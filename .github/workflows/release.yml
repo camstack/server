@@ -1,10 +1,14 @@
 name: Release — CamStack (Docker + Electron)
-run-name: "Release ${{ github.ref_name || github.event.inputs.version_type }}"
+run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_type }}"
 
 # Single workflow that produces every artifact for the single CamStack
 # product — ONE Docker image + ONE desktop app, each selecting hub vs
-# agent at runtime (CAMSTACK_ROLE). Triggered on tag push (`vX.Y.Z`)
-# or manually via workflow_dispatch.
+# agent at runtime (CAMSTACK_ROLE). Triggered ONLY by workflow_dispatch,
+# and the first job refuses any ref other than refs/heads/main.
+#
+# The home runners sit in an org runner group that allows exactly this
+# file on main. GitHub cannot name a tag pattern in that restriction, so
+# a tag push cannot reach them. Fork pull requests have no trigger here.
 #
 # `vX.Y.Z` is the PRODUCT version (image tags, desktop app, GitHub
 # release), starting at 0.1.0 and labelled beta while the major is 0.
@@ -13,7 +17,12 @@ run-name: "Release ${{ github.ref_name || github.event.inputs.version_type }}"
 # as an image label and a release-note line (D943). The Expo viewer app
 # stays on its own 1.0.x line and is not built here.
 #
-# Output (tag push attaches installers to the GitHub Release; workflow_dispatch uploads them as artifacts):
+# publish_release=true creates tag v<product-version.json> on github.sha,
+# the draft GitHub release, and the installer upload. false leaves
+# installers on the runner and creates no release (version_type still
+# bumps the image tag, as a manual run always has).
+#
+# Output (publish_release only — an artifact run leaves installers on the runner):
 #
 #   ── Docker image on GHCR (accel-prefixed tags, no bare :latest) ──────
 #     ghcr.io/<owner>/camstack:{intel-X.Y.Z, intel-latest}   (linux/amd64)
@@ -39,8 +48,13 @@ run-name: "Release ${{ github.ref_name || github.event.inputs.version_type }}"
 on:
   workflow_dispatch:
     inputs:
+      publish_release:
+        description: "Create tag v<product-version>, the GitHub release, and upload installers. False builds artifacts only."
+        required: false
+        type: boolean
+        default: false
       version_type:
-        description: "Version increment type"
+        description: "Version increment for an artifact-only run (ignored when publish_release is true)"
         required: true
         type: choice
         options: [patch, minor, major]
@@ -66,11 +80,10 @@ on:
         required: false
         type: boolean
         default: false
-  push:
-    tags: ["v*.*.*"]
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
 
 env:
   NODE_VERSION: "24"
@@ -86,7 +99,15 @@ jobs:
       server_version: ${{ steps.npm.outputs.server_version }}
       previous_tag: ${{ steps.prev.outputs.previous_tag }}
       electron_matrix: ${{ steps.ematrix.outputs.matrix }}
+      # dry_run derives the same version and resolves npm, then builds nothing.
+      is_release: ${{ steps.version.outputs.is_release == 'true' && inputs.dry_run == false }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
+      - name: Refuse any ref other than main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::This workflow runs only from refs/heads/main (got ${{ github.ref }}). The home runners allow only release.yml on main; a tag push cannot reach them."
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -98,11 +119,12 @@ jobs:
         id: ematrix
         run: |
           # The Electron matrix is computed here so `electron_platforms`
-          # (workflow_dispatch input) can filter which legs run — a job-level
-          # `if` cannot reference `matrix.*`, so we filter the include list
-          # itself. Tag push always builds every platform.
+          # can filter which legs run — a job-level `if` cannot reference
+          # `matrix.*`, so we filter the include list itself. A publish
+          # builds every platform, as a tag push used to. An artifact-only
+          # run honours electron_platforms.
           FILTER="all"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ inputs.publish_release }}" != "true" ]; then
             FILTER="${{ inputs.electron_platforms }}"
           fi
           node -e '
@@ -110,9 +132,10 @@ jobs:
             const L = (a) => JSON.stringify(a);
             // ONE desktop product (packages/desktop) — the single CamStack
             // app selects hub vs agent at runtime via CAMSTACK_ROLE. Three
-            // mac arm64 runs on macos-latest. mac x64 runs natively on
-            // macos-13, so CS_NODE_ARCH matches the host. Linux runs on
-            // ubuntu-latest.
+            // legs: mac arm64 + mac x64 (cross-built on the two arm64 Mac
+            // mini runners, one arch each — staging fetches the target-arch
+            // native prebuilds via CS_NODE_ARCH) + linux x64. Both mac legs
+            // match the same labels; GHA places them on the two mac runners.
             //
             // ⚠ build.mac.target in packages/desktop/package.json must NOT
             // declare an explicit per-target arch list: config-level arch
@@ -137,11 +160,11 @@ jobs:
             // re-create the twin-DMG collision this file was bitten by. The
             // viewer config declares its own mac arch for the same reason.
             const all = [
-              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"linux",arch:"x64",builder_flags:"--linux",runner_labels:L(["ubuntu-latest"])},
-              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"arm64",builder_flags:"--mac --arm64",runner_labels:L(["macos-latest"])},
-              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"x64",builder_flags:"--mac --x64",runner_labels:L(["macos-13"])},
-              {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"linux",arch:"x64",stage_closure:"false",builder_flags:"--linux --config electron-builder.viewer.json",runner_labels:L(["ubuntu-latest"])},
-              {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"mac",arch:"arm64",stage_closure:"false",builder_flags:"--mac --arm64 --config electron-builder.viewer.json",runner_labels:L(["macos-latest"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"linux",arch:"x64",builder_flags:"--linux",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"arm64",builder_flags:"--mac --arm64",runner_labels:L(["self-hosted","macos","arm64"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"x64",builder_flags:"--mac --x64",runner_labels:L(["self-hosted","macos","arm64"])},
+              {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"linux",arch:"x64",stage_closure:"false",builder_flags:"--linux --config electron-builder.viewer.json",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
+              {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"mac",arch:"arm64",stage_closure:"false",builder_flags:"--mac --arm64 --config electron-builder.viewer.json",runner_labels:L(["self-hosted","macos","arm64"])},
             ];
             const sel = filter === "all" ? all : all.filter(e => e.platform === filter);
             console.log("matrix=" + JSON.stringify({ include: sel }));
@@ -149,10 +172,12 @@ jobs:
       - name: Determine product version
         id: version
         env:
-          VERSION_TYPE: ${{ github.event.inputs.version_type }}
+          VERSION_TYPE: ${{ inputs.version_type }}
+          PUBLISH_RELEASE: ${{ inputs.publish_release }}
         run: |
-          # Product version: the tag on a tag push, else product-version.json
-          # bumped by version_type (dispatch). Not server/backend/package.json.
+          # publish_release reads product-version.json and refuses when
+          # tag v<version> already exists. An artifact-only run bumps that
+          # file by version_type and creates no tag. Not an npm version.
           # Logic: scripts/ci/product-release.mjs, pinned by
           # scripts/__tests__/product-release.spec.ts.
           node scripts/ci/product-release.mjs
@@ -196,17 +221,15 @@ jobs:
             echo "dry_run=true — no image, installer, or GitHub release will be published"
           fi
 
-  # ── Step 1b — create the GitHub Release up front (tag push only) ──
+  # ── Step 1b — create the tag and the draft GitHub Release (publish only) ──
   #
   # The Release is created BEFORE any installer is built so that the
   # build-electron matrix can append each installer straight to it as a
   # release asset (release-asset storage is separate from the Actions
   # artifact storage quota — no upload-artifact/download-artifact needed).
   create-release:
-    permissions:
-      contents: write
     needs: derive-version
-    if: startsWith(github.ref, 'refs/tags/')
+    if: needs.derive-version.result == 'success' && needs.derive-version.outputs.is_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -276,7 +299,11 @@ jobs:
       - name: Create GitHub Release (draft — flipped to published by publish-release)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          # The tag does not exist yet (derive-version refused it if it did).
+          # target_commitish pins it to the dispatched commit, not whatever
+          # main points at when this job reaches the API.
+          tag_name: ${{ needs.derive-version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: ${{ needs.derive-version.outputs.release_name }}
           body_path: release-body.md
           make_latest: true
@@ -293,13 +320,9 @@ jobs:
   # (`intel` | `amd`). Tags are accel-prefixed
   # (`intel-<version>`, `amd-latest`, …) — never a bare `:latest`.
   build-docker:
-    permissions:
-      contents: read
-      packages: write
     needs: derive-version
-    # On a manual dispatch, allow skipping the (slow registry-install)
-    # Docker build to iterate on Electron only. Always builds on tag push.
-    if: ${{ github.event_name != 'workflow_dispatch' || (inputs.dry_run == false && inputs.skip_docker == false) }}
+    # skip_docker iterates on Electron only. dry_run stops after derive.
+    if: inputs.dry_run == false && inputs.skip_docker == false
     strategy:
       fail-fast: false
       matrix:
@@ -307,18 +330,20 @@ jobs:
         # `runtime-common` stage; vendor VA/GPU/NPU only in the final target.
         include:
           - accel: intel
+            runner: ci-release
             dockerfile: Dockerfile
             target: intel
             image: camstack
             title: CamStack
             description: CamStack node (Intel VA/NPU) — hub or agent via CAMSTACK_ROLE
           - accel: amd
+            runner: ci-release
             dockerfile: Dockerfile
             target: amd
             image: camstack
             title: CamStack (AMD)
             description: CamStack node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, docker, "${{ matrix.runner }}"]
     # docker/build-push-action@v6 uploads a "build summary" record as a GitHub
     # Actions artifact by default. We don't use it (images go to GHCR; the
     # summary is just a UI panel), and it was the source of the recurring
@@ -335,13 +360,12 @@ jobs:
 
       # Compute Docker build platforms.
       #   * Default: linux/amd64 only — fast (~3-4 min/job) on the
-      #     amd64 GH runners.
-      #   * `multi_arch=true` workflow_dispatch input adds linux/arm64
+      #     home amd64 runner.
+      #   * `multi_arch=true` adds linux/arm64
       #     (slow — ~12-13 min/job, QEMU emulation on amd64 hosts).
       #
-      # Tag pushes default to amd64-only too. Flip to multi-arch from
-      # the Actions UI by re-running the workflow with the box checked,
-      # or by calling `gh workflow run release.yml -f multi_arch=true`.
+      # Every run defaults to amd64-only. Flip to multi-arch from the
+      # Actions UI, or `gh workflow run release.yml --ref main -f multi_arch=true`.
       #
       # Trade-off when amd64-only: published images don't ship a
       # linux/arm64 manifest. Apple Silicon Docker Desktop falls back
@@ -366,8 +390,19 @@ jobs:
         with:
           platforms: arm64
 
+      # Pin reliable DNS inside the buildkit builder. The host resolver
+      # intermittently fails lookups for docker.io and ghcr.io, and buildx
+      # then fails to fetch the `docker/dockerfile:1` frontend, base images,
+      # or the push. Setting buildkitd's own nameservers makes every in-build
+      # registry lookup go to 1.1.1.1/8.8.8.8, bypassing the flaky resolver
+      # WITHOUT touching the host daemon (no container restart). The buildkit
+      # image itself comes from the local cache.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [dns]
+              nameservers = ["1.1.1.1", "8.8.8.8"]
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -428,35 +463,60 @@ jobs:
 
   # ── Step 3 — Electron desktop bundles (single CamStack app × Mac/Linux) ──
   build-electron:
-    permissions:
-      contents: write
-      actions: write
     needs: [derive-version, create-release]
-    # Runs on tag push (after create-release) AND on manual dispatch (where
-    # create-release is skipped — tolerate that). The `electron_platforms`
-    # dispatch filter is applied to the matrix itself (computed in
-    # derive-version), since a job-level `if` cannot reference `matrix.*`.
+    # Runs after create-release on a publish, and without it on an artifact
+    # run (create-release is skipped — tolerate that). The platform filter
+    # is applied to the matrix itself (computed in derive-version), since a
+    # job-level `if` cannot reference `matrix.*`.
     #
-    # Linux on ubuntu-latest, macOS arm64 on macos-latest, macOS x64 on
-    # macos-13. Windows stays off: the app side is ready
-    # (`npm run dist:win -w packages/desktop`, docs/architecture/windows-agent.md)
-    # and the leg is a `windows-latest` matrix row once the install steps on
-    # that page have been run. Add
-    # runner_labels:L(["windows-latest"]) with builder_flags `--win`, then the
-    # `latest.yml` feed and `CamStack-Setup-*.exe` in the publish step and in
-    # scripts/check-desktop-update-feeds.ts.
+    # Linux + macOS only on self-hosted runners. Windows is disabled (no
+    # Windows self-hosted runner) — to add one, register a runner with labels
+    # `self-hosted,windows,x64` and append a matrix entry in derive-version's
+    # `Compute Electron build matrix` step with `builder_flags: --win`.
+    #
+    # TODO(windows-agent): the Windows leg stays OFF until a self-hosted
+    # Windows runner exists. The app side is ready: `npm run dist:win -w
+    # packages/desktop` stages the Windows Node + the pinned WinSW and builds the
+    # NSIS installer (docs/architecture/windows-agent.md). When the runner is up:
+    #   1. register it with labels `self-hosted,windows,x64`;
+    #   2. add {target:"desktop",...,platform:"win",arch:"x64",builder_flags:"--win",
+    #      runner_labels:L(["self-hosted","windows","x64"])} to the matrix above;
+    #   3. add the `latest.yml` feed + `CamStack-Setup-*.exe` to the publish step
+    #      and to scripts/check-desktop-update-feeds.ts, then run the install
+    #      steps of the Windows page on that VM BEFORE enabling the leg.
     #
     # `runner_labels` is a JSON string handed to `fromJSON` in `runs-on:`
     # below — GHA otherwise flattens YAML arrays to space-joined strings.
-    if: ${{ !cancelled() && needs.derive-version.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') && (github.event_name != 'workflow_dispatch' || inputs.dry_run == false) }}
+    if: ${{ !cancelled() && needs.derive-version.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') && inputs.dry_run == false }}
     strategy:
       fail-fast: false
-      # mac arm64 is macos-latest and mac x64 is macos-13: two images, two
-      # keychains, so the legs sign concurrently (D429). They are not
-      # serialised. `max-parallel: 1` was added when a tag push attached
-      # ~2.2 GB at once from the home network and saturated it; it cost wall
-      # clock and is gone. If a release upload fails, stop attaching the full
-      # desktop installers — they reach nodes through Docker and npm.
+      # The two mac legs (arm64 + x64 of the SAME desktop app) run on two
+      # dedicated per-user macOS runners. Both match the same
+      # `self-hosted,macos,arm64` labels; GitHub Actions places one leg on
+      # each runner. Distinct users mean distinct login keychains, so signing
+      # and notarization no longer share the mutable keychain state that
+      # forced `max-parallel: 1` (both legs used to run as one user and raced,
+      # dropping one job's signing identity). The two legs CAN sign
+      # concurrently, one per runner.
+      #
+      # They are NOT serialised (D429). `max-parallel: 1` was added when a tag
+      # push attached ~2.2 GB of installers at once and saturated the runners'
+      # uplink: measured on v1.2.265, WAN latency
+      # to three independent targets went from 12-18 ms to a 610-650 ms average
+      # with 2.9-second peaks, all three degrading together, and the Docker leg
+      # died on `npm error network aborted` while pulling the closure in the
+      # same window.
+      #
+      # It reduced no bytes — it only stopped the peaks stacking — and it cost
+      # WALL CLOCK: a release went from about one hour to nearly three. The
+      # operator chose the hour, knowingly, because a full release is rare.
+      #
+      # ⚠ If the disconnections come back, the fix is NOT this line. It is to
+      # stop ATTACHING the full installers to a release: ~2.0 GB of the 2.2 is
+      # the full desktop product, which reaches the nodes through Docker and
+      # npm and is never downloaded from a release by hand. Splitting the
+      # viewer onto its own tag was tried and reverted — it moves only ~232 MB,
+      # about 10%, and costs a second release to remember.
       matrix: ${{ fromJSON(needs.derive-version.outputs.electron_matrix) }}
     runs-on: ${{ fromJSON(matrix.runner_labels) }}
     steps:
@@ -469,9 +529,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # Hosted images ship python3. The shim satisfies electron-builder's
-      # `which python` during the macOS .dmg stage. No setup-python step:
-      # the image already has an interpreter.
+      # Note: no `actions/setup-python@v5` step here.
+      # 1. On Linux self-hosted runners we don't need python at all.
+      # 2. On macOS self-hosted runners, `setup-python` tries
+      #    to write to `/Users/runner/hostedtoolcache` (the GHA-hosted
+      #    convention) and fails with EACCES on our self-hosted user.
+      #    macOS ships `python3` natively (3.9.6 on Tahoe), and the
+      #    `python-shim` block below symlinks `python → python3` so
+      #    electron-builder's `which python` check passes during the
+      #    .dmg/codesign stage. No external python install needed.
 
       # A full disk killed the v1.2.491 arm64 leg (hdiutil/zip: "No space
       # left on device"; 40 GB of the machine went to the runners' npm
@@ -503,8 +569,10 @@ jobs:
           # imports workspace types directly. But SKIP the heavy nx build of all
           # packages: @camstack/server etc. are installed from npm in the next
           # step (stage-deps).
-          # Wipe node_modules first so a retried step cannot satisfy npm ci
-          # with a half-cleaned tree.
+          # Self-hosted hygiene: the persistent workspace can hold a partially
+          # cleaned node_modules (ENOTEMPTY on native-module dirs), which makes
+          # `npm ci` leave broken installs (e.g. node-av without its prebuilt).
+          # Wipe it first — npm ci re-resolves everything from the lockfile.
           rm -rf node_modules
           # --ignore-scripts: the lockfile (regenerated on macOS) lacks the
           # linux platform prebuilt entries (npm cross-platform-optionals bug),
@@ -546,7 +614,7 @@ jobs:
           # CC/CXX at a compiler that ACTUALLY accepts gnu++20.
           #
           # HARD-LEARNED: never trust `apt-get install` exit status or a
-          # `command -v` — on an older image `apt-get install
+          # `command -v` — on this self-hosted focal runner `apt-get install
           # g++-12` returned 0 yet /usr/bin/g++-12 was absent, so a prior
           # revision wrote `CXX=g++-12` and node-gyp died with
           # `FileNotFoundError: 'g++-12'` inside GetCompilerPredefines. The ONLY
@@ -655,13 +723,18 @@ jobs:
           # build, NO nx. ONE closure serves both roles — the desktop app picks
           # hub vs agent at runtime via CAMSTACK_ROLE.
           #
-          # Clean a half-written tree from a retried step in this job.
+          # Clean stale electron build artifacts from any PRIOR run on this
+          # self-hosted runner. A prior FAILED pack can leave a half-written
+          # `release/` (or a stale .deps hard-link) that makes electron-builder
+          # die `EEXIST: file already exists, link …` on the next copy. The
+          # workspace persists between jobs on a self-hosted runner, so clean it.
           rm -rf packages/desktop/release packages/desktop/.deps || true
           npm run stage-deps -w packages/desktop
 
       - name: Build electron wrapper (TS only)
         # Self-sufficient: node-root resolves from SOURCE via tsconfig paths
-        # (no prior node-root build needed).
+        # (no prior node-root build needed — its dts step was flaky on the
+        # self-hosted mac runners).
         run: npm run build -w ${{ matrix.workspace }}
 
       - name: Clear stale dmg-builder cache (macOS)
@@ -714,7 +787,7 @@ jobs:
               ln -sf "$(which python3)" "$WORKSPACE/.python-shim/python"
               export PATH="$PWD/$WORKSPACE/.python-shim:$PATH"
 
-              # Mac code-signing — build a DEDICATED keychain from CSC_LINK.
+              # Mac code-signing on self-hosted runners — build a DEDICATED
               # keychain from the CSC_LINK secret at build time.
               #
               # The previous approach relied on the cert being pre-imported
@@ -752,8 +825,12 @@ jobs:
                 # notarytool (the Notarize step) needs an UNLOCKED *default*
                 # keychain — even with explicit --apple-id/--password it errors
                 # `keychainLocked: default` against the login keychain. Point
-                # the default at our unlocked keychain. Each mac leg is its own
-                # VM (macos-latest and macos-13), so the keychains do not meet.
+                # the default at our unlocked keychain. No race: `-d user` is
+                # PER-USER and the two mac legs run as different users,
+                # one leg each. That — not the former
+                # `max-parallel: 1` — is what makes this safe, and it is why
+                # removing the serialisation (D429) does not reintroduce the
+                # 2026-08 identity race.
                 security default-keychain -d user -s "$SIGN_KC"
                 rm -f "$P12"
                 # electron-builder must NOT run its own (partition-list-less)
@@ -850,8 +927,10 @@ jobs:
       # Apple notary, exiting the entire build on a single 500. With this
       # split we can retry just notarize on the same artifacts.
       #
-      # Notarize with the Apple id, app-specific password and team id secrets.
-      # A hosted image has no stored notary profile.
+      # Uses `--keychain-profile camstack-notary` — credentials must be
+      # stored on the runner with `xcrun notarytool store-credentials
+      # camstack-notary` once (one-time per Mac runner). No env-var pwd
+      # roundtrip needed.
       - name: Notarize macOS .dmg + staple
         if: matrix.platform == 'mac'
         env:
@@ -865,7 +944,14 @@ jobs:
         run: |
           set -e
           cd "$WORKSPACE"
-          # Per-job notary log. $RUNNER_TEMP is owned by this job.
+          # Per-job notary log path. MUST NOT be a shared, hardcoded /tmp file:
+          # the two mac legs run as different users on the same machine and
+          # would collide on a fixed /tmp path — and a
+          # file left behind by a prior run's user is unwritable, so `tee`
+          # fails with "Permission denied", the log comes back empty, the
+          # "status: Accepted" grep misses, and an already-Accepted submission
+          # is wrongly retried/failed. $RUNNER_TEMP is per-job and owned by the
+          # runner user.
           NOTARY_LOG="$RUNNER_TEMP/notary-output.log"
           # electron-builder produces multiple .dmg (arm64 + x64) — notarize each.
           # NOTE: macOS ships bash 3.2 which lacks `mapfile`; use a plain glob
@@ -919,9 +1005,14 @@ jobs:
           echo "── All notarize+staple complete ──"
         shell: bash
 
-      # Signing points the default keychain at a file under $RUNNER_TEMP.
-      # Put login back and drop the temporary keychain before the job ends,
-      # including when the build or notarization failed.
+      # The signing step makes the temporary camstack-signing keychain the
+      # user's DEFAULT keychain and prepends it to the search list, then
+      # $RUNNER_TEMP is wiped at job end. On a runner that runs as a real
+      # login user (a macOS runner that uses a real login session),
+      # that left the operator's default pointing at a deleted file, and macOS
+      # warned "the CamStack keychain was renamed" at every app start. Always
+      # restore login as default and drop the temporary keychain, even when
+      # the build or notarization failed.
       - name: Restore the user's keychains (macOS)
         if: always() && matrix.platform == 'mac'
         run: |
@@ -934,22 +1025,19 @@ jobs:
           echo "default: $(security default-keychain -d user)"
         shell: bash
 
-      # A dispatch has no GitHub Release. The hosted disk does not outlive
-      # the job, so the installers are an artifact. A tag push attaches the
-      # same files to the Release instead.
-      - name: Upload installers (workflow_dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: installer-${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
-          path: |
-            ${{ matrix.workspace }}/${{ matrix.output_dir }}/${{ matrix.artifact_glob }}
-            ${{ matrix.workspace }}/${{ matrix.output_dir }}/${{ matrix.feed_glob }}
-          if-no-files-found: error
-          retention-days: 7
+      # Self-hosted runners keep installers in `_work/` (and MinIO, task #129).
+      # Never `actions/upload-artifact` — that is the org Actions storage
+      # quota, and a single mac dispatch is ~1 GB. A publish attaches the
+      # same files to the GitHub Release (separate quota).
+      - name: Keep installer on the runner (artifact run)
+        if: needs.derive-version.outputs.is_release != 'true'
+        run: |
+          echo "Installer left on this runner — not uploaded to GitHub Actions artifacts."
+          ls -lh ${{ matrix.workspace }}/${{ matrix.output_dir }}/${{ matrix.artifact_glob }}
+          echo "workspace=$(realpath ${{ matrix.workspace }}/${{ matrix.output_dir }})"
 
-      - name: Stage installers for release (tag push only)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Stage installers for release (publish only)
+        if: needs.derive-version.outputs.is_release == 'true'
         run: |
           mkdir -p release-staging
           # Glob expands per-workspace's release/ dir — we only ship the
@@ -972,11 +1060,11 @@ jobs:
           ls -la release-staging/
         shell: bash
 
-      - name: Upload installers to the GitHub Release (tag push only)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload installers to the GitHub Release (publish only)
+        if: needs.derive-version.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ needs.derive-version.outputs.tag }}
           files: release-staging/*
           fail_on_unmatched_files: false
           # Keep the release in draft state — `publish-release` un-drafts at
@@ -984,9 +1072,11 @@ jobs:
           # from accidentally flipping the release to published mid-build.
           draft: true
 
-      # The installers are on the release; drop the workspace copies.
-      - name: Clean up build output (tag push only)
-        if: always() && startsWith(github.ref, 'refs/tags/')
+      # The installers are in the release now; drop the per-leg build output
+      # so a self-hosted runner does not accumulate ~1 GB per leg per publish.
+      # An artifact run keeps them on purpose (see above).
+      - name: Clean up build output (publish only)
+        if: always() && needs.derive-version.outputs.is_release == 'true'
         run: |
           rm -rf "${{ matrix.workspace }}/${{ matrix.output_dir }}" \
             "${{ matrix.workspace }}/.deps" release-staging || true
@@ -1000,16 +1090,16 @@ jobs:
   # asset, so it is safe to publish. The job is intentionally minimal: a
   # single `gh release edit --draft=false`.
   publish-release:
-    permissions:
-      contents: write
     needs: [derive-version, build-docker, build-electron]
-    if: startsWith(github.ref, 'refs/tags/')
+    # One failed leg leaves the release a draft. skip_docker skips this job
+    # too: a publish without the image is not a finished release.
+    if: ${{ needs.derive-version.outputs.is_release == 'true' && needs.build-docker.result == 'success' && needs.build-electron.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Publish the release (un-draft)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${{ github.ref_name }}" --draft=false
+        run: gh release edit "${{ needs.derive-version.outputs.tag }}" --draft=false
 
   # ── Step 5 — summary printed even when partial failures occurred ──
   summary:

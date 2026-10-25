@@ -1,6 +1,6 @@
 ---
 name: camstack-publish-ci
-description: Release CamStack through GitHub Actions — publish packages to npm (`Publish Packages`), then cut a release that builds the Docker image and the desktop app (`Release — CamStack (Docker + Electron)`). ALWAYS through CI, never a local publish. Covers the push-first and lockfile preflights, the workflow inputs (`include_dependents`, `force_packages` for a capability change), npm registry lag, checking what a server closure pins, the `[skip ci]` tag trap, and the CI rules (never dispatch Checks). Use when shipping a batch to npm, cutting a release tag, or a publish/release run failed.
+description: Release CamStack through GitHub Actions — publish packages to npm (`Publish Packages`), then cut a release that builds the Docker image and the desktop app (`Release — CamStack (Docker + Electron)`). ALWAYS through CI, never a local publish. Covers the push-first and lockfile preflights, the workflow inputs (`include_dependents`, `force_packages` for a capability change, `publish_release`), npm registry lag, checking what a server closure pins, and the CI rules (never dispatch Checks). Use when shipping a batch to npm, cutting a product release from main, or a publish/release run failed.
 ---
 
 # Publishing and releasing through CI
@@ -45,9 +45,14 @@ npm install --package-lock-only --ignore-scripts
 git add package-lock.json && git commit -m "chore: sync package-lock before CI publish" && git push origin main
 ```
 
-**CI runs on GitHub-hosted runners** (`ubuntu-latest` for Linux jobs,
-`macos-latest` and `macos-13` for the desktop app). Never dispatch the
-`Checks` workflow — it is operator-only (D704).
+**Runners.** `ci.yml`, `checks.yml`, `publish-packages.yml` and
+`unpublish-retired.yml` run on GitHub-hosted `ubuntu-latest`. The release
+workflow's light jobs (`derive-version`, `create-release`, `publish-release`,
+`summary`) do too. Docker and Electron stay on the home runners
+(`[self-hosted, linux, x64, ci-release]` / `docker`, and
+`[self-hosted, macos, arm64]`), in the org runner group `release`, which
+allows only `release.yml` on `main`. Never dispatch the `Checks` workflow —
+it is operator-only (D704).
 
 ## 1. Publish packages — `Publish Packages`
 
@@ -115,15 +120,24 @@ minifier renames symbols — and check runtime `.js`, not only `.d.ts`.
 
 ## 2. Cut a release — `Release — CamStack (Docker + Electron)`
 
-Trigger: push a tag `vX.Y.Z` (the canonical path: image + desktop installers
-+ a GitHub release), or `workflow_dispatch` (artifacts only; inputs
-`version_type`, `multi_arch`, `skip_docker`, `electron_platforms`, `dry_run`).
+`workflow_dispatch` from `main` only. The first job refuses any other ref.
+`publish_release=true` is the release: image, desktop installers and a GitHub
+release. `false` (the default) builds artifacts only — installers stay on the
+home runner, no tag, no GitHub release. Other inputs: `version_type` (artifact
+runs only; a publish ignores it), `multi_arch`, `skip_docker`,
+`electron_platforms` (artifact runs only), `dry_run`.
 
 `vX.Y.Z` is the **product** version (image, desktop app, GitHub release),
-starting at 0.1.0 beta (D943). It is not `@camstack/server`. Bump
-`product-version.json` and `packages/desktop/package.json` together, on the
-commit the tag sits on. npm packages stay on 1.2.x. The viewer app stays on
-1.0.x.
+starting at 0.1.0 beta (D943). It is not `@camstack/server`. Commit the same
+number in `product-version.json` and `packages/desktop/package.json` on
+`main`. The workflow creates `v<version>` on the dispatched commit and refuses
+when that tag already exists. npm packages stay on 1.2.x. The viewer app stays
+on 1.0.x.
+
+```bash
+gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true
+gh run list --workflow="Release — CamStack (Docker + Electron)" --limit 2
+```
 
 Dry run — derive only, nothing published:
 
@@ -132,31 +146,18 @@ gh workflow run "Release — CamStack (Docker + Electron)" --ref main \
   -f dry_run=true -f version_type=patch
 ```
 
-**The tag must not sit on the `[skip ci]` publish commit** — GitHub honours the
-marker and silently runs nothing. Tag a clean commit:
-
-```bash
-git pull --no-edit origin main                         # get the CI's version-bump commit
-git commit --allow-empty -m "chore: release vX.Y.Z"    # no [skip ci]
-git tag vX.Y.Z && git push origin main vX.Y.Z
-gh run list --workflow="Release — CamStack (Docker + Electron)" --limit 2
-```
-
-A tag already on a `[skip ci]` commit: `git tag -d vX.Y.Z; git push origin
-:refs/tags/vX.Y.Z`, then re-tag as above.
-
-**The tag does not have to exist on npm.** `derive-version` resolves
-`@camstack/server` dist-tag `latest` and records that closure
+**The product version does not have to exist on npm.** `derive-version`
+resolves `@camstack/server` dist-tag `latest` and records that closure
 (`scripts/ci/verify-release-npm.mjs`). It fails when `latest` cannot be
 resolved, not when `latest` differs from the product version. The image and
 the desktop app both install `@latest`. A 1.2.x desktop install will not
-auto-update to 0.1.0 — reinstall once (D943).
+auto-update to 0.1.0 — reinstall once (D943). Dispatch only after that
+publish has landed.
 
-A release runs on GitHub-hosted images (`ubuntu-latest`, `macos-latest`,
-`macos-13`). A run sitting in `queued` is a GitHub capacity wait, not a dead
-home runner. Superseding a tag whose
-build has not finished: cancel it and delete the tag, or it later pushes
-`intel-latest` from the older tree.
+Docker and Electron run on the home runners (group `release`). A leg sitting
+in `queued` is an offline home runner. Cancel a publish that has not finished;
+if `create-release` already made the tag, delete it before dispatching again,
+or a later push of `intel-latest` comes from the older tree.
 
 ## 3. Retiring a published package
 
@@ -171,7 +172,7 @@ old (`422`). Unpublish only versions under 72 h, and `npm deprecate <pkg>
 | --- | --- | --- |
 | changed packages | `Publish Packages`, `include_dependents=false` | `applyServerUpdate` per node (framework) / `camstack deploy` (addon) |
 | a capability change | the same + `force_packages=@camstack/system,@camstack/server` | `applyServerUpdate` per node, then deploy the providing addon |
-| a release (image + desktop app) | publish → wait for npm → tag `vX.Y.Z` on a clean commit | nodes still need `applyServerUpdate`; an image only changes on a container recreate |
+| a release (image + desktop app) | publish → wait for npm → commit the product version on `main` → `gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true` | the workflow creates `vX.Y.Z`; nodes still need `applyServerUpdate`; an image only changes on a container recreate |
 
 ## Done-gate — paste it before "done"
 
@@ -181,6 +182,6 @@ preflight:  origin/main..HEAD empty; lockfile in sync
 publish:    run <id> — published <pkg → version, from the run log>
 registry:   <tarball 200 for the versions that matter>
 pins:       @camstack/server@<VER> pins system/types <versions>
-release:    <tag vX.Y.Z on <commit> (not [skip ci]) — run <id> result | not released>
+release:    <publish_release dispatch — run <id>, tag vX.Y.Z on <sha> | not released>
 next:       <applyServerUpdate / camstack deploy still to do, or done — camstack-server-change gate>
 ```

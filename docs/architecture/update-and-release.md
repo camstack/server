@@ -836,14 +836,19 @@ gh api orgs/camstack/actions/runners \
 ssh <host> 'docker start github-runner-2'
 ```
 
-Superseding a tag whose build has not finished? **Cancel it and delete the
-tag** — otherwise it builds later and pushes `intel-latest` from the older
-Dockerfile, quietly undoing the newer release.
+Cancel a publish that has not finished. Once `create-release` has made
+`v<version>`, delete that tag before dispatching again — `derive-version`
+refuses an existing tag, and a run that already pushed `intel-latest` from
+the older tree undoes the newer image if it is left to finish.
 
-Those labels were the home pool. The workflow now runs on `ubuntu-latest`,
-`macos-latest` and `macos-13`, so an offline home runner does not stall a
-release. The commands above apply to a private repository that still uses
-self-hosted runners.
+The heavy legs are on the home runners, in the org runner group `release`.
+That group allows only `.github/workflows/release.yml` on `refs/heads/main`.
+GitHub cannot express a `refs/tags/v*` pattern there, so a tag push cannot
+reach these machines. The workflow is `workflow_dispatch` only, and its first
+job refuses any other ref, so a fork pull request never schedules them. The
+light jobs (`derive-version`, `create-release`, `publish-release`, `summary`)
+run on `ubuntu-latest` and hold no secret beyond `GITHUB_TOKEN`. An offline
+home runner still leaves a Docker or Electron leg `queued`.
 
 ### Deploying from a laptop
 
@@ -1166,23 +1171,27 @@ that ships it.
 
 ## Where CI runs
 
-Public CI uses GitHub-hosted runners. A public repository does not run on the
-home self-hosted pool.
+Public CI uses GitHub-hosted runners. A public repository does not run
+ordinary CI on the home self-hosted pool. Releases are the exception: Docker
+and Electron stay on the home runners, and nothing else is allowed to.
 
-| Workflow | Image |
+| Workflow | Where it runs |
 | --- | --- |
 | `ci.yml`, `checks.yml`, `publish-packages.yml`, `unpublish-retired.yml` | `ubuntu-latest` (4 vCPU, 16 GB) |
-| `release.yml` Docker and Linux Electron | `ubuntu-latest` |
-| `release.yml` macOS arm64 | `macos-latest` |
-| `release.yml` macOS x64 | `macos-13` |
+| `release.yml` `derive-version`, `create-release`, `publish-release`, `summary` | `ubuntu-latest` (`GITHUB_TOKEN` only) |
+| `release.yml` Docker and Linux Electron | home runner `[self-hosted, linux, x64, ci-release]` (`docker` on the image jobs), org runner group `release` |
+| `release.yml` macOS Electron | home runner `[self-hosted, macos, arm64]`, same group |
 
 `ci.yml` runs on push, pull request and the nightly schedule. A pull request
 gets the default token only: no repository secrets, and no
-`pull_request_target`. Publish is `workflow_dispatch` from `main`. Release is
-a `vX.Y.Z` tag push or `workflow_dispatch`. Each job sets the smallest
-`permissions` it needs (`contents: read` for CI; `packages: write` on the
-image push; `contents: write` only where a release or the version bump is
-pushed).
+`pull_request_target`. Publish is `workflow_dispatch` from `main`. A release
+is `workflow_dispatch` from `main` only (`publish_release=true` creates the
+tag). The runner group allows exactly
+`camstack/server/.github/workflows/release.yml` on `refs/heads/main` — it
+cannot name a tag pattern — and the workflow's first job refuses any other
+ref. Each job sets the smallest `permissions` it needs (`contents: read` for
+CI; `packages: write` on the image push; `contents: write` only where a
+release or the version bump is pushed).
 
 Nx cache is `actions/cache` over `.nx/cache` and `.nx/workspace-data`, keyed
 on the lockfile and `nx.json`. The database file is named after the machine,
@@ -1273,24 +1282,43 @@ It creates no `vX.Y.Z` tag, pushes no image, and touches no GitHub Release.
 
 ## Cutting a release
 
-A release is a **human-pushed `vX.Y.Z` tag**, and the order is
-**publish → tag → build**. `.github/workflows/release.yml` then runs on
-GitHub-hosted runners:
+A release is a **dispatch from `main`**, and the order is
+**publish → dispatch → build**. The workflow creates the tag. Commit the
+product version (`product-version.json` and `packages/desktop/package.json`,
+the same number) on that commit first.
+
+```bash
+gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true
+```
+
+`publish_release` defaults to false. That run is an artifact build: installers
+stay on the home runner, there is no GitHub release, and `version_type`
+(`patch` / `minor` / `major`) still bumps the image tag the way a manual run
+always has. `dry_run=true` stops after derive.
+
+```bash
+gh workflow run "Release — CamStack (Docker + Electron)" --ref main \
+  -f dry_run=true -f version_type=patch
+```
+
+`.github/workflows/release.yml` then runs. Light jobs are on `ubuntu-latest`.
+Docker and Electron stay on the home runners (group `release`):
 
 | Job | Runner | What it does |
 | --- | --- | --- |
-| `derive-version` | `ubuntu-latest` | product version from the tag (or `product-version.json` on dispatch), then `scripts/ci/verify-release-npm.mjs` records `@camstack/server@latest` — see *The product release is not the npm version*, above |
-| `create-release` | `ubuntu-latest` | creates the GitHub Release **as a draft**, notes from `git log <previous v-tag>..HEAD` |
-| `build-docker` | `ubuntu-latest` | buildx pushes `ghcr.io/camstack/camstack:intel-<version>` **and** `:intel-latest` (and the `amd-` pair) to GHCR with `GITHUB_TOKEN`; linux/amd64 unless `multi_arch` |
-| `build-electron` | `ubuntu-latest`, `macos-latest`, `macos-13` | FIVE legs, in PARALLEL: the full desktop product (mac arm64, mac x64, linux x64) **and** the viewer shell (`CamStackViewer-*`, mac arm64 + linux x64, `electron-builder.viewer.json`, no staged closure). One release, one version (D429) |
-| `publish-release` | `ubuntu-latest` | `gh release edit --draft=false`, the only thing that makes the release visible |
+| `derive-version` | `ubuntu-latest` | refuses any ref other than `refs/heads/main`. `publish_release` reads `product-version.json` and refuses when `v<version>` already exists; an artifact run bumps by `version_type`. Then `scripts/ci/verify-release-npm.mjs` records `@camstack/server@latest` — see *The product release is not the npm version*, above |
+| `create-release` | `ubuntu-latest` | publish only: creates tag `v<version>` on `github.sha` and the GitHub Release **as a draft**, notes from `git log <previous v-tag>..HEAD` |
+| `build-docker` | `[self-hosted, linux, x64, docker, ci-release]` | buildx pushes `ghcr.io/camstack/camstack:intel-<version>` **and** `:intel-latest` (and the `amd-` pair) to GHCR with `GITHUB_TOKEN`; linux/amd64 unless `multi_arch` |
+| `build-electron` | `[self-hosted, linux, x64, ci-release]`, `[self-hosted, macos, arm64]` | FIVE legs, in PARALLEL: the full desktop product (mac arm64, mac x64, linux x64) **and** the viewer shell (`CamStackViewer-*`, mac arm64 + linux x64, `electron-builder.viewer.json`, no staged closure). One release, one version (D429). A publish uploads each leg to the draft; an artifact run leaves the files on the runner |
+| `publish-release` | `ubuntu-latest` | `gh release edit --draft=false`, the only thing that makes the release visible. A failed Docker or Electron leg leaves the draft |
 
 The legs are not serialised
 ([D429](../decisions/adr-0429-one-release-both-products-and-the-legs-run-in-parallel.md)).
-They run on separate hosted images, so they do not share a disk or a keychain.
+The two mac legs match the same `[self-hosted, macos, arm64]` labels and land
+on the two home Mac runners, one user each, so they do not share a keychain.
 Signing still builds a temporary keychain from `CSC_LINK`, and the "Restore
 the user's keychains (macOS)" step (`if: always()`) puts `login` back before
-the job ends. `max-parallel: 1` was tried when one tag attached ~2.2 GB at
+the job ends. `max-parallel: 1` was tried when one release attached ~2.2 GB at
 once and is gone: it cost wall clock and moved no bytes.
 
 The Electron viewer shell is built in this same release, at the **product**
@@ -1325,47 +1353,26 @@ records why the zip is safe only after the channels are separate.
 `scripts/check-desktop-update-feeds.ts` fails the build on any of it.
 
 **Windows.** The `windows` column above is declared but not built. Enabling
-the leg is a `windows-latest` matrix row; the app side is ready and described
-in [windows-agent.md](windows-agent.md). A service-mode agent loads the closure
-from `Program Files` and an `electron-updater` replacement of those files while
-it runs is not handled yet.
+the leg is a matrix row with labels `self-hosted, windows, x64`; the app side
+is ready and described in [windows-agent.md](windows-agent.md). A service-mode
+agent loads the closure from `Program Files` and an `electron-updater`
+replacement of those files while it runs is not handled yet.
 
-The legs upload from GitHub-hosted runners. The ~2.2 GB is still attached to
-one release; if that upload fails, stop attaching the full desktop installers.
-They reach nodes through Docker and npm and are never downloaded by hand.
+A publish uploads the installers from the home runners onto the GitHub Release.
+The ~2.2 GB is still attached to one release; if that upload fails, stop
+attaching the full desktop installers. They reach nodes through Docker and npm
+and are never downloaded by hand. An artifact-only dispatch does not upload
+them: the runner keeps the files under its work directory. There is no
+`actions/upload-artifact` step.
 
-`workflow_dispatch` is **not** a substitute for a tag: `create-release` and
-`publish-release` are tag-push-only, the version is the product line
-(`product-version.json`, bumped by `version_type`), and the run produces no
-release at all. `dry_run=true` stops after derive: it prints the product
-version and the `@camstack/server` `latest` would bake, and builds nothing.
+### A release is not started by a tag
 
-```bash
-gh workflow run "Release — CamStack (Docker + Electron)" --ref main \
-  -f dry_run=true -f version_type=patch
-```
-
-**A dispatch uploads artifacts.** The hosted disk does not outlive the job, so
-`workflow_dispatch` uploads each leg with `actions/upload-artifact` (kept 7
-days). A tag push is what puts installers on the GitHub Release.
-
-### A `[skip ci]` commit swallows the tag — including when you wrote the marker
-
-The publish workflow's own bump commit carries the suppression marker. GitHub
-evaluates it against the **tag's target commit message**, so a `vX.Y.Z` tag
-pushed onto that commit produces **no run at all**: the tag pushes cleanly and
-the only symptom is silence in the Actions list.
-
-So every train needs a follow-up commit for the tag to sit on. `v1.2.106`
-through `v1.2.109` each got one — a one-line note in
-history/sessions.md (planning repo: sessions/sessions.md) saying what the train contained,
-tagged after the bump landed.
-
-The marker is matched **anywhere in the message, prose and quotation included**.
-On 2026-08-14 the anchor commit written to escape the trap reproduced the marker
-in its own subject line and was skipped by it; the re-anchor with a clean
-subject started a run five seconds after the push. Describe the marker, never
-retype it.
+`create-release` creates `v<version>` on the dispatched commit (`github.sha`)
+after `derive-version` has refused an existing tag. Pushing the tag yourself
+does not start this workflow, and a `[skip ci]` line in the commit message
+does not suppress it. The publish workflow still marks its own bump commit
+that way so push CI does not rebuild it; that marker is unrelated to a product
+release.
 
 ### A failed matrix leg leaves the release invisible and the image published
 

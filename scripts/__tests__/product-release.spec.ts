@@ -18,11 +18,15 @@ describe('deriveProductVersion', () => {
       refName: 'v0.1.0',
       eventName: 'push',
       versionType: '',
+      publishRelease: false,
+      tagExists: false,
       ...aligned,
     })
     expect(result.problems).toEqual([])
     expect(result.version).toBe('0.1.0')
     expect(result.releaseName).toBe('CamStack 0.1.0 beta')
+    expect(result.isRelease).toBe(true)
+    expect(result.tag).toBe('v0.1.0')
   })
 
   it('labels beta only while the major is 0', () => {
@@ -37,11 +41,48 @@ describe('deriveProductVersion', () => {
       refName: 'main',
       eventName: 'workflow_dispatch',
       versionType: 'patch',
+      publishRelease: false,
+      tagExists: false,
       ...aligned,
     })
     expect(result.problems).toEqual([])
     expect(result.version).toBe('0.1.1')
     expect(result.releaseName).toBe('CamStack 0.1.1 beta')
+    expect(result.isRelease).toBe(false)
+    expect(result.tag).toBe('')
+  })
+
+  it('publish_release uses product-version.json and does not bump', () => {
+    const result = deriveProductVersion({
+      ref: 'refs/heads/main',
+      refName: 'main',
+      eventName: 'workflow_dispatch',
+      versionType: 'minor',
+      publishRelease: true,
+      tagExists: false,
+      ...aligned,
+    })
+    expect(result.problems).toEqual([])
+    expect(result.version).toBe('0.1.0')
+    expect(result.releaseName).toBe('CamStack 0.1.0 beta')
+    expect(result.isRelease).toBe(true)
+    expect(result.tag).toBe('v0.1.0')
+  })
+
+  it('FAILS a publish_release when tag v<version> already exists', () => {
+    const result = deriveProductVersion({
+      ref: 'refs/heads/main',
+      refName: 'main',
+      eventName: 'workflow_dispatch',
+      versionType: 'patch',
+      publishRelease: true,
+      tagExists: true,
+      ...aligned,
+    })
+    expect(result.problems.join('\n')).toContain('v0.1.0')
+    expect(result.problems.join('\n')).toContain('already exists')
+    expect(result.isRelease).toBe(false)
+    expect(result.tag).toBe('')
   })
 
   it('FAILS when the tag and product-version.json disagree', () => {
@@ -50,6 +91,8 @@ describe('deriveProductVersion', () => {
       refName: 'v0.1.1',
       eventName: 'push',
       versionType: '',
+      publishRelease: false,
+      tagExists: false,
       ...aligned,
     })
     expect(result.problems.join('\n')).toContain('0.1.1')
@@ -62,6 +105,8 @@ describe('deriveProductVersion', () => {
       refName: 'main',
       eventName: 'workflow_dispatch',
       versionType: 'patch',
+      publishRelease: false,
+      tagExists: false,
       fileVersion: '0.1.0',
       desktopVersion: '0.0.0',
     })

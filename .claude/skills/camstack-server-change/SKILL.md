@@ -182,12 +182,14 @@ it with §4, not with a version number.
   has taken a self-hosted runner node down. Run the guards you touched locally.
 - **One CI run at a time, and wait for it.** The self-hosted runners share
   hardware with a live system; do not stack dispatches to "speed up".
-- **The release tag never sits on a `[skip ci]` commit** — the publish
-  workflow's version-bump commit is one. Tag an empty `chore: release vX.Y.Z`
-  commit (`camstack-publish-ci` §2).
-- **Tag only after npm has the version.** The release's `derive-version` job
-  verifies the version exists on npm AND that `latest` equals it; a tag pushed
-  before the publish landed fails there.
+- **A product release is a dispatch from `main`.** After npm has the closure,
+  commit the product version (`product-version.json` and
+  `packages/desktop/package.json`) and run
+  `gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true`.
+  The workflow creates `v<version>` on that commit. It refuses a ref other
+  than `refs/heads/main` and a tag that already exists. `derive-version`
+  resolves `@camstack/server` dist-tag `latest` (`camstack-publish-ci` §2).
+  Dispatch only after that publish has landed.
 - CI on push only builds and tests (D704). Watch your run with
   `gh run list --limit 3` / `gh run watch <id>` and fix forward.
 

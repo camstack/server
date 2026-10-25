@@ -66,6 +66,15 @@ semver. `v0.1.0` sorts below every `v1.2.*` tag.
 ## Enforcement
 
 `scripts/__tests__/product-release.spec.ts` and
-`scripts/__tests__/verify-release-npm.spec.ts`. The derive job fails when the
-tag, `product-version.json` and `packages/desktop/package.json` disagree, and
-when `latest` cannot be resolved. Nothing checks the GitHub Actions YAML.
+`scripts/__tests__/verify-release-npm.spec.ts`. The derive job fails when
+`product-version.json` and `packages/desktop/package.json` disagree, when a
+`publish_release` finds tag `v<version>` already present, and when `latest`
+cannot be resolved. Nothing checks the GitHub Actions YAML.
+
+## Amendment (2026-10-25) — the workflow creates the tag
+
+A product release is `workflow_dispatch` from `main` with `publish_release=true`.
+`derive-version` reads `product-version.json` and refuses when `v<version>`
+already exists. `create-release` creates that tag on the dispatched commit
+(`github.sha`). An artifact-only dispatch still bumps by `version_type` and
+creates no tag and no GitHub release.

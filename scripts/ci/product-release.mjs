@@ -7,8 +7,10 @@
  *
  * Usage (CI): node scripts/ci/product-release.mjs
  *   reads product-version.json + packages/desktop/package.json
- *   writes version= and release_name= to $GITHUB_OUTPUT
+ *   writes version=, release_name=, is_release= and tag= to $GITHUB_OUTPUT
+ *   PUBLISH_RELEASE=true uses the committed version and refuses an existing tag
  */
+import { spawnSync } from 'node:child_process'
 import { appendFileSync, readFileSync } from 'node:fs'
 
 const PRODUCT_FILE = 'product-version.json'
@@ -73,6 +75,65 @@ export function bumpSemver(version, kind) {
 }
 
 /**
+ * @param {string} version
+ * @param {string[]} problems
+ * @returns {{ version: string, releaseName: string, problems: string[], isRelease: boolean, tag: string }}
+ */
+function blocked(version, problems) {
+  return { version, releaseName: '', problems, isRelease: false, tag: '' }
+}
+
+/**
+ * A publish_release names the committed product version. An existing
+ * `v<version>` tag means that release already happened.
+ *
+ * @param {string} fileVersion
+ * @param {boolean} tagExists
+ * @param {string[]} problems
+ * @returns {{ version: string, releaseName: string, problems: string[], isRelease: boolean, tag: string }}
+ */
+function releaseFromFile(fileVersion, tagExists, problems) {
+  if (tagExists) {
+    return blocked(fileVersion, [
+      ...problems,
+      `tag v${fileVersion} already exists. Bump product-version.json and ` +
+        'packages/desktop/package.json, then dispatch the release again.',
+    ])
+  }
+  return {
+    version: fileVersion,
+    releaseName: productReleaseName(fileVersion),
+    problems,
+    isRelease: true,
+    tag: `v${fileVersion}`,
+  }
+}
+
+/**
+ * @param {{ refName: string, fileVersion: string }} input
+ * @param {string[]} problems
+ * @returns {{ version: string, releaseName: string, problems: string[], isRelease: boolean, tag: string }}
+ */
+function releaseFromTag(input, problems) {
+  const tagged = input.refName.startsWith('v') ? input.refName.slice(1) : input.refName
+  if (tagged !== input.fileVersion) {
+    return blocked(tagged, [
+      ...problems,
+      `tag v${tagged} does not match product-version.json ${input.fileVersion}. ` +
+        'Bump product-version.json and packages/desktop/package.json together, then dispatch from main.',
+    ])
+  }
+  const tag = input.refName.startsWith('v') ? input.refName : `v${tagged}`
+  return {
+    version: tagged,
+    releaseName: productReleaseName(tagged),
+    problems,
+    isRelease: true,
+    tag,
+  }
+}
+
+/**
  * @param {{
  *   ref: string,
  *   refName: string,
@@ -80,8 +141,10 @@ export function bumpSemver(version, kind) {
  *   versionType: string,
  *   fileVersion: string,
  *   desktopVersion: string,
+ *   publishRelease: boolean,
+ *   tagExists: boolean,
  * }} input
- * @returns {{ version: string, releaseName: string, problems: string[] }}
+ * @returns {{ version: string, releaseName: string, problems: string[], isRelease: boolean, tag: string }}
  */
 export function deriveProductVersion(input) {
   const problems = []
@@ -94,22 +157,11 @@ export function deriveProductVersion(input) {
   if (!SEMVER.test(input.fileVersion)) {
     problems.push(`product-version.json version "${input.fileVersion}" is not X.Y.Z`)
   }
-  if (problems.length > 0) {
-    return { version: input.fileVersion, releaseName: '', problems }
-  }
+  if (problems.length > 0) return blocked(input.fileVersion, problems)
 
-  const onTag = input.ref.startsWith('refs/tags/v')
-  if (onTag) {
-    const tagged = input.refName.startsWith('v') ? input.refName.slice(1) : input.refName
-    if (tagged !== input.fileVersion) {
-      problems.push(
-        `tag v${tagged} does not match product-version.json ${input.fileVersion}. ` +
-          'Bump product-version.json and packages/desktop/package.json to the tag, then tag that commit.',
-      )
-      return { version: tagged, releaseName: '', problems }
-    }
-    return { version: tagged, releaseName: productReleaseName(tagged), problems }
-  }
+  if (input.ref.startsWith('refs/tags/v')) return releaseFromTag(input, problems)
+
+  if (input.publishRelease) return releaseFromFile(input.fileVersion, input.tagExists, problems)
 
   if (input.eventName === 'workflow_dispatch') {
     let bumped
@@ -118,15 +170,23 @@ export function deriveProductVersion(input) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       problems.push(message)
-      return { version: input.fileVersion, releaseName: '', problems }
+      return blocked(input.fileVersion, problems)
     }
-    return { version: bumped, releaseName: productReleaseName(bumped), problems }
+    return {
+      version: bumped,
+      releaseName: productReleaseName(bumped),
+      problems,
+      isRelease: false,
+      tag: '',
+    }
   }
 
   return {
     version: input.fileVersion,
     releaseName: productReleaseName(input.fileVersion),
     problems,
+    isRelease: false,
+    tag: '',
   }
 }
 
@@ -139,23 +199,48 @@ function readVersion(file) {
   return parsed.version
 }
 
+/**
+ * @param {string} version
+ * @returns {boolean}
+ */
+function productTagExists(version) {
+  const result = spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/tags/v${version}`], {
+    encoding: 'utf8',
+  })
+  if (result.error) throw new Error(`could not check tag v${version}: ${result.error.message}`)
+  if (result.status === 0) return true
+  if (result.status === 1) return false
+  const detail = (result.stderr ?? '').trim()
+  throw new Error(`could not check tag v${version}: ${detail || `git exit ${result.status}`}`)
+}
+
 function main() {
+  const publishRelease = process.env.PUBLISH_RELEASE === 'true'
+  const fileVersion = readVersion(PRODUCT_FILE)
+  let tagExists = false
+  if (publishRelease) tagExists = productTagExists(fileVersion)
   const result = deriveProductVersion({
     ref: process.env.GITHUB_REF ?? '',
     refName: process.env.GITHUB_REF_NAME ?? '',
     eventName: process.env.GITHUB_EVENT_NAME ?? '',
     versionType: process.env.VERSION_TYPE ?? '',
-    fileVersion: readVersion(PRODUCT_FILE),
+    fileVersion,
     desktopVersion: readVersion(DESKTOP_FILE),
+    publishRelease,
+    tagExists,
   })
   if (result.problems.length > 0) {
     for (const problem of result.problems) console.error(`::error::${problem}`)
     process.exit(1)
   }
-  const lines = `version=${result.version}\nrelease_name=${result.releaseName}\n`
+  const lines =
+    `version=${result.version}\n` +
+    `release_name=${result.releaseName}\n` +
+    `is_release=${result.isRelease ? 'true' : 'false'}\n` +
+    `tag=${result.tag}\n`
   const output = process.env.GITHUB_OUTPUT
   if (output !== undefined && output.length > 0) appendFileSync(output, lines)
-  console.log(`product ${result.version} — ${result.releaseName}`)
+  console.log(`product ${result.version} — ${result.releaseName} release=${result.isRelease}`)
 }
 
 const invokedDirectly =

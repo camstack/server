@@ -7,6 +7,7 @@ supersedes:
 applies-to:
   - .github/workflows/ci.yml
   - .github/workflows/checks.yml
+  - .github/workflows/release.yml
   - .husky/pre-commit
   - scripts/docs-generate.ts
 ---
@@ -53,10 +54,9 @@ Nothing automatic: a step added back to `ci.yml` is caught in review only.
 
 ## Amendment (2026-10-25) — GitHub-hosted runners
 
-Public CI does not run on the home self-hosted pool. `ci.yml` and `checks.yml`
-run on `ubuntu-latest` (4 vCPU, 16 GB). Publish and the Linux release legs do
-too. Electron uses `macos-latest` (arm64) and `macos-13` (x64). Docker buildx
-pushes to GHCR from `ubuntu-latest` with `packages: write`.
+Public CI does not run on the home self-hosted pool. `ci.yml`, `checks.yml`,
+`publish-packages.yml` and `unpublish-retired.yml` run on `ubuntu-latest`
+(4 vCPU, 16 GB). Releases are the exception recorded below.
 
 The Checks job keeps an 8 GB heap
 (`NODE_OPTIONS=--max-old-space-size=8192`). The automatic typecheck step uses
@@ -72,3 +72,20 @@ pinned ffmpeg is cached the same way, under `.camstack-ffmpeg`, keyed on
 
 `runner-watchdog.yml` watched the home queue and is not in this repository.
 A pull request job receives the default token only.
+
+## Amendment (2026-10-25) — releases stay on the home runners
+
+Docker and Electron in `release.yml` run on the home runners
+(`[self-hosted, linux, x64, ci-release]` and `docker` for the image;
+`[self-hosted, macos, arm64]` for the desktop app). Those runners sit in the
+org runner group `release`, which allows only
+`camstack/server/.github/workflows/release.yml` on `refs/heads/main`. GitHub's
+group restriction cannot name a `refs/tags/v*` pattern, so a tag push cannot
+reach them. The workflow is `workflow_dispatch` only, and its first job refuses
+any other ref. A public repo's fork pull request must never schedule a job on
+those machines: there is no pull-request trigger, and the group would refuse
+one anyway. The light jobs (`derive-version`, `create-release`,
+`publish-release`, `summary`) run on `ubuntu-latest` and hold no secret beyond
+`GITHUB_TOKEN`. `publish_release=true` reads `product-version.json`, refuses
+an existing `v<version>` tag, and `create-release` creates that tag on the
+dispatched commit.
