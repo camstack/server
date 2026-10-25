@@ -1,0 +1,2 @@
+table.RecordMode[0].Mode=0
+table.RecordMode[0].ModeExtra1=0

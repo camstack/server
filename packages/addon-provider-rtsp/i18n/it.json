@@ -1,0 +1,22 @@
+{
+  "creation.s_identity.title": "Telecamera",
+  "creation.s_identity.name.label": "Nome",
+  "creation.s_streams.title": "Flussi RTSP",
+  "creation.s_streams.description": "1–3 URL RTSP; il broker assegna i profili high / mid / low in base alla risoluzione.",
+  "creation.s_streams.streams.label": "URL del flusso RTSP",
+  "creation.s_snapshot.title": "Snapshot",
+  "creation.s_snapshot.snapshotUrl.label": "URL dello snapshot",
+  "creation.s_credentials.title": "Credenziali",
+  "creation.s_credentials.description": "Facoltativo. Se l'URL RTSP contiene già utente:password@ puoi lasciare questi campi vuoti.",
+  "creation.s_credentials.username.label": "Nome utente",
+  "creation.s_credentials.password.label": "Password",
+  "schema.s_streams.title": "Flussi RTSP",
+  "schema.s_streams.description": "1–3 URL RTSP; il broker assegna i profili high / mid / low in base alla risoluzione.",
+  "schema.s_streams.streams.label": "URL del flusso RTSP",
+  "schema.s_snapshot.title": "Snapshot",
+  "schema.s_snapshot.snapshotUrl.label": "URL dello snapshot",
+  "schema.s_credentials.title": "Credenziali",
+  "schema.s_credentials.description": "Facoltativo. Se l'URL RTSP contiene già utente:password@ puoi lasciare questi campi vuoti.",
+  "schema.s_credentials.username.label": "Nome utente",
+  "schema.s_credentials.password.label": "Password"
+}

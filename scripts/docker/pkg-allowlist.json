@@ -1,0 +1,6 @@
+{
+  "_comment": "D326: packages the privileged helper will apt/apk/dnf install. Expanding this list is an image rebuild; installing a listed package is not.",
+  "apt": ["smbclient"],
+  "apk": ["samba-client"],
+  "dnf": ["samba-client"]
+}

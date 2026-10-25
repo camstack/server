@@ -1,0 +1,16 @@
+// Guard: ban ctx.capabilities / this.ctx.capabilities in addons.
+// ctx.capabilities is the LOCAL CapabilityRegistry of the addon's own group
+// runner — it never sees providers in other processes. Cross-addon access must
+// go through ctx.api (the SDK routes locally when co-located, via Moleculer when
+// remote). Ported from the old eslint no-restricted-syntax selectors
+//   MemberExpression[object.name="ctx"][property.name="capabilities"]
+//   MemberExpression[object: this.ctx][property.name="capabilities"]
+// Scope (biome.json overrides): packages/addon-*/src ONLY (NOT core — core boot
+// plumbing legitimately uses the local registry), excluding test files.
+`$obj.capabilities` where {
+  $obj <: or {
+    `ctx`,
+    `this.ctx`
+  },
+  register_diagnostic(span=$obj, message="Do NOT use ctx.capabilities — it is the LOCAL registry of this addon's group runner and never sees providers in other processes. Use ctx.api (the SDK routes locally when co-located, via Moleculer when remote). For existence checks: ctx.api.addons.listCapabilityProviders.query({ capName }).")
+}

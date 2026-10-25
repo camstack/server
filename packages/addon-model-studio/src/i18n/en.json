@@ -1,0 +1,436 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "loading": "Loading…",
+    "refresh": "Refresh",
+    "delete": "Delete",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "activate": "Activate",
+    "register": "Register",
+    "import": "Import",
+    "importing": "Importing…",
+    "node": "Node",
+    "state": "State",
+    "model": "Model",
+    "modelId": "Model id",
+    "format": "Format",
+    "step": "Step",
+    "source": "Source",
+    "landOn": "Land on",
+    "mbSep": "MB ·",
+    "close": "Close"
+  },
+  "page": {
+    "title": "Model Studio",
+    "sections": "Model Studio sections",
+    "tabs": {
+      "catalog": "Catalog",
+      "installed": "Installed",
+      "import": "Import",
+      "logs": "Logs"
+    }
+  },
+  "displayName": {
+    "label": "Display name (optional)",
+    "control": "The name contains control characters.",
+    "tooLong": "The name is {{length}} characters long; the limit is {{max}}."
+  },
+  "stepSelect": {
+    "loadFailed": "Failed to load pipeline steps",
+    "loading": "Loading steps…",
+    "none": "No pipeline steps available"
+  },
+  "tfliteGate": {
+    "checking": "Checking Coral availability…",
+    "unsupported": "TFLite not supported here: no Coral (tflite) node in the cluster — the pool's only tflite runtime binds the EdgeTPU delegate, so a TFLite build has nowhere to load.",
+    "available": "Coral (tflite) node available: {{nodes}} — TFLite builds run there only."
+  },
+  "sources": {
+    "intro": "Import from plus catalog or plugin catalog. Artifacts land on the hub — use Library → Distribute for agents that need a <mono>camstack-local://</mono> copy.",
+    "pluginCatalogImported": "plugin catalog model imported on hub. Distribute from Library to agents."
+  },
+  "importTab": {
+    "registered": "Registered."
+  },
+  "inlineRename": {
+    "rename": "Rename",
+    "renameName": "Rename {{name}}",
+    "failed": "Rename failed",
+    "displayName": "Display name",
+    "placeholder": "Empty restores the imported name",
+    "saveName": "Save name",
+    "cancel": "Cancel rename",
+    "reset": "Empty: the model goes back to the name it was imported with.",
+    "idSame": "id <mono>{{modelId}}</mono> stays the same."
+  },
+  "formatRow": {
+    "imported": "imported",
+    "blocked": "blocked",
+    "onCluster": "On cluster",
+    "presenceTitle": "{{format}} on {{nodeId}}",
+    "distributing": "Distributing…",
+    "distributeAll": "Distribute to all agents"
+  },
+  "fillBadges": {
+    "mask": "Emits an instance mask with every detection: the Segmentation step can take its masks from this model instead of running its own.",
+    "cropFace": "Draws face boxes inside people: face detection can refine them for recognition (from a 640 px or larger model input), once \"Use the root model\" is checked on that step.",
+    "cropPlate": "Draws plate boxes inside vehicles: plate detection can use them, and the plate reader reads them, once \"Use the root model\" is checked on that step.",
+    "labelsDefaultUncovered": "{{stepId}} takes this model's labels by default — its own model does not run; this model cannot produce {{uncovered}}.",
+    "labelsDefaultAll": "{{stepId}} takes this model's labels by default — its own model does not run, for every class.",
+    "labelsOptionalUncovered": "{{stepId}} can take this model's labels; this model cannot produce {{uncovered}}.",
+    "labelsOptionalAll": "{{stepId}} can take this model's labels, for every class."
+  },
+  "importProgress": {
+    "skipped": " (skipped)",
+    "processLog": "Process log",
+    "waiting": "Waiting for convert process…",
+    "noLines": "No log lines."
+  },
+  "settingsModal": {
+    "title": "Settings · {{name}}",
+    "saveFailed": "Save settings failed",
+    "accelerator": "Accelerator:",
+    "loadingSchema": "Loading step schema…",
+    "save": "Save settings"
+  },
+  "operation": {
+    "failed": "Operation failed"
+  },
+  "sourceBrowser": {
+    "empty": "No models match the current filters."
+  },
+  "providers": {
+    "custom": "Custom"
+  },
+  "installedFilters": {
+    "provider": "Provider",
+    "all": "All",
+    "modelType": "Model type",
+    "allSteps": "All steps",
+    "device": "Device",
+    "allDevices": "All devices",
+    "deviceOff": "{{label}} · {{value}} (off)"
+  },
+  "usage": {
+    "inUse": {
+      "label": "in use",
+      "title": "Loaded in at least one device's inference pool right now."
+    },
+    "configured": {
+      "label": "configured",
+      "title": "An enabled device is configured to run it, but its pool has not loaded it."
+    },
+    "idle": {
+      "label": "idle",
+      "title": "An enabled device could run this format; nothing uses this model."
+    },
+    "unused": {
+      "label": "unused",
+      "title": "No enabled device on this node runs this format — the space is reclaimable."
+    },
+    "outsidePools": {
+      "label": "audio analyzer",
+      "title": "Run by the audio analyzer process, not by an inference-device pool."
+    },
+    "unknown": {
+      "label": "load unknown",
+      "title": "The loaded-engine read failed: whether a pool holds it cannot be told."
+    },
+    "stale": {
+      "label": "stale",
+      "title": "On disk, but not proven to be the current catalog build: it is replaced the next time the model is needed."
+    },
+    "precisionTitle": "Numeric precision of this build"
+  },
+  "deviceChips": {
+    "none": "no device of this format",
+    "state": {
+      "off": "off",
+      "loadedConfigured": "loaded, configured",
+      "loaded": "loaded",
+      "configuredNotLoaded": "configured, not loaded",
+      "unknown": "load state unknown",
+      "notUsed": "not used"
+    },
+    "chipLabel": "{{label}} ({{deviceKey}}): {{state}}",
+    "title": "{{deviceKey}} — {{state}}",
+    "titleOpenSettings": "{{deviceKey}} — {{state}}. Open its step settings.",
+    "titlePin": "{{deviceKey}} — {{state}}. Pin as this device's base model."
+  },
+  "filesTable": {
+    "clusterModel": " · cluster model",
+    "removeAria": "Remove {{modelId}} {{format}}",
+    "removeTitle": "Delete the {{format}} file of {{modelId}} from this node",
+    "remove": "Remove",
+    "actionFailed": "Action failed",
+    "cols": {
+      "model": "Model",
+      "format": "Format",
+      "size": "Size",
+      "devices": "Devices",
+      "status": "Status"
+    },
+    "devicesNotSortable": "A list of devices has no order that means something."
+  },
+  "cluster": {
+    "noDevice": "no enabled device",
+    "refusedTitle": "The node refuses the step",
+    "refused": "no build for {{format}} → refused",
+    "loaded": "loaded",
+    "loadUnknown": "load unknown",
+    "notLoaded": "not loaded",
+    "fileStale": "file stale",
+    "cols": {
+      "node": "Node",
+      "runtime": "Runtime",
+      "devices": "Devices",
+      "state": "State"
+    },
+    "selectAria": "{{step}}: cluster model",
+    "change": "Change",
+    "oneModel": "One model for the whole cluster: every node writes into {{index}}.",
+    "reading": "Reading every node…",
+    "noOnlineNode": "No online node.",
+    "confirmTitle": "Activate cluster-wide?",
+    "confirmMessage": "Set \"{{label}}\" as the ONE cluster model for {{stepId}}. Shared vector index — every node uses this encoder.",
+    "activateFailed": "Activate failed",
+    "title": "Cluster models"
+  },
+  "installed": {
+    "loadFailed": "Failed to load installed models",
+    "deleteFile": {
+      "title": "Delete model file?",
+      "message": "Permanently delete the {{format}} file of \"{{name}}\" ({{modelId}}, {{size}}) from {{nodeId}}. Its other formats stay. This cannot be undone.",
+      "confirm": "Delete file"
+    },
+    "deleteUnused": {
+      "title": "Delete unused model files?",
+      "message_one": "Permanently delete {{count}} unused file ({{size}}) from {{nodeId}}. No enabled device on this node runs these formats. Other formats of each model stay. This cannot be undone.",
+      "message_other": "Permanently delete {{count}} unused files ({{size}}) from {{nodeId}}. No enabled device on this node runs these formats. Other formats of each model stay. This cannot be undone.",
+      "confirm": "Delete unused files"
+    },
+    "activate": {
+      "title": "Activate model?",
+      "message": "Pin \"{{name}}\" as the BASE model on {{label}} ({{deviceKey}}, {{nodeId}}). Every camera landing on that accelerator will use it."
+    },
+    "loading": "Loading installed models…",
+    "summary": {
+      "files_one": "{{count}} file on {{nodeId}}",
+      "files_other": "{{count}} files on {{nodeId}}",
+      "ofTotal": "(of {{total}})",
+      "onDisk": "{{size}} on disk",
+      "reclaimable": "{{size}} reclaimable",
+      "loadedUnavailable": "loaded state unavailable"
+    },
+    "removeUnused": "Remove unused ({{count}})",
+    "emptyNode": "No model files on {{nodeId}}.",
+    "emptyFiltered": "No files match these filters."
+  },
+  "catalog": {
+    "onNode": "on {{nodeId}}",
+    "downloading": "Downloading…",
+    "download": "Download",
+    "loadFailed": "Failed to load catalog",
+    "downloadFailed": "Download failed",
+    "opTitle": "Download {{modelId}} · {{format}}",
+    "opStep": "Download {{format}} to {{nodeId}}",
+    "opInitialLog": "Downloading {{modelId}} ({{format}}) → {{nodeId}}…",
+    "opDone": "Downloaded {{format}} to {{nodeId}}",
+    "loading": "Loading catalog…",
+    "noModels": "No models",
+    "noCamstackModels": "No CamStack models for this step.",
+    "sourceAria": "Catalog source"
+  },
+  "inventory": {
+    "loadFailed": "Failed to load models",
+    "removeFailed": "Failed to remove model",
+    "step": "step: {{stepId}}",
+    "cols": {
+      "model": "Model",
+      "formats": "Formats",
+      "size": "Size"
+    },
+    "formatsNotSortable": "A set of format labels has no single order.",
+    "removeAria": "Remove {{name}}",
+    "removeTitle": "Remove from registry, delete files on every node, clear pipeline pins",
+    "remove": "Remove",
+    "loading": "Loading models…",
+    "errorTitle": "Could not load inventory",
+    "summary_one": "{{count}} model on <mono>{{nodeId}}</mono>. Import lands files on the chosen node.",
+    "summary_other": "{{count}} models on <mono>{{nodeId}}</mono>. Import lands files on the chosen node.",
+    "empty": "No {{provider}} models on {{nodeId}}. Use Import to land one here."
+  },
+  "importOp": {
+    "title": "Import {{modelId}} · {{format}}",
+    "step": "Import {{format}}",
+    "landStep": "Land on {{nodeId}}",
+    "start": "Starting {{format}} import for {{modelId}}…",
+    "landed": "Imported and landed on {{nodeId}}",
+    "intoRegistry": "Imported {{format}} into the registry",
+    "failed": "Import failed"
+  },
+  "pluginCatalog": {
+    "loadFailed": "Failed to load plugin catalog catalog",
+    "onnxFirst": "ONNX not present — importing first…",
+    "converting": "Converting ONNX → {{format}}…",
+    "converted": "Converted to {{format}}",
+    "loading": "Loading plugin catalog catalog…",
+    "intro": "Local plugin catalog YOLO catalog. Import lands on the selected node.",
+    "tfliteCoral": "TFLite → Coral",
+    "noCoral": "No Coral node — TFLite registers only.",
+    "landOn": "Land on <mono>{{nodeId}}</mono>",
+    "variant": "Variant",
+    "variants": {
+      "standard": "Standard",
+      "test": "Test"
+    },
+    "emptyVariant": "No plugin catalog artifacts for this variant."
+  },
+  "plusCatalog": {
+    "plus": "plus catalog",
+    "keyIntro": "Required to list your account models. <docs>docs</docs>. Stored server-side only.",
+    "keyConfigured": "API key: configured",
+    "replaceKey": "Replace key",
+    "testConnection": "Test connection",
+    "connectionOk": "Connection OK",
+    "connectionFailed": "Connection failed",
+    "keyShapeWrong": "Key shape looks wrong (expected uuid:40-hex). Test or replace it.",
+    "keyLabel": "plus catalog API key",
+    "saveKey": "Save key",
+    "keyFormatInvalid": "The key does not match the documented \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:40-hex\" format shown in your plus catalog account.",
+    "keySaveFailed": "Failed to save the API key",
+    "listFailed": "Failed to list plus catalog models",
+    "checking": "Checking plus catalog configuration…",
+    "publicDefault": "Public default (no key required):",
+    "refreshList": "Refresh list",
+    "loadingModels": "Loading your plus catalog models…",
+    "landOnNode": "Land on <mono>{{nodeId}}</mono>",
+    "opTitle": "Import {{label}}",
+    "opLog": "Importing {{modelId}}…",
+    "opStepDownload": "Download + register",
+    "registeredLanded": "Registered \"{{modelId}}\" and landed on {{nodeId}} ({{size}} MB).",
+    "registered": "Registered \"{{modelId}}\" ({{size}} MB).",
+    "catalogImportFailed": "Catalog import failed",
+    "importLand": "Import + land on {{nodeId}}",
+    "prefillCustom": "Prefill Custom"
+  },
+  "plus": {
+    "empty": "No models this cluster can run are visible to this account yet — train one on plus catalog.",
+    "modelGroup": "Model group",
+    "release": "plus catalog release",
+    "emptyRelease": "No plus catalog models in this release that the cluster can run.",
+    "checkingCoral": "checking Coral…",
+    "needsCoral": "needs a Coral",
+    "training": "Training",
+    "verifiedSuffix": " · {{count}} verified images",
+    "summary": "<name>{{name}}</name> · release <mono>{{release}}</mono> · decode <mono>{{decode}}</mono> · input {{input}}",
+    "onnxNote": "ONNX downloads; OpenVINO / CoreML convert from it.",
+    "tfliteNote": "TFLite is the EdgeTPU build — it runs on a Coral.",
+    "kind": {
+      "custom": "My trainings",
+      "base": "Official base"
+    }
+  },
+  "register": {
+    "sources": {
+      "upload": "Upload file",
+      "url": "Remote URL"
+    },
+    "uploadFailed": "Upload failed",
+    "enterUrl": "Enter a URL to probe",
+    "uploadFirst": "Upload the model file first",
+    "urlRequired": "Model URL is required",
+    "nameInvalid": "The display name is not acceptable",
+    "opTitle": "Register {{name}} · {{format}}",
+    "opStepRegister": "Register custom model",
+    "opStepLand": "Land on selected node",
+    "opInitialLog": "Registering \"{{name}}\"…",
+    "opDone": "Registered for step {{stepId}}.{{summary}}",
+    "registered": "Registered \"{{name}}\".",
+    "failed": "Failed to register model",
+    "prefilled": "Format, decode, input size and labelmap prefilled from the plus catalog catalog: <b>{{source}}</b>. Upload your exported file below.",
+    "modelFile": "Model file ({{extensions}})",
+    "uploading": "Uploading… {{pct}}%",
+    "chooseFile": "Choose file",
+    "urlLabel": "Model URL / HuggingFace path",
+    "urlPlaceholder": "https://… or hf://org/repo/model.onnx",
+    "sizeMb": "Size (MB)",
+    "probeUrl": "Probe URL",
+    "defaultName": "My Detector",
+    "inputWidth": "Input width",
+    "inputHeight": "Input height",
+    "decode": "Decode (postprocessor)",
+    "stepDefault": "Step default",
+    "decodeWarning": "Must match the model's raw output layout — a wrong decode produces zero detections with no error anywhere.",
+    "labelmap": "Labelmap ({{count}} labels — order = model output index)",
+    "registering": "Registering…",
+    "registerModel": "Register model"
+  },
+  "convert": {
+    "recommendFailed": "Failed to load node recommendations",
+    "sourceRequired": "Source ONNX URL is required",
+    "idRequired": "Model id is required",
+    "idInvalid": "Model id may only contain letters, digits, dot, underscore, hyphen",
+    "targetRequired": "Select at least one target format",
+    "failed": "Conversion failed",
+    "intro": "Convert a source ONNX model to OpenVINO and/or CoreML on a capable node. The result is registered into the model registry and recorded as available on the converting node.",
+    "sourceUrl": "Source ONNX URL",
+    "defaultName": "My YOLO v9",
+    "inputSize": "Input size",
+    "outputFormat": "Output format",
+    "labels": "Labels (comma-separated)",
+    "labelsPlaceholder": "person, car, dog",
+    "targetFormats": "Target formats",
+    "targetNode": "Target node",
+    "auto": "Auto — the orchestrator picks a capable node from the recommendations below. Artifacts land on the converting node; prefer OpenVINO-on-hub for fleet Distribute from Library.",
+    "recsUnavailable": "Node recommendations unavailable: {{error}}",
+    "recs": "Node recommendations",
+    "converting": "Converting…",
+    "convert": "Convert",
+    "refreshRecs": "Refresh recommendations",
+    "inProgress": "Conversion in progress",
+    "complete": "Conversion complete",
+    "registeredAs": "Registered as",
+    "onNode": "On node",
+    "artifacts": "Artifacts",
+    "unvalidated": " (unvalidated)"
+  },
+  "plusImport": {
+    "conversions": " Engine conversions: {{parts}}.",
+    "conversionFailedWord": "failed",
+    "stepDownload": "Download from plus catalog",
+    "stepRegister": "Register on hub",
+    "stepConvert": "Convert to {{engine}}",
+    "stepEngines": "Engine formats (Import OpenVINO / CoreML when needed)",
+    "title": "Import {{name}} · {{format}}",
+    "start": "Starting {{format}} import for {{plusModelId}}…",
+    "alreadyInLibrary": "{{format}} already in Library",
+    "downloadingNative": "Downloading native {{format}}…",
+    "registeredLog": "Registered {{modelId}} ({{size}} MB)",
+    "imported": "Imported \"{{modelId}}\" ({{size}} MB).",
+    "onnxMissing": "ONNX missing — downloading first…",
+    "registeredConv": "Registered {{modelId}}.{{summary}}",
+    "importedPlus": "Imported \"{{modelId}}\" + {{format}}.{{summary}}",
+    "alreadyPresent": "{{format}} already present on {{registryId}}",
+    "converting": "Converting ONNX → {{format}} on a capable node…",
+    "conversionLog": "Conversion:{{summary}}",
+    "conversionFailed": "{{format}} conversion failed",
+    "converted": "Converted \"{{registryId}}\" → {{format}}.{{summary}}"
+  },
+  "probe": {
+    "noFormat": "Could not infer format from extension — pick it below.",
+    "size640": "Input size guessed 640 from the name.",
+    "size320": "Input size default 320 (edit if the model expects another).",
+    "decode": "Decode (postprocessor) is not inferred — choose to match the model output."
+  },
+  "blocked": {
+    "imported": "Already imported on this hub.",
+    "missing": "Import blocked: remote artifact is missing from the verified tree.",
+    "sizeChanged": "Import blocked: remote artifact size no longer matches the verified manifesto.",
+    "unavailable": "Import blocked: catalog drift is unavailable and cannot be verified.",
+    "unknown": "Import blocked: catalog drift is unknown and cannot be verified."
+  }
+}

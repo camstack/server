@@ -1,0 +1,86 @@
+{
+  "name": "@camstack/addon-provider-homematic",
+  "version": "1.2.156",
+  "description": "Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "homematic",
+    "homematicip",
+    "ccu",
+    "raspberrymatic",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Homematic Provider",
+    "addons": [
+      {
+        "id": "provider-homematic",
+        "category": "providers",
+        "name": "Homematic",
+        "version": "0.1.0",
+        "description": "Connect to a Homematic CCU3 / RaspberryMatic hub and adopt its switches, covers, lights, locks, thermostats and sensors",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#e2001a",
+        "instanceMode": "multiple",
+        "brokerKind": "homematic",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "broker"
+          },
+          {
+            "name": "device-adoption"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "nodehomematic": "^0.4.4"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

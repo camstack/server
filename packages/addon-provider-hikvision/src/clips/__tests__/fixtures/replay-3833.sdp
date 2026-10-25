@@ -1,0 +1,23 @@
+v=0
+o=- 1790109052223439 1790109052223439 IN IP4 192.168.x.x
+s=Media Presentation
+e=NONE
+b=AS:5100
+t=0 0
+a=control:rtsp://192.168.x.x/Streaming/tracks/101/?starttime=20260922T152742Z&endtime=20260922T152801Z
+m=video 0 RTP/AVP 96
+c=IN IP4 0.0.0.0
+b=AS:5000
+a=recvonly
+a=x-dimensions:3840,2160
+a=control:rtsp://192.168.x.x/Streaming/tracks/101/trackID=1?starttime=20260922T152742Z&endtime=20260922T152801Z
+a=rtpmap:96 H265/90000
+a=fmtp:96 sprop-vps=QAEMAf//AWAAAAMAAAMAAAMAAAMAmawJ; sprop-sps=QgEBAWAAAAMAAAMAAAMAAAMAmaAB4CACHH+KrTuiS7/8AAQABbAgAAB9IAAGWQE=; sprop-pps=RAHAcvCJDx482SB7
+m=audio 0 RTP/AVP 0
+c=IN IP4 0.0.0.0
+b=AS:50
+a=recvonly
+a=control:rtsp://192.168.x.x/Streaming/tracks/101/trackID=2?starttime=20260922T152742Z&endtime=20260922T152801Z
+a=rtpmap:0 PCMU/8000
+a=Media_header:MEDIAINFO=494D4B48010200000400050010710110401F000000FA000000000000000000000000000000000000;
+a=appversion:1.0

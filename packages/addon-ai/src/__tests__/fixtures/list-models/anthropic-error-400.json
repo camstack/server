@@ -1,0 +1,8 @@
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "anthropic-beta: unexpected value(s) `example-beta`"
+  },
+  "request_id": "req_fixture_0001"
+}

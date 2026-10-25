@@ -1,0 +1,11 @@
+---
+description: Audit CamStack tracks the operator flagged — missing media kinds, thumbnails, early track ends
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**Track media complaints (no photo, wrong thumbnail, ended too soon)** → follow the `audit-debug-tracks` skill — `.claude/skills/audit-debug-tracks/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/post-analysis.md`.
+
+- @.claude/skills/audit-debug-tracks/SKILL.md

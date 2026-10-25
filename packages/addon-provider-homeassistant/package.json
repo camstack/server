@@ -1,0 +1,150 @@
+{
+  "name": "@camstack/addon-provider-homeassistant",
+  "version": "1.2.624",
+  "description": "Home Assistant device provider addon for CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "home-assistant",
+    "homeassistant",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./ha-export": {
+      "import": "./dist/ha-export/ha-export.addon.mjs",
+      "require": "./dist/ha-export/ha-export.addon.js"
+    }
+  },
+  "camstack": {
+    "displayName": "Home Assistant",
+    "addons": [
+      {
+        "id": "provider-homeassistant",
+        "category": "messaging",
+        "name": "Home Assistant Provider",
+        "version": "0.1.0",
+        "description": "Adopt Home Assistant devices into CamStack via WebSocket",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#41bdf5",
+        "instanceMode": "multiple",
+        "brokerKind": "home-assistant",
+        "supportsLocationImport": true,
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "broker"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "vacuum-control"
+          },
+          {
+            "name": "lawn-mower-control"
+          },
+          {
+            "name": "running-state"
+          },
+          {
+            "name": "valve"
+          },
+          {
+            "name": "humidifier"
+          },
+          {
+            "name": "water-heater"
+          },
+          {
+            "name": "weather"
+          },
+          {
+            "name": "image"
+          },
+          {
+            "name": "update"
+          },
+          {
+            "name": "notification-output"
+          },
+          {
+            "name": "addon-routes"
+          },
+          {
+            "name": "calendar-source"
+          }
+        ]
+      },
+      {
+        "id": "homeassistant-export",
+        "category": "exports",
+        "name": "Home Assistant Export",
+        "version": "0.1.0",
+        "description": "Pushes CamStack entities to the CamStack Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value.",
+        "entry": "./dist/ha-export/ha-export.addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#41bdf5",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-export"
+          },
+          {
+            "name": "addon-routes"
+          },
+          {
+            "name": "oauth-integration"
+          }
+        ]
+      }
+    ],
+    "bundle": {
+      "displayName": "Home Assistant",
+      "description": "Device provider (import) + native entity export (push). Two addons, one bundle, separate processes."
+    }
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "home-assistant-js-websocket": "^9.4.0"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@types/ws": "^8.5.13",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "*",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "name": "@camstack/addon-post-analysis",
+  "version": "1.2.635",
+  "description": "Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "post-analysis",
+    "enrichment",
+    "embedding",
+    "analytics"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/pipeline-analytics/index.js",
+  "exports": {
+    "./embedding-encoder": {
+      "import": "./dist/embedding-encoder/index.mjs",
+      "require": "./dist/embedding-encoder/index.js"
+    },
+    "./pipeline-analytics": {
+      "import": "./dist/pipeline-analytics/index.mjs",
+      "require": "./dist/pipeline-analytics/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "python",
+    "assets",
+    "THIRD_PARTY_MODELS.md"
+  ],
+  "camstack": {
+    "displayName": "Post-Analysis",
+    "bundle": {
+      "displayName": "Post-Analysis",
+      "description": "Enrichment, embedding encoder, and pipeline analytics — consumers of pipeline output."
+    },
+    "nativeDependencies": {},
+    "addons": [
+      {
+        "id": "embedding-encoder",
+        "category": "analytics",
+        "name": "Embedding Encoder",
+        "description": "ONNX-Runtime image-embedding encoder. Produces semantic vectors from detection crops for similarity search + scene-state tracking.",
+        "entry": "./dist/embedding-encoder/index.js",
+        "execution": {
+          "placement": "any-node"
+        },
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "embedding-encoder"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#9333ea"
+      },
+      {
+        "id": "pipeline-analytics",
+        "category": "analytics",
+        "name": "Pipeline Analytics",
+        "icon": "assets/pipeline-analytics/icon.svg",
+        "description": "Zone analytics + audio metrics aggregator. Consumes pipeline events to surface per-camera zone counters and audio-level histograms.",
+        "entry": "./dist/pipeline-analytics/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "rssBudgetMb": 2048
+        },
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "device-removal-hook",
+            "optional": true
+          },
+          {
+            "name": "pipeline-analytics"
+          },
+          {
+            "name": "notification-rules"
+          },
+          {
+            "name": "zone-analytics"
+          },
+          {
+            "name": "audio-metrics"
+          },
+          {
+            "name": "addon-widgets-source"
+          },
+          {
+            "name": "face-gallery"
+          },
+          {
+            "name": "plate-gallery"
+          },
+          {
+            "name": "scene-monitor"
+          },
+          {
+            "name": "failure-contribution"
+          },
+          {
+            "name": "storage-occupancy",
+            "optional": true
+          }
+        ],
+        "storageLocations": [
+          {
+            "id": "eventMedia",
+            "displayName": "Event Media",
+            "cardinality": "multi",
+            "description": "Detection snapshots, thumbnails and crops.",
+            "defaultsTo": "recordings"
+          },
+          {
+            "id": "artifacts",
+            "displayName": "Artifacts",
+            "cardinality": "single",
+            "description": "Notification artifacts (stills, GIFs, clips, timelapses behind signed links and the viewer's artifact library), operator-exported video clips, the enrolled gallery (face/plate reference crops and scene photographs), the retrain dataset (the frames an operator selected for training) and the tracking tapes (pixel-free per-camera tracker input), in disjoint subtrees of ONE root. Each tenant keeps its OWN retention — the notification shelf's bounds (6 h send scratch; 14 d / 2000 / 2 GiB retained), per-export expiry + delete-after-download, NONE for the gallery and the retrain dataset (curation work survives every sweep), 24 h for tape segments and none for promoted tapes (the operator deletes them once the case is committed) — and no media-class retention may attach to any of them. Exactly ONE location (singleton). Not part of the system backup, gallery included — a deliberate operator decision: media locations are operator-managed; a remote-media-backup cap is the intended future answer.",
+            "defaultRoot": "media"
+          }
+        ],
+        "color": "#9333ea"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "vite build && vite build --config vite.widgets.pipeline-analytics.config.ts",
+    "build:server": "vite build",
+    "build:widgets": "vite build --config vite.widgets.pipeline-analytics.config.ts",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "tracking-bench": "tsx src/pipeline-analytics/tracking-bench/cli-main.ts",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@camstack/system": "*",
+    "@tanstack/react-query": "^5.90.0",
+    "sharp": "^0.35.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/vite": "^1.16.9",
+    "@vitejs/plugin-react": "^6.0.2",
+    "lucide-react": "^0.576.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  }
+}

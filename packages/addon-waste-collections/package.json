@@ -1,0 +1,71 @@
+{
+  "name": "@camstack/addon-waste-collections",
+  "version": "0.1.28",
+  "description": "Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "waste",
+    "calendar",
+    "garbage"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Waste Collections",
+    "addons": [
+      {
+        "id": "waste-collections",
+        "category": "messaging",
+        "name": "Waste Collections",
+        "description": "Fetches municipal waste collection schedules through the HACS waste_collection_schedule source catalog (full set) and exposes them as calendars.",
+        "entry": "./dist/waste-collections.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "calendar-source"
+          }
+        ],
+        "python": {
+          "requirements": "./python/requirements.txt"
+        },
+        "icon": "assets/icon.svg",
+        "color": "#6B8E23"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "python",
+    "assets",
+    "THIRD_PARTY.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "gen:catalog": "tsx scripts/gen-catalog.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "tsx": "^4.19.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^4.0.0",
+    "zod": "^4.3.6"
+  }
+}

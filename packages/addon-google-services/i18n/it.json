@@ -1,0 +1,21 @@
+{
+  "googleBrokerSettings.s_setup-intro.title": "Configurazione",
+  "googleBrokerSettings.s_setup-intro.description": "Google Cloud Console: registra il reindirizzamento dell'hub prima di Aggiungi / Accedi.",
+  "googleBrokerSettings.s_setup-intro._setupSteps.label": "Passaggi",
+  "googleBrokerSettings.s_google-oauth-client.title": "Client OAuth di Google",
+  "googleBrokerSettings.s_google-oauth-client.description": "Client di tipo applicazione web creato in Google Cloud Console. Lo stesso progetto Cloud può essere riutilizzato tra più broker Google.",
+  "googleBrokerSettings.s_google-oauth-client.clientId.label": "ID client",
+  "googleBrokerSettings.s_google-oauth-client.clientSecret.label": "Segreto del client",
+  "googleBrokerSettings.s_gmail-send.title": "Invio Gmail",
+  "googleBrokerSettings.s_gmail-send.description": "Il mittente deve essere questo account collegato o un indirizzo di invio verificato. Disattiva Email in Connettività per spegnere Gmail senza rimuovere il broker.",
+  "googleBrokerSettings.s_gmail-send.fromAddress.label": "Indirizzo del mittente",
+  "googleBrokerSettings.s_gmail-send.fromAddress.description": "Se vuoto, usa l'email dell'account Google collegato.",
+  "googleBrokerSettings.s_gmail-send.fromName.label": "Nome visualizzato del mittente (facoltativo)",
+  "googleFeatureSettings.s_setup-intro.title": "Broker Google",
+  "googleFeatureSettings.s_setup-intro._setupSteps.label": "Configurazione",
+  "googleFeatureSettings.s_google-calendars-import.title": "Calendari da importare",
+  "googleFeatureSettings.s_google-calendars-import.description": "Nessuna selezione = nessun calendario importato. Le opzioni compaiono dopo che almeno un broker Google ha effettuato l'accesso.",
+  "googleFeatureSettings.s_google-calendars-import.calendarIds.label": "Calendari",
+  "googleFeatureSettings.s_google-calendars-import.calendarIds.description": "Gli ID sono marcati come brokerId:googleCalendarId su tutti i broker Google.",
+  "googleFeatureSettings._setupSteps.label": "Configurazione"
+}

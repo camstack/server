@@ -1,0 +1,41 @@
+{
+  "_doc": "Visually confirmed ANIMAL presence intervals (inclusive, epoch ms) on camera 101, read off contact sheets at 2 s. A frame inside an interval is a positive; a frame outside is not counted as a negative for recall (the subject may be entering/leaving), it is only used for the crop-cost figures. False positives are measured on the separate 'quiet' windows.",
+  "intervals": [
+    {
+      "id": "E1-1829",
+      "fromMs": 1788798556000,
+      "toMs": 1788798562000,
+      "subject": "small dog on lead + person, far half of the frame"
+    },
+    {
+      "id": "E2-1604",
+      "fromMs": 1788789868000,
+      "toMs": 1788789876000,
+      "subject": "small dog on lead + two people"
+    },
+    {
+      "id": "E3-1748",
+      "fromMs": 1788796104000,
+      "toMs": 1788796110000,
+      "subject": "black dog on lead + person, entering from the road"
+    },
+    {
+      "id": "E4-1534",
+      "fromMs": 1788788080000,
+      "toMs": 1788788080000,
+      "subject": "dark cat/small dog crossing alone"
+    },
+    {
+      "id": "E5-0641",
+      "fromMs": 1788756096000,
+      "toMs": 1788756100000,
+      "subject": "white dog on lead + person, early morning"
+    },
+    {
+      "id": "E6-1127",
+      "fromMs": 1788773212000,
+      "toMs": 1788773220000,
+      "subject": "black-and-white dog on lead + person"
+    }
+  ]
+}

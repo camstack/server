@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noUncheckedIndexedAccess": false,
+    "paths": {
+      "@camstack/types": [
+        "../types/src/index.ts"
+      ],
+      "@camstack/sdk": [
+        "../sdk/src/index.ts"
+      ],
+      "@camstack/ui-library": [
+        "../ui-library/src/index.ts"
+      ]
+    },
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/server"
+  ]
+}

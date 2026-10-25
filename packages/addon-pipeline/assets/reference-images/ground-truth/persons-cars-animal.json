@@ -1,0 +1,136 @@
+{
+  "image": "persons-cars-animal.jpg",
+  "width": 1280,
+  "height": 853,
+  "generatedAt": "2026-04-11T07:13:40.128Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "vehicle",
+      "score": 0.896,
+      "bbox": {
+        "x": 89.2,
+        "y": 353.5,
+        "width": 414.1,
+        "height": 247.5
+      },
+      "labels": []
+    },
+    {
+      "id": "d2",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.892,
+      "bbox": {
+        "x": 695.2,
+        "y": 273.3,
+        "width": 168.39999999999998,
+        "height": 466.59999999999997
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d3"
+        }
+      ]
+    },
+    {
+      "id": "d4",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.866,
+      "bbox": {
+        "x": 453.9,
+        "y": 312.2,
+        "width": 129.70000000000005,
+        "height": 466.3
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d5"
+        }
+      ]
+    },
+    {
+      "id": "d6",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.818,
+      "bbox": {
+        "x": 556.2,
+        "y": 275.8,
+        "width": 154.5,
+        "height": 510.40000000000003
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d7"
+        }
+      ]
+    },
+    {
+      "id": "d3",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.857,
+      "bbox": {
+        "x": 774.2,
+        "y": 298.5,
+        "width": 38.89999999999998,
+        "height": 51.200000000000045
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d2"
+    },
+    {
+      "id": "d5",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.871,
+      "bbox": {
+        "x": 517.4,
+        "y": 333.7,
+        "width": 39.700000000000045,
+        "height": 49.30000000000001
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d4"
+    },
+    {
+      "id": "d7",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.775,
+      "bbox": {
+        "x": 569,
+        "y": 297.40000000000003,
+        "width": 50.90000000000009,
+        "height": 51.599999999999966
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d6"
+    }
+  ]
+}

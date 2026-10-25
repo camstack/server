@@ -1,0 +1,1041 @@
+{
+  "repo": "scrypted/plugin-models",
+  "revision": "187402b20a3be0a7fab9bceee21d857ed6ae0064",
+  "lastModified": "2026-03-08T01:21:12.000Z",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "size": 1519
+    },
+    {
+      "path": ".gitignore",
+      "size": 72
+    },
+    {
+      "path": "README.md",
+      "size": 95
+    },
+    {
+      "path": "coreml/.vscode/launch.json",
+      "size": 506
+    },
+    {
+      "path": "coreml/clip/text.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 142948,
+      "lfs": {
+        "oid": "8aaaa22ea9d69dc1bab6c417547ce2b6a872df434bded9ec11ab359e2967d2b8",
+        "size": 142948,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/clip/text.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 126881920,
+      "lfs": {
+        "oid": "a0e280577d622fde534615f5807451423357a53735ae57db3f8589c2ffa4d68f",
+        "size": 126881920,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "coreml/clip/text.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/clip/vision.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 142309,
+      "lfs": {
+        "oid": "b82ca2662fd0c9beebe70e97cad32dcd4aaf9679f9a3c874beded2b637c3c251",
+        "size": 142309,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/clip/vision.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 175712384,
+      "lfs": {
+        "oid": "e8b36731015c664e29d069142aa840f8ae11e8c6d70310afa902a53f00954734",
+        "size": 175712384,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "coreml/clip/vision.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/craft/craft.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 43159,
+      "lfs": {
+        "oid": "a88e73841ed8dcae1efe93c687c95a109089d7596a5961bb72cf9731101183f3",
+        "size": 43159,
+        "pointerSize": 130
+      }
+    },
+    {
+      "path": "coreml/craft/craft.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 41523840,
+      "lfs": {
+        "oid": "2b5d938e7022af4b4c4ff3f23accda0bd51a00d57a30fb8791506c0b42a8999b",
+        "size": 41523840,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/craft/craft.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/inception_resnet_v1/inception_resnet_v1.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 188777,
+      "lfs": {
+        "oid": "5a5a2390f99e63ff03cab5240902b48b2cb2d4b3fa77e8e3ae22136426602faa",
+        "size": 188777,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/inception_resnet_v1/inception_resnet_v1.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 46957120,
+      "lfs": {
+        "oid": "edb38b8ddba481f93ee5420483aa4e91dbb43e9ba5d49a36e3f5c099df113eb7",
+        "size": 46957120,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/inception_resnet_v1/inception_resnet_v1.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9c_relu/scrypted_yolov9c_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 263210,
+      "lfs": {
+        "oid": "862f082619075e470738306b0ff0a37ae70a7d08e684ca6a6dfa1971d404e0c3",
+        "size": 263210,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9c_relu/scrypted_yolov9c_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 50489960,
+      "lfs": {
+        "oid": "ed89747e58943758e2a87221d1d404f6a4466cbc039c3c6f96e327cadc403d27",
+        "size": 50489960,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9c_relu/scrypted_yolov9c_relu.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 263210,
+      "lfs": {
+        "oid": "08718ecd3e9552d21a702bd8df60911cad0eec7b2ae382466809550f14634711",
+        "size": 263210,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 50489960,
+      "lfs": {
+        "oid": "fe5936b9430ab4c87f30b148220131d6ec998b2377223d033e2fa2a00e60aada",
+        "size": 50489960,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9m_relu/scrypted_yolov9m_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 247061,
+      "lfs": {
+        "oid": "1c40e02fc2a2559cb906ea6cd9da9c730d4a78f5019290cbb38d2fcaae379fe7",
+        "size": 247061,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9m_relu/scrypted_yolov9m_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 39880616,
+      "lfs": {
+        "oid": "4cf938e5bfcc3ee1644813e4eb4702a7de450cc0581df94c719cf43d0ed2e408",
+        "size": 39880616,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9m_relu/scrypted_yolov9m_relu.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 247061,
+      "lfs": {
+        "oid": "53d5946e74b13b15c5f8616081c9f15e8a95a5df3d5b45b830fc5a7f49561c16",
+        "size": 247061,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 39880616,
+      "lfs": {
+        "oid": "69774bf0032c37707601b8cdc1e1820dbd9f8288eb5d6f3879618a5d34ff5199",
+        "size": 39880616,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9s_relu/scrypted_yolov9s_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 322664,
+      "lfs": {
+        "oid": "9a9c3c9cbca406ec2f0418ec867ed6b878ec6d02c16636d30e0bbd83d2ff7c40",
+        "size": 322664,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9s_relu/scrypted_yolov9s_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 14190120,
+      "lfs": {
+        "oid": "fd51eda58a993997268f6a2e424b536ba173207ad7974ab8bee2a8ff76d52dab",
+        "size": 14190120,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9s_relu/scrypted_yolov9s_relu.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 322664,
+      "lfs": {
+        "oid": "186b147cdfd15c5ed7a381ec3a426a22cee0b5c52d56f14efd26da06357f5cb0",
+        "size": 322664,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 14190120,
+      "lfs": {
+        "oid": "e50651924c2cbffd56008a8953569e66c3de69f21807fcf7d825390ce30f21f8",
+        "size": 14190120,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu/scrypted_yolov9t_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 322229,
+      "lfs": {
+        "oid": "f5a62f196f1e72a84efa1637119dffb6501621af9cf6f867bc76b4b59c9242a0",
+        "size": 322229,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu/scrypted_yolov9t_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 3797160,
+      "lfs": {
+        "oid": "b994419b8b68cfd6b89c3c6f3fe6b37458c86cc1d87fcca3df5034476a99dd38",
+        "size": 3797160,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu/scrypted_yolov9t_relu.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu_face/scrypted_yolov9t_relu_face.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 322188,
+      "lfs": {
+        "oid": "4cb76d5ab69687ab995b1997358c2b5ebe66879fd56bf7b59c42a86ece7b4efd",
+        "size": 322188,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu_face/scrypted_yolov9t_relu_face.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 3796392,
+      "lfs": {
+        "oid": "299d0974187ccda8a7256cae50553176b4e4bd142a962f10659392b3a5864a4c",
+        "size": 3796392,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu_face/scrypted_yolov9t_relu_face.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 322229,
+      "lfs": {
+        "oid": "79f4f647f2a0c79db3b560c84251b48c7ba7cbe9c1fecc9674d1a603a389dfa3",
+        "size": 322229,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 3797160,
+      "lfs": {
+        "oid": "72efc9dc6af9241b5e5ee7de24a4f55741f6425d0e279d797f0f223e3d355f84",
+        "size": 3797160,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_seg_relu/scrypted_yolov9t_seg_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 370528,
+      "lfs": {
+        "oid": "20d0ef10b12ecd97771773d48110054f13936f6adca7454cb0961ef58b2189df",
+        "size": 370528,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_seg_relu/scrypted_yolov9t_seg_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 4214568,
+      "lfs": {
+        "oid": "13a42c56d5ff58a449635c51b690d4489e0c94e51b1e7bd9c56b77a906165ebf",
+        "size": 4214568,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "coreml/scrypted_yolov9t_seg_relu/scrypted_yolov9t_seg_relu.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/vgg_english_g2/vgg_english_g2.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 24744,
+      "lfs": {
+        "oid": "92e74e6fc2d2ec790eb91d89139ce49ed66f05833d213a8a53e2d49618fdc239",
+        "size": 24744,
+        "pointerSize": 130
+      }
+    },
+    {
+      "path": "coreml/vgg_english_g2/vgg_english_g2.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 11760194,
+      "lfs": {
+        "oid": "cd67671eab192aee87e79d2e7682c84db28b2eb3b7a241a572af12cd03c477ee",
+        "size": 11760194,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/vgg_english_g2/vgg_english_g2.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "coreml/yolov9c_seg/yolov9c_seg.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+      "size": 306204,
+      "lfs": {
+        "oid": "f6186f3f9dfcdb6f18407b479159505c4e87563cb24fb7d01cd7c75761e08d6d",
+        "size": 306204,
+        "pointerSize": 131
+      }
+    },
+    {
+      "path": "coreml/yolov9c_seg/yolov9c_seg.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+      "size": 54929896,
+      "lfs": {
+        "oid": "185c17f00ccb909f23c1da1f9bb69a74469b13c26e2f412e22a82feff0bdadfa",
+        "size": 54929896,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "coreml/yolov9c_seg/yolov9c_seg.mlpackage/Manifest.json",
+      "size": 617
+    },
+    {
+      "path": "ncnn/craft/craft.ncnn.bin",
+      "size": 41535028,
+      "lfs": {
+        "oid": "22d4859d75d784fdc5bde103d3920a0eb73a53223c626a001a2e0535b42d9f68",
+        "size": 41535028,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/craft/craft.ncnn.param",
+      "size": 4465
+    },
+    {
+      "path": "ncnn/inception_resnet_v1/inception_resnet_v1.ncnn.bin",
+      "size": 47007768,
+      "lfs": {
+        "oid": "79c6b556232ea5874cbb177bd7da131515a29a5dfac06bf5fe92245b6bbc2954",
+        "size": 47007768,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/inception_resnet_v1/inception_resnet_v1.ncnn.param",
+      "size": 23939
+    },
+    {
+      "path": "ncnn/scrypted_yolov9c_relu/best_converted.ncnn.bin",
+      "size": 100960184,
+      "lfs": {
+        "oid": "114d956c66fa444a3a3f57bfb688f54e8c6d9531f17842f6022588e78e676768",
+        "size": 100960184,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9c_relu/best_converted.ncnn.param",
+      "size": 28304
+    },
+    {
+      "path": "ncnn/scrypted_yolov9c_relu_test/best_converted.ncnn.bin",
+      "size": 50534008,
+      "lfs": {
+        "oid": "d687e56a4172f3acfaf2f45f7ab804d3b030775ace0e6fa2f41ace64aa2a324d",
+        "size": 50534008,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9c_relu_test/best_converted.ncnn.param",
+      "size": 28253
+    },
+    {
+      "path": "ncnn/scrypted_yolov9m_relu/best_converted.ncnn.bin",
+      "size": 79734564,
+      "lfs": {
+        "oid": "cbff5096de7c970061bbc64df21156055c3c814b612922f0529de23cbad7e0d7",
+        "size": 79734564,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9m_relu/best_converted.ncnn.param",
+      "size": 26385
+    },
+    {
+      "path": "ncnn/scrypted_yolov9m_relu_test/best_converted.ncnn.bin",
+      "size": 39912228,
+      "lfs": {
+        "oid": "1ba40389bc0fbfa9308af1a80d331af605092a5b6d4b3fc81d32400f6fb07f20",
+        "size": 39912228,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9m_relu_test/best_converted.ncnn.param",
+      "size": 26334
+    },
+    {
+      "path": "ncnn/scrypted_yolov9s_relu/best_converted.ncnn.bin",
+      "size": 28347100,
+      "lfs": {
+        "oid": "3374c1203d0a159e44f2a83e85fbd7e7b06a86a8df5a94b913ec58b8757bcc6c",
+        "size": 28347100,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9s_relu/best_converted.ncnn.param",
+      "size": 35127
+    },
+    {
+      "path": "ncnn/scrypted_yolov9s_relu_test/best_converted.ncnn.bin",
+      "size": 14205276,
+      "lfs": {
+        "oid": "f78ad92ca6085500a00c4e4589d14ff7dbbdd54ecc1936d1ae2146eb1fbb7160",
+        "size": 14205276,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9s_relu_test/best_converted.ncnn.param",
+      "size": 35076
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_relu/best_converted.ncnn.bin",
+      "size": 7559580,
+      "lfs": {
+        "oid": "714bb05a18b5afef7f06c6b0a0e589858b00b9c1f09a7036db2dfd5aa01c3b53",
+        "size": 7559580,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_relu/best_converted.ncnn.param",
+      "size": 34999
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_relu_face/best_converted.ncnn.bin",
+      "size": 3814532,
+      "lfs": {
+        "oid": "02c48255c2b88b8c0f15bbbd2c857c74e3e28293133482389ba4ddae568af700",
+        "size": 3814532,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_relu_face/best_converted.ncnn.param",
+      "size": 34996
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_relu_test/best_converted.ncnn.bin",
+      "size": 3798524,
+      "lfs": {
+        "oid": "0651958b76a6eccab26f42062c3df2d9d57b4fddbc590aaf14e992051563f303",
+        "size": 3798524,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_relu_test/best_converted.ncnn.param",
+      "size": 34948
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_seg_relu/best_converted.ncnn.bin",
+      "size": 4213616,
+      "lfs": {
+        "oid": "e9fc63594df9663058520f30658fd40c6d4fd920d5e47319ffbf84fee93ac521",
+        "size": 4213616,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "ncnn/scrypted_yolov9t_seg_relu/best_converted.ncnn.param",
+      "size": 39812
+    },
+    {
+      "path": "ncnn/vgg_english_g2/vgg_english_g2.ncnn.bin",
+      "size": 7555792,
+      "lfs": {
+        "oid": "a2d39aad9da27df38a41c7a8d329a9a19786da78ea80d9cdb8e5bce11d899743",
+        "size": 7555792,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "ncnn/vgg_english_g2/vgg_english_g2.ncnn.param",
+      "size": 1953
+    },
+    {
+      "path": "onnx/clip/text.onnx",
+      "size": 253840117,
+      "lfs": {
+        "oid": "03c42c60df09b081001cdcc188caf265828164e4a58b4ad718adf75be103c2be",
+        "size": 253840117,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "onnx/clip/vision.onnx",
+      "size": 351488332,
+      "lfs": {
+        "oid": "1f6401d0943d892e1fafb233b2c0cc53b4052e0e40814101246688758b996735",
+        "size": 351488332,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "onnx/craft/craft.onnx",
+      "size": 83055740,
+      "lfs": {
+        "oid": "72210ae01ee409624176ec6c90d4568cec06d1a4ef62c6acfb565db249a88ff2",
+        "size": 83055740,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/inception_resnet_v1/inception_resnet_v1.onnx",
+      "size": 93958716,
+      "lfs": {
+        "oid": "e24eb06509df7cbbd8ac2853ddeb181f7de35b62c1a436428f9a857d8d900698",
+        "size": 93958716,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9c_relu/scrypted_yolov9c_relu.onnx",
+      "size": 101631962,
+      "lfs": {
+        "oid": "b9372c4428daf4cd944c114b1e80d1a9ff0487d743e53a77216a051cfbef7116",
+        "size": 101631962,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.onnx",
+      "size": 101631962,
+      "lfs": {
+        "oid": "2f4e2031e8efb4cbc871594338b2e875d78ab4af3ee0258d253273b1aac84742",
+        "size": 101631962,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9m_relu/scrypted_yolov9m_relu.onnx",
+      "size": 80380404,
+      "lfs": {
+        "oid": "e7a81fb33224a0105d2a0a594c3fa43c398c361de623f1d14156ae826e7312d5",
+        "size": 80380404,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.onnx",
+      "size": 80380404,
+      "lfs": {
+        "oid": "8bb054f099295909ec518e2a6598d63db24d3f90edc8105a0f016903f2a205a2",
+        "size": 80380404,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9s_relu/scrypted_yolov9s_relu.onnx",
+      "size": 29287339,
+      "lfs": {
+        "oid": "ca0b5bd98d5f59eb2029c6cb5129d53af59873f62a317a028beda463bbb96399",
+        "size": 29287339,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.onnx",
+      "size": 29287339,
+      "lfs": {
+        "oid": "115ddb83333762a0f2599421335678696454a5c3571ade5df9bac8e9cb5fb4cf",
+        "size": 29287339,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9t_relu/scrypted_yolov9t_relu.onnx",
+      "size": 8499266,
+      "lfs": {
+        "oid": "3f11ea2071b27c285b58c16636a44d6a0a27bdd1ca8b64112dfadabd39cfea47",
+        "size": 8499266,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9t_relu_face/scrypted_yolov9t_relu_face.onnx",
+      "size": 8497671,
+      "lfs": {
+        "oid": "dbd1bcbc4bd0775432c156bd94971ee2a6af46c142be60706aa10b580ebf05df",
+        "size": 8497671,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.onnx",
+      "size": 8499266,
+      "lfs": {
+        "oid": "d20aa0e6923a3af7f5e84e3a6d28fb00e8ecd592e3225f986f93bd34b634e2f8",
+        "size": 8499266,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "onnx/scrypted_yolov9t_seg_relu/scrypted_yolov9t_seg_relu.onnx",
+      "size": 9465679,
+      "lfs": {
+        "oid": "f9441731060062277addb28551086f62bb67085efbb6de6133149cf0149baa9d",
+        "size": 9465679,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "onnx/vgg_english_g2/vgg_english_g2.onnx",
+      "size": 15143597,
+      "lfs": {
+        "oid": "3f28bb12cd82bf40a04225e64b9c2eb6dda85241414d8bcc2e276534493bfec6",
+        "size": 15143597,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "onnx/yolov9c_seg/yolov9c_seg.onnx",
+      "size": 110875204,
+      "lfs": {
+        "oid": "78df2d9be74a05c92fdcf3db6e3a380939d0c11c412126038ab8808d2937948e",
+        "size": 110875204,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "openvino/clip/text.bin",
+      "size": 126856992,
+      "lfs": {
+        "oid": "23fb3be10d6676f24bc5adf05b6321dfe346650453dd959be8457ce35052335f",
+        "size": 126856992,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "openvino/clip/text.xml",
+      "size": 519177
+    },
+    {
+      "path": "openvino/clip/text_int8.bin",
+      "size": 64105628,
+      "lfs": {
+        "oid": "ad0d394e83a24bc1d2d9415f43a5847ccb804cb44715bbbc45f21b4190673d94",
+        "size": 64105628,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/clip/text_int8.xml",
+      "size": 785642
+    },
+    {
+      "path": "openvino/clip/vision.bin",
+      "size": 175698578,
+      "lfs": {
+        "oid": "52d5cb3ad5d6acd3070bc8e9e985029b58e7ddda41d80a336b50195b5e65f8d2",
+        "size": 175698578,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "openvino/clip/vision.xml",
+      "size": 497431
+    },
+    {
+      "path": "openvino/clip/vision_int8.bin",
+      "size": 88610018,
+      "lfs": {
+        "oid": "798edc4ba50811ec147985d57d601cf2744e706a6f9dbac0d2d66dd93f159087",
+        "size": 88610018,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/clip/vision_int8.xml",
+      "size": 765892
+    },
+    {
+      "path": "openvino/craft/best.bin",
+      "size": 41520360,
+      "lfs": {
+        "oid": "f0192ab9726b3a0f4ec4949ca9b42bd7346930926a5debd02fdec7b553b44a3c",
+        "size": 41520360,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/craft/best.xml",
+      "size": 123969
+    },
+    {
+      "path": "openvino/inception_resnet_v1/best.bin",
+      "size": 46935692,
+      "lfs": {
+        "oid": "cde52b2fff8681be14746f2fe53f3cff65394847a2d8c060699227a7609a8414",
+        "size": 46935692,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/inception_resnet_v1/best.xml",
+      "size": 535828
+    },
+    {
+      "path": "openvino/scrypted_yolov9c_relu/best-converted.bin",
+      "size": 100942972,
+      "lfs": {
+        "oid": "11a1b330ac9843b349927977b3c7c7f17bb42af73a7ff102969132f27ab81814",
+        "size": 100942972,
+        "pointerSize": 134
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9c_relu/best-converted.xml",
+      "size": 535047
+    },
+    {
+      "path": "openvino/scrypted_yolov9c_relu_int8/best-converted.bin",
+      "size": 25428280,
+      "lfs": {
+        "oid": "0643403a56178c3ed1e066c7884458d8ea6780115d662bdc38d10754d7a11c79",
+        "size": 25428280,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9c_relu_int8/best-converted.xml",
+      "size": 1092695
+    },
+    {
+      "path": "openvino/scrypted_yolov9c_relu_test_int8/best-converted.bin",
+      "size": 25428280,
+      "lfs": {
+        "oid": "2eb6bb3d0a03a9b239b6f623f9e7bced62eea61fbe4d8ff89c1b3e2e2b7978a2",
+        "size": 25428280,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9c_relu_test_int8/best-converted.xml",
+      "size": 1092695
+    },
+    {
+      "path": "openvino/scrypted_yolov9m_relu/best-converted.bin",
+      "size": 79717372,
+      "lfs": {
+        "oid": "dfc2d8952bbca9ad0e116168e3fd5c754e601c327d78c4f4d0d4cae12f0e1d2a",
+        "size": 79717372,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9m_relu/best-converted.xml",
+      "size": 485439
+    },
+    {
+      "path": "openvino/scrypted_yolov9m_relu_int8/best-converted.bin",
+      "size": 20090516,
+      "lfs": {
+        "oid": "da8e44af8bee66478e6f359e9504bfb13ab4b76f4bd8a2f1b10cfbc22febcf6e",
+        "size": 20090516,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9m_relu_int8/best-converted.xml",
+      "size": 1024595
+    },
+    {
+      "path": "openvino/scrypted_yolov9m_relu_test_int8/best-converted.bin",
+      "size": 20090520,
+      "lfs": {
+        "oid": "4360fe0312067f92c49f180c7b8a10271f14d58b8909aa9b96b13af4ab9289aa",
+        "size": 20090520,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9m_relu_test_int8/best-converted.xml",
+      "size": 1024601
+    },
+    {
+      "path": "openvino/scrypted_yolov9s_relu/best-converted.bin",
+      "size": 28329724,
+      "lfs": {
+        "oid": "c030bd219208ea94082578c81f383d4ef9ec45d7150eec1c2c2ff2569cf49b35",
+        "size": 28329724,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9s_relu/best-converted.xml",
+      "size": 629249
+    },
+    {
+      "path": "openvino/scrypted_yolov9s_relu_int8/best-converted.bin",
+      "size": 7197308,
+      "lfs": {
+        "oid": "23fd3d666a938c41db232d9c6239baec1134716cfb4ed4ddd3d602dd20eb8ac0",
+        "size": 7197308,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9s_relu_int8/best-converted.xml",
+      "size": 1382088
+    },
+    {
+      "path": "openvino/scrypted_yolov9s_relu_test_int8/best-converted.bin",
+      "size": 7197312,
+      "lfs": {
+        "oid": "78e9d36e6b74754db2b624ea3ec0b3ff57ed6dfed59a4f2225e1a271054597de",
+        "size": 7197312,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9s_relu_test_int8/best-converted.xml",
+      "size": 1382092
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu/best-converted.bin",
+      "size": 7542204,
+      "lfs": {
+        "oid": "4fe9ce8dbdf94514fdd450cbfc907f257153e4898a0c1489a44e4912d8e32cc7",
+        "size": 7542204,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu/best-converted.xml",
+      "size": 628222
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_face/best-converted.bin",
+      "size": 7540644,
+      "lfs": {
+        "oid": "4c7d26a42184c9e5f350f4d5afb9dbdcfb9434159d835f18816cfd81cb1b8aca",
+        "size": 7540644,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_face/best-converted.xml",
+      "size": 628202
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_face_int8/best-converted.bin",
+      "size": 1954528,
+      "lfs": {
+        "oid": "92da8bdcbeebbb84f3bf8c1a2478b0bbff81db61b64c2305dfa0c5e8c096618e",
+        "size": 1954528,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_face_int8/best-converted.xml",
+      "size": 1380357
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_int8/best-converted.bin",
+      "size": 1954956,
+      "lfs": {
+        "oid": "98fb5b6826d7c6697a585f69ba96754873772d9d61fbed8335aab761e8248659",
+        "size": 1954956,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_int8/best-converted.xml",
+      "size": 1380379
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_test_int8/best-converted.bin",
+      "size": 1954960,
+      "lfs": {
+        "oid": "efe5b0a2fd2f5ddef5923eeb9e592a7ef14719061bb7605c86e05b35c2c58ea9",
+        "size": 1954960,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_relu_test_int8/best-converted.xml",
+      "size": 1380383
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_seg_relu_int8/best-converted.bin",
+      "size": 2167560,
+      "lfs": {
+        "oid": "adc537407452a94a3861f624b35f3c47f963fd24e06c6e47b42e8d30f4c05507",
+        "size": 2167560,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/scrypted_yolov9t_seg_relu_int8/best-converted.xml",
+      "size": 1577100
+    },
+    {
+      "path": "openvino/vgg_english_g2/best.bin",
+      "size": 7553580,
+      "lfs": {
+        "oid": "7f9360d6fe676b6ad9b7a6804c70e43f3aebc48470d68c97ed320897587ac6a8",
+        "size": 7553580,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "openvino/vgg_english_g2/best.xml",
+      "size": 76230
+    },
+    {
+      "path": "openvino/yolov9c_seg_int8/best-converted.bin",
+      "size": 27664512,
+      "lfs": {
+        "oid": "ff7cd465a5e57f2a3a3783b9c8e27bdaee551ed50cd29c090f5640c275fe941e",
+        "size": 27664512,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "openvino/yolov9c_seg_int8/best-converted.xml",
+      "size": 1262752
+    },
+    {
+      "path": "tflite/scrypted_yolov9s_relu_sep_320/best_float16.tflite",
+      "size": 14482836,
+      "lfs": {
+        "oid": "04889db3b81af361c361e41ffa99327330d37b71d680a2f889e6cdf1e94c0d8c",
+        "size": 14482836,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "tflite/scrypted_yolov9s_relu_sep_320/best_float32.tflite",
+      "size": 28777068,
+      "lfs": {
+        "oid": "f5d7d08fc1d8f2262633d2df4391638e0481740331aaa1837880a47c33001a96",
+        "size": 28777068,
+        "pointerSize": 133
+      }
+    },
+    {
+      "path": "tflite/scrypted_yolov9s_relu_sep_320/best_full_integer_quant.tflite",
+      "size": 7341704,
+      "lfs": {
+        "oid": "483ce38dbe33ee5a35f40a82f56c77629a44fa5d95efd8ade9fa97e4d2a261fd",
+        "size": 7341704,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "tflite/scrypted_yolov9s_relu_sep_320/best_full_integer_quant_edgetpu.tflite",
+      "size": 8164480,
+      "lfs": {
+        "oid": "e1e6b074a3b9fdf19a171baf615553ad375a046aa7de2a3fef9a1950175fab22",
+        "size": 8164480,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "tflite/scrypted_yolov9s_relu_sep_320/best_int8.tflite",
+      "size": 7325616,
+      "lfs": {
+        "oid": "1e9866b16fe80931383bf3c94dc629fe93a37ba3dc1465ea019eb0a50bd428df",
+        "size": 7325616,
+        "pointerSize": 132
+      }
+    },
+    {
+      "path": "tflite/scrypted_yolov9s_relu_sep_320/best_integer_quant.tflite",
+      "size": 7342552,
+      "lfs": {
+        "oid": "bc1c902e9a9865637ee2403f70c6bf5c29c695d9163e58ad658feb29bb097ebc",
+        "size": 7342552,
+        "pointerSize": 132
+      }
+    }
+  ]
+}

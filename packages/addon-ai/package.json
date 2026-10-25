@@ -1,0 +1,82 @@
+{
+  "name": "@camstack/addon-ai",
+  "version": "0.4.167",
+  "description": "AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "llm",
+    "ai"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "AI",
+    "addons": [
+      {
+        "id": "ai",
+        "category": "analytics",
+        "name": "AI",
+        "description": "LLM profiles (cloud, LAN, managed local models) + per-node managed llama.cpp runtimes",
+        "version": "0.1.0",
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "any-node",
+          "group": "ml"
+        },
+        "capabilities": [
+          {
+            "name": "llm"
+          },
+          {
+            "name": "llm-runtime"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets",
+    "native/afm/camstack-afm",
+    "native/afm/camstack-afm.swift",
+    "THIRD_PARTY_MODELS.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build-afm.mjs && vite build",
+    "build:native": "node scripts/build-afm.mjs --force",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.38",
+    "@ai-sdk/google": "4.0.44",
+    "@ai-sdk/openai": "4.0.41",
+    "@ai-sdk/openai-compatible": "3.0.30",
+    "@camstack/system": "*",
+    "ai": "7.0.65",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  }
+}

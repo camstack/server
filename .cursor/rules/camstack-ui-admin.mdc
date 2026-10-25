@@ -1,0 +1,20 @@
+---
+description: CamStack admin UI / ui-library / addon page rules (AdminPage, AdminTabs, IntegrationHub, DataTable, Dialog, theme tokens)
+globs: packages/addon-admin-ui/src/**, packages/ui-library/src/**, packages/addon-agent-ui/src/**, packages/addon-pipeline-orchestrator/src/widgets/**, packages/addon-pipeline/src/stream-broker/widgets/**, packages/addon-post-analysis/src/pipeline-analytics/widgets/**, packages/addon-benchmark/src/**, packages/addon-model-studio/src/**, packages/addon-osd-manager/src/**, packages/addon-training/src/**, packages/addon-*/src/**/*.tsx
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The rules live in the skills below and in docs/ui/. -->
+
+**UI work** (admin-ui, ui-library, an addon page or widget, the viewer): load the `camstack-ui` skill first — `.claude/skills/camstack-ui/SKILL.md` — then `camstack-ui-admin` or `camstack-ui-viewer`. Claude Code and Cursor list them as skills; any other agent reads them as files.
+
+- Search before building: `npm run ui:find -- "<need>"`, `npm run ui:show -- <Name>`, `npm run ui:tokens`.
+- Library components and theme tokens only: no hex, no palette classes (`bg-red-500`), no colour or spacing in `style=`.
+- Rules: `docs/ui/README.md` (conventions, need → component, admin patterns, viewer, anti-patterns).
+- Done = the skill’s done-gate: `npm run ui:check -- <files>` with 0 new findings, plus `npm run ui:shots` before/after (dark + light, desktop 1440×900 + phone 390×844).
+- After `ui:shots`: **Read the PNG files** under `scratchpad/ui-shots/<label>/` (Cursor `Read` accepts images) so before/after appear in the transcript — do not stop at `report.md` alone. Any agent / harness, not only Claude Code.
+- Viewer layout changes are co-designed with the operator: ask first.
+
+Read these before the first edit (Cursor also offers them as Agent Skills):
+
+- @.claude/skills/camstack-ui/SKILL.md
+- @.claude/skills/camstack-ui-admin/SKILL.md

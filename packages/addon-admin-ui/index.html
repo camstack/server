@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>CamStack Admin</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#f59e42" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <!--
+      Theme before first paint. The ThemeProvider sets `.dark` / `.light` only
+      once React runs; until then the tokens followed the OS preference, so a
+      dark-theme operator on a light OS saw a WHITE page (boot splash included)
+      on every cold load. Same key and default as the ThemeProvider.
+    -->
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem('camstack-theme-mode')
+          if (mode === 'system') {
+            mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+          }
+          document.documentElement.classList.add(mode === 'light' ? 'light' : 'dark')
+        } catch (e) {
+          document.documentElement.classList.add('dark')
+        }
+      })()
+    </script>
+    <!--
+      Stale-deploy self-heal. The admin UI is a PWA: a service worker can keep
+      serving a previous build's shell after a redeploy, whose code-split /
+      Module Federation chunks no longer exist on the server. A stale chunk then
+      loads as the SPA shell (text/html) or 404s, the module loader rejects, and
+      React/MF never mount -> blank page. This classic <script> runs BEFORE the
+      deferred module entry so the handlers are armed ahead of the first dynamic
+      import. On a chunk-load failure it drops the service worker + caches and
+      reloads once -- a programmatic reload (no user gesture), so it also
+      recovers inside in-app webviews like the Alexa account-linking flow where
+      a manual refresh isn't possible. Time-windowed so a genuinely broken build
+      can't loop. Kept inline so it is always part of the always-fresh shell and
+      needs no extra request that could itself be stale.
+    -->
+    <script>
+      (function () {
+        var KEY = 'camstack:stale-chunk-reloads'
+        var WINDOW_MS = 60000
+        var MAX_RELOADS = 2
+        function isStaleChunkError(message) {
+          return (
+            !!message &&
+            /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|module script.*MIME|Unable to preload/i.test(
+              message,
+            )
+          )
+        }
+        /** Host Vite assets only — addon MF (`/api/addon-pages/`) shows an inline error without reload. */
+        function isHostChunkUrl(url) {
+          if (!url || typeof url !== 'string') return true
+          if (/\/api\/addon-pages\//i.test(url)) return false
+          if (/remoteEntry\.js/i.test(url)) return false
+          return true
+        }
+        function messageMentionsAddonRemote(message) {
+          return !!message && /\/api\/addon-pages\/|remoteEntry\.js/i.test(message)
+        }
+        function recentReloads() {
+          try {
+            var now = Date.now()
+            return JSON.parse(sessionStorage.getItem(KEY) || '[]').filter(function (t) {
+              return now - t < WINDOW_MS
+            })
+          } catch (e) {
+            return []
+          }
+        }
+        function recover() {
+          var recent = recentReloads()
+          if (recent.length >= MAX_RELOADS) return
+          recent.push(Date.now())
+          try {
+            sessionStorage.setItem(KEY, JSON.stringify(recent))
+          } catch (e) {}
+          var reload = function () {
+            window.location.reload()
+          }
+          var jobs = []
+          try {
+            if ('serviceWorker' in navigator) {
+              jobs.push(
+                navigator.serviceWorker.getRegistrations().then(function (regs) {
+                  return Promise.all(
+                    regs.map(function (r) {
+                      return r.unregister()
+                    }),
+                  )
+                }),
+              )
+            }
+            if (window.caches && caches.keys) {
+              jobs.push(
+                caches.keys().then(function (keys) {
+                  return Promise.all(
+                    keys.map(function (k) {
+                      return caches.delete(k)
+                    }),
+                  )
+                }),
+              )
+            }
+          } catch (e) {}
+          Promise.all(jobs).then(reload, reload)
+        }
+        window.addEventListener('vite:preloadError', function (e) {
+          if (e && e.preventDefault) e.preventDefault()
+          var payload = e && e.payload
+          var url = payload && (payload.url || payload.href || '')
+          if (!isHostChunkUrl(url)) return
+          recover()
+        })
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason
+          var msg = typeof r === 'string' ? r : (r && r.message) || ''
+          if (!isStaleChunkError(msg) || messageMentionsAddonRemote(msg)) return
+          recover()
+        })
+        window.addEventListener('error', function (e) {
+          var msg = (e && e.message) || ''
+          var src = (e && e.filename) || ''
+          if (!isStaleChunkError(msg)) return
+          if (!isHostChunkUrl(src) || messageMentionsAddonRemote(msg)) return
+          recover()
+        })
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Lock the app shell at 1x zoom. iOS Safari ignores `user-scalable=no`
+         in the viewport meta, so block the pinch/double-tap zoom gestures
+         directly. App-internal zoomable surfaces (maps, canvases) handle
+         their own gestures and aren't affected. -->
+    <script>
+      (function () {
+        document.addEventListener('gesturestart', function (e) { e.preventDefault() }, { passive: false })
+        document.addEventListener('gesturechange', function (e) { e.preventDefault() }, { passive: false })
+        var lastTouchEnd = 0
+        document.addEventListener('touchend', function (e) {
+          var now = Date.now()
+          if (now - lastTouchEnd <= 300) e.preventDefault()
+          lastTouchEnd = now
+        }, { passive: false })
+      })()
+    </script>
+    <script type="module" src="./src/main.tsx"></script>
+  </body>
+</html>

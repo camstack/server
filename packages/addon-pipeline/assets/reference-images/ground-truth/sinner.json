@@ -1,0 +1,73 @@
+{
+  "image": "sinner.jpg",
+  "width": 1920,
+  "height": 1080,
+  "generatedAt": "2026-04-11T07:13:40.281Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.948,
+      "bbox": {
+        "x": 437.8,
+        "y": 11.2,
+        "width": 1194.4,
+        "height": 1057.6
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d2"
+        }
+      ]
+    },
+    {
+      "id": "d3",
+      "kind": "first-level",
+      "macroClass": "tennis racket",
+      "score": 0.894,
+      "bbox": {
+        "x": 124.3,
+        "y": 452.8,
+        "width": 474.59999999999997,
+        "height": 202.49999999999994
+      },
+      "labels": []
+    },
+    {
+      "id": "d4",
+      "kind": "first-level",
+      "macroClass": "sports ball",
+      "score": 0.755,
+      "bbox": {
+        "x": 178.2,
+        "y": 533.1,
+        "width": 53.30000000000001,
+        "height": 53.19999999999993
+      },
+      "labels": []
+    },
+    {
+      "id": "d2",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.852,
+      "bbox": {
+        "x": 971.9000000000001,
+        "y": 83.10000000000001,
+        "width": 104.5,
+        "height": 126.39999999999999
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d1"
+    }
+  ]
+}

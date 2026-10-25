@@ -1,0 +1,85 @@
+{
+  "image": "1-car-plate.jpg",
+  "width": 1280,
+  "height": 853,
+  "generatedAt": "2026-04-11T07:13:39.511Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "vehicle",
+      "score": 0.766,
+      "bbox": {
+        "x": 171.2,
+        "y": 191.6,
+        "width": 942.5999999999999,
+        "height": 607.5
+      },
+      "labels": [
+        {
+          "label": "DFB0202BB",
+          "score": 0.889,
+          "detectionId": "d2"
+        }
+      ]
+    },
+    {
+      "id": "d3",
+      "kind": "first-level",
+      "macroClass": "vehicle",
+      "score": 0.511,
+      "bbox": {
+        "x": 176.2,
+        "y": 193,
+        "width": 937.5999999999999,
+        "height": 608.5
+      },
+      "labels": [
+        {
+          "label": "DFBP202BB",
+          "score": 0.882,
+          "detectionId": "d4"
+        }
+      ]
+    },
+    {
+      "id": "d2",
+      "kind": "detail",
+      "macroClass": "plate",
+      "score": 0.968,
+      "bbox": {
+        "x": 302.6,
+        "y": 572.5,
+        "width": 186.59999999999997,
+        "height": 61.10000000000002
+      },
+      "labels": [
+        {
+          "label": "DFB0202BB",
+          "score": 0.889
+        }
+      ],
+      "parentId": "d1"
+    },
+    {
+      "id": "d4",
+      "kind": "detail",
+      "macroClass": "plate",
+      "score": 0.959,
+      "bbox": {
+        "x": 302.29999999999995,
+        "y": 572.8,
+        "width": 187.50000000000006,
+        "height": 62.60000000000002
+      },
+      "labels": [
+        {
+          "label": "DFBP202BB",
+          "score": 0.882
+        }
+      ],
+      "parentId": "d3"
+    }
+  ]
+}

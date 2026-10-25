@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@camstack/sdk": ["./packages/sdk/src/index.ts"],
+      "@camstack/sdk/*": ["./packages/sdk/src/*"],
+      "@camstack/addon-stream-broker": ["./packages/addon-stream-broker/src/index.ts"],
+      "@camstack/addon-stream-broker/*": ["./packages/addon-stream-broker/src/*"],
+      "@camstack/ui-library": ["./packages/ui-library/src/index.ts"],
+      "@camstack/ui-library/*": ["./packages/ui-library/src/*"],
+      "@camstack/types": ["./packages/types/src/index.ts"],
+      "@camstack/types/*": ["./packages/types/src/*"],
+      "@camstack/addon-motion-detection": ["./packages/addon-motion-detection/src/index.ts"],
+      "@camstack/addon-motion-detection/*": ["./packages/addon-motion-detection/src/*"],
+      "@camstack/addon-embedding-encoder": ["./packages/addon-embedding-encoder/src/index.ts"],
+      "@camstack/addon-embedding-encoder/*": ["./packages/addon-embedding-encoder/src/*"],
+      "@camstack/addon-analytics-suite": ["./packages/addon-analytics-suite/src/index.ts"],
+      "@camstack/addon-analytics-suite/*": ["./packages/addon-analytics-suite/src/*"],
+      "@camstack/addon-benchmark": ["./packages/addon-benchmark/src/index.ts"],
+      "@camstack/addon-benchmark/*": ["./packages/addon-benchmark/src/*"],
+      "@camstack/addon-webrtc-session": ["./packages/addon-stream-broker/src/webrtc/session.ts"],
+      "@camstack/addon-provider-onvif": ["./packages/addon-provider-onvif/src/index.ts"],
+      "@camstack/addon-provider-onvif/*": ["./packages/addon-provider-onvif/src/*"],
+      "@camstack/addon-provider-rtsp": ["./packages/addon-provider-rtsp/src/index.ts"],
+      "@camstack/addon-provider-rtsp/*": ["./packages/addon-provider-rtsp/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "**/dist"]
+}

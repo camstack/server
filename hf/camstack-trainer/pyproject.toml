@@ -1,0 +1,50 @@
+# Tracked in camstack/server as hf/camstack-trainer/; edit it there, not on the Hub.
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "camstack-train"
+version = "0.1.0"
+description = "CamStack detector trainer: fine-tunes the YOLOv9 root on a hub's annotated export"
+readme = "README.md"
+license = "AGPL-3.0-only"
+requires-python = ">=3.10"
+# The light core: spec, dataset conversion, split, floors, manifest and the
+# vendored evaluation harness. Enough to run the unit tests.
+dependencies = [
+  "numpy==2.5.1",
+  "pillow==12.3.0",
+  "pydantic==2.13.4",
+  "onnxruntime==1.27.0",
+]
+
+[project.optional-dependencies]
+# torch comes from the base image (pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime);
+# it is deliberately NOT pinned here so pip never replaces the CUDA build.
+train = [
+  "ultralytics==8.4.98",
+]
+export = [
+  "onnx==1.22.0",
+  "onnxslim==0.1.94",
+  "openvino==2026.2.1",
+  "nncf==3.2.0",
+  "coremltools==9.0",
+]
+test = [
+  "pytest==9.1.1",
+]
+
+[project.scripts]
+camstack-train = "camstack_train.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["camstack_train*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"*" = ["*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,507 @@
+{
+  "_about": {
+    "method": "Crops a classifier really receives: tight native-resolution crops of animal / vehicle tracks (keyFrame + the track box at that instant; 219 animal, 233 vehicle crops, 28 cameras, last 10 days), plus 224 pseudo-GT crops from the 409-frame set. Pseudo-label = agreement of two large zero-shot models (SigLIP SO400M-384 and CLIP ViT-H-14 DFN5B) over the step vocabulary plus \"not an animal / not a vehicle\" prompts; crops where they disagree are excluded. Spot-checked by eye (contact sheets). precision = correct labels / labels emitted (a label on a non-animal / non-vehicle crop counts as wrong); recall = correct labels / crops with an in-vocabulary reference label.",
+    "howApplied": "animal-classifier and vehicle-classifier run their own model only when the root does not declare the labels (D736). With every COCO root in the catalog (YOLOv9, YOLO26, SSD) the label comes from the root (rootSupplied below): its score is the detection score and NO step floor is applied to it today (linked-label.ts / root-supply.ts) - only the macro floor gates it. rootSupplied.animal.floor is a proposed sub-label floor: below it the detection should keep the plain \"animal\" label.",
+    "caveat": "Animal data is dominated by one household dog (white curly coat, ~80% of animal crops) - animal numbers say how the models behave on such dogs, not on wildlife. Vehicle data is ~90% cars. Small sample: treat floors as +/-0.05-0.10."
+  },
+  "animal-classifier": {
+    "step": "animal-classifier",
+    "currentDefault": 0.5,
+    "animal": {
+      "floor": 0.8,
+      "precision": 0.681,
+      "recall": 0.196,
+      "atCurrentDefault": {
+        "floor": 0.5,
+        "precision": 0.543,
+        "recall": 0.46
+      },
+      "reliable": false,
+      "note": "No floor makes it usable on this set: precision 0.54 at 0.5 and <=0.71 at any floor. Main errors: a white curly dog called sheep/cat at high confidence, and species labels on people/objects that the root called animal (the model has no reject class). 0.80 is the least-bad floor; prefer a root that names animals itself."
+    },
+    "gtCropCheck": {
+      "crops": 88,
+      "accuracyNoFloor": 0.32,
+      "atFloor0.8": {
+        "precision": 0.32,
+        "recall": 0.1
+      }
+    }
+  },
+  "vehicle-type-v1": {
+    "step": "vehicle-classifier",
+    "currentDefault": 0.5,
+    "vehicle": {
+      "floor": 0.6,
+      "precision": 0.912,
+      "recall": 0.846,
+      "atCurrentDefault": {
+        "floor": 0.5,
+        "precision": 0.877,
+        "recall": 0.877
+      },
+      "reliable": true,
+      "note": "Precision crosses 0.90 at 0.60 (0.93 at 0.65, 0.97 at 0.80). Errors: Car->Motorcycle on partial/occluded cars, and Car/Bicycle labels on non-vehicle crops (garden furniture, chair legs, on-screen text) that the root called vehicle."
+    },
+    "gtCropCheck": {
+      "crops": 112,
+      "atFloor0.6": {
+        "precision": 0.91,
+        "recall": 0.65
+      },
+      "atFloor0.5": {
+        "precision": 0.87,
+        "recall": 0.73
+      }
+    }
+  },
+  "yunet-2023mar": {
+    "step": "face-detection",
+    "currentDefault": 0.85,
+    "face": {
+      "floor": 0.7,
+      "precision": 1.0,
+      "recall": 0.828,
+      "atCurrentDefault": {
+        "floor": 0.85,
+        "precision": 1.0,
+        "recall": 0.534
+      },
+      "gt": 58,
+      "crops": 131,
+      "note": "Native person crops of 131 person tracks; reference = SCRFD-10G and RetinaFace-R50 agreement. 0.85 drops ~40% of clear frontal faces; below 0.65 false faces appear (hair/back of head, pillows, leaves). Spot-checked. If 0.85 was chosen for embedding quality rather than detection precision, keep it for face-embedding and gate detection at 0.70."
+    }
+  },
+  "yolox-tiny-plate": {
+    "step": "plate-detection",
+    "currentDefault": 0.5,
+    "plate": {
+      "floor": null,
+      "note": "Not measured: no independent plate reference, and too few readable plates in this set. Keep 0.5."
+    }
+  },
+  "rootSupplied": {
+    "_about": "Sub-label (species / vehicle type) taken from the root detection (COCO class). floor = proposed minimum detection score for the sub-label (lowest score from which accuracy stays ~>=0.90); null vehicle floor = the macro floor is enough. Models not listed: same pattern - 640 roots ~0.89-0.90 animal accuracy at the macro floor, 320 roots ~0.74.",
+    "yolov9m-320-int8": {
+      "animal": {
+        "floor": 0.75,
+        "accuracyAtMacroFloor": 0.741,
+        "labelledAtMacroFloor": 54,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 66,
+            "correct": 48,
+            "accuracy": 0.727
+          },
+          "0.4": {
+            "labelled": 58,
+            "correct": 44,
+            "accuracy": 0.759
+          },
+          "0.5": {
+            "labelled": 54,
+            "correct": 40,
+            "accuracy": 0.741
+          },
+          "0.55": {
+            "labelled": 42,
+            "correct": 35,
+            "accuracy": 0.833
+          },
+          "0.6": {
+            "labelled": 40,
+            "correct": 34,
+            "accuracy": 0.85
+          },
+          "0.65": {
+            "labelled": 33,
+            "correct": 28,
+            "accuracy": 0.848
+          },
+          "0.7": {
+            "labelled": 28,
+            "correct": 24,
+            "accuracy": 0.857
+          },
+          "0.75": {
+            "labelled": 18,
+            "correct": 16,
+            "accuracy": 0.889
+          },
+          "0.8": {
+            "labelled": 11,
+            "correct": 11,
+            "accuracy": 1.0
+          }
+        }
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 0.988,
+        "labelledAtMacroFloor": 81,
+        "note": "no extra floor needed"
+      }
+    },
+    "yolov9m-640-int8": {
+      "animal": {
+        "floor": 0.7,
+        "accuracyAtMacroFloor": 0.893,
+        "labelledAtMacroFloor": 75,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 80,
+            "correct": 71,
+            "accuracy": 0.887
+          },
+          "0.4": {
+            "labelled": 78,
+            "correct": 69,
+            "accuracy": 0.885
+          },
+          "0.5": {
+            "labelled": 75,
+            "correct": 67,
+            "accuracy": 0.893
+          },
+          "0.55": {
+            "labelled": 74,
+            "correct": 66,
+            "accuracy": 0.892
+          },
+          "0.6": {
+            "labelled": 70,
+            "correct": 62,
+            "accuracy": 0.886
+          },
+          "0.65": {
+            "labelled": 63,
+            "correct": 56,
+            "accuracy": 0.889
+          },
+          "0.7": {
+            "labelled": 57,
+            "correct": 52,
+            "accuracy": 0.912
+          },
+          "0.75": {
+            "labelled": 49,
+            "correct": 46,
+            "accuracy": 0.939
+          },
+          "0.8": {
+            "labelled": 43,
+            "correct": 40,
+            "accuracy": 0.93
+          }
+        }
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 0.989,
+        "labelledAtMacroFloor": 95,
+        "note": "no extra floor needed"
+      }
+    },
+    "yolov9c-640-int8": {
+      "animal": {
+        "floor": 0.75,
+        "accuracyAtMacroFloor": 0.817,
+        "labelledAtMacroFloor": 71,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 78,
+            "correct": 63,
+            "accuracy": 0.808
+          },
+          "0.4": {
+            "labelled": 76,
+            "correct": 62,
+            "accuracy": 0.816
+          },
+          "0.5": {
+            "labelled": 71,
+            "correct": 58,
+            "accuracy": 0.817
+          },
+          "0.55": {
+            "labelled": 64,
+            "correct": 54,
+            "accuracy": 0.844
+          },
+          "0.6": {
+            "labelled": 61,
+            "correct": 52,
+            "accuracy": 0.852
+          },
+          "0.65": {
+            "labelled": 58,
+            "correct": 49,
+            "accuracy": 0.845
+          },
+          "0.7": {
+            "labelled": 52,
+            "correct": 46,
+            "accuracy": 0.885
+          },
+          "0.75": {
+            "labelled": 42,
+            "correct": 38,
+            "accuracy": 0.905
+          },
+          "0.8": {
+            "labelled": 31,
+            "correct": 30,
+            "accuracy": 0.968
+          }
+        }
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 1.0,
+        "labelledAtMacroFloor": 96,
+        "note": "no extra floor needed"
+      }
+    },
+    "yolo26s": {
+      "animal": {
+        "floor": 0.45,
+        "accuracyAtMacroFloor": 0.9,
+        "labelledAtMacroFloor": 70,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 82,
+            "correct": 71,
+            "accuracy": 0.866
+          },
+          "0.4": {
+            "labelled": 78,
+            "correct": 70,
+            "accuracy": 0.897
+          },
+          "0.5": {
+            "labelled": 70,
+            "correct": 63,
+            "accuracy": 0.9
+          },
+          "0.55": {
+            "labelled": 65,
+            "correct": 61,
+            "accuracy": 0.938
+          },
+          "0.6": {
+            "labelled": 60,
+            "correct": 56,
+            "accuracy": 0.933
+          },
+          "0.65": {
+            "labelled": 49,
+            "correct": 46,
+            "accuracy": 0.939
+          },
+          "0.7": {
+            "labelled": 43,
+            "correct": 41,
+            "accuracy": 0.953
+          },
+          "0.75": {
+            "labelled": 34,
+            "correct": 33,
+            "accuracy": 0.971
+          },
+          "0.8": {
+            "labelled": 25,
+            "correct": 24,
+            "accuracy": 0.96
+          }
+        }
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 0.989,
+        "labelledAtMacroFloor": 89,
+        "note": "no extra floor needed"
+      }
+    },
+    "yolo26m": {
+      "animal": {
+        "floor": 0.7,
+        "accuracyAtMacroFloor": 0.842,
+        "labelledAtMacroFloor": 76,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 87,
+            "correct": 72,
+            "accuracy": 0.828
+          },
+          "0.4": {
+            "labelled": 85,
+            "correct": 70,
+            "accuracy": 0.824
+          },
+          "0.5": {
+            "labelled": 76,
+            "correct": 64,
+            "accuracy": 0.842
+          },
+          "0.55": {
+            "labelled": 75,
+            "correct": 63,
+            "accuracy": 0.84
+          },
+          "0.6": {
+            "labelled": 70,
+            "correct": 60,
+            "accuracy": 0.857
+          },
+          "0.65": {
+            "labelled": 67,
+            "correct": 58,
+            "accuracy": 0.866
+          },
+          "0.7": {
+            "labelled": 56,
+            "correct": 51,
+            "accuracy": 0.911
+          },
+          "0.75": {
+            "labelled": 48,
+            "correct": 44,
+            "accuracy": 0.917
+          },
+          "0.8": {
+            "labelled": 40,
+            "correct": 37,
+            "accuracy": 0.925
+          }
+        }
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 1.0,
+        "labelledAtMacroFloor": 91,
+        "note": "no extra floor needed"
+      }
+    },
+    "yolo26s-int8": {
+      "animal": {
+        "floor": 0.55,
+        "accuracyAtMacroFloor": 0.846,
+        "labelledAtMacroFloor": 52,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 73,
+            "correct": 60,
+            "accuracy": 0.822
+          },
+          "0.4": {
+            "labelled": 59,
+            "correct": 51,
+            "accuracy": 0.864
+          },
+          "0.5": {
+            "labelled": 51,
+            "correct": 43,
+            "accuracy": 0.843
+          },
+          "0.55": {
+            "labelled": 44,
+            "correct": 40,
+            "accuracy": 0.909
+          },
+          "0.6": {
+            "labelled": 39,
+            "correct": 36,
+            "accuracy": 0.923
+          },
+          "0.65": {
+            "labelled": 33,
+            "correct": 30,
+            "accuracy": 0.909
+          },
+          "0.7": {
+            "labelled": 27,
+            "correct": 25,
+            "accuracy": 0.926
+          },
+          "0.75": {
+            "labelled": 18,
+            "correct": 17,
+            "accuracy": 0.944
+          },
+          "0.8": {
+            "labelled": 14,
+            "correct": 13,
+            "accuracy": 0.929
+          }
+        }
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 0.989,
+        "labelledAtMacroFloor": 88,
+        "note": "no extra floor needed"
+      }
+    },
+    "ssd-mobilenet-v2-coco-edgetpu": {
+      "animal": {
+        "floor": null,
+        "accuracyAtMacroFloor": 0.25,
+        "labelledAtMacroFloor": 4,
+        "curveByDetectionScore": {
+          "0.3": {
+            "labelled": 7,
+            "correct": 3,
+            "accuracy": 0.429
+          },
+          "0.4": {
+            "labelled": 5,
+            "correct": 2,
+            "accuracy": 0.4
+          },
+          "0.5": {
+            "labelled": 4,
+            "correct": 1,
+            "accuracy": 0.25
+          },
+          "0.55": {
+            "labelled": 4,
+            "correct": 1,
+            "accuracy": 0.25
+          },
+          "0.6": {
+            "labelled": 1,
+            "correct": 0,
+            "accuracy": 0.0
+          },
+          "0.65": {
+            "labelled": 1,
+            "correct": 0,
+            "accuracy": 0.0
+          },
+          "0.7": {
+            "labelled": 1,
+            "correct": 0,
+            "accuracy": 0.0
+          },
+          "0.75": {
+            "labelled": 0,
+            "correct": 0,
+            "accuracy": 0.0
+          },
+          "0.8": {
+            "labelled": 0,
+            "correct": 0,
+            "accuracy": 0.0
+          }
+        },
+        "note": "sub-labels wrong 3 of 4 times: do not take animal species from this root"
+      },
+      "vehicle": {
+        "floor": null,
+        "accuracyAtMacroFloor": 1.0,
+        "labelledAtMacroFloor": 34,
+        "note": "no extra floor needed"
+      }
+    }
+  }
+}

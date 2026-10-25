@@ -1,0 +1,131 @@
+{
+  "name": "@camstack/addon-auth",
+  "version": "1.2.167",
+  "description": "Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "auth",
+    "oidc",
+    "sso",
+    "webauthn",
+    "passkey"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/oidc/auth-oidc.addon.js",
+  "exports": {
+    "./oidc": {
+      "import": "./dist/oidc/auth-oidc.addon.mjs",
+      "require": "./dist/oidc/auth-oidc.addon.js"
+    },
+    "./webauthn": {
+      "import": "./dist/webauthn/auth-webauthn.addon.mjs",
+      "require": "./dist/webauthn/auth-webauthn.addon.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "camstack": {
+    "displayName": "Authentication",
+    "bundle": {
+      "displayName": "Authentication",
+      "description": "OIDC SSO and WebAuthn/passkey login providers."
+    },
+    "addons": [
+      {
+        "id": "auth-oidc",
+        "execution": {
+          "group": "auth"
+        },
+        "category": "system",
+        "name": "OpenID Connect",
+        "description": "Standards-compliant OIDC authentication. Configure issuer URL + client credentials to enable SSO via Google, Microsoft, Okta, Keycloak, etc. In-process on hub root — pure HTTP/JWT, no native deps.",
+        "entry": "./dist/oidc/auth-oidc.addon.js",
+        "icon": "assets/oidc/icon.svg",
+        "capabilities": [
+          {
+            "name": "auth-provider"
+          },
+          {
+            "name": "addon-routes"
+          },
+          {
+            "name": "login-method"
+          },
+          {
+            "name": "oidc-connections"
+          }
+        ],
+        "protected": true
+      },
+      {
+        "id": "auth-webauthn",
+        "execution": {
+          "group": "auth"
+        },
+        "category": "system",
+        "name": "Passkey",
+        "description": "Phishing-resistant passwordless 2FA via the WebAuthn standard. Users enroll a passkey (Touch ID, Windows Hello, YubiKey, …) and authenticate with the browser's native prompt — no codes to type.",
+        "entry": "./dist/webauthn/auth-webauthn.addon.js",
+        "icon": "assets/webauthn/icon.svg",
+        "capabilities": [
+          {
+            "name": "user-passkeys"
+          },
+          {
+            "name": "addon-widgets-source"
+          },
+          {
+            "name": "login-method"
+          }
+        ],
+        "protected": true
+      }
+    ]
+  },
+  "scripts": {
+    "build": "vite build && vite build --config vite.widgets.config.ts",
+    "build:server": "vite build",
+    "build:widgets": "vite build --config vite.widgets.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "validate": "tsx ../../scripts/validate-addon.ts .",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "11.0.0",
+    "@simplewebauthn/server": "11.0.0",
+    "@simplewebauthn/types": "11.0.0",
+    "jose": "^6.2.3"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/vite": "^1.16.9",
+    "@tanstack/react-query": "^5.90.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "lucide-react": "^0.576.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  }
+}

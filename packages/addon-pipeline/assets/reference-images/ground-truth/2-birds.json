@@ -1,0 +1,35 @@
+{
+  "image": "2-birds.jpg",
+  "width": 1280,
+  "height": 856,
+  "generatedAt": "2026-04-11T07:13:39.535Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.892,
+      "bbox": {
+        "x": 0.9,
+        "y": 269.9,
+        "width": 751.3000000000001,
+        "height": 572.5
+      },
+      "labels": []
+    },
+    {
+      "id": "d2",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.649,
+      "bbox": {
+        "x": 568.8,
+        "y": 318,
+        "width": 456.20000000000005,
+        "height": 530
+      },
+      "labels": []
+    }
+  ]
+}

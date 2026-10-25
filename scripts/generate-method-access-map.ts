@@ -1,0 +1,198 @@
+#!/usr/bin/env tsx
+/**
+ * Codegen: emit a constant `METHOD_ACCESS_MAP` that maps every
+ * tRPC path (e.g. `'backup.list'`) to its canonical metadata —
+ *
+ *   {
+ *     capName:  string          // the .cap.ts `name`
+ *     addonId:  string | null   // owning addon (null for core)
+ *     access:   'view' | 'create' | 'delete'
+ *   }
+ *
+ * Powers the scope-gate in `protectedProcedure`. The middleware looks up
+ * the incoming `path` here, then checks the caller's scopes:
+ *
+ *   - find a scope whose `target` matches `capName` (`type: 'capability'`)
+ *     or `addonId` (`type: 'addon'`)
+ *   - assert `scope.access.includes(method.access)`
+ *
+ * Default `access` derivation (overridable on the cap method via
+ * `access: 'X'` in the method options):
+ *   - `kind: 'query'`    → `view`
+ *   - `kind: 'mutation'` → `create`
+ *   - name match `^(delete|remove|revoke|destroy|drop|purge|clear|reset|forget)` → `delete`
+ *
+ * An unmapped path at runtime is treated as FORBIDDEN — drift is a
+ * sec failure mode, not a soft warning.
+ */
+
+import * as fs from 'node:fs'
+import { writeIfChanged } from './codegen-write.ts'
+import * as path from 'node:path'
+import {
+  expandCapMethods,
+  type MethodRole,
+  resolveMethodAuth,
+  resolveMethodRole,
+} from '../packages/types/src/index.js'
+import type {
+  CapabilityDefinition,
+  CapabilityMethodAccess,
+  CapabilityMethodKind,
+  CapabilityMethodSchema,
+} from '../packages/types/src/capabilities/capability-definition.js'
+
+type CapScope = 'device' | 'system'
+
+const ROOT = path.resolve(import.meta.dirname ?? __dirname, '..')
+const CAPS_DIR = path.join(ROOT, 'packages/types/src/capabilities')
+const OUTPUT_FILE = path.join(ROOT, 'packages/types/src/generated/method-access-map.ts')
+
+const DESTRUCTIVE_RE =
+  /^(delete|remove|revoke|destroy|drop|purge|clear|reset|forget|uninstall|unlink|unregister|wipe)/i
+
+interface MethodEntry {
+  readonly path: string
+  readonly capName: string
+  readonly capScope: CapScope
+  readonly addonId: string | null
+  readonly access: CapabilityMethodAccess
+  readonly role: MethodRole
+}
+
+function kebabToCamel(str: string): string {
+  return str.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+}
+
+function deriveAccess(methodName: string, method: CapabilityMethodSchema): CapabilityMethodAccess {
+  if (method.access !== undefined) return method.access
+  if (DESTRUCTIVE_RE.test(methodName)) return 'delete'
+  const kind: CapabilityMethodKind = method.kind ?? 'query'
+  return kind === 'query' || kind === 'subscription' ? 'view' : 'create'
+}
+
+async function loadCaps(): Promise<MethodEntry[]> {
+  const files = fs.readdirSync(CAPS_DIR).filter((f) => f.endsWith('.cap.ts'))
+  const out: MethodEntry[] = []
+
+  for (const file of files) {
+    const filePath = path.join(CAPS_DIR, file)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const mod: Record<string, unknown> = await import(filePath)
+    const exportName = Object.keys(mod).find((k) => k.endsWith('Capability'))
+    if (!exportName) continue
+    const capDef = mod[exportName] as CapabilityDefinition
+    // tRPC router namespace matches the cap name in camelCase
+    // (`backup-destination` → `backupDestination`), mirroring
+    // `generate-cap-routers.ts`.
+    const routerKey = kebabToCamel(capDef.name)
+    const capScope: CapScope = capDef.scope === 'device' ? 'device' : 'system'
+    // The EFFECTIVE surface, not the declared one — the same expansion
+    // `generate-cap-routers.ts` uses to emit the routes. A cap with
+    // `exposesDeviceSettings` or a `status` schema gains `getStatus` and the
+    // three contribution methods, and those are real tRPC paths a browser can
+    // call. Reading `capDef.methods` here left 105 of them out of the map, and
+    // the middleware SKIPS the scope check for a path it cannot find
+    // (`trpc.middleware.ts`, `if (path in METHOD_ACCESS_MAP)`): 92 protected
+    // per-device reads were reachable by any authenticated non-admin, for any
+    // device, outside their grant. Measured 2026-09-21. `check-method-access-map-
+    // coverage.ts` now fails the build if this list and the routers disagree.
+    const methods = expandCapMethods(capDef) as Record<string, CapabilityMethodSchema>
+    for (const [methodName, m] of Object.entries(methods)) {
+      out.push({
+        path: `${routerKey}.${methodName}`,
+        capName: capDef.name,
+        capScope,
+        addonId: null,
+        access: deriveAccess(methodName, m),
+        role: resolveMethodRole({
+          capScope,
+          capRole: capDef.role,
+          methodRole: m.role,
+          auth: resolveMethodAuth(capDef, m),
+        }),
+      })
+    }
+  }
+  out.sort((a, b) => a.path.localeCompare(b.path))
+  return out
+}
+
+function quote(s: string | null): string {
+  return s === null ? 'null' : JSON.stringify(s)
+}
+
+async function main(): Promise<void> {
+  const entries = await loadCaps()
+
+  const banner = `/**
+ * AUTO-GENERATED by scripts/generate-method-access-map.ts — DO NOT EDIT.
+ *
+ * Maps every tRPC method path (\`<cap>.<method>\`) to the canonical
+ * access flavour, cap name, and owning addon. Drives the per-method
+ * scope+access check inside \`protectedProcedure\` (see
+ * \`server/backend/src/api/trpc/trpc.middleware.ts\`).
+ *
+ * Coverage: ${entries.length} method paths across ${new Set(entries.map((e) => e.capName)).size} capabilities.
+ */
+/* eslint-disable */
+`
+
+  const deviceCaps = [
+    ...new Set(entries.filter((e) => e.capScope === 'device').map((e) => e.capName)),
+  ].sort()
+  const systemCaps = [
+    ...new Set(entries.filter((e) => e.capScope === 'system').map((e) => e.capName)),
+  ].sort()
+
+  const body = `import type { MethodRole } from '../auth/viewer-access.js'
+import type { CapabilityMethodAccess } from '../capabilities/capability-definition.js'
+
+export interface MethodAccessRecord {
+  readonly capName: string
+  readonly capScope: 'device' | 'system'
+  readonly addonId: string | null
+  readonly access: CapabilityMethodAccess
+  /** What the method is for a viewer (D921): \`public\`, \`viewer\`, \`admin\` or \`feature:<id>\`. */
+  readonly role: MethodRole
+}
+
+export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = Object.freeze({
+${entries
+  .map(
+    (e) =>
+      `  '${e.path}': { capName: ${quote(e.capName)}, capScope: ${quote(e.capScope)}, addonId: ${quote(e.addonId)}, access: ${quote(e.access)}, role: ${quote(e.role)} } as const,`,
+  )
+  .join('\n')}
+} as const)
+
+/** Set of all known cap names — handy for the scope picker. */
+export const KNOWN_CAP_NAMES: readonly string[] = [
+${[...new Set(entries.map((e) => e.capName))]
+  .sort()
+  .map((n) => `  ${quote(n)},`)
+  .join('\n')}
+] as const
+
+/** Every cap declared as \`scope: 'device'\` — drives the \`category:device\` matcher. */
+export const DEVICE_CAP_NAMES: readonly string[] = [
+${deviceCaps.map((n) => `  ${quote(n)},`).join('\n')}
+] as const
+
+/** Every cap declared as \`scope: 'system'\` — drives the \`category:system\` matcher. */
+export const SYSTEM_CAP_NAMES: readonly string[] = [
+${systemCaps.map((n) => `  ${quote(n)},`).join('\n')}
+] as const
+`
+
+  const content = banner + body
+  fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true })
+  writeIfChanged(OUTPUT_FILE, content)
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${entries.length} method paths → ${path.relative(ROOT, OUTPUT_FILE)}`)
+}
+
+void main().catch((err: unknown) => {
+  console.error(err)
+  process.exit(1)
+})

@@ -1,0 +1,19 @@
+// Guard: ban re-declaring interfaces that already live in @camstack/types.
+// Ported from the old eslint no-restricted-syntax selector
+//   TSInterfaceDeclaration[id.name=/^(Logger|LoggerLike|ElementConfigStore
+//     |IWebRtcProvider|DetectionEvent|StreamOption|StreamInfo)$/]
+// NOTE: Biome GritQL regexes are fully anchored (^...$) and reject capture
+// groups "(a|b)", so each exact name is a separate anchored alternative under or{}.
+// Scope (biome.json overrides): packages/core/src + packages/addon-*/src + server/backend/src.
+TsInterfaceDeclaration(id=$name) where {
+  or {
+    $name <: r"Logger",
+    $name <: r"LoggerLike",
+    $name <: r"ElementConfigStore",
+    $name <: r"IWebRtcProvider",
+    $name <: r"DetectionEvent",
+    $name <: r"StreamOption",
+    $name <: r"StreamInfo"
+  },
+  register_diagnostic(span=$name, message="This interface exists in @camstack/types. Import it instead of redefining it.")
+}

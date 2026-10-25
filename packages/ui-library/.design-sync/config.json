@@ -1,0 +1,15 @@
+{
+  "pkg": "@camstack/ui-library",
+  "globalName": "CamstackUI",
+  "shape": "package",
+  "projectId": "8a1583ff-a118-4193-b711-aebf37282de4",
+  "buildCmd": "vite build",
+  "cssEntry": ".design-sync/.cache/compiled.css",
+  "libOverrides": {
+    "bundle.mjs": "minify:true to fit 5MB upload limit (5.4MB->2.4MB); + drop the scheduler stub so react-konva's react-reconciler bundles real scheduler (DS legitimately uses scheduler, not a react-dom leak)"
+  },
+  "dtsPropsFor": {
+    "FormField": "label: string; description?: string; error?: string; required?: boolean; children?: React.ReactNode; orientation?: \"vertical\" | \"horizontal\"; className?: string;"
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}

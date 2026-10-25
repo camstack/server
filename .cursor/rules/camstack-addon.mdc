@@ -1,0 +1,12 @@
+---
+description: CamStack addon authoring — manifest, vite entries, BaseAddon traps, forked vs in-process, device settings stores, camstack deploy
+globs: packages/addon-*/package.json, packages/addon-*/vite.config.ts, packages/*/src/**/*.addon.ts, packages/system/src/builtins/**
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**A new or changed addon or manifest entry; `camstack deploy`** → follow the `camstack-addon` skill — `.claude/skills/camstack-addon/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/addon-lifecycle.md`, `docs/architecture/addon-custom-actions.md`.
+
+- @.claude/skills/camstack-addon/SKILL.md

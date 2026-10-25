@@ -1,0 +1,9 @@
+{
+  "connection.s_credentials.title": "Tuya IoT cloud project",
+  "connection.s_credentials.description": "Create a project at iot.tuya.com, link your Smart Life / Tuya account to it, and paste its Access ID and Access Secret.",
+  "connection.s_credentials.accessId.label": "Access ID / Client ID",
+  "connection.s_credentials.accessSecret.label": "Access Secret / Client Secret",
+  "connection.s_region.title": "Region",
+  "connection.s_region.region.label": "Data-centre region",
+  "connection.s_region.discoveryTimeoutMs.label": "LAN discovery window (ms)"
+}

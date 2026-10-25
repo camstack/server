@@ -1,0 +1,12 @@
+{
+  "connection.s_identity.title": "Account",
+  "connection.s_identity.name.label": "Name",
+  "connection.s_connection.title": "Credentials",
+  "connection.s_connection.description": "Use the same email and password as the VeSync mobile app.",
+  "connection.s_connection.email.label": "Email",
+  "connection.s_connection.password.label": "Password",
+  "connection.s_connection.region.label": "Region",
+  "connection.s_connection.region.o_EU.label": "Europe",
+  "connection.s_connection.region.o_US.label": "United States",
+  "connection.s_connection.pollIntervalMs.label": "Poll interval (ms)"
+}

@@ -1,0 +1,12 @@
+---
+description: CamStack documentation — generated vs hand-written docs, ADRs, applies-to, docs:check, the public docs site
+globs: docs/**, .claude/skills/**, **/AGENTS.md
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**Finishing any work: what to document, ADRs, generated files** → follow the `camstack-docs` skill — `.claude/skills/camstack-docs/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/README.md`, `docs/decisions/conventions.md`.
+
+- @.claude/skills/camstack-docs/SKILL.md

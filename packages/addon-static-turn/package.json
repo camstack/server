@@ -1,0 +1,69 @@
+{
+  "name": "@camstack/addon-static-turn",
+  "version": "1.2.138",
+  "description": "Static / self-hosted (coturn) TURN provider for CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "turn",
+    "coturn",
+    "webrtc",
+    "relay"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Static / coturn TURN",
+    "addons": [
+      {
+        "id": "static-turn",
+        "category": "networking",
+        "name": "Static TURN (coturn / custom)",
+        "version": "1.0.0",
+        "entry": "./dist/static-turn.addon.js",
+        "execution": {
+          "placement": "hub-only",
+          "group": "net-access"
+        },
+        "capabilities": [
+          {
+            "name": "turn-provider"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#3B82F6"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11"
+  }
+}

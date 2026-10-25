@@ -1,0 +1,85 @@
+{
+  "name": "@camstack/addon-decoder-nodeav",
+  "version": "1.2.141",
+  "description": "Standalone in-process node-av decoder addon for CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "decoder",
+    "node-av",
+    "pipeline"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Decoder (node-av)",
+    "system": false,
+    "addons": [
+      {
+        "id": "decoder-nodeav",
+        "category": "pipeline",
+        "name": "Decoder (node-av)",
+        "version": "0.1.0",
+        "description": "The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap.",
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "rssBudgetMb": 1536
+        },
+        "capabilities": [
+          {
+            "name": "decoder",
+            "optional": true
+          },
+          {
+            "name": "audio-codec",
+            "optional": true
+          }
+        ],
+        "passive": true,
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "node-av": "^6.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  }
+}

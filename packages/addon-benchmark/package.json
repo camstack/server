@@ -1,0 +1,101 @@
+{
+  "name": "@camstack/addon-benchmark",
+  "version": "1.2.267",
+  "description": "Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "benchmark",
+    "detection",
+    "accuracy"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Benchmark",
+    "nativeDependencies": {},
+    "addons": [
+      {
+        "id": "benchmark",
+        "category": "system",
+        "name": "Benchmark",
+        "version": "0.1.0",
+        "protected": true,
+        "description": "Node benchmark, image and audio inspection",
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "hub-only",
+          "heapProfile": "heavy",
+          "group": "ml"
+        },
+        "capabilities": [
+          {
+            "name": "addon-pages-source"
+          }
+        ],
+        "pages": [
+          {
+            "id": "benchmark",
+            "label": "Benchmark",
+            "icon": "gauge",
+            "path": "/addon/benchmark",
+            "remoteName": "addon_benchmark_page",
+            "bundle": "remoteEntry.js"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#f59e0b"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "tsup --no-dts && vite build",
+    "build:server": "tsup",
+    "build:page": "vite build",
+    "dev": "tsup --watch",
+    "dev:page": "vite",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/vite": "^1.16.9",
+    "@tailwindcss/vite": "^4.2.0",
+    "@trpc/client": "^11.16.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "lucide-react": "^0.576.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "superjson": "^2.0.0",
+    "tailwindcss": "^4.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0",
+    "zod": "^4.3.6"
+  }
+}

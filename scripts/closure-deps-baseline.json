@@ -1,0 +1,7 @@
+{
+  "_comment": "Known-dead camstack.runtimeDependencies entries: names with no installable range in dependencies/peerDependencies, so stripBundledDeps drops them and npm installs nothing — the addon only works because vite inlined the library into dist. Ratchet for check-closure-shipped-deps.ts: fixing one (declare the range, or delete the dead entry) requires removing it here; adding a new one fails CI.",
+  "deadRuntimeDependencies": {
+    "@camstack/addon-provider-amcrest": ["onvif"],
+    "@camstack/addon-provider-hikvision": ["onvif"]
+  }
+}

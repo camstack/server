@@ -1,0 +1,4 @@
+# Verbatim ISAPI response bodies. Same reason as the clips fixtures next door:
+# in HTTP the CRLF is protocol, not formatting, and git normalised the first
+# batch on its way in — turning "real bytes" into "real bytes, edited".
+* -text

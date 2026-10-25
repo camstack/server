@@ -1,0 +1,334 @@
+{
+  "$defs": {
+    "Base": {
+      "additionalProperties": false,
+      "properties": {
+        "imgsz": {
+          "maximum": 2048,
+          "minimum": 64,
+          "title": "Imgsz",
+          "type": "integer"
+        },
+        "modelId": {
+          "minLength": 1,
+          "title": "Modelid",
+          "type": "string"
+        },
+        "weights": {
+          "pattern": "^[A-Za-z0-9._-]+\\.pt$",
+          "title": "Weights",
+          "type": "string"
+        }
+      },
+      "required": ["modelId", "weights", "imgsz"],
+      "title": "Base",
+      "type": "object"
+    },
+    "Baseline": {
+      "additionalProperties": false,
+      "properties": {
+        "floors": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Floors",
+          "type": "object"
+        },
+        "imgsz": {
+          "maximum": 2048,
+          "minimum": 64,
+          "title": "Imgsz",
+          "type": "integer"
+        },
+        "modelId": {
+          "minLength": 1,
+          "title": "Modelid",
+          "type": "string"
+        },
+        "onnxUrl": {
+          "pattern": "^https://",
+          "title": "Onnxurl",
+          "type": "string"
+        }
+      },
+      "required": ["modelId", "onnxUrl", "imgsz", "floors"],
+      "title": "Baseline",
+      "type": "object"
+    },
+    "Calibration": {
+      "additionalProperties": false,
+      "properties": {
+        "maxFrames": {
+          "maximum": 5000,
+          "minimum": 1,
+          "title": "Maxframes",
+          "type": "integer"
+        }
+      },
+      "required": ["maxFrames"],
+      "title": "Calibration",
+      "type": "object"
+    },
+    "Catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": ["id", "name"],
+      "title": "Catalog",
+      "type": "object"
+    },
+    "Dataset": {
+      "additionalProperties": false,
+      "properties": {
+        "annotationHash": {
+          "title": "Annotationhash",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "versionId": {
+          "minLength": 1,
+          "title": "Versionid",
+          "type": "string"
+        }
+      },
+      "required": ["versionId", "annotationHash", "sha256"],
+      "title": "Dataset",
+      "type": "object"
+    },
+    "Floors": {
+      "additionalProperties": false,
+      "properties": {
+        "clamp": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Clamp",
+          "type": "number"
+        },
+        "minSupport": {
+          "minimum": 0,
+          "title": "Minsupport",
+          "type": "integer"
+        }
+      },
+      "required": ["minSupport", "clamp"],
+      "title": "Floors",
+      "type": "object"
+    },
+    "Hyper": {
+      "additionalProperties": false,
+      "properties": {
+        "batch": {
+          "maximum": 512,
+          "minimum": 1,
+          "title": "Batch",
+          "type": "integer"
+        },
+        "epochs": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Epochs",
+          "type": "integer"
+        },
+        "freeze": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Freeze",
+          "type": "integer"
+        },
+        "lr0": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Lr0",
+          "type": "number"
+        },
+        "patience": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Patience",
+          "type": "integer"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        }
+      },
+      "required": ["epochs", "batch", "lr0", "freeze", "patience", "seed"],
+      "title": "Hyper",
+      "type": "object"
+    },
+    "Int8Gate": {
+      "additionalProperties": false,
+      "properties": {
+        "maxMap50Drop": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Maxmap50Drop",
+          "type": "number"
+        }
+      },
+      "required": ["maxMap50Drop"],
+      "title": "Int8Gate",
+      "type": "object"
+    },
+    "Replay": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "maximum": 20000,
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        },
+        "source": {
+          "const": "coco2017",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": ["source", "count"],
+      "title": "Replay",
+      "type": "object"
+    },
+    "Split": {
+      "additionalProperties": false,
+      "properties": {
+        "holdoutCameras": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Holdoutcameras",
+          "type": "array"
+        },
+        "holdoutLastDays": {
+          "maximum": 365,
+          "minimum": 0,
+          "title": "Holdoutlastdays",
+          "type": "integer"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        },
+        "valFraction": {
+          "maximum": 0.5,
+          "minimum": 0.0,
+          "title": "Valfraction",
+          "type": "number"
+        }
+      },
+      "required": ["holdoutCameras", "holdoutLastDays", "valFraction", "seed"],
+      "title": "Split",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "detector",
+          "title": "Kind",
+          "type": "string"
+        },
+        "step": {
+          "const": "object-detection",
+          "title": "Step",
+          "type": "string"
+        }
+      },
+      "required": ["kind", "step"],
+      "title": "Target",
+      "type": "object"
+    }
+  },
+  "$id": "camstack.training/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "base": {
+      "$ref": "#/$defs/Base"
+    },
+    "baseline": {
+      "$ref": "#/$defs/Baseline"
+    },
+    "calibration": {
+      "$ref": "#/$defs/Calibration"
+    },
+    "catalog": {
+      "$ref": "#/$defs/Catalog"
+    },
+    "dataset": {
+      "$ref": "#/$defs/Dataset"
+    },
+    "exports": {
+      "items": {
+        "enum": ["onnx", "openvino-fp16", "openvino-int8", "coreml-fp16"],
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Exports",
+      "type": "array"
+    },
+    "floors": {
+      "$ref": "#/$defs/Floors"
+    },
+    "hyper": {
+      "$ref": "#/$defs/Hyper"
+    },
+    "int8Gate": {
+      "$ref": "#/$defs/Int8Gate"
+    },
+    "jobKey": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9-]+$",
+      "title": "Jobkey",
+      "type": "string"
+    },
+    "replay": {
+      "$ref": "#/$defs/Replay"
+    },
+    "schema": {
+      "const": "camstack.training/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "split": {
+      "$ref": "#/$defs/Split"
+    },
+    "target": {
+      "$ref": "#/$defs/Target"
+    }
+  },
+  "required": [
+    "schema",
+    "jobKey",
+    "target",
+    "base",
+    "baseline",
+    "dataset",
+    "split",
+    "hyper",
+    "replay",
+    "exports",
+    "calibration",
+    "floors",
+    "int8Gate",
+    "catalog"
+  ],
+  "title": "JobSpec",
+  "type": "object"
+}

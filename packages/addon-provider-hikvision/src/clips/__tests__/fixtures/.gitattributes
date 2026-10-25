@@ -1,0 +1,9 @@
+# These are VERBATIM bytes off a camera — an SDP body, RTSP/ISAPI payloads and
+# a raw interleaved RTP capture. In RTSP and HTTP the CRLF is part of the
+# protocol, not formatting: a header block ends at `\r\n\r\n` and a parser that
+# only ever sees `\n` is being tested against something no camera sends.
+#
+# Git normalised them on the first commit (`CRLF will be replaced by LF the
+# next time Git touches it`), which silently turned "real bytes" into "real
+# bytes, edited". `-text` stops that for good.
+* -text

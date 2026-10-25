@@ -1,0 +1,86 @@
+{
+  "name": "@camstack/addon-terminal",
+  "version": "0.1.152",
+  "description": "Interactive terminal sessions (pty + xterm) as a CamStack addon",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "terminal",
+    "pty",
+    "xterm"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Terminal",
+    "addons": [
+      {
+        "id": "terminal",
+        "category": "system",
+        "name": "Terminal",
+        "version": "0.1.0",
+        "description": "Interactive terminal sessions on any cluster node. Operators explicitly create virtual-camera instances from administrator-configured profile templates.",
+        "entry": "./dist/index.js",
+        "python": {
+          "requirements": "./python/requirements.txt"
+        },
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "execution": {
+          "placement": "any-node"
+        },
+        "capabilities": [
+          {
+            "name": "terminal-session"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets",
+    "python"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "@xterm/addon-serialize": "^0.13.0",
+    "@xterm/headless": "^5.5.0",
+    "sharp": "^0.35.2"
+  },
+  "optionalDependencies": {
+    "node-pty": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6"
+  }
+}

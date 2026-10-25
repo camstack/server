@@ -1,0 +1,236 @@
+[
+  {
+    "id": "061fd8c6-c8df-4c04-8964-4e8579e462da",
+    "modelId": "mobileclip-s1",
+    "deviceId": 637,
+    "className": "embedding"
+  },
+  {
+    "id": "7a7f4205-c02d-4181-8017-59e3d1baf8fd",
+    "modelId": "mobileclip-s1",
+    "deviceId": 636,
+    "className": "embedding"
+  },
+  {
+    "id": "1ecdab3d-860e-4c1a-9848-cef5f38330a9",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "eeca208c-4f00-4f8f-8cee-7cc65162c7c8",
+    "modelId": "mobileclip-s1",
+    "deviceId": 112,
+    "className": "embedding"
+  },
+  {
+    "id": "68897292-23f6-46a1-9eca-3fa29c483848",
+    "modelId": "mobileclip-s1",
+    "deviceId": 637,
+    "className": "embedding"
+  },
+  {
+    "id": "cf94afcb-6161-4f85-bb4d-b09e22e24c1f",
+    "modelId": "mobileclip-s1",
+    "deviceId": 636,
+    "className": "embedding"
+  },
+  {
+    "id": "bb6a1400-e38d-4654-a8b1-30ba429c7059",
+    "modelId": "mobileclip-s1",
+    "deviceId": 637,
+    "className": "embedding"
+  },
+  {
+    "id": "c4580a98-6ff8-4e42-b266-e9eb6df1c11e",
+    "modelId": "mobileclip-s1",
+    "deviceId": 112,
+    "className": "embedding"
+  },
+  {
+    "id": "eb419d9f-97cc-4ffb-91ac-49590ca59c4c",
+    "modelId": "mobileclip-s1",
+    "deviceId": 637,
+    "className": "embedding"
+  },
+  {
+    "id": "2ae0f8ff-55fd-49fc-a303-73c28bd9e616",
+    "modelId": "mobileclip-s1",
+    "deviceId": 636,
+    "className": "embedding"
+  },
+  {
+    "id": "f478a8c5-cf12-448e-90e5-4370d46a9fa6",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "a20315f2-4e88-40a0-aeaa-1dd207ec1e4d",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "0c6fd6de-c8a0-4c90-9e43-a7ccec1c7028",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "54f86cb8-47b7-4bc9-8ccf-3be4cdeaeaee",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "a9f4d7f8-ca86-484f-969f-76fd8e10a9ed",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "3b0c5da6-bcbf-4c51-875c-76b947929283",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "49f7b281-10d4-456b-8b0a-bae8bc7a306f",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "f81b3d6d-decf-4e80-af8b-7f82b81bfbe9",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "dacd71d1-05aa-48fe-adee-b9e4edf25cd7",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "f3b5fc63-a6f8-45f3-a63b-6dac1d8c102b",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "ffb17184-024e-43dc-9f40-c405de9a5760",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "a58fc357-ffd7-45a8-82c8-60c8a1ebb2a2",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "d215cddf-9cd3-4e75-8fe4-c975f069bf7d",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "9ebe4873-ccac-429c-b2a8-00443121ab0a",
+    "modelId": "mobileclip-s1",
+    "deviceId": 101,
+    "className": "embedding"
+  },
+  {
+    "id": "f7396d7f-20c1-41fe-8545-dbda02329f53",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "69bd340b-cee4-482b-a420-46cbcd47e0a7",
+    "modelId": "mobileclip-s1",
+    "deviceId": 111,
+    "className": "embedding"
+  },
+  {
+    "id": "07e58782-5e2f-4565-a371-a471de45e3d7",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "bbafe527-710b-4ab9-974a-c3df782e21fd",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "48b7df72-d157-49c1-919a-875556a18df5",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "e1db459f-a54b-47c8-aa75-8b7e1b4ad17c",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "7d87fc4d-5c95-4856-b46d-8df6f6eb09fd",
+    "modelId": "mobileclip-s1",
+    "deviceId": 112,
+    "className": "embedding"
+  },
+  {
+    "id": "0875f363-7e45-4ac4-a3ed-6ab236a11335",
+    "modelId": "mobileclip-s1",
+    "deviceId": 1441,
+    "className": "embedding"
+  },
+  {
+    "id": "d070764b-7bc2-457b-ba86-03838e988e15",
+    "modelId": "mobileclip-s1",
+    "deviceId": 3829,
+    "className": "embedding"
+  },
+  {
+    "id": "7cbb5791-1e81-4a6a-8495-9eefc3a0e464",
+    "modelId": "mobileclip-s1",
+    "deviceId": 101,
+    "className": "embedding"
+  },
+  {
+    "id": "986a538e-bb01-4d32-b41e-7ea048bce49f",
+    "modelId": "mobileclip-s1",
+    "deviceId": 101,
+    "className": "embedding"
+  },
+  {
+    "id": "c3f334ea-d3d3-4d3b-94c9-c51f1a0a8a0e",
+    "modelId": "mobileclip-s1",
+    "deviceId": 101,
+    "className": "embedding"
+  },
+  {
+    "id": "c39a4294-93cc-409e-9bfc-d49aedaebeb2",
+    "modelId": "mobileclip-s1",
+    "deviceId": 104,
+    "className": "embedding"
+  },
+  {
+    "id": "16da8a48-1422-43b1-a24d-17dc2d4b8a6f",
+    "modelId": "mobileclip-s1",
+    "deviceId": 112,
+    "className": "embedding"
+  },
+  {
+    "id": "7e683daa-496e-4bcb-8149-39abef6c8833",
+    "modelId": "mobileclip-s1",
+    "deviceId": 636,
+    "className": "embedding"
+  }
+]

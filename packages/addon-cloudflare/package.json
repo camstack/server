@@ -1,0 +1,105 @@
+{
+  "name": "@camstack/addon-cloudflare",
+  "version": "1.2.145",
+  "description": "Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Multi-entry npm package shipping 2 addons under a single bundle.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "cloudflare",
+    "tunnel",
+    "turn",
+    "network",
+    "webrtc",
+    "relay",
+    "camera"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/tunnel/cloudflare-tunnel.addon.js",
+  "exports": {
+    "./tunnel": {
+      "import": "./dist/tunnel/cloudflare-tunnel.addon.mjs",
+      "require": "./dist/tunnel/cloudflare-tunnel.addon.js"
+    },
+    "./turn": {
+      "import": "./dist/turn/cloudflare-turn.addon.mjs",
+      "require": "./dist/turn/cloudflare-turn.addon.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Cloudflare",
+    "bundle": {
+      "displayName": "Cloudflare",
+      "description": "Tunnel (public access) + TURN relay (WebRTC)."
+    },
+    "addons": [
+      {
+        "id": "cloudflare-tunnel",
+        "category": "networking",
+        "name": "Cloudflare Tunnel",
+        "version": "1.0.0",
+        "entry": "./dist/tunnel/cloudflare-tunnel.addon.js",
+        "execution": {
+          "placement": "hub-only",
+          "group": "net-access"
+        },
+        "capabilities": [
+          {
+            "name": "network-access"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#F38020"
+      },
+      {
+        "id": "cloudflare-turn",
+        "category": "networking",
+        "name": "Cloudflare TURN Relay",
+        "version": "1.0.0",
+        "entry": "./dist/turn/cloudflare-turn.addon.js",
+        "execution": {
+          "placement": "hub-only",
+          "group": "net-access"
+        },
+        "capabilities": [
+          {
+            "name": "turn-provider"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#F38020"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "validate": "tsx ../../scripts/validate-addon.ts .",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "tsx": "^4.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

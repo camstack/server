@@ -1,0 +1,1 @@
+export { DeviceInfoAdapter } from './DeviceInfoAdapter'

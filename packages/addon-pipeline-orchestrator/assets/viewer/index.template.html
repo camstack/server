@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE. `public/index.html` is rendered from this file by
+  scripts/write-manifest-for-build.js, which replaces __WEB_MOUNT_PREFIX__ with
+  the mount the build targets (`/` for `npm run web`, `/viewer/camstack/` on
+  the hub). Edit THIS file; a hand edit of index.html is lost at the next build.
+-->
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <!--
+      `viewport-fit=cover` is what makes `env(safe-area-inset-*)` non-zero: without
+      it WebKit reports 0 and `useSafeAreaInsets()` on web pads nothing, so the
+      header, the bottom nav and the landscape drawer all sat against the status
+      bar band in the installed PWA (operator report 2026-09-06, "the stream did
+      not take the header into account").
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Translucent: the page extends under the status bar and paints it itself. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- `colors.background` light/dark from src/theme/tokens.ts — not the Expo-default blue. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafaf9" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />
+    <!--
+      Literal, not the Expo title token: an installed Chrome app titles its window
+      "<manifest name> - <document title>" when the two differ, which read
+      "Camstack - CamStack". Keep this equal to the manifest `name`.
+    -->
+    <title>CamStack Viewer</title>
+    <meta name="application-name" content="CamStack Viewer" />
+    <meta name="apple-mobile-web-app-title" content="CamStack" />
+    <!--
+      Absolute, under the mount: the hub serves this shell for every
+      extension-less route, so a relative `./manifest.json` resolved from
+      /viewer/camstack/camera/615 to a 404 and "Add to Home Screen" from any
+      deep route produced a bookmark instead of an app.
+    -->
+    <link rel="icon" type="image/png" href="__WEB_MOUNT_PREFIX__favicon.png" />
+    <link rel="apple-touch-icon" href="__WEB_MOUNT_PREFIX__icon-192.png" />
+    <link rel="manifest" href="__WEB_MOUNT_PREFIX__manifest.json" />
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+        /* Prevent double-tap zoom and page pinch on iOS PWA; camera zoom uses its own touch handlers. */
+        touch-action: pan-x pan-y;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+    <style id="camstack-shell">
+      /* The OS bands (status bar, home indicator) show the body behind the
+         translucent status bar: paint them with the app background, per
+         scheme, instead of the default white. */
+      body { background: #fafaf9 }
+      @media (prefers-color-scheme: dark) { body { background: #0c0a09 } }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  </body>
+</html>

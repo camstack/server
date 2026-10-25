@@ -1,0 +1,87 @@
+{
+  "image": "animals-group.jpg",
+  "width": 612,
+  "height": 227,
+  "generatedAt": "2026-04-11T07:13:39.996Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.86,
+      "bbox": {
+        "x": 493,
+        "y": 76.1,
+        "width": 52.10000000000002,
+        "height": 98.9
+      },
+      "labels": []
+    },
+    {
+      "id": "d2",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.852,
+      "bbox": {
+        "x": 328.4,
+        "y": 46.6,
+        "width": 64.60000000000002,
+        "height": 128.6
+      },
+      "labels": []
+    },
+    {
+      "id": "d3",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.787,
+      "bbox": {
+        "x": 76.6,
+        "y": 21.9,
+        "width": 58.400000000000006,
+        "height": 67.5
+      },
+      "labels": []
+    },
+    {
+      "id": "d4",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.727,
+      "bbox": {
+        "x": 195.4,
+        "y": 63.8,
+        "width": 70.6,
+        "height": 110.39999999999999
+      },
+      "labels": []
+    },
+    {
+      "id": "d5",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.721,
+      "bbox": {
+        "x": 79.4,
+        "y": 116.8,
+        "width": 43.69999999999999,
+        "height": 55.7
+      },
+      "labels": []
+    },
+    {
+      "id": "d6",
+      "kind": "first-level",
+      "macroClass": "animal",
+      "score": 0.662,
+      "bbox": {
+        "x": 247.5,
+        "y": 23.6,
+        "width": 86.30000000000001,
+        "height": 151.1
+      },
+      "labels": []
+    }
+  ]
+}

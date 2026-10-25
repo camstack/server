@@ -1,0 +1,58 @@
+{
+  "name": "@camstack/nx-plugin",
+  "version": "1.1.32",
+  "description": "Nx plugin for CamStack addon authors — `deploy` executor and `addon` generator. Drop into any Nx workspace to package + push addons to a running CamStack hub from the CLI.",
+  "keywords": [
+    "camstack",
+    "nx",
+    "nx-plugin",
+    "addon",
+    "deploy"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./executors.json": "./executors.json",
+    "./generators.json": "./generators.json"
+  },
+  "files": [
+    "dist",
+    "executors.json",
+    "generators.json",
+    "src/generators/**/files"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "executors": "./executors.json",
+  "generators": "./generators.json",
+  "nx-migrations": {
+    "migrations": ""
+  },
+  "dependencies": {
+    "form-data": "^4.0.0"
+  },
+  "peerDependencies": {
+    "@nx/devkit": "^23.0.0",
+    "nx": "^23.0.0"
+  },
+  "devDependencies": {
+    "@nx/devkit": "^23.0.0",
+    "nx": "^23.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.4"
+  }
+}

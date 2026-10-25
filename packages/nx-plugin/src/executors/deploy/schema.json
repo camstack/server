@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "version": 2,
+  "title": "CamStack addon deploy executor",
+  "description": "Pack + upload an addon to a running CamStack hub.",
+  "type": "object",
+  "properties": {
+    "server": {
+      "type": "string",
+      "description": "Hub base URL (e.g. https://hub.example.com:4443). Falls back to $CAMSTACK_SERVER, ~/.camstackrc, then http://localhost:4443.",
+      "examples": ["http://localhost:4443"]
+    },
+    "token": {
+      "type": "string",
+      "description": "Auth token (Bearer). Prefer leaving this unset and reading from $CAMSTACK_TOKEN or ~/.camstackrc — don't bake secrets into project.json."
+    },
+    "skipBuild": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip the `build` target dependency and pack whatever is already on disk. Useful for iterative pack-only debugging."
+    },
+    "packOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "Run `npm pack` but skip the upload — emit the .tgz path to stdout. Useful in CI when the upload step is gated on a downstream approval."
+    },
+    "keepTarball": {
+      "type": "boolean",
+      "default": false,
+      "description": "Keep the .tgz after a successful upload (default: delete). Useful for archive/audit."
+    },
+    "rcPath": {
+      "type": "string",
+      "description": "Override the rc file path (default: $HOME/.camstackrc)."
+    }
+  },
+  "required": []
+}

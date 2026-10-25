@@ -1,0 +1,10 @@
+{
+  "connection.s_credentials.title": "Account PetKit",
+  "connection.s_credentials.email.label": "Email",
+  "connection.s_credentials.password.label": "Password",
+  "connection.s_region.title": "Regione",
+  "connection.s_region.region.label": "Regione",
+  "connection.s_advanced.title": "Avanzate",
+  "connection.s_advanced.timezone.label": "Fuso orario (IANA)",
+  "connection.s_advanced.pollIntervalMs.label": "Frequenza di lettura (ms, 0 = solo su richiesta)"
+}

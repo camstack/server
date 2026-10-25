@@ -1,0 +1,9 @@
+@camstack/addon-admin-ui@1.2.435
+@camstack/addon-agent-ui@1.2.242
+@camstack/addon-ai@0.4.147
+@camstack/addon-benchmark@1.2.243
+@camstack/addon-model-studio@1.1.268
+@camstack/addon-osd-manager@0.1.244
+@camstack/addon-pipeline@1.2.375
+@camstack/addon-post-analysis@1.2.374
+@camstack/addon-training@0.1.54

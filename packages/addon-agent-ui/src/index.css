@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@camstack/ui-library/tailwind/camstack-theme.css";
+
+/* Scan ui-library source for Tailwind classes used in shared components */
+@source "../../ui-library/src";

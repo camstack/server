@@ -1,0 +1,420 @@
+/**
+ * Two appliance device pages, each bound to `consumables` (D915) and so each
+ * with the ONE Consumables section under its hero card: 501 "Kitchen
+ * dishwasher" (`/devices/501` — salt low, rinse aid ok, as `supply` items) and
+ * 502 "Robot vacuum" (`/devices/502` — a percent item, a replace item and an
+ * unknown one, plus its tanks as `supply` / `waste` items, drawn as tank,
+ * product and bin forms), and 503 "Utility dishwasher" (`/devices/503` —
+ * every item ok, so the section starts collapsed on "All OK") and 504
+ * "Mopping robot" (`/devices/504` — two tanks, a bin and a product). Their Customize
+ * tabs (`?tab=customize`) list the consumables each device already has. Data
+ * is invented.
+ */
+import { defineFixtures } from './_define'
+import { NOW } from './_time'
+
+const appliance = (id: number, name: string, type: string, addonId: string) => ({
+  id,
+  stableId: `appliance-${id}`,
+  addonId,
+  type,
+  name,
+  location: 'Kitchen',
+  disabled: false,
+  parentDeviceId: null,
+  role: null,
+  online: true,
+  probed: true,
+  features: [],
+  isCamera: false,
+  config: {},
+  secretConfigPaths: [],
+  metadata: { manufacturer: 'Example', model: `${type}-1` },
+})
+
+const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
+  501: appliance(501, 'Kitchen dishwasher', 'dishwasher', 'bosch-home-connect'),
+  502: appliance(502, 'Robot vacuum', 'vacuum', 'provider-dreame'),
+  503: appliance(503, 'Utility dishwasher', 'dishwasher', 'bosch-home-connect'),
+  504: appliance(504, 'Mopping robot', 'vacuum', 'provider-dreame'),
+  510: appliance(510, 'Filter life', 'sensor', 'provider-homeassistant'),
+}
+
+const entry = (capName: string, nativeAddonId: string) => ({
+  capName,
+  kind: 'native',
+  providerAddonId: nativeAddonId,
+  providerNodeId: 'hub',
+  nativeAddonId,
+})
+
+const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = {
+  501: [
+    entry('device-status', 'bosch-home-connect'),
+    entry('dishwasher', 'bosch-home-connect'),
+    entry('consumables', 'bosch-home-connect'),
+    entry('running-state', 'bosch-home-connect'),
+  ],
+  503: [
+    entry('device-status', 'bosch-home-connect'),
+    entry('dishwasher', 'bosch-home-connect'),
+    entry('consumables', 'bosch-home-connect'),
+    entry('running-state', 'bosch-home-connect'),
+  ],
+  504: [
+    entry('device-status', 'provider-dreame'),
+    entry('vacuum-control', 'provider-dreame'),
+    entry('consumables', 'provider-dreame'),
+  ],
+  502: [
+    entry('device-status', 'provider-dreame'),
+    entry('vacuum-control', 'provider-dreame'),
+    entry('consumables', 'provider-dreame'),
+    entry('running-state', 'provider-dreame'),
+  ],
+}
+
+const DISHWASHER = {
+  availability: 'available',
+  state: 'idle',
+  operationState: 'Ready',
+  program: null,
+  selectedProgram: 'Dishcare.Dishwasher.Program.Eco50',
+  availablePrograms: ['Dishcare.Dishwasher.Program.Eco50', 'Dishcare.Dishwasher.Program.Quick65'],
+  remainingSeconds: 12_600,
+  delayedStartSeconds: 0,
+  progressPercent: 0,
+  doorOpen: false,
+  doorLocked: false,
+  remoteStartAllowed: true,
+  remoteControlActive: true,
+  localControlActive: null,
+  powerOn: true,
+  powerState: 'On',
+  halfLoad: false,
+  hygienePlus: false,
+  extraDry: true,
+  intensiveZone: null,
+  varioSpeedPlus: false,
+  childLock: false,
+  activeEvents: ['Dishcare.Dishwasher.Event.SaltNearlyEmpty'],
+  errorCode: null,
+  errorLabel: null,
+  lastFetchedAt: NOW,
+}
+
+const supply = (key: string, label: string, status: string | null, form: string) => ({
+  key,
+  label,
+  level: null,
+  status,
+  kind: 'supply',
+  form,
+  lastResetAt: null,
+  resettable: false,
+})
+
+const DISHWASHER_CONSUMABLES = {
+  items: [
+    supply('salt', 'Salt', 'low', 'product'),
+    supply('rinseAid', 'Rinse aid', 'ok', 'product'),
+  ],
+  lastChangedAt: NOW,
+}
+
+/** Every item ok: the section starts COLLAPSED with "All OK". */
+const DISHWASHER_CONSUMABLES_OK = {
+  items: [
+    supply('salt', 'Salt', 'ok', 'product'),
+    supply('rinseAid', 'Rinse aid', 'ok', 'product'),
+  ],
+  lastChangedAt: NOW,
+}
+
+/** Tanks, a bin and a product with known fills: every non-part form on screen. */
+const TANK_CONSUMABLES = {
+  items: [
+    { ...supply('cleanWater', 'Clean water tank', null, 'tank'), level: 65 },
+    {
+      key: 'dirtyWater',
+      label: 'Dirty water tank',
+      level: 90,
+      status: null,
+      kind: 'waste',
+      form: 'tank',
+      lastResetAt: null,
+      resettable: false,
+    },
+    {
+      key: 'dustBin',
+      label: 'Dust bin',
+      level: 30,
+      status: null,
+      kind: 'waste',
+      form: 'bin',
+      lastResetAt: null,
+      resettable: false,
+    },
+    supply('detergent', 'Detergent', 'empty', 'product'),
+  ],
+  lastChangedAt: NOW,
+}
+
+const CONSUMABLES = {
+  items: [
+    {
+      key: 'main-brush',
+      label: 'Main brush',
+      level: 72,
+      status: null,
+      lastResetAt: NOW - 40 * 86_400_000,
+      resettable: true,
+    },
+    {
+      key: 'filter',
+      label: 'Filter',
+      level: null,
+      status: 'replace',
+      lastResetAt: null,
+      resettable: true,
+    },
+    {
+      key: 'mop-pad',
+      label: 'Mop pad',
+      level: null,
+      status: null,
+      lastResetAt: null,
+      resettable: false,
+    },
+    supply('cleanWater', 'Clean water tank', 'low', 'tank'),
+    {
+      key: 'dirtyWater',
+      label: 'Dirty water tank',
+      level: null,
+      status: 'ok',
+      kind: 'waste',
+      form: 'tank',
+      lastResetAt: null,
+      resettable: false,
+    },
+    supply('detergent', 'Detergent', null, 'product'),
+    {
+      key: 'dustBin',
+      label: 'Dust bin',
+      level: 40,
+      status: null,
+      kind: 'waste',
+      form: 'bin',
+      lastResetAt: null,
+      resettable: false,
+    },
+  ],
+  lastChangedAt: NOW,
+}
+
+const VACUUM = {
+  state: 'docked',
+  batteryLevel: 100,
+  fanSpeed: 'standard',
+  availableFanSpeeds: ['quiet', 'standard', 'strong'],
+  progressPercent: null,
+  errorCode: null,
+  errorLabel: null,
+  lastChangedAt: NOW,
+}
+
+const SLICES: Readonly<Record<string, unknown>> = {
+  '501/device-status': { online: true, lastChangedAt: NOW },
+  '501/dishwasher': DISHWASHER,
+  '501/consumables': DISHWASHER_CONSUMABLES,
+  '503/device-status': { online: true, lastChangedAt: NOW },
+  '503/dishwasher': { ...DISHWASHER, activeEvents: [] },
+  '503/consumables': DISHWASHER_CONSUMABLES_OK,
+  '504/device-status': { online: true, lastChangedAt: NOW },
+  '504/vacuum-control': VACUUM,
+  '504/consumables': TANK_CONSUMABLES,
+  '502/device-status': { online: true, lastChangedAt: NOW },
+  '502/vacuum-control': VACUUM,
+  '502/consumables': CONSUMABLES,
+  '501/running-state': {
+    running: true,
+    since: NOW - 42 * 60_000,
+    source: 'native',
+    phase: 'Eco',
+    lastFetchedAt: NOW,
+  },
+  '502/running-state': {
+    running: false,
+    since: NOW - 60_000,
+    source: 'native',
+    phase: null,
+    lastFetchedAt: NOW,
+  },
+  '503/running-state': {
+    running: null,
+    since: null,
+    source: 'native',
+    phase: null,
+    lastFetchedAt: null,
+  },
+}
+
+const WIREABLE: Readonly<Record<number, unknown>> = {
+  501: {
+    caps: [
+      {
+        cap: 'dishwasher',
+        fields: [{ path: 'remainingSeconds', kind: 'number' }],
+      },
+      {
+        cap: 'consumables',
+        fields: [{ path: 'level', kind: 'number', item: true }],
+        itemArray: { path: 'items', keyField: 'key' },
+      },
+    ],
+  },
+  502: {
+    caps: [
+      {
+        cap: 'consumables',
+        fields: [{ path: 'level', kind: 'number', item: true }],
+        itemArray: { path: 'items', keyField: 'key' },
+      },
+    ],
+  },
+  510: {
+    caps: [{ cap: 'numeric-sensor', fields: [{ path: 'value', kind: 'number' }] }],
+  },
+}
+
+const FILTER_SOURCE = { addonId: 'provider-homeassistant', stableId: 'appliance-510' }
+const expr = (text: string) => ({ kind: 'expression' as const, expr: text, bindings: {} })
+const FILTER_VIEW = {
+  block: {
+    id: 'blk-dishwasher-filter',
+    name: 'customize:dishwasher-501',
+    code: '',
+    enabled: true,
+    placement: 'hub',
+    createdAt: 1,
+    updatedAt: NOW,
+    createdBy: 'admin',
+    status: 'running',
+    lastChangedAt: 1,
+    source: {
+      kind: 'composition',
+      composition: {
+        target: {
+          kind: 'existing',
+          device: { addonId: 'bosch-home-connect', stableId: 'appliance-501' },
+        },
+        features: [
+          {
+            kind: 'fields',
+            cap: 'consumables',
+            fields: { lastChangedAt: expr('now'), lastFetchedAt: expr('now') },
+            items: {
+              filter: {
+                label: 'Filter',
+                fields: {
+                  level: {
+                    kind: 'from',
+                    source: FILTER_SOURCE,
+                    cap: 'numeric-sensor',
+                    fieldPath: 'value',
+                  },
+                  kind: expr('"wear"'),
+                  form: expr('"part"'),
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+  state: { kind: 'answered', state: null },
+}
+
+const consumablesSection = (writerAddonId: string) => ({
+  id: 'consumables-widget',
+  title: 'Consumables',
+  tab: 'consumables',
+  location: 'hero',
+  columns: 1,
+  order: 5,
+  fields: [
+    {
+      type: 'widget',
+      key: '_consumables',
+      label: 'Consumables',
+      widgetId: 'host/consumables-panel',
+      span: 1,
+      source: 'settings',
+      writerCapName: 'consumables',
+      writerAddonId,
+    },
+  ],
+})
+
+const aggregateFor = (deviceId: number) => ({
+  settings: {
+    tabs: [],
+    sections:
+      deviceId === 502 || deviceId === 504
+        ? [consumablesSection('provider-dreame')]
+        : deviceId === 501 || deviceId === 503
+          ? [consumablesSection('bosch-home-connect')]
+          : [],
+  },
+  live: { sections: [] },
+  tabs: undefined,
+  deviceId,
+})
+
+export default defineFixtures({
+  area: 'appliances',
+  description: 'A dishwasher and a robot vacuum with consumables (pills, Customize defaults)',
+  handlers: {
+    'deviceManager.getDevice': (i: { deviceId: number }) => DEVICES[i.deviceId] ?? null,
+    'deviceManager.listAll': Object.values(DEVICES),
+    'deviceManager.getDeviceAggregate': (i: { deviceId: number }) => aggregateFor(i.deviceId),
+    'deviceManager.getBindings': (i: { deviceId: number }) => ({
+      deviceId: i.deviceId,
+      entries: (BINDINGS[i.deviceId] ?? []).map((b) => ({ ...b })),
+    }),
+    'deviceManager.getWireableFields': (i: { deviceId: number }) =>
+      WIREABLE[i.deviceId] ?? { caps: [] },
+    'deviceManager.listBindableCapsForDeviceType': [],
+    'deviceManager.getChildren': [],
+    'deviceManager.listSiteZones': [],
+    'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) =>
+      SLICES[`${i.deviceId}/${i.capName}`] ?? null,
+    'coreBlocks.getCustomization': (input: { stableId?: string }) =>
+      input.stableId === 'appliance-501'
+        ? { state: 'loaded', view: FILTER_VIEW }
+        : { state: 'loaded', view: null },
+    'deviceState.getSnapshot': (input: { deviceId: number }) =>
+      input.deviceId === 510 ? { 'numeric-sensor': { value: 40 } } : null,
+    'coreBlocks.listComposableCaps': (i: { deviceType: string }) => ({
+      caps:
+        i.deviceType === 'dishwasher'
+          ? [{ cap: 'battery' }, { cap: 'consumables' }, { cap: 'running-state' }]
+          : i.deviceType === 'vacuum'
+            ? [{ cap: 'running-state' }]
+            : [],
+    }),
+    'deviceExtension.listSlots': [],
+    'deviceExtension.listCandidates': { candidates: [] },
+    'capabilities.getCapability': {
+      name: 'composer',
+      mode: 'singleton',
+      providers: ['composer'],
+      activeProvider: 'composer',
+      disabledProviders: [],
+    },
+    'notificationRules.listDeviceMutes': { mutedDeviceIds: [] },
+    'integrations.list': [],
+    'auth.listLoginMethods': [],
+  },
+})

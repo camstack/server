@@ -1,0 +1,80 @@
+{
+  "name": "@camstack/addon-import-alexa",
+  "version": "0.2.146",
+  "description": "Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "alexa",
+    "alexa-remote2",
+    "import",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Alexa Import",
+    "addons": [
+      {
+        "id": "import-alexa",
+        "category": "providers",
+        "name": "Alexa Import",
+        "version": "0.1.0",
+        "description": "Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). Maps Alexa capability interfaces onto typed CamStack device caps.",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#00caff",
+        "instanceMode": "multiple",
+        "brokerKind": "alexa",
+        "supportsLocationImport": true,
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "broker"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "addon-routes"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "alexa-remote2": "^8.0.4",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

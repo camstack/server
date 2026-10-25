@@ -1,0 +1,19 @@
+{
+  "name": "@camstack/addon-broken-fixture",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Deliberately-broken addon used by the e2e/addon-failure suite. Throws at module load to verify the AddonLoader surfaces the failure (Fix #7) and the picker filter excludes it (Fix #10).",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "camstack": {
+    "displayName": "Broken Fixture",
+    "addons": [
+      {
+        "id": "broken-addon",
+        "name": "Broken Fixture",
+        "main": "./index.js",
+        "capabilities": []
+      }
+    ]
+  }
+}

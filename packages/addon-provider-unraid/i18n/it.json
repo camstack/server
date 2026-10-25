@@ -1,0 +1,11 @@
+{
+  "connection.s_identity.title": "Server Unraid",
+  "connection.s_identity.name.label": "Nome",
+  "connection.s_connection.title": "Connessione",
+  "connection.s_connection.description": "La API key deve avere ruolo ADMIN, creata con `unraid-api apikey --create`.",
+  "connection.s_connection.host.label": "Host / IP",
+  "connection.s_connection.port.label": "Porta",
+  "connection.s_connection.https.label": "Usa HTTPS",
+  "connection.s_connection.apiKey.label": "API key",
+  "connection.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)"
+}

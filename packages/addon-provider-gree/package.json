@@ -1,0 +1,75 @@
+{
+  "name": "@camstack/addon-provider-gree",
+  "version": "0.2.141",
+  "description": "Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "gree",
+    "air-conditioner",
+    "hvac",
+    "climate",
+    "udp",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Gree Provider",
+    "addons": [
+      {
+        "id": "provider-gree",
+        "category": "providers",
+        "name": "Gree",
+        "version": "0.1.0",
+        "description": "Adopt Gree (and compatible) air conditioners over local UDP — climate-control + fan-control, no cloud",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#0a7cff",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@apocaliss92/nodegree": "file:./vendor/apocaliss92-nodegree-0.1.0.tgz",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "@camstack/mcp-dev",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private CamStack operator MCP (camstack-dev / camstack-ops). Not published — for developing CamStack itself.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "bin": {
+    "camstack-dev": "dist/server.js"
+  },
+  "main": "./dist/server.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "start": "node dist/server.js"
+  },
+  "nx": {
+    "targets": {
+      "test": {
+        "dependsOn": [
+          "^build",
+          "build"
+        ]
+      }
+    }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@camstack/develop": "*",
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "typescript": "~6.0.3",
+    "vitest": "^3.0.0"
+  }
+}

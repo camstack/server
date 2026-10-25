@@ -1,0 +1,19 @@
+{
+  "name": "@camstack/werift-turn-fix",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Automated acceptance test scaffold for verifying the werift TURN/NAT relay bug and its patch",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json"
+  },
+  "devDependencies": {
+    "@koush/werift": "0.17.14",
+    "node-turn": "^0.0.6",
+    "patch-package": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.4",
+    "werift": "0.22.9"
+  }
+}

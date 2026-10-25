@@ -1,0 +1,58 @@
+# Dockerfile.dev — TEMPORARY dev overlay image (no public npm publish).
+#
+# The production `Dockerfile` bakes a single-canonical-artifact: it
+# `npm install @camstack/server@latest` (+ framework/addon seeds) from the
+# public registry. That means a server-side change (server-backend, generated
+# cap routers, @camstack/types/system/sdk) is ONLY live after a full
+# `scripts/publish.sh` release — 40+ packages to public npm.
+#
+# For fast local iteration this overlay skips the registry entirely: it takes a
+# PUBLISHED base image and replaces the `dist/` of only the packages you changed
+# with locally-built + `npm pack`ed tarballs. Base layers stay cached, so the
+# rebuild is seconds. Use `scripts/dev-pack.sh` to produce `dev-overlay/*.tgz`,
+# then build + swap-deploy (see `.claude/skills/camstack-hub-image-deploy`).
+#
+# Scope: overlays every install location of each package across the image's
+# node_modules trees (camstack-hub, seed-framework, seed-addons). Dist-only
+# changes (types/server/routers) are the intended use — if a package's runtime
+# DEPENDENCIES changed, prefer the full publish path.
+#
+#   BASE   the published image to overlay onto (defaults to the running tag)
+#
+# Build (on Unraid, where Docker lives):
+#   docker build -f Dockerfile.dev --build-arg BASE=ghcr.io/camstack/camstack-server:intel-1.1.35 \
+#     -t camstack-server:dev-<tag> .
+
+ARG BASE=ghcr.io/camstack/camstack-server:intel-1.1.35
+FROM ${BASE}
+
+# The packed tarballs (`package/` prefix, per `npm pack`) produced by dev-pack.sh.
+COPY dev-overlay/ /tmp/overlay/
+
+# For each tarball: resolve its package name, then replace EVERY installed copy
+# of that package with the packed contents. Two kinds of install location:
+#   (a) node_modules trees (camstack-hub, seed-framework) — framework/system/server
+#   (b) the standalone self-contained addon seed dir
+#       (/opt/camstack-seed-addons/@camstack/<basename>) — one dir per addon
+# `--strip-components=1` drops the `package/` prefix.
+RUN set -eu; \
+    for t in /tmp/overlay/*.tgz; do \
+      [ -e "$t" ] || { echo "no dev-overlay/*.tgz — did you run dev-pack.sh?"; exit 1; }; \
+      name=$(tar -xzOf "$t" package/package.json | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).name'); \
+      base=${name#@camstack/}; \
+      echo "== overlay $name =="; \
+      found=0; \
+      for dir in $(find /opt -type d -path "*/node_modules/$name" 2>/dev/null); do \
+        rm -rf "$dir"; mkdir -p "$dir"; \
+        tar -xzf "$t" -C "$dir" --strip-components=1 package; \
+        echo "   -> $dir"; found=1; \
+      done; \
+      seed="/opt/camstack-seed-addons/@camstack/$base"; \
+      if [ -d "$seed" ]; then \
+        rm -rf "$seed"; mkdir -p "$seed"; \
+        tar -xzf "$t" -C "$seed" --strip-components=1 package; \
+        echo "   -> $seed"; found=1; \
+      fi; \
+      [ "$found" = 1 ] || echo "   WARN: $name not present in base image — nothing overlaid"; \
+    done; \
+    rm -rf /tmp/overlay

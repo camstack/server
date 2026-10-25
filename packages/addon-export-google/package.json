@@ -1,0 +1,74 @@
+{
+  "name": "@camstack/addon-export-google",
+  "version": "0.1.112",
+  "description": "Google Home export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT) for the non-camera fleet, served over the hub's own OAuth account link. No Google credential is stored, sent or required.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "google",
+    "google-home",
+    "smart-home"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Google Home export",
+    "addons": [
+      {
+        "id": "export-google",
+        "category": "exports",
+        "name": "Google Home export",
+        "description": "Publishes switches, dimmable lights, locks and covers to Google Home / Google Assistant. The hub answers Google's smart-home fulfillment directly (SYNC / QUERY / EXECUTE / DISCONNECT) and account-links through the hub's own OAuth server — no cloud function and no Google credential. Cameras and proactive Report State are deliberately out of scope.",
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-export"
+          },
+          {
+            "name": "addon-routes"
+          },
+          {
+            "name": "oauth-integration"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#4285F4"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "build:lib": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^4.0.0"
+  }
+}

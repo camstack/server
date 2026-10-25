@@ -1,0 +1,21 @@
+{
+  "connection.s_identity.title": "Gateway",
+  "connection.s_identity.name.label": "Name",
+  "connection.s_transport.title": "Transport",
+  "connection.s_transport.description": "Local poll connects out to the gateway (recommended). Push listener needs the gateway \"Customized\" upload pointed at this hub.",
+  "connection.s_transport.transport.label": "Transport",
+  "connection.s_transport.transport.o_local.label": "Local poll (recommended)",
+  "connection.s_transport.transport.o_listener.label": "Push listener",
+  "connection.s_local.title": "Local poll settings",
+  "connection.s_local.host.label": "Gateway host / IP",
+  "connection.s_local.port.label": "HTTP port",
+  "connection.s_local.password.label": "Password (optional)",
+  "connection.s_local.pollIntervalMs.label": "Poll interval (ms)",
+  "connection.s_listener.title": "Push listener settings",
+  "connection.s_listener.listenPort.label": "Listen port",
+  "connection.s_listener.listenHost.label": "Bind host (optional)",
+  "discoveryParams.s_scan.title": "Scan options",
+  "discoveryParams.s_scan.description": "Leave empty to scan the local subnet; otherwise list broadcast addresses, gateway IPs or CIDRs, comma or newline separated.",
+  "discoveryParams.s_scan.broadcastAddress.label": "Broadcast addresses / gateway IPs / CIDRs",
+  "discoveryParams.s_scan.timeoutMs.label": "UDP timeout (ms)"
+}

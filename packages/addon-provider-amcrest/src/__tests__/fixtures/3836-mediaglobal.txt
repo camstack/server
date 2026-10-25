@@ -1,0 +1,7 @@
+table.MediaGlobal.LogEncode=false
+table.MediaGlobal.LogRecord=false
+table.MediaGlobal.OverWrite=true
+table.MediaGlobal.PacketLength=5
+table.MediaGlobal.PacketSize=1024
+table.MediaGlobal.PacketType=0
+table.MediaGlobal.SnapFormatAs=MainFormat

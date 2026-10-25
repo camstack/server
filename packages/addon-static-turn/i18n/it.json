@@ -1,0 +1,11 @@
+{
+  "globalSettings.s_turn.title": "Server TURN / STUN",
+  "globalSettings.s_turn.description": "Coturn ospitato da te o un qualsiasi server TURN/STUN statico. CamStack invia questi server ICE sia all'hub sia al browser, così WebRTC può attraversare NAT/CGNAT.",
+  "globalSettings.s_turn.help.label": "Come compilarlo",
+  "globalSettings.s_turn.urls.label": "URL TURN / STUN",
+  "globalSettings.s_turn.urls.description": "Uno per riga o separati da virgola.",
+  "globalSettings.s_turn.username.label": "Nome utente",
+  "globalSettings.s_turn.username.description": "Nome utente a credenziale di lungo termine di coturn.",
+  "globalSettings.s_turn.credential.label": "Credenziale / password",
+  "globalSettings.s_turn.credential.description": "Password a credenziale di lungo termine di coturn."
+}

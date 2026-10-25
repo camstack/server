@@ -1,0 +1,12 @@
+---
+description: CamStack capability change end to end — cap schema, codegen, registerProvider, bindings, CAP_INPUT_DEFAULTS, what to publish
+globs: packages/types/src/capabilities/**, packages/types/src/generated/**, scripts/codegen.ts, scripts/generate-*.ts
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**A new or changed `*.cap.ts`; picking a provider** → follow the `camstack-capability` skill — `.claude/skills/camstack-capability/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/capabilities.md`, `docs/reference/capabilities.md`.
+
+- @.claude/skills/camstack-capability/SKILL.md

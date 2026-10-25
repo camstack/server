@@ -1,0 +1,12 @@
+---
+description: CamStack server-side change — typecheck vs real build, .d.ts leaks, publish → applyServerUpdate → restart → verify, CI rules
+globs: server/backend/src/**, packages/system/src/**, packages/types/src/**, packages/sdk/src/**, packages/node-root/src/**
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**A change to `server/backend`, `system`, `types` or `sdk`: test, build, ship** → follow the `camstack-server-change` skill — `.claude/skills/camstack-server-change/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/update-and-release.md`.
+
+- @.claude/skills/camstack-server-change/SKILL.md

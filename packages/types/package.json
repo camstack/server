@@ -1,0 +1,93 @@
+{
+  "name": "@camstack/types",
+  "version": "1.2.415",
+  "description": "Shared types, interfaces, and model catalogs for the CamStack detection ecosystem",
+  "keywords": [
+    "camstack",
+    "types",
+    "typescript",
+    "camera",
+    "detection",
+    "nvr"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.mjs",
+      "require": "./dist/node.js"
+    },
+    "./addon": {
+      "types": "./dist/addon.d.ts",
+      "import": "./dist/addon.mjs",
+      "require": "./dist/addon.js"
+    },
+    "./enums": {
+      "types": "./dist/enums/index.d.ts",
+      "import": "./dist/enums.mjs",
+      "require": "./dist/enums.js"
+    },
+    "./node-color": {
+      "types": "./dist/node-color.d.ts",
+      "import": "./dist/node-color.mjs",
+      "require": "./dist/node-color.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.js"
+    },
+    "./catalogs": {
+      "types": "./dist/catalogs/index.d.ts",
+      "import": "./dist/catalogs/index.mjs",
+      "require": "./dist/catalogs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "system": false,
+    "displayName": "Types",
+    "description": "Shared cap definitions, schemas, and runtime contracts. Required at server boot; updating restarts the hub."
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && vite build -c vite.client.config.ts && ../../scripts/tsc7 -p tsconfig.json --emitDeclarationOnly",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@trpc/client": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "parallelism": false
+      }
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "name": "@camstack/addon-remote-storage",
+  "version": "1.2.140",
+  "description": "Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "storage",
+    "sftp",
+    "s3",
+    "webdav",
+    "smb"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Remote Storage",
+    "bundle": {
+      "displayName": "Remote Storage",
+      "description": "SFTP, S3, WebDAV and SMB storage providers. Remote backends serve cap-mediated location kinds (backups); recordings and event media are local-path kinds and are refused."
+    },
+    "addons": [
+      {
+        "id": "sftp-storage",
+        "execution": {
+          "group": "remote-storage"
+        },
+        "category": "system",
+        "name": "SFTP Storage",
+        "version": "0.1.1",
+        "description": "SFTP / SSH-2 storage-provider for cap-mediated storage kinds (backups).",
+        "entry": "./dist/sftp.addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#9333ea",
+        "instanceMode": "unique",
+        "capabilities": [
+          {
+            "name": "storage-provider"
+          }
+        ]
+      },
+      {
+        "id": "s3-storage",
+        "execution": {
+          "group": "remote-storage"
+        },
+        "category": "system",
+        "name": "S3 Storage",
+        "version": "0.1.1",
+        "description": "AWS S3 + S3-compatible (Minio, R2, Backblaze) storage-provider.",
+        "entry": "./dist/s3.addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#f59e0b",
+        "instanceMode": "unique",
+        "capabilities": [
+          {
+            "name": "storage-provider"
+          }
+        ]
+      },
+      {
+        "id": "webdav-storage",
+        "execution": {
+          "group": "remote-storage"
+        },
+        "category": "system",
+        "name": "WebDAV Storage",
+        "version": "0.1.1",
+        "description": "WebDAV / Nextcloud / OwnCloud storage-provider.",
+        "entry": "./dist/webdav.addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#06b6d4",
+        "instanceMode": "unique",
+        "capabilities": [
+          {
+            "name": "storage-provider"
+          }
+        ]
+      },
+      {
+        "id": "smb-storage",
+        "execution": {
+          "group": "remote-storage"
+        },
+        "category": "system",
+        "name": "SMB Storage",
+        "version": "0.1.0",
+        "description": "SMB / CIFS storage-provider for a NAS share. Serves cap-mediated location kinds (backups); refused for recordings and event media by the storage access constraint.",
+        "entry": "./dist/smb.addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9",
+        "instanceMode": "unique",
+        "systemDependencies": [
+          {
+            "binary": "smbclient",
+            "packages": {
+              "apt": "smbclient",
+              "apk": "samba-client",
+              "dnf": "samba-client",
+              "brew": "samba"
+            },
+            "reason": "The SMB provider drives Samba's own smbclient binary; it is not present in the CamStack container image."
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "storage-provider"
+          }
+        ]
+      }
+    ],
+    "runtimeDependencies": [
+      "@aws-sdk/client-s3",
+      "@aws-sdk/lib-storage",
+      "webdav",
+      "samba-client"
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@aws-sdk/lib-storage": "^3.700.0",
+    "samba-client": "^7.2.0",
+    "ssh2": "^1.16.0",
+    "webdav": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@types/ssh2": "^1.15.0",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  }
+}

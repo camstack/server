@@ -1,0 +1,74 @@
+{
+  "name": "@camstack/addon-provider-velux",
+  "version": "0.2.145",
+  "description": "Velux KLF-200 device-provider addon for CamStack — local-gateway window + shutter covers (positional, no tilt)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "velux",
+    "klf-200",
+    "klf200",
+    "cover",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Velux Provider",
+    "addons": [
+      {
+        "id": "provider-velux",
+        "category": "providers",
+        "name": "Velux",
+        "version": "0.1.0",
+        "description": "Adopt a Velux KLF-200 gateway over the local network and its windows / roller shutters (positional cover)",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#00457c",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "klf-200-api": "^6.0.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "tag": "v1.1.53",
+  "date": "2026-07-13",
+  "npm": {
+    "@camstack/server": "1.1.48",
+    "@camstack/agent": "1.1.37",
+    "@camstack/system": "1.1.39",
+    "@camstack/shm-ring": "1.0.21",
+    "@camstack/addon-pipeline": "1.1.50",
+    "@camstack/addon-admin-ui": "1.1.42",
+    "@camstack/addon-auth": "1.1.4",
+    "@camstack/addon-pipeline-orchestrator": "1.1.35 (npm copy is viewer-less — live hub runs hot-deployed 1.1.36 with embedded viewer; publish blocked on VIEWER_SSH_KEY secret)",
+    "@camstack/addon-export-hap": "1.1.20",
+    "@camstack/addon-mqtt-broker": "1.1.20",
+    "@camstack/addon-remote-storage": "1.1.21",
+    "@camstack/addon-provider-reolink": "1.1.22",
+    "@camstack/addon-provider-onvif": "1.1.22",
+    "@camstack/addon-provider-hikvision": "1.1.21",
+    "@camstack/addon-provider-amcrest": "0.1.7"
+  },
+  "serverClosurePinned": true,
+  "images": {
+    "server": "ghcr.io/camstack/camstack-server:intel-1.1.53",
+    "agent": "ghcr.io/camstack/camstack-agent:intel-1.1.53",
+    "note": "runtime image now includes python3/make/g++ (native-dep staging belt-and-braces)"
+  },
+  "viewer": {
+    "repo": "github.com/camstack/viewer",
+    "sha": "987edb7",
+    "webDistServedFrom": "orchestrator assets (hot-deployed 1.1.36)",
+    "version": "1.0.131"
+  },
+  "ios": {
+    "appVersion": "1.0.131",
+    "runtimeVersion": "1.0.130",
+    "nativeBuild": "1.0.130 (build 13, App Store submission of 2026-07-13 AM)",
+    "otaGroupId": "37099a0a-05b6-4897-b8c0-2155db6e8d96",
+    "otaChannel": "production",
+    "otaCommit": "c40d774"
+  },
+  "liveClusterState": {
+    "hub": "@camstack/server 1.1.48 via FIRST live applyServerUpdate (bootMode data-root, seed 1.1.46); hot-deployed addon-pipeline 1.1.50 + orchestrator 1.1.36 + admin-ui 1.1.42 + auth 1.1.4",
+    "agent-a": "@camstack/agent 1.1.37 via applyServerUpdate (data-root)",
+    "mac-mini-electron": "1.1.52 app — updates only via the v1.1.53 DMG from this release"
+  },
+  "highlights": [
+    "first live applyServerUpdate (hub + agent) — no-image framework updates validated",
+    "published root closures fully version-pinned (reproducible checkpoints)",
+    "shm-ring linux-x64 N-API prebuild (staging needs no toolchain)",
+    "backup event-loop stall fixed (async walk + cache + lazy UI query)",
+    "addon dep-strip: node_modules only for genuine runtime externals",
+    "auth: addonId routing fix (3x magic-link buttons), addon-routes invoke fix, magic-link enabled gate, unified Authentication page",
+    "grid: single create modal, builder settings collision removed, toolbar tooltips, share view-token (csv_, TTL incl. never), standalone share URLs (embed URL config source)",
+    "cam-view web: wheel/pointer scrub + wide layout (stream + 380px timeline rail)"
+  ],
+  "pendingAfterRelease": [
+    "swap-deploy the intel-1.1.53 hub image on Unraid (baked seed == live state)",
+    "install the v1.1.53 Electron DMG on the Mac mini agent",
+    "set VIEWER_SSH_KEY secret → republish orchestrator WITH embedded viewer",
+    "grid wave 2b: runtime bounding-boxes + highlight menu (GridMenuPanel), embed showBoxes",
+    "cam-view web Phases 3-4 (rail polish, info tabs)"
+  ]
+}

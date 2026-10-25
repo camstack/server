@@ -1,0 +1,521 @@
+{
+  "page": {
+    "title": "Training",
+    "subtitle": "Annotate the retrain corpus, run cloud fine-tunes on your GPU account, and configure providers.",
+    "addProvider": "Add provider",
+    "addJob": "Add job",
+    "tabs": {
+      "frames": "Frames",
+      "jobs": "Jobs",
+      "providers": "Providers"
+    }
+  },
+  "sectionState": {
+    "couldNotLoad": "Could not load:"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "edit": "Edit",
+    "name": "Name",
+    "status": "Status",
+    "type": "Type",
+    "cost": "Cost"
+  },
+  "jobsSection": {
+    "loadingDeps": "Loading providers and collections…",
+    "couldNotLoadSetup": "Could not load job setup",
+    "title": "Jobs"
+  },
+  "jobs": {
+    "emptyNone": "No training job yet.",
+    "emptyFiltered": "No jobs match this filter.",
+    "cancelConfirm": {
+      "title": "Cancel this job?",
+      "message": "The cloud job is stopped and its dataset deleted. What it spent so far is not refunded.",
+      "confirm": "Cancel job"
+    },
+    "columns": {
+      "name": "Job",
+      "state": "State",
+      "collections": "Collections",
+      "progress": "Progress",
+      "cost": "Cost",
+      "created": "Created"
+    },
+    "filter": {
+      "searchPlaceholder": "Search jobs…",
+      "searchLabel": "Search jobs",
+      "facetsLabel": "Filter by job state",
+      "clearLabel": "Clear filters"
+    }
+  },
+  "state": {
+    "queued": "Queued",
+    "uploading": "Uploading",
+    "submitted": "Submitted",
+    "starting": "Starting",
+    "running": "Training",
+    "collecting": "Collecting",
+    "ready": "Ready",
+    "registered": "Registered",
+    "canary": "Canary",
+    "failed": "Failed",
+    "cancelling": "Cancelling",
+    "cancelled": "Cancelled",
+    "lost": "Lost",
+    "expired": "Expired",
+    "discarded": "Discarded"
+  },
+  "jobDetail": {
+    "details": "Details for {{name}}",
+    "collections": "Collections:",
+    "progress": "Job progress",
+    "stepFailed": "{{step}} — {{state}}",
+    "failure": "{{reason}}: {{detail}}",
+    "failureDuring": "{{reason}} during {{stage}}: {{detail}}",
+    "epoch": "Epoch {{epoch}} / {{epochs}}",
+    "eta": "about {{duration}} left",
+    "ran": "Ran {{duration}}",
+    "cost": "Cost {{cost}} of ${{cap}} cap",
+    "datasetDeleted": "cloud dataset deleted {{when}}",
+    "datasetKept": "cloud dataset kept until {{when}}",
+    "resultKept": "result kept on the hub until {{when}}"
+  },
+  "sparkline": {
+    "afterTwoEpochs": "mAP50 after two epochs",
+    "perEpoch": "mAP50 per epoch"
+  },
+  "comparison": {
+    "small": "small {{found}}/{{total}}",
+    "metrics": "P {{precision}} · R {{recall}} · AP50 {{ap50}}",
+    "floorNight": "floor {{floor}} · night R {{night}}",
+    "noEvaluation": "No held-out evaluation in this result.",
+    "classColumn": "Class (held-out positives)",
+    "current": "Current model",
+    "fineTuned": "Fine-tuned",
+    "fineTunedInt8": "Fine-tuned INT8",
+    "recallChange": "Recall change per camera",
+    "delta": "{{camera}} {{cls}} {{value}} pt"
+  },
+  "plan": {
+    "cannotStart": "Cannot start ({{reason}}): {{detail}}",
+    "heldOut": "Held out for evaluation: {{scope}}; {{train}} subjects to train on.",
+    "heldOutWithSupport": "Held out for evaluation: {{scope}} — {{support}} held-out subjects; {{train}} subjects to train on.",
+    "lastDays": "the last {{days}} days of every camera",
+    "estimatedCost": "Estimated cost: <b>${{low}} – ${{high}}</b>",
+    "gpuTime": "GPU time: {{low}} – {{high}}",
+    "upload": "Upload: about {{size}}, {{minutes}} min at 20 Mbit/s"
+  },
+  "result": {
+    "discardConfirm": {
+      "title": "Discard this result?",
+      "message": "The trained model and its files are deleted from the hub. This cannot be undone.",
+      "confirm": "Discard"
+    },
+    "rollbackConfirm": {
+      "title": "Roll the canary back?",
+      "message": "Every canary accelerator gets back exactly the detector model it had before.",
+      "confirm": "Roll back"
+    },
+    "loading": "Loading the result…",
+    "couldNotLoad": "Could not load the result:",
+    "gone": "The staged result is no longer on the hub.",
+    "floors": "Proposed floors: {{floors}}",
+    "floorsWithNotes": "Proposed floors: {{floors}} — {{notes}}",
+    "int8Kept": "INT8: kept",
+    "int8KeptReason": "INT8: kept ({{reason}})",
+    "int8Dropped": "INT8: dropped",
+    "int8DroppedReason": "INT8: dropped ({{reason}})",
+    "notExported": "not exported: {{list}}",
+    "files_one": "{{count}} file, {{size}} · {{licence}}",
+    "files_other": "{{count}} files, {{size}} · {{licence}}",
+    "canarySince": "<badge>Canary</badge> on {{accelerators}} since {{since}}",
+    "register": "Register",
+    "registerCanary_one": "Register + Canary on {{count}} accelerator",
+    "registerCanary_other": "Register + Canary on {{count}} accelerators",
+    "discard": "Discard",
+    "canaryOn_one": "Canary on {{count}} accelerator",
+    "canaryOn_other": "Canary on {{count}} accelerators",
+    "rollback": "Rollback",
+    "canaryAccelerators": "Canary accelerators — every camera balanced onto one runs the new model",
+    "loadingAccelerators": "Loading accelerators…"
+  },
+  "providers": {
+    "check": {
+      "asking": "Asking the provider…",
+      "signedIn": "Signed in",
+      "signedInAs": "Signed in — {{account}}",
+      "refused": "refused"
+    },
+    "validation": {
+      "nameRequired": "Name is required.",
+      "costCap": "Cost cap must be a non-negative number.",
+      "maxRuntime": "Max runtime must be a positive number of hours.",
+      "graceHours": "Grace hours must be a non-negative number."
+    },
+    "typeGone": "That provider type is no longer available.",
+    "entryGone": "That entry is no longer available.",
+    "deleteConfirm": {
+      "title": "Delete provider entry?",
+      "message": "Remove “{{name}}” ({{type}}). Credentials for this entry are dropped."
+    },
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "deleteEntry": "Delete {{name}}",
+    "registryUnreachable": "Could not reach the capability registry.",
+    "absent": {
+      "title": "No training provider installed",
+      "description": "Install a training provider addon (for example Modal) from the Addons page, then create an entry here.",
+      "addons": "Addons"
+    },
+    "couldNotLoadEntries": "Could not load entries:",
+    "couldNotLoadTypes": "Could not load types:",
+    "empty": "No provider entries yet. Add one to store credentials and run cloud jobs.",
+    "editTitle": "Edit {{name}}",
+    "fallbackName": "provider",
+    "providerType": "Provider type",
+    "selectType": "Select type…",
+    "typeLine": "Type: {{type}}",
+    "namePlaceholder": "e.g. Production",
+    "testCredentials": "Test credentials",
+    "nameOnlyHint": "This provider type only needs a name here. Credentials open after Save if the addon exposes more fields later."
+  },
+  "newJob": {
+    "confirm": {
+      "title": "Start training in the cloud?",
+      "batchTitle": "Start training batch in the cloud?",
+      "message": "The job is stopped if it reaches ${{cap}} or runs longer than {{hours}} h.",
+      "batchMessage": "{{jobs}} jobs will run one after another (same collections and entry). Each stops at ${{cap}} or {{hours}} h.",
+      "confirm": "Upload and start"
+    },
+    "refused": "Refused ({{reason}}): {{detail}}",
+    "noCollections": "Create at least one collection on the Frames tab before planning a job.",
+    "noProviders": "Create a provider entry on the Providers tab before planning a job.",
+    "providerEntry": "Provider entry",
+    "providerNotConfigured": "{{name}} · {{type}} (not configured)",
+    "collections": "Collections to train on",
+    "workState": "Frame work state",
+    "workStates": {
+      "complete": "Complete frames only",
+      "annotated_or_complete": "Annotated or complete",
+      "any_annotated": "Any annotated (incl. hard negatives)"
+    },
+    "baseModels": "Base models",
+    "baseModel": "Base model",
+    "baseModelHint": "One architecture per job. The trainer exports ONNX, OpenVINO, and CoreML from that run — you do not pick formats here.",
+    "advancedMulti": "Advanced: train several architectures (one job each, sequential)",
+    "preset": {
+      "label": "Preset",
+      "quick": "Quick — 15 epochs",
+      "standard": "Standard — 40 epochs",
+      "thorough": "Thorough — 80 epochs, nothing frozen"
+    },
+    "freeze": "Frozen backbone layers (empty = preset)",
+    "freezePlaceholder": "preset",
+    "region": "Region",
+    "holdoutCameras": "Holdout cameras (automatic): {{cameras}}",
+    "planning": "Planning…",
+    "couldNotPlan": "Could not plan:",
+    "jobName": "Job name",
+    "jobNamePlaceholder": "night false alarms, October",
+    "costCap": "Cost cap (USD)",
+    "maxRuntime": "Maximum runtime (hours)",
+    "starting": "Starting…",
+    "reviewAndStart": "Review and start…"
+  },
+  "kpi": {
+    "cameraFallback": "Camera {{id}}",
+    "couldNotLoad": "Could not load corpus counts.",
+    "total": "Total frames",
+    "unannotated": "Unannotated",
+    "annotated": "Annotated",
+    "complete": "Complete",
+    "perCamera": "Per camera",
+    "perCameraHint": "Sorted by unannotated. % is this camera's complete ÷ corpus total. Click a row to filter the grid.",
+    "open": "{{count}} open",
+    "inProgress": "{{count}} in progress",
+    "done": "{{count}} done",
+    "showAll": "Show all ({{count}})"
+  },
+  "corpus": {
+    "badge": {
+      "todo": "To do",
+      "inProgress": "In progress",
+      "complete": "Complete"
+    },
+    "grid": {
+      "couldNotLoad": "Could not load the corpus page.",
+      "emptyTitle": "No frames match",
+      "emptyDescription": "Widen the filters, or copy frames into the corpus from staging tracks and recording stills.",
+      "cameraFallback": "Camera {{id}}",
+      "perPage": "Frames per page",
+      "itemNoun": "frames"
+    },
+    "filter": {
+      "workStates": {
+        "all": "All",
+        "unannotated": "Unannotated",
+        "annotated": "Annotated",
+        "complete": "Complete"
+      },
+      "readingCollections": "Reading collections…",
+      "anyCollection": "Any collection",
+      "workState": "Work state",
+      "anyCamera": "Any camera",
+      "collection": "Collection",
+      "export": "Export",
+      "annotatedClasses": "Annotated classes"
+    }
+  },
+  "collections": {
+    "refusal": {
+      "emptyName": "Give the collection a name.",
+      "duplicateName": "A collection with that name already exists.",
+      "unknown": "That collection no longer exists."
+    },
+    "title": "Collections"
+  },
+  "frames": {
+    "position": "{{index}} of {{total}}"
+  },
+  "annotate": {
+    "title": "Annotate frame"
+  },
+  "editor": {
+    "unsaved": "Unsaved changes",
+    "showRemoved": "Show removed"
+  },
+  "actionBar": {
+    "subjects": "Subjects ({{count}})",
+    "allBoxedLabel": "All subjects in this frame are boxed",
+    "allBoxed": "All subjects boxed",
+    "allBoxedHint": "Detector evaluation uses only these frames — an unboxed person counts as a false alarm. A frame with nothing in it, ticked, is a negative example.",
+    "acceptDrafts_one": "Accept {{count}} draft",
+    "acceptDrafts_other": "Accept {{count}} drafts",
+    "saveFrame": "Save frame"
+  },
+  "annotationEditor": {
+    "empty": "No subject on this frame yet. Drag on the image to draw one, or ask for a proposal. Annotate <b>every</b> subject — a frame with one box and three unlabelled people teaches the model that two thirds of the people in it are background."
+  },
+  "shortcuts": {
+    "frameNav": {
+      "keys": "← / →",
+      "does": "Previous / next frame"
+    },
+    "drawBox": {
+      "keys": "Drag on empty frame",
+      "does": "Draw a box"
+    },
+    "moveBox": {
+      "keys": "Drag a box / its handles",
+      "does": "Move / resize it"
+    },
+    "deleteBox": {
+      "keys": "Delete, Backspace",
+      "does": "Delete the selected box"
+    },
+    "classes": {
+      "keys": "1 – 6",
+      "does": "Class: person, vehicle, animal, package, face, plate"
+    },
+    "accept": {
+      "keys": "A",
+      "does": "Accept the selected draft"
+    },
+    "acceptAll": {
+      "keys": "Shift + A",
+      "does": "Accept every draft"
+    },
+    "modelError": {
+      "keys": "E",
+      "does": "Mark / unmark the selected box as a model error"
+    },
+    "complete": {
+      "keys": "C",
+      "does": "Toggle \"all subjects boxed\""
+    },
+    "selectNext": {
+      "keys": "Tab / Shift + Tab, ↓ / ↑",
+      "does": "Select the next / previous box"
+    },
+    "deselect": {
+      "keys": "Esc",
+      "does": "Deselect"
+    },
+    "undo": {
+      "keys": "Ctrl/⌘ + Z",
+      "does": "Undo"
+    },
+    "redo": {
+      "keys": "Ctrl/⌘ + Shift + Z, Ctrl/⌘ + Y",
+      "does": "Redo"
+    },
+    "save": {
+      "keys": "Ctrl/⌘ + S",
+      "does": "Save the frame"
+    },
+    "zoom": {
+      "keys": "+ / − / 0, wheel, pinch",
+      "does": "Zoom in / out / fit"
+    },
+    "pan": {
+      "keys": "Space + drag, middle drag, two fingers",
+      "does": "Pan"
+    }
+  },
+  "toolbar": {
+    "previousFrame": "Previous frame",
+    "nextFrame": "Next frame",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
+    "fit": "Fit the whole frame",
+    "pan": "Pan tool",
+    "undo": "Undo",
+    "redo": "Redo",
+    "shortcuts": "Keyboard shortcuts",
+    "shortcutsTitle": "Keyboard and gestures"
+  },
+  "canvas": {
+    "frameAlt": "Frame being annotated"
+  },
+  "source": {
+    "operator": "drawn",
+    "pipeline": "pipeline",
+    "assist": "detector",
+    "llm": "AI vision"
+  },
+  "chips": {
+    "classUnknown": "class unknown",
+    "approximate": "approximate"
+  },
+  "unsavedGuard": {
+    "title": "Discard unsaved changes?",
+    "message": "This frame has edits that are not saved. Leaving it now loses them.",
+    "confirm": "Discard changes",
+    "cancel": "Keep editing"
+  },
+  "editorNote": {
+    "subjectBox": "The box the pipeline recorded on this very frame.",
+    "trackPosition": "The pipeline's track position {{ms}} ms from this frame."
+  },
+  "collectionsList": {
+    "newName": "New collection name",
+    "newPlaceholder": "New collection",
+    "create": "Create",
+    "reading": "Reading the collections…",
+    "empty": "No collection yet. Create one here, or use \"Send frame to training\" on a camera’s recording timeline.",
+    "name": "Collection name",
+    "saveName": "Save the name",
+    "cancelRename": "Cancel renaming",
+    "rename": "Rename {{name}}",
+    "deleteTitle": "Delete \"{{name}}\"?",
+    "deleteDescription": "Frames taken from the recording that are in no other collection are deleted with their boxes. Frames copied from tracks stay in the dataset."
+  },
+  "subject": {
+    "tierError": "\"{{value}}\" is a macro class, not a label — person / postman / Marco are three different tiers",
+    "why": "Why this box is here",
+    "suggests": "suggests {{class}}",
+    "accept": "Accept this proposal",
+    "delete": "Delete this subject",
+    "class": "Class",
+    "label": "Label",
+    "labelPlaceholder": "label (postman, van, cat…)",
+    "subLabel": "Sub-label",
+    "subLabelPlaceholder": "sub-label (a name, a plate…)",
+    "realSubject": "This is a real subject",
+    "markModelError": "Mark as model error",
+    "drawnByYou": "drawn by you"
+  },
+  "assistGap": {
+    "pending": "Reading which detector this camera runs…",
+    "placement-unreadable": "The detection stage of this camera could not be read, so the model it runs is unknown — not absent.",
+    "detection-off": "This camera runs no object detector, so there is no proposal to mirror.",
+    "node-unreachable": "The node that detects for this camera did not answer about its accelerators.",
+    "device-unknown": "The node does not list the accelerator this camera detects on — asking another one would propose with a different model.",
+    "step-unknown": "That node carries no object-detection step in its catalog.",
+    "no-model": "No object-detection model on that accelerator can be resolved for this camera."
+  },
+  "workbench": {
+    "noZone": "A package proposal runs on the zone crop only — this camera has no zone, and running the detector on the whole frame at 0.35 proposes furniture.",
+    "refused": "The pipeline refused: {{reason}}",
+    "refusedDetail": "The pipeline refused: {{reason}} — {{detail}}",
+    "proposals_one": "{{count}} proposal from {{model}}",
+    "proposals_other": "{{count}} proposals from {{model}}",
+    "skipped": "{{count}} already on the frame",
+    "belowThreshold": "{{count}} more were below {{score}}",
+    "proposalsTail": "Accept or correct each one; drafts are not saved.",
+    "saved": "Annotations saved.",
+    "savedWithDrafts_one": "Annotations saved. {{count}} unconfirmed draft was not saved.",
+    "savedWithDrafts_other": "Annotations saved. {{count}} unconfirmed drafts were not saved.",
+    "closeList": "Close the subject list",
+    "fromRecording": "from the recording",
+    "propose": "Propose",
+    "packages": "Packages",
+    "proposalsFrom": "Proposals come from {{model}} at {{score}}, on {{node}} — what this camera really runs.",
+    "assist": "Assist — a bigger detector, AI vision",
+    "conflict": "This frame was changed elsewhere (now at revision {{revision}}). Your edits are not saved.",
+    "reload": "Reload the latest version",
+    "couldNotLoad": "Could not load the frame.",
+    "loading": "Loading the frame…"
+  },
+  "assist": {
+    "refusal": {
+      "unknownFrame": "The frame is no longer in the dataset.",
+      "unreadableFrame": "The frame copy could not be read.",
+      "unknownProfile": "That AI profile no longer exists.",
+      "profileDisabled": "That AI profile is disabled.",
+      "noVision": "That AI profile cannot read images.",
+      "cloudNotConfirmed": "The frame was not sent: sending it outside the house needs your confirmation.",
+      "llmError": "The AI model call failed.",
+      "malformedAnswer": "The AI answered in a shape that cannot be trusted, so nothing was drawn."
+    },
+    "teacherRefused": "{{name}} refused: {{reason}}.",
+    "teacherRefusedDetail": "{{name}} refused: {{reason}} — {{detail}}.",
+    "teacherNote": "Proposed by the larger detector {{model}} on {{node}}.",
+    "teacherResult_one": "{{name}}: {{count}} new draft.",
+    "teacherResult_other": "{{name}}: {{count}} new drafts.",
+    "teacherResultSkipped_one": "{{name}}: {{count}} new draft, {{skipped}} already on the frame.",
+    "teacherResultSkipped_other": "{{name}}: {{count}} new drafts, {{skipped}} already on the frame.",
+    "llmNote": "{{model}}: {{reason}}",
+    "llmDrafts_one": "{{count}} new draft",
+    "llmDrafts_other": "{{count}} new drafts",
+    "llmQuestioned_one": "{{count}} box questioned",
+    "llmQuestioned_other": "{{count}} boxes questioned",
+    "llmDropped_one": "{{count}} unusable item dropped",
+    "llmDropped_other": "{{count}} unusable items dropped",
+    "draftsNotSaved": "Drafts are not saved until you accept or correct them.",
+    "failed": "The assist failed: {{error}}",
+    "title": "Assist",
+    "engine": "Assist engine",
+    "engines": {
+      "teacher": "Bigger detector",
+      "llm": "AI vision",
+      "both": "Both"
+    },
+    "run": "Run",
+    "noNode": "The camera’s detection node is not known, so no larger detector can be run there.",
+    "noLarger": "The detection node’s catalog has no detector larger than this camera’s for its format.",
+    "largerDetector": "Larger detector",
+    "teacherOption": "{{name}} ({{size}} MB)",
+    "minScore": "Minimum score",
+    "onNode": "on {{node}}",
+    "profilesUnreadable": "The AI profiles could not be read.",
+    "noProfile": "No enabled AI profile can read images. Add one under AI settings.",
+    "profile": "AI profile",
+    "cloud": "cloud",
+    "local": "local",
+    "leavesHome": "This profile sends the frame outside your home, to a cloud service. Each run asks first.",
+    "lookFor": "Look for:",
+    "confirm": {
+      "title": "Send this frame outside your home?",
+      "message": "The frame from {{source}} will be sent to {{profile}} ({{kind}}, model {{model}}), a service outside your network, to be analysed. Only this frame, for this run.",
+      "sourceRecording": "the recording",
+      "sourceTrack": "this track",
+      "defaultProfile": "the AI profile",
+      "send": "Send this frame"
+    }
+  }
+}

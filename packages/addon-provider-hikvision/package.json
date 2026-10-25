@@ -1,0 +1,109 @@
+{
+  "name": "@camstack/addon-provider-hikvision",
+  "version": "1.2.174",
+  "description": "Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "hikvision",
+    "isapi",
+    "provider",
+    "camera",
+    "streaming"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Hikvision Provider",
+    "addons": [
+      {
+        "id": "provider-hikvision",
+        "category": "providers",
+        "name": "Hikvision",
+        "version": "0.1.0",
+        "description": "Hikvision ISAPI camera/NVR provider — discovers RTSP streams, captures snapshots, parses the alarm event stream",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#c1272d",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "stream-params"
+          },
+          {
+            "name": "recording-onboard"
+          },
+          {
+            "name": "motion-zones"
+          },
+          {
+            "name": "privacy-mask"
+          },
+          {
+            "name": "day-night"
+          },
+          {
+            "name": "image-settings"
+          },
+          {
+            "name": "failure-contribution"
+          },
+          {
+            "name": "videoclips"
+          }
+        ]
+      }
+    ],
+    "runtimeDependencies": [
+      "onvif",
+      "werift"
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "werift": "0.22.9"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6",
+    "onvif": "^0.8.1"
+  }
+}

@@ -1,0 +1,12 @@
+---
+description: Ship a CamStack server-side change to a running hub/agent — applyServerUpdate, the restart, verification, when an image is needed
+globs: Dockerfile, Dockerfile.dev, packages/node-root/src/**
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**Putting a server closure on a node: `applyServerUpdate`, images** → follow the `camstack-hub-image-deploy` skill — `.claude/skills/camstack-hub-image-deploy/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/update-and-release.md`, `docs/architecture/deploying.md`.
+
+- @.claude/skills/camstack-hub-image-deploy/SKILL.md

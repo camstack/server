@@ -1,0 +1,3 @@
+[submodule "camstack"]
+	path = camstack
+	url = https://github.com/camstack/viewer.git

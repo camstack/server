@@ -1,0 +1,22 @@
+{
+  "globalSettings.s_hm-broker.title": "Homematic broker",
+  "globalSettings.s_hm-broker.brokerHelp.label": "Brokers are managed separately",
+  "connection.s_connection.title": "CCU connection",
+  "connection.s_connection.host.label": "Host / IP",
+  "connection.s_interfaces.title": "Interfaces",
+  "connection.s_interfaces.description": "CCU-Jack and CUxD are not supported.",
+  "connection.s_interfaces.enableHmipRf.label": "Enable Homematic IP",
+  "connection.s_interfaces.enableBidcosRf.label": "Enable Homematic (BidCos-RF)",
+  "connection.s_interfaces.enableGroups.label": "Enable groups (heating groups)",
+  "connection.s_interfaces.enableBidcosWired.label": "Enable BidCos-Wired (HM-Wired)",
+  "connection.s_callback.title": "Event callback",
+  "connection.s_callback.description": "Optional; must be reachable from the CCU (not 127.0.0.1). Blank auto-infers the hub LAN address.",
+  "connection.s_callback.callbackHost.label": "Callback host (optional — auto-inferred when blank)",
+  "connection.s_callback.callbackPort.label": "Callback port",
+  "connection.s_credentials.title": "WebUI credentials",
+  "connection.s_credentials.description": "Optional. Unlocks friendly names, rooms, system variables and programs.",
+  "connection.s_credentials.username.label": "Username",
+  "connection.s_credentials.password.label": "Password",
+  "connection.s_advanced.title": "Advanced",
+  "connection.s_advanced.tls.label": "Use TLS"
+}

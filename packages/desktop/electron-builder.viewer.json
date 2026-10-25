@@ -1,0 +1,101 @@
+{
+  "extends": null,
+  "appId": "com.camstack.viewer",
+  "productName": "CamStack Viewer",
+  "executableName": "camstack-viewer",
+  "electronVersion": "42.4.1",
+  "directories": {
+    "output": "release-viewer"
+  },
+  "asar": true,
+  "nodeGypRebuild": false,
+  "buildDependenciesFromSource": false,
+  "npmRebuild": false,
+  "files": [
+    "dist/**/*",
+    "assets/**/*",
+    "package.json",
+    "!node_modules/**",
+    "node_modules/ajv/**",
+    "node_modules/ajv-formats/**",
+    "node_modules/argparse/**",
+    "node_modules/atomically/**",
+    "node_modules/builder-util-runtime/**",
+    "node_modules/conf/**",
+    "node_modules/debounce-fn/**",
+    "node_modules/debug/**",
+    "node_modules/dot-prop/**",
+    "node_modules/electron-store/**",
+    "node_modules/electron-updater/**",
+    "node_modules/env-paths/**",
+    "node_modules/fast-deep-equal/**",
+    "node_modules/fast-uri/**",
+    "node_modules/fs-extra/**",
+    "node_modules/graceful-fs/**",
+    "node_modules/js-yaml/**",
+    "node_modules/json-schema-traverse/**",
+    "node_modules/json-schema-typed/**",
+    "node_modules/jsonfile/**",
+    "node_modules/lazy-val/**",
+    "node_modules/lodash.escaperegexp/**",
+    "node_modules/lodash.isequal/**",
+    "node_modules/mimic-function/**",
+    "node_modules/ms/**",
+    "node_modules/require-from-string/**",
+    "node_modules/sax/**",
+    "node_modules/semver/**",
+    "node_modules/stubborn-fs/**",
+    "node_modules/stubborn-utils/**",
+    "node_modules/tagged-tag/**",
+    "node_modules/tiny-typed-emitter/**",
+    "node_modules/type-fest/**",
+    "node_modules/uint8array-extras/**",
+    "node_modules/universalify/**",
+    "node_modules/when-exit/**"
+  ],
+  "extraResources": [],
+  "extraMetadata": {
+    "name": "camstack-viewer",
+    "productName": "CamStack Viewer",
+    "dependencies": {
+      "electron-store": "^11.0.0",
+      "electron-updater": "^6.3.0"
+    }
+  },
+  "artifactName": "CamStackViewer-${version}-${arch}.${ext}",
+  "mac": {
+    "category": "public.app-category.utilities",
+    "target": [
+      {
+        "target": "dmg"
+      },
+      {
+        "target": "zip"
+      }
+    ],
+    "icon": "assets/icon.icns",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "assets/entitlements.mac.plist",
+    "entitlementsInherit": "assets/entitlements.mac.plist",
+    "notarize": false
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage"
+      }
+    ],
+    "category": "Utility",
+    "icon": "assets/icon.png"
+  },
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "camstack",
+      "repo": "server",
+      "releaseType": "release",
+      "channel": "viewer"
+    }
+  ]
+}

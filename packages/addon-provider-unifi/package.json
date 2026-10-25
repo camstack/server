@@ -1,0 +1,74 @@
+{
+  "name": "@camstack/addon-provider-unifi",
+  "version": "0.2.146",
+  "description": "UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "unifi",
+    "ubiquiti",
+    "network",
+    "presence",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "UniFi Network Provider",
+    "addons": [
+      {
+        "id": "provider-unifi",
+        "category": "providers",
+        "name": "UniFi Network",
+        "version": "0.1.0",
+        "description": "Adopt a UniFi Network controller over the local network: infra devices (switches / APs / gateways) as containers exposing per-port PoE, restart, LED and CPU/temp/clients sensors, plus network clients as presence. Cameras are not in scope.",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#0559c9",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "node-unifi": "^2.5.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

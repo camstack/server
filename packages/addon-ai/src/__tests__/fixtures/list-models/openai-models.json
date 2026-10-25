@@ -1,0 +1,7 @@
+{
+  "object": "list",
+  "data": [
+    { "id": "gpt-example-a", "object": "model", "created": 1730000000, "owned_by": "system" },
+    { "id": "gpt-example-b", "object": "model", "created": 1730000001, "owned_by": "system" }
+  ]
+}

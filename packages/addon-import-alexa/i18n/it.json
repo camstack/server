@@ -1,0 +1,15 @@
+{
+  "globalSettings.s_alexa-account.title": "Account Amazon Alexa",
+  "globalSettings.s_alexa-account.description": "Gli account Alexa si gestiscono nella scheda Sistemi esterni → Broker.",
+  "globalSettings.s_alexa-account.accountHelp.label": "Gli account si gestiscono separatamente",
+  "globalSettings.s_alexa-proxy-login.title": "Accesso interattivo (proxy)",
+  "globalSettings.s_alexa-proxy-login.description": "Il pulsante «Accedi ad Amazon» nell'onboarding apre un proxy locale che cattura il cookie dopo che hai completato il vero accesso Amazon (incluso il 2FA). Poiché gli URL di Amazon vengono riscritti su questo host:porta esatto, deve essere un indirizzo raggiungibile direttamente: lascia vuoto l'host per rilevare automaticamente l'IP del server e assicurati che la porta sia raggiungibile dal browser da cui accedi.",
+  "globalSettings.s_alexa-proxy-login.proxyLogin_proxyHost.label": "Host/IP del proxy di accesso (vuoto = rilevamento automatico)",
+  "globalSettings.s_alexa-proxy-login.proxyLogin_proxyPort.label": "Porta del proxy di accesso",
+  "connection.s_alexa-account.title": "Account Amazon Alexa",
+  "connection.s_alexa-account.description": "Collega un account Amazon tramite il client Alexa non ufficiale. Fornisci un cookie catturato OPPURE un refresh token. NOTA: è un'integrazione non ufficiale — Amazon può modificarla o interromperla senza preavviso, e potrebbe violare i termini di servizio Amazon. Lo stato viene interrogato, non inviato.",
+  "connection.s_alexa-account.amazonDomain.label": "Dominio Amazon (regione)",
+  "connection.s_alexa-account.cookie.label": "Blocco cookie (dal proxy di accesso)",
+  "connection.s_alexa-account.refreshToken.label": "Refresh token (alternativa al cookie)",
+  "connection.s_alexa-account.pollIntervalMs.label": "Intervallo di interrogazione dello stato (ms)"
+}

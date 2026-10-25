@@ -1,0 +1,13 @@
+caps.DejitterEnable=false
+caps.DejitterRange.Max=100
+caps.DejitterRange.Min=0
+caps.MailEnable=true
+caps.PtzLinkEnable=true
+caps.RecordCloudEnable=true
+caps.RecordEnable=true
+caps.RecordLatch[0]=10
+caps.RecordLatch[1]=300
+caps.SnapshotEnable=true
+caps.SupportAlarmBell=false
+caps.TimeSectionEnable=true
+caps.VoiceEnable=true

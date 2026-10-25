@@ -1,0 +1,9 @@
+---
+description: CamStack entry point for any change — phases, gates and the definition of done; how to ask the operator
+alwaysApply: true
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. Always applied: keep it a few lines. -->
+
+**Any change** (implement, fix, add, refactor, build) → follow the `camstack-workflow` skill first: `/camstack-workflow`, or read `.claude/skills/camstack-workflow/SKILL.md`. It sets the phases, the gates and the definition of done; the other skills give the details.
+
+Ask the operator with the `AskQuestion` tool (it is reliably offered in Plan mode — Shift+Tab): one decision per question, 2–4 options, the recommendation first. No picker → a numbered list with the recommendation marked, then stop and wait.

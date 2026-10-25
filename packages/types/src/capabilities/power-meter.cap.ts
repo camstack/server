@@ -1,0 +1,97 @@
+import { z } from 'zod'
+import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec } from './customize-spec.js'
+import { DeviceType } from '../device/device-type.js'
+
+/**
+ * Multi-metric electrical meter. One slice can carry any combination
+ * of instantaneous power (W), cumulative energy (kWh), voltage (V),
+ * and current (A) — all fields optional so a single-metric source
+ * (HA `sensor` with `device_class: power`) populates only what it
+ * has and aggregators (energy dashboards, billing exports) compose
+ * across providers without needing one cap per metric.
+ *
+ * Trade-off acknowledged: a HomeKit export that wants to surface
+ * "power" and "energy" as separate services has to crack open the
+ * slice and emit two characteristics from one cap. Worth it to avoid
+ * exploding the cap catalog with `power-w` / `energy-kwh` /
+ * `voltage-v` / `current-a` quartets that always travel together
+ * in real-world devices.
+ */
+export const PowerMeterStatusSchema = z.object({
+  /** Instantaneous power draw in watts. */
+  watts: z.number().optional().meta({ unit: 'W', label: 'Power' }),
+  /** Cumulative energy in kilowatt-hours since the meter was reset. */
+  kwhTotal: z.number().optional().meta({ unit: 'kWh', label: 'Energy' }),
+  /** Voltage in volts. */
+  volts: z.number().optional(),
+  /** Current in amperes. */
+  amps: z.number().optional(),
+  /** Apparent power in volt-amperes (W × power-factor reciprocal). */
+  va: z.number().optional(),
+  /** Power factor (0..1) if reported. */
+  powerFactor: z.number().min(0).max(1).optional(),
+  /** Ms epoch when the slice was last updated. */
+  lastFetchedAt: z.number(),
+  /** Live display unit of the single metric this slice carries (e.g. HA
+   *  `attributes.unit_of_measurement` → 'V' / 'A' / 'W' / 'kW' / 'kWh').
+   *  Each upstream `sensor.*` entity surfaces ONE device_class, so one
+   *  unit per slice is unambiguous. The UI prefers this over the role's
+   *  canonical unit so a 'kW' / 'Wh' feed renders verbatim. */
+  unit: z.string().optional(),
+  /** Suggested decimal places for numeric display.
+   *  Populated live from the upstream source when provided (e.g. HA
+   *  `attributes.suggested_display_precision`). Falls back to
+   *  auto-formatting when absent. */
+  precision: z.number().int().min(0).max(10).optional(),
+})
+
+export type PowerMeterStatus = z.infer<typeof PowerMeterStatusSchema>
+
+/** Advanced rows only (D939). No card target, so a composed device keeps the generic card. */
+const powerMeterCustomize = {
+  version: 1,
+  advanced: 'derive',
+  targets: [],
+} as const satisfies CapabilityCustomizeSpec
+
+export const powerMeterCapability = {
+  name: 'power-meter',
+  scope: 'device',
+  deviceNative: true,
+  mode: 'singleton',
+  deviceTypes: [DeviceType.Sensor],
+  methods: {},
+  status: {
+    schema: PowerMeterStatusSchema,
+    kind: 'push',
+  },
+  runtimeState: PowerMeterStatusSchema,
+
+  /**
+   * Runtime-state durability: **restored** — as `numeric-sensor`; `kwhTotal` is an accumulator whose restored value is the baseline.
+   *
+   * See `RuntimeStateDurability`. Enforced by
+   * `scripts/check-runtime-state-durability.ts`.
+   */
+  durability: 'restored',
+  /**
+   * History (D850): recorded series. Gauges are floored at 30 s; `kwhTotal` is the one monotonic meter (counter).
+   */
+  history: {
+    fields: {
+      watts: { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
+      kwhTotal: { kind: 'counter', unit: 'kWh', deadband: 0.01, minIntervalMs: 60000 },
+      volts: { kind: 'gauge', unit: 'V', deadband: 1, minIntervalMs: 30000 },
+      amps: { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
+      va: { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
+      powerFactor: { kind: 'gauge', unit: 'ratio', deadband: 0.01, minIntervalMs: 60000 },
+    },
+  },
+  /** Clock fields: written, but excluded from the compare that decides
+   *  whether persisting is worth a SQLite commit. */
+  volatileStateFields: ['lastFetchedAt'],
+  customize: powerMeterCustomize,
+} as const satisfies CapabilityDefinition
+
+export type IPowerMeterProvider = InferProvider<typeof powerMeterCapability>

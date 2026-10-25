@@ -1,0 +1,19 @@
+{
+  "modelfile": "# omitted",
+  "parameters": "",
+  "template": "{{ .Prompt }}",
+  "details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "qwen25vl",
+    "families": ["qwen25vl"],
+    "parameter_size": "8.3B",
+    "quantization_level": "Q4_K_M"
+  },
+  "model_info": {
+    "general.architecture": "qwen25vl",
+    "qwen25vl.context_length": 128000
+  },
+  "capabilities": ["completion", "vision"],
+  "modified_at": "2026-09-02T10:00:00.000000000+02:00"
+}

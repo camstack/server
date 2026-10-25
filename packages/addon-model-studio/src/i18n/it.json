@@ -1,0 +1,436 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "loading": "Caricamento…",
+    "refresh": "Aggiorna",
+    "delete": "Elimina",
+    "retry": "Riprova",
+    "confirm": "Conferma",
+    "activate": "Attiva",
+    "register": "Registra",
+    "import": "Importa",
+    "importing": "Importazione…",
+    "node": "Nodo",
+    "state": "Stato",
+    "model": "Modello",
+    "modelId": "ID modello",
+    "format": "Formato",
+    "step": "Step",
+    "source": "Sorgente",
+    "landOn": "Destinazione",
+    "mbSep": "MB ·",
+    "close": "Chiudi"
+  },
+  "page": {
+    "title": "Model Studio",
+    "sections": "Sezioni di Model Studio",
+    "tabs": {
+      "catalog": "Catalogo",
+      "installed": "Installati",
+      "import": "Importa",
+      "logs": "Log"
+    }
+  },
+  "displayName": {
+    "label": "Nome visualizzato (facoltativo)",
+    "control": "Il nome contiene caratteri di controllo.",
+    "tooLong": "Il nome è lungo {{length}} caratteri; il limite è {{max}}."
+  },
+  "stepSelect": {
+    "loadFailed": "Impossibile caricare gli step della pipeline",
+    "loading": "Caricamento degli step…",
+    "none": "Nessuno step della pipeline disponibile"
+  },
+  "tfliteGate": {
+    "checking": "Verifica della disponibilità di Coral…",
+    "unsupported": "TFLite non supportato qui: nessun nodo Coral (tflite) nel cluster — l'unico runtime tflite del pool usa il delegate EdgeTPU, quindi una build TFLite non ha dove caricarsi.",
+    "available": "Nodo Coral (tflite) disponibile: {{nodes}} — le build TFLite girano solo lì."
+  },
+  "sources": {
+    "intro": "Importa da catalogo plus o catalogo plugin. Gli artefatti arrivano sull'hub — usa Libreria → Distribuisci per gli agent che richiedono una copia <mono>camstack-local://</mono>.",
+    "pluginCatalogImported": "Modello catalogo plugin importato sull'hub. Distribuiscilo dalla Libreria agli agent."
+  },
+  "importTab": {
+    "registered": "Registrato."
+  },
+  "inlineRename": {
+    "rename": "Rinomina",
+    "renameName": "Rinomina {{name}}",
+    "failed": "Rinomina non riuscita",
+    "displayName": "Nome visualizzato",
+    "placeholder": "Vuoto ripristina il nome importato",
+    "saveName": "Salva il nome",
+    "cancel": "Annulla la rinomina",
+    "reset": "Vuoto: il modello torna al nome con cui è stato importato.",
+    "idSame": "l'id <mono>{{modelId}}</mono> resta invariato."
+  },
+  "formatRow": {
+    "imported": "importato",
+    "blocked": "bloccato",
+    "onCluster": "Nel cluster",
+    "presenceTitle": "{{format}} su {{nodeId}}",
+    "distributing": "Distribuzione…",
+    "distributeAll": "Distribuisci a tutti gli agent"
+  },
+  "fillBadges": {
+    "mask": "Emette una maschera di istanza con ogni rilevamento: lo step Segmentazione può prendere le maschere da questo modello invece di eseguire il proprio.",
+    "cropFace": "Disegna i riquadri dei volti dentro le persone: il rilevamento dei volti può affinarli per il riconoscimento (da un input del modello di 640 px o più), una volta spuntato \"Usa il modello radice\" su quello step.",
+    "cropPlate": "Disegna i riquadri delle targhe dentro i veicoli: il rilevamento delle targhe può usarli e il lettore di targhe li legge, una volta spuntato \"Usa il modello radice\" su quello step.",
+    "labelsDefaultUncovered": "{{stepId}} prende per impostazione predefinita le etichette di questo modello — il suo modello non viene eseguito; questo modello non può produrre {{uncovered}}.",
+    "labelsDefaultAll": "{{stepId}} prende per impostazione predefinita le etichette di questo modello — il suo modello non viene eseguito, per ogni classe.",
+    "labelsOptionalUncovered": "{{stepId}} può prendere le etichette di questo modello; questo modello non può produrre {{uncovered}}.",
+    "labelsOptionalAll": "{{stepId}} può prendere le etichette di questo modello, per ogni classe."
+  },
+  "importProgress": {
+    "skipped": " (saltato)",
+    "processLog": "Log del processo",
+    "waiting": "In attesa del processo di conversione…",
+    "noLines": "Nessuna riga di log."
+  },
+  "settingsModal": {
+    "title": "Impostazioni · {{name}}",
+    "saveFailed": "Salvataggio delle impostazioni non riuscito",
+    "accelerator": "Acceleratore:",
+    "loadingSchema": "Caricamento dello schema dello step…",
+    "save": "Salva impostazioni"
+  },
+  "operation": {
+    "failed": "Operazione non riuscita"
+  },
+  "sourceBrowser": {
+    "empty": "Nessun modello corrisponde ai filtri attuali."
+  },
+  "providers": {
+    "custom": "Personalizzato"
+  },
+  "installedFilters": {
+    "provider": "Provider",
+    "all": "Tutti",
+    "modelType": "Tipo di modello",
+    "allSteps": "Tutti gli step",
+    "device": "Dispositivo",
+    "allDevices": "Tutti i dispositivi",
+    "deviceOff": "{{label}} · {{value}} (spento)"
+  },
+  "usage": {
+    "inUse": {
+      "label": "in uso",
+      "title": "Caricato adesso nel pool di inferenza di almeno un dispositivo."
+    },
+    "configured": {
+      "label": "configurato",
+      "title": "Un dispositivo abilitato è configurato per eseguirlo, ma il suo pool non lo ha caricato."
+    },
+    "idle": {
+      "label": "inattivo",
+      "title": "Un dispositivo abilitato potrebbe eseguire questo formato; nessuno usa questo modello."
+    },
+    "unused": {
+      "label": "non usato",
+      "title": "Nessun dispositivo abilitato su questo nodo esegue questo formato — lo spazio è recuperabile."
+    },
+    "outsidePools": {
+      "label": "analizzatore audio",
+      "title": "Eseguito dal processo dell'analizzatore audio, non da un pool di dispositivi di inferenza."
+    },
+    "unknown": {
+      "label": "caricamento sconosciuto",
+      "title": "La lettura dei motori caricati non è riuscita: non si può dire se un pool lo contenga."
+    },
+    "stale": {
+      "label": "obsoleto",
+      "title": "Su disco, ma non è dimostrato che sia la build corrente del catalogo: viene sostituito alla prossima occorrenza del modello."
+    },
+    "precisionTitle": "Precisione numerica di questa build"
+  },
+  "deviceChips": {
+    "none": "nessun dispositivo di questo formato",
+    "state": {
+      "off": "spento",
+      "loadedConfigured": "caricato, configurato",
+      "loaded": "caricato",
+      "configuredNotLoaded": "configurato, non caricato",
+      "unknown": "stato di caricamento sconosciuto",
+      "notUsed": "non usato"
+    },
+    "chipLabel": "{{label}} ({{deviceKey}}): {{state}}",
+    "title": "{{deviceKey}} — {{state}}",
+    "titleOpenSettings": "{{deviceKey}} — {{state}}. Apri le impostazioni dello step.",
+    "titlePin": "{{deviceKey}} — {{state}}. Imposta come modello base di questo dispositivo."
+  },
+  "filesTable": {
+    "clusterModel": " · modello del cluster",
+    "removeAria": "Rimuovi {{modelId}} {{format}}",
+    "removeTitle": "Elimina il file {{format}} di {{modelId}} da questo nodo",
+    "remove": "Rimuovi",
+    "actionFailed": "Azione non riuscita",
+    "cols": {
+      "model": "Modello",
+      "format": "Formato",
+      "size": "Dimensione",
+      "devices": "Dispositivi",
+      "status": "Stato"
+    },
+    "devicesNotSortable": "Un elenco di dispositivi non ha un ordine che abbia significato."
+  },
+  "cluster": {
+    "noDevice": "nessun dispositivo abilitato",
+    "refusedTitle": "Il nodo rifiuta lo step",
+    "refused": "nessuna build per {{format}} → rifiutato",
+    "loaded": "caricato",
+    "loadUnknown": "caricamento sconosciuto",
+    "notLoaded": "non caricato",
+    "fileStale": "file obsoleto",
+    "cols": {
+      "node": "Nodo",
+      "runtime": "Runtime",
+      "devices": "Dispositivi",
+      "state": "Stato"
+    },
+    "selectAria": "{{step}}: modello del cluster",
+    "change": "Cambia",
+    "oneModel": "Un solo modello per tutto il cluster: ogni nodo scrive in {{index}}.",
+    "reading": "Lettura di ogni nodo…",
+    "noOnlineNode": "Nessun nodo online.",
+    "confirmTitle": "Attivare su tutto il cluster?",
+    "confirmMessage": "Imposta \"{{label}}\" come UNICO modello del cluster per {{stepId}}. Indice vettoriale condiviso — ogni nodo usa questo encoder.",
+    "activateFailed": "Attivazione non riuscita",
+    "title": "Modelli del cluster"
+  },
+  "installed": {
+    "loadFailed": "Impossibile caricare i modelli installati",
+    "deleteFile": {
+      "title": "Eliminare il file del modello?",
+      "message": "Elimina definitivamente il file {{format}} di \"{{name}}\" ({{modelId}}, {{size}}) da {{nodeId}}. Gli altri formati restano. L'operazione non può essere annullata.",
+      "confirm": "Elimina file"
+    },
+    "deleteUnused": {
+      "title": "Eliminare i file di modello inutilizzati?",
+      "message_one": "Elimina definitivamente {{count}} file inutilizzato ({{size}}) da {{nodeId}}. Nessun dispositivo abilitato su questo nodo esegue questi formati. Gli altri formati di ogni modello restano. L'operazione non può essere annullata.",
+      "message_other": "Elimina definitivamente {{count}} file inutilizzati ({{size}}) da {{nodeId}}. Nessun dispositivo abilitato su questo nodo esegue questi formati. Gli altri formati di ogni modello restano. L'operazione non può essere annullata.",
+      "confirm": "Elimina file inutilizzati"
+    },
+    "activate": {
+      "title": "Attivare il modello?",
+      "message": "Imposta \"{{name}}\" come modello BASE su {{label}} ({{deviceKey}}, {{nodeId}}). Ogni telecamera assegnata a quell'acceleratore lo userà."
+    },
+    "loading": "Caricamento dei modelli installati…",
+    "summary": {
+      "files_one": "{{count}} file su {{nodeId}}",
+      "files_other": "{{count}} file su {{nodeId}}",
+      "ofTotal": "(su {{total}})",
+      "onDisk": "{{size}} su disco",
+      "reclaimable": "{{size}} recuperabili",
+      "loadedUnavailable": "stato di caricamento non disponibile"
+    },
+    "removeUnused": "Rimuovi inutilizzati ({{count}})",
+    "emptyNode": "Nessun file di modello su {{nodeId}}.",
+    "emptyFiltered": "Nessun file corrisponde a questi filtri."
+  },
+  "catalog": {
+    "onNode": "su {{nodeId}}",
+    "downloading": "Download in corso…",
+    "download": "Scarica",
+    "loadFailed": "Impossibile caricare il catalogo",
+    "downloadFailed": "Download non riuscito",
+    "opTitle": "Download di {{modelId}} · {{format}}",
+    "opStep": "Download di {{format}} su {{nodeId}}",
+    "opInitialLog": "Download di {{modelId}} ({{format}}) → {{nodeId}}…",
+    "opDone": "Scaricato {{format}} su {{nodeId}}",
+    "loading": "Caricamento del catalogo…",
+    "noModels": "Nessun modello",
+    "noCamstackModels": "Nessun modello CamStack per questo step.",
+    "sourceAria": "Sorgente del catalogo"
+  },
+  "inventory": {
+    "loadFailed": "Impossibile caricare i modelli",
+    "removeFailed": "Impossibile rimuovere il modello",
+    "step": "step: {{stepId}}",
+    "cols": {
+      "model": "Modello",
+      "formats": "Formati",
+      "size": "Dimensione"
+    },
+    "formatsNotSortable": "Un insieme di etichette di formato non ha un ordine unico.",
+    "removeAria": "Rimuovi {{name}}",
+    "removeTitle": "Rimuovi dal registro, elimina i file su ogni nodo, cancella i vincoli della pipeline",
+    "remove": "Rimuovi",
+    "loading": "Caricamento dei modelli…",
+    "errorTitle": "Impossibile caricare l'inventario",
+    "summary_one": "{{count}} modello su <mono>{{nodeId}}</mono>. L'importazione porta i file sul nodo scelto.",
+    "summary_other": "{{count}} modelli su <mono>{{nodeId}}</mono>. L'importazione porta i file sul nodo scelto.",
+    "empty": "Nessun modello {{provider}} su {{nodeId}}. Usa Importa per portarne uno qui."
+  },
+  "importOp": {
+    "title": "Importazione di {{modelId}} · {{format}}",
+    "step": "Importa {{format}}",
+    "landStep": "Destinazione {{nodeId}}",
+    "start": "Avvio dell'importazione {{format}} per {{modelId}}…",
+    "landed": "Importato e portato su {{nodeId}}",
+    "intoRegistry": "Importato {{format}} nel registro",
+    "failed": "Importazione non riuscita"
+  },
+  "pluginCatalog": {
+    "loadFailed": "Impossibile caricare il catalogo catalogo plugin",
+    "onnxFirst": "ONNX non presente — importazione prima…",
+    "converting": "Conversione di ONNX → {{format}}…",
+    "converted": "Convertito in {{format}}",
+    "loading": "Caricamento del catalogo catalogo plugin…",
+    "intro": "Catalogo YOLO catalogo plugin locale. L'importazione arriva sul nodo selezionato.",
+    "tfliteCoral": "TFLite → Coral",
+    "noCoral": "Nessun nodo Coral — TFLite viene solo registrato.",
+    "landOn": "Destinazione <mono>{{nodeId}}</mono>",
+    "variant": "Variante",
+    "variants": {
+      "standard": "Standard",
+      "test": "Test"
+    },
+    "emptyVariant": "Nessun artefatto catalogo plugin per questa variante."
+  },
+  "plusCatalog": {
+    "plus": "catalogo plus",
+    "keyIntro": "Necessaria per elencare i modelli del tuo account. <docs>documentazione</docs>. Conservata solo lato server.",
+    "keyConfigured": "Chiave API: configurata",
+    "replaceKey": "Sostituisci chiave",
+    "testConnection": "Verifica connessione",
+    "connectionOk": "Connessione riuscita",
+    "connectionFailed": "Connessione non riuscita",
+    "keyShapeWrong": "Il formato della chiave sembra errato (atteso uuid:40-hex). Verificala o sostituiscila.",
+    "keyLabel": "Chiave API catalogo plus",
+    "saveKey": "Salva chiave",
+    "keyFormatInvalid": "La chiave non corrisponde al formato documentato \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:40-hex\" mostrato nel tuo account catalogo plus.",
+    "keySaveFailed": "Impossibile salvare la chiave API",
+    "listFailed": "Impossibile elencare i modelli catalogo plus",
+    "checking": "Verifica della configurazione catalogo plus…",
+    "publicDefault": "Predefinito pubblico (nessuna chiave richiesta):",
+    "refreshList": "Aggiorna elenco",
+    "loadingModels": "Caricamento dei tuoi modelli catalogo plus…",
+    "landOnNode": "Destinazione <mono>{{nodeId}}</mono>",
+    "opTitle": "Importazione di {{label}}",
+    "opLog": "Importazione di {{modelId}}…",
+    "opStepDownload": "Scarica e registra",
+    "registeredLanded": "Registrato \"{{modelId}}\" e portato su {{nodeId}} ({{size}} MB).",
+    "registered": "Registrato \"{{modelId}}\" ({{size}} MB).",
+    "catalogImportFailed": "Importazione dal catalogo non riuscita",
+    "importLand": "Importa e porta su {{nodeId}}",
+    "prefillCustom": "Precompila Personalizzato"
+  },
+  "plus": {
+    "empty": "Nessun modello eseguibile da questo cluster è ancora visibile a questo account — addestrane uno su catalogo plus.",
+    "modelGroup": "Gruppo di modelli",
+    "release": "Release catalogo plus",
+    "emptyRelease": "Nessun modello catalogo plus in questa release che il cluster possa eseguire.",
+    "checkingCoral": "verifica di Coral…",
+    "needsCoral": "richiede un Coral",
+    "training": "Addestramento",
+    "verifiedSuffix": " · {{count}} immagini verificate",
+    "summary": "<name>{{name}}</name> · release <mono>{{release}}</mono> · decodifica <mono>{{decode}}</mono> · input {{input}}",
+    "onnxNote": "ONNX viene scaricato; OpenVINO / CoreML sono convertiti da esso.",
+    "tfliteNote": "TFLite è la build EdgeTPU — gira su un Coral.",
+    "kind": {
+      "custom": "I miei addestramenti",
+      "base": "Base ufficiale"
+    }
+  },
+  "register": {
+    "sources": {
+      "upload": "Carica file",
+      "url": "URL remoto"
+    },
+    "uploadFailed": "Caricamento non riuscito",
+    "enterUrl": "Inserisci un URL da analizzare",
+    "uploadFirst": "Carica prima il file del modello",
+    "urlRequired": "L'URL del modello è obbligatorio",
+    "nameInvalid": "Il nome visualizzato non è accettabile",
+    "opTitle": "Registrazione di {{name}} · {{format}}",
+    "opStepRegister": "Registra modello personalizzato",
+    "opStepLand": "Porta sul nodo selezionato",
+    "opInitialLog": "Registrazione di \"{{name}}\"…",
+    "opDone": "Registrato per lo step {{stepId}}.{{summary}}",
+    "registered": "Registrato \"{{name}}\".",
+    "failed": "Impossibile registrare il modello",
+    "prefilled": "Formato, decodifica, dimensione di input e labelmap precompilati dal catalogo catalogo plus: <b>{{source}}</b>. Carica qui sotto il file esportato.",
+    "modelFile": "File del modello ({{extensions}})",
+    "uploading": "Caricamento… {{pct}}%",
+    "chooseFile": "Scegli file",
+    "urlLabel": "URL del modello / percorso HuggingFace",
+    "urlPlaceholder": "https://… oppure hf://org/repo/model.onnx",
+    "sizeMb": "Dimensione (MB)",
+    "probeUrl": "Analizza URL",
+    "defaultName": "Il mio rilevatore",
+    "inputWidth": "Larghezza di input",
+    "inputHeight": "Altezza di input",
+    "decode": "Decodifica (postprocessore)",
+    "stepDefault": "Predefinito dello step",
+    "decodeWarning": "Deve corrispondere al layout dell'output grezzo del modello — una decodifica errata non produce alcun rilevamento e nessun errore da nessuna parte.",
+    "labelmap": "Labelmap ({{count}} etichette — l'ordine corrisponde all'indice di output del modello)",
+    "registering": "Registrazione…",
+    "registerModel": "Registra modello"
+  },
+  "convert": {
+    "recommendFailed": "Impossibile caricare i nodi consigliati",
+    "sourceRequired": "L'URL ONNX di origine è obbligatorio",
+    "idRequired": "L'ID del modello è obbligatorio",
+    "idInvalid": "L'ID del modello può contenere solo lettere, cifre, punto, trattino basso e trattino",
+    "targetRequired": "Seleziona almeno un formato di destinazione",
+    "failed": "Conversione non riuscita",
+    "intro": "Converti un modello ONNX di origine in OpenVINO e/o CoreML su un nodo idoneo. Il risultato viene registrato nel registro dei modelli e annotato come disponibile sul nodo che converte.",
+    "sourceUrl": "URL ONNX di origine",
+    "defaultName": "Il mio YOLO v9",
+    "inputSize": "Dimensione di input",
+    "outputFormat": "Formato di output",
+    "labels": "Etichette (separate da virgola)",
+    "labelsPlaceholder": "persona, auto, cane",
+    "targetFormats": "Formati di destinazione",
+    "targetNode": "Nodo di destinazione",
+    "auto": "Auto — l'orchestrator sceglie un nodo idoneo tra i consigli qui sotto. Gli artefatti restano sul nodo che converte; preferisci OpenVINO sull'hub per distribuire alla flotta dalla Libreria.",
+    "recsUnavailable": "Nodi consigliati non disponibili: {{error}}",
+    "recs": "Nodi consigliati",
+    "converting": "Conversione…",
+    "convert": "Converti",
+    "refreshRecs": "Aggiorna i consigli",
+    "inProgress": "Conversione in corso",
+    "complete": "Conversione completata",
+    "registeredAs": "Registrato come",
+    "onNode": "Sul nodo",
+    "artifacts": "Artefatti",
+    "unvalidated": " (non validato)"
+  },
+  "plusImport": {
+    "conversions": " Conversioni dei motori: {{parts}}.",
+    "conversionFailedWord": "non riuscita",
+    "stepDownload": "Download da catalogo plus",
+    "stepRegister": "Registrazione sull'hub",
+    "stepConvert": "Conversione in {{engine}}",
+    "stepEngines": "Formati dei motori (importa OpenVINO / CoreML quando serve)",
+    "title": "Importazione di {{name}} · {{format}}",
+    "start": "Avvio dell'importazione {{format}} per {{plusModelId}}…",
+    "alreadyInLibrary": "{{format}} già nella Libreria",
+    "downloadingNative": "Download di {{format}} nativo…",
+    "registeredLog": "Registrato {{modelId}} ({{size}} MB)",
+    "imported": "Importato \"{{modelId}}\" ({{size}} MB).",
+    "onnxMissing": "ONNX mancante — download prima…",
+    "registeredConv": "Registrato {{modelId}}.{{summary}}",
+    "importedPlus": "Importato \"{{modelId}}\" + {{format}}.{{summary}}",
+    "alreadyPresent": "{{format}} già presente su {{registryId}}",
+    "converting": "Conversione di ONNX → {{format}} su un nodo idoneo…",
+    "conversionLog": "Conversione:{{summary}}",
+    "conversionFailed": "Conversione {{format}} non riuscita",
+    "converted": "Convertito \"{{registryId}}\" → {{format}}.{{summary}}"
+  },
+  "probe": {
+    "noFormat": "Impossibile dedurre il formato dall'estensione — sceglilo qui sotto.",
+    "size640": "Dimensione di input dedotta dal nome: 640.",
+    "size320": "Dimensione di input predefinita: 320 (modificala se il modello ne richiede un'altra).",
+    "decode": "La decodifica (postprocessore) non viene dedotta — scegli quella che corrisponde all'output del modello."
+  },
+  "blocked": {
+    "imported": "Già importato su questo hub.",
+    "missing": "Importazione bloccata: l'artefatto remoto manca nell'albero verificato.",
+    "sizeChanged": "Importazione bloccata: la dimensione dell'artefatto remoto non corrisponde più al manifesto verificato.",
+    "unavailable": "Importazione bloccata: lo scostamento del catalogo non è disponibile e non può essere verificato.",
+    "unknown": "Importazione bloccata: lo scostamento del catalogo è sconosciuto e non può essere verificato."
+  }
+}

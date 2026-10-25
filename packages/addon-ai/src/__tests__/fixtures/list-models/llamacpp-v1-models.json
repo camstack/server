@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gemma-3-4b-it-Q4_K_M.gguf",
+      "object": "model",
+      "created": 1730000000,
+      "owned_by": "llamacpp",
+      "meta": {
+        "vocab_type": 1,
+        "n_vocab": 262144,
+        "n_ctx_train": 131072,
+        "n_embd": 2560,
+        "n_params": 3880263168,
+        "size": 2489757856
+      }
+    }
+  ]
+}

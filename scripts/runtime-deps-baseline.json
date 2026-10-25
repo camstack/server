@@ -1,0 +1,50 @@
+{
+  "_comment": "Exemptions for check-runtime-deps-reachable-from-dist.ts. Two kinds live here today: (1) a dependency the literal-string scan cannot see referenced in dist/ (a dynamic require built from a computed string, a WASM loader referenced only via a bundled asset URL, a .node native addon resolved through a path the scanner does not follow); (2) pre-existing candidates this scan surfaced while D479 was scoped narrowly to the admin-ui/ui-library browser toolchain (monaco-editor, lucide-react, hls.js, @xyflow/react, konva, @xterm, react/react-dom/react-router-dom/i18next and friends) plus the lucide-react version split \u2014 every entry below is UNVERIFIED beyond 'the scan flagged it', not yet audited, and not fixed under D479. The most likely systemic repeat of the SAME pattern is 'zod' across self-contained-mode addons (vite-lib.preset's SELF_CONTAINED_EXTERNALS does not externalize zod, so it is bundled into dist exactly like lucide-react was) \u2014 worth a dedicated follow-up pass, package by package, verifying each against its BUILT dist before moving anything. Ratchet: an entry no longer needed must be removed; a NEW entry needs a reviewed reason, not a parked devDependency move.",
+  "exemptions": {
+    "@camstack/addon-ai": [
+      "@ai-sdk/anthropic",
+      "@ai-sdk/google",
+      "@ai-sdk/openai",
+      "@ai-sdk/openai-compatible",
+      "ai",
+      "zod"
+    ],
+    "@camstack/addon-auth": [
+      "@simplewebauthn/browser",
+      "@simplewebauthn/server",
+      "@simplewebauthn/types",
+      "jose"
+    ],
+    "@camstack/addon-cloudflare": ["zod"],
+    "@camstack/addon-decoder-nodeav": ["zod"],
+    "@camstack/addon-export-alexa": ["zod"],
+    "@camstack/addon-export-google": ["zod"],
+    "@camstack/addon-export-hap": ["@homebridge/hap-nodejs", "werift-rtp", "zod"],
+    "@camstack/addon-mqtt-broker": ["aedes", "bcryptjs", "mqtt"],
+    "@camstack/addon-pipeline": ["mp4box", "opus-decoder", "zod"],
+    "@camstack/addon-pipeline-orchestrator": ["@tanstack/react-query"],
+    "@camstack/addon-post-analysis": ["@tanstack/react-query", "zod"],
+    "@camstack/addon-provider-hikvision": ["werift"],
+    "@camstack/addon-provider-homeassistant": ["home-assistant-js-websocket"],
+    "@camstack/addon-provider-homematic": ["nodehomematic"],
+    "@camstack/addon-provider-onvif": ["zod"],
+    "@camstack/addon-provider-reolink": ["@apocaliss92/nodelink-js"],
+    "@camstack/addon-smtp-nodemailer": ["nodemailer", "zod"],
+    "@camstack/addon-terminal": ["@xterm/addon-serialize", "@xterm/headless"],
+    "@camstack/sdk": ["superjson"],
+    "@camstack/system": [
+      "@camstack/sdk",
+      "@msgpack/msgpack",
+      "bcryptjs",
+      "croner",
+      "js-yaml",
+      "jsonwebtoken",
+      "moleculer",
+      "otplib",
+      "sqlite-vec",
+      "superjson",
+      "systeminformation",
+      "tar"
+    ]
+  }
+}

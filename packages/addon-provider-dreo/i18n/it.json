@@ -1,0 +1,7 @@
+{
+  "connection.s_credentials.title": "Account Dreo",
+  "connection.s_credentials.email.label": "Email",
+  "connection.s_credentials.password.label": "Password",
+  "connection.s_region.title": "Regione",
+  "connection.s_region.region.label": "Regione"
+}

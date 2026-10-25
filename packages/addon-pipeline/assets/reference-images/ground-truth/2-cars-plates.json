@@ -1,0 +1,137 @@
+{
+  "image": "2-cars-plates.jpg",
+  "width": 1036,
+  "height": 1380,
+  "generatedAt": "2026-04-11T07:13:39.862Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "vehicle",
+      "score": 0.919,
+      "bbox": {
+        "x": 191,
+        "y": 466.1,
+        "width": 843,
+        "height": 569.1
+      },
+      "labels": [
+        {
+          "label": "SDOF 8447",
+          "score": 0.863,
+          "detectionId": "d2"
+        }
+      ]
+    },
+    {
+      "id": "d3",
+      "kind": "first-level",
+      "macroClass": "vehicle",
+      "score": 0.911,
+      "bbox": {
+        "x": 0,
+        "y": 324.7,
+        "width": 225.8,
+        "height": 237.40000000000003
+      },
+      "labels": []
+    },
+    {
+      "id": "d4",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.811,
+      "bbox": {
+        "x": 759.7,
+        "y": 252.7,
+        "width": 155.69999999999993,
+        "height": 231.8
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d5"
+        }
+      ]
+    },
+    {
+      "id": "d6",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.648,
+      "bbox": {
+        "x": 177.8,
+        "y": 246.1,
+        "width": 73,
+        "height": 167.50000000000003
+      },
+      "labels": []
+    },
+    {
+      "id": "d7",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.562,
+      "bbox": {
+        "x": 249.9,
+        "y": 254,
+        "width": 58.79999999999998,
+        "height": 165.8
+      },
+      "labels": []
+    },
+    {
+      "id": "d8",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.538,
+      "bbox": {
+        "x": 147.8,
+        "y": 222.2,
+        "width": 45.29999999999998,
+        "height": 160.7
+      },
+      "labels": []
+    },
+    {
+      "id": "d2",
+      "kind": "detail",
+      "macroClass": "plate",
+      "score": 0.859,
+      "bbox": {
+        "x": 593.4,
+        "y": 702.4000000000001,
+        "width": 247.60000000000002,
+        "height": 65.5
+      },
+      "labels": [
+        {
+          "label": "SDOF 8447",
+          "score": 0.863
+        }
+      ],
+      "parentId": "d1"
+    },
+    {
+      "id": "d5",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.65,
+      "bbox": {
+        "x": 762.7,
+        "y": 302.5,
+        "width": 28.5,
+        "height": 39.5
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d4"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+caps.Format[0]=mp4
+caps.MaxPreRecordTime=5
+caps.PacketLengthRange[0]=1
+caps.PacketLengthRange[1]=20
+caps.SupportExtraRecordMode=false
+caps.SupportHoliday=true

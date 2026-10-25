@@ -1,0 +1,50 @@
+[
+  {
+    "id": "E1-1829",
+    "kind": "event",
+    "deviceId": 101,
+    "fromMs": 1788798555000,
+    "toMs": 1788798563000,
+    "stepMs": 1000
+  },
+  {
+    "id": "E2-1604",
+    "kind": "event",
+    "deviceId": 101,
+    "fromMs": 1788789867000,
+    "toMs": 1788789877000,
+    "stepMs": 1000
+  },
+  {
+    "id": "E3-1748",
+    "kind": "event",
+    "deviceId": 101,
+    "fromMs": 1788796103000,
+    "toMs": 1788796111000,
+    "stepMs": 1000
+  },
+  {
+    "id": "E4-1534",
+    "kind": "event",
+    "deviceId": 101,
+    "fromMs": 1788788079000,
+    "toMs": 1788788081000,
+    "stepMs": 1000
+  },
+  {
+    "id": "E5-0641",
+    "kind": "event",
+    "deviceId": 101,
+    "fromMs": 1788756095000,
+    "toMs": 1788756101000,
+    "stepMs": 1000
+  },
+  {
+    "id": "E6-1127",
+    "kind": "event",
+    "deviceId": 101,
+    "fromMs": 1788773211000,
+    "toMs": 1788773221000,
+    "stepMs": 1000
+  }
+]

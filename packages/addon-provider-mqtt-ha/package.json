@@ -1,0 +1,80 @@
+{
+  "name": "@camstack/addon-provider-mqtt-ha",
+  "version": "0.1.24",
+  "description": "Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "mqtt",
+    "home-assistant",
+    "import",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "MQTT HA Discovery Import",
+    "addons": [
+      {
+        "id": "provider-mqtt-ha",
+        "category": "providers",
+        "name": "MQTT HA Discovery Import",
+        "version": "0.1.0",
+        "description": "Import devices from Home Assistant MQTT discovery (homeassistant/+/+/config) via a configured MQTT broker",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#41bdf5",
+        "instanceMode": "multiple",
+        "supportsLocationImport": false,
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@types/mqtt": "^2.5.0",
+    "mqtt": "^5.10.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

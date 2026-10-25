@@ -1,0 +1,82 @@
+// @vitest-environment jsdom
+/**
+ * Add Integration picker: search + 2-column grid (NotificationTargets KindPicker).
+ */
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const providers = vi.hoisted(() => ({
+  list: [
+    {
+      addonId: 'provider-reolink',
+      name: 'Reolink',
+      description: 'Cameras',
+      color: '#f60',
+      iconUrl: null as string | null,
+      instanceMode: 'multiple',
+      existingInstances: [] as { id: string }[],
+      discoveryMode: 'scan',
+      kind: 'device-provider' as const,
+      brokerKind: null as string | null,
+      mode: 'standalone' as const,
+      canTest: true,
+    },
+    {
+      addonId: 'provider-tuya',
+      name: 'Tuya',
+      description: 'Smart home',
+      color: '#06f',
+      iconUrl: null as string | null,
+      instanceMode: 'multiple',
+      existingInstances: [] as { id: string }[],
+      discoveryMode: 'cloud',
+      kind: 'device-provider' as const,
+      brokerKind: null as string | null,
+      mode: 'account' as const,
+      canTest: false,
+    },
+  ],
+}))
+
+vi.mock('@camstack/ui-library', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+  useIntegrationsGetAvailableTypes: () => ({ data: providers.list, isLoading: false }),
+}))
+
+import { ProviderPicker } from '../ProviderPicker'
+
+describe('ProviderPicker', () => {
+  beforeEach(() => {
+    providers.list = providers.list.slice()
+  })
+
+  it('renders a 2-column grid of providers and filters by search', () => {
+    const onSelect = vi.fn()
+    render(
+      <MemoryRouter>
+        <ProviderPicker onSelect={onSelect} onClose={vi.fn()} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('provider-picker')).toBeTruthy()
+    expect(screen.getByTestId('provider-pick-provider-reolink')).toBeTruthy()
+    expect(screen.getByTestId('provider-pick-provider-tuya')).toBeTruthy()
+
+    fireEvent.change(screen.getByTestId('provider-picker-search'), {
+      target: { value: 'reolink' },
+    })
+    expect(screen.getByTestId('provider-pick-provider-reolink')).toBeTruthy()
+    expect(screen.queryByTestId('provider-pick-provider-tuya')).toBeNull()
+  })
+
+  it('does not show a trailing arrow on a provider card', () => {
+    render(
+      <MemoryRouter>
+        <ProviderPicker onSelect={vi.fn()} onClose={vi.fn()} />
+      </MemoryRouter>,
+    )
+    const card = screen.getByTestId('provider-pick-provider-reolink')
+    expect(card.querySelector('svg')).toBeNull()
+    expect(card.textContent).not.toContain('>')
+  })
+})

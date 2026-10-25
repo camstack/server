@@ -1,0 +1,37 @@
+# addon-training
+
+Read `docs/architecture/cloud-training.md` first. Traps specific to this package:
+
+- **Two entries, two processes.** `training` (orchestrator) and `training-modal`
+  (provider) never call each other directly — only through `ctx.api` — so a
+  second cloud is a new entry with no orchestrator change.
+- **The `modal` SDK is imported in ONE file** (`providers/modal/modal-sdk-gateway.ts`),
+  pinned exactly. A version bump is: read its `index.d.ts`, fix that file, run the
+  contract suite (`provider-contract.spec.ts`). Never import `modal` elsewhere.
+- **The trainer revision is a commit sha** (`orchestrator/trainer-source.ts`).
+  Change `hf/camstack-trainer/`, upload it to the HF repo, then bump the sha — the
+  Modal provider builds the image from the Dockerfile AT that sha.
+- **Base-model floors are copies of the pipeline catalog**; `base-models.spec.ts`
+  holds them equal. Re-measure there, then here.
+- **Bytes never ride a cap field.** Dataset in = a pipeline-analytics peer-bytes
+  offer; bundle out = a provider offer; bundle to Model Studio = an `offerFile`.
+
+## Skills for this package
+
+<!-- camstack-skills-pointer:begin — written by `npx tsx scripts/skills/gen-skill-pointers.ts`; edit the generator, not this block -->
+Follow the skill; do not reconstruct the procedure (any agent can open the file):
+
+- A new or changed addon or manifest entry; `camstack deploy` → `camstack-addon` (`.claude/skills/camstack-addon/SKILL.md`)
+<!-- camstack-skills-pointer:end -->
+
+## UI work
+
+<!-- camstack-ui-pointer:begin — written by `npx tsx scripts/skills/gen-skill-pointers.ts`; edit the generator, not this block -->
+**This package ships an addon page** (a Module Federation remote). Before any UI change load `camstack-ui`, then `camstack-ui-admin` (`.claude/skills/camstack-ui-admin/SKILL.md`). It ships no CSS: its classes exist only because the admin-ui build scans it (D747, `npx tsx scripts/check-addon-page-css.ts`).
+
+- Search before building: `npm run ui:find -- "<need>"`, `npm run ui:show -- <Name>`, `npm run ui:tokens`.
+- Library components and theme tokens only: no hex, no palette classes (`bg-red-500`), no colour or spacing in `style=`.
+- Rules: `docs/ui/README.md` (conventions, need → component, admin patterns, viewer, anti-patterns).
+- Done = the skill’s done-gate: `npm run ui:check -- <files>` with 0 new findings, plus `npm run ui:shots` before/after (dark + light, desktop 1440×900 + phone 390×844).
+- After `ui:shots`: **Read the PNG files** under `scratchpad/ui-shots/<label>/` (Cursor `Read` accepts images) so before/after appear in the transcript — do not stop at `report.md` alone. Any agent / harness, not only Claude Code.
+<!-- camstack-ui-pointer:end -->

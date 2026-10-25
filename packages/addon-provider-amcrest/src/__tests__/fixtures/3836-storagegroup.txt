@@ -1,0 +1,14 @@
+table.StorageGroup[0].Channels[0].MaxPictures=0
+table.StorageGroup[0].FileHoldTime=0
+table.StorageGroup[0].Memo=For Reading & Writing Files
+table.StorageGroup[0].Name=ReadWrite
+table.StorageGroup[0].OverWrite=true
+table.StorageGroup[0].PicturePathRule=%y-%M-%d/%c/jpg/%h/%m/%s[%E][%O@%S][%R].jpg
+table.StorageGroup[0].RecordPathRule=%y-%M-%d/%c/dav/%h/%h.%m.%s-%h.%m.%s[%E][%O@%S][%R].%t
+table.StorageGroup[1].Channels[0].MaxPictures=0
+table.StorageGroup[1].FileHoldTime=0
+table.StorageGroup[1].Memo=For FTP & NAS Files
+table.StorageGroup[1].Name=Remote
+table.StorageGroup[1].OverWrite=true
+table.StorageGroup[1].PicturePathRule=%y-%M-%d/%hhour/jpg/%h.%m.%s[%E][%O@%S][%R].jpg
+table.StorageGroup[1].RecordPathRule=%y-%M-%d/%hhour/dav/%h.%m.%s-%h.%m.%s[%E][%O@%S][%R].%t

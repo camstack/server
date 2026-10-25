@@ -1,0 +1,76 @@
+{
+  "name": "@camstack/addon-export-alexa",
+  "version": "1.2.167",
+  "description": "Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "alexa",
+    "smart-home"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Alexa Smart Home export",
+    "addons": [
+      {
+        "id": "export-alexa",
+        "category": "exports",
+        "name": "Alexa Smart Home export",
+        "description": "Hub-side OAuth provider + Smart Home directive handler. Pairs with a user-owned AWS Lambda that forwards Alexa directives to this addon. Skeleton: AcceptGrant + Discovery implemented; CameraStream / RTC / Doorbell push in next dispatch.",
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-export"
+          },
+          {
+            "name": "addon-routes"
+          },
+          {
+            "name": "oauth-integration"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#00CAFF"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets",
+    "lambda-template"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "build:lib": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "sharp": "^0.35.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^4.0.0"
+  }
+}

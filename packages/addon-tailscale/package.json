@@ -1,0 +1,103 @@
+{
+  "name": "@camstack/addon-tailscale",
+  "version": "1.2.144",
+  "description": "Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "tailscale",
+    "mesh",
+    "vpn",
+    "funnel",
+    "serve",
+    "ingress"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/client/index.js",
+  "exports": {
+    "./client": {
+      "import": "./dist/client/index.mjs",
+      "require": "./dist/client/index.js"
+    },
+    "./ingress": {
+      "import": "./dist/ingress/index.mjs",
+      "require": "./dist/ingress/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Tailscale",
+    "bundle": {
+      "displayName": "Tailscale",
+      "description": "Tailnet client + Serve/Funnel ingress."
+    },
+    "addons": [
+      {
+        "id": "tailscale-client",
+        "category": "networking",
+        "name": "Tailscale Client",
+        "version": "1.0.0",
+        "entry": "./dist/client/tailscale.addon.js",
+        "execution": {
+          "placement": "hub-only",
+          "group": "net-access"
+        },
+        "capabilities": [
+          {
+            "name": "mesh-network"
+          },
+          {
+            "name": "network-access"
+          }
+        ],
+        "icon": "assets/client-icon.svg",
+        "color": "#242424"
+      },
+      {
+        "id": "tailscale-ingress",
+        "category": "networking",
+        "name": "Tailscale Ingress (Serve/Funnel)",
+        "version": "1.0.0",
+        "description": "Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first.",
+        "entry": "./dist/ingress/tailscale-ingress.addon.js",
+        "execution": {
+          "placement": "hub-only",
+          "group": "net-access"
+        },
+        "capabilities": [
+          {
+            "name": "network-access"
+          }
+        ],
+        "icon": "assets/ingress-icon.svg",
+        "color": "#242424"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "validate": "tsx ../../scripts/validate-addon.ts .",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "tsx": "^4.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11"
+  }
+}

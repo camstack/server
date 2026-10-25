@@ -1,0 +1,13 @@
+list.info[0].CantHotPlug=false
+list.info[0].Detail[0].IsError=false
+list.info[0].Detail[0].Path=/mnt/sd
+list.info[0].Detail[0].TotalBytes=134202327040.000000
+list.info[0].Detail[0].Type=ReadWrite
+list.info[0].Detail[0].UsedBytes=426115072.000000
+list.info[0].HealthDataFlag=0
+list.info[0].LifePercent=0.000000
+list.info[0].LockState=0
+list.info[0].Name=/dev/mmc0
+list.info[0].Pointer=1
+list.info[0].SDEncryptFlag=0
+list.info[0].State=Success

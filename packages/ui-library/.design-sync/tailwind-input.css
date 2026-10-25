@@ -1,0 +1,36 @@
+/* Tailwind v4 entry for the design-system preview stylesheet.
+   Mirrors addon-admin-ui/src/index.css: pull in Tailwind + the @theme tokens,
+   and scan the ui-library source (and authored previews) for utility classes.
+   Compiled by .design-sync/build-theme-css.sh into .design-sync/.cache/compiled.css,
+   which cfg.cssEntry points at. Regenerate before each converter run. */
+@import "tailwindcss";
+@import "../src/tailwind/camstack-theme.css";
+@source "../src";
+@source "./previews";
+
+/* Safelist common sizing/layout utilities so authored previews always have them
+   even before the next recompile (preview-rebuild does NOT run Tailwind; this
+   stylesheet is the only source of utility CSS the cards see). Arbitrary [..]
+   values still can't be safelisted — previews should use the standard scale. */
+@source inline("{w,h,min-w,min-h,max-w,max-h}-{0,1,2,3,4,5,6,8,10,12,16,20,24,28,32,40,48,56,64,72,80,96}");
+@source inline("{w,h}-{full,screen,auto,fit,px}");
+@source inline("max-w-{xs,sm,md,lg,xl,2xl,3xl,4xl,none}");
+@source inline("grid-cols-{1,2,3,4,5,6,12} gap-{0,1,2,3,4,5,6,8} {gap-x,gap-y}-{1,2,3,4,6}");
+@source inline("{p,px,py,pt,pb,pl,pr,m,mx,my,mt,mb}-{0,1,2,3,4,5,6,8,10,12}");
+/* DS semantic token utilities the conventions header documents (tokens exist in
+   @theme but the utilities are only generated if referenced). */
+@source inline("{text,bg,border}-provider-{onvif,hikvision,reolink,ha,rtsp}");
+@source inline("{bg,text,border}-{primary,surface,background,foreground,success,warning,danger,info,border}");
+@source inline("bg-surface-hover bg-background-elevated border-border-subtle text-primary-foreground text-foreground-{muted,subtle,disabled} rounded-{sm,md,lg,xl}");
+
+/* DS is dark-first: the @theme defaults are the dark palette, so give every
+   rendered design/card the DS canvas instead of the browser's white default
+   (otherwise light foreground text renders invisibly). */
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_comment": "D45 single-copy layout debt, pinned per <file> » <marker>. A ratchet: counts may only go DOWN. Enforced by scripts/check-single-copy-layout.ts. This file is also the cleanup list — every entry is a second copy or a second resolution path that D45 removes.",
+  "buckets": {
+    "Dockerfile » framework-dir-override": 3,
+    "Dockerfile » legacy-framework-dir": 4,
+    "Dockerfile » node-path-manipulation": 6,
+    "server/backend/src/launcher.ts » framework-dir-override": 2,
+    "server/backend/src/launcher.ts » node-path-manipulation": 6
+  }
+}

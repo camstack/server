@@ -1,0 +1,4 @@
+# Python bytecode + test caches must never ship in the addon tarball.
+python/__pycache__
+python/.pytest_cache
+**/*.pyc

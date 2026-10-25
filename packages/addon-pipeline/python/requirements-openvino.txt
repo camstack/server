@@ -1,0 +1,3 @@
+# OpenVINO backend (Linux/Windows; macOS support is x86_64 only).
+# Wheels available for Python 3.10-3.12.
+openvino>=2025,<2026

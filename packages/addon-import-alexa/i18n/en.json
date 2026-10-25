@@ -1,0 +1,15 @@
+{
+  "globalSettings.s_alexa-account.title": "Amazon Alexa account",
+  "globalSettings.s_alexa-account.description": "Alexa accounts are managed in the External systems → Brokers tab.",
+  "globalSettings.s_alexa-account.accountHelp.label": "Accounts are managed separately",
+  "globalSettings.s_alexa-proxy-login.title": "Interactive login (proxy)",
+  "globalSettings.s_alexa-proxy-login.description": "The \"Login to Amazon\" button in onboarding opens a local proxy that captures the cookie after you complete the real Amazon login (incl. 2FA). Because Amazon URLs are rewritten to this exact host:port, it must be a directly-reachable address — leave the host blank to auto-detect the server IP, and make sure the port is reachable from the browser you log in from.",
+  "globalSettings.s_alexa-proxy-login.proxyLogin_proxyHost.label": "Login proxy host/IP (blank = auto-detect)",
+  "globalSettings.s_alexa-proxy-login.proxyLogin_proxyPort.label": "Login proxy port",
+  "connection.s_alexa-account.title": "Amazon Alexa account",
+  "connection.s_alexa-account.description": "Link an Amazon account via the unofficial Alexa client. Supply a captured cookie OR a refresh token. NOTE: this is an unofficial integration — Amazon can change or break it without notice, and it may violate Amazon ToS. State is polled, not pushed.",
+  "connection.s_alexa-account.amazonDomain.label": "Amazon domain (region)",
+  "connection.s_alexa-account.cookie.label": "Cookie blob (from proxy login)",
+  "connection.s_alexa-account.refreshToken.label": "Refresh token (alternative to cookie)",
+  "connection.s_alexa-account.pollIntervalMs.label": "State poll interval (ms)"
+}

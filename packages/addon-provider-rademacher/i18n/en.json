@@ -1,0 +1,10 @@
+{
+  "connection.s_identity.title": "Hub",
+  "connection.s_identity.name.label": "Name",
+  "connection.s_connection.title": "Connection",
+  "connection.s_connection.description": "Leave the password blank for an unprotected hub.",
+  "connection.s_connection.host.label": "Hub host / IP",
+  "connection.s_connection.password.label": "Password (optional)",
+  "connection.s_connection.pollIntervalMs.label": "Poll interval (ms)",
+  "connection.s_connection.basePath.label": "API base path (optional)"
+}

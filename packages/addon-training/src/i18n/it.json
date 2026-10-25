@@ -1,0 +1,521 @@
+{
+  "page": {
+    "title": "Addestramento",
+    "subtitle": "Annota il corpus di riaddestramento, avvia fine-tuning nel cloud sul tuo account GPU e configura i provider.",
+    "addProvider": "Aggiungi provider",
+    "addJob": "Aggiungi job",
+    "tabs": {
+      "frames": "Frame",
+      "jobs": "Job",
+      "providers": "Provider"
+    }
+  },
+  "sectionState": {
+    "couldNotLoad": "Impossibile caricare:"
+  },
+  "common": {
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "edit": "Modifica",
+    "name": "Nome",
+    "status": "Stato",
+    "type": "Tipo",
+    "cost": "Costo"
+  },
+  "jobsSection": {
+    "loadingDeps": "Caricamento di provider e collezioni…",
+    "couldNotLoadSetup": "Impossibile caricare la configurazione dei job",
+    "title": "Job"
+  },
+  "jobs": {
+    "emptyNone": "Nessun job di addestramento.",
+    "emptyFiltered": "Nessun job corrisponde a questo filtro.",
+    "cancelConfirm": {
+      "title": "Annullare questo job?",
+      "message": "Il job nel cloud viene fermato e il suo dataset eliminato. Quanto speso finora non viene rimborsato.",
+      "confirm": "Annulla job"
+    },
+    "columns": {
+      "name": "Job",
+      "state": "Stato",
+      "collections": "Collezioni",
+      "progress": "Avanzamento",
+      "cost": "Costo",
+      "created": "Creato"
+    },
+    "filter": {
+      "searchPlaceholder": "Cerca job…",
+      "searchLabel": "Cerca job",
+      "facetsLabel": "Filtra per stato del job",
+      "clearLabel": "Cancella filtri"
+    }
+  },
+  "state": {
+    "queued": "In coda",
+    "uploading": "Caricamento",
+    "submitted": "Inviato",
+    "starting": "Avvio",
+    "running": "Addestramento",
+    "collecting": "Raccolta",
+    "ready": "Pronto",
+    "registered": "Registrato",
+    "canary": "Canary",
+    "failed": "Fallito",
+    "cancelling": "Annullamento",
+    "cancelled": "Annullato",
+    "lost": "Perso",
+    "expired": "Scaduto",
+    "discarded": "Scartato"
+  },
+  "jobDetail": {
+    "details": "Dettagli di {{name}}",
+    "collections": "Collezioni:",
+    "progress": "Avanzamento del job",
+    "stepFailed": "{{step}} — {{state}}",
+    "failure": "{{reason}}: {{detail}}",
+    "failureDuring": "{{reason}} durante {{stage}}: {{detail}}",
+    "epoch": "Epoca {{epoch}} / {{epochs}}",
+    "eta": "ancora circa {{duration}}",
+    "ran": "Eseguito per {{duration}}",
+    "cost": "Costo {{cost}} su un tetto di ${{cap}}",
+    "datasetDeleted": "dataset cloud eliminato il {{when}}",
+    "datasetKept": "dataset cloud conservato fino al {{when}}",
+    "resultKept": "risultato conservato sull'hub fino al {{when}}"
+  },
+  "sparkline": {
+    "afterTwoEpochs": "mAP50 dopo due epoche",
+    "perEpoch": "mAP50 per epoca"
+  },
+  "comparison": {
+    "small": "piccoli {{found}}/{{total}}",
+    "metrics": "P {{precision}} · R {{recall}} · AP50 {{ap50}}",
+    "floorNight": "soglia {{floor}} · R notte {{night}}",
+    "noEvaluation": "Nessuna valutazione sul set escluso in questo risultato.",
+    "classColumn": "Classe (positivi nel set escluso)",
+    "current": "Modello attuale",
+    "fineTuned": "Fine-tuned",
+    "fineTunedInt8": "Fine-tuned INT8",
+    "recallChange": "Variazione del recall per telecamera",
+    "delta": "{{camera}} {{cls}} {{value}} pt"
+  },
+  "plan": {
+    "cannotStart": "Impossibile avviare ({{reason}}): {{detail}}",
+    "heldOut": "Escluso per la valutazione: {{scope}}; {{train}} soggetti per l'addestramento.",
+    "heldOutWithSupport": "Escluso per la valutazione: {{scope}} — {{support}} soggetti esclusi; {{train}} soggetti per l'addestramento.",
+    "lastDays": "gli ultimi {{days}} giorni di ogni telecamera",
+    "estimatedCost": "Costo stimato: <b>${{low}} – ${{high}}</b>",
+    "gpuTime": "Tempo GPU: {{low}} – {{high}}",
+    "upload": "Upload: circa {{size}}, {{minutes}} min a 20 Mbit/s"
+  },
+  "result": {
+    "discardConfirm": {
+      "title": "Scartare questo risultato?",
+      "message": "Il modello addestrato e i suoi file vengono eliminati dall'hub. L'operazione non può essere annullata.",
+      "confirm": "Scarta"
+    },
+    "rollbackConfirm": {
+      "title": "Ripristinare il canary?",
+      "message": "Ogni acceleratore canary torna esattamente al modello di rilevamento che aveva prima.",
+      "confirm": "Ripristina"
+    },
+    "loading": "Caricamento del risultato…",
+    "couldNotLoad": "Impossibile caricare il risultato:",
+    "gone": "Il risultato in staging non è più sull'hub.",
+    "floors": "Soglie proposte: {{floors}}",
+    "floorsWithNotes": "Soglie proposte: {{floors}} — {{notes}}",
+    "int8Kept": "INT8: mantenuto",
+    "int8KeptReason": "INT8: mantenuto ({{reason}})",
+    "int8Dropped": "INT8: scartato",
+    "int8DroppedReason": "INT8: scartato ({{reason}})",
+    "notExported": "non esportato: {{list}}",
+    "files_one": "{{count}} file, {{size}} · {{licence}}",
+    "files_other": "{{count}} file, {{size}} · {{licence}}",
+    "canarySince": "<badge>Canary</badge> su {{accelerators}} dal {{since}}",
+    "register": "Registra",
+    "registerCanary_one": "Registra + Canary su {{count}} acceleratore",
+    "registerCanary_other": "Registra + Canary su {{count}} acceleratori",
+    "discard": "Scarta",
+    "canaryOn_one": "Canary su {{count}} acceleratore",
+    "canaryOn_other": "Canary su {{count}} acceleratori",
+    "rollback": "Ripristina",
+    "canaryAccelerators": "Acceleratori canary — ogni telecamera bilanciata su uno di essi usa il nuovo modello",
+    "loadingAccelerators": "Caricamento degli acceleratori…"
+  },
+  "providers": {
+    "check": {
+      "asking": "Interrogazione del provider…",
+      "signedIn": "Accesso eseguito",
+      "signedInAs": "Accesso eseguito — {{account}}",
+      "refused": "rifiutato"
+    },
+    "validation": {
+      "nameRequired": "Il nome è obbligatorio.",
+      "costCap": "Il tetto di costo deve essere un numero non negativo.",
+      "maxRuntime": "La durata massima deve essere un numero positivo di ore.",
+      "graceHours": "Le ore di tolleranza devono essere un numero non negativo."
+    },
+    "typeGone": "Quel tipo di provider non è più disponibile.",
+    "entryGone": "Quella voce non è più disponibile.",
+    "deleteConfirm": {
+      "title": "Eliminare la voce del provider?",
+      "message": "Rimuovere “{{name}}” ({{type}}). Le credenziali di questa voce vengono eliminate."
+    },
+    "configured": "Configurato",
+    "notConfigured": "Non configurato",
+    "deleteEntry": "Elimina {{name}}",
+    "registryUnreachable": "Impossibile raggiungere il registro delle capability.",
+    "absent": {
+      "title": "Nessun provider di addestramento installato",
+      "description": "Installa un addon provider di addestramento (ad esempio Modal) dalla pagina Addon, poi crea qui una voce.",
+      "addons": "Addon"
+    },
+    "couldNotLoadEntries": "Impossibile caricare le voci:",
+    "couldNotLoadTypes": "Impossibile caricare i tipi:",
+    "empty": "Nessuna voce provider. Aggiungine una per salvare le credenziali ed eseguire job nel cloud.",
+    "editTitle": "Modifica {{name}}",
+    "fallbackName": "provider",
+    "providerType": "Tipo di provider",
+    "selectType": "Seleziona il tipo…",
+    "typeLine": "Tipo: {{type}}",
+    "namePlaceholder": "es. Produzione",
+    "testCredentials": "Verifica credenziali",
+    "nameOnlyHint": "Questo tipo di provider richiede solo un nome qui. Le credenziali si aprono dopo il salvataggio se l'addon espone altri campi in futuro."
+  },
+  "newJob": {
+    "confirm": {
+      "title": "Avviare l'addestramento nel cloud?",
+      "batchTitle": "Avviare il batch di addestramento nel cloud?",
+      "message": "Il job viene fermato se raggiunge ${{cap}} o dura più di {{hours}} h.",
+      "batchMessage": "{{jobs}} job verranno eseguiti uno dopo l'altro (stesse collezioni e stessa voce). Ciascuno si ferma a ${{cap}} o dopo {{hours}} h.",
+      "confirm": "Carica e avvia"
+    },
+    "refused": "Rifiutato ({{reason}}): {{detail}}",
+    "noCollections": "Crea almeno una collezione nella scheda Frame prima di pianificare un job.",
+    "noProviders": "Crea una voce provider nella scheda Provider prima di pianificare un job.",
+    "providerEntry": "Voce provider",
+    "providerNotConfigured": "{{name}} · {{type}} (non configurato)",
+    "collections": "Collezioni su cui addestrare",
+    "workState": "Stato di lavorazione dei frame",
+    "workStates": {
+      "complete": "Solo frame completi",
+      "annotated_or_complete": "Annotati o completi",
+      "any_annotated": "Qualsiasi annotato (inclusi i negativi difficili)"
+    },
+    "baseModels": "Modelli base",
+    "baseModel": "Modello base",
+    "baseModelHint": "Un'architettura per job. Il trainer esporta ONNX, OpenVINO e CoreML da quell'esecuzione: qui non si scelgono i formati.",
+    "advancedMulti": "Avanzate: addestra più architetture (un job ciascuna, in sequenza)",
+    "preset": {
+      "label": "Preset",
+      "quick": "Rapido — 15 epoche",
+      "standard": "Standard — 40 epoche",
+      "thorough": "Accurato — 80 epoche, nulla congelato"
+    },
+    "freeze": "Livelli del backbone congelati (vuoto = preset)",
+    "freezePlaceholder": "preset",
+    "region": "Regione",
+    "holdoutCameras": "Telecamere escluse (automatico): {{cameras}}",
+    "planning": "Pianificazione…",
+    "couldNotPlan": "Impossibile pianificare:",
+    "jobName": "Nome del job",
+    "jobNamePlaceholder": "falsi allarmi notturni, ottobre",
+    "costCap": "Tetto di costo (USD)",
+    "maxRuntime": "Durata massima (ore)",
+    "starting": "Avvio…",
+    "reviewAndStart": "Controlla e avvia…"
+  },
+  "kpi": {
+    "cameraFallback": "Telecamera {{id}}",
+    "couldNotLoad": "Impossibile caricare i conteggi del corpus.",
+    "total": "Frame totali",
+    "unannotated": "Non annotati",
+    "annotated": "Annotati",
+    "complete": "Completi",
+    "perCamera": "Per telecamera",
+    "perCameraHint": "Ordinate per non annotati. La % è i completi di questa telecamera ÷ il totale del corpus. Clicca una riga per filtrare la griglia.",
+    "open": "{{count}} da fare",
+    "inProgress": "{{count}} in corso",
+    "done": "{{count}} completati",
+    "showAll": "Mostra tutte ({{count}})"
+  },
+  "corpus": {
+    "badge": {
+      "todo": "Da fare",
+      "inProgress": "In corso",
+      "complete": "Completo"
+    },
+    "grid": {
+      "couldNotLoad": "Impossibile caricare la pagina del corpus.",
+      "emptyTitle": "Nessun frame corrisponde",
+      "emptyDescription": "Allarga i filtri, oppure copia nel corpus i frame da track in staging e fermi immagine delle registrazioni.",
+      "cameraFallback": "Telecamera {{id}}",
+      "perPage": "Frame per pagina",
+      "itemNoun": "frame"
+    },
+    "filter": {
+      "workStates": {
+        "all": "Tutti",
+        "unannotated": "Non annotati",
+        "annotated": "Annotati",
+        "complete": "Completi"
+      },
+      "readingCollections": "Lettura delle collezioni…",
+      "anyCollection": "Qualsiasi collezione",
+      "workState": "Stato di lavorazione",
+      "anyCamera": "Qualsiasi telecamera",
+      "collection": "Collezione",
+      "export": "Esporta",
+      "annotatedClasses": "Classi annotate"
+    }
+  },
+  "collections": {
+    "refusal": {
+      "emptyName": "Dai un nome alla collezione.",
+      "duplicateName": "Esiste già una collezione con questo nome.",
+      "unknown": "Questa collezione non esiste più."
+    },
+    "title": "Collezioni"
+  },
+  "frames": {
+    "position": "{{index}} di {{total}}"
+  },
+  "annotate": {
+    "title": "Annota frame"
+  },
+  "editor": {
+    "unsaved": "Modifiche non salvate",
+    "showRemoved": "Mostra rimossi"
+  },
+  "actionBar": {
+    "subjects": "Soggetti ({{count}})",
+    "allBoxedLabel": "Tutti i soggetti di questo frame sono riquadrati",
+    "allBoxed": "Tutti i soggetti riquadrati",
+    "allBoxedHint": "La valutazione del detector usa solo questi frame: una persona senza riquadro conta come falso allarme. Un frame senza nulla, se spuntato, è un esempio negativo.",
+    "acceptDrafts_one": "Accetta {{count}} bozza",
+    "acceptDrafts_other": "Accetta {{count}} bozze",
+    "saveFrame": "Salva frame"
+  },
+  "annotationEditor": {
+    "empty": "Nessun soggetto in questo frame. Trascina sull'immagine per disegnarne uno, oppure chiedi una proposta. Annota <b>ogni</b> soggetto: un frame con un solo riquadro e tre persone senza etichetta insegna al modello che due terzi delle persone presenti sono sfondo."
+  },
+  "shortcuts": {
+    "frameNav": {
+      "keys": "← / →",
+      "does": "Frame precedente / successivo"
+    },
+    "drawBox": {
+      "keys": "Trascina su un'area vuota",
+      "does": "Disegna un riquadro"
+    },
+    "moveBox": {
+      "keys": "Trascina un riquadro / le sue maniglie",
+      "does": "Sposta / ridimensiona"
+    },
+    "deleteBox": {
+      "keys": "Canc, Backspace",
+      "does": "Elimina il riquadro selezionato"
+    },
+    "classes": {
+      "keys": "1 – 6",
+      "does": "Classe: persona, veicolo, animale, pacco, volto, targa"
+    },
+    "accept": {
+      "keys": "A",
+      "does": "Accetta la bozza selezionata"
+    },
+    "acceptAll": {
+      "keys": "Maiusc + A",
+      "does": "Accetta tutte le bozze"
+    },
+    "modelError": {
+      "keys": "E",
+      "does": "Segna / deseleziona il riquadro selezionato come errore del modello"
+    },
+    "complete": {
+      "keys": "C",
+      "does": "Attiva / disattiva \"tutti i soggetti riquadrati\""
+    },
+    "selectNext": {
+      "keys": "Tab / Maiusc + Tab, ↓ / ↑",
+      "does": "Seleziona il riquadro successivo / precedente"
+    },
+    "deselect": {
+      "keys": "Esc",
+      "does": "Deseleziona"
+    },
+    "undo": {
+      "keys": "Ctrl/⌘ + Z",
+      "does": "Annulla"
+    },
+    "redo": {
+      "keys": "Ctrl/⌘ + Maiusc + Z, Ctrl/⌘ + Y",
+      "does": "Ripeti"
+    },
+    "save": {
+      "keys": "Ctrl/⌘ + S",
+      "does": "Salva il frame"
+    },
+    "zoom": {
+      "keys": "+ / − / 0, rotella, pizzico",
+      "does": "Ingrandisci / riduci / adatta"
+    },
+    "pan": {
+      "keys": "Spazio + trascina, trascina con tasto centrale, due dita",
+      "does": "Sposta la vista"
+    }
+  },
+  "toolbar": {
+    "previousFrame": "Frame precedente",
+    "nextFrame": "Frame successivo",
+    "zoomOut": "Riduci",
+    "zoomIn": "Ingrandisci",
+    "fit": "Adatta l'intero frame",
+    "pan": "Strumento sposta",
+    "undo": "Annulla",
+    "redo": "Ripeti",
+    "shortcuts": "Scorciatoie da tastiera",
+    "shortcutsTitle": "Tastiera e gesti"
+  },
+  "canvas": {
+    "frameAlt": "Frame in annotazione"
+  },
+  "source": {
+    "operator": "disegnato",
+    "pipeline": "pipeline",
+    "assist": "detector",
+    "llm": "Visione AI"
+  },
+  "chips": {
+    "classUnknown": "classe sconosciuta",
+    "approximate": "approssimativo"
+  },
+  "unsavedGuard": {
+    "title": "Scartare le modifiche non salvate?",
+    "message": "Questo frame ha modifiche non salvate. Uscendo ora andranno perse.",
+    "confirm": "Scarta modifiche",
+    "cancel": "Continua a modificare"
+  },
+  "editorNote": {
+    "subjectBox": "Il riquadro registrato dalla pipeline su questo stesso frame.",
+    "trackPosition": "La posizione del track secondo la pipeline a {{ms}} ms da questo frame."
+  },
+  "collectionsList": {
+    "newName": "Nome della nuova collezione",
+    "newPlaceholder": "Nuova collezione",
+    "create": "Crea",
+    "reading": "Lettura delle collezioni…",
+    "empty": "Nessuna collezione. Creane una qui, oppure usa \"Invia frame all'addestramento\" sulla timeline di registrazione di una telecamera.",
+    "name": "Nome della collezione",
+    "saveName": "Salva il nome",
+    "cancelRename": "Annulla la rinomina",
+    "rename": "Rinomina {{name}}",
+    "deleteTitle": "Eliminare \"{{name}}\"?",
+    "deleteDescription": "I frame presi dalla registrazione che non sono in nessun'altra collezione vengono eliminati insieme ai loro riquadri. I frame copiati dai track restano nel dataset."
+  },
+  "subject": {
+    "tierError": "\"{{value}}\" è una macro-classe, non un'etichetta: persona / postino / Marco sono tre livelli diversi",
+    "why": "Perché c'è questo riquadro",
+    "suggests": "suggerisce {{class}}",
+    "accept": "Accetta questa proposta",
+    "delete": "Elimina questo soggetto",
+    "class": "Classe",
+    "label": "Etichetta",
+    "labelPlaceholder": "etichetta (postino, furgone, gatto…)",
+    "subLabel": "Sotto-etichetta",
+    "subLabelPlaceholder": "sotto-etichetta (un nome, una targa…)",
+    "realSubject": "Questo è un soggetto reale",
+    "markModelError": "Segna come errore del modello",
+    "drawnByYou": "disegnato da te"
+  },
+  "assistGap": {
+    "pending": "Lettura del detector in uso su questa telecamera…",
+    "placement-unreadable": "Non è stato possibile leggere lo stadio di detection di questa telecamera, quindi il modello in uso è sconosciuto, non assente.",
+    "detection-off": "Questa telecamera non esegue nessun detector di oggetti, quindi non c'è una proposta da replicare.",
+    "node-unreachable": "Il nodo che esegue la detection per questa telecamera non ha risposto sui suoi acceleratori.",
+    "device-unknown": "Il nodo non elenca l'acceleratore su cui questa telecamera esegue la detection: interrogarne un altro proporrebbe con un modello diverso.",
+    "step-unknown": "Quel nodo non ha nessuno step di object detection nel suo catalogo.",
+    "no-model": "Nessun modello di object detection su quell'acceleratore può essere risolto per questa telecamera."
+  },
+  "workbench": {
+    "noZone": "Una proposta per i pacchi usa solo il ritaglio della zona: questa telecamera non ha zone, e il detector sull'intero frame a 0.35 propone mobili.",
+    "refused": "La pipeline ha rifiutato: {{reason}}",
+    "refusedDetail": "La pipeline ha rifiutato: {{reason}} — {{detail}}",
+    "proposals_one": "{{count}} proposta da {{model}}",
+    "proposals_other": "{{count}} proposte da {{model}}",
+    "skipped": "{{count}} già presenti nel frame",
+    "belowThreshold": "altre {{count}} erano sotto {{score}}",
+    "proposalsTail": "Accetta o correggi ciascuna; le bozze non vengono salvate.",
+    "saved": "Annotazioni salvate.",
+    "savedWithDrafts_one": "Annotazioni salvate. {{count}} bozza non confermata non è stata salvata.",
+    "savedWithDrafts_other": "Annotazioni salvate. {{count}} bozze non confermate non sono state salvate.",
+    "closeList": "Chiudi l'elenco dei soggetti",
+    "fromRecording": "dalla registrazione",
+    "propose": "Proponi",
+    "packages": "Pacchi",
+    "proposalsFrom": "Le proposte vengono da {{model}} a {{score}}, su {{node}}: ciò che questa telecamera esegue davvero.",
+    "assist": "Assistenza — un detector più grande, visione AI",
+    "conflict": "Questo frame è stato modificato altrove (ora alla revisione {{revision}}). Le tue modifiche non sono salvate.",
+    "reload": "Ricarica l'ultima versione",
+    "couldNotLoad": "Impossibile caricare il frame.",
+    "loading": "Caricamento del frame…"
+  },
+  "assist": {
+    "refusal": {
+      "unknownFrame": "Il frame non è più nel dataset.",
+      "unreadableFrame": "Non è stato possibile leggere la copia del frame.",
+      "unknownProfile": "Questo profilo AI non esiste più.",
+      "profileDisabled": "Questo profilo AI è disabilitato.",
+      "noVision": "Questo profilo AI non può leggere le immagini.",
+      "cloudNotConfirmed": "Il frame non è stato inviato: inviarlo fuori casa richiede la tua conferma.",
+      "llmError": "La chiamata al modello AI non è riuscita.",
+      "malformedAnswer": "L'AI ha risposto in un formato non affidabile, quindi non è stato disegnato nulla."
+    },
+    "teacherRefused": "{{name}} ha rifiutato: {{reason}}.",
+    "teacherRefusedDetail": "{{name}} ha rifiutato: {{reason}} — {{detail}}.",
+    "teacherNote": "Proposto dal detector più grande {{model}} su {{node}}.",
+    "teacherResult_one": "{{name}}: {{count}} nuova bozza.",
+    "teacherResult_other": "{{name}}: {{count}} nuove bozze.",
+    "teacherResultSkipped_one": "{{name}}: {{count}} nuova bozza, {{skipped}} già presenti nel frame.",
+    "teacherResultSkipped_other": "{{name}}: {{count}} nuove bozze, {{skipped}} già presenti nel frame.",
+    "llmNote": "{{model}}: {{reason}}",
+    "llmDrafts_one": "{{count}} nuova bozza",
+    "llmDrafts_other": "{{count}} nuove bozze",
+    "llmQuestioned_one": "{{count}} riquadro messo in dubbio",
+    "llmQuestioned_other": "{{count}} riquadri messi in dubbio",
+    "llmDropped_one": "{{count}} elemento inutilizzabile scartato",
+    "llmDropped_other": "{{count}} elementi inutilizzabili scartati",
+    "draftsNotSaved": "Le bozze non vengono salvate finché non le accetti o le correggi.",
+    "failed": "L'assistenza non è riuscita: {{error}}",
+    "title": "Assistenza",
+    "engine": "Motore di assistenza",
+    "engines": {
+      "teacher": "Detector più grande",
+      "llm": "Visione AI",
+      "both": "Entrambi"
+    },
+    "run": "Esegui",
+    "noNode": "Il nodo di detection della telecamera non è noto, quindi non si può eseguire lì un detector più grande.",
+    "noLarger": "Il catalogo del nodo di detection non ha un detector più grande di quello di questa telecamera per il suo formato.",
+    "largerDetector": "Detector più grande",
+    "teacherOption": "{{name}} ({{size}} MB)",
+    "minScore": "Punteggio minimo",
+    "onNode": "su {{node}}",
+    "profilesUnreadable": "Impossibile leggere i profili AI.",
+    "noProfile": "Nessun profilo AI abilitato può leggere le immagini. Aggiungine uno nelle impostazioni AI.",
+    "profile": "Profilo AI",
+    "cloud": "cloud",
+    "local": "locale",
+    "leavesHome": "Questo profilo invia il frame fuori casa, a un servizio cloud. Ogni esecuzione chiede prima conferma.",
+    "lookFor": "Cerca:",
+    "confirm": {
+      "title": "Inviare questo frame fuori casa?",
+      "message": "Il frame da {{source}} verrà inviato a {{profile}} ({{kind}}, modello {{model}}), un servizio esterno alla tua rete, per essere analizzato. Solo questo frame, solo per questa esecuzione.",
+      "sourceRecording": "la registrazione",
+      "sourceTrack": "questo track",
+      "defaultProfile": "il profilo AI",
+      "send": "Invia questo frame"
+    }
+  }
+}

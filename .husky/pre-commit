@@ -1,0 +1,182 @@
+npx lint-staged
+
+# ── Docs sync ──────────────────────────────────────────────────────────────
+# `docs/reference/*.md` is DERIVED from package manifests + `*.cap.ts` (see
+# scripts/docs-generate.ts). Regenerate and re-stage automatically whenever one
+# of those inputs is part of this commit — keeping the reference in sync must
+# never be a step the author has to remember, or it stops happening.
+# Two more inputs drive generated pages and used to be invisible here, and each
+# turned the ratchet red on a commit that never touched the "guilty" file:
+# `docs/reference/storage.md` derives from `@durable` annotations on store
+# constants, and `docs/decisions/index.md` from ADR frontmatter (a705bf464 went
+# red on a diff no human wrote — the same shape the publish train had until
+# dee9a3bd9).
+if git diff --cached --name-only |
+  grep -qE '^(packages|server)/[^/]+/package\.json$|^packages/types/src/capabilities/.*\.cap\.ts$|^docs/decisions/adr-.*\.md$' ||
+  git diff --cached -G'@durable' --name-only | grep -qE '\.ts$'; then
+  npx tsx scripts/docs-generate.ts || exit 1
+  # The API index (149 caps with resolved Zod shapes) derives from the same
+  # `*.cap.ts` files. It used to be generated OUTSIDE the repository, into one
+  # machine's `~/.claude/skills`, and nothing ever ran it.
+  npx tsx scripts/gen-api-reference.ts || exit 1
+  git add docs/reference docs/decisions/index.md
+  # A manifest changed, so an addon `entry` may now point at something the build
+  # does not emit. That failure is invisible until a node tries to load it, and
+  # the check is instant — so it runs here rather than only in CI.
+  npx tsx scripts/check-addon-entries.ts || exit 1
+fi
+
+# A cap change is also judged by two baseline guards that ONLY CI ran until
+# 2026-09-20: `check-method-tiers` (every method's auth tier is pinned in
+# `scripts/method-tier-baseline.json`) and `check-export-coverage` (a cap
+# either exports to the ecosystems or is a written exception). Both fire on a
+# NEW method — a decision the author must record, and one they could not see
+# locally: ten consecutive CI runs of 2026-09-18/19 were red on exactly these
+# two plus two guard bugs, and the suite behind them never ran once. Sub-second.
+if git diff --cached --name-only | grep -qE '^packages/types/src/capabilities/.*\.cap\.ts$'; then
+  npx tsx scripts/check-method-tiers.ts || exit 1
+  # D921: every method's viewer role is pinned in `scripts/method-role-baseline.json`.
+  npx tsx scripts/check-method-roles.ts || exit 1
+  npx tsx scripts/check-export-coverage.ts || exit 1
+  # D850: every runtimeState cap declares `history` (a block or 'none'), fields numeric/boolean.
+  npx tsx scripts/check-cap-history-declared.ts || exit 1
+  npx tsx scripts/check-customize-declaration.ts || exit 1
+fi
+
+# D850 P4: legacy LTS tiers (LtsAggregator, stats-5m, bucketStart outside device-history).
+if git diff --cached --name-only |
+  grep -qE '^packages/addon-post-analysis/|^packages/addon-pipeline-orchestrator/|^packages/system/src/builtins/native-metrics/|^server/backend/|^scripts/check-history-single-mechanism\.ts$'; then
+  npx tsx scripts/check-history-single-mechanism.ts || exit 1
+fi
+
+# The API reference resolves Zod shapes TRANSITIVELY: a cap's published
+# input/output changes when a schema file the cap IMPORTS changes, with no
+# `*.cap.ts` in the diff — so the block above does not see it. 2026-09-19:
+# `RecordingBandSchema` gained `audio` in a schema file, three CI runs went red
+# on "generated API reference is stale", and the fix was a two-line docs
+# commit the next morning. Regenerate on ANY change under `packages/types/src`
+# — ~7 s, and only the two API pages, never the 60 s full `docs-generate`.
+if git diff --cached --name-only | grep -qE '^packages/types/src/'; then
+  npx tsx scripts/gen-api-reference.ts || exit 1
+  git add docs/reference/api.md docs/reference/api-schemas.md
+fi
+
+# ── Subsystem index ────────────────────────────────────────────────────────
+# `docs/reference/subsystems.md` and `coverage.md` are DERIVED from the curated
+# chapter list, the set of source files, and every document's `applies-to` /
+# `covers` frontmatter. So they change on three kinds of commit the block above
+# does not see: an edit to the taxonomy, a source file ADDED or DELETED, and a
+# document changing what it claims.
+#
+# `--only` matters here. A full `docs-generate` costs ~60s (45 of it parsing the
+# storage map twice); these two pages cost 1.6s. A hook that added a minute to
+# every docs commit is a hook people bypass with `-n`, and then CI is red for
+# someone else.
+if git diff --cached --name-only | grep -qE '^docs/subsystems\.yaml$|^docs/.*\.md$' ||
+  git diff --cached --name-only --diff-filter=ADR | grep -qE '\.(ts|tsx|mts|cts|py)$'; then
+  npx tsx scripts/docs-generate.ts --only subsystems.md,coverage.md || exit 1
+  git add docs/reference/subsystems.md docs/reference/coverage.md
+fi
+
+# ── Viewer web build ───────────────────────────────────────────────────────
+# The viewer ships over TWO chains and only one is convenient: an OTA reaches
+# the native app and never touches the web bundle embedded in
+# `addon-pipeline-orchestrator/assets/viewer`. Nothing compared them, and the
+# hub served a bundle 18 versions behind the app for a week. Runs whenever the
+# submodule pin or the bundle itself is part of the commit — the two moments
+# the two halves can diverge.
+if git diff --cached --name-only |
+  grep -qE '^camstack$|^packages/addon-pipeline-orchestrator/assets/viewer/'; then
+  npx tsx scripts/check-viewer-web-build.ts || exit 1
+fi
+
+# ── UI catalogue + UI check (warn only) ────────────────────────────────────
+# `docs/reference/ui-components.json` is DERIVED from the ui-library barrel, the
+# theme, `docs/ui/need-x-use-y.md` and the viewer kit (the `camstack` submodule
+# pin moving); regenerate it when one of them is staged,
+# like the other generated references (<1 s). Then `ui:check` prints the
+# off-system UI shapes in the staged UI files, each with its replacement. It
+# NEVER fails the commit and is never run in CI (operator decision, 2026-10-09):
+# it is there so drift is seen at the moment it is written.
+if git diff --cached --name-only |
+  grep -qE '^packages/ui-library/src/|^docs/ui/need-x-use-y\.md$|^camstack$'; then
+  npx tsx scripts/ui/gen-ui-catalogue.ts >/dev/null || exit 1
+  git add docs/reference/ui-components.json
+fi
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '^packages/[^/]+/src/.*\.(tsx|ts|css)$'; then
+  npx tsx scripts/ui/cli.ts check --staged --warn || true
+fi
+
+# ── Docs checks: NOT at commit time (D704) ─────────────────────────────────
+# Docs drift, the subsystem map, English-only prose and private data in the
+# public working docs run in the on-demand `checks.yml` workflow
+# (`gh workflow run Checks --ref main`), or by hand: `npm run docs:check`,
+# `npx tsx scripts/check-docs-english.ts`,
+# `npx tsx scripts/check-public-docs-private-data.ts`. The generated pages
+# above are still regenerated here, because that is a fix, not a verdict.
+
+# ── Unresolved merge markers ───────────────────────────────────────────────
+# A merge committed conflict markers into two decision records and they sat on
+# main unnoticed: docs:check only verifies generated docs and dead links, the
+# linters do not read markdown, and the generated index PUBLISHED the wrong
+# title because it parsed past the markers. Belongs at commit time — this is
+# precisely the moment the mistake is made.
+npx tsx scripts/check-no-conflict-markers.ts || exit 1
+
+# ── Specs CI never runs ────────────────────────────────────────────────────
+# nx runs a `test` target only where a package declares one. Four packages
+# carried specs and no `test` script (addon-provider-reolink: 963 tests) and
+# CI never ran any of them. The moment to catch it is the commit that adds a
+# spec or edits a manifest. <1 s.
+if git diff --cached --name-only |
+  grep -qE '(^|/)package\.json$|\.(spec|test)\.[cm]?[jt]sx?$'; then
+  npx tsx scripts/check-specs-have-test-script.ts || exit 1
+fi
+# Same moment, second half: every spec is inside the program `typecheck`
+# runs (`tsconfig.spec.json`) — vitest strips types and checks none. ~1 s.
+if git diff --cached --name-only |
+  grep -qE '(^|/)package\.json$|(^|/)tsconfig[^/]*\.json$|\.(spec|test)\.[cm]?[jt]sx?$'; then
+  npx tsx scripts/check-specs-are-typechecked.ts || exit 1
+fi
+# A production file reaching a sibling package's source by relative path. tsc's
+# rootDir used to refuse it only in some packages; this holds it in all. ~3 s.
+if git diff --cached --name-only | grep -qE '^(packages|server)/[^/]+/src/.*\.[cm]?[jt]sx?$'; then
+  npx tsx scripts/check-src-imports-stay-in-package.ts || exit 1
+fi
+
+# ── No internal decision ids in text an operator reads ─────────────────────
+# Help text, labels, error messages, schema descriptions, locale files and
+# manifest descriptions say what a thing does — never which `docs/decisions`
+# record decided it. Staged files only, so it stays well under a second.
+UF_FILES=$(git diff --cached --name-only --diff-filter=ACMR |
+  grep -E '^(packages|server)/[^/]+/(src/.*\.(tsx?|json)|package\.json)$' || true)
+if [ -n "$UF_FILES" ]; then
+  # shellcheck disable=SC2086
+  npx tsx scripts/check-user-facing-decision-ids.ts $UF_FILES || exit 1
+fi
+
+# ── Capability activation: one authority ───────────────────────────────────
+# The kernel used to carry a second one: `runtime-state.json`, two maps keyed
+# `{capability}/{addonId}`, consulted on the live resolution path. It was never
+# wired to a writer, so it never existed on disk — but a single `false` under a
+# deviceId would have made a registered provider vanish for that one camera,
+# silently, and the storage census could not see the file at all. Removed in
+# D334; this keeps the surface, and the ConfigManager wiring that reached it,
+# from coming back by accident.
+npx tsx scripts/check-capability-activation-single-authority.ts || exit 1
+npx tsx scripts/check-no-heap-dump-command.ts || exit 1
+# D718: no heap-snapshot env and no event-fanout mode switch (always filter).
+npx tsx scripts/check-no-retired-fanout-heap-env.ts || exit 1
+# The container-child precedence is defined once and copied twice, by two
+# consumers that cannot import it (the viewer resolves @camstack/types from its
+# own node_modules; the HA provider expresses it over the DeviceType enum). A
+# comment asking them to stay in sync is not a rule — this is.
+npx tsx scripts/check-container-priority-in-sync.ts || exit 1
+npx tsx scripts/check-device-selection-in-sync.ts || exit 1
+# The viewer's hand mirrors of NC clearable-key lists and of pruneBannerFor
+# (final review m4): the submodule is on disk here, and absent in CI.
+npx tsx scripts/check-nc-mirrors-in-sync.ts || exit 1
+# D637 family scoping, including the viewer half (skipped in CI: no submodule).
+npx tsx scripts/check-nc-system-filter-scope.ts || exit 1
+# D854: the icon catalog is drawable by the installed lucide packages, and is the only icon list.
+npx tsx scripts/check-icon-catalog.ts || exit 1

@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "addon": {
+      "factory": "./dist/generators/addon/generator",
+      "schema": "./dist/generators/addon/schema.json",
+      "description": "Scaffold a new CamStack addon workspace package (BaseAddon subclass + capability skeleton + manifest in camstack.addons[]). Wires the `deploy` target via the plugin's executor."
+    }
+  }
+}

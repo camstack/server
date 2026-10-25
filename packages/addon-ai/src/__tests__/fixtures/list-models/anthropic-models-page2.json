@@ -1,0 +1,68 @@
+{
+  "data": [
+    {
+      "type": "model",
+      "id": "claude-example-text-only",
+      "display_name": "Example text-only model",
+      "created_at": "2024-01-01T00:00:00Z",
+      "lifecycle": "deprecated",
+      "line": null,
+      "deprecated_at": "2026-01-01T00:00:00Z",
+      "retires_at": "2027-01-01T00:00:00Z",
+      "max_input_tokens": 100000,
+      "max_tokens": 4096,
+      "capabilities": {
+        "batch": { "supported": true },
+        "citations": { "supported": false },
+        "code_execution": { "supported": false },
+        "context_management": {
+          "supported": false,
+          "clear_thinking_20251015": null,
+          "clear_tool_uses_20250919": null,
+          "compact_20260112": null
+        },
+        "effort": {
+          "supported": false,
+          "low": { "supported": false },
+          "medium": { "supported": false },
+          "high": { "supported": false },
+          "xhigh": null,
+          "max": { "supported": false }
+        },
+        "image_input": { "supported": false },
+        "pdf_input": { "supported": false },
+        "server_tools": {
+          "supported": false,
+          "code_execution": { "supported": false },
+          "web_search": { "supported": false }
+        },
+        "structured_outputs": { "supported": false },
+        "thinking": {
+          "supported": false,
+          "types": {
+            "adaptive": { "supported": false },
+            "between_tools": { "supported": false },
+            "disabled": { "supported": true },
+            "enabled": { "supported": false }
+          }
+        }
+      }
+    },
+    {
+      "type": "model",
+      "id": "claude-example-unknown-caps",
+      "display_name": "Example model without a capability tree",
+      "created_at": "1970-01-01T00:00:00Z",
+      "lifecycle": "active",
+      "line": null,
+      "deprecated_at": null,
+      "retires_at": null,
+      "max_input_tokens": null,
+      "max_tokens": null,
+      "capabilities": null
+    }
+  ],
+  "first_id": "claude-example-text-only",
+  "has_more": false,
+  "last_id": "claude-example-unknown-caps"
+}

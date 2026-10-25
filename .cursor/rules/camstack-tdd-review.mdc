@@ -1,0 +1,67 @@
+---
+description: TDD + consecutive code review loop — align Cursor with Claude/superpowers on this repo
+alwaysApply: true
+---
+<!-- Cursor project rule — mirrors camstack-workflow §4–5 and superpowers subagent-driven-development. -->
+
+# TDD and review (this repo)
+
+Load `camstack-workflow` first. Pure implementation goes to project agents
+(`.claude/agents/`), never bare `general-purpose`.
+
+## TDD (every implementation task)
+
+1. Write a **discriminating** test that fails on the old code for the reason
+   the change exists (RED).
+2. Implement until GREEN.
+3. **Disarm check:** remove the fix (or break the assertion) and confirm RED
+   again — then restore. A suite that only passes because a fake supplied the
+   missing value is not proof.
+4. Specs live next to sources (`__tests__/*.spec.ts`). Run:
+   - `npx vitest run <spec>` / `npm run test -w <pkg>` / `npm run test:scripts`
+5. Before push: `npm run verify:push` GREEN (TS7 pins + affected tests). A
+   local `tsc` is not the CI gate. **Viewer (`camstack/`):** before every
+   commit and push, `npm run verify:push` GREEN in that checkout (TypeScript
+   Check gates + `ui:check` on changed UI files) — `camstack-ui-viewer`.
+
+Domain extras: addon → `camstack-addon`; `*.cap.ts` → `camstack-capability` +
+codegen; UI → `camstack-ui` (+ admin/viewer) + `ui:check` / `ui:shots`
+(+ viewer `verify:push`).
+
+## Review loop (after each meaningful task)
+
+Do **not** self-review the whole diff in the coordinator context. Dispatch a
+fresh reviewer with a crafted brief (plan + file list + what “done” means),
+no session history.
+
+| Severity | Action |
+| --- | --- |
+| Critical / Important | Fix immediately; scoped re-review of the fix diff |
+| Minor | Note for later; do not block the next task |
+
+**Stop the fix→re-review cycle only when the reviewer reports no new Critical
+or Important findings** (or every remaining finding is ruled with a recorded
+reason). Cap: ~5 fix rounds; after round 3 prefer a fresh implementer on a
+stronger model. Final whole-change review once before ship.
+
+Cursor mapping (agents → `Task` tool):
+
+- Implement: `camstack-implementer` / `camstack-ui-engineer` / `camstack-test-fixer`
+- Review: `code-reviewer` (or Bugbot / Security Review only when the operator
+  asked for those by name)
+- Docs chores: `camstack-docs-writer`
+
+**Models:** see `camstack-model-routing.mdc` — cheap catalog slug for
+implement/docs/test-fix/UI build; `inherit` for review/diagnose; never pin
+Anthropic for every Task.
+
+**UI (any agent, including a generic coordinator):** before the first edit
+`npm run ui:shots -- … --label before`; after
+`… --label after --compare scratchpad/ui-shots/before`; then **Read the
+PNG paths** (light+dark × desktop+phone). Pasting only `report.md` is not
+done. Details: `camstack-ui` skill §2 step 6 and done-gate.
+
+## Ship after green review
+
+Path B `deploy --closure` vs Path A publish: see
+`camstack-ship-channel.mdc`. Never “published but not deployed”.

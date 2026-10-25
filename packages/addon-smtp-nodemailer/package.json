@@ -1,0 +1,63 @@
+{
+  "name": "@camstack/addon-smtp-nodemailer",
+  "version": "1.2.140",
+  "description": "SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "smtp",
+    "email",
+    "nodemailer"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "SMTP Email (Nodemailer)",
+    "addons": [
+      {
+        "id": "smtp-nodemailer",
+        "category": "messaging",
+        "name": "SMTP Email (Nodemailer)",
+        "description": "Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts).",
+        "entry": "./dist/smtp.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "smtp-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "nodemailer": "^9.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@types/nodemailer": "^8.0.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11"
+  }
+}

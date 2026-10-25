@@ -1,0 +1,75 @@
+{
+  "name": "@camstack/addon-google-services",
+  "version": "0.2.30",
+  "description": "Google Services — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "google",
+    "calendar",
+    "gmail",
+    "oauth"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Google Services",
+    "addons": [
+      {
+        "id": "google-services",
+        "category": "messaging",
+        "name": "Google Services",
+        "description": "Google brokers (OAuth2 accounts): Calendar as calendar-source, Gmail send as smtp-provider.",
+        "entry": "./dist/google-services.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "broker"
+          },
+          {
+            "name": "calendar-source"
+          },
+          {
+            "name": "smtp-provider"
+          },
+          {
+            "name": "addon-routes"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#4285F4"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^4.0.0",
+    "zod": "^4.3.6"
+  }
+}

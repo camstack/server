@@ -1,0 +1,82 @@
+{
+  "name": "@camstack/addon-provider-petkit",
+  "version": "0.2.145",
+  "description": "PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "petkit",
+    "feeder",
+    "pet",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "PetKit Provider",
+    "addons": [
+      {
+        "id": "provider-petkit",
+        "category": "providers",
+        "name": "PetKit",
+        "version": "0.1.0",
+        "description": "Adopt PetKit smart feeders via the PetKit cloud account",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#00b4a0",
+        "mode": "account",
+        "instanceMode": "multiple",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "pet-feeder"
+          },
+          {
+            "name": "connection-test"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@apocaliss92/nodepetkit": "0.1.0",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

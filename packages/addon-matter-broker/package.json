@@ -1,0 +1,80 @@
+{
+  "name": "@camstack/addon-matter-broker",
+  "version": "0.2.146",
+  "description": "Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "matter",
+    "matter.js",
+    "broker",
+    "commissioning"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Matter Broker",
+    "addons": [
+      {
+        "id": "matter-broker",
+        "category": "providers",
+        "name": "Matter",
+        "version": "0.1.0",
+        "description": "Own a Matter fabric and broker commissioned Matter nodes into CamStack (commission via QR / pairing code; map endpoints to typed device caps)",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#3b6ea5",
+        "instanceMode": "unique",
+        "brokerKind": "matter",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "broker"
+          },
+          {
+            "name": "device-adoption"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@matter/main": "^0.17.3",
+    "@matter/nodejs": "^0.17.3",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

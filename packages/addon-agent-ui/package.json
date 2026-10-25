@@ -1,0 +1,67 @@
+{
+  "name": "@camstack/addon-agent-ui",
+  "version": "1.2.268",
+  "description": "Agent UI — lightweight status dashboard served by every agent node",
+  "keywords": [
+    "camstack",
+    "addon",
+    "agent",
+    "ui"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "package.json",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build && vite build -c vite.lib.config.ts",
+    "dev": "vite",
+    "dev:build": "vite build --watch",
+    "publish:npm": "npm publish --access public",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json"
+  },
+  "camstack": {
+    "displayName": "Agent UI",
+    "addons": [
+      {
+        "id": "agent-ui",
+        "category": "system",
+        "name": "Agent UI",
+        "version": "0.1.0",
+        "description": "Lightweight status dashboard for agent nodes",
+        "entry": "./dist/addon.js",
+        "execution": {
+          "placement": "agent-only"
+        },
+        "capabilities": [
+          {
+            "name": "admin-ui"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#6b7280"
+      }
+    ]
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/ui-library": "*",
+    "@tailwindcss/vite": "^4.2.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.0.1",
+    "lucide-react": "^0.576.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  }
+}

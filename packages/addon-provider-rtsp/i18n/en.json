@@ -1,0 +1,22 @@
+{
+  "creation.s_identity.title": "Camera",
+  "creation.s_identity.name.label": "Name",
+  "creation.s_streams.title": "RTSP Streams",
+  "creation.s_streams.description": "1–3 RTSP URLs; the broker assigns the high / mid / low profiles by resolution.",
+  "creation.s_streams.streams.label": "RTSP stream URL",
+  "creation.s_snapshot.title": "Snapshot",
+  "creation.s_snapshot.snapshotUrl.label": "Snapshot URL",
+  "creation.s_credentials.title": "Credentials",
+  "creation.s_credentials.description": "Optional. If the RTSP URL already contains user:pass@ you can leave these empty.",
+  "creation.s_credentials.username.label": "Username",
+  "creation.s_credentials.password.label": "Password",
+  "schema.s_streams.title": "RTSP Streams",
+  "schema.s_streams.description": "1–3 RTSP URLs; the broker assigns the high / mid / low profiles by resolution.",
+  "schema.s_streams.streams.label": "RTSP stream URL",
+  "schema.s_snapshot.title": "Snapshot",
+  "schema.s_snapshot.snapshotUrl.label": "Snapshot URL",
+  "schema.s_credentials.title": "Credentials",
+  "schema.s_credentials.description": "Optional. If the RTSP URL already contains user:pass@ you can leave these empty.",
+  "schema.s_credentials.username.label": "Username",
+  "schema.s_credentials.password.label": "Password"
+}

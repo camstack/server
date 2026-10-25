@@ -1,0 +1,877 @@
+{
+  "_about": {
+    "method": "floor = lowest confidence at which the model makes no more false positives than the production root (yolov9m-320-int8 at person 0.65 / vehicle 0.50 / animal 0.50) on the same 409 hub frames; median over device runs; rounded to 0.05; minimum 0.25",
+    "groundTruth": "pseudo-GT = yolo26x@1280 AND RT-DETR-x@640 ensemble",
+    "fpBudget": {
+      "person": 5,
+      "vehicle": 1,
+      "animal": 3,
+      "package": 1
+    },
+    "frames": 409,
+    "precisionRecall": "P/R per class at the recommended floor (median over runs); gt = objects of that class in the set",
+    "packageNote": "package (suitcase/backpack/handbag) has 7 objects in the set: keep 0.50, not calibrated",
+    "caveat": "floors carry roughly +/-0.05-0.10 noise (FP counts are single digits); vehicle uses a 1-FP budget"
+  },
+  "ssd-mobilenet-v2-coco-edgetpu": {
+    "runs": ["dets_hub/ssd-mobilenet-v2-coco-edgetpu.json"],
+    "person": {
+      "floor": 0.6,
+      "precision": 0.939,
+      "recall": 0.319,
+      "gt": 288,
+      "perRunFloors": [0.625]
+    },
+    "vehicle": {
+      "floor": 0.35,
+      "precision": 0.973,
+      "recall": 0.313,
+      "gt": 115,
+      "perRunFloors": [0.35]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.667,
+      "recall": 0.055,
+      "gt": 109,
+      "perRunFloors": [0.4]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26l-int8": {
+    "runs": ["2026-10-09-int8-recipe: hub set, yolo26l-int8 (D818), CPU exact fake-quant"],
+    "measured": "2026-10-09 re-derivation for the D818 INT8 IR (docs/benchmarks/2026-10-09-int8-recipe.md): 400 hub frames, pseudo-GT yolo26x@1280 AND RT-DETR-x@640, same root budget, one exact fake-quant CPU run",
+    "person": {
+      "floor": 0.5,
+      "precision": 0.991,
+      "recall": 0.888,
+      "gt": 392,
+      "perRunFloors": [0.5]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.967,
+      "recall": 0.796,
+      "gt": 147,
+      "perRunFloors": [0.4]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.922,
+      "recall": 0.934,
+      "gt": 151,
+      "perRunFloors": [0.4]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26m": {
+    "runs": ["remote/dets/yolo26m.json"],
+    "person": {
+      "floor": 0.4,
+      "precision": 0.974,
+      "recall": 0.91,
+      "gt": 288,
+      "perRunFloors": [0.425]
+    },
+    "vehicle": {
+      "floor": 0.25,
+      "precision": 0.991,
+      "recall": 0.913,
+      "gt": 115,
+      "perRunFloors": [0.25]
+    },
+    "animal": {
+      "floor": 0.3,
+      "precision": 0.973,
+      "recall": 0.982,
+      "gt": 109,
+      "perRunFloors": [0.3]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26m-320": {
+    "runs": ["remote/dets/yolo26m-320.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.98,
+      "recall": 0.67,
+      "gt": 288,
+      "perRunFloors": [0.675]
+    },
+    "vehicle": {
+      "floor": 0.3,
+      "precision": 0.989,
+      "recall": 0.817,
+      "gt": 115,
+      "perRunFloors": [0.3]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.957,
+      "recall": 0.615,
+      "gt": 109,
+      "perRunFloors": [0.4]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26m-320-int8": {
+    "runs": ["dets_hub/yolo26m-320-int8.json"],
+    "person": {
+      "floor": 0.6,
+      "precision": 0.967,
+      "recall": 0.719,
+      "gt": 288,
+      "perRunFloors": [0.625]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.989,
+      "recall": 0.774,
+      "gt": 115,
+      "perRunFloors": [0.375]
+    },
+    "animal": {
+      "floor": 0.3,
+      "precision": 0.951,
+      "recall": 0.706,
+      "gt": 109,
+      "perRunFloors": [0.325]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26m-int8": {
+    "runs": ["dets_hub/yolo26m-int8.json", "dets_hub/yolo26m-int8@NPU.json"],
+    "person": {
+      "floor": 0.4,
+      "precision": 0.979,
+      "recall": 0.877,
+      "gt": 288,
+      "perRunFloors": [0.425, 0.4]
+    },
+    "vehicle": {
+      "floor": 0.35,
+      "precision": 0.985,
+      "recall": 0.865,
+      "gt": 115,
+      "perRunFloors": [0.375, 0.3]
+    },
+    "animal": {
+      "floor": 0.45,
+      "precision": 0.966,
+      "recall": 0.876,
+      "gt": 109,
+      "perRunFloors": [0.4, 0.525]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26n": {
+    "runs": ["remote/dets/yolo26n.json", "dets_hub/yolo26n@GPU.json"],
+    "person": {
+      "floor": 0.65,
+      "precision": 0.98,
+      "recall": 0.595,
+      "gt": 288,
+      "perRunFloors": [0.65, 0.65]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.988,
+      "recall": 0.713,
+      "gt": 115,
+      "perRunFloors": [0.375, 0.375]
+    },
+    "animal": {
+      "floor": 0.5,
+      "precision": 0.939,
+      "recall": 0.422,
+      "gt": 109,
+      "perRunFloors": [0.5, 0.5]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26n-320": {
+    "runs": ["remote/dets/yolo26n-320.json"],
+    "person": {
+      "floor": 0.6,
+      "precision": 0.945,
+      "recall": 0.299,
+      "gt": 288,
+      "perRunFloors": [0.6]
+    },
+    "vehicle": {
+      "floor": 0.6,
+      "precision": 0.969,
+      "recall": 0.27,
+      "gt": 115,
+      "perRunFloors": [0.6]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.85,
+      "recall": 0.156,
+      "gt": 109,
+      "perRunFloors": [0.4]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26n-320-int8": {
+    "runs": ["dets_hub/yolo26n-320-int8.json"],
+    "person": {
+      "floor": 0.45,
+      "precision": 0.938,
+      "recall": 0.316,
+      "gt": 288,
+      "perRunFloors": [0.475]
+    },
+    "vehicle": {
+      "floor": 0.55,
+      "precision": 0.97,
+      "recall": 0.278,
+      "gt": 115,
+      "perRunFloors": [0.55]
+    },
+    "animal": {
+      "floor": 0.35,
+      "precision": 0.833,
+      "recall": 0.138,
+      "gt": 109,
+      "perRunFloors": [0.35]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26n-int8": {
+    "runs": ["dets_hub/yolo26n-int8.json"],
+    "person": {
+      "floor": 0.55,
+      "precision": 0.964,
+      "recall": 0.552,
+      "gt": 288,
+      "perRunFloors": [0.575]
+    },
+    "vehicle": {
+      "floor": 0.3,
+      "precision": 1.0,
+      "recall": 0.739,
+      "gt": 115,
+      "perRunFloors": [0.275]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.94,
+      "recall": 0.431,
+      "gt": 109,
+      "perRunFloors": [0.375]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26s": {
+    "runs": [
+      "remote/dets/yolo26s.json",
+      "dets_hub/yolo26s@GPU-f32.json",
+      "dets_hub/yolo26s@NPU.json"
+    ],
+    "person": {
+      "floor": 0.4,
+      "precision": 0.984,
+      "recall": 0.875,
+      "gt": 288,
+      "perRunFloors": [0.375, 0.375, 0.375]
+    },
+    "vehicle": {
+      "floor": 0.45,
+      "precision": 0.979,
+      "recall": 0.809,
+      "gt": 115,
+      "perRunFloors": [0.475, 0.475, 0.475]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.96,
+      "recall": 0.881,
+      "gt": 109,
+      "perRunFloors": [0.425, 0.425, 0.425]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26s-320": {
+    "runs": ["remote/dets/yolo26s-320.json", "dets_hub/yolo26s-320@GPU.json"],
+    "person": {
+      "floor": 0.6,
+      "precision": 0.971,
+      "recall": 0.651,
+      "gt": 288,
+      "perRunFloors": [0.6, 0.625]
+    },
+    "vehicle": {
+      "floor": 0.45,
+      "precision": 0.982,
+      "recall": 0.696,
+      "gt": 115,
+      "perRunFloors": [0.35, 0.525]
+    },
+    "animal": {
+      "floor": 0.45,
+      "precision": 0.945,
+      "recall": 0.477,
+      "gt": 109,
+      "perRunFloors": [0.45, 0.45]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26s-320-int8": {
+    "runs": ["dets_hub/yolo26s-320-int8@NPU.json", "dets_hub/yolo26s-320-int8.json"],
+    "person": {
+      "floor": 0.5,
+      "precision": 0.977,
+      "recall": 0.601,
+      "gt": 288,
+      "perRunFloors": [0.475, 0.5]
+    },
+    "vehicle": {
+      "floor": 0.55,
+      "precision": 0.972,
+      "recall": 0.596,
+      "gt": 115,
+      "perRunFloors": [0.575, 0.575]
+    },
+    "animal": {
+      "floor": 0.45,
+      "precision": 0.943,
+      "recall": 0.454,
+      "gt": 109,
+      "perRunFloors": [0.4, 0.475]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolo26s-int8": {
+    "runs": [
+      "dets_hub/yolo26s-int8@NPU.json",
+      "dets_hub/yolo26s-int8@GPU.json",
+      "dets_hub/yolo26s-int8.json"
+    ],
+    "person": {
+      "floor": 0.4,
+      "precision": 0.979,
+      "recall": 0.806,
+      "gt": 288,
+      "perRunFloors": [0.525, 0.4, 0.375]
+    },
+    "vehicle": {
+      "floor": 0.3,
+      "precision": 0.978,
+      "recall": 0.826,
+      "gt": 115,
+      "perRunFloors": [0.325, 0.375, 0.3]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.949,
+      "recall": 0.679,
+      "gt": 109,
+      "perRunFloors": [0.375, 0.45, 0.425]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9c-320": {
+    "runs": ["remote/dets/yolov9c-320.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.985,
+      "recall": 0.674,
+      "gt": 288,
+      "perRunFloors": [0.675]
+    },
+    "vehicle": {
+      "floor": 0.45,
+      "precision": 0.967,
+      "recall": 0.765,
+      "gt": 115,
+      "perRunFloors": [0.475]
+    },
+    "animal": {
+      "floor": 0.45,
+      "precision": 0.959,
+      "recall": 0.642,
+      "gt": 109,
+      "perRunFloors": [0.45]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9c-320-int8": {
+    "runs": ["dets_hub/yolov9c-320-int8.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.97,
+      "recall": 0.67,
+      "gt": 288,
+      "perRunFloors": [0.725]
+    },
+    "vehicle": {
+      "floor": 0.5,
+      "precision": 0.989,
+      "recall": 0.757,
+      "gt": 115,
+      "perRunFloors": [0.5]
+    },
+    "animal": {
+      "floor": 0.25,
+      "precision": 0.966,
+      "recall": 0.771,
+      "gt": 109,
+      "perRunFloors": [0.25]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9c-640": {
+    "runs": ["remote/dets/yolov9c-640.json"],
+    "person": {
+      "floor": 0.55,
+      "precision": 0.981,
+      "recall": 0.875,
+      "gt": 288,
+      "perRunFloors": [0.55]
+    },
+    "vehicle": {
+      "floor": 0.45,
+      "precision": 0.99,
+      "recall": 0.87,
+      "gt": 115,
+      "perRunFloors": [0.45]
+    },
+    "animal": {
+      "floor": 0.3,
+      "precision": 0.971,
+      "recall": 0.936,
+      "gt": 109,
+      "perRunFloors": [0.275]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9c-640-int8": {
+    "runs": ["dets_hub/yolov9c-640-int8.json"],
+    "person": {
+      "floor": 0.45,
+      "precision": 0.981,
+      "recall": 0.875,
+      "gt": 288,
+      "perRunFloors": [0.45]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 1.0,
+      "recall": 0.861,
+      "gt": 115,
+      "perRunFloors": [0.375]
+    },
+    "animal": {
+      "floor": 0.3,
+      "precision": 0.951,
+      "recall": 0.899,
+      "gt": 109,
+      "perRunFloors": [0.325]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9m-320": {
+    "runs": ["remote/dets/yolov9m-320.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.979,
+      "recall": 0.649,
+      "gt": 288,
+      "perRunFloors": [0.7]
+    },
+    "vehicle": {
+      "floor": 0.75,
+      "precision": 0.985,
+      "recall": 0.557,
+      "gt": 115,
+      "perRunFloors": [0.75],
+      "fragile": "one extra false positive allows 0.50 \u2014 the floor hinges on a single high-score FP"
+    },
+    "animal": {
+      "floor": 0.55,
+      "precision": 0.935,
+      "recall": 0.532,
+      "gt": 109,
+      "perRunFloors": [0.575]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9m-320-int8": {
+    "runs": [
+      "dets_hub/prod-v9m320i8@CPU-f32.json",
+      "dets_hub/prod-v9m320i8@NPU-default.json",
+      "dets_hub/prod-v9m320i8@GPU-default.json"
+    ],
+    "person": {
+      "floor": 0.65,
+      "precision": 0.974,
+      "recall": 0.684,
+      "gt": 288,
+      "perRunFloors": [0.65, 0.675, 0.65]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.977,
+      "recall": 0.748,
+      "gt": 115,
+      "perRunFloors": [0.425, 0.425, 0.35]
+    },
+    "animal": {
+      "floor": 0.35,
+      "precision": 0.899,
+      "recall": 0.709,
+      "gt": 151,
+      "perRunFloors": [0.35],
+      "remeasured": "2026-10-09 re-derivation for the D818 INT8 IR (docs/benchmarks/2026-10-09-int8-recipe.md): 400 hub frames, pseudo-GT yolo26x@1280 AND RT-DETR-x@640, same root budget, one exact fake-quant CPU run"
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9m-640": {
+    "runs": ["remote/dets/yolov9m-640.json", "dets_hub/yolov9m-640-fp16@NPU.json"],
+    "person": {
+      "floor": 0.6,
+      "precision": 0.976,
+      "recall": 0.854,
+      "gt": 288,
+      "perRunFloors": [0.625, 0.625]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.981,
+      "recall": 0.878,
+      "gt": 115,
+      "perRunFloors": [0.425, 0.425]
+    },
+    "animal": {
+      "floor": 0.55,
+      "precision": 0.957,
+      "recall": 0.817,
+      "gt": 109,
+      "perRunFloors": [0.575, 0.575]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9m-640-int8": {
+    "runs": [
+      "dets_hub/yolov9m-640-int8.json",
+      "dets_hub/yolov9m-640-int8@NPU.json",
+      "dets_hub/yolov9m-640-int8@GPU.json"
+    ],
+    "person": {
+      "floor": 0.55,
+      "precision": 0.976,
+      "recall": 0.847,
+      "gt": 288,
+      "perRunFloors": [0.5, 0.575, 0.575]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 1.0,
+      "recall": 0.878,
+      "gt": 115,
+      "perRunFloors": [0.325, 0.425, 0.375]
+    },
+    "animal": {
+      "floor": 0.7,
+      "precision": 0.958,
+      "recall": 0.661,
+      "gt": 109,
+      "perRunFloors": [0.6, 0.7, 0.75]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9s-320": {
+    "runs": ["remote/dets/yolov9s-320.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.958,
+      "recall": 0.479,
+      "gt": 288,
+      "perRunFloors": [0.725]
+    },
+    "vehicle": {
+      "floor": 0.55,
+      "precision": 0.969,
+      "recall": 0.539,
+      "gt": 115,
+      "perRunFloors": [0.575]
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.907,
+      "recall": 0.358,
+      "gt": 109,
+      "perRunFloors": [0.425]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9s-320-int8": {
+    "runs": ["dets_hub/yolov9s-320-int8.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.969,
+      "recall": 0.438,
+      "gt": 288,
+      "perRunFloors": [0.675]
+    },
+    "vehicle": {
+      "floor": 0.7,
+      "precision": 0.955,
+      "recall": 0.365,
+      "gt": 115,
+      "perRunFloors": [0.725],
+      "fragile": "one extra false positive allows 0.45 \u2014 the floor hinges on a single high-score FP"
+    },
+    "animal": {
+      "floor": 0.4,
+      "precision": 0.919,
+      "recall": 0.312,
+      "gt": 109,
+      "perRunFloors": [0.375]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9s-640": {
+    "runs": ["remote/dets/yolov9s-640.json"],
+    "person": {
+      "floor": 0.7,
+      "precision": 0.986,
+      "recall": 0.753,
+      "gt": 288,
+      "perRunFloors": [0.675]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.99,
+      "recall": 0.826,
+      "gt": 115,
+      "perRunFloors": [0.375]
+    },
+    "animal": {
+      "floor": 0.6,
+      "precision": 0.952,
+      "recall": 0.55,
+      "gt": 109,
+      "perRunFloors": [0.6]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9s-640-int8": {
+    "runs": ["dets_hub/yolov9s-640-int8.json"],
+    "person": {
+      "floor": 0.5,
+      "precision": 0.963,
+      "recall": 0.823,
+      "gt": 288,
+      "perRunFloors": [0.525]
+    },
+    "vehicle": {
+      "floor": 0.3,
+      "precision": 0.99,
+      "recall": 0.87,
+      "gt": 115,
+      "perRunFloors": [0.275]
+    },
+    "animal": {
+      "floor": 0.6,
+      "precision": 0.872,
+      "recall": 0.497,
+      "gt": 151,
+      "perRunFloors": [0.6],
+      "remeasured": "2026-10-09 re-derivation for the D818 INT8 IR (docs/benchmarks/2026-10-09-int8-recipe.md): 400 hub frames, pseudo-GT yolo26x@1280 AND RT-DETR-x@640, same root budget, one exact fake-quant CPU run"
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9t-320": {
+    "runs": ["remote/dets/yolov9t-320.json"],
+    "person": {
+      "floor": 0.55,
+      "precision": 0.946,
+      "recall": 0.368,
+      "gt": 288,
+      "perRunFloors": [0.575]
+    },
+    "vehicle": {
+      "floor": 0.45,
+      "precision": 0.98,
+      "recall": 0.435,
+      "gt": 115,
+      "perRunFloors": [0.45]
+    },
+    "animal": {
+      "floor": 0.3,
+      "precision": 0.92,
+      "recall": 0.211,
+      "gt": 109,
+      "perRunFloors": [0.275]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9t-320-int8": {
+    "runs": ["dets_hub/yolov9t-320-int8.json"],
+    "person": {
+      "floor": 0.55,
+      "precision": 0.943,
+      "recall": 0.347,
+      "gt": 288,
+      "perRunFloors": [0.575]
+    },
+    "vehicle": {
+      "floor": 0.4,
+      "precision": 0.963,
+      "recall": 0.452,
+      "gt": 115,
+      "perRunFloors": [0.425]
+    },
+    "animal": {
+      "floor": 0.3,
+      "precision": 0.833,
+      "recall": 0.229,
+      "gt": 109,
+      "perRunFloors": [0.325]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9t-640": {
+    "runs": ["remote/dets/yolov9t-640.json"],
+    "person": {
+      "floor": 0.65,
+      "precision": 0.979,
+      "recall": 0.646,
+      "gt": 288,
+      "perRunFloors": [0.65]
+    },
+    "vehicle": {
+      "floor": 0.5,
+      "precision": 0.984,
+      "recall": 0.539,
+      "gt": 115,
+      "perRunFloors": [0.5]
+    },
+    "animal": {
+      "floor": 0.5,
+      "precision": 0.941,
+      "recall": 0.587,
+      "gt": 109,
+      "perRunFloors": [0.525]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  },
+  "yolov9t-640-int8": {
+    "runs": ["dets_hub/yolov9t-640-int8.json"],
+    "person": {
+      "floor": 0.6,
+      "precision": 0.979,
+      "recall": 0.646,
+      "gt": 288,
+      "perRunFloors": [0.6]
+    },
+    "vehicle": {
+      "floor": 0.55,
+      "precision": 0.984,
+      "recall": 0.548,
+      "gt": 115,
+      "perRunFloors": [0.55]
+    },
+    "animal": {
+      "floor": 0.55,
+      "precision": 0.929,
+      "recall": 0.477,
+      "gt": 109,
+      "perRunFloors": [0.575]
+    },
+    "package": {
+      "floor": 0.5,
+      "calibrated": false
+    }
+  }
+}

@@ -1,0 +1,84 @@
+---
+description: When to use deploy --closure (dev) vs Publish Packages + applyServerUpdate (release) — align Cursor with Claude's ship cycle
+alwaysApply: true
+---
+<!-- Cursor project rule — keep in sync with camstack-server-change §3 and camstack-homelab-ops. -->
+
+# Ship channel — `deploy --closure` vs publish
+
+`publish ≠ deployed ≠ live`. Pick ONE channel per change; do not mix labels.
+
+## Use `deploy --closure` (Path B — local tree, no npm)
+
+```bash
+node packages/cli/dist/cli.js deploy --closure -s <hub-url>           # hub
+node packages/cli/dist/cli.js deploy --closure -s <hub-url> --cluster # hub + agents
+# reuse: … --version <base>-dev.<epoch>
+```
+
+**When:**
+
+- Iterating on `server/backend`, `packages/system|types|sdk`, cap routers, or
+  placement — verify on **`.50` first**, then prod, before any CI publish.
+- A records migration / adopt that needs a fresh builtin or framework on the hub
+  in the same session (stop → deploy → adopt → start).
+- You need the **exact local workspace** on a node; npm would lag or pin an
+  older closure.
+
+**Rules:**
+
+- Version is `<base>-dev.<epoch>` and lives only under
+  `server-root/dev-uploads/` — never on npm.
+- A non-admin session 403s on `applyServerUpdate`: `camstack login <host>` as an
+  admin once; every tool (CLI, `hub.mjs`, MCP) uses that session and refreshes it.
+  `--token-file` is an explicit override only; no tool looks for a token file.
+- Enumerate agents (`nodes.topology`); never a remembered list. After apply,
+  poll `getServerPackageStatus` until `runningVersion` matches and
+  `updateState: idle` — `/health` 200 is not proof.
+- Addons still need `camstack deploy packages/addon-<name>` after the closure
+  (closure does not refresh `<dataDir>/addons/`).
+- Prefer MCP `user-camstack-ops` (`ops_status`, `hub_query`, `topology`,
+  `cap_providers`) for verify; mutations stay CLI / `hub.mjs`.
+
+## Use Publish Packages → `applyServerUpdate` (Path A — release)
+
+```bash
+# after commit + push to main, verify:push green
+gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected -f include_dependents=false
+# then per node:
+node scripts/hub/hub.mjs POST serverManagement.applyServerUpdate '{"version":"X.Y.Z"}'
+node scripts/hub/hub.mjs POST serverManagement.applyServerUpdate '{"version":"X.Y.Z","nodeId":"<agent>"}'
+```
+
+**When:**
+
+- The change is **done** and should be the durable cluster state (prod and
+  `.50` both on a registry version, not a `-dev.` stamp).
+- You need npm consumers / other machines / a checkpoint that
+  `releases/*.json` can name.
+- Addon version bumps that agents reconcile from the registry
+  (`addons.updatePackage`), or anything that must survive a fresh image seed.
+
+**Rules:**
+
+- Push first — CI builds `origin/main`, not the dirty tree.
+- `include_dependents=false`; cap edits force
+  `@camstack/system,@camstack/server`.
+- Registry lag is not failure — wait for the tarball URL, never re-publish
+  because `npm view` is stale (`camstack-publish-ci`).
+- After publish: `git pull` before any `camstack deploy` of an addon (deploy
+  packs the **local** tree — wrong label otherwise).
+- Never leave "published but not applied" on an online node.
+
+## Addon-only (neither closure nor full publish train)
+
+`camstack deploy packages/addon-<name>` — hub first, then `-n` / `--cluster`.
+Enough when only that addon's `dist/` changed and it does not need a newer
+`@camstack/server` / types / system. admin-ui bundles ui-library: deploy
+admin-ui + hard reload.
+
+## This cluster (operator overlay)
+
+Details (hosts, tokens, Path B fan-out): personal skill
+`camstack-homelab-ops`. Standing order: deploy after runtime work without
+asking; `.50` before prod for migrations; report what shipped.

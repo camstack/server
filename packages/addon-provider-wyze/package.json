@@ -1,0 +1,83 @@
+{
+  "name": "@camstack/addon-provider-wyze",
+  "version": "0.2.157",
+  "description": "Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "wyze",
+    "camera",
+    "rfc4571",
+    "p2p",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Wyze Provider",
+    "addons": [
+      {
+        "id": "provider-wyze",
+        "category": "providers",
+        "name": "Wyze",
+        "version": "0.1.0",
+        "description": "Adopt Wyze cameras over the local P2P/DTLS protocol via Wyze-cloud discovery — H264/H265 + audio into the stream-broker, snapshot, motion and two-way audio",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#00c389",
+        "mode": "account",
+        "instanceMode": "multiple",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "stream-params"
+          },
+          {
+            "name": "connection-test"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@apocaliss92/wyze-bridge-js": "file:./vendor/apocaliss92-wyze-bridge-js-0.1.2.tgz",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

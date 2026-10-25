@@ -1,0 +1,222 @@
+{
+  "common": {
+    "unknownError": "Unknown error",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…"
+  },
+  "crash": {
+    "title": "CamStack Agent UI crashed",
+    "body": "The dashboard hit an unexpected error while rendering. The agent itself keeps running — this only affects the UI. Details below (also in the agent log).",
+    "startFailed": "CamStack Agent UI failed to start"
+  },
+  "dashboard": {
+    "defaultName": "CamStack Agent",
+    "unlocking": "Unlocking from hub…",
+    "unreachable": "Unreachable",
+    "hub": {
+      "connected": "Hub Connected",
+      "unconfigured": "No hub configured",
+      "unpaired": "Not paired",
+      "certificateRejected": "Certificate rejected",
+      "disconnected": "Hub Disconnected"
+    },
+    "overview": {
+      "title": "Overview",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "addons": "Addons",
+      "uptime": "Uptime"
+    },
+    "resources": {
+      "title": "Resources",
+      "cpuCores": "CPU ({{cores}} cores)",
+      "cpuCoresModel": "CPU ({{cores}} cores — {{model}})",
+      "memory": "Memory ({{used}} / {{total}} MB)"
+    },
+    "host": {
+      "title": "System (host)",
+      "platform": "Platform",
+      "hostname": "Hostname",
+      "uptime": "Host uptime",
+      "memory": "Host memory",
+      "ipv4": "IPv4"
+    },
+    "process": {
+      "title": "Agent Process",
+      "pid": "PID",
+      "uptime": "Uptime",
+      "memory": "Memory (RSS)",
+      "heap": "Heap"
+    },
+    "decode": {
+      "title": "Detection / Decoding",
+      "hwaccel": "Decode hwaccel",
+      "driDevice": "DRI device",
+      "detectionDevices": "Detection devices",
+      "software": "software / none detected"
+    },
+    "locked": {
+      "title": "Agent dashboard locked",
+      "body": "This agent is paired with a hub. Sign in on the hub as an admin to unlock this dashboard.",
+      "continue": "Continue with hub",
+      "hubUnknown": "Hub address unknown — open this agent from System → Cluster → Open dashboard."
+    },
+    "version": {
+      "restartToUpdate": "Restart to update",
+      "restartToUpdateTo": "Restart to update → v{{version}}",
+      "downloading": "Downloading update…",
+      "checking": "Checking…",
+      "check": "Check for updates",
+      "checkFailed": "Update check failed: {{error}}",
+      "both": "{{product}} · server {{server}}",
+      "serverOnly": "server {{version}}"
+    }
+  },
+  "hubConfig": {
+    "title": "Hub Connection",
+    "connection": {
+      "connected": "Connected",
+      "unpaired": "Not paired",
+      "unconfigured": "Not configured",
+      "certificateRejected": "Certificate rejected",
+      "disconnected": "Disconnected"
+    },
+    "pairingState": {
+      "paired": "Paired",
+      "requested": "Pairing requested",
+      "unpaired": "Not paired"
+    },
+    "certRejected": {
+      "title": "The hub refused this agent's certificate",
+      "message": "The certificate was revoked or was issued by another hub. Forget the hub below, then pair this agent again from the hub."
+    },
+    "unreachable": {
+      "title": "Hub unreachable",
+      "message": "This agent is paired but cannot reach the hub right now. Check that the hub is running and reachable from this machine."
+    },
+    "hubAddress": "Hub Address",
+    "pairing": "Pairing",
+    "clusterNodes": "Cluster nodes",
+    "unsupported": "This agent is too old to pair from here. Update it from the hub (System → Cluster → Nodes), then pair it again.",
+    "statusUnavailable": "Pairing status unavailable",
+    "emptyPairing": "This agent is not paired. On the hub open System → Cluster → Agents, pick this agent and start pairing; the request appears here.",
+    "name": {
+      "label": "Agent Name",
+      "placeholder": "e.g. kitchen-agent",
+      "rename": "Rename agent",
+      "saveFailed": "Save failed",
+      "saveFailedWith": "Save failed: {{error}}",
+      "saved": "Name saved."
+    }
+  },
+  "paired": {
+    "pairedWith": "Paired with",
+    "theHub": "The hub",
+    "hubUrl": "Hub URL",
+    "caFingerprint": "CA fingerprint",
+    "forget": "Forget this hub",
+    "forgetTitle": "Forget this hub?",
+    "forgetDescription": "This agent erases the certificate the hub issued and disconnects. Its cameras stop being served from this node until a hub pairs with it again, which needs a new confirmation on both screens.",
+    "forgetConfirm": "Forget hub"
+  },
+  "requests": {
+    "pinHelp": "The one-time PIN is shown only on the agent's own machine: in the agent console (docker logs for a container), in pairing-pin.txt in the agent data directory, or in the desktop app window. Use the PIN printed for this hub.",
+    "codeHelp": "The {{digits}}-digit code the hub shows for this pairing. Type it from the hub screen.",
+    "pendingGroup": "Pending pairing requests",
+    "pickOne_one": "{{count}} hub asked to pair - pick the one you mean",
+    "pickOne_other": "{{count}} hubs asked to pair - pick the one you mean",
+    "requestFrom": "Pairing request from <b>{{node}}</b>",
+    "caFingerprint": "CA fingerprint <mono>{{fingerprint}}</mono>",
+    "timeLeft": "Time left to confirm",
+    "lockedTitle": "Confirming is locked",
+    "lockedMessage": "Too many wrong PINs. Try again in {{wait}}, or reset the pairing lockout below.",
+    "confirmedHere": "Confirmed on this agent",
+    "confirmedHint": "Now confirm the same code on the hub. This agent pairs as soon as the hub confirms.",
+    "codeLabel": "Code shown on the hub",
+    "pinLabel": "Local PIN",
+    "pinPlaceholder": "PIN from the agent machine",
+    "noPinNeeded": "You are on the agent itself, so no PIN is needed.",
+    "confirm": "Confirm",
+    "reject": "Reject"
+  },
+  "reset": {
+    "codeHelp": "The reset code is printed in the agent console at boot (docker logs for a container) and kept in pairing-reset.txt in the agent data directory. It is renewed each time it is used.",
+    "done": "Pairing reset: lockouts and pending requests are cleared.",
+    "hide": "Hide pairing reset",
+    "show": "Reset pairing lockout",
+    "explain": "Use this when confirming is locked after wrong PINs, or a stuck request keeps the agent from accepting a new one. It cancels every pending pairing; the hub can then ask again.",
+    "noCodeNeeded": "This page runs on the agent itself, so no reset code is needed.",
+    "codeLabel": "Reset code",
+    "codePlaceholder": "Reset code from the agent",
+    "resetting": "Resetting…",
+    "submit": "Reset pairing"
+  },
+  "pairingApi": {
+    "httpStatus": "The agent answered HTTP {{status}}",
+    "requestFailed": "The request failed",
+    "refused": "The agent refused the request",
+    "retryIn": "{{message}} (try again in {{wait}})"
+  },
+  "addons": {
+    "title": "Addons",
+    "empty": "No addons loaded",
+    "readFailed": "Could not read the addons: {{error}}",
+    "hubVersionsFailed": "The hub could not be asked which versions this node should run: {{error}}",
+    "startFailed": "The update could not be started",
+    "columns": {
+      "addon": "Addon",
+      "version": "Version",
+      "versionNotSortable": "A version cell can also say what is being updated.",
+      "runner": "Runner",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "status": "Status",
+      "actionsNotSortable": "Actions."
+    },
+    "runnerWithoutAddon": "runner without a known addon",
+    "updateFailed": "Update failed: {{message}}",
+    "updatingTo": "Updating to {{version}}…",
+    "updatedTo": "Updated to {{version}}",
+    "published": "{{version}} published",
+    "publishedHint": "A newer release is published. It reaches this node once the hub runs it — update the hub first.",
+    "inAgentProcess": "in the agent process",
+    "shared_one": "shared with {{count}} other",
+    "shared_other": "shared with {{count}} others",
+    "updating": "Updating…",
+    "updateTo": "Update to {{version}}",
+    "restart": "Restart {{name}}"
+  },
+  "updates": {
+    "title": "Framework update",
+    "bootMode": {
+      "dataRoot": "Updatable copy (runtime-updatable)",
+      "baked": "Image copy (read-only)",
+      "workspace": "Dev workspace"
+    },
+    "restartWarning": "Applying downloads the release, then restarts this node to swap it in. Live streams and detection on this node stop for the restart, and this page goes unreachable until the agent comes back.",
+    "state": {
+      "checking": "Checking the registry…",
+      "staging": "Downloading and staging the release…",
+      "pendingRestart": "Staged — restarting to apply",
+      "pendingRestartVersion": "Staged v{{version}} — restarting to apply",
+      "working": "Working…"
+    },
+    "updateAvailable": "update available",
+    "checking": "Checking…",
+    "check": "Check for updates",
+    "confirmApply": "Confirm — update and restart this node",
+    "apply": "Update",
+    "applyTo": "Update → v{{version}}",
+    "running": "Running",
+    "published": "Published (npm)",
+    "notChecked": "not checked",
+    "loadedFrom": "Code loaded from",
+    "checkFailed": "Update check failed: {{error}}",
+    "npmNote": "The framework installs from the npm registry — this works with the hub unreachable.",
+    "readFailed": "Could not read update state: {{error}}",
+    "checkRequestFailed": "Check failed",
+    "applyFailed": "Update could not be started"
+  }
+}

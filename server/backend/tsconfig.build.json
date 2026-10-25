@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "module": "CommonJS",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src"],
+  "exclude": ["src/scripts", "src/__tests__", "src/**/__tests__", "src/**/*.spec.ts", "src/**/*.test.ts"]
+}

@@ -1,0 +1,7 @@
+# ONNX Runtime WebGPU plugin EP — AMD iGPU (RADV) and other Vulkan adapters.
+# Requires a compatible core ORT (plugin refuses older builds at register time).
+# Installed lazily when the node offers `onnx:webgpu` (see runtime-packages /
+# shouldInstallWebgpu). Does NOT replace requirements-onnxruntime.txt for the
+# CPU/CUDA path — a node that only needs the floor keeps the lighter pin.
+onnxruntime>=1.24.4,<2
+onnxruntime-ep-webgpu>=0.4.0,<1

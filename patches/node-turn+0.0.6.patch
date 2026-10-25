@@ -1,0 +1,81 @@
+diff --git a/node_modules/node-turn/lib/network.js b/node_modules/node-turn/lib/network.js
+index c584d65..445c383 100644
+--- a/node_modules/node-turn/lib/network.js
++++ b/node_modules/node-turn/lib/network.js
+@@ -2,8 +2,59 @@ const dgram = require('dgram');
+ const Message = require('./message');
+ const Transport = require('./transport');
+ const Address = require('./address');
++const ChannelMsg = require('./channelMessage');
+ const CONSTANTS = require('./constants');
+ 
++// camstack: relay client→peer ChannelData (node-turn gap) — see werift-turn-fix.
++// node-turn forwards peer→client ChannelData (allocation.js) but DROPS the
++// reverse direction: message.read() rejects any frame whose top 2 bits aren't
++// zero, and a ChannelData channel number (0x4000–0x7FFE) has bit 1 set. So a
++// client that channel-binds and sends media as ChannelData never gets relayed.
++// This mirrors the send.js Send-indication path: look up the allocation for the
++// source 5-tuple, resolve the bound peer for the frame's channel number, and
++// send the inner data out the allocation's relay socket to that peer.
++function tryRelayClientChannelData(server, transport, udpMessage) {
++  // ChannelData frames begin with a channel number in 0x4000–0x7FFE, i.e. a
++  // first byte in 0x40–0x7F. Anything else is a STUN message — leave it alone.
++  if (udpMessage.length < 4) {
++    return false;
++  }
++  var firstByte = udpMessage[0];
++  if (firstByte < 0x40 || firstByte > 0x7f) {
++    return false;
++  }
++
++  var allocation = server.allocations[transport.get5Tuple()];
++  if (!allocation) {
++    return false;
++  }
++
++  var channelMsg = new ChannelMsg();
++  if (!channelMsg.read(udpMessage)) {
++    return false;
++  }
++
++  var peer = allocation.channelBindings[channelMsg.channelNumber];
++  if (!peer) {
++    return false;
++  }
++
++  var permission = allocation.permissions[peer.address];
++  if (!permission || permission < Date.now()) {
++    return false;
++  }
++
++  // The ChannelData message is relayed out the relay socket to the bound peer,
++  // stripped of its 4-byte ChannelData header (same as send.js's indication).
++  allocation.sockets[0].send(channelMsg.data, peer.port, peer.address, function(err) {
++    if (err) {
++      return server.debug('ERROR', err);
++    }
++    server.debug('TRACE', 'relaying client data over channelNumber ' + channelMsg.channelNumber + ' to ' + peer);
++  });
++  return true;
++}
++
+ var network = function(server) {
+   this.sockets = [];
+   this.server = server;
+@@ -35,6 +86,16 @@ network.prototype.start = function() {
+       // shoud detect destination address for dst but https://github.com/nodejs/node/issues/1649
+       const src = new Address(rinfo.address, rinfo.port);
+       const transport = new Transport(CONSTANTS.TRANSPORT.PROTOCOL.UDP, src, dst, udpSocket);
++      // camstack: relay client→peer ChannelData (node-turn gap) — see werift-turn-fix.
++      // Try the ChannelData relay BEFORE message.read() (which would drop it);
++      // fall through to normal STUN handling when it isn't a bound ChannelData.
++      try {
++        if (tryRelayClientChannelData(self.server, transport, udpMessage)) {
++          return;
++        }
++      } catch(err) {
++        self.debug('ERROR', err);
++      }
+       var msg = new Message(self.server, transport);
+       try {
+         if (msg.read(udpMessage)) {

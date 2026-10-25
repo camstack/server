@@ -1,0 +1,308 @@
+@theme {
+  /* Register all color tokens so Tailwind v4 generates utility classes
+     (bg-background, text-foreground, border-border, etc.)
+     Default values are dark theme — overridden by .dark/.light classes below */
+  --color-primary: #f59e42;
+  --color-primary-foreground: #0c0a09;
+  --color-background: #0c0a09;
+  --color-background-elevated: #1c1917;
+  --color-surface: #1c1917;
+  --color-surface-hover: #292524;
+  --color-border: #292524;
+  --color-border-subtle: #1c1917;
+  --color-foreground: #fafaf9;
+  --color-foreground-muted: #a8a29e;
+  --color-foreground-subtle: #78716c;
+  --color-foreground-disabled: #57534e;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+  /* Filled status chips: *-fill is the background, *-on the text ON it (WCAG AA >= 4.5:1) */
+  --color-success-fill: #4ade80;
+  --color-success-on: #0c0a09;
+  --color-warning-fill: #fbbf24;
+  --color-warning-on: #0c0a09;
+  --color-danger-fill: #f87171;
+  --color-danger-on: #0c0a09;
+  --color-info-fill: #60a5fa;
+  --color-info-on: #0c0a09;
+  --color-primary-fill: #f59e42;
+  --color-primary-on: #0c0a09;
+  --color-neutral-fill: #44403c;
+  --color-neutral-on: #fafaf9;
+
+  /* Provider-specific colors */
+  --color-provider-onvif: #3b82f6;
+  --color-provider-hikvision: #a855f7;
+  --color-provider-reolink: #06b6d4;
+  --color-provider-ha: #22d3ee;
+  --color-provider-rtsp: #78716c;
+
+  /* Chart categorical series (web only; never status colours), FIXED order:
+     a blue, b magenta, c yellow, d aqua, e orange, f violet, g green, h red.
+     Validated as an 8-slot adjacent-pair palette against `surface` in both
+     themes (dark: all checks pass; light: CVD 7.2 and four slots under 3:1, so
+     every chart carries a legend and direct values). Slots a/b keep the load
+     chart's meaning (main threads / V8 pool). A ninth series reuses a slot
+     with a dash pattern (`composites/charts/chart-palette.ts`), never a new hue. */
+  --color-chart-series-a: #3987e5;
+  --color-chart-series-b: #d55181;
+  --color-chart-series-c: #c98500;
+  --color-chart-series-d: #199e70;
+  --color-chart-series-e: #d95926;
+  --color-chart-series-f: #9085e9;
+  --color-chart-series-g: #008300;
+  --color-chart-series-h: #e66767;
+
+  /* Cluster node identity — vivid pastels (never stone/gray: that reads disabled) */
+  --color-node-a: #7dd3fc;
+  --color-node-b: #f9a8d4;
+  --color-node-c: #86efac;
+  --color-node-d: #fde047;
+  --color-node-e: #c4b5fd;
+  --color-node-f: #67e8f9;
+  --color-node-g: #fdba74;
+  --color-node-h: #fb7185;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}
+
+/* `color-scheme` lives WITH the tokens, in every block that sets them.
+   It drives two things the tokens cannot: the UA's default text colour for any
+   element that declares none, and the rendering of native controls (select
+   popups, range tracks, scrollbars). Pinning it to `dark` on :root — as
+   admin-ui's index.css used to — made a light theme render white UA text and
+   dark native controls on a white surface. :root keeps `dark` only as the
+   pre-hydration default, matching the dark token defaults above; the
+   ThemeProvider then puts .dark/.light on <html> and the blocks below win. */
+:root {
+  color-scheme: dark;
+}
+
+/* Dark theme (default) */
+.dark {
+  color-scheme: dark;
+  --color-primary: #f59e42;
+  --color-primary-foreground: #0c0a09;
+  --color-background: #0c0a09;
+  --color-background-elevated: #1c1917;
+  --color-surface: #1c1917;
+  --color-surface-hover: #292524;
+  --color-border: #292524;
+  --color-border-subtle: #1c1917;
+  --color-foreground: #fafaf9;
+  --color-foreground-muted: #a8a29e;
+  --color-foreground-subtle: #78716c;
+  --color-foreground-disabled: #57534e;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+  /* Filled status chips: *-fill is the background, *-on the text ON it (WCAG AA >= 4.5:1) */
+  --color-success-fill: #4ade80;
+  --color-success-on: #0c0a09;
+  --color-warning-fill: #fbbf24;
+  --color-warning-on: #0c0a09;
+  --color-danger-fill: #f87171;
+  --color-danger-on: #0c0a09;
+  --color-info-fill: #60a5fa;
+  --color-info-on: #0c0a09;
+  --color-primary-fill: #f59e42;
+  --color-primary-on: #0c0a09;
+  --color-neutral-fill: #44403c;
+  --color-neutral-on: #fafaf9;
+  --color-chart-series-a: #3987e5;
+  --color-chart-series-b: #d55181;
+  --color-chart-series-c: #c98500;
+  --color-chart-series-d: #199e70;
+  --color-chart-series-e: #d95926;
+  --color-chart-series-f: #9085e9;
+  --color-chart-series-g: #008300;
+  --color-chart-series-h: #e66767;
+  --color-node-a: #7dd3fc;
+  --color-node-b: #f9a8d4;
+  --color-node-c: #86efac;
+  --color-node-d: #fde047;
+  --color-node-e: #c4b5fd;
+  --color-node-f: #67e8f9;
+  --color-node-g: #fdba74;
+  --color-node-h: #fb7185;
+}
+
+/* Light theme */
+.light {
+  color-scheme: light;
+  --color-primary: #e67e22;
+  --color-primary-foreground: #ffffff;
+  --color-background: #fafaf9;
+  --color-background-elevated: #ffffff;
+  --color-surface: #f5f5f4;
+  --color-surface-hover: #e7e5e4;
+  --color-border: #d6d3d1;
+  --color-border-subtle: #e7e5e4;
+  --color-foreground: #1c1917;
+  --color-foreground-muted: #57534e;
+  --color-foreground-subtle: #78716c;
+  --color-foreground-disabled: #a8a29e;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+  --color-success-fill: #15803d;
+  --color-success-on: #ffffff;
+  --color-warning-fill: #b45309;
+  --color-warning-on: #ffffff;
+  --color-danger-fill: #dc2626;
+  --color-danger-on: #ffffff;
+  --color-info-fill: #2563eb;
+  --color-info-on: #ffffff;
+  --color-primary-fill: #c2410c;
+  --color-primary-on: #ffffff;
+  --color-neutral-fill: #57534e;
+  --color-neutral-on: #ffffff;
+  --color-chart-series-a: #2a78d6;
+  --color-chart-series-b: #e87ba4;
+  --color-chart-series-c: #eda100;
+  --color-chart-series-d: #1baf7a;
+  --color-chart-series-e: #eb6834;
+  --color-chart-series-f: #6250d6;
+  --color-chart-series-g: #008300;
+  --color-chart-series-h: #e34948;
+  --color-node-a: #0284c7;
+  --color-node-b: #db2777;
+  --color-node-c: #16a34a;
+  --color-node-d: #ca8a04;
+  --color-node-e: #7c3aed;
+  --color-node-f: #0891b2;
+  --color-node-g: #ea580c;
+  --color-node-h: #e11d48;
+}
+
+/* System preference fallback (when no .dark/.light class is set) */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    color-scheme: light;
+    --color-primary: #e67e22;
+    --color-primary-foreground: #ffffff;
+    --color-background: #fafaf9;
+    --color-background-elevated: #ffffff;
+    --color-surface: #f5f5f4;
+    --color-surface-hover: #e7e5e4;
+    --color-border: #d6d3d1;
+    --color-border-subtle: #e7e5e4;
+    --color-foreground: #1c1917;
+    --color-foreground-muted: #57534e;
+    --color-foreground-subtle: #78716c;
+    --color-foreground-disabled: #a8a29e;
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+    --color-info: #2563eb;
+    --color-success-fill: #15803d;
+    --color-success-on: #ffffff;
+    --color-warning-fill: #b45309;
+    --color-warning-on: #ffffff;
+    --color-danger-fill: #dc2626;
+    --color-danger-on: #ffffff;
+    --color-info-fill: #2563eb;
+    --color-info-on: #ffffff;
+    --color-primary-fill: #c2410c;
+    --color-primary-on: #ffffff;
+    --color-neutral-fill: #57534e;
+    --color-neutral-on: #ffffff;
+    --color-chart-series-a: #2a78d6;
+    --color-chart-series-b: #e87ba4;
+    --color-chart-series-c: #eda100;
+    --color-chart-series-d: #1baf7a;
+    --color-chart-series-e: #eb6834;
+    --color-chart-series-f: #6250d6;
+    --color-chart-series-g: #008300;
+    --color-chart-series-h: #e34948;
+    --color-node-a: #0284c7;
+    --color-node-b: #db2777;
+    --color-node-c: #16a34a;
+    --color-node-d: #ca8a04;
+    --color-node-e: #7c3aed;
+    --color-node-f: #0891b2;
+    --color-node-g: #ea580c;
+    --color-node-h: #e11d48;
+  }
+}
+
+/* uPlot structure for the chart family (`composites/charts/`). uPlot ships its
+   own stylesheet; these are only the rules its layout needs, spelled in theme
+   tokens. Its legend is never used — the React legend renders identity. */
+.uplot,
+.uplot *,
+.uplot *::before,
+.uplot *::after {
+  box-sizing: border-box;
+}
+.uplot {
+  font-family: inherit;
+  line-height: 1.5;
+  width: 100%;
+}
+.uplot .u-wrap {
+  position: relative;
+  user-select: none;
+}
+.uplot .u-over,
+.uplot .u-under {
+  position: absolute;
+}
+.uplot .u-under {
+  overflow: hidden;
+}
+.uplot canvas {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.uplot .u-axis {
+  position: absolute;
+}
+.uplot .u-select {
+  position: absolute;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+.uplot .u-cursor-x,
+.uplot .u-cursor-y {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.uplot.u-hz .u-cursor-x {
+  height: 100%;
+  border-right: 1px solid var(--color-foreground-subtle);
+}
+.uplot.u-hz .u-cursor-y {
+  width: 100%;
+  border-bottom: 1px dashed var(--color-border);
+}
+.uplot .u-cursor-pt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  border: 0 solid;
+  pointer-events: none;
+  will-change: transform;
+  background-clip: padding-box !important;
+}
+.uplot .u-axis.u-off,
+.uplot .u-select.u-off,
+.uplot .u-cursor-x.u-off,
+.uplot .u-cursor-y.u-off,
+.uplot .u-cursor-pt.u-off {
+  display: none;
+}

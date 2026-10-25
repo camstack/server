@@ -1,0 +1,9 @@
+import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
+
+export default buildLibPreset({
+  entries: {
+    index: 'src/index.ts',
+    '<%= fileName %>.addon': 'src/<%= fileName %>.addon.ts',
+  },
+  externals: 'self-contained',
+})

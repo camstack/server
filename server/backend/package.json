@@ -1,0 +1,99 @@
+{
+  "name": "@camstack/server",
+  "version": "1.2.632",
+  "license": "MIT",
+  "private": false,
+  "files": [
+    "dist",
+    "scripts/closure-postinstall.mjs",
+    ".env.example",
+    "THIRD_PARTY_MODELS.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./main.js": "./dist/main.js",
+    "./launcher.js": "./dist/launcher.js",
+    "./starter.js": "./dist/starter.js"
+  },
+  "scripts": {
+    "build": "../../scripts/tsc7 -p tsconfig.build.json && tsup && node scripts/copy-closure-patches.mjs",
+    "postinstall": "node scripts/closure-postinstall.mjs",
+    "dev": "npx concurrently -n server,ui -c blue,magenta \"CAMSTACK_RESTART_TOUCH_FILE=src/launcher.ts tsx watch --env-file=.env --ignore=./camstack-data --ignore=../../packages/core/dist --ignore=../../packages/sdk/dist --ignore=../../packages/ui-library/dist src/launcher.ts\" \"cd ../../packages/addon-admin-ui && npx vite --port 3001\"",
+    "serve": "CAMSTACK_RESTART_TOUCH_FILE=src/launcher.ts tsx watch --env-file=.env --ignore=./camstack-data --ignore=../../packages/core/dist --ignore=../../packages/sdk/dist --ignore=../../packages/ui-library/dist src/launcher.ts",
+    "serve:once": "tsx --env-file=.env src/launcher.ts",
+    "start": "node --env-file=.env dist/launcher.js",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run --reporter verbose",
+    "test:watch": "vitest",
+    "test:cluster": "vitest run -c vitest.cluster.config.ts --reporter verbose"
+  },
+  "camstack": {
+    "agentBootstrapAddons": [
+      "@camstack/addon-pipeline",
+      "@camstack/addon-decoder-nodeav",
+      "@camstack/addon-agent-ui"
+    ],
+    "agentOnlyBootstrapAddons": [
+      "@camstack/addon-agent-ui"
+    ]
+  },
+  "dependencies": {
+    "@camstack/addon-admin-ui": "*",
+    "@camstack/addon-agent-ui": "*",
+    "@camstack/addon-auth": "*",
+    "@camstack/addon-benchmark": "*",
+    "@camstack/addon-decoder-nodeav": "*",
+    "@camstack/addon-notifiers": "*",
+    "@camstack/addon-pipeline": "*",
+    "@camstack/addon-pipeline-orchestrator": "*",
+    "@camstack/addon-post-analysis": "*",
+    "@camstack/develop": "*",
+    "@camstack/sdk": "*",
+    "@camstack/system": "*",
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@fastify/compress": "^9.0.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/multipart": "^10.0.0",
+    "@fastify/static": "^9.1.3",
+    "@trpc/client": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "fastify": "^5",
+    "js-yaml": "^4",
+    "moleculer": "0.15.0",
+    "node-av": "^6.0.0",
+    "node-pty": "^1.0.0",
+    "sharp": "^0.35.2",
+    "ssh2": "^1.16.0",
+    "superjson": "^2.2.6",
+    "tar": "7.5.16",
+    "undici": "^7.28.0",
+    "ws": "^8.20.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.15.18",
+    "@types/js-yaml": "^4",
+    "@types/node": "^24",
+    "@types/tar": "^7.0.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4",
+    "typescript": "~6.0.3",
+    "unplugin-swc": "^1.5.9",
+    "vite": "^8.0.11",
+    "vitest": "*",
+    "@camstack/node-root": "*",
+    "tsup": "^8.0.0"
+  },
+  "nx": {
+    "implicitDependencies": [
+      "@camstack/addon-benchmark"
+    ],
+    "targets": {
+      "build": {
+        "parallelism": false
+      }
+    }
+  }
+}

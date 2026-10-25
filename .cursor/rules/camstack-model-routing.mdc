@@ -1,0 +1,36 @@
+---
+description: Cursor Task model routing — cheap models for implement, inherit for judgment; never force Anthropic
+alwaysApply: true
+---
+<!-- Cursor project rule — mirrors camstack-workflow "Who does the work". -->
+
+# Model routing (Cursor)
+
+Tokens are a budget. The **chat model** (coordinator) keeps understand /
+design / plan / review / report. Pure implementation goes to a `Task`
+subagent with a **cheap** catalog slug — not the same Anthropic (or other)
+frontier model as the chat.
+
+## Rules
+
+1. **Only slugs from this turn’s `available_subagent_models` catalog.** Never
+   invent `claude-*` / Anthropic names if they are not listed. If the catalog
+   has no cheap option, use `inherit`.
+2. **Do not force Anthropic (or any one vendor) for every Task.** Pick by job:
+
+| Work | Cursor `Task` `model` |
+| --- | --- |
+| `camstack-implementer`, `camstack-test-fixer`, `camstack-docs-writer` | cheapest non-`inherit` (today usually `composer-2.5-fast`) |
+| `camstack-ui-engineer` (build the UI) | same cheap slug |
+| Look at `ui:shots` PNGs / visual sign-off | coordinator (`inherit` / chat) — Read the PNGs |
+| `camstack-diagnostician`, `code-reviewer`, Bugbot, Security Review | `inherit` |
+| Tiny edit cheaper than writing a brief | coordinator, no Task |
+
+3. **Never `general-purpose`** for camstack work — use the project agents
+   above (or name the skills to load). See `camstack-tdd-review.mdc`.
+4. Claude Code agent frontmatter (`model: sonnet|haiku|opus`) is for that
+   harness only; on Cursor map through the table, do not copy those names
+   unless they appear in the catalog.
+
+Source of truth for the table: `.claude/skills/camstack-workflow/SKILL.md`
+§ "Who does the work — model routing".

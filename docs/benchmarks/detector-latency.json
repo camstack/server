@@ -1,0 +1,575 @@
+{
+  "_about": {
+    "what": "Detector latency per hardware class and accelerator, YOLOv9 t/s/m (the family the Auto tune recommender picks from) plus, in the coral columns, the one Edge TPU build a Coral runs by default (yolov9s-320-edgetpu, D908/D912). Transcribed from 2026-10-07-detector-comparison.md section (a) (Intel columns) and (f) (Apple M3 Pro, Core ML FP16 on the Neural Engine), plus the Apple M2 Mac mini bench of 2026-10-07 evening.",
+    "units": "p50Ms = single-request median latency; fps = throughput ceiling of one accelerator (OpenVINO columns: 4 requests in flight; Core ML columns: 1000 / p50, the pool's Core ML executor is single-threaded).",
+    "cpuColumns": "x86-cpu rows: plain ids are ONNX FP32, -int8 ids are the OpenVINO INT8 IR, both at 4 threads.",
+    "m2": "apple-m-base/apple-ane: measured on a Mac mini M2 through the benchmark addon's synthetic bench (pipeline pool, predict time, 13 cameras live on the same Neural Engine, median of 3 passes) for yolov9m-320, yolov9m-640, yolov9s-640, yolov9t-640. The other cells are the M3 Pro cell x 1.2 (the measured M2 / M3 Pro ratio was 1.0-1.2) and carry measured:false.",
+    "lockedBy": "packages/types/src/pipeline/auto-tune/__tests__/detector-performance.spec.ts \u2014 the TS table equals this file.",
+    "amdPhoenix": "amd-phoenix/x86-cpu measured on agent-b (2026-10-10): plain ids = onnx:cpu FP32, -int8 = openvino:cpu INT8 IR; single-request warm median of 3, fps = round(1000/p50). Raw: scratchpad/detector-latency-amd-phoenix-x86-cpu-{int8,onnx}.json. amd-phoenix/amd-igpu is onnx:webgpu, re-measured on the GPU 2026-10-23 (see amdIgpuMethod).",
+    "amdIgpuMethod": "scripts/bench-detector-latency-column.mjs (skill camstack-benchmark-detection): restartAddon(detection-pipeline); rearm; 1 cold + 3 warm runPipelineTest plane=frame alone; p50 = median of warm inferMs. Re-measured 2026-10-23 (all six family models, none shed) with the D845 render-node fix running: probe as uid 1001 in the agent container reported render-node=ok and providers=[WebGpuExecutionProvider], raw session.run p50 12.5 ms (t-320) and 161 ms (m-640); sysfs gpu_busy_percent rose to 20-38 % during the run. Raw: scratchpad/detector-latency-amd-phoenix-amd-igpu-20261023.json.",
+    "amdIgpuStale": "The amd-phoenix/amd-igpu cells of 2026-10-10 (yolov9t-320 188 ms, slower than the ONNX CPU column at 24 ms) were the software path (D845) and were replaced on 2026-10-23; see docs/benchmarks/2026-10-10-amd-webgpu-catalog.md.",
+    "n100IgpuRefresh": "intel-n-series/intel-igpu cells yolov9t-640-int8, yolov9s-640-int8, yolov9m-320-int8 and yolov9m-640-int8 were re-measured on agent-a (N100, openvino:gpu) on 2026-10-24 with scripts/bench-detector-latency-column.mjs: restartAddon(detection-pipeline), rearm, 1 cold + 3 warm runPipelineTest plane=frame object-detection alone, p50 = median of warm inferMs, fps = round(1000/p50). That fps is the single-request ceiling. The node's OpenVINO GPU pool runs one worker at concurrency 1, so the 4-in-flight fps from the 2026-10-07 transcription was not copied into these four cells. The other cells in the column are unchanged. Raw: scratchpad/lu-2026-10-24/detector-latency-intel-n-series-intel-igpu.json (gitignored). Narrative: docs/benchmarks/2026-10-24-agent-a-after-vaapi.md.",
+    "coralPcie": "Coral columns (D912): ONE cell each, yolov9s-320-edgetpu, the Coral default (D908); it is YOLOv9-s at 320, so it belongs to the YOLOv9 family D745 locks the table to, and the Edge TPU 512 build and the SSD stay out. p50 32 ms / 31 fps is the SLOWEST of the three units measured on agent-b (2026-10-22: edgetpu:usb 32, edgetpu:pci 29, edgetpu:pci:1 23 ms; same harness, 1 cold + 3 warm, docs/benchmarks/2026-10-22-coral-pcie-amd-phoenix.md second section), so a PCIe unit is sized conservatively and the one cell serves every bus. amd-phoenix/coral is measured; the other hardware classes carry the same cell as measured:false (the invoke runs on the TPU, the host only adds the bus and the Python step, and no Coral was benchmarked on those hosts). A Coral is sized only when the operator ENABLED it (D39 stays: a Coral is never enabled automatically). The other measured Coral step latencies (ssd-mobilenet-v2-coco-edgetpu 14-16 ms, bird-classifier 9-10, yunet-2023mar 22-29, yolox-tiny-plate ~61) are in the same benchmark file."
+  },
+  "columns": {
+    "intel-core-ultra/intel-npu": {
+      "source": "Core Ultra 7 265K NPU, OpenVINO",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 2.9,
+          "fps": 383,
+          "measured": true
+        },
+        "yolov9t-320-int8": {
+          "p50Ms": 3.8,
+          "fps": 333,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 7.4,
+          "fps": 139,
+          "measured": true
+        },
+        "yolov9t-640-int8": {
+          "p50Ms": 7.5,
+          "fps": 144,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 4.4,
+          "fps": 241,
+          "measured": true
+        },
+        "yolov9s-320-int8": {
+          "p50Ms": 4.1,
+          "fps": 264,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 12.7,
+          "fps": 82,
+          "measured": true
+        },
+        "yolov9s-640-int8": {
+          "p50Ms": 10.7,
+          "fps": 99,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 8.4,
+          "fps": 123,
+          "measured": true
+        },
+        "yolov9m-320-int8": {
+          "p50Ms": 6.5,
+          "fps": 165,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 29.5,
+          "fps": 32,
+          "measured": true
+        },
+        "yolov9m-640-int8": {
+          "p50Ms": 19.5,
+          "fps": 52,
+          "measured": true
+        }
+      }
+    },
+    "intel-core-ultra/intel-igpu": {
+      "source": "Core Ultra 7 265K iGPU, OpenVINO",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 2.6,
+          "fps": 405,
+          "measured": true
+        },
+        "yolov9t-320-int8": {
+          "p50Ms": 2.8,
+          "fps": 324,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 6.5,
+          "fps": 157,
+          "measured": true
+        },
+        "yolov9t-640-int8": {
+          "p50Ms": 5.6,
+          "fps": 185,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 4.6,
+          "fps": 200,
+          "measured": true
+        },
+        "yolov9s-320-int8": {
+          "p50Ms": 4.1,
+          "fps": 239,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 15.2,
+          "fps": 69,
+          "measured": true
+        },
+        "yolov9s-640-int8": {
+          "p50Ms": 10.5,
+          "fps": 99,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 11.4,
+          "fps": 88,
+          "measured": true
+        },
+        "yolov9m-320-int8": {
+          "p50Ms": 7.0,
+          "fps": 127,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 40.0,
+          "fps": 25,
+          "measured": true
+        },
+        "yolov9m-640-int8": {
+          "p50Ms": 23.5,
+          "fps": 44,
+          "measured": true
+        }
+      }
+    },
+    "intel-core-ultra/x86-cpu": {
+      "source": "Core Ultra 7 265K CPU, 4 threads",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 6.9,
+          "fps": 145,
+          "measured": true
+        },
+        "yolov9t-320-int8": {
+          "p50Ms": 2.7,
+          "fps": 405,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 23.0,
+          "fps": 44,
+          "measured": true
+        },
+        "yolov9t-640-int8": {
+          "p50Ms": 8.8,
+          "fps": 124,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 15.8,
+          "fps": 63,
+          "measured": true
+        },
+        "yolov9s-320-int8": {
+          "p50Ms": 6.5,
+          "fps": 180,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 58.2,
+          "fps": 17,
+          "measured": true
+        },
+        "yolov9s-640-int8": {
+          "p50Ms": 20.1,
+          "fps": 52,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 40.0,
+          "fps": 25,
+          "measured": true
+        },
+        "yolov9m-320-int8": {
+          "p50Ms": 14.2,
+          "fps": 74,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 155.8,
+          "fps": 6,
+          "measured": true
+        },
+        "yolov9m-640-int8": {
+          "p50Ms": 52.4,
+          "fps": 19,
+          "measured": true
+        }
+      }
+    },
+    "intel-n-series/intel-igpu": {
+      "source": "N100 iGPU, OpenVINO",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 15.0,
+          "fps": 48,
+          "measured": true
+        },
+        "yolov9t-320-int8": {
+          "p50Ms": 14.1,
+          "fps": 67,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 38.5,
+          "fps": 26,
+          "measured": true
+        },
+        "yolov9t-640-int8": {
+          "p50Ms": 50,
+          "fps": 20,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 41.4,
+          "fps": 24,
+          "measured": true
+        },
+        "yolov9s-320-int8": {
+          "p50Ms": 23.3,
+          "fps": 34,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 127.4,
+          "fps": 8,
+          "measured": true
+        },
+        "yolov9s-640-int8": {
+          "p50Ms": 81,
+          "fps": 12,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 63.5,
+          "fps": 16,
+          "measured": true
+        },
+        "yolov9m-320-int8": {
+          "p50Ms": 66,
+          "fps": 15,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 215.5,
+          "fps": 5,
+          "measured": true
+        },
+        "yolov9m-640-int8": {
+          "p50Ms": 163,
+          "fps": 6,
+          "measured": true
+        }
+      }
+    },
+    "intel-n-series/x86-cpu": {
+      "source": "N100 CPU, 4 threads, contended (pessimistic)",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 86.2,
+          "fps": 12,
+          "measured": true
+        },
+        "yolov9t-320-int8": {
+          "p50Ms": 52.7,
+          "fps": 20,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 322.1,
+          "fps": 3,
+          "measured": true
+        },
+        "yolov9t-640-int8": {
+          "p50Ms": 205.6,
+          "fps": 5,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 164.4,
+          "fps": 6,
+          "measured": true
+        },
+        "yolov9s-320-int8": {
+          "p50Ms": 86.9,
+          "fps": 12,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 341.3,
+          "fps": 3,
+          "measured": true
+        },
+        "yolov9s-640-int8": {
+          "p50Ms": 185.3,
+          "fps": 5,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 166.8,
+          "fps": 6,
+          "measured": true
+        },
+        "yolov9m-320-int8": {
+          "p50Ms": 226.3,
+          "fps": 4,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 663.5,
+          "fps": 2,
+          "measured": true
+        },
+        "yolov9m-640-int8": {
+          "p50Ms": 324.4,
+          "fps": 3,
+          "measured": true
+        }
+      }
+    },
+    "apple-m-pro/apple-ane": {
+      "source": "Apple M3 Pro, Core ML FP16, all compute units",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 1.1,
+          "fps": 952,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 3.0,
+          "fps": 333,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 1.5,
+          "fps": 667,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 5.1,
+          "fps": 196,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 3.2,
+          "fps": 312,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 10.2,
+          "fps": 98,
+          "measured": true
+        }
+      }
+    },
+    "apple-m-base/apple-ane": {
+      "source": "Apple M2 Mac mini, Core ML FP16, all compute units",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 1.32,
+          "fps": 758,
+          "measured": false
+        },
+        "yolov9t-640": {
+          "p50Ms": 3.45,
+          "fps": 290,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 1.8,
+          "fps": 556,
+          "measured": false
+        },
+        "yolov9s-640": {
+          "p50Ms": 5.46,
+          "fps": 183,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 3.79,
+          "fps": 264,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 10.34,
+          "fps": 97,
+          "measured": true
+        }
+      }
+    },
+    "amd-phoenix/x86-cpu": {
+      "source": "agent-b (2026-10-10): plain = onnx:cpu FP32, -int8 = openvino:cpu INT8; single-request warm median of 3, fps = round(1000/p50). INT8 is ~2\u20133\u00d7 faster than ONNX on this Zen4 box.",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 24,
+          "fps": 42,
+          "measured": true
+        },
+        "yolov9t-320-int8": {
+          "p50Ms": 12,
+          "fps": 83,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 50,
+          "fps": 20,
+          "measured": true
+        },
+        "yolov9t-640-int8": {
+          "p50Ms": 20,
+          "fps": 50,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 30,
+          "fps": 33,
+          "measured": true
+        },
+        "yolov9s-320-int8": {
+          "p50Ms": 15,
+          "fps": 67,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 92,
+          "fps": 11,
+          "measured": true
+        },
+        "yolov9s-640-int8": {
+          "p50Ms": 27,
+          "fps": 37,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 67,
+          "fps": 15,
+          "measured": true
+        },
+        "yolov9m-320-int8": {
+          "p50Ms": 21,
+          "fps": 48,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 229,
+          "fps": 4,
+          "measured": true
+        },
+        "yolov9m-640-int8": {
+          "p50Ms": 48,
+          "fps": 21,
+          "measured": true
+        }
+      }
+    },
+    "amd-phoenix/amd-igpu": {
+      "source": "agent-b onnx:webgpu (D823 isolated child per model, D845 render node fixed), single-request warm median of 3 (2026-10-23). fps = round(1000/p50). Includes the pool step overhead (decode, letterbox, IPC, postprocess) on a node with live cameras; raw session.run is 12.5 ms (t-320) and 161 ms (m-640).",
+      "measured": true,
+      "cells": {
+        "yolov9t-320": {
+          "p50Ms": 40,
+          "fps": 25,
+          "measured": true
+        },
+        "yolov9t-640": {
+          "p50Ms": 89,
+          "fps": 11,
+          "measured": true
+        },
+        "yolov9s-320": {
+          "p50Ms": 65,
+          "fps": 15,
+          "measured": true
+        },
+        "yolov9s-640": {
+          "p50Ms": 125,
+          "fps": 8,
+          "measured": true
+        },
+        "yolov9m-320": {
+          "p50Ms": 85,
+          "fps": 12,
+          "measured": true
+        },
+        "yolov9m-640": {
+          "p50Ms": 228,
+          "fps": 4,
+          "measured": true
+        }
+      }
+    },
+    "intel-core-ultra/coral": {
+      "source": "Coral Edge TPU, yolov9s-320-edgetpu (D908), TFLite/libedgetpu",
+      "measured": false,
+      "cells": {
+        "yolov9s-320-edgetpu": {
+          "p50Ms": 32,
+          "fps": 31,
+          "measured": false
+        }
+      }
+    },
+    "intel-n-series/coral": {
+      "source": "Coral Edge TPU, yolov9s-320-edgetpu (D908), TFLite/libedgetpu",
+      "measured": false,
+      "cells": {
+        "yolov9s-320-edgetpu": {
+          "p50Ms": 32,
+          "fps": 31,
+          "measured": false
+        }
+      }
+    },
+    "amd-phoenix/coral": {
+      "source": "Coral Edge TPU, yolov9s-320-edgetpu (D908), TFLite/libedgetpu",
+      "measured": true,
+      "cells": {
+        "yolov9s-320-edgetpu": {
+          "p50Ms": 32,
+          "fps": 31,
+          "measured": true
+        }
+      }
+    },
+    "apple-m-pro/coral": {
+      "source": "Coral Edge TPU, yolov9s-320-edgetpu (D908), TFLite/libedgetpu",
+      "measured": false,
+      "cells": {
+        "yolov9s-320-edgetpu": {
+          "p50Ms": 32,
+          "fps": 31,
+          "measured": false
+        }
+      }
+    },
+    "apple-m-base/coral": {
+      "source": "Coral Edge TPU, yolov9s-320-edgetpu (D908), TFLite/libedgetpu",
+      "measured": false,
+      "cells": {
+        "yolov9s-320-edgetpu": {
+          "p50Ms": 32,
+          "fps": 31,
+          "measured": false
+        }
+      }
+    }
+  }
+}

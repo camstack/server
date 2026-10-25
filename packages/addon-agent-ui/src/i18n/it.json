@@ -1,0 +1,222 @@
+{
+  "common": {
+    "unknownError": "Errore sconosciuto",
+    "loading": "Caricamento…",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio…"
+  },
+  "crash": {
+    "title": "L'interfaccia dell'agente CamStack si è interrotta",
+    "body": "La dashboard ha incontrato un errore imprevisto durante la visualizzazione. L'agente continua a funzionare: riguarda solo l'interfaccia. Dettagli qui sotto (anche nel log dell'agente).",
+    "startFailed": "Impossibile avviare l'interfaccia dell'agente CamStack"
+  },
+  "dashboard": {
+    "defaultName": "Agente CamStack",
+    "unlocking": "Sblocco dall'hub in corso…",
+    "unreachable": "Non raggiungibile",
+    "hub": {
+      "connected": "Hub connesso",
+      "unconfigured": "Nessun hub configurato",
+      "unpaired": "Non associato",
+      "certificateRejected": "Certificato rifiutato",
+      "disconnected": "Hub disconnesso"
+    },
+    "overview": {
+      "title": "Panoramica",
+      "cpu": "CPU",
+      "memory": "Memoria",
+      "addons": "Addon",
+      "uptime": "Uptime"
+    },
+    "resources": {
+      "title": "Risorse",
+      "cpuCores": "CPU ({{cores}} core)",
+      "cpuCoresModel": "CPU ({{cores}} core — {{model}})",
+      "memory": "Memoria ({{used}} / {{total}} MB)"
+    },
+    "host": {
+      "title": "Sistema (host)",
+      "platform": "Piattaforma",
+      "hostname": "Nome host",
+      "uptime": "Uptime host",
+      "memory": "Memoria host",
+      "ipv4": "IPv4"
+    },
+    "process": {
+      "title": "Processo dell'agente",
+      "pid": "PID",
+      "uptime": "Uptime",
+      "memory": "Memoria (RSS)",
+      "heap": "Heap"
+    },
+    "decode": {
+      "title": "Detection / Decodifica",
+      "hwaccel": "Accelerazione hardware di decodifica",
+      "driDevice": "Dispositivo DRI",
+      "detectionDevices": "Dispositivi di detection",
+      "software": "software / nessuno rilevato"
+    },
+    "locked": {
+      "title": "Dashboard dell'agente bloccata",
+      "body": "Questo agente è associato a un hub. Accedi all'hub come amministratore per sbloccare la dashboard.",
+      "continue": "Continua con l'hub",
+      "hubUnknown": "Indirizzo dell'hub sconosciuto: apri questo agente da Sistema → Cluster → Apri dashboard."
+    },
+    "version": {
+      "restartToUpdate": "Riavvia per aggiornare",
+      "restartToUpdateTo": "Riavvia per aggiornare → v{{version}}",
+      "downloading": "Download dell'aggiornamento…",
+      "checking": "Controllo…",
+      "check": "Cerca aggiornamenti",
+      "checkFailed": "Controllo aggiornamenti non riuscito: {{error}}",
+      "both": "{{product}} · server {{server}}",
+      "serverOnly": "server {{version}}"
+    }
+  },
+  "hubConfig": {
+    "title": "Connessione all'hub",
+    "connection": {
+      "connected": "Connesso",
+      "unpaired": "Non associato",
+      "unconfigured": "Non configurato",
+      "certificateRejected": "Certificato rifiutato",
+      "disconnected": "Disconnesso"
+    },
+    "pairingState": {
+      "paired": "Associato",
+      "requested": "Associazione richiesta",
+      "unpaired": "Non associato"
+    },
+    "certRejected": {
+      "title": "L'hub ha rifiutato il certificato di questo agente",
+      "message": "Il certificato è stato revocato o emesso da un altro hub. Dimentica l'hub qui sotto, poi associa di nuovo questo agente dall'hub."
+    },
+    "unreachable": {
+      "title": "Hub non raggiungibile",
+      "message": "Questo agente è associato ma ora non riesce a raggiungere l'hub. Verifica che l'hub sia in esecuzione e raggiungibile da questa macchina."
+    },
+    "hubAddress": "Indirizzo dell'hub",
+    "pairing": "Associazione",
+    "clusterNodes": "Nodi del cluster",
+    "unsupported": "Questo agente è troppo vecchio per essere associato da qui. Aggiornalo dall'hub (Sistema → Cluster → Nodi), poi associalo di nuovo.",
+    "statusUnavailable": "Stato dell'associazione non disponibile",
+    "emptyPairing": "Questo agente non è associato. Sull'hub apri Sistema → Cluster → Agenti, scegli questo agente e avvia l'associazione: la richiesta compare qui.",
+    "name": {
+      "label": "Nome dell'agente",
+      "placeholder": "es. agent-kitchen",
+      "rename": "Rinomina agente",
+      "saveFailed": "Salvataggio non riuscito",
+      "saveFailedWith": "Salvataggio non riuscito: {{error}}",
+      "saved": "Nome salvato."
+    }
+  },
+  "paired": {
+    "pairedWith": "Associato a",
+    "theHub": "L'hub",
+    "hubUrl": "URL dell'hub",
+    "caFingerprint": "Impronta della CA",
+    "forget": "Dimentica questo hub",
+    "forgetTitle": "Dimenticare questo hub?",
+    "forgetDescription": "L'agente cancella il certificato emesso dall'hub e si disconnette. Le sue telecamere non vengono più servite da questo nodo finché un hub non lo associa di nuovo, cosa che richiede una nuova conferma su entrambe le schermate.",
+    "forgetConfirm": "Dimentica hub"
+  },
+  "requests": {
+    "pinHelp": "Il PIN monouso è mostrato solo sulla macchina dell'agente: nella console dell'agente (docker logs per un container), in pairing-pin.txt nella cartella dati dell'agente o nella finestra dell'app desktop. Usa il PIN stampato per questo hub.",
+    "codeHelp": "Il codice di {{digits}} cifre che l'hub mostra per questa associazione. Digitalo dalla schermata dell'hub.",
+    "pendingGroup": "Richieste di associazione in sospeso",
+    "pickOne_one": "{{count}} hub ha chiesto di associarsi - scegli quello giusto",
+    "pickOne_other": "{{count}} hub hanno chiesto di associarsi - scegli quello giusto",
+    "requestFrom": "Richiesta di associazione da <b>{{node}}</b>",
+    "caFingerprint": "Impronta della CA <mono>{{fingerprint}}</mono>",
+    "timeLeft": "Tempo rimasto per confermare",
+    "lockedTitle": "La conferma è bloccata",
+    "lockedMessage": "Troppi PIN errati. Riprova tra {{wait}} oppure reimposta il blocco dell'associazione qui sotto.",
+    "confirmedHere": "Confermato su questo agente",
+    "confirmedHint": "Ora conferma lo stesso codice sull'hub. L'agente si associa non appena l'hub conferma.",
+    "codeLabel": "Codice mostrato sull'hub",
+    "pinLabel": "PIN locale",
+    "pinPlaceholder": "PIN dalla macchina dell'agente",
+    "noPinNeeded": "Sei sull'agente stesso, quindi non serve il PIN.",
+    "confirm": "Conferma",
+    "reject": "Rifiuta"
+  },
+  "reset": {
+    "codeHelp": "Il codice di reimpostazione viene stampato nella console dell'agente all'avvio (docker logs per un container) e salvato in pairing-reset.txt nella cartella dati dell'agente. Viene rinnovato a ogni utilizzo.",
+    "done": "Associazione reimpostata: blocchi e richieste in sospeso eliminati.",
+    "hide": "Nascondi reimpostazione associazione",
+    "show": "Reimposta blocco associazione",
+    "explain": "Usalo quando la conferma è bloccata dopo PIN errati o quando una richiesta bloccata impedisce all'agente di accettarne una nuova. Annulla ogni associazione in sospeso; l'hub potrà poi chiederla di nuovo.",
+    "noCodeNeeded": "Questa pagina è in esecuzione sull'agente stesso, quindi non serve il codice di reimpostazione.",
+    "codeLabel": "Codice di reimpostazione",
+    "codePlaceholder": "Codice di reimpostazione dall'agente",
+    "resetting": "Reimpostazione…",
+    "submit": "Reimposta associazione"
+  },
+  "pairingApi": {
+    "httpStatus": "L'agente ha risposto HTTP {{status}}",
+    "requestFailed": "La richiesta non è riuscita",
+    "refused": "L'agente ha rifiutato la richiesta",
+    "retryIn": "{{message}} (riprova tra {{wait}})"
+  },
+  "addons": {
+    "title": "Addon",
+    "empty": "Nessun addon caricato",
+    "readFailed": "Impossibile leggere gli addon: {{error}}",
+    "hubVersionsFailed": "Impossibile chiedere all'hub quali versioni questo nodo deve eseguire: {{error}}",
+    "startFailed": "Impossibile avviare l'aggiornamento",
+    "columns": {
+      "addon": "Addon",
+      "version": "Versione",
+      "versionNotSortable": "Una cella di versione può anche indicare cosa si sta aggiornando.",
+      "runner": "Runner",
+      "cpu": "CPU",
+      "memory": "Memoria",
+      "status": "Stato",
+      "actionsNotSortable": "Azioni."
+    },
+    "runnerWithoutAddon": "runner senza un addon noto",
+    "updateFailed": "Aggiornamento non riuscito: {{message}}",
+    "updatingTo": "Aggiornamento a {{version}}…",
+    "updatedTo": "Aggiornato a {{version}}",
+    "published": "{{version}} pubblicata",
+    "publishedHint": "È stata pubblicata una versione più recente. Arriva su questo nodo quando l'hub la esegue: aggiorna prima l'hub.",
+    "inAgentProcess": "nel processo dell'agente",
+    "shared_one": "condiviso con {{count}} altro",
+    "shared_other": "condiviso con altri {{count}}",
+    "updating": "Aggiornamento…",
+    "updateTo": "Aggiorna a {{version}}",
+    "restart": "Riavvia {{name}}"
+  },
+  "updates": {
+    "title": "Aggiornamento del framework",
+    "bootMode": {
+      "dataRoot": "Copia aggiornabile (aggiornabile a runtime)",
+      "baked": "Copia dell'immagine (sola lettura)",
+      "workspace": "Workspace di sviluppo"
+    },
+    "restartWarning": "L'applicazione scarica la release e poi riavvia questo nodo per attivarla. Streaming live e detection su questo nodo si fermano durante il riavvio e questa pagina resta irraggiungibile finché l'agente non torna disponibile.",
+    "state": {
+      "checking": "Controllo del registry…",
+      "staging": "Download e preparazione della release…",
+      "pendingRestart": "Preparata: riavvio per applicare",
+      "pendingRestartVersion": "Preparata v{{version}}: riavvio per applicare",
+      "working": "Elaborazione…"
+    },
+    "updateAvailable": "aggiornamento disponibile",
+    "checking": "Controllo…",
+    "check": "Cerca aggiornamenti",
+    "confirmApply": "Conferma: aggiorna e riavvia questo nodo",
+    "apply": "Aggiorna",
+    "applyTo": "Aggiorna → v{{version}}",
+    "running": "In esecuzione",
+    "published": "Pubblicata (npm)",
+    "notChecked": "non controllato",
+    "loadedFrom": "Codice caricato da",
+    "checkFailed": "Controllo aggiornamenti non riuscito: {{error}}",
+    "npmNote": "Il framework si installa dal registry npm: funziona anche con l'hub non raggiungibile.",
+    "readFailed": "Impossibile leggere lo stato degli aggiornamenti: {{error}}",
+    "checkRequestFailed": "Controllo non riuscito",
+    "applyFailed": "Impossibile avviare l'aggiornamento"
+  }
+}

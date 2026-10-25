@@ -1,0 +1,78 @@
+{
+  "name": "@camstack/addon-provider-onvif",
+  "version": "1.2.147",
+  "description": "ONVIF camera device provider addon for CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "onvif",
+    "provider",
+    "camera",
+    "ip-camera"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "ONVIF Provider",
+    "addons": [
+      {
+        "id": "provider-onvif",
+        "category": "providers",
+        "name": "ONVIF Camera Provider",
+        "version": "0.1.0",
+        "description": "Discovery automatica di camere ONVIF sulla rete locale",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#06b6d4",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ],
+    "runtimeDependencies": [
+      "onvif"
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "onvif": "^0.8.1",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "zod": "^4.3.6"
+  }
+}

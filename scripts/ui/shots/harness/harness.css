@@ -1,0 +1,9 @@
+/* The admin-ui stylesheet, unchanged: its own @source lines resolve relative to it. */
+@import '../../../../packages/addon-admin-ui/src/index.css';
+
+/* The admin build finds its own sources from ITS root; the harness root is this
+   directory, so without this a class used only by a lazily-loaded admin page
+   (one no other scanned file spells) produced no rule here and the shot showed
+   a layout the hub never renders. */
+@source '../../../../packages/addon-admin-ui/src';
+@source './bosch-forms.tsx';

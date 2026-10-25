@@ -1,0 +1,26 @@
+[
+  {
+    "id": "Q1-0543",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788752580000,
+    "toMs": 1788752820000,
+    "stepMs": 6000
+  },
+  {
+    "id": "Q2-1043",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788770580000,
+    "toMs": 1788770820000,
+    "stepMs": 6000
+  },
+  {
+    "id": "Q3-1213",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788775980000,
+    "toMs": 1788776220000,
+    "stepMs": 6000
+  }
+]

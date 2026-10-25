@@ -1,0 +1,37 @@
+{
+  "directLogin": {
+    "requiresCallback": "Passkey direct-login widget requires an onComplete callback.",
+    "signInWithPasskey": "Sign in with a passkey",
+    "unsupported": "This browser does not support passkeys.",
+    "failed": "Passkey sign-in failed",
+    "secondFactorRequired": "Additional verification is required — sign in with your password to continue."
+  },
+  "login": {
+    "requiresChallenge": "Passkey login widget requires a challengeToken + onComplete callback.",
+    "unsupported": "This browser does not support passkeys.",
+    "verificationFailed": "Passkey verification failed",
+    "usePasskey": "Use a passkey"
+  },
+  "enrollment": {
+    "title": "Passkeys",
+    "intro": "Add a passkey (Touch ID, Windows Hello, or a security key) to sign in directly — fast and phishing-resistant, no password needed.",
+    "loading": "Loading passkeys…",
+    "addedUsed": "Added {{added}} · last used {{used}}",
+    "addedNever": "Added {{added}} · never used",
+    "currentPassword": "Current password",
+    "passwordToConfirm": "Password to confirm",
+    "remove": "Remove",
+    "usePasskey": "Use a passkey",
+    "none": "No passkeys enrolled yet.",
+    "secondFactorTitle": "Require passkey as second factor",
+    "secondFactorHint": "Also ask for a passkey after every password sign-in. Off by default — enrolling a passkey on its own only enables direct passkey sign-in.",
+    "passkeyName": "Passkey name",
+    "namePlaceholder": "e.g. MacBook Touch ID",
+    "enrolling": "Enrolling…",
+    "addPasskey": "Add passkey",
+    "unnamedDevice": "Unnamed device",
+    "preferenceFailed": "Could not update the preference",
+    "enrollFailed": "Passkey enrollment failed",
+    "removeFailed": "Remove failed"
+  }
+}

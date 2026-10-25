@@ -1,0 +1,11 @@
+// Guard: ban creating bespoke `*Logger` interfaces (use IScopedLogger).
+// Ported from the old eslint no-restricted-syntax selector
+//   TSInterfaceDeclaration[id.name=/Logger$/][id.name!="IScopedLogger"]
+// NOTE: Biome GritQL regexes are fully anchored, so "ends with Logger" is r".*Logger"
+// and the IScopedLogger exemption is an anchored `not r"IScopedLogger"`.
+// Scope (biome.json overrides): packages/core/src + packages/addon-*/src.
+TsInterfaceDeclaration(id=$name) where {
+  $name <: r".*Logger",
+  $name <: not r"IScopedLogger",
+  register_diagnostic(span=$name, message="Use IScopedLogger from @camstack/types instead of creating custom logger interfaces.")
+}

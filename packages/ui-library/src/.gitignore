@@ -1,0 +1,5 @@
+# Prevent compiled output from polluting src/
+*.js
+*.jsx
+*.js.map
+!vite-env.d.ts

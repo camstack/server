@@ -1,0 +1,22 @@
+// Guard: ban the raw addon-store primitive `readAddonStore()` /
+// `writeAddonStore()` inside addons. The primitive is @internal (see
+// `packages/types/src/interfaces/addon.ts`). Addons must use the high-level,
+// schema-driven, per-node-aware surface on `BaseAddon`:
+//   - `this.getGlobalSettings()` / `this.updateGlobalSettings(patch)` — schema
+//     settings (per-node aware via `perNode: true` fields, no bare fallback).
+//   - `this.resolveGlobalStore(nodeId)` — the sanctioned per-node-projected raw
+//     view for a `getGlobalSettings` override that computes dynamic options.
+//   - `this.state<T>(key, schema, fallback)` — a Zod-validated durable JSON blob.
+// Scope (biome.json overrides): packages/addon-*/src ONLY, excluding test files
+// and the allowlisted engine-cascade holdouts (detection-pipeline index +
+// provider, whose per-node engine read/write pre-dates the base surface) and the
+// recorder config-store test-fake adapter. The BaseAddon wrappers themselves
+// live in `@camstack/types` (out of scope) and are the only sanctioned callers.
+or {
+  `$obj.readAddonStore` where {
+    register_diagnostic(span=$obj, message="Do NOT call ctx.settings.readAddonStore() directly — it is the @internal raw primitive. Use this.getGlobalSettings() / this.resolveGlobalStore(nodeId) for a settings view, or this.state<T>(key, schema, fallback) for a durable JSON blob.")
+  },
+  `$obj.writeAddonStore` where {
+    register_diagnostic(span=$obj, message="Do NOT call ctx.settings.writeAddonStore() directly — it is the @internal raw primitive. Use this.updateGlobalSettings(patch) for schema settings, or this.state<T>(key, schema, fallback).set(value) for a durable JSON blob.")
+  }
+}

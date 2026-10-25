@@ -1,0 +1,194 @@
+{
+  "common": {
+    "nodeDefault": "predefinito del nodo",
+    "loading": "Caricamento…"
+  },
+  "page": {
+    "title": "Benchmark",
+    "subtitle": "Misura un nodo, oppure ispeziona un'immagine o un suono",
+    "tabNode": "Benchmark del nodo",
+    "tabImage": "Immagine",
+    "tabAudio": "Audio"
+  },
+  "device": {
+    "label": "Dispositivo",
+    "nodeDefaultTitle": "Esegui senza deviceKey — il nodo risponde sul suo pool predefinito",
+    "liveForCamera": "in uso dal vivo per questa telecamera",
+    "noAccelerators": "nessun acceleratore rilevato su questo nodo"
+  },
+  "runTarget": {
+    "title": "Destinazione dell'esecuzione — telecamera · nodo · dispositivo",
+    "camera": "Telecamera",
+    "customTree": "— albero personalizzato (nessuna telecamera) —",
+    "node": "nodo",
+    "device": "dispositivo",
+    "notDispatched": "nessuno (non assegnato)",
+    "notInRoster": "non presente nell'elenco di questo nodo",
+    "phase": "fase",
+    "infer": "inferenza",
+    "queue": "coda",
+    "provisioning": "provisioning",
+    "noDetection": "Nessun blocco di rilevamento — questa telecamera non è assegnata a nessun nodo. L'albero qui sotto è quello che verrebbe eseguito.",
+    "resolvedTree": "Albero risolto (resolvePipeline)",
+    "noSteps": "nessun passaggio risolto"
+  },
+  "image": {
+    "noImage": "Nessuna immagine caricata",
+    "processing": "Elaborazione…",
+    "run": "Esegui la pipeline",
+    "target": "destinazione",
+    "nodeDefaultPool": "pool predefinito del nodo",
+    "cameraResolved": "telecamera #{{id}} (albero risolto)",
+    "customTree": "albero personalizzato",
+    "selectImage": "Seleziona un'immagine qui sopra",
+    "detections_one": "{{count}} rilevamento — {{w}}x{{h}}",
+    "detections_other": "{{count}} rilevamenti — {{w}}x{{h}}",
+    "response": "Risposta della pipeline"
+  },
+  "audio": {
+    "needsReference": "Il benchmark audio richiede un file di riferimento: runAudioTest non ha un campo per un WAV caricato, e un payload senza nome file fa classificare al provider il primo file di riferimento della sua cartella.",
+    "uploadUnsupported": "Il caricamento non è supportato per l'audio: runAudioTest non ha un campo payload per un file caricato, quindi \"{{name}}\" non può essere classificato. Scegli un WAV di riferimento qui sopra.",
+    "loading": "Caricamento della pipeline audio…",
+    "uploadLabel": "Carica WAV (solo anteprima)",
+    "referenceOnly": "Solo file di riferimento — <code>runAudioTest</code> non ha un campo payload per un WAV caricato, quindi un file caricato può essere visto come forma d'onda ma mai classificato.",
+    "waveform": "Forma d'onda",
+    "detections_one": "{{count}} rilevamento",
+    "detections_other": "{{count}} rilevamenti",
+    "selectFile": "Seleziona un file audio qui sopra",
+    "bestMatch": "Corrispondenza migliore:",
+    "timings": "Tempi",
+    "inference": "Inferenza ({{backend}})",
+    "total": "Totale (caricamento + inferenza)",
+    "overhead": "Overhead",
+    "classifications": "Classificazioni",
+    "labels_one": "{{count}} etichetta",
+    "labels_other": "{{count}} etichette",
+    "classifying": "Classificazione…",
+    "detected": "rilevato",
+    "noClassifications": "Nessuna classificazione",
+    "response": "Risposta della classificazione audio",
+    "backend": "Backend del classificatore",
+    "settings": "Impostazioni del classificatore",
+    "pipeline": "Pipeline audio",
+    "sampleRate": "Frequenza di campionamento",
+    "chunkDuration": "Durata del blocco",
+    "activeBackend": "Backend attivo",
+    "classify": "Classifica l'audio"
+  },
+  "plan": {
+    "chooseDevice": "Scegli almeno un dispositivo e un modello.",
+    "chooseMeasurement": "Scegli almeno una misurazione.",
+    "none": "Nessun piano ancora"
+  },
+  "preflight": {
+    "node": "Nodo in prova: {{node}}. Il suo rilevamento lo lascia per la durata dell'esecuzione e torna al termine.",
+    "noneMoving": "Nessuna telecamera è in esecuzione su questo nodo ora.",
+    "moving": "{{count}} telecamera/e passano ad altri nodi: {{list}}.",
+    "pinned": " (fissata qui — il vincolo viene ripristinato dopo)",
+    "staying": "{{count}} telecamera/e non possono spostarsi — questo nodo è la loro unica sorgente di frame: {{list}}. Restano in esecuzione qui e i risultati sono marcati come contaminati.",
+    "measurements": "Misurazioni: {{list}}{{steps}}.",
+    "steps": " (passaggi: {{steps}})",
+    "devices": "Dispositivi: {{list}}.",
+    "estimated": "Stima: fino a {{estimate}}; l'esecuzione si ferma e ripristina il cluster al più tardi dopo {{budget}}.",
+    "startAnyway": "Puoi avviare comunque qui sotto."
+  },
+  "phase": {
+    "device": "capacità del dispositivo",
+    "pipeline": "carico della pipeline"
+  },
+  "run": {
+    "draining": "Spostamento delle telecamere fuori da {{node}}…",
+    "measuring": "Misurazione di {{node}}{{progress}}",
+    "restoring": "Ripristino del cluster…",
+    "done": "Completato — {{count}} risultato/i salvato/i.",
+    "aborted": "Interrotto ({{reason}}) — il cluster è stato ripristinato; {{count}} risultato/i conservato/i.",
+    "failed": "Fallito — il cluster è stato ripristinato.",
+    "failedDetail": "Fallito — il cluster è stato ripristinato. {{error}}",
+    "running": "In esecuzione",
+    "lastRun": "Ultima esecuzione",
+    "abort": "Interrompi",
+    "abortTitle": "Interrompi il benchmark",
+    "abortDescription": "L'esecuzione si ferma; quanto completato viene conservato e il cluster è ripristinato com'era.",
+    "stayed": "Rimaste sul nodo (unica sorgente di frame): {{list}} — risultati marcati come contaminati."
+  },
+  "progress": {
+    "device": "dispositivo {{device}} · {{model}}",
+    "pipeline": "pipeline {{device}} · {{model}}"
+  },
+  "endReason": {
+    "operator-abort": "interrotto da te",
+    "deadline": "tempo massimo raggiunto",
+    "node-lost": "il nodo è andato offline",
+    "runner-lost": "il nodo si è riavviato",
+    "hub-restart": "l'hub si è riavviato",
+    "drain-timeout": "le telecamere non hanno lasciato il nodo in tempo"
+  },
+  "flags": {
+    "contaminated": "contaminato",
+    "partialRun": "esecuzione parziale",
+    "referenceImages": "immagini di riferimento"
+  },
+  "result": {
+    "deviceCapacity": "Capacità del dispositivo",
+    "pipeline": "Pipeline",
+    "pipelineWithSteps": "Pipeline + {{steps}}",
+    "capacityDevice": "{{streams}} stream · {{fps}} fps",
+    "capacityPipeline": "{{sessions}} sessioni"
+  },
+  "standing": {
+    "fresh": "Usato da Auto tune e dalle quote",
+    "superseded": "Sostituito da un'esecuzione più recente",
+    "stale": "Obsoleto — {{why}}",
+    "staleAge": "più vecchio di 30 giorni",
+    "staleRuntime": "il runtime è cambiato",
+    "stalePool": "la configurazione del pool è cambiata"
+  },
+  "devices": {
+    "unavailable": "non disponibile",
+    "notUsed": "non usato per il rilevamento",
+    "suggested": "(suggerito)",
+    "pipelineModel": "· pipeline",
+    "addModelAria": "Aggiungi un modello su {{device}}",
+    "addModel": "+ modello…",
+    "title": "Dispositivi e modelli candidati",
+    "reading": "Lettura di {{node}}…",
+    "note": "Ogni modello selezionato ottiene una rampa di capacità del dispositivo; il primo per dispositivo esegue anche la misurazione della pipeline. I modelli non presenti sul nodo vengono scaricati per l'esecuzione e rimossi dopo.",
+    "noteKept": "Ogni modello selezionato ottiene una rampa di capacità del dispositivo; il primo per dispositivo esegue anche la misurazione della pipeline. I modelli non presenti sul nodo vengono scaricati per l'esecuzione e rimossi dopo — conservati, come hai scelto."
+  },
+  "results": {
+    "device": "Dispositivo",
+    "model": "Modello",
+    "measurement": "Misurazione",
+    "capacity": "Capacità",
+    "latency": "Latenza (1 stream)",
+    "limitedBy": "Limitato da",
+    "measured": "Misurato",
+    "standing": "Stato",
+    "delete": "Elimina il risultato",
+    "title": "Risultati — {{node}}",
+    "empty": "Ancora nessun risultato per questo nodo",
+    "emptyHint": "Auto tune e le quote automatiche usano per esso la tabella delle latenze finché non viene misurato."
+  },
+  "node": {
+    "title": "Nodo",
+    "intro": "Un nodo alla volta. Mentre è in esecuzione, il nodo non esegue rilevamento: le sue telecamere passano agli altri nodi e tornano — vincoli compresi — al termine, anche dopo un crash o un riavvio dell'hub.",
+    "cluster": "Cluster ora: {{now}} sessione/i in parallelo; gli altri nodi possono sostenerne {{capacity}}.",
+    "unknownCapacity": "un numero sconosciuto di"
+  },
+  "measure": {
+    "title": "Cosa misurare",
+    "deviceCapacity": "Capacità del dispositivo (solo rilevatore)",
+    "pipelineLoad": "Carico della pipeline (rilevatore + i passaggi sotto)",
+    "noSteps": "Il catalogo del nodo non offre passaggi di dettaglio.",
+    "fps": "fps per telecamera",
+    "budget": "tempo massimo (min)",
+    "keepModels": "Conserva i modelli scaricati",
+    "acceptHeadroom": "Avvia anche se gli altri nodi non possono sostenere ogni sessione"
+  },
+  "start": {
+    "label": "Avvia il benchmark",
+    "title": "Eseguire il benchmark di {{node}}?",
+    "reading": "Lettura dei controlli preliminari…",
+    "confirm": "Avvia"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "name": "@camstack/addon-provider-unraid",
+  "version": "0.2.146",
+  "description": "Unraid device-provider addon for CamStack — one Container per Unraid instance fanning out array, disk, docker and notification entities",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "unraid",
+    "array",
+    "docker",
+    "parity",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Unraid Provider",
+    "addons": [
+      {
+        "id": "provider-unraid",
+        "category": "providers",
+        "name": "Unraid",
+        "version": "0.1.0",
+        "description": "Adopt an Unraid server over its local GraphQL API and expose its array, disks, docker containers and notifications as one instance Container",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#f15a2c",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "node-unraid": "^1.0.0",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

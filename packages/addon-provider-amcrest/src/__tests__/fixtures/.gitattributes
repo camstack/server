@@ -1,0 +1,5 @@
+# Verbatim Dahua CGI responses, captured off the camera. Dahua answers with
+# CRLF, so these must be stored byte-for-byte: a normalised fixture stops
+# being what the camera sends, and a parser test then proves nothing about
+# the wire.
+* -text

@@ -1,0 +1,17 @@
+// Guard: a leaf module inside @camstack/types must NOT import the root barrel
+// ('../index.js', '../../index.js', …) — value OR type. A VALUE import of the
+// barrel instantiates the ENTIRE zod schema graph (~317k objects / ~48MB heap)
+// in every process that loads the module at runtime — exactly how
+// @camstack/types/node leaked the barrel into every addon-runner (measured
+// 2026-06-25). Import from the symbol's DEEP module instead (e.g. errMsg from
+// '../utils/err-msg.js', IScopedLogger from '../interfaces/logging.js'). Banning
+// type imports too keeps the rule simple and avoids value/type drift.
+// Scope (biome.json): packages/types/src EXCEPT entry barrels index/node/addon.
+$imp where {
+  $imp <: or {
+    `import $clause from "../index.js"`,
+    `import $clause from "../../index.js"`,
+    `import $clause from "../../../index.js"`
+  },
+  register_diagnostic(span=$imp, message="Do NOT import the @camstack/types root barrel from a leaf module. A value import instantiates the whole zod schema graph (~48MB heap) at runtime in every consumer (this leaked the barrel into every addon-runner via @camstack/types/node). Import from the symbol's deep module (errMsg -> '../utils/err-msg.js', IScopedLogger -> '../interfaces/logging.js', etc.).")
+}

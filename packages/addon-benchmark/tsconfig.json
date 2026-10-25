@@ -1,0 +1,38 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "declaration": false,
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "paths": {
+      "@camstack/types": [
+        "../types/src/index.ts"
+      ],
+      "@camstack/sdk": [
+        "../sdk/src/index.ts"
+      ],
+      "@camstack/ui": [
+        "../ui-library/src/index.ts"
+      ],
+      "@camstack/ui-library": [
+        "../ui-library/src/index.ts"
+      ]
+    },
+    "ignoreDeprecations": "6.0",
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*",
+    "__tests__/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "name": "@camstack/addon-training",
+  "version": "0.1.81",
+  "description": "Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "training",
+    "fine-tune",
+    "modal",
+    "gpu"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Cloud Training",
+    "addons": [
+      {
+        "id": "training",
+        "category": "system",
+        "name": "Training",
+        "description": "Fine-tune the root detector on your own annotated frames in a GPU cloud you choose, compare it with the model you run, and register it in Model Studio only when you say so",
+        "version": "1.0.0",
+        "entry": "./dist/orchestrator/training.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "training"
+          },
+          {
+            "name": "addon-pages-source"
+          }
+        ],
+        "pages": [
+          {
+            "id": "training",
+            "label": "Training",
+            "icon": "graduation-cap",
+            "path": "/addon/training",
+            "remoteName": "addon_training_page",
+            "bundle": "remoteEntry.js",
+            "section": "detection"
+          }
+        ],
+        "icon": "assets/training/icon.svg",
+        "color": "#0d9488"
+      },
+      {
+        "id": "training-modal",
+        "category": "system",
+        "name": "Modal (training cloud)",
+        "description": "Runs CamStack training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token",
+        "version": "1.0.0",
+        "entry": "./dist/providers/modal/training-modal.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "training-provider"
+          }
+        ],
+        "icon": "assets/training-modal/icon.svg",
+        "color": "#16a34a"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build && vite build -c vite.page.config.ts",
+    "build:server": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "modal": "0.11.0"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/runtime": "^2.4.0",
+    "@module-federation/vite": "^1.16.9",
+    "@tailwindcss/vite": "^4.2.0",
+    "@trpc/client": "^11.16.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "superjson": "^2.0.0",
+    "tailwindcss": "^4.2.0",
+    "tar": "^7.5.16",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0",
+    "zod": "^4.3.6"
+  }
+}

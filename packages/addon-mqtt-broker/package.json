@@ -1,0 +1,78 @@
+{
+  "name": "@camstack/addon-mqtt-broker",
+  "version": "1.2.144",
+  "description": "MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "mqtt",
+    "aedes",
+    "broker"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "MQTT Broker",
+    "addons": [
+      {
+        "id": "mqtt-broker",
+        "category": "messaging",
+        "name": "MQTT Broker",
+        "description": "Registry of MQTT brokers (external + optionally an embedded aedes broker). Exposes connection details via the `mqtt-broker` cap — consumer addons connect with their own `mqtt.js` clients.",
+        "entry": "./dist/mqtt-broker.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "mqtt-broker"
+          },
+          {
+            "name": "broker"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#660066"
+      }
+    ],
+    "runtimeDependencies": [
+      "aedes"
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "build:lib": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "aedes": "^0.51.3",
+    "bcryptjs": "^3.0.3",
+    "mqtt": "^5.10.0"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  }
+}

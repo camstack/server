@@ -1,0 +1,116 @@
+{
+  "name": "@camstack/addon-provider-reolink",
+  "version": "1.2.209",
+  "description": "Reolink camera device provider addon for CamStack — native Baichuan protocol",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "reolink",
+    "baichuan",
+    "provider",
+    "camera",
+    "streaming"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Reolink Provider",
+    "addons": [
+      {
+        "id": "provider-reolink",
+        "category": "providers",
+        "name": "Reolink",
+        "version": "0.1.0",
+        "description": "Native Baichuan protocol connection to Reolink cameras — direct Annex-B push, no RTSP intermediary",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#1ea2e9",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only",
+          "heapProfile": "heavy",
+          "rssBudgetMb": 1024
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "stream-params"
+          },
+          {
+            "name": "recording-onboard"
+          },
+          {
+            "name": "motion-zones"
+          },
+          {
+            "name": "privacy-mask"
+          },
+          {
+            "name": "log-channels"
+          },
+          {
+            "name": "failure-contribution"
+          },
+          {
+            "name": "stream-signals"
+          },
+          {
+            "name": "videoclips"
+          }
+        ]
+      }
+    ],
+    "runtimeDependencies": [
+      "@apocaliss92/nodelink-js",
+      "werift"
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "@apocaliss92/nodelink-js": "^0.12.0"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "werift": "0.22.9",
+    "zod": "^4.3.6"
+  },
+  "peerDependenciesMeta": {
+    "werift": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6"
+  }
+}

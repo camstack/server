@@ -1,0 +1,81 @@
+{
+  "name": "@camstack/addon-provider-tuya",
+  "version": "0.2.144",
+  "description": "Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "tuya",
+    "smartlife",
+    "localtuya",
+    "switch",
+    "kettle",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Tuya Provider",
+    "addons": [
+      {
+        "id": "provider-tuya",
+        "category": "providers",
+        "name": "Tuya",
+        "version": "0.1.0",
+        "description": "Adopt Tuya / Smart Life devices — account-onboarded (Tuya IoT cloud fetches each device's localKey) then controlled LOCALLY over the encrypted LAN protocol (switches + kettle)",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#ff4800",
+        "mode": "account",
+        "instanceMode": "multiple",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "connection-test"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@apocaliss92/nodetuya": "file:./vendor/apocaliss92-nodetuya-0.2.1.tgz",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,8 @@
+# Raw-tensor ONNX inference for the embedding encoder (raw_tensor_inference.py),
+# run in the embedded portable Python. Installed lazily via
+# ctx.deps.installPythonRequirements the first time an embedding engine boots.
+numpy>=1.26,<3
+onnxruntime>=1.20,<2
+# HF Rust tokenizers — exact CLIP BPE for text_encoder_inference.py (linux-x86_64
+# + macOS-arm64 wheels). Replaces the former hand-rolled TS CLIP BPE.
+tokenizers>=0.20,<1

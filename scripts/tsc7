@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# tsc7 — invoke the TypeScript 7 native binary (`typescript-7` npm alias).
+#
+# Always by absolute path so a `.bin/tsc` collision cannot silently run TS 6.
+# Default `--checkers 1` (RAM floor; override with TSGO_CHECKERS). Extra args
+# are forwarded after the checkers flag.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BIN="$ROOT/node_modules/typescript-7/bin/tsc"
+if [ ! -x "$BIN" ] && [ ! -f "$BIN" ]; then
+  echo "tsc7: missing $BIN — install typescript-7 (npm alias → typescript@7)" >&2
+  exit 127
+fi
+exec "$BIN" --checkers "${TSGO_CHECKERS:-1}" "$@"

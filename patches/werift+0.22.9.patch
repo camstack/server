@@ -1,0 +1,245 @@
+diff --git a/node_modules/werift/lib/ice/src/ice.js b/node_modules/werift/lib/ice/src/ice.js
+index 74cf126..0c5cedf 100644
+--- a/node_modules/werift/lib/ice/src/ice.js
++++ b/node_modules/werift/lib/ice/src/ice.js
+@@ -635,7 +635,10 @@ class Connection {
+                 const candidateAddress = [address, protocol.getExtraInfo()[1]];
+                 protocol.localCandidate = new candidate_1.Candidate((0, candidate_1.candidateFoundation)("host", "udp", candidateAddress[0]), 1, "udp", (0, candidate_1.candidatePriority)("host"), candidateAddress[0], candidateAddress[1], "host", undefined, undefined, undefined, this.generation, this.localUsername);
+                 this.pairLocalProtocol(protocol);
+-                this.appendLocalCandidate(protocol.localCandidate);
++                // camstack: relay-only SDP under forceTurn (werift forceTurn candidate leak) — see werift-turn-fix spec
++                if (!this.options.forceTurn) {
++                    this.appendLocalCandidate(protocol.localCandidate);
++                }
+                 return protocol;
+             }
+             catch (error) {
+@@ -656,7 +659,8 @@ class Connection {
+                         const candidate = await (0, iceBase_1.serverReflexiveCandidate)(protocol, stunServer).catch((error) => {
+                             log("error", error);
+                         });
+-                        if (candidate) {
++                        // camstack: relay-only SDP under forceTurn (werift forceTurn candidate leak) — see werift-turn-fix spec
++                        if (candidate && !this.options.forceTurn) {
+                             this.appendLocalCandidate(candidate);
+                         }
+                         clearTimeout(timer);
+diff --git a/node_modules/werift/lib/index.mjs b/node_modules/werift/lib/index.mjs
+index 3e8b013..f481aa5 100644
+--- a/node_modules/werift/lib/index.mjs
++++ b/node_modules/werift/lib/index.mjs
+@@ -4358,6 +4358,21 @@ var timestampOffset = 4;
+ var ssrcOffset = 8;
+ var csrcOffset = 12;
+ var csrcSize = 4;
++
++// camstack: D868 — SRTP output arena (see lib/rtp/src/rtp/rtp.js).
++var CAMSTACK_SRTP_ARENA_BYTES = 262144;
++var camstackSrtpArena = Buffer.allocUnsafeSlow(0);
++var camstackSrtpArenaOffset = 0;
++function camstackSrtpOut(size) {
++  if (size > CAMSTACK_SRTP_ARENA_BYTES >> 2) return Buffer.allocUnsafeSlow(size);
++  if (camstackSrtpArenaOffset + size > camstackSrtpArena.length) {
++    camstackSrtpArena = Buffer.allocUnsafeSlow(CAMSTACK_SRTP_ARENA_BYTES);
++    camstackSrtpArenaOffset = 0;
++  }
++  const out = camstackSrtpArena.subarray(camstackSrtpArenaOffset, camstackSrtpArenaOffset + size);
++  camstackSrtpArenaOffset += size;
++  return out;
++}
+ var RtpHeader = class _RtpHeader {
+   version = 2;
+   padding = false;
+@@ -4501,8 +4516,8 @@ var RtpHeader = class _RtpHeader {
+     }
+     return size;
+   }
+-  serialize(size) {
+-    const buf = Buffer.alloc(size);
++  serialize(size, into) {
++    const buf = into ? into.fill(0, 0, size) : Buffer.alloc(size);
+     let offset = 0;
+     const v_p_x_cc = new BitWriter(8);
+     v_p_x_cc.set(2, 0, this.version);
+@@ -4679,7 +4694,9 @@ var CipherAesCtr = class extends CipherAesBase {
+   }
+   authTagLength = 10;
+   encryptRtp(header, payload, rolloverCounter) {
+-    const headerBuffer = header.serialize(header.serializeSize);
++    const hdrSize = header.serializeSize;
++    const out = camstackSrtpOut(hdrSize + payload.length + this.authTagLength);
++    const headerBuffer = header.serialize(hdrSize, out.subarray(0, hdrSize));
+     const counter = this.generateCounter(
+       header.sequenceNumber,
+       rolloverCounter,
+@@ -4693,7 +4710,9 @@ var CipherAesCtr = class extends CipherAesBase {
+       headerBuffer,
+       enc
+     );
+-    return Buffer.concat([headerBuffer, enc, authTag]);
++    enc.copy(out, hdrSize);
++    authTag.copy(out, hdrSize + enc.length);
++    return out.subarray(0, hdrSize + enc.length + authTag.length);
+   }
+   decryptRtp(cipherText, rolloverCounter) {
+     const header = RtpHeader.deSerialize(cipherText);
+@@ -4800,15 +4819,18 @@ var CipherAesGcm = class extends CipherAesBase {
+     super(srtpSessionKey, srtpSessionSalt, srtcpSessionKey, srtcpSessionSalt);
+   }
+   encryptRtp(header, payload, rolloverCounter) {
+-    const hdr = header.serialize(header.serializeSize);
++    const hdrSize = header.serializeSize;
++    const out = camstackSrtpOut(hdrSize + payload.length + this.aeadAuthTagLen);
++    const hdr = header.serialize(hdrSize, out.subarray(0, hdrSize));
+     const iv = this.rtpInitializationVector(header, rolloverCounter);
+     const cipher = createCipheriv3("aes-128-gcm", this.srtpSessionKey, iv);
+     cipher.setAAD(hdr);
+     const enc = cipher.update(payload);
+     cipher.final();
+     const authTag = cipher.getAuthTag();
+-    const dst = Buffer.concat([hdr, enc, authTag]);
+-    return dst;
++    enc.copy(out, hdrSize);
++    authTag.copy(out, hdrSize + enc.length);
++    return out.subarray(0, hdrSize + enc.length + authTag.length);
+   }
+   decryptRtp(cipherText, rolloverCounter) {
+     const header = RtpHeader.deSerialize(cipherText);
+@@ -7940,7 +7962,10 @@ var Connection = class {
+           this.localUsername
+         );
+         this.pairLocalProtocol(protocol);
+-        this.appendLocalCandidate(protocol.localCandidate);
++        // camstack: relay-only SDP under forceTurn (werift forceTurn candidate leak) — see werift-turn-fix spec
++        if (!this.options.forceTurn) {
++          this.appendLocalCandidate(protocol.localCandidate);
++        }
+         return protocol;
+       } catch (error) {
+         log22("error protocol STUN", error);
+@@ -7967,7 +7992,8 @@ var Connection = class {
+                 ).catch((error) => {
+                   log22("error", error);
+                 });
+-                if (candidate) {
++                // camstack: relay-only SDP under forceTurn (werift forceTurn candidate leak) — see werift-turn-fix spec
++                if (candidate && !this.options.forceTurn) {
+                   this.appendLocalCandidate(candidate);
+                 }
+                 clearTimeout(timer2);
+@@ -13565,7 +13591,7 @@ var SenderBandwidthEstimator = class {
+ 
+ // src/media/rtpSender.ts
+ var log33 = debug("werift:packages/webrtc/src/media/rtpSender.ts");
+-var RTP_HISTORY_SIZE = 128;
++var RTP_HISTORY_SIZE = 4096;
+ var RTT_ALPHA = 0.85;
+ var RTCRtpSender = class {
+   constructor(trackOrKind) {
+diff --git a/node_modules/werift/lib/rtp/src/rtp/rtp.js b/node_modules/werift/lib/rtp/src/rtp/rtp.js
+index 97b2767..b8ee886 100644
+--- a/node_modules/werift/lib/rtp/src/rtp/rtp.js
++++ b/node_modules/werift/lib/rtp/src/rtp/rtp.js
+@@ -11,6 +11,26 @@ const timestampOffset = 4;
+ const ssrcOffset = 8;
+ const csrcOffset = 12;
+ const csrcSize = 4;
++
++// camstack: D868 — SRTP output arena. Every outgoing RTP packet used to cost a
++// Buffer.alloc for the header and a Buffer.concat for header + ciphertext + tag.
++// The packet now lands in a dense slice of a 256 KiB arena that is never reused
++// (a full arena is left to the GC and lives as long as the datagram in flight).
++const CAMSTACK_SRTP_ARENA_BYTES = 262144;
++let camstackSrtpArena = Buffer.allocUnsafeSlow(0);
++let camstackSrtpArenaOffset = 0;
++function camstackSrtpOut(size) {
++    if (size > CAMSTACK_SRTP_ARENA_BYTES >> 2)
++        return Buffer.allocUnsafeSlow(size);
++    if (camstackSrtpArenaOffset + size > camstackSrtpArena.length) {
++        camstackSrtpArena = Buffer.allocUnsafeSlow(CAMSTACK_SRTP_ARENA_BYTES);
++        camstackSrtpArenaOffset = 0;
++    }
++    const out = camstackSrtpArena.subarray(camstackSrtpArenaOffset, camstackSrtpArenaOffset + size);
++    camstackSrtpArenaOffset += size;
++    return out;
++}
++exports.camstackSrtpOut = camstackSrtpOut;
+ /*
+  *  0                   1                   2                   3
+  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+@@ -242,8 +262,9 @@ class RtpHeader {
+         }
+         return size;
+     }
+-    serialize(size) {
+-        const buf = Buffer.alloc(size);
++    serialize(size, into) {
++        // camstack: D868 — SRTP writes the header straight into its output buffer.
++        const buf = into ? into.fill(0, 0, size) : Buffer.alloc(size);
+         let offset = 0;
+         const v_p_x_cc = new src_1.BitWriter(8);
+         v_p_x_cc.set(2, 0, this.version);
+diff --git a/node_modules/werift/lib/rtp/src/srtp/cipher/ctr.js b/node_modules/werift/lib/rtp/src/srtp/cipher/ctr.js
+index e0c1380..13aa5aa 100644
+--- a/node_modules/werift/lib/rtp/src/srtp/cipher/ctr.js
++++ b/node_modules/werift/lib/rtp/src/srtp/cipher/ctr.js
+@@ -28,12 +28,17 @@ class CipherAesCtr extends _1.CipherAesBase {
+         });
+     }
+     encryptRtp(header, payload, rolloverCounter) {
+-        const headerBuffer = header.serialize(header.serializeSize);
++        // camstack: D868 — header, ciphertext and tag in ONE arena slice (no serialize alloc, no concat).
++        const hdrSize = header.serializeSize;
++        const out = rtp_1.camstackSrtpOut(hdrSize + payload.length + this.authTagLength);
++        const headerBuffer = header.serialize(hdrSize, out.subarray(0, hdrSize));
+         const counter = this.generateCounter(header.sequenceNumber, rolloverCounter, header.ssrc, this.srtpSessionSalt);
+         const cipher = (0, crypto_1.createCipheriv)("aes-128-ctr", this.srtpSessionKey, counter);
+         const enc = cipher.update(payload);
+         const authTag = this.generateSrtpAuthTag(rolloverCounter, headerBuffer, enc);
+-        return Buffer.concat([headerBuffer, enc, authTag]);
++        enc.copy(out, hdrSize);
++        authTag.copy(out, hdrSize + enc.length);
++        return out.subarray(0, hdrSize + enc.length + authTag.length);
+     }
+     decryptRtp(cipherText, rolloverCounter) {
+         const header = rtp_1.RtpHeader.deSerialize(cipherText);
+diff --git a/node_modules/werift/lib/rtp/src/srtp/cipher/gcm.js b/node_modules/werift/lib/rtp/src/srtp/cipher/gcm.js
+index 8d9d498..4cdd15b 100644
+--- a/node_modules/werift/lib/rtp/src/srtp/cipher/gcm.js
++++ b/node_modules/werift/lib/rtp/src/srtp/cipher/gcm.js
+@@ -36,15 +36,19 @@ class CipherAesGcm extends _1.CipherAesBase {
+         });
+     }
+     encryptRtp(header, payload, rolloverCounter) {
+-        const hdr = header.serialize(header.serializeSize);
++        // camstack: D868 — header, ciphertext and tag in ONE arena slice (no serialize alloc, no concat).
++        const hdrSize = header.serializeSize;
++        const out = rtp_1.camstackSrtpOut(hdrSize + payload.length + this.aeadAuthTagLen);
++        const hdr = header.serialize(hdrSize, out.subarray(0, hdrSize));
+         const iv = this.rtpInitializationVector(header, rolloverCounter);
+         const cipher = (0, crypto_1.createCipheriv)("aes-128-gcm", this.srtpSessionKey, iv);
+         cipher.setAAD(hdr);
+         const enc = cipher.update(payload);
+         cipher.final();
+         const authTag = cipher.getAuthTag();
+-        const dst = Buffer.concat([hdr, enc, authTag]);
+-        return dst;
++        enc.copy(out, hdrSize);
++        authTag.copy(out, hdrSize + enc.length);
++        return out.subarray(0, hdrSize + enc.length + authTag.length);
+     }
+     decryptRtp(cipherText, rolloverCounter) {
+         const header = rtp_1.RtpHeader.deSerialize(cipherText);
+diff --git a/node_modules/werift/lib/webrtc/src/media/rtpSender.js b/node_modules/werift/lib/webrtc/src/media/rtpSender.js
+index bc85968..64a5304 100644
+--- a/node_modules/werift/lib/webrtc/src/media/rtpSender.js
++++ b/node_modules/werift/lib/webrtc/src/media/rtpSender.js
+@@ -33,7 +33,7 @@ const utils_1 = require("../utils");
+ const senderBWE_1 = require("./sender/senderBWE");
+ const stats_1 = require("./stats");
+ const log = (0, rtp_1.debug)("werift:packages/webrtc/src/media/rtpSender.ts");
+-const RTP_HISTORY_SIZE = 128;
++const RTP_HISTORY_SIZE = 4096;
+ const RTT_ALPHA = 0.85;
+ class RTCRtpSender {
+     constructor(trackOrKind) {

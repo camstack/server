@@ -1,0 +1,37 @@
+/**
+ * <%= displayName %> — generated addon skeleton.
+ *
+ * Replace this scaffold with your real implementation. The default
+ * `onInitialize` registers no capabilities, so the addon loads cleanly
+ * but does nothing until you wire it up.
+ *
+ * Common next steps:
+ *   1. Pick one or more capabilities from `@camstack/types/capabilities`.
+ *   2. Implement a provider conforming to the cap's `InferProvider`.
+ *   3. Return them from `onInitialize` and add them to
+ *      `package.json` → `camstack.addons[0].capabilities`.
+ *   4. `nx run @camstack/addon-<%= fileName %>:deploy` to push to a hub.
+ */
+import { BaseAddon, type ProviderRegistration } from '@camstack/types'
+
+// Operator-visible config fields go here, each with a default below and a
+// field in a `globalSettingsSchema()` override. The framework merges persisted
+// values over DEFAULTS; `this.config` is the live typed snapshot. No on/off switch: the
+// capability toggle is an addon's ONE enable (D777). An addon that needs a
+// setting to do anything (a URL, a token) treats the empty value as inert.
+type <%= className %>Config = Readonly<Record<string, never>>
+
+const DEFAULTS: <%= className %>Config = {}
+
+export class <%= className %>Addon extends BaseAddon<<%= className %>Config> {
+  constructor() {
+    super({ ...DEFAULTS })
+  }
+
+  protected async onInitialize(): Promise<ProviderRegistration[]> {
+    this.ctx.logger.info('<%= displayName %> addon initialized')
+    return []
+  }
+}
+
+export default <%= className %>Addon

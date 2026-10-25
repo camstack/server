@@ -1,0 +1,37 @@
+{
+  "directLogin": {
+    "requiresCallback": "Il widget di accesso diretto con passkey richiede una callback onComplete.",
+    "signInWithPasskey": "Accedi con una passkey",
+    "unsupported": "Questo browser non supporta le passkey.",
+    "failed": "Accesso con passkey non riuscito",
+    "secondFactorRequired": "È richiesta una verifica aggiuntiva — accedi con la password per continuare."
+  },
+  "login": {
+    "requiresChallenge": "Il widget di accesso con passkey richiede un challengeToken e una callback onComplete.",
+    "unsupported": "Questo browser non supporta le passkey.",
+    "verificationFailed": "Verifica della passkey non riuscita",
+    "usePasskey": "Usa una passkey"
+  },
+  "enrollment": {
+    "title": "Passkey",
+    "intro": "Aggiungi una passkey (Touch ID, Windows Hello o una chiave di sicurezza) per accedere direttamente: veloce, resistente al phishing e senza password.",
+    "loading": "Caricamento passkey…",
+    "addedUsed": "Aggiunta il {{added}} · ultimo utilizzo {{used}}",
+    "addedNever": "Aggiunta il {{added}} · mai utilizzata",
+    "currentPassword": "Password attuale",
+    "passwordToConfirm": "Password per confermare",
+    "remove": "Rimuovi",
+    "usePasskey": "Usa una passkey",
+    "none": "Nessuna passkey registrata.",
+    "secondFactorTitle": "Richiedi la passkey come secondo fattore",
+    "secondFactorHint": "Chiedi una passkey anche dopo ogni accesso con password. Disattivato per impostazione predefinita: registrare una passkey abilita soltanto l'accesso diretto con passkey.",
+    "passkeyName": "Nome della passkey",
+    "namePlaceholder": "es. MacBook Touch ID",
+    "enrolling": "Registrazione…",
+    "addPasskey": "Aggiungi passkey",
+    "unnamedDevice": "Dispositivo senza nome",
+    "preferenceFailed": "Impossibile aggiornare la preferenza",
+    "enrollFailed": "Registrazione della passkey non riuscita",
+    "removeFailed": "Rimozione non riuscita"
+  }
+}

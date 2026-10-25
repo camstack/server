@@ -1,0 +1,5 @@
+# YAMNet audio classification (yamnet_audio.py) — runs in the embedded
+# portable Python. Installed lazily via ctx.deps.installPythonRequirements
+# the first time the cross-platform audio backend boots.
+numpy>=1.26,<3
+onnxruntime>=1.20,<2

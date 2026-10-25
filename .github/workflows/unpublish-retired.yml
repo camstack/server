@@ -1,0 +1,69 @@
+# One-shot: remove retired @camstack packages from the public registry.
+# Safe to re-run — already-missing names are skipped. Delete this workflow
+# after the run succeeds.
+name: Unpublish Retired Packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unpublish-retired
+  cancel-in-progress: false
+
+jobs:
+  unpublish:
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+
+      - name: Unpublish retired packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          npm whoami
+
+          # Deprecated on npm, or source gone / no longer deployable.
+          PACKAGES=(
+            @camstack/addon-analytics
+            @camstack/addon-decoder-ffmpeg
+            @camstack/shm-ring
+            @camstack/addon-export-ha-mqtt
+            @camstack/core
+            @camstack/kernel
+            @camstack/addon-vector-store
+          )
+
+          for pkg in "${PACKAGES[@]}"; do
+            if ! npm view "$pkg" name >/dev/null 2>&1; then
+              echo "SKIP  $pkg (already gone)"
+              continue
+            fi
+            echo "UNPUBLISH  $pkg"
+            # Entire package. npm may refuse if >300 downloads/week or dependents.
+            if npm unpublish "$pkg" --force; then
+              echo "OK     $pkg"
+            else
+              echo "FAIL   $pkg"
+              FAILED=1
+            fi
+          done
+
+          echo "=== verify ==="
+          for pkg in "${PACKAGES[@]}"; do
+            if npm view "$pkg" name >/dev/null 2>&1; then
+              echo "STILL_PRESENT  $pkg"
+              FAILED=1
+            else
+              echo "GONE           $pkg"
+            fi
+          done
+
+          exit "${FAILED:-0}"

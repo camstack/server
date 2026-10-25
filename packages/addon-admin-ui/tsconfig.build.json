@@ -1,0 +1,15 @@
+{
+  // The type gate inside `npm run build`. Same program as tsconfig.json, but
+  // @camstack/types, sdk and ui-library resolve to their BUILT .d.ts (nx
+  // guarantees them through `dependsOn: ^build`) instead of their sources via
+  // `paths`. Checking the three framework sources again from here was the
+  // single heaviest step of the CI build: 3.9 GB peak RSS and 30 s, against
+  // 2.4 GB and 15 s on the .d.ts, with the same zero errors (measured
+  // 2026-10-09, docs/design/2026-10-09-ci-build-memory-and-ts7.md). Those
+  // sources are checked by their own packages; `npm run typecheck` here still
+  // uses tsconfig.spec.json (sources) unchanged.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {}
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "globalSettings.s_cluster-recording.title": "Cluster recording",
+  "globalSettings.s_cluster-recording.description": "Which node runs recording (continuous + events write path). A SINGLE node — no multi-node balancing; every other node stays fully inert. Default: hub.",
+  "globalSettings.s_cluster-recording.recordingNodeId.label": "Recording node",
+  "globalSettings.s_cluster-recording.recordingNodeId.description": "Node id that records + serves playback (e.g. \"hub\"). Leave \"hub\" unless you intentionally move recording to an agent. Takes effect on addon restart.",
+  "globalSettings.s_cluster-recording.recordingHubHostname.label": "Hub host (cross-node)",
+  "globalSettings.s_cluster-recording.recordingHubHostname.description": "Advanced: only used when the recording node is an AGENT. The hub's host the agent dials to pull broker streams (the RTSP restream port must be reachable there). Leave empty to auto-derive from the agent's hub connection."
+}

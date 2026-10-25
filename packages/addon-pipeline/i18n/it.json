@@ -1,0 +1,8 @@
+{
+  "globalSettings.s_cluster-recording.title": "Registrazione del cluster",
+  "globalSettings.s_cluster-recording.description": "Quale nodo esegue la registrazione (percorso di scrittura continuo + eventi). UN SOLO nodo — nessun bilanciamento tra più nodi; tutti gli altri restano del tutto inattivi. Predefinito: hub.",
+  "globalSettings.s_cluster-recording.recordingNodeId.label": "Nodo di registrazione",
+  "globalSettings.s_cluster-recording.recordingNodeId.description": "Id del nodo che registra e serve la riproduzione (es. \"hub\"). Lascia \"hub\" a meno che tu non voglia spostare di proposito la registrazione su un agent. Ha effetto al riavvio dell'addon.",
+  "globalSettings.s_cluster-recording.recordingHubHostname.label": "Host dell'hub (tra nodi)",
+  "globalSettings.s_cluster-recording.recordingHubHostname.description": "Avanzato: usato solo quando il nodo di registrazione è un AGENT. L'host dell'hub che l'agent contatta per prelevare i flussi del broker (la porta di restream RTSP deve essere raggiungibile lì). Lascia vuoto per ricavarlo dalla connessione dell'agent all'hub."
+}

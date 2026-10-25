@@ -1,0 +1,186 @@
+{
+  "image": "3-persons.jpg",
+  "width": 1280,
+  "height": 720,
+  "generatedAt": "2026-04-11T07:13:39.977Z",
+  "engine": "python+coreml",
+  "annotations": [
+    {
+      "id": "d1",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.949,
+      "bbox": {
+        "x": 0.3,
+        "y": 37.5,
+        "width": 658.1,
+        "height": 677.5
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d2"
+        },
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d3"
+        }
+      ]
+    },
+    {
+      "id": "d4",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.908,
+      "bbox": {
+        "x": 745.6,
+        "y": 15.2,
+        "width": 489.9999999999999,
+        "height": 538.4
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d5"
+        }
+      ]
+    },
+    {
+      "id": "d6",
+      "kind": "first-level",
+      "macroClass": "person",
+      "score": 0.895,
+      "bbox": {
+        "x": 493.3,
+        "y": 112.8,
+        "width": 304.7,
+        "height": 311.9
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1,
+          "detectionId": "d7"
+        }
+      ]
+    },
+    {
+      "id": "d8",
+      "kind": "first-level",
+      "macroClass": "laptop",
+      "score": 0.84,
+      "bbox": {
+        "x": 576.2,
+        "y": 408.8,
+        "width": 360,
+        "height": 207.40000000000003
+      },
+      "labels": []
+    },
+    {
+      "id": "d9",
+      "kind": "first-level",
+      "macroClass": "chair",
+      "score": 0.665,
+      "bbox": {
+        "x": 779.3,
+        "y": 285.9,
+        "width": 111.40000000000009,
+        "height": 100
+      },
+      "labels": []
+    },
+    {
+      "id": "d10",
+      "kind": "first-level",
+      "macroClass": "tie",
+      "score": 0.637,
+      "bbox": {
+        "x": 972.1,
+        "y": 270.8,
+        "width": 42,
+        "height": 135.89999999999998
+      },
+      "labels": []
+    },
+    {
+      "id": "d2",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.683,
+      "bbox": {
+        "x": 139.8,
+        "y": 115.4,
+        "width": 113.6,
+        "height": 226.9
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d1"
+    },
+    {
+      "id": "d3",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.603,
+      "bbox": {
+        "x": 623.5999999999999,
+        "y": 160.4,
+        "width": 34.700000000000045,
+        "height": 119.70000000000002
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d1"
+    },
+    {
+      "id": "d5",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.741,
+      "bbox": {
+        "x": 943.4000000000001,
+        "y": 97.4,
+        "width": 124.29999999999995,
+        "height": 173.20000000000002
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d4"
+    },
+    {
+      "id": "d7",
+      "kind": "detail",
+      "macroClass": "face",
+      "score": 0.839,
+      "bbox": {
+        "x": 622.4,
+        "y": 162.6,
+        "width": 86.20000000000005,
+        "height": 113.29999999999998
+      },
+      "labels": [
+        {
+          "label": "embedding:512d",
+          "score": 1
+        }
+      ],
+      "parentId": "d6"
+    }
+  ]
+}

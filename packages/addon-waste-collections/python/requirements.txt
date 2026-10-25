@@ -1,0 +1,12 @@
+# Runtime deps for the vendored HACS waste_collection_schedule core
+# (from custom_components/.../manifest.json, pinned loosely for portable Python).
+requests>=2.31.0
+pdfminer.six>=20221105
+icalendar>=5.0.0
+icalevents>=0.2.1
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+pycryptodome>=3.19.0
+pypdf>=3.0.0
+curl_cffi>=0.7.0
+urllib3>=2.0.0

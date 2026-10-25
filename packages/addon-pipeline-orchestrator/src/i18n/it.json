@@ -1,0 +1,83 @@
+{
+  "quickStats": {
+    "requiresDevice": "PipelineQuickStats richiede un deviceId",
+    "phase": "Fase",
+    "detectionFps": "FPS di rilevamento",
+    "inference": "Inferenza",
+    "activeTracks": "Tracce attive",
+    "currentDb": "dB attuali",
+    "recording": "Registrazione",
+    "target": "obiettivo: {{value}}",
+    "queue": "coda: {{value}}",
+    "dropped": "scartati: {{value}}",
+    "rec": {
+      "disabled": "Disattivata",
+      "idle": "Inattiva",
+      "continuous": "Continua",
+      "onMotion": "Su movimento",
+      "onAudio": "Su audio"
+    }
+  },
+  "zoneEditor": {
+    "requiresDevice": "ZoneEditor richiede un deviceId"
+  },
+  "zonesTab": {
+    "title": "Zone di rilevamento",
+    "hint": "Scegli una forma qui sotto oppure usa il pulsante <b>Zone</b> sul fotogramma live per disegnare nuovi poligoni o linee di passaggio. Il comportamento si imposta per fase negli editor delle regole qui sotto: una zona senza regole viene osservata dalle analisi ma non filtra mai."
+  },
+  "zone": {
+    "kind": {
+      "polygon": "Poligono",
+      "tripwire": "Linea di passaggio"
+    }
+  },
+  "zoneList": {
+    "cancelDrawing": "Annulla disegno",
+    "cancel": "Annulla",
+    "addPolygon": "Aggiungi zona poligonale",
+    "addTripwire": "Aggiungi linea di passaggio",
+    "empty": "Nessuna zona ancora: scegli \"Zona\" o \"Linea di passaggio\" per disegnare.",
+    "deleteZone": "Elimina zona"
+  },
+  "zoneForm": {
+    "editing": "Modifica",
+    "namePlaceholder": "Nome zona",
+    "twoPoints": "2 punti",
+    "pointCount": "{{count}} punti",
+    "dragHint": "· trascina i punti per rimodellare",
+    "saveTitle": "Salva le modifiche (Invio)",
+    "save": "Salva",
+    "discardTitle": "Scarta le modifiche (Esc)",
+    "discard": "Scarta",
+    "delete": "Elimina"
+  },
+  "rules": {
+    "title": {
+      "motion": "Regole di movimento",
+      "detection": "Regole di rilevamento",
+      "package": "Regole pacchi"
+    },
+    "add": "Aggiungi regola",
+    "addShort": "Aggiungi",
+    "save": "Salva",
+    "noZones": "Definisci prima una zona: le regole fanno riferimento agli id delle zone.",
+    "empty": "Nessuna regola: ogni rilevamento di questa fase passa senza filtri.",
+    "disable": "Disattiva regola",
+    "enable": "Attiva regola",
+    "activeTitle": "La regola è attiva: clicca per disattivarla",
+    "disabledTitle": "La regola è disattivata: clicca per attivarla",
+    "namePlaceholder": "Nome regola (facoltativo)",
+    "remove": "Rimuovi regola",
+    "mode": "Modalità",
+    "include": "Includi",
+    "exclude": "Escludi",
+    "zones": "Zone",
+    "noneZones": "nessuna",
+    "class": "Classe",
+    "anyClass": "qualsiasi",
+    "sceneDifference": "Rileva per differenza di scena",
+    "sceneDifferenceHint": "Dopo che una persona esce, un cambiamento nella zona può essere un pacco",
+    "confirmLlm": "Conferma con l'LLM",
+    "confirmLlmHint": "Chiedi al modello visivo prima di segnalare un pacco"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "name": "@camstack/addon-provider-amcrest",
+  "version": "0.2.159",
+  "description": "Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "amcrest",
+    "dahua",
+    "cgi",
+    "provider",
+    "camera",
+    "streaming"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Amcrest Provider",
+    "addons": [
+      {
+        "id": "provider-amcrest",
+        "category": "providers",
+        "name": "Amcrest",
+        "version": "0.1.0",
+        "description": "Amcrest/Dahua CGI camera provider — discovers RTSP streams, captures snapshots, and configures PTZ / image / day-night over HTTP digest auth",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#16a34a",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "stream-params"
+          },
+          {
+            "name": "motion-zones"
+          },
+          {
+            "name": "privacy-mask"
+          },
+          {
+            "name": "day-night"
+          },
+          {
+            "name": "image-settings"
+          },
+          {
+            "name": "recording-onboard"
+          },
+          {
+            "name": "videoclips"
+          }
+        ]
+      }
+    ],
+    "runtimeDependencies": [
+      "onvif"
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6",
+    "onvif": "^0.8.1"
+  }
+}

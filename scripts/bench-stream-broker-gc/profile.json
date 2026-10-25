@@ -1,0 +1,472 @@
+[
+  {
+    "id": "1436/native:main",
+    "kbps": 4762,
+    "fps": 12.2,
+    "gopMs": 4003,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "1436/native:sub",
+    "kbps": 24,
+    "fps": 12.6,
+    "gopMs": 4009,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "1438/native:main",
+    "kbps": 6625,
+    "fps": 24.7,
+    "gopMs": 4022,
+    "codec": "h264",
+    "clients": 0,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "1438/native:slot-3",
+    "kbps": 1611,
+    "fps": 25.0,
+    "gopMs": 4005,
+    "codec": "h264",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "1439/native:main",
+    "kbps": 7408,
+    "fps": 12.6,
+    "gopMs": 4020,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "1439/native:sub",
+    "kbps": 126,
+    "fps": 12.7,
+    "gopMs": 4000,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "1441/native:main",
+    "kbps": 9952,
+    "fps": 20,
+    "gopMs": 51,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "1441/native:sub",
+    "kbps": 1701,
+    "fps": 20.0,
+    "gopMs": 3997,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "1443/native:main",
+    "kbps": 3743,
+    "fps": 25.0,
+    "gopMs": 4001,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "1443/native:slot-3",
+    "kbps": 1401,
+    "fps": 9.9,
+    "gopMs": 3999,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "1443/native:sub",
+    "kbps": 1260,
+    "fps": 25,
+    "gopMs": 4040,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3829/native:main",
+    "kbps": 2853,
+    "fps": 10.0,
+    "gopMs": 4001,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3829/native:sub",
+    "kbps": 95,
+    "fps": 25.0,
+    "gopMs": 4000,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3830/native:main",
+    "kbps": 3308,
+    "fps": 25,
+    "gopMs": 4000,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3830/native:sub",
+    "kbps": 67,
+    "fps": 24.8,
+    "gopMs": 3999,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3831/native:main",
+    "kbps": 4677,
+    "fps": 12.3,
+    "gopMs": 3993,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3831/native:sub",
+    "kbps": 347,
+    "fps": 12.6,
+    "gopMs": 3968,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3833/native:main",
+    "kbps": 3120,
+    "fps": 12.6,
+    "gopMs": 4006,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3833/native:sub",
+    "kbps": 280,
+    "fps": 12.4,
+    "gopMs": 3981,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3835/native:main",
+    "kbps": 4702,
+    "fps": 25,
+    "gopMs": 3990,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3835/native:sub",
+    "kbps": 93,
+    "fps": 25.0,
+    "gopMs": 4002,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3836/main",
+    "kbps": 6148,
+    "fps": 29.9,
+    "gopMs": 3996,
+    "codec": "h264",
+    "clients": 2,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3836/sub",
+    "kbps": 68,
+    "fps": 29.9,
+    "gopMs": 4009,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3838/native:main",
+    "kbps": 787,
+    "fps": 15.0,
+    "gopMs": 1996,
+    "codec": "h264",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "3839/native:main",
+    "kbps": 3958,
+    "fps": 24.8,
+    "gopMs": 3995,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "3839/native:sub",
+    "kbps": 74,
+    "fps": 24.9,
+    "gopMs": 3990,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "4779/live",
+    "kbps": 944,
+    "fps": 14.4,
+    "gopMs": 1120,
+    "codec": "h264",
+    "clients": 2,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "103/native:main",
+    "kbps": 4600,
+    "fps": 25.3,
+    "gopMs": 4013,
+    "codec": "h264",
+    "clients": 2,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "103/native:sub",
+    "kbps": 9,
+    "fps": 24.9,
+    "gopMs": 3967,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "586/native:main",
+    "kbps": 3286,
+    "fps": 25.0,
+    "gopMs": 4007,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "586/native:sub",
+    "kbps": 7,
+    "fps": 25.0,
+    "gopMs": 3990,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "587/native:main",
+    "kbps": 4469,
+    "fps": 25.1,
+    "gopMs": 4002,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "587/native:sub",
+    "kbps": 411,
+    "fps": 25,
+    "gopMs": 3978,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "104/native:main",
+    "kbps": 7931,
+    "fps": 24.3,
+    "gopMs": 3994,
+    "codec": "h264",
+    "clients": 2,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "104/native:sub",
+    "kbps": 452,
+    "fps": 25.3,
+    "gopMs": 3982,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "592/native:main",
+    "kbps": 6321,
+    "fps": 24.9,
+    "gopMs": 2002,
+    "codec": "h264",
+    "clients": 2,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "592/native:sub",
+    "kbps": 83,
+    "fps": 14.9,
+    "gopMs": 4059,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "101/native:main",
+    "kbps": 9150,
+    "fps": 25.2,
+    "gopMs": 4001,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "101/native:slot-3",
+    "kbps": 440,
+    "fps": 10.1,
+    "gopMs": 3997,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "101/native:sub",
+    "kbps": 104,
+    "fps": 25.5,
+    "gopMs": 3959,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "102/native:main",
+    "kbps": 3745,
+    "fps": 25.1,
+    "gopMs": 3976,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "102/native:sub",
+    "kbps": 89,
+    "fps": 25.2,
+    "gopMs": 3993,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "618/native:main",
+    "kbps": 4311,
+    "fps": 20.9,
+    "gopMs": 1975,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "618/native:sub",
+    "kbps": 3,
+    "fps": 15.0,
+    "gopMs": 4013,
+    "codec": "h264",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "636/native:main",
+    "kbps": 4709,
+    "fps": 25,
+    "gopMs": 4000,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 5,
+    "audio": true
+  },
+  {
+    "id": "636/native:sub",
+    "kbps": 8,
+    "fps": 24.8,
+    "gopMs": 4018,
+    "codec": "h265",
+    "clients": 0,
+    "pre": 0,
+    "audio": true
+  },
+  {
+    "id": "637/native:sub",
+    "kbps": 69,
+    "fps": 12.6,
+    "gopMs": 7969,
+    "codec": "h265",
+    "clients": 1,
+    "pre": 0,
+    "audio": true
+  }
+]

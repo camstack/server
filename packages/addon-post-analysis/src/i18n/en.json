@@ -1,0 +1,77 @@
+{
+  "missingDevice": "{{name}} requires a deviceId",
+  "common": {
+    "loading": "Loading…",
+    "resolving": "Resolving device…",
+    "justNow": "just now",
+    "secondsAgo": "{{seconds}}s ago",
+    "timeWindow": "Time window"
+  },
+  "audioMetrics": {
+    "title": "Audio Metrics",
+    "noData": "No audio data yet — analytics pipeline must be active and audio enabled for this device.",
+    "level": "Level",
+    "silent": "silent",
+    "peak": "peak {{value}} dB",
+    "avg": "avg {{value}} dB",
+    "window": "{{seconds}}s window",
+    "now": "Now",
+    "scoreAgo": "score {{score}}% — {{seconds}}s ago",
+    "unclassified": "silence / unclassified",
+    "last": "Last {{seconds}}s",
+    "noClassified": "no classified audio",
+    "hits": "{{count}}× hits"
+  },
+  "occupancy": {
+    "title": "Live Occupancy",
+    "noData": "No occupancy data yet — analytics pipeline must be active for this device.",
+    "frameTotal": "Frame total",
+    "outsideZone": "Outside any zone",
+    "perZone": "Per-zone",
+    "noZones": "No zones defined for this camera.",
+    "noObjects": "no objects"
+  },
+  "audioHistory": {
+    "title": "Audio Level History",
+    "empty": "No audio history yet — analytics pipeline must be active.",
+    "peakWindow": "peak (window)",
+    "samples": "{{count}} samples · ~{{seconds}}s spacing",
+    "peak": "peak {{value}} dB",
+    "level": "Level",
+    "lineTitle": "Level (dBFS)",
+    "classHits": "Class hits: {{list}}"
+  },
+  "occupancyHistory": {
+    "title": "Occupancy History",
+    "filterByClass": "Filter by detected class",
+    "allClasses": "All classes",
+    "empty": "No occupancy history yet — analytics pipeline must be active.",
+    "buckets_one": "{{count}} bucket · 5 min resolution",
+    "buckets_other": "{{count}} buckets · 5 min resolution",
+    "peak": "peak {{value}} obj",
+    "lineTitle": "Objects in frame (bucket maximum)"
+  },
+  "motionHistory": {
+    "title": "Motion History",
+    "empty": "No motion events in the selected window.",
+    "events_one": "{{count}} event",
+    "events_other": "{{count}} events",
+    "summary_one": "{{count}} event · {{bucket}} buckets",
+    "summary_other": "{{count}} events · {{bucket}} buckets",
+    "peak": "peak {{value}}/bucket",
+    "barsTitle": "Events per {{bucket}}"
+  },
+  "detectionHistory": {
+    "title": "Detection History",
+    "filterByClass": "Filter by detected class",
+    "allClasses": "All classes",
+    "empty": "No detection events in the selected window.",
+    "detections_one": "{{count}} detection",
+    "detections_other": "{{count}} detections",
+    "other": "other",
+    "summary_one": "{{count}} detection · {{bucket}} buckets",
+    "summary_other": "{{count}} detections · {{bucket}} buckets",
+    "peak": "peak {{value}}/bucket",
+    "barsTitle": "Detections per {{bucket}}"
+  }
+}

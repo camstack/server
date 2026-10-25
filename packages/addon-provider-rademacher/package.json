@@ -1,0 +1,75 @@
+{
+  "name": "@camstack/addon-provider-rademacher",
+  "version": "0.2.145",
+  "description": "Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "rademacher",
+    "homepilot",
+    "start2smart",
+    "cover",
+    "roller-shutter",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Rademacher Provider",
+    "addons": [
+      {
+        "id": "provider-rademacher",
+        "category": "providers",
+        "name": "Rademacher",
+        "version": "0.1.0",
+        "description": "Adopt a Rademacher HomePilot / Start2Smart hub over the local network and its roller shutters (positional cover)",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#c8102e",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@apocaliss92/noderademacher": "0.1.0",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

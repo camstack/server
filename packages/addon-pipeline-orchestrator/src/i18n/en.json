@@ -1,0 +1,83 @@
+{
+  "quickStats": {
+    "requiresDevice": "PipelineQuickStats requires a deviceId",
+    "phase": "Phase",
+    "detectionFps": "Detection FPS",
+    "inference": "Inference",
+    "activeTracks": "Active Tracks",
+    "currentDb": "Current dB",
+    "recording": "Recording",
+    "target": "target: {{value}}",
+    "queue": "queue: {{value}}",
+    "dropped": "dropped: {{value}}",
+    "rec": {
+      "disabled": "Disabled",
+      "idle": "Idle",
+      "continuous": "Continuous",
+      "onMotion": "On motion",
+      "onAudio": "On audio"
+    }
+  },
+  "zoneEditor": {
+    "requiresDevice": "ZoneEditor requires a deviceId"
+  },
+  "zonesTab": {
+    "title": "Detection Zones",
+    "hint": "Pick a shape below or use the <b>Zones</b> button on the live frame to draw new polygons or tripwires. Behaviour is set per-stage in the rules editors below — a zone with no rule is observed by analytics but never filters."
+  },
+  "zone": {
+    "kind": {
+      "polygon": "Polygon",
+      "tripwire": "Tripwire"
+    }
+  },
+  "zoneList": {
+    "cancelDrawing": "Cancel drawing",
+    "cancel": "Cancel",
+    "addPolygon": "Add polygon zone",
+    "addTripwire": "Add tripwire",
+    "empty": "No zones yet — pick \"Zone\" or \"Tripwire\" to draw.",
+    "deleteZone": "Delete zone"
+  },
+  "zoneForm": {
+    "editing": "Editing",
+    "namePlaceholder": "Zone name",
+    "twoPoints": "2 points",
+    "pointCount": "{{count}} pts",
+    "dragHint": "· drag handles to reshape",
+    "saveTitle": "Save changes (Enter)",
+    "save": "Save",
+    "discardTitle": "Discard changes (Esc)",
+    "discard": "Discard",
+    "delete": "Delete"
+  },
+  "rules": {
+    "title": {
+      "motion": "Motion Rules",
+      "detection": "Detection Rules",
+      "package": "Package Rules"
+    },
+    "add": "Add rule",
+    "addShort": "Add",
+    "save": "Save",
+    "noZones": "Define a zone first — rules reference zone ids.",
+    "empty": "No rules — every detection at this stage passes through.",
+    "disable": "Disable rule",
+    "enable": "Enable rule",
+    "activeTitle": "Rule is active — click to disable",
+    "disabledTitle": "Rule is disabled — click to enable",
+    "namePlaceholder": "Rule name (optional)",
+    "remove": "Remove rule",
+    "mode": "Mode",
+    "include": "Include",
+    "exclude": "Exclude",
+    "zones": "Zones",
+    "noneZones": "none",
+    "class": "Class",
+    "anyClass": "any",
+    "sceneDifference": "Detect by scene difference",
+    "sceneDifferenceHint": "After a person leaves, a change in the zone can be a parcel",
+    "confirmLlm": "Confirm with the LLM",
+    "confirmLlmHint": "Ask the vision model before reporting a parcel"
+  }
+}

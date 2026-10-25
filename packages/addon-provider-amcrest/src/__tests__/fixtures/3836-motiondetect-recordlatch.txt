@@ -1,0 +1,1 @@
+table.MotionDetect[0].EventHandler.RecordLatch=10

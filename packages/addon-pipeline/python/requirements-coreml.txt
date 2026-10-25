@@ -1,0 +1,4 @@
+# CoreML backend (macOS only). coremltools 8.x supports Python 3.9-3.12
+# and ships universal2 wheels for darwin. Pulls tensorflow as transitive,
+# so first install is ~150 MB on disk.
+coremltools>=8.0,<9

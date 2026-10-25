@@ -1,0 +1,21 @@
+{
+  "connection.s_identity.title": "Condizionatore",
+  "connection.s_identity.name.label": "Nome",
+  "connection.s_identity.host.label": "Indirizzo IP",
+  "connection.s_advanced.title": "Avanzate (UDP)",
+  "connection.s_advanced.broadcastAddr.label": "Indirizzo di broadcast (facoltativo)",
+  "connection.s_advanced.timeoutMs.label": "Timeout UDP (ms)",
+  "connection.s_advanced.retries.label": "Tentativi",
+  "connection.s_advanced.encryption.label": "Cifratura",
+  "discoveryParams.s_scan.title": "Opzioni di scansione",
+  "discoveryParams.s_scan.description": "Lascia vuoto per scansionare la subnet locale; per un'altra subnet inserisci il suo indirizzo broadcast (es. 192.168.20.255).",
+  "discoveryParams.s_scan.broadcastAddress.label": "Indirizzo di broadcast",
+  "discoveryParams.s_scan.timeoutMs.label": "Timeout UDP (ms)",
+  "fields.enabledModes.label": "Modalità",
+  "fields.enabledModes.description": "Modalità mostrate nell'interfaccia di controllo. Vuoto = tutte. «Spento» è sempre disponibile.",
+  "fields.enabledFanModes.label": "Velocità della ventola",
+  "fields.enabledFanModes.description": "Velocità della ventola mostrate nell'interfaccia di controllo. Vuoto = tutte.",
+  "fields.exposeVerticalSwing.label": "Oscillazione verticale",
+  "settingsUI.exposeHorizontalSwing.label": "Oscillazione orizzontale",
+  "schema.s_exposure.title": "Comandi esposti"
+}

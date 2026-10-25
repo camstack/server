@@ -1,0 +1,9 @@
+// Guard: ban string-literal event categories in eventBus.emit({ category: '...' }).
+// Ported from the old eslint no-restricted-syntax selector
+//   CallExpression[callee.property.name="emit"] > ObjectExpression
+//     > Property[key.name="category"][value.type="Literal"]
+// Scope (biome.json overrides): packages/*/src + server/backend/src.
+`$obj.emit($arg)` where {
+  $arg <: contains `category: $cat` where { $cat <: string() },
+  register_diagnostic(span=$cat, message="Use the EventCategory enum instead of a string literal for the eventBus.emit() category (import EventCategory from @camstack/types).")
+}

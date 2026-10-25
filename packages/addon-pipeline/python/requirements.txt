@@ -1,0 +1,9 @@
+# Base requirements for inference_pool.py — installed by camstack
+# at addon boot via ctx.deps.installPythonRequirements(...).
+#
+# Backend-specific deps (coremltools / onnxruntime / openvino) are NOT
+# listed here — they are installed lazily from requirements-<backend>.txt
+# the first time the user selects that runtime, to keep first-boot
+# install footprint small.
+numpy>=1.26,<3
+Pillow>=10.0,<12

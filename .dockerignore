@@ -1,0 +1,23 @@
+# Registry-install images assemble from npm and COPY almost nothing from the
+# build context — exclude everything so buildx uploads ~0 bytes instead of the
+# whole repo+history (fetch-depth:0). The Dockerfile itself is read via `file:`,
+# not the context.
+*
+# D326: the root package helper is image-baked (applyServerUpdate must not
+# replace a root process). These two files are the only monorepo COPY.
+!scripts/docker
+!scripts/docker/**
+
+# Licence notices baked into the runtime image (/usr/share/doc/camstack).
+!LICENSE
+!THIRD_PARTY_MODELS.md
+!licenses/models
+!licenses/models/**
+
+# dev-overlay/*.tgz are COPYed by Dockerfile.dev (temporary local test image only)
+!dev-overlay
+!dev-overlay/**
+
+# dev-overlay/*.tgz are COPYed by Dockerfile.dev (temporary local test image only)
+!dev-overlay
+!dev-overlay/**

@@ -1,0 +1,31 @@
+{
+  "name": "@camstack/node-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CamStack shared node-root boot core — zero-dep starter machinery (state schema/IO, boot plan, semver compare, workspace detect, root update service) bundled INTO each node starter at build time. Never published; never a runtime dependency.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@types/node": "^24",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.1"
+  }
+}

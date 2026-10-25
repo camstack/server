@@ -1,0 +1,112 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/dist/**",
+      "!**/node_modules/**",
+      "!**/*.d.ts",
+      "!**/generated/**",
+      "!**/*.generated.ts",
+      "!**/coverage/**",
+      "!**/embed-dist/**",
+      "!**/scratchpad/**",
+      "!camstack/**",
+      "!packages/addon-pipeline-orchestrator/assets/viewer/**",
+      "!**/*.wasm",
+      "!**/package.json",
+      "!**/package-lock.json",
+      "!**/tsconfig*.json",
+      "!**/*.css",
+      "!packages/addon-model-studio/src/__tests__/fixtures/plugin-catalog-coreml-manifest.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/*/src/**/*.ts", "server/backend/src/**/*.ts"],
+      "plugins": ["./biome-plugins/no-string-event-category.grit"]
+    },
+    {
+      "includes": [
+        "packages/core/src/**/*.ts",
+        "packages/addon-*/src/**/*.ts",
+        "packages/addon-*/src/**/*.tsx",
+        "server/backend/src/**/*.ts"
+      ],
+      "plugins": ["./biome-plugins/no-duplicate-interface.grit"]
+    },
+    {
+      "includes": [
+        "packages/core/src/**/*.ts",
+        "packages/addon-*/src/**/*.ts",
+        "packages/addon-*/src/**/*.tsx"
+      ],
+      "plugins": ["./biome-plugins/no-custom-logger-interface.grit"]
+    },
+    {
+      "includes": [
+        "packages/addon-*/src/**/*.ts",
+        "packages/addon-*/src/**/*.tsx",
+        "!**/__tests__/**",
+        "!**/*.spec.ts",
+        "!**/*.test.ts"
+      ],
+      "plugins": ["./biome-plugins/no-ctx-capabilities.grit"]
+    },
+    {
+      "includes": [
+        "packages/addon-*/src/**/*.ts",
+        "packages/addon-*/src/**/*.tsx",
+        "!**/__tests__/**",
+        "!**/*.spec.ts",
+        "!**/*.test.ts",
+        "!packages/addon-pipeline/src/detection-pipeline/index.ts",
+        "!packages/addon-pipeline/src/detection-pipeline/provider.ts",
+        "!packages/addon-pipeline/src/recorder/addon/config-store.ts"
+      ],
+      "plugins": ["./biome-plugins/no-raw-addon-store.grit"]
+    },
+    {
+      "includes": [
+        "packages/addon-*/src/**/*.ts",
+        "packages/addon-*/src/**/*.tsx",
+        "!packages/addon-*/src/**/__tests__/**"
+      ],
+      "plugins": ["./biome-plugins/no-system-barrel-in-addons.grit"]
+    },
+    {
+      "includes": [
+        "packages/types/src/**/*.ts",
+        "!packages/types/src/index.ts",
+        "!packages/types/src/node.ts",
+        "!packages/types/src/addon.ts"
+      ],
+      "plugins": ["./biome-plugins/no-types-barrel-leaf-import.grit"]
+    }
+  ]
+}

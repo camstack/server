@@ -1,0 +1,5 @@
+{
+  "globalSettings.s_mqtt-ha-broker-link.title": "Broker MQTT",
+  "globalSettings.s_mqtt-ha-broker-link.description": "Ogni istanza di integrazione si collega a un broker MQTT (Connettività → Broker MQTT).",
+  "globalSettings.s_mqtt-ha-broker-link.help.label": "Collegamento al broker"
+}

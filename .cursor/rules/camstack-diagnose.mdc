@@ -1,0 +1,11 @@
+---
+description: Debug a live CamStack system — log tiers, hub.mjs and the tRPC API, topology, verifying where work ran, instrument before guessing
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**Something is wrong on a running node: logs, API, where work ran** → follow the `camstack-diagnose` skill — `.claude/skills/camstack-diagnose/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/overview.md`, `docs/architecture/transport.md`.
+
+- @.claude/skills/camstack-diagnose/SKILL.md

@@ -1,0 +1,22 @@
+{
+  "globalSettings.s_hm-broker.title": "Broker Homematic",
+  "globalSettings.s_hm-broker.brokerHelp.label": "I broker si gestiscono separatamente",
+  "connection.s_connection.title": "Connessione alla CCU",
+  "connection.s_connection.host.label": "Host / IP",
+  "connection.s_interfaces.title": "Interfacce",
+  "connection.s_interfaces.description": "CCU-Jack e CUxD non sono supportati.",
+  "connection.s_interfaces.enableHmipRf.label": "Attiva Homematic IP",
+  "connection.s_interfaces.enableBidcosRf.label": "Attiva Homematic (BidCos-RF)",
+  "connection.s_interfaces.enableGroups.label": "Attiva i gruppi (gruppi di riscaldamento)",
+  "connection.s_interfaces.enableBidcosWired.label": "Attiva BidCos-Wired (HM-Wired)",
+  "connection.s_callback.title": "Callback eventi",
+  "connection.s_callback.description": "Facoltativo; deve essere raggiungibile dalla CCU (non 127.0.0.1). Se vuoto ricava l'indirizzo LAN dell'hub.",
+  "connection.s_callback.callbackHost.label": "Host di callback (facoltativo: rilevato automaticamente se vuoto)",
+  "connection.s_callback.callbackPort.label": "Porta di callback",
+  "connection.s_credentials.title": "Credenziali dell'interfaccia web",
+  "connection.s_credentials.description": "Facoltativo. Abilita nomi, stanze, variabili di sistema e programmi.",
+  "connection.s_credentials.username.label": "Nome utente",
+  "connection.s_credentials.password.label": "Password",
+  "connection.s_advanced.title": "Avanzate",
+  "connection.s_advanced.tls.label": "Usa TLS"
+}

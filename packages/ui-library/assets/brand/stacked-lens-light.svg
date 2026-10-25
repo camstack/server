@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Bottom layer (darkest) -->
+  <rect x="8" y="28" width="48" height="28" rx="6" fill="#d6d3d1"/>
+  <!-- Middle layer -->
+  <rect x="12" y="16" width="40" height="28" rx="6" fill="#e7e5e4"/>
+  <!-- Top layer (amber) -->
+  <rect x="16" y="4" width="32" height="28" rx="6" fill="#f59e42"/>
+  <!-- Lens rings -->
+  <circle cx="32" cy="18" r="8" fill="#fafaf9" opacity="0.4"/>
+  <circle cx="32" cy="18" r="5" fill="#fafaf9" opacity="0.3"/>
+  <!-- Lens center (bright) -->
+  <circle cx="32" cy="18" r="2.5" fill="#44403c" opacity="0.8"/>
+</svg>

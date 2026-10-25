@@ -1,0 +1,683 @@
+{
+  "$defs": {
+    "Bundle": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "title": "Bytes",
+          "type": "integer"
+        },
+        "path": {
+          "const": "bundle.tar",
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": ["path", "bytes", "sha256"],
+      "title": "Bundle",
+      "type": "object"
+    },
+    "CatalogDraft": {
+      "additionalProperties": false,
+      "properties": {
+        "base": {
+          "$ref": "#/$defs/CatalogEntryDraft"
+        },
+        "int8": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CatalogEntryDraft"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["base", "int8"],
+      "title": "CatalogDraft",
+      "type": "object"
+    },
+    "CatalogEntryDraft": {
+      "additionalProperties": false,
+      "properties": {
+        "defaultClassFloors": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Defaultclassfloors",
+          "type": "object"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "formats": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FormatEntry"
+          },
+          "propertyNames": {
+            "enum": ["onnx", "openvino", "coreml"]
+          },
+          "title": "Formats",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "inputSize": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "enum": ["width", "height"]
+          },
+          "title": "Inputsize",
+          "type": "object"
+        },
+        "labels": {
+          "items": {},
+          "title": "Labels",
+          "type": "array"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "preprocessMode": {
+          "const": "letterbox",
+          "title": "Preprocessmode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "inputSize",
+        "labels",
+        "preprocessMode",
+        "defaultClassFloors",
+        "formats"
+      ],
+      "title": "CatalogEntryDraft",
+      "type": "object"
+    },
+    "DatasetBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "annotationHash": {
+          "title": "Annotationhash",
+          "type": "string"
+        },
+        "frames": {
+          "$ref": "#/$defs/Frames"
+        },
+        "holdoutCameras": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Holdoutcameras",
+          "type": "array"
+        },
+        "replayImages": {
+          "title": "Replayimages",
+          "type": "integer"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "versionId": {
+          "title": "Versionid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "versionId",
+        "annotationHash",
+        "sha256",
+        "frames",
+        "holdoutCameras",
+        "replayImages"
+      ],
+      "title": "DatasetBlock",
+      "type": "object"
+    },
+    "Dropped": {
+      "additionalProperties": false,
+      "properties": {
+        "export": {
+          "title": "Export",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": ["export", "reason"],
+      "title": "Dropped",
+      "type": "object"
+    },
+    "ErrorBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "stage": {
+          "title": "Stage",
+          "type": "string"
+        }
+      },
+      "required": ["stage", "code", "message"],
+      "title": "ErrorBlock",
+      "type": "object"
+    },
+    "EvaluationBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Baseline"
+        },
+        "candidate": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Candidate"
+        },
+        "candidateInt8": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Candidateint8"
+        },
+        "holdoutFrames": {
+          "title": "Holdoutframes",
+          "type": "integer"
+        },
+        "map50": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Map50",
+          "type": "object"
+        },
+        "recallDeltaByCamera": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recalldeltabycamera"
+        }
+      },
+      "required": [
+        "holdoutFrames",
+        "baseline",
+        "candidate",
+        "candidateInt8",
+        "recallDeltaByCamera",
+        "map50"
+      ],
+      "title": "EvaluationBlock",
+      "type": "object"
+    },
+    "FileRow": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "title": "Bytes",
+          "type": "integer"
+        },
+        "format": {
+          "enum": ["onnx", "openvino", "coreml", "pt"],
+          "title": "Format",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "variant": {
+          "enum": ["base", "int8"],
+          "title": "Variant",
+          "type": "string"
+        }
+      },
+      "required": ["path", "bytes", "sha256", "format", "variant"],
+      "title": "FileRow",
+      "type": "object"
+    },
+    "FloorsBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Baseline",
+          "type": "object"
+        },
+        "candidate": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Candidate",
+          "type": "object"
+        },
+        "candidateInt8": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Candidateint8"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "required": ["baseline", "candidate", "candidateInt8", "notes"],
+      "title": "FloorsBlock",
+      "type": "object"
+    },
+    "FormatEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Files"
+        },
+        "isDirectory": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Isdirectory"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "runtimes": {
+          "anyOf": [
+            {
+              "items": {
+                "const": "python",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtimes"
+        },
+        "sizeMB": {
+          "title": "Sizemb",
+          "type": "number"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": ["url", "sizeMB", "revision"],
+      "title": "FormatEntry",
+      "type": "object"
+    },
+    "Frames": {
+      "additionalProperties": false,
+      "properties": {
+        "holdout": {
+          "title": "Holdout",
+          "type": "integer"
+        },
+        "train": {
+          "title": "Train",
+          "type": "integer"
+        },
+        "val": {
+          "title": "Val",
+          "type": "integer"
+        }
+      },
+      "required": ["train", "val", "holdout"],
+      "title": "Frames",
+      "type": "object"
+    },
+    "Int8Block": {
+      "additionalProperties": false,
+      "properties": {
+        "kept": {
+          "title": "Kept",
+          "type": "boolean"
+        },
+        "map50Fp16": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Map50Fp16"
+        },
+        "map50Int8": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Map50Int8"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        }
+      },
+      "required": ["kept", "map50Fp16", "map50Int8", "reason"],
+      "title": "Int8Block",
+      "type": "object"
+    },
+    "TrainerBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": ["version", "revision"],
+      "title": "TrainerBlock",
+      "type": "object"
+    },
+    "TrainingBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "bestEpoch": {
+          "title": "Bestepoch",
+          "type": "integer"
+        },
+        "bestMap50": {
+          "title": "Bestmap50",
+          "type": "number"
+        },
+        "bestMap50_95": {
+          "title": "Bestmap50 95",
+          "type": "number"
+        },
+        "epochsRun": {
+          "title": "Epochsrun",
+          "type": "integer"
+        },
+        "seconds": {
+          "title": "Seconds",
+          "type": "number"
+        }
+      },
+      "required": ["epochsRun", "bestEpoch", "bestMap50", "bestMap50_95", "seconds"],
+      "title": "TrainingBlock",
+      "type": "object"
+    }
+  },
+  "$id": "camstack.training-result/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A succeeded result carries every block; a failed one the error and whatever was known.",
+  "properties": {
+    "bundle": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Bundle"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "catalogDraft": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CatalogDraft"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "dataset": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DatasetBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorBlock"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "evaluation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvaluationBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "exportsDropped": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Dropped"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Exportsdropped"
+    },
+    "files": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/FileRow"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Files"
+    },
+    "floors": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FloorsBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "int8": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Int8Block"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "jobKey": {
+      "title": "Jobkey",
+      "type": "string"
+    },
+    "licence": {
+      "title": "Licence",
+      "type": "string"
+    },
+    "schema": {
+      "const": "camstack.training-result/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "status": {
+      "enum": ["succeeded", "failed"],
+      "title": "Status",
+      "type": "string"
+    },
+    "toolchain": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Toolchain",
+      "type": "object"
+    },
+    "trainer": {
+      "$ref": "#/$defs/TrainerBlock"
+    },
+    "training": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TrainingBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": ["schema", "jobKey", "status", "error", "trainer", "toolchain", "licence"],
+  "title": "TrainingResult",
+  "type": "object"
+}

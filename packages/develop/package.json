@@ -1,0 +1,55 @@
+{
+  "name": "@camstack/develop",
+  "version": "0.1.35",
+  "description": "CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server.",
+  "keywords": [
+    "camstack",
+    "develop",
+    "addon",
+    "scaffold",
+    "mcp"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./hub-discovery": {
+      "types": "./dist/hub-discovery/index.d.ts",
+      "import": "./dist/hub-discovery/index.js",
+      "default": "./dist/hub-discovery/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@types/multicast-dns": "^7.2.4",
+    "@types/node": "^24",
+    "typescript": "~6.0.3",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@camstack/types": "*",
+    "multicast-dns": "^7.2.5"
+  }
+}

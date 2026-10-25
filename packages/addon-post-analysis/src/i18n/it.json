@@ -1,0 +1,77 @@
+{
+  "missingDevice": "{{name}} richiede un deviceId",
+  "common": {
+    "loading": "Caricamento…",
+    "resolving": "Risoluzione del dispositivo…",
+    "justNow": "adesso",
+    "secondsAgo": "{{seconds}}s fa",
+    "timeWindow": "Finestra temporale"
+  },
+  "audioMetrics": {
+    "title": "Metriche audio",
+    "noData": "Ancora nessun dato audio: la pipeline di analisi deve essere attiva e l'audio abilitato per questo dispositivo.",
+    "level": "Livello",
+    "silent": "silenzio",
+    "peak": "picco {{value}} dB",
+    "avg": "media {{value}} dB",
+    "window": "finestra di {{seconds}}s",
+    "now": "Adesso",
+    "scoreAgo": "punteggio {{score}}% — {{seconds}}s fa",
+    "unclassified": "silenzio / non classificato",
+    "last": "Ultimi {{seconds}}s",
+    "noClassified": "nessun audio classificato",
+    "hits": "{{count}}× rilevamenti"
+  },
+  "occupancy": {
+    "title": "Occupazione live",
+    "noData": "Ancora nessun dato di occupazione: la pipeline di analisi deve essere attiva per questo dispositivo.",
+    "frameTotal": "Totale fotogramma",
+    "outsideZone": "Fuori da ogni zona",
+    "perZone": "Per zona",
+    "noZones": "Nessuna zona definita per questa telecamera.",
+    "noObjects": "nessun oggetto"
+  },
+  "audioHistory": {
+    "title": "Storico livello audio",
+    "empty": "Ancora nessuno storico audio: la pipeline di analisi deve essere attiva.",
+    "peakWindow": "picco (finestra)",
+    "samples": "{{count}} campioni · intervallo ~{{seconds}}s",
+    "peak": "picco {{value}} dB",
+    "level": "Livello",
+    "lineTitle": "Livello (dBFS)",
+    "classHits": "Classi rilevate: {{list}}"
+  },
+  "occupancyHistory": {
+    "title": "Storico occupazione",
+    "filterByClass": "Filtra per classe rilevata",
+    "allClasses": "Tutte le classi",
+    "empty": "Ancora nessuno storico di occupazione: la pipeline di analisi deve essere attiva.",
+    "buckets_one": "{{count}} intervallo · risoluzione 5 min",
+    "buckets_other": "{{count}} intervalli · risoluzione 5 min",
+    "peak": "picco {{value}} ogg.",
+    "lineTitle": "Oggetti nell'inquadratura (massimo per intervallo)"
+  },
+  "motionHistory": {
+    "title": "Storico movimento",
+    "empty": "Nessun evento di movimento nella finestra selezionata.",
+    "events_one": "{{count}} evento",
+    "events_other": "{{count}} eventi",
+    "summary_one": "{{count}} evento · intervalli da {{bucket}}",
+    "summary_other": "{{count}} eventi · intervalli da {{bucket}}",
+    "peak": "picco {{value}}/intervallo",
+    "barsTitle": "Eventi ogni {{bucket}}"
+  },
+  "detectionHistory": {
+    "title": "Storico rilevamenti",
+    "filterByClass": "Filtra per classe rilevata",
+    "allClasses": "Tutte le classi",
+    "empty": "Nessun evento di rilevamento nella finestra selezionata.",
+    "detections_one": "{{count}} rilevamento",
+    "detections_other": "{{count}} rilevamenti",
+    "other": "altro",
+    "summary_one": "{{count}} rilevamento · intervalli da {{bucket}}",
+    "summary_other": "{{count}} rilevamenti · intervalli da {{bucket}}",
+    "peak": "picco {{value}}/intervallo",
+    "barsTitle": "Rilevamenti ogni {{bucket}}"
+  }
+}

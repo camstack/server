@@ -1,0 +1,12 @@
+---
+description: Measure Auto-tune detector latency on a live node — warm median, detector-latency.json + DETECTOR_PERF, D745 lock
+globs: docs/benchmarks/detector-latency.json, packages/types/src/pipeline/auto-tune/**, scripts/bench-detector-latency-column.mjs
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**Filling DETECTOR_PERF / detector-latency for a node×device** → follow the `camstack-benchmark-detection` skill — `.claude/skills/camstack-benchmark-detection/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/inference-devices.md`, `docs/benchmarks/2026-10-07-detector-comparison.md`, `docs/architecture/benchmark.md`.
+
+- @.claude/skills/camstack-benchmark-detection/SKILL.md

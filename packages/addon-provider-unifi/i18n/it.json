@@ -1,0 +1,13 @@
+{
+  "controller.s_identity.title": "Controller",
+  "controller.s_identity.name.label": "Nome",
+  "controller.s_connection.title": "Connessione",
+  "controller.s_connection.description": "Autenticati con una API key UniFi OS (consigliata) o con utente e password di un admin locale.",
+  "controller.s_connection.host.label": "Host / IP del controller",
+  "controller.s_connection.port.label": "Porta HTTPS",
+  "controller.s_connection.apiKey.label": "API key",
+  "controller.s_connection.username.label": "Nome utente",
+  "controller.s_connection.password.label": "Password",
+  "controller.s_connection.site.label": "Sito",
+  "controller.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)"
+}

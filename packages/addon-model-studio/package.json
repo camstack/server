@@ -1,0 +1,112 @@
+{
+  "name": "@camstack/addon-model-studio",
+  "version": "1.1.295",
+  "description": "Custom detection model registry, conversion & distribution for CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "model",
+    "detection",
+    "registry"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Model Studio",
+    "addons": [
+      {
+        "id": "model-studio",
+        "category": "system",
+        "name": "Model Studio",
+        "icon": "assets/icon.svg",
+        "version": "1.0.0",
+        "description": "Register, manipulate and distribute custom detection models",
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "group": "ml",
+          "rssBudgetMb": 2048
+        },
+        "capabilities": [
+          {
+            "name": "custom-model-registry"
+          },
+          {
+            "name": "model-convert"
+          },
+          {
+            "name": "addon-pages-source"
+          }
+        ],
+        "pages": [
+          {
+            "id": "model-studio",
+            "label": "Model Studio",
+            "icon": "boxes",
+            "path": "/addon/model-studio",
+            "remoteName": "addon_model_studio_page",
+            "bundle": "remoteEntry.js"
+          }
+        ],
+        "python": {
+          "requirements": "./python/requirements.txt"
+        },
+        "color": "#8b5cf6"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "python",
+    "THIRD_PARTY_MODELS.md",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build && vite build -c vite.page.config.ts",
+    "build:server": "vite build",
+    "build:page": "vite build -c vite.page.config.ts",
+    "dev:page": "vite -c vite.page.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/runtime": "^2.4.0",
+    "@module-federation/vite": "^1.16.9",
+    "@tailwindcss/vite": "^4.2.0",
+    "@trpc/client": "^11.16.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "superjson": "^2.0.0",
+    "tailwindcss": "^4.2.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0",
+    "zod": "^4.3.6"
+  },
+  "dependencies": {
+    "@camstack/system": "*"
+  }
+}

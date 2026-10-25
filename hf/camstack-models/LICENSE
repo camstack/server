@@ -1,0 +1,18 @@
+camstack/camstack-models is a collection. It has no single licence.
+
+Each folder <category>/<model>/ is governed by the licence stated in its
+README.md and in the table of the root README.md. The full texts are in
+LICENSES/. Converting, quantising, fine-tuning or re-exporting a model does not
+change its licence. Nothing in this repository is offered under terms broader
+than its upstream's.
+
+Folders whose weights are AGPL-3.0 (Ultralytics) are distributed under
+AGPL-3.0; see LICENSES/AGPL-3.0.txt. Their Corresponding Source is set out in
+THIRD_PARTY_MODELS.md, section "Source offer for the AGPL-3.0 weights".
+
+Some folders are licensed for non-commercial or research use only; the root
+README.md lists them under "Non-commercial models".
+
+This file, README.md and the folder README.md cards are maintained in the
+CamStack source repository (hf/camstack-models/). LICENSES/ is a copy of its
+licenses/models/, and THIRD_PARTY_MODELS.md a copy of its root notice.

@@ -1,0 +1,686 @@
+[
+  {
+    "id": "scrypted-yolov9t-relu-coreml",
+    "label": "plugin catalog YOLOv9T ReLU CoreML",
+    "family": "yolov9t",
+    "variant": "relu",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9t_relu/scrypted_yolov9t_relu.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "0a8733949d77e3204dba6418e81a11a8cc177015711457ce2c171266f23382d6"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9t_relu/scrypted_yolov9t_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 322229,
+        "sha256": "f5a62f196f1e72a84efa1637119dffb6501621af9cf6f867bc76b4b59c9242a0"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9t_relu/scrypted_yolov9t_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 3797160,
+        "sha256": "b994419b8b68cfd6b89c3c6f3fe6b37458c86cc1d87fcca3df5034476a99dd38"
+      }
+    ],
+    "sizeMB": 4.12
+  },
+  {
+    "id": "scrypted-yolov9t-relu-onnx",
+    "label": "plugin catalog YOLOv9T ReLU ONNX",
+    "family": "yolov9t",
+    "variant": "relu",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9t_relu/scrypted_yolov9t_relu.onnx",
+        "size": 8499266,
+        "sha256": "3f11ea2071b27c285b58c16636a44d6a0a27bdd1ca8b64112dfadabd39cfea47"
+      }
+    ],
+    "sizeMB": 8.5
+  },
+  {
+    "id": "scrypted-yolov9t-relu-test-coreml",
+    "label": "plugin catalog YOLOv9T ReLU test CoreML",
+    "family": "yolov9t",
+    "variant": "relu_test",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "a5e0128b643f1a66f3e07d4b332f9ccbca97ccab75651c794f0b9f1fb41c8491"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 322229,
+        "sha256": "79f4f647f2a0c79db3b560c84251b48c7ba7cbe9c1fecc9674d1a603a389dfa3"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 3797160,
+        "sha256": "72efc9dc6af9241b5e5ee7de24a4f55741f6425d0e279d797f0f223e3d355f84"
+      }
+    ],
+    "sizeMB": 4.12
+  },
+  {
+    "id": "scrypted-yolov9t-relu-test-onnx",
+    "label": "plugin catalog YOLOv9T ReLU test ONNX",
+    "family": "yolov9t",
+    "variant": "relu_test",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9t_relu_test/scrypted_yolov9t_relu_test.onnx",
+        "size": 8499266,
+        "sha256": "d20aa0e6923a3af7f5e84e3a6d28fb00e8ecd592e3225f986f93bd34b634e2f8"
+      }
+    ],
+    "sizeMB": 8.5
+  },
+  {
+    "id": "scrypted-yolov9s-relu-coreml",
+    "label": "plugin catalog YOLOv9S ReLU CoreML",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9s_relu/scrypted_yolov9s_relu.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "3bcdb820b82f1e89266f2d11bae1604d3ee4ca6d11dc5bd5c57055ff4157e9f3"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9s_relu/scrypted_yolov9s_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 322664,
+        "sha256": "9a9c3c9cbca406ec2f0418ec867ed6b878ec6d02c16636d30e0bbd83d2ff7c40"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9s_relu/scrypted_yolov9s_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 14190120,
+        "sha256": "fd51eda58a993997268f6a2e424b536ba173207ad7974ab8bee2a8ff76d52dab"
+      }
+    ],
+    "sizeMB": 14.51
+  },
+  {
+    "id": "scrypted-yolov9s-relu-onnx",
+    "label": "plugin catalog YOLOv9S ReLU ONNX",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9s_relu/scrypted_yolov9s_relu.onnx",
+        "size": 29287339,
+        "sha256": "ca0b5bd98d5f59eb2029c6cb5129d53af59873f62a317a028beda463bbb96399"
+      }
+    ],
+    "sizeMB": 29.29
+  },
+  {
+    "id": "scrypted-yolov9s-relu-test-coreml",
+    "label": "plugin catalog YOLOv9S ReLU test CoreML",
+    "family": "yolov9s",
+    "variant": "relu_test",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "e2d24de0ce7e8573f19572029765e55abc714f36a85175ad7fcb95c001a76653"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 322664,
+        "sha256": "186b147cdfd15c5ed7a381ec3a426a22cee0b5c52d56f14efd26da06357f5cb0"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 14190120,
+        "sha256": "e50651924c2cbffd56008a8953569e66c3de69f21807fcf7d825390ce30f21f8"
+      }
+    ],
+    "sizeMB": 14.51
+  },
+  {
+    "id": "scrypted-yolov9s-relu-test-onnx",
+    "label": "plugin catalog YOLOv9S ReLU test ONNX",
+    "family": "yolov9s",
+    "variant": "relu_test",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9s_relu_test/scrypted_yolov9s_relu_test.onnx",
+        "size": 29287339,
+        "sha256": "115ddb83333762a0f2599421335678696454a5c3571ade5df9bac8e9cb5fb4cf"
+      }
+    ],
+    "sizeMB": 29.29
+  },
+  {
+    "id": "scrypted-yolov9m-relu-coreml",
+    "label": "plugin catalog YOLOv9M ReLU CoreML",
+    "family": "yolov9m",
+    "variant": "relu",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9m_relu/scrypted_yolov9m_relu.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "c548c6e1ff768b2b01bd71e230aa712a1635ae2baa30e0369557a42fc531ecbf"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9m_relu/scrypted_yolov9m_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 247061,
+        "sha256": "1c40e02fc2a2559cb906ea6cd9da9c730d4a78f5019290cbb38d2fcaae379fe7"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9m_relu/scrypted_yolov9m_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 39880616,
+        "sha256": "4cf938e5bfcc3ee1644813e4eb4702a7de450cc0581df94c719cf43d0ed2e408"
+      }
+    ],
+    "sizeMB": 40.13
+  },
+  {
+    "id": "scrypted-yolov9m-relu-onnx",
+    "label": "plugin catalog YOLOv9M ReLU ONNX",
+    "family": "yolov9m",
+    "variant": "relu",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9m_relu/scrypted_yolov9m_relu.onnx",
+        "size": 80380404,
+        "sha256": "e7a81fb33224a0105d2a0a594c3fa43c398c361de623f1d14156ae826e7312d5"
+      }
+    ],
+    "sizeMB": 80.38
+  },
+  {
+    "id": "scrypted-yolov9m-relu-test-coreml",
+    "label": "plugin catalog YOLOv9M ReLU test CoreML",
+    "family": "yolov9m",
+    "variant": "relu_test",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "8e2684b286d02b4bdf9db1027c84cb89bf8e4830cfb58269f3ec457c5a010650"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 247061,
+        "sha256": "53d5946e74b13b15c5f8616081c9f15e8a95a5df3d5b45b830fc5a7f49561c16"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 39880616,
+        "sha256": "69774bf0032c37707601b8cdc1e1820dbd9f8288eb5d6f3879618a5d34ff5199"
+      }
+    ],
+    "sizeMB": 40.13
+  },
+  {
+    "id": "scrypted-yolov9m-relu-test-onnx",
+    "label": "plugin catalog YOLOv9M ReLU test ONNX",
+    "family": "yolov9m",
+    "variant": "relu_test",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9m_relu_test/scrypted_yolov9m_relu_test.onnx",
+        "size": 80380404,
+        "sha256": "8bb054f099295909ec518e2a6598d63db24d3f90edc8105a0f016903f2a205a2"
+      }
+    ],
+    "sizeMB": 80.38
+  },
+  {
+    "id": "scrypted-yolov9c-relu-coreml",
+    "label": "plugin catalog YOLOv9C ReLU CoreML",
+    "family": "yolov9c",
+    "variant": "relu",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9c_relu/scrypted_yolov9c_relu.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "813a306ebd69cabfd31f00434f5a961feeca7d237833f3e11805dcf4ad120ba9"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9c_relu/scrypted_yolov9c_relu.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 263210,
+        "sha256": "862f082619075e470738306b0ff0a37ae70a7d08e684ca6a6dfa1971d404e0c3"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9c_relu/scrypted_yolov9c_relu.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 50489960,
+        "sha256": "ed89747e58943758e2a87221d1d404f6a4466cbc039c3c6f96e327cadc403d27"
+      }
+    ],
+    "sizeMB": 50.75
+  },
+  {
+    "id": "scrypted-yolov9c-relu-onnx",
+    "label": "plugin catalog YOLOv9C ReLU ONNX",
+    "family": "yolov9c",
+    "variant": "relu",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9c_relu/scrypted_yolov9c_relu.onnx",
+        "size": 101631962,
+        "sha256": "b9372c4428daf4cd944c114b1e80d1a9ff0487d743e53a77216a051cfbef7116"
+      }
+    ],
+    "sizeMB": 101.63
+  },
+  {
+    "id": "scrypted-yolov9c-relu-test-coreml",
+    "label": "plugin catalog YOLOv9C ReLU test CoreML",
+    "family": "yolov9c",
+    "variant": "relu_test",
+    "format": "coreml",
+    "precision": "fp16",
+    "files": [
+      {
+        "relativePath": "coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage/Manifest.json",
+        "size": 617,
+        "sha256": "966ef82a93cb0ccf1036a8c9729c065fd372fa9590a97d0945e581cc674f7ad2"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+        "size": 263210,
+        "sha256": "08718ecd3e9552d21a702bd8df60911cad0eec7b2ae382466809550f14634711"
+      },
+      {
+        "relativePath": "coreml/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+        "size": 50489960,
+        "sha256": "fe5936b9430ab4c87f30b148220131d6ec998b2377223d033e2fa2a00e60aada"
+      }
+    ],
+    "sizeMB": 50.75
+  },
+  {
+    "id": "scrypted-yolov9c-relu-test-onnx",
+    "label": "plugin catalog YOLOv9C ReLU test ONNX",
+    "family": "yolov9c",
+    "variant": "relu_test",
+    "format": "onnx",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "onnx/scrypted_yolov9c_relu_test/scrypted_yolov9c_relu_test.onnx",
+        "size": 101631962,
+        "sha256": "2f4e2031e8efb4cbc871594338b2e875d78ab4af3ee0258d253273b1aac84742"
+      }
+    ],
+    "sizeMB": 101.63
+  },
+  {
+    "id": "scrypted-yolov9t-relu-openvino-fp32",
+    "label": "plugin catalog YOLOv9T ReLU OpenVINO FP32",
+    "family": "yolov9t",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9t_relu/best-converted.xml",
+        "size": 628222,
+        "sha256": "01b5a9d02a0f281e1aaf4860e1b0ed3a7f16b9d78975be8ff985ae0ee283d877"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9t_relu/best-converted.bin",
+        "size": 7542204,
+        "sha256": "4fe9ce8dbdf94514fdd450cbfc907f257153e4898a0c1489a44e4912d8e32cc7"
+      }
+    ],
+    "sizeMB": 8.17
+  },
+  {
+    "id": "scrypted-yolov9s-relu-openvino-fp32",
+    "label": "plugin catalog YOLOv9S ReLU OpenVINO FP32",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9s_relu/best-converted.xml",
+        "size": 629249,
+        "sha256": "5b4a229bf7229425698b63bd065a403e440a6151a6ddff0034867659cc4a480d"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9s_relu/best-converted.bin",
+        "size": 28329724,
+        "sha256": "c030bd219208ea94082578c81f383d4ef9ec45d7150eec1c2c2ff2569cf49b35"
+      }
+    ],
+    "sizeMB": 28.96
+  },
+  {
+    "id": "scrypted-yolov9m-relu-openvino-fp32",
+    "label": "plugin catalog YOLOv9M ReLU OpenVINO FP32",
+    "family": "yolov9m",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9m_relu/best-converted.xml",
+        "size": 485439,
+        "sha256": "c66f9f1965bf70fd3635d4dfc3cb94c72c06b344c256713237d77706725b9a0c"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9m_relu/best-converted.bin",
+        "size": 79717372,
+        "sha256": "dfc2d8952bbca9ad0e116168e3fd5c754e601c327d78c4f4d0d4cae12f0e1d2a"
+      }
+    ],
+    "sizeMB": 80.2
+  },
+  {
+    "id": "scrypted-yolov9c-relu-openvino-fp32",
+    "label": "plugin catalog YOLOv9C ReLU OpenVINO FP32",
+    "family": "yolov9c",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "fp32",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9c_relu/best-converted.xml",
+        "size": 535047,
+        "sha256": "836c1e998ebf76108ff64d554fdfa07aa72c42624f1a5448701bb409f27b8d68"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9c_relu/best-converted.bin",
+        "size": 100942972,
+        "sha256": "11a1b330ac9843b349927977b3c7c7f17bb42af73a7ff102969132f27ab81814"
+      }
+    ],
+    "sizeMB": 101.48
+  },
+  {
+    "id": "scrypted-yolov9t-relu-openvino-int8",
+    "label": "plugin catalog YOLOv9T ReLU OpenVINO INT8",
+    "family": "yolov9t",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9t_relu_int8/best-converted.xml",
+        "size": 1380379,
+        "sha256": "e5a76bf88ac69fc0ebc50c04b61ff91550dd9c2349af1f6d7e4cac949c640cec"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9t_relu_int8/best-converted.bin",
+        "size": 1954956,
+        "sha256": "98fb5b6826d7c6697a585f69ba96754873772d9d61fbed8335aab761e8248659"
+      }
+    ],
+    "sizeMB": 3.34
+  },
+  {
+    "id": "scrypted-yolov9t-relu-test-openvino-int8",
+    "label": "plugin catalog YOLOv9T ReLU test OpenVINO INT8",
+    "family": "yolov9t",
+    "variant": "relu_test",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9t_relu_test_int8/best-converted.xml",
+        "size": 1380383,
+        "sha256": "9e4119284e923e08c9929e78fd31e2552e602a552ac538ae99bf34a50dd4d172"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9t_relu_test_int8/best-converted.bin",
+        "size": 1954960,
+        "sha256": "efe5b0a2fd2f5ddef5923eeb9e592a7ef14719061bb7605c86e05b35c2c58ea9"
+      }
+    ],
+    "sizeMB": 3.34
+  },
+  {
+    "id": "scrypted-yolov9s-relu-openvino-int8",
+    "label": "plugin catalog YOLOv9S ReLU OpenVINO INT8",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9s_relu_int8/best-converted.xml",
+        "size": 1382088,
+        "sha256": "4e6c24cf24afbab21462f7e1a15bd05b1cbbe5915046000e03c2435d8110bbbf"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9s_relu_int8/best-converted.bin",
+        "size": 7197308,
+        "sha256": "23fd3d666a938c41db232d9c6239baec1134716cfb4ed4ddd3d602dd20eb8ac0"
+      }
+    ],
+    "sizeMB": 8.58
+  },
+  {
+    "id": "scrypted-yolov9s-relu-test-openvino-int8",
+    "label": "plugin catalog YOLOv9S ReLU test OpenVINO INT8",
+    "family": "yolov9s",
+    "variant": "relu_test",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9s_relu_test_int8/best-converted.xml",
+        "size": 1382092,
+        "sha256": "49865bfeafe7576afce089ba6f5c3e25a9192c8b514eb96265c90fe877795641"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9s_relu_test_int8/best-converted.bin",
+        "size": 7197312,
+        "sha256": "78e9d36e6b74754db2b624ea3ec0b3ff57ed6dfed59a4f2225e1a271054597de"
+      }
+    ],
+    "sizeMB": 8.58
+  },
+  {
+    "id": "scrypted-yolov9m-relu-openvino-int8",
+    "label": "plugin catalog YOLOv9M ReLU OpenVINO INT8",
+    "family": "yolov9m",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9m_relu_int8/best-converted.xml",
+        "size": 1024595,
+        "sha256": "1242ab8d8c73b2e80c5dd541177ade6e102a2684114b059136acb4cad6efb034"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9m_relu_int8/best-converted.bin",
+        "size": 20090516,
+        "sha256": "da8e44af8bee66478e6f359e9504bfb13ab4b76f4bd8a2f1b10cfbc22febcf6e"
+      }
+    ],
+    "sizeMB": 21.12
+  },
+  {
+    "id": "scrypted-yolov9m-relu-test-openvino-int8",
+    "label": "plugin catalog YOLOv9M ReLU test OpenVINO INT8",
+    "family": "yolov9m",
+    "variant": "relu_test",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9m_relu_test_int8/best-converted.xml",
+        "size": 1024601,
+        "sha256": "24395ae5fdbb321304c865372cd2b905cdc55abb7610520f3963702e2371decb"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9m_relu_test_int8/best-converted.bin",
+        "size": 20090520,
+        "sha256": "4360fe0312067f92c49f180c7b8a10271f14d58b8909aa9b96b13af4ab9289aa"
+      }
+    ],
+    "sizeMB": 21.12
+  },
+  {
+    "id": "scrypted-yolov9c-relu-openvino-int8",
+    "label": "plugin catalog YOLOv9C ReLU OpenVINO INT8",
+    "family": "yolov9c",
+    "variant": "relu",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9c_relu_int8/best-converted.xml",
+        "size": 1092695,
+        "sha256": "a45c62940120c4301d8fff9fb3b275c29e3618f403ea68a785f2f3220cefec7a"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9c_relu_int8/best-converted.bin",
+        "size": 25428280,
+        "sha256": "0643403a56178c3ed1e066c7884458d8ea6780115d662bdc38d10754d7a11c79"
+      }
+    ],
+    "sizeMB": 26.52
+  },
+  {
+    "id": "scrypted-yolov9c-relu-test-openvino-int8",
+    "label": "plugin catalog YOLOv9C ReLU test OpenVINO INT8",
+    "family": "yolov9c",
+    "variant": "relu_test",
+    "format": "openvino",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "openvino/scrypted_yolov9c_relu_test_int8/best-converted.xml",
+        "size": 1092695,
+        "sha256": "a8a1899848ebd060af2326d3c8d3c09ea83354f0bedff6cce6fa08b284ea5519"
+      },
+      {
+        "relativePath": "openvino/scrypted_yolov9c_relu_test_int8/best-converted.bin",
+        "size": 25428280,
+        "sha256": "2eb6bb3d0a03a9b239b6f623f9e7bced62eea61fbe4d8ff89c1b3e2e2b7978a2"
+      }
+    ],
+    "sizeMB": 26.52
+  },
+  {
+    "id": "scrypted-yolov9s-relu-sep-320-tflite-float16",
+    "label": "plugin catalog YOLOv9s ReLU sep 320 TFLite float16",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "tflite",
+    "precision": "float16",
+    "files": [
+      {
+        "relativePath": "tflite/scrypted_yolov9s_relu_sep_320/best_float16.tflite",
+        "size": 14482836,
+        "sha256": "04889db3b81af361c361e41ffa99327330d37b71d680a2f889e6cdf1e94c0d8c"
+      }
+    ],
+    "sizeMB": 14.48
+  },
+  {
+    "id": "scrypted-yolov9s-relu-sep-320-tflite-float32",
+    "label": "plugin catalog YOLOv9s ReLU sep 320 TFLite float32",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "tflite",
+    "precision": "float32",
+    "files": [
+      {
+        "relativePath": "tflite/scrypted_yolov9s_relu_sep_320/best_float32.tflite",
+        "size": 28777068,
+        "sha256": "f5d7d08fc1d8f2262633d2df4391638e0481740331aaa1837880a47c33001a96"
+      }
+    ],
+    "sizeMB": 28.78
+  },
+  {
+    "id": "scrypted-yolov9s-relu-sep-320-tflite-int8",
+    "label": "plugin catalog YOLOv9s ReLU sep 320 TFLite int8",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "tflite",
+    "precision": "int8",
+    "files": [
+      {
+        "relativePath": "tflite/scrypted_yolov9s_relu_sep_320/best_int8.tflite",
+        "size": 7325616,
+        "sha256": "1e9866b16fe80931383bf3c94dc629fe93a37ba3dc1465ea019eb0a50bd428df"
+      }
+    ],
+    "sizeMB": 7.33
+  },
+  {
+    "id": "scrypted-yolov9s-relu-sep-320-tflite-integer_quant",
+    "label": "plugin catalog YOLOv9s ReLU sep 320 TFLite integer_quant",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "tflite",
+    "precision": "integer_quant",
+    "files": [
+      {
+        "relativePath": "tflite/scrypted_yolov9s_relu_sep_320/best_integer_quant.tflite",
+        "size": 7342552,
+        "sha256": "bc1c902e9a9865637ee2403f70c6bf5c29c695d9163e58ad658feb29bb097ebc"
+      }
+    ],
+    "sizeMB": 7.34
+  },
+  {
+    "id": "scrypted-yolov9s-relu-sep-320-tflite-full_integer_quant",
+    "label": "plugin catalog YOLOv9s ReLU sep 320 TFLite full_integer_quant",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "tflite",
+    "precision": "full_integer_quant",
+    "files": [
+      {
+        "relativePath": "tflite/scrypted_yolov9s_relu_sep_320/best_full_integer_quant.tflite",
+        "size": 7341704,
+        "sha256": "483ce38dbe33ee5a35f40a82f56c77629a44fa5d95efd8ade9fa97e4d2a261fd"
+      }
+    ],
+    "sizeMB": 7.34
+  },
+  {
+    "id": "scrypted-yolov9s-relu-sep-320-tflite-edgetpu",
+    "label": "plugin catalog YOLOv9s ReLU sep 320 TFLite edgetpu",
+    "family": "yolov9s",
+    "variant": "relu",
+    "format": "tflite",
+    "precision": "edgetpu",
+    "files": [
+      {
+        "relativePath": "tflite/scrypted_yolov9s_relu_sep_320/best_full_integer_quant_edgetpu.tflite",
+        "size": 8164480,
+        "sha256": "e1e6b074a3b9fdf19a171baf615553ad375a046aa7de2a3fef9a1950175fab22"
+      }
+    ],
+    "sizeMB": 8.16
+  }
+]

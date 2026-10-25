@@ -1,0 +1,219 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off",
+    "style": "off"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "no-unused-vars": "warn",
+    "no-unused-expressions": "warn",
+    "unicorn/no-new-array": "warn",
+    "unicorn/no-useless-spread": "warn",
+    "typescript/no-this-alias": "warn",
+    "oxc/erasing-op": "warn",
+    "no-underscore-dangle": "off",
+    "unicorn/consistent-function-scoping": "off"
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/*.d.ts",
+    "**/generated/**",
+    "**/coverage/**",
+    "**/embed-dist/**",
+    "packages/*/build/**",
+    "server/*/build/**",
+    "packages/types/src/generated/**",
+    "packages/addon-admin-ui/src/server/**",
+    "**/wasm/assembly/**"
+  ],
+  "overrides": [
+    {
+      "files": ["packages/types/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/*"],
+                "message": "@camstack/types must not import from other @camstack packages"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/sdk/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/addon-*"],
+                "message": "@camstack/sdk must not import from addon packages"
+              },
+              {
+                "group": ["@camstack/core"],
+                "message": "@camstack/sdk must not import from @camstack/core"
+              },
+              {
+                "group": ["@camstack/lib-*"],
+                "message": "@camstack/sdk must not import from lib packages"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/lib-*/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/addon-*"],
+                "message": "lib packages must not import from addon packages"
+              },
+              {
+                "group": ["@camstack/core"],
+                "message": "lib packages must not import from @camstack/core"
+              },
+              {
+                "group": ["@camstack/sdk"],
+                "message": "lib packages must not import from @camstack/sdk"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["server/backend/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/addon-*"],
+                "message": "Server must not import from addon packages. Use @camstack/types for interfaces."
+              },
+              {
+                "group": ["@camstack/lib-*"],
+                "message": "Server must not import from lib packages. Use @camstack/types for interfaces."
+              },
+              {
+                "group": ["@camstack/sdk"],
+                "message": "Server must not import from SDK"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/addon-*/src/**/*.ts", "packages/addon-*/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/core", "@camstack/core/*"],
+                "message": "Addons must not import from @camstack/core. Use ctx.deps, ctx.models, ctx.api, or other AddonContext fields instead."
+              },
+              {
+                "group": ["@camstack/kernel", "@camstack/kernel/*"],
+                "message": "Addons must not import from @camstack/kernel. Use AddonContext interfaces from @camstack/types."
+              },
+              {
+                "group": ["@camstack/sdk", "@camstack/sdk/*"],
+                "message": "Addons must not import from @camstack/sdk. Use ctx.api for server communication."
+              },
+              {
+                "group": ["@camstack/addon-*"],
+                "message": "Addons must not import from other addon packages. Use shared interfaces from @camstack/types."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/addon-admin-ui/src/**/*.ts", "packages/addon-admin-ui/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/core", "@camstack/core/*"],
+                "message": "Admin UI must not import from @camstack/core."
+              },
+              {
+                "group": ["@camstack/kernel", "@camstack/kernel/*"],
+                "message": "Admin UI must not import from @camstack/kernel."
+              },
+              {
+                "group": ["@camstack/addon-*"],
+                "message": "Admin UI must not import from other addon packages."
+              },
+              {
+                "group": ["**/trpc", "**/trpc.ts", "**/trpc.js"],
+                "message": "Use canonical hooks from @camstack/ui-library (useXMethod) or `useSystem().trpcClient` for imperative reads. Direct `trpc` imports are reserved for App.tsx + trpc.ts."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/addon-admin-ui/src/App.tsx",
+        "packages/addon-admin-ui/src/trpc.ts",
+        "packages/addon-admin-ui/src/**/__tests__/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@camstack/core", "@camstack/core/*"],
+                "message": "Admin UI must not import from @camstack/core."
+              },
+              {
+                "group": ["@camstack/kernel", "@camstack/kernel/*"],
+                "message": "Admin UI must not import from @camstack/kernel."
+              },
+              {
+                "group": ["@camstack/addon-*"],
+                "message": "Admin UI must not import from other addon packages."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "**/__tests__/**",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "**/*.test.ts",
+        "**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}

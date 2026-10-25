@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "version": 2,
+  "title": "CamStack addon generator",
+  "description": "Scaffold a new CamStack addon workspace package.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Addon name (without scope). Used as the folder name, the package name (under `@camstack/`), and the addon manifest id.",
+      "x-prompt": "What name should the addon have? (e.g. `weather-station`)"
+    },
+    "directory": {
+      "type": "string",
+      "description": "Parent directory the package is created in (default: packages).",
+      "default": "packages"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short marketing description for package.json + admin UI."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name shown in the admin UI."
+    }
+  },
+  "required": ["name"]
+}

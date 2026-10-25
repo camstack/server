@@ -1,0 +1,71 @@
+{
+  "name": "@camstack/addon-notifiers",
+  "version": "1.2.620",
+  "description": "System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik).",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "notifications",
+    "notification-output"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Notifiers",
+    "addons": [
+      {
+        "id": "notifiers",
+        "category": "messaging",
+        "name": "Notifiers",
+        "description": "Push-notification delivery targets (ntfy, Pushover, Gotify, Telegram, Discord, generic webhook, Zentik). One canonical notification is degraded per target's declared capabilities.",
+        "version": "0.1.0",
+        "protected": true,
+        "entry": "./dist/index.js",
+        "execution": {
+          "placement": "hub-only",
+          "group": "notifiers"
+        },
+        "capabilities": [
+          {
+            "name": "notification-output"
+          },
+          {
+            "name": "addon-routes"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#7c3aed"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  }
+}

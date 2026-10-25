@@ -1,0 +1,21 @@
+{
+  "connection.s_identity.title": "Air conditioner",
+  "connection.s_identity.name.label": "Name",
+  "connection.s_identity.host.label": "IP address",
+  "connection.s_advanced.title": "Advanced (UDP)",
+  "connection.s_advanced.broadcastAddr.label": "Broadcast address (optional)",
+  "connection.s_advanced.timeoutMs.label": "UDP timeout (ms)",
+  "connection.s_advanced.retries.label": "Retries",
+  "connection.s_advanced.encryption.label": "Encryption",
+  "discoveryParams.s_scan.title": "Scan options",
+  "discoveryParams.s_scan.description": "Leave empty to scan the local subnet; for another subnet enter its broadcast address (e.g. 192.168.20.255).",
+  "discoveryParams.s_scan.broadcastAddress.label": "Broadcast address",
+  "discoveryParams.s_scan.timeoutMs.label": "UDP timeout (ms)",
+  "fields.enabledModes.label": "Modes",
+  "fields.enabledModes.description": "Modes shown in the control UI. Empty = all. “Off” is always available.",
+  "fields.enabledFanModes.label": "Fan speeds",
+  "fields.enabledFanModes.description": "Fan speeds shown in the control UI. Empty = all.",
+  "fields.exposeVerticalSwing.label": "Vertical swing",
+  "settingsUI.exposeHorizontalSwing.label": "Horizontal swing",
+  "schema.s_exposure.title": "Exposed controls"
+}

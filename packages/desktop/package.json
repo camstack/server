@@ -1,0 +1,174 @@
+{
+  "name": "@camstack/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CamStack — single desktop app (hub or agent, chosen at first run)",
+  "homepage": "https://github.com/camstack/server",
+  "author": "CamStack <noreply@camstack.local>",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "_python-shim": "mkdir -p .python-shim && [ -e .python-shim/python ] || ln -sf $(which python3) .python-shim/python",
+    "stage-deps": "node scripts/stage-deps.mjs",
+    "dist:mac": "npm run _python-shim && npm run stage-deps && PATH=$PWD/.python-shim:$PATH electron-builder --mac",
+    "dist:viewer:mac": "npm run build && electron-builder --mac --config electron-builder.viewer.json",
+    "dist:viewer:linux": "npm run build && electron-builder --linux --config electron-builder.viewer.json",
+    "dist:mac:arm64": "npm run _python-shim && CS_NODE_ARCH=arm64 npm run stage-deps && PATH=$PWD/.python-shim:$PATH electron-builder --mac --arm64",
+    "dist:mac:x64": "npm run _python-shim && CS_NODE_ARCH=x64 npm run stage-deps && PATH=$PWD/.python-shim:$PATH electron-builder --mac --x64",
+    "dist:win": "npm run stage-deps && electron-builder --win",
+    "dist:linux": "npm run stage-deps && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.camstack.app",
+    "productName": "CamStack",
+    "executableName": "camstack",
+    "electronVersion": "42.4.1",
+    "directories": {
+      "output": "release"
+    },
+    "asar": true,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "npmRebuild": false,
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json",
+      "!node_modules/**",
+      "node_modules/ajv/**",
+      "node_modules/ajv-formats/**",
+      "node_modules/argparse/**",
+      "node_modules/atomically/**",
+      "node_modules/builder-util-runtime/**",
+      "node_modules/conf/**",
+      "node_modules/debounce-fn/**",
+      "node_modules/debug/**",
+      "node_modules/dot-prop/**",
+      "node_modules/electron-store/**",
+      "node_modules/electron-updater/**",
+      "node_modules/env-paths/**",
+      "node_modules/fast-deep-equal/**",
+      "node_modules/fast-uri/**",
+      "node_modules/fs-extra/**",
+      "node_modules/graceful-fs/**",
+      "node_modules/js-yaml/**",
+      "node_modules/json-schema-traverse/**",
+      "node_modules/json-schema-typed/**",
+      "node_modules/jsonfile/**",
+      "node_modules/lazy-val/**",
+      "node_modules/lodash.escaperegexp/**",
+      "node_modules/lodash.isequal/**",
+      "node_modules/mimic-function/**",
+      "node_modules/ms/**",
+      "node_modules/require-from-string/**",
+      "node_modules/sax/**",
+      "node_modules/semver/**",
+      "node_modules/stubborn-fs/**",
+      "node_modules/stubborn-utils/**",
+      "node_modules/tagged-tag/**",
+      "node_modules/tiny-typed-emitter/**",
+      "node_modules/type-fest/**",
+      "node_modules/uint8array-extras/**",
+      "node_modules/universalify/**",
+      "node_modules/when-exit/**"
+    ],
+    "extraResources": [
+      {
+        "from": ".deps/runtime-node",
+        "to": "node",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": ".deps/node_modules",
+        "to": "node_modules",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "camstack",
+        "repo": "server",
+        "releaseType": "release",
+        "channel": "latest"
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "artifactName": "CamStack-${version}-${arch}.${ext}",
+      "notarize": false
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "CamStack-Setup-${version}.${ext}",
+      "extraResources": [
+        {
+          "from": "dist/service-supervisor.js",
+          "to": "service/service-supervisor.js"
+        },
+        {
+          "from": ".deps/service",
+          "to": "service",
+          "filter": [
+            "winsw.exe"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "assets/icon.png",
+      "artifactName": "CamStack-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "CamStack"
+    }
+  },
+  "dependencies": {
+    "@camstack/server": "*",
+    "electron-store": "^11.0.0",
+    "electron-updater": "^6.3.0"
+  },
+  "devDependencies": {
+    "@camstack/node-root": "*",
+    "@electron/rebuild": "^4.0.0",
+    "electron": "^42.0.0",
+    "electron-builder": "^26.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.0.18"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "parallelism": false
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "onGetCreation.s_connection.title": "ONVIF Camera",
+  "onGetCreation.s_connection.name.label": "Name",
+  "onGetCreation.s_connection.host.label": "Host",
+  "onGetCreation.s_connection.port.label": "Port",
+  "onGetCreation.s_connection.username.label": "Username",
+  "onGetCreation.s_connection.password.label": "Password",
+  "globalSettings.s_discovery.title": "ONVIF Discovery",
+  "globalSettings.s_credentials.title": "Default Credentials",
+  "globalSettings.s_credentials.defaultUsername.label": "Default Username",
+  "globalSettings.s_credentials.defaultPassword.label": "Default Password"
+}

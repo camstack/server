@@ -1,0 +1,179 @@
+diff --git a/node_modules/moleculer/src/transporters/tcp/parser.js b/node_modules/moleculer/src/transporters/tcp/parser.js
+index f79bc9b..b103ca3 100644
+--- a/node_modules/moleculer/src/transporters/tcp/parser.js
++++ b/node_modules/moleculer/src/transporters/tcp/parser.js
+@@ -9,17 +9,37 @@
+ const Writable = require("stream").Writable;
+ const { resolvePacketType } = require("./constants");
+ 
+-/**
+- * Import types
+- *
+- * @typedef {import("./parser")} ParserClass
+- */
++/** Moleculer TCP framing: CRC byte, 4-byte BE total length, type byte, payload. */
++const HEADER_BYTES = 6;
+ 
+ /**
+  * TCP packet parser
+  * @class Parser
+  * @extends {Writable}
+  * @implements {ParserClass}
++ *
++ * ── CamStack patch (D457) — the accumulator is no longer quadratic ─────────
++ *
++ * The shipped `_write` did, ONCE PER SOCKET CHUNK that left a partial packet:
++ *
++ *     packet = Buffer.concat([this.buf, chunk]);   // copies the whole pending
++ *     this.buf = Buffer.from(packet);              // copies it AGAIN
++ *
++ * so a message of M bytes arriving in chunks of c copied ~2·M²/2c bytes on the
++ * receiving event loop — quadratic in the chunk COUNT. On CamStack's hub the
++ * mesh carries base64 JPEG cross-node (`pipelineRunner.getNativeCrop`
++ * with `encodeJpeg`, `pipelineRunner.runStatelessStep{frameJpeg}`) at
++ * `maxPacketSize: 10 MiB`, and a 50 s V8 profile of hub-main put **20.8 % of
++ * its busy main thread inside this one function**.
++ *
++ * The fix is the same one CamStack applied to its own UDS `FrameDecoder`:
++ * hold the pending chunks in a LIST, concatenate ONCE when a whole packet is
++ * available, and never at all while one is still incomplete. Everything else —
++ * the framing, the CRC check and its position, the `maxPacketSize` rule
++ * (accumulated bytes, not the declared length, exactly as before), the `data`
++ * event shape, the error text — is byte-for-byte the original behaviour, and
++ * `packages/system/src/kernel/__tests__/moleculer/mesh-tcp-parser.spec.ts`
++ * asserts each of those cases alongside the copy accounting.
+  */
+ class Parser extends Writable {
+ 	/**
+@@ -32,56 +52,102 @@ class Parser extends Writable {
+ 
+ 		this.maxPacketSize = maxPacketSize;
+ 
+-		this.buf = null;
++		/** Pending chunks, newest last. Never concatenated until a packet completes. */
++		this.bufs = [];
++		/** Total bytes across `bufs` — the old `this.buf.length`. */
++		this.bufLen = 0;
++		// `this.buf` is GONE, deliberately. It was the accumulator itself and
++		// nothing outside this file ever read it (checked across
++		// `src/transporters/tcp/**`); leaving a getter-only shadow of a
++		// formerly-writable field would be a new incompatibility, not a
++		// compatibility shim.
++	}
++
++	/** The first `HEADER_BYTES` pending bytes, without flattening the rest. */
++	_header() {
++		const first = this.bufs[0];
++		if (first.length >= HEADER_BYTES) return first;
++		const head = Buffer.allocUnsafe(HEADER_BYTES);
++		let written = 0;
++		for (let i = 0; i < this.bufs.length && written < HEADER_BYTES; i++) {
++			const b = this.bufs[i];
++			const take = Math.min(HEADER_BYTES - written, b.length);
++			b.copy(head, written, 0, take);
++			written += take;
++		}
++		return head;
+ 	}
+ 
+ 	_write(chunk, encoding, cb) {
+-		let packet = chunk;
+-		if (this.buf && this.buf.length > 0) {
+-			// There is previous chunk, concatenate them
+-			packet = Buffer.concat([this.buf, chunk]);
+-			this.buf = null;
++		if (this.bufLen > 0) {
++			this.bufs.push(chunk);
++		} else {
++			this.bufs = [chunk];
+ 		}
++		this.bufLen += chunk.length;
+ 
+-		// Find all messages from the chunk
+-		while (packet.length > 0) {
+-			if (packet.length < 6) {
+-				// Too short, waiting for the next chunk
+-				this.buf = Buffer.from(packet);
++		// Find all messages in what is pending.
++		while (this.bufLen > 0) {
++			if (this.bufLen < HEADER_BYTES) {
++				// Too short, waiting for the next chunk.
+ 				return cb();
+ 			}
+ 
+-			if (this.maxPacketSize && packet.length > this.maxPacketSize) {
++			// Unchanged semantics: the ACCUMULATED length is compared, not the
++			// declared one, and it is compared before the CRC — same order, same
++			// numbers as the original `packet.length > this.maxPacketSize`.
++			if (this.maxPacketSize && this.bufLen > this.maxPacketSize) {
+ 				return cb(
+ 					new Error(
+-						`Incoming packet is larger than the 'maxPacketSize' limit (${packet.length} > ${this.maxPacketSize})!`
++						`Incoming packet is larger than the 'maxPacketSize' limit (${this.bufLen} > ${this.maxPacketSize})!`
+ 					)
+ 				);
+ 			}
+ 
++			const header = this._header();
++
+ 			// Check the CRC
+-			const crc = packet[1] ^ packet[2] ^ packet[3] ^ packet[4] ^ packet[5];
+-			if (crc !== packet[0]) {
++			const crc = header[1] ^ header[2] ^ header[3] ^ header[4] ^ header[5];
++			if (crc !== header[0]) {
+ 				return cb(new Error("Invalid packet CRC! " + crc));
+ 			}
+ 
+-			const length = packet.readInt32BE(1);
+-
+-			// The chunk contain a message
+-			if (packet.length >= length) {
+-				const msg = packet.slice(6, length);
+-				const type = resolvePacketType(packet[5]);
+-
+-				this.emit("data", type, msg);
++			const length = header.readInt32BE(1);
+ 
+-				// Remove processed message from incoming data
+-				packet = packet.slice(length);
+-			} else {
+-				// The chunk is not contain the whole message.
+-				// Waiting for the next one.
+-				this.buf = Buffer.from(packet);
++			if (this.bufLen < length) {
++				// The pending bytes do not contain the whole message.
++				// Waiting for the next chunk — WITHOUT copying what is held.
+ 				return cb();
+ 			}
++
++			// One concatenation per COMPLETED packet, and none when the packet
++			// arrived whole in a single chunk.
++			const packet = this.bufs.length === 1 ? this.bufs[0] : Buffer.concat(this.bufs, this.bufLen);
++
++			const msg = packet.slice(HEADER_BYTES, length);
++			const type = resolvePacketType(packet[5]);
++
++			this.emit("data", type, msg);
++
++			// Remove the processed message. `slice` is a VIEW, not a copy.
++			//
++			// That was argued to be safe because `msg` is handed out as a view
++			// into the same buffer anyway — true for `msg`, which the consumer
++			// drops immediately, and FALSE for the remainder, which this parser
++			// RETAINS until the next chunk arrives. Between two cross-node calls
++			// that silence is the ordinary case, so a 3-byte tail held a 2 MiB
++			// backing store alive (measured: 2 097 161 bytes pinned by 3).
++			//
++			// It cannot simply be copied every time: a large remainder is the
++			// pipelined-burst case, and copying it once per completed packet is
++			// the quadratic behaviour this patch exists to remove. So only a
++			// tail that is small RELATIVE TO WHAT IT PINS is copied — the
++			// pathological shape — and a substantial remainder stays a view.
++			const rest = packet.slice(length);
++			const pinsTooMuch = rest.length > 0 && rest.length * 8 < rest.buffer.byteLength;
++			const carried = pinsTooMuch ? Buffer.from(rest) : rest;
++			this.bufs = carried.length > 0 ? [carried] : [];
++			this.bufLen = carried.length;
+ 		}
+ 		cb();
+ 	}

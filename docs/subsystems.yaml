@@ -1,0 +1,502 @@
+# The subsystem taxonomy — the ONLY hand-written index input in this repository.
+#
+# Everything else under `docs/reference/` is derived from the workspace and so
+# cannot rot. A subsystem cannot be derived: nothing in the manifests says that
+# decode, inference, tracking and the confirmation gate are one story, or that
+# `addon-export-hap` and `provider-homeassistant/src/ha-export` are two halves of
+# "ecosystem export". Manifests know packages, capabilities know methods, the
+# call graph knows edges — none of them knows chapters.
+#
+# So: curate the chapters here, generate every join over them.
+#   docs/reference/subsystems.md   what each chapter is, and what inside it no document claims
+#   docs/reference/coverage.md     the same data by unit of code
+# Both are written by `scripts/docs-generate.ts` and guarded by
+# `scripts/check-subsystem-map.ts`. Never edit them by hand.
+#
+# Rules for editing this file:
+#   - `purpose` is ONE sentence and is the only free prose. What a reader wants
+#     next — file counts, claiming documents, freshness, holes — is computed.
+#   - `owner-doc` is the page that OWNS the chapter. Omit it while nobody has
+#     written one; the index then reports the chapter as ❌, which is the point.
+#   - A glob matching nothing FAILS the guard: the chapter outlived its code.
+#   - A file may belong to several chapters. That is legitimate — a cap
+#     definition belongs to both its feature and the capability system — and the
+#     map does not force it unique.
+#   - Order is editorial and is preserved in the rendered index. Roughly: the
+#     kernel outward, then the data planes, then everything built on them.
+#
+# Parser: `parseSubsystemsYaml` in `scripts/lib/subsystem-map.ts` — a deliberate
+# YAML subset (sequence of mappings, scalars, a folded `purpose: >`, a `globs:`
+# list). A real YAML dependency here would be a dependency in the pre-commit hook.
+
+- id: kernel
+  title: Kernel, addon lifecycle and boot
+  purpose: >
+    Owns processes: loads addon manifests, forks runners, supervises crashes and
+    decides what is alive.
+  owner-doc: docs/architecture/addon-lifecycle.md
+  globs:
+    - packages/system/src/kernel/*.ts
+    - packages/system/src/kernel/lifecycle/**
+    - packages/system/src/kernel/deps/**
+    - packages/system/src/kernel/utils/**
+    - packages/system/src/addon/**
+    - packages/system/src/addon-routes/**
+    - packages/system/src/lifecycle/**
+    - packages/system/src/process/**
+    - packages/system/src/feature/**
+    - packages/system/src/*.ts
+    - packages/types/src/addon/**
+    - packages/types/src/lifecycle/**
+    - packages/types/src/readiness/**
+    - server/backend/src/boot/**
+    - packages/node-root/**
+
+- id: transport
+  title: Transport and cross-node routing
+  purpose: >
+    Carries every call between hub, agents and addon runners, and decides which
+    node a call is answered on.
+  owner-doc: docs/architecture/transport.md
+  globs:
+    - packages/system/src/kernel/transport/**
+    - packages/system/src/kernel/moleculer/**
+    - server/backend/src/core/moleculer/**
+    - server/backend/src/core/topology/**
+    - packages/types/src/node.ts
+
+- id: capabilities
+  title: Capability system and codegen
+  purpose: >
+    Declares what a node can do — every `*.cap.ts`, the routers generated from
+    them, and the registry that resolves a (capability, device) pair.
+  owner-doc: docs/architecture/capabilities.md
+  globs:
+    - packages/types/src/capabilities/**
+    - packages/types/src/generated/**
+    - packages/types/src/interfaces/**
+    - packages/types/src/cap-call-context.ts
+    - packages/system/src/kernel/capability-registry.ts
+    - packages/system/src/kernel/capability-handle.ts
+    - packages/system/src/kernel/cap-router-builder.ts
+    - packages/system/src/kernel/infra-capabilities.ts
+    - server/backend/src/core/capability/**
+
+- id: device-model
+  title: Device model and the provider contract
+  purpose: >
+    What a device IS across twenty vendors — identity, kinds, bindings, runtime
+    state — and the contract every provider addon implements.
+  owner-doc: docs/architecture/device-model.md
+  globs:
+    - packages/types/src/device/**
+    - packages/types/src/device-extension/**
+    - packages/system/src/builtins/device-manager/**
+    - packages/system/src/kernel/device-registry.ts
+    - packages/system/src/kernel/provider-kind-drift.ts
+    - server/backend/src/core/provider/**
+
+- id: device-providers
+  title: Device providers (per vendor)
+  purpose: >
+    Twenty vendor integrations that turn a camera, a plug or a robot vacuum into
+    devices with capabilities.
+  owner-doc: docs/architecture/device-model.md
+  globs:
+    - packages/addon-provider-*/**
+
+- id: decode-and-data-planes
+  title: Decode and the data planes
+  purpose: >
+    Turns an encoded stream into frames, and moves frames without letting them
+    cross a process boundary at frame rate.
+  owner-doc: docs/architecture/data-planes.md
+  globs:
+    - packages/addon-pipeline/src/session-decode/**
+    - packages/addon-pipeline/src/shared/**
+    - packages/addon-decoder-nodeav/**
+    - packages/types/src/ffmpeg/**
+    - packages/types/src/encode-profile.ts
+    - packages/types/src/stream-selection.ts
+
+- id: detection-execution
+  title: Detection execution and inference
+  purpose: >
+    Runs a model on a frame — the detection pipeline, the Python inference pool
+    and the per-node inference devices it runs on.
+  owner-doc: docs/architecture/detection-execution.md
+  globs:
+    - packages/addon-pipeline/src/detection-pipeline/**
+    - packages/addon-pipeline/src/motion-wasm/**
+    - packages/addon-pipeline/python/**
+    - packages/addon-pipeline/wasm/**
+    - packages/system/src/kernel/inference/**
+    - packages/system/src/kernel/hwaccel/**
+    - packages/system/src/python/**
+    - packages/types/src/inference/**
+
+- id: pipeline-orchestration
+  title: Pipeline orchestration and placement
+  purpose: >
+    Decides which node runs which camera's pipeline, and keeps sessions,
+    balancing and load shedding consistent with that decision.
+  owner-doc: docs/architecture/detection-execution.md
+  globs:
+    - packages/addon-pipeline-orchestrator/src/*.ts
+    - packages/addon-pipeline-orchestrator/src/durable/**
+    - packages/addon-pipeline-orchestrator/src/camera-status/**
+    - packages/addon-pipeline-orchestrator/src/camera-sensors/**
+    - packages/addon-pipeline/src/pipeline-runner/**
+    - packages/addon-pipeline-orchestrator/src/widgets/**
+    - packages/addon-pipeline-orchestrator/src/auto-tune/**
+    - packages/system/src/pipeline/**
+    - packages/types/src/pipeline/**
+
+- id: post-analysis
+  title: Post-analysis — tracking, the confirmation gate and media
+  purpose: >
+    Everything that happens after the pipeline emits a frame: tracks, the
+    confirmation gate, best shots and the media a track carries.
+  owner-doc: docs/architecture/post-analysis.md
+  globs:
+    - packages/addon-post-analysis/src/pipeline-analytics/**
+    - packages/addon-post-analysis/src/shared/**
+    - packages/addon-post-analysis/src/durable/**
+    - packages/addon-post-analysis/src/_analytics-schemas/**
+    - packages/addon-post-analysis/python/**
+    # The media-key codec lives in `@camstack/types` because both an addon and
+    # the UI packages must reach it and addons may not import each other — but
+    # it is post-analysis's grammar, and it belongs to this chapter (D476/D482).
+    - packages/types/src/media/**
+
+- id: recognition
+  title: Face, plate and embedding recognition
+  purpose: >
+    Turns a crop into an identity — face and plate recognisers, the galleries
+    behind them, and the embedding index they search.
+  globs:
+    - packages/addon-post-analysis/src/pipeline-analytics/face-*.ts
+    - packages/addon-post-analysis/src/pipeline-analytics/plate-*.ts
+    - packages/addon-post-analysis/src/pipeline-analytics/embedding/**
+    - packages/addon-post-analysis/src/pipeline-analytics/embedding-*.ts
+    - packages/addon-post-analysis/src/pipeline-analytics/clip-*.ts
+    - packages/addon-post-analysis/src/shared/clip/**
+    - packages/addon-post-analysis/src/embedding-encoder/**
+
+- id: notification-center
+  title: Notification Center — rules, outbox, occupancy, timelapse
+  purpose: >
+    Decides whether a track deserves to reach a human, and delivers it.
+  owner-doc: docs/architecture/notifications.md
+  globs:
+    - packages/addon-post-analysis/src/notification-center/**
+    - packages/types/src/notification/**
+    - packages/types/src/i18n/**
+    - packages/system/src/notification/**
+    - packages/addon-notifiers/**
+    - packages/addon-smtp-nodemailer/**
+    - server/backend/src/core/notification/**
+
+- id: recorder
+  title: Recorder, scrub and recorded playback
+  purpose: >
+    Writes continuous recordings to disk and serves the recorded read path —
+    scrub thumbnails, video clips and timeline seeks.
+  globs:
+    - packages/addon-pipeline/src/recorder/**
+    - packages/addon-pipeline/src/stream-broker/recorded/**
+
+- id: stream-broker
+  title: Stream broker, WebRTC and live delivery
+  purpose: >
+    Serves live media to every consumer — WebRTC, RTSP, RTMP and the frame
+    transports beneath them.
+  owner-doc: docs/architecture/data-planes.md
+  globs:
+    - packages/addon-pipeline/src/stream-broker/*.ts
+    - packages/addon-pipeline/src/stream-broker/webrtc/**
+    - packages/addon-pipeline/src/stream-broker/rtsp/**
+    - packages/addon-pipeline/src/stream-broker/rtmp/**
+    # The ONE stream ranking every consumer scores through, and the pure module
+    # behind `cameraStreams.pickStream`.
+    - packages/types/src/camera/**
+    - packages/addon-pipeline/src/stream-broker/frame-transport/**
+    - packages/addon-pipeline/src/stream-broker/derived/**
+    - packages/addon-pipeline/src/stream-broker/stream-broker/**
+    - packages/addon-pipeline/src/stream-broker/widgets/**
+    - packages/addon-static-turn/**
+    - packages/werift-turn-fix/**
+    - server/backend/src/core/streaming/**
+
+- id: audio
+  title: Audio analysis and audio delivery
+  purpose: >
+    Detects events in sound rather than pixels, and carries audio alongside
+    video.
+  globs:
+    - packages/addon-pipeline/src/audio-analyzer/**
+    - packages/addon-decoder-nodeav/src/audio-codec/**
+    - packages/types/src/audio/**
+
+- id: zones
+  title: Zones and zone rules
+  purpose: >
+    The per-camera geometry every gate consults — where a detection counts and
+    where it does not.
+  globs:
+    - packages/addon-pipeline-orchestrator/src/zone*.ts
+    - packages/addon-pipeline-orchestrator/src/package-zone-gate.ts
+    - packages/addon-pipeline/src/pipeline-runner/package-zone-proximity.ts
+
+- id: storage
+  title: Storage, retention and backup
+  purpose: >
+    Every durable byte — the SQLite collections, where media lives, what prunes
+    it and what backs it up.
+  globs:
+    - packages/system/src/builtins/sqlite-storage/**
+    - packages/system/src/builtins/storage-orchestrator/**
+    - packages/system/src/builtins/backup-orchestrator/**
+    - packages/system/src/builtins/system-backup/**
+    - packages/system/src/storage/**
+    - packages/system/src/kernel/storage-location-registry.ts
+    - packages/types/src/storage/**
+    - packages/addon-remote-storage/**
+    - packages/addon-pipeline/src/durable/**
+    - server/backend/src/core/storage/**
+
+- id: secrets
+  title: Secrets and the keychain
+  purpose: >
+    Where every password, token and key lives — encrypted in the hub keychain,
+    a marker in each settings blob, owner-checked by the transport-stamped
+    caller, kept out of logs.
+  owner-doc: docs/architecture/secrets-keychain.md
+  globs:
+    - packages/system/src/builtins/keychain/**
+    - packages/types/src/keychain/**
+    - packages/types/src/addon/secret-*.ts
+    - packages/types/src/capabilities/keychain.cap.ts
+    - packages/types/src/capabilities/keychain-admin.cap.ts
+    - packages/system/src/builtins/device-manager/device-config-secrets.ts
+    - packages/system/src/logging/log-redactor.ts
+    - server/backend/src/api/core/integration-secrets.ts
+    - server/backend/src/boot/platform-keychain-key.ts
+    - packages/desktop/src/keychain-platform-key.ts
+    - packages/ui-library/src/composites/config-secret-field.tsx
+    - packages/addon-admin-ui/src/pages/system/Secrets.tsx
+
+- id: auth
+  title: Auth, scopes and method tiers
+  purpose: >
+    Who may call what — the auth providers, the scope presets and the method
+    access map every tRPC call is checked against.
+  globs:
+    - packages/addon-auth/**
+    - packages/system/src/auth/**
+    - packages/system/src/builtins/local-auth/**
+    - packages/types/src/auth/**
+    - server/backend/src/auth/**
+    - server/backend/src/core/auth/**
+
+- id: api-surface
+  title: The hub API surface
+  purpose: >
+    The Fastify + tRPC server itself: routers, HTTP routes, the event bus wiring
+    and the settings plumbing every addon reaches through.
+  globs:
+    - server/backend/src/api/**
+    - server/backend/src/core/app-links/**
+    - server/backend/src/core/addon/**
+    - server/backend/src/core/addon-bridge/**
+    - server/backend/src/core/addon-pages/**
+    - server/backend/src/core/addon-widgets/**
+    - server/backend/src/core/config/**
+    - server/backend/src/core/events/**
+    - server/backend/src/core/feature/**
+    - server/backend/src/core/lifecycle/**
+    - server/backend/src/core/repl/**
+    - server/backend/src/core/*.ts
+    - server/backend/src/*.ts
+    - server/backend/src/server-root/**
+    - packages/system/src/http/**
+    - packages/system/src/events/**
+    - packages/system/src/repl/**
+    - packages/system/src/download/**
+
+- id: shared-types
+  title: Shared types, schemas and enums
+  purpose: >
+    The vocabulary every package agrees on — the Zod schemas, enums, catalogues
+    and unit helpers exported from `@camstack/types`.
+  globs:
+    - packages/types/src/schemas/**
+    - packages/types/src/helpers/**
+    - packages/types/src/enums/**
+    - packages/types/src/catalogs/**
+    - packages/types/src/types/**
+    - packages/types/src/units/**
+    - packages/types/src/util/**
+    - packages/types/src/utils/**
+    - packages/types/src/deps/**
+    - packages/types/src/*.ts
+
+- id: update-and-release
+  title: Update, release, OTA and agent delivery
+  purpose: >
+    Gets new code onto a running cluster — package publication, agent bundles
+    and the single-copy addon layout on disk.
+  owner-doc: docs/architecture/update-and-release.md
+  globs:
+    - server/backend/src/agent/**
+    - server/backend/src/core/agent/**
+    - server/backend/src/core/server-update/**
+    - server/backend/src/core/updates/**
+    - packages/system/src/kernel/addon-installer.ts
+    - packages/system/src/kernel/addon-loader.ts
+    - packages/system/src/kernel/addon-manifest.ts
+    - packages/system/src/kernel/addon-residue.ts
+    - packages/system/src/kernel/workspace-detect.ts
+
+- id: ecosystem-exports
+  title: Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT
+  purpose: >
+    Publishes CamStack's devices into somebody else's ecosystem, and imports
+    theirs.
+  globs:
+    - packages/addon-export-hap/**
+    - packages/addon-export-alexa/**
+    - packages/addon-export-google/**
+    - packages/addon-import-alexa/**
+    - packages/addon-matter-broker/**
+    - packages/addon-mqtt-broker/**
+    - packages/addon-provider-homeassistant/src/ha-export/**
+
+- id: remote-access
+  title: Remote access and networking
+  purpose: >
+    How the hub is reachable from outside the LAN — tunnels, TLS and local
+    network discovery.
+  globs:
+    - packages/addon-cloudflare/**
+    - packages/addon-tailscale/**
+    - packages/system/src/builtins/remote-access-orchestrator/**
+    - packages/system/src/builtins/local-network/**
+    - packages/system/src/builtins/hub-forwarder/**
+    - packages/system/src/network/**
+    - packages/system/src/tls/**
+    - server/backend/src/core/network/**
+
+- id: automations
+  title: Automations, blocks and declared devices
+  purpose: >
+    The operator-authored logic layer — expression blocks, recipes and the
+    devices an automation declares into existence.
+  globs:
+    - packages/system/src/builtins/core-blocks/**
+    - packages/system/src/builtins/composer/**
+    - packages/types/src/expression/**
+    - packages/types/src/automation/**
+    - packages/types/src/composition/**
+
+- id: alerts-and-health
+  title: Alerts, liveness and system health
+  purpose: >
+    What the operator sees when something breaks — the alert centre, liveness
+    probes and host metrics.
+  globs:
+    - packages/system/src/builtins/alerts/**
+    - packages/system/src/builtins/liveness-monitor/**
+    - packages/system/src/builtins/native-metrics/**
+    - packages/system/src/builtins/platform-probe/**
+    - packages/system/src/builtins/system-config/**
+    - packages/system/src/kernel/addon-health-monitor.ts
+    - packages/system/src/kernel/event-plane-report.ts
+    - packages/system/src/kernel/heap-spaces.ts
+    - packages/system/src/kernel/heap-watch.ts
+    - packages/types/src/health/**
+    - packages/types/src/metrics/**
+    - packages/types/src/process/**
+
+- id: logging
+  title: Logging and log shipping
+  purpose: >
+    Where a log line goes — the scoped logger every addon is injected with, and
+    the backends it is shipped to.
+  globs:
+    - packages/system/src/logging/**
+    - packages/types/src/logging/**
+    - packages/system/src/builtins/console-logging/**
+    - packages/system/src/builtins/winston-logging/**
+    - packages/system/src/builtins/loki-logging/**
+    - server/backend/src/core/logging/**
+
+- id: ai
+  title: LLM runtimes and AI actions
+  purpose: >
+    Model-backed reasoning available to the rest of the system — runtimes,
+    profiles and the actions they can take.
+  globs:
+    - packages/addon-ai/**
+
+- id: admin-ui
+  title: Admin UI and the shared component library
+  purpose: >
+    The operator's web console, and the design-system package every CamStack
+    surface renders with.
+  owner-doc: docs/architecture/ui.md
+  globs:
+    - packages/addon-admin-ui/**
+    - packages/addon-agent-ui/**
+    - packages/ui-library/**
+
+- id: device-surfaces
+  title: Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack
+  purpose: >
+    Small addons and builtins that act ON a device rather than describing it.
+  globs:
+    - packages/system/src/builtins/camera-grid/**
+    - packages/system/src/builtins/autotrack/**
+    - packages/addon-osd-manager/**
+    - packages/addon-terminal/**
+    - packages/system/src/builtins/snapshot/**
+    - packages/system/src/builtins/shared/**
+    - packages/system/src/builtins/addon-pages-aggregator/**
+    - packages/system/src/builtins/addon-widgets-aggregator/**
+
+- id: cloud-training
+  title: Cloud training
+  purpose: >
+    Fine-tunes the root detector on the operator's annotated frames in a GPU
+    cloud of their choice and returns a verified result to Model Studio.
+  owner-doc: docs/architecture/cloud-training.md
+  globs:
+    - packages/addon-training/**
+    - packages/types/src/capabilities/training.cap.ts
+    - packages/types/src/capabilities/training-provider.cap.ts
+    - packages/types/src/training/**
+    - packages/addon-model-studio/src/bundle/**
+    - hf/camstack-trainer/**
+
+- id: tooling
+  title: Benchmarks, model studio and developer tooling
+  purpose: >
+    Everything that measures or builds CamStack rather than running it — the
+    benchmark addon, the model studio, the CLI, the SDK and the repo's guards.
+  owner-doc: docs/reference/guards.md
+  globs:
+    - packages/addon-benchmark/**
+    - packages/addon-model-studio/**
+    - packages/cli/**
+    - packages/sdk/**
+    - packages/desktop/**
+    - packages/nx-plugin/**
+    - scripts/**
+    - e2e/**
+    # Precise, not `packages/*/scripts/**`: addon-ai/scripts, addon-notifiers/scripts
+    # and desktop/scripts already fall under their own package's whole-package glob
+    # (ai, notification-center, and tooling's own packages/desktop/** above) — a
+    # broad glob here would double-cover them. addon-pipeline has no whole-package
+    # glob (it is split by src/ subdirectory across several subsystems), so its
+    # local cost-bench script (D683 Task 10) is the one path that needs claiming.
+    - packages/addon-pipeline/scripts/**

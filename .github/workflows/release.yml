@@ -1,0 +1,1116 @@
+name: Release — CamStack (Docker + Electron)
+run-name: "Release ${{ github.ref_name || github.event.inputs.version_type }}"
+
+# Single workflow that produces every artifact for the single CamStack
+# product — ONE Docker image + ONE desktop app, each selecting hub vs
+# agent at runtime (CAMSTACK_ROLE). Triggered on tag push (`vX.Y.Z`)
+# or manually via workflow_dispatch.
+#
+# `vX.Y.Z` is the PRODUCT version (image tags, desktop app, GitHub
+# release), starting at 0.1.0 and labelled beta while the major is 0.
+# It is not `@camstack/server`'s version. The image and the desktop app
+# both install `@camstack/server@latest`; the job records that closure
+# as an image label and a release-note line (D943). The Expo viewer app
+# stays on its own 1.0.x line and is not built here.
+#
+# Output (tag push only — workflow_dispatch leaves installers on the runner):
+#
+#   ── Docker image on GHCR (accel-prefixed tags, no bare :latest) ──────
+#     ghcr.io/<owner>/camstack:{intel-X.Y.Z, intel-latest}   (linux/amd64)
+#     ghcr.io/<owner>/camstack:{amd-X.Y.Z, amd-latest}       (linux/amd64)
+#     (`intel` / `amd` are Dockerfile --target names; more accels = matrix rows)
+#     (multi_arch=true workflow_dispatch input adds linux/arm64 via QEMU)
+#
+#   ── Desktop installers ───────────────────────────────────────────────
+#     CamStack-X.Y.Z-arm64.dmg          (macOS Apple Silicon)
+#     CamStack-X.Y.Z-x64.dmg            (macOS Intel)
+#     CamStack-Setup-X.Y.Z.exe          (Windows — when a win runner exists)
+#     CamStack-X.Y.Z-x64.AppImage       (Linux x64)
+#     CamStack-X.Y.Z-amd64.deb          (Linux Debian)
+#
+#   ── electron-updater feeds (ONE per product per platform — ADR-0584) ──
+#     latest-mac.yml  latest.yml  latest-linux.yml   (CamStack, channel `latest`)
+#     viewer-mac.yml  viewer.yml  viewer-linux.yml   (CamStack Viewer, channel `viewer`)
+#
+#   ── Single GitHub Release ────────────────────────────────────────────
+#     Auto-generated release notes (commit diff vs prior tag) + full
+#     asset list table.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: "Version increment type"
+        required: true
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      multi_arch:
+        description: "Build linux/arm64 alongside amd64 (slow — ~3x via QEMU)"
+        required: false
+        type: boolean
+        default: false
+      skip_docker:
+        description: "Skip the Docker image build (iterate on Electron only — the registry-install image build is slow)"
+        required: false
+        type: boolean
+        default: false
+      electron_platforms:
+        description: "Which Electron platforms to build (dispatch only)"
+        required: false
+        type: choice
+        options: [all, mac, linux]
+        default: all
+      dry_run:
+        description: "Derive the product version and the baked @camstack/server only — do not build or publish"
+        required: false
+        type: boolean
+        default: false
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  NODE_VERSION: "24"
+  REGISTRY: ghcr.io
+
+jobs:
+  # ── Step 1 — derive a single version string for both Docker + Electron ──
+  derive-version:
+    runs-on: [self-hosted, linux, x64, ci-release]
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_name: ${{ steps.version.outputs.release_name }}
+      server_version: ${{ steps.npm.outputs.server_version }}
+      previous_tag: ${{ steps.prev.outputs.previous_tag }}
+      electron_matrix: ${{ steps.ematrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Compute Electron build matrix
+        id: ematrix
+        run: |
+          # The Electron matrix is computed here so `electron_platforms`
+          # (workflow_dispatch input) can filter which legs run — a job-level
+          # `if` cannot reference `matrix.*`, so we filter the include list
+          # itself. Tag push always builds every platform.
+          FILTER="all"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            FILTER="${{ inputs.electron_platforms }}"
+          fi
+          node -e '
+            const filter = process.argv[1];
+            const L = (a) => JSON.stringify(a);
+            // ONE desktop product (packages/desktop) — the single CamStack
+            // app selects hub vs agent at runtime via CAMSTACK_ROLE. Three
+            // legs: mac arm64 + mac x64 (cross-built on the two arm64 Mac
+            // mini runners, one arch each — staging fetches the target-arch
+            // native prebuilds via CS_NODE_ARCH) + linux x64. Both mac legs
+            // match the same labels; GHA places them on the two mac runners.
+            //
+            // ⚠ build.mac.target in packages/desktop/package.json must NOT
+            // declare an explicit per-target arch list: config-level arch
+            // OVERRIDES the CLI --arm64/--x64 flag, so each mac leg would
+            // build BOTH arch DMGs from its single-arch CS_NODE_ARCH staging
+            // — the "twin" DMG carries the WRONG-arch bundled node, and the
+            // CamStack-* upload glob makes the last-finishing leg overwrite
+            // the sibling leg asset (v1.2.3: published arm64.dmg contained
+            // x64 node — built by the x64 leg, which finished last). NOTE:
+            // this comment lives inside a bash single-quoted string — no
+            // apostrophes/backticks here or the matrix step dies on syntax.
+            // The VIEWER legs below build the second product from the same
+            // source: electron-builder.viewer.json, no extraResources, so
+            // stage_closure is false and the closure step is skipped
+            // entirely. They own the CamStackViewer-* glob and nothing else
+            // does — sharing CamStack-* is the v1.2.3 overwrite described
+            // above, and scripts/check-viewer-build-carries-no-server.ts
+            // fails the build if that name is ever reused.
+            //
+            // ONE mac viewer leg, not two: the viewer artifact carries no
+            // native content at all, so a second arch buys nothing and would
+            // re-create the twin-DMG collision this file was bitten by. The
+            // viewer config declares its own mac arch for the same reason.
+            const all = [
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"linux",arch:"x64",builder_flags:"--linux",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"arm64",builder_flags:"--mac --arm64",runner_labels:L(["self-hosted","macos","arm64"])},
+              {target:"desktop",workspace:"packages/desktop",artifact_glob:"CamStack-*",feed_glob:"latest*.yml",output_dir:"release",platform:"mac",arch:"x64",builder_flags:"--mac --x64",runner_labels:L(["self-hosted","macos","arm64"])},
+              {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"linux",arch:"x64",stage_closure:"false",builder_flags:"--linux --config electron-builder.viewer.json",runner_labels:L(["self-hosted","linux","x64","ci-release"])},
+              {target:"desktop-viewer",workspace:"packages/desktop",artifact_glob:"CamStackViewer-*",feed_glob:"viewer*.yml",output_dir:"release-viewer",platform:"mac",arch:"arm64",stage_closure:"false",builder_flags:"--mac --arm64 --config electron-builder.viewer.json",runner_labels:L(["self-hosted","macos","arm64"])},
+            ];
+            const sel = filter === "all" ? all : all.filter(e => e.platform === filter);
+            console.log("matrix=" + JSON.stringify({ include: sel }));
+          ' "$FILTER" >> $GITHUB_OUTPUT
+      - name: Determine product version
+        id: version
+        env:
+          VERSION_TYPE: ${{ github.event.inputs.version_type }}
+        run: |
+          # Product version: the tag on a tag push, else product-version.json
+          # bumped by version_type (dispatch). Not server/backend/package.json.
+          # Logic: scripts/ci/product-release.mjs, pinned by
+          # scripts/__tests__/product-release.spec.ts.
+          node scripts/ci/product-release.mjs
+      - name: Resolve the baked @camstack/server (npm latest)
+        id: npm
+        run: |
+          # The product version is not an npm version. Both the image and
+          # the desktop app install @camstack/server@latest; this step
+          # records which closure that is. A missing dist-tag fails closed.
+          # Logic: scripts/ci/verify-release-npm.mjs, pinned by
+          # scripts/__tests__/verify-release-npm.spec.ts.
+          node scripts/ci/verify-release-npm.mjs "${{ steps.version.outputs.version }}"
+
+      - name: Find previous version tag
+        id: prev
+        run: |
+          # Walk back from HEAD (or current tag) and find the previous
+          # `vX.Y.Z` tag — used by the release-notes generator below.
+          # Excludes `publish-*` (npm package publish markers).
+          #
+          # Pipefail-safe: when there's no prior tag (or only the current
+          # one), grep -v matches nothing → exit 1 → pipefail bubbles up.
+          # Run grep with `set +o pipefail` locally so the absence is OK.
+          set +o pipefail
+          # creatordate, not semver: the product line restarted at 0.1.0,
+          # which sorts BELOW every 1.2.x tag. The previous release is the
+          # one created before this one.
+          ALL_TAGS=$(git tag --list 'v*.*.*' --sort=-creatordate)
+          PREV=$(printf '%s\n' "$ALL_TAGS" \
+            | grep -v "^v${{ steps.version.outputs.version }}$" \
+            | head -1)
+          set -o pipefail
+          echo "previous_tag=${PREV}" >> $GITHUB_OUTPUT
+          echo "Previous tag: ${PREV:-<none>}"
+      - name: Print product release identity
+        run: |
+          echo "product=${{ steps.version.outputs.version }}"
+          echo "release_name=${{ steps.version.outputs.release_name }}"
+          echo "server=@camstack/server@${{ steps.npm.outputs.server_version }} (npm latest)"
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "dry_run=true — no image, installer, or GitHub release will be published"
+          fi
+
+  # ── Step 1b — create the GitHub Release up front (tag push only) ──
+  #
+  # The Release is created BEFORE any installer is built so that the
+  # build-electron matrix can append each installer straight to it as a
+  # release asset (release-asset storage is separate from the Actions
+  # artifact storage quota — no upload-artifact/download-artifact needed).
+  create-release:
+    needs: derive-version
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: [self-hosted, linux, x64, ci-release]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lowercase repository owner
+        id: repo
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes body
+        id: notes
+        env:
+          VERSION: ${{ needs.derive-version.outputs.version }}
+          PREV_TAG: ${{ needs.derive-version.outputs.previous_tag }}
+          SERVER_VERSION: ${{ needs.derive-version.outputs.server_version }}
+        run: |
+          OWNER_LC="${{ steps.repo.outputs.owner }}"
+          IMG="${{ env.REGISTRY }}/${OWNER_LC}/camstack"
+
+          # Commit log between previous tag and current — feed for the
+          # auto-changelog. Empty if no previous tag.
+          if [ -n "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:'- %s (%h) — @%an' "${PREV_TAG}..HEAD" 2>/dev/null || true)
+            COMPARE_URL="${{ github.server_url }}/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}"
+            COMMITS_LINE="**Changes since [\`${PREV_TAG}\`](${{ github.server_url }}/${{ github.repository }}/releases/tag/${PREV_TAG}):** [compare](${COMPARE_URL})"
+          else
+            CHANGELOG="(initial release)"
+            COMMITS_LINE="**Initial release.**"
+          fi
+
+          DOWNGRADE_NOTE=$(node --input-type=module -e "import { desktopDowngradeNote } from './scripts/ci/product-release.mjs'; const note = desktopDowngradeNote(process.env.VERSION); if (note) console.log(note)")
+          {
+            echo "## CamStack \`v${VERSION}\`"
+            echo ""
+            echo "Baked closure: \`@camstack/server@${SERVER_VERSION}\` (npm \`latest\` at build time)."
+            echo ""
+            if [ -n "$DOWNGRADE_NOTE" ]; then
+              echo "$DOWNGRADE_NOTE"
+              echo ""
+            fi
+            echo "$COMMITS_LINE"
+            echo ""
+            echo "### 🐳 Docker image"
+            echo ""
+            echo '```bash'
+            echo "# Intel VA/NPU (Unraid default)"
+            echo "docker pull ${IMG}:intel-${VERSION}   # or :intel-latest (moving)"
+            echo "# AMD Mesa VA/Vulkan (Proxmox / AMD APU hosts)"
+            echo "docker pull ${IMG}:amd-${VERSION}     # or :amd-latest (moving)"
+            echo '```'
+            echo ""
+            echo "Tags are accel-prefixed (\`intel-*\`, \`amd-*\`) — no bare \`:latest\`. linux/amd64 only by default. Re-run with \`multi_arch: true\` for linux/arm64."
+            echo ""
+            echo "### 💻 Desktop installers"
+            echo ""
+            echo "Desktop installers (macOS .dmg arm64 + x64, Linux .AppImage + .deb) are attached to this release as assets below."
+            echo ""
+            echo "### 📋 Changes"
+            echo ""
+            echo "$CHANGELOG"
+          } > release-body.md
+
+          echo "── release body preview ──"
+          cat release-body.md
+
+      - name: Create GitHub Release (draft — flipped to published by publish-release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ needs.derive-version.outputs.release_name }}
+          body_path: release-body.md
+          make_latest: true
+          # The release is born as a draft so it is not visible until every
+          # build-docker + build-electron job has finished and the final
+          # `publish-release` job flips it. Matrix jobs upload installers as
+          # assets to this draft as they finish.
+          draft: true
+
+  # ── Step 2 — Docker image (single CamStack image, hub OR agent) ──
+  #
+  # ONE image name `ghcr.io/<owner>/camstack` from the single `Dockerfile`:
+  # hub vs agent at runtime via CAMSTACK_ROLE; accel variant via `--target`
+  # (`intel` | `amd`). Built on `agent-a`. Tags are accel-prefixed
+  # (`intel-<version>`, `amd-latest`, …) — never a bare `:latest`.
+  build-docker:
+    needs: derive-version
+    # On a manual dispatch, allow skipping the (slow registry-install)
+    # Docker build to iterate on Electron only. Always builds on tag push.
+    if: ${{ github.event_name != 'workflow_dispatch' || (inputs.dry_run == false && inputs.skip_docker == false) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # `accel` = Dockerfile `--target` and the tag prefix. Shared
+        # `runtime-common` stage; vendor VA/GPU/NPU only in the final target.
+        include:
+          - accel: intel
+            runner: ci-release
+            dockerfile: Dockerfile
+            target: intel
+            image: camstack
+            title: CamStack
+            description: CamStack node (Intel VA/NPU) — hub or agent via CAMSTACK_ROLE
+          - accel: amd
+            runner: ci-release
+            dockerfile: Dockerfile
+            target: amd
+            image: camstack
+            title: CamStack (AMD)
+            description: CamStack node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
+    runs-on: [self-hosted, linux, x64, docker, "${{ matrix.runner }}"]
+    # docker/build-push-action@v6 uploads a "build summary" record as a GitHub
+    # Actions artifact by default. We don't use it (images go to GHCR; the
+    # summary is just a UI panel), and it was the source of the recurring
+    # "Failed to CreateArtifact: storage quota has been hit" warning. Disable
+    # it to stop the useless upload and free quota. (provenance/sbom are already
+    # off on the build step; this is the separate build-record artifact.)
+    env:
+      DOCKER_BUILD_SUMMARY: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Compute Docker build platforms.
+      #   * Default: linux/amd64 only — fast (~3-4 min/job) on the
+      #     amd64 GH runners.
+      #   * `multi_arch=true` workflow_dispatch input adds linux/arm64
+      #     (slow — ~12-13 min/job, QEMU emulation on amd64 hosts).
+      #
+      # Tag pushes default to amd64-only too. Flip to multi-arch from
+      # the Actions UI by re-running the workflow with the box checked,
+      # or by calling `gh workflow run release.yml -f multi_arch=true`.
+      #
+      # Trade-off when amd64-only: published images don't ship a
+      # linux/arm64 manifest. Apple Silicon Docker Desktop falls back
+      # to amd64 under Rosetta — works but ~2x slower. Raspberry Pi /
+      # Graviton / Ampere ARM hosts can't pull at all.
+      - name: Compute build platforms
+        id: platforms
+        run: |
+          if [ "${{ github.event.inputs.multi_arch }}" = "true" ]; then
+            echo "list=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+            echo "multi=true" >> "$GITHUB_OUTPUT"
+            echo "Building multi-arch (linux/amd64 + linux/arm64) — this is the slow path."
+          else
+            echo "list=linux/amd64" >> "$GITHUB_OUTPUT"
+            echo "multi=false" >> "$GITHUB_OUTPUT"
+            echo "Building linux/amd64 only — pass multi_arch=true to enable arm64."
+          fi
+
+      - name: Set up QEMU
+        if: steps.platforms.outputs.multi == 'true'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      # Pin reliable DNS inside the buildkit builder. The Unraid docker
+      # daemon resolves via the homelab Pi-hole (192.168.x.x), which
+      # intermittently returns "server misbehaving" for docker.io/ghcr.io
+      # → buildx fails to fetch the `docker/dockerfile:1` frontend, base
+      # images, or push to GHCR. Setting buildkitd's own nameservers makes
+      # every in-build registry lookup go to 1.1.1.1/8.8.8.8, bypassing the
+      # flaky resolver WITHOUT touching the host daemon (no container
+      # restart). The buildkit image itself comes from the local cache.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [dns]
+              nameservers = ["1.1.1.1", "8.8.8.8"]
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase repository owner
+        id: repo
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Build and push CamStack Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          # Registry-install: the image installs `@camstack/server@latest`.
+          # PRODUCT_VERSION is the product release (the tag), baked as
+          # CAMSTACK_PRODUCT_VERSION for the About line. It is not the
+          # npm version — that is the server_version label below.
+          build-args: |
+            PRODUCT_VERSION=${{ needs.derive-version.outputs.version }}
+          platforms: ${{ steps.platforms.outputs.list }}
+          push: true
+          # Accel-explicit tags ONLY — no bare `:latest` / `:<version>`. With
+          # more than one accelerator target a bare moving tag is ambiguous, so
+          # every image is prefixed by its accel target:
+          #   <image>:<accel>-<version>   immutable, e.g. camstack:intel-1.0.0
+          #   <image>:<accel>-latest      moving "latest for this accel", e.g. :intel-latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.repo.outputs.owner }}/${{ matrix.image }}:${{ matrix.accel }}-${{ needs.derive-version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.repo.outputs.owner }}/${{ matrix.image }}:${{ matrix.accel }}-latest
+          # Cache READ from GHCR (existing `:buildcache` tag). We do NOT
+          # write a fresh cache image — buildkit was concurrently pushing
+          # image + cache, saturating the session window on the Unraid
+          # runner's GHCR upload bandwidth (agent docker failed on
+          # 2026-05-20 dryrun with "no active session for ...: context
+          # deadline exceeded" mid-push). Keeping cache-from means future
+          # builds can still warm-start from the previously-pushed cache;
+          # we just don't refresh it from this run. If cache becomes
+          # stale enough to be unhelpful, manually re-run with cache-to
+          # added temporarily, or kick a separate cache-warm workflow.
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.repo.outputs.owner }}/${{ matrix.image }}:buildcache-${{ matrix.accel }}
+          # Disable build attestations. provenance=true publishes an
+          # additional manifest per platform; combined with multi-arch
+          # + GHA cache export this saturates the buildkitd push
+          # pipeline on the shared Unraid Docker daemon.
+          provenance: false
+          sbom: false
+          labels: |
+            org.opencontainers.image.title=${{ matrix.title }}
+            org.opencontainers.image.description=${{ matrix.description }}
+            org.opencontainers.image.version=${{ needs.derive-version.outputs.version }}
+            io.camstack.server.version=${{ needs.derive-version.outputs.server_version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.variant=${{ matrix.accel }}
+
+  # ── Step 3 — Electron desktop bundles (single CamStack app × Mac/Linux) ──
+  build-electron:
+    needs: [derive-version, create-release]
+    # Runs on tag push (after create-release) AND on manual dispatch (where
+    # create-release is skipped — tolerate that). The `electron_platforms`
+    # dispatch filter is applied to the matrix itself (computed in
+    # derive-version), since a job-level `if` cannot reference `matrix.*`.
+    #
+    # Linux + macOS only on self-hosted runners. Windows is disabled (no
+    # Windows self-hosted runner) — to add one, register a runner with labels
+    # `self-hosted,windows,x64` and append a matrix entry in derive-version's
+    # `Compute Electron build matrix` step with `builder_flags: --win`.
+    #
+    # TODO(windows-agent): the Windows leg stays OFF until the self-hosted
+    # Windows runner exists (the VM on the PVE host agent-b, .63). The app
+    # side is ready and was unpacked/packaged from a Mac: `npm run dist:win -w
+    # packages/desktop` stages the Windows Node + the pinned WinSW and builds the
+    # NSIS installer (docs/architecture/windows-agent.md). When the runner is up:
+    #   1. register it with labels `self-hosted,windows,x64`;
+    #   2. add {target:"desktop",...,platform:"win",arch:"x64",builder_flags:"--win",
+    #      runner_labels:L(["self-hosted","windows","x64"])} to the matrix above;
+    #   3. add the `latest.yml` feed + `CamStack-Setup-*.exe` to the publish step
+    #      and to scripts/check-desktop-update-feeds.ts, then run the install
+    #      steps of the Windows page on that VM BEFORE enabling the leg.
+    #
+    # `runner_labels` is a JSON string handed to `fromJSON` in `runs-on:`
+    # below — GHA otherwise flattens YAML arrays to space-joined strings.
+    if: ${{ !cancelled() && needs.derive-version.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') && (github.event_name != 'workflow_dispatch' || inputs.dry_run == false) }}
+    strategy:
+      fail-fast: false
+      # The two mac legs (arm64 + x64 of the SAME desktop app) run on two
+      # DEDICATED per-user macOS runners on the Mac mini — `mac-ghrunner1`
+      # (user ghrunner1) and `mac-ghrunner2` (user ghrunner2), each a
+      # LaunchDaemon with SessionCreate=true. Both match the same
+      # `self-hosted,macos,arm64` labels; GHA places one leg on each runner.
+      # Distinct users mean distinct login keychains AND distinct per-user
+      # default keychain / search list, so signing + notarization no longer
+      # share the mutable keychain state that forced `max-parallel: 1` (legs
+      # used to run as apocaliss92 and raced, dropping one job's signing
+      # identity). The two legs CAN sign concurrently, one per runner.
+      #
+      # They are NOT serialised (D429). `max-parallel: 1` was added when a tag
+      # push attached ~2.2 GB of installers at once from runners on the
+      # operator's home LAN and saturated it: measured on v1.2.265, WAN latency
+      # to three independent targets went from 12-18 ms to a 610-650 ms average
+      # with 2.9-second peaks, all three degrading together, and the Docker leg
+      # died on `npm error network aborted` while pulling the closure in the
+      # same window.
+      #
+      # It reduced no bytes — it only stopped the peaks stacking — and it cost
+      # WALL CLOCK: a release went from about one hour to nearly three. The
+      # operator chose the hour, knowingly, because a full release is rare.
+      #
+      # ⚠ If the disconnections come back, the fix is NOT this line. It is to
+      # stop ATTACHING the full installers to a release: ~2.0 GB of the 2.2 is
+      # the full desktop product, which reaches the nodes through Docker and
+      # npm and is never downloaded from a release by hand. Splitting the
+      # viewer onto its own tag was tried and reverted — it moves only ~232 MB,
+      # about 10%, and costs a second release to remember.
+      matrix: ${{ fromJSON(needs.derive-version.outputs.electron_matrix) }}
+    runs-on: ${{ fromJSON(matrix.runner_labels) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Note: no `actions/setup-python@v5` step here.
+      # 1. On Linux self-hosted runners we don't need python at all.
+      # 2. On Mac self-hosted runners (Mac mini), `setup-python` tries
+      #    to write to `/Users/runner/hostedtoolcache` (the GHA-hosted
+      #    convention) and fails with EACCES on our self-hosted user.
+      #    macOS ships `python3` natively (3.9.6 on Tahoe), and the
+      #    `python-shim` block below symlinks `python → python3` so
+      #    electron-builder's `which python` check passes during the
+      #    .dmg/codesign stage. No external python install needed.
+
+      # A full disk killed the v1.2.491 arm64 leg (hdiutil/zip: "No space
+      # left on device"; 40 GB of the Mac mini went to the runners' npm
+      # caches). Trim the npm cache when it is large, then refuse to start a
+      # leg that cannot finish, with a message that says why.
+      - name: Disk space guard
+        run: |
+          MIN_FREE_GB=15
+          NPM_CACHE_MAX_GB=8
+          cache_dir="$(npm config get cache)"
+          if [ -d "$cache_dir" ]; then
+            cache_gb=$(du -sk "$cache_dir" | awk '{print int($1/1048576)}')
+            if [ "$cache_gb" -ge "$NPM_CACHE_MAX_GB" ]; then
+              echo "npm cache is ${cache_gb} GB (>= ${NPM_CACHE_MAX_GB}) — cleaning it"
+              npm cache clean --force || true
+            fi
+          fi
+          free_gb=$(df -Pk "$GITHUB_WORKSPACE" | awk 'NR==2 {print int($4/1048576)}')
+          echo "free on the workspace volume: ${free_gb} GB"
+          if [ "$free_gb" -lt "$MIN_FREE_GB" ]; then
+            echo "::error::Only ${free_gb} GB free on ${RUNNER_NAME}; an Electron leg needs ${MIN_FREE_GB} GB. Free disk space on that host and re-run."
+            exit 1
+          fi
+        shell: bash
+
+      - name: Install workspace deps (no nx build)
+        run: |
+          # Keep workspace install — packages/desktop is `private: true` and
+          # imports workspace types directly. But SKIP the heavy nx build of all
+          # packages: @camstack/server etc. are installed from npm in the next
+          # step (stage-deps).
+          # Self-hosted hygiene: the persistent workspace can hold a partially
+          # cleaned node_modules (ENOTEMPTY on native-module dirs), which makes
+          # `npm ci` leave broken installs (e.g. node-av without its prebuilt).
+          # Wipe it first — npm ci re-resolves everything from the lockfile.
+          rm -rf node_modules
+          # --ignore-scripts: the lockfile (regenerated on macOS) lacks the
+          # linux platform prebuilt entries (npm cross-platform-optionals bug),
+          # so node-av's install check aborts npm ci on the linux runner. The
+          # desktop build needs NO workspace native modules — only the Electron
+          # binary, whose postinstall we run explicitly right after.
+          npm ci --no-audit --no-fund --ignore-scripts
+          npm rebuild electron
+
+      - name: Ensure Python distutils (for node-gyp source-build fallback)
+        run: |
+          # Python 3.12+ removed `distutils` from stdlib. node-gyp's gyp_main.py
+          # imports it. On a Mac/Linux runner with Python 3.12+ and no
+          # `setuptools` installed, the next `@electron/rebuild` step
+          # crashes with "ModuleNotFoundError: No module named 'distutils'"
+          # the first time it touches a native module (any native
+          # dependency with no Electron-ABI prebuild compiles from source).
+          # Install setuptools — it provides the distutils backport.
+          if python3 -c "import distutils" 2>/dev/null; then
+            echo "distutils already importable, skipping"
+          else
+            echo "Installing setuptools (provides distutils for Python 3.12+)"
+            python3 -m pip install --user setuptools --break-system-packages 2>&1 || \
+              python3 -m pip install --user setuptools 2>&1 || \
+              { echo "::error::failed to install setuptools — node-gyp will crash on source compile"; exit 1; }
+            python3 -c "import distutils; print('OK distutils now available')"
+          fi
+        shell: bash
+
+      - name: Ensure a C++20 compiler (Linux node-pty source-build fallback)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          # A native module in the @camstack/server closure (node-pty via
+          # addon-terminal) has no linux-x64 prebuild for this Node ABI, so
+          # stage-deps source-compiles it. Under Node 24, node-gyp's default
+          # C++ standard is gnu++20, which the runner's default GCC 9 rejects
+          # ("unrecognized command line option '-std=gnu++20'"). We must point
+          # CC/CXX at a compiler that ACTUALLY accepts gnu++20.
+          #
+          # HARD-LEARNED: never trust `apt-get install` exit status or a
+          # `command -v` — on this self-hosted focal runner `apt-get install
+          # g++-12` returned 0 yet /usr/bin/g++-12 was absent, so a prior
+          # revision wrote `CXX=g++-12` and node-gyp died with
+          # `FileNotFoundError: 'g++-12'` inside GetCompilerPredefines. The ONLY
+          # reliable acceptance test is to run the candidate against a real
+          # gnu++20 probe. A candidate is used ONLY if the probe passes; CXX is
+          # written ONLY for a proven-good binary. Never block on an interactive
+          # sudo prompt (that hung a leg ~10min) — apt is gated on passwordless
+          # sudo and hard-bounded by `timeout`.
+          set +e
+          works() {
+            command -v "$1" >/dev/null 2>&1 || return 1
+            "$1" -std=gnu++20 -x c++ -E /dev/null >/dev/null 2>&1
+          }
+          adopt() {
+            # $1 = working g++ binary name (e.g. g++-10). Wire CXX (+ matching CC
+            # + bare g++/gcc alternatives) so both $CXX-aware and Makefile-style
+            # builds get C++20.
+            local cxx="$1" ver="${1#g++-}" cc="gcc-${1#g++-}"
+            echo "Using $cxx for native source builds (probe passed)"
+            echo "CXX=$cxx" >> "$GITHUB_ENV"
+            command -v "$cc" >/dev/null 2>&1 && echo "CC=$cc" >> "$GITHUB_ENV"
+            sudo -n update-alternatives --install /usr/bin/g++ g++ "/usr/bin/$cxx" 100 2>/dev/null || true
+            command -v "$cc" >/dev/null 2>&1 && \
+              sudo -n update-alternatives --install /usr/bin/gcc gcc "/usr/bin/$cc" 100 2>/dev/null || true
+          }
+          pick=""
+          # 1) A compiler already on the runner that truly accepts gnu++20.
+          for c in g++-15 g++-14 g++-13 g++-12 g++-11 g++-10; do
+            if works "$c"; then pick="$c"; break; fi
+          done
+          # 2) Bare g++ / clang++ if either already speaks gnu++20.
+          if [ -z "$pick" ] && works g++;   then pick="g++";   fi
+          if [ -z "$pick" ] && works clang++; then
+            echo "Using clang++ for native source builds (probe passed)"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+            command -v clang >/dev/null 2>&1 && echo "CC=clang" >> "$GITHUB_ENV"
+            pick="clang++"
+          fi
+          # 3) Nothing works yet — install a modern g++ and re-probe. Accept the
+          # first version whose INSTALLED binary passes the probe (apt exit code
+          # and package availability are ignored on purpose).
+          if [ -z "$pick" ] && sudo -n true 2>/dev/null; then
+            echo "No gnu++20-capable compiler present; attempting apt install"
+            sudo -n env DEBIAN_FRONTEND=noninteractive apt-get update -y >/dev/null 2>&1 || true
+            for v in 13 12 11 10; do
+              timeout 600 sudo -n env DEBIAN_FRONTEND=noninteractive \
+                apt-get install -y --no-install-recommends "g++-$v" >/dev/null 2>&1
+              if works "g++-$v"; then pick="g++-$v"; break; fi
+            done
+          fi
+          # 4) Focal's GCC 9 implements the required C++20 draft under the old
+          # `gnu++2a` spelling. node-gyp hard-codes the final spelling
+          # `gnu++20`, so CXXFLAGS cannot override it. When apt cannot provide a
+          # newer compiler, use a tiny CXX adapter that changes ONLY that flag.
+          # The normal probe still gates it, so node-gyp never receives an
+          # untested compiler command.
+          if [ -z "$pick" ] && \
+             g++ -std=gnu++2a -x c++ -E /dev/null >/dev/null 2>&1; then
+            compat="$RUNNER_TEMP/camstack-g++20-compat"
+            cat > "$compat" <<'EOF'
+          #!/usr/bin/env bash
+          args=()
+          for arg in "$@"; do
+            case "$arg" in
+              -std=gnu++20) arg=-std=gnu++2a ;;
+              -std=c++20) arg=-std=c++2a ;;
+            esac
+            args+=("$arg")
+          done
+          exec /usr/bin/g++ "${args[@]}"
+          EOF
+            chmod +x "$compat"
+            if works "$compat"; then
+              echo "Using GCC gnu++2a compatibility adapter for native source builds"
+              echo "CXX=$compat" >> "$GITHUB_ENV"
+              command -v gcc >/dev/null 2>&1 && echo "CC=gcc" >> "$GITHUB_ENV"
+              pick="compat"
+            fi
+          fi
+          # 5) Adopt the proven compiler, or fail BEFORE the expensive registry
+          # install with the actual missing prerequisite.
+          if [ -n "$pick" ] && [ "$pick" != clang++ ]; then
+            [ "$pick" = compat ] || adopt "$pick"
+          elif [ -z "$pick" ]; then
+            echo "::error::no C++20-capable compiler could be found for the node-pty source build"
+            exit 1
+          fi
+          set -e
+
+      - name: Stage runtime closure from npm registry
+        # SKIPPED for the viewer product: it declares `extraResources: []` and
+        # runs no node process, so there is nothing to stage. This also makes
+        # the viewer legs the fastest in the matrix — no registry install of the
+        # 1.1 GB closure, no 116 MB Node download, no cross-arch native fetch.
+        if: matrix.stage_closure != 'false'
+        env:
+          # Cross-arch native prebuilds: stage-deps fetches the TARGET arch's
+          # node-av / better-sqlite3 prebuilds when CS_NODE_ARCH is set (needed
+          # for the mac x64 leg cross-built on an arm64 runner). arm64 / linux
+          # x64 legs also pass their own arch — a no-op that matches the host.
+          CS_NODE_ARCH: ${{ matrix.arch }}
+        run: |
+          # Registry-install: the single @camstack/server closure (server + all
+          # addons + node_modules + native prebuilds) is fetched from public npm
+          # and staged into packages/desktop/.deps by stage-deps. NO source
+          # build, NO nx. ONE closure serves both roles — the desktop app picks
+          # hub vs agent at runtime via CAMSTACK_ROLE.
+          #
+          # Clean stale electron build artifacts from any PRIOR run on this
+          # self-hosted runner. A prior FAILED pack can leave a half-written
+          # `release/` (or a stale .deps hard-link) that makes electron-builder
+          # die `EEXIST: file already exists, link …` on the next copy. The
+          # workspace persists between jobs on a self-hosted runner, so clean it.
+          rm -rf packages/desktop/release packages/desktop/.deps || true
+          npm run stage-deps -w packages/desktop
+
+      - name: Build electron wrapper (TS only)
+        # Self-sufficient: node-root resolves from SOURCE via tsconfig paths
+        # (no prior node-root build needed — its dts step was flaky on the
+        # self-hosted mac runners).
+        run: npm run build -w ${{ matrix.workspace }}
+
+      - name: Clear stale dmg-builder cache (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # electron-builder downloads a `dmg-builder` bundle (a bundled python
+          # + dmgbuild) into the per-user cache. If that bundle ends up
+          # half-written / poisoned, the .dmg step's final `hdiutil convert`
+          # output fails to parse in the bundled python
+          # (`plistlib.InvalidFileException`) even though hdiutil itself is
+          # perfectly fine — the failure appears SUDDENLY on a runner that
+          # built cleanly before (observed between v1.1.35 → v1.1.36). Clearing
+          # ONLY the dmg-builder bundle (small, re-downloaded in seconds) each
+          # mac build makes a poisoned cache unable to wedge the .dmg step,
+          # while leaving the heavy Electron/cache entries intact. Runs as the
+          # runner user, so it can write its own cache (no sudo needed).
+          rm -rf "$HOME/Library/Caches/electron-builder/dmg-builder"* 2>/dev/null || true
+          echo "cleared dmg-builder cache for $(whoami)"
+
+      - name: Build Electron ${{ matrix.target }} installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS code-signing + notarization. GitHub Actions translates
+          # missing secrets to "" — empty CSC_LINK breaks codesign.js
+          # (path.resolve(currentDir, "") === currentDir → "not a file").
+          # We unset the empty values in the run script below.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' }}
+          WORKSPACE: ${{ matrix.workspace }}
+          BUILDER_FLAGS: ${{ matrix.builder_flags }}
+        run: |
+          set -e
+
+          # Unset empty code-signing env vars so codesign.js doesn't
+          # interpret "" as a relative path resolving to currentDir.
+          for V in CSC_LINK CSC_KEY_PASSWORD APPLE_ID \
+                   APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!V}" ]; then unset "$V"; fi
+          done
+
+          # macOS prep.
+          if [ "$RUNNER_OS" = "macOS" ]; then
+              # Build-time python shim — electron-builder calls
+              # `which python` during the .dmg/codesign stage on macOS.
+              mkdir -p "$WORKSPACE/.python-shim"
+              ln -sf "$(which python3)" "$WORKSPACE/.python-shim/python"
+              export PATH="$PWD/$WORKSPACE/.python-shim:$PATH"
+
+              # Mac code-signing on self-hosted runners — build a DEDICATED
+              # keychain from the CSC_LINK secret at build time.
+              #
+              # The previous approach relied on the cert being pre-imported
+              # into the Mac mini's login.keychain. That breaks whenever the
+              # login keychain locks (reboot / no GUI session) or its key ACL
+              # is lost — codesign then dies with `errSecInternalComponent`.
+              # electron-builder's OWN CSC_LINK pipeline also fails in the
+              # LaunchAgent context because it never runs
+              # `set-key-partition-list` on the temp keychain it makes.
+              #
+              # So we create the keychain ourselves: import the p12, set the
+              # partition list (lets codesign use the key with no UI prompt),
+              # unlock it, and put it first on the user search list.
+              # electron-builder's CSC_IDENTITY_AUTO_DISCOVERY then resolves
+              # the identity from it. Fully self-contained — no dependency on
+              # the machine's login keychain or an interactive session.
+              if [ -n "${CSC_LINK:-}" ] && [ -n "${CSC_KEY_PASSWORD:-}" ]; then
+                echo "Mac signing: building a dedicated keychain from CSC_LINK"
+                SIGN_KC="$RUNNER_TEMP/camstack-signing.keychain-db"
+                SIGN_KC_PW="$(openssl rand -base64 24)"
+                P12="$RUNNER_TEMP/camstack-cert.p12"
+                printf '%s' "$CSC_LINK" | openssl base64 -d -A > "$P12"
+                security delete-keychain "$SIGN_KC" 2>/dev/null || true
+                security create-keychain -p "$SIGN_KC_PW" "$SIGN_KC"
+                security set-keychain-settings -lut 21600 "$SIGN_KC"
+                security unlock-keychain -p "$SIGN_KC_PW" "$SIGN_KC"
+                security import "$P12" -k "$SIGN_KC" -P "$CSC_KEY_PASSWORD" \
+                  -T /usr/bin/codesign -T /usr/bin/security
+                security set-key-partition-list -S apple-tool:,apple:,codesign: \
+                  -s -k "$SIGN_KC_PW" "$SIGN_KC" >/dev/null
+                # Prepend our keychain to the user search list (keep the
+                # existing ones for the Apple WWDR intermediate chain).
+                security list-keychains -d user -s "$SIGN_KC" \
+                  $(security list-keychains -d user | sed -e 's/^ *"//' -e 's/" *$//' | grep -v camstack-signing)
+                # notarytool (the Notarize step) needs an UNLOCKED *default*
+                # keychain — even with explicit --apple-id/--password it errors
+                # `keychainLocked: default` against the login keychain. Point
+                # the default at our unlocked keychain. No race: `-d user` is
+                # PER-USER and the two mac legs run as different users
+                # (ghrunner1 / ghrunner2, one leg each). That — not the former
+                # `max-parallel: 1` — is what makes this safe, and it is why
+                # removing the serialisation (D429) does not reintroduce the
+                # 2026-08 identity race.
+                security default-keychain -d user -s "$SIGN_KC"
+                rm -f "$P12"
+                # electron-builder must NOT run its own (partition-list-less)
+                # keychain import — unset so it falls back to
+                # CSC_IDENTITY_AUTO_DISCOVERY against our search list.
+                unset CSC_LINK CSC_KEY_PASSWORD
+                if ! security find-identity -v -p codesigning \
+                     | grep -q "Developer ID Application"; then
+                  echo "::error::Developer ID Application identity not found after importing CSC_LINK into the dedicated keychain."
+                  exit 1
+                fi
+                security find-identity -v -p codesigning | grep "Developer ID Application"
+              fi
+          fi
+
+          # Verify the build output is in place before electron-builder
+          # tries to package it.
+          echo "── $WORKSPACE dist content ──"
+          ls -la "$WORKSPACE/dist/" 2>&1 | head -20
+
+          # ALWAYS skip electron-builder's own publish step. The dual-
+          # publish (electron-builder uploading AND softprops/action-
+          # gh-release uploading the same files) collides on tag-retag
+          # with 422 'asset already_exists' against the prior run's
+          # release. softprops handles the GitHub Release upload
+          # exclusively — see the `release` job further down.
+          PUBLISH_FLAG="--publish=never"
+
+          # `cd "$WORKSPACE"` rather than `--projectDir` because some of
+          # electron-builder's downstream commands (notably codesign with
+          # `--entitlements assets/entitlements.mac.plist`) resolve relative
+          # paths against the *process CWD*, not against projectDir. With
+          # --projectDir but CWD = repo root, codesign aborts with
+          # "assets/entitlements.mac.plist: cannot read entitlement data".
+          #
+          # `--config.extraMetadata.version` overrides the package.json
+          # version used in artifactName so the .dmg/.exe/.AppImage
+          # filenames match the git tag (e.g. CamStack-0.1.1-arm64.dmg
+          # under the v0.1.1 release, not the package.json's stale 0.1.0).
+          #
+          # electron-builder is a devDependency of packages/desktop. npm
+          # workspaces does NOT hoist it to the root node_modules/.bin/ (no
+          # deduplication for devDeps of private workspace members). After
+          # `cd "$WORKSPACE"`, npx
+          # resolves the binary from the workspace's own node_modules/.bin/
+          # — reliably, without a hardcoded absolute path.
+          BUILD_VERSION="${{ needs.derive-version.outputs.version }}"
+          # On macOS we delegate notarize to a post-build `xcrun notarytool`
+          # invocation (see "Notarize macOS .dmg" step). The reason: the
+          # @electron/notarize wrapper electron-builder uses doesn't retry
+          # cleanly on Apple notary HTTP 500 transients (which are common on
+          # large bundles), and exits the whole build. Doing it as a separate
+          # step lets us retry just the notarize call without rebuilding the
+          # entire app + .dmg. Skip flag injected for darwin only.
+          NOTARIZE_FLAG=""
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            NOTARIZE_FLAG="--config.mac.notarize=false"
+          fi
+          # The macOS .dmg step (dmgbuild → `hdiutil convert`) fails
+          # INTERMITTENTLY with `plistlib.InvalidFileException` when
+          # `hdiutil convert` returns empty output — a transient
+          # timing/contention hiccup in the real dmgbuild flow (every hdiutil
+          # command parses fine in isolation, and it appeared suddenly between
+          # v1.1.35 → v1.1.36). Retry once, refreshing the dmg-builder bundle
+          # between attempts, so a transient/poisoned-bundle failure doesn't
+          # sink the whole release. Non-mac builds simply never retry (they
+          # succeed on the first pass; a real failure still surfaces).
+          attempt=1; max=2; rc=0
+          while [ "$attempt" -le "$max" ]; do
+            if (
+              cd "$WORKSPACE"
+              npx electron-builder \
+                --config.extraMetadata.version="$BUILD_VERSION" \
+                $PUBLISH_FLAG $BUILDER_FLAGS $NOTARIZE_FLAG
+            ); then
+              rc=0; break
+            fi
+            rc=$?
+            [ "$attempt" -ge "$max" ] && break
+            echo "::warning::electron-builder attempt $attempt failed (rc=$rc) — refreshing dmg-builder cache + retrying"
+            if [ "$RUNNER_OS" = "macOS" ]; then
+              rm -rf "$HOME/Library/Caches/electron-builder/dmg-builder"* 2>/dev/null || true
+            fi
+            attempt=$((attempt + 1)); sleep 5
+          done
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::electron-builder failed after $attempt attempt(s) (rc=$rc)"
+            exit "$rc"
+          fi
+        shell: bash
+
+      # Manual notarize via `xcrun notarytool` — replaces the in-builder flow
+      # because @electron/notarize doesn't retry HTTP 500 transients from
+      # Apple notary, exiting the entire build on a single 500. With this
+      # split we can retry just notarize on the same artifacts.
+      #
+      # Uses `--keychain-profile camstack-notary` — credentials must be
+      # stored on the runner with `xcrun notarytool store-credentials
+      # camstack-notary` once (one-time per Mac runner). No env-var pwd
+      # roundtrip needed.
+      - name: Notarize macOS .dmg + staple
+        if: matrix.platform == 'mac'
+        env:
+          WORKSPACE: ${{ matrix.workspace }}
+          # Explicit Apple credentials — NOT a `--keychain-profile`, which
+          # reads from the (locked, in the runner's non-GUI session) default
+          # login keychain and fails with `keychainLocked: default`.
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -e
+          cd "$WORKSPACE"
+          # Per-job notary log path. MUST NOT be a shared, hardcoded /tmp file:
+          # the two mac legs run as DIFFERENT users (ghrunner1 / ghrunner2) on
+          # the same Mac mini and would collide on a fixed /tmp path — and a
+          # file left behind by a prior run's user is unwritable, so `tee`
+          # fails with "Permission denied", the log comes back empty, the
+          # "status: Accepted" grep misses, and an already-Accepted submission
+          # is wrongly retried/failed. $RUNNER_TEMP is per-job and owned by the
+          # runner user.
+          NOTARY_LOG="$RUNNER_TEMP/notary-output.log"
+          # electron-builder produces multiple .dmg (arm64 + x64) — notarize each.
+          # NOTE: macOS ships bash 3.2 which lacks `mapfile`; use a plain glob
+          # iteration instead. nullglob avoids spurious literal "release/*.dmg"
+          # if no matches.
+          shopt -s nullglob
+          DMG_COUNT=0
+          for DMG in "${{ matrix.output_dir }}"/*.dmg; do
+            DMG_COUNT=$((DMG_COUNT+1))
+          done
+          if [ "$DMG_COUNT" -eq 0 ]; then
+            echo "::error::No .dmg found in $WORKSPACE/${{ matrix.output_dir }}/"
+            ls -la "${{ matrix.output_dir }}"/
+            exit 1
+          fi
+          echo "── Found $DMG_COUNT dmg(s) ──"
+          for DMG in "${{ matrix.output_dir }}"/*.dmg; do
+          echo "── Notarizing $DMG ──"
+          # Submit + wait. notarytool retries internal Apple flakes more
+          # gracefully than @electron/notarize. Up to 3 attempts on full
+          # failure (each `submit --wait` polls every 10s for ~30 min by
+          # default).
+          ATTEMPTS=0
+          MAX=3
+          while [ $ATTEMPTS -lt $MAX ]; do
+            ATTEMPTS=$((ATTEMPTS+1))
+            echo "── Notarize attempt $ATTEMPTS/$MAX ──"
+            if xcrun notarytool submit "$DMG" \
+                 --apple-id "$APPLE_ID" \
+                 --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+                 --team-id "$APPLE_TEAM_ID" \
+                 --wait 2>&1 | tee "$NOTARY_LOG"; then
+              if grep -q "status: Accepted" "$NOTARY_LOG"; then
+                echo "── Accepted ──"
+                break
+              fi
+            fi
+            if [ $ATTEMPTS -lt $MAX ]; then
+              echo "::warning::notarize attempt $ATTEMPTS failed — retrying in 60s"
+              sleep 60
+            else
+              echo "::error::notarize failed after $MAX attempts"
+              exit 1
+            fi
+          done
+          echo "── Stapling $DMG ──"
+          xcrun stapler staple "$DMG"
+          xcrun stapler validate "$DMG"
+          echo "── $DMG done ──"
+          done   # end for DMG loop
+          echo "── All notarize+staple complete ──"
+        shell: bash
+
+      # The signing step makes the temporary camstack-signing keychain the
+      # user's DEFAULT keychain and prepends it to the search list, then
+      # $RUNNER_TEMP is wiped at job end. On a runner that runs as a real
+      # login user (the Mac mini agent runs actions-runner-1 as the operator),
+      # that left the operator's default pointing at a deleted file, and macOS
+      # warned "the CamStack keychain was renamed" at every app start. Always
+      # restore login as default and drop the temporary keychain, even when
+      # the build or notarization failed.
+      - name: Restore the user's keychains (macOS)
+        if: always() && matrix.platform == 'mac'
+        run: |
+          LOGIN_KC="$HOME/Library/Keychains/login.keychain-db"
+          SIGN_KC="$RUNNER_TEMP/camstack-signing.keychain-db"
+          security default-keychain -d user -s "$LOGIN_KC" || true
+          security list-keychains -d user -s "$LOGIN_KC" \
+            $(security list-keychains -d user | sed -e 's/^ *"//' -e 's/" *$//' | grep -v camstack-signing | grep -v "$LOGIN_KC") || true
+          security delete-keychain "$SIGN_KC" 2>/dev/null || true
+          echo "default: $(security default-keychain -d user)"
+        shell: bash
+
+      # Self-hosted runners keep installers in `_work/` (and MinIO, task #129).
+      # Never `actions/upload-artifact` — that is the org Actions storage
+      # quota, and a single mac dispatch is ~1 GB. Tag pushes attach the
+      # same files to the GitHub Release (separate quota).
+      - name: Keep installer on the runner (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Installer left on this runner — not uploaded to GitHub Actions artifacts."
+          ls -lh ${{ matrix.workspace }}/${{ matrix.output_dir }}/${{ matrix.artifact_glob }}
+          echo "workspace=$(realpath ${{ matrix.workspace }}/${{ matrix.output_dir }})"
+
+      - name: Stage installers for release (tag push only)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          mkdir -p release-staging
+          # Glob expands per-workspace's release/ dir — we only ship the
+          # final installer files + electron-updater feeds, never blockmap
+          # internals or the unpacked .app dir.
+          shopt -s nullglob
+          cp -v "${{ matrix.workspace }}/${{ matrix.output_dir }}/"${{ matrix.artifact_glob }} \
+            release-staging/ 2>/dev/null || true
+          # The electron-updater FEED, matched by the leg's own glob — never a
+          # bare `latest*.yml`. The two products publish to the SAME GitHub
+          # release and each carries its own channel (`latest` for the full
+          # app, `viewer` for the reduced one), so their feed files are
+          # `latest-*.yml` and `viewer-*.yml`. A shared glob here would either
+          # miss the viewer's feed entirely or re-create the collision the
+          # channels exist to remove. `scripts/check-desktop-update-feeds.ts`
+          # asserts each leg's glob against the channel its config publishes.
+          # ADR-0584.
+          cp -v "${{ matrix.workspace }}/${{ matrix.output_dir }}/"${{ matrix.feed_glob }} \
+            release-staging/ 2>/dev/null || true
+          ls -la release-staging/
+        shell: bash
+
+      - name: Upload installers to the GitHub Release (tag push only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: release-staging/*
+          fail_on_unmatched_files: false
+          # Keep the release in draft state — `publish-release` un-drafts at
+          # the end. Asserting `draft: true` here prevents any matrix job
+          # from accidentally flipping the release to published mid-build.
+          draft: true
+
+      # The installers are in the release now; drop the per-leg build output
+      # so a self-hosted runner does not accumulate ~1 GB per leg per tag.
+      # workflow_dispatch keeps them on purpose (see above).
+      - name: Clean up build output (tag push only)
+        if: always() && startsWith(github.ref, 'refs/tags/')
+        run: |
+          rm -rf "${{ matrix.workspace }}/${{ matrix.output_dir }}" \
+            "${{ matrix.workspace }}/.deps" release-staging || true
+        shell: bash
+
+  # ── Step 4 — flip the draft release to published once everything is in ──
+  #
+  # Until this job runs the release is a draft — invisible to anyone hitting
+  # the releases page. With every build-docker + build-electron job green,
+  # the Docker images are on GHCR and every installer is attached as an
+  # asset, so it is safe to publish. The job is intentionally minimal: a
+  # single `gh release edit --draft=false`.
+  publish-release:
+    needs: [derive-version, build-docker, build-electron]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: [self-hosted, linux, x64, ci-release]
+    steps:
+      - name: Publish the release (un-draft)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.ref_name }}" --draft=false
+
+  # ── Step 5 — summary printed even when partial failures occurred ──
+  summary:
+    needs: [derive-version, build-docker, build-electron, publish-release]
+    runs-on: [self-hosted, linux, x64, ci-release]
+    if: always()
+    steps:
+      - name: Lowercase repository owner
+        id: repo
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+      - name: Job summary
+        env:
+          VERSION: ${{ needs.derive-version.outputs.version }}
+          SERVER_VERSION: ${{ needs.derive-version.outputs.server_version }}
+        run: |
+          OWNER_LC="${{ steps.repo.outputs.owner }}"
+          IMG="${{ env.REGISTRY }}/${OWNER_LC}/camstack"
+          {
+            echo "## CamStack — Release \`v${VERSION}\`"
+            echo ""
+            echo "Baked closure: \`@camstack/server@${SERVER_VERSION}\` (npm \`latest\`)."
+            if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+              echo ""
+              echo "Dry run — derive only. Nothing was built or published."
+            fi
+            echo ""
+            echo "### Docker image"
+            echo ""
+            echo '```bash'
+            echo "docker pull ${IMG}:intel-${VERSION}"
+            echo '```'
+            echo ""
+            echo "### Desktop installers"
+            echo "Available on the release page:"
+            echo "- \`CamStack-${VERSION}-arm64.dmg\` / \`CamStack-${VERSION}-x64.dmg\` / \`CamStack-${VERSION}-x64.AppImage\` / \`CamStack-${VERSION}-amd64.deb\`"
+          } >> $GITHUB_STEP_SUMMARY

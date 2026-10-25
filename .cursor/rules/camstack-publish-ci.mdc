@@ -1,0 +1,12 @@
+---
+description: CamStack releases through GitHub Actions — Publish Packages, the release tag, registry lag, never dispatch Checks
+globs: .github/workflows/**
+alwaysApply: false
+---
+<!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The procedure lives in the skill below. -->
+
+**Publishing to npm or cutting a release, through CI** → follow the `camstack-publish-ci` skill — `.claude/skills/camstack-publish-ci/SKILL.md`. Cursor also offers it as an Agent Skill; any other agent reads the file.
+
+Long-form reference: `docs/architecture/update-and-release.md`.
+
+- @.claude/skills/camstack-publish-ci/SKILL.md

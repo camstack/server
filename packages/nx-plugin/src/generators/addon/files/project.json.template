@@ -1,0 +1,20 @@
+{
+  "name": "@camstack/addon-<%= fileName %>",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "<%= projectRoot %>/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vite build",
+        "cwd": "<%= projectRoot %>"
+      }
+    },
+    "deploy": {
+      "executor": "@camstack/nx-plugin:deploy",
+      "dependsOn": ["build"],
+      "options": {}
+    }
+  }
+}

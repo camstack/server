@@ -1,0 +1,11 @@
+{
+  // The type gate inside `npm run build`. Same program as tsconfig.json, but
+  // @camstack/ui-library resolves to its BUILT .d.ts (nx guarantees it through
+  // `dependsOn: ^build`) instead of its sources via `paths`. Same move as
+  // admin-ui's 2026-10-09 CI memory bound (docs/design/2026-10-09-ts7-
+  // transition-plan.md §P1). Editor / other programs keep the source paths.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {}
+  }
+}

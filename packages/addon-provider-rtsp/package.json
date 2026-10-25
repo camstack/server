@@ -1,0 +1,80 @@
+{
+  "name": "@camstack/addon-provider-rtsp",
+  "version": "1.2.145",
+  "description": "Generic RTSP camera device provider addon for CamStack",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "rtsp",
+    "provider",
+    "camera",
+    "streaming"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "RTSP Provider",
+    "addons": [
+      {
+        "id": "provider-rtsp",
+        "category": "providers",
+        "name": "RTSP",
+        "version": "0.1.0",
+        "description": "Direct connection to cameras via RTSP URL",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#78716c",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "connection-test"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "better-sqlite3": "^12.8.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6"
+  }
+}

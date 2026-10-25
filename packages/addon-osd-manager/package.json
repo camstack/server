@@ -1,0 +1,104 @@
+{
+  "name": "@camstack/addon-osd-manager",
+  "version": "0.1.270",
+  "description": "Binds camera on-screen-display slots to live state and recognitions",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "osd",
+    "overlay"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "OSD Manager",
+    "addons": [
+      {
+        "id": "osd-manager",
+        "category": "system",
+        "name": "OSD Manager",
+        "version": "0.1.0",
+        "description": "Drives the text a camera burns into its own video. Each overlay slot can be bound to device state, the latest recognized person or plate, a clock, or a literal. Writes nothing when the rendered text has not changed.",
+        "entry": "./dist/index.js",
+        "icon": "assets/icon.svg",
+        "color": "#f59e0b",
+        "instanceMode": "unique",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "osd-manager"
+          },
+          {
+            "name": "addon-pages-source"
+          }
+        ],
+        "pages": [
+          {
+            "id": "osd-manager",
+            "label": "OSD Manager",
+            "icon": "monitor",
+            "path": "/addon/osd-manager",
+            "remoteName": "addon_osd_manager_page",
+            "bundle": "remoteEntry.js",
+            "section": "detection"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build && vite build -c vite.page.config.ts",
+    "build:server": "vite build",
+    "build:page": "vite build -c vite.page.config.ts",
+    "dev": "vite build --watch",
+    "dev:page": "vite -c vite.page.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/vite": "^1.16.9",
+    "@tailwindcss/vite": "^4.2.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@trpc/client": "^11.16.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "superjson": "^2.0.0",
+    "tailwindcss": "^4.2.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "file": "docs/design/2026-08-13-durable-value-tracking-and-runtime-state.md",
+    "match": "DB 326 MB",
+    "why": "false positive of the plate pattern: 'DB 326 MB' is a database size"
+  },
+  {
+    "file": "docs/design/2026-09-20-external-videoclips.md",
+    "match": "SD 238 GB",
+    "why": "false positive of the plate pattern: an SD-card capacity"
+  },
+  {
+    "file": "docs/design/2026-09-20-external-videoclips.md",
+    "match": "SD 249 GB",
+    "why": "false positive of the plate pattern: an SD-card capacity"
+  },
+  {
+    "file": "docs/design/2026-09-22-amcrest-clips-feasibility.md",
+    "match": "00:00:00-23:59:59",
+    "why": "false positive of the MAC pattern: a recording time window"
+  }
+]

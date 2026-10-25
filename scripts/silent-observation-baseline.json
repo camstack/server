@@ -1,0 +1,8 @@
+{
+  "_comment": "D237: observation emits gated on a bare truthiness check. A ratchet — counts may only go DOWN. Enforced by scripts/check-silent-observation-drop.ts.",
+  "files": {
+    "packages/addon-pipeline/src/stream-broker/rtsp/rtsp-client.ts": 1,
+    "packages/system/src/builtins/core-blocks/block-supervisor.ts": 1,
+    "packages/system/src/kernel/moleculer/addon-context-factory.ts": 1
+  }
+}

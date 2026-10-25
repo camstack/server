@@ -1,0 +1,31 @@
+# EdgeTPU (Coral USB Edge TPU) backend.
+#
+# Interpreter: ai-edge-litert (LiteRT) — numpy-2 native, cp39-cp312 wheels.
+# We use LiteRT (NOT tflite-runtime / pycoral) because:
+#   * pycoral official wheels cap at Python 3.9; the hub venv is 3.12.
+#   * feranick's tflite-runtime cp312 wheel is compiled against numpy 1.x and
+#     crashes under the hub's numpy 2.x (OpenVINO needs numpy<2.4).
+#   * ai-edge-litert exposes tflite_runtime-compatible Interpreter + load_delegate
+#     and is numpy-2 native.
+ai-edge-litert==2.1.6
+
+# libedgetpu (the Coral delegate) is a native shared library — pip cannot
+# install it — and its TensorFlow version MUST match the interpreter (stock
+# Coral libedgetpu 16.0/grouper is built against old TFLite and FAILS at invoke:
+# "EdgeTpuDelegateForCustomOp failed to invoke"). The line below asks the deps
+# downloader to stage feranick's libedgetpu rebuilt against TF 2.17.1 right
+# after this file installs (`@camstack/types` `deps/edgetpu-delegate.ts`:
+# pinned, SHA-256 verified; on Linux libusb-1.0.so.0 beside it, because the std
+# delegate links libusb even for a PCIe Coral and the pool preloads that copy).
+# It lands in <CAMSTACK_DATA>/deps/edgetpu/lib/ — /data/deps/edgetpu/lib on the
+# hub image, where `edgetpu-install.sh` (beside this file) has always put it.
+# Linux x64/arm64 and Apple Silicon only; Windows has no TF 2.17.1 build.
+# CAMSTACK_EDGETPU_LIB overrides the path the pool loads.
+# camstack-native-dep: edgetpu-delegate
+#
+# Host prerequisite, USB: /dev/bus/usb passed through plus a
+# `--device-cgroup-rule 'c 189:* rmw'` rule (the Coral re-enumerates its USB
+# minor after firmware init, so a fixed --device does not survive).
+# Host prerequisite, PCIe/M.2: the gasket/apex kernel driver loaded on the host
+# and each /dev/apex_N passed in (`--device /dev/apex_0`), read/write for the
+# CamStack user.

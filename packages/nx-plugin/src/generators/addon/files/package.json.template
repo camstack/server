@@ -1,0 +1,47 @@
+{
+  "name": "@camstack/addon-<%= fileName %>",
+  "version": "0.1.0",
+  "description": "<%= description %>",
+  "keywords": ["camstack", "addon", "camstack-addon"],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "<%= displayName %>",
+    "addons": [
+      {
+        "id": "<%= fileName %>",
+        "name": "<%= displayName %>",
+        "description": "<%= description %>",
+        "entry": "./dist/<%= fileName %>.addon.js",
+        "capabilities": []
+      }
+    ]
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@camstack/types": "^0.1.0"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

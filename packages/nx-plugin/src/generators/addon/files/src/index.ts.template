@@ -1,0 +1,1 @@
+export { <%= className %>Addon, default } from './<%= fileName %>.addon.js'

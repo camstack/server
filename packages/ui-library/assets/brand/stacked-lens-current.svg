@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Bottom layer -->
+  <rect x="8" y="28" width="48" height="28" rx="6" fill="currentColor" opacity="0.2"/>
+  <!-- Middle layer -->
+  <rect x="12" y="16" width="40" height="28" rx="6" fill="currentColor" opacity="0.35"/>
+  <!-- Top layer -->
+  <rect x="16" y="4" width="32" height="28" rx="6" fill="currentColor" opacity="0.6"/>
+  <!-- Lens outer ring -->
+  <circle cx="32" cy="18" r="8" fill="currentColor" opacity="0.1"/>
+  <!-- Lens inner ring -->
+  <circle cx="32" cy="18" r="5" fill="currentColor" opacity="0.08"/>
+  <!-- Lens center -->
+  <circle cx="32" cy="18" r="2.5" fill="currentColor" opacity="0.9"/>
+</svg>

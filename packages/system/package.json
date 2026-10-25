@@ -1,0 +1,585 @@
+{
+  "name": "@camstack/system",
+  "version": "1.2.483",
+  "description": "Core addon for CamStack — builtins, pipeline, process management, auth, logging, events",
+  "keywords": [
+    "camstack",
+    "core",
+    "addon",
+    "camera",
+    "nvr"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./addon-utils": {
+      "types": "./dist/addon-utils.d.ts",
+      "import": "./dist/addon-utils.mjs",
+      "require": "./dist/addon-utils.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "system": true,
+    "displayName": "Core",
+    "addons": [
+      {
+        "id": "filesystem-storage",
+        "category": "system",
+        "name": "Filesystem Storage",
+        "icon": "assets/filesystem-storage/icon.svg",
+        "color": "#0d9488",
+        "entry": "./dist/builtins/sqlite-storage/filesystem-storage.addon.js",
+        "capabilities": [
+          {
+            "name": "storage-provider"
+          },
+          {
+            "name": "filesystem-browse"
+          }
+        ]
+      },
+      {
+        "id": "sqlite-settings",
+        "category": "system",
+        "name": "SQLite Settings",
+        "icon": "assets/sqlite-settings/icon.svg",
+        "color": "#0d9488",
+        "entry": "./dist/builtins/sqlite-storage/sqlite-settings.addon.js",
+        "description": "The relational ENGINE behind the data door (SQLite WAL). Registers `data-store-provider`, an internal collection cap; the public `settings-store` door is owned by `storage-orchestrator`, which dispatches here. Callers never reach this addon directly — that is what makes the engine replaceable. It ALSO registers `vector-store` (sqlite-vec) from the same database file and the same open handle, `storage-admin` (list tables, drop one nothing owns) and `database-snapshot`: the verified copy of its database that the nightly backup archives in place of the live files, written by this runner on a thread over its own connection. Runs in its OWN process (`execution.isolate`) — `better-sqlite3` `Statement.run` does not belong on the event loop that serves the API.",
+        "execution": {
+          "isolate": true,
+          "heapProfile": "heavy",
+          "rssBudgetMb": 1536
+        },
+        "capabilities": [
+          {
+            "name": "data-store-provider"
+          },
+          {
+            "name": "vector-store"
+          },
+          {
+            "name": "database-snapshot"
+          },
+          {
+            "name": "storage-admin"
+          },
+          {
+            "name": "records"
+          }
+        ]
+      },
+      {
+        "id": "winston-logging",
+        "category": "system",
+        "name": "Winston Logging",
+        "icon": "assets/winston-logging/icon.svg",
+        "color": "#64748b",
+        "entry": "./dist/builtins/winston-logging/index.js",
+        "capabilities": [
+          {
+            "name": "log-destination"
+          }
+        ]
+      },
+      {
+        "id": "console-logging",
+        "category": "system",
+        "name": "Console Logging",
+        "icon": "assets/console-logging/icon.svg",
+        "color": "#64748b",
+        "entry": "./dist/builtins/console-logging/index.js",
+        "capabilities": [
+          {
+            "name": "log-destination"
+          }
+        ]
+      },
+      {
+        "id": "loki-logging",
+        "category": "system",
+        "name": "Loki Logging",
+        "icon": "assets/loki-logging/icon.svg",
+        "color": "#64748b",
+        "description": "Opt-in log destination — batches this node's log entries and pushes them to a Grafana Loki instance via /loki/api/v1/push. Registered always, inert until enabled with a URL.",
+        "entry": "./dist/builtins/loki-logging/index.js",
+        "capabilities": [
+          {
+            "name": "log-destination"
+          }
+        ]
+      },
+      {
+        "id": "hub-forwarder",
+        "category": "system",
+        "name": "Hub Log Forwarder",
+        "icon": "assets/hub-forwarder/icon.svg",
+        "color": "#64748b",
+        "description": "Agent-only log destination — forwards every log entry to the hub via the cluster broker. Never runs on the hub itself (the hub already owns the log-receiver, registering hub-forwarder there would create a write→ingest→write feedback loop).",
+        "entry": "./dist/builtins/hub-forwarder/index.js",
+        "execution": {
+          "placement": "agent-only"
+        },
+        "capabilities": [
+          {
+            "name": "log-destination"
+          }
+        ]
+      },
+      {
+        "id": "backup-orchestrator",
+        "category": "system",
+        "name": "Backup Orchestrator",
+        "icon": "assets/backup-orchestrator/icon.svg",
+        "color": "#0d9488",
+        "description": "System singleton that owns the schedule, builds the archive once, and fans it out to every enabled `backup-destination` provider (local, S3, rsync, …). In-process on hub root — aggregator over a cluster collection, no native deps.",
+        "entry": "./dist/builtins/backup-orchestrator/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "backup"
+          }
+        ],
+        "storageLocations": [
+          {
+            "id": "backups",
+            "displayName": "Backups",
+            "description": "Backup archives.",
+            "cardinality": "multi",
+            "access": "cap-mediated",
+            "defaultRoot": "backup"
+          }
+        ]
+      },
+      {
+        "id": "storage-orchestrator",
+        "category": "system",
+        "name": "Storage Orchestrator",
+        "icon": "assets/storage-orchestrator/icon.svg",
+        "color": "#0d9488",
+        "description": "The single data door. Owns the consumer-facing `storage` cap for bytes — the `locationId → StorageLocation` map, `StorageLocationRef` resolution, dispatch to the matching `storage-provider` registrant (`filesystem-storage` today; SFTP / S3 / WebDAV plug in alongside) — AND the `settings-store` cap for rows, dispatching to the `data-store-provider` engine (`sqlite-settings` today; a vector engine plugs in alongside). Nothing reaches an engine except through this addon.",
+        "entry": "./dist/builtins/storage-orchestrator/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "storage"
+          },
+          {
+            "name": "storage-migration"
+          },
+          {
+            "name": "settings-store"
+          }
+        ]
+      },
+      {
+        "id": "keychain",
+        "category": "system",
+        "name": "Keychain",
+        "icon": "assets/keychain/icon.svg",
+        "color": "#0d9488",
+        "description": "Hub-only store of every secret value. Settings blobs hold a marker; the value lives here, AES-256-GCM under a data key wrapped by a master key whose location is configuration (config.yaml `keychain.keyFile`, the desktop OS keychain, else the data-dir default). Registers `keychain` (internal, owner-checked against the transport-stamped caller) and `keychain-admin` (System → Secrets). Boots in the infrastructure pass, right after the settings door.",
+        "entry": "./dist/builtins/keychain/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "keychain"
+          },
+          {
+            "name": "keychain-admin"
+          }
+        ]
+      },
+      {
+        "id": "record-entries",
+        "category": "system",
+        "name": "Record Entries",
+        "icon": "assets/record-entries/icon.svg",
+        "color": "#0d9488",
+        "description": "The ONE admin surface for every list of user-created entries (notification targets, brokers, LLM profiles): any addon declares an entry kind with `defineEntryKind` and the entries UI lists, adds, edits and deletes it, with password fields derived from the schema (`.meta({ secret: true })`). Holds no data of its own: it acts for each entry's owner on the records door and the keychain, in-process on the hub.",
+        "entry": "./dist/builtins/record-entries/index.js",
+        "protected": true,
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "record-entries"
+          }
+        ]
+      },
+      {
+        "id": "metrics-native",
+        "category": "system",
+        "name": "Native Metrics",
+        "icon": "assets/metrics-native/icon.svg",
+        "color": "#d97706",
+        "entry": "./dist/builtins/native-metrics/native-metrics.addon.js",
+        "capabilities": [
+          {
+            "name": "metrics-provider"
+          }
+        ]
+      },
+      {
+        "id": "device-history",
+        "category": "system",
+        "name": "Device History",
+        "icon": "assets/device-history/icon.svg",
+        "color": "#2F7D8C",
+        "description": "Records numeric history of device values (capability history blocks and producer-declared series) with 5m/1h/1d rollups and retention.",
+        "entry": "./dist/builtins/device-history/device-history.addon.js",
+        "protected": true,
+        "execution": {
+          "placement": "hub-only",
+          "isolate": true
+        },
+        "capabilities": [
+          {
+            "name": "device-removal-hook",
+            "optional": true
+          },
+          {
+            "name": "device-history"
+          }
+        ]
+      },
+      {
+        "id": "snapshot",
+        "category": "system",
+        "name": "Snapshot",
+        "icon": "assets/snapshot/icon.svg",
+        "color": "#7c3aed",
+        "description": "Owns every camera's latest frame: the capture ladder (vendor native → ffmpeg keyframe grab off the stream-broker restream), the sharp resize, the courtesy frame for a camera that cannot answer, and the two HTTP planes the clients actually fetch bytes from. Runs in its OWN process (`execution.isolate`) — capture, transcode and byte caches do not belong on the event loop that serves the API.",
+        "entry": "./dist/builtins/snapshot/index.js",
+        "execution": {
+          "isolate": true,
+          "heapProfile": "heavy",
+          "rssBudgetMb": 1024
+        },
+        "capabilities": [
+          {
+            "name": "snapshot"
+          }
+        ]
+      },
+      {
+        "id": "autotrack",
+        "category": "system",
+        "name": "PTZ Autotrack (emulated)",
+        "icon": "assets/autotrack/icon.svg",
+        "color": "#7c3aed",
+        "description": "Wrapper over the `ptz-autotrack` cap — follows a subject with self-terminating `ptz.move` pulses on cameras whose firmware has no autotrack, driven by the detection pipeline's tracked boxes. The operator binds it per camera, then uses the SAME autotrack switch a native camera has: the binding chooses the implementation, never a second toggle. It refuses to move without a readable `moveImpulseMs`, and while a firmware autotrack on the same camera reports armed. Runs IN-PROCESS: it spawns nothing, carries no frames and issues a command every few seconds at most.",
+        "entry": "./dist/builtins/autotrack/index.js",
+        "capabilities": [
+          {
+            "name": "ptz-autotrack"
+          }
+        ]
+      },
+      {
+        "id": "alert-center",
+        "category": "system",
+        "name": "Alert Center",
+        "icon": "assets/alert-center/icon.svg",
+        "color": "#d97706",
+        "entry": "./dist/builtins/alerts/index.js",
+        "capabilities": [
+          {
+            "name": "alerts"
+          }
+        ]
+      },
+      {
+        "id": "liveness-monitor",
+        "category": "system",
+        "name": "Liveness Monitor",
+        "icon": "assets/liveness-monitor/icon.svg",
+        "color": "#d97706",
+        "description": "Asserts that this node is actually working — it has devices, its cameras are online, and a camera that was recording has not silently stopped. Raises one persistent alert per fault and dismisses it on recovery. Exists because the hub once ran four hours with no devices and no recordings while every surface stayed quiet.",
+        "entry": "./dist/builtins/liveness-monitor/index.js",
+        "protected": true,
+        "capabilities": []
+      },
+      {
+        "id": "system-config",
+        "category": "system",
+        "name": "System Config",
+        "icon": "assets/system-config/icon.svg",
+        "color": "#4f46e5",
+        "description": "Exposes the cluster-wide yml-backed configuration sections (server, auth) via the three-level settings API. Hub-only.",
+        "entry": "./dist/builtins/system-config/index.js",
+        "protected": true
+      },
+      {
+        "id": "calendars",
+        "category": "system",
+        "name": "Calendars",
+        "icon": "assets/calendars/icon.svg",
+        "color": "#4f46e5",
+        "description": "Hub-only singleton that aggregates `calendar-source` providers (Home Assistant and future addon sources) and exposes listCalendars / listEvents / importFromHomeAssistant.",
+        "entry": "./dist/builtins/calendars/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "calendars"
+          }
+        ]
+      },
+      {
+        "id": "addon-pages-aggregator",
+        "category": "system",
+        "name": "Addon Pages Aggregator",
+        "icon": "assets/addon-pages-aggregator/icon.svg",
+        "color": "#4f46e5",
+        "description": "Hub-only singleton that aggregates `addon-pages-source` (collection) providers and emits the public `addon-pages.listPages` surface with versioned bundleUrls.",
+        "entry": "./dist/builtins/addon-pages-aggregator/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "addon-pages"
+          }
+        ]
+      },
+      {
+        "id": "addon-widgets-aggregator",
+        "category": "system",
+        "name": "Addon Widgets Aggregator",
+        "icon": "assets/addon-widgets-aggregator/icon.svg",
+        "color": "#4f46e5",
+        "description": "Hub-only singleton that aggregates `addon-widgets-source` (collection) providers and emits the public `addon-widgets.listWidgets` surface with versioned bundleUrls.",
+        "entry": "./dist/builtins/addon-widgets-aggregator/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "addon-widgets"
+          }
+        ]
+      },
+      {
+        "id": "device-manager",
+        "category": "system",
+        "name": "Device Manager",
+        "icon": "assets/device-manager/icon.svg",
+        "color": "#4f46e5",
+        "description": "Hub-side singleton that unifies device persistence and management. Uses ctx.settings for storage — no direct SQLite access. Replaces device-persistence cap (Phase 2 will delete device-persistence once all consumers are migrated).",
+        "entry": "./dist/builtins/device-manager/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "device-manager"
+          },
+          {
+            "name": "device-state"
+          },
+          {
+            "name": "device-extension"
+          }
+        ]
+      },
+      {
+        "id": "local-auth",
+        "category": "system",
+        "name": "Local Auth",
+        "icon": "assets/local-auth/icon.svg",
+        "color": "#e11d48",
+        "description": "Built-in local username/password authentication. Implements the auth-provider capability as the default login path. OIDC and other providers can register alongside via the same capability.",
+        "entry": "./dist/builtins/local-auth/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "auth-provider"
+          },
+          {
+            "name": "user-management"
+          },
+          {
+            "name": "device-credentials"
+          }
+        ]
+      },
+      {
+        "id": "platform-probe",
+        "category": "system",
+        "name": "Platform Probe (Native)",
+        "icon": "assets/platform-probe/icon.svg",
+        "color": "#d97706",
+        "description": "Probes hardware and inference runtimes on the local node. Registers the `platform-probe` capability consumed by every inference addon on this node.",
+        "entry": "./dist/builtins/platform-probe/index.js",
+        "protected": true,
+        "execution": {
+          "placement": "any-node"
+        },
+        "capabilities": [
+          {
+            "name": "platform-probe"
+          }
+        ]
+      },
+      {
+        "id": "local-network",
+        "category": "system",
+        "name": "Local Network",
+        "icon": "assets/local-network/icon.svg",
+        "color": "#2563eb",
+        "description": "Enumerates the hub's network interfaces, classifies them (LAN / Wi-Fi / Docker / VPN / loopback), and ranks connection-endpoints for SDK clients. Hub-only — agents are not directly addressable.",
+        "entry": "./dist/builtins/local-network/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "local-network"
+          }
+        ]
+      },
+      {
+        "id": "remote-access-orchestrator",
+        "category": "system",
+        "name": "Remote Access Orchestrator",
+        "icon": "assets/remote-access-orchestrator/icon.svg",
+        "color": "#2563eb",
+        "description": "Hub-only singleton facade over the network-access collection (Cloudflare Tunnel, ngrok, …). Surfaces a unified provider list to the admin UI's Remote Access page.",
+        "entry": "./dist/builtins/remote-access-orchestrator/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "remote-access"
+          }
+        ]
+      },
+      {
+        "id": "core-blocks",
+        "category": "system",
+        "name": "Core Blocks",
+        "icon": "assets/core-blocks/icon.svg",
+        "color": "#ea580c",
+        "description": "Store and type-check user-authored TypeScript that owns devices with an addon's own ctx. Admin-only: a block is a plugin with no review step, so it is process-isolated when it runs. This slice stores and serves; execution is the runner.",
+        "entry": "./dist/builtins/core-blocks/index.js",
+        "protected": true,
+        "capabilities": [
+          {
+            "name": "core-blocks"
+          }
+        ]
+      },
+      {
+        "id": "composer",
+        "category": "system",
+        "name": "Composer",
+        "icon": "assets/composer/icon.svg",
+        "color": "#ea580c",
+        "description": "Runs every DECLARATIVE composition (a core block whose source is `composition`): declares the composed device under the shared Blocks integration, registers its caps natively, and derives each field from other devices' state by `from` / expression — event-driven, no polling. Hub-only. Runs in its OWN runner (`execution.isolate` + `group: composer`): frame-free and low-crash, grouped with no device provider or data plane.",
+        "entry": "./dist/builtins/composer/index.js",
+        "protected": true,
+        "execution": {
+          "isolate": true,
+          "placement": "hub-only",
+          "group": "composer",
+          "heapProfile": "light"
+        },
+        "capabilities": [
+          {
+            "name": "composer"
+          }
+        ]
+      },
+      {
+        "id": "camera-grid",
+        "category": "system",
+        "name": "Camera Grids",
+        "icon": "assets/camera-grid/icon.svg",
+        "color": "#7c3aed",
+        "description": "Composite cameras: several cameras composed into one fixed picture and emitted as an ordinary camera — recorded, played back and bound like any other. The composition runs only while something is consuming it; object detection is switched off on a new grid because the cameras it is composed from are already analysed. Runs in its OWN process (`execution.isolate`): it spawns an ffmpeg per live composition and relays its bytes, and neither belongs on the event loop that serves the API.",
+        "entry": "./dist/builtins/camera-grid/index.js",
+        "instanceMode": "unique",
+        "execution": {
+          "isolate": true,
+          "heapProfile": "heavy",
+          "rssBudgetMb": 1024
+        },
+        "capabilities": [
+          {
+            "name": "camera-grid-layout"
+          },
+          {
+            "name": "motion"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "copy:hook": "node -e \"const fs=require('fs'),p=require('path');const dst=p.join('dist');fs.mkdirSync(dst,{recursive:true});fs.copyFileSync(p.join('src','kernel','moleculer','framework-resolver-hook.mjs'),p.join(dst,'framework-resolver-hook.mjs'));console.log('copied framework-resolver-hook.mjs ->',dst)\"",
+    "build": "vite build && vite build -c vite.runner.config.ts && npx tsx ../../scripts/emit-isolated-dts.ts --root . --src src --out dist && npm run copy:hook",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:cluster": "vitest run -c vitest.cluster.config.ts --reporter verbose",
+    "test:watch": "vitest",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "@msgpack/msgpack": "^3.1.3",
+    "@trpc/client": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "croner": "^10.0.1",
+    "esbuild": "^0.27.7",
+    "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "moleculer": "0.15.0",
+    "otplib": "13.4.1",
+    "sqlite-vec": "^0.1.9",
+    "superjson": "^2.2.0",
+    "systeminformation": "^5.0.0",
+    "tar": "7.5.16",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "@homebridge/ciao": "^1.3.9",
+    "@peculiar/asn1-schema": "^2.6.0",
+    "@peculiar/asn1-x509": "^2.6.1",
+    "@peculiar/x509": "^1.14.3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/js-yaml": "^4.0.9",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/tar": "^6.1.13",
+    "jose": "^6.2.3",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.0.0"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "parallelism": false
+      }
+    }
+  }
+}

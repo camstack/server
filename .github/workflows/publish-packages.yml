@@ -1,0 +1,594 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      scope:
+        description: "Which packages to publish"
+        required: true
+        type: choice
+        options: [affected, all]
+        default: affected
+      include_dependents:
+        description: "Rarely needed. OFF (default) publishes only packages whose OWN files changed, plus @camstack/server whenever one of them is in the server's dependency closure — which is how a framework change actually reaches a node. ON adds every package that DEPENDS on a changed lib: a dozen addons that pin nothing, declare @camstack/* as '*', and gain nothing from the bump. Turn it ON only when a dependent's PUBLISHED tarball must change without its own files changing."
+        required: false
+        type: boolean
+        default: false
+      force_packages:
+        description: "Comma-separated extra packages to publish on top of scope detection (e.g. @camstack/types,@camstack/sdk). Useful when only the workflow changed but a specific package needs a republish."
+        required: false
+        type: string
+        default: ""
+      exact_version:
+        description: "Reset/override: publish every selected package at this EXACT version (no sync-up, no bump). Used to restart the version line, e.g. 0.0.1. Leave empty for normal bump."
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-packages
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  # ── Publish on the self-hosted Mac runner ─────────────────────────
+  publish:
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull latest (pick up prior publish bumps)
+        run: git pull --rebase origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Pre-build @camstack/nx-plugin. `nx.json` registers it as a plugin,
+      # so the very first `nx` call below loads `./dist/index.js` — which
+      # does not exist on a fresh checkout. (The same step is in the
+      # Dockerfile for the same reason.)
+      - name: Pre-build nx-plugin
+        run: npm run build -w packages/nx-plugin
+
+      # ── Detect which packages to publish ──────────────────────────
+      - name: Find last publish tag
+        id: base
+        run: |
+          TAG=$(git tag --list 'publish-*' --sort=-creatordate | head -1 || true)
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          if [ -z "$TAG" ]; then
+            echo "No publish tag found — will publish all"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "Base tag: $TAG"
+            echo "found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Detect affected packages
+        id: detect
+        run: |
+          BUMP="${{ github.event.inputs.bump }}"
+          SCOPE="${{ github.event.inputs.scope }}"
+          BASE="${{ steps.base.outputs.tag }}"
+          FORCE="${{ github.event.inputs.force_packages }}"
+          INCLUDE_DEPENDENTS="${{ github.event.inputs.include_dependents }}"
+
+          # The reused self-hosted Mac runner keeps an nx daemon alive across
+          # jobs; a stale daemon makes `nx show projects` exit non-zero (the
+          # failure was masked by the old `2>/dev/null`, which silently
+          # aborted the publish under `set -e`). Reset the daemon/cache and
+          # run daemon-less, and DON'T swallow stderr so any real error shows.
+          export NX_DAEMON=false
+          npx nx reset >/dev/null 2>&1 || true
+          if [ "$SCOPE" = "all" ] || [ "${{ steps.base.outputs.found }}" = "false" ]; then
+            echo "mode=all" >> $GITHUB_OUTPUT
+            PROJECTS=$(npx nx show projects --json)
+          else
+            # Affected detection — base = last publish tag.
+            #
+            # CRITICAL: we feed nx an explicit changed-file list with
+            # `package-lock.json` EXCLUDED. nx (v23) treats ANY lockfile change
+            # as globally-affecting (it can't be tuned off via namedInputs), so
+            # `nx affected --base/--head` marks ALL ~45 projects affected on a
+            # one-line lockfile edit. Passing `--files=<changed minus lockfile>`
+            # runs the SAME affected algorithm (project graph + dependent
+            # cascade) on a precise input → only the genuinely-changed packages.
+            CHANGED=$(git diff --name-only "$BASE" HEAD -- . ':(exclude)package-lock.json' | paste -sd, -)
+            if [ -z "$CHANGED" ]; then
+              echo "mode=affected (no non-lockfile changes)" >> $GITHUB_OUTPUT
+              PROJECTS='[]'
+            elif [ "$INCLUDE_DEPENDENTS" = "true" ]; then
+              # Cascade: changed packages + everything that depends on them
+              # (e.g. a real @camstack/types source change → all dependents).
+              echo "mode=affected+dependents" >> $GITHUB_OUTPUT
+              PROJECTS=$(npx nx show projects --affected --files="$CHANGED" --json)
+            else
+              # Default: only packages whose OWN files changed (no cascade).
+              # A change to a shared/system lib republishes just that lib,
+              # not its dependents — turn on include_dependents to cascade.
+              # Direct changes + the two cascades that make a release REACH a
+              # node: a package that compiles another's source into its own
+              # artifact, and @camstack/server for anything in its pinned
+              # closure. Both live in scripts/ci/publish-scope.mjs, under test
+              # against the real workspace (scripts/__tests__).
+              echo "mode=affected (direct + bundlers + closure)" >> $GITHUB_OUTPUT
+              PROJECTS=$(CHANGED_FILES="$CHANGED" node -e "
+                import('./scripts/ci/publish-scope.mjs').then((m) => {
+                  const files=(process.env.CHANGED_FILES||'').split(',').filter(Boolean);
+                  const dirs=m.resolvePublishSet(files);
+                  const names=dirs.map((d)=>require('./'+d+'/package.json').name);
+                  console.log(JSON.stringify(names));
+                });
+              ")
+            fi
+          fi
+
+          # Pass through to the filter step: nx-detected projects (JSON
+          # array of nx project names) + force_packages (comma-separated
+          # npm package names like "@camstack/types").
+          # The filter resolves each to a real workspace package dir,
+          # de-duplicates, and excludes `private: true` packages.
+          PUBLISHABLE=$(NX_PROJECTS="$PROJECTS" FORCE_LIST="$FORCE" node --input-type=module -e "
+            const fs = (await import('node:fs')).default, path = (await import('node:path')).default;
+            const require = (await import('node:module')).createRequire(import.meta.url);
+            const nxProjects = JSON.parse(process.env.NX_PROJECTS || '[]');
+            const forced = (process.env.FORCE_LIST || '')
+              .split(',').map(s => s.trim()).filter(Boolean);
+
+            // Build an index of every workspace package: pkgJson.name + dir.name → dir.
+            const index = new Map();
+            for (const root of ['packages', 'server']) {
+              if (!fs.existsSync(root)) continue;
+              for (const d of fs.readdirSync(root, {withFileTypes:true})) {
+                if (!d.isDirectory()) continue;
+                const pjPath = path.join(root, d.name, 'package.json');
+                if (!fs.existsSync(pjPath)) continue;
+                const pj = JSON.parse(fs.readFileSync(pjPath,'utf-8'));
+                const full = path.join(root, d.name);
+                index.set(pj.name, full);
+                index.set(d.name, full);
+              }
+            }
+
+            const resolved = new Set();
+            for (const name of [...nxProjects, ...forced]) {
+              const dir = index.get(name);
+              if (!dir) {
+                if (forced.includes(name)) {
+                  console.error('::error::force_packages contains unknown name: ' + name);
+                  process.exit(1);
+                }
+                continue;
+              }
+              const pj = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'),'utf-8'));
+              if (pj.private) continue;
+              resolved.add(dir);
+            }
+
+            // The cascades that make a release REACH a node live in
+            // scripts/ci/publish-scope.mjs, under test against the real
+            // workspace: a package that compiles another's SOURCE into its
+            // artifact (admin-ui holds a COPY of ui-library), and
+            // @camstack/server for anything in its pinned closure. Applied
+            // here too so force_packages and scope=all get the same answer as
+            // the affected path; a second copy of the rules in this YAML is how
+            // the closure rule covered @camstack/system and nothing else for a
+            // month.
+            //
+            // NO BACKTICKS IN THIS BLOCK. It is a double-quoted shell string,
+            // so a backtick in a COMMENT is a command substitution — the first
+            // draft of this comment ran force_packages as a command.
+            // applyCascades returns orderForPublish (server LAST). Do NOT
+            // re-add into a Set and print Set insertion order — that is how
+            // scope=all (nx show projects) put server before types/sdk and
+            // the closure gate waited on pins this loop had not reached
+            // (2026-10-04 run 37223477606).
+            const { applyCascades } = await import('./scripts/ci/publish-scope.mjs');
+            console.log(applyCascades([...resolved]).join(','));
+          ")
+
+          echo "packages=${PUBLISHABLE}" >> $GITHUB_OUTPUT
+          echo "Publishable: ${PUBLISHABLE}"
+          if [ -n "$FORCE" ]; then
+            echo "  (force_packages override: $FORCE)"
+          fi
+
+      # ── Bump versions ─────────────────────────────────────────────
+      - name: Bump package versions
+        if: steps.detect.outputs.packages != ''
+        run: |
+          BUMP="${{ github.event.inputs.bump }}"
+          EXACT="${{ github.event.inputs.exact_version }}"
+          IFS=',' read -ra PKGS <<< "${{ steps.detect.outputs.packages }}"
+          for pkg in "${PKGS[@]}"; do
+            cd "$pkg"
+            NAME=$(node -p "require('./package.json').name")
+
+            # Reset/override mode: force the EXACT version (no sync-up, no
+            # bump, no collision guard). Used to restart the version line at
+            # e.g. 0.0.1 — the sync-up guard below would otherwise pull a
+            # reset local version back UP to the (higher) npm version.
+            if [ -n "$EXACT" ]; then
+              node -e "const p=require('./package.json'); p.version='$EXACT'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n')"
+              echo "  $NAME → $EXACT (exact override)"
+              cd "$GITHUB_WORKSPACE"
+              continue
+            fi
+
+            # Sync local to npm ONLY when local is STRICTLY BEHIND. Previously
+            # this synced on any mismatch, which could ROLL BACK local when
+            # `npm view` returned a stale value (registry cache lag). That
+            # produced "Cannot publish over previously published versions"
+            # 403s for ~23 packages on 2026-05-20. Now we only sync when
+            # local would otherwise produce a version that's already on npm.
+            NPM_VER=$(npm view "$NAME" version 2>/dev/null || echo "")
+            LOCAL_VER=$(node -p "require('./package.json').version")
+            if [ -n "$NPM_VER" ] && [ "$NPM_VER" != "$LOCAL_VER" ]; then
+              HIGHER=$(printf '%s\n%s\n' "$LOCAL_VER" "$NPM_VER" | sort -V | tail -1)
+              if [ "$HIGHER" = "$NPM_VER" ]; then
+                echo "  $NAME: local $LOCAL_VER is behind npm $NPM_VER — syncing up before bump"
+                node -e "const p=require('./package.json'); p.version='$NPM_VER'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n')"
+              else
+                echo "  $NAME: local $LOCAL_VER ahead of npm $NPM_VER — keeping local (defensive vs stale registry cache)"
+              fi
+            fi
+
+            npm version "$BUMP" --no-git-tag-version
+            VER=$(node -p "require('./package.json').version")
+
+            # Final guard: if the bumped version already exists on npm (stale
+            # cache made us hit a collision), bump again until we find a free
+            # slot. Bounded to 5 attempts so we can't loop forever.
+            attempts=0
+            while [ "$attempts" -lt 5 ] && npm view "$NAME@$VER" version 2>/dev/null | grep -qx "$VER"; do
+              echo "  $NAME@$VER already exists on npm — bumping again"
+              npm version "$BUMP" --no-git-tag-version
+              VER=$(node -p "require('./package.json').version")
+              attempts=$((attempts + 1))
+            done
+
+            echo "  $NAME → $VER"
+            cd "$GITHUB_WORKSPACE"
+          done
+
+      # ── Embedded viewer gate (only when the orchestrator publishes) ──
+      # The viewer web dist is built LOCALLY (`cd camstack && npm run
+      # build:orchestrator`) and COMMITTED under the orchestrator's
+      # assets/viewer — CI never builds it (operator decision 2026-07-13;
+      # the viewer repo is private and the dist is the operator-validated
+      # artifact). This gate only refuses to publish an orchestrator whose
+      # committed dist is missing: it drops the package from the set (loud
+      # warning) so the rest of the batch still ships.
+      - name: Gate — orchestrator must embed the viewer
+        if: steps.detect.outputs.packages != '' && contains(steps.detect.outputs.packages, 'packages/addon-pipeline-orchestrator')
+        run: |
+          STAMP=packages/addon-pipeline-orchestrator/assets/viewer/.viewer-version
+          if [ -f "$STAMP" ]; then
+            echo "Embedded viewer: $(cat "$STAMP")"
+            exit 0
+          fi
+          FILTERED=$(node -e "
+            const pkgs = '${{ steps.detect.outputs.packages }}'.split(',').filter(Boolean);
+            console.log(pkgs.filter((p) => p !== 'packages/addon-pipeline-orchestrator').join(','));
+          ")
+          echo "PUBLISH_PACKAGES_OVERRIDE=$FILTERED" >> "$GITHUB_ENV"
+          echo "::warning::orchestrator DROPPED from this publish (assets/viewer missing — run 'npm run build:orchestrator' in camstack/ and COMMIT the dist). Publishing: $FILTERED"
+
+      # ── Build ─────────────────────────────────────────────────────
+      - name: Build all packages
+        if: steps.detect.outputs.packages != ''
+        run: NODE_OPTIONS="--max-old-space-size=8192" npx nx run-many -t build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
+
+      # ── Pin root-package dependency closures ──────────────────────
+      # The workspace declares @camstack/* deps as "*" (always link local);
+      # the PUBLISHED @camstack/server (the single root package for every node
+      # role) must pin exact versions or applyServerUpdate + Docker builds
+      # resolve to "latest of
+      # everything at install time" and stop being reproducible checkpoints.
+      # Pinned to THIS run's post-bump workspace versions; the restore step
+      # below puts "*" back so the bump commit and the reused self-hosted
+      # runner workspace never carry pins.
+      - name: Pin root-package deps for publish
+        if: steps.detect.outputs.packages != ''
+        run: PUBLISH_SET="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}" node scripts/ci/pin-root-deps.mjs pin
+
+      # ── Publish ───────────────────────────────────────────────────
+      - name: Publish to npm
+        if: steps.detect.outputs.packages != ''
+        run: |
+          # The viewer gate may have dropped the orchestrator from the set.
+          PKGS_CSV="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}"
+          # Belt: server last even if detect order regresses. The closure
+          # gate below waits for pins on npm — packages after server in this
+          # loop can never land in time (2026-10-04 run 37223477606).
+          PKGS_CSV=$(PKGS_CSV="$PKGS_CSV" node --input-type=module -e "
+            const { orderForPublish } = await import('./scripts/ci/publish-scope.mjs');
+            console.log(orderForPublish((process.env.PKGS_CSV || '').split(',').filter(Boolean)).join(','));
+          ")
+          IFS=',' read -ra PKGS <<< "$PKGS_CSV"
+          PUBLISHED=0
+          FAILED=0
+          FAILED_NAMES="" 
+          # Throttle: a small sleep before each `npm publish` reduces
+          # the chance of flaky 403s. We were seeing ~30% of publishes
+          # report "Cannot publish over previously published versions"
+          # while the artifact actually landed on npm — npm's PUT
+          # response was racing the registry's own consistency. A 2s
+          # gap between PUTs gives the CDN time to propagate the
+          # previous publish before the next one starts, dramatically
+          # cutting the misreport rate. Total cost: ~75s on a 37-pkg
+          # run, vs hours of investigation when flaky-403 strikes.
+          for pkg in "${PKGS[@]}"; do
+            cd "$pkg"
+            NAME=$(node -p "require('./package.json').name")
+            VER=$(node -p "require('./package.json').version")
+
+            # Skip if already on npm
+            NPM_VER=$(npm view "$NAME@$VER" version 2>/dev/null || echo "")
+            if [ "$NPM_VER" = "$VER" ]; then
+              echo "⏭ $NAME@$VER already on npm"
+              cd "$GITHUB_WORKSPACE"
+              continue
+            fi
+
+            # Throttle (skipped on the first publish so we don't pay
+            # the wait for nothing).
+            if [ "$PUBLISHED" -gt 0 ] || [ "$FAILED" -gt 0 ]; then
+              sleep 2
+            fi
+
+            # THE CLOSURE IS PUBLISHED LAST, AND ONLY IF WHAT IT PINS EXISTS.
+            #
+            # `pin-root-deps.mjs` rewrites @camstack/* deps from "*" to the exact
+            # version this run is about to publish. That pin is written whether or
+            # not the dependency actually lands, so a run where ui-library failed
+            # still shipped a @camstack/server pinning it — and every node then
+            # refused to stage with ETARGET, hours later, far from the cause
+            # (2026-09-14: server@1.2.294 pinned ui-library@1.2.162, which was
+            # never on the registry). The closure is the ONE artifact whose
+            # installability depends on this run's other publishes, so it asks.
+            # THE CLOSURE SHIPS ONLY IF THE REST OF THE RUN DID.
+            #
+            # `pin-root-deps.mjs` pins @camstack/* to the versions THIS run
+            # publishes, whether or not they land. A run where one of them
+            # failed would otherwise ship a @camstack/server nobody can
+            # install, and the failure surfaces on the nodes — a staging
+            # ETARGET, twenty minutes and one deploy chain away from its cause.
+            #
+            # The question is answered from what this run KNOWS, not by asking
+            # the registry: the registry lags minutes behind its own writes, so
+            # a lookup here would refuse good releases as often as bad ones.
+            #
+            # AND IT VERIFIES THE PINS IT IS ABOUT TO SHIP.
+            #
+            # The rule above answers from what this run knows, and that was not
+            # enough: on 2026-09-18 npm printed `+ @camstack/addon-pipeline@
+            # 1.2.263` and exited 0, the run counted it published, the closure
+            # pinned it — and two hours later the version was still absent from
+            # the registry. Every node then refused to stage with ETARGET, which
+            # is the same failure this gate exists to prevent, arriving through
+            # the one door it did not watch. Twice now (2026-09-14 was
+            # ui-library@1.2.162).
+            #
+            # So the closure — and ONLY the closure, once per run — asks whether
+            # what it pins can be installed, with a bounded retry for the
+            # registry's own lag. A false refusal costs a re-run; a false accept
+            # costs every node's update path until somebody notices.
+            if [ "$NAME" = "@camstack/server" ] && [ "$FAILED" -eq 0 ]; then
+              MISSING=$(node -e "
+                const fs=require('fs');
+                const pj=JSON.parse(fs.readFileSync('package.json','utf-8'));
+                const deps=Object.entries(pj.dependencies||{}).filter(([n])=>n.startsWith('@camstack/'));
+                console.log(deps.map(([n,v])=>n+'@'+v).join(' '));
+              ")
+              for SPEC in $MISSING; do
+                OK=0
+                # Thirty minutes, not twelve. npm answers a publish with "Your
+                # package is being processed and may take a few minutes to
+                # become available", and for the biggest package in this repo
+                # (addon-pipeline: 6 MB packed, 142 files) it really does take
+                # minutes: 1.2.303 took twenty minutes to appear, after a
+                # twelve-minute bound correctly refused the closure
+                # (2026-09-28). The wait is paid once per run, only by the
+                # closure, and only when a pin is not yet visible — a caught-up
+                # registry answers on the first attempt and costs nothing.
+                for ATTEMPT in $(seq 1 60); do
+                  if npm view "$SPEC" version >/dev/null 2>&1; then OK=1; break; fi
+                  echo "  waiting for $SPEC to be installable (attempt $ATTEMPT/60)"
+                  sleep 30
+                done
+                if [ "$OK" -eq 0 ]; then
+                  echo "::error::refusing to publish $NAME@$VER — it pins $SPEC, which is still not installable from the registry thirty minutes after this run published it"
+                  FAILED=$((FAILED + 1))
+                  FAILED_NAMES="$FAILED_NAMES $SPEC"
+                fi
+              done
+            fi
+            if [ "$NAME" = "@camstack/server" ] && [ "$FAILED" -gt 0 ]; then
+              echo "::error::refusing to publish $NAME@$VER — $FAILED package(s) failed earlier in this run, so the closure pins versions that were never published:$FAILED_NAMES"
+              echo "✗ $NAME@$VER REFUSED (the closure would be uninstallable)"
+              FAILED=$((FAILED + 1))
+              cd "$GITHUB_WORKSPACE"
+              continue
+            fi
+
+            PUB_OUT=$(npm publish --access public 2>&1) && PUB_RC=0 || PUB_RC=$?
+            echo "$PUB_OUT"
+            if [ "$PUB_RC" -eq 0 ]; then
+              echo "✓ $NAME@$VER"
+              PUBLISHED=$((PUBLISHED + 1))
+            elif echo "$PUB_OUT" | grep -qiE "cannot publish over (the )?previously published version|EPUBLISHCONFLICT"; then
+              # A 403 over an existing version USED to be accepted as proof our
+              # own double-PUT had landed. It is not proof of that at all: it
+              # says the version exists, never WHOSE build is under it.
+              #
+              # On 2026-09-14 addon-admin-ui sat at 1.2.199 in git while the
+              # registry was at 1.2.201. The bump computed 1.2.200 (its
+              # collision check read a stale replica and saw the slot free), the
+              # PUT hit an artifact published by an earlier run, and this branch
+              # called it published. The operator then installed 1.2.201 — a
+              # build OLDER than the work of that evening — three times, each
+              # time told the deploy had succeeded, each time seeing no change.
+              # Hours went into looking for the bug in the UI code.
+              #
+              # Only a 200 means we published. A collision means the version
+              # line is wrong and the next run — reading a registry that has by
+              # then caught up — will pick a free slot. Refusing costs a re-run;
+              # accepting costs a silent no-op release, which is worse and
+              # invisible.
+              echo "✗ $NAME@$VER FAILED (version already on the registry — this run published nothing for it)"
+              FAILED=$((FAILED + 1))
+              FAILED_NAMES="$FAILED_NAMES $NAME@$VER" 
+            else
+              # A real failure: npm neither returned 0 nor told us the version
+              # already exists.
+              #
+              # We do NOT then interrogate the registry. That is what this step
+              # used to do — 180 s of polling per failure — and it was wrong in
+              # both directions: it cost 3 minutes of wall clock each (four of
+              # them turned one run into 16 minutes) and it still declared FAILED
+              # for packages that were live. The registry lags MINUTES behind its
+              # own accepted writes: on 2026-09-14 ui-library@1.2.162 appeared at
+              # 20:49:22, seven minutes after its PUT and four after the run gave
+              # up on it. A read that slow cannot be a verdict about a write.
+              #
+              # npm's own exit code is the verdict. 0 means the registry accepted
+              # it; when it becomes visible is the registry's business.
+              echo "✗ $NAME@$VER FAILED (npm publish exited $PUB_RC)"
+              FAILED=$((FAILED + 1))
+              FAILED_NAMES="$FAILED_NAMES $NAME@$VER" 
+            fi
+            cd "$GITHUB_WORKSPACE"
+          done
+
+          echo "Published: $PUBLISHED, Failed: $FAILED"
+          if [ "$FAILED" -gt 0 ]; then
+            # Hard-fail. Previously this only emitted ::warning::, which let
+            # the job conclude `success` even when 0 packages got published
+            # (real example: NPM_TOKEN expired on 2026-05-20, 37/37 silently
+            # failed for hours). Refusing to mask publish breakage.
+            echo "::error::$FAILED package(s) failed to publish — see per-package logs above"
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Always restore (even on publish failure): the bump commit below and
+      # the reused runner workspace must stay pin-free ("*" in git, exact
+      # only inside the published artifacts).
+      - name: Restore root-package deps
+        if: always() && steps.detect.outputs.packages != ''
+        run: node scripts/ci/pin-root-deps.mjs restore
+
+      # ── Tag + Commit ──────────────────────────────────────────────
+      - name: Commit version bumps + create publish tag
+        if: steps.detect.outputs.packages != ''
+        run: |
+          set -e
+          TAG="publish-$(date -u +%Y%m%d-%H%M%S)"
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          # docs/reference/packages.md embeds the package versions, so the
+          # bump commit must carry its regeneration — every train on
+          # 2026-08-19/20 left it stale and turned every subsequent CI run red
+          # on the drift guard.
+          npx tsx scripts/docs-generate.ts
+          git add packages/*/package.json server/*/package.json package-lock.json \
+            docs/reference docs/decisions/index.md
+          # `--no-verify`: this commit is MACHINE-generated and contains nothing but
+          # version numbers and the lockfile. Pre-commit hooks police human edits;
+          # here they can only produce a false failure — and they do it at the worst
+          # possible moment, because `npm publish` has ALREADY run by this point.
+          #
+          # That is exactly what happened once: the docs drift guard failed on the
+          # bump commit, `set -e` aborted the step before the tag was even created,
+          # and the result was npm one patch ahead of git with no publish tag —
+          # which then breaks the NEXT run's affected detection.
+          git diff --staged --quiet \
+            || git commit --no-verify -m "chore: publish packages (${{ github.event.inputs.bump }}) [skip ci]"
+
+          # Tag *before* any rebase. The tag must point at a commit whose
+          # diff is purely package.json bumps — if a `git pull --rebase`
+          # pulls in unrelated changes (e.g. workflow files) afterwards,
+          # the tag still references the clean bump commit.
+          git tag -a "$TAG" -m "Publish: ${{ github.event.inputs.bump }} bump (${{ steps.detect.outputs.mode }})"
+
+          # Push tag FIRST, before any rebase. Tags in GitHub don't go
+          # through workflow-file-modification checks, so this works
+          # even when the tag's parent history would otherwise.
+          if ! git push origin "$TAG"; then
+            echo "::warning::tag push failed — next 'affected' run may republish all packages"
+          fi
+
+          # Now push the commit (with retry for concurrent pushes).
+          # `git pull --rebase` may pull in unrelated commits from main
+          # that include workflow-file changes; if GITHUB_TOKEN lacks
+          # `workflows` scope, the rebased commit push will fail. We
+          # accept that — packages are published, tag is set, and the
+          # version bump can be re-attempted on the next run.
+          for i in 1 2 3; do
+            git pull --rebase origin main 2>/dev/null || true
+            if git push 2>&1; then
+              echo "Commit push succeeded on attempt $i"
+              break
+            fi
+            if [ "$i" = "3" ]; then
+              echo "::warning::commit push failed 3× — version bumps are local only; manual push may be needed"
+            else
+              echo "Commit push failed on attempt $i, retrying..."
+              sleep 2
+            fi
+          done
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      # ── Summary ───────────────────────────────────────────────────
+      - name: Job Summary
+        if: steps.detect.outputs.packages != ''
+        run: |
+          echo "## Packages Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+
+          PKGS_CSV="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}"
+          IFS=',' read -ra PKGS <<< "$PKGS_CSV"
+          for pkg in "${PKGS[@]}"; do
+            NAME=$(node -p "require('./$pkg/package.json').name")
+            VER=$(node -p "require('./$pkg/package.json').version")
+            echo "| \`$NAME\` | \`$VER\` |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Bump:** ${{ github.event.inputs.bump }} | **Scope:** ${{ steps.detect.outputs.mode }} | **Tag:** \`${TAG}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: No packages to publish
+        if: steps.detect.outputs.packages == ''
+        run: |
+          echo "No packages to publish"
+          echo "## No Changes" >> $GITHUB_STEP_SUMMARY
+          echo "No affected packages found since last publish tag." >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,75 @@
+{
+  "name": "@camstack/addon-provider-vesync",
+  "version": "0.2.143",
+  "description": "VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "vesync",
+    "levoit",
+    "cosori",
+    "air-purifier",
+    "fan",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "VeSync Provider",
+    "addons": [
+      {
+        "id": "provider-vesync",
+        "category": "providers",
+        "name": "VeSync",
+        "version": "0.1.0",
+        "description": "Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors)",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#4a8cff",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "tsvesync": "^1.0.68",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

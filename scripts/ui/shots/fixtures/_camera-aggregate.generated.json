@@ -1,0 +1,2940 @@
+{
+  "native": [
+    {
+      "id": "day-night",
+      "title": "Day / Night",
+      "tab": "image",
+      "description": "IR-cut switching mode and the photocell knobs that gate it.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "select",
+          "key": "dayNight_mode",
+          "label": "Mode",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto"
+            },
+            {
+              "value": "day",
+              "label": "Day"
+            },
+            {
+              "value": "night",
+              "label": "Night"
+            }
+          ],
+          "default": "auto",
+          "value": "auto",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "slider",
+          "key": "dayNight_sensitivity",
+          "label": "IR-cut sensitivity",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "showValue": true,
+          "default": 50,
+          "value": 50,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "number",
+          "key": "dayNight_switchDelaySec",
+          "label": "Switch delay",
+          "unit": "s",
+          "min": 5,
+          "max": 120,
+          "step": 1,
+          "default": 10,
+          "value": 10,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    },
+    {
+      "id": "image-settings",
+      "title": "Image adjustment",
+      "tab": "image",
+      "description": "Picture sliders, orientation and exposure. Option lists are read live from the camera — fields the firmware doesn't expose are hidden.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "slider",
+          "key": "imageSettings_brightness",
+          "label": "Brightness",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "showValue": true,
+          "default": 50,
+          "value": 50,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "slider",
+          "key": "imageSettings_contrast",
+          "label": "Contrast",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "showValue": true,
+          "default": 50,
+          "value": 50,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "slider",
+          "key": "imageSettings_saturation",
+          "label": "Saturation",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "showValue": true,
+          "default": 50,
+          "value": 50,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "slider",
+          "key": "imageSettings_sharpness",
+          "label": "Sharpness",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "showValue": true,
+          "default": 50,
+          "value": 50,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "boolean",
+          "key": "imageSettings_mirror",
+          "label": "Mirror",
+          "style": "switch",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "boolean",
+          "key": "imageSettings_flip",
+          "label": "Flip",
+          "style": "switch",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "imageSettings_rotate",
+          "label": "Rotation",
+          "options": [
+            {
+              "value": "0",
+              "label": "0°"
+            },
+            {
+              "value": "180",
+              "label": "180°"
+            }
+          ],
+          "default": "0",
+          "value": "0",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "imageSettings_whiteBalance",
+          "label": "White balance",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto"
+            },
+            {
+              "value": "manual",
+              "label": "Manual"
+            }
+          ],
+          "default": "auto",
+          "value": "auto",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "slider",
+          "key": "imageSettings_warmth",
+          "label": "Warmth",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "showValue": true,
+          "default": 0,
+          "showWhen": {
+            "field": "imageSettings_whiteBalance",
+            "equals": "manual"
+          },
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "imageSettings_exposureMode",
+          "label": "Exposure mode",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto"
+            },
+            {
+              "value": "manual",
+              "label": "Manual"
+            }
+          ],
+          "default": "auto",
+          "value": "auto",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "imageSettings_backlightMode",
+          "label": "Backlight compensation",
+          "options": [
+            {
+              "value": "off",
+              "label": "Off"
+            },
+            {
+              "value": "blc",
+              "label": "Backlight compensation"
+            },
+            {
+              "value": "wdr",
+              "label": "Wide dynamic range"
+            }
+          ],
+          "default": "off",
+          "value": "off",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    },
+    {
+      "id": "stream-main",
+      "title": "Main stream",
+      "tab": "streaming",
+      "description": "Encoder parameters pushed to the camera. Option lists are read live from the camera — fields the firmware doesn't expose are hidden.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "select",
+          "key": "streamMain_resolution",
+          "label": "Resolution",
+          "options": [
+            {
+              "value": "3840x2160",
+              "label": "3840×2160"
+            },
+            {
+              "value": "2560x1440",
+              "label": "2560×1440"
+            },
+            {
+              "value": "1920x1080",
+              "label": "1920×1080"
+            }
+          ],
+          "default": "3840x2160",
+          "value": "3840x2160",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamMain_codec",
+          "label": "Codec",
+          "options": [
+            {
+              "value": "h264",
+              "label": "H.264"
+            },
+            {
+              "value": "h265",
+              "label": "H.265"
+            }
+          ],
+          "default": "h265",
+          "value": "h265",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamMain_framerate",
+          "label": "Frame rate",
+          "options": [
+            {
+              "value": "10",
+              "label": "10 fps"
+            },
+            {
+              "value": "15",
+              "label": "15 fps"
+            },
+            {
+              "value": "20",
+              "label": "20 fps"
+            },
+            {
+              "value": "25",
+              "label": "25 fps"
+            },
+            {
+              "value": "30",
+              "label": "30 fps"
+            }
+          ],
+          "default": "25",
+          "value": "25",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamMain_bitrate",
+          "label": "Bitrate",
+          "options": [
+            {
+              "value": "1024",
+              "label": "1024 kbps"
+            },
+            {
+              "value": "2048",
+              "label": "2048 kbps"
+            },
+            {
+              "value": "4096",
+              "label": "4096 kbps"
+            },
+            {
+              "value": "6144",
+              "label": "6144 kbps"
+            },
+            {
+              "value": "8192",
+              "label": "8192 kbps"
+            }
+          ],
+          "default": "6144",
+          "value": "6144",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamMain_bitrateMode",
+          "label": "Bitrate mode",
+          "options": [
+            {
+              "value": "vbr",
+              "label": "VBR (variable)"
+            },
+            {
+              "value": "cbr",
+              "label": "CBR (constant)"
+            }
+          ],
+          "default": "vbr",
+          "value": "vbr",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamMain_encoderProfile",
+          "label": "Encoder profile",
+          "options": [
+            {
+              "value": "baseline",
+              "label": "Baseline"
+            },
+            {
+              "value": "main",
+              "label": "Main"
+            },
+            {
+              "value": "high",
+              "label": "High"
+            }
+          ],
+          "default": "main",
+          "value": "main",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamMain_gop",
+          "label": "I-frame interval (GOP)",
+          "options": [
+            {
+              "value": "1",
+              "label": "1 s"
+            },
+            {
+              "value": "2",
+              "label": "2 s"
+            },
+            {
+              "value": "3",
+              "label": "3 s"
+            },
+            {
+              "value": "4",
+              "label": "4 s"
+            },
+            {
+              "value": "5",
+              "label": "5 s"
+            },
+            {
+              "value": "6",
+              "label": "6 s"
+            },
+            {
+              "value": "7",
+              "label": "7 s"
+            },
+            {
+              "value": "8",
+              "label": "8 s"
+            },
+            {
+              "value": "9",
+              "label": "9 s"
+            },
+            {
+              "value": "10",
+              "label": "10 s"
+            }
+          ],
+          "default": "4",
+          "value": "4",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    },
+    {
+      "id": "stream-sub",
+      "title": "Sub stream",
+      "tab": "streaming",
+      "description": "Encoder parameters pushed to the camera. Option lists are read live from the camera — fields the firmware doesn't expose are hidden.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "select",
+          "key": "streamSub_resolution",
+          "label": "Resolution",
+          "options": [
+            {
+              "value": "640x360",
+              "label": "640×360"
+            }
+          ],
+          "default": "640x360",
+          "value": "640x360",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamSub_codec",
+          "label": "Codec",
+          "options": [
+            {
+              "value": "h264",
+              "label": "H.264"
+            },
+            {
+              "value": "h265",
+              "label": "H.265"
+            }
+          ],
+          "default": "h264",
+          "value": "h264",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamSub_framerate",
+          "label": "Frame rate",
+          "options": [
+            {
+              "value": "10",
+              "label": "10 fps"
+            },
+            {
+              "value": "15",
+              "label": "15 fps"
+            },
+            {
+              "value": "20",
+              "label": "20 fps"
+            },
+            {
+              "value": "25",
+              "label": "25 fps"
+            },
+            {
+              "value": "30",
+              "label": "30 fps"
+            }
+          ],
+          "default": "15",
+          "value": "15",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamSub_bitrate",
+          "label": "Bitrate",
+          "options": [
+            {
+              "value": "512",
+              "label": "512 kbps (current)"
+            },
+            {
+              "value": "1024",
+              "label": "1024 kbps"
+            },
+            {
+              "value": "2048",
+              "label": "2048 kbps"
+            },
+            {
+              "value": "4096",
+              "label": "4096 kbps"
+            },
+            {
+              "value": "6144",
+              "label": "6144 kbps"
+            },
+            {
+              "value": "8192",
+              "label": "8192 kbps"
+            }
+          ],
+          "default": "512",
+          "value": "512",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamSub_bitrateMode",
+          "label": "Bitrate mode",
+          "options": [
+            {
+              "value": "vbr",
+              "label": "VBR (variable)"
+            },
+            {
+              "value": "cbr",
+              "label": "CBR (constant)"
+            }
+          ],
+          "default": "vbr",
+          "value": "vbr",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamSub_encoderProfile",
+          "label": "Encoder profile",
+          "options": [
+            {
+              "value": "baseline",
+              "label": "Baseline"
+            },
+            {
+              "value": "main",
+              "label": "Main"
+            },
+            {
+              "value": "high",
+              "label": "High"
+            }
+          ],
+          "default": "main",
+          "value": "main",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "select",
+          "key": "streamSub_gop",
+          "label": "I-frame interval (GOP)",
+          "options": [
+            {
+              "value": "1",
+              "label": "1 s"
+            },
+            {
+              "value": "2",
+              "label": "2 s"
+            },
+            {
+              "value": "3",
+              "label": "3 s"
+            },
+            {
+              "value": "4",
+              "label": "4 s"
+            },
+            {
+              "value": "5",
+              "label": "5 s"
+            },
+            {
+              "value": "6",
+              "label": "6 s"
+            },
+            {
+              "value": "7",
+              "label": "7 s"
+            },
+            {
+              "value": "8",
+              "label": "8 s"
+            },
+            {
+              "value": "9",
+              "label": "9 s"
+            },
+            {
+              "value": "10",
+              "label": "10 s"
+            }
+          ],
+          "default": "4",
+          "value": "4",
+          "source": "settings",
+          "writerCapName": "stream-params",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    }
+  ],
+  "motionWasm": [
+    {
+      "id": "motion-wasm-settings",
+      "title": "",
+      "tab": "motion",
+      "order": 10,
+      "columns": 2,
+      "fields": [
+        {
+          "type": "slider",
+          "key": "threshold",
+          "label": "Threshold",
+          "description": "Pixel intensity difference to count as changed (higher = less sensitive)",
+          "min": 1,
+          "max": 255,
+          "step": 1,
+          "default": 45,
+          "showValue": true,
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 45,
+          "source": "settings",
+          "writerCapName": "motion-detection",
+          "writerAddonId": "motion-wasm"
+        },
+        {
+          "type": "slider",
+          "key": "minAreaFraction",
+          "label": "Min Subject Size",
+          "description": "Smallest subject that triggers motion, as a share of the analysed view. Fragments of one subject are merged before this is applied, so a partly hidden animal counts once at its full size. Only in effect when Min Area is 0.",
+          "min": 0.001,
+          "max": 0.05,
+          "step": 0.0005,
+          "default": 0.0085,
+          "showValue": true,
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 0.0085,
+          "source": "settings",
+          "writerCapName": "motion-detection",
+          "writerAddonId": "motion-wasm"
+        },
+        {
+          "type": "number",
+          "key": "minArea",
+          "label": "Min Area",
+          "description": "Absolute pixel bar, applied to each motion region on its own. This is how motion has always worked, and it stays the default. Set it to 0 to move THIS camera to Min Subject Size, which merges the fragments of one subject before measuring it and keeps its meaning at any resolution - expect more motion, so move one camera at a time.",
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 1500,
+          "unit": "px",
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 1500,
+          "source": "settings",
+          "writerCapName": "motion-detection",
+          "writerAddonId": "motion-wasm"
+        },
+        {
+          "type": "slider",
+          "key": "maxCoverageFraction",
+          "label": "Storm Cutoff",
+          "description": "A merged region whose changed pixels cover more of the view than this is weather, an IR cut or an exposure step, not a subject, and does not fire motion. A real mover inside the storm still fires on its own region. Only in effect when Min Area is 0; 1 disables the cutoff.",
+          "min": 0.2,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.5,
+          "showValue": true,
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 0.5,
+          "source": "settings",
+          "writerCapName": "motion-detection",
+          "writerAddonId": "motion-wasm"
+        },
+        {
+          "type": "slider",
+          "key": "blurRadius",
+          "label": "Blur Radius",
+          "description": "Gaussian blur before diff (reduces noise)",
+          "min": 0,
+          "max": 10,
+          "step": 1,
+          "default": 1,
+          "showValue": true,
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 1,
+          "source": "settings",
+          "writerCapName": "motion-detection",
+          "writerAddonId": "motion-wasm"
+        },
+        {
+          "type": "slider",
+          "key": "dilateRadius",
+          "label": "Dilation Radius",
+          "description": "Expand motion regions to merge nearby changes",
+          "min": 0,
+          "max": 10,
+          "step": 1,
+          "default": 4,
+          "showValue": true,
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 4,
+          "source": "settings",
+          "writerCapName": "motion-detection",
+          "writerAddonId": "motion-wasm"
+        }
+      ]
+    }
+  ],
+  "snapshot": [
+    {
+      "id": "snapshot-preferences",
+      "title": "Snapshot",
+      "tab": "snapshot",
+      "fields": [
+        {
+          "type": "select",
+          "key": "snapshotStreamId",
+          "label": "Preferred stream",
+          "description": "Stream used when grabbing a snapshot",
+          "options": [
+            {
+              "value": "",
+              "label": "Not assigned"
+            },
+            {
+              "value": "main",
+              "label": "Main (3840x2160, h265)"
+            },
+            {
+              "value": "sub",
+              "label": "Sub (640x360, h264)"
+            }
+          ],
+          "source": "settings",
+          "writerCapName": "snapshot",
+          "writerAddonId": "snapshot"
+        },
+        {
+          "type": "number",
+          "key": "snapshotMaxAgeS",
+          "label": "Max cache age (s)",
+          "min": 0,
+          "max": 86400,
+          "step": 1,
+          "description": "Serve cached snapshot up to this age before re-capturing. Default 15s for non-battery cams (live-feel). The UI refresh button always forces a fresh capture regardless of this value.",
+          "source": "settings",
+          "writerCapName": "snapshot",
+          "writerAddonId": "snapshot"
+        },
+        {
+          "type": "boolean",
+          "key": "snapshotDebug",
+          "label": "Debug logging",
+          "description": "Log stream selection and timing details for this device.",
+          "source": "settings",
+          "writerCapName": "snapshot",
+          "writerAddonId": "snapshot"
+        }
+      ]
+    }
+  ],
+  "reolinkBattery": [
+    {
+      "id": "battery-refresh",
+      "tab": "general",
+      "title": "Scheduled refresh",
+      "description": "How often this battery camera is guaranteed to have been read, so a battery level never goes stale unseen.",
+      "columns": 1,
+      "fields": [
+        {
+          "type": "number",
+          "key": "batteryRefreshMinutes",
+          "label": "Refresh window (min)",
+          "description": "Once per window this camera refreshes everything CamStack knows about it — battery level and charging, signal, device info, every state panel and the cached snapshot. If the camera is awake at some point in the window (a motion event, a live view, anything that woke it) it is refreshed then and not woken again; if the whole window passes with the camera asleep, it is woken ONCE near the end of the window, refreshed, and left to go back to sleep. A camera that does not answer is retried at most twice per window. 15–240 minutes, default 60; 0 turns the scheduled refresh off (the battery level then ages until the camera next wakes by itself).",
+          "default": 60,
+          "min": 0,
+          "max": 240,
+          "step": 5,
+          "value": 60,
+          "source": "settings",
+          "writerCapName": "device-config",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    },
+    {
+      "id": "sleep-push",
+      "title": "Battery motion (sleep push)",
+      "tab": "motion",
+      "fields": [
+        {
+          "type": "select",
+          "key": "batterySleepPushMethod",
+          "label": "Preferred sleep-push path",
+          "default": "auto",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto (webhook if supported, else email)"
+            },
+            {
+              "value": "webhook",
+              "label": "HaCfg webhook only"
+            },
+            {
+              "value": "email",
+              "label": "Email/SMTP only"
+            }
+          ],
+          "value": "auto",
+          "source": "settings",
+          "writerCapName": "device-config",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    }
+  ],
+  "reolinkMotion": [
+    {
+      "id": "motion",
+      "title": "On-camera motion (MdAlarm)",
+      "tab": "motion",
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "motionEnabled",
+          "label": "Motion detection",
+          "default": true,
+          "description": "Master switch for the camera's on-board motion detector. Disabling stops the camera from emitting motion events on the alarm channel.",
+          "value": true,
+          "source": "settings",
+          "writerCapName": "device-config",
+          "writerAddonId": "provider-reolink"
+        },
+        {
+          "type": "slider",
+          "key": "motionSensitivity",
+          "label": "Sensitivity",
+          "default": 25,
+          "min": 1,
+          "max": 50,
+          "step": 1,
+          "description": "Higher = triggers on smaller motion. Reolink user-facing range 1..50.",
+          "value": 25,
+          "source": "settings",
+          "writerCapName": "device-config",
+          "writerAddonId": "provider-reolink"
+        }
+      ]
+    }
+  ],
+  "orchestrator": [
+    {
+      "id": "motion-tuning",
+      "title": "Motion",
+      "tab": "detection-pipeline",
+      "location": "top-tab",
+      "order": 4,
+      "fields": [
+        {
+          "key": "motionSources",
+          "type": "multiselect",
+          "label": "Motion Sources",
+          "default": ["analyzer"],
+          "options": [
+            {
+              "value": "analyzer",
+              "label": "Frame-diff Analyzer (motion addon)"
+            },
+            {
+              "value": "onboard",
+              "label": "Camera sensors",
+              "description": "The camera's own motion, plus any sensor attached to it"
+            },
+            {
+              "value": "device-activity",
+              "label": "Device activity (the device says it is working)"
+            }
+          ],
+          "value": ["analyzer"],
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "detectionSources",
+          "type": "multiselect",
+          "label": "Detection Sources",
+          "default": ["pipeline"],
+          "options": [
+            {
+              "value": "pipeline",
+              "label": "This node (ML root step on decoded frames)"
+            },
+            {
+              "value": "onboard",
+              "label": "Camera onboard AI (replaces the root step when picked alone)"
+            }
+          ],
+          "value": ["pipeline"],
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "motionFps",
+          "type": "slider",
+          "label": "Motion FPS (analyzer)",
+          "min": 1,
+          "max": 30,
+          "step": 1,
+          "default": 4,
+          "showValue": true,
+          "unit": "fps",
+          "nullable": true,
+          "nullLabel": "Default",
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": 4,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "motionCooldownMs",
+          "type": "slider",
+          "label": "Motion Cooldown",
+          "description": "Time without a fresh motion event before the active phase ends. Applies to all motion sources — every motion event re-arms the timer.",
+          "min": 0,
+          "max": 60000,
+          "step": 500,
+          "default": 30000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "nullable": true,
+          "nullLabel": "Default",
+          "value": 30000,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "maxSessionHoldMs",
+          "type": "slider",
+          "label": "Max session hold",
+          "description": "Upper bound on how long detection keeps running past the motion cooldown while a subject is still moving in-frame but no longer triggering motion. Prevents the detection box from stopping on a slow-moving subject. Set to 0 to disable.",
+          "min": 0,
+          "max": 600000,
+          "step": 5000,
+          "default": 120000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "nullable": true,
+          "nullLabel": "Default",
+          "value": 120000,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "audioMotionWindowMs",
+          "type": "slider",
+          "label": "Audio window after motion",
+          "description": "How long audio keeps being analysed after the last motion event. Each new motion event extends the window without restarting the audio stream.",
+          "min": 5000,
+          "max": 600000,
+          "step": 5000,
+          "default": 90000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "nullable": true,
+          "nullLabel": "Default",
+          "showWhen": {
+            "field": "audioMode",
+            "equals": "on-motion"
+          },
+          "value": 90000,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "onboardMotionDrivesAnalyzer",
+          "type": "boolean",
+          "label": "Run motion analyzer on onboard motion",
+          "description": "When onboard motion is detected, temporarily start the frame-diff analyzer to emit zone results. Stops after the motion cooldown window.",
+          "default": true,
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "onboard"
+          },
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "occupancyRecheckEnabled",
+          "type": "boolean",
+          "style": "checkbox",
+          "label": "Occupancy re-check",
+          "description": "Periodically re-sample a few frames during the watching phase, so objects that are simply parked are still counted (motion gating alone loses them after a restart). On by default at a wide interval; turn it off on cameras where the extra decoder re-dial is expensive.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "motionStreamProfile",
+          "type": "select",
+          "label": "Motion Stream (analyzer)",
+          "default": "low",
+          "options": [
+            {
+              "value": "high",
+              "label": "High"
+            },
+            {
+              "value": "mid",
+              "label": "Medium"
+            },
+            {
+              "value": "low",
+              "label": "Low"
+            }
+          ],
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "analyzer"
+          },
+          "value": "low",
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        }
+      ]
+    },
+    {
+      "id": "pipeline-object-detection",
+      "title": "Object Detection",
+      "tab": "detection-pipeline",
+      "location": "top-tab",
+      "order": 5,
+      "description": "When the SW object detection pipeline (yolov9s, scrfd, …) runs for this camera. Wrappers stay bound regardless — the runner reads this mode at attach time to decide whether to pull the substream.",
+      "fields": [
+        {
+          "key": "detectionMode",
+          "type": "select",
+          "label": "Object detection",
+          "default": "on-motion",
+          "options": [
+            {
+              "value": "disabled",
+              "label": "Disabled"
+            },
+            {
+              "value": "always-on",
+              "label": "Always on"
+            },
+            {
+              "value": "on-motion",
+              "label": "On motion (firmware/PIR/SW)"
+            }
+          ],
+          "value": "on-motion",
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "detectionStreamProfile",
+          "type": "select",
+          "label": "Detection Stream",
+          "default": "high",
+          "options": [
+            {
+              "value": "high",
+              "label": "High"
+            },
+            {
+              "value": "mid",
+              "label": "Medium"
+            },
+            {
+              "value": "low",
+              "label": "Low"
+            }
+          ],
+          "showWhen": {
+            "field": "detectionMode",
+            "notEquals": "disabled"
+          },
+          "value": "high",
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "detectionFps",
+          "type": "slider",
+          "label": "Detection FPS",
+          "min": 1,
+          "max": 30,
+          "step": 1,
+          "default": 10,
+          "showValue": true,
+          "unit": "fps",
+          "description": "Maximum frames decoded and sent to object detection each second",
+          "showWhen": {
+            "field": "detectionMode",
+            "notEquals": "disabled"
+          },
+          "value": 10,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "activityDetectionFps",
+          "type": "slider",
+          "label": "Detection FPS while the device is working",
+          "min": 1,
+          "max": 10,
+          "step": 1,
+          "default": 1,
+          "showValue": true,
+          "unit": "fps",
+          "description": "A device-activity session lasts as long as the job does — a cleaning run is tens of minutes. This caps the rate for that session only; a session opened by motion keeps the rate above.",
+          "showWhen": {
+            "field": "motionSources",
+            "includes": "device-activity"
+          },
+          "value": 1,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        }
+      ]
+    },
+    {
+      "id": "pipeline-audio",
+      "title": "Audio classification",
+      "tab": "detection-pipeline",
+      "location": "top-tab",
+      "order": 6,
+      "description": "When the audio classifier (apple-soundanalysis, etc.) runs for this camera. Default for battery cams: disabled (continuous audio holds the substream open).",
+      "fields": [
+        {
+          "key": "audioMode",
+          "type": "select",
+          "label": "Audio classification",
+          "default": "always-on",
+          "options": [
+            {
+              "value": "disabled",
+              "label": "Disabled"
+            },
+            {
+              "value": "always-on",
+              "label": "Always on"
+            },
+            {
+              "value": "on-motion",
+              "label": "On motion (firmware/PIR/SW)"
+            }
+          ],
+          "value": "always-on",
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "audioStreamPick",
+          "type": "select",
+          "label": "Audio stream",
+          "default": "auto",
+          "description": "Which camera stream the audio classifier listens on. Auto picks the lowest stream the camera serves natively — a transcoded stream is never started just to hear a camera.",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto (lowest native)"
+            },
+            {
+              "value": "high",
+              "label": "High"
+            },
+            {
+              "value": "mid",
+              "label": "Medium"
+            },
+            {
+              "value": "low",
+              "label": "Low"
+            }
+          ],
+          "showWhen": {
+            "field": "audioMode",
+            "notEquals": "disabled"
+          },
+          "value": "auto",
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        }
+      ]
+    },
+    {
+      "id": "occupancy",
+      "title": "Occupancy",
+      "tab": "detection-pipeline",
+      "location": "top-tab",
+      "order": 7,
+      "description": "Periodic re-sampling to keep stationary objects / occupancy fresh while the camera is idle (watching).",
+      "fields": [
+        {
+          "key": "occupancyRecheckSec",
+          "type": "slider",
+          "label": "Occupancy re-check interval",
+          "description": "How often (in seconds) the runner re-samples a few frames to confirm the scene is truly empty during the watching phase.",
+          "min": 0,
+          "max": 300,
+          "step": 5,
+          "default": 300,
+          "showValue": true,
+          "unit": "s",
+          "showWhen": {
+            "field": "occupancyRecheckEnabled",
+            "equals": true
+          },
+          "value": 300,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "occupancyRecheckFrames",
+          "type": "slider",
+          "label": "Occupancy re-check frames",
+          "description": "Number of frames sampled per occupancy re-check burst.",
+          "min": 1,
+          "max": 10,
+          "step": 1,
+          "default": 4,
+          "showValue": true,
+          "showWhen": {
+            "field": "occupancyRecheckEnabled",
+            "equals": true
+          },
+          "value": 4,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        }
+      ]
+    },
+    {
+      "id": "pre-roll-detection",
+      "title": "Pre-roll detection",
+      "tab": "detection-pipeline",
+      "location": "top-tab",
+      "order": 8,
+      "description": "When motion opens a session the camera has already buffered a few seconds of footage. Detecting over it finds a subject at the moment it appeared instead of after the decoder has warmed up.",
+      "fields": [
+        {
+          "key": "preRollInferenceEnabled",
+          "type": "boolean",
+          "style": "checkbox",
+          "label": "Detect in the pre-roll",
+          "description": "Run detection over the few seconds of footage the camera had already buffered when motion fired, so a subject that was in view before the trigger is found at the moment it appeared rather than seconds later. The burst is bounded and never delays live detection.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        },
+        {
+          "key": "preRollInferenceFrames",
+          "type": "slider",
+          "label": "Pre-roll frames",
+          "description": "How many frames of buffered history may be detected on, per session. Higher samples the history more densely; 0 disables the pass.",
+          "min": 0,
+          "max": 30,
+          "step": 1,
+          "default": 12,
+          "showValue": true,
+          "showWhen": {
+            "field": "preRollInferenceEnabled",
+            "equals": true
+          },
+          "value": 12,
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        }
+      ]
+    },
+    {
+      "id": "cluster-assignment",
+      "title": "Cluster Assignment",
+      "tab": "detection-pipeline",
+      "location": "top-tab",
+      "order": 10,
+      "fields": [
+        {
+          "key": "pipelineNodeId",
+          "type": "select",
+          "label": "Pipeline Node",
+          "description": "Which node runs the detection pipeline for this camera.",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto (load balanced)"
+            },
+            {
+              "value": "hub",
+              "label": "hub"
+            },
+            {
+              "value": "agent-2",
+              "label": "agent-2"
+            }
+          ],
+          "default": "auto",
+          "value": "auto",
+          "source": "settings",
+          "writerCapName": "pipeline-orchestrator",
+          "writerAddonId": "pipeline-orchestrator"
+        }
+      ]
+    }
+  ],
+  "analytics": [
+    {
+      "id": "media-policy",
+      "title": "Snapshots & media",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "debugMediaEnabled",
+          "label": "Debug media",
+          "description": "Off (the default) keeps first/last frame, key frames, thumbnails and face/plate crops, and reduces motion-only stills to one marker per detection drought. On also stores the per-track filmstrip and a still on EVERY motion transition — diagnostic volume, roughly 95 KiB per transition.",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "motionMarkerQuietMs",
+          "label": "Motion marker after",
+          "description": "With debug media off: a motion still is kept only when no detection has run on this camera for this long, and at most one per window. Fleet p90 of detection-free stretches is ~13 min.",
+          "min": 60000,
+          "max": 21600000,
+          "step": 60000,
+          "default": 900000,
+          "showValue": true,
+          "unit": "min",
+          "displayScale": 60000,
+          "value": 900000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "snapshotIntervalMs",
+          "label": "Snapshot interval",
+          "description": "How often a snapshot is persisted per active track.",
+          "min": 500,
+          "max": 60000,
+          "step": 500,
+          "default": 5000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "value": 5000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "snapshotMovementThreshold",
+          "label": "Snapshot movement gate",
+          "description": "After the interval elapses, only capture a snapshot if the object moved this fraction of the frame since the last one. Higher = fewer near-identical frames. 0 disables the gate.",
+          "min": 0,
+          "max": 0.15,
+          "step": 0.005,
+          "default": 0.03,
+          "showValue": true,
+          "unit": "%",
+          "displayScale": 0.01,
+          "value": 0.03,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "snapshotMaxIdleMs",
+          "label": "Snapshot max idle",
+          "description": "Force a snapshot for a stationary but still-present track after this long without one, so its filmstrip is never empty.",
+          "min": 5000,
+          "max": 120000,
+          "step": 5000,
+          "default": 30000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "value": 30000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "audio-metrics-report",
+      "title": "Audio metrics reporting",
+      "description": "Coalesce audio-metrics state updates so the events tab + bus aren't flooded by per-second dBFS jitter on idle scenes. Per-camera override.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "audioMetricsReportEnabled",
+          "label": "Mirror to device-state",
+          "description": "When off, the audio classifier still runs (the live AUDIO METRICS panel reads through the cap method), but the periodic state-changed events are suppressed. Use for cameras where audio is informational only.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "audioMetricsReportThresholdDb",
+          "label": "Report threshold",
+          "description": "Minimum dBFS delta between consecutive snapshots to trigger an emit. 2dB means quiet noise jitter (±1dB) is suppressed; class changes always emit regardless. Lower = more updates.",
+          "min": 0,
+          "max": 10,
+          "step": 1,
+          "default": 2,
+          "showValue": true,
+          "unit": "dB",
+          "value": 2,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "retention",
+      "title": "Retention",
+      "description": "ONE window per camera. Everything this camera produces — tracks, their events, media, faces, plates and search vectors, plus motion, audio and sensor events — is deleted on it. Default: as long as the camera's recordings, so footage and analytics stay one policy. Enrolled faces and plates are never pruned.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "select",
+          "key": "retentionMode",
+          "label": "Mode",
+          "description": "Follow recordings: history lives exactly as long as retained footage (age retention AND disk eviction; never prunes the last 7 days). Custom: the window below.",
+          "default": "follow-recordings",
+          "options": [
+            {
+              "value": "follow-recordings",
+              "label": "Follow recordings (default)"
+            },
+            {
+              "value": "custom",
+              "label": "Custom window"
+            }
+          ],
+          "value": "follow-recordings",
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "trackRetentionDays",
+          "label": "Window",
+          "description": "How long this camera's analytics history is kept in Custom mode — and the bound in Follow mode when the camera has no footage at all. 0 = keep forever, which switches retention OFF for this camera entirely (motion and audio events included, and those grow by thousands of rows a day).",
+          "min": 0,
+          "max": 365,
+          "step": 1,
+          "default": 7,
+          "unit": "days",
+          "value": 7,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "recording",
+      "location": "top-tab"
+    },
+    {
+      "id": "package-drop",
+      "title": "Package detection",
+      "description": "Detect a delivered package (a package-class object left parked inside a package zone) and, symmetrically, its pick-up. Draw the package zone in the zone editor; enable the package class in the object-detection step. Per-device override.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "packageDropEnabled",
+          "label": "Enable package detection",
+          "description": "Turn package delivered / picked-up detection on for this camera (off elsewhere).",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "packageDropPickupEnabled",
+          "label": "Emit pick-up",
+          "description": "Also emit a package-picked-up event when the delivered package leaves.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "packageDropEarlyPickupEnabled",
+          "label": "Early pick-up",
+          "description": "Report a pick-up as soon as the package detector has looked three times over at least 10 s, found the spot empty and unblocked, and somebody was in the drop-off zone — instead of after 5 minutes without a sighting. Off by default until it is measured on more pick-ups.",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "packageDropMinFrames",
+          "label": "Confirmation frames",
+          "description": "How many frames the box must be seen on before it counts as a delivery. One is a flicker; two can still be a passer-by; three is the default bar against false positives. Independent of dwell.",
+          "min": 1,
+          "max": 10,
+          "step": 1,
+          "default": 3,
+          "showValue": true,
+          "value": 3,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "packageDropDwellSec",
+          "label": "Minimum dwell",
+          "description": "Extra time the package must stay parked after the confirmation frames. 0 (default) means N frames is enough — a courier who drops and leaves in a couple of seconds still delivers. Raise to reject a bag briefly set down.",
+          "min": 0,
+          "max": 300,
+          "step": 5,
+          "default": 0,
+          "showValue": true,
+          "unit": "s",
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "packageDropMinBboxAreaFrac",
+          "label": "Minimum package size",
+          "description": "Reject tiny far-field blobs: the package box must cover at least this fraction of the frame.",
+          "min": 0,
+          "max": 0.1,
+          "step": 0.001,
+          "default": 0.004,
+          "showValue": true,
+          "value": 0.004,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "packageDropMaxBboxAreaFrac",
+          "label": "Maximum package size",
+          "description": "Reject scene-sized blobs: a \"package\" covering more of the frame than this is scenery (a light patch, a doormat), not a parcel. Real parcels measure 1–2% of the frame; the recurring false positive measured 8–9.5%. This — not confidence — is the lever against a static false positive.",
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.005,
+          "default": 0.04,
+          "showValue": true,
+          "value": 0.04,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "packageDropActivityWindowSec",
+          "label": "Deliverer window",
+          "description": "A delivery only counts if a person or vehicle was in the configured package drop-off zone within this many seconds before the package appeared — and a pick-up only with somebody in that zone when it vanished. Motion elsewhere on the camera does not count. 0 disables the requirement.",
+          "min": 0,
+          "max": 1800,
+          "step": 30,
+          "default": 300,
+          "showValue": true,
+          "unit": "s",
+          "value": 300,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "audio-detection",
+      "title": "Audio detection",
+      "description": "Thresholds for audio-level and classification events. Per-device override.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "number",
+          "key": "classificationMinScore",
+          "label": "Classification min score",
+          "description": "Minimum confidence (0–1) for a classification result to be accepted.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.6,
+          "value": 0.6,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "multiselect",
+          "key": "audioAllowedClasses",
+          "label": "Event classes",
+          "description": "Which sounds may become an event on this camera. Leave empty to allow every class. The classifier is untouched — it keeps hearing and labelling everything; this only narrows what is worth an event and a notification here.",
+          "options": [
+            {
+              "value": "speech",
+              "label": "Speech"
+            },
+            {
+              "value": "scream",
+              "label": "Scream / Shout"
+            },
+            {
+              "value": "crying",
+              "label": "Crying / Baby"
+            },
+            {
+              "value": "laughter",
+              "label": "Laughter"
+            },
+            {
+              "value": "music",
+              "label": "Music"
+            },
+            {
+              "value": "dog",
+              "label": "Dog"
+            },
+            {
+              "value": "cat",
+              "label": "Cat"
+            },
+            {
+              "value": "bird",
+              "label": "Bird"
+            },
+            {
+              "value": "animal",
+              "label": "Animal (other)"
+            },
+            {
+              "value": "alarm",
+              "label": "Alarm / Siren"
+            },
+            {
+              "value": "doorbell",
+              "label": "Doorbell / Knock"
+            },
+            {
+              "value": "glass_breaking",
+              "label": "Glass Breaking"
+            },
+            {
+              "value": "gunshot",
+              "label": "Gunshot / Explosion"
+            },
+            {
+              "value": "vehicle",
+              "label": "Vehicle"
+            },
+            {
+              "value": "siren",
+              "label": "Emergency Siren"
+            },
+            {
+              "value": "fire",
+              "label": "Fire / Smoke"
+            },
+            {
+              "value": "water",
+              "label": "Water"
+            },
+            {
+              "value": "wind",
+              "label": "Wind / Weather"
+            },
+            {
+              "value": "door",
+              "label": "Door"
+            },
+            {
+              "value": "footsteps",
+              "label": "Footsteps"
+            },
+            {
+              "value": "crowd",
+              "label": "Crowd / Chatter"
+            },
+            {
+              "value": "telephone",
+              "label": "Telephone"
+            },
+            {
+              "value": "engine",
+              "label": "Engine / Motor"
+            },
+            {
+              "value": "tools",
+              "label": "Tools / Construction"
+            }
+          ],
+          "default": [],
+          "value": [],
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioConfirmHits",
+          "label": "Occurrences to confirm",
+          "description": "How many times the same sound must be heard inside the window below before it becomes an event. 1 disables the window — every occurrence is an event.",
+          "min": 1,
+          "step": 1,
+          "default": 2,
+          "value": 2,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioConfirmWindowSec",
+          "label": "Confirmation window",
+          "description": "Width of the corroboration window. Occurrences are counted per class, so two different sounds never confirm each other. Ignored when occurrences is 1.",
+          "min": 1,
+          "step": 1,
+          "default": 10,
+          "unit": "s",
+          "value": 10,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "levelDeviationDb",
+          "label": "Level deviation",
+          "description": "dB above the rolling mean required to trigger a peak event.",
+          "min": 1,
+          "step": 1,
+          "default": 10,
+          "unit": "dB",
+          "value": 10,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "levelWindowSec",
+          "label": "Level window",
+          "description": "Rolling baseline window length for peak detection.",
+          "min": 1,
+          "step": 1,
+          "default": 10,
+          "unit": "s",
+          "value": 10,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "levelMaxWaitSec",
+          "label": "Level max wait",
+          "description": "Maximum silence between events before a heartbeat sample is emitted.",
+          "min": 1,
+          "step": 1,
+          "default": 20,
+          "unit": "s",
+          "value": 20,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "audio-markers",
+      "title": "Audio markers",
+      "description": "A synthetic timeline marker (with a snapshot) for audio that is out of the ordinary FOR THIS CAMERA, loud, and heard while nothing visual is happening. Off by default: leave it off for a day and read the “audio anomaly gate (window)” log line — its `wouldFire` count is how many markers this camera would have produced, per camera, before you pay for any of them.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "audioMarkerEnabled",
+          "label": "Create audio markers",
+          "description": "When off the criteria are still evaluated and counted (wouldFire) — only the marker is not created.",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerBaselineSec",
+          "label": "Baseline window",
+          "description": "How much of its own history defines this camera’s “normal” loudness. Also the warm-up: no marker until this much audio has been heard.",
+          "min": 30,
+          "step": 30,
+          "default": 300,
+          "unit": "s",
+          "value": 300,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerMinDbfs",
+          "label": "Minimum volume",
+          "description": "Absolute loudness floor. A sound quieter than this is never a marker, however unusual it is for the camera. 0 dBFS is digital full scale, so this is negative.",
+          "min": -60,
+          "max": 0,
+          "step": 1,
+          "default": -25,
+          "unit": "dBFS",
+          "value": -25,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerMinDeviations",
+          "label": "Out-of-the-ordinary factor",
+          "description": "How many multiples of this camera’s OWN loudness jitter the sound must exceed. A camera on a busy road needs a bigger jump than one in a garden — that is the point of measuring it per camera.",
+          "min": 1,
+          "step": 0.5,
+          "default": 4,
+          "value": 4,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerMinDeviationDb",
+          "label": "Minimum jump",
+          "description": "Floor, in dB, on how far above its own normal the sound must sit. Holds when a camera is so steady that the factor above would pass on any nudge.",
+          "min": 1,
+          "step": 1,
+          "default": 12,
+          "unit": "dB",
+          "value": 12,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerMotionQuietSec",
+          "label": "Motion-quiet window",
+          "description": "Suppress the marker if a track was alive or motion was reported within this long. An audio marker laid over an active track is noise.",
+          "min": 0,
+          "step": 5,
+          "default": 20,
+          "unit": "s",
+          "value": 20,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerCooldownSec",
+          "label": "Minimum gap",
+          "description": "Shortest interval between two markers on this camera.",
+          "min": 5,
+          "step": 5,
+          "default": 120,
+          "unit": "s",
+          "value": 120,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerMaxPerHour",
+          "label": "Ceiling per hour",
+          "description": "Hard burst ceiling per camera. Drops past it are counted, not silent.",
+          "min": 1,
+          "step": 1,
+          "default": 3,
+          "value": 3,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioMarkerMaxPerDay",
+          "label": "Ceiling per day",
+          "description": "Hard daily ceiling per camera — this, not the thresholds, is what bounds the worst case. A mis-tuned threshold can only ever cost you this many markers a day.",
+          "min": 1,
+          "step": 1,
+          "default": 12,
+          "value": 12,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "audio-episodes",
+      "title": "Audio episodes",
+      "description": "One timeline track and one event per classified sound, held open with hysteresis so a long cry is not four tracks. No class filter: speech, crying, a bark — the knobs below are what stop repeats. Leave on for a day or two and judge the spam, then tighten per camera.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "audioEpisodeEnabled",
+          "label": "Create audio episodes",
+          "description": "Off switches off the GROUPING only: classified audio still persists an event and still notifies, but no timeline track is opened and a long sound is no longer collapsed into one episode (one event per class change, then one every 5 s while it lasts).",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioEpisodeOpenHoldSec",
+          "label": "Open hold",
+          "description": "The class must be heard continuously this long before an episode opens. Filters 200 ms blips.",
+          "min": 0,
+          "step": 0.5,
+          "default": 1.5,
+          "unit": "s",
+          "value": 1.5,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioEpisodeCloseGapSec",
+          "label": "Close gap",
+          "description": "The class must be absent this long before the episode closes. A pause inside a cry does not start a second track.",
+          "min": 1,
+          "step": 1,
+          "default": 12,
+          "unit": "s",
+          "value": 12,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "audioEpisodeCooldownSec",
+          "label": "Cooldown",
+          "description": "After an episode closes, the same class cannot reopen until this elapses.",
+          "min": 0,
+          "step": 5,
+          "default": 60,
+          "unit": "s",
+          "value": 60,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "face-recognition",
+      "title": "Face recognition",
+      "description": "How a face is matched to a person. Which cameras look for faces is set per camera, in its detection steps. The switch turns matching off everywhere; the other values can also be set per camera.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "number",
+          "key": "similarityThreshold",
+          "label": "Similarity threshold",
+          "description": "How alike (0–1) a face must be to a known person to be matched. Higher = stricter. Near misses (from 80% of this value) are offered as suggestions.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.45,
+          "value": 0.45,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "margin",
+          "label": "Ambiguity margin",
+          "description": "The best match must beat the second best by at least this much, or the face stays unassigned.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "default": 0.12,
+          "value": 0.12,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minFacePx",
+          "label": "Min face size to keep (px)",
+          "description": "Faces smaller than this (short side, full-resolution pixels) are dropped and not stored. Applied after the embedding floor in Faces & recognition.",
+          "min": 0,
+          "step": 1,
+          "default": 30,
+          "unit": "px",
+          "value": 30,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "recognitionMinFacePx",
+          "label": "Min face size to auto-assign (px)",
+          "description": "Stored faces smaller than this (short side, full-resolution pixels) can be assigned by hand but are never matched automatically — small faces give wrong matches. Raise it if distant faces get the wrong name.",
+          "min": 0,
+          "step": 1,
+          "default": 48,
+          "unit": "px",
+          "value": 48,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minIdentitySamples",
+          "label": "Min identity samples",
+          "description": "A person needs at least this many saved faces before new faces are matched to them automatically.",
+          "min": 1,
+          "step": 1,
+          "default": 2,
+          "value": 2,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "confirmFrames",
+          "label": "Confirm frames",
+          "description": "Frames an identity must be seen before a track is assigned. Minimum 1.",
+          "min": 1,
+          "step": 1,
+          "default": 3,
+          "value": 3,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "maxEmbeddingMagnitude",
+          "label": "Max embedding magnitude (0 = off)",
+          "description": "Reject a face whose embedding is abnormally strong — a blank or garbled crop that would match everyone. Leave at 0 until the \"face: embedding magnitude\" log lines show where your cameras sit.",
+          "min": 0,
+          "step": 0.5,
+          "default": 0,
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "bufferMaxPerDevice",
+          "label": "Buffer max per device",
+          "description": "Maximum buffered face entries kept per device.",
+          "min": 0,
+          "step": 10,
+          "default": 50,
+          "value": 50,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "keepSourceFrames",
+          "label": "Keep the source frame of every buffered face",
+          "description": "Also store the whole frame each face came from (about 1.6 MB at 4K), so faces can be re-extracted later with a better model. Off by default.",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "analytics",
+      "location": "top-tab"
+    },
+    {
+      "id": "detection-sensitivity",
+      "title": "Detection sensitivity",
+      "description": "Per-device tracking and event-emission tuning. Lower values produce more events; higher values suppress noise.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "number",
+          "key": "minTrackAge",
+          "label": "Min track age",
+          "description": "Minimum tracker hits before a track is exposed to the event emitter.",
+          "min": 0,
+          "step": 1,
+          "default": 3,
+          "value": 3,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "cooldownSec",
+          "label": "Event cooldown",
+          "description": "Minimum seconds between repeated events for the same track.",
+          "min": 0.5,
+          "step": 0.5,
+          "default": 8,
+          "unit": "s",
+          "value": 8,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minHits",
+          "label": "Min detection hits",
+          "description": "Minimum consecutive detection hits before a track is promoted to output.",
+          "min": 1,
+          "step": 1,
+          "default": 3,
+          "value": 3,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "stationaryThresholdSec",
+          "label": "Stationary threshold",
+          "description": "Seconds without significant movement before a track is marked stationary.",
+          "min": 0.5,
+          "step": 0.5,
+          "default": 10,
+          "unit": "s",
+          "value": 10,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "detection-pipeline",
+      "location": "top-tab"
+    },
+    {
+      "id": "confirmation-gate",
+      "title": "Confirmation gate",
+      "description": "Before a NEW track is born, re-run object detection on the hi-res native crop of the detection box. If the crop does not confirm a compatible object above the threshold, the birth is suppressed as a false positive. Fail-DEFERRED: a crop miss, unavailable inference, or a timeout leaves the birth UNDECIDED and looks again on later frames — it is not confirmed by default. Only an exhausted deferral with no crop at all lets a birth through unmeasured.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "confirmationGateEnabled",
+          "label": "Confirm new tracks",
+          "description": "Re-detect the native crop before a birth. Off = every track is born from the low-res detection frame directly.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "confirmationGateMinConfidence",
+          "label": "Min confirmation score",
+          "description": "Minimum re-detection score (0..1) required in the crop, class-compatible with the track, for a birth to be confirmed.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.4,
+          "showValue": true,
+          "value": 0.4,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "confirmationGateMinCropPx",
+          "label": "Min crop size",
+          "description": "Subject boxes smaller than this (longest side, detection-frame px) are too tiny to confirm reliably — the gate defers them and looks again as the subject approaches and the box grows. 0 = confirm every birth regardless of size.",
+          "min": 0,
+          "max": 256,
+          "step": 8,
+          "default": 48,
+          "showValue": true,
+          "unit": "px",
+          "value": 48,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "confirmationGateTimeoutMs",
+          "label": "Confirmation timeout",
+          "description": "Per-ATTEMPT budget for crop fetch + re-detection. If it does not resolve in time the attempt ends undecided, so the frame path never stalls on inference.",
+          "min": 50,
+          "max": 2000,
+          "step": 50,
+          "default": 300,
+          "showValue": true,
+          "unit": "ms",
+          "value": 300,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "confirmationGateMaxDeferralMs",
+          "label": "Max deferral",
+          "description": "How long an undecided birth may wait for a native crop before the gate decides on the sub-native fallback. Measured from the first attempt, so retries cannot push it out. 0 = decide on the first attempt.",
+          "min": 0,
+          "max": 10000,
+          "step": 250,
+          "default": 2000,
+          "showValue": true,
+          "unit": "ms",
+          "value": 2000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "confirmationGateMaxAttempts",
+          "label": "Max gate attempts",
+          "description": "How many times one birth may be put through the gate, the first attempt included. The deferral ends on this or on the max deferral, whichever comes first.",
+          "min": 1,
+          "max": 12,
+          "step": 1,
+          "default": 4,
+          "showValue": true,
+          "value": 4,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "detection-pipeline",
+      "location": "top-tab"
+    },
+    {
+      "id": "tracking",
+      "title": "Tracking",
+      "description": "Per-device tracker tuning: association, coasting, spawn floors, sub-floor continuation and detector-dropout handling. Use the deviceId-tagged logs (track started/lost/ended, frame processed) to measure the effect.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "number",
+          "key": "iouThreshold",
+          "label": "IoU match threshold",
+          "description": "Overlap required to match a (predicted) track to a detection. Higher = stricter.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.3,
+          "value": 0.3,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "maxMissedMs",
+          "label": "Max coasting time",
+          "description": "How long (ms) a track may miss detections before it is dropped. Time-based so it behaves the same on a 5fps and a 23fps camera.",
+          "min": 0,
+          "step": 100,
+          "default": 4000,
+          "unit": "ms",
+          "value": 4000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minTrackAgeMs",
+          "label": "Min track age",
+          "description": "A track must exist for at least this long (ms) before it can produce events — stops sub-second flicker fragments from becoming events.",
+          "min": 0,
+          "step": 100,
+          "default": 1000,
+          "unit": "ms",
+          "value": 1000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "predictiveCoasting",
+          "label": "Predictive coasting",
+          "description": "Extrapolate a coasting track by its velocity so a moved object re-matches instead of spawning a duplicate.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "classGating",
+          "label": "Class-consistent matching",
+          "description": "Only match a detection to a track of the same class.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "dedupEnabled",
+          "label": "Duplicate-track suppression",
+          "description": "Suppress and merge concurrent duplicate tracks. Stops one subject the detector double-fires (two boxes for one object, or a person misdetected as an animal) from becoming several time-overlapping tracks that each fire their own event. Off = legacy behaviour.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "dedupSpawnIou",
+          "label": "Duplicate spawn IoU",
+          "description": "Overlap at/above which a NEW track is treated as a duplicate of a concurrent same-kind track and not created. High so two distinct subjects appearing close together are still tracked separately.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.6,
+          "value": 0.6,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "personAnimalDedup",
+          "label": "Person/animal duplicate merge",
+          "description": "Treat an animal track overlapping a person track as the same subject (a person in a crouching / bending pose is often misdetected as an animal). The person track wins.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "animalOverPersonMaxScore",
+          "label": "Animal-over-person max score",
+          "description": "A low-confidence animal detection (score below this) sitting on a concurrent person track is suppressed — the common person-in-odd-pose false animal.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.6,
+          "value": 0.6,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "animalOverPersonIou",
+          "label": "Animal-over-person IoU",
+          "description": "Overlap with a concurrent person track that triggers the low-confidence animal spawn suppression.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.2,
+          "value": 0.2,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "dropoutSkipEnabled",
+          "label": "Detector-dropout skip",
+          "description": "Skip frames where detections suddenly drop to zero (likely a detector glitch) to protect coasting tracks.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "dropoutMaxSkipFrames",
+          "label": "Dropout max skip frames",
+          "description": "Max consecutive all-zero frames absorbed as a glitch before the scene is treated as genuinely empty.",
+          "min": 0,
+          "step": 1,
+          "default": 5,
+          "value": 5,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "classVotingEnabled",
+          "label": "Per-track class voting",
+          "description": "Report a track’s class by a confidence-weighted majority over its whole life instead of the latest frame — a person read as an animal on a single crouch/bend frame keeps the person label.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "classVoteMinFraction",
+          "label": "Class-vote min fraction",
+          "description": "The winning class must hold at least this fraction of a track’s total vote weight to override the latest frame; below it the latest frame wins (so a genuine mid-life reclassification is not frozen out).",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.5,
+          "value": 0.5,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "perClassMinScoreEnabled",
+          "label": "Per-class spawn confidence",
+          "description": "Require a per-class minimum detection score before a NEW track is created. Kills static-object / reflection false spawns from the FP-prone classes. An already-tracked object still matches on a low-confidence frame.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minScorePerson",
+          "label": "Min spawn score — person",
+          "description": "Minimum score to spawn a person track. 0 keeps person fully sensitive.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0,
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minScoreAnimal",
+          "label": "Min spawn score — animal",
+          "description": "Minimum score to spawn an animal track (FP-prone — a higher floor drops low-confidence static-object false animals).",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.45,
+          "value": 0.45,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minScoreVehicle",
+          "label": "Min spawn score — vehicle",
+          "description": "Minimum score to spawn a vehicle track (FP-prone — a higher floor drops low-confidence false vehicles).",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.45,
+          "value": 0.45,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "confirmBypassEnabled",
+          "label": "Fast high-confidence confirm",
+          "description": "Let a single very-high-confidence detection confirm a track for events before it reaches the min-hits gate, so a fast subject crossing in 1-2 frames (a passing car) still registers. Off by default (strict N-hit confirmation).",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "confirmBypassScore",
+          "label": "Fast-confirm score",
+          "description": "Score at/above which a detection confirms its track immediately, bypassing min-hits. Only used when fast high-confidence confirm is on.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.9,
+          "value": 0.9,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "byteTrackLowIouThreshold",
+          "label": "Sub-floor recovery IoU",
+          "description": "The IoU a sub-floor box needs with a moving tracklet’s prediction to re-attach it. Which boxes count as sub-floor is decided by the \"keep tracks through low-confidence frames\" option below.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.2,
+          "value": 0.2,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "lowScoreContinuationEnabled",
+          "label": "Keep tracks through low-confidence frames",
+          "description": "Boxes below the class confidence floor may keep an EXISTING track alive while the detector is unsure, so a person read at 0.5 for a few seconds keeps one id instead of splitting. They never start a track and never produce events, notifications or snapshots.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "lowScoreContinuationFloor",
+          "label": "Low-confidence continuation floor",
+          "description": "Score at or above which a box the class floor dropped still counts as evidence that a tracked subject is there. Only used with the option above.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.35,
+          "value": 0.35,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "trackingTape",
+          "label": "Record the track history (kept 1 day)",
+          "description": "Write, continuously, what the tracker is given on this camera — boxes, classes, scores, before the tracker decides — and the ids it produced, never pixels, so a track that went wrong can be promoted and kept as a test case within a day. About 43–72 MB per day per camera on the Artifacts location. Off by default; Events → Debug → Tapes shows what each recording camera costs.",
+          "default": false,
+          "value": false,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "minSpawnAreaEnabled",
+          "label": "Minimum spawn size",
+          "description": "Require a new track’s box to cover at least a minimum fraction of the frame before it is created — stops tiny far-field / vanishing-point blips from spawning full tracks. An already-tracked subject that shrinks into the distance is unaffected.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minSpawnAreaFracPerson",
+          "label": "Min spawn area — person",
+          "description": "Smallest person box (as a fraction of the frame area) allowed to start a NEW track. 0 = ungated. Conservative default (0.0005 = 0.05% of frame) drops only vanishing-point noise. Raise on cameras with a distant road / horizon.",
+          "min": 0,
+          "max": 1,
+          "step": 0.0005,
+          "default": 0.0005,
+          "value": 0.0005,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minSpawnAreaFracAnimal",
+          "label": "Min spawn area — animal",
+          "description": "Smallest animal box (fraction of frame area) allowed to start a NEW track. 0 = ungated (animal already has a spawn-score floor).",
+          "min": 0,
+          "max": 1,
+          "step": 0.0005,
+          "default": 0,
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "minSpawnAreaFracVehicle",
+          "label": "Min spawn area — vehicle",
+          "description": "Smallest vehicle box (fraction of frame area) allowed to start a NEW track. 0 = ungated (vehicle already has a spawn-score floor).",
+          "min": 0,
+          "max": 1,
+          "step": 0.0005,
+          "default": 0,
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "boolean",
+          "key": "classGroupAssoc",
+          "label": "Person/animal group matching",
+          "description": "Let a detection that flips between person and animal for a frame (a crouching / bending person is often read as an animal) re-match its existing track instead of spawning a concurrent animal track. A flip is the same subject in the same place, weakly read: the cross-class match happens only on the strict predicted-box pass and only for a full-frame box below the \"animal over person max score\" bar — a confident animal beside a person, or a person beside an animal, is its own subject and keeps its own track. The reported class is still decided by the per-track class vote.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "number",
+          "key": "zoneMembershipMinOverlap",
+          "label": "Zone membership minimum overlap",
+          "description": "How much of a detection box must fall inside a zone for the detection to be STAMPED with it — as a fraction of the BOX area, not of the zone. Same bar for live tracks and parked (stationary) occupancy. 0 stamps on any touch, which is what let a plant brushing a zone by 6% fire a \"person on the doorstep\" rule. Only a stamped zone can match a zone-scoped notification rule. Read the \"zone membership stamped on event\" log line to choose the value: it prints the achieved percentage per zone.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "default": 0,
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "detection-pipeline",
+      "location": "top-tab"
+    },
+    {
+      "id": "stationary-objects",
+      "title": "Stationary objects",
+      "tab": "detection-pipeline",
+      "description": "Parked / idle object suppression — keeps a stopped car from re-spawning tracks and re-flooding events. Per-device overrides on each camera. Defaults match today’s behaviour.",
+      "columns": 2,
+      "fields": [
+        {
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Suppress parked objects",
+          "description": "Promote a stopped object to a lightweight registry entry and suppress its detections from re-spawning tracks. Off = every parked object keeps spawning normal tracks on this camera.",
+          "default": true,
+          "value": true,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "suppressIou",
+          "label": "Suppress IoU",
+          "description": "Overlap at/above which a detection is the SAME parked object (unmoved) → its spawn is suppressed. Lower can suppress genuine new tracks near a parked object.",
+          "min": 0.3,
+          "max": 0.9,
+          "step": 0.05,
+          "default": 0.6,
+          "showValue": true,
+          "value": 0.6,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "wakeAssocIou",
+          "label": "Wake / associate IoU",
+          "description": "Minimum overlap for a detection to be treated as a parked entry’s OWN object (confirm or wake it). Too low lets a passing object wake a parked entry (re-flood); too high can miss the real departure.",
+          "min": 0.02,
+          "max": 0.5,
+          "step": 0.02,
+          "default": 0.1,
+          "showValue": true,
+          "value": 0.1,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "sessionStillnessWindowMs",
+          "label": "Session stillness window",
+          "description": "How long (ms) a tracked object must stay put before it stops holding a motion session open. It creates nothing: a parked object becomes an entry by being seen repeatedly in the same place, not by one track surviving this long.",
+          "min": 5000,
+          "max": 120000,
+          "step": 1000,
+          "default": 30000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "value": 30000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "slider",
+          "key": "entryTtlMs",
+          "label": "Observed-time TTL",
+          "description": "Retire a parked entry after this much OBSERVED (frames-flowing) time without a confirming detection — the object was removed while watched, or a long occlusion.",
+          "min": 60000,
+          "max": 1800000,
+          "step": 30000,
+          "default": 300000,
+          "showValue": true,
+          "unit": "s",
+          "displayScale": 1000,
+          "value": 300000,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "location": "top-tab"
+    },
+    {
+      "id": "stillness-scale",
+      "title": "Stillness scale (per camera)",
+      "description": "How slowly a subject has to move on THIS camera before it counts as settled. A camera looking down a 30 m driveway and one watching a doorway two metres away disagree about this by more than an order of magnitude, so one fleet-wide number cannot be right for both. Leave it at 0 and the camera behaves exactly as it always has (a flat 2 px-per-update bar). Run the `stillness.calibrate` action to measure it from the camera’s own recorded tracks — the run reports what it measured and REFUSES, with a reason, when the evidence is too thin.",
+      "columns": 1,
+      "fields": [
+        {
+          "type": "number",
+          "key": "stillnessSpeedFracPerSec",
+          "label": "Stillness speed bar",
+          "description": "Centroid speed, as a fraction of the subject’s OWN box diagonal, per second, at or below which the subject is not travelling. Subject-relative, so perspective is already divided out; per second, so an irregular on-motion cadence cannot masquerade as speed. 0 = not calibrated (the shipped absolute bar decides, exactly as before). Live reference: 0.0136 on a close, mostly-parked view; 0.3081 on a far view whose subjects only transit.",
+          "min": 0,
+          "max": 1,
+          "step": 0.001,
+          "default": 0,
+          "value": 0,
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        },
+        {
+          "type": "text",
+          "key": "stillnessCalibrationNote",
+          "label": "Last calibration",
+          "description": "What the last run measured, from how many samples and tracks, and what it chose — or which named reason it refused for. Display only.",
+          "default": "",
+          "readonlyField": true
+        },
+        {
+          "type": "addon-action-button",
+          "key": "__stillness-calibrate",
+          "addonId": "pipeline-analytics",
+          "action": "stillness.calibrate",
+          "label": "Calibrate from this camera",
+          "description": "Measure this camera’s own recent tracks and WRITE the bar above from them. It refuses — with a reason, and without writing — when the evidence is too thin: no tracks, too few tracks, too few samples, or no movement to scale against. The reading it took is left in “Last calibration” either way, so a refusal is as legible as a result.",
+          "buttonLabel": "Calibrate now",
+          "variant": "primary",
+          "includeDeviceId": true,
+          "paramsStatic": {
+            "apply": true
+          },
+          "confirmMessage": "Measure this camera’s recent tracks and overwrite its stillness bar with what they show?",
+          "successMessage": "{note}",
+          "source": "settings",
+          "writerCapName": "pipeline-analytics",
+          "writerAddonId": "pipeline-analytics"
+        }
+      ],
+      "tab": "detection-pipeline",
+      "location": "top-tab"
+    }
+  ]
+}

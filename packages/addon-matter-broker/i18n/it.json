@@ -1,0 +1,11 @@
+{
+  "globalSettings.s_matter-fabric.title": "Fabric Matter",
+  "globalSettings.s_matter-fabric.description": "I fabric Matter si gestiscono nella scheda Sistemi esterni → Broker.",
+  "globalSettings.s_matter-fabric.fabricHelp.label": "I fabric si gestiscono separatamente",
+  "connection.s_matter-fabric.title": "Fabric Matter",
+  "connection.s_matter-fabric.description": "CamStack gestisce un fabric Matter su questo hub. Aggiungi le credenziali di onboarding wireless solo se metterai in servizio dispositivi Thread o BLE-Wi-Fi. I dispositivi Matter sulla rete (Ethernet/Wi-Fi) non ne hanno bisogno.",
+  "connection.s_matter-fabric.threadDataset.label": "Dataset operativo Thread (esadecimale, facoltativo)",
+  "connection.s_matter-fabric.wifiSsid.label": "SSID Wi-Fi (facoltativo)",
+  "connection.s_matter-fabric.wifiPassword.label": "Password Wi-Fi (facoltativa)",
+  "connection.s_matter-fabric.reconcileIntervalMs.label": "Intervallo di riconciliazione dei nodi (ms)"
+}

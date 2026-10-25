@@ -1,0 +1,121 @@
+{
+  "name": "@camstack/ui-library",
+  "version": "1.2.324",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "import": "./dist/theme/index.js",
+      "require": "./dist/theme/index.cjs"
+    },
+    "./theme/tokens": {
+      "types": "./dist/theme/tokens.d.ts",
+      "import": "./dist/theme/tokens.js",
+      "require": "./dist/theme/tokens.cjs"
+    },
+    "./tailwind/*": "./src/tailwind/*"
+  },
+  "camstack": {
+    "system": true,
+    "displayName": "UI Library",
+    "description": "Shared React components and hooks for admin/agent UIs."
+  },
+  "files": [
+    "dist",
+    "src/tailwind",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build && npx tsx ../../scripts/emit-isolated-dts.ts --root . --src src --out dist",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@trpc/client": "^11.16.0",
+    "@trpc/react-query": "^11.16.0",
+    "konva": "^10.2.3",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "react-konva": "^19.2.3",
+    "superjson": "^2.0.0",
+    "tailwindcss": ">=4.0"
+  },
+  "peerDependenciesMeta": {
+    "@camstack/sdk": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "@tanstack/react-table": {
+      "optional": true
+    },
+    "@trpc/client": {
+      "optional": true
+    },
+    "@trpc/react-query": {
+      "optional": true
+    },
+    "superjson": {
+      "optional": true
+    },
+    "react-konva": {
+      "optional": true
+    },
+    "konva": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "@module-federation/runtime": "^2.4.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@trpc/client": "^11.16.0",
+    "@trpc/react-query": "^11.16.0",
+    "class-variance-authority": "^0.7",
+    "clsx": "^2.1",
+    "hls.js": "^1.6.16",
+    "jsdom": "^29.0.1",
+    "lucide-react": "^0.576.0",
+    "qrcode.react": "^4.2.0",
+    "tailwind-merge": "^3.0",
+    "typescript": "~6.0.3",
+    "uplot": "1.6.32",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  },
+  "nx": {
+    "implicitDependencies": [
+      "sdk"
+    ],
+    "targets": {
+      "build": {
+        "parallelism": false
+      }
+    }
+  }
+}

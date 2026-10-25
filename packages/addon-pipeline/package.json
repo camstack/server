@@ -1,0 +1,336 @@
+{
+  "name": "@camstack/addon-pipeline",
+  "version": "1.2.626",
+  "description": "Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "pipeline",
+    "detection",
+    "motion",
+    "audio",
+    "stream-broker"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/pipeline-runner/index.js",
+  "exports": {
+    "./pipeline-runner": {
+      "import": "./dist/pipeline-runner/index.mjs",
+      "require": "./dist/pipeline-runner/index.js"
+    },
+    "./detection-pipeline": {
+      "import": "./dist/detection-pipeline/index.mjs",
+      "require": "./dist/detection-pipeline/index.js"
+    },
+    "./motion-wasm": {
+      "import": "./dist/motion-wasm/index.mjs",
+      "require": "./dist/motion-wasm/index.js"
+    },
+    "./audio-analyzer": {
+      "import": "./dist/audio-analyzer/index.mjs",
+      "require": "./dist/audio-analyzer/index.js"
+    },
+    "./stream-broker": {
+      "import": "./dist/stream-broker/index.mjs",
+      "require": "./dist/stream-broker/index.js"
+    },
+    "./recorder": {
+      "import": "./dist/recorder/index.mjs",
+      "require": "./dist/recorder/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "python",
+    "swift",
+    "wasm",
+    "assets",
+    "THIRD_PARTY_MODELS.md"
+  ],
+  "camstack": {
+    "displayName": "Pipeline",
+    "bundle": {
+      "displayName": "Pipeline",
+      "description": "Detection, motion, audio + stream broker."
+    },
+    "nativeDependencies": {},
+    "addons": [
+      {
+        "id": "pipeline-runner",
+        "category": "pipeline",
+        "name": "Pipeline Runner",
+        "version": "0.1.0",
+        "description": "Per-node detection scheduler — manages frame queues, semaphore, motion drain, and inference dispatch for cameras assigned by the orchestrator",
+        "entry": "./dist/pipeline-runner/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "group": "detection"
+        },
+        "capabilities": [
+          {
+            "name": "pipeline-runner"
+          },
+          {
+            "name": "load-contribution"
+          },
+          {
+            "name": "failure-contribution"
+          }
+        ],
+        "passive": true,
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      },
+      {
+        "id": "detection-pipeline",
+        "category": "pipeline",
+        "name": "Detection Pipeline",
+        "version": "0.1.0",
+        "description": "Unified detection pipeline — object detection, face/plate recognition, classification, segmentation",
+        "entry": "./dist/detection-pipeline/index.js",
+        "python": {
+          "requirements": "./python/requirements.txt"
+        },
+        "capabilities": [
+          {
+            "name": "pipeline-executor"
+          },
+          {
+            "name": "detection-pipeline"
+          },
+          {
+            "name": "load-contribution"
+          }
+        ],
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "group": "detection",
+          "rssBudgetMb": 1536
+        },
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      },
+      {
+        "id": "motion-wasm",
+        "category": "pipeline",
+        "name": "Motion Detection (WASM)",
+        "version": "0.1.0",
+        "description": "WASM-accelerated motion detection with blur, dilation, and connected component labeling",
+        "entry": "./dist/motion-wasm/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "group": "detection"
+        },
+        "capabilities": [
+          {
+            "name": "motion-detection"
+          }
+        ],
+        "passive": true,
+        "defaultConfig": {
+          "threshold": 45,
+          "blurRadius": 1,
+          "dilateRadius": 4,
+          "minArea": 3000
+        },
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      },
+      {
+        "id": "audio-analyzer",
+        "category": "pipeline",
+        "name": "Audio Analyzer",
+        "version": "0.1.0",
+        "description": "Audio level metering (dB/RMS) with optional classification",
+        "entry": "./dist/audio-analyzer/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "rssBudgetMb": 512
+        },
+        "capabilities": [
+          {
+            "name": "audio-analyzer"
+          },
+          {
+            "name": "audio-analysis"
+          }
+        ],
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      },
+      {
+        "id": "stream-broker",
+        "category": "pipeline",
+        "name": "Stream Broker",
+        "version": "0.1.0",
+        "entry": "./dist/stream-broker/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "rssBudgetMb": 2048,
+          "semiSpaceMb": 8,
+          "initialOldSpaceMb": 512
+        },
+        "capabilities": [
+          {
+            "name": "device-removal-hook",
+            "optional": true
+          },
+          {
+            "name": "stream-broker"
+          },
+          {
+            "name": "camera-streams"
+          },
+          {
+            "name": "webrtc-session"
+          },
+          {
+            "name": "addon-widgets-source"
+          },
+          {
+            "name": "log-channels"
+          },
+          {
+            "name": "load-contribution"
+          }
+        ],
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      },
+      {
+        "id": "recorder",
+        "category": "pipeline",
+        "name": "Recorder",
+        "version": "0.1.0",
+        "description": "Continuous, local, filesystem-native camera recording — passthrough ffmpeg segmenter per profile with a RAM index and HLS variant/master playlists",
+        "entry": "./dist/recorder/index.js",
+        "execution": {
+          "placement": "any-node",
+          "heapProfile": "heavy",
+          "maxOldSpaceMb": 3072,
+          "rssBudgetMb": 3584
+        },
+        "capabilities": [
+          {
+            "name": "device-removal-hook",
+            "optional": true
+          },
+          {
+            "name": "recording"
+          },
+          {
+            "name": "recording-archive"
+          },
+          {
+            "name": "videoclips",
+            "optional": true
+          },
+          {
+            "name": "recording-export",
+            "optional": true
+          },
+          {
+            "name": "storage-evictable",
+            "optional": true
+          },
+          {
+            "name": "storage-occupancy",
+            "optional": true
+          },
+          {
+            "name": "load-contribution"
+          }
+        ],
+        "storageLocations": [
+          {
+            "id": "recordings",
+            "displayName": "Recordings",
+            "cardinality": "multi",
+            "defaultRoot": "media"
+          },
+          {
+            "id": "recordingsLow",
+            "displayName": "Recordings (Low)",
+            "cardinality": "multi",
+            "description": "Low-res + scrub stream.",
+            "defaultsTo": "recordings"
+          },
+          {
+            "id": "artifacts",
+            "displayName": "Artifacts",
+            "cardinality": "single",
+            "description": "Notification artifacts (stills, GIFs, clips, timelapses behind signed links and the viewer's artifact library), operator-exported video clips, and the enrolled gallery (face/plate reference crops and scene photographs), in disjoint subtrees of ONE root. Each tenant keeps its OWN retention — the notification shelf's bounds (6 h send scratch; 14 d / 2000 / 2 GiB retained), per-export expiry + delete-after-download, and NONE for the gallery (enrolled samples survive every sweep) — and no media-class retention may attach to any of them. Exactly ONE location (singleton). Not part of the system backup, gallery included — a deliberate operator decision: media locations are operator-managed; a remote-media-backup cap is the intended future answer.",
+            "defaultRoot": "media"
+          }
+        ],
+        "protected": true,
+        "icon": "assets/icon.svg",
+        "color": "#0ea5e9"
+      }
+    ],
+    "runtimeDependencies": [
+      "werift"
+    ]
+  },
+  "scripts": {
+    "build": "vite build && vite build --config vite.widgets.stream-broker.config.ts",
+    "build:server": "vite build",
+    "build:widgets": "vite build --config vite.widgets.stream-broker.config.ts",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:embed": "vitest run -c embed/vitest.config.ts",
+    "publish:npm": "npm publish --access public"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "werift": "0.22.9"
+  },
+  "dependencies": {
+    "@camstack/system": "*",
+    "mp4box": "0.5.4",
+    "node-av": "^6.0.0",
+    "opus-decoder": "^0.7.11",
+    "sharp": "^0.35.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/vite": "^1.16.9",
+    "@tailwindcss/vite": "^4.2.0",
+    "@tanstack/react-query": "^5.90.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@trpc/react-query": "^11.16.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.0.1",
+    "lucide-react": "^0.576.0",
+    "tailwindcss": "^4.2.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  }
+}

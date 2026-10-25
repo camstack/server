@@ -1,0 +1,436 @@
+{
+  "lock": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack lock",
+    "friendlyName": "Dev lock",
+    "displayCategories": ["SMARTLOCK"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.LockController",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "lockState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "contact": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack sensor",
+    "friendlyName": "Dev contact",
+    "displayCategories": ["CONTACT_SENSOR"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.ContactSensor",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "detectionState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "motionPresence": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack sensor",
+    "friendlyName": "Dev motionPresence",
+    "displayCategories": ["MOTION_SENSOR"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.MotionSensor",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "detectionState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "temperature": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack sensor",
+    "friendlyName": "Dev temperature",
+    "displayCategories": ["TEMPERATURE_SENSOR"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.TemperatureSensor",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "temperature"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "climateSensors": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack sensor",
+    "friendlyName": "Dev climateSensors",
+    "displayCategories": ["TEMPERATURE_SENSOR"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.TemperatureSensor",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "temperature"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.HumiditySensor",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "relativeHumidity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "switch": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack switch",
+    "friendlyName": "Dev switch",
+    "displayCategories": ["SWITCH"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.PowerController",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "powerState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "siren": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack siren",
+    "friendlyName": "Dev siren",
+    "displayCategories": ["SWITCH"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.PowerController",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "powerState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "light": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack light",
+    "friendlyName": "Dev light",
+    "displayCategories": ["LIGHT"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.PowerController",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "powerState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "dimmer": {
+    "endpointId": "7__dev",
+    "manufacturerName": "camstack",
+    "description": "CamStack switch",
+    "friendlyName": "Dev dimmer",
+    "displayCategories": ["LIGHT"],
+    "capabilities": [
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa",
+        "version": "3"
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.PowerController",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "powerState"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.BrightnessController",
+        "version": "3",
+        "properties": {
+          "supported": [
+            {
+              "name": "brightness"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      },
+      {
+        "type": "AlexaInterface",
+        "interface": "Alexa.EndpointHealth",
+        "version": "3.1",
+        "properties": {
+          "supported": [
+            {
+              "name": "connectivity"
+            }
+          ],
+          "proactivelyReported": true,
+          "retrievable": true
+        }
+      }
+    ],
+    "cookie": {
+      "stableId": "s7"
+    }
+  },
+  "none": null
+}

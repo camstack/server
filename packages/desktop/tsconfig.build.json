@@ -1,0 +1,17 @@
+{
+  // The type gate inside `npm run build`. Same program as tsconfig.main.json,
+  // but @camstack/types and node-root resolve to their BUILT .d.ts (nx
+  // guarantees them through `dependsOn: ^build`) instead of their sources via
+  // `paths`. Checking those sources again from here was the heaviest part of
+  // the desktop gate: 1.72 GB → 0.46 GB on the .d.ts, with the same zero
+  // errors (measured 2026-10-09, docs/design/2026-10-09-ts7-transition-plan.md
+  // §P1). `npm run typecheck` still uses tsconfig.spec.json (sources).
+  "extends": "./tsconfig.main.json",
+  "compilerOptions": {
+    "paths": {
+      "@camstack/owner-only-file": [
+        "../types/src/util/owner-only-file.ts"
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Stacked lens icon -->
+  <g transform="translate(4, 2) scale(0.68)">
+    <rect x="8" y="28" width="48" height="28" rx="6" fill="#d6d3d1"/>
+    <rect x="12" y="16" width="40" height="28" rx="6" fill="#a8a29e"/>
+    <rect x="16" y="4" width="32" height="28" rx="6" fill="#e67e22"/>
+    <circle cx="32" cy="18" r="8" fill="#fafaf9" opacity="0.3"/>
+    <circle cx="32" cy="18" r="5" fill="#fafaf9" opacity="0.2"/>
+    <circle cx="32" cy="18" r="2.5" fill="#1c1917" opacity="0.7"/>
+  </g>
+
+  <!-- CamStack wordmark -->
+  <text x="52" y="31" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="700" letter-spacing="-0.5" fill="#1c1917">
+    Cam<tspan fill="#e67e22">Stack</tspan>
+  </text>
+</svg>

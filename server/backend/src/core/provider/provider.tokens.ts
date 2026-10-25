@@ -1,0 +1,1 @@
+export const PROVIDER_MANAGER = Symbol('PROVIDER_MANAGER')

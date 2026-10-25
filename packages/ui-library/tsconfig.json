@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [
+      "vitest/globals"
+    ],
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "isolatedDeclarations": true
+  },
+  "include": [
+    "src"
+  ]
+}

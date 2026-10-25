@@ -1,0 +1,42 @@
+[
+  {
+    "id": "QS1-0543",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788752580000,
+    "toMs": 1788752880000,
+    "stepMs": 250,
+    "onlyOnMotion": true,
+    "maxCalls": 60
+  },
+  {
+    "id": "QS2-1043",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788770580000,
+    "toMs": 1788770880000,
+    "stepMs": 250,
+    "onlyOnMotion": true,
+    "maxCalls": 60
+  },
+  {
+    "id": "QS3-1213",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788775980000,
+    "toMs": 1788776280000,
+    "stepMs": 250,
+    "onlyOnMotion": true,
+    "maxCalls": 60
+  },
+  {
+    "id": "QS4-1203",
+    "kind": "quiet",
+    "deviceId": 101,
+    "fromMs": 1788775380000,
+    "toMs": 1788775620000,
+    "stepMs": 250,
+    "onlyOnMotion": true,
+    "maxCalls": 60
+  }
+]

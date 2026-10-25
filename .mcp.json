@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "uvx",
+      "args": ["code-review-graph", "serve"],
+      "type": "stdio"
+    },
+    "camstack-dev": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "root=$(git rev-parse --show-superproject-working-tree 2>/dev/null); [ -n \"$root\" ] || root=$(git rev-parse --show-toplevel); cd \"$root\" && exec node packages/mcp-dev/dist/server.js \"$@\"",
+        "camstack-dev"
+      ],
+      "type": "stdio"
+    },
+    "camstack-ops": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "root=$(git rev-parse --show-superproject-working-tree 2>/dev/null); [ -n \"$root\" ] || root=$(git rev-parse --show-toplevel); cd \"$root\" && exec node packages/mcp-dev/dist/server.js \"$@\"",
+        "camstack-ops",
+        "--toolsets",
+        "ops"
+      ],
+      "type": "stdio"
+    }
+  }
+}

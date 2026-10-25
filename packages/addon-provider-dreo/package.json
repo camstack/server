@@ -1,0 +1,83 @@
+{
+  "name": "@camstack/addon-provider-dreo",
+  "version": "0.2.145",
+  "description": "Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "dreo",
+    "fan",
+    "air-circulator",
+    "purifier",
+    "heater",
+    "humidifier",
+    "cloud",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Dreo Provider",
+    "addons": [
+      {
+        "id": "provider-dreo",
+        "category": "providers",
+        "name": "Dreo",
+        "version": "0.1.0",
+        "description": "Adopt Dreo fans, air circulators, purifiers, heaters and humidifiers via the Dreo cloud",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.png",
+        "color": "#0a7cff",
+        "mode": "account",
+        "instanceMode": "multiple",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "connection-test"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@apocaliss92/nodedreo": "file:./vendor/apocaliss92-nodedreo-0.1.0.tgz",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "name": "@camstack/addon-export-hap",
+  "version": "1.2.179",
+  "description": "HomeKit (HAP) exporter for CamStack devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table.",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "homekit",
+    "hap",
+    "bridge"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "HomeKit Export",
+    "addons": [
+      {
+        "id": "export-hap",
+        "category": "exports",
+        "name": "HomeKit Export",
+        "description": "Publishes exposed CamStack devices to iOS Home over HomeKit (HAP) — cameras, doorbells, switches, lights, locks and sensors, each as its own accessory sharing one setup code.",
+        "entry": "./dist/hap-export.addon.js",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-export"
+          },
+          {
+            "name": "videoclips"
+          }
+        ],
+        "storageLocations": [
+          {
+            "id": "homekitClips",
+            "displayName": "HomeKit Clips",
+            "description": "Copies of the clips CamStack SENT to HomeKit Secure Video. HomeKit is a sink — HAP has no read-back — so a clip is only ever ours if we teed it while sending it. Its own location because a teed clip has no track, detection or event behind it, so it is not event media and no media-class retention may attach to it: the age is per camera (14 days by default) with fixed per-camera and whole-store rails. Exactly ONE location; repoint it to choose the disk. Written under the `homekit-clips/` subtree so occupancy is the class subtree even when it shares a root.",
+            "cardinality": "single",
+            "access": "local-path",
+            "defaultsTo": "recordings"
+          }
+        ],
+        "icon": "assets/icon.svg",
+        "color": "#000000"
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "build:lib": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*"
+  },
+  "dependencies": {
+    "@homebridge/hap-nodejs": "^2.1.6",
+    "werift-rtp": "^0.8.8",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/sdk": "*",
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^3.2.4"
+  }
+}

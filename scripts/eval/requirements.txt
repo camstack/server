@@ -1,0 +1,9 @@
+# The evaluation harness. Runs on CPU; no Ultralytics (no AGPL import here).
+numpy
+pillow
+onnxruntime
+# OpenVINO IRs (.xml) in evaluate_variants.py; the version the hosted IRs record
+openvino==2026.2.1
+# tests only
+pytest
+onnx

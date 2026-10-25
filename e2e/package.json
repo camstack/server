@@ -1,0 +1,20 @@
+{
+  "name": "@camstack/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end test harness for the camstack hub. Spawns a hub with isolated CAMSTACK_DATA per suite and exercises tRPC + UI flows.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^24",
+    "@types/ws": "^8.5.13",
+    "typescript": "~6.0.3",
+    "vitest": "^2.1.0"
+  }
+}

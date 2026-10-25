@@ -1,0 +1,13 @@
+{
+  "//": [
+    "Pre-existing violations pinned per bucket. Enforced by scripts/check-ci-baselines.ts.",
+    "A bucket may only shrink: exceeding a pinned count FAILS CI, dropping below it",
+    "asks you to re-pin. Regenerate with `tsx scripts/check-ci-baselines.ts --update`",
+    "and commit the diff — never edit a number upward by hand."
+  ],
+  "oxlint": {},
+  "format": {},
+  "double-cast": {},
+  "typecheck": {},
+  "typecheck-specs": {}
+}

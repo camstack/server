@@ -1,0 +1,194 @@
+{
+  "common": {
+    "nodeDefault": "node default",
+    "loading": "Loading..."
+  },
+  "page": {
+    "title": "Benchmark",
+    "subtitle": "Measure a node, or inspect one image or sound",
+    "tabNode": "Node benchmark",
+    "tabImage": "Image",
+    "tabAudio": "Audio"
+  },
+  "device": {
+    "label": "Device",
+    "nodeDefaultTitle": "Run with no deviceKey — the node answers on its default pool",
+    "liveForCamera": "live for this camera",
+    "noAccelerators": "no probed accelerators on this node"
+  },
+  "runTarget": {
+    "title": "Run target — camera · node · device",
+    "camera": "Camera",
+    "customTree": "— custom tree (no camera) —",
+    "node": "node",
+    "device": "device",
+    "notDispatched": "none (not dispatched)",
+    "notInRoster": "not in this node's roster",
+    "phase": "phase",
+    "infer": "infer",
+    "queue": "queue",
+    "provisioning": "provisioning",
+    "noDetection": "No detection block — this camera is not currently dispatched anywhere. The tree below is what WOULD run.",
+    "resolvedTree": "Resolved tree (resolvePipeline)",
+    "noSteps": "no steps resolved"
+  },
+  "image": {
+    "noImage": "No image loaded",
+    "processing": "Processing...",
+    "run": "Run Pipeline",
+    "target": "target",
+    "nodeDefaultPool": "node default pool",
+    "cameraResolved": "camera #{{id}} (resolved tree)",
+    "customTree": "custom tree",
+    "selectImage": "Select an image above",
+    "detections_one": "{{count}} detection — {{w}}x{{h}}",
+    "detections_other": "{{count}} detections — {{w}}x{{h}}",
+    "response": "Pipeline Response"
+  },
+  "audio": {
+    "needsReference": "Audio bench needs a reference file: runAudioTest has no field for an uploaded WAV, and a payload without a filename makes the provider classify the first reference file in its directory instead.",
+    "uploadUnsupported": "Upload is not supported for audio: runAudioTest has no payload field for an uploaded file, so \"{{name}}\" cannot be classified. Pick a reference WAV above.",
+    "loading": "Loading audio pipeline...",
+    "uploadLabel": "Upload WAV (preview only)",
+    "referenceOnly": "Reference files only — <code>runAudioTest</code> has no payload field for an uploaded WAV, so an upload can be waveform-previewed but never classified.",
+    "waveform": "Waveform",
+    "detections_one": "{{count}} detection",
+    "detections_other": "{{count}} detections",
+    "selectFile": "Select an audio file above",
+    "bestMatch": "Best match:",
+    "timings": "Timings",
+    "inference": "Inference ({{backend}})",
+    "total": "Total (load + inference)",
+    "overhead": "Overhead",
+    "classifications": "Classifications",
+    "labels_one": "{{count}} label",
+    "labels_other": "{{count}} labels",
+    "classifying": "Classifying...",
+    "detected": "detected",
+    "noClassifications": "No classifications",
+    "response": "Audio Classification Response",
+    "backend": "Classifier Backend",
+    "settings": "Classifier Settings",
+    "pipeline": "Audio Pipeline",
+    "sampleRate": "Sample rate",
+    "chunkDuration": "Chunk duration",
+    "activeBackend": "Active backend",
+    "classify": "Classify Audio"
+  },
+  "plan": {
+    "chooseDevice": "Choose at least one device and model.",
+    "chooseMeasurement": "Choose at least one measurement.",
+    "none": "No plan yet"
+  },
+  "preflight": {
+    "node": "Node under test: {{node}}. Its detection leaves it for the run and comes back when it ends.",
+    "noneMoving": "No camera runs on this node now.",
+    "moving": "{{count}} camera(s) move to other nodes: {{list}}.",
+    "pinned": " (pinned here — the pin is restored after)",
+    "staying": "{{count}} camera(s) cannot move — this node is their only frame source: {{list}}. They keep running here and the results are marked contaminated.",
+    "measurements": "Measurements: {{list}}{{steps}}.",
+    "steps": " (steps: {{steps}})",
+    "devices": "Devices: {{list}}.",
+    "estimated": "Estimated: up to {{estimate}}; the run stops and restores the cluster after {{budget}} at the latest.",
+    "startAnyway": "You can start anyway below."
+  },
+  "phase": {
+    "device": "device capacity",
+    "pipeline": "pipeline load"
+  },
+  "run": {
+    "draining": "Moving cameras off {{node}}…",
+    "measuring": "Measuring {{node}}{{progress}}",
+    "restoring": "Restoring the cluster…",
+    "done": "Finished — {{count}} result(s) stored.",
+    "aborted": "Stopped ({{reason}}) — the cluster was restored; {{count}} result(s) kept.",
+    "failed": "Failed — the cluster was restored.",
+    "failedDetail": "Failed — the cluster was restored. {{error}}",
+    "running": "Running",
+    "lastRun": "Last run",
+    "abort": "Abort",
+    "abortTitle": "Abort the benchmark",
+    "abortDescription": "The run stops; what it finished is kept, and the cluster is restored as it was.",
+    "stayed": "Stayed on the node (only frame source): {{list}} — results marked contaminated."
+  },
+  "progress": {
+    "device": "device {{device}} · {{model}}",
+    "pipeline": "pipeline {{device}} · {{model}}"
+  },
+  "endReason": {
+    "operator-abort": "stopped by you",
+    "deadline": "time budget reached",
+    "node-lost": "the node went offline",
+    "runner-lost": "the node restarted",
+    "hub-restart": "the hub restarted",
+    "drain-timeout": "cameras did not leave the node in time"
+  },
+  "flags": {
+    "contaminated": "contaminated",
+    "partialRun": "partial run",
+    "referenceImages": "reference images"
+  },
+  "result": {
+    "deviceCapacity": "Device capacity",
+    "pipeline": "Pipeline",
+    "pipelineWithSteps": "Pipeline + {{steps}}",
+    "capacityDevice": "{{streams}} streams · {{fps}} fps",
+    "capacityPipeline": "{{sessions}} sessions"
+  },
+  "standing": {
+    "fresh": "Used by Auto tune and the shares",
+    "superseded": "Superseded by a newer run",
+    "stale": "Stale — {{why}}",
+    "staleAge": "older than 30 days",
+    "staleRuntime": "the runtime changed",
+    "stalePool": "the pool tuning changed"
+  },
+  "devices": {
+    "unavailable": "unavailable",
+    "notUsed": "not used for detection",
+    "suggested": "(suggested)",
+    "pipelineModel": "· pipeline",
+    "addModelAria": "Add a model on {{device}}",
+    "addModel": "+ model…",
+    "title": "Devices and candidate models",
+    "reading": "Reading {{node}}…",
+    "note": "Each ticked model gets a device-capacity ramp; the first one per device also runs the pipeline measurement. Models not on the node are downloaded for the run and removed after.",
+    "noteKept": "Each ticked model gets a device-capacity ramp; the first one per device also runs the pipeline measurement. Models not on the node are downloaded for the run and removed after — kept, as you chose."
+  },
+  "results": {
+    "device": "Device",
+    "model": "Model",
+    "measurement": "Measurement",
+    "capacity": "Capacity",
+    "latency": "Latency (1 stream)",
+    "limitedBy": "Limited by",
+    "measured": "Measured",
+    "standing": "Standing",
+    "delete": "Delete result",
+    "title": "Results — {{node}}",
+    "empty": "No results for this node yet",
+    "emptyHint": "Auto tune and the automatic shares use the latency table for it until it is benchmarked."
+  },
+  "node": {
+    "title": "Node",
+    "intro": "One node at a time. While it runs, the node takes no detection: its cameras move to the other nodes and come back — pins included — when it ends, also after a crash or a hub restart.",
+    "cluster": "Cluster now: {{now}} parallel session(s); the other nodes can carry {{capacity}}.",
+    "unknownCapacity": "an unknown number of"
+  },
+  "measure": {
+    "title": "What to measure",
+    "deviceCapacity": "Device capacity (detector only)",
+    "pipelineLoad": "Pipeline load (detector + the steps below)",
+    "noSteps": "The node's catalog offers no detail step.",
+    "fps": "fps per camera",
+    "budget": "time budget (min)",
+    "keepModels": "Keep downloaded models",
+    "acceptHeadroom": "Start although the other nodes cannot carry every session"
+  },
+  "start": {
+    "label": "Start benchmark",
+    "title": "Benchmark {{node}}?",
+    "reading": "Reading the preflight…",
+    "confirm": "Start"
+  }
+}

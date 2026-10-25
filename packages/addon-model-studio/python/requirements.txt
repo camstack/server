@@ -1,0 +1,24 @@
+# Cross-platform base + platform-gated conversion backends.
+#
+# openvino has NO arm64-macOS wheel (Intel/x86 Linux/Windows only), so installing
+# it unconditionally aborts the WHOLE pip install on an Apple-Silicon agent and
+# model-studio crash-loops on boot. coremltools is macOS-only. pip evaluates
+# these environment markers per host, so a Mac agent installs the CoreML backend
+# and skips OpenVINO, while a Linux/Windows agent does the reverse — convert_lib
+# imports each backend lazily, matching whatever this host provides.
+numpy
+opencv-python-headless
+onnx
+openvino>=2025,<2026 ; platform_system != "Darwin"
+nncf>=2.14 ; platform_system != "Darwin"
+coremltools>=8.0,<9 ; platform_system == "Darwin"
+# coremltools dropped the ONNX frontend, so ONNX->CoreML bridges through PyTorch
+# (onnx2torch rebuilds the graph as an nn.Module → trace → ct.convert). macOS-only,
+# matching coremltools; convert_lib imports them lazily inside the CoreML path.
+# torch upper-bounded to what coremltools 8.x has tested (≤2.5); newer torch
+# trips "has not been tested" + unimplemented-op converter errors.
+torch>=2.2,<2.6 ; platform_system == "Darwin"
+onnx2torch>=1.5 ; platform_system == "Darwin"
+# onnx-simplifier constant-folds dynamic Shape ops (pinned input) so YOLO-style
+# graphs trace to a static module coremltools can lower.
+onnxsim>=0.4 ; platform_system == "Darwin"
