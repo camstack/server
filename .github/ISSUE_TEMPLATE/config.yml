@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/camstack/server/discussions
+    about: Questions and how-to belong in Discussions, not in an issue.
+  - name: Documentation
+    url: https://camstack-docs.zentik.app
+    about: Installation and user guides.
+  - name: Report a security vulnerability
+    url: https://github.com/camstack/server/security/policy
+    about: Private reports only. Email ruoccogianluca1@gmail.com. See SECURITY.md.

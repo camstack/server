@@ -9,6 +9,11 @@
  * publishable. They are not. The values are stored as hashes so this file,
  * which is public, does not repeat them.
  *
+ * The security contact address is stored as a hash. Its plaintext may appear
+ * only in `SECURITY.md` and `.github/ISSUE_TEMPLATE/config.yml`. The same
+ * address anywhere else is a finding. Other e-mail addresses are not scanned
+ * here (`check-public-docs-private-data.ts` still scans `docs/design`).
+ *
  * Run: npx tsx scripts/check-tree-private-data.ts
  */
 import { execFileSync } from 'node:child_process'
@@ -19,7 +24,19 @@ import { termHash } from './check-public-docs-private-data.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-export type TreePrivateCategory = 'person' | 'host' | 'room' | 'home-ip' | 'camera-id'
+export type TreePrivateCategory = 'person' | 'host' | 'room' | 'home-ip' | 'camera-id' | 'email'
+
+/**
+ * sha256(lowercase NFC)[0..16] of the security contact. The plaintext is
+ * allowed only in the two files below — never in this source file.
+ */
+export const SECURITY_CONTACT_HASH = 'b8cf1eead6cd2123'
+export const SECURITY_CONTACT_FILES: ReadonlySet<string> = new Set([
+  'SECURITY.md',
+  '.github/ISSUE_TEMPLATE/config.yml',
+])
+
+const EMAIL_RE = /[\w.+-]+@[\w-]+(?:\.[\w-]+)*\.[A-Za-z]{2,}\b/g
 
 export interface TreePrivateFinding {
   readonly file: string
@@ -112,6 +129,8 @@ export interface TreeScanOptions {
   readonly room?: ReadonlySet<string>
   readonly homeIp?: ReadonlySet<string>
   readonly cameraId?: ReadonlySet<string>
+  readonly securityContactHash?: string
+  readonly securityContactFiles?: ReadonlySet<string>
 }
 
 function lineOf(text: string, index: number): number {
@@ -194,6 +213,8 @@ export function findTreePrivateData(
   const room = options.room ?? ROOM_HASHES
   const homeIp = options.homeIp ?? HOME_IP_HASHES
   const cameraId = options.cameraId ?? CAMERA_ID_HASHES
+  const securityContactHash = options.securityContactHash ?? SECURITY_CONTACT_HASH
+  const securityContactFiles = options.securityContactFiles ?? SECURITY_CONTACT_FILES
   const found: TreePrivateFinding[] = []
   const add = (category: TreePrivateCategory, index: number, match: string): void => {
     found.push({ file, line: lineOf(text, index), category, match })
@@ -255,6 +276,13 @@ export function findTreePrivateData(
       )
         add('room', index, word)
     }
+  }
+
+  for (const m of text.matchAll(EMAIL_RE)) {
+    const address = m[0] ?? ''
+    if (termHash(address) !== securityContactHash) continue
+    if (securityContactFiles.has(file)) continue
+    add('email', m.index ?? 0, address)
   }
 
   if (!file.includes('assets/viewer/')) {

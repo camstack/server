@@ -8,6 +8,10 @@ The licence is [MIT](LICENSE).
 
 Guides: <https://camstack-docs.zentik.app>
 
+Contributing: [CONTRIBUTING.md](CONTRIBUTING.md). Questions:
+[Discussions](https://github.com/camstack/server/discussions).
+Vulnerabilities: [SECURITY.md](SECURITY.md).
+
 ## What it does
 
 **Cameras and live view.** WebRTC from the camera, including H.264 and H.265.
@@ -122,7 +126,8 @@ integrations are addons you add from the admin UI.
 ## This repository
 
 This tree is the server. Guides for installing and using CamStack are on the
-docs site above. Working on the code starts at [`docs/README.md`](docs/README.md).
+docs site above. Contributors start at [CONTRIBUTING.md](CONTRIBUTING.md).
+The map of this tree is [`docs/README.md`](docs/README.md).
 
-To report a vulnerability, see [SECURITY.md](SECURITY.md). The contact there
-is not set yet.
+To report a vulnerability, see [SECURITY.md](SECURITY.md). Questions go to
+[Discussions](https://github.com/camstack/server/discussions).

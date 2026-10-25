@@ -1,0 +1,73 @@
+name: Bug report
+description: Something CamStack does that it should not, or does not do.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste secrets, tokens, private keys, LAN addresses, or camera
+        images and video. A vulnerability belongs in a private report
+        (SECURITY.md), not in this form.
+  - type: input
+    id: product-version
+    attributes:
+      label: Product version
+      description: The 0.1.x beta shown on the hub.
+      placeholder: 0.1.x
+    validations:
+      required: true
+  - type: input
+    id: server-version
+    attributes:
+      label: Server package or image
+      description: The @camstack/server version, or the container tag (intel- or amd-).
+      placeholder: 0.1.x or intel-0.1.x
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Install type
+      options:
+        - Docker
+        - Unraid
+        - Proxmox
+        - Desktop (macOS or Linux)
+        - From this repository
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Node role
+      options:
+        - Hub
+        - Agent
+        - Both
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Relevant lines from the hub log or the addon's log view in the admin
+        UI. Remove secrets, tokens, addresses, and anything from a camera feed
+        before pasting.
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I removed secrets, tokens, private keys, LAN addresses, and camera images or video.
+          required: true

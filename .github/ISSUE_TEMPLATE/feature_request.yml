@@ -1,0 +1,30 @@
+name: Feature request
+description: A change you want in CamStack.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A question belongs in Discussions. A vulnerability belongs in a private
+        report (SECURITY.md). Do not paste secrets, addresses, or camera media.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What you cannot do today, and who it affects (hub, agent, one addon, the viewer).
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The behaviour you want. An addon or capability idea can name the kind of extension (see CONTRIBUTING.md).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Other ways you considered, if any.
+    validations:
+      required: false

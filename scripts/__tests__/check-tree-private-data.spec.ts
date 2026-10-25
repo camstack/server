@@ -47,4 +47,17 @@ describe('tree scrub guard', () => {
       ).map((f) => f.match),
     ).toEqual([])
   })
+
+  it('allows the security contact only in SECURITY.md and the issue chooser', () => {
+    const address = 'kept-out@other.test'
+    const options = { ...FAKE, securityContactHash: termHash(address) }
+    expect(
+      findTreePrivateData(`write ${address}`, 'README.md', options).map((f) => f.category),
+    ).toEqual(['email'])
+    expect(findTreePrivateData(`write ${address}`, 'CONTRIBUTING.md', options)).toHaveLength(1)
+    expect(findTreePrivateData(`write ${address}`, 'SECURITY.md', options)).toEqual([])
+    expect(
+      findTreePrivateData(`mailto:${address}`, '.github/ISSUE_TEMPLATE/config.yml', options),
+    ).toEqual([])
+  })
 })

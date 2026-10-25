@@ -25,6 +25,10 @@ describe('third-party product guard', () => {
     expect(hits('family scrypted:yolov9')).toEqual([])
     expect(hits('curl bin/go2rtc from install-go2rtc.sh')).toEqual([])
     expect(hits('the binary name go2rtc is the product', 'scripts/install-go2rtc.sh')).toEqual([])
+    expect(hits("window.history.replaceState(null, '', '/model-studio?source=scrypted')")).toEqual(
+      [],
+    )
+    expect(hits('expect(id).toMatch(/^scrypted-/)')).toEqual([])
   })
 
   it('does not keep a product word that merely sits beside an allowed token', () => {

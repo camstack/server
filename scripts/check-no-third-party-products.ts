@@ -44,6 +44,10 @@ const KEPT: readonly RegExp[] = [
   /(?:scrypted|frigate):/g,
   /(['"`])(?:scrypted|frigate|hassio)\1/g,
   /\/(?:scrypted|frigate)\/i\b/g,
+  // Stored catalog source id the Model Studio URL still reads (`?source=scrypted`).
+  /\?source=scrypted\b/g,
+  // Prefix of a stored plugin-catalog model id (`scrypted-yolov9…`).
+  /\^scrypted-/g,
   /bin\/go2rtc/g,
   /install-go2rtc\.sh/g,
   /go2rtc_(?:mac|linux)[\w.-]*/g,
