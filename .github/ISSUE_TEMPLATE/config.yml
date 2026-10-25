@@ -3,6 +3,12 @@ contact_links:
   - name: Ask a question
     url: https://github.com/camstack/server/discussions
     about: Questions and how-to belong in Discussions, not in an issue.
+  - name: Alexa skill beta invite
+    url: https://github.com/camstack/server/discussions/1
+    about: The Alexa skill is invite-only while in beta. How to request an invite.
+  - name: Open app links on your own domain
+    url: https://github.com/camstack/server/discussions/2
+    about: Ask for your domain to be added to the mobile app's linked domains.
   - name: Documentation
     url: https://camstack-docs.zentik.app
     about: Installation and user guides.
