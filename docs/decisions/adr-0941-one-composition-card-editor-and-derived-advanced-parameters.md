@@ -1,7 +1,7 @@
 ---
 id: D941
 title: One composition card editor and derived advanced parameters
-status: accepted
+status: accepted (derived advanced parameters superseded by D944)
 date: 2026-10-25
 supersedes:
 applies-to:

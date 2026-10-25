@@ -4,7 +4,7 @@
 
 # Decisions
 
-907 architecture decision records. One file per decision, never
+908 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -919,9 +919,10 @@ that rots.
 | D938 | [A pulse override seeds its last edge from the source, not the native slice](adr-0938-a-pulse-override-seeds-its-last-edge-from-the-source-not-the-native-slice.md) | ✅ accepted | 2026-10-25 |
 | D939 | [The display palette is one hub capability, and a failed read is not the default](adr-0939-the-display-palette-is-one-hub-capability.md) | ✅ accepted | 2026-10-25 |
 | D940 | [The display palette is provided by the pipeline orchestrator](adr-0940-the-display-palette-is-provided-by-the-pipeline-orchestrator.md) | ✅ accepted | 2026-10-25 |
-| D941 | [One composition card editor and derived advanced parameters](adr-0941-one-composition-card-editor-and-derived-advanced-parameters.md) | ✅ accepted | 2026-10-25 |
+| D941 | [One composition card editor and derived advanced parameters](adr-0941-one-composition-card-editor-and-derived-advanced-parameters.md) | accepted (derived advanced parameters superseded by D944) | 2026-10-25 |
 | D942 | [An addon follows registry latest, and an agent follows the hub](adr-0942-an-addon-follows-registry-latest-and-an-agent-follows-the-hub.md) | ✅ accepted | 2026-10-25 |
 | D943 | [The product release is its own version line, starting at 0.1.0 beta](adr-0943-the-product-release-is-not-the-npm-version.md) | ✅ accepted | 2026-10-25 |
+| D944 | [Customize attaches a fixed set of extensions; everything else is a built device](adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md) | ✅ accepted (supersedes D941 (derived advanced parameters only; the one card editor stays)) | 2026-10-26 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
