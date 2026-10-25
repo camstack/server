@@ -8,6 +8,7 @@ data/
 camstack-data/
 camstack-agent-*/
 .nx/
+.camstack-ffmpeg/
 
 # tsc artifacts that occasionally leak into source dirs when a build
 # script is run with the wrong cwd (`tsc --emitDeclarationOnly` without

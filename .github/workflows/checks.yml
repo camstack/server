@@ -16,7 +16,8 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  # Nx cache save, and the e2e failure artifact.
+  actions: write
 
 concurrency:
   group: checks-${{ github.ref }}
@@ -24,14 +25,15 @@ concurrency:
 
 env:
   NODE_VERSION: "24"
-  NODE_OPTIONS: "--max-old-space-size=8192"
 
 jobs:
 
   static:
-    # Self-hosted linux runner (`ci-linux`). Rebuild the runner container if it
-    # starts a 137 restart loop; do not debug the job.
-    runs-on: [self-hosted, linux, x64, ci-linux]
+    # GitHub-hosted, 16 GB. This job's heap is the D704 static typecheck
+    # ceiling. The build step overrides it: three tasks at 8 GB do not fit.
+    env:
+      NODE_OPTIONS: "--max-old-space-size=8192"
+    runs-on: ubuntu-latest
     # Cold (a rebuilt runner, empty nx cache): ~3 min install + ~8 min build +
     # ~17 min typecheck + ~guards/codegen ≈ 33 min cold. Warm: ≈ 12 min.
     timeout-minutes: 60
@@ -41,47 +43,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      # THE NX CACHE LIVES BESIDE THE CHECKOUT, NOT IN IT. actions/checkout's
-      # `clean: true` runs `git clean -ffdx` before every job and wipes `.nx/`;
-      # the earlier answer was to tar `.nx/cache` through the GitHub cache
-      # service and back. Measured over the 14 completed runs of 2026-09-18/19:
-      # the tarball was 1.07 → 1.39 GB (it only ever grew — nothing evicts),
-      # the restore took 291–598 s and the save 125–412 s at 2–4 MB/s, and NOT
-      # ONE of the 54 build tasks behind it ever hit: `Successfully ran target
-      # build for 54 projects`, 454 s of building, zero `[local cache]` lines,
-      # every run. Nx ≥ 20 resolves every lookup through the sqlite index in
-      # `.nx/workspace-data/`, which the tarball never carried and `git clean`
-      # wiped anyway — the restored entries were orphans by construction, and
-      # thirteen minutes of transfer per run bought nothing.
-      #
-      # So nx is pointed at two directories in `runner.workspace` — the
-      # runner's `_work` dir (`/server` here; the checkout is `/server/server`)
-      # — which `git clean` never touches and which lives as long as the runner
-      # container. A template rebuild costs one cold run, the same as today.
-      # Each of the two runners keeps its own (the sqlite index is per machine),
-      # so a warm runner hits and a cold one builds, and nothing is transferred
-      # in either direction. `NX_MAX_CACHE_SIZE` bounds it, because nx never
-      # evicts on its own (this repo's Mac checkout carries an 8.2 GB `.nx/cache`).
-      - name: Point Nx at a cache that outlives the checkout
+      # Same Nx cache as ci.yml: both directories, then align the database
+      # file onto this machine's id. See scripts/ci/align-nx-db.sh.
+      - name: Restore the Nx cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data
+          key: nx-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json', 'nx.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Point the restored Nx database at this machine
         run: |
-          echo "NX_CACHE_DIRECTORY=${{ runner.workspace }}/.nx-cache" >> "$GITHUB_ENV"
-          echo "NX_WORKSPACE_DATA_DIRECTORY=${{ runner.workspace }}/.nx-workspace-data" >> "$GITHUB_ENV"
-          echo "NX_MAX_CACHE_SIZE=6GB" >> "$GITHUB_ENV"
-          du -sh "${{ runner.workspace }}/.nx-cache" 2>/dev/null \
-            || echo "nx cache: cold — first run on runner ${{ runner.name }}"
+          echo "NX_DAEMON=false" >> "$GITHUB_ENV"
+          echo "NX_MAX_CACHE_SIZE=4GB" >> "$GITHUB_ENV"
+          bash scripts/ci/align-nx-db.sh
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       # `nx.json` lists `@camstack/nx-plugin` as a workspace plugin, and nx
       # refuses to load a local plugin whose `main` (./dist/index.js) does not
-      # exist. On a self-hosted runner with a warm workspace the dist is left
-      # over and this looks unnecessary; on a fresh clone EVERY nx command dies
+      # exist. A hosted runner is a fresh clone: EVERY nx command dies
       # with "Unable to resolve local plugin" before doing any work. Build it
       # with plain tsc first — this is the one build that cannot go through nx.
       - name: Bootstrap the Nx plugin (chicken-and-egg)
@@ -112,7 +103,7 @@ jobs:
       # reported by scripts/ci/mem-step.sh (a warning over budget, never a
       # failure unless MEM_BUDGET_ENFORCE=1).
       - name: Build all packages
-        run: scripts/ci/mem-step.sh build 6000 -- npm run build -- --parallel=3
+        run: scripts/ci/mem-step.sh build 12000 -- npm run build -- --parallel=3
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
@@ -376,10 +367,10 @@ jobs:
       # defaults to tsgo; `--engine=tsc` is the tsc 6 reference and
       # `typecheck-tsgo.ts --parity` compares both by hand when a TS bump needs it.
       - name: Pinned-debt guard (typecheck, oxlint, format, scripts/lint-double-cast.sh)
-        run: scripts/ci/mem-step.sh pinned-debt 4500 -- npx tsx scripts/check-ci-baselines.ts
+        run: scripts/ci/mem-step.sh pinned-debt 12000 -- npx tsx scripts/check-ci-baselines.ts
 
   docs:
-    runs-on: [self-hosted, linux, x64, ci-linux]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout code
@@ -391,6 +382,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -417,7 +409,7 @@ jobs:
         run: npm run test:scripts:slow
 
   e2e:
-    runs-on: [self-hosted, linux, x64, ci-linux]
+    runs-on: ubuntu-latest
     needs: [static]
     timeout-minutes: 30
     # Manual dispatch ONLY. The suite spawns a real hub; keep it deliberate
@@ -431,10 +423,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Restore the Nx cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data
+          key: nx-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json', 'nx.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Point the restored Nx database at this machine
+        run: |
+          echo "NX_DAEMON=false" >> "$GITHUB_ENV"
+          echo "NX_MAX_CACHE_SIZE=4GB" >> "$GITHUB_ENV"
+          bash scripts/ci/align-nx-db.sh
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -443,7 +452,7 @@ jobs:
         run: npm run build -w packages/nx-plugin
 
       - name: Build all packages
-        run: scripts/ci/mem-step.sh build 6000 -- npm run build -- --parallel=3
+        run: scripts/ci/mem-step.sh build 12000 -- npm run build -- --parallel=3
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
@@ -465,6 +474,11 @@ jobs:
         run: npm run test:heavy
         timeout-minutes: 20
 
-      # Failures stay on the self-hosted runner (`e2e/test-results/`). Never
-      # upload to GitHub Actions artifacts — this org's quota is the cloud
-      # bucket, and these jobs already run on the self-hosted runner.
+      - name: Upload e2e failure output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 7

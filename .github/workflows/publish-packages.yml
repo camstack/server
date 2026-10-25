@@ -33,6 +33,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: publish-packages
@@ -42,9 +43,11 @@ env:
   NODE_VERSION: "24"
 
 jobs:
-  # ── Publish on the self-hosted Mac runner ─────────────────────────
+  # Publish from a GitHub-hosted Linux runner. Dispatch is accepted only
+  # from main: the job rebases onto origin/main and pushes the bump.
   publish:
-    runs-on: [self-hosted, macOS, ARM64]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,6 +63,23 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Restore the Nx cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data
+          key: nx-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json', 'nx.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Point the restored Nx database at this machine
+        run: |
+          echo "NX_DAEMON=false" >> "$GITHUB_ENV"
+          echo "NX_MAX_CACHE_SIZE=4GB" >> "$GITHUB_ENV"
+          bash scripts/ci/align-nx-db.sh
 
       - name: Install dependencies
         run: npm ci
@@ -94,13 +114,9 @@ jobs:
           FORCE="${{ github.event.inputs.force_packages }}"
           INCLUDE_DEPENDENTS="${{ github.event.inputs.include_dependents }}"
 
-          # The reused self-hosted Mac runner keeps an nx daemon alive across
-          # jobs; a stale daemon makes `nx show projects` exit non-zero (the
-          # failure was masked by the old `2>/dev/null`, which silently
-          # aborted the publish under `set -e`). Reset the daemon/cache and
-          # run daemon-less, and DON'T swallow stderr so any real error shows.
+          # Daemon-less. Do not `nx reset` here: that deletes the restored
+          # `.nx` cache. Don't swallow stderr, so a real error shows.
           export NX_DAEMON=false
-          npx nx reset >/dev/null 2>&1 || true
           if [ "$SCOPE" = "all" ] || [ "${{ steps.base.outputs.found }}" = "false" ]; then
             echo "mode=all" >> $GITHUB_OUTPUT
             PROJECTS=$(npx nx show projects --json)
@@ -309,8 +325,7 @@ jobs:
       # resolve to "latest of
       # everything at install time" and stop being reproducible checkpoints.
       # Pinned to THIS run's post-bump workspace versions; the restore step
-      # below puts "*" back so the bump commit and the reused self-hosted
-      # runner workspace never carry pins.
+      # below puts "*" back so the bump commit never carries pins.
       - name: Pin root-package deps for publish
         if: steps.detect.outputs.packages != ''
         run: PUBLISH_SET="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}" node scripts/ci/pin-root-deps.mjs pin

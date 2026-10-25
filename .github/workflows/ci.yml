@@ -16,6 +16,10 @@ name: CI
 # from ~2026-10-01 to 2026-10-06 (stale self-hosted runner version: jobs queued
 # forever, every run ended `cancelled`). A run that never starts looks exactly
 # like a run nobody pushed — check `gh run list --workflow=CI` after a push.
+#
+# Public CI runs on GitHub-hosted `ubuntu-latest` (4 vCPU, 16 GB). A pull
+# request gets the default token only — do not add a repository secret here,
+# and do not switch this trigger to `pull_request_target`.
 
 on:
   workflow_dispatch:
@@ -30,10 +34,11 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  # Cache save. A fork pull request is downgraded to read and runs cold.
+  actions: write
 
-# A burst of pushes queues a full job each, and the pool is two runners, so a
-# superseded run is cancelled rather than left to fight for them.
+# A burst of pushes queues a full job each. A superseded run is cancelled
+# rather than left to occupy a hosted runner.
 #
 # Main used to be exempt, on the argument that cancelling meant the default
 # branch could never produce a complete verdict (measured 2026-08-21: four
@@ -50,19 +55,18 @@ concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
-# NODE_OPTIONS is deliberately NOT set here. A job-wide 8 GB heap ceiling was
-# inherited by every vitest fork and every tsx script, which bounded nothing.
-# Each step that runs node sets its own (docs/design/2026-10-09-ts7-transition-plan.md
-# §P0): build 4096, tests 3072, tsx scripts 2048.
+# NODE_OPTIONS is deliberately NOT set here. A job-wide 8 GB heap ceiling is
+# inherited by every vitest fork. The Checks workflow keeps that ceiling on
+# its static typecheck (D704). Each step here sets its own: build 4096 (three
+# tasks fit in 16 GB), the typecheck step 8192, tests 4096.
 env:
   NODE_VERSION: "24"
 
 jobs:
   tests:
-    runs-on: [self-hosted, linux, x64, ci-linux]
-    # Cold: ~5 min install + ~10 min build + up to 90 min of tests (the step's
-    # own ceiling) + ~1 min scripts/python. Warm: the build is a cache read.
-    # Measured 2026-09-27 (run 36322518829): install 5.5 min, build 9.8 min.
+    runs-on: ubuntu-latest
+    # Cold: install + full build + up to 90 min of tests. Warm: the build is
+    # an actions/cache read of `.nx`. Hosted runners are 16 GB.
     timeout-minutes: 110
     steps:
       - name: Checkout code
@@ -70,76 +74,63 @@ jobs:
         with:
           fetch-depth: 0
 
-      # THE NX CACHE LIVES BESIDE THE CHECKOUT, NOT IN IT. actions/checkout's
-      # `clean: true` runs `git clean -ffdx` before every job and wipes `.nx/`;
-      # the earlier answer was to tar `.nx/cache` through the GitHub cache
-      # service and back. Measured over the 14 completed runs of 2026-09-18/19:
-      # the tarball was 1.07 → 1.39 GB (it only ever grew — nothing evicts),
-      # the restore took 291–598 s and the save 125–412 s at 2–4 MB/s, and NOT
-      # ONE of the 54 build tasks behind it ever hit: `Successfully ran target
-      # build for 54 projects`, 454 s of building, zero `[local cache]` lines,
-      # every run. Nx ≥ 20 resolves every lookup through the sqlite index in
-      # `.nx/workspace-data/`, which the tarball never carried and `git clean`
-      # wiped anyway — the restored entries were orphans by construction, and
-      # thirteen minutes of transfer per run bought nothing.
-      #
-      # So nx is pointed at two directories in `runner.workspace` — the
-      # runner's `_work` dir (`/server` here; the checkout is `/server/server`)
-      # — which `git clean` never touches and which lives as long as the runner
-      # container. A template rebuild costs one cold run, the same as today.
-      # Each of the two runners keeps its own (the sqlite index is per machine),
-      # so a warm runner hits and a cold one builds, and nothing is transferred
-      # in either direction. `NX_MAX_CACHE_SIZE` bounds it, because nx never
-      # evicts on its own (this repo's Mac checkout carries an 8.2 GB `.nx/cache`).
-      - name: Point Nx at a cache that outlives the checkout
+      # Nx 23 keeps task bytes in `.nx/cache` and the index in
+      # `.nx/workspace-data/<machine-id>-v3.db`. A tarball of `.nx/cache`
+      # alone never hit (D548). Both directories are cached, keyed on the
+      # lockfile and nx.json. The database file is named after the machine,
+      # and a hosted VM is a new machine every job — `align-nx-db.sh` copies
+      # the restored file onto this machine's id before nx opens it.
+      # `NX_MAX_CACHE_SIZE` bounds the directory; the exact cache key is not
+      # rewritten until the lockfile or nx.json changes.
+      - name: Restore the Nx cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data
+          key: nx-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json', 'nx.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Point the restored Nx database at this machine
         run: |
-          echo "NX_CACHE_DIRECTORY=${{ runner.workspace }}/.nx-cache" >> "$GITHUB_ENV"
-          echo "NX_WORKSPACE_DATA_DIRECTORY=${{ runner.workspace }}/.nx-workspace-data" >> "$GITHUB_ENV"
-          echo "NX_MAX_CACHE_SIZE=6GB" >> "$GITHUB_ENV"
-          du -sh "${{ runner.workspace }}/.nx-cache" 2>/dev/null \
-            || echo "nx cache: cold — first run on runner ${{ runner.name }}"
+          echo "NX_DAEMON=false" >> "$GITHUB_ENV"
+          echo "NX_MAX_CACHE_SIZE=4GB" >> "$GITHUB_ENV"
+          bash scripts/ci/align-nx-db.sh
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       # Steps below run through scripts/ci/mem-step.sh: the command is unchanged
       # and its exit code passes through; the wrapper appends peak RSS / cgroup
       # memory to the step summary and warns over <budget-MB> (MEM_BUDGET_ENFORCE=1
       # would fail the step — unset on purpose until the budgets are measured).
       - name: Install dependencies
-        # N100 measured 3.2–4.4 GB tree RSS (2026-10-09); 2 GB was a Mac guess.
-        run: scripts/ci/mem-step.sh install 4500 -- npm ci
+        run: scripts/ci/mem-step.sh install 8000 -- npm ci
 
       # `nx.json` lists `@camstack/nx-plugin` as a workspace plugin, and nx
       # refuses to load a local plugin whose `main` (./dist/index.js) does not
-      # exist. On a self-hosted runner with a warm workspace the dist is left
-      # over and this looks unnecessary; on a fresh clone EVERY nx command dies
+      # exist. A hosted runner is a fresh clone: EVERY nx command dies
       # with "Unable to resolve local plugin" before doing any work. Build it
       # with plain tsc first — this is the one build that cannot go through nx.
       - name: Bootstrap the Nx plugin (chicken-and-egg)
         run: npm run build -w packages/nx-plugin
         env:
           NODE_OPTIONS: "--max-old-space-size=2048"
-      # The same build the `static` job runs, from the same runner-local nx
-      # cache: on a warm runner this is a cache read, on a cold one it is the
-      # one full build this job pays. Tests resolve `@camstack/types` (and sdk /
+      # The same build Checks runs, from the Nx cache: on a warm key this is a
+      # cache read, on a cold one it is the one full build this job pays.
+      # Tests resolve `@camstack/types` (and sdk /
       # ui-library / system) through `dist/`, so it cannot be skipped — see the
       # 2026-07-31 note on the `static` job's build step.
       #
-      # Bounded memory (2026-10-09, the day two of these builds at once took
-      # the previous self-hosted runners down —
-      # docs/design/2026-10-09-ci-build-memory-and-ts7.md). Without a flag nx
-      # runs THREE tasks at once, each allowed an 8 GB heap. The heavy steps
-      # are single tsc programs, measured peak RSS: admin-ui's type gate 3.9 GB
-      # (now 2.3 GB, on the built .d.ts), server tsc 2.4 GB, system's
-      # vite-plugin-dts 2.1 GB, desktop 1.7 GB, ui-library dts 1.7 GB. Two
-      # tasks and a 4 GB heap keep one build under ~5 GB; the largest single
-      # program needs ~3.4 GB of heap (admin-ui on sources OOMs at 3 GB).
-      # This runner has headroom for --parallel=3 on the build line below.
+      # Three tasks at once, each with a 4 GB heap, fit in the 16 GB hosted
+      # runner. An 8 GB heap per task does not. The largest single program
+      # needs ~3.4 GB (admin-ui on sources OOMs at 3 GB).
       - name: Build all packages
-        run: scripts/ci/mem-step.sh build 6000 -- npm run build -- --parallel=3
+        run: scripts/ci/mem-step.sh build 12000 -- npm run build -- --parallel=3
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
@@ -170,9 +161,9 @@ jobs:
       # sequential). Peak ≈ admin-ui spec (~3 GB). Local `npm run typecheck`
       # stays tsc 6 until the Checks parity flip.
       - name: Typecheck (TypeScript 7)
-        run: scripts/ci/mem-step.sh typecheck-tsgo 4500 -- npx tsx scripts/typecheck-tsgo.ts
+        run: scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=8192"
 
       # The suites that spawn ffmpeg get the binary the PRODUCT runs: the pinned
       # jellyfin-ffmpeg build of `ffmpeg-artifacts.ts`, downloaded by the same
@@ -186,11 +177,17 @@ jobs:
       # template rebuild with no ffmpeg at all; this is still that answer, with
       # the right binary.)
       #
-      # Cached beside the checkout like the nx cache — `git clean` never
-      # touches it — so the 60 MB download is paid once per runner container.
-      # After the build: the script imports `@camstack/types/node` from dist.
+      # Cached under the workspace (gitignored). A hosted disk does not
+      # outlive the job. After the build: the script imports
+      # `@camstack/types/node` from dist.
+      - name: Restore the pinned ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: .camstack-ffmpeg
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('packages/types/src/deps/ffmpeg-artifacts.ts') }}
+
       - name: Provision the pinned ffmpeg (the binary the product runs)
-        run: npx tsx scripts/ci-provision-ffmpeg.ts "${{ runner.workspace }}/.camstack-ffmpeg"
+        run: npx tsx scripts/ci-provision-ffmpeg.ts "${{ github.workspace }}/.camstack-ffmpeg"
         env:
           NODE_OPTIONS: "--max-old-space-size=2048"
 
@@ -262,7 +259,7 @@ jobs:
           scripts/ci/mem-step.sh test-affected 12000 -- \
             scripts/ci/test-affected.sh --files "$CHANGED"
         env:
-          NODE_OPTIONS: "--max-old-space-size=3072"
+          NODE_OPTIONS: "--max-old-space-size=4096"
           VITEST_MAX_WORKERS: "2"
           LIGHT_PARALLEL: "2"
           GITHUB_TOKEN: ${{ github.token }}
@@ -276,10 +273,9 @@ jobs:
         # So a types change could not pass CI at all, and the red it produced
         # said "timed out" where a reader looks for a failing test.
         #
-        # Raising the step rather than the parallelism on purpose: the serial
-        # run and `VITEST_MAX_WORKERS: 2` are what keep this runner inside its
-        # memory, and trading a timeout for an OOM would move the failure
-        # rather than remove it.
+        # Raising the step rather than the parallelism on purpose: overlapping
+        # heavy suites flake. `VITEST_MAX_WORKERS: 2` stays for that reason.
+        # Two forks at a 4 GB heap fit in the 16 GB hosted runner.
         #
         # 90, not 55 (2026-09-27). 55 stopped fitting too: run 36322518829
         # (a types change, so every package) was killed at 55:12 inside
@@ -296,7 +292,7 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: scripts/ci/mem-step.sh test-all 12000 -- scripts/ci/test-affected.sh --all
         env:
-          NODE_OPTIONS: "--max-old-space-size=3072"
+          NODE_OPTIONS: "--max-old-space-size=4096"
           VITEST_MAX_WORKERS: "2"
           LIGHT_PARALLEL: "2"
         # Same heavy/light split as push; nightlies of 2026-09-25/26/27 timed
@@ -309,9 +305,9 @@ jobs:
       # was written: not failing, never collected. A test nobody runs is the
       # leftover this repo keeps getting bitten by — it reads as verification.
       - name: Test repo scripts
-        run: scripts/ci/mem-step.sh test-repo-scripts 6000 -- npm run test:scripts
+        run: scripts/ci/mem-step.sh test-repo-scripts 8000 -- npm run test:scripts
         env:
-          NODE_OPTIONS: "--max-old-space-size=3072"
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       # Same leftover, second instance: the inference pool is PYTHON, so nx has
       # never collected `packages/addon-pipeline/python/test_*.py` either. The
@@ -321,7 +317,6 @@ jobs:
       - name: Test the inference pool (python)
         run: ./scripts/test-python-pool.sh
 
-      # There is no "Save Nx cache" step any more: the cache is a directory
-      # beside the checkout (see "Point Nx at a cache that outlives the
-      # checkout"), so a failed, cancelled or green run all leave it warm for
-      # the next one, with no tarball to race a still-writing nx process.
+      # actions/cache saves `.nx` when the key misses. An exact hit is not
+      # rewritten, so unchanged packages stay warm and a changed package
+      # rebuilds until the lockfile or nx.json changes the key.

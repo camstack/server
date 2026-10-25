@@ -160,3 +160,13 @@ cache hit rate is visible in the build step's output (`[local cache]` per
 task) and in the `du -sh` the workflow prints before the build. Each moved
 guard's spec carries its negative case; `scripts/__tests__/walk-sources.spec.ts`
 covers the walker.
+
+## Amendment (2026-10-25)
+
+Decision 1 assumed a disk that outlived the job. Public CI runs on
+GitHub-hosted runners (D704 amendment): `.nx/cache` and `.nx/workspace-data`
+are restored with `actions/cache`, keyed on the lockfile and `nx.json`.
+Both directories travel together — a tarball of `.nx/cache` alone still
+misses. Nx 23 names the task database `<machine-id>-v3.db`, so
+`scripts/ci/align-nx-db.sh` copies the restored file onto the current
+machine's id before nx opens it. `NX_MAX_CACHE_SIZE` is 4 GB.

@@ -50,3 +50,25 @@ rather than a verdict.
 ## Enforcement
 
 Nothing automatic: a step added back to `ci.yml` is caught in review only.
+
+## Amendment (2026-10-25) — GitHub-hosted runners
+
+Public CI does not run on the home self-hosted pool. `ci.yml` and `checks.yml`
+run on `ubuntu-latest` (4 vCPU, 16 GB). Publish and the Linux release legs do
+too. Electron uses `macos-latest` (arm64) and `macos-13` (x64). Docker buildx
+pushes to GHCR from `ubuntu-latest` with `packages: write`.
+
+The Checks job keeps an 8 GB heap
+(`NODE_OPTIONS=--max-old-space-size=8192`). The automatic typecheck step uses
+the same ceiling. 16 GB is enough for it. Per-step heaps below that exist so
+three parallel builds, or two vitest forks, fit in the machine.
+
+Nx's cache is `actions/cache` over `.nx/cache` and `.nx/workspace-data`, keyed
+on `package-lock.json` and `nx.json` (D548's persistent directory does not
+exist on an ephemeral VM). `scripts/ci/align-nx-db.sh` copies the restored
+database onto this machine's id, because Nx 23 names the file after it. The
+pinned ffmpeg is cached the same way, under `.camstack-ffmpeg`, keyed on
+`packages/types/src/deps/ffmpeg-artifacts.ts`.
+
+`runner-watchdog.yml` watched the home queue and is not in this repository.
+A pull request job receives the default token only.

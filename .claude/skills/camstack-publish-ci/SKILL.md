@@ -45,8 +45,9 @@ npm install --package-lock-only --ignore-scripts
 git add package-lock.json && git commit -m "chore: sync package-lock before CI publish" && git push origin main
 ```
 
-**One CI run at a time.** The self-hosted runners share hardware with a live
-system. Never dispatch the `Checks` workflow — it is operator-only (D704).
+**CI runs on GitHub-hosted runners** (`ubuntu-latest` for Linux jobs,
+`macos-latest` and `macos-13` for the desktop app). Never dispatch the
+`Checks` workflow — it is operator-only (D704).
 
 ## 1. Publish packages — `Publish Packages`
 
@@ -151,8 +152,9 @@ resolved, not when `latest` differs from the product version. The image and
 the desktop app both install `@latest`. A 1.2.x desktop install will not
 auto-update to 0.1.0 — reinstall once (D943).
 
-A release run sitting in `queued` usually means no online runner carries the
-required labels: `gh api orgs/<owner>/actions/runners`. Superseding a tag whose
+A release runs on GitHub-hosted images (`ubuntu-latest`, `macos-latest`,
+`macos-13`). A run sitting in `queued` is a GitHub capacity wait, not a dead
+home runner. Superseding a tag whose
 build has not finished: cancel it and delete the tag, or it later pushes
 `intel-latest` from the older tree.
 

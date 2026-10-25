@@ -2,8 +2,11 @@
 title: Update and release
 applies-to:
   - Dockerfile
+  - .github/workflows/ci.yml
+  - .github/workflows/checks.yml
   - .github/workflows/publish-packages.yml
   - .github/workflows/release.yml
+  - scripts/ci/align-nx-db.sh
   - packages/node-root/**
   - server/backend/src/core/server-update/**
   - scripts/ci/verify-release-npm.mjs
@@ -837,6 +840,11 @@ Superseding a tag whose build has not finished? **Cancel it and delete the
 tag** — otherwise it builds later and pushes `intel-latest` from the older
 Dockerfile, quietly undoing the newer release.
 
+Those labels were the home pool. The workflow now runs on `ubuntu-latest`,
+`macos-latest` and `macos-13`, so an offline home runner does not stall a
+release. The commands above apply to a private repository that still uses
+self-hosted runners.
+
 ### Deploying from a laptop
 
 `camstack deploy` defaults to a LAN address that a laptop on Tailscale cannot
@@ -1156,10 +1164,38 @@ in particular the dependent cascade is NOT the way to get it: it republishes the
 things that DEPEND on the change, which is the opposite direction from the one
 that ships it.
 
+## Where CI runs
+
+Public CI uses GitHub-hosted runners. A public repository does not run on the
+home self-hosted pool.
+
+| Workflow | Image |
+| --- | --- |
+| `ci.yml`, `checks.yml`, `publish-packages.yml`, `unpublish-retired.yml` | `ubuntu-latest` (4 vCPU, 16 GB) |
+| `release.yml` Docker and Linux Electron | `ubuntu-latest` |
+| `release.yml` macOS arm64 | `macos-latest` |
+| `release.yml` macOS x64 | `macos-13` |
+
+`ci.yml` runs on push, pull request and the nightly schedule. A pull request
+gets the default token only: no repository secrets, and no
+`pull_request_target`. Publish is `workflow_dispatch` from `main`. Release is
+a `vX.Y.Z` tag push or `workflow_dispatch`. Each job sets the smallest
+`permissions` it needs (`contents: read` for CI; `packages: write` on the
+image push; `contents: write` only where a release or the version bump is
+pushed).
+
+Nx cache is `actions/cache` over `.nx/cache` and `.nx/workspace-data`, keyed
+on the lockfile and `nx.json`. The database file is named after the machine,
+so `scripts/ci/align-nx-db.sh` copies it onto this VM before nx opens it
+(D548, D704). The pinned ffmpeg is cached under `.camstack-ffmpeg`. The Checks
+static job keeps an 8 GB heap (`NODE_OPTIONS=--max-old-space-size=8192`).
+
+`runner-watchdog.yml` watched the home runners' queue and is not in this repo.
+
 ## Publishing
 
-`.github/workflows/publish-packages.yml`, `workflow_dispatch` only, on a
-self-hosted macOS ARM64 runner. It is the only thing that publishes to npm — the
+`.github/workflows/publish-packages.yml`, `workflow_dispatch` only, on
+`ubuntu-latest`, and only when the ref is `main`. It is the only thing that publishes to npm — the
 `NPM_TOKEN` secret is wired into that job alone, and `scripts/publish.sh` (still
 reachable as `npm run publish`) is a local escape hatch, not the route.
 
@@ -1238,31 +1274,24 @@ It creates no `vX.Y.Z` tag, pushes no image, and touches no GitHub Release.
 ## Cutting a release
 
 A release is a **human-pushed `vX.Y.Z` tag**, and the order is
-**publish → tag → build**. `.github/workflows/release.yml` then runs, entirely on
-self-hosted runners:
+**publish → tag → build**. `.github/workflows/release.yml` then runs on
+GitHub-hosted runners:
 
 | Job | Runner | What it does |
 | --- | --- | --- |
-| `derive-version` | `agent-a` | product version from the tag (or `product-version.json` on dispatch), then `scripts/ci/verify-release-npm.mjs` records `@camstack/server@latest` — see *The product release is not the npm version*, above |
-| `create-release` | `agent-a` | creates the GitHub Release **as a draft**, notes from `git log <previous v-tag>..HEAD` |
-| `build-docker` | `agent-a` (docker) | pushes `ghcr.io/camstack/camstack:intel-<version>` **and** `:intel-latest` to GHCR; linux/amd64 unless `multi_arch` |
-| `build-electron` | two per-user macOS runners + `agent-a` | FIVE legs, in PARALLEL: the full desktop product (mac arm64, mac x64, linux x64) **and** the viewer shell (`CamStackViewer-*`, mac arm64 + linux x64, `electron-builder.viewer.json`, no staged closure). One release, one version (D429) |
-| `publish-release` | `agent-a` | `gh release edit --draft=false`, the only thing that makes the release visible |
+| `derive-version` | `ubuntu-latest` | product version from the tag (or `product-version.json` on dispatch), then `scripts/ci/verify-release-npm.mjs` records `@camstack/server@latest` — see *The product release is not the npm version*, above |
+| `create-release` | `ubuntu-latest` | creates the GitHub Release **as a draft**, notes from `git log <previous v-tag>..HEAD` |
+| `build-docker` | `ubuntu-latest` | buildx pushes `ghcr.io/camstack/camstack:intel-<version>` **and** `:intel-latest` (and the `amd-` pair) to GHCR with `GITHUB_TOKEN`; linux/amd64 unless `multi_arch` |
+| `build-electron` | `ubuntu-latest`, `macos-latest`, `macos-13` | FIVE legs, in PARALLEL: the full desktop product (mac arm64, mac x64, linux x64) **and** the viewer shell (`CamStackViewer-*`, mac arm64 + linux x64, `electron-builder.viewer.json`, no staged closure). One release, one version (D429) |
+| `publish-release` | `ubuntu-latest` | `gh release edit --draft=false`, the only thing that makes the release visible |
 
-The legs are not serialised. `max-parallel: 1` was added when one tag attached
-~2.2 GB of installers at once from the operator's home LAN and saturated it —
-WAN latency to three independent targets went from 12-18 ms to a 610-650 ms
-average with 2.9 s peaks, and the Docker leg died on `npm error network
-aborted`. It reduced no bytes and cost wall clock (about one hour became nearly
-three), so it is gone ([D429](../decisions/adr-0429-one-release-both-products-and-the-legs-run-in-parallel.md)).
-It was also credited with preventing a keychain race it never prevented:
-`security default-keychain -d user` is per-user, and the two mac legs run as
-different users. Per-user is also why the signing step must UNDO it: a runner
-that runs as a real login user (the Mac mini agent's `actions-runner-1` runs as
-the operator) was left with its default keychain pointing at the deleted
-`$RUNNER_TEMP/camstack-signing.keychain-db`, and macOS warned at every CamStack
-start. The "Restore the user's keychains (macOS)" step (`if: always()`) puts
-`login` back as default and drops the temporary keychain.
+The legs are not serialised
+([D429](../decisions/adr-0429-one-release-both-products-and-the-legs-run-in-parallel.md)).
+They run on separate hosted images, so they do not share a disk or a keychain.
+Signing still builds a temporary keychain from `CSC_LINK`, and the "Restore
+the user's keychains (macOS)" step (`if: always()`) puts `login` back before
+the job ends. `max-parallel: 1` was tried when one tag attached ~2.2 GB at
+once and is gone: it cost wall clock and moved no bytes.
 
 The Electron viewer shell is built in this same release, at the **product**
 version (D429), not at `@camstack/server`'s version. It is a shell that loads
@@ -1295,19 +1324,15 @@ Squirrel.Mac applies a zip and nothing else; the order matters, and
 records why the zip is safe only after the channels are separate.
 `scripts/check-desktop-update-feeds.ts` fails the build on any of it.
 
-**Windows.** The `windows` column above is declared but not built: the release
-workflow has no Windows leg until a self-hosted Windows runner exists (the VM on
-the PVE host). The app side — Windows Node staging, the NSIS installer, the
-opt-in agent service — is ready and described in
-[windows-agent.md](windows-agent.md), including what still needs a real Windows
-host. A service-mode agent loads the closure from `Program Files` and an
-`electron-updater` replacement of those files while it runs is not handled yet.
+**Windows.** The `windows` column above is declared but not built. Enabling
+the leg is a `windows-latest` matrix row; the app side is ready and described
+in [windows-agent.md](windows-agent.md). A service-mode agent loads the closure
+from `Program Files` and an `electron-updater` replacement of those files while
+it runs is not handled yet.
 
-⚠ **The uplink is not solved.** Three fat legs plus the viewer still push
-~2.2 GB concurrently — the configuration that broke the operator's connection.
-That is a knowing trade for the two hours. If it returns, the fix is to stop
-attaching the full installers to a release at all, since they reach the nodes
-through Docker and npm and are never downloaded by hand. That decision is open.
+The legs upload from GitHub-hosted runners. The ~2.2 GB is still attached to
+one release; if that upload fails, stop attaching the full desktop installers.
+They reach nodes through Docker and npm and are never downloaded by hand.
 
 `workflow_dispatch` is **not** a substitute for a tag: `create-release` and
 `publish-release` are tag-push-only, the version is the product line
@@ -1320,14 +1345,9 @@ gh workflow run "Release — CamStack (Docker + Electron)" --ref main \
   -f dry_run=true -f version_type=patch
 ```
 
-**And no artifact either.** Since 2026-08-16 nothing in `release.yml` calls
-`actions/upload-artifact` — a single mac dispatch is ~1 GB of installers and the
-org's Actions storage quota went to ~2 GB of them. Every job already runs on a
-self-hosted runner, so a dispatch leaves the installers in that runner's `_work/`
-tree: the `Keep installer on the runner (workflow_dispatch)` step prints the
-absolute path and you fetch them over SSH. A tag push is the only thing that puts
-installers somewhere downloadable — the GitHub Release, which is a separate
-quota.
+**A dispatch uploads artifacts.** The hosted disk does not outlive the job, so
+`workflow_dispatch` uploads each leg with `actions/upload-artifact` (kept 7
+days). A tag push is what puts installers on the GitHub Release.
 
 ### A `[skip ci]` commit swallows the tag — including when you wrote the marker
 

@@ -3,11 +3,11 @@
 #
 #   scripts/ci/mem-step.sh <label> <budget-MB> -- <command...>
 #
-# Why: the runner is a 4-core N100 that also hosts a live CamStack agent, and the
-# build / test / typecheck steps were bounded by proxies measured on a Mac
-# (docs/design/2026-10-09-ts7-transition-plan.md §P0). This wrapper makes the
-# real numbers visible on every run, one row per step, without changing what the
-# step does.
+# Why: the caller passes a budget sized for GitHub-hosted ubuntu-latest
+# (4 vCPU, 16 GB). A warning over 12000 MB means the step is close to that
+# machine. The wrapper makes the real numbers visible on every run, one row
+# per step, without changing what the step does. Cgroup counters are read
+# when the kernel exposes them and omitted when it does not.
 #
 # What it measures
 #   - largest single process: GNU `/usr/bin/time -v` "Maximum resident set size"
