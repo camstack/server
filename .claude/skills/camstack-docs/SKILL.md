@@ -57,7 +57,7 @@ git add docs/reference docs/decisions/index.md AGENTS.md .cursor/rules
 | `docs/decisions/adr-*.md` | one rule per record; numbering and rules in `docs/decisions/conventions.md`, template `docs/decisions/template.md` |
 | `docs/ui/*.md` | UI build rules (the `camstack-ui` skills apply them) |
 | `docs/addons/<package>.md` | a package's notes when its `AGENTS.md` would push root + package past Codex's 32 KiB; the `AGENTS.md` keeps the intro and a link |
-| `../planning/sessions/` | the private diary: one file per month of what changed and what was learned; `sessions/sessions.md` is the index. Clone github.com/camstack/planning as a sibling of this checkout |
+| `../planning/sessions/` | the private diary: one file per month of what changed and what was learned; `sessions/sessions.md` is the index. A sibling of the main checkout, when you already have it |
 | `docs/design/*.md` | plans and analyses, dated; a plan records its own "implemented" status |
 | planning repo `superpowers/`, `.superpowers/`, `archive/` | working specs, plans, reports and handovers. Not in this repository |
 | `docs/benchmarks/*.md` | measured comparisons, dated |
@@ -103,7 +103,7 @@ page; a new Alexa capability also adds its device to
 a device)? → mirror it by hand in the Unraid templates repository and the
 public docs' Compose example (D717); nothing checks either.
 
-**Did the backlog move?** → the planning board (https://github.com/orgs/camstack/projects/1) in the same piece of work.
+**Did the backlog move?** → the backlog is private; update it in the same piece of work.
 
 ### 3a. When a change needs an ADR, and how to write one
 

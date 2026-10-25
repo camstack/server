@@ -1,6 +1,15 @@
 {
   "name": "@camstack/ui-library",
   "version": "1.2.324",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/ui-library"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
+  },
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",

@@ -4,6 +4,15 @@
   "private": false,
   "type": "module",
   "description": "Admin UI — Vite frontend build and server-side addon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/addon-admin-ui"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
+  },
   "files": [
     "dist",
     "assets"

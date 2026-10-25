@@ -19,7 +19,7 @@ on the returned id. Also `get_decision`, `next_adr_number`. Do not open a whole
 architecture page.
 
 - Never open the planning session index. Append with
-  `cat >> ../planning/sessions/<YYYY-MM>.md` (sibling clone of github.com/camstack/planning, from the repository root).
+  `cat >> ../planning/sessions/<YYYY-MM>.md` (private diary, sibling of the main checkout).
 - Never read `docs/reference/*.md`, or `docs/decisions/index.md`
   whole. Generated pages are regenerated, not hand-edited.
 - A file over ~60 KB: grep the symbol and read ±80 lines.

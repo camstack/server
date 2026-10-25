@@ -253,7 +253,7 @@ jobs:
             echo "### 🐳 Docker image"
             echo ""
             echo '```bash'
-            echo "# Intel VA/NPU (Unraid default)"
+            echo "# Intel VA/NPU"
             echo "docker pull ${IMG}:intel-${VERSION}   # or :intel-latest (moving)"
             echo "# AMD Mesa VA/Vulkan (Proxmox / AMD APU hosts)"
             echo "docker pull ${IMG}:amd-${VERSION}     # or :amd-latest (moving)"
@@ -290,7 +290,7 @@ jobs:
   #
   # ONE image name `ghcr.io/<owner>/camstack` from the single `Dockerfile`:
   # hub vs agent at runtime via CAMSTACK_ROLE; accel variant via `--target`
-  # (`intel` | `amd`). Built on `agent-a`. Tags are accel-prefixed
+  # (`intel` | `amd`). Tags are accel-prefixed
   # (`intel-<version>`, `amd-latest`, …) — never a bare `:latest`.
   build-docker:
     needs: derive-version
@@ -365,14 +365,13 @@ jobs:
         with:
           platforms: arm64
 
-      # Pin reliable DNS inside the buildkit builder. The Unraid docker
-      # daemon resolves via the homelab Pi-hole (192.168.x.x), which
-      # intermittently returns "server misbehaving" for docker.io/ghcr.io
-      # → buildx fails to fetch the `docker/dockerfile:1` frontend, base
-      # images, or push to GHCR. Setting buildkitd's own nameservers makes
-      # every in-build registry lookup go to 1.1.1.1/8.8.8.8, bypassing the
-      # flaky resolver WITHOUT touching the host daemon (no container
-      # restart). The buildkit image itself comes from the local cache.
+      # Pin reliable DNS inside the buildkit builder. The host resolver
+      # intermittently fails lookups for docker.io and ghcr.io, and buildx
+      # then fails to fetch the `docker/dockerfile:1` frontend, base images,
+      # or the push. Setting buildkitd's own nameservers makes every in-build
+      # registry lookup go to 1.1.1.1/8.8.8.8, bypassing the flaky resolver
+      # WITHOUT touching the host daemon (no container restart). The buildkit
+      # image itself comes from the local cache.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -415,10 +414,9 @@ jobs:
             ${{ env.REGISTRY }}/${{ steps.repo.outputs.owner }}/${{ matrix.image }}:${{ matrix.accel }}-latest
           # Cache READ from GHCR (existing `:buildcache` tag). We do NOT
           # write a fresh cache image — buildkit was concurrently pushing
-          # image + cache, saturating the session window on the Unraid
-          # runner's GHCR upload bandwidth (agent docker failed on
-          # 2026-05-20 dryrun with "no active session for ...: context
-          # deadline exceeded" mid-push). Keeping cache-from means future
+          # image + cache and saturating the runner's GHCR upload (a push
+          # failed with "no active session" / context deadline exceeded).
+          # Keeping cache-from means future
           # builds can still warm-start from the previously-pushed cache;
           # we just don't refresh it from this run. If cache becomes
           # stale enough to be unhelpful, manually re-run with cache-to
@@ -427,7 +425,7 @@ jobs:
           # Disable build attestations. provenance=true publishes an
           # additional manifest per platform; combined with multi-arch
           # + GHA cache export this saturates the buildkitd push
-          # pipeline on the shared Unraid Docker daemon.
+          # pipeline on the shared Docker daemon.
           provenance: false
           sbom: false
           labels: |
@@ -451,9 +449,8 @@ jobs:
     # `self-hosted,windows,x64` and append a matrix entry in derive-version's
     # `Compute Electron build matrix` step with `builder_flags: --win`.
     #
-    # TODO(windows-agent): the Windows leg stays OFF until the self-hosted
-    # Windows runner exists (the VM on the PVE host agent-b, .63). The app
-    # side is ready and was unpacked/packaged from a Mac: `npm run dist:win -w
+    # TODO(windows-agent): the Windows leg stays OFF until a self-hosted
+    # Windows runner exists. The app side is ready: `npm run dist:win -w
     # packages/desktop` stages the Windows Node + the pinned WinSW and builds the
     # NSIS installer (docs/architecture/windows-agent.md). When the runner is up:
     #   1. register it with labels `self-hosted,windows,x64`;
@@ -469,19 +466,17 @@ jobs:
     strategy:
       fail-fast: false
       # The two mac legs (arm64 + x64 of the SAME desktop app) run on two
-      # DEDICATED per-user macOS runners on the Mac mini — `mac-ghrunner1`
-      # (user ghrunner1) and `mac-ghrunner2` (user ghrunner2), each a
-      # LaunchDaemon with SessionCreate=true. Both match the same
-      # `self-hosted,macos,arm64` labels; GHA places one leg on each runner.
-      # Distinct users mean distinct login keychains AND distinct per-user
-      # default keychain / search list, so signing + notarization no longer
-      # share the mutable keychain state that forced `max-parallel: 1` (legs
-      # used to run as apocaliss92 and raced, dropping one job's signing
-      # identity). The two legs CAN sign concurrently, one per runner.
+      # dedicated per-user macOS runners. Both match the same
+      # `self-hosted,macos,arm64` labels; GitHub Actions places one leg on
+      # each runner. Distinct users mean distinct login keychains, so signing
+      # and notarization no longer share the mutable keychain state that
+      # forced `max-parallel: 1` (both legs used to run as one user and raced,
+      # dropping one job's signing identity). The two legs CAN sign
+      # concurrently, one per runner.
       #
       # They are NOT serialised (D429). `max-parallel: 1` was added when a tag
-      # push attached ~2.2 GB of installers at once from runners on the
-      # operator's home LAN and saturated it: measured on v1.2.265, WAN latency
+      # push attached ~2.2 GB of installers at once and saturated the runners'
+      # uplink: measured on v1.2.265, WAN latency
       # to three independent targets went from 12-18 ms to a 610-650 ms average
       # with 2.9-second peaks, all three degrading together, and the Docker leg
       # died on `npm error network aborted` while pulling the closure in the
@@ -511,7 +506,7 @@ jobs:
 
       # Note: no `actions/setup-python@v5` step here.
       # 1. On Linux self-hosted runners we don't need python at all.
-      # 2. On Mac self-hosted runners (Mac mini), `setup-python` tries
+      # 2. On macOS self-hosted runners, `setup-python` tries
       #    to write to `/Users/runner/hostedtoolcache` (the GHA-hosted
       #    convention) and fails with EACCES on our self-hosted user.
       #    macOS ships `python3` natively (3.9.6 on Tahoe), and the
@@ -520,7 +515,7 @@ jobs:
       #    .dmg/codesign stage. No external python install needed.
 
       # A full disk killed the v1.2.491 arm64 leg (hdiutil/zip: "No space
-      # left on device"; 40 GB of the Mac mini went to the runners' npm
+      # left on device"; 40 GB of the machine went to the runners' npm
       # caches). Trim the npm cache when it is large, then refuse to start a
       # leg that cannot finish, with a message that says why.
       - name: Disk space guard
@@ -771,7 +766,7 @@ jobs:
               # keychain from the CSC_LINK secret at build time.
               #
               # The previous approach relied on the cert being pre-imported
-              # into the Mac mini's login.keychain. That breaks whenever the
+              # into the login keychain. That breaks whenever the
               # login keychain locks (reboot / no GUI session) or its key ACL
               # is lost — codesign then dies with `errSecInternalComponent`.
               # electron-builder's OWN CSC_LINK pipeline also fails in the
@@ -806,8 +801,8 @@ jobs:
                 # keychain — even with explicit --apple-id/--password it errors
                 # `keychainLocked: default` against the login keychain. Point
                 # the default at our unlocked keychain. No race: `-d user` is
-                # PER-USER and the two mac legs run as different users
-                # (ghrunner1 / ghrunner2, one leg each). That — not the former
+                # PER-USER and the two mac legs run as different users,
+                # one leg each. That — not the former
                 # `max-parallel: 1` — is what makes this safe, and it is why
                 # removing the serialisation (D429) does not reintroduce the
                 # 2026-08 identity race.
@@ -925,8 +920,8 @@ jobs:
           set -e
           cd "$WORKSPACE"
           # Per-job notary log path. MUST NOT be a shared, hardcoded /tmp file:
-          # the two mac legs run as DIFFERENT users (ghrunner1 / ghrunner2) on
-          # the same Mac mini and would collide on a fixed /tmp path — and a
+          # the two mac legs run as different users on the same machine and
+          # would collide on a fixed /tmp path — and a
           # file left behind by a prior run's user is unwritable, so `tee`
           # fails with "Permission denied", the log comes back empty, the
           # "status: Accepted" grep misses, and an already-Accepted submission
@@ -988,7 +983,7 @@ jobs:
       # The signing step makes the temporary camstack-signing keychain the
       # user's DEFAULT keychain and prepends it to the search list, then
       # $RUNNER_TEMP is wiped at job end. On a runner that runs as a real
-      # login user (the Mac mini agent runs actions-runner-1 as the operator),
+      # login user (a macOS runner that uses a real login session),
       # that left the operator's default pointing at a deleted file, and macOS
       # warned "the CamStack keychain was renamed" at every app start. Always
       # restore login as default and drop the temporary keychain, even when

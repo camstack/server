@@ -3,7 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "description": "CamStack — single desktop app (hub or agent, chosen at first run)",
-  "homepage": "https://github.com/camstack/server",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/desktop"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
+  },
   "author": "CamStack <noreply@camstack.local>",
   "main": "dist/main.js",
   "scripts": {

@@ -65,7 +65,7 @@ Repo knowledge comes from the `camstack-dev` MCP: `search_knowledge`, then
 architecture page.
 
 - Never open the planning session index. Append to the current month file
-  (sibling clone of github.com/camstack/planning, from the repository root): `cat >> ../planning/sessions/<YYYY-MM>.md`.
+  (private diary, sibling of the main checkout): `cat >> ../planning/sessions/<YYYY-MM>.md`.
 - Never read `docs/reference/*.md`, `docs/decisions/index.md`,
   or an i18n JSON whole. Add a key with
   `npm run i18n:set -- <dotted.key> "<en>" "<it>"` (`i18n:get`, `i18n:keys`).
@@ -235,9 +235,8 @@ npm run ui:shots -- --route "/system/identity?tab=access" --fixtures access --la
 
 `camstack-docs`, end to end: regenerate what your change feeds, decide the
 prose with its ladder, ADR only for a choice between real alternatives,
-the planning board (<https://github.com/orgs/camstack/projects/1>) when the
-backlog moved, `npm run docs:check` green. A new lesson goes in
-`../planning/sessions/<YYYY-MM>.md` (sibling clone of github.com/camstack/planning, from the repository root).
+the private backlog when it moved, `npm run docs:check` green. A new lesson goes in
+`../planning/sessions/<YYYY-MM>.md` (private diary, sibling of the main checkout).
 The index is `../planning/sessions/sessions.md`; do not append to it.
 
 ## 7. Ship

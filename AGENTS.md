@@ -212,11 +212,10 @@ hand-rolled `camstack.evt.*` topic.
   Unraid templates, the Proxmox script and the Compose example live outside this
   repo, and nothing checks them. (D717, D822)
 - When you learn something a future session would need, append it to
-  `../planning/sessions/<YYYY-MM>.md` (sibling clone of
-  github.com/camstack/planning, from this repository's root — not from a
-  git worktree; index `../planning/sessions/sessions.md`). When you decide
-  something, add a record in `docs/decisions/` — copy
-  `docs/decisions/template.md`.
+  `../planning/sessions/<YYYY-MM>.md` (private diary, sibling of the main
+  checkout — not of a git worktree; index `../planning/sessions/sessions.md`).
+  The backlog is private. When you decide something, add a record in
+  `docs/decisions/` — copy `docs/decisions/template.md`.
 - **Name mechanisms, not other products**, in code, comments and commits.
 
 **Git and parallel agents**

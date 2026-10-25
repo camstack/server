@@ -69,7 +69,7 @@ export type ${typeName} = InferProvider<typeof ${exportName}>
       'Hand-edit packages/types/src/capabilities/index.ts (re-export + AnyCapability)',
       'npm run codegen',
       'Declare the cap by name in the addon manifest and implement the provider',
-      'Append ../planning/sessions/<YYYY-MM>.md (sibling clone of github.com/camstack/planning); run npm run docs:check',
+      'Append ../planning/sessions/<YYYY-MM>.md (private diary, not published); run npm run docs:check',
     ],
   }
 }

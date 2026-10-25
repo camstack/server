@@ -258,7 +258,7 @@ retention PIN, so it silently exempts the track from pruning. A knob that writes
 a store nobody reads for the purpose is exactly what D62 forbids.
 
 Always end by recording the audited ids and their verdicts in
-the current month file `../planning/sessions/<YYYY-MM>.md` (sibling clone of github.com/camstack/planning, from the repository root). Until a real flag exists, that log is the audit
+the current month file `../planning/sessions/<YYYY-MM>.md` (private diary, sibling of the main checkout). Until a real flag exists, that log is the audit
 trail.
 
 ### What would have to be added for a real "verified"

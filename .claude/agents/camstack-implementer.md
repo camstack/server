@@ -27,7 +27,7 @@ on the returned id. Also `decisions_for_path`, `get_decision`, `traps_for`,
 The next ADR number is `next_adr_number`. Do not open a whole architecture page.
 
 - Never open the planning session index. Append with
-  `cat >> ../planning/sessions/<YYYY-MM>.md` (sibling clone of github.com/camstack/planning, from the repository root).
+  `cat >> ../planning/sessions/<YYYY-MM>.md` (private diary, sibling of the main checkout).
 - Never read `docs/reference/*.md`, `docs/decisions/index.md`,
   or an i18n JSON whole. Keys go through `npm run i18n:set` (`i18n:get`,
   `i18n:keys`).

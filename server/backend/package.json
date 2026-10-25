@@ -2,6 +2,15 @@
   "name": "@camstack/server",
   "version": "1.2.632",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server.git",
+    "directory": "server/backend"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
+  },
   "private": false,
   "files": [
     "dist",

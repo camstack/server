@@ -38,7 +38,7 @@ adding one more file to one.
 
 ## What to write (stop at first yes)
 
-1. Learned something expensive? → append `../planning/sessions/<YYYY-MM>.md` (sibling clone of github.com/camstack/planning; include wrong turns).
+1. Learned something expensive? → the session diary is private (`../planning/sessions/<YYYY-MM>.md` when this checkout has one). Include the wrong turns.
 2. Chose between real alternatives? → new `docs/decisions/` record from
    `template.md`. State a violable rule; put the failure in Context.
 3. Changed how a whole subsystem behaves? → matching `docs/architecture/*.md`.

@@ -14,7 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server"
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/addon-post-analysis"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
   },
   "main": "./dist/pipeline-analytics/index.js",
   "exports": {

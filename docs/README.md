@@ -92,19 +92,18 @@ These are accurate **to their date**. Do not treat them as current:
   directory **is** drift-checked; the purely historical documents in it carry
   `<!-- drift-ok -->` markers.
 
-Working specs, plans and handovers are not in this repository. They live in the
-sibling planning repo under `superpowers/`, `.superpowers/` and `archive/`.
+Working specs, plans and handovers are not in this repository. They live in a
+private planning checkout under `superpowers/`, `.superpowers/` and `archive/`.
 
 ## Planning is private
 
 The session diary, the backlog, unscheduled ideas, and working notes
 (superpowers specs and plans, archive handovers, agent run ledgers) are not in
-this repository. Clone <https://github.com/camstack/planning> as a sibling of this
-checkout (`../planning` from the repository root). A git worktree's parent is
-still inside this repo, so that sibling sits next to the main checkout, not
-next to the worktree. Append a lesson with
-`cat >> ../planning/sessions/<YYYY-MM>.md`. The backlog is the board
-<https://github.com/orgs/camstack/projects/1>, which replaced the roadmap file.
+this repository. The backlog is private. From a checkout that already has the
+private diary as a sibling, append a lesson with
+`cat >> ../planning/sessions/<YYYY-MM>.md` (from the repository root). A git
+worktree's parent is still inside this repo, so that sibling sits next to the
+main checkout, not next to the worktree.
 
 ## The public docs are elsewhere
 

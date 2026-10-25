@@ -100,7 +100,7 @@ export function scaffoldCapability(options: {
       'If the cap must exist on agents, add it to server/backend/src/agent/main.ts',
       'npm run codegen',
       'npx tsx scripts/check-method-tiers.ts --update (review widened tiers)',
-      'Append ../planning/sessions/<YYYY-MM>.md (sibling clone of github.com/camstack/planning); npm run docs:check',
+      'Append ../planning/sessions/<YYYY-MM>.md (private diary, not published); npm run docs:check',
       'Ship: force-publish @camstack/system when the contract changes (see cap_ship_plan)',
     ],
   }

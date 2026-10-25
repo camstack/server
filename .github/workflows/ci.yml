@@ -129,7 +129,7 @@ jobs:
       # 2026-07-31 note on the `static` job's build step.
       #
       # Bounded memory (2026-10-09, the day two of these builds at once took
-      # the previous agent-a runners down —
+      # the previous self-hosted runners down —
       # docs/design/2026-10-09-ci-build-memory-and-ts7.md). Without a flag nx
       # runs THREE tasks at once, each allowed an 8 GB heap. The heavy steps
       # are single tsc programs, measured peak RSS: admin-ui's type gate 3.9 GB
@@ -137,7 +137,7 @@ jobs:
       # vite-plugin-dts 2.1 GB, desktop 1.7 GB, ui-library dts 1.7 GB. Two
       # tasks and a 4 GB heap keep one build under ~5 GB; the largest single
       # program needs ~3.4 GB of heap (admin-ui on sources OOMs at 3 GB).
-      # agent-b has headroom for --parallel=3 on the build line below.
+      # This runner has headroom for --parallel=3 on the build line below.
       - name: Build all packages
         run: scripts/ci/mem-step.sh build 6000 -- npm run build -- --parallel=3
         env:
@@ -199,7 +199,7 @@ jobs:
       # Rationale: a full serial suite is ~40 min on this runner and the
       # operator's sessions push every few minutes — an every-push full suite
       # means main never has a fresh verdict (measured 2026-08-21, repeatedly).
-      # On agent-b: heavy suites serial, light addons --parallel=2
+      # On this runner: heavy suites serial, light addons --parallel=2
       # (scripts/ci/test-affected.sh). Overlapping heavies flaked pipeline
       # timing tests (38132637960 SIGTERM grace; 38133811367 preroll settle).
       - name: Test affected packages (push/PR)

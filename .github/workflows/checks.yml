@@ -29,8 +29,7 @@ env:
 jobs:
 
   static:
-    # Self-hosted on agent-b (CI LXC) — NOT `agent-a` (live hub) and NOT
-    # ci-runner (monitoring + agent). Rebuild the runner container if it
+    # Self-hosted linux runner (`ci-linux`). Rebuild the runner container if it
     # starts a 137 restart loop; do not debug the job.
     runs-on: [self-hosted, linux, x64, ci-linux]
     # Cold (a rebuilt runner, empty nx cache): ~3 min install + ~8 min build +
@@ -468,4 +467,4 @@ jobs:
 
       # Failures stay on the self-hosted runner (`e2e/test-results/`). Never
       # upload to GitHub Actions artifacts — this org's quota is the cloud
-      # bucket, and these jobs already run on agent-b.
+      # bucket, and these jobs already run on the self-hosted runner.

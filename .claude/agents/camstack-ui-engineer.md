@@ -22,7 +22,7 @@ on the returned id. Also `find_ui_component` / `npm run ui:find` before reading
 a large component. Do not open a whole architecture page.
 
 - Never open the planning session index. Append with
-  `cat >> ../planning/sessions/<YYYY-MM>.md` (sibling clone of github.com/camstack/planning, from the repository root).
+  `cat >> ../planning/sessions/<YYYY-MM>.md` (private diary, sibling of the main checkout).
 - Never read `docs/reference/*.md`, `docs/decisions/index.md`,
   or an i18n JSON whole. Keys go through `npm run i18n:set` (`i18n:get`,
   `i18n:keys`).

@@ -17,7 +17,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/camstack/server"
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/addon-cloudflare"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
   },
   "main": "./dist/tunnel/cloudflare-tunnel.addon.js",
   "exports": {
