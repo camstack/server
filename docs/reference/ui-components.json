@@ -613,7 +613,7 @@
       "need": "A chart over time",
       "admin": "`TimeSeriesChart`, `StateTimeline`, `BarSeries`, `Sparkline` (D899)",
       "viewer": "—",
-      "notes": "One unit per chart on a device surface; slots, never hex; see `admin-patterns.md`"
+      "notes": "One unit per chart on a device surface; slots, never hex; the selected point's tooltip is built into the chart (mouse, touch, arrow keys). `Tooltip` is for a control hint. See `admin-patterns.md`"
     },
     {
       "need": "A device's recorded history",
@@ -1279,6 +1279,12 @@
           "type": "(v: number, unit: string | null) => string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "displayPreference",
+          "type": "DisplayPreference",
+          "optional": true,
+          "doc": "Display preference for base-unit samples in the point tooltip. Default metric."
         },
         {
           "name": "height",
@@ -10111,6 +10117,24 @@
           "doc": "Start the value axis at zero (default true)."
         },
         {
+          "name": "unit",
+          "type": "string | null",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "quantity",
+          "type": "ReadingQuantity",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "displayPreference",
+          "type": "DisplayPreference",
+          "optional": true,
+          "doc": "Display preference for a base-unit sample in the point tooltip. Default metric."
+        },
+        {
           "name": "className",
           "type": "string",
           "optional": true,
@@ -11475,6 +11499,12 @@
           "type": "(v: number, unit: string | null) => string",
           "optional": true,
           "doc": "Value formatter per unit; default: bytes binary, `%` glued, unit after a space."
+        },
+        {
+          "name": "displayPreference",
+          "type": "DisplayPreference",
+          "optional": true,
+          "doc": "Display preference for base-unit samples in the point tooltip. Default metric."
         },
         {
           "name": "axisFor",
