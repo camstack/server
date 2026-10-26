@@ -681,8 +681,12 @@ that reason. Hrefs come only from `lib/customization-routes.ts`.
   (`components/device/customize/source-selector/SourceSelector.tsx`): the left
   column is the ui-library `DevicePicker` (scrolls inside the column,
   `parentDeviceId` for “in &lt;parent&gt;”, incompatible devices collapsed);
-  the right column groups wireable values by capability vocabulary and renders
-  declaration behaviour parameters below. Assignment linked-devices may still use
+  the right column offers a value radio only when the declaration needs a field
+  (a scalar such as battery percentage or watts). An event extension (motion
+  span, doorbell pulse) binds the device's declared on/off
+  (`SOURCE_CAP_ACTIVE_FIELD`: binary/switch `on`, motion `detected`, …) and
+  shows that field read-only with its current value — never reachability,
+  never another capability's internal flag — then the behaviour parameters. Assignment linked-devices may still use
   `CustomizeDevicePickerDialog` or `AssignmentFieldPicker` (device then field
   via `sourceFor`). The notification smart picker (D636) stays a selection
   editor only — no live value or field step. Candidate reads stay bounded: one

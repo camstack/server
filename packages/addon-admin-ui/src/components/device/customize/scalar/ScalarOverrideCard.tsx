@@ -27,6 +27,7 @@ import {
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
 import { LiveValueText } from '../assignments/LiveValueText'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
+import { sourceRowLabel } from '../source-selector/source-selector-parent-detail'
 import { CustomizeCard } from '../CustomizeCard'
 import { currentComposition } from '../customization-read'
 import { featureOf, withFeature, withoutFeature } from '../customization-save'
@@ -97,7 +98,20 @@ export function ScalarOverrideCard({
             compositionSourceKey({ addonId: row.addonId, stableId: row.stableId }) ===
             compositionSourceKey(decoded.draft.source),
         ) ?? null)
-  const sourceName = sourceDevice?.name ?? null
+  const sourceName =
+    sourceDevice === null
+      ? null
+      : sourceRowLabel(
+          sourceDevice.name,
+          sourceDevice.id,
+          devices.kind === 'known'
+            ? devices.value.map((entry) => ({
+                id: entry.id,
+                name: entry.name,
+                parentDeviceId: entry.parentDeviceId ?? null,
+              }))
+            : [],
+        )
   const presence = sourcePresence(recognized, devices.kind, sourceDevice !== null)
   const projection = projectScalarAssignment({
     cap,
@@ -303,7 +317,13 @@ function CardBody(props: CardBodyProps): ReactNode {
       )}
       <div className="flex flex-wrap gap-2">
         {props.recognized && (
-          <Button variant="outline" size="sm" onClick={props.onOpen} disabled={props.saving}>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid={`scalar-change-${props.cap}`}
+            onClick={props.onOpen}
+            disabled={props.saving}
+          >
             {props.released ? t('customize.scalar.chooseAnother') : t('customize.scalar.change')}
           </Button>
         )}

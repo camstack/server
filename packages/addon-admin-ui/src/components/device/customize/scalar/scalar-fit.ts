@@ -4,6 +4,7 @@
  */
 import {
   CAP_CUSTOMIZE_CATALOG,
+  SOURCE_CAP_ACTIVE_FIELD,
   type CustomizeCatalogTarget,
   type CustomizeCatalogTransform,
 } from '@camstack/types'
@@ -77,10 +78,19 @@ export function declarationSourceForField(
   sources: CustomizeCatalogTarget['sources'],
   field: ScalarFieldOffer,
 ): CustomizeCatalogTarget['sources'][number] | null {
-  if (field.kind === 'boolean' && field.cap === 'switch') {
-    return sources.find((source) => source.kind === 'switch') ?? null
-  }
   if (field.kind === 'boolean') {
+    // The declaration's binary/switch source is the cap's active on/off
+    // (`SOURCE_CAP_ACTIVE_FIELD`), never every boolean the device happens to
+    // publish (reachability, a broker flag).
+    const active = SOURCE_CAP_ACTIVE_FIELD[field.cap]
+    if (active === undefined || active !== field.path) return null
+    if (field.cap === 'switch') {
+      return (
+        sources.find((source) => source.kind === 'switch') ??
+        sources.find((source) => source.kind === 'binary') ??
+        null
+      )
+    }
     return (
       sources.find((source) => source.kind === 'binary') ??
       sources.find((source) => source.kind === 'field' && source.valueKinds?.includes('boolean')) ??

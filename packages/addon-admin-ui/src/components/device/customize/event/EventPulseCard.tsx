@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import type { AssignmentAvailability } from '../assignment-availability'
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
+import { sourceRowLabel } from '../source-selector/source-selector-parent-detail'
 import { useLiveValue } from '../assignments/use-live-value'
 import { CustomizeCard } from '../CustomizeCard'
 import { currentComposition } from '../customization-read'
@@ -149,7 +150,20 @@ export function EventPulseCard({
               {recognized && source !== null && (
                 <p className="text-xs text-foreground">
                   {t('customize.scalar.override', {
-                    name: sourceDevice?.name ?? source.stableId,
+                    name:
+                      sourceDevice === null
+                        ? source.stableId
+                        : sourceRowLabel(
+                            sourceDevice.name,
+                            sourceDevice.id,
+                            devices.kind === 'known'
+                              ? devices.value.map((entry) => ({
+                                  id: entry.id,
+                                  name: entry.name,
+                                  parentDeviceId: entry.parentDeviceId ?? null,
+                                }))
+                              : [],
+                          ),
                     field: fieldLabel,
                   })}
                 </p>

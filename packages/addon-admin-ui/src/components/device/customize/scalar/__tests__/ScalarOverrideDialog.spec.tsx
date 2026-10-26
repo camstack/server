@@ -134,6 +134,13 @@ describe('ScalarOverrideDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /Porch power meter/ }))
     expect(screen.getByTestId('source-incompatible-values')).toBeTruthy()
     fireEvent.click(screen.getByTestId('source-value-power-meter.watts'))
+    const watts = screen.getByTestId('source-value-power-meter.watts')
+    expect(watts instanceof HTMLInputElement && watts.checked).toBe(true)
+    const deviceRow = screen.getAllByRole('button', { name: /Porch power meter/ })[0]
+    if (deviceRow === undefined) throw new Error('device row missing')
+    fireEvent.click(deviceRow)
+    const still = screen.getByTestId('source-value-power-meter.watts')
+    expect(still instanceof HTMLInputElement && still.checked).toBe(true)
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/8\.4 W/)
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/30/)
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))

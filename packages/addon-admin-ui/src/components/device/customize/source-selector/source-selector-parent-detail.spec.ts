@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SourceCandidateDevice } from './source-selector-model'
-import { compatiblePickerItems } from './source-selector-parent-detail'
+import { compatiblePickerItems, sourceRowLabel } from './source-selector-parent-detail'
 
 function candidate(
   id: number,
@@ -35,5 +35,17 @@ describe('compatiblePickerItems', () => {
     const items = compatiblePickerItems(compatible, fleet)
     expect(items).toHaveLength(1)
     expect(items[0]?.detail).toBe('in Porch hub')
+  })
+})
+
+describe('sourceRowLabel', () => {
+  it('names a child with the same parent the picker says "in"', () => {
+    const fleet = [
+      { id: 399, name: 'Sensore movimento veranda', parentDeviceId: null },
+      { id: 301, name: 'Motion', parentDeviceId: 399 },
+    ]
+    expect(sourceRowLabel('Motion', 301, fleet)).toBe('Motion · Sensore movimento veranda')
+    expect(sourceRowLabel('Motion', 399, fleet)).toBe('Motion')
+    expect(sourceRowLabel('Motion', null, fleet)).toBe('Motion')
   })
 })

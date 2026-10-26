@@ -15,7 +15,7 @@ import {
   useDeviceStateGetSnapshot,
 } from '@camstack/ui-library'
 import { ChevronDown } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCapIndex } from '../assignments/use-cap-index'
 import { keyedFieldFit } from '../keyed/keyed-fit'
@@ -32,12 +32,12 @@ import { type PickerDevice, toPickerDevices, type WireableCatalog } from '../sou
 type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>>
 
 import { ModeLine } from '../event/event-mode-line'
-import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
 import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
 import {
-  appendEventPick,
   type EventPickedRow,
   removeEventPick,
+  syncDeclaredEventPick,
   updateEventPickMode,
 } from './source-selector-event-add'
 import { EventEdgeField, NumberSecondsField } from './source-selector-event-params'
@@ -49,6 +49,7 @@ import {
   type SourceCandidateDevice,
   type SourceCompatibility,
   type SourceDestination,
+  type SourceWireableField,
 } from './source-selector-model'
 import { compatiblePickerItems } from './source-selector-parent-detail'
 
@@ -232,25 +233,27 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       if (props.kind !== 'event') props.onFieldChange(null)
       return
     }
+    // The picker reports the current row again when the list re-renders.
+    // Clearing the field then drops a radio the operator just chose.
+    if (props.device?.id === id) return
     const next = fleet.find((row) => row.id === id) ?? null
     props.onDeviceChange(next)
     if (props.kind !== 'event') props.onFieldChange(null)
     setMobileStep('value')
   }
-  const pickEventValue = (cap: string, path: string): void => {
-    if (props.kind !== 'event' || props.device === null) return
-    props.onPickedChange(
-      appendEventPick(
-        props.picked,
-        props.device,
-        catalog,
-        cap,
-        path,
-        props.shape,
-        props.sourceModes[0] ?? 'in-addition',
-      ),
+  const declared = props.kind === 'event' ? (fields[0] ?? null) : null
+  const eventBinding = props.kind === 'event' ? props : null
+  useEffect(() => {
+    if (eventBinding === null || eventBinding.device === null || declared === null) return
+    const next = syncDeclaredEventPick(
+      eventBinding.picked,
+      eventBinding.device,
+      { cap: declared.cap, path: declared.path },
+      eventBinding.shape,
+      eventBinding.sourceModes[0] ?? 'in-addition',
     )
-  }
+    if (next !== null) eventBinding.onPickedChange(next)
+  }, [eventBinding, declared])
   const compatibleDeviceItems = useMemo(
     () => compatiblePickerItems(compatible, fleet),
     [compatible, fleet],
@@ -395,57 +398,58 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         />
       ) : (
         <div className="flex flex-col gap-3">
-          {groups.map((group) => (
-            <section key={group.cap} aria-label={group.title}>
-              <h4 className="text-[10px] font-medium uppercase tracking-wide text-foreground-muted">
-                {group.title}
-              </h4>
-              <ul className="mt-1 flex flex-col gap-1">
-                {group.rows.map((row) => {
-                  const selected =
-                    props.kind !== 'event' &&
-                    props.field?.cap === row.cap &&
-                    props.field.path === row.path
-                  return (
-                    <li key={`${row.cap}.${row.path}`}>
-                      <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
-                        <input
-                          type="radio"
-                          name="source-value"
-                          checked={selected}
-                          data-testid={`source-value-${row.cap}.${row.path}`}
-                          onChange={() => {
-                            if (props.kind === 'event') {
-                              pickEventValue(row.cap, row.path)
-                              return
-                            }
-                            props.onFieldChange({ cap: row.cap, path: row.path })
-                            if (props.kind === 'formula') return
-                            const nextFit = fieldFitForRow(
-                              props,
-                              catalog,
-                              snapshot.status === 'success' ? snapshot.data : null,
-                              row.cap,
-                              row.path,
-                            )
-                            if (nextFit !== null && nextFit.ok) {
-                              props.onTransformChange(defaultScalarTransform(nextFit))
-                            }
-                          }}
-                        />
-                        <span>{row.label}</span>
-                        <span className="text-foreground-muted">{row.currentText}</span>
-                        <span className="text-foreground-subtle">
-                          {compatibilityLabel(row.compatibility, t)}
-                        </span>
-                      </label>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          ))}
-          {incompatibleValues.length > 0 && (
+          {props.kind === 'event' ? (
+            <DeclaredEventFields
+              fields={declared === null ? [] : [declared]}
+              language={i18n.language}
+              emptyLabel={t('customize.sourceSelector.noStateField')}
+            />
+          ) : null}
+          {props.kind !== 'event' &&
+            groups.map((group) => (
+              <section key={group.cap} aria-label={group.title}>
+                <h4 className="text-[10px] font-medium uppercase tracking-wide text-foreground-muted">
+                  {group.title}
+                </h4>
+                <ul className="mt-1 flex flex-col gap-1">
+                  {group.rows.map((row) => {
+                    const selected = props.field?.cap === row.cap && props.field.path === row.path
+                    return (
+                      <li key={`${row.cap}.${row.path}`}>
+                        <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
+                          <input
+                            type="radio"
+                            name="source-value"
+                            checked={selected}
+                            data-testid={`source-value-${row.cap}.${row.path}`}
+                            onChange={() => {
+                              props.onFieldChange({ cap: row.cap, path: row.path })
+                              if (props.kind === 'formula') return
+                              const nextFit = fieldFitForRow(
+                                props,
+                                catalog,
+                                snapshot.status === 'success' ? snapshot.data : null,
+                                row.cap,
+                                row.path,
+                              )
+                              if (nextFit !== null && nextFit.ok) {
+                                props.onTransformChange(defaultScalarTransform(nextFit))
+                              }
+                            }}
+                          />
+                          <span>{row.label}</span>
+                          <span className="text-foreground-muted">{row.currentText}</span>
+                          <span className="text-foreground-subtle">
+                            {compatibilityLabel(row.compatibility, t)}
+                          </span>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            ))}
+          {props.kind !== 'event' && incompatibleValues.length > 0 && (
             <div data-testid="source-incompatible-values">
               <Button
                 variant="ghost"
@@ -583,4 +587,37 @@ function readUnit(snapshot: DeviceSnapshot | null, cap: string): string | null {
   if (snapshot === null) return null
   const unit = snapshot[cap]?.unit
   return typeof unit === 'string' && unit.length > 0 ? unit : null
+}
+
+interface DeclaredEventFieldsProps {
+  readonly fields: readonly SourceWireableField[]
+  readonly language: string
+  readonly emptyLabel: string
+}
+
+/** An event source is the device's declared on/off — shown, not chosen. */
+function DeclaredEventFields({
+  fields,
+  language,
+  emptyLabel,
+}: DeclaredEventFieldsProps): ReactNode {
+  if (fields.length === 0) {
+    return <p className="text-[11px] text-foreground-subtle">{emptyLabel}</p>
+  }
+  return (
+    <ul className="flex flex-col gap-1">
+      {fields.map((field) => (
+        <li
+          key={`${field.cap}.${field.path}`}
+          data-testid="source-declared-field"
+          className="text-[11px] text-foreground"
+        >
+          <span className="font-medium">{vocabularyCapTitle(field.cap, language)}</span>
+          {' · '}
+          {vocabularyFieldLabel(field.cap, field.path, language)}{' '}
+          <span className="text-foreground-muted">{field.currentText}</span>
+        </li>
+      ))}
+    </ul>
+  )
 }

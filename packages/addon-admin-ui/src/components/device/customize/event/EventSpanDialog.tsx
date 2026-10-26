@@ -20,11 +20,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  useDeviceManagerListAll,
 } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLiveValue } from '../assignments/use-live-value'
-import type { PickerDevice } from '../source-picker-model'
+import { toPickerDevices, type PickerDevice } from '../source-picker-model'
+import { storedPickerDevice } from '../source-selector/source-selector-event-add'
 import { SourceSelector, type EventPickedRow } from '../source-selector/SourceSelector'
 import { spanApplyFromForm, type SpanFormSource } from './event-form'
 
@@ -65,10 +67,21 @@ export function EventSpanDialog(props: EventSpanDialogProps): ReactNode {
 
 function SpanForm(props: EventSpanDialogProps): ReactNode {
   const { t } = useTranslation()
+  const listed = useDeviceManagerListAll({ projection: 'slim' })
+  const fleet = useMemo(
+    () => (listed.status === 'success' ? toPickerDevices(listed.data) : []),
+    [listed.status, listed.data],
+  )
+  const seeded = storedPickerDevice(fleet, props.sources[0])
   const [picked, setPicked] = useState<readonly EventPickedRow[]>(() =>
     spanPickedFromSources(props.sources),
   )
   const [device, setDevice] = useState<PickerDevice | null>(null)
+  const [seededOnce, setSeededOnce] = useState(false)
+  if (!seededOnce && seeded !== null) {
+    setDevice(seeded)
+    setSeededOnce(true)
+  }
   const [timeoutSec, setTimeoutSec] = useState(props.timeoutMs / 1000)
   const [cooldownSec, setCooldownSec] = useState((props.cooldownMs ?? 0) / 1000)
   const sources = spanSourcesFromPicked(picked)
@@ -184,6 +197,7 @@ function SpanLevelPreview({
       ? { kind: 'level', active: value.value, changedAt: null }
       : { kind: 'unread' }
   const next = stepSpan(INITIAL_SPAN, sample, { timeoutMs, cooldownMs: 0, nowMs: Date.now() })
+  if (sample.kind === 'unread') return null
   return (
     <p role="status" className="text-[11px] text-foreground-subtle">
       {t(spanPreviewKey(sample, next.open))}

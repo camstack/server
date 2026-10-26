@@ -7,10 +7,22 @@ import {
 import type { SourceCandidateDevice } from './source-selector-model'
 
 /**
- * Build {@link DevicePicker} rows for compatible devices only, but resolve
- * `in <parent>` from the full fleet so a container filtered to incompatible
- * still names correctly.
+ * A Customize card row: the device's own name, and — when it lives under a
+ * container — that container's name from the same map the picker turns into
+ * "in &lt;parent&gt;". A top-level device stays its own name.
  */
+export function sourceRowLabel(
+  name: string,
+  deviceId: number | null,
+  fleet: readonly ParentResolvable[],
+): string {
+  if (deviceId === null) return name
+  const parent = resolveParentNames(fleet).get(deviceId)
+  if (parent === undefined || parent.length === 0) return name
+  return `${name} · ${parent}`
+}
+
+/** Compatible rows only; parent names still resolve from the full fleet. */
 export function compatiblePickerItems(
   compatible: readonly SourceCandidateDevice[],
   fleet: readonly ParentResolvable[],

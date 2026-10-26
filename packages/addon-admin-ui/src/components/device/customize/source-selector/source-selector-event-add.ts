@@ -4,6 +4,67 @@ import type { EventShape } from '../event/event-fit'
 import { pulseFieldFits } from '../event/event-fit'
 import type { PickerDevice, WireableCatalog } from '../source-picker-model'
 
+export interface StoredSourceRef {
+  readonly addonId: string
+  readonly stableId: string
+}
+
+/** The fleet row an edited extension already stores, or null before the fleet answers. */
+export function storedPickerDevice(
+  fleet: readonly PickerDevice[],
+  source: StoredSourceRef | undefined,
+): PickerDevice | null {
+  if (source === undefined) return null
+  return (
+    fleet.find((row) => row.addonId === source.addonId && row.stableId === source.stableId) ?? null
+  )
+}
+
+export interface DeclaredStateField {
+  readonly cap: string
+  readonly path: string
+}
+
+/**
+ * Bind the selected device to the declaration's on/off field. Returns null when
+ * the pick already names that field on that device (mode included).
+ */
+export function syncDeclaredEventPick(
+  picked: readonly EventPickedRow[],
+  device: PickerDevice,
+  field: DeclaredStateField,
+  shape: EventShape,
+  defaultMode: CameraSensorMode,
+): readonly EventPickedRow[] | null {
+  const existing = picked.find(
+    (row) => row.addonId === device.addonId && row.stableId === device.stableId,
+  )
+  const changedAt = shape === 'pulse' ? SOURCE_CAP_CHANGED_AT_FIELD[field.cap] : undefined
+  if (
+    existing !== undefined &&
+    existing.deviceId === device.id &&
+    existing.cap === field.cap &&
+    existing.fieldPath === field.path &&
+    (shape !== 'pulse' || existing.changedAtField === changedAt)
+  ) {
+    return null
+  }
+  const rest = picked.filter(
+    (row) => !(row.addonId === device.addonId && row.stableId === device.stableId),
+  )
+  const next: EventPickedRow = {
+    deviceId: device.id,
+    addonId: device.addonId,
+    stableId: device.stableId,
+    cap: field.cap,
+    fieldPath: field.path,
+    deviceName: device.name,
+    mode: existing?.mode ?? defaultMode,
+    ...(changedAt !== undefined ? { changedAtField: changedAt } : {}),
+  }
+  return [...rest, next]
+}
+
 export interface EventPickedRow {
   readonly deviceId: number
   readonly addonId: string

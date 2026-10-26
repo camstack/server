@@ -2,7 +2,7 @@
  * A span whose authority is the camera's attached sensors. The list is written
  * only after it was read (D49). Timeout is the camera's `motionCooldownMs`.
  */
-import type { DeviceInfo, SpanCompiled } from '@camstack/types'
+import type { DeviceInfo, SpanCompiled, SpanSensorRow } from '@camstack/types'
 import { projectSpanAssignment, type SpanRead } from '@camstack/types'
 import {
   Badge,
@@ -16,8 +16,12 @@ import { Activity } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentAvailability } from '../assignment-availability'
+import type { CandidateDevice } from '../assignments/assignment-candidates'
+import { useCandidateDevices } from '../assignments/use-source-candidates'
+import type { Known } from '../known'
 import { useLiveValue } from '../assignments/use-live-value'
 import { CustomizeCard } from '../CustomizeCard'
+import { sourceRowLabel } from '../source-selector/source-selector-parent-detail'
 import { extractOrchestratorCameraSettings } from '../../../pipeline/cameras/camera-card-model'
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import { applySpan, type SpanFormSource } from './event-form'
@@ -55,6 +59,7 @@ export function EventSpanCard({
   const inFlight = useRef(false)
   const [holding, setHolding] = useState(false)
   const read = spanRead(sensors)
+  const fleet = useCandidateDevices(true)
   const projection = projectSpanAssignment(view.id, read)
   const timeoutMs = timeoutFrom(
     extractOrchestratorCameraSettings(settings.data).motionCooldownMs,
@@ -132,9 +137,10 @@ export function EventSpanCard({
               {t('customize.motion.reading')}
             </p>
           ) : availability.kind === 'unknown' || read.kind === 'unknown' ? (
-            <ErrorBox
-              title={t('customize.motion.unreadable', { reason: readReason(read) })}
-              message={read.kind === 'unknown' ? (read.reason ?? '') : ''}
+            <SensorsUnreadable
+              reason={
+                readReason(read) || (availability.kind === 'unknown' ? availability.reason : '')
+              }
             />
           ) : (
             <>
@@ -145,7 +151,7 @@ export function EventSpanCard({
                 <ul className="flex flex-col gap-1">
                   {projection.rows.map((row) => (
                     <li key={row.key} className="text-xs text-foreground">
-                      {row.name}
+                      {sensorRowLabel(row, fleet)}
                       {row.reason !== null ? ` — ${t(`customize.motion.state.${row.state}`)}` : ''}
                     </li>
                   ))}
@@ -228,8 +234,37 @@ function MotionNowLine({ deviceId }: MotionNowLineProps): ReactNode {
 
 function spanRead(sensors: CameraSensorsRead): SpanRead {
   if (sensors.presence === 'pending') return { kind: 'pending' }
-  if (sensors.status === null) return { kind: 'unknown', reason: null }
+  if (sensors.status === null) return { kind: 'unknown', reason: sensors.failureReason }
   return { kind: 'known', value: sensors.status }
+}
+
+interface SensorsUnreadableProps {
+  readonly reason: string
+}
+
+function SensorsUnreadable({ reason }: SensorsUnreadableProps): ReactNode {
+  const { t } = useTranslation()
+  const named = reason.trim()
+  if (named.length === 0) {
+    return <ErrorBox message={t('customize.motion.unreadableBare')} />
+  }
+  return <ErrorBox title={t('customize.motion.unreadable', { reason: named })} message={named} />
+}
+
+function sensorRowLabel(row: SpanSensorRow, fleet: Known<readonly CandidateDevice[]>): string {
+  if (fleet.kind !== 'known') return row.name
+  const device = fleet.value.find(
+    (entry) => entry.addonId === row.addonId && entry.stableId === row.stableId,
+  )
+  return sourceRowLabel(
+    row.name,
+    device?.id ?? null,
+    fleet.value.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      parentDeviceId: entry.parentDeviceId ?? null,
+    })),
+  )
 }
 
 function readReason(read: SpanRead): string {

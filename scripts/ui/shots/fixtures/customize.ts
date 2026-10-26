@@ -29,9 +29,9 @@ const device = (id: number, name: string, location: string, type: string, isCame
 const FLEET = [
   device(101, 'Driveway', 'Front of house', 'camera', true),
   device(102, 'Garden', 'Front of house', 'camera', true),
-  device(399, 'Porch hub', 'Front of house', 'container'),
+  device(399, 'Sensore movimento veranda', 'Front of house', 'container'),
   {
-    ...device(301, 'Porch motion sensor', 'Front of house', 'sensor'),
+    ...device(301, 'Motion', 'Front of house', 'sensor'),
     parentDeviceId: 399,
   },
   device(307, 'Front door button', 'Front of house', 'switch'),
@@ -234,6 +234,25 @@ const FRONT_DOOR_CUSTOMIZATION = {
                 },
               },
             },
+            {
+              kind: 'fields',
+              cap: 'battery',
+              fields: {
+                percentage: {
+                  kind: 'from',
+                  source: {
+                    addonId: 'provider-homeassistant',
+                    stableId:
+                      'ha:ha_001:dev:6cddfefa9609eb6e5778e65913b93b86-sensor.termostato_porch_temperature',
+                  },
+                  cap: 'numeric-sensor',
+                  fieldPath: 'value',
+                },
+                charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
+                sleeping: { kind: 'expression', expr: 'false', bindings: {} },
+                lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
+              },
+            },
           ],
         },
       },
@@ -339,9 +358,7 @@ export default defineFixtures({
       ],
     },
     'deviceManager.getBindings': (input: { deviceId?: number }) => {
-      if (input.deviceId === 101) {
-        return { entries: [{ capName: 'battery', nativeAddonId: 'provider-reolink' }] }
-      }
+      if (input.deviceId === 101) return { entries: [] }
       if (input.deviceId === 801) {
         return {
           entries: [
@@ -361,7 +378,16 @@ export default defineFixtures({
           ],
         }
       }
-      if (i.deviceId === 301 || i.deviceId === 302) {
+      if (i.deviceId === 301) {
+        return {
+          caps: [
+            { cap: 'device-status', fields: [{ path: 'online', kind: 'boolean' }] },
+            { cap: 'motion', fields: [{ path: 'detected', kind: 'boolean' }] },
+            { cap: 'mqtt-broker', fields: [{ path: 'embeddedRunning', kind: 'boolean' }] },
+          ],
+        }
+      }
+      if (i.deviceId === 302) {
         return {
           caps: [
             {
@@ -389,7 +415,10 @@ export default defineFixtures({
       }
       if (i.deviceId === 801) {
         return {
-          caps: [{ cap: 'battery', fields: [{ path: 'percentage', kind: 'number' }] }],
+          caps: [
+            { cap: 'battery', fields: [{ path: 'percentage', kind: 'number' }] },
+            { cap: 'numeric-sensor', fields: [{ path: 'value', kind: 'number' }] },
+          ],
         }
       }
       return { caps: [] }
@@ -402,7 +431,16 @@ export default defineFixtures({
         }
       }
       if (i.deviceId === 306) return { switch: { on: true, lastChangedAt: 1_700_000_000_000 } }
-      if (i.deviceId === 801) return { battery: { percentage: 82 } }
+      if (i.deviceId === 801) {
+        return { battery: { percentage: 82 }, 'numeric-sensor': { value: 82, unit: '%' } }
+      }
+      if (i.deviceId === 301) {
+        return {
+          motion: { detected: false },
+          'device-status': { online: true },
+          'mqtt-broker': { embeddedRunning: true },
+        }
+      }
       return {}
     },
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) => {
@@ -411,6 +449,9 @@ export default defineFixtures({
       }
       if (i.deviceId === 801 && i.capName === 'humidity-sensor') {
         return { percent: 48, unit: '%', lastFetchedAt: 1_700_000_000_000 }
+      }
+      if (i.deviceId === 301 && i.capName === 'motion') {
+        return { detected: false, lastDetectedAt: 1_700_000_000_000 }
       }
       if (i.deviceId === 101 && i.capName === 'motion') {
         return { detected: true, lastDetectedAt: 1_700_000_000_000 - 12_000 }
@@ -425,7 +466,7 @@ export default defineFixtures({
       if (cap === 'motion') return [301, 302]
       if (cap === 'binary') return [301, 302]
       if (cap === 'switch') return [306]
-      if (cap === 'battery') return [801]
+      if (cap === 'battery' || cap === 'numeric-sensor') return [801]
       if (cap === 'consumables') return [801]
       return []
     },
@@ -433,7 +474,23 @@ export default defineFixtures({
     'pipelineOrchestrator.getCameraStatus': (i: { deviceId: number }) => ({
       deviceId: i.deviceId,
       switchedOff: [],
-      cameraSensors: { state: 'configured', sensors: [] },
+      cameraSensors:
+        i.deviceId === 101
+          ? {
+              state: 'configured',
+              cameraMotion: 'always',
+              sensors: [
+                {
+                  state: 'ready',
+                  addonId: 'provider-homeassistant',
+                  stableId: 'dev-301',
+                  mode: 'confirm',
+                  deviceId: 301,
+                  name: 'Motion',
+                },
+              ],
+            }
+          : { state: 'configured', sensors: [] },
     }),
     'deviceExtension.listSlots': (i: { deviceId: number }) => [
       {

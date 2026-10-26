@@ -20,11 +20,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
 } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { readPath, type PickerDevice } from '../source-picker-model'
+import { readPath, toPickerDevices, type PickerDevice } from '../source-picker-model'
+import { storedPickerDevice } from '../source-selector/source-selector-event-add'
 import { SourceSelector, type EventPickedRow } from '../source-selector/SourceSelector'
 import { pulseFeatureFromForm, type PulseFormSource } from './event-form'
 
@@ -66,10 +68,21 @@ export function EventPulseDialog(props: EventPulseDialogProps): ReactNode {
 
 function PulseForm(props: EventPulseDialogProps): ReactNode {
   const { t } = useTranslation()
+  const listed = useDeviceManagerListAll({ projection: 'slim' })
+  const fleet = useMemo(
+    () => (listed.status === 'success' ? toPickerDevices(listed.data) : []),
+    [listed.status, listed.data],
+  )
+  const seeded = storedPickerDevice(fleet, props.sources[0])
   const [picked, setPicked] = useState<readonly EventPickedRow[]>(() =>
     pulsePickedFromSources(props.sources),
   )
   const [device, setDevice] = useState<PickerDevice | null>(null)
+  const [seededOnce, setSeededOnce] = useState(false)
+  if (!seededOnce && seeded !== null) {
+    setDevice(seeded)
+    setSeededOnce(true)
+  }
   const [edge, setEdge] = useState<CustomizeEventEdge>(props.edge)
   const [debounceSec, setDebounceSec] = useState(props.debounceMs / 1000)
   const sources = pulseSourcesFromPicked(picked)
@@ -116,9 +129,11 @@ function PulseForm(props: EventPulseDialogProps): ReactNode {
           cooldownSec={null}
           onCooldownSecChange={() => undefined}
         />
-        <p role="status" className="text-[11px] text-foreground-subtle">
-          {t(previewKey(sample, preview.lastPressedAt))}
-        </p>
+        {sample.kind === 'level' ? (
+          <p role="status" className="text-[11px] text-foreground-subtle">
+            {t(previewKey(sample, preview.lastPressedAt))}
+          </p>
+        ) : null}
       </DialogBody>
       <DialogFooter className="flex flex-wrap gap-2">
         <Button variant="ghost" onClick={props.onClose}>

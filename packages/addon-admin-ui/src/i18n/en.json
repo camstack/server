@@ -2311,7 +2311,8 @@
         "in-addition": "Its motion counts as this camera's motion too.",
         "confirm": "The camera's own motion counts only while this sensor is active.",
         "replace": "While this sensor is ready, the camera's own motion no longer counts on its own."
-      }
+      },
+      "unreadableBare": "The attached sensors could not be read."
     },
     "assign": {
       "search": "Search a device",
@@ -2589,7 +2590,8 @@
       "direct": "direct",
       "withConversion": "with {{name}}",
       "backToDevices": "Back to devices",
-      "noDevice": "Pick a device on the left."
+      "noDevice": "Pick a device on the left.",
+      "noStateField": "This device has no on/off reading this extension can use."
     }
   },
   "compositionEditor": {

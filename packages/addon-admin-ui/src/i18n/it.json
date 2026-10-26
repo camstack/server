@@ -2372,7 +2372,8 @@
         "in-addition": "Il suo movimento conta anche come movimento di questa camera.",
         "confirm": "Il movimento della camera conta solo mentre questo sensore è attivo.",
         "replace": "Finché questo sensore è pronto, il movimento della camera da solo non conta."
-      }
+      },
+      "unreadableBare": "I sensori collegati non si sono potuti leggere."
     },
     "assign": {
       "search": "Cerca un dispositivo",
@@ -2650,7 +2651,8 @@
       "direct": "diretto",
       "withConversion": "con {{name}}",
       "backToDevices": "Torna ai dispositivi",
-      "noDevice": "Scegli un dispositivo a sinistra."
+      "noDevice": "Scegli un dispositivo a sinistra.",
+      "noStateField": "Questo dispositivo non ha una lettura acceso/spento che questa estensione possa usare."
     }
   },
   "compositionEditor": {

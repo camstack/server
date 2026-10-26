@@ -122,6 +122,53 @@ describe('judgeSourceCompatibility', () => {
     }
     expect(judgeSourceCompatibility(runningDest, field)).toEqual({ kind: 'direct' })
   })
+
+  it('motion accepts the active on/off of a binary, switch or motion source', () => {
+    const motionDest: SourceDestination = {
+      cap: 'motion',
+      targetId: 'detected',
+      title: 'Motion',
+    }
+    const field = (cap: string, path: string): SourceWireableField => ({
+      cap,
+      path,
+      kind: 'boolean',
+      unit: null,
+      currentText: 'false',
+    })
+    expect(judgeSourceCompatibility(motionDest, field('binary', 'on'))).toEqual({ kind: 'direct' })
+    expect(judgeSourceCompatibility(motionDest, field('switch', 'on'))).toEqual({ kind: 'direct' })
+    expect(judgeSourceCompatibility(motionDest, field('motion', 'detected'))).toEqual({
+      kind: 'direct',
+    })
+  })
+
+  it('motion rejects reachability and another cap’s internal flags', () => {
+    const motionDest: SourceDestination = {
+      cap: 'motion',
+      targetId: 'detected',
+      title: 'Motion',
+    }
+    const field = (cap: string, path: string): SourceWireableField => ({
+      cap,
+      path,
+      kind: 'boolean',
+      unit: null,
+      currentText: 'true',
+    })
+    expect(judgeSourceCompatibility(motionDest, field('device-status', 'online'))).toEqual({
+      kind: 'incompatible',
+      reason: 'kind',
+    })
+    expect(judgeSourceCompatibility(motionDest, field('mqtt-broker', 'embeddedRunning'))).toEqual({
+      kind: 'incompatible',
+      reason: 'kind',
+    })
+    expect(judgeSourceCompatibility(motionDest, field('motion', 'enabled'))).toEqual({
+      kind: 'incompatible',
+      reason: 'kind',
+    })
+  })
 })
 
 describe('partitionSourceDevices', () => {
