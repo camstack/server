@@ -5,6 +5,7 @@ import {
   type InferNativeProvider,
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Vendor-neutral image / picture-adjustment cap — the per-camera config
@@ -60,19 +61,19 @@ const NormalizedRangeSchema = z.object({
  */
 export const ImageSettingsStatusSchema = z.object({
   /** Normalized 0–100. */
-  brightness: z.number().optional(),
+  brightness: z.number().optional().meta(readingMeta('none')),
   /** Normalized 0–100. */
-  contrast: z.number().optional(),
+  contrast: z.number().optional().meta(readingMeta('none')),
   /** Normalized 0–100. */
-  saturation: z.number().optional(),
+  saturation: z.number().optional().meta(readingMeta('none')),
   /** Normalized 0–100. */
-  sharpness: z.number().optional(),
+  sharpness: z.number().optional().meta(readingMeta('none')),
   mirror: z.boolean().optional(),
   flip: z.boolean().optional(),
   rotate: ImageRotateSchema.optional(),
   whiteBalance: WhiteBalanceModeSchema.optional(),
   /** Manual white-balance warmth, NORMALIZED 0–100. Meaningful only when `whiteBalance === 'manual'`. */
-  warmth: z.number().optional(),
+  warmth: z.number().optional().meta(readingMeta('none')),
   exposureMode: ExposureModeSchema.optional(),
   backlightMode: BacklightModeSchema.optional(),
   lastFetchedAt: z.number(),

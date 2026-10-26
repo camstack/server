@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Robot-vacuum cap. Models HA `vacuum.*` entities — anything with a
@@ -39,16 +40,16 @@ export const VacuumControlStatusSchema = z.object({
   state: VacuumStateSchema,
   /** 0..100 battery percentage. Null when the device has no battery
    *  reading. */
-  batteryLevel: z.number().min(0).max(100).nullable(),
+  batteryLevel: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Current fan-speed token (provider-verbatim). Null when unknown or
    *  the vacuum has no speed control. */
   fanSpeed: z.string().nullable(),
   /** Speed tokens the hardware accepts — drives the UI selector. */
   availableFanSpeeds: z.array(z.string()),
   /** 0..100 cleaning-completion percentage of the current task, or null. */
-  progressPercent: z.number().min(0).max(100).nullable(),
+  progressPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Current error code (0 / null = no error). */
-  errorCode: z.number().nullable(),
+  errorCode: z.number().nullable().meta(readingMeta('none')),
   /** Human label for {@link errorCode}, or null when none / undecodable. */
   errorLabel: z.string().nullable(),
   /** Ms epoch when the slice was last updated. */

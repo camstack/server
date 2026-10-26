@@ -31,12 +31,14 @@ import {
   HISTORY_CATALOG,
   HISTORY_ITEM_CATALOG,
   type IDeviceHistoryProvider,
+  isReadingQuantity,
   type IDeviceRemovalHookProvider,
   type ProviderRegistration,
 } from '@camstack/types'
 import type { SnapshotMap } from './capture/capture-engine.js'
 import { DEFAULT_RETENTION, type RetentionPolicy } from './retention/retention.js'
 import { HistoryRuntime } from './runtime/history-runtime.js'
+import { UNRAID_ADDON_ID, type LegacyScale, unraidInformationScale } from './store/series-scale.js'
 
 export interface DeviceHistoryConfig extends Record<string, unknown> {
   rawDays: number
@@ -116,6 +118,20 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       hourDays: positiveOr(c.hourDays, DEFAULT_RETENTION.hourDays),
       dayDays: positiveOr(c.dayDays, 0) > 0 ? c.dayDays : null,
     }
+  }
+
+  /** Unraid array counters still stored in GiB. A failed listing throws to the caller. */
+  private async legacyScales(): Promise<readonly LegacyScale[]> {
+    const devices = await this.ctx.api.deviceManager.listAll.query({})
+    const scales: LegacyScale[] = []
+    for (const device of devices) {
+      if (device.addonId !== UNRAID_ADDON_ID) continue
+      const entityKey = device.config['entityKey']
+      if (typeof entityKey !== 'string') continue
+      const scale = unraidInformationScale(device.id, entityKey)
+      if (scale !== null) scales.push(scale)
+    }
+    return scales
   }
 
   private requireRuntime(): HistoryRuntime {
@@ -203,6 +219,12 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       },
       readSnapshots: async (): Promise<SnapshotMap> => api.deviceState.getAllSnapshots.query({}),
       readCapSlice: (deviceId, capName) => api.deviceState.getCapSlice.query({ deviceId, capName }),
+      readDeviceQuantity: async (deviceId) => {
+        const device = await api.deviceManager.getDevice.query({ deviceId })
+        const quantity = device?.sourceInfo?.quantity
+        return isReadingQuantity(quantity) ? quantity : null
+      },
+      listLegacyScales: () => this.legacyScales(),
       retention: () => this.retention(),
       logger: this.ctx.logger,
       clock: () => Date.now(),

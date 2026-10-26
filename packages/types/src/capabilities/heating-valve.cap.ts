@@ -1,10 +1,11 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 export const HeatingValveStatusSchema = z.object({
   /** Radiator valve opening 0 (closed) .. 100 (open). Null = not yet known. */
-  position: z.number().min(0).max(100).nullable(),
+  position: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Ms epoch when the slice was last updated (push or poll). */
   lastFetchedAt: z.number(),
 })

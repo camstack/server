@@ -1723,7 +1723,7 @@
 
 ### `battery` → `battery.*`
 
-- **Source:** `packages/types/src/capabilities/battery.cap.ts:143`
+- **Source:** `packages/types/src/capabilities/battery.cap.ts:154`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, pet-feeder, container, thermostat`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IBatteryProvider`
@@ -1749,7 +1749,7 @@
 
 ### `brightness` → `brightness.*`
 
-- **Source:** `packages/types/src/capabilities/brightness.cap.ts:26`
+- **Source:** `packages/types/src/capabilities/brightness.cap.ts:27`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `light`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IBrightnessProvider`
@@ -1895,7 +1895,7 @@
 
 ### `climate-control` → `climateControl.*`
 
-- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:101`
+- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:102`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `thermostat, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IClimateControlProvider`
@@ -1915,7 +1915,7 @@
 
 ### `color` → `color.*`
 
-- **Source:** `packages/types/src/capabilities/color.cap.ts:70`
+- **Source:** `packages/types/src/capabilities/color.cap.ts:71`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `light`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IColorProvider`
@@ -2032,7 +2032,7 @@
 
 ### `cover` → `cover.*`
 
-- **Source:** `packages/types/src/capabilities/cover.cap.ts:44`
+- **Source:** `packages/types/src/capabilities/cover.cap.ts:45`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `cover`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ICoverProvider`
@@ -2101,7 +2101,7 @@
 
 ### `day-night` → `dayNight.*`
 
-- **Source:** `packages/types/src/capabilities/day-night.cap.ts:82`
+- **Source:** `packages/types/src/capabilities/day-night.cap.ts:83`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IDayNightProvider`
@@ -2258,7 +2258,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:504`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:505`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2283,7 +2283,7 @@
 | setDisplay | `deviceManager.setDisplay` | mutation | admin | `{ deviceId: number; display: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } \| null }` | `void` |
 | getRoleDisplayDefaults | `deviceManager.getRoleDisplayDefaults` | query | protected | `{}` | `{ defaults: Record<string, { unit?: string; precision?: number; icon?: string }> }` |
 | setRoleDisplayDefaults | `deviceManager.setRoleDisplayDefaults` | mutation | admin | `{ defaults: Record<string, { unit?: string; precision?: number; icon?: string }> }` | `void` |
-| getWireableFields | `deviceManager.getWireableFields` | query | protected | `{ deviceId: number; includeSynthesizable?: boolean }` | `{ caps: ({ cap: string; fields: ({ path: string; kind: "string" \| "number" \| "boolean" \| "enum"; enumValues?: string[]; item?: boolean })[]; itemArray?: { path: string; keyField: string } })[] }` |
+| getWireableFields | `deviceManager.getWireableFields` | query | protected | `{ deviceId: number; includeSynthesizable?: boolean }` | `{ caps: ({ cap: string; fields: ({ path: string; kind: "string" \| "number" \| "boolean" \| "enum"; enumValues?: string[]; item?: boolean; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device" })[]; itemArray?: { path: string; keyField: string } })[] }` |
 | setRole | `deviceManager.setRole` | mutation | admin | `{ deviceId: number; role: string \| null }` | `void` |
 | applyInitialMeta | `deviceManager.applyInitialMeta` | mutation | admin | `{ deviceId: number; name?: string; location?: string \| null; type?: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; integrationId?: string; linkDeviceId?: number \| null; role?: string \| null }` | `void` |
 | setMetadata | `deviceManager.setMetadata` | mutation | admin | `{ deviceId: number; patch: Record<string, unknown> }` | `void` |
@@ -2445,7 +2445,7 @@
 
 ### `dishwasher` → `dishwasher.*`
 
-- **Source:** `packages/types/src/capabilities/dishwasher.cap.ts:189`
+- **Source:** `packages/types/src/capabilities/dishwasher.cap.ts:190`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `dishwasher`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IDishwasherProvider`
@@ -2484,7 +2484,7 @@
 
 ### `doorbell` → `doorbell.*`
 
-- **Source:** `packages/types/src/capabilities/doorbell.cap.ts:71`
+- **Source:** `packages/types/src/capabilities/doorbell.cap.ts:72`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `button, camera`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IDoorbellProvider`
@@ -2523,7 +2523,7 @@
 
 ### `event-emitter` → `eventEmitter.*`
 
-- **Source:** `packages/types/src/capabilities/event-emitter.cap.ts:31`
+- **Source:** `packages/types/src/capabilities/event-emitter.cap.ts:32`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `event-emitter`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IEventEmitterProvider`
@@ -2573,7 +2573,7 @@
 
 ### `fan-control` → `fanControl.*`
 
-- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:51`
+- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:52`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `fan`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFanControlProvider`
@@ -2589,7 +2589,7 @@
 
 ### `feature-probe` → `featureProbe.*`
 
-- **Source:** `packages/types/src/capabilities/feature-probe.cap.ts:64`
+- **Source:** `packages/types/src/capabilities/feature-probe.cap.ts:65`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFeatureProbeProvider`
@@ -2639,7 +2639,7 @@
 
 ### `heating-valve` → `heatingValve.*`
 
-- **Source:** `packages/types/src/capabilities/heating-valve.cap.ts:14`
+- **Source:** `packages/types/src/capabilities/heating-valve.cap.ts:15`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `thermostat`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHeatingValveProvider`
@@ -2651,7 +2651,7 @@
 
 ### `humidifier` → `humidifier.*`
 
-- **Source:** `packages/types/src/capabilities/humidifier.cap.ts:46`
+- **Source:** `packages/types/src/capabilities/humidifier.cap.ts:47`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `humidifier`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHumidifierProvider`
@@ -2678,7 +2678,7 @@
 
 ### `image` → `image.*`
 
-- **Source:** `packages/types/src/capabilities/image.cap.ts:29`
+- **Source:** `packages/types/src/capabilities/image.cap.ts:30`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `image`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IImageProvider`
@@ -2690,7 +2690,7 @@
 
 ### `image-settings` → `imageSettings.*`
 
-- **Source:** `packages/types/src/capabilities/image-settings.cap.ts:138`
+- **Source:** `packages/types/src/capabilities/image-settings.cap.ts:139`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IImageSettingsProvider`
@@ -2724,7 +2724,7 @@
 
 ### `intercom` → `intercom.*`
 
-- **Source:** `packages/types/src/capabilities/intercom.cap.ts:63`
+- **Source:** `packages/types/src/capabilities/intercom.cap.ts:64`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IIntercomProvider`
@@ -2782,7 +2782,7 @@
 
 ### `lawn-mower-control` → `lawnMowerControl.*`
 
-- **Source:** `packages/types/src/capabilities/lawn-mower-control.cap.ts:47`
+- **Source:** `packages/types/src/capabilities/lawn-mower-control.cap.ts:48`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lawn-mower`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILawnMowerControlProvider`
@@ -2944,7 +2944,7 @@
 
 ### `media-player` → `mediaPlayer.*`
 
-- **Source:** `packages/types/src/capabilities/media-player.cap.ts:81`
+- **Source:** `packages/types/src/capabilities/media-player.cap.ts:82`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMediaPlayerProvider`
@@ -3028,7 +3028,7 @@
 
 ### `motion` → `motion.*`
 
-- **Source:** `packages/types/src/capabilities/motion.cap.ts:141`
+- **Source:** `packages/types/src/capabilities/motion.cap.ts:142`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMotionProvider`
@@ -3073,7 +3073,7 @@
 
 ### `motion-zones` → `motionZones.*`
 
-- **Source:** `packages/types/src/capabilities/motion-zones.cap.ts:55`
+- **Source:** `packages/types/src/capabilities/motion-zones.cap.ts:56`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IMotionZonesProvider`
@@ -3121,7 +3121,7 @@
 
 ### `navigation` → `navigation.*`
 
-- **Source:** `packages/types/src/capabilities/navigation.cap.ts:273`
+- **Source:** `packages/types/src/capabilities/navigation.cap.ts:278`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `INavigationProvider`
@@ -3159,7 +3159,7 @@
 
 ### `network-link` → `networkLink.*`
 
-- **Source:** `packages/types/src/capabilities/network-link.cap.ts:77`
+- **Source:** `packages/types/src/capabilities/network-link.cap.ts:78`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, light, lock, siren`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `INetworkLinkProvider`
@@ -3289,7 +3289,7 @@
 
 ### `notifier` → `notifier.*`
 
-- **Source:** `packages/types/src/capabilities/notifier.cap.ts:107`
+- **Source:** `packages/types/src/capabilities/notifier.cap.ts:108`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `notifier`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `INotifierProvider`
@@ -3377,7 +3377,7 @@
 
 ### `pet-feeder` → `petFeeder.*`
 
-- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:102`
+- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:106`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-feeder`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IPetFeederProvider`
@@ -3694,7 +3694,7 @@
 
 ### `presence` → `presence.*`
 
-- **Source:** `packages/types/src/capabilities/presence.cap.ts:49`
+- **Source:** `packages/types/src/capabilities/presence.cap.ts:50`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `presence`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPresenceProvider`
@@ -3760,7 +3760,7 @@
 
 ### `ptz-autotrack` → `ptzAutotrack.*`
 
-- **Source:** `packages/types/src/capabilities/ptz-autotrack.cap.ts:108`
+- **Source:** `packages/types/src/capabilities/ptz-autotrack.cap.ts:109`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven) · runtimeState · deviceConfig(widget) · wrapper
 - **Provider interface:** `IPtzAutotrackProvider`
@@ -3877,7 +3877,7 @@
 
 ### `recording-onboard` → `recordingOnboard.*`
 
-- **Source:** `packages/types/src/capabilities/recording-onboard.cap.ts:350`
+- **Source:** `packages/types/src/capabilities/recording-onboard.cap.ts:351`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IRecordingOnboardProvider`
@@ -3930,7 +3930,7 @@
 
 ### `running-state` → `runningState.*`
 
-- **Source:** `packages/types/src/capabilities/running-state.cap.ts:105`
+- **Source:** `packages/types/src/capabilities/running-state.cap.ts:106`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, light, siren, switch, sensor, thermostat, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, container, image, pet-feeder, dishwasher`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IRunningStateProvider`
@@ -4239,7 +4239,7 @@
 
 ### `stream-catalog` → `streamCatalog.*`
 
-- **Source:** `packages/types/src/capabilities/stream-catalog.cap.ts:93`
+- **Source:** `packages/types/src/capabilities/stream-catalog.cap.ts:94`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IStreamCatalogProvider`
@@ -4251,7 +4251,7 @@
 
 ### `stream-params` → `streamParams.*`
 
-- **Source:** `packages/types/src/capabilities/stream-params.cap.ts:92`
+- **Source:** `packages/types/src/capabilities/stream-params.cap.ts:93`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IStreamParamsProvider`
@@ -4501,7 +4501,7 @@
 
 ### `vacuum-control` → `vacuumControl.*`
 
-- **Source:** `packages/types/src/capabilities/vacuum-control.cap.ts:60`
+- **Source:** `packages/types/src/capabilities/vacuum-control.cap.ts:61`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `vacuum`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IVacuumControlProvider`
@@ -4519,7 +4519,7 @@
 
 ### `valve` → `valve.*`
 
-- **Source:** `packages/types/src/capabilities/valve.cap.ts:38`
+- **Source:** `packages/types/src/capabilities/valve.cap.ts:39`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `valve`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IValveProvider`
@@ -4595,7 +4595,7 @@
 
 ### `water-heater` → `waterHeater.*`
 
-- **Source:** `packages/types/src/capabilities/water-heater.cap.ts:44`
+- **Source:** `packages/types/src/capabilities/water-heater.cap.ts:45`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `water-heater`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IWaterHeaterProvider`

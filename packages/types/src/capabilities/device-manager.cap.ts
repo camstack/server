@@ -28,6 +28,7 @@ import {
 } from '../device/location-icon.js'
 import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
+import { ReadingQuantitySchema } from '../units/quantity.js'
 import { AdoptionJobSchema } from '../interfaces/adoption-job.js'
 import { SettingsSchemaWithValuesSchema } from './addon-settings.cap.js'
 import { type CapabilityDefinition, method } from './capability-definition.js'
@@ -728,6 +729,7 @@ export const deviceManagerCapability = {
                     kind: z.enum(['string', 'number', 'boolean', 'enum']),
                     enumValues: z.array(z.string()).optional(),
                     item: z.boolean().optional(),
+                    quantity: ReadingQuantitySchema.optional(),
                   }),
                 )
                 .readonly(),

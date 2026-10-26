@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Image display cap. Models a single still image exposed by an integration —
@@ -21,7 +22,7 @@ export const ImageStatusSchema = z.object({
    *  entity exposes no `entity_picture` (yet). */
   url: z.string().nullable(),
   /** Ms epoch of the upstream last-updated timestamp. Null at cold-start. */
-  lastUpdated: z.number().nullable(),
+  lastUpdated: z.number().nullable().meta(readingMeta('none')),
 })
 
 export type ImageStatus = z.infer<typeof ImageStatusSchema>

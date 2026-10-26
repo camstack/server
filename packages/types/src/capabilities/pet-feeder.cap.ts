@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { readingMeta } from '../units/quantity.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 
@@ -55,23 +56,26 @@ export const PetFeederStatusSchema = z.object({
   /** Food currently in the bowl (grams). Null when the device has not
    *  reported a reading yet. On dual-hopper models this is the combined
    *  bowl reading; per-hopper levels live in `food1`/`food2`. */
-  foodLevel: z.number().nullable(),
+  foodLevel: z.number().nullable().meta(readingMeta('none')),
   /** Hopper-1 food level (grams) on dual-hopper feeders; null on
    *  single-hopper models. */
-  food1: z.number().nullable(),
+  food1: z.number().nullable().meta(readingMeta('none')),
   /** Hopper-2 food level (grams) on dual-hopper feeders; null on
    *  single-hopper models. */
-  food2: z.number().nullable(),
+  food2: z.number().nullable().meta(readingMeta('none')),
   /** Derived low-food flag — mirrors the HA `food_level` binary_sensor
    *  (`device_class: problem`, on = low). True when the bowl is empty /
    *  below the feeder's low threshold. */
   lowFood: z.boolean(),
   /** Battery charge 0..100 (%). Null on mains-powered models or when the
    *  device has no battery reading. */
-  batteryPower: z.number().min(0).max(100).nullable(),
-  /** Days of desiccant life remaining. Null when the model has no
-   *  desiccant sensor. */
-  desiccantLeftDays: z.number().nullable(),
+  batteryPower: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
+  /**
+   * Desiccant life remaining, stored in seconds (duration base, D944).
+   * Providers convert from the days the feeder reports. Null when the
+   * model has no desiccant sensor.
+   */
+  desiccantLeftDays: z.number().nullable().meta(readingMeta('duration')),
   /** True while a feed is in progress. */
   feeding: z.boolean(),
   /** Decoded connectivity / power status (HA petkit device-status enum).
@@ -82,7 +86,7 @@ export const PetFeederStatusSchema = z.object({
    *  with `errorCode` for consumers that want the raw integer. */
   error: z.string().nullable(),
   /** Raw device error code (0 / null = no error). */
-  errorCode: z.number().nullable(),
+  errorCode: z.number().nullable().meta(readingMeta('none')),
   /** True for D4S/D4SH dual-hopper hardware — gates the per-hopper UI. */
   isDualHopper: z.boolean(),
   /** Child-lock (manual-lock) setting — buttons on the unit are disabled. */
@@ -92,7 +96,7 @@ export const PetFeederStatusSchema = z.object({
   /** Play a chime when dispensing. */
   feedSound: z.boolean(),
   /** Speaker / prompt volume level (device-scaled integer). */
-  volume: z.number(),
+  volume: z.number().meta(readingMeta('none')),
   /** Ms epoch when the slice was last refreshed from the cloud. */
   lastFetchedAt: z.number(),
 })
@@ -207,7 +211,7 @@ export const petFeederCapability = {
       food1: { kind: 'gauge' },
       food2: { kind: 'gauge' },
       batteryPower: { kind: 'gauge', unit: '%', deadband: 2 },
-      desiccantLeftDays: { kind: 'gauge', unit: 'days' },
+      desiccantLeftDays: { kind: 'gauge', unit: 's' },
     },
   },
 } as const satisfies CapabilityDefinition

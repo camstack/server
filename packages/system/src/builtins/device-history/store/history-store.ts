@@ -10,6 +10,7 @@
  */
 import type { DeviceHistoryKind } from '@camstack/types'
 import type { RawPoint, RollupRow } from '../rollup/rollup-math.js'
+import { rollupIsLegacy, scaledMagnitude } from './series-scale.js'
 import type { RollupTier } from '../time/bucket-time.js'
 import {
   COLLECTIONS,
@@ -528,5 +529,108 @@ export class HistoryStore {
       collection: COLLECTIONS.optOuts,
       filter: { where: { device_id: deviceId } },
     })
+  }
+
+  /** True when this rescale already finished. A missing row is "not yet". */
+  async scaleApplied(id: string): Promise<boolean> {
+    const rows = await this.door.query.query({
+      namespace: HISTORY_NAMESPACE,
+      collection: COLLECTIONS.appliedScales,
+      filter: { where: { id }, limit: 1 },
+    })
+    return rows.length > 0
+  }
+
+  async markScale(id: string, at: number): Promise<void> {
+    await this.door.upsertMany.mutate({
+      namespace: HISTORY_NAMESPACE,
+      collection: COLLECTIONS.appliedScales,
+      conflict: ['id'],
+      records: [{ id, data: { id, applied_at: at } }],
+    })
+  }
+
+  /**
+   * Multiply one series' raw points and rollups that are still in the old
+   * unit. Points already at or above `legacyMax` stay. Returns how many rows
+   * changed.
+   */
+  async scaleSeries(seriesId: number, factor: number, legacyMax: number): Promise<number> {
+    const raw = await this.scaleRaw(seriesId, factor, legacyMax)
+    let rollups = 0
+    for (const tier of ['5m', '1h', '1d'] as const) {
+      rollups += await this.scaleRollupTier(tier, seriesId, factor, legacyMax)
+    }
+    return raw + rollups
+  }
+
+  private async scaleRaw(seriesId: number, factor: number, legacyMax: number): Promise<number> {
+    let after = -1
+    let changed = 0
+    for (;;) {
+      const rows = await this.readRaw(
+        seriesId,
+        after + 1,
+        Number.MAX_SAFE_INTEGER,
+        READ_PAGE,
+        'asc',
+      )
+      if (rows.length === 0) break
+      const next = rows.flatMap((row) => {
+        const value = scaledMagnitude(row.value, factor, legacyMax)
+        return value === row.value ? [] : [{ seriesId, ts: row.ts, value }]
+      })
+      if (next.length > 0) {
+        await this.upsertRaw(next)
+        changed += next.length
+      }
+      const last = rows[rows.length - 1]
+      if (last === undefined || rows.length < READ_PAGE) break
+      after = last.ts
+    }
+    return changed
+  }
+
+  private async scaleRollupTier(
+    tier: RollupTier,
+    seriesId: number,
+    factor: number,
+    legacyMax: number,
+  ): Promise<number> {
+    let after = -1
+    let changed = 0
+    for (;;) {
+      const rows = await this.readRollups(
+        tier,
+        seriesId,
+        after + 1,
+        Number.MAX_SAFE_INTEGER,
+        READ_PAGE,
+        'asc',
+      )
+      if (rows.length === 0) break
+      const next = rows.flatMap((row) =>
+        rollupIsLegacy(row, legacyMax) ? [scaleRollup(row, factor)] : [],
+      )
+      if (next.length > 0) {
+        await this.upsertRollups(tier, next)
+        changed += next.length
+      }
+      const last = rows[rows.length - 1]
+      if (last === undefined || rows.length < READ_PAGE) break
+      after = last.bucketStart
+    }
+    return changed
+  }
+}
+
+function scaleRollup(row: RollupRow, factor: number): RollupRow {
+  return {
+    ...row,
+    sum: row.sum * factor,
+    min: row.min * factor,
+    max: row.max * factor,
+    last: row.last === null ? null : row.last * factor,
+    twSum: row.twSum === null ? null : row.twSum * factor,
   }
 }

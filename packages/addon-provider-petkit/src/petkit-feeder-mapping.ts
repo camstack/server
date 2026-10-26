@@ -105,6 +105,14 @@ function resolveFoodLevel(reading: FeederReading): number | null {
   return null
 }
 
+const SECONDS_PER_DAY = 86_400
+
+/** Feeder reports desiccant in days. The slice stores seconds (D944). */
+function desiccantSeconds(days: number | null): number | null {
+  if (days === null || !Number.isFinite(days)) return null
+  return days * SECONDS_PER_DAY
+}
+
 /**
  * Map a {@link FeederReading} to the full `pet-feeder` cap status slice.
  * Pure: same reading + timestamp in → same slice out.
@@ -117,7 +125,7 @@ export function mapFeederToStatus(reading: FeederReading, now: number): PetFeede
     food2: reading.isDualHopper ? reading.food2 : null,
     lowFood: foodLevel !== null && foodLevel <= 0,
     batteryPower: clampBattery(reading.batteryPower),
-    desiccantLeftDays: reading.desiccantLeftDays,
+    desiccantLeftDays: desiccantSeconds(reading.desiccantLeftDays),
     feeding: reading.feeding,
     status: decodeFeederStatus(reading),
     error: decodeFeederError(reading.errorCode, reading.errorMsg),

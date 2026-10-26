@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Dimmable-light brightness control. Co-exists with `switch` on the
@@ -16,7 +17,7 @@ import { DeviceType } from '../device/device-type.js'
  */
 export const BrightnessStatusSchema = z.object({
   /** Current level as 0..100 inclusive. Firmware-reported. */
-  percentage: z.number().min(0).max(100),
+  percentage: z.number().min(0).max(100).meta(readingMeta('percentage')),
   /** Ms epoch of the last operator-driven change. Useful for UI freshness. */
   lastChangedAt: z.number(),
 })

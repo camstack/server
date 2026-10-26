@@ -516,6 +516,7 @@ Enum: `"queued" \| "running" \| "succeeded" \| "failed" \| "cancelled"`
 - `charging`: `"dc" \| "solar" \| "none" \| "unknown"`
 - `sleeping`: `boolean`
 - `lastUpdated`: `number`
+- `volts?`: `number \| null`
 - `lastContactAt?`: `number`
 - `lastFullRefreshAt?`: `number`
 - `binary?`: `boolean`

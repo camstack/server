@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /** A rise closer than this to the previous one is the same press (D671). */
 export const DOORBELL_RISE_DEBOUNCE_MS = 2_000
@@ -41,7 +42,7 @@ export const DoorbellStatusSchema = z.object({
   /** Ms epoch of the last press. null = never observed since this provider started. */
   lastPressedAt: z.number().nullable(),
   /** Counter since provider start. Resets on reboot. Useful for metrics/debug. */
-  pressCountSinceStart: z.number(),
+  pressCountSinceStart: z.number().meta(readingMeta('count')),
 })
 
 export type DoorbellStatus = z.infer<typeof DoorbellStatusSchema>

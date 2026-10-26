@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Notification delivery cap. Models HA `notify.<service>` plus future
@@ -63,7 +64,7 @@ export const NotifierStatusSchema = z.object({
   lastError: z.string().nullable(),
   /** Number of deliveries currently buffered server-side (rate-limited
    *  notifiers may queue). 0 when the provider sends synchronously. */
-  queueDepth: z.number().int().nonnegative(),
+  queueDepth: z.number().int().nonnegative().meta(readingMeta('count')),
   /** Per-feature capability matrix — authoritative source for the
    *  compose-form field gating. */
   supports: NotifierSupportsSchema,

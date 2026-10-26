@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Fan-control cap. Models HA `fan.*` entity-specific surfaces:
@@ -27,10 +28,10 @@ export type FanDirection = z.infer<typeof FanDirectionSchema>
 export const FanControlStatusSchema = z.object({
   /** Active speed as 0..100 inclusive. Null when the device has no
    *  speed surface (single-speed fan). */
-  percentage: z.number().min(0).max(100).nullable(),
+  percentage: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Speed granularity the device accepts (HA `percentage_step`, e.g. 25 for
    *  a 4-speed fan). Absent when unknown — the UI then falls back to step 1. */
-  percentageStep: z.number().positive().optional(),
+  percentageStep: z.number().positive().optional().meta(readingMeta('percentage')),
   /** Active preset mode (`auto` / `quiet` / `turbo` / vendor-specific)
    *  — empty string when no preset is active or supported. */
   preset: z.string(),

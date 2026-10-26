@@ -285,4 +285,12 @@ describe('listSeries', () => {
     const two = await h.runtime.query.listSeries({ kind: 'device', deviceId: 2 })
     expect(two[0]?.unit).toBe('°C')
   })
+
+  it('labels a numeric-sensor series with the device quantity base', async () => {
+    h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
+    h.quantities.set(1, 'information')
+    await h.runtime.registry.ensure('cap:numeric-sensor.value', SUBJECT, '', T0)
+    const [info] = await h.runtime.query.listSeries(SUBJECT)
+    expect(info?.unit).toBe('B')
+  })
 })

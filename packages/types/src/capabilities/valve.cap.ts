@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Pipe / water / gas valve cap. Models HA `valve.*` entities — anything
@@ -28,7 +29,7 @@ export const ValveStatusSchema = z.object({
   state: ValveStateSchema,
   /** 0 = fully closed, 100 = fully open. Null when the device has no
    *  intermediate position surface. */
-  position: z.number().min(0).max(100).nullable(),
+  position: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

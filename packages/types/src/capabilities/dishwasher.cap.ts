@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Smart-dishwasher cap — program lifecycle, door / remote-start gates and
@@ -69,11 +70,11 @@ export const DishwasherStatusSchema = z.object({
   /** Feature keys of the programs the appliance currently offers — drives the UI selector. */
   availablePrograms: z.array(z.string()),
   /** Seconds remaining on the active cycle, or null when not running / not known. */
-  remainingSeconds: z.number().int().nonnegative().nullable(),
+  remainingSeconds: z.number().int().nonnegative().nullable().meta(readingMeta('duration')),
   /** Seconds the delayed start is set to (time until the cycle starts), or null. */
-  delayedStartSeconds: z.number().int().nonnegative().nullable(),
+  delayedStartSeconds: z.number().int().nonnegative().nullable().meta(readingMeta('duration')),
   /** Cycle completion 0..100, or null when not applicable. */
-  progressPercent: z.number().min(0).max(100).nullable(),
+  progressPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** True when the door is reported open; null when the door state is not known. */
   doorOpen: z.boolean().nullable(),
   /** True when the door is latched (locked) during a cycle; null when not reported. */
@@ -97,7 +98,7 @@ export const DishwasherStatusSchema = z.object({
   /** True while the machine-care (descaling / cleaning-program) reminder is raised; false when clear; null when not reported. */
   machineCareDue: z.boolean().nullable(),
   /** Program runs left before the machine-care reminder is due; null when the appliance does not say. */
-  machineCareRemainingRuns: z.number().int().nonnegative().nullable(),
+  machineCareRemainingRuns: z.number().int().nonnegative().nullable().meta(readingMeta('count')),
   /** Option states: null when the appliance does not expose the option or has not said. */
   halfLoad: z.boolean().nullable(),
   hygienePlus: z.boolean().nullable(),
@@ -112,7 +113,7 @@ export const DishwasherStatusSchema = z.object({
   /** Feature keys of the events currently raised (salt low, rinse aid low, program finished, …). */
   activeEvents: z.array(z.string()),
   /** Numeric error code when the appliance reports one; null otherwise. */
-  errorCode: z.number().nullable(),
+  errorCode: z.number().nullable().meta(readingMeta('none')),
   /** Name of the raised alert-level event while the appliance is in error; null otherwise. */
   errorLabel: z.string().nullable(),
   /** Ms epoch of the last value received from the appliance; 0 = never. */

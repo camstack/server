@@ -1227,6 +1227,7 @@ interface WireableCapEntry {
     kind: WireableField['kind']
     enumValues?: string[]
     item?: boolean
+    quantity?: WireableField['quantity']
   }>
   itemArray?: { path: string; keyField: string }
 }
@@ -1254,6 +1255,7 @@ function wireableEntryForDef(capName: string, def: CapabilityDefinition): Wireab
     kind: f.kind,
     ...(f.enumValues !== undefined ? { enumValues: [...f.enumValues] } : {}),
     ...(f.item === true ? { item: true } : {}),
+    ...(f.quantity !== undefined ? { quantity: f.quantity } : {}),
   }))
   if (fields.length === 0) return null
   return {

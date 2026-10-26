@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * How a device reaches the network, and how well.
@@ -35,13 +36,13 @@ export const NetworkLinkStatusSchema = z.object({
    * one whose reading has not landed must not be drawn at 0 %. Consumers
    * SKIP a null rather than coerce it.
    */
-  signalPercent: z.number().min(0).max(100).nullable(),
+  signalPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Raw received signal strength in dBm, when the firmware reports one. */
-  rssiDbm: z.number().optional(),
+  rssiDbm: z.number().optional().meta(readingMeta('signal-level')),
   /** Network name of a wireless link, when the firmware reports it. */
   ssid: z.string().optional(),
   /** Ms epoch of the last observation. Lets consumers reason about freshness. */
-  lastUpdated: z.number(),
+  lastUpdated: z.number().meta(readingMeta('none')),
 })
 
 export type NetworkLinkStatus = z.infer<typeof NetworkLinkStatusSchema>

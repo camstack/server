@@ -24,7 +24,7 @@ interface ItemFixture {
   readonly label: string
   readonly level: number | null
   readonly status: string | null
-  readonly remaining?: { readonly value: number | null; readonly unit: string }
+  readonly remaining?: { readonly value: number | null; readonly kind: 'duration' | 'count' }
 }
 
 function item(over: Partial<ItemFixture> & { key: string }): ItemFixture {

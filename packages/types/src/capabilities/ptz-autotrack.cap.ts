@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * `ptz-autotrack` — sibling cap of `ptz` that exposes the on-camera
@@ -43,8 +44,8 @@ const AutotrackTargetTypeSchema = z
 
 export const PtzAutotrackSettingsSchema = z.object({
   targetType: AutotrackTargetTypeSchema,
-  stopDelaySeconds: z.number().int().min(0).max(300),
-  disappearDelaySeconds: z.number().int().min(0).max(300),
+  stopDelaySeconds: z.number().int().min(0).max(300).meta(readingMeta('duration')),
+  disappearDelaySeconds: z.number().int().min(0).max(300).meta(readingMeta('duration')),
 })
 
 export type PtzAutotrackSettings = z.infer<typeof PtzAutotrackSettingsSchema>

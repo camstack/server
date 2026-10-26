@@ -107,6 +107,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
         kind: 'boolean',
         label: 'Sleeping',
       },
+      {
+        path: 'volts',
+        kind: 'number',
+        label: 'Voltage',
+        unit: 'V',
+      },
     ],
   },
   'binary': {

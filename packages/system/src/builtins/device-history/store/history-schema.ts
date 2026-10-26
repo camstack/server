@@ -20,6 +20,8 @@ export const COLLECTIONS = {
   rollup1d: 'rollup-1d',
   optOuts: 'device-opt-outs',
   departures: 'device-departures',
+  /** One row per applied base-unit rescale, in history.db so it travels with the points. */
+  appliedScales: 'applied-scales',
 } as const
 
 export type TierCollection = (typeof COLLECTIONS)['rollup5m' | 'rollup1h' | 'rollup1d']
@@ -136,5 +138,14 @@ export const HISTORY_DECLARATIONS: readonly DeclareCollectionInput[] = [
       { name: 'missing_since', type: 'INTEGER', notNull: true },
     ],
     indexes: [{ name: 'idx_dh_departures_device', columns: ['device_id'], unique: true }],
+  },
+  {
+    namespace: HISTORY_NAMESPACE,
+    collection: COLLECTIONS.appliedScales,
+    database: 'history',
+    columns: [
+      { name: 'id', type: 'TEXT', primaryKey: true, notNull: true },
+      { name: 'applied_at', type: 'INTEGER', notNull: true },
+    ],
   },
 ]

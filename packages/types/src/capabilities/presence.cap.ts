@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Presence cap. Models HA `person.*` and `device_tracker.*` entities
@@ -21,11 +22,11 @@ import { DeviceType } from '../device/device-type.js'
 
 const GpsLocationSchema = z.object({
   /** Latitude in decimal degrees, -90..90. */
-  latitude: z.number().min(-90).max(90),
+  latitude: z.number().min(-90).max(90).meta(readingMeta('angle')),
   /** Longitude in decimal degrees, -180..180. */
-  longitude: z.number().min(-180).max(180),
+  longitude: z.number().min(-180).max(180).meta(readingMeta('angle')),
   /** Reported accuracy in meters (lower = better). */
-  accuracyMeters: z.number().nonnegative(),
+  accuracyMeters: z.number().nonnegative().meta(readingMeta('length')),
 })
 export type GpsLocation = z.infer<typeof GpsLocationSchema>
 
@@ -39,7 +40,7 @@ export const PresenceStatusSchema = z.object({
   gps: GpsLocationSchema.nullable(),
   /** Optional battery level of the tracking device (0..100). Null
    *  when not reported. */
-  batteryPercent: z.number().min(0).max(100).nullable(),
+  batteryPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

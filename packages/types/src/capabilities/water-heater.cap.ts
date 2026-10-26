@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Water heater / boiler cap. Models HA `water_heater.*` entities — a
@@ -19,9 +20,9 @@ import { DeviceType } from '../device/device-type.js'
 
 export const WaterHeaterStatusSchema = z.object({
   /** Current measured temperature. Null when not reported. */
-  currentTemp: z.number().nullable(),
+  currentTemp: z.number().nullable().meta(readingMeta('temperature')),
   /** Target temperature setpoint. Null when no setpoint surface. */
-  targetTemp: z.number().nullable(),
+  targetTemp: z.number().nullable().meta(readingMeta('temperature')),
   /** Active operation mode = HA `state` (`eco` / `electric` / `gas` /
    *  `heat_pump` / `high_demand` / `performance` / `off`). Null when the
    *  device reports an unknown state. */
@@ -32,9 +33,9 @@ export const WaterHeaterStatusSchema = z.object({
    *  has no away surface. */
   away: z.boolean().nullable(),
   /** HA `min_temp` attribute. Null when not reported. */
-  minTemp: z.number().nullable(),
+  minTemp: z.number().nullable().meta(readingMeta('temperature')),
   /** HA `max_temp` attribute. Null when not reported. */
-  maxTemp: z.number().nullable(),
+  maxTemp: z.number().nullable().meta(readingMeta('temperature')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

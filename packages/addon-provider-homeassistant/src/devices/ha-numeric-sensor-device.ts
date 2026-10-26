@@ -102,7 +102,7 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
     // Cold-start slice with `lastFetchedAt: 0` so consumers see the
     // documented "no push received yet" sentinel.
     // unit/precision are absent at cold-start (not yet received from HA).
-    this.runtimeState.setCapState(this.capName, this.buildSlice(0, 0, undefined, undefined))
+    this.runtimeState.setCapState(this.capName, this.buildSlice(0, 0, undefined))
   }
 
   protected override handleStatePush(state: HaEntityState): void {

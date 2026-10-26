@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Color-light cap. Coexists with `switch` (on/off) and `brightness`
@@ -28,18 +29,18 @@ import { DeviceType } from '../device/device-type.js'
  */
 
 const RgbTripletSchema = z.object({
-  r: z.number().int().min(0).max(255),
-  g: z.number().int().min(0).max(255),
-  b: z.number().int().min(0).max(255),
+  r: z.number().int().min(0).max(255).meta(readingMeta('none')),
+  g: z.number().int().min(0).max(255).meta(readingMeta('none')),
+  b: z.number().int().min(0).max(255).meta(readingMeta('none')),
 })
 
 const HsvTripletSchema = z.object({
   /** Hue in degrees, 0..360. */
-  h: z.number().min(0).max(360),
+  h: z.number().min(0).max(360).meta(readingMeta('none')),
   /** Saturation as 0..100 inclusive. */
-  s: z.number().min(0).max(100),
+  s: z.number().min(0).max(100).meta(readingMeta('none')),
   /** Value/brightness as 0..100 inclusive. */
-  v: z.number().min(0).max(100),
+  v: z.number().min(0).max(100).meta(readingMeta('none')),
 })
 
 const ColorInputSchema = z.discriminatedUnion('mode', [
@@ -57,7 +58,7 @@ export const ColorStatusSchema = z.object({
   /** Populated when `mode === 'hsv'`. */
   hsv: HsvTripletSchema.optional(),
   /** Populated when `mode === 'mired'`. */
-  mireds: z.number().int().optional(),
+  mireds: z.number().int().optional().meta(readingMeta('colour-temperature')),
   /** Ms epoch of the last operator-driven change. */
   lastChangedAt: z.number(),
 })

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Per-device feature/identity probe slice. Holds the runtime-resolved
@@ -43,7 +44,7 @@ export const FeatureProbeStatusSchema = z.object({
   /** Camera/firmware model string. `null` when the firmware doesn't expose it. */
   model: z.string().nullable(),
   /** Channel count for NVR/Hub devices; `1` for standalone cameras; `null` pre-probe. */
-  channelCount: z.number().nullable(),
+  channelCount: z.number().nullable().meta(readingMeta('count')),
   /**
    * Ms epoch of the last SUCCESSFUL probe. `0` before the first probe
    * completes — drivers' `getAccessoryChildren()` should treat zero as

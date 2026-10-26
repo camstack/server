@@ -1,9 +1,12 @@
 import { z } from 'zod'
+import { isReadingQuantity, type ReadingQuantity } from '../units/quantity.js'
 
 export interface WireableField {
   readonly path: string
   readonly kind: 'string' | 'number' | 'boolean' | 'enum'
   readonly enumValues?: readonly string[]
+  /** Quantity of a numeric reading, when the schema declares one. */
+  readonly quantity?: ReadingQuantity
   /** True when `path` is relative to ONE item of an item-array cap (see
    *  `CapabilityStatusItemArray`) — a link targeting it must carry a
    *  `target.itemKey`. Absent/false for plain status fields. */
@@ -20,6 +23,21 @@ export function unwrapSchema(schema: z.ZodType): z.ZodType {
     ).unwrap()
   }
   return s
+}
+
+function isMetaBag(value: unknown): value is { readonly quantity?: unknown } {
+  return typeof value === 'object' && value !== null
+}
+
+function metaQuantity(schema: z.ZodType): ReadingQuantity | undefined {
+  const bag: unknown = z.globalRegistry.get(schema)
+  if (isMetaBag(bag) && isReadingQuantity(bag.quantity)) return bag.quantity
+  return undefined
+}
+
+/** Quantity declared with `readingMeta` on the field or on the unwrapped leaf. */
+function quantityOfField(schema: z.ZodType): ReadingQuantity | undefined {
+  return metaQuantity(schema) ?? metaQuantity(unwrapSchema(schema))
 }
 
 function leafKind(
@@ -50,12 +68,15 @@ export function enumerateSchemaFields(schema: z.ZodType, prefix = ''): readonly 
       continue
     }
     const leaf = leafKind(field)
-    if (leaf)
+    if (leaf) {
+      const quantity = quantityOfField(field)
       out.push({
         path,
         kind: leaf.kind,
         ...(leaf.enumValues ? { enumValues: leaf.enumValues } : {}),
+        ...(quantity !== undefined ? { quantity } : {}),
       })
+    }
   }
   return out
 }

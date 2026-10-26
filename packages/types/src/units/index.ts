@@ -26,6 +26,7 @@ export {
   readingMeta,
 } from './quantity.js'
 export type { DisplayPreference, ReadingMeta, ReadingQuantity } from './quantity.js'
+export { thresholdToBase, thresholdToDisplay } from './threshold.js'
 export { formatReading } from './format-reading.js'
 export type { FormatReadingInput, FormattedReading } from './format-reading.js'
 export { ingestReading, quantityFromUnit } from './ingest-reading.js'

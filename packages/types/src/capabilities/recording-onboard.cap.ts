@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 import {
   type CapabilityDefinition,
   type InferNativeProvider,
@@ -100,9 +101,9 @@ export const RecordTriggerSchema = z.enum([
  */
 export const RecordWindowSchema = z.object({
   trigger: RecordTriggerSchema,
-  day: z.number().int().min(0).max(6),
-  startMinute: z.number().int().min(0).max(1439),
-  endMinute: z.number().int().min(1).max(1440),
+  day: z.number().int().min(0).max(6).meta(readingMeta('none')),
+  startMinute: z.number().int().min(0).max(1439).meta(readingMeta('none')),
+  endMinute: z.number().int().min(1).max(1440).meta(readingMeta('none')),
 })
 
 // ── Onboard storage ──────────────────────────────────────────────────
@@ -196,10 +197,10 @@ export const RecordingOnboardStatusSchema = z.object({
   /** Master "record to the card at all" switch. */
   enabled: z.boolean().nullable(),
   overwriteWhenFull: z.boolean().nullable(),
-  preRecordSec: z.number().nullable(),
-  postRecordSec: z.number().nullable(),
+  preRecordSec: z.number().nullable().meta(readingMeta('duration')),
+  postRecordSec: z.number().nullable().meta(readingMeta('duration')),
   /** Length of one recorded file, in minutes. */
-  segmentMinutes: z.number().nullable(),
+  segmentMinutes: z.number().nullable().meta(readingMeta('none')),
   /** The primary track's weekly windows, flattened. */
   windows: z.array(RecordWindowSchema),
   /**
@@ -215,7 +216,7 @@ export const RecordingOnboardStatusSchema = z.object({
    * provider reporting a non-zero count also reports the schedule as not
    * writable.
    */
-  unreadableWindows: z.number(),
+  unreadableWindows: z.number().meta(readingMeta('count')),
   /**
    * The camera is scheduled to record and has NO usable storage.
    *

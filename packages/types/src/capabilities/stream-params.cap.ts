@@ -5,20 +5,21 @@ import {
   type InferNativeProvider,
   method,
 } from './capability-definition.js'
+import { readingMeta } from '../units/quantity.js'
 
 /** One of the camera's stream profiles. */
 export const StreamProfileSchema = z.enum(['main', 'sub', 'ext'])
 
 /** The current encoding config of one stream profile. */
 const StreamProfileConfigSchema = z.object({
-  width: z.number(),
-  height: z.number(),
+  width: z.number().meta(readingMeta('none')),
+  height: z.number().meta(readingMeta('none')),
   codec: z.enum(['h264', 'h265']),
-  framerate: z.number(),
-  bitrate: z.number(), // kbps
+  framerate: z.number().meta(readingMeta('rate')),
+  bitrate: z.number().meta(readingMeta('bitrate')), // kbps
   bitrateMode: z.enum(['vbr', 'cbr']).optional(),
   encoderProfile: z.enum(['high', 'main', 'baseline']).optional(),
-  gop: z.number().optional(),
+  gop: z.number().optional().meta(readingMeta('none')),
   /**
    * Whether THIS profile currently carries an audio track. READ-ONLY here.
    *

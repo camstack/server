@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Shared geometry vocabulary for on-frame shape caps — privacy-mask,
@@ -35,8 +36,8 @@ export const MaskPolygonShapeSchema = z.object({
 /** Boolean cell grid — row-major, length === gridWidth*gridHeight. */
 export const MaskGridShapeSchema = z.object({
   kind: z.literal('grid'),
-  gridWidth: z.number(),
-  gridHeight: z.number(),
+  gridWidth: z.number().meta(readingMeta('none')),
+  gridHeight: z.number().meta(readingMeta('none')),
   cells: z.array(z.boolean()),
 })
 

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Robotic lawn-mower cap. Models HA `lawn_mower.*` entities — anything
@@ -26,13 +27,13 @@ export const LawnMowerControlStatusSchema = z.object({
   activity: LawnMowerActivitySchema,
   /** 0..100 battery percentage. Null when the device has no battery
    *  reading. */
-  batteryLevel: z.number().min(0).max(100).nullable(),
+  batteryLevel: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** 0..100 mowing-completion percentage of the current task, or null when no
    *  task is active / progress is unavailable. */
-  progressPercent: z.number().min(0).max(100).nullable(),
+  progressPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Current device/event code (dynamic — mostly status, sometimes an error),
    *  or null when unknown. */
-  currentCode: z.number().nullable(),
+  currentCode: z.number().nullable().meta(readingMeta('none')),
   /** Human label for {@link currentCode}, or null when undecodable. */
   currentCodeLabel: z.string().nullable(),
   /** Severity of {@link currentCode}. `error` (and often `warning`) warrants UI

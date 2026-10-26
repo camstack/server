@@ -237,6 +237,13 @@ makes the choice, so two charts of one device cannot disagree, and it covers
 history recorded before the key existed.
 `listSeries` reports the catalog `unit`. That symbol is the quantity's base
 (°C, hPa, m/s, B, s). A series does not take its unit from a sibling field.
+Weather fields each carry their own catalog unit. `cap:numeric-sensor.value`
+has none: the label is `historyUnitFor` of that device's `SourceInfo.quantity`.
+Points recorded before the base was fixed are not rescaled — the unit at
+sample time was not stored. Two series are, because every old point was in
+one known unit: `cap:pet-feeder.desiccantLeftDays` (days → seconds) and the
+Unraid array counters on `cap:numeric-sensor.value` (GiB → bytes), applied
+once at boot through the history connection.
 
 ## Node and storage series
 
@@ -283,8 +290,9 @@ statements the engine really prepares (D447). There is no `ts` index.
 Boot waits for `onHubReachable` (the door and the device manager are hub caps).
 `prepare()` declares, loads series, declares the catalog metrics, loads the
 opt-outs, lists the devices, seeds the last-recorded map; the shell then
-subscribes to `DeviceStateChanged`; `finishBoot()` rebuilds the rollup window and
-reconciles. Timers: flush 10 s, rollups 60 s, reconcile 5 min, retention 10 min.
+subscribes to `DeviceStateChanged`; `finishBoot()` rewrites the two legacy
+series above (idempotent, marked in `applied-scales`), then rebuilds the
+rollup window and reconciles. Timers: flush 10 s, rollups 60 s, reconcile 5 min, retention 10 min.
 
 **Row counts.** One exact `COUNT(*)` per tier, once per boot, 90 s after start (a
 full scan on the history thread, kept off the boot path). After it `getStatus`

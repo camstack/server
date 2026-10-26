@@ -6,6 +6,7 @@ import {
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { MaskGridShapeSchema, MaskShapeKindSchema, MaskGridDimsSchema } from './mask-shape.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Motion-zones share the same MaskShape vocabulary as privacy-mask — the
@@ -25,7 +26,7 @@ export const MotionZoneRegionSchema = z.object({
  *  the grid region(s). */
 export const MotionZoneStatusSchema = z.object({
   enabled: z.boolean(),
-  sensitivity: z.number(),
+  sensitivity: z.number().meta(readingMeta('none')),
   /** Grid region(s). Today exactly one `grid` shape. */
   regions: z.array(MotionZoneRegionSchema),
   lastFetchedAt: z.number(),

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Two-way audio / talk-back cap. Clients open a WebRTC audio-only
@@ -19,10 +20,10 @@ export const IntercomAbilitySchema = z.object({
   /** Codecs accepted by firmware, in preference order. Driver-authored strings. */
   codecs: z.array(z.string()),
   /** Sample rate (Hz) the firmware expects. Reolink typical: 16000. */
-  sampleRate: z.number(),
+  sampleRate: z.number().meta(readingMeta('none')),
   duplex: z.enum(['half', 'full']),
   /** Max in-flight audio backlog before drop (ms). Server uses this to bound latency. */
-  maxBacklogMs: z.number(),
+  maxBacklogMs: z.number().meta(readingMeta('duration-ms')),
 })
 
 export type IntercomAbility = z.infer<typeof IntercomAbilitySchema>

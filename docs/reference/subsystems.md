@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7060 source files · 1196 file(s) in no subsystem.**
+**31 subsystems · 7062 source files · 1197 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -42,7 +42,7 @@ commits. A generated page may not.
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +19 more, 5 ADRs | 2026-10-24 | ✅ |
 | Auth, scopes and method tiers | 96 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +28 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 156 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +101 more, 18 ADRs | 2026-10-25 | ⚠️ |
-| Shared types, schemas and enums | 98 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-24 | ⚠️ |
+| Shared types, schemas and enums | 99 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-24 | ⚠️ |
 | Update, release, OTA and agent delivery | 57 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +30 more, 10 ADRs | 2026-10-25 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 264 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +41 more, 20 ADRs | 2026-10-06 | ⚠️ |
 | Remote access and networking | 51 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +16 more | 2026-10-21 | ⚠️ |
@@ -234,7 +234,7 @@ The vocabulary every package agrees on — the Zod schemas, enums, catalogues an
 
 - **Owner doc**: — none
 - **Code**: `packages/types/src/schemas/**`, `packages/types/src/helpers/**`, `packages/types/src/enums/**`, `packages/types/src/catalogs/**`, `packages/types/src/types/**`, `packages/types/src/units/**`, `packages/types/src/util/**`, `packages/types/src/utils/**`, `packages/types/src/deps/**`, `packages/types/src/*.ts`
-- **Files**: 98 (98 claimed by some document)
+- **Files**: 99 (99 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Update, release, OTA and agent delivery

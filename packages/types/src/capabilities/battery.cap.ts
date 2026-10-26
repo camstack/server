@@ -54,7 +54,18 @@ export const BatteryStatusSchema = z.object({
    */
   sleeping: z.boolean().meta({ label: 'Sleeping' }),
   /** Ms epoch of the last observation. Lets consumers reason about freshness. */
-  lastUpdated: z.number(),
+  lastUpdated: z.number().meta(readingMeta('none')),
+  /**
+   * Battery voltage in volts, for a cell the firmware reports as voltage
+   * rather than a percentage (Ecowitt capacitor packs). Absent on cameras
+   * that only report charge. A second reading on this cap, not a second
+   * `numeric-sensor` on the same device.
+   */
+  volts: z
+    .number()
+    .nullable()
+    .optional()
+    .meta(readingMeta('voltage', { label: 'Voltage' })),
   /**
    * Ms epoch of the last time the device PROVED it was reachable — a
    * completed firmware round-trip, an observed wake, or an inbound push
@@ -231,6 +242,7 @@ export const batteryCapability = {
   history: {
     fields: {
       percentage: { kind: 'gauge', unit: '%' },
+      volts: { kind: 'gauge', unit: 'V' },
     },
   },
   customize: batteryCustomize,

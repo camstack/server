@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * `navigation` — a device-scoped capability that natively expresses the FULL
@@ -254,7 +255,11 @@ export const NavigationStatusSchema = z.object({
   following: z.boolean(),
   flash: z.boolean(),
   lightMode: NavigationLightModeSchema,
-  lightLevel: z.number().min(NAVIGATION_LIGHT_LEVEL_MIN).max(NAVIGATION_LIGHT_LEVEL_MAX),
+  lightLevel: z
+    .number()
+    .min(NAVIGATION_LIGHT_LEVEL_MIN)
+    .max(NAVIGATION_LIGHT_LEVEL_MAX)
+    .meta(readingMeta('none')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

@@ -5,6 +5,7 @@ import {
   type InferNativeProvider,
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Vendor-neutral day/night (IR-cut) control — the per-camera config cap
@@ -41,9 +42,9 @@ const NormalizedRangeSchema = z.object({
 export const DayNightStatusSchema = z.object({
   mode: DayNightModeSchema,
   /** IR-cut trigger sensitivity, NORMALIZED 0–100 (higher = switches to night sooner). */
-  sensitivity: z.number().optional(),
+  sensitivity: z.number().optional().meta(readingMeta('none')),
   /** Delay before the IR-cut filter flips, in seconds. */
-  switchDelaySec: z.number().optional(),
+  switchDelaySec: z.number().optional().meta(readingMeta('duration')),
   lastFetchedAt: z.number(),
 })
 

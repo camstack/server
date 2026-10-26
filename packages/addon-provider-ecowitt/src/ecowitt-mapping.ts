@@ -119,9 +119,8 @@ export function roleForQuantity(quantity: Quantity | string): DeviceRole {
 /**
  * How a sensor's battery reading is surfaced as a cap, from its `batteryUnit`:
  *   - `'percent'` → typed `battery` cap (0..100), for a `'%'` battery.
- *   - `'voltage'` → `numeric-sensor` cap (unit `'V'`), for a `'V'` (raw-volts)
- *     battery — a voltage has no honest percentage, so the percentage-shaped
- *     `battery` cap is not used.
+ *   - `'voltage'` → `battery.volts`, for a `'V'` (raw-volts) battery. A voltage
+ *     has no honest percentage, so `percentage` stays null.
  *   - `'none'`    → no battery cap (the sensor reports no battery).
  */
 export type EcowittBatteryMode = 'percent' | 'voltage' | 'none'

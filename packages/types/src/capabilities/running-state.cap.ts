@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 import {
   RUNNING_POWER_START_DELAY_MS,
   RUNNING_POWER_STOP_DELAY_MS,
@@ -15,7 +16,7 @@ export const RunningStateStatusSchema = z.object({
   /** null = unknown — never coerced to false (D393). */
   running: z.boolean().nullable(),
   /** Epoch ms the current boolean began; null while `running` is null. */
-  since: z.number().nullable(),
+  since: z.number().nullable().meta(readingMeta('none')),
   source: RunningStateSourceSchema.meta({ label: 'Source' }),
   phase: z.string().nullable(),
   /** null until a reading has been published (D393). */

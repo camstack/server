@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 41 caps with series (74 series), 30 caps answered `'none'`.
+ * 41 caps with series (75 series), 30 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -29,6 +29,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   },
   'battery': {
     'percentage': { kind: 'gauge', unit: '%' },
+    'volts': { kind: 'gauge', unit: 'V' },
   },
   'binary': {
     'on': { kind: 'boolean' },
@@ -114,7 +115,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'food1': { kind: 'gauge' },
     'food2': { kind: 'gauge' },
     'batteryPower': { kind: 'gauge', unit: '%', deadband: 2 },
-    'desiccantLeftDays': { kind: 'gauge', unit: 'days' },
+    'desiccantLeftDays': { kind: 'gauge', unit: 's' },
   },
   'power-meter': {
     'watts': { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },

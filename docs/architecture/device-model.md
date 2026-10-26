@@ -58,6 +58,12 @@ the slice. A polymorphic reading (`numeric-sensor`, a numeric `control`)
 stores the quantity once on `SourceInfo`. Providers convert on ingest; an
 unknown unit is logged with `tags: { deviceId }` and published as null.
 Display unit (°F, imperial) is a read-time preference and defaults to metric.
+The control panel and an automation threshold show that display unit and
+commit the base: the operator's number is converted once, on the write.
+`formatReading` / `resolveSensorDisplay` are the only place a label is chosen.
+Every device-native number declares a quantity, or `none` when it is
+dimensionless. A second reading (Ecowitt battery voltage) is its own field
+(`battery.volts`), not a companion sensor.
 
 **One exception: a camera's `motion` slice (D696).** No camera provider writes
 it, not even a boot seed. The orchestrator is its only writer, with the

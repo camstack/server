@@ -16,6 +16,7 @@ import type {
   DeviceHistoryOrphanList,
   DeviceHistoryStatus,
   IScopedLogger,
+  ReadingQuantity,
 } from '@camstack/types'
 import {
   CaptureEngine,
@@ -35,7 +36,14 @@ import { RollupEngine } from '../rollup/rollup-engine.js'
 import { HistoryCounters } from '../status/counters.js'
 import type { HistoryDoor } from '../store/history-door.js'
 import { HistoryStore, type StoredTier } from '../store/history-store.js'
-import { SeriesRegistry } from '../store/series-registry.js'
+import {
+  DAY_TO_SECONDS,
+  DESICCANT_LEGACY_MAX_DAYS,
+  DESICCANT_SCALE_ID,
+  DESICCANT_SERIES_KEY,
+  type LegacyScale,
+} from '../store/series-scale.js'
+import { SeriesRegistry, subjectIdOf } from '../store/series-registry.js'
 import { DAY_MS } from '../time/bucket-time.js'
 
 export const ROLLUP_INTERVAL_MS: number = 60_000
@@ -67,6 +75,13 @@ export interface HistoryRuntimeDeps {
     deviceId: number,
     capName: string,
   ) => Promise<Readonly<Record<string, unknown>> | null>
+  /** Polymorphic series (`numeric-sensor.value`): the quantity chosen at adopt. */
+  readonly readDeviceQuantity?: (deviceId: number) => Promise<ReadingQuantity | null>
+  /**
+   * Series whose stored points are still in a retired unit (Unraid GiB).
+   * A failed read scales nothing (D49).
+   */
+  readonly listLegacyScales?: () => Promise<readonly LegacyScale[]>
   readonly retention: () => RetentionPolicy
   readonly logger: IScopedLogger
   readonly clock: () => number
@@ -159,6 +174,7 @@ export class HistoryRuntime {
       catalog,
       itemCatalog,
       readCapSlice: deps.readCapSlice,
+      readDeviceQuantity: deps.readDeviceQuantity,
     })
     this.departures = new DepartureTracker(this.store, this.registry, logger)
     this.registry.onRemove((series) => {
@@ -204,9 +220,76 @@ export class HistoryRuntime {
   }
 
   async finishBoot(): Promise<void> {
+    await this.applyLegacyScales()
     const series = await this.rollup.bootRecompute(this.deps.clock())
     this.deps.logger.info('device-history: recent rollup window rebuilt', { meta: { series } })
     await this.reconcile()
+  }
+
+  /**
+   * PetKit desiccant was stored in days; the quantity base is seconds.
+   * Unraid array counters were stored in GiB; the base is bytes. Both
+   * factors are honest because the unit never varied inside the series.
+   * Weather and numeric-sensor are not rescaled: the unit at sample time
+   * was not stored, so a factor would invent a number (D393).
+   */
+  private async applyLegacyScales(): Promise<void> {
+    await this.scaleMatching(
+      DESICCANT_SERIES_KEY,
+      undefined,
+      DAY_TO_SECONDS,
+      DESICCANT_LEGACY_MAX_DAYS,
+      DESICCANT_SCALE_ID,
+    )
+    const list = this.deps.listLegacyScales
+    if (list === undefined) return
+    let subjects: readonly LegacyScale[]
+    try {
+      subjects = await list()
+    } catch (err) {
+      this.deps.logger.warn(
+        'device-history: legacy scale listing failed — stored points unchanged',
+        {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        },
+      )
+      return
+    }
+    for (const subject of subjects) {
+      await this.scaleMatching(
+        subject.seriesKey,
+        subject.deviceId,
+        subject.factor,
+        subject.legacyMax,
+        subject.migrationId,
+      )
+    }
+  }
+
+  private async scaleMatching(
+    key: string,
+    deviceId: number | undefined,
+    factor: number,
+    legacyMax: number,
+    migrationId: string,
+  ): Promise<void> {
+    if (await this.store.scaleApplied(migrationId)) return
+    const subject = deviceId === undefined ? undefined : subjectIdOf({ kind: 'device', deviceId })
+    const series = this.registry.all().filter((row) => {
+      if (row.key !== key) return false
+      return subject === undefined || row.subject === subject
+    })
+    let changed = 0
+    for (const row of series) {
+      changed += await this.store.scaleSeries(row.id, factor, legacyMax)
+    }
+    await this.store.markScale(migrationId, this.deps.clock())
+    if (changed > 0) {
+      this.deps.logger.info('device-history: rescaled a series into its base unit', {
+        ...(deviceId === undefined ? {} : { tags: { deviceId } }),
+        meta: { migrationId, key, changed },
+      })
+    }
   }
 
   startTimers(): void {

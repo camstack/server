@@ -29,6 +29,8 @@ import {
   type DeviceHistoryResolution,
   type DeviceHistorySeriesInfo,
   type DeviceHistorySubject,
+  type ReadingQuantity,
+  historyUnitFor,
 } from '@camstack/types'
 import type { RawPoint, RollupRow } from '../rollup/rollup-math.js'
 import { type RetentionPolicy } from '../retention/retention.js'
@@ -66,6 +68,14 @@ const MAX_SCOPES = 50
 /** The power-meter series the energy key is derived from, meter first. */
 export const ENERGY_METER_KEY: string = capSeriesKey('power-meter', 'kwhTotal')
 export const ENERGY_POWER_KEY: string = capSeriesKey('power-meter', 'watts')
+
+/**
+ * Series whose quantity is chosen per device (D944). Weather is not here:
+ * each weather field has its own quantity on the capability, and the catalog
+ * unit is that base. A past weather point stored in another unit cannot be
+ * rescaled — the unit at sample time was not kept.
+ */
+const DEVICE_QUANTITY_KEYS: ReadonlySet<string> = new Set([capSeriesKey('numeric-sensor', 'value')])
 
 export interface QueryInput {
   readonly key: string
@@ -116,6 +126,8 @@ export interface QueryDeps {
     deviceId: number,
     capName: string,
   ) => Promise<Readonly<Record<string, unknown>> | null>
+  /** `null` when the device has no chosen quantity. A failed read is `null`. */
+  readonly readDeviceQuantity?: (deviceId: number) => Promise<ReadingQuantity | null>
 }
 
 function retentionMsOf(tier: Tier, policy: RetentionPolicy): number | null {
@@ -445,12 +457,28 @@ export class HistoryQuery {
     if (fixed !== null || subject.kind !== 'device' || !series.key.startsWith(CAP_KEY_PREFIX)) {
       return fixed
     }
+    if (DEVICE_QUANTITY_KEYS.has(series.key)) {
+      const quantity = await this.quantityOf(subject.deviceId)
+      if (quantity === null || quantity === 'device' || quantity === 'none') return null
+      return historyUnitFor(quantity) ?? null
+    }
     const spec = this.specOf(series.key)
     if (spec?.unitFrom === undefined) return null
     const capName = series.key.slice(CAP_KEY_PREFIX.length, series.key.indexOf('.'))
     const slice = await this.sliceOf(subject.deviceId, capName, slices)
     return slice === null ? null : readUnit(slice, spec.unitFrom)
   }
+
+  private quantityOf(deviceId: number): Promise<ReadingQuantity | null> {
+    const pending = this.quantities.get(deviceId)
+    if (pending !== undefined) return pending
+    const read = this.deps.readDeviceQuantity
+    const run = read === undefined ? Promise.resolve(null) : read(deviceId).catch(() => null)
+    this.quantities.set(deviceId, run)
+    return run
+  }
+
+  private readonly quantities = new Map<number, Promise<ReadingQuantity | null>>()
 
   private specOf(key: string): CapabilityHistoryField | undefined {
     const body = key.slice(CAP_KEY_PREFIX.length)

@@ -1,6 +1,7 @@
 /** Shared Zod schemas used across streaming capabilities. */
 
 import { z } from 'zod'
+import { readingMeta } from '../../units/quantity.js'
 import type { FrameHandle } from '../../interfaces/frame-handle.js'
 import type { AudioChunkFormat } from '../../audio/audio-chunk-format.js'
 import { AUDIO_CHUNK_FORMATS } from '../../audio/audio-chunk-format.js'
@@ -67,8 +68,8 @@ export const CamStreamKindSchema = z.enum([
 export type CamStreamKind = z.infer<typeof CamStreamKindSchema>
 
 export const CamStreamResolutionSchema = z.object({
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
+  width: z.number().int().positive().meta(readingMeta('none')),
+  height: z.number().int().positive().meta(readingMeta('none')),
 })
 
 export const CameraStreamSchema = z.object({

@@ -4,7 +4,12 @@
  * fake of the code under test: only the hub (device list, state snapshots) and
  * time are stand-ins.
  */
-import { DeviceType, HISTORY_CATALOG, HISTORY_ITEM_CATALOG } from '@camstack/types'
+import {
+  DeviceType,
+  HISTORY_CATALOG,
+  HISTORY_ITEM_CATALOG,
+  type ReadingQuantity,
+} from '@camstack/types'
 import type {
   HistoryCatalog,
   HistoryItemCatalog,
@@ -24,6 +29,7 @@ export interface Harness {
   /** Device id to type; mutate to change what the hub "says". */
   readonly devices: Map<number, DeviceType>
   readonly slices: Map<string, Readonly<Record<string, unknown>>>
+  readonly quantities: Map<number, ReadingQuantity>
   /** What `getAllSnapshots` answers; an Error makes the read FAIL. */
   setSnapshots(value: SnapshotMap | Error): void
   now(): number
@@ -54,6 +60,7 @@ export async function makeHarness(options: HarnessOptions = {}): Promise<Harness
     Object.entries(options.devices ?? {}).map(([id, type]) => [Number(id), type]),
   )
   const slices = new Map<string, Readonly<Record<string, unknown>>>()
+  const quantities = new Map<number, ReadingQuantity>()
   const state: { clock: number; snapshots: SnapshotMap | Error } = {
     clock: options.start ?? T0,
     snapshots: options.snapshots ?? {},
@@ -75,6 +82,7 @@ export async function makeHarness(options: HarnessOptions = {}): Promise<Harness
         return state.snapshots
       },
       readCapSlice: async (deviceId, capName) => slices.get(`${deviceId}:${capName}`) ?? null,
+      readDeviceQuantity: async (deviceId) => quantities.get(deviceId) ?? null,
       retention: () => options.retention ?? DEFAULT_RETENTION,
       logger: recordingLogger(logs),
       clock: () => state.clock,
@@ -98,6 +106,7 @@ export async function makeHarness(options: HarnessOptions = {}): Promise<Harness
     logs,
     devices,
     slices,
+    quantities,
     setSnapshots: (value) => {
       state.snapshots = value
     },

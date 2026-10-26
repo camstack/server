@@ -10,6 +10,7 @@ import {
   CamStreamKindSchema,
   CamStreamResolutionSchema,
 } from './schemas/streaming-shared.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * One publishable camera stream as its OWNING PROVIDER describes it — the same
@@ -35,7 +36,7 @@ export const CamStreamDescriptorSchema = z.object({
   url: z.string().optional(),
   codec: z.string().optional(),
   resolution: CamStreamResolutionSchema.optional(),
-  fps: z.number().positive().optional(),
+  fps: z.number().positive().optional().meta(readingMeta('rate')),
   label: z.string().optional(),
   /** Device-level features (e.g. `battery-operated`) — drives broker policy. */
   deviceFeatures: z.array(z.string()).optional(),

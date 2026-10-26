@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 74 caps with 347 state leaves.
+ * Coverage: 1 advance-derived caps, 74 caps with 348 state leaves.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -213,7 +213,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "ambient-light-sensor": [{"path":"lux","valueType":"number"}],
   "audio-metrics": [{"path":"ts","valueType":"number"}, {"path":"windowSec","valueType":"number"}, {"path":"level.rms","valueType":"number"}, {"path":"level.dbfs","valueType":"number"}, {"path":"peakDbfs","valueType":"number"}, {"path":"avgDbfs","valueType":"number"}, {"path":"current.className","valueType":"string"}, {"path":"current.score","valueType":"number"}, {"path":"current.timestamp","valueType":"number"}],
   "automation-control": [{"path":"enabled","valueType":"boolean"}, {"path":"isRunning","valueType":"boolean"}, {"path":"lastTriggeredAt","valueType":"number"}, {"path":"lastError","valueType":"string"}],
-  "battery": [{"path":"percentage","valueType":"number"}, {"path":"charging","valueType":"enum","enumValues":["dc","solar","none","unknown"]}, {"path":"sleeping","valueType":"boolean"}, {"path":"lastUpdated","valueType":"number"}, {"path":"lastContactAt","valueType":"number"}, {"path":"lastFullRefreshAt","valueType":"number"}, {"path":"binary","valueType":"boolean"}],
+  "battery": [{"path":"percentage","valueType":"number"}, {"path":"charging","valueType":"enum","enumValues":["dc","solar","none","unknown"]}, {"path":"sleeping","valueType":"boolean"}, {"path":"lastUpdated","valueType":"number"}, {"path":"volts","valueType":"number"}, {"path":"lastContactAt","valueType":"number"}, {"path":"lastFullRefreshAt","valueType":"number"}, {"path":"binary","valueType":"boolean"}],
   "binary": [{"path":"on","valueType":"boolean"}],
   "brightness": [{"path":"percentage","valueType":"number"}],
   "broker": [{"path":"brokerCount","valueType":"number"}, {"path":"connectedCount","valueType":"number"}],

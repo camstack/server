@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Humidifier / dehumidifier cap. Models HA `humidifier.*` entities —
@@ -22,9 +23,9 @@ export const HumidifierStatusSchema = z.object({
   /** Whether the humidifier is currently on. */
   on: z.boolean(),
   /** Current measured relative humidity (0..100). Null when not reported. */
-  currentHumidity: z.number().min(0).max(100).nullable(),
+  currentHumidity: z.number().min(0).max(100).nullable().meta(readingMeta('humidity')),
   /** Target relative humidity (0..100). Null when no setpoint surface. */
-  targetHumidity: z.number().min(0).max(100).nullable(),
+  targetHumidity: z.number().min(0).max(100).nullable().meta(readingMeta('humidity')),
   /** Active mode (`auto` / `normal` / `baby` / vendor). Null when the
    *  device has no mode surface. */
   mode: z.string().nullable(),
@@ -34,9 +35,9 @@ export const HumidifierStatusSchema = z.object({
    *  `idle` / `off`). Null when the device doesn't report it. */
   action: z.string().nullable(),
   /** HA `min_humidity` attribute. Null → UI uses 0. */
-  minHumidity: z.number().nullable(),
+  minHumidity: z.number().nullable().meta(readingMeta('humidity')),
   /** HA `max_humidity` attribute. Null → UI uses 100. */
-  maxHumidity: z.number().nullable(),
+  maxHumidity: z.number().nullable().meta(readingMeta('humidity')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

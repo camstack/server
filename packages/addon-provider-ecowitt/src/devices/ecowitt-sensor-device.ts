@@ -42,14 +42,6 @@ export const ecowittSensorSchema = z.object({
 
 export type EcowittSensorConfig = z.infer<typeof ecowittSensorSchema>
 
-/**
- * Slice key the V-battery `numeric-sensor` cap writes/reads. It is the cap's own
- * name (`'numeric-sensor'`) — the same key the codegen `getStatus` reads — so
- * the manual `setCapState` here lands in the slice the framework serves. Only
- * registered when the PRIMARY cap is NOT itself `numeric-sensor` (no collision).
- */
-const BATTERY_VOLTAGE_CAP = numericSensorCapability.name
-
 const SUPPORTED_CAPS: ReadonlySet<EcowittSensorCap> = new Set([
   'temperature-sensor',
   'humidity-sensor',
@@ -69,16 +61,10 @@ const SUPPORTED_CAPS: ReadonlySet<EcowittSensorCap> = new Set([
  * library discriminates two battery forms via `batteryUnit`:
  *   - `'%'` (binary/bar batteries, already decoded to a percent) → the typed
  *     `battery` cap (which models a 0..100 percentage).
- *   - `'V'` (raw voltage, e.g. WS90/WH90/WS85 capacitor + soil/leaf push) → a
- *     `numeric-sensor` cap carrying the voltage with `unit: 'V'`. A voltage has
- *     no honest percentage, so the percentage-shaped `battery` cap would be
- *     wrong; the generic numeric cap renders the volts verbatim.
- *
- * A child registers AT MOST one battery cap. When the child's PRIMARY sensor cap
- * is itself `numeric-sensor` (e.g. a precipitation channel) a V-battery cannot
- * also be hosted as a second `numeric-sensor` on the same device (the cap slice
- * is keyed by cap name) — that rare case is skipped with a debug note rather
- * than adding a new cap.
+ *   - `'V'` (raw voltage, e.g. WS90/WH90/WS85 capacitor + soil/leaf push) →
+ *     `battery.volts`. A voltage has no honest percentage, so `percentage`
+ *     stays null. The field lives on `battery`, so a numeric primary sensor
+ *     and a voltage battery do not share a slice.
  */
 export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> {
   readonly features: readonly DeviceFeature[] = []
@@ -91,9 +77,8 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   /**
    * Which battery cap (if any) was registered for this sensor:
    *   - `'percent'` → the typed `battery` cap (percentage),
-   *   - `'voltage'` → a `numeric-sensor` cap carrying volts (unit `'V'`),
-   *   - `'none'`    → no battery cap (no battery, or a V-battery on a sensor
-   *     whose primary cap is already `numeric-sensor`).
+   *   - `'voltage'` → `battery.volts` (percentage stays null),
+   *   - `'none'`    → no battery cap.
    */
   private batteryMode: 'percent' | 'voltage' | 'none' = 'none'
 
@@ -193,8 +178,14 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
       typeof sensor.battery === 'number' &&
       Number.isFinite(sensor.battery)
     ) {
-      const next = { value: sensor.battery, lastFetchedAt }
-      this.runtimeState.setCapState(BATTERY_VOLTAGE_CAP, next)
+      const next: BatteryStatus = {
+        percentage: null,
+        volts: sensor.battery,
+        charging: 'none',
+        sleeping: false,
+        lastUpdated: lastFetchedAt,
+      }
+      this.runtimeState.setCapState('battery', next)
     }
   }
 
@@ -249,11 +240,8 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   }
 
   /**
-   * Register the per-sensor battery cap matching the sensor's battery form:
-   *   - `'%'` → typed `battery` cap (percentage),
-   *   - `'V'` → `numeric-sensor` cap carrying volts (unit `'V'`), unless the
-   *     sensor's primary cap is already `numeric-sensor` (slice-key collision),
-   *     in which case it is skipped with a debug note.
+   * Register the `battery` cap. Percent batteries fill `percentage`. Voltage
+   * batteries fill `volts` and leave `percentage` null.
    */
   private maybeRegisterBatteryCap(): void {
     const sensor = this.resolveSensor()
@@ -284,27 +272,21 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     this.batteryMode = 'percent'
   }
 
-  /**
-   * Register a `numeric-sensor` (unit `'V'`) cap for a raw-voltage battery. The
-   * voltage has no honest percentage, so the percentage-shaped `battery` cap is
-   * not used. Skipped when the primary cap already occupies the `numeric-sensor`
-   * slice on this device (a second instance would collide).
-   */
+  /** Voltage batteries share the `battery` cap. `percentage` stays unknown. */
   private registerVoltageBatteryCap(): void {
-    if (this.capName === 'numeric-sensor') {
-      this.ctx.logger.debug(
-        'ecowitt sensor: V-battery not surfaced — primary cap already numeric-sensor',
-        { meta: { sensorId: this.sensorId } },
-      )
-      return
+    const COLD: BatteryStatus = {
+      percentage: null,
+      volts: null,
+      charging: 'unknown',
+      sleeping: false,
+      lastUpdated: 0,
     }
-    const COLD = { value: 0, unit: 'V', lastFetchedAt: 0 }
-    const provider: InferNativeProvider<typeof numericSensorCapability> = {
-      getStatus: async () =>
-        this.runtimeState.getCapState<typeof COLD>(BATTERY_VOLTAGE_CAP) ?? COLD,
+    const provider: InferNativeProvider<typeof batteryCapability> = {
+      getStatus: async () => this.runtimeState.getCapState<BatteryStatus>('battery') ?? COLD,
+      wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
     }
-    this.ctx.registerNativeCap(numericSensorCapability, provider)
-    this.runtimeState.setCapState(BATTERY_VOLTAGE_CAP, COLD)
+    this.ctx.registerNativeCap(batteryCapability, provider)
+    this.runtimeState.setCapState('battery', COLD)
     this.batteryMode = 'voltage'
   }
 

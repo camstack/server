@@ -3,6 +3,7 @@ import { DeviceType } from '../device/device-type.js'
 import { MotionTriggeredBySchema } from '../pipeline/camera-sensors.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Span timeout for a camera's attached sensors. This is the pipeline-runner
@@ -116,7 +117,7 @@ export const MotionStatusSchema = z.object({
    * it, every provider seeded it at boot, and every session left it
    * `detected: true` after its detach.
    */
-  autoClearAfterMs: z.number().nullable(),
+  autoClearAfterMs: z.number().nullable().meta(readingMeta('duration-ms')),
 })
 
 export type MotionStatus = z.infer<typeof MotionStatusSchema>

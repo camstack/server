@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Media-player cap. Models HA `media_player.*` (Sonos, Chromecast,
@@ -49,7 +50,7 @@ export const MediaPlayerStatusSchema = z.object({
   state: MediaPlayerStateSchema,
   /** Volume as 0..100 inclusive. Null when the device has no volume
    *  surface. Pair with `DeviceFeature.MediaPlayerVolume`. */
-  volumeLevel: z.number().min(0).max(100).nullable(),
+  volumeLevel: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Mute toggle distinct from volume=0. Null when no mute surface.
    *  Pair with `DeviceFeature.MediaPlayerMute`. */
   isMuted: z.boolean().nullable(),
@@ -62,10 +63,10 @@ export const MediaPlayerStatusSchema = z.object({
   currentMedia: MediaInfoSchema.nullable(),
   /** Current playback position in ms. Null when not seekable or
    *  nothing is playing. Pair with `DeviceFeature.MediaPlayerSeek`. */
-  positionMs: z.number().int().nonnegative().nullable(),
+  positionMs: z.number().int().nonnegative().nullable().meta(readingMeta('duration-ms')),
   /** Total duration of the current media in ms. Null when unknown
    *  (live stream) or nothing is playing. */
-  durationMs: z.number().int().nonnegative().nullable(),
+  durationMs: z.number().int().nonnegative().nullable().meta(readingMeta('duration-ms')),
   /** Shuffle toggle. Null when no shuffle surface.
    *  Pair with `DeviceFeature.MediaPlayerShuffle`. */
   shuffle: z.boolean().nullable(),

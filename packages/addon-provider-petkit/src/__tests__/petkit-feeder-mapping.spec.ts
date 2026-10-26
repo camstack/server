@@ -104,7 +104,7 @@ describe('mapFeederToStatus — single hopper', () => {
       food2: null,
       lowFood: false,
       batteryPower: 80,
-      desiccantLeftDays: 20,
+      desiccantLeftDays: 20 * 86_400,
       feeding: false,
       status: 'normal',
       error: null,

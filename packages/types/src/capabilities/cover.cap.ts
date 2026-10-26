@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Window covering / blinds / garage door / valve cap. Models HA
@@ -32,9 +33,9 @@ export const CoverStatusSchema = z.object({
   state: CoverStateSchema,
   /** 0 = fully closed, 100 = fully open. Null when the device has
    *  no intermediate position surface. */
-  position: z.number().min(0).max(100).nullable(),
+  position: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** 0 = closed slats, 100 = open slats. Null when no tilt support. */
-  tiltPosition: z.number().min(0).max(100).nullable(),
+  tiltPosition: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

@@ -75,7 +75,7 @@ describe('batteryModeForUnit', () => {
   it('maps a percent battery to the typed battery cap', () => {
     expect(batteryModeForUnit('%')).toBe('percent')
   })
-  it('maps a raw-voltage battery to a numeric-sensor (V)', () => {
+  it('maps a raw-voltage battery to the voltage battery reading', () => {
     expect(batteryModeForUnit('V')).toBe('voltage')
   })
   it('maps an absent battery unit to none', () => {

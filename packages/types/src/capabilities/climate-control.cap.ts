@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * HVAC / climate control cap. Models the full surface of a HA
@@ -65,21 +66,21 @@ export const ClimateControlStatusSchema = z.object({
   /** Single setpoint in Celsius. Used by single-target modes
    *  (heat / cool / dry). Null when the device is in a range mode
    *  (`heat_cool`) or has no setpoint at all (`fan_only`/`off`). */
-  target: z.number().nullable(),
+  target: z.number().nullable().meta(readingMeta('temperature')),
   /** Upper bound of the dual setpoint in Celsius. Populated only
    *  in `heat_cool` mode. */
-  targetHigh: z.number().nullable(),
+  targetHigh: z.number().nullable().meta(readingMeta('temperature')),
   /** Lower bound of the dual setpoint in Celsius. Populated only
    *  in `heat_cool` mode. */
-  targetLow: z.number().nullable(),
+  targetLow: z.number().nullable().meta(readingMeta('temperature')),
   /** Target relative humidity (0..100). Null when the device has no
    *  humidity control. */
-  targetHumidity: z.number().min(0).max(100).nullable(),
+  targetHumidity: z.number().min(0).max(100).nullable().meta(readingMeta('humidity')),
   /** Current measured temperature in Celsius. Read-only — pushed by
    *  the device's internal sensor. */
-  currentTemp: z.number().nullable(),
+  currentTemp: z.number().nullable().meta(readingMeta('temperature')),
   /** Current measured relative humidity (0..100). Read-only. */
-  currentHumidity: z.number().min(0).max(100).nullable(),
+  currentHumidity: z.number().min(0).max(100).nullable().meta(readingMeta('humidity')),
   /** Vertical louver swing on/off. Null when the device has no vertical
    *  swing surface (gate with `DeviceFeature.ClimateSwingVertical`). */
   swingVertical: z.boolean().nullable(),
@@ -87,11 +88,11 @@ export const ClimateControlStatusSchema = z.object({
    *  horizontal swing surface (gate with `DeviceFeature.ClimateSwingHorizontal`). */
   swingHorizontal: z.boolean().nullable(),
   /** Lowest setpoint the device accepts, Celsius. Absent / null = not reported. */
-  minTemp: z.number().nullable().optional(),
+  minTemp: z.number().nullable().optional().meta(readingMeta('temperature')),
   /** Highest setpoint the device accepts, Celsius. Absent / null = not reported. */
-  maxTemp: z.number().nullable().optional(),
+  maxTemp: z.number().nullable().optional().meta(readingMeta('temperature')),
   /** Setpoint granularity, Celsius (0.5, 1). Absent / null = not reported. */
-  tempStep: z.number().positive().nullable().optional(),
+  tempStep: z.number().positive().nullable().optional().meta(readingMeta('temperature')),
   /** Ms epoch when the slice was last updated (push or command). */
   lastFetchedAt: z.number(),
 })

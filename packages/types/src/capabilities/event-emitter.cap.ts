@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Generic stateless event emitter. Installed on a `DeviceType.EventEmitter`
@@ -16,15 +17,15 @@ export const EventFireSchema = z.object({
   deviceId: z.number(),
   eventType: z.string(),
   data: z.record(z.string(), z.unknown()).nullable(),
-  timestamp: z.number(),
-  seq: z.number(),
+  timestamp: z.number().meta(readingMeta('none')),
+  seq: z.number().meta(readingMeta('count')),
 })
 export type EventFire = z.infer<typeof EventFireSchema>
 
 export const EventEmitterStatusSchema = z.object({
   eventTypes: z.array(z.string()),
   lastEvent: EventFireSchema.nullable(),
-  eventCountSinceStart: z.number(),
+  eventCountSinceStart: z.number().meta(readingMeta('count')),
 })
 export type EventEmitterStatus = z.infer<typeof EventEmitterStatusSchema>
 
