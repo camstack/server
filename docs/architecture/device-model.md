@@ -624,6 +624,14 @@ is in
 the split between settings and data is
 [D865](../decisions/adr-0865-a-deleted-device-is-a-recorded-fact-settings-are-cleared-centrally-and-device-data-is-removed-by-a-hook-driven-by-tombstones.md).
 
+## How a device is named
+
+A device has one stored name. What a screen paints is a different string, from one function (`formatDeviceName` in `@camstack/ui-library`, mirrored in the viewer at `camstack/src/data/device-name.ts`).
+
+A child under a container is named from its role or type, in the active locale's short form (Motion / Movimento, Battery / Batteria, Camera / Telecamera). A stored name that is only that stock word is replaced by the short noun. A name the operator wrote (`display.label`, or a remainder that is not a stock word) is kept. The compact form is the container's name alone when this child is the container's only meaningful child, or when the child's own name is the container's name. Otherwise it is `container · noun`. The full form is `container · noun` unless the noun is the container's name. Nested, under the parent row, is the noun alone. A room is appended only by the `with-location` form, and only when that room is not already one of the segments.
+
+Diagnostic children (battery, temperature, humidity, illuminance, signal, last-seen, a plain number or enum, an update) do not count as the container's meaningful child. Parent names come from one slim device list shared by the page, never a query per row. Until that list has answered, the stored name is shown. Search still matches the stored name.
+
 ## Reading further
 
 - Aggregation is binding-driven: [D12](../decisions/adr-0012.md)

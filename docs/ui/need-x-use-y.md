@@ -61,6 +61,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A single number with a label | `StatCard` (see KPI strip row above) | — | |
 | Pick a cluster node | `NodePicker` (standard), `NodeSelectField` in a form | — | Offline nodes disabled; hidden on a single-node cluster |
 | Pick one or more devices | `DeviceSelectField` / `DeviceMultiSelectField` (the one smart picker) | the same rule (D636) | |
+| A device's name | `DeviceName` (`compact` in lists, pickers, history, export and alarms; `full` on the page title, breadcrumb, hero and confirms; `nested` under a parent row; `with-location` when the room is not already on the line) | `formatDeviceName` in `src/data/device-name.ts` (not yet on screens) | One rule. The stored name stays in search and in the identity editor. Parent names come from one slim fleet list |
 | Pick the device and value that feed a Customize extension, or the members of a group helper | `SourceSelector` (`components/device/customize/source-selector/SourceSelector.tsx`) | — | Left column = ui-library `DevicePicker`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944) |
 | Pick a timezone / icon / unit / model | `TimezoneSelector`, `IconPicker`, `UnitPicker`, `ModelPicker` | — | |
 | Live camera video | `CameraStreamPlayer`, `StreamPanel` | the embed player (`embed/`) | WebRTC only |

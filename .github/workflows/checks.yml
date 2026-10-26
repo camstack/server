@@ -299,6 +299,8 @@ jobs:
             scripts/check-topology-is-a-diagram-not-a-lookup.ts \
             scripts/check-container-priority-in-sync.ts \
             scripts/check-device-selection-in-sync.ts \
+            scripts/check-device-name-rendered-via-component.ts \
+            scripts/check-device-name-in-sync.ts \
             scripts/check-nc-mirrors-in-sync.ts \
             scripts/check-nc-one-shot.ts \
             scripts/check-icon-catalog.ts \

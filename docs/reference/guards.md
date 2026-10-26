@@ -4,12 +4,12 @@
 
 # Guards
 
-194 repository guards: 189 in `scripts/`,
+196 repository guards: 191 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (185)
+## Enforced by CI checks (187)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -64,6 +64,8 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-decode-worker-child-lean.ts` | Guard: nothing reachable from the decode-worker CHILD entry may VALUE-import a workspace package. Type-only imports are free; a value import is not. |
 | `scripts/check-deps.ts` | Verify that every @camstack/* import in each package is declared as a dependency (dependencies, peerDependencies, or devDependencies). |
 | `scripts/check-desktop-update-feeds.ts` | Desktop update-feed guard — two products, never one feed file. |
+| `scripts/check-device-name-in-sync.ts` | The device-name rule has one definition. The viewer cannot import ui-library (it is a web package; the viewer is React Native) and it resolves `@camstack/types` from an installed release, so it keeps a copy of `format-device-name.ts`. Th… |
+| `scripts/check-device-name-rendered-via-component.ts` | A device's name is painted by `DeviceName` / `useDeviceLabel`. A JSX file that interpolates `device.name` (and the sibling shapes below) is a second naming rule. |
 | `scripts/check-device-scoped-wrapper-mounts.ts` | Device-scoped wrapper mount guard — a cap that is one provider PER DEVICE must not be SERVED as one provider for the whole fleet. |
 | `scripts/check-device-selection-authority.ts` | An operator-facing activation verb must not write a store nothing reads. |
 | `scripts/check-device-selection-in-sync.ts` | The device-picker selection helper has TWO copies that cannot import each other. This makes "they are the same" checkable instead of promised. |
