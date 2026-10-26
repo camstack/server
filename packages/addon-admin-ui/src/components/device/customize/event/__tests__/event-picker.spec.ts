@@ -10,6 +10,7 @@ const SWITCH: PickerDevice = {
   stableId: 'switch.porch',
   location: 'Porch',
   type: 'switch',
+  parentDeviceId: null,
 }
 const CAM: PickerDevice = {
   id: 101,
@@ -18,6 +19,7 @@ const CAM: PickerDevice = {
   stableId: 'cam',
   location: 'Porch',
   type: 'camera',
+  parentDeviceId: null,
 }
 
 describe('eventPickerLockedIds', () => {

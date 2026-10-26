@@ -20,6 +20,7 @@ export interface PickerDevice {
   readonly stableId: string
   readonly location: string | null
   readonly type: string
+  readonly parentDeviceId: number | null
 }
 
 export interface WireableCatalogField {
@@ -59,6 +60,7 @@ export function toPickerDevices(devices: readonly DeviceInfo[]): readonly Picker
     stableId: d.stableId,
     location: d.location,
     type: d.type,
+    parentDeviceId: d.parentDeviceId,
   }))
 }
 
