@@ -50,11 +50,39 @@ const ROOM_SOURCE_BINDINGS: readonly BoundCapView[] = [
 ]
 
 /**
- * "Invert state" on the feeder: it REPLACES the native `binary.on` with its
- * negation, reading the very field it replaces — the native value (D663 rule 5).
- * Stored as a peer, that self-read is an edge only if `replaced` is unknown.
+ * Battery ADDED to a sensor that already has native `binary` and lacks battery
+ * (D944: Customize only adds a capability the device does not provide).
+ * `percentage` reads that device's own native `binary.on` — a self-read of a
+ * field this composition does not write, so it is not a graph edge (D663 rule 5).
  */
-function invertFeeder(expr = '!on', device = FEEDER): Composition {
+function addBattery(expr = 'on ? 100 : 0', device = FEEDER): Composition {
+  return CompositionSchema.parse({
+    target: { kind: 'existing', device },
+    features: [
+      {
+        kind: 'fields',
+        cap: 'battery',
+        fields: {
+          percentage: {
+            kind: 'expression',
+            expr,
+            bindings: { on: { kind: 'from', source: device, cap: 'binary', fieldPath: 'on' } },
+          },
+          charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
+          sleeping: { kind: 'expression', expr: 'false', bindings: {} },
+          lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
+        },
+      },
+    ],
+  })
+}
+
+/**
+ * Replaces the feeder's native `binary`. D944 refuses this before it can be
+ * stored, so a self-read of the field a customization replaces is unreachable
+ * through the API (`planComposition` never emits mode `replace`).
+ */
+function invertFeeder(device = FEEDER): Composition {
   return CompositionSchema.parse({
     target: { kind: 'existing', device },
     features: [
@@ -64,7 +92,7 @@ function invertFeeder(expr = '!on', device = FEEDER): Composition {
         fields: {
           on: {
             kind: 'expression',
-            expr,
+            expr: '!on',
             bindings: { on: { kind: 'from', source: device, cap: 'binary', fieldPath: 'on' } },
           },
         },
@@ -484,8 +512,8 @@ describe('get / list', () => {
   })
 })
 
-describe('customizing an existing device (D663)', () => {
-  const customize = (composition = invertFeeder()) => ({
+describe('customizing an existing device (D663, D944)', () => {
+  const customize = (composition = addBattery()) => ({
     block: { enabled: true, composition },
     caller: CALLER,
   })
@@ -501,7 +529,7 @@ describe('customizing an existing device (D663)', () => {
   it('a client-sent name on a customization is refused BY NAME, and nothing is stored', async () => {
     await expect(
       buildCompositionApi(deps()).createComposition({
-        block: { name: 'Feeder', enabled: true, composition: invertFeeder() },
+        block: { name: 'Feeder', enabled: true, composition: addBattery() },
         caller: CALLER,
       }),
     ).rejects.toThrow(
@@ -515,7 +543,7 @@ describe('customizing an existing device (D663)', () => {
     const log = recordingLogger()
     await expect(
       buildCompositionApi(deps({ logger: log.logger })).createComposition({
-        block: { name: 'Feeder', enabled: true, composition: invertFeeder() },
+        block: { name: 'Feeder', enabled: true, composition: addBattery() },
         caller: CALLER,
       }),
     ).rejects.toThrow('a customization has no name of its own')
@@ -543,20 +571,34 @@ describe('customizing an existing device (D663)', () => {
   it('a second customization of the same device is refused as duplicate-target naming the first block; the first block edits itself freely', async () => {
     const api = buildCompositionApi(deps())
     const { block: a } = await api.createComposition(customize())
-    const second = api.createComposition(customize(invertFeeder('on ? false : true')))
+    const second = api.createComposition(customize(addBattery('on ? 0 : 100')))
     await expect(second).rejects.toThrow('[duplicate-target]')
     await expect(second).rejects.toThrow(`block \`${a.id}\``)
     expect(stored).toHaveLength(1)
     const { block: edited } = await api.updateComposition({
       blockId: a.id,
       expectedUpdatedAt: a.updatedAt,
-      block: { composition: invertFeeder('on ? false : true') },
+      block: { composition: addBattery('on ? 0 : 100') },
       caller: CALLER,
     })
     expect(edited.updatedAt).toBe(a.updatedAt + 1)
   })
 
-  it("a STORED customization's self-read of the field it replaces is native — it never refuses an unrelated save as a cycle", async () => {
+  it('a customization that replaces a native capability is refused (D944) — a self-read of the replaced field can no longer be stored', async () => {
+    // D663 rule 5 stored a replace whose self-read was the native value, so it
+    // was not a cycle. That save is unreachable: the override is refused by name
+    // and nothing is stored.
+    await expect(
+      buildCompositionApi(deps()).createComposition(customize(invertFeeder())),
+    ).rejects.toThrow('[native-capability-replace]')
+    await expect(
+      buildCompositionApi(deps()).createComposition(customize(invertFeeder())),
+    ).rejects.toThrow('binary')
+    expect(stored).toEqual([])
+    expect(converged).toBe(0)
+  })
+
+  it("a stored customization's self-read of a native field it does not compose is not a cycle — an unrelated save is not refused", async () => {
     const api = buildCompositionApi(deps())
     await api.createComposition(customize())
     const { block } = await api.createComposition({
@@ -635,45 +677,44 @@ describe('customizing an existing device (D663)', () => {
   })
 
   it('C-1: a real cycle through the candidate and an unreadable device is refused even when the DFS names only the artefact loop', async () => {
-    // FEEDER's customization p1 (stored FIRST, so its nodes are walked first):
-    //   celsius (ADDED)   reads FEEDER binary.on and b1's celsius;
-    //   binary.on (REPLACED, but unread → over-approximated) reads FEEDER celsius.
-    // q1 relays FEEDER binary.on; the candidate b1 reads q1.
-    // Real cycle: b1 → q1 → FEEDER.on → FEEDER.celsius → b1. Artefact: FEEDER.celsius ↔ FEEDER.on.
+    // FEEDER's customization p1 (stored FIRST, so its nodes are walked first)
+    // ADDS battery — the device has no native battery (D944). Unread, so nothing
+    // is replaced and every self-read of a field it writes is an edge:
+    //   percentage reads charging (own output) and b1's celsius;
+    //   charging reads percentage (own output).
+    // q1 relays FEEDER charging; the candidate b1 reads q1.
+    // Real cycle: b1 → q1 → FEEDER.charging → FEEDER.percentage → b1.
+    // Artefact: FEEDER.percentage ↔ FEEDER.charging.
     const room = composedDeviceRef('b1')
     const feeder = CompositionSchema.parse({
       target: { kind: 'existing', device: FEEDER },
       features: [
         {
           kind: 'fields',
-          cap: 'temperature-sensor',
+          cap: 'battery',
           fields: {
-            celsius: {
+            percentage: {
               kind: 'expression',
-              expr: 'on ? c : 0',
+              expr: 'charging ? c : 0',
               bindings: {
-                on: { kind: 'from', source: FEEDER, cap: 'binary', fieldPath: 'on' },
+                charging: { kind: 'from', source: FEEDER, cap: 'battery', fieldPath: 'charging' },
                 c: { kind: 'from', source: room, cap: 'temperature-sensor', fieldPath: 'celsius' },
               },
             },
-          },
-        },
-        {
-          kind: 'fields',
-          cap: 'binary',
-          fields: {
-            on: {
+            charging: {
               kind: 'expression',
-              expr: 'c > 0',
+              expr: 'percentage > 0 ? "dc" : "unknown"',
               bindings: {
-                c: {
+                percentage: {
                   kind: 'from',
                   source: FEEDER,
-                  cap: 'temperature-sensor',
-                  fieldPath: 'celsius',
+                  cap: 'battery',
+                  fieldPath: 'percentage',
                 },
               },
             },
+            sleeping: { kind: 'expression', expr: 'false', bindings: {} },
+            lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
           },
         },
       ],
@@ -686,7 +727,7 @@ describe('customizing an existing device (D663)', () => {
               ...f,
               fields: {
                 ...f.fields,
-                celsius: { kind: 'from', source: FEEDER, cap: 'binary', fieldPath: 'on' },
+                celsius: { kind: 'from', source: FEEDER, cap: 'battery', fieldPath: 'charging' },
               },
             }
           : f,
@@ -720,7 +761,7 @@ describe('customizing an existing device (D663)', () => {
       api.updateComposition({
         blockId: a.id,
         expectedUpdatedAt: a.updatedAt,
-        block: { composition: invertFeeder('!on', OTHER) },
+        block: { composition: addBattery('on ? 100 : 0', OTHER) },
         caller: CALLER,
       }),
     ).rejects.toThrow(
