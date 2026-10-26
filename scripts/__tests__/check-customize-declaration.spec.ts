@@ -316,11 +316,19 @@ describe('customize declaration guard', () => {
   it('projects derived advanced parameters for battery and running-state', async () => {
     const caps = await loadCustomizeCaps()
     const battery = projectCustomize(caps.find((cap) => cap.capName === 'battery')!)
+    // D944 §4: a labelled reading publishes its base unit into the derived
+    // advanced list. `volts` is that reading (base `V`); unlabelled quantities stay out.
     expect(battery.advancedParameters.map((row) => row.path)).toEqual([
       'binary',
       'charging',
       'sleeping',
+      'volts',
     ])
+    expect(battery.advancedParameters.find((row) => row.path === 'volts')).toMatchObject({
+      kind: 'number',
+      unit: 'V',
+      label: 'Voltage',
+    })
     expect(battery.advancedParameters.find((row) => row.path === 'charging')).toMatchObject({
       kind: 'enum',
       label: 'Charging source',

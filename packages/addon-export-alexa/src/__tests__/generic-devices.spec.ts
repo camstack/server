@@ -76,6 +76,11 @@ describe('generic state', () => {
     expect(genericPropertyFor('presence', { state: 'not_home' })?.value).toBe('NOT_DETECTED')
   })
 
+  it('a null reading publishes nothing — never 0 (D393)', () => {
+    expect(genericPropertyFor('temperature-sensor', { celsius: null })).toBeNull()
+    expect(genericPropertyFor('humidity-sensor', { percent: null })).toBeNull()
+  })
+
   it('a lock change on an exported lock becomes a LockController report', () => {
     const out = stateReportsFor(
       { deviceId: 5, capName: 'lock-control', slice: { state: 'locked' } },

@@ -61,6 +61,18 @@ describe('nextConsumablesSlice — write only what changed', () => {
     ).not.toBeNull()
   })
 
+  it('a remaining count and a remaining duration with the same number are different', () => {
+    const prev = slice([{ ...item('brush', 4), remaining: { value: 12, kind: 'count' } }], 100, 100)
+    expect(
+      nextConsumablesSlice(
+        prev,
+        [{ ...item('brush', 4), remaining: { value: 12, kind: 'duration' } }],
+        5,
+        false,
+      ),
+    ).not.toBeNull()
+  })
+
   it('never writes an EMPTY list — unknown is not "no consumables"', () => {
     const prev = slice([item('blade', 60)], 100, 100)
     expect(nextConsumablesSlice(prev, [], 999, true)).toBeNull()

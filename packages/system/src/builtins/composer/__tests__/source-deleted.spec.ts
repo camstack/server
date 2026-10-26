@@ -147,10 +147,11 @@ describe('the sofa sensor is deleted', () => {
   it('celsius is unavailable — null in the state, never a number — and the device goes offline', () => {
     expect(celsiusState()).toMatchObject({ state: 'unavailable', value: null })
     expect(target.availability.at(-1)).toBe(false)
-    // D393: `celsius` is non-nullable, so it is not written at all once unavailable —
-    // no plausible number, never 0; the offline device carries the absence.
+    // D944 §4 made `celsius` nullable: a refused sample is null (D393). The
+    // composer therefore writes that null, so the device state cannot keep
+    // the stale 21.3. One null, after the boot average — not a second number.
     expect(celsiusWritesBefore).toEqual([21.3])
-    expect(celsiusWrites()).toEqual(celsiusWritesBefore)
+    expect(celsiusWrites()).toEqual([21.3, null])
   })
 
   it('the block is FAILED and the reason names the source', async () => {

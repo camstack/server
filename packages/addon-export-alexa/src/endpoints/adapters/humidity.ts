@@ -18,15 +18,15 @@ export const humidityAdapter: GenericAdapter = {
   }),
   properties: (_cap, slice) => {
     const p = HumiditySensorStatusSchema.pick({ percent: true }).safeParse(slice)
-    return p.success
-      ? [
-          {
-            namespace: 'Alexa.HumiditySensor',
-            name: 'relativeHumidity',
-            value: { value: Math.max(0, Math.min(100, p.data.percent)) },
-          },
-        ]
-      : []
+    // A refused sample is null (D944 §4, D393). Publishing 0 would be a dry room.
+    if (!p.success || p.data.percent === null) return []
+    return [
+      {
+        namespace: 'Alexa.HumiditySensor',
+        name: 'relativeHumidity',
+        value: { value: Math.max(0, Math.min(100, p.data.percent)) },
+      },
+    ]
   },
   directives: [],
   shaping: () => ({

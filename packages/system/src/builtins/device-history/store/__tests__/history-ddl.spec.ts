@@ -128,6 +128,11 @@ const PLAN_DDL: Record<string, string> = {
     missing_since  INTEGER NOT NULL
   )`,
   idx_dh_departures_device: `CREATE UNIQUE INDEX idx_dh_departures_device ON "device-history:device-departures"(device_id)`,
+  // D944 §4: one row per finished base-unit rescale, in history.db with the points.
+  'device-history:applied-scales': `CREATE TABLE "device-history:applied-scales" (
+    id          TEXT PRIMARY KEY NOT NULL,
+    applied_at  INTEGER NOT NULL
+  )`,
 }
 for (const tier of ['5m', '1h', '1d']) {
   PLAN_DDL[`device-history:rollup-${tier}`] = `CREATE TABLE "device-history:rollup-${tier}" (

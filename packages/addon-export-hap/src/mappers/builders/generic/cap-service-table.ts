@@ -98,7 +98,7 @@ export interface HapCapServiceRow {
 /** HomeKit's floor for `CurrentAmbientLightLevel`; 0 lux is out of range. */
 const MIN_LUX = 0.0001
 
-const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
+export const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
   contact: {
     label: 'Contact',
     addService: (accessory, name, subtype) =>
@@ -194,10 +194,14 @@ const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
       accessory.addService(Service.TemperatureSensor, name, subtype),
     getStatus: (proxy) => proxy.temperatureSensor?.getStatus({}),
     subscribe: (proxy, onValue) => proxy.state.temperatureSensor?.subscribe(onValue) ?? null,
-    // The cap's field is `celsius`, which is also HomeKit's unit.
-    read: reader(TemperatureSensorStatusSchema.pick({ celsius: true }), (status) => [
-      { characteristic: Characteristic.CurrentTemperature, value: status.celsius },
-    ]),
+    // The cap's field is `celsius`, which is also HomeKit's unit. A refused
+    // sample is null (D944 §4, D393); HomeKit has no null, and 0 °C would be
+    // a freezing reading nobody took, so the characteristic is left alone.
+    read: reader(TemperatureSensorStatusSchema.pick({ celsius: true }), (status) =>
+      status.celsius === null
+        ? []
+        : [{ characteristic: Characteristic.CurrentTemperature, value: status.celsius }],
+    ),
   },
   'humidity-sensor': {
     label: 'Humidity',
@@ -205,9 +209,11 @@ const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
       accessory.addService(Service.HumiditySensor, name, subtype),
     getStatus: (proxy) => proxy.humiditySensor?.getStatus({}),
     subscribe: (proxy, onValue) => proxy.state.humiditySensor?.subscribe(onValue) ?? null,
-    read: reader(HumiditySensorStatusSchema.pick({ percent: true }), (status) => [
-      { characteristic: Characteristic.CurrentRelativeHumidity, value: status.percent },
-    ]),
+    read: reader(HumiditySensorStatusSchema.pick({ percent: true }), (status) =>
+      status.percent === null
+        ? []
+        : [{ characteristic: Characteristic.CurrentRelativeHumidity, value: status.percent }],
+    ),
   },
   'ambient-light-sensor': {
     label: 'Light level',
@@ -215,12 +221,16 @@ const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
       accessory.addService(Service.LightSensor, name, subtype),
     getStatus: (proxy) => proxy.ambientLightSensor?.getStatus({}),
     subscribe: (proxy, onValue) => proxy.state.ambientLightSensor?.subscribe(onValue) ?? null,
-    read: reader(AmbientLightSensorStatusSchema.pick({ lux: true }), (status) => [
-      {
-        characteristic: Characteristic.CurrentAmbientLightLevel,
-        value: Math.max(MIN_LUX, status.lux),
-      },
-    ]),
+    read: reader(AmbientLightSensorStatusSchema.pick({ lux: true }), (status) =>
+      status.lux === null
+        ? []
+        : [
+            {
+              characteristic: Characteristic.CurrentAmbientLightLevel,
+              value: Math.max(MIN_LUX, status.lux),
+            },
+          ],
+    ),
   },
 }
 

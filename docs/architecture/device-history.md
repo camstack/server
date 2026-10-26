@@ -265,7 +265,7 @@ unknown figure is no point (D393).
 
 ## Data model
 
-`history-schema.ts` declares seven collections; a spec compares the DDL the real
+`history-schema.ts` declares nine collections; a spec compares the DDL the real
 engine writes with plan §4, plus two nullable columns D896 added (`enum_values` on
 the metrics, `state_ms` on every rollup tier) — added IN PLACE by the engine on an
 existing `history.db`, every row kept. One deliberate difference: §4 writes the opt-out key
@@ -273,8 +273,11 @@ as `device_id INTEGER PRIMARY KEY`, but the engine treats an INTEGER primary key
 as a rowid alias it assigns itself (D473) and DROPS a supplied value, so the
 device id could not be written through the door. The opt-out table is `id
 INTEGER PRIMARY KEY, device_id INTEGER NOT NULL` with a unique index on
-`device_id`. It lives in `camstack.db` (configuration, nightly backup); the other
-six are in `history.db`.
+`device_id`. Opt-outs and departures live in `camstack.db` (configuration, nightly
+backup). The other seven are in `history.db`, including `applied-scales`
+(`id TEXT PRIMARY KEY NOT NULL`, `applied_at INTEGER NOT NULL`): one row per
+base-unit rescale that has finished (D944 §4), so a restart does not rescale
+the same series twice.
 
 The metric row's key is its PRIMARY KEY, passed to the door as the record `id`:
 without it the engine minted a random key, every boot added an unreachable row

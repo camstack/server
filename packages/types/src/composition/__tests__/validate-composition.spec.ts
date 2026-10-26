@@ -38,7 +38,12 @@ const LEVEL_CAP = {
   scope: 'device',
   mode: 'singleton',
   methods: {},
-  runtimeState: z.object({ level: z.number().nullable(), lastFetchedAt: z.number() }),
+  runtimeState: z.object({
+    level: z.number().nullable(),
+    /** A plain string, the stand-in for the root `unit` D944 §4 removed. Optional so it is not a required target. */
+    label: z.string().optional(),
+    lastFetchedAt: z.number(),
+  }),
 } as const satisfies CapabilityDefinition
 
 /** A fake cap with an ENUM field, to pin the save-time literal check. */
@@ -129,7 +134,9 @@ describe('the room is valid', () => {
     expect(result.problems).toEqual([])
     expect(result.ok).toBe(true)
     expect(result.fields.map((f) => [f.cap, f.path, f.role, f.unavailable])).toEqual([
-      ['temperature-sensor', 'celsius', 'derived', 'offline'],
+      // D944 §4: celsius is nullable (a refused sample is null, D393), so a new
+      // device says unavailable with null rather than by taking the field offline.
+      ['temperature-sensor', 'celsius', 'derived', 'null'],
       ['temperature-sensor', 'lastFetchedAt', 'derived', 'offline'],
       ['binary', 'on', 'derived', 'offline'],
       ['binary', 'lastChangedAt', 'clock', 'offline'],
@@ -304,15 +311,15 @@ describe('enum target fields', () => {
     expect(codes(c)).toEqual([])
   })
   it('leaves a dynamic (non-literal) source to runtime — no save-time enum check', () => {
-    // `temperature-sensor.unit` is a plain STRING field, not this enum's set.
-    // Reading it collapses to the coarse 'string' KIND only (the actual live
-    // value, e.g. "°F", is unknown at save time) — no way to catch this one
-    // until the write. Documented limitation, see `literalStringValue`'s doc.
+    // D944 §4 removed the root `unit` sibling. `test-level.label` is a plain
+    // STRING field, not this enum's set. Reading it collapses to the coarse
+    // 'string' KIND only (the live value is unknown at save time) — no way
+    // to catch this one until the write. See `literalStringValue`'s doc.
     const c = single('test-enum', {
       mode: {
         kind: 'expression',
         expr: 'a',
-        bindings: { a: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'unit' } },
+        bindings: { a: { kind: 'from', source: T1, cap: 'test-level', fieldPath: 'label' } },
       },
       lastChangedAt: tempFrom('lastFetchedAt'),
     })

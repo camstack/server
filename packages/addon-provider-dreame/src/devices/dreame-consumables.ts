@@ -44,7 +44,7 @@ function itemEqual(a: ConsumableItem, b: ConsumableItem): boolean {
     a.resettable === b.resettable &&
     a.kind === b.kind &&
     a.remaining?.value === b.remaining?.value &&
-    a.remaining?.unit === b.remaining?.unit
+    a.remaining?.kind === b.remaining?.kind
   )
 }
 
