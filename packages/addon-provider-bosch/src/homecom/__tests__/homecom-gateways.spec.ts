@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { connectionFromSettings, type HomeComConfig } from '../config.js'
+import { connectionFromSettings, HOMECOM_GATEWAYS_PATH, type HomeComConfig } from '../config.js'
 import type { FetchFn } from '../homecom-api-client.js'
 import { parseHomeComGatewayList } from '../homecom-api-client.js'
 import { HomeComConnectionResolver } from '../homecom-gateway.js'
@@ -12,7 +12,7 @@ function logger() {
 function cloud(gateways: readonly unknown[], requested: string[]): FetchFn {
   return async (url) => {
     requested.push(url)
-    if (url.endsWith('/v2/gateways')) {
+    if (url.endsWith(HOMECOM_GATEWAYS_PATH)) {
       return { ok: true, status: 200, json: async () => gateways }
     }
     return {

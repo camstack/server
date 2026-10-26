@@ -105,4 +105,36 @@ describe('account-sign-in field', () => {
     )
     open.mockRestore()
   })
+
+  it('shows the named message when the account has no gateway', async () => {
+    vi.spyOn(window, 'open').mockImplementation(() => null)
+    const onAction = vi.fn(async (action: string) => {
+      if (action === 'beginSignIn') {
+        return { attemptId: 'attempt-1', authorizeUrl: 'https://singlekey-id.com/auth' }
+      }
+      return {
+        token: 'access',
+        accountLabel: 'me@example.com',
+        gatewayCount: 0,
+        summary: 'This Bosch account has no HomeCom gateway.',
+      }
+    })
+    render(
+      <FormField
+        field={FIELD}
+        values={{}}
+        onChange={vi.fn()}
+        onChangeMany={vi.fn()}
+        onAction={onAction}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with SingleKey ID' }))
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeTruthy())
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'com.bosch.tt.dashtt.pointt://app/login?code=abc&state=st' },
+    })
+    await waitFor(() =>
+      expect(screen.getByText('This Bosch account has no HomeCom gateway.')).toBeTruthy(),
+    )
+  })
 })

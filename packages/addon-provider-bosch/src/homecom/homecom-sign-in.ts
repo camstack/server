@@ -1,6 +1,6 @@
-import { HOMECOM_POINTT_API_ORIGIN } from './config.js'
+import { HOMECOM_GATEWAYS_PATH, HOMECOM_POINTT_API_ORIGIN } from './config.js'
 import type { FetchFn, HomeComGatewayListing } from './homecom-api-client.js'
-import { parseHomeComGatewayList } from './homecom-api-client.js'
+import { HomeComGatewayListError, parseHomeComGatewayList } from './homecom-api-client.js'
 import {
   resolveHomeComGateway,
   type HomeComGatewayChoice,
@@ -47,10 +47,11 @@ async function listGatewaysDefault(
   tokens: HomeComSignInTokens,
   fetchFn: FetchFn,
 ): Promise<readonly HomeComGatewayListing[]> {
-  const res = await fetchFn(`${HOMECOM_POINTT_API_ORIGIN}/v2/gateways`, {
+  const res = await fetchFn(`${HOMECOM_POINTT_API_ORIGIN}${HOMECOM_GATEWAYS_PATH}`, {
     headers: { Authorization: `Bearer ${tokens.token}`, Accept: 'application/json' },
   })
-  if (!res.ok) return []
+  if (res.status === 401) throw new HomeComGatewayListError(res.status)
+  if (!res.ok) throw new HomeComGatewayListError(res.status)
   return parseHomeComGatewayList(await res.json())
 }
 
@@ -72,29 +73,29 @@ export async function finishHomeComSignIn(
     fetchFn,
   )
   let gateways: readonly HomeComGatewayListing[] = []
-  let listFailed = false
+  let listFailure: string | null = null
   try {
     const list = deps.listGateways ?? ((next) => listGatewaysDefault(next, fetchFn))
     gateways = await list(tokens)
-  } catch {
-    listFailed = true
+  } catch (err) {
+    listFailure = err instanceof HomeComGatewayListError ? err.message : 'The gateway list failed.'
     gateways = []
   }
-  return finishedFromGateways(tokens, resolveHomeComGateway(gateways), listFailed)
+  return finishedFromGateways(tokens, resolveHomeComGateway(gateways), listFailure)
 }
 
 function finishedFromGateways(
   tokens: HomeComSignInTokens,
   resolved: HomeComGatewayResolution,
-  listFailed: boolean,
+  listFailure: string | null,
 ): HomeComFinishedSignIn {
   const who = tokens.username.length > 0 ? `Signed in as ${tokens.username}` : 'Signed in'
   const base = { ...tokens, accountLabel: tokens.username }
-  if (listFailed) {
+  if (listFailure !== null) {
     return {
       ...base,
       gatewayCount: 0,
-      summary: `${who}. The gateway list could not be read. Enter the gateway id under Advanced.`,
+      summary: listFailure,
     }
   }
   if (resolved.kind === 'one') {
@@ -118,7 +119,7 @@ function finishedFromGateways(
   return {
     ...base,
     gatewayCount: 0,
-    summary: `${who}. No gateway was listed. Enter the gateway id under Advanced.`,
+    summary: 'This Bosch account has no HomeCom gateway.',
   }
 }
 

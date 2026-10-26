@@ -3,6 +3,7 @@ import { homeComConfigSchema, type HomeComConfig } from './config.js'
 import {
   createHomeComApiClient,
   HomeComAuthError,
+  HomeComGatewayListError,
   type HomeComApiClient,
 } from './homecom-api-client.js'
 
@@ -12,6 +13,20 @@ export interface HomeComConnectionTestDeps {
 }
 
 const TEST_LABEL = 'Lists the account gateways and reads the heat-pump system snapshot'
+const NO_GATEWAY = 'This Bosch account has no HomeCom gateway.'
+
+function signInIncomplete(paths: readonly string[]): string {
+  if (paths.includes('token') || paths.includes('refresh')) {
+    return 'Sign in first. Bosch has not issued an access token yet.'
+  }
+  return `HomeCom could not use the saved sign-in (${paths.join(', ')}).`
+}
+
+function listFailureMessage(err: unknown): string | null {
+  if (err instanceof HomeComGatewayListError) return err.message
+  if (err instanceof Error && err.message.startsWith('The gateway list failed')) return err.message
+  return null
+}
 
 export function buildHomeComConnectionTestProvider(
   deps: HomeComConnectionTestDeps,
@@ -26,10 +41,10 @@ export function buildHomeComConnectionTestProvider(
     testSettings: async ({ settings }) => {
       const parsed = homeComConfigSchema.safeParse(settings)
       if (!parsed.success) {
-        const missing = parsed.error.issues.map((i) => i.path.join('.') || '(root)').join(', ')
+        const missing = parsed.error.issues.map((issue) => issue.path.join('.') || '(root)')
         return {
           outcome: 'rejected',
-          error: `HomeCom settings incomplete: ${missing}`,
+          error: signInIncomplete(missing),
         }
       }
 
@@ -43,7 +58,7 @@ export function buildHomeComConnectionTestProvider(
         if (gatewayId === undefined) {
           return {
             outcome: 'rejected',
-            error: 'This HomeCom account has no gateway.',
+            error: NO_GATEWAY,
           }
         }
         if (!gateways.some((g) => g.gatewayId === gatewayId)) {
@@ -55,6 +70,10 @@ export function buildHomeComConnectionTestProvider(
         await makeClient(parsed.data, gatewayId).fetchSystem()
         return { outcome: 'validated', latencyMs: Date.now() - startedAt }
       } catch (err: unknown) {
+        const listed = listFailureMessage(err)
+        if (listed !== null) {
+          return { outcome: 'rejected', error: listed }
+        }
         if (err instanceof HomeComAuthError) {
           return {
             outcome: 'rejected',

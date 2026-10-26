@@ -1482,7 +1482,15 @@ function InfoBox({ field }: { field: ConfigInfoField }) {
     <div className="col-span-full">
       <div className={`rounded-md border-l-4 px-3 py-2.5 ${styles.border} ${styles.bg}`}>
         {field.label && (
-          <p className={`text-xs font-semibold mb-0.5 ${styles.text}`}>{field.label}</p>
+          <p
+            className={
+              field.content.length > 0
+                ? `text-xs font-semibold mb-0.5 ${styles.text}`
+                : 'text-xs text-foreground-subtle leading-relaxed whitespace-pre-line break-words'
+            }
+          >
+            {field.label}
+          </p>
         )}
         {isHtml ? (
           <div
@@ -1493,9 +1501,11 @@ function InfoBox({ field }: { field: ConfigInfoField }) {
             dangerouslySetInnerHTML={{ __html: sanitizeInfoHtml(field.content) }}
           />
         ) : (
-          <p className="text-xs text-foreground-subtle leading-relaxed whitespace-pre-line">
-            {field.content}
-          </p>
+          field.content.length > 0 && (
+            <p className="text-xs text-foreground-subtle leading-relaxed whitespace-pre-line break-words">
+              {field.content}
+            </p>
+          )
         )}
       </div>
     </div>

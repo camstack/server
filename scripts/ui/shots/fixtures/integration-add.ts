@@ -4,6 +4,7 @@
  * that waits for a token, a select that loads immediately, a standalone
  * create). Invented hosts only.
  */
+import { buildHomeComFormSchema } from '../../../../packages/addon-provider-bosch/src/homecom/config'
 import { buildConnectionFormSchema } from '../../../../packages/addon-provider-bosch/src/shc/config'
 import { defineFixtures } from './_define'
 
@@ -102,6 +103,7 @@ const addressSchema = {
 
 const SCHEMAS: Readonly<Record<string, unknown>> = {
   'bosch-shc': buildConnectionFormSchema(),
+  'bosch-homecom': buildHomeComFormSchema(),
   'provider-wyze': textSchema('wyze', 'Wyze', 'email', 'Email'),
   'provider-rtsp': textSchema('rtsp', 'RTSP', 'host', 'Host'),
   'provider-dreo': textSchema('dreo', 'Dreo', 'email', 'Email'),
@@ -117,6 +119,7 @@ export default defineFixtures({
   handlers: {
     'integrations.getAvailableTypes': [
       tile('bosch-shc', 'Bosch SHC', 'account'),
+      tile('bosch-homecom', 'Bosch HomeCom', 'account'),
       tile('provider-wyze', 'Wyze', 'account'),
       tile('provider-rtsp', 'RTSP', 'account'),
       tile('provider-dreo', 'Dreo', 'account'),

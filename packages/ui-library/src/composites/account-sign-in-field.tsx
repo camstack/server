@@ -122,6 +122,9 @@ export function AccountSignInField({
     if (Object.keys(patch).length > 0) onChangeMany?.(patch)
     const nextChoices = choicesOf(result['choices'])
     setChoices(nextChoices.length > 1 ? nextChoices : [])
+    const picked = typeof result['gatewayId'] === 'string' && result['gatewayId'].length > 0
+    const summary = typeof result['summary'] === 'string' ? result['summary'] : null
+    if (summary !== null && !picked && nextChoices.length < 2) setError(summary)
     setPhase('idle')
     setPaste('')
     setAttemptId(null)

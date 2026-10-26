@@ -1,11 +1,21 @@
 import type { HomeComConfig } from './config.js'
-import { homeComApiBase } from './config.js'
+import { HOMECOM_GATEWAYS_PATH, homeComApiBase } from './config.js'
 import { parseHomeComSystemPayload } from './homecom-domain-mapping.js'
 import type { HomeComDhw, HomeComHeatingCircuit } from './homecom-domain-mapping.js'
 import { HOMECOM_CLIENT_ID, HOMECOM_TOKEN_URL } from './homecom-oauth.js'
 
 export class HomeComAuthError extends Error {
   readonly name = 'HomeComAuthError'
+}
+
+/** The account gateway list answered with an HTTP error. The status is the point. */
+export class HomeComGatewayListError extends Error {
+  readonly name = 'HomeComGatewayListError'
+  readonly status: number
+  constructor(status: number) {
+    super(`The gateway list failed (HTTP ${status}).`)
+    this.status = status
+  }
 }
 
 export interface HomeComGatewayInfo {
@@ -18,6 +28,8 @@ export interface HomeComGatewayInfo {
 export interface HomeComGatewayListing {
   readonly gatewayId: string
   readonly name: string
+  readonly model?: string
+  readonly serial?: string
   readonly brand?: string
   readonly region?: string
 }
@@ -67,6 +79,15 @@ function rowId(row: Record<string, unknown>): string | null {
   return null
 }
 
+function textOf(row: Record<string, unknown>, keys: readonly string[]): string | undefined {
+  for (const key of keys) {
+    const value = row[key]
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim()
+    if (typeof value === 'number') return String(value)
+  }
+  return undefined
+}
+
 /** Gateways from the account listing: a bare array or `{ gateways: [...] }`. */
 export function parseHomeComGatewayList(payload: unknown): readonly HomeComGatewayListing[] {
   const rows = isRecord(payload) ? payload['gateways'] : payload
@@ -76,14 +97,18 @@ export function parseHomeComGatewayList(payload: unknown): readonly HomeComGatew
     if (!isRecord(row)) continue
     const gatewayId = rowId(row)
     if (gatewayId === null) continue
-    const name = row['name']
-    const brand = row['brand']
-    const region = row['region']
+    const name = textOf(row, ['name', 'friendlyName'])
+    const model = textOf(row, ['model', 'deviceType'])
+    const serial = textOf(row, ['serial', 'serialNumber', 'serialId'])
+    const brand = textOf(row, ['brand'])
+    const region = textOf(row, ['region'])
     out.push({
       gatewayId,
-      name: typeof name === 'string' && name.length > 0 ? name : gatewayId,
-      ...(typeof brand === 'string' && brand.length > 0 ? { brand } : {}),
-      ...(typeof region === 'string' && region.length > 0 ? { region } : {}),
+      name: name ?? gatewayId,
+      ...(model !== undefined ? { model } : {}),
+      ...(serial !== undefined ? { serial } : {}),
+      ...(brand !== undefined ? { brand } : {}),
+      ...(region !== undefined ? { region } : {}),
     })
   }
   return out
@@ -156,7 +181,13 @@ export function createHomeComApiClient(
     },
 
     async listGateways() {
-      return parseHomeComGatewayList(await request('/v2/gateways'))
+      const res = await fetchFn(`${base}${HOMECOM_GATEWAYS_PATH}`, {
+        method: 'GET',
+        headers: await authHeaders(),
+      })
+      if (res.status === 401) throw new HomeComAuthError('token expired')
+      if (!res.ok) throw new HomeComGatewayListError(res.status)
+      return parseHomeComGatewayList(await res.json())
     },
 
     async fetchSystem() {

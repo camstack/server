@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { connectionFromSettings, type HomeComConfig } from '../config.js'
+import { connectionFromSettings, HOMECOM_GATEWAYS_PATH, type HomeComConfig } from '../config.js'
 import { createHomeComApiClient, type FetchFn } from '../homecom-api-client.js'
 import { HomeComIntegrationManager } from '../homecom-integration-manager.js'
 import { buildHomeComTokenPersister } from '../homecom-token-persist.js'
@@ -55,7 +55,7 @@ function cloud(calls: Call[], gateways: readonly string[] = ['g1']): FetchFn {
     if (init?.headers?.['Authorization'] !== `Bearer ${validAccess}`) {
       return { ok: false, status: 401, json: async () => ({}) }
     }
-    if (url.endsWith('/v2/gateways')) {
+    if (url.endsWith(HOMECOM_GATEWAYS_PATH)) {
       return {
         ok: true,
         status: 200,

@@ -116,6 +116,12 @@ export function IntegrationsPage(): ReactNode {
     setWizardOpen(true)
     navigate('/integrations', { replace: true, state: null })
   }, [location.state, navigate])
+  const setupAddonId = searchParams.get('setup')
+  useEffect(() => {
+    if (setupAddonId === null || setupAddonId.length === 0) return
+    setWizardSeed({ addonId: setupAddonId, name: setupAddonId, config: {} })
+    setWizardOpen(true)
+  }, [setupAddonId])
   const handleOpenScan = useCallback(() => setScanOpen(true), [])
   const handleCloseScan = useCallback(() => setScanOpen(false), [])
 

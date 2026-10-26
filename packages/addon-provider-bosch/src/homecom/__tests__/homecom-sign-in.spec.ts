@@ -78,6 +78,89 @@ describe('finishHomeComSignIn', () => {
     expect(finished).not.toHaveProperty('choices')
   })
 
+  it('lists gateways on the PointT v1 path and selects the only one', async () => {
+    const store = createSignInAttemptStore()
+    const published = publishHomeComSignIn(store, 1_000)
+    const seen: string[] = []
+    const finished = await finishHomeComSignIn(
+      {
+        attemptId: published.attemptId,
+        callback: callbackFor(published.authorizeUrl),
+        nowMs: 1_000,
+      },
+      store,
+      {
+        fetchFn: async (url, init) => {
+          seen.push(url)
+          if (url.includes('/gateways')) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => [
+                { deviceId: '101', name: 'Boiler', deviceType: 'k40', serialNumber: 'SN1' },
+              ],
+            }
+          }
+          return tokenFetch([])(url, init)
+        },
+      },
+    )
+    expect(seen.some((url) => url.endsWith('/pointt-api/api/v1/gateways/'))).toBe(true)
+    expect(finished.gatewayId).toBe('101')
+    expect(finished.gatewayCount).toBe(1)
+    expect(finished.summary).not.toMatch(/settings incomplete/i)
+  })
+
+  it('names a gateway-list HTTP failure and still returns the tokens', async () => {
+    const store = createSignInAttemptStore()
+    const published = publishHomeComSignIn(store, 1_000)
+    const finished = await finishHomeComSignIn(
+      {
+        attemptId: published.attemptId,
+        callback: callbackFor(published.authorizeUrl),
+        nowMs: 1_000,
+      },
+      store,
+      {
+        fetchFn: async (url, init) => {
+          if (url.includes('/gateways')) {
+            return { ok: false, status: 503, json: async () => ({}) }
+          }
+          return tokenFetch([])(url, init)
+        },
+      },
+    )
+    expect(finished.token).toBe('access')
+    expect(finished.gatewayId).toBeUndefined()
+    expect(finished.summary).toMatch(/gateway list/i)
+    expect(finished.summary).toContain('503')
+    expect(finished.summary).not.toMatch(/settings incomplete/i)
+  })
+
+  it('names an account with no gateway', async () => {
+    const store = createSignInAttemptStore()
+    const published = publishHomeComSignIn(store, 1_000)
+    const finished = await finishHomeComSignIn(
+      {
+        attemptId: published.attemptId,
+        callback: callbackFor(published.authorizeUrl),
+        nowMs: 1_000,
+      },
+      store,
+      {
+        fetchFn: async (url, init) => {
+          if (url.includes('/gateways')) {
+            return { ok: true, status: 200, json: async () => [] }
+          }
+          return tokenFetch([])(url, init)
+        },
+      },
+    )
+    expect(finished.token).toBe('access')
+    expect(finished.gatewayId).toBeUndefined()
+    expect(finished.summary).toBe('This Bosch account has no HomeCom gateway.')
+  })
+
   it('keeps the sign-in when the gateway list fails', async () => {
     const store = createSignInAttemptStore()
     const published = publishHomeComSignIn(store, 1_000)
@@ -97,7 +180,7 @@ describe('finishHomeComSignIn', () => {
     )
     expect(finished.token).toBe('access')
     expect(finished.gatewayId).toBeUndefined()
-    expect(finished.summary).toContain('could not be read')
+    expect(finished.summary).toBe('The gateway list failed.')
   })
 
   it('offers a choice when the account has several gateways and does not pick one', async () => {
@@ -121,6 +204,31 @@ describe('finishHomeComSignIn', () => {
     expect(finished.choices).toEqual([
       { value: 'gw-1', label: 'Home', brand: 'bosch', region: 'eu' },
       { value: 'gw-2', label: 'Cabin', brand: 'buderus', region: 'us' },
+    ])
+  })
+
+  it('labels each gateway with its name, model and serial', async () => {
+    const store = createSignInAttemptStore()
+    const published = publishHomeComSignIn(store, 1_000)
+    const finished = await finishHomeComSignIn(
+      {
+        attemptId: published.attemptId,
+        callback: callbackFor(published.authorizeUrl),
+        nowMs: 1_000,
+      },
+      store,
+      {
+        fetchFn: tokenFetch([]),
+        listGateways: async () => [
+          { gatewayId: 'gw-1', name: 'Home', model: 'K40', serial: 'SN1' },
+          { gatewayId: 'gw-2', name: 'Cabin', model: 'K30', serial: 'SN2' },
+        ],
+      },
+    )
+    expect(finished.gatewayId).toBeUndefined()
+    expect(finished.choices?.map((row) => row.label)).toEqual([
+      'Home · K40 · SN1',
+      'Cabin · K30 · SN2',
     ])
   })
 

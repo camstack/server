@@ -56,6 +56,85 @@ describe('HomeCom connection-test', () => {
     expect(outcome.outcome).toBe('rejected')
   })
 
+  it('lists gateways when the saved gateway id is blank', async () => {
+    const provider = buildHomeComConnectionTestProvider({
+      logger: logger() as never,
+      makeClient: () =>
+        createInMemoryHomeComApiClient({
+          snapshot: emptySnapshot,
+          tokensValid: true,
+        }),
+    })
+    const outcome = await provider.testSettings({
+      settings: {
+        username: 'user@example.com',
+        token: 'valid-access-token',
+        refresh: 'valid-refresh-token',
+        brand: 'bosch',
+        region: 'eu',
+        gatewayId: '',
+      },
+    })
+    expect(outcome.outcome).toBe('validated')
+    if (outcome.outcome !== 'validated') {
+      expect(outcome.error).not.toMatch(/settings incomplete/i)
+    }
+  })
+
+  it('names an empty gateway list and a list that failed with a status', async () => {
+    const empty = buildHomeComConnectionTestProvider({
+      logger: logger() as never,
+      makeClient: () => ({
+        refreshTokens: async () => ({ token: 't', refresh: 'r' }),
+        listGateways: async () => [],
+        fetchSystem: async () => emptySnapshot,
+        setCircuitSetpoint: async () => undefined,
+        setCircuitMode: async () => undefined,
+        setDhwTarget: async () => undefined,
+        setDhwMode: async () => undefined,
+      }),
+    })
+    const none = await empty.testSettings({
+      settings: {
+        token: 'valid-access-token',
+        refresh: 'valid-refresh-token',
+        brand: 'bosch',
+        region: 'eu',
+      },
+    })
+    expect(none.outcome).toBe('rejected')
+    if (none.outcome === 'rejected') {
+      expect(none.error).toBe('This Bosch account has no HomeCom gateway.')
+    }
+
+    const failed = buildHomeComConnectionTestProvider({
+      logger: logger() as never,
+      makeClient: () => ({
+        refreshTokens: async () => ({ token: 't', refresh: 'r' }),
+        listGateways: async () => {
+          throw new Error('The gateway list failed (HTTP 404).')
+        },
+        fetchSystem: async () => emptySnapshot,
+        setCircuitSetpoint: async () => undefined,
+        setCircuitMode: async () => undefined,
+        setDhwTarget: async () => undefined,
+        setDhwMode: async () => undefined,
+      }),
+    })
+    const listed = await failed.testSettings({
+      settings: {
+        token: 'valid-access-token',
+        refresh: 'valid-refresh-token',
+        brand: 'bosch',
+        region: 'eu',
+      },
+    })
+    expect(listed.outcome).toBe('rejected')
+    if (listed.outcome === 'rejected') {
+      expect(listed.error).toBe('The gateway list failed (HTTP 404).')
+    }
+  })
+
   it('uses createHomeComApiClient when makeClient is omitted', async () => {
     const createSpy = vi.spyOn(apiClientModule, 'createHomeComApiClient').mockReturnValue(
       createInMemoryHomeComApiClient({

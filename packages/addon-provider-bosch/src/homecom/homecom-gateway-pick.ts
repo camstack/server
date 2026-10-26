@@ -32,10 +32,20 @@ function regionOf(value: unknown): HomeComConfig['region'] {
   return 'eu'
 }
 
+function choiceLabel(gateway: HomeComGatewayListing): string {
+  const parts: string[] = []
+  if (gateway.name.length > 0 && gateway.name !== gateway.gatewayId) parts.push(gateway.name)
+  if (gateway.model !== undefined && gateway.model.length > 0 && gateway.model !== gateway.name) {
+    parts.push(gateway.model)
+  }
+  if (gateway.serial !== undefined && gateway.serial.length > 0) parts.push(gateway.serial)
+  return parts.length > 0 ? parts.join(' · ') : gateway.gatewayId
+}
+
 function choiceOf(gateway: HomeComGatewayListing): HomeComGatewayChoice {
   return {
     value: gateway.gatewayId,
-    label: gateway.name,
+    label: choiceLabel(gateway),
     brand: brandOf(gateway.brand),
     region: regionOf(gateway.region),
   }

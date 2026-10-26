@@ -14,8 +14,15 @@ export const homeComConfigSchema = z.object({
   refresh: z.string().min(1).describe('OAuth refresh token').meta({ secret: true }),
   brand: HomeComBrandSchema.default('bosch'),
   region: HomeComRegionSchema.default('eu'),
-  /** The gateway this integration controls; chosen once from the account's gateways. */
-  gatewayId: z.string().min(1).optional(),
+  /**
+   * The gateway this integration controls. Chosen from the account list after
+   * sign-in. A blank value is the same as absent: the id is not known yet.
+   */
+  gatewayId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value === undefined || value.length === 0 ? undefined : value)),
   /** Shown on the sign-in field. Not a credential. */
   accountLabel: z.string().optional(),
   /** How many gateways the last sign-in listed. */
@@ -47,6 +54,9 @@ export function sameHomeComConnection(a: HomeComConfig | null, b: HomeComConfig 
  */
 export const HOMECOM_POINTT_API_ORIGIN = 'https://pointt-api.bosch-thermotechnology.com'
 
+/** Account gateway list. `deviceId` on each row is the gateway id. */
+export const HOMECOM_GATEWAYS_PATH = '/pointt-api/api/v1/gateways/'
+
 export function homeComApiBase(_region: HomeComConfig['region']): string {
   return HOMECOM_POINTT_API_ORIGIN
 }
@@ -54,6 +64,14 @@ export function homeComApiBase(_region: HomeComConfig['region']): string {
 export const HOMECOM_SECRET_KEYS = ['username', 'token', 'refresh'] as const
 
 const HIDDEN_UNTIL_ADVANCED = { field: '__hidden__', equals: 'yes' } as const
+
+const HOMECOM_CODE_HELP = [
+  "Before you sign in, open the browser's developer tools, choose the Network tab, and turn on Preserve log.",
+  'Sign in with SingleKey. The page will say it has network problems. Ignore that: the browser tried to open the Bosch app and could not.',
+  'In the Network list, filter by code= and open the request whose address starts with com.bosch.tt.dashtt.pointt://app/login?code=',
+  'Copy that whole address, or only the code, and paste it in the box under the sign-in button.',
+  'On a phone the same redirect fails unless the Bosch app is installed. Use a desktop browser to copy the code.',
+].join('\n\n')
 
 export function buildHomeComFormSchema(): ConfigUISchema {
   return {
@@ -63,10 +81,17 @@ export function buildHomeComFormSchema(): ConfigUISchema {
         title: 'HomeCom account',
         titleKey: 'provider-bosch:homecom.s_account.title',
         description:
-          'Sign in with your SingleKey ID. Bosch opens its app address; paste that address here.',
+          'Sign in with your SingleKey ID. Copy the code as described below, then paste it here.',
         descriptionKey: 'provider-bosch:homecom.s_account.description',
         columns: 1,
         fields: [
+          {
+            type: 'info',
+            key: '__homecom-code-help',
+            label: HOMECOM_CODE_HELP,
+            labelKey: 'provider-bosch:homecom.s_account.__homecom-code-help.label',
+            content: '',
+          },
           {
             type: 'account-sign-in',
             addonId: 'bosch-homecom',
@@ -148,6 +173,9 @@ export function buildHomeComFormSchema(): ConfigUISchema {
                 key: 'gatewayId',
                 label: 'Gateway id',
                 labelKey: 'provider-bosch:homecom.s_account.gatewayId.label',
+                description:
+                  'Filled from the account. Type one only when you need to override the choice.',
+                descriptionKey: 'provider-bosch:homecom.s_account.gatewayId.description',
                 required: false,
               },
               {
