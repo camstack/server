@@ -5103,7 +5103,10 @@
       "install": "Install {{version}}",
       "noVersionsFound": "No versions found",
       "inPlace": "{{kind}} in place.",
-      "reinstall": "Re-install <mono>{{version}}</mono> from npm to track upstream releases again."
+      "reinstall": "Re-install <mono>{{version}}</mono> from npm to track upstream releases again.",
+      "showOlder": "Show older versions ({{count}})",
+      "hideOlder": "Hide older versions",
+      "registryError": "Could not load versions from the registry."
     },
     "addonRowBadge": {
       "queued": "queued",
@@ -5127,6 +5130,19 @@
       "updated": "updated",
       "failed": "failed",
       "skipped": "skipped"
+    },
+    "installDialog": {
+      "loadingDocument": "Loading…",
+      "couldNotLoadDocument": "Could not load this file from the registry.",
+      "documentError": "Could not load this file. {{message}}",
+      "title": "Install {{name}}",
+      "version": "Version",
+      "deprecatedVersion": "{{version}} (deprecated)",
+      "readme": "README",
+      "changelog": "CHANGELOG",
+      "missingReadme": "This package has no README.",
+      "missingChangelog": "This package has no CHANGELOG.",
+      "install": "Install"
     }
   },
   "brokers": {
@@ -6010,7 +6026,8 @@
         "noAddonsCompatibleWithPlacement": "No addons compatible with {{name}} (placement filter active)",
         "reFetchAddonsCheckNpm": "Re-fetch addons + check npm for new versions",
         "checkForUpdates": "Check for updates",
-        "failedToLoadAddons": "Failed to load addons"
+        "failedToLoadAddons": "Failed to load addons",
+        "loadingInstalled": "Loading installed addons…"
       }
     }
   },

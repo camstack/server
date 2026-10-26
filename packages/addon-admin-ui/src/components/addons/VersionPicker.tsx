@@ -1,7 +1,9 @@
 import { Check, Download, Loader2, Upload, X } from 'lucide-react'
+import { useState } from 'react'
 
-import { useAddonsGetVersions } from '@camstack/ui-library'
+import { Button, useAddonsGetVersions } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
+import { hiddenOlderVersionCount, isDeprecatedVersion, versionsForPicker } from './visible-versions'
 interface VersionPickerProps {
   packageName: string
   currentVersion: string
@@ -37,7 +39,10 @@ export function VersionPicker({
 }: VersionPickerProps) {
   const { t } = useTranslation()
   const isOverridden = installSource === 'upload' || installSource === 'local'
-  const { data: versions, isLoading } = useAddonsGetVersions({ name: packageName })
+  const [showOlder, setShowOlder] = useState(false)
+  const { data: versions, isLoading, isError } = useAddonsGetVersions({ name: packageName })
+  const listed = versions ? versionsForPicker(versions, showOlder) : []
+  const hiddenOlder = versions ? hiddenOlderVersionCount(versions) : 0
 
   return (
     <div
@@ -107,10 +112,18 @@ export function VersionPicker({
         </div>
       )}
 
-      {/* Version list */}
-      {versions && (
+      {isError && (
+        <div className="px-3 py-4 text-center text-[10px] text-danger">
+          {t('addons.versionPicker.registryError', 'Could not load versions from the registry.')}
+        </div>
+      )}
+
+      {/* Version list — latest and non-deprecated rows. Older deprecated
+          versions stay behind an explicit control so a rollback is still
+          possible. */}
+      {listed.length > 0 && (
         <div className="max-h-64 overflow-auto divide-y divide-border">
-          {versions.map((v) => {
+          {listed.map((v) => {
             const isCurrent = v.version === currentVersion
             const isSelected = onSelect !== undefined && v.version === selectedVersion
             const isPreRelease = /-(alpha|beta|rc|dev|canary|next)/i.test(v.version)
@@ -140,7 +153,7 @@ export function VersionPicker({
                     {tag}
                   </span>
                 ))}
-                {v.deprecated && (
+                {isDeprecatedVersion(v) && (
                   <span className="text-[9px] text-red-400 line-through">
                     {t('common.deprecated')}
                   </span>
@@ -202,10 +215,26 @@ export function VersionPicker({
         </div>
       )}
 
-      {versions && versions.length === 0 && (
+      {!isLoading && !isError && versions && versions.length === 0 && (
         <div className="py-4 text-center text-[10px] text-foreground-subtle">
           {t('addons.versionPicker.noVersionsFound', 'No versions found')}
         </div>
+      )}
+
+      {hiddenOlder > 0 && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-auto w-full justify-start rounded-none border-t border-border px-3 py-2 text-left text-[10px] font-normal text-foreground-subtle"
+          onClick={() => setShowOlder((current) => !current)}
+        >
+          {showOlder
+            ? t('addons.versionPicker.hideOlder', 'Hide older versions')
+            : t('addons.versionPicker.showOlder', 'Show older versions ({{count}})', {
+                count: hiddenOlder,
+              })}
+        </Button>
       )}
     </div>
   )

@@ -75,10 +75,44 @@ export default defineFixtures({
     'addons.list': INSTALLED,
     'addons.listInstallations': { installations: [], unreachable: [] },
     'nodes.clusterAddonStatus': {},
-    'addons.searchAvailable': (input: { capability?: string } | undefined) =>
+    'addons.searchAvailable': (input: { capability?: string; query?: string } | undefined) =>
       PUBLISHED.filter(
         (pkg) =>
           input?.capability === undefined || (pkg.capabilities ?? []).includes(input.capability),
       ),
+    'addons.getVersions': () => [
+      {
+        version: '1.4.2',
+        publishedAt: '2026-10-01T00:00:00.000Z',
+        distTags: ['latest'],
+      },
+      {
+        version: '1.0.0',
+        publishedAt: '2026-01-01T00:00:00.000Z',
+        deprecated: 'superseded by 1.4.2',
+        distTags: [],
+      },
+    ],
+    'addons.getPackageDocs': (input: { name?: string; version?: string } | undefined) => ({
+      name: input?.name ?? '@camstack/addon-tailscale',
+      version: input?.version ?? '1.4.2',
+      readme: {
+        status: 'ok',
+        markdown:
+          '# Tailscale\n\nConnects the hub to a tailnet.\n\n## Settings\n\nThe auth key is a keychain password.\n\n## Node placement\n\nHub only.\n',
+      },
+      changelog: {
+        status: 'ok',
+        markdown: '# Changelog\n\n## 1.4.2\n\n- Documented Serve reload.\n',
+      },
+    }),
+    'addons.getAutoUpdateSettings': {
+      channel: 'off',
+      intervalSeconds: 21600,
+      updateCheckIntervalSeconds: 21600,
+    },
+    'addons.getAddonAutoUpdate': 'inherit',
+    'addons.getLastRestart': null,
+    'addons.listJobs': [],
   },
 })

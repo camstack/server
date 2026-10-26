@@ -11,7 +11,7 @@ export function NpmAddonRow({
 }: {
   readonly addon: AddonSearchResult
   readonly installing: boolean
-  readonly onInstall: (packageName: string) => void
+  readonly onInstall: (addon: AddonSearchResult) => void
 }) {
   const { t } = useTranslation()
   return (
@@ -40,7 +40,7 @@ export function NpmAddonRow({
       ) : (
         <Button
           size="sm"
-          onClick={() => onInstall(addon.name)}
+          onClick={() => onInstall(addon)}
           disabled={installing}
           className="shrink-0"
         >
@@ -69,7 +69,7 @@ export function AvailableToInstall({
 }: {
   readonly capability: string
   readonly installing: boolean
-  readonly onInstall: (packageName: string) => void
+  readonly onInstall: (addon: AddonSearchResult) => void
 }) {
   const { t } = useTranslation()
   const { data, isPending, isError } = useAddonsSearchAvailable({ capability })

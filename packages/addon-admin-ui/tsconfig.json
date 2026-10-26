@@ -19,9 +19,14 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "noUncheckedIndexedAccess": false,
+    // Subpaths included so `@camstack/types/client` is this checkout, not the
+    // main checkout a worktree's root node_modules points at.
     "paths": {
       "@camstack/types": [
         "../types/src/index.ts"
+      ],
+      "@camstack/types/*": [
+        "../types/src/*"
       ],
       "@camstack/sdk": [
         "../sdk/src/index.ts"

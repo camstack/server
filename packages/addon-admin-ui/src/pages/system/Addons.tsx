@@ -31,6 +31,10 @@ import {
   useAddonJobProgress,
 } from '../../components/addons/AddonsJobProgress'
 import { AddonUploadZone } from '../../components/addons/AddonUploadZone'
+import {
+  InstallAddonDialog,
+  type InstallAddonTarget,
+} from '../../components/addons/InstallAddonDialog'
 import { NodeOnlyPackagesPanel } from '../../components/addons/NodeOnlyPackagesPanel'
 import { StaleNodeNotice } from '../../components/shared/StaleNodeNotice'
 import { AvailableToInstall, NpmAddonRow } from './CapabilityCatalog'
@@ -265,7 +269,8 @@ interface InstalledTabProps {
   >
   selectedNode: AddonsNode
   onRefresh: () => void
-  isRefreshing: boolean
+  /** pending = the roster has not answered; that is not "no addons". */
+  listPhase: 'pending' | 'error' | 'ready'
 }
 
 function InstalledTab({
@@ -273,7 +278,7 @@ function InstalledTab({
   clusterStatus,
   selectedNode,
   onRefresh,
-  isRefreshing,
+  listPhase,
 }: InstalledTabProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -479,12 +484,24 @@ function InstalledTab({
     // Live per-step progress renders per card via useAddonJobProgress (F4).
   }, [updates, selectedNode.id, selectedNode.isHub, startJobMutation, updateMutation])
 
+  const [installTarget, setInstallTarget] = useState<InstallAddonTarget | null>(null)
+  const [installError, setInstallError] = useState<string | null>(null)
+  const openInstall = (target: InstallAddonTarget): void => {
+    setInstallError(null)
+    setInstallTarget(target)
+  }
   const installMutation = useAddonsInstallPackage({
     onSuccess: () => {
+      setInstallTarget(null)
+      setInstallError(null)
       queryClient.invalidateQueries({ queryKey: [['addons']] })
       queryClient.invalidateQueries({ queryKey: [['addonPages']] })
       queryClient.invalidateQueries({ queryKey: [['capabilities']] })
       queryClient.invalidateQueries({ queryKey: [['integrations']] })
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Install failed'
+      setInstallError(message)
     },
   })
 
@@ -795,17 +812,6 @@ function InstalledTab({
                 })}
           </button>
         )}
-
-        {/* Refresh button */}
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={isRefreshing || startJobMutation.isPending}
-          className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-md bg-surface hover:bg-surface-hover border border-border disabled:opacity-50 transition-colors"
-        >
-          <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {t('common.refresh', 'Refresh')}
-        </button>
       </div>
 
       {/* Two filters: update status + source (npm XOR local/dev). URL-backed. */}
@@ -895,7 +901,13 @@ function InstalledTab({
                       key={addon.name}
                       addon={addon}
                       installing={installMutation.isPending}
-                      onInstall={(packageName) => installMutation.mutate({ packageName })}
+                      onInstall={(addon) =>
+                        openInstall({
+                          name: addon.name,
+                          version: addon.version,
+                          description: addon.description,
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -938,7 +950,13 @@ function InstalledTab({
         <AvailableToInstall
           capability={capabilityFilter}
           installing={installMutation.isPending}
-          onInstall={(packageName) => installMutation.mutate({ packageName })}
+          onInstall={(addon) =>
+            openInstall({
+              name: addon.name,
+              version: addon.version,
+              description: addon.description,
+            })
+          }
         />
       )}
 
@@ -969,8 +987,20 @@ function InstalledTab({
         </div>
       )}
 
-      {/* Empty state */}
-      {filteredAddons.length === 0 && (
+      {listPhase === 'pending' && (
+        <div className="flex items-center gap-2 text-xs text-foreground-subtle">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          {t('admin.system.addons.loadingInstalled', 'Loading installed addons…')}
+        </div>
+      )}
+      {listPhase === 'error' && (
+        <div className="text-xs text-danger">
+          {t('admin.system.addons.failedToLoadAddons', 'Failed to load addons')}
+        </div>
+      )}
+
+      {/* Empty state — only after the roster has answered. */}
+      {listPhase === 'ready' && filteredAddons.length === 0 && (
         <div className="text-xs text-foreground-subtle">
           {addons.length === 0
             ? t('admin.system.addons.noAddonsInstalled', 'No addons installed')
@@ -991,40 +1021,50 @@ function InstalledTab({
       {/* Installed addon cards. Real addons only — framework/system packages
           are hidden (managed from Server management, phase 4). */}
       <div className="space-y-1.5">
-        {sortedGrouped.map((item) => {
-          const pkgName = isBundled(item) ? item.bundle.packageName : item.manifest.packageName
-          const update = updateMap.get(pkgName)
-          const representative = isBundled(item) ? item.representative : item
-          // `version` is the SELECTED version from the card's version
-          // selector (defaults to the latest available).
-          const onUpdate = update
-            ? (version: string) =>
-                updateMutation.mutate({
-                  name: pkgName,
-                  version,
-                  nodeId: selectedNode.id,
-                })
-            : undefined
-          // F4: per-package lifecycle-job progress (engine-driven updates —
-          // "Update all", auto-update — plus the phases of single updates).
-          const jobProgress = jobProgressByPackage.get(pkgName) ?? null
-          const jobActive = jobProgress !== null && isTaskProgressActive(jobProgress)
-          return (
-            <AddonCard
-              key={isBundled(item) ? pkgName : item.manifest.id}
-              addon={representative}
-              clusterStatus={clusterStatus?.[representative.manifest.id]}
-              bundle={isBundled(item) ? item.bundle : undefined}
-              availableUpdate={update}
-              isUpdating={updatingPackages.has(pkgName) || jobActive}
-              jobProgress={jobProgress}
-              onUpdate={onUpdate}
-              disabledByBulk={startJobMutation.isPending}
-              selectedNode={selectedNode}
-            />
-          )
-        })}
+        {listPhase === 'ready' &&
+          sortedGrouped.map((item) => {
+            const pkgName = isBundled(item) ? item.bundle.packageName : item.manifest.packageName
+            const update = updateMap.get(pkgName)
+            const representative = isBundled(item) ? item.representative : item
+            // `version` is the SELECTED version from the card's version
+            // selector (defaults to the latest available).
+            const onUpdate = update
+              ? (version: string) =>
+                  updateMutation.mutate({
+                    name: pkgName,
+                    version,
+                    nodeId: selectedNode.id,
+                  })
+              : undefined
+            // F4: per-package lifecycle-job progress (engine-driven updates —
+            // "Update all", auto-update — plus the phases of single updates).
+            const jobProgress = jobProgressByPackage.get(pkgName) ?? null
+            const jobActive = jobProgress !== null && isTaskProgressActive(jobProgress)
+            return (
+              <AddonCard
+                key={isBundled(item) ? pkgName : item.manifest.id}
+                addon={representative}
+                clusterStatus={clusterStatus?.[representative.manifest.id]}
+                bundle={isBundled(item) ? item.bundle : undefined}
+                availableUpdate={update}
+                isUpdating={updatingPackages.has(pkgName) || jobActive}
+                jobProgress={jobProgress}
+                onUpdate={onUpdate}
+                disabledByBulk={startJobMutation.isPending}
+                selectedNode={selectedNode}
+              />
+            )
+          })}
       </div>
+      {installTarget !== null && (
+        <InstallAddonDialog
+          target={installTarget}
+          installing={installMutation.isPending}
+          installError={installError}
+          onClose={() => setInstallTarget(null)}
+          onInstall={(packageName, version) => installMutation.mutate({ packageName, version })}
+        />
+      )}
     </div>
   )
 }
@@ -1127,28 +1167,13 @@ export function AddonsPage() {
           (list overlays agent versions onto hub manifests only). */}
       <NodeOnlyPackagesPanel selectedNode={selectedNode} />
 
-      {/* Loading / error states */}
-      {isLoading && (
-        <div className="text-xs text-foreground-subtle animate-pulse">
-          {t('common.loading', 'Loading…')}
-        </div>
-      )}
-      {isError && (
-        <div className="text-xs text-danger">
-          {t('admin.system.addons.failedToLoadAddons', 'Failed to load addons')}
-        </div>
-      )}
-
-      {/* Installed addons */}
-      {!isLoading && !isError && (
-        <InstalledTab
-          addons={addonList}
-          clusterStatus={clusterStatus}
-          selectedNode={selectedNode}
-          onRefresh={() => void reload()}
-          isRefreshing={reloadIsPending}
-        />
-      )}
+      <InstalledTab
+        addons={addonList}
+        clusterStatus={clusterStatus}
+        selectedNode={selectedNode}
+        onRefresh={() => void reload()}
+        listPhase={isLoading ? 'pending' : isError ? 'error' : 'ready'}
+      />
     </AdminPage>
   )
 }

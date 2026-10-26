@@ -89,6 +89,7 @@ let mockCapabilitySearch: CapabilitySearchState = {
   isFetching: true,
 }
 const searchAvailableInputs: string[] = []
+const mockInstall = vi.fn()
 
 const mockStartJob = vi.fn().mockResolvedValue({ jobId: 'job-1' })
 
@@ -162,7 +163,28 @@ vi.mock('@camstack/ui-library', () => ({
     values: Array.from(mockLiveJobMap.values()),
   }),
   // VersionPicker (opened from the version selector)
-  useAddonsGetVersions: () => ({ data: [], isLoading: false }),
+  useAddonsGetVersions: () => ({ data: [], isLoading: false, isError: false }),
+  useAddonsGetPackageDocs: () => ({
+    data: {
+      name: '@camstack/addon-tailscale',
+      version: '1.2.3',
+      readme: { status: 'ok', markdown: '# Tailscale\n\nConnects the hub.' },
+      changelog: { status: 'missing' },
+    },
+    isPending: false,
+    isError: false,
+  }),
+  Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+  DialogBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Select: () => <select aria-label="Version" />,
+  Tabs: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TabsTrigger: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  TabsContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   useAddonsUpdateFrameworkPackage: () => ({
     mutate: vi.fn(),
     mutateAsync: vi.fn().mockResolvedValue({ restartingAt: 0 }),
@@ -179,7 +201,7 @@ vi.mock('@camstack/ui-library', () => ({
     searchAvailableInputs.push(input.capability)
     return mockCapabilitySearch
   },
-  useAddonsInstallPackage: () => ({ mutate: vi.fn(), isPending: false }),
+  useAddonsInstallPackage: () => ({ mutate: mockInstall, isPending: false }),
   // AddonCard imports
   useAddonsGetAddonAutoUpdate: () => ({ data: undefined }),
   useAddonsSetAddonAutoUpdate: () => ({ mutate: vi.fn(), isPending: false }),
@@ -1051,6 +1073,24 @@ describe('Addons page — ?capability= offers uninstalled addons (D860)', () => 
     expect(screen.getByText('Available to install')).toBeTruthy()
     expect(screen.getByText('addon-tailscale'.replace('addon-', ''))).toBeTruthy()
     expect(screen.getByRole('button', { name: /install/i })).toBeTruthy()
+  })
+
+  it('opens the install dialog and does not install until that dialog confirms', () => {
+    mockInstall.mockClear()
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: /^install$/i }))
+    expect(mockInstall).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: /install tailscale/i })).toBeTruthy()
+    expect(screen.getByText('Connects the hub.')).toBeTruthy()
+    expect(screen.getByText('This package has no CHANGELOG.')).toBeTruthy()
+    const installs = screen.getAllByRole('button', { name: /^install$/i })
+    const confirm = installs[installs.length - 1]
+    if (confirm === undefined) throw new Error('install confirm missing')
+    fireEvent.click(confirm)
+    expect(mockInstall).toHaveBeenCalledWith({
+      packageName: '@camstack/addon-tailscale',
+      version: '1.2.3',
+    })
   })
 
   it('a query that has not answered is "searching", never "no addon exists"', () => {

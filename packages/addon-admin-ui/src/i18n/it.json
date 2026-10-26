@@ -5164,7 +5164,10 @@
       "install": "Installa {{version}}",
       "noVersionsFound": "Nessuna versione trovata",
       "inPlace": "{{kind}} in uso.",
-      "reinstall": "Reinstalla <mono>{{version}}</mono> da npm per tornare a seguire le release upstream."
+      "reinstall": "Reinstalla <mono>{{version}}</mono> da npm per tornare a seguire le release upstream.",
+      "showOlder": "Mostra le versioni precedenti ({{count}})",
+      "hideOlder": "Nascondi le versioni precedenti",
+      "registryError": "Impossibile caricare le versioni dal registry."
     },
     "addonRowBadge": {
       "queued": "in coda",
@@ -5188,6 +5191,19 @@
       "updated": "aggiornato",
       "failed": "fallito",
       "skipped": "saltato"
+    },
+    "installDialog": {
+      "loadingDocument": "Caricamento…",
+      "couldNotLoadDocument": "Impossibile caricare questo file dal registry.",
+      "documentError": "Impossibile caricare questo file. {{message}}",
+      "title": "Installa {{name}}",
+      "version": "Versione",
+      "deprecatedVersion": "{{version}} (deprecata)",
+      "readme": "README",
+      "changelog": "CHANGELOG",
+      "missingReadme": "Questo pacchetto non ha un README.",
+      "missingChangelog": "Questo pacchetto non ha un CHANGELOG.",
+      "install": "Installa"
     }
   },
   "brokers": {
@@ -6071,7 +6087,8 @@
         "noAddonsCompatibleWithPlacement": "Nessun addon compatibile con {{name}} (filtro di posizionamento attivo)",
         "reFetchAddonsCheckNpm": "Ricarica gli addon e controlla su npm le nuove versioni",
         "checkForUpdates": "Controlla aggiornamenti",
-        "failedToLoadAddons": "Impossibile caricare gli addon"
+        "failedToLoadAddons": "Impossibile caricare gli addon",
+        "loadingInstalled": "Caricamento degli addon installati…"
       }
     }
   },

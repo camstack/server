@@ -25,7 +25,6 @@ import {
   Download,
   Loader2,
   Package,
-  Plus,
   Puzzle,
   RefreshCw,
   ScrollText,
@@ -339,16 +338,6 @@ export interface BundleGroup {
 }
 
 // ---------------------------------------------------------------------------
-// AgentInfo
-// ---------------------------------------------------------------------------
-
-export interface AgentInfo {
-  id: string
-  name: string
-  isHub: boolean
-}
-
-// ---------------------------------------------------------------------------
 // AutoUpdateSelector — per-addon auto-update override
 // ---------------------------------------------------------------------------
 
@@ -412,7 +401,6 @@ export interface ClusterAddonStatus {
 
 interface AddonCardProps {
   addon: AddonListItem
-  agents?: AgentInfo[]
   /** Cluster deployment status for this addon (multi-node) */
   clusterStatus?: ClusterAddonStatus
   /** Hide version when addon is nested inside a bundle */
@@ -447,7 +435,6 @@ const HUB_NODE: UninstallTargetNode = { id: 'hub', name: 'Hub', isHub: true }
 
 export function AddonCard({
   addon,
-  agents = [],
   clusterStatus,
   hideVersion,
   availableUpdate,
@@ -462,7 +449,6 @@ export function AddonCard({
 }: AddonCardProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
-  const [agentDropdownOpen, setAgentDropdownOpen] = useState(false)
   const [showVersionPicker, setShowVersionPicker] = useState(false)
   // Version the Update button installs. `null` = "latest available" —
   // reset whenever the available update changes (new release published,
@@ -479,7 +465,6 @@ export function AddonCard({
   const navigate = useNavigate()
 
   const { manifest } = addon
-  const installedOn = addon.installedOn ?? []
   const removable = !bundle && !manifest.protected && manifest.removable !== false
   const isBundle = !!bundle
 
@@ -930,12 +915,7 @@ export function AddonCard({
           {expanded && (
             <div className="border-t border-border px-2.5 py-1.5 space-y-1.5">
               {bundle.addons.map((childAddon) => (
-                <AddonCard
-                  key={childAddon.manifest.id}
-                  addon={childAddon}
-                  agents={agents}
-                  hideVersion
-                />
+                <AddonCard key={childAddon.manifest.id} addon={childAddon} hideVersion />
               ))}
             </div>
           )}
@@ -1033,69 +1013,6 @@ export function AddonCard({
                         {comp}
                       </span>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Installed on agents */}
-              {agents.length >= 2 && (
-                <div>
-                  <div className="text-[10px] font-medium text-foreground-subtle uppercase tracking-wide mb-2">
-                    {t('addons.addonCard.installedOn', 'Installed on')}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {installedOn.length === 0 && (
-                      <span className="text-[10px] text-foreground-subtle">
-                        {t('addons.addonCard.hubLocal', 'Hub (local)')}
-                      </span>
-                    )}
-                    {installedOn.map((agentName) => (
-                      <span
-                        key={agentName}
-                        className="rounded-full bg-surface-hover border border-border px-2 py-0.5 text-[10px] text-foreground-subtle"
-                      >
-                        {agentName}
-                      </span>
-                    ))}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setAgentDropdownOpen((o) => !o)
-                        }}
-                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-[10px] text-foreground-subtle hover:text-foreground hover:border-primary transition-colors"
-                        title={t('addons.addonCard.installOnMoreAgents', 'Install on more agents')}
-                      >
-                        <Plus className="h-3 w-3" />
-                        {t('addons.addonCard.addAgent', 'Add agent')}
-                      </button>
-                      {agentDropdownOpen && (
-                        <div className="absolute left-0 top-full mt-1 z-10 min-w-[160px] rounded-md border border-border bg-surface shadow-lg overflow-hidden">
-                          {agents
-                            .filter((a) => !a.isHub && !installedOn.includes(a.name))
-                            .map((agent) => (
-                              <button
-                                key={agent.id}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setAgentDropdownOpen(false)
-                                }}
-                                className="w-full text-left px-3 py-1.5 text-[10px] text-foreground hover:bg-surface-hover transition-colors"
-                              >
-                                {agent.name}
-                              </button>
-                            ))}
-                          {agents.filter((a) => !a.isHub && !installedOn.includes(a.name))
-                            .length === 0 && (
-                            <div className="px-3 py-1.5 text-[10px] text-foreground-subtle">
-                              {t('addons.addonCard.noAvailableAgents', 'No available agents')}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
