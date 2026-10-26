@@ -1,31 +1,20 @@
 /**
- * Real {@link MatterController} backed by matter.js v0.17 (`@matter/main` +
- * `@matter/nodejs`).
+ * Real {@link MatterController} backed by matter.js (`@matter/main` +
+ * `@matter/nodejs`). ServerNode / ClientNode is the API this controller uses.
  *
- * matter.js v0.17 uses the "node API": a {@link ServerNode} owns the controller
- * fabric, and commissioned devices are {@link ClientNode} peers reachable via
- * `serverNode.peers`. This class wraps exactly one `ServerNode` per broker
- * (= one fabric), persisting it under the addon `dataDir` via the matter.js
- * `Environment`'s `storage.path` variable.
+ * One `ServerNode` per broker (= one fabric). Storage is matter.js's own
+ * files under the addon `dataDir` (`Environment` `storage.path`) — the
+ * library-owned exception for fabric root / NOC / node registry, same class
+ * as HAP pairing files. Not the keychain.
  *
- * Bound API (matter.js 0.17.3):
- *   - `ServerNode.create({ environment, id })` — fabric owner; storage at dataDir.
- *   - `serverNode.peers.commission({ pairingCode })` — commission a node from a
- *     QR (`MT:…`) or manual pairing code; resolves to a `ClientNode`.
- *   - `serverNode.peers` — iterable of commissioned `ClientNode`s.
- *   - `clientNode.lifecycle.isOnline`, `clientNode.peerAddress.nodeId` — liveness
- *     + stable node id.
- *   - `clientNode.decommission()` — remove a node from the fabric.
- *   - endpoint `commandsOf(behaviorId)[name](args)` — outbound cluster commands.
+ * Bound API:
+ *   - `ServerNode.create({ environment, id })` — fabric owner.
+ *   - `serverNode.peers.commission({ pairingCode, continueCommissioningAfterPase })`.
+ *   - `clientNode.interaction.subscribe({ sustain: true })` — attribute reports.
+ *   - `clientNode.lifecycle` online / offline — resubscribe.
+ *   - endpoint `commandsOf(behaviorId)[name](args)` — outbound commands.
  *
- * The dynamic endpoint/cluster/attribute introspection lives in
- * `matter-endpoint-introspect.ts` (the single matter.js dynamic-shape boundary).
- * This class polls each node's endpoint state on reconcile + emits decoded
- * attribute reports, and re-emits on node online/offline transitions.
- *
- * BLE commissioning (`@matter/nodejs-ble`) is NOT wired — that package is not
- * installed. IP / on-network commissioning is the supported path; see the class
- * `commissionNode` note.
+ * BLE commissioning is not wired. IP / on-network share codes only.
  */
 
 import { Environment, ServerNode } from '@matter/main'
@@ -42,6 +31,14 @@ import {
   type Unsubscribe,
 } from './matter-controller.js'
 import { readNodeEndpoints, invokeNodeCommand } from './matter-endpoint-introspect.js'
+import {
+  classifyCommissionError,
+  commissionFailureMessage,
+  type CommissionProgress,
+  CommissionPhase,
+} from './matter-commission-progress.js'
+import { subscribableFromPeer } from './matter-peer-subscribe.js'
+import { MatterSubscriptionSupervisor, type MatterSubscribablePeer } from './matter-subscription.js'
 
 /** A commissioning failure (bad code / device unreachable), distinct from runtime. */
 export class MatterCommissioningError extends Error {
@@ -49,6 +46,19 @@ export class MatterCommissioningError extends Error {
     super(`matter-broker: commissioning failed — ${message}`, options)
     this.name = 'MatterCommissioningError'
   }
+}
+
+/** Fabric handle. Production wraps `ServerNode`; tests pass a recorded peer. */
+export interface MatterFabricServer {
+  start(): Promise<void>
+  close(): Promise<void>
+  listPeers(): Iterable<unknown>
+  commission(input: { readonly pairingCode: string; readonly onPase: () => void }): Promise<unknown>
+}
+
+export interface MatterJsControllerOptions extends MatterControllerOptions {
+  /** Test seam. Production builds a `ServerNode` when this is omitted. */
+  readonly openServer?: () => Promise<MatterFabricServer>
 }
 
 /** The minimal dynamic surface we read off a commissioned peer node. */
@@ -68,17 +78,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Real matter.js-backed controller. One instance == one fabric (one broker).
  */
 export class MatterJsController implements MatterController {
-  readonly #options: MatterControllerOptions
+  readonly #options: MatterJsControllerOptions
   readonly #logger: IScopedLogger
   readonly #handlers: Set<(report: MatterAttributeReport) => void> = new Set()
+  readonly #subscriptions: MatterSubscriptionSupervisor
 
-  #server: ServerNode | null = null
+  #server: MatterFabricServer | null = null
   /** Last emitted value per `node:endpoint:cluster:attribute` (change detection). */
   readonly #lastValues: Map<string, unknown> = new Map()
 
-  constructor(options: MatterControllerOptions, logger: IScopedLogger) {
+  constructor(options: MatterJsControllerOptions, logger: IScopedLogger) {
     this.#options = options
     this.#logger = logger
+    this.#subscriptions = new MatterSubscriptionSupervisor({
+      brokerId: options.brokerId,
+      logger,
+      resolveDeviceId: options.resolveDeviceId ?? (() => null),
+      onReport: (report) => this.#emitIfChanged(report),
+    })
   }
 
   get options(): MatterControllerOptions {
@@ -88,23 +105,25 @@ export class MatterJsController implements MatterController {
   /** Boot the ServerNode fabric, loading/persisting state from `dataDir`. */
   async start(): Promise<void> {
     if (this.#server !== null) return
-    const environment = this.#buildEnvironment()
-    const server = await ServerNode.create({
-      environment,
-      id: this.#options.brokerId,
-    })
+    const server =
+      this.#options.openServer !== undefined
+        ? await this.#options.openServer()
+        : await this.#openProductionServer()
     this.#server = server
     await server.start()
     this.#logger.info('MatterJsController: ServerNode online', {
       tags: { brokerId: this.#options.brokerId },
     })
-    // Seed reports from whatever peers already persisted on the fabric.
+    await this.syncSubscriptions()
+    // Seed from cached attribute state in case the subscription's first report
+    // is still in flight. Missing values are not emitted.
     this.#emitAllReports()
   }
 
-  /** Close the ServerNode FIRST (frees OS sockets/subscriptions), then clear. */
+  /** Close subscriptions FIRST, then the ServerNode. */
   async stop(): Promise<void> {
     this.#handlers.clear()
+    await this.#subscriptions.stop()
     const server = this.#server
     this.#server = null
     this.#lastValues.clear()
@@ -126,21 +145,40 @@ export class MatterJsController implements MatterController {
    */
   async commissionNode(pairingCode: string): Promise<CommissionResult> {
     const server = this.#requireServer('commissionNode')
+    this.#progress({ phase: CommissionPhase.Discovering, failure: null, message: null })
     try {
-      const node = await server.peers.commission({ pairingCode })
+      const node = await server.commission({
+        pairingCode,
+        onPase: () => {
+          this.#progress({ phase: CommissionPhase.Pase, failure: null, message: null })
+          this.#progress({ phase: CommissionPhase.Commissioning, failure: null, message: null })
+        },
+      })
       const view = this.#viewPeer(node)
       this.#logger.info('MatterJsController: node commissioned', {
         tags: { brokerId: this.#options.brokerId },
         meta: { nodeId: view?.id ?? '(unknown)' },
       })
+      await this.syncSubscriptions()
       this.#emitAllReports()
       if (view === null) {
         throw new MatterCommissioningError('commissioned node exposed no operational id')
       }
+      this.#progress({ phase: CommissionPhase.Done, failure: null, message: null })
       return { nodeId: view.id }
     } catch (err: unknown) {
-      if (err instanceof MatterCommissioningError) throw err
-      throw new MatterCommissioningError(errMsg(err), { cause: err })
+      if (err instanceof MatterCommissioningError && err.message.includes('no operational id')) {
+        this.#failCommission(err.message)
+        throw err
+      }
+      const message = errMsg(err)
+      this.#failCommission(message)
+      throw new MatterCommissioningError(
+        commissionFailureMessage(classifyCommissionError(message), message),
+        {
+          cause: err,
+        },
+      )
     }
   }
 
@@ -149,11 +187,31 @@ export class MatterJsController implements MatterController {
     const server = this.#server
     if (server === null) return []
     const out: MatterNodeSnapshot[] = []
-    for (const peer of this.#peers(server)) {
+    for (const peer of server.listPeers()) {
       const snapshot = this.#snapshot(peer)
       if (snapshot !== null) out.push(snapshot)
     }
     return out
+  }
+
+  async syncSubscriptions(): Promise<void> {
+    const server = this.#server
+    if (server === null) return
+    const peers: MatterSubscribablePeer[] = []
+    for (const peer of server.listPeers()) {
+      const view = this.#viewPeer(peer)
+      if (view === null) continue
+      const subscribable = subscribableFromPeer(peer, view.id)
+      if (subscribable === null) {
+        this.#logger.warn('MatterJsController: peer has no attribute subscription', {
+          tags: { brokerId: this.#options.brokerId },
+          meta: { nodeId: view.id },
+        })
+        continue
+      }
+      peers.push(subscribable)
+    }
+    await this.#subscriptions.sync(peers)
   }
 
   async getNode(nodeId: string): Promise<MatterNodeSnapshot | null> {
@@ -202,6 +260,27 @@ export class MatterJsController implements MatterController {
 
   // ── internals ────────────────────────────────────────────────────────────
 
+  async #openProductionServer(): Promise<MatterFabricServer> {
+    const environment = this.#buildEnvironment()
+    const server = await ServerNode.create({
+      environment,
+      id: this.#options.brokerId,
+    })
+    return {
+      start: () => server.start(),
+      close: () => server.close(),
+      listPeers: () => this.#serverPeers(server),
+      commission: ({ pairingCode, onPase }) =>
+        server.peers.commission({
+          pairingCode,
+          continueCommissioningAfterPase: () => {
+            onPase()
+            return true
+          },
+        }),
+    }
+  }
+
   #buildEnvironment(): Environment {
     // `@matter/main` configures `Environment.default` with the Node.js platform
     // (filesystem/network/storage) on import. Point storage at the addon dataDir
@@ -214,20 +293,20 @@ export class MatterJsController implements MatterController {
     return env
   }
 
-  #requireServer(op: string): ServerNode {
+  #requireServer(op: string): MatterFabricServer {
     if (this.#server === null) throw new MatterControllerNotWiredError(op)
     return this.#server
   }
 
   /** Iterate the commissioned peers of a ServerNode (cast-free). */
-  #peers(server: ServerNode): Iterable<unknown> {
+  #serverPeers(server: ServerNode): Iterable<unknown> {
     const peers: unknown = server.peers
     if (isIterable(peers)) return peers
     return []
   }
 
-  #findPeer(server: ServerNode, nodeId: string): PeerNodeView | null {
-    for (const peer of this.#peers(server)) {
+  #findPeer(server: MatterFabricServer, nodeId: string): PeerNodeView | null {
+    for (const peer of server.listPeers()) {
       const view = this.#viewPeer(peer)
       if (view !== null && view.id === nodeId) return view
     }
@@ -235,12 +314,25 @@ export class MatterJsController implements MatterController {
   }
 
   /** Raw (un-viewed) peer object for operations that call its methods. */
-  #rawPeer(server: ServerNode, nodeId: string): unknown {
-    for (const peer of this.#peers(server)) {
+  #rawPeer(server: MatterFabricServer, nodeId: string): unknown {
+    for (const peer of server.listPeers()) {
       const view = this.#viewPeer(peer)
       if (view !== null && view.id === nodeId) return peer
     }
     return null
+  }
+
+  #progress(progress: CommissionProgress): void {
+    this.#options.onCommissionProgress?.(progress)
+  }
+
+  #failCommission(message: string): void {
+    const failure = classifyCommissionError(message)
+    this.#progress({
+      phase: CommissionPhase.Failed,
+      failure,
+      message: commissionFailureMessage(failure, message),
+    })
   }
 
   /** Reduce a peer to the read-only view the addon models. */
@@ -285,7 +377,7 @@ export class MatterJsController implements MatterController {
   #emitAllReports(): void {
     const server = this.#server
     if (server === null) return
-    for (const peer of this.#peers(server)) {
+    for (const peer of server.listPeers()) {
       const view = this.#viewPeer(peer)
       if (view === null) continue
       for (const ep of readNodeEndpoints(view.rootEndpoint)) {
@@ -304,6 +396,7 @@ export class MatterJsController implements MatterController {
   }
 
   #emitIfChanged(report: MatterAttributeReport): void {
+    if (report.value === undefined || report.value === null) return
     const key = `${report.nodeId}:${report.endpointId}:${report.clusterId}:${report.attributeId}`
     const prev = this.#lastValues.get(key)
     if (prev !== undefined && shallowEqual(prev, report.value)) return

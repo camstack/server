@@ -10,6 +10,7 @@ import type {
   MatterNodeSnapshot,
 } from './matter-controller.js'
 import type { MatterBrokerEntry, MatterConnection } from './config.js'
+import type { CommissionProgress } from './matter-commission-progress.js'
 
 /** Minimal manager surface the registry depends on. */
 export type ManagerLike = Pick<
@@ -23,6 +24,7 @@ export type ManagerLike = Pick<
   | 'removeNode'
   | 'reconcile'
   | 'invokeCommand'
+  | 'getCommissionProgress'
 >
 
 /** Factory for one manager — overridable in tests. */
@@ -192,6 +194,11 @@ export class MatterBrokerRegistry {
     const mgr = this.#managers.get(brokerId)
     if (!mgr) throw new Error(`MatterBrokerRegistry: unknown broker id "${brokerId}"`)
     return mgr.commissionNode(pairingCode)
+  }
+
+  getCommissionProgress(brokerId: string): CommissionProgress | null {
+    const mgr = this.#managers.get(brokerId)
+    return mgr ? mgr.getCommissionProgress() : null
   }
 
   async removeNode(brokerId: string, nodeId: string): Promise<void> {

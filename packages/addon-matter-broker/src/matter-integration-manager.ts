@@ -11,6 +11,7 @@ import {
 import { MatterJsController } from './matter-controller-impl.js'
 import { matterNodes } from './matter-gateway.js'
 import type { MatterConnection } from './config.js'
+import { IDLE_COMMISSION_PROGRESS, type CommissionProgress } from './matter-commission-progress.js'
 
 /** Status of a single Matter fabric connection. */
 export type MatterBrokerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -75,6 +76,7 @@ export class MatterIntegrationManager {
   #nodeCount = 0
   #lastCheckedAt: number | null = null
   #error: string | null = null
+  #commission: CommissionProgress = IDLE_COMMISSION_PROGRESS
 
   constructor(options: MatterIntegrationManagerOptions) {
     this.#id = options.id
@@ -87,7 +89,23 @@ export class MatterIntegrationManager {
     this.#onNodesChanged = options.onNodesChanged
     this.#onAttributeReport = options.onAttributeReport
     this.#makeController =
-      options.makeController ?? ((opts) => new MatterJsController(opts, this.#logger))
+      options.makeController ??
+      ((opts) =>
+        new MatterJsController(
+          {
+            ...opts,
+            onCommissionProgress: (progress) => {
+              this.#commission = progress
+            },
+            resolveDeviceId: (nodeId) => matterNodes.deviceIdFor(nodeId),
+          },
+          this.#logger,
+        ))
+  }
+
+  /** Latest commissioning phase for `broker.getState({ key: 'commission' })`. */
+  getCommissionProgress(): CommissionProgress {
+    return this.#commission
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -171,6 +189,7 @@ export class MatterIntegrationManager {
     if (controller === null) return
     try {
       const nodes = await controller.listNodes()
+      await controller.syncSubscriptions()
       this.#nodeCount = nodes.length
       this.#lastCheckedAt = Date.now()
       matterNodes.setNodes(this.#id, nodes)

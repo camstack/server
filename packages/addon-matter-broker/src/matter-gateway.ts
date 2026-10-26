@@ -32,6 +32,8 @@ export class MatterNodeResolver {
   readonly #attrs: Map<string, Map<string, unknown>> = new Map()
   /** Live attribute-report subscribers (endpoint device classes). */
   readonly #listeners: Set<AttributeReportListener> = new Set()
+  /** Adopted container id per Matter node, for subscription logs. */
+  readonly #deviceIds: Map<string, number> = new Map()
 
   /**
    * Subscribe to live attribute reports across all brokers. Endpoint device
@@ -39,6 +41,19 @@ export class MatterNodeResolver {
    * push report decodes straight into their runtime-state slice. Returns a
    * disposer.
    */
+  /** Remember the CamStack container id for a commissioned node. */
+  bindDevice(nodeId: string, deviceId: number): void {
+    this.#deviceIds.set(nodeId, deviceId)
+  }
+
+  unbindDevice(nodeId: string): void {
+    this.#deviceIds.delete(nodeId)
+  }
+
+  deviceIdFor(nodeId: string): number | null {
+    return this.#deviceIds.get(nodeId) ?? null
+  }
+
   onAttributeReport(listener: AttributeReportListener): () => void {
     this.#listeners.add(listener)
     return () => {
@@ -113,6 +128,7 @@ export class MatterNodeResolver {
     this.#nodes.clear()
     this.#attrs.clear()
     this.#listeners.clear()
+    this.#deviceIds.clear()
   }
 }
 

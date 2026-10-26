@@ -60,6 +60,28 @@ export function settingsToMatterConnection(settings: unknown): MatterConnection 
   return matterConnectionSchema.parse(toRecord(settings))
 }
 
+/**
+ * Settings readers see an empty string for both secrets. The stored value
+ * stays in the keychain (records `secret` meta). An empty round-trip must
+ * not wipe it — see {@link mergeMatterSecrets}.
+ */
+export function publicMatterConnection(connection: MatterConnection): MatterConnection {
+  return { ...connection, wifiPassword: '', threadDataset: '' }
+}
+
+/** Keep a stored secret when the form sent back the redacted empty string. */
+export function mergeMatterSecrets(
+  existing: MatterConnection,
+  incoming: MatterConnection,
+): MatterConnection {
+  return {
+    ...incoming,
+    wifiPassword: incoming.wifiPassword.length > 0 ? incoming.wifiPassword : existing.wifiPassword,
+    threadDataset:
+      incoming.threadDataset.length > 0 ? incoming.threadDataset : existing.threadDataset,
+  }
+}
+
 /** Hand-written connection form for the broker/integration creation UI. */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
@@ -74,10 +96,11 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         columns: 1,
         fields: [
           {
-            type: 'text',
+            type: 'password',
             key: 'threadDataset',
             // The operational dataset carries the Thread network key (D783).
             secret: true,
+            showToggle: true,
             label: 'Thread operational dataset (hex, optional)',
             labelKey: 'matter-broker:connection.s_matter-fabric.threadDataset.label',
             placeholder: '0e08000000000001…',

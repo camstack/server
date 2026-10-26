@@ -1,28 +1,16 @@
 /**
  * The Matter controller seam.
  *
- * `MatterController` is the clean INTERFACE the rest of the addon depends on —
- * the broker/adoption/device layers never import matter.js directly, only this
- * interface. The real binding to matter.js (`@matter/main`'s
- * `CommissioningController` + `@matter/nodejs` storage/network) is a TODO; for
- * now `StubMatterController` provides a compiling, fully-typed no-op that throws
- * on any operation requiring the native controller.
+ * `MatterController` is the interface the rest of the addon depends on. The
+ * broker, adoption and device layers never import matter.js. Production uses
+ * {@link import('./matter-controller-impl.js').MatterJsController} (`ServerNode`
+ * + per-node `interaction.subscribe`). {@link StubMatterController} is the test
+ * double: it boots and lists nothing, and throws on commission / commands.
  *
- * This mirrors the plan's option (A) (embed the controller in-process), behind
- * the broker boundary so option (B) (external matter-server WS) is a clean swap.
- *
- * TODO(matter.js binding): replace `StubMatterController` with a
- * `MatterJsController` that:
- *   - boots a `CommissioningController` with `@matter/nodejs` storage bound to
- *     the addon `dataDir` (fabric root cert / NOC / node registry persist there);
- *   - parses a QR (`MT:...`) / 11-digit manual pairing code and runs
- *     `commissionNode(...)` (PASE/CASE, BLE via `@matter/nodejs-ble` when present,
- *     else on-network IP commissioning), then interviews the node;
- *   - subscribes to each commissioned node's attribute reports and forwards them
- *     through `onAttributeReport`;
- *   - invokes cluster commands (OnOff.on/off, LevelControl.moveToLevel,
- *     DoorLock.lockDoor, …) for outbound control.
+ * IP / on-network commissioning only. BLE (`@matter/nodejs-ble`) is not wired.
  */
+
+import type { CommissionProgress } from './matter-commission-progress.js'
 
 /** A commissioned Matter node as the addon models it (controller-agnostic). */
 export interface MatterNodeSnapshot {
@@ -92,6 +80,11 @@ export interface MatterController {
   invokeCommand(invocation: MatterCommandInvocation): Promise<void>
   /** Remove (decommission) a node from this fabric. */
   removeNode(nodeId: string): Promise<void>
+  /**
+   * Ensure every commissioned node has a live attribute subscription.
+   * Called on start, after commission, and on the reconcile backstop.
+   */
+  syncSubscriptions(): Promise<void>
 }
 
 /** Thrown by the stub for every operation that needs the real matter.js binding. */
@@ -111,6 +104,10 @@ export interface MatterControllerOptions {
   readonly dataDir: string
   /** Stable broker id (one fabric per broker). */
   readonly brokerId: string
+  /** Commissioning phases for the admin UI. The stub ignores this. */
+  readonly onCommissionProgress?: (progress: CommissionProgress) => void
+  /** Adopted container id for subscription logs. Null until the node is adopted. */
+  readonly resolveDeviceId?: (nodeId: string) => number | null
 }
 
 /**
@@ -132,8 +129,7 @@ export class StubMatterController implements MatterController {
   }
 
   async start(): Promise<void> {
-    // No-op: a real controller would boot the CommissioningController and load
-    // the persisted fabric from `this.options.dataDir`. TODO(matter.js binding).
+    // No-op: the stub has no fabric. Production boots ServerNode from dataDir.
   }
 
   async stop(): Promise<void> {
@@ -166,6 +162,10 @@ export class StubMatterController implements MatterController {
 
   async removeNode(_nodeId: string): Promise<void> {
     throw new MatterControllerNotWiredError('removeNode')
+  }
+
+  async syncSubscriptions(): Promise<void> {
+    // No peers in the stub.
   }
 }
 

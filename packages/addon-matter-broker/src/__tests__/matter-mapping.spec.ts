@@ -309,4 +309,71 @@ describe('decodeMatterAttribute', () => {
       }),
     ).toBeNull()
   })
+
+  it('decodes DoorLock.LockState into the lock cap and does not invent a state from a missing value', () => {
+    const locked = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: 1,
+    })
+    expect(locked?.cap).toBe('lock-control')
+    expect(locked?.patch['state']).toBe('locked')
+
+    const unlocked = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: 2,
+    })
+    expect(unlocked?.patch['state']).toBe('unlocked')
+
+    const notFully = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: 0,
+    })
+    expect(notFully?.patch['state']).toBe('jammed')
+    expect(notFully?.detail).toBe('not-fully-locked')
+
+    const missing = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.LockState,
+      value: null,
+    })
+    expect(missing).toBeNull()
+  })
+
+  it('decodes DoorLock.DoorState, mapping a jammed door onto the lock cap', () => {
+    const jammed = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.DoorState,
+      value: 2,
+    })
+    expect(jammed?.patch['state']).toBe('jammed')
+    expect(jammed?.detail).toBe('door-jammed')
+
+    const open = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.DoorState,
+      value: 0,
+    })
+    expect(open?.detail).toBe('door-open')
+    expect(open?.patch['state']).toBeUndefined()
+  })
+
+  it('decodes RequirePinForRemoteOperation without treating a missing report as false', () => {
+    const required = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.RequirePinForRemoteOperation,
+      value: true,
+    })
+    expect(required?.detail).toBe('pin-required')
+    expect(required?.patch['state']).toBeUndefined()
+
+    const absent = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.RequirePinForRemoteOperation,
+      value: null,
+    })
+    expect(absent).toBeNull()
+  })
 })

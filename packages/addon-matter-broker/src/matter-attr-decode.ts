@@ -52,14 +52,30 @@ export const MatterAttributeId = {
   ActivePower: 0x0008,
   /** ElectricalEnergyMeasurement.CumulativeEnergyImported (energy struct, mWh). */
   CumulativeEnergyImported: 0x0001,
+  /** DoorLock.LockState (enum: 0 NotFullyLocked, 1 Locked, 2 Unlocked, 3 Unlatched). */
+  LockState: 0x0000,
+  /** DoorLock.DoorState (enum; 2 = DoorJammed). Present only with the door sensor. */
+  DoorState: 0x0003,
+  /** DoorLock.RequirePinForRemoteOperation (bool). */
+  RequirePinForRemoteOperation: 0x0033,
 } as const
 
 /** A decoded slice patch destined for one cap's runtime state. */
 export interface DecodedAttribute {
   /** The cap whose runtime-state slice receives the patch. */
   readonly cap: MatterEndpointCap
-  /** The partial slice to merge into the cap's runtime state. */
+  /**
+   * The partial slice to merge into the cap's runtime state. Empty when the
+   * report is a fact the cap schema cannot store (door open, PIN required) —
+   * callers must not invent a lock state from an empty patch.
+   */
   readonly patch: Record<string, unknown>
+  /**
+   * Matter-specific fact that is more precise than the cap enum. Logged, not
+   * written into the slice. `not-fully-locked` is LockState 0 (the cap's
+   * closest state is `jammed`). Door states keep the `door-` prefix.
+   */
+  readonly detail?: string
 }
 
 /** Thermostat.SystemMode enum → CamStack HvacMode (climate-control). */
@@ -95,10 +111,12 @@ function asBoolean(value: unknown): boolean | null {
  * matter.js may surface a `MeasuredValue` either as a plain scaled int or wrapped
  * in an energy-measurement struct (`{ energy }`). Pull the numeric payload out.
  */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 function asEnergyMilliWattHours(value: unknown): number | null {
-  if (typeof value === 'object' && value !== null && 'energy' in value) {
-    return asNumber((value as { energy: unknown }).energy)
-  }
+  if (isRecord(value) && 'energy' in value) return asNumber(value['energy'])
   return asNumber(value)
 }
 
@@ -138,9 +156,69 @@ export function decodeMatterAttribute(input: {
       return decodeElectricalPower(attributeId, value)
     case MatterClusterId.ElectricalEnergyMeasurement:
       return decodeElectricalEnergy(attributeId, value)
+    case MatterClusterId.DoorLock:
+      return decodeDoorLock(attributeId, value)
     default:
       return null
   }
+}
+
+/** LockState enum → cap state. NotFullyLocked has no cap value of its own. */
+const LOCK_STATE_TO_CAP: ReadonlyMap<number, { readonly state: string; readonly detail?: string }> =
+  new Map([
+    [0, { state: 'jammed', detail: 'not-fully-locked' }],
+    [1, { state: 'locked' }],
+    [2, { state: 'unlocked' }],
+    [3, { state: 'unlocked', detail: 'unlatched' }],
+  ])
+
+/** DoorState enum → a detail. Only DoorJammed also moves the lock cap. */
+const DOOR_STATE_DETAIL: ReadonlyMap<number, string> = new Map([
+  [0, 'door-open'],
+  [1, 'door-closed'],
+  [2, 'door-jammed'],
+  [3, 'door-forced-open'],
+  [4, 'door-unspecified'],
+  [5, 'door-ajar'],
+])
+
+function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute | null {
+  if (attributeId === MatterAttributeId.LockState) {
+    const raw = asNumber(value)
+    if (raw === null) return null
+    const mapped = LOCK_STATE_TO_CAP.get(raw)
+    if (mapped === undefined) return null
+    const decoded: DecodedAttribute = {
+      cap: 'lock-control',
+      patch: { state: mapped.state, lastChangedAt: Date.now() },
+      ...(mapped.detail !== undefined ? { detail: mapped.detail } : {}),
+    }
+    return decoded
+  }
+  if (attributeId === MatterAttributeId.DoorState) {
+    const raw = asNumber(value)
+    if (raw === null) return null
+    const detail = DOOR_STATE_DETAIL.get(raw)
+    if (detail === undefined) return null
+    if (detail === 'door-jammed') {
+      return {
+        cap: 'lock-control',
+        patch: { state: 'jammed', lastChangedAt: Date.now() },
+        detail,
+      }
+    }
+    return { cap: 'lock-control', patch: {}, detail }
+  }
+  if (attributeId === MatterAttributeId.RequirePinForRemoteOperation) {
+    const required = asBoolean(value)
+    if (required === null) return null
+    return {
+      cap: 'lock-control',
+      patch: {},
+      detail: required ? 'pin-required' : 'pin-not-required',
+    }
+  }
+  return null
 }
 
 function decodeOnOff(attributeId: number, value: unknown): DecodedAttribute | null {

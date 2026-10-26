@@ -56,7 +56,13 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
     this.nodeId = cfg.nodeId
     this.integrationId = cfg.integrationId
     this.online = matterNodes.getNode(this.brokerId, this.nodeId)?.online ?? false
+    matterNodes.bindDevice(this.nodeId, this.id)
     void this.updateSourceInfo({ id: this.nodeId, system: 'matter' })
+  }
+
+  override async removeDevice(): Promise<void> {
+    matterNodes.unbindDevice(this.nodeId)
+    await super.removeDevice()
   }
 
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {

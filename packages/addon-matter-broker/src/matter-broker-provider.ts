@@ -1,5 +1,10 @@
 import { errMsg, type IBrokerProvider, type IScopedLogger } from '@camstack/types'
-import { buildConnectionFormSchema, settingsToMatterConnection } from './config.js'
+import {
+  buildConnectionFormSchema,
+  mergeMatterSecrets,
+  publicMatterConnection,
+  settingsToMatterConnection,
+} from './config.js'
 import type { MatterBrokerEntry } from './config.js'
 import type { MatterBrokerRegistry } from './matter-broker-registry.js'
 import { parsePairingCode } from './matter-commissioning.js'
@@ -18,6 +23,7 @@ export interface MatterBrokerProviderDeps {
     | 'size'
     | 'connectedCount'
     | 'commissionNode'
+    | 'getCommissionProgress'
   >
   readonly getBrokers: () => readonly MatterBrokerEntry[]
   readonly persistBrokers: (brokers: readonly MatterBrokerEntry[]) => Promise<void>
@@ -29,19 +35,17 @@ export interface MatterBrokerProviderDeps {
  * Construct the `broker` cap provider for the Matter addon. Pure builder.
  * Mirrors `buildEcowittBrokerProvider`. The defining Matter operation —
  * commissioning — is surfaced through `publish` with
- * `target: { action: 'commissionNode' }` and `payload: { pairingCode }`. The
- * Wi-Fi password is the only secret; it is redacted on settings reads and
- * preserved on an empty round-trip.
+ * `target: { action: 'commissionNode' }` and `payload: { pairingCode }`.
+ * `threadDataset` and `wifiPassword` are redacted on settings reads and
+ * preserved on an empty round-trip. Fabric keys stay in matter.js storage.
  */
 export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrokerProvider {
   const { ownerAddonId, registry, getBrokers, persistBrokers, cascadeRemoveDevices, logger } = deps
 
   const owns = (id: string): boolean => getBrokers().some((b) => b.id === id)
 
-  const redact = (entry: MatterBrokerEntry): Record<string, unknown> => ({
-    ...entry.connection,
-    wifiPassword: '',
-  })
+  const redact = (entry: MatterBrokerEntry): Record<string, unknown> =>
+    publicMatterConnection(entry.connection)
 
   return {
     list: async ({ kind }) => {
@@ -102,13 +106,7 @@ export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrok
       const existing = getBrokers().find((b) => b.id === id)
       if (!existing) return
       const parsed = settingsToMatterConnection(settings)
-      // Preserve a stored Wi-Fi password when the incoming one is the redacted
-      // (empty) round-trip value.
-      const merged = {
-        ...parsed,
-        wifiPassword:
-          parsed.wifiPassword.length > 0 ? parsed.wifiPassword : existing.connection.wifiPassword,
-      }
+      const merged = mergeMatterSecrets(existing.connection, parsed)
       const updated = await registry.updateEntry(id, merged)
       await persistBrokers(getBrokers().map((b) => (b.id === id ? updated : b)))
     },
@@ -142,10 +140,7 @@ export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrok
       if (!owns(brokerId)) throw new Error(`matter: unknown broker ${brokerId}`)
       const action = typeof target['action'] === 'string' ? target['action'] : undefined
       if (action === 'commissionNode') {
-        const code =
-          typeof payload === 'object' && payload !== null && 'pairingCode' in payload
-            ? String((payload as Record<string, unknown>)['pairingCode'] ?? '')
-            : ''
+        const code = pairingCodeFromPayload(payload)
         // Fail fast on a malformed code before touching the controller.
         parsePairingCode(code)
         return registry.commissionNode(brokerId, code)
@@ -156,11 +151,22 @@ export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrok
     // ── Pub/sub: attribute reports flow over the event bus as broker.message ──
     subscribe: async () => ({ subscriptionId: '' }),
     unsubscribe: async () => undefined,
-    getState: async () => null,
+    getState: async ({ brokerId, key }) => {
+      if (key !== 'commission') return null
+      return registry.getCommissionProgress(brokerId)
+    },
 
     getStatus: async () => ({
       brokerCount: registry.size(),
       connectedCount: registry.connectedCount(),
     }),
   }
+}
+
+function pairingCodeFromPayload(payload: unknown): string {
+  if (typeof payload !== 'object' || payload === null || !('pairingCode' in payload)) return ''
+  const code = payload.pairingCode
+  if (typeof code === 'string') return code
+  if (typeof code === 'number' && Number.isFinite(code)) return String(code)
+  return ''
 }

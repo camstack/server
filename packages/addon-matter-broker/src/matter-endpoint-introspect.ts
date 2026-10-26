@@ -58,6 +58,9 @@ const ATTR_NAME_TO_ID: ReadonlyMap<string, number> = new Map<string, number>([
   ['activeCurrent', MatterAttributeId.ActiveCurrent],
   ['activePower', MatterAttributeId.ActivePower],
   ['cumulativeEnergyImported', MatterAttributeId.CumulativeEnergyImported],
+  ['lockState', MatterAttributeId.LockState],
+  ['doorState', MatterAttributeId.DoorState],
+  ['requirePinForRemoteOperation', MatterAttributeId.RequirePinForRemoteOperation],
 ])
 
 /** clusterId → matter.js behavior id (camelCase) for outbound command clusters. */
