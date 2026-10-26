@@ -9800,13 +9800,30 @@
       "light-color-mired": "Bianco"
     },
     "newComposition": "Nuova composizione",
-    "newOf": "Nuovo {{name}}",
     "saveOpen": "Salva e apri il dispositivo",
     "saveMore": "Salva e creane un altro",
     "created": "<device>{{name}}</device> è stato creato.",
     "supportedOperations": "Operazioni disponibili",
     "detailsOf": "Dettagli di {{name}}",
     "devicePending": "Il nuovo dispositivo non è ancora nell'elenco.",
-    "noTemplates": "Nessun tipo di helper è disponibile."
+    "noTemplates": "Nessun tipo di helper è disponibile.",
+    "newTitle": {
+      "temperature": "Nuovo sensore di temperatura",
+      "humidity": "Nuovo sensore di umidità",
+      "pressure": "Nuovo sensore di pressione",
+      "illuminance": "Nuovo sensore di luminosità",
+      "power": "Nuovo misuratore di potenza",
+      "energy": "Nuovo misuratore di energia",
+      "battery": "Nuovo sensore di batteria",
+      "numeric": "Nuovo sensore numerico",
+      "motion": "Nuovo sensore di movimento",
+      "contact": "Nuovo sensore di contatto",
+      "leak": "Nuovo sensore di perdite",
+      "smoke": "Nuovo sensore di fumo",
+      "occupancy": "Nuovo sensore di presenza",
+      "binary": "Nuovo sensore binario",
+      "switch": "Nuovo gruppo di interruttori",
+      "light": "Nuovo gruppo di luci"
+    }
   }
 }

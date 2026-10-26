@@ -23,7 +23,6 @@ import {
   refusalFromMessage,
   sharedCapsView,
   specFromDraft,
-  helperKindName,
   withActive,
   withAggregate,
   withTemplate,
@@ -149,28 +148,6 @@ describe('helper template groups', () => {
     expect(next.aggregate).toBe('mean')
   })
 
-  it('names a new helper from the template and the device type', () => {
-    expect(
-      helperKindName({
-        family: 'numeric',
-        templateLabel: 'Temperature',
-        typeLabel: 'Sensor',
-      }),
-    ).toBe('Temperature sensor')
-    expect(helperKindName({ family: 'binary', templateLabel: 'Motion', typeLabel: 'Sensor' })).toBe(
-      'Motion sensor',
-    )
-    expect(
-      helperKindName({
-        family: 'binary',
-        templateLabel: 'Motion sensor',
-        typeLabel: 'Sensor',
-      }),
-    ).toBe('Motion sensor')
-    expect(
-      helperKindName({ family: 'actuator', templateLabel: 'Light group', typeLabel: 'Light' }),
-    ).toBe('Light group')
-  })
 })
 
 describe('editing a stored helper', () => {
@@ -281,3 +258,15 @@ function requireTemplate(id: 'temperature'): GroupTemplate {
   if (template === null) throw new Error('missing template')
   return template
 }
+
+describe('the helper dialog title', () => {
+  it('has a whole phrase for every template in both locales', async () => {
+    const { GROUP_TEMPLATES } = await import('@camstack/types')
+    const en = (await import('../../../i18n/en.json')).default.helper.newTitle as Record<string, string>
+    const it_ = (await import('../../../i18n/it.json')).default.helper.newTitle as Record<string, string>
+    for (const template of GROUP_TEMPLATES) {
+      expect(en[template.id], template.id).toBeTruthy()
+      expect(it_[template.id], template.id).toBeTruthy()
+    }
+  })
+})

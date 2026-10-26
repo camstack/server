@@ -11,11 +11,9 @@ import {
 import {
   Button,
   deviceRoleMetaOf,
-  deviceTypeMeta,
   deviceTypeMetaOf,
   Input,
   Select,
-  type UiTextFn,
   useCoreBlocksCreateComposition,
   useDeviceManagerListPersistedByAddon,
   useDeviceManagerSetName,
@@ -30,7 +28,6 @@ import { buildSkeletonComposition } from './build-skeleton'
 import { HelperWizard } from './HelperWizard'
 import {
   type HelperFormDraft,
-  helperKindName,
   type HelperSaveIntent,
   type HelperSaveResult,
   type RefusalLine,
@@ -61,13 +58,12 @@ export function CompositionCreateForm({ mode, onTitle }: CompositionCreateFormPr
 
 function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const { t } = useTranslation()
-  const uiText = useUiText()
   const navigate = useNavigate()
   const create = useCoreBlocksCreateComposition()
   const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
   const [draft, setDraft] = useState<HelperFormDraft | null>(null)
-  const title = titleForDraft(draft, t, uiText)
+  const title = titleForDraft(draft, t)
 
   useEffect(() => {
     onTitle(title)
@@ -239,16 +235,13 @@ async function saveBlank(input: BlankSave): Promise<void> {
   }
 }
 
-function titleForDraft(draft: HelperFormDraft | null, t: TFunction, uiText: UiTextFn): string {
+function titleForDraft(draft: HelperFormDraft | null, t: TFunction): string {
   if (draft === null) return t('helper.newHelper')
   const template = groupTemplate(draft.templateId)
   if (template === null) return t('helper.newHelper')
-  const name = helperKindName({
-    family: template.family,
-    templateLabel: t(`helper.template.${template.id}`),
-    typeLabel: deviceTypeMeta(template.deviceType, uiText).label,
-  })
-  return t('helper.newOf', { name })
+  // One whole phrase per template and locale: gluing a type word and a
+  // template word reads backwards in Italian ("Nuovo Temperatura sensore").
+  return t(`helper.newTitle.${template.id}`)
 }
 
 async function deviceIdForBlock(

@@ -9778,13 +9778,30 @@
       "light-color-mired": "White"
     },
     "newComposition": "New composition",
-    "newOf": "New {{name}}",
     "saveOpen": "Save and open device",
     "saveMore": "Save and create more",
     "created": "<device>{{name}}</device> was created.",
     "supportedOperations": "Supported operations",
     "detailsOf": "Details for {{name}}",
     "devicePending": "The new device is not in the list yet.",
-    "noTemplates": "No helper types are available."
+    "noTemplates": "No helper types are available.",
+    "newTitle": {
+      "temperature": "New temperature sensor",
+      "humidity": "New humidity sensor",
+      "pressure": "New pressure sensor",
+      "illuminance": "New light sensor",
+      "power": "New power meter",
+      "energy": "New energy meter",
+      "battery": "New battery sensor",
+      "numeric": "New numeric sensor",
+      "motion": "New motion sensor",
+      "contact": "New contact sensor",
+      "leak": "New leak sensor",
+      "smoke": "New smoke sensor",
+      "occupancy": "New occupancy sensor",
+      "binary": "New binary sensor",
+      "switch": "New switch group",
+      "light": "New light group"
+    }
   }
 }
