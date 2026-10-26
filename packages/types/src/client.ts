@@ -135,4 +135,10 @@ export {
   // Paired system events as one class (D906).
   expandSystemEventClasses,
   withSystemEventClasses,
+  // The display palette (D939): the viewer reads it from the hub and falls
+  // back to the bundled preset when the hub answers `unknown`.
+  bundledCamstack,
+  paintHex,
+  paletteResultSchema,
 } from './index.js'
+export type { PaletteReady, PaletteResult, PaletteEntryId, PalettePresetId } from './index.js'
