@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildSyncDevice, SUPPORTED_DEVICE_KINDS } from '../google-home/device-model.js'
+import { DeviceType } from '@camstack/types'
+import {
+  buildSyncDevice,
+  resolveGoogleDeviceType,
+  SUPPORTED_DEVICE_KINDS,
+} from '../google-home/device-model.js'
 import { facts } from './fakes.js'
 
 describe('buildSyncDevice', () => {
@@ -79,5 +84,12 @@ describe('SUPPORTED_DEVICE_KINDS', () => {
     expect(SUPPORTED_DEVICE_KINDS.toSorted()).toEqual(
       ['cover', 'light', 'lock', 'siren', 'switch'].toSorted(),
     )
+  })
+
+  it('does not turn a washer into a switch just because power could look like OnOff', () => {
+    expect(resolveGoogleDeviceType(DeviceType.Washer, ['action.devices.traits.OnOff'])).toBeNull()
+    expect(SUPPORTED_DEVICE_KINDS).not.toContain(DeviceType.Washer)
+    expect(SUPPORTED_DEVICE_KINDS).not.toContain(DeviceType.Dryer)
+    expect(SUPPORTED_DEVICE_KINDS).not.toContain(DeviceType.Dishwasher)
   })
 })

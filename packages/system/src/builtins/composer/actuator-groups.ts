@@ -122,7 +122,7 @@ export class ActuatorGroups {
 
   private async remember(block: ActuatorBlock): Promise<RememberedGroup | null> {
     const spec = block.helper
-    if (spec === undefined) return null
+    if (spec === undefined || spec.kind !== 'group') return null
     const template = groupTemplate(spec.templateId)
     if (template === null || template.family !== 'actuator') return null
     if (template.id !== 'switch' && template.id !== 'light') return null

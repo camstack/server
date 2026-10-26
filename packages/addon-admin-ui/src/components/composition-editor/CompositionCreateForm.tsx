@@ -237,6 +237,10 @@ async function saveBlank(input: BlankSave): Promise<void> {
 
 function titleForDraft(draft: HelperFormDraft | null, t: TFunction): string {
   if (draft === null) return t('helper.newHelper')
+  if (draft.templateId === 'appliance' && draft.appliance !== null) {
+    return t(`helper.newTitle.${draft.appliance}`)
+  }
+  if (draft.templateId === 'appliance') return t('helper.newHelper')
   const template = groupTemplate(draft.templateId)
   if (template === null) return t('helper.newHelper')
   // One whole phrase per template and locale: gluing a type word and a

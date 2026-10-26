@@ -989,6 +989,17 @@ export {
 // ── Device architecture ──────────────────────────────────────────────
 // DeviceType (enum), DeviceFeature, ChargingStatus, DeviceRole
 export { ChargingStatus, DeviceFeature, DeviceRole, DeviceType } from './device/device-type.js'
+export {
+  APPLIANCE_EXPORT,
+  type ApplianceExportDecision,
+  type ApplianceExportEcosystem,
+  type ApplianceExported,
+  type ApplianceNotExported,
+  type PlugApplianceType,
+  PLUG_APPLIANCE_TYPES,
+  applianceExport,
+  isPlugApplianceType,
+} from './device/appliance-export.js'
 // Device feature interfaces
 export type {
   IBatteryOperated,

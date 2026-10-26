@@ -56,7 +56,13 @@ function actuator(
 
 function context(composition: Composition, deviceType: DeviceType): ValidateCompositionContext {
   const sources = new Map<string, CompositionSourceDescription>()
-  for (const [index, item] of composition.helper?.members.entries() ?? []) {
+  const members =
+    composition.helper === undefined
+      ? []
+      : composition.helper.kind === 'group'
+        ? composition.helper.members
+        : [composition.helper.member]
+  for (const [index, item] of members.entries()) {
     sources.set(compositionSourceKey(item.source), {
       kind: 'found',
       deviceId: 5000 + index,

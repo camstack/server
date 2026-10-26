@@ -20,7 +20,7 @@
  */
 
 import type { AddonContext, DeviceProxy } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import { applianceExport, DeviceType } from '@camstack/types'
 import type { CharacteristicWarning } from '@homebridge/hap-nodejs'
 import { Categories, Characteristic, Service } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'
@@ -140,6 +140,14 @@ describe('pickMapperKind', () => {
     // accessory with no services on it.
     expect(pickMapperKind(DeviceType.MediaPlayer)).toBeNull()
     expect(HAP_EXPORTABLE_DEVICE_TYPES).not.toContain(DeviceType.MediaPlayer)
+  })
+
+  it('refuses a washer, a dryer and a dishwasher', () => {
+    for (const type of [DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher]) {
+      expect(pickMapperKind(type)).toBeNull()
+      expect(HAP_EXPORTABLE_DEVICE_TYPES).not.toContain(type)
+      expect(applianceExport('homekit', type)?.exported).toBe(false)
+    }
   })
 
   it('falls back to the camera path when the device type is unknown', () => {

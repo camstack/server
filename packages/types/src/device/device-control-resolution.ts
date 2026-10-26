@@ -106,6 +106,10 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Image]: 'image',
   [DeviceType.PetFeeder]: 'pet-feeder',
   [DeviceType.Dishwasher]: 'dishwasher',
+  // No program surface. The list row stays a placeholder; power and running
+  // are readings on the device, not an inline control.
+  [DeviceType.Washer]: 'dummy',
+  [DeviceType.Dryer]: 'dummy',
 }
 
 const DEVICE_TYPE_VALUES = new Set<string>(Object.values(DeviceType))

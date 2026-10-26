@@ -46,9 +46,9 @@ import { helperSaveProblems, type HelperMemberFact } from '../save.js'
 import { sourcePickForTemplate } from '../source-pick.js'
 import {
   GROUP_TEMPLATE_IDS,
+  type GroupHelperSpec,
   type GroupTemplateId,
   type HelperMember,
-  type HelperSpec,
 } from '../spec.js'
 
 const lookupCap = buildCapabilityLookup([
@@ -78,9 +78,9 @@ function member(n: number, cap: string, fieldPath: string): HelperMember {
 
 function group(
   templateId: GroupTemplateId,
-  aggregate: HelperSpec['aggregate'],
+  aggregate: GroupHelperSpec['aggregate'],
   members: readonly HelperMember[],
-): HelperSpec {
+): GroupHelperSpec {
   return { kind: 'group', templateId, aggregate, members: [...members] }
 }
 
@@ -402,7 +402,13 @@ function context(
   deviceType: DeviceType = DeviceType.Sensor,
 ): ValidateCompositionContext {
   const sources = new Map<string, CompositionSourceDescription>()
-  for (const [index, item] of composition.helper?.members.entries() ?? []) {
+  const members =
+    composition.helper === undefined
+      ? []
+      : composition.helper.kind === 'group'
+        ? composition.helper.members
+        : [composition.helper.member]
+  for (const [index, item] of members.entries()) {
     sources.set(compositionSourceKey(item.source), {
       kind: 'found',
       deviceId: 4000 + index,
@@ -419,7 +425,13 @@ function factMap(
   bySensor: Readonly<Record<number, HelperMemberFact>>,
 ): ReadonlyMap<string, HelperMemberFact> {
   const facts = new Map<string, HelperMemberFact>()
-  for (const item of composition.helper?.members ?? []) {
+  const members =
+    composition.helper === undefined
+      ? []
+      : composition.helper.kind === 'group'
+        ? composition.helper.members
+        : [composition.helper.member]
+  for (const item of members) {
     const n = Number(item.source.stableId.replace('sensor-', ''))
     const fact = bySensor[n]
     if (fact !== undefined) facts.set(compositionSourceKey(item.source), fact)

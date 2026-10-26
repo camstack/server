@@ -11,6 +11,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
+  canSaveDraft,
   commandResultsFromSnapshot,
   draftForTemplate,
   draftFromHelper,
@@ -25,6 +26,7 @@ import {
   specFromDraft,
   withActive,
   withAggregate,
+  withAppliance,
   withTemplate,
 } from '../helper-form-model'
 
@@ -65,6 +67,7 @@ describe('helper template groups', () => {
         templateIds: ['motion', 'contact', 'leak', 'smoke', 'occupancy', 'binary'],
       },
       { id: 'actuators', templateIds: ['switch', 'light'] },
+      { id: 'appliances', templateIds: ['appliance'] },
     ])
   })
 
@@ -75,11 +78,17 @@ describe('helper template groups', () => {
     if (draft === null) return
     const all = withActive(draft, 'all')
     expect(all.aggregate).toBe('all')
-    expect(specFromDraft(all).active).toBe('all')
-    const back = draftFromHelper(specFromDraft(all), 'Porch', '')
+    const stored = specFromDraft(all)
+    expect(stored?.kind).toBe('group')
+    if (stored?.kind !== 'group') return
+    expect(stored.active).toBe('all')
+    const back = draftFromHelper(stored, 'Porch', '')
     expect(back?.active).toBe('all')
     expect(draftForTemplate('temperature')?.active).toBeNull()
-    expect(specFromDraft(draftForTemplate('temperature') ?? draft).active).toBeUndefined()
+    const temperature = specFromDraft(draftForTemplate('temperature') ?? draft)
+    expect(temperature?.kind).toBe('group')
+    if (temperature?.kind !== 'group') return
+    expect(temperature.active).toBeUndefined()
   })
 
   it('does not treat an unanswered member as a light with no shared controls', () => {
@@ -147,7 +156,6 @@ describe('helper template groups', () => {
     expect(next.members).toEqual([])
     expect(next.aggregate).toBe('mean')
   })
-
 })
 
 describe('editing a stored helper', () => {
@@ -157,9 +165,10 @@ describe('editing a stored helper', () => {
     expect(draft?.templateId).toBe('temperature')
     expect(draft?.aggregate).toBe('mean')
     expect(draft?.members).toEqual([porch, garden])
-    expect(specFromDraft(draft ?? specAsDraft(spec)).members[0]?.source).not.toBe(
-      spec.members[0]?.source,
-    )
+    const roundTrip = specFromDraft(draft ?? specAsDraft(spec))
+    expect(roundTrip?.kind).toBe('group')
+    if (roundTrip?.kind !== 'group') return
+    expect(roundTrip.members[0]?.source).not.toBe(spec.members[0]?.source)
     const compiled = compileHelper(spec)
     expect(compiled.ok).toBe(true)
     if (!compiled.ok) return
@@ -247,6 +256,10 @@ function specAsDraft(spec: GroupHelperSpec) {
     templateId: spec.templateId,
     aggregate: spec.aggregate,
     active: spec.active ?? null,
+    appliance: null,
+    thresholdWatts: 0,
+    startDwellMs: 0,
+    stopDwellMs: 0,
     name: '',
     room: '',
     members: spec.members,
@@ -259,14 +272,60 @@ function requireTemplate(id: 'temperature'): GroupTemplate {
   return template
 }
 
+describe('an appliance from a smart plug', () => {
+  const plug: HelperMember = {
+    source: { addonId: 'provider-homeassistant', stableId: 'sensor.plug_power' },
+    cap: 'power-meter',
+    fieldPath: 'watts',
+  }
+
+  it('compiles one power reading with the washer defaults and reopens the saved numbers', () => {
+    const draft = draftForTemplate('appliance')
+    expect(draft?.appliance).toBe('washer')
+    expect(draft?.thresholdWatts).toBe(5)
+    expect(draft?.startDwellMs).toBe(30_000)
+    expect(draft?.stopDwellMs).toBe(600_000)
+    expect(canSaveDraft(draft ?? specAsDraft(temperature([porch])))).toBe(false)
+    if (draft === null) return
+    const filled = { ...draft, name: 'Laundry', members: [plug] }
+    expect(canSaveDraft(filled)).toBe(true)
+    expect(withTemplate(filled, 'appliance')).toBe(filled)
+    const spec = specFromDraft(filled)
+    expect(spec?.kind).toBe('appliance')
+    if (spec?.kind !== 'appliance') return
+    expect(spec.thresholdWatts).toBe(5)
+    expect(spec.stopDwellMs).toBe(600_000)
+    const compiled = compileHelper(spec)
+    expect(compiled.ok).toBe(true)
+    const dryer = withAppliance(filled, 'dryer')
+    expect(dryer.appliance).toBe('dryer')
+    expect(dryer.stopDwellMs).toBe(600_000)
+    const reopened = draftFromHelper({ ...spec, thresholdWatts: 8 }, 'Laundry', '')
+    expect(reopened?.thresholdWatts).toBe(8)
+    expect(reopened?.members).toEqual([plug])
+  })
+})
+
 describe('the helper dialog title', () => {
   it('has a whole phrase for every template in both locales', async () => {
     const { GROUP_TEMPLATES } = await import('@camstack/types')
-    const en = (await import('../../../i18n/en.json')).default.helper.newTitle as Record<string, string>
-    const it_ = (await import('../../../i18n/it.json')).default.helper.newTitle as Record<string, string>
+    const en = (await import('../../../i18n/en.json')).default.helper.newTitle as Record<
+      string,
+      string
+    >
+    const it_ = (await import('../../../i18n/it.json')).default.helper.newTitle as Record<
+      string,
+      string
+    >
     for (const template of GROUP_TEMPLATES) {
       expect(en[template.id], template.id).toBeTruthy()
       expect(it_[template.id], template.id).toBeTruthy()
     }
+    expect(en.washer).toBe('New washing machine')
+    expect(it_.washer).toBe('Nuova lavatrice')
+    expect(en.dryer).toBe('New dryer')
+    expect(it_.dryer).toBe('Nuova asciugatrice')
+    expect(en.dishwasher).toBe('New dishwasher')
+    expect(it_.dishwasher).toBe('Nuova lavastoviglie')
   })
 })

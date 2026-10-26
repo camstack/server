@@ -3,6 +3,7 @@
  * features are a projection; the editor never edits the expression.
  */
 import { z } from 'zod'
+import { APPLIANCE_KINDS, APPLIANCE_TEMPLATE_ID } from './appliance.js'
 import { CompositionSourceRefSchema } from '../source-ref.js'
 
 /** A group may name more members than an expression call (the 16-arg cap). */
@@ -77,6 +78,32 @@ export const GroupHelperSpecSchema: z.ZodObject<{
 })
 export type GroupHelperSpec = z.infer<typeof GroupHelperSpecSchema>
 
-export const HelperSpecSchema: z.ZodDiscriminatedUnion<[typeof GroupHelperSpecSchema], 'kind'> =
-  z.discriminatedUnion('kind', [GroupHelperSpecSchema])
+export const ApplianceHelperSpecSchema: z.ZodObject<{
+  kind: z.ZodLiteral<'appliance'>
+  templateId: z.ZodLiteral<typeof APPLIANCE_TEMPLATE_ID>
+  appliance: z.ZodEnum<{ washer: 'washer'; dryer: 'dryer'; dishwasher: 'dishwasher' }>
+  thresholdWatts: z.ZodNumber
+  startDwellMs: z.ZodNumber
+  stopDwellMs: z.ZodNumber
+  member: typeof HelperMemberSchema
+}> = z.object({
+  kind: z.literal('appliance'),
+  templateId: z.literal(APPLIANCE_TEMPLATE_ID),
+  appliance: z.enum(APPLIANCE_KINDS),
+  thresholdWatts: z.number().positive(),
+  startDwellMs: z.number().int().nonnegative(),
+  stopDwellMs: z.number().int().nonnegative(),
+  member: HelperMemberSchema,
+})
+export type ApplianceHelperSpec = z.infer<typeof ApplianceHelperSpecSchema>
+
+export const HelperSpecSchema: z.ZodDiscriminatedUnion<
+  [typeof GroupHelperSpecSchema, typeof ApplianceHelperSpecSchema],
+  'kind'
+> = z.discriminatedUnion('kind', [GroupHelperSpecSchema, ApplianceHelperSpecSchema])
 export type HelperSpec = z.infer<typeof HelperSpecSchema>
+
+/** Every member a helper reads. An appliance has one. */
+export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
+  return spec.kind === 'group' ? spec.members : [spec.member]
+}

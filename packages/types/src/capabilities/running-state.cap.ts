@@ -36,10 +36,12 @@ const RUNNING_DEVICE_TYPES: readonly DeviceType[] = Object.values(DeviceType)
 /**
  * Customize offers "running" only where a job makes sense (D933): a cycle,
  * a clean, a mow, playback, or another appliance that is on and working.
- * Washer and dryer are not device types yet. The cap itself stays on every
- * type — a camera can still report running natively; it just has no card.
+ * The cap itself stays on every type — a camera can still report running
+ * natively; it just has no card.
  */
 const RUNNING_CUSTOMIZE_DEVICE_TYPES = [
+  DeviceType.Washer,
+  DeviceType.Dryer,
   DeviceType.Dishwasher,
   DeviceType.Vacuum,
   DeviceType.LawnMower,

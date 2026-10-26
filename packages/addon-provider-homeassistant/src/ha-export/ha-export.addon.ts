@@ -142,6 +142,7 @@ import {
   syntheticPlans,
 } from './synthetic-devices.js'
 import { parseCommandTopic, stateTopic } from './topics.js'
+import { SUPPORTED_DEVICE_KINDS } from './supported-device-kinds.js'
 import type {
   CatalogDevice,
   CatalogFunctionSwitch,
@@ -3098,37 +3099,6 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
  * CAPABILITIES, not its type, and restricting the picker by type is what
  * confined the previous exporter to cameras.
  */
-const SUPPORTED_DEVICE_KINDS: readonly string[] = [
-  'camera',
-  'light',
-  'siren',
-  'switch',
-  'sensor',
-  'thermostat',
-  'climate',
-  'button',
-  'event-emitter',
-  'update',
-  'generic',
-  'lock',
-  'cover',
-  'valve',
-  'humidifier',
-  'water-heater',
-  'fan',
-  'media-player',
-  'alarm-panel',
-  'control',
-  'presence',
-  'weather',
-  'vacuum',
-  'lawn-mower',
-  'container',
-  'image',
-  'pet-feeder',
-  'hub',
-]
-
 /**
  * POST one message to Home Assistant's push view.
  *

@@ -5,7 +5,7 @@
  * Separate from `index.ts` (the factory registry) only so the orchestrators can
  * import the uuid convention without importing the registry that imports them.
  */
-import { DeviceType } from '@camstack/types'
+import { applianceExport, DeviceType } from '@camstack/types'
 import { uuid } from '@homebridge/hap-nodejs'
 
 /** Mapper kind id — the orchestrator that builds a device's accessory. */
@@ -58,6 +58,8 @@ export const HAP_EXPORTABLE_DEVICE_TYPES: readonly DeviceType[] = [
 export function pickMapperKind(deviceType: string | null | undefined): MapperKind | null {
   if (deviceType === null || deviceType === undefined || deviceType.length === 0) return 'camera'
   if (deviceType === DeviceType.Camera) return 'camera'
+  const withheld = applianceExport('homekit', deviceType)
+  if (withheld !== null && !withheld.exported) return null
   const known = HAP_EXPORTABLE_DEVICE_TYPES.find((type) => type === deviceType)
   return known === undefined ? null : 'generic'
 }

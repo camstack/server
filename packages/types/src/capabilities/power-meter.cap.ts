@@ -48,7 +48,7 @@ export const powerMeterCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Sensor],
+  deviceTypes: [DeviceType.Sensor, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher],
   methods: {},
   status: {
     schema: PowerMeterStatusSchema,

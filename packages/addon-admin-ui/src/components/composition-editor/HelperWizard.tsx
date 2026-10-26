@@ -3,7 +3,12 @@
  * reducer / name, members via the common source selector. Back keeps the
  * draft. A different template replaces it.
  */
-import { ACTIVE_CRITERIA, type GroupTemplateId, groupTemplate } from '@camstack/types'
+import {
+  ACTIVE_CRITERIA,
+  APPLIANCE_KINDS,
+  APPLIANCE_TEMPLATE_ID,
+  groupTemplate,
+} from '@camstack/types'
 import { Button, Input, Select } from '@camstack/ui-library'
 import { type ReactNode, useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
@@ -15,12 +20,14 @@ import {
   canSaveDraft,
   draftForTemplate,
   type HelperFormDraft,
+  type HelperPickerId,
   type HelperSaveIntent,
   type HelperSaveResult,
   memberRequest,
   type RefusalLine,
   withActive,
   withAggregate,
+  withAppliance,
   withName,
   withTemplate,
 } from './helper-form-model'
@@ -59,7 +66,7 @@ export function HelperWizard({
     onDraftChange?.(draft)
   }, [draft, onDraftChange])
 
-  const pickTemplate = (templateId: GroupTemplateId): void => {
+  const pickTemplate = (templateId: HelperPickerId): void => {
     setDraft((current) =>
       current === null ? draftForTemplate(templateId) : withTemplate(current, templateId),
     )
@@ -87,7 +94,16 @@ export function HelperWizard({
   }
 
   const request = draft === null ? null : memberRequest(draft)
-  const template = draft === null ? null : groupTemplate(draft.templateId)
+  const template =
+    draft === null || draft.templateId === APPLIANCE_TEMPLATE_ID
+      ? null
+      : groupTemplate(draft.templateId)
+  const stepKey =
+    draft?.templateId === APPLIANCE_TEMPLATE_ID && step === 'parameters'
+      ? 'helper.step.appliance'
+      : draft?.templateId === APPLIANCE_TEMPLATE_ID && step === 'members'
+        ? 'helper.step.applianceMembers'
+        : `helper.step.${step}`
 
   return (
     <div className="flex flex-col gap-3" data-testid="helper-wizard">
@@ -104,8 +120,11 @@ export function HelperWizard({
           />
         </p>
       )}
-      <p className="text-[11px] text-foreground-muted">{t(`helper.step.${step}`)}</p>
+      <p className="text-[11px] text-foreground-muted">{t(stepKey)}</p>
       {step === 'template' && <HelperTemplatePicker onPick={pickTemplate} />}
+      {step === 'parameters' && draft !== null && draft.templateId === APPLIANCE_TEMPLATE_ID && (
+        <ApplianceParameters draft={draft} onDraft={(next) => setDraft(next)} />
+      )}
       {step === 'parameters' && draft !== null && template !== null && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {template.family === 'actuator' && draft.active !== null ? (
@@ -228,6 +247,114 @@ export function HelperWizard({
         )}
       </div>
     </div>
+  )
+}
+
+const MS_PER_MINUTE = 60_000
+
+interface ApplianceParametersProps {
+  readonly draft: HelperFormDraft
+  readonly onDraft: (draft: HelperFormDraft) => void
+}
+
+function ApplianceParameters({ draft, onDraft }: ApplianceParametersProps): ReactNode {
+  const { t } = useTranslation()
+  const kind = draft.appliance ?? 'washer'
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <label className="flex flex-col gap-1 text-[11px]">
+        {t('helper.applianceType')}
+        <Select
+          aria-label={t('helper.applianceType')}
+          data-testid="helper-appliance"
+          value={kind}
+          onChange={(event) => {
+            const next = APPLIANCE_KINDS.find((item) => item === event.target.value)
+            if (next !== undefined) onDraft(withAppliance(draft, next))
+          }}
+          options={APPLIANCE_KINDS.map((item) => ({
+            value: item,
+            label: t(`helper.appliance.${item}`),
+          }))}
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px]">
+        {t('helper.name')}
+        <Input
+          aria-label={t('helper.name')}
+          data-testid="helper-name"
+          value={draft.name}
+          onChange={(event) => onDraft(withName(draft, event.target.value))}
+        />
+      </label>
+      <NumberField
+        label={t('helper.threshold')}
+        testId="helper-threshold"
+        value={String(draft.thresholdWatts)}
+        onValue={(text) => {
+          const watts = positiveNumber(text)
+          if (watts !== null) onDraft({ ...draft, thresholdWatts: watts })
+        }}
+      />
+      <NumberField
+        label={t('helper.startDwell')}
+        testId="helper-start-dwell"
+        value={minutesText(draft.startDwellMs)}
+        onValue={(text) => {
+          const ms = msFromMinutes(text)
+          if (ms !== null) onDraft({ ...draft, startDwellMs: ms })
+        }}
+      />
+      <NumberField
+        label={t('helper.stopDwell')}
+        testId="helper-stop-dwell"
+        value={minutesText(draft.stopDwellMs)}
+        onValue={(text) => {
+          const ms = msFromMinutes(text)
+          if (ms !== null) onDraft({ ...draft, stopDwellMs: ms })
+        }}
+      />
+    </div>
+  )
+}
+
+function minutesText(ms: number): string {
+  return String(ms / MS_PER_MINUTE)
+}
+
+function msFromMinutes(text: string): number | null {
+  const value = Number(text)
+  if (!Number.isFinite(value) || value < 0) return null
+  return Math.round(value * MS_PER_MINUTE)
+}
+
+function positiveNumber(text: string): number | null {
+  const value = Number(text)
+  if (!Number.isFinite(value) || value <= 0) return null
+  return value
+}
+
+interface NumberFieldProps {
+  readonly label: string
+  readonly testId: string
+  readonly value: string
+  readonly onValue: (text: string) => void
+}
+
+function NumberField({ label, testId, value, onValue }: NumberFieldProps): ReactNode {
+  return (
+    <label className="flex flex-col gap-1 text-[11px]">
+      {label}
+      <Input
+        type="number"
+        min={0}
+        step="any"
+        aria-label={label}
+        data-testid={testId}
+        value={value}
+        onChange={(event) => onValue(event.target.value)}
+      />
+    </label>
   )
 }
 

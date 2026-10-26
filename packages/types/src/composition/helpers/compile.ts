@@ -3,6 +3,7 @@
  * Pure: it stores nothing. A group does not compile to `avg(...)` / `any(...)`.
  */
 import { DeviceType } from '../../device/device-type.js'
+import { dwellExpr, unsignedToken } from '../customize/scalar-expr.js'
 import {
   type Composition,
   type CompositionAggregateSource,
@@ -14,8 +15,14 @@ import {
 import type { CompositionProblem } from '../composition-report.js'
 import { problem } from '../plan-result.js'
 import { reducerForActive } from './actuator.js'
+import { applianceDeviceType } from './appliance.js'
 import { type GroupTemplate, groupTemplate } from './catalog.js'
-import { type GroupHelperSpec, type HelperMember, type HelperSpec } from './spec.js'
+import {
+  type ApplianceHelperSpec,
+  type GroupHelperSpec,
+  type HelperMember,
+  type HelperSpec,
+} from './spec.js'
 
 export interface HelperCompiled {
   readonly ok: true
@@ -80,10 +87,6 @@ function aggregateSource(
     publish,
     empty: template.empty,
   }
-}
-
-function expressionSource(expr: string): CompositionFieldSource {
-  return { kind: 'expression', expr, bindings: {} }
 }
 
 function draftOf(template: GroupTemplate, spec: GroupHelperSpec): unknown {
@@ -172,8 +175,97 @@ function parseDraft(draft: unknown): HelperCompileResult {
   }
 }
 
-/** Compile a group template to a new-device composition. Refusals are named. */
+function expressionSource(
+  expr: string,
+  bindings: CompositionExpressionBindings = {},
+): CompositionFieldSource {
+  return { kind: 'expression', expr, bindings }
+}
+
+type CompositionExpressionBindings = Extract<
+  CompositionFieldSource,
+  { kind: 'expression' }
+>['bindings']
+
+function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
+  const member = spec.member
+  if (member.cap !== 'power-meter' || member.fieldPath !== 'watts') {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'member-constraint',
+          'helper.member',
+          'an appliance helper reads power-meter.watts',
+        ),
+      ],
+    }
+  }
+  const threshold = unsignedToken(spec.thresholdWatts)
+  const start = unsignedToken(spec.startDwellMs)
+  const stop = unsignedToken(spec.stopDwellMs)
+  if (threshold === null || spec.thresholdWatts <= 0) {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'kind-mismatch',
+          'helper.thresholdWatts',
+          'the threshold is watts above which the appliance is running',
+        ),
+      ],
+    }
+  }
+  if (start === null || stop === null) {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'kind-mismatch',
+          'helper.startDwellMs',
+          'start and stop dwells are a non-negative number of milliseconds',
+        ),
+      ],
+    }
+  }
+  const read = {
+    kind: 'from' as const,
+    source: member.source,
+    cap: member.cap,
+    fieldPath: member.fieldPath,
+  }
+  const dwell = dwellExpr('gte', threshold, start, stop)
+  const clock = expressionSource('now')
+  return parseDraft({
+    target: { kind: 'new', type: applianceDeviceType(spec.appliance) },
+    helper: spec,
+    features: [
+      {
+        kind: 'fields',
+        cap: 'running-state',
+        fields: {
+          running: expressionSource(dwell, { x: read }),
+          source: expressionSource('"assigned"'),
+          phase: expressionSource('null'),
+          lastFetchedAt: clock,
+          since: expressionSource(`latchedAt(${dwell})`, { x: read }),
+        },
+      },
+      {
+        kind: 'fields',
+        cap: 'power-meter',
+        fields: {
+          watts: read,
+          lastFetchedAt: clock,
+        },
+      },
+    ],
+  })
+}
+
+/** Compile a helper template to a new-device composition. Refusals are named. */
 export function compileHelper(spec: HelperSpec): HelperCompileResult {
+  if (spec.kind === 'appliance') return compileAppliance(spec)
   const template = groupTemplate(spec.templateId)
   if (template === null) {
     return {
@@ -216,5 +308,6 @@ export function sameHelperBody(stored: Composition, compiled: Composition): bool
 }
 
 export function templateDeviceType(spec: HelperSpec): DeviceType | null {
+  if (spec.kind === 'appliance') return applianceDeviceType(spec.appliance)
   return groupTemplate(spec.templateId)?.memberDeviceType ?? null
 }

@@ -24,6 +24,7 @@ import type {
   LooseVocabStateTrigger,
   LooseVocabWording,
   VocabActionWording,
+  VocabEventWording,
   VocabIcon,
   VocabLocale,
   VocabStateWording,
@@ -193,6 +194,10 @@ function stateWording(wordings: readonly LooseVocabWording[], field: string): Vo
   return wordings.reduce<VocabStateWording>((acc, w) => ({ ...acc, ...w.state?.[field] }), {})
 }
 
+function eventWording(wordings: readonly LooseVocabWording[], name: string): VocabEventWording {
+  return wordings.reduce<VocabEventWording>((acc, w) => ({ ...acc, ...w.events?.[name] }), {})
+}
+
 function accessOf(cap: string, method: string): CapabilityMethodAccess | undefined {
   return METHOD_ACCESS_MAP[`${kebabToCamel(cap)}.${method}`]?.access
 }
@@ -317,18 +322,20 @@ function resolveState(
 function eventTriggersOf(
   cap: string,
   entry: LooseCapVocabularyEntry,
+  wordings: readonly LooseVocabWording[],
 ): readonly ResolvedEventTrigger[] {
   const out: ResolvedEventTrigger[] = []
-  for (const ev of Object.values(entry.events ?? {})) {
+  for (const [name, ev] of Object.entries(entry.events ?? {})) {
     if ('notOperatorFacing' in ev) continue
+    const wording = eventWording(wordings, name)
     out.push({
       kind: 'event',
       id: `${cap}.event.${ev.category}`,
       cap,
       category: ev.category,
-      label: ev.label,
-      phrase: ev.phrase,
-      icon: ev.icon,
+      label: wording.label ?? ev.label,
+      phrase: wording.phrase ?? ev.phrase,
+      icon: wording.icon ?? ev.icon,
     })
   }
   for (const ev of entry.extraEvents ?? []) {
@@ -359,7 +366,7 @@ export function triggersForDevice(
   for (const [cap, entry] of boundEntries(bindings)) {
     const wordings = wordingsFor(entry, deviceType, role)
     for (const trigger of entry.state ?? []) state.push(resolveState(cap, trigger, wordings))
-    events.push(...eventTriggersOf(cap, entry))
+    events.push(...eventTriggersOf(cap, entry, wordings))
   }
   return [...state, ...events]
 }

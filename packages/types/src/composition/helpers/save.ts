@@ -2,14 +2,14 @@
  * Save-time checks a pure compile cannot make: the compiled features must be
  * this spec's, and members that report a quantity must share one (D944 §4).
  */
-import type { DeviceType } from '../../device/device-type.js'
+import { DeviceType } from '../../device/device-type.js'
 import type { ReadingQuantity } from '../../units/quantity.js'
 import { compositionSourceKey, type Composition } from '../composition.js'
 import type { CompositionProblem } from '../composition-report.js'
 import { problem } from '../plan-result.js'
 import { groupTemplate } from './catalog.js'
 import { compileHelper, sameHelperBody } from './compile.js'
-import type { HelperSpec } from './spec.js'
+import type { GroupHelperSpec } from './spec.js'
 
 /** What a save learned about one member device. Absent keys were not read. */
 export interface HelperMemberFact {
@@ -18,7 +18,7 @@ export interface HelperMemberFact {
 }
 
 function quantityProblems(
-  spec: HelperSpec,
+  spec: GroupHelperSpec,
   facts: ReadonlyMap<string, HelperMemberFact>,
 ): readonly CompositionProblem[] {
   const template = groupTemplate(spec.templateId)
@@ -52,7 +52,7 @@ function quantityProblems(
 }
 
 function deviceTypeProblems(
-  spec: HelperSpec,
+  spec: GroupHelperSpec,
   facts: ReadonlyMap<string, HelperMemberFact>,
 ): readonly CompositionProblem[] {
   const template = groupTemplate(spec.templateId)
@@ -91,5 +91,38 @@ export function helperSaveProblems(
       ),
     ]
   }
+  if (spec.kind === 'appliance') return applianceMemberProblems(spec.member, facts)
   return [...quantityProblems(spec, facts), ...deviceTypeProblems(spec, facts)]
+}
+
+function applianceMemberProblems(
+  member: GroupHelperSpec['members'][number],
+  facts: ReadonlyMap<string, HelperMemberFact>,
+): readonly CompositionProblem[] {
+  const fact = facts.get(compositionSourceKey(member.source))
+  if (fact === undefined) return []
+  const problems: CompositionProblem[] = []
+  if (
+    fact.deviceType !== undefined &&
+    fact.deviceType !== DeviceType.Sensor &&
+    fact.deviceType !== DeviceType.Switch
+  ) {
+    problems.push(
+      problem(
+        'member-constraint',
+        'helper.member',
+        `an appliance helper reads a sensor or a switch; this member is a ${fact.deviceType}`,
+      ),
+    )
+  }
+  if (fact.quantity !== undefined && fact.quantity !== 'power') {
+    problems.push(
+      problem(
+        'mixed-quantity',
+        'helper.member',
+        `an appliance helper reads power (W); this member is ${fact.quantity}`,
+      ),
+    )
+  }
+  return problems
 }

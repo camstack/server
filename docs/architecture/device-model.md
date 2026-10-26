@@ -549,9 +549,12 @@ the spec, so the editor does not reopen it as an expression. A composition
 with no `helper` is a free expression: device 4603's room average is that, and
 `avg` / `any` still include a stale value.
 
-Phase 1a is group templates only, one per base reading (temperature, humidity,
+Phase 1a is group templates, one per base reading (temperature, humidity,
 pressure, illuminance, power, energy, battery, numeric) and one per binary
-reading (motion, contact, leak, smoke, occupancy, binary). A numeric group
+reading (motion, contact, leak, smoke, occupancy, binary), plus one appliance
+template. That template is not a group reducer: one power reading (W) becomes
+a washer, dryer or dishwasher whose running state is power at or above a
+threshold, with a stop dwell long enough to ride over a wash pause. A numeric group
 reduces by mean, median, min, max or sum. A binary group reduces by any or
 all. Members are one device type (`Sensor`) and one catalog field. Occupancy
 reads `motion.detected` or `binary.on`; a presence zone is not a boolean and

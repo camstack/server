@@ -58,6 +58,7 @@ import {
   Type,
   Vibrate,
   Volume2,
+  WashingMachine,
   Waves,
   Wifi,
   Wind,
@@ -256,6 +257,16 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     icon: Waves,
     labelKey: 'uiLibrary.deviceMeta.type.dishwasher',
     labelFallback: 'Dishwasher',
+  },
+  [DeviceType.Washer]: {
+    icon: WashingMachine,
+    labelKey: 'uiLibrary.deviceMeta.type.washer',
+    labelFallback: 'Washing machine',
+  },
+  [DeviceType.Dryer]: {
+    icon: Wind,
+    labelKey: 'uiLibrary.deviceMeta.type.dryer',
+    labelFallback: 'Dryer',
   },
 }
 

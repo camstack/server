@@ -8380,7 +8380,9 @@
         "container": "Container",
         "image": "Image",
         "petFeeder": "Pet feeder",
-        "dishwasher": "Dishwasher"
+        "dishwasher": "Dishwasher",
+        "washer": "Washing machine",
+        "dryer": "Dryer"
       },
       "role": {
         "siren": "Siren",
@@ -9794,7 +9796,8 @@
     "group": {
       "readings": "Readings",
       "binary": "Binary sensors",
-      "actuators": "Actuators"
+      "actuators": "Actuators",
+      "appliances": "Appliances"
     },
     "template": {
       "temperature": "Temperature",
@@ -9828,7 +9831,9 @@
       "switch": "Switch group",
       "switchSummary": "On when at least one is on, or only when every one is. Offline members stay out of that decision and still receive the command.",
       "light": "Light group",
-      "lightSummary": "Same as a switch group. Brightness and colour appear only when every light has them."
+      "lightSummary": "Same as a switch group. Brightness and colour appear only when every light has them.",
+      "appliance": "Appliance from a smart plug",
+      "applianceSummary": "One power reading. Running while power stays above a threshold, long enough that a wash pause is not the end of the cycle."
     },
     "aggregate": {
       "mean": "Mean",
@@ -9847,7 +9852,9 @@
     "step": {
       "template": "Choose what the helper reports.",
       "parameters": "Name it and choose how members combine.",
-      "members": "Choose the members."
+      "members": "Choose the members.",
+      "appliance": "Name it and choose the appliance.",
+      "applianceMembers": "Choose the plug's power reading."
     },
     "reducer": "Combine by",
     "name": "Name",
@@ -9919,7 +9926,19 @@
       "occupancy": "New occupancy sensor",
       "binary": "New binary sensor",
       "switch": "New switch group",
-      "light": "New light group"
-    }
+      "light": "New light group",
+      "washer": "New washing machine",
+      "dryer": "New dryer",
+      "dishwasher": "New dishwasher"
+    },
+    "appliance": {
+      "washer": "Washing machine",
+      "dryer": "Dryer",
+      "dishwasher": "Dishwasher"
+    },
+    "applianceType": "Appliance",
+    "threshold": "Threshold (W)",
+    "startDwell": "Starts after (min)",
+    "stopDwell": "Stops after (min)"
   }
 }

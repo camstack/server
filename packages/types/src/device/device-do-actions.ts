@@ -208,6 +208,9 @@ export const DEVICE_TYPE_DO_CAPS: Record<DeviceType, readonly string[]> = {
   [DeviceType.Image]: [],
   [DeviceType.PetFeeder]: ['pet-feeder'],
   [DeviceType.Dishwasher]: ['dishwasher'],
+  // A plug-built washer or dryer has no command cap. Running is a reading.
+  [DeviceType.Washer]: [],
+  [DeviceType.Dryer]: [],
 }
 
 /**

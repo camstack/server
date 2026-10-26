@@ -321,6 +321,8 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   // Pet feeder inline = food/battery readout + a natural-width Feed button.
   [DeviceType.PetFeeder]: false,
   [DeviceType.Dishwasher]: false,
+  [DeviceType.Washer]: false,
+  [DeviceType.Dryer]: false,
 }
 
 /**

@@ -147,7 +147,8 @@ function helperMemberDeviceIds(
   const helper = composition.helper
   if (helper === undefined) return []
   const ids: number[] = []
-  for (const member of helper.members) {
+  const members = helper.kind === 'group' ? helper.members : [helper.member]
+  for (const member of members) {
     const found = sources.get(compositionSourceKey(member.source))
     if (found?.kind === 'found') ids.push(found.deviceId)
   }

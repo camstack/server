@@ -308,11 +308,19 @@ export interface VocabStateWording {
   readonly icon?: VocabIcon
 }
 
+/** Re-wording of one declared event for a kind of device. */
+export interface VocabEventWording {
+  readonly label?: L10n
+  readonly phrase?: L10n
+  readonly icon?: VocabIcon
+}
+
 /** Wording that differs for a device type or role (a switch that is a siren). */
 export interface VocabWording<C extends VocabCapName> {
   /** Keyed by action id. */
   readonly actions?: Readonly<Record<string, VocabActionWording>>
   readonly state?: { readonly [F in CapStatusField<C>]?: VocabStateWording }
+  readonly events?: { readonly [E in CapEventName<C>]?: VocabEventWording }
 }
 
 /** Overrides, keyed in the same map: a role beats a type. */
@@ -469,6 +477,7 @@ export type LooseVocabStateTrigger =
 export interface LooseVocabWording {
   readonly actions?: Readonly<Record<string, VocabActionWording>>
   readonly state?: Readonly<Record<string, VocabStateWording | undefined>>
+  readonly events?: Readonly<Record<string, VocabEventWording | undefined>>
 }
 
 /** Overrides as a consumer reads them. */

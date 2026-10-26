@@ -305,6 +305,8 @@ describe('customize declaration guard', () => {
     const runningTypes = CAP_CUSTOMIZE_CATALOG['running-state']?.targets[0]?.deviceTypes
     expect(CAP_CUSTOMIZE_CATALOG['running-state']?.targets[0]?.valueKind).toBe('boolean')
     expect(runningTypes).toEqual([
+      DeviceType.Washer,
+      DeviceType.Dryer,
       DeviceType.Dishwasher,
       DeviceType.Vacuum,
       DeviceType.LawnMower,

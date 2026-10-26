@@ -10,10 +10,11 @@
  * (`SUPPORTED_DEVICE_KINDS` in `ha-export.addon.ts`) and it is what kept the
  * previous exporter confined to cameras. `DeviceType` is consulted for exactly
  * one thing here — picking between two Google types that carry the SAME traits
- * (a LIGHT and a SWITCH are both OnOff) — and never to decide whether a device
- * exports at all.
+ * (a LIGHT and a SWITCH are both OnOff). A washer, dryer or dishwasher is
+ * withheld even when some other trait would match: Google's laundry types
+ * require RunCycle, and this export does not publish that trait.
  */
-import { DeviceType } from '@camstack/types'
+import { applianceExport, DeviceType } from '@camstack/types'
 
 import type { GoogleDeviceType, GoogleTraitName, SyncDevice } from './protocol.js'
 import { traitsForCaps } from './trait-catalog.js'
@@ -48,6 +49,8 @@ export function resolveGoogleDeviceType(
   deviceType: string,
   traits: readonly GoogleTraitName[],
 ): GoogleDeviceType | null {
+  const withheld = applianceExport('google', deviceType)
+  if (withheld !== null && !withheld.exported) return null
   if (traits.includes('action.devices.traits.LockUnlock')) return 'action.devices.types.LOCK'
   if (traits.includes('action.devices.traits.OpenClose')) return 'action.devices.types.SHUTTER'
   if (

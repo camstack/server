@@ -93,8 +93,14 @@ export enum DeviceType {
   PetFeeder = 'pet-feeder',
   /** Built-in dishwasher — program lifecycle, door / remote-start gates,
    *  salt and rinse-aid levels. Installed with the `dishwasher` cap.
-   *  Sources: native Bosch Home Connect, reusable by similar integrations. */
+   *  Sources: native Bosch Home Connect, reusable by similar integrations.
+   *  A plug-built dishwasher carries running-state and power instead. */
   Dishwasher = 'dishwasher',
+  /** Washing machine. A plug-built one is running while its power stays
+   *  above a threshold. No program cap — that surface is the dishwasher's. */
+  Washer = 'washer',
+  /** Tumble dryer. Same plug-built running surface as {@link Washer}. */
+  Dryer = 'dryer',
 }
 
 export enum DeviceFeature {

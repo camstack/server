@@ -6,6 +6,9 @@
 import {
   type ActiveCriterion,
   type AggregateReducer,
+  APPLIANCE_DEFAULTS,
+  APPLIANCE_TEMPLATE_ID,
+  type ApplianceKind,
   type Composition,
   type CompositionProblem,
   compileHelper,
@@ -22,21 +25,29 @@ import {
   sharedColorModes,
   sharedLightCaps,
   type SourcePickRequest,
+  sourcePickForAppliance,
   sourcePickForTemplate,
 } from '@camstack/types'
 
-export type HelperTemplateGroupId = 'readings' | 'binary' | 'actuators'
+export type HelperPickerId = GroupTemplateId | typeof APPLIANCE_TEMPLATE_ID
+
+export type HelperTemplateGroupId = 'readings' | 'binary' | 'actuators' | 'appliances'
 
 export interface HelperTemplateGroup {
   readonly id: HelperTemplateGroupId
-  readonly templateIds: readonly GroupTemplateId[]
+  readonly templateIds: readonly HelperPickerId[]
 }
 
 export interface HelperFormDraft {
-  readonly templateId: GroupTemplateId
+  readonly templateId: HelperPickerId
   readonly aggregate: AggregateReducer
   /** Set on an actuator template. Readings leave it null. */
   readonly active: ActiveCriterion | null
+  /** Set on the appliance template. Groups leave it null. */
+  readonly appliance: ApplianceKind | null
+  readonly thresholdWatts: number
+  readonly startDwellMs: number
+  readonly stopDwellMs: number
   readonly name: string
   readonly room: string
   readonly members: readonly HelperMember[]
@@ -138,6 +149,8 @@ const BINARY: readonly GroupTemplateId[] = [
 
 const ACTUATORS: readonly GroupTemplateId[] = ['switch', 'light']
 
+const APPLIANCES: readonly HelperPickerId[] = [APPLIANCE_TEMPLATE_ID]
+
 const REFUSAL_MARKER = 'was refused — '
 const REFUSAL_PART = /^(.+?) \[([a-z0-9-]+)\]: (.+)$/
 
@@ -146,16 +159,40 @@ export function helperTemplateGroups(): readonly HelperTemplateGroup[] {
     { id: 'readings', templateIds: READINGS },
     { id: 'binary', templateIds: BINARY },
     { id: 'actuators', templateIds: ACTUATORS },
+    { id: 'appliances', templateIds: APPLIANCES },
   ]
 }
 
-export function draftForTemplate(templateId: GroupTemplateId): HelperFormDraft | null {
+const NO_APPLIANCE = {
+  appliance: null,
+  thresholdWatts: 0,
+  startDwellMs: 0,
+  stopDwellMs: 0,
+} as const
+
+export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | null {
+  if (templateId === APPLIANCE_TEMPLATE_ID) {
+    const defaults = APPLIANCE_DEFAULTS.washer
+    return {
+      templateId,
+      aggregate: 'any',
+      active: null,
+      appliance: 'washer',
+      thresholdWatts: defaults.thresholdWatts,
+      startDwellMs: defaults.startDwellMs,
+      stopDwellMs: defaults.stopDwellMs,
+      name: '',
+      room: '',
+      members: [],
+    }
+  }
   const template = groupTemplate(templateId)
   if (template === null) return null
   return {
     templateId,
     aggregate: template.defaultAggregate,
     active: template.family === 'actuator' ? 'at-least-one' : null,
+    ...NO_APPLIANCE,
     name: '',
     room: '',
     members: [],
@@ -167,6 +204,20 @@ export function draftFromHelper(
   name: string,
   room: string,
 ): HelperFormDraft | null {
+  if (spec.kind === 'appliance') {
+    return {
+      templateId: APPLIANCE_TEMPLATE_ID,
+      aggregate: 'any',
+      active: null,
+      appliance: spec.appliance,
+      thresholdWatts: spec.thresholdWatts,
+      startDwellMs: spec.startDwellMs,
+      stopDwellMs: spec.stopDwellMs,
+      name,
+      room,
+      members: [copyMember(spec.member)],
+    }
+  }
   const template = groupTemplate(spec.templateId)
   if (template === null || !template.aggregates.includes(spec.aggregate)) return null
   if (template.family === 'actuator' && spec.active === undefined) return null
@@ -175,6 +226,7 @@ export function draftFromHelper(
     templateId: spec.templateId,
     aggregate: spec.aggregate,
     active: spec.active ?? null,
+    ...NO_APPLIANCE,
     name,
     room,
     members: spec.members.map(copyMember),
@@ -191,12 +243,14 @@ export function withAggregate(
   draft: HelperFormDraft,
   aggregate: AggregateReducer,
 ): HelperFormDraft {
+  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft
   const template = groupTemplate(draft.templateId)
   if (template === null || !template.aggregates.includes(aggregate)) return draft
   return { ...draft, aggregate }
 }
 
 export function withActive(draft: HelperFormDraft, active: ActiveCriterion): HelperFormDraft {
+  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft
   const template = groupTemplate(draft.templateId)
   if (template === null || template.family !== 'actuator') return draft
   return { ...draft, active, aggregate: reducerForActive(active) }
@@ -214,9 +268,22 @@ export function withRoom(draft: HelperFormDraft, room: string): HelperFormDraft 
  * The same template keeps every choice. A different template starts over:
  * name, operation, criterion and members belong to the template that was open.
  */
-export function withTemplate(draft: HelperFormDraft, templateId: GroupTemplateId): HelperFormDraft {
+export function withTemplate(draft: HelperFormDraft, templateId: HelperPickerId): HelperFormDraft {
   if (templateId === draft.templateId) return draft
   return draftForTemplate(templateId) ?? draft
+}
+
+/** A different appliance type starts from that type's dwells. */
+export function withAppliance(draft: HelperFormDraft, kind: ApplianceKind): HelperFormDraft {
+  if (draft.templateId !== APPLIANCE_TEMPLATE_ID) return draft
+  const defaults = APPLIANCE_DEFAULTS[kind]
+  return {
+    ...draft,
+    appliance: kind,
+    thresholdWatts: defaults.thresholdWatts,
+    startDwellMs: defaults.startDwellMs,
+    stopDwellMs: defaults.stopDwellMs,
+  }
 }
 
 export type HelperSaveIntent = 'open' | 'again'
@@ -226,12 +293,33 @@ export type HelperSaveResult =
   | { readonly kind: 'refused'; readonly lines: readonly RefusalLine[] }
 
 export function memberRequest(draft: HelperFormDraft): SourcePickRequest | null {
+  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return sourcePickForAppliance()
   const template = groupTemplate(draft.templateId)
   if (template === null) return null
   return sourcePickForTemplate(template)
 }
 
-export function specFromDraft(draft: HelperFormDraft): GroupHelperSpec {
+export function specFromDraft(draft: HelperFormDraft): HelperSpec | null {
+  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return applianceSpec(draft)
+  return groupSpec(draft)
+}
+
+function applianceSpec(draft: HelperFormDraft): HelperSpec | null {
+  const member = draft.members[0]
+  if (member === undefined || draft.appliance === null) return null
+  return {
+    kind: 'appliance',
+    templateId: APPLIANCE_TEMPLATE_ID,
+    appliance: draft.appliance,
+    thresholdWatts: draft.thresholdWatts,
+    startDwellMs: draft.startDwellMs,
+    stopDwellMs: draft.stopDwellMs,
+    member: copyMember(member),
+  }
+}
+
+function groupSpec(draft: HelperFormDraft): GroupHelperSpec | null {
+  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return null
   const template = groupTemplate(draft.templateId)
   const actuator = template?.family === 'actuator' && draft.active !== null
   return {
@@ -243,8 +331,16 @@ export function specFromDraft(draft: HelperFormDraft): GroupHelperSpec {
   }
 }
 
+const MISSING_MEMBER: CompositionProblem = {
+  code: 'member-constraint',
+  path: 'helper.member',
+  message: 'an appliance helper needs one power reading',
+}
+
 export function compileDraft(draft: HelperFormDraft): HelperCompileResult {
-  return compileHelper(specFromDraft(draft))
+  const spec = specFromDraft(draft)
+  if (spec === null) return { ok: false, problems: [MISSING_MEMBER] }
+  return compileHelper(spec)
 }
 
 /** Compile, then write. A thrown server refusal comes back as its named lines. */
@@ -264,6 +360,7 @@ export async function writeHelper(
 }
 
 export function canSaveDraft(draft: HelperFormDraft): boolean {
+  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft.members.length === 1
   return draft.members.length >= 1 && draft.members.length <= MAX_HELPER_MEMBERS
 }
 

@@ -4,6 +4,7 @@
  * Adding a cap to Alexa is adding its adapter here — in order: the first
  * adapter with a category decides the endpoint's display category.
  */
+import { applianceExport } from '@camstack/types'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
 import { climateAdapter } from './climate.js'
 import { contactAdapter } from './contact.js'
@@ -133,6 +134,8 @@ function capabilityKey(c: AlexaCapability): string {
 
 /** What a device becomes, folding every applicable adapter in registry order. */
 export function planGenericDevice(device: AdapterDevice): GenericPlan {
+  const withheld = applianceExport('alexa', device.type)
+  if (withheld !== null && !withheld.exported) return { kind: 'skip', reasons: [withheld.reason] }
   const capabilities: AlexaCapability[] = [BASE]
   const seen = new Set<string>()
   const reasons: string[] = []

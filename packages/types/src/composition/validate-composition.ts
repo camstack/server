@@ -183,7 +183,7 @@ function composableCap(
  */
 function actuatorCommandCaps(composition: Composition): ReadonlySet<string> {
   const spec = composition.helper
-  if (spec === undefined) return new Set()
+  if (spec === undefined || spec.kind !== 'group') return new Set()
   const template = groupTemplate(spec.templateId)
   if (template === null || template.family !== 'actuator') return new Set()
   return new Set(template.commandCaps)

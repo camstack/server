@@ -53,6 +53,8 @@ export const CONTAINER_CHILD_PRIORITY: readonly string[] = [
   'fan',
   'vacuum',
   'lawn-mower',
+  'washer',
+  'dryer',
   'dishwasher',
   'light',
   'switch',

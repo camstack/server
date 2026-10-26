@@ -4,6 +4,7 @@
  * automations, notifiers and firmware updates.
  */
 import { EventCategory } from '../../../enums/event-category.js'
+import { DeviceType } from '../../device-type.js'
 import { t } from '../l10n.js'
 import type { CapVocabularySlice } from '../types.js'
 
@@ -1217,6 +1218,61 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
         label: t('Finished', 'Ha finito'),
         phrase: t('When {device} finishes', 'Quando {device} finisce'),
         icon: 'square',
+      },
+    },
+    overrides: {
+      byType: {
+        [DeviceType.Washer]: {
+          state: {
+            running: {
+              whenTrue: t('When the washing machine starts', 'Quando la lavatrice inizia'),
+              whenFalse: t(
+                'When the washing machine has finished',
+                'Quando la lavatrice ha finito',
+              ),
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: t('When the washing machine starts', 'Quando la lavatrice inizia'),
+            },
+            onFinished: {
+              phrase: t('When the washing machine has finished', 'Quando la lavatrice ha finito'),
+            },
+          },
+        },
+        [DeviceType.Dryer]: {
+          state: {
+            running: {
+              whenTrue: t('When the dryer starts', "Quando l'asciugatrice inizia"),
+              whenFalse: t('When the dryer has finished', "Quando l'asciugatrice ha finito"),
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: t('When the dryer starts', "Quando l'asciugatrice inizia"),
+            },
+            onFinished: {
+              phrase: t('When the dryer has finished', "Quando l'asciugatrice ha finito"),
+            },
+          },
+        },
+        [DeviceType.Dishwasher]: {
+          state: {
+            running: {
+              whenTrue: t('When the dishwasher starts', 'Quando la lavastoviglie inizia'),
+              whenFalse: t('When the dishwasher has finished', 'Quando la lavastoviglie ha finito'),
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: t('When the dishwasher starts', 'Quando la lavastoviglie inizia'),
+            },
+            onFinished: {
+              phrase: t('When the dishwasher has finished', 'Quando la lavastoviglie ha finito'),
+            },
+          },
+        },
       },
     },
   },

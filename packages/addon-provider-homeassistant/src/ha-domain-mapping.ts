@@ -827,6 +827,8 @@ const PARENT_TYPE_PRIORITY: readonly DeviceType[] = [
   DeviceType.Fan,
   DeviceType.Vacuum,
   DeviceType.LawnMower,
+  DeviceType.Washer,
+  DeviceType.Dryer,
   DeviceType.Dishwasher,
   DeviceType.Light,
   DeviceType.Switch,

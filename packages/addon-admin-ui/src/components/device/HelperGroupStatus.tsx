@@ -90,7 +90,9 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
   if (read.data.state !== 'loaded' || read.data.view === null) return null
   const composition = coreBlockComposition(read.data.view.block)
   if (composition === null || !isHelperComposition(composition)) return null
-  const template = groupTemplate(composition.helper.templateId)
+  const helper = composition.helper
+  if (helper.kind !== 'group') return null
+  const template = groupTemplate(helper.templateId)
   if (template === null) return null
 
   const snapshotRead = snapshotReadOf(snapshot.status, snapshot.data, snapshot.error?.message)
@@ -99,7 +101,7 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
   const rows = fleet.status === 'success' ? fleet.data.map(fleetRow) : []
   const fleetKind = fleetKindOf(fleet.status)
   const excluded = namedExcluded(
-    composition.helper.members.map(
+    helper.members.map(
       (member) =>
         lives.get(memberKey(member)) ?? { name: member.source.stableId, presence: 'unknown' },
     ),
@@ -125,7 +127,7 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
       testId="helper-group-status"
     >
       <div className={`${SECTION_BODY} flex flex-col gap-3`}>
-        {composition.helper.members.map((member) => (
+        {helper.members.map((member) => (
           <MemberProbe
             key={memberKey(member)}
             member={member}
@@ -192,7 +194,7 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
         )}
         <HelperActuatorExtras
           template={template}
-          members={composition.helper.members}
+          members={helper.members}
           fleet={rows.map((row) => ({
             id: row.id,
             name: row.name,

@@ -8402,7 +8402,9 @@
         "container": "Contenitore",
         "image": "Immagine",
         "petFeeder": "Distributore di cibo per animali",
-        "dishwasher": "Lavastoviglie"
+        "dishwasher": "Lavastoviglie",
+        "washer": "Lavatrice",
+        "dryer": "Asciugatrice"
       },
       "role": {
         "siren": "Sirena",
@@ -9816,7 +9818,8 @@
     "group": {
       "readings": "Letture",
       "binary": "Sensori binari",
-      "actuators": "Attuatori"
+      "actuators": "Attuatori",
+      "appliances": "Elettrodomestici"
     },
     "template": {
       "temperature": "Temperatura",
@@ -9850,7 +9853,9 @@
       "switch": "Gruppo di interruttori",
       "switchSummary": "Acceso se almeno uno lo è, oppure solo se lo sono tutti. I membri offline restano fuori da quella decisione e ricevono comunque il comando.",
       "light": "Gruppo di luci",
-      "lightSummary": "Come un gruppo di interruttori. Luminosità e colore compaiono solo se ogni luce li ha."
+      "lightSummary": "Come un gruppo di interruttori. Luminosità e colore compaiono solo se ogni luce li ha.",
+      "appliance": "Elettrodomestico da una presa intelligente",
+      "applianceSummary": "Una lettura di potenza. In funzione finché la potenza resta sopra una soglia, abbastanza a lungo da non scambiare una pausa di lavaggio per la fine del ciclo."
     },
     "aggregate": {
       "mean": "Media",
@@ -9869,7 +9874,9 @@
     "step": {
       "template": "Scegli cosa riporta l'helper.",
       "parameters": "Dagli un nome e scegli come combinare i membri.",
-      "members": "Scegli i membri."
+      "members": "Scegli i membri.",
+      "appliance": "Dagli un nome e scegli l'elettrodomestico.",
+      "applianceMembers": "Scegli la lettura di potenza della presa."
     },
     "reducer": "Combina con",
     "name": "Nome",
@@ -9941,7 +9948,19 @@
       "occupancy": "Nuovo sensore di presenza",
       "binary": "Nuovo sensore binario",
       "switch": "Nuovo gruppo di interruttori",
-      "light": "Nuovo gruppo di luci"
-    }
+      "light": "Nuovo gruppo di luci",
+      "washer": "Nuova lavatrice",
+      "dryer": "Nuova asciugatrice",
+      "dishwasher": "Nuova lavastoviglie"
+    },
+    "appliance": {
+      "washer": "Lavatrice",
+      "dryer": "Asciugatrice",
+      "dishwasher": "Lavastoviglie"
+    },
+    "applianceType": "Elettrodomestico",
+    "threshold": "Soglia (W)",
+    "startDwell": "Parte dopo (min)",
+    "stopDwell": "Si ferma dopo (min)"
   }
 }
