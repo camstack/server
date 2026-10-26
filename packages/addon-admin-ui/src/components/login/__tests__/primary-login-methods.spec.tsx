@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeAll, describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
 /**
@@ -188,9 +188,14 @@ describe('PrimaryLoginMethods — redirect icon (D780)', () => {
     ...(icon !== undefined ? { icon } : {}),
   })
 
-  it('draws the contributed catalog key', async () => {
-    // `key` is not on the synchronous first-paint table: the lazy glyph table must be there.
+  // `key` is not on the synchronous first-paint table: the lazy glyph table must be
+  // there. Loading it imports the whole icon module, which can exceed a test's own
+  // 5 s budget on a busy machine, so it is paid once here, outside the assertion.
+  beforeAll(async () => {
     await loadIconGlyphs()
+  }, 60_000)
+
+  it('draws the contributed catalog key', () => {
     const { container } = render(
       <PrimaryLoginMethods methods={[withIcon('key')]} widgetConfig={{}} />,
     )
