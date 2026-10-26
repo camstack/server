@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import {
+  DeviceType,
+  baseUnitOf,
+  enumerateSchemaFields,
+  powerMeterCapability,
+} from '@camstack/types'
 import {
   MatterClusterId,
   mapMatterEndpointToCamStack,
@@ -262,7 +267,13 @@ describe('decodeMatterAttribute', () => {
     })
     expect(decoded?.cap).toBe('power-meter')
     expect(decoded?.patch['watts']).toBeCloseTo(1500)
-    expect(decoded?.patch['unit']).toBe('W')
+    // D944 §4: base unit W is the watts declaration. mW → W stays the conversion above.
+    expect(decoded?.patch['unit']).toBeUndefined()
+    const watts = enumerateSchemaFields(powerMeterCapability.runtimeState).find(
+      (field) => field.path === 'watts',
+    )
+    expect(watts?.quantity).toBe('power')
+    expect(baseUnitOf('power')).toBe('W')
   })
 
   it('decodes ElectricalEnergyMeasurement (mWh, possibly wrapped) → kwhTotal', () => {

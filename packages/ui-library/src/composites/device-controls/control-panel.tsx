@@ -228,6 +228,9 @@ interface ControlWidgetProps {
   /** Quantity of a numeric control, from the device descriptor. */
   readonly quantity?: ReadingQuantity
   readonly display?: DeviceDisplayOverride
+  /** Date / time / datetime shape. Not a unit (D944 §4): it lives on
+   *  `SourceInfo.dateTimeShape`, never on a slice sibling. */
+  readonly dateTimeShape?: ControlDateTimeFormat
 }
 
 function ControlWidget({
@@ -237,6 +240,7 @@ function ControlWidget({
   layout,
   quantity,
   display,
+  dateTimeShape,
 }: ControlWidgetProps): ReactNode {
   const t = useUiText()
   const kind = slice.kind
@@ -314,7 +318,7 @@ function ControlWidget({
 
     case 'datetime': {
       const rawValue = String(slice.value)
-      const format: ControlDateTimeFormat = 'datetime'
+      const format: ControlDateTimeFormat = dateTimeShape ?? 'datetime'
 
       // Read-only (at-a-glance) context: render the value in the user's locale
       // instead of an editable input. Editing stays in the full/detail layout.
@@ -419,6 +423,7 @@ export function ControlPanel({
         layout={layout}
         quantity={quantity}
         display={info?.display}
+        dateTimeShape={info?.sourceInfo?.dateTimeShape}
       />
     </div>
   )

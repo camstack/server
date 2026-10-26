@@ -122,21 +122,24 @@ function pushState(device: HaEnumSensorDevice, value: string): void {
 }
 
 describe('HaEnumSensorDevice — dateTimeFormat seeding', () => {
-  it("seeds format 'datetime' into the slice (cold-start + on push)", () => {
+  it('stores dateTimeShape on SourceInfo (cold-start + on push)', () => {
     const { ctx, setCapStateCalls } = buildEnumSensorCtx({
       dateTimeFormat: 'datetime',
       role: 'datetime-sensor',
     })
     const device = new HaEnumSensorDevice(ctx)
-    // Cold-start slice carries the format up-front.
-    expect(setCapStateCalls[0]?.format).toBe('datetime')
+    // D944 §4: the shape is not a unit and is not a slice sibling. It is
+    // written once onto SourceInfo.dateTimeShape (cold-start, then kept on push).
+    expect(setCapStateCalls[0]?.format).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('datetime')
     pushState(device, '2025-12-02T09:36:12+00:00')
     const last = setCapStateCalls[setCapStateCalls.length - 1]
     expect(last?.value).toBe('2025-12-02T09:36:12+00:00')
-    expect(last?.format).toBe('datetime')
+    expect(last?.format).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('datetime')
   })
 
-  it("seeds format 'date' when config carries dateTimeFormat='date'", () => {
+  it("stores dateTimeShape 'date' when config carries dateTimeFormat='date'", () => {
     const { ctx, setCapStateCalls } = buildEnumSensorCtx({
       dateTimeFormat: 'date',
       role: 'datetime-sensor',
@@ -145,7 +148,8 @@ describe('HaEnumSensorDevice — dateTimeFormat seeding', () => {
     pushState(device, '2025-12-02')
     const last = setCapStateCalls[setCapStateCalls.length - 1]
     expect(last?.value).toBe('2025-12-02')
-    expect(last?.format).toBe('date')
+    expect(last?.format).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('date')
   })
 
   it('omits format for a plain enum sensor (no dateTimeFormat in config)', () => {

@@ -241,6 +241,41 @@ describe('ControlPanel', () => {
       const input = document.querySelector('input[type="datetime-local"]') as HTMLInputElement
       expect(input.disabled).toBe(true)
     })
+
+    it('picks a date input from SourceInfo.dateTimeShape, ignoring a slice format sibling', () => {
+      // D944 §4 removed unit siblings. A datetime shape is not a unit: it lives
+      // on SourceInfo.dateTimeShape, and that is what the panel must render.
+      getDeviceInfo.mockReturnValue({ sourceInfo: { dateTimeShape: 'date' } })
+      mockResult = {
+        cap: { setValue },
+        slice: {
+          kind: 'datetime',
+          value: '2026-06-07',
+          options: [],
+          lastChangedAt: 0,
+          format: 'time',
+        },
+        available: true,
+      }
+      render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
+      const input = document.querySelector('input[type="date"]') as HTMLInputElement
+      expect(input).toBeTruthy()
+      expect(input.value).toBe('2026-06-07')
+      expect(document.querySelector('input[type="time"]')).toBeNull()
+    })
+
+    it('picks a time input from SourceInfo.dateTimeShape', () => {
+      getDeviceInfo.mockReturnValue({ sourceInfo: { dateTimeShape: 'time' } })
+      mockResult = {
+        cap: { setValue },
+        slice: { kind: 'datetime', value: '07:30:00', options: [], lastChangedAt: 0 },
+        available: true,
+      }
+      render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
+      const input = document.querySelector('input[type="time"]') as HTMLInputElement
+      expect(input).toBeTruthy()
+      expect(input.value).toBe('07:30')
+    })
   })
 
   describe('datetime kind — compact (read-only) layout', () => {

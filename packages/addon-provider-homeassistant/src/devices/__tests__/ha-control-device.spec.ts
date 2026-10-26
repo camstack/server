@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
+import { DeviceType, baseUnitOf, type IDeviceRuntimeState } from '@camstack/types'
 import { HaControlDevice } from '../ha-control-device.js'
 import type { HaEntityState } from '../../ha-types.js'
 
@@ -127,7 +127,10 @@ describe('HaControlDevice — decodeControlSlice (numeric)', () => {
     expect(pushed).toBeDefined()
     expect(pushed!['kind']).toBe('numeric')
     expect(pushed!['value']).toBe(21.5)
-    expect(pushed!['unit']).toBe('°C')
+    // D944 §4: the unit is the quantity's base, on SourceInfo, not a slice sibling.
+    expect(pushed!['unit']).toBeUndefined()
+    expect(device.sourceInfo.quantity).toBe('temperature')
+    expect(baseUnitOf('temperature')).toBe('°C')
     expect(pushed!['min']).toBe(5)
     expect(pushed!['max']).toBe(30)
     expect(pushed!['step']).toBe(0.5)
@@ -315,7 +318,9 @@ describe('HaControlDevice — datetime format derivation', () => {
     )
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]
     expect(pushed!['kind']).toBe('datetime')
-    expect(pushed!['format']).toBe('date')
+    // D944 §4 removed unit siblings. The shape is not a unit: SourceInfo.dateTimeShape.
+    expect(pushed!['format']).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('date')
     expect(pushed!['value']).toBe('2026-06-06')
   })
 
@@ -326,7 +331,8 @@ describe('HaControlDevice — datetime format derivation', () => {
       makeDatetimeState('07:30:00'),
     )
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]
-    expect(pushed!['format']).toBe('time')
+    expect(pushed!['format']).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('time')
   })
 
   it('datetime.* → format "datetime"', () => {
@@ -336,7 +342,8 @@ describe('HaControlDevice — datetime format derivation', () => {
       makeDatetimeState('2026-06-06T10:00:00'),
     )
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]
-    expect(pushed!['format']).toBe('datetime')
+    expect(pushed!['format']).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('datetime')
   })
 
   it.each([
@@ -351,14 +358,16 @@ describe('HaControlDevice — datetime format derivation', () => {
       makeDatetimeState('2026-06-06 10:00:00', attrs),
     )
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]
-    expect(pushed!['format']).toBe(expected)
+    expect(pushed!['format']).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe(expected)
   })
 
   it('time-only input_datetime stores the time value verbatim and trims to a valid time input', () => {
     // A time-only input_datetime (has_date:false, has_time:true) pushes a
-    // realistic time-only state ('07:30:00'). The slice must report format
-    // 'time' and keep the value verbatim; the browser <input type=time> shape
-    // is derived by trimming to 'HH:MM'. `toTimeInput` is the canonical helper
+    // realistic time-only state ('07:30:00'). The shape is SourceInfo.dateTimeShape
+    // 'time' (D944 §4 — not a slice unit) and the value stays verbatim; the
+    // browser <input type=time> shape is derived by trimming to 'HH:MM'.
+    // `toTimeInput` is the canonical helper
     // in @camstack/ui-library (control-panel) — pure `value.slice(0, 5)`,
     // unit-tested there. Re-expressed locally to avoid importing the React
     // composite barrel into this self-contained addon's backend test.
@@ -371,7 +380,8 @@ describe('HaControlDevice — datetime format derivation', () => {
     )
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]
     expect(pushed!['kind']).toBe('datetime')
-    expect(pushed!['format']).toBe('time')
+    expect(pushed!['format']).toBeUndefined()
+    expect(device.sourceInfo.dateTimeShape).toBe('time')
     const storedValue = pushed!['value']
     expect(storedValue).toBe('07:30:00')
     expect(typeof storedValue).toBe('string')

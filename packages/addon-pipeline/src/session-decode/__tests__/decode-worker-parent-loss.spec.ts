@@ -99,6 +99,22 @@ function loseStdio(child: ChildProcess): void {
 
 const settle = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
+/** The fixture reports its write count on a 50 ms tick. On a loaded runner
+ *  that tick lands late; wait for it, bounded, instead of a fixed sleep. */
+async function countAtLeast(
+  counts: StderrWriteCounts,
+  min: number,
+  boundMs: number,
+): Promise<number> {
+  const deadline = Date.now() + boundMs
+  let latest = counts.latest()
+  while (latest < min && Date.now() < deadline) {
+    await settle(20)
+    latest = counts.latest()
+  }
+  return latest
+}
+
 afterEach(() => {
   for (const child of children.splice(0)) {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')
@@ -136,7 +152,11 @@ describe('a decode worker exits when its parent or its stdio is lost (D666)', {
     const stderrWrites = stderrWriteCounts(child)
     await firstStderr(child)
     loseStdio(child)
-    await settle(300)
+    // The loss write is reported on the fixture tick. Sample only after that
+    // tick has landed, then require the count to stay put.
+    const seen = await countAtLeast(stderrWrites, 1, 2_000)
+    expect(seen).toBeGreaterThanOrEqual(1)
+    await settle(400)
     const writesAtLoss = stderrWrites.latest()
     await settle(400)
 
