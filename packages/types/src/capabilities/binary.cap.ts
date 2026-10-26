@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 
 /**
@@ -21,13 +20,6 @@ export const BinaryStatusSchema = z.object({
 })
 
 export type BinaryStatus = z.infer<typeof BinaryStatusSchema>
-
-/** Advanced rows only (D939). `on` has no card target, so it belongs in Advanced. */
-const binaryCustomize = {
-  version: 1,
-  advanced: 'derive',
-  targets: [],
-} as const satisfies CapabilityCustomizeSpec
 
 export const binaryCapability = {
   name: 'binary',
@@ -60,7 +52,6 @@ export const binaryCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
-  customize: binaryCustomize,
 } as const satisfies CapabilityDefinition
 
 export type IBinaryProvider = InferProvider<typeof binaryCapability>

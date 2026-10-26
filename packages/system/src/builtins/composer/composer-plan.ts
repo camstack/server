@@ -339,7 +339,16 @@ export function logPlanTransition(
       meta: { ...extras.meta, reason: target.waiting },
     })
   } else if (p.problems.length === 0) logger.info('composition plans again', extras)
-  else
+  else if (
+    target.kind === 'existing' &&
+    target.deviceId !== null &&
+    p.problems.some((line) => line.includes('native-capability-replace'))
+  ) {
+    logger.warn(`stored customization ${p.block.id} replaces a native capability — refused`, {
+      tags: { deviceId: target.deviceId },
+      meta: { ...extras.meta, problems: p.problems },
+    })
+  } else
     logger.warn(
       p.declaration === null
         ? 'composition does not plan — no device is declared for it'

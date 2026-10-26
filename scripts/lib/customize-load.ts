@@ -6,6 +6,7 @@ import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import type { CapabilityCustomizeSpec } from '../../packages/types/src/capabilities/customize-spec.ts'
+import { runtimeFieldUnits } from '../../packages/types/src/capabilities/runtime-field-units.ts'
 import { parseAllCaps } from './parse-cap.ts'
 import {
   vocabularyHas,
@@ -45,6 +46,22 @@ export async function loadCustomizeCaps(): Promise<readonly CustomizeCapView[]> 
     })
   }
   return out.toSorted((a, b) => a.capName.localeCompare(b.capName))
+}
+
+/** Caps whose runtime state declares a unit, for composed-device convert-unit rows. */
+export async function loadRuntimeFieldUnits(): Promise<
+  Readonly<Record<string, Readonly<Record<string, string>>>>
+> {
+  const out: Record<string, Readonly<Record<string, string>>> = {}
+  for (const info of parseAllCaps(CAPS_DIR)) {
+    const file = info.fileName.replace(/\.js$/, '.ts')
+    const mod: Record<string, unknown> = await import(pathToFileURL(path.join(CAPS_DIR, file)).href)
+    const def = mod[info.exportName]
+    if (!isRecord(def) || !(def.runtimeState instanceof z.ZodObject)) continue
+    const units = runtimeFieldUnits(def.runtimeState)
+    if (Object.keys(units).length > 0) out[info.capName] = units
+  }
+  return out
 }
 
 function isCustomizeSpec(value: unknown): value is CapabilityCustomizeSpec {

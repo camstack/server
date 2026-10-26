@@ -5,7 +5,6 @@
 import { z } from 'zod'
 import { DeviceType } from '../../packages/types/src/device/device-type.ts'
 import type {
-  CustomizeCatalogAdvancedParameter,
   CustomizeCatalogEntry,
   CustomizeCatalogField,
   CustomizeCatalogLiteral,
@@ -15,12 +14,6 @@ import type {
   CustomizeCatalogTransform,
   CustomizeCatalogValueKind,
 } from '../../packages/types/src/capabilities/customize-catalog.ts'
-import {
-  collectCustomizeOwnedPaths,
-  collectEventTimestampPaths,
-  deriveAdvancedParameters,
-  type DerivedAdvancedParameter,
-} from '../../packages/types/src/capabilities/advanced-parameters.ts'
 import type {
   CapabilityCustomizeTarget,
   CustomizeSourceSpec,
@@ -62,41 +55,9 @@ export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry 
   const entry = {
     version: 1 as const,
     targets: spec.targets.map((target) => projectTarget(view, target, runtime)),
-    advancedParameters: projectAdvancedParameters(view, runtime),
   }
   assertProjectedParameters(view.capName, spec, entry)
   return entry
-}
-
-function projectAdvancedParameters(
-  view: CustomizeCapView,
-  runtime: Schema,
-): readonly CustomizeCatalogAdvancedParameter[] {
-  const spec = view.customize
-  if (spec === undefined || spec.advanced === undefined) return []
-  const owned = collectCustomizeOwnedPaths(spec)
-  const eventTs = collectEventTimestampPaths(spec)
-  const derived = deriveAdvancedParameters(runtime, owned, eventTs)
-  if (spec.advanced === 'derive') {
-    return derived.map(toCatalogAdvanced)
-  }
-  const byPath = new Map(derived.map((row) => [row.path, row]))
-  const listed: CustomizeCatalogAdvancedParameter[] = []
-  for (const path of spec.advanced) {
-    const row = byPath.get(path)
-    if (row !== undefined) listed.push(toCatalogAdvanced(row))
-  }
-  return listed
-}
-
-function toCatalogAdvanced(row: DerivedAdvancedParameter): CustomizeCatalogAdvancedParameter {
-  return {
-    path: row.path,
-    kind: row.kind,
-    label: row.label,
-    ...(row.unit !== undefined ? { unit: row.unit } : {}),
-    ...(row.enumValues !== undefined ? { enumValues: row.enumValues } : {}),
-  }
 }
 
 function projectTarget(

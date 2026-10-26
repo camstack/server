@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 
 /**
@@ -17,13 +16,6 @@ export const SwitchStatusSchema = z.object({
 })
 
 export type SwitchStatus = z.infer<typeof SwitchStatusSchema>
-
-/** Advanced rows only (D939). `on` has no card target, so it belongs in Advanced. */
-const switchCustomize = {
-  version: 1,
-  advanced: 'derive',
-  targets: [],
-} as const satisfies CapabilityCustomizeSpec
 
 export const switchCapability = {
   name: 'switch',
@@ -88,7 +80,6 @@ export const switchCapability = {
       },
     ],
   },
-  customize: switchCustomize,
 } as const satisfies CapabilityDefinition
 
 export type ISwitchProvider = InferProvider<typeof switchCapability>

@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -44,13 +43,6 @@ export const PowerMeterStatusSchema = z.object({
 
 export type PowerMeterStatus = z.infer<typeof PowerMeterStatusSchema>
 
-/** Advanced rows only (D939). No card target, so a composed device keeps the generic card. */
-const powerMeterCustomize = {
-  version: 1,
-  advanced: 'derive',
-  targets: [],
-} as const satisfies CapabilityCustomizeSpec
-
 export const powerMeterCapability = {
   name: 'power-meter',
   scope: 'device',
@@ -87,7 +79,6 @@ export const powerMeterCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
-  customize: powerMeterCustomize,
 } as const satisfies CapabilityDefinition
 
 export type IPowerMeterProvider = InferProvider<typeof powerMeterCapability>

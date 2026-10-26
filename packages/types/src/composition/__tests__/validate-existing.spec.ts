@@ -163,22 +163,59 @@ describe('per-feature enablement (D670)', () => {
   })
 })
 
-describe('existing targets (D663)', () => {
-  it('a bound native cap is REPLACE; only the named fields are owned (no missing-field)', () => {
-    const c = CompositionSchema.parse({
+describe('existing targets (D663, D944)', () => {
+  it('a bound native cap is refused by name — an add and a new device still plan (D944)', () => {
+    const native = CompositionSchema.parse({
       target: { kind: 'existing', device: CAM },
       features: [{ kind: 'fields', cap: 'battery', fields: { charging: CORRECT_CHARGING } }],
     })
-    const v = validateComposition(c, ctx(found({ battery: HA }), CAM))
-    expect(v.problems).toEqual([])
-    expect(v.features).toEqual([{ featureIndex: 0, cap: 'battery', mode: 'replace' }])
-    expect(v.fields.map((f) => [f.path, f.role, f.unavailable])).toEqual([
-      ['charging', 'derived', 'release'],
+    const refused = validateComposition(native, ctx(found({ battery: HA }), CAM))
+    expect(refused.features).toEqual([])
+    expect(refused.fields).toEqual([])
+    expect(refused.problems).toEqual([
+      {
+        code: 'native-capability-replace',
+        path: 'features[0]',
+        message: expect.stringContaining('device 50'),
+      },
+    ])
+    expect(refused.problems[0]?.message).toContain('battery')
+
+    const added = CompositionSchema.parse({
+      target: { kind: 'existing', device: FEEDER },
+      features: [
+        {
+          kind: 'fields',
+          cap: 'battery',
+          fields: { percentage: { kind: 'expression', expr: 'null', bindings: {} } },
+        },
+      ],
+    })
+    const addPlan = validateComposition(added, ctx(found({})))
+    expect(addPlan.problems.map((p) => p.code)).not.toContain('native-capability-replace')
+    expect(addPlan.features).toEqual([{ featureIndex: 0, cap: 'battery', mode: 'add' }])
+
+    const built = CompositionSchema.parse({
+      target: { kind: 'new', type: DeviceType.Sensor, role: 'temperature-sensor' },
+      features: [
+        {
+          kind: 'fields',
+          cap: 'temperature-sensor',
+          fields: {
+            celsius: { kind: 'expression', expr: '21', bindings: {} },
+            lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+          },
+        },
+      ],
+    })
+    const builtPlan = validateComposition(built, ctx(found({})))
+    expect(builtPlan.problems).toEqual([])
+    expect(builtPlan.features).toEqual([
+      { featureIndex: 0, cap: 'temperature-sensor', mode: 'new' },
     ])
   })
 
-  it('reading the field it replaces is the NATIVE value — not a cycle', () => {
-    // same composition as above; asserted separately so a disarm names the rule
+  it('refusing a native override does not report a cycle', () => {
     const c = CompositionSchema.parse({
       target: { kind: 'existing', device: CAM },
       features: [{ kind: 'fields', cap: 'battery', fields: { charging: CORRECT_CHARGING } }],
@@ -186,21 +223,17 @@ describe('existing targets (D663)', () => {
     const codes = validateComposition(c, ctx(found({ battery: HA }), CAM)).problems.map(
       (p) => p.code,
     )
-    expect(codes).not.toContain('cycle')
-    expect(codes).not.toContain('source-field-unknown')
+    expect(codes).toEqual(['native-capability-replace'])
   })
 
-  it('"Invert state": a derived replace of binary.on is REPLACE with unavailable = release, and its self-read is native, not a cycle (S1b, rule 5)', () => {
+  it('a feature on a native binary is refused, not planned as a replace (D944)', () => {
     const c = CompositionSchema.parse({
       target: { kind: 'existing', device: FOOD },
       features: [{ kind: 'fields', cap: 'binary', fields: { on: INVERT_ON } }],
     })
     const v = validateComposition(c, ctx(found({ binary: HA }, DeviceType.Sensor), FOOD))
-    expect(v.problems).toEqual([])
-    expect(v.features).toEqual([{ featureIndex: 0, cap: 'binary', mode: 'replace' }])
-    expect(v.fields.map((f) => [f.path, f.role, f.unavailable])).toEqual([
-      ['on', 'derived', 'release'],
-    ])
+    expect(v.features).toEqual([])
+    expect(v.problems.map((p) => p.code)).toEqual(['native-capability-replace'])
   })
 
   it('an unbound cap is ADD and gets the full new-device checks against the target type', () => {
@@ -221,7 +254,7 @@ describe('existing targets (D663)', () => {
     expect(codes).not.toContain('wrong-device-type') // Container is in battery.deviceTypes (Task 1)
   })
 
-  it('a REPLACED derived field that can say neither null nor unknown is planned release; the same field ADDED is not-replaceable (S1b)', () => {
+  it('a native battery override is refused; the same field ADDED is not-replaceable (D944, S1b)', () => {
     // `sleeping` is a non-nullable boolean. Feed it from a source so it is `derived`.
     const feature = {
       kind: 'fields',
@@ -235,8 +268,8 @@ describe('existing targets (D663)', () => {
       }),
       ctx(found({ battery: HA })),
     )
-    expect(replace.problems).toEqual([])
-    expect(replace.fields.map((f) => [f.path, f.unavailable])).toEqual([['sleeping', 'release']])
+    expect(replace.features).toEqual([])
+    expect(replace.problems.map((p) => p.code)).toEqual(['native-capability-replace'])
     const add = validateComposition(
       CompositionSchema.parse({
         target: { kind: 'existing', device: FEEDER },
@@ -273,8 +306,9 @@ describe('existing targets (D663)', () => {
         },
       ],
     })
-    const v = validateComposition(c, ctx(found({ battery: HA })))
+    const v = validateComposition(c, ctx(found({})))
     expect(v.problems.map((p) => p.code)).not.toContain('not-replaceable')
+    expect(v.problems.map((p) => p.code)).not.toContain('native-capability-replace')
     expect(v.fields.map((f) => [f.path, f.role, f.unavailable])).toEqual([
       ['sleeping', 'constant', 'offline'],
       ['lastUpdated', 'clock', 'offline'],
@@ -316,12 +350,8 @@ describe('existing targets (D663)', () => {
     })
 
     const replaced = validateComposition(c, ctx(found({ doorbell: HA }, DeviceType.Camera), CAM))
-    expect(replaced.problems).toEqual([])
-    expect(replaced.features).toEqual([{ featureIndex: 0, cap: 'doorbell', mode: 'replace' }])
-    expect(replaced.fields.find((field) => field.path === 'pressCountSinceStart')).toMatchObject({
-      role: 'accumulator',
-      unavailable: 'release',
-    })
+    expect(replaced.features).toEqual([])
+    expect(replaced.problems.map((p) => p.code)).toEqual(['native-capability-replace'])
   })
 
   it('ADDED derived fields map unavailable to null when nullable, else to the enum’s unknown; the SAME fields REPLACED are release (S1 / S1b)', () => {
@@ -368,11 +398,8 @@ describe('existing targets (D663)', () => {
       }),
       ctx(found({ battery: HA })),
     )
-    expect(replaced.problems).toEqual([])
-    expect(replaced.fields.map((f) => [f.path, f.unavailable])).toEqual([
-      ['percentage', 'release'],
-      ['charging', 'release'],
-    ])
+    expect(replaced.features).toEqual([])
+    expect(replaced.problems.map((p) => p.code)).toEqual(['native-capability-replace'])
   })
 
   it('a target that is gone or unreadable refuses the save by name', () => {
@@ -404,9 +431,12 @@ describe('existing targets (D663)', () => {
       features: [
         {
           kind: 'fields',
-          cap: 'binary',
+          cap: 'battery',
           fields: {
-            on: { kind: 'expression', expr: 'false', bindings: {} },
+            percentage: { kind: 'expression', expr: 'null', bindings: {} },
+            charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
+            sleeping: { kind: 'expression', expr: 'false', bindings: {} },
+            lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
           },
         },
       ],
@@ -415,7 +445,7 @@ describe('existing targets (D663)', () => {
       blockId: 'blk-old',
       target: FOOD,
       composition: c,
-      replaced: new Set(['binary.on']),
+      replaced: new Set<string>(),
     }
     const asOther = validateComposition(c, {
       ...ctx(found({ binary: HA }, DeviceType.Sensor), FOOD),
@@ -437,9 +467,12 @@ describe('existing targets (D663)', () => {
       features: [
         {
           kind: 'fields',
-          cap: 'binary',
+          cap: 'battery',
           fields: {
-            on: { kind: 'expression', expr: 'false', bindings: {} },
+            percentage: { kind: 'expression', expr: 'null', bindings: {} },
+            charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
+            sleeping: { kind: 'expression', expr: 'false', bindings: {} },
+            lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
           },
         },
       ],
@@ -473,23 +506,26 @@ describe('existing targets (D663)', () => {
   })
 
   it('a self-read of a cap the target does not serve natively is refused by name (rule 5)', () => {
-    // FOOD's binary.on is replaced by FOOD's own battery.sleeping — FOOD has no native battery.
     const c = CompositionSchema.parse({
       target: { kind: 'existing', device: FOOD },
       features: [
         {
           kind: 'fields',
-          cap: 'binary',
+          cap: 'battery',
           fields: {
-            on: { kind: 'from', source: FOOD, cap: 'battery', fieldPath: 'sleeping' },
+            percentage: {
+              kind: 'from',
+              source: FOOD,
+              cap: 'humidity-sensor',
+              fieldPath: 'percent',
+            },
           },
         },
       ],
     })
     const v = validateComposition(c, ctx(found({ binary: HA }, DeviceType.Sensor), FOOD))
-    expect(v.problems.map((p) => [p.code, p.path])).toEqual([
-      ['source-capability-missing', 'features[0].fields.on'],
-    ])
+    expect(v.problems.map((p) => p.code)).toContain('source-capability-missing')
+    expect(v.problems.map((p) => p.code)).not.toContain('native-capability-replace')
   })
 
   it('a self-read of a native field this composition does not compose is the native value', () => {
@@ -498,18 +534,17 @@ describe('existing targets (D663)', () => {
       features: [
         {
           kind: 'fields',
-          cap: 'binary',
+          cap: 'doorbell',
           fields: {
-            on: { kind: 'from', source: CAM, cap: 'battery', fieldPath: 'sleeping' },
+            lastPressedAt: { kind: 'from', source: CAM, cap: 'binary', fieldPath: 'lastChangedAt' },
+            pressCountSinceStart: { kind: 'expression', expr: '0', bindings: {} },
           },
         },
       ],
     })
-    const v = validateComposition(
-      c,
-      ctx(found({ battery: HA, binary: HA }, DeviceType.Sensor), CAM),
-    )
+    const v = validateComposition(c, ctx(found({ binary: HA }, DeviceType.Camera), CAM))
     expect(v.problems).toEqual([])
+    expect(v.features).toEqual([{ featureIndex: 0, cap: 'doorbell', mode: 'add' }])
   })
 
   it('a self-read of an ADDED field is the composition’s own output (slice-1 own-field rule)', () => {
@@ -593,18 +628,13 @@ describe('existing targets (D663)', () => {
       ])
     })
 
-    it('on a REPLACED cap: every derived leaf → release', () => {
+    it('on a native consumables cap the override is refused (D944)', () => {
       const v = validateComposition(
         consumables({ ...nullableLeaves, ...unit }),
         ctx(found({ consumables: HA })),
       )
-      expect(v.problems).toEqual([])
-      expect(v.features).toEqual([{ featureIndex: 0, cap: 'consumables', mode: 'replace' }])
-      expect(itemModes(v)).toEqual([
-        ['level', 'release'],
-        ['status', 'release'],
-        ['remaining.kind', 'release'],
-      ])
+      expect(v.features).toEqual([])
+      expect(v.problems.map((p) => p.code)).toEqual(['native-capability-replace'])
     })
   })
 })

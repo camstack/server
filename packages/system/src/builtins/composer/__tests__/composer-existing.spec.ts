@@ -1,8 +1,9 @@
 /**
- * A composition on an EXISTING device (D663): its fields are CLAIMED on the hub
- * under the block's id, released through the D49 gate, its own replaced fields
- * are read in the NATIVE view, and a target row gone on two agreeing reads fails
- * the block by name. Driven through `Composer.apply` over the `FakeHub`.
+ * A composition on an EXISTING device (D663, D944): a missing cap is ADDED and
+ * its fields are CLAIMED on the hub under the block's id, released through the
+ * D49 gate. A stored feature that would replace a native capability is refused
+ * by name. A target row gone on two agreeing reads fails the block by name.
+ * Driven through `Composer.apply` over the `FakeHub`.
  */
 import {
   COMPOSER_ADDON_ID,
@@ -65,12 +66,6 @@ const INVERT: Composition = CompositionSchema.parse({
   ],
 })
 
-/** FOOD's `binary.on` replaced from X's `binary.on`. */
-const FROM_X: Composition = CompositionSchema.parse({
-  target: { kind: 'existing', device: FOOD },
-  features: [{ kind: 'fields', cap: 'binary', fields: { on: from(X, 'binary', 'on') } }],
-})
-
 /** `battery` ADDED to FEEDER: `percentage` from FEEDER's own native `binary.on`, `charging` from CAM. */
 const ADD_BATTERY: Composition = CompositionSchema.parse({
   target: { kind: 'existing', device: FEEDER },
@@ -90,25 +85,6 @@ const ADD_BATTERY: Composition = CompositionSchema.parse({
       },
     },
   ],
-})
-
-/** FEEDER's own `binary.on` inverted: a replace, and nothing added. */
-const FEEDER_INVERT_FEATURE = {
-  kind: 'fields',
-  cap: 'binary',
-  fields: {
-    on: { kind: 'expression', expr: '!on', bindings: { on: from(FEEDER, 'binary', 'on') } },
-  },
-} as const
-const FEEDER_INVERT: Composition = CompositionSchema.parse({
-  target: { kind: 'existing', device: FEEDER },
-  features: [FEEDER_INVERT_FEATURE],
-})
-
-/** `battery` ADDED and FEEDER's `binary.on` replaced: one add beside a served replace. */
-const ADD_BATTERY_AND_INVERT: Composition = CompositionSchema.parse({
-  target: { kind: 'existing', device: FEEDER },
-  features: [...ADD_BATTERY.features, FEEDER_INVERT_FEATURE],
 })
 
 const DOORBELL: Composition = CompositionSchema.parse({
@@ -333,7 +309,7 @@ beforeEach(async () => {
 
 describe('D670 — existing-target state is seeded before ownership', () => {
   it('reads every affected effective cap before graft planning or claims', async () => {
-    await composer.apply(input([block({ composition: ADD_BATTERY_AND_INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
 
     const ownership = hub.calls.filter(
@@ -341,7 +317,6 @@ describe('D670 — existing-target state is seeded before ownership', () => {
     )
     expect(ownership.filter((call) => call.startsWith('seed:'))).toEqual([
       `seed:${FEEDER_ID}#battery`,
-      `seed:${FEEDER_ID}#binary`,
     ])
     const lastSeed = Math.max(
       ...ownership.map((call, index) => (call.startsWith('seed:') ? index : -1)),
@@ -369,23 +344,23 @@ describe('D670 — existing-target state is seeded before ownership', () => {
   })
 
   it('keeps the old runtime running when an edit seed read fails', async () => {
-    await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: true })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
 
     seedReadFailure = 'offline'
     const patchesBefore = calls('patch:').length
-    const edited = await composer.apply(input([block({ composition: FROM_X, updatedAt: 2 })]))
+    const edited = await composer.apply(input([block({ composition: ADD_BATTERY, updatedAt: 2 })]))
     await flush()
     expect(edited.blocks).toEqual([{ blockId: 'b1', status: 'running' }])
 
     const native = { on: true, lastChangedAt: 30 }
-    hub.setSlice(FOOD_ID, 'binary', native)
-    await composer.onNativeChanged({ deviceId: FOOD_ID, capName: 'binary', native })
+    hub.setSlice(FEEDER_ID, 'binary', native)
+    await composer.onNativeChanged({ deviceId: FEEDER_ID, capName: 'binary', native })
     await flush()
 
     expect(calls('patch:')).toHaveLength(patchesBefore + 1)
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: false })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 100 })
   })
 })
 
@@ -463,39 +438,38 @@ describe('D670 — disabled features produce no runtime work', () => {
 
 describe('rule 1 — the target is resolved and described once per plan change', () => {
   it('a described target plans, its fields are claimed under the block id, and unchanged applies read nothing more', async () => {
-    const result = await composer.apply(input([block({ composition: INVERT })]))
+    const result = await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(result.blocks).toEqual([{ blockId: 'b1', status: 'running' }])
-    expect(hub.claim(FOOD_ID, 'binary')).toEqual({
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({
       owner: 'b1',
-      mode: 'replace',
-      fields: ['on'],
-      values: { on: true },
+      mode: 'add',
+      fields: ['percentage', 'charging', 'sleeping', 'lastUpdated'],
     })
     // No device is declared for an existing target: the row is not the composer's (D663).
     expect(declared.at(-1)).toEqual([])
-    expect(calls(`describe:${FOOD_ID}`)).toHaveLength(1)
-    await composer.apply(input([block({ composition: INVERT })]))
-    await composer.apply(input([block({ composition: INVERT })]))
-    expect(calls(`describe:${FOOD_ID}`)).toHaveLength(1)
+    expect(calls(`describe:${FEEDER_ID}`)).toHaveLength(1)
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
+    expect(calls(`describe:${FEEDER_ID}`)).toHaveLength(1)
     expect(calls('claim:')).toHaveLength(1)
   })
 
   it('an edit re-reads the description ONCE; a read that fails keeps the previous one', async () => {
-    await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
-    expect(calls(`describe:${FOOD_ID}`)).toHaveLength(1)
-    hub.failBindings(FOOD_ID)
-    const edited = await composer.apply(input([block({ composition: INVERT, updatedAt: 2 })]))
+    expect(calls(`describe:${FEEDER_ID}`)).toHaveLength(1)
+    hub.failBindings(FEEDER_ID)
+    const edited = await composer.apply(input([block({ composition: ADD_BATTERY, updatedAt: 2 })]))
     await flush()
-    expect(calls(`describe:${FOOD_ID}`)).toHaveLength(2)
+    expect(calls(`describe:${FEEDER_ID}`)).toHaveLength(2)
     expect(edited.blocks).toEqual([{ blockId: 'b1', status: 'running' }])
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1' })
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1' })
   })
 
   it('with NO previous description the block is starting and nothing is claimed or released (D49)', async () => {
-    hub.failBindings(FOOD_ID)
-    const first = await composer.apply(input([block({ composition: INVERT })]))
+    hub.failBindings(FEEDER_ID)
+    const first = await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(first.blocks).toEqual([
       { blockId: 'b1', status: 'starting', reason: expect.stringContaining('described') },
@@ -504,10 +478,10 @@ describe('rule 1 — the target is resolved and described once per plan change',
     expect(calls('release:')).toEqual([])
     const waits = log.lines.filter((l) => l.message.includes('customization waits'))
     expect(waits).toHaveLength(1)
-    expect(waits[0]?.extras?.tags).toEqual({ deviceId: FOOD_ID })
+    expect(waits[0]?.extras?.tags).toEqual({ deviceId: FEEDER_ID })
     // The read heals: the block plans on the next apply and claims once.
-    hub.healBindings(FOOD_ID)
-    const second = await composer.apply(input([block({ composition: INVERT })]))
+    hub.healBindings(FEEDER_ID)
+    const second = await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(second.blocks).toEqual([{ blockId: 'b1', status: 'running' }])
     expect(calls('claim:')).toHaveLength(1)
@@ -519,7 +493,7 @@ describe('rule 2 — nothing is claimed while the claims index has not loaded', 
     composer = makeComposer()
     hub.scriptedClaims.push({ state: 'not-loaded', reason: 'index blob unreadable' })
     const blocks = [
-      block({ composition: INVERT }),
+      block({ composition: ADD_BATTERY }),
       block({ id: 'room', name: 'Living room', composition: ROOM }),
     ]
     await composer.apply(input(blocks)) // the composer's rows read [] once: everything waits (D49)
@@ -539,7 +513,7 @@ describe('rule 2 — nothing is claimed while the claims index has not loaded', 
     const loaded = await composer.apply(input(blocks)) // the next read agrees
     await flush()
     expect(loaded.blocks[0]).toEqual({ blockId: 'b1', status: 'running' })
-    expect(calls(`claim:${FOOD_ID}#binary`)).toHaveLength(1)
+    expect(calls(`claim:${FEEDER_ID}#battery`)).toHaveLength(1)
   })
 })
 
@@ -594,7 +568,7 @@ describe('rule 3 — a claim nobody wants is released only when two applies agre
     composer = makeComposer()
     hub.scriptedClaims.push({ state: 'loaded', claims: [] })
     await composer.apply(input([])) // rows [] once
-    const cold = await composer.apply(input([block({ composition: INVERT })])) // claims [] once: not trusted
+    const cold = await composer.apply(input([block({ composition: ADD_BATTERY })])) // claims [] once: not trusted
     expect(cold.blocks[0]).toMatchObject({ status: 'starting' })
     expect(calls('claim:')).toEqual([])
     await composer.apply(input([])) // the warm read names the orphan: miss 1
@@ -603,30 +577,34 @@ describe('rule 3 — a claim nobody wants is released only when two applies agre
   })
 
   it('a feature removed by an edit releases its claim before the apply returns', async () => {
+    const cam2: CompositionSourceRef = { addonId: HA, stableId: 'ha:cam2' }
+    const cam2Id = 71
+    hub.add(cam2, cam2Id, {}, DeviceType.Camera)
     const both: Composition = CompositionSchema.parse({
-      target: { kind: 'existing', device: FEEDER },
-      features: [
-        ...ADD_BATTERY.features,
-        { kind: 'fields', cap: 'binary', fields: { on: from(X, 'binary', 'on') } },
-      ],
+      target: { kind: 'existing', device: cam2 },
+      features: [...DOORBELL.features, ...ADD_BATTERY.features],
+    })
+    const batteryOnly: Composition = CompositionSchema.parse({
+      target: { kind: 'existing', device: cam2 },
+      features: ADD_BATTERY.features,
     })
     await composer.apply(input([block({ composition: both })]))
     await flush()
-    expect(hub.claim(FEEDER_ID, 'binary')).toMatchObject({ owner: 'b1', mode: 'replace' })
-    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1', mode: 'add' })
-    await composer.apply(input([block({ composition: ADD_BATTERY, updatedAt: 2 })]))
-    expect(hub.claim(FEEDER_ID, 'binary')).toBeUndefined()
-    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1' })
+    expect(hub.claim(cam2Id, 'doorbell')).toMatchObject({ owner: 'b1', mode: 'add' })
+    expect(hub.claim(cam2Id, 'battery')).toMatchObject({ owner: 'b1', mode: 'add' })
+    await composer.apply(input([block({ composition: batteryOnly, updatedAt: 2 })]))
+    expect(hub.claim(cam2Id, 'doorbell')).toBeUndefined()
+    expect(hub.claim(cam2Id, 'battery')).toMatchObject({ owner: 'b1' })
   })
 })
 
 describe('rule 4 — a block whose row exists but whose plan fails keeps its claims (D659 placeholder rule)', () => {
   it('a cap renamed by a release: failed by name, claims kept, its fields reported stale at their last value', async () => {
-    await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     const renamed: Composition = {
-      ...INVERT,
-      features: INVERT.features.map((f) => ({ ...f, cap: 'binary-v2' })),
+      ...ADD_BATTERY,
+      features: ADD_BATTERY.features.map((f) => ({ ...f, cap: 'battery-v2' })),
     }
     const broken = input([block({ composition: renamed, updatedAt: 2 })])
     const result = await composer.apply(broken)
@@ -635,20 +613,20 @@ describe('rule 4 — a block whose row exists but whose plan fails keeps its cla
     await flush()
     expect(result.blocks[0]).toMatchObject({
       status: 'failed',
-      reason: expect.stringContaining('binary-v2'),
+      reason: expect.stringContaining('battery-v2'),
     })
     expect(calls('release:')).toEqual([])
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1', values: { on: true } })
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1' })
     const [state] = composer.getStates(['b1'])
-    expect(state?.fields).toEqual([
-      {
-        cap: 'binary',
-        path: 'on',
-        state: 'stale',
-        value: true,
-        reason: expect.stringContaining('binary-v2'),
-      },
+    expect(state?.fields.map((field) => field.path).sort()).toEqual([
+      'charging',
+      'lastUpdated',
+      'percentage',
+      'sleeping',
     ])
+    expect(state?.fields.every((field) => field.state === 'stale' && field.cap === 'battery')).toBe(
+      true,
+    )
   })
 })
 
@@ -740,13 +718,24 @@ describe('Task 10 — grafts: an ADDED cap gets a method-serving native, decided
       addonId,
     })
 
-  it('the plan that ADDS battery grafts it once on the target; a replace grafts nothing', async () => {
+  it('the plan that ADDS battery grafts it once; a native replace is refused and grafts nothing', async () => {
     await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(grafts.grafts).toEqual([`${FEEDER_ID}#battery@${FEEDER.stableId}`])
-    await composer.apply(input([block({ id: 'b2', composition: INVERT })]))
+    const refused = await composer.apply(input([block({ id: 'b2', composition: INVERT })]))
+    await flush()
     expect(grafts.grafts).toHaveLength(1)
+    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
+    expect(refused.blocks.find((row) => row.blockId === 'b2')).toMatchObject({ status: 'failed' })
+    const warned = log.lines.filter(
+      (line) =>
+        line.level === 'warn' &&
+        line.message === 'stored customization b2 replaces a native capability — refused' &&
+        line.extras?.tags?.deviceId === FOOD_ID,
+    )
+    expect(warned).toHaveLength(1)
+    expect(warned[0]?.extras?.meta).toMatchObject({ blockId: 'b2' })
   })
 
   it('a disabled block grafts nothing', async () => {
@@ -838,15 +827,21 @@ describe('Task 10 fix round 1 — an unserved add is named (I-1), native always 
     )
   })
 
-  it('I-1: a refused add beside a served replace → degraded, naming it; the next edit that grafts clears it', async () => {
+  it('I-1: a refused add beside a served add → degraded, naming it; the next edit that grafts clears it', async () => {
+    const cam2: CompositionSourceRef = { addonId: HA, stableId: 'ha:cam2' }
+    hub.add(cam2, 71, {}, DeviceType.Camera)
+    const both: Composition = CompositionSchema.parse({
+      target: { kind: 'existing', device: cam2 },
+      features: [...DOORBELL.features, ...ADD_BATTERY.features],
+    })
     grafts.refusing.set('battery', 'no composed answer')
-    await composer.apply(input([block({ composition: ADD_BATTERY_AND_INVERT })]))
+    await composer.apply(input([block({ composition: both })]))
     await flush()
     const [state] = composer.getStates(['b1'])
     expect(state).toMatchObject({ status: 'degraded' })
     expect(state?.reason).toContain('battery: graft refused: no composed answer')
     grafts.refusing.clear()
-    await composer.apply(input([block({ composition: ADD_BATTERY_AND_INVERT, updatedAt: 2 })]))
+    await composer.apply(input([block({ composition: both, updatedAt: 2 })]))
     await flush()
     expect(composer.getStates(['b1'])[0]?.status).toBe('running')
   })
@@ -863,12 +858,12 @@ describe('Task 10 fix round 1 — an unserved add is named (I-1), native always 
         addonId: HA,
       })
     }
-    await composer.apply(input([block({ composition: ADD_BATTERY_AND_INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(grafts.grafts).toEqual([])
     expect(grafts.grafted(FEEDER_ID).size).toBe(0)
     const [state] = composer.getStates(['b1'])
-    expect(state).toMatchObject({ status: 'degraded' })
+    expect(state).toMatchObject({ status: 'failed' })
     expect(state?.reason).toContain(
       `battery: a native provider (${HA}) registered while the block was planning`,
     )
@@ -877,7 +872,7 @@ describe('Task 10 fix round 1 — an unserved add is named (I-1), native always 
   })
 
   it('I-2: a native registered AFTER the graft ungrafts it and the block names it', async () => {
-    await composer.apply(input([block({ composition: ADD_BATTERY_AND_INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(grafts.grafted(FEEDER_ID)).toEqual(new Set(['battery']))
     hub.bind(FEEDER_ID, 'battery')
@@ -889,14 +884,18 @@ describe('Task 10 fix round 1 — an unserved add is named (I-1), native always 
     })
     expect(grafts.grafted(FEEDER_ID).size).toBe(0)
     const [state] = composer.getStates(['b1'])
-    expect(state).toMatchObject({ status: 'degraded' })
+    expect(state).toMatchObject({ status: 'failed' })
     expect(state?.reason).toContain(`battery: a native provider (${HA}) appeared`)
   })
 
   it('I-3: after a respawn, the first plan retracts a graft the previous process left that the plan no longer adds', async () => {
     // The previous process grafted battery; the block was edited to stop adding it while the runner was down.
     hub.bindAs(FEEDER_ID, 'battery', COMPOSER_ADDON_ID)
-    await composer.apply(input([block({ composition: FEEDER_INVERT })]))
+    const stoppedAdding: Composition = CompositionSchema.parse({
+      ...ADD_BATTERY,
+      features: ADD_BATTERY.features.map((feature) => ({ ...feature, enabled: false })),
+    })
+    await composer.apply(input([block({ composition: stoppedAdding })]))
     await flush()
     expect(grafts.retracts).toEqual([
       {
@@ -938,38 +937,24 @@ describe('Task 10 fix round 1 — an unserved add is named (I-1), native always 
 })
 
 describe('rule 6 — self reads come from the NATIVE view, never the merge (no self-cycle)', () => {
-  it('"Invert state": three native writes false → true → false give effective true, false, true — and the merged event is ignored', async () => {
-    await composer.apply(input([block({ composition: INVERT })]))
+  it('a stored override that replaces a native capability is refused by name (D944)', async () => {
+    const result = await composer.apply(input([block({ composition: INVERT })]))
     await flush()
-    // One effective pre-ownership seed, then native hydration and ONE re-read
-    // when the claim landed (C-1): the window between the RPC and its answer.
-    expect(calls(`slice:${FOOD_ID}#binary`)).toHaveLength(1)
-    expect(calls(`native:${FOOD_ID}#binary`)).toHaveLength(2)
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: true })
-    // The hub emits the composer's own merge on every write: taking it as the native would flip the field forever.
-    await composer.onStateChanged({
-      deviceId: FOOD_ID,
-      capName: 'binary',
-      slice: hub.effective(FOOD_ID, 'binary') ?? {},
+    expect(result.blocks[0]).toMatchObject({
+      status: 'failed',
+      reason: expect.stringContaining('native-capability-replace'),
     })
-    await flush()
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: true })
-    const writes = calls('patch:').length
-    for (const on of [true, false]) {
-      const native = { on, lastChangedAt: 11 }
-      hub.setSlice(FOOD_ID, 'binary', native)
-      await composer.onNativeChanged({ deviceId: FOOD_ID, capName: 'binary', native })
-      await flush()
-      expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: !on })
-      await composer.onStateChanged({
-        deviceId: FOOD_ID,
-        capName: 'binary',
-        slice: hub.effective(FOOD_ID, 'binary') ?? {},
-      })
-      await flush()
-      expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: !on })
-    }
-    expect(calls('patch:').length).toBe(writes + 2)
+    expect(result.blocks[0]?.reason).toContain(`device ${FOOD_ID}`)
+    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
+    expect(calls('patch:')).toEqual([])
+    const warned = log.lines.filter(
+      (line) =>
+        line.level === 'warn' &&
+        line.message === 'stored customization b1 replaces a native capability — refused',
+    )
+    expect(warned).toHaveLength(1)
+    expect(warned[0]?.extras?.tags).toEqual({ deviceId: FOOD_ID })
+    expect(warned[0]?.extras?.meta).toMatchObject({ blockId: 'b1' })
   })
 
   it('a native field the composition does NOT claim: `device.state-changed` IS the native (no shadow ever comes)', async () => {
@@ -985,156 +970,102 @@ describe('rule 6 — self reads come from the NATIVE view, never the merge (no s
 })
 
 describe('C-1 — what the tracker takes as the native follows the claim the hub HOLDS, never the plan', () => {
-  const PERSISTED = { owner: 'b1', mode: 'replace', fields: ['on'], values: { on: true } } as const
+  const PERSISTED = {
+    owner: 'b1',
+    mode: 'add',
+    fields: ['percentage', 'charging', 'sleeping', 'lastUpdated'],
+    values: { percentage: 0, charging: 'dc', sleeping: false, lastUpdated: 1 },
+  } as const
 
   it('boot with a persisted claim and a FAILING target-state read: ownership waits, the claim is held; the read recovers → the composed value', async () => {
-    hub.seedClaim(FOOD_ID, 'binary', PERSISTED)
-    hub.failSlice(FOOD_ID, 'binary')
+    hub.seedClaim(FEEDER_ID, 'battery', PERSISTED)
+    hub.failSlice(FEEDER_ID, 'battery')
     composer = makeComposer()
-    await composer.apply(input([block({ composition: INVERT })])) // rows [] once
-    const booted = await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })])) // rows [] once
+    const booted = await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(calls('release:')).toEqual([])
-    expect(hub.claim(FOOD_ID, 'binary')).toEqual(PERSISTED)
+    expect(hub.claim(FEEDER_ID, 'battery')).toEqual(PERSISTED)
     expect(booted.blocks[0]).toMatchObject({
       status: 'starting',
       reason: expect.stringContaining('state could not be read before ownership'),
     })
     expect(calls('claim:')).toEqual([])
     // Still failing on the next converge: still held, nothing released or claimed.
-    await composer.apply(input([block({ composition: INVERT })]))
-    await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(calls('release:')).toEqual([])
-    expect(hub.claim(FOOD_ID, 'binary')).toEqual(PERSISTED)
-    // The read heals: the converge re-reads it and the runtime starts from the real native.
-    hub.healSlice(FOOD_ID, 'binary')
-    hub.setSlice(FOOD_ID, 'binary', { on: true, lastChangedAt: 12 })
-    const healed = await composer.apply(input([block({ composition: INVERT })]))
+    expect(hub.claim(FEEDER_ID, 'battery')).toEqual(PERSISTED)
+    // The read heals: the converge re-reads it and the runtime starts from the sources.
+    hub.healSlice(FEEDER_ID, 'battery')
+    const healed = await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(healed.blocks[0]).toEqual({ blockId: 'b1', status: 'running' })
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1', values: { on: false } })
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({
+      owner: 'b1',
+      values: { percentage: 0 },
+    })
     expect(calls('release:')).toEqual([])
     // Under the seeded claim the merged event is the composer's own: ignored.
     await composer.onStateChanged({
-      deviceId: FOOD_ID,
-      capName: 'binary',
-      slice: hub.effective(FOOD_ID, 'binary') ?? {},
+      deviceId: FEEDER_ID,
+      capName: 'battery',
+      slice: hub.effective(FEEDER_ID, 'battery') ?? {},
     })
     await flush()
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: false })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
   })
 
-  it("a FOOD whose `binary` never reported: HELD (an empty read is no answer), and the provider's first `state-changed` (no claim held → it IS the native) claims it without the operator", async () => {
-    hub.clearSlice(FOOD_ID, 'binary')
-    const first = await composer.apply(input([block({ composition: INVERT })]))
-    await flush()
-    expect(first.blocks[0]).toMatchObject({
-      status: 'starting',
-      reason: expect.stringContaining('held'),
-    })
-    expect(calls('release:')).toEqual([])
-    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
-    const native = { on: false, lastChangedAt: 30 }
-    hub.setSlice(FOOD_ID, 'binary', native)
-    await composer.onStateChanged({ deviceId: FOOD_ID, capName: 'binary', slice: native })
-    await flush()
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1', values: { on: true } })
-    expect(composer.getStates(['b1'])[0]).toMatchObject({ status: 'running' })
-  })
-
-  it('`self.on && X.on` through a release caused by X: the native change DURING the release is taken, and the re-claim uses it', async () => {
-    const BOTH: Composition = CompositionSchema.parse({
+  it('a composition that also replaces a native cap is refused and claims nothing (D944)', async () => {
+    const both: Composition = CompositionSchema.parse({
       target: { kind: 'existing', device: FOOD },
       features: [
-        {
-          kind: 'fields',
-          cap: 'binary',
-          fields: {
-            on: {
-              kind: 'expression',
-              expr: 'self && x',
-              bindings: { self: from(FOOD, 'binary', 'on'), x: from(X, 'binary', 'on') },
-            },
-          },
-        },
+        ...ADD_BATTERY.features,
+        { kind: 'fields', cap: 'binary', fields: { on: from(X, 'binary', 'on') } },
       ],
     })
-    await composer.apply(input([block({ composition: BOTH })]))
+    const result = await composer.apply(input([block({ composition: both })]))
     await flush()
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: false })
-    hub.unbind(X_ID, 'binary')
-    await composer.onBindingsChanged({
-      deviceId: X_ID,
-      capName: 'binary',
-      reason: 'native-unregistered',
-      addonId: HA,
-    })
-    await flush()
+    expect(result.blocks[0]).toMatchObject({ status: 'failed' })
+    expect(result.blocks[0]?.reason).toContain('native-capability-replace')
     expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
-    // No claim now: the provider's write arrives as a plain state-changed, and it IS the native.
-    const native = { on: true, lastChangedAt: 40 }
-    hub.setSlice(FOOD_ID, 'binary', native)
-    await composer.onStateChanged({ deviceId: FOOD_ID, capName: 'binary', slice: native })
-    await flush()
-    hub.bind(X_ID, 'binary')
-    await composer.onBindingsChanged({
-      deviceId: X_ID,
-      capName: 'binary',
-      reason: 'native-registered',
-      addonId: HA,
-    })
-    await flush()
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1', values: { on: true } })
-    expect(composer.getStates(['b1'])[0]).toMatchObject({ status: 'running' })
+    expect(hub.claim(FOOD_ID, 'battery')).toBeUndefined()
   })
 })
 
 describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the claim window (N-1), a fresh runtime waits for its sync (N-5)', () => {
-  const PERSISTED_X = {
+  const PERSISTED_CAM = {
     owner: 'b1',
-    mode: 'replace',
-    fields: ['on'],
-    values: { on: true },
+    mode: 'add',
+    fields: ['percentage', 'charging', 'sleeping', 'lastUpdated'],
+    values: { percentage: 0, charging: 'dc', sleeping: false, lastUpdated: 1 },
   } as const
 
-  it("N-2: boot with a persisted claim and ANOTHER source's first read failing: nothing released, the field held; its unregistration CONFIRMED by a re-read → released, degraded", async () => {
-    hub.seedClaim(FOOD_ID, 'binary', PERSISTED_X)
-    hub.failSlice(X_ID, 'binary')
+  it('N-2: a failed source read and an unconfirmed unregistration release nothing', async () => {
+    hub.seedClaim(FEEDER_ID, 'battery', PERSISTED_CAM)
+    hub.failSlice(CAM_ID, 'battery')
     composer = makeComposer()
-    await composer.apply(input([block({ composition: FROM_X })])) // rows [] once
-    const booted = await composer.apply(input([block({ composition: FROM_X })]))
-    await composer.apply(input([block({ composition: FROM_X })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })])) // rows [] once
+    const booted = await composer.apply(input([block({ composition: ADD_BATTERY })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(calls('release:')).toEqual([])
-    expect(hub.claim(FOOD_ID, 'binary')).toEqual(PERSISTED_X)
-    expect(booted.blocks[0]).toMatchObject({
-      status: 'starting',
-      reason: expect.stringContaining(`${X.stableId} binary.on`),
-    })
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1', mode: 'add' })
+    expect(booted.blocks[0]?.status === 'starting' || booted.blocks[0]?.status === 'running').toBe(
+      true,
+    )
     // An unregistration the bindings re-read could not confirm is still no answer.
-    hub.failBindings(X_ID)
+    hub.failBindings(CAM_ID)
     await composer.onBindingsChanged({
-      deviceId: X_ID,
-      capName: 'binary',
+      deviceId: CAM_ID,
+      capName: 'battery',
       reason: 'native-unregistered',
       addonId: HA,
     })
     await flush()
     expect(calls('release:')).toEqual([])
-    // Confirmed: the provider unregistered it and the re-read agrees.
-    hub.healBindings(X_ID)
-    hub.unbind(X_ID, 'binary')
-    await composer.onBindingsChanged({
-      deviceId: X_ID,
-      capName: 'binary',
-      reason: 'native-unregistered',
-      addonId: HA,
-    })
-    await flush()
-    expect(calls('release:')).toEqual([`release:${FOOD_ID}#binary`])
-    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
-    expect(composer.getStates(['b1'])[0]).toMatchObject({ status: 'degraded' })
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1' })
   })
 
   it("N-1: the hub's merged `state-changed` arriving BEFORE the claim reply is not taken as the native — no flip-back write", async () => {
@@ -1148,10 +1079,10 @@ describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the cl
         slice: hub.effective(input.deviceId, input.capName) ?? {},
       })
     }
-    await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(merged).toBe(true)
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: true })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
     expect(calls('patch:')).toEqual([])
   })
 
@@ -1201,28 +1132,26 @@ describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the cl
 })
 
 describe('rule 7 — disabling or deleting a block releases its claims, healed by the gate', () => {
-  it('disabled: the runtime hands the cap back at once; when that release FAILS, the gate re-sends it on the second apply', async () => {
-    await composer.apply(input([block({ composition: INVERT })]))
+  it('disabled: an added cap stops; the claim stays until a later apply agrees it is unwanted (D49)', async () => {
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
-    hub.failReleases = 1
-    const off = await composer.apply(input([block({ composition: INVERT, enabled: false })]))
+    const off = await composer.apply(input([block({ composition: ADD_BATTERY, enabled: false })]))
     await flush()
     expect(off.blocks[0]).toMatchObject({ status: 'stopped' })
-    expect(calls('release:')).toEqual([`release:${FOOD_ID}#binary`])
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1' })
-    await composer.apply(input([block({ composition: INVERT, enabled: false })]))
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1' })
+    await composer.apply(input([block({ composition: ADD_BATTERY, enabled: false })]))
     await flush()
-    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
-    expect(calls('release:')).toHaveLength(2)
+    expect(calls('release:')).toEqual([`release:${FEEDER_ID}#battery`])
+    expect(hub.claim(FEEDER_ID, 'battery')).toBeUndefined()
   })
 
   it('deleted: released on the second apply that omits it', async () => {
-    await composer.apply(input([block({ composition: INVERT })]))
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     await composer.apply(input([]))
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1' })
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({ owner: 'b1' })
     await composer.apply(input([]))
-    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
+    expect(hub.claim(FEEDER_ID, 'battery')).toBeUndefined()
   })
 
   it('delete then create on the same device: the replacement runs', async () => {
@@ -1285,66 +1214,52 @@ describe('rule 7 — disabling or deleting a block releases its claims, healed b
 })
 
 describe('rule 8 — a released field makes the block degraded (S1b), and it is the runtime that releases, not the gate', () => {
-  it('the source cap unregistered → degraded naming the field and the source, native shows at once; back → claimed again, running', async () => {
-    await composer.apply(input([block({ composition: FROM_X })]))
+  it('an added field whose source unregisters says unknown and keeps the claim', async () => {
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
-    expect(hub.claim(FOOD_ID, 'binary')?.values).toEqual({ on: true })
-    hub.unbind(X_ID, 'binary')
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ charging: 'dc' })
+    hub.unbind(CAM_ID, 'battery')
     await composer.onBindingsChanged({
-      deviceId: X_ID,
-      capName: 'binary',
+      deviceId: CAM_ID,
+      capName: 'battery',
       reason: 'native-unregistered',
       addonId: HA,
     })
     await flush()
     // ONE event, no apply in between: the native value already shows (D393 — never a composed value whose source is gone).
-    expect(calls('release:')).toEqual([`release:${FOOD_ID}#binary`])
-    expect(hub.claim(FOOD_ID, 'binary')).toBeUndefined()
-    const [degraded] = composer.getStates(['b1'])
-    expect(degraded).toMatchObject({ blockId: 'b1', deviceId: FOOD_ID, status: 'degraded' })
-    expect(degraded?.reason).toContain('released to the native provider: binary.on')
-    expect(degraded?.reason).toContain(`${HA}/${X.stableId} binary.on`)
-    expect(degraded?.reason).toContain('unregistered')
-    const applied = await composer.apply(input([block({ composition: FROM_X })]))
-    expect(applied.blocks[0]?.status).toBe('degraded')
-    hub.bind(X_ID, 'binary')
-    hub.setSlice(X_ID, 'binary', { on: false, lastChangedAt: 21 })
-    await composer.onBindingsChanged({
-      deviceId: X_ID,
-      capName: 'binary',
-      reason: 'native-registered',
-      addonId: HA,
+    // An added field that can say 'unknown' stays claimed: there is no native charging to hand back.
+    expect(calls('release:')).toEqual([])
+    expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({
+      owner: 'b1',
+      values: { charging: 'unknown' },
     })
-    await flush()
-    expect(calls('claim:')).toHaveLength(2)
-    expect(hub.claim(FOOD_ID, 'binary')).toMatchObject({ owner: 'b1', values: { on: false } })
     expect(composer.getStates(['b1'])[0]).toMatchObject({ status: 'running' })
   })
 })
 
 describe('the target description is refreshed after `device.bindings-changed`', () => {
   it('a block waiting on an unreadable description re-reads it; a settled block is re-planned only by the operator', async () => {
-    hub.failBindings(FOOD_ID)
-    await composer.apply(input([block({ composition: INVERT })]))
-    hub.healBindings(FOOD_ID)
+    hub.failBindings(FEEDER_ID)
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
+    hub.healBindings(FEEDER_ID)
     await composer.onBindingsChanged({
-      deviceId: FOOD_ID,
+      deviceId: FEEDER_ID,
       capName: 'binary',
       reason: 'native-registered',
       addonId: HA,
     })
-    const healed = await composer.apply(input([block({ composition: INVERT })]))
+    const healed = await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(healed.blocks[0]).toEqual({ blockId: 'b1', status: 'running' })
-    const reads = calls(`describe:${FOOD_ID}`).length
+    const reads = calls(`describe:${FEEDER_ID}`).length
     await composer.onBindingsChanged({
-      deviceId: FOOD_ID,
+      deviceId: FEEDER_ID,
       capName: 'binary',
       reason: 'native-registered',
       addonId: HA,
     })
-    await composer.apply(input([block({ composition: INVERT })]))
-    expect(calls(`describe:${FOOD_ID}`).length).toBe(reads)
+    await composer.apply(input([block({ composition: ADD_BATTERY })]))
+    expect(calls(`describe:${FEEDER_ID}`).length).toBe(reads)
   })
 })
 
@@ -1352,7 +1267,7 @@ describe('declarations', () => {
   it('an existing target never reaches DeclaredDevices — the owner filter stays load-bearing', async () => {
     await composer.apply(
       input([
-        block({ composition: INVERT }),
+        block({ composition: ADD_BATTERY }),
         block({ id: 'room', name: 'Living room', composition: ROOM }),
       ]),
     )

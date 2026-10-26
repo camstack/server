@@ -450,9 +450,13 @@ runner (a group of one) for every declarative composition. Existing devices are 
   before the store loads (D315); writes are serialized and an update carries
   `expectedUpdatedAt`. Commands and media passthrough (slice 3) and code
   fields (slice 4) are in the wire shape and refused by name today.
-- **An EXISTING device can be the target (slice 2, D663).** Nothing is
-  declared: the composer CLAIMS the fields it replaces or adds on the hub under
-  the block id (`deviceState.claimFields`), and hands a claim back only when
+- **An EXISTING device can be the target (slice 2, D663, D944).** Nothing is
+  declared. A feature ADDS a capability the device lacks and the composer
+  CLAIMS those fields on the hub under the block id (`deviceState.claimFields`).
+  A stored feature that would replace a capability the device already serves
+  is refused (`native-capability-replace`), logged with `tags: { deviceId }`
+  and the block id. A built device (`target.kind: 'new'`) is unchanged. A claim
+  is handed back only when
   two applies agree (seeded from the claims index; a failed release is retried
   on every apply until it lands). The target's own REPLACED or uncomposed
   fields are read in the NATIVE view, so "invert state" never reads its own
@@ -497,7 +501,7 @@ runner (a group of one) for every declarative composition. Existing devices are 
 - **A composition may derive capability events from state (D670).** The
   capability declares the event and its numeric advancing state field;
   composition planning maps supported names explicitly to event categories.
-  `replace` never plans an event, because the native provider remains its
+  A native capability is not replaced (D944), so its provider remains the event
   authority. The runtime seeds the existing target before ownership side
   effects, evaluates stateful calls with per-field transactional memory, then
   advances the event high-water, emits to the event bus and writes the owned

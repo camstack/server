@@ -178,7 +178,7 @@ describe('ScalarOverrideCard', () => {
       <ScalarOverrideCard
         device={DEVICE}
         handle={handleOf(presentState(composition))}
-        availability={{ kind: 'present', mode: 'replace' }}
+        availability={{ kind: 'present', mode: 'add' }}
         cap="battery"
         target={targetOf('battery')}
       />,
@@ -199,7 +199,7 @@ describe('ScalarOverrideCard', () => {
       <ScalarOverrideCard
         device={DEVICE}
         handle={handleOf(presentState(composition))}
-        availability={{ kind: 'present', mode: 'replace' }}
+        availability={{ kind: 'present', mode: 'add' }}
         cap="battery"
         target={targetOf('battery')}
       />,
@@ -235,7 +235,7 @@ describe('ScalarOverrideCard', () => {
       <ScalarOverrideCard
         device={{ ...DEVICE, type: DeviceType.Camera }}
         handle={handleOf({ kind: 'none' })}
-        availability={{ kind: 'present', mode: 'replace' }}
+        availability={{ kind: 'present', mode: 'add' }}
         cap="running-state"
         target={running}
       />,
@@ -249,7 +249,7 @@ describe('ScalarOverrideCard', () => {
       <ScalarOverrideCard
         device={{ ...DEVICE, type: DeviceType.Dishwasher, name: 'Kitchen dishwasher' }}
         handle={handleOf({ kind: 'none' })}
-        availability={{ kind: 'present', mode: 'replace' }}
+        availability={{ kind: 'present', mode: 'add' }}
         cap="running-state"
         target={running}
       />,

@@ -95,7 +95,7 @@ export function KeyedArrayCard(props: KeyedArrayCardProps): ReactNode {
   if (!visible(props, storedFeature)) return null
   const answered = props.handle.state.kind === 'none' || props.handle.state.kind === 'present'
   const canAdd = props.availability.kind === 'present' && answered
-  const apply = props.target.apply === 'replace' ? 'replace' : 'add'
+  const apply = 'add' as const
   const title = t(`customize.keyed.title.${props.cap}`)
   const badgeText = badgeLabel(t, projection.text, projection.assignedCount)
   const save = async (next: Parameters<CustomizationHandle['save']>[0]): Promise<void> => {

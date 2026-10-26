@@ -4,12 +4,12 @@
 
 # Guards
 
-192 repository guards: 187 in `scripts/`,
+193 repository guards: 188 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (183)
+## Enforced by CI checks (184)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -53,6 +53,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-collection-namespacing.ts` | Collection-namespacing guard — an addon may not take a BARE collection name. |
 | `scripts/check-composed-methods.ts` | GUARD: `composedMethods` (D663) — every key a `*.cap.ts` declares must actually be one of that cap's own methods, and every `{ kind: 'answer' }` value must parse with THAT method's output schema. |
 | `scripts/check-container-priority-in-sync.ts` | The container-child precedence has ONE definition and two copies that cannot import it. This makes that fact checkable instead of asking for it in a comment. |
+| `scripts/check-customize-apply-add.ts` | Customize apply guard (D944). An extension target is `apply: 'add'` only. |
 | `scripts/check-customize-bespoke-card.ts` | Customize bespoke-card guard (D936). A cap that declares `customize` is offered by the generic scalar, keyed-array and event cards. A component or builder named after that cap outside those folders is a second card, and a new override ha… |
 | `scripts/check-customize-declaration.ts` | Customize declaration guard (D936). A cap may offer a generic override only by declaring `customize`, and that declaration has to name paths, types and vocabulary the cap actually has. |
 | `scripts/check-customize-parameters.ts` | Customize parameter guard (D944). An extension's transform parameters — threshold, comparison, dwell, scale, offset, clamp, debounce, edges, source modes, timeout — have to appear on the catalog the editor reads. |

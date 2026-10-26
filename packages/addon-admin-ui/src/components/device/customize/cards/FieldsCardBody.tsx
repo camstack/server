@@ -1,8 +1,8 @@
 /**
- * One generic composition card: a row per field, the same override row as
- * Advanced (Current value / No override / + Add override).
+ * One generic composition card: a row per field
+ * (Current value / No override / + Add override).
  */
-import { CAP_CUSTOMIZE_CATALOG, type CompositionFieldsCard } from '@camstack/types'
+import { runtimeFieldUnit, type CompositionFieldsCard } from '@camstack/types'
 import { Button } from '@camstack/ui-library'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -22,15 +22,8 @@ export interface FieldsCardBodyProps {
   readonly names: ReadonlyMap<string, string>
 }
 
-function isCatalogCap(cap: string): cap is keyof typeof CAP_CUSTOMIZE_CATALOG {
-  return Object.hasOwn(CAP_CUSTOMIZE_CATALOG, cap)
-}
-
 function fieldUnit(cap: string, path: string): string | undefined {
-  if (!isCatalogCap(cap)) return undefined
-  const param = CAP_CUSTOMIZE_CATALOG[cap].advancedParameters.find((item) => item.path === path)
-  if (param !== undefined && 'unit' in param) return param.unit
-  return undefined
+  return runtimeFieldUnit(cap, path)
 }
 
 export function FieldsCardBody({

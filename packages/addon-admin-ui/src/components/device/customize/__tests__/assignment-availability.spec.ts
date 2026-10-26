@@ -22,13 +22,13 @@ const DOORBELL: CustomizeOffer = {
 }
 const BATTERY: CustomizeOffer = {
   cap: 'battery',
-  apply: 'add-or-replace',
+  apply: 'add',
   authority: 'composition-claim',
   nativeItemsReadOnly: false,
 }
 const RUNNING: CustomizeOffer = {
   cap: 'running-state',
-  apply: 'add-or-replace',
+  apply: 'add',
   authority: 'composition-claim',
   nativeItemsReadOnly: false,
 }
@@ -40,7 +40,7 @@ const CONSUMABLES: CustomizeOffer = {
 }
 const MOTION: CustomizeOffer = {
   cap: 'motion',
-  apply: 'replace',
+  apply: 'add',
   authority: 'camera-sensors',
   nativeItemsReadOnly: false,
 }
@@ -52,7 +52,7 @@ describe('assignmentAvailability — four answered states (D315, D676 ruling 13)
       assignmentAvailability(DOORBELL, { ...CAMERA, nativeCaps: known(new Set(['doorbell'])) }),
     ).toEqual({ kind: 'absent' })
   })
-  it('running-state replaces a native cap and adds where none exists', () => {
+  it('running-state is offered only where the device has none of its own', () => {
     const composableRunning: AssignmentFacts = {
       ...CAMERA,
       composable: known(new Set(['running-state'])),
@@ -67,13 +67,13 @@ describe('assignmentAvailability — four answered states (D315, D676 ruling 13)
         composable: known(new Set(['running-state'])),
         nativeCaps: known(new Set(['running-state'])),
       }),
-    ).toEqual({ kind: 'present', mode: 'replace' })
+    ).toEqual({ kind: 'absent' })
   })
-  it('battery replaces a native battery and adds where none exists', () => {
+  it('battery is offered only where the device has none of its own', () => {
     expect(assignmentAvailability(BATTERY, CAMERA)).toEqual({ kind: 'present', mode: 'add' })
     expect(
       assignmentAvailability(BATTERY, { ...CAMERA, nativeCaps: known(new Set(['battery'])) }),
-    ).toEqual({ kind: 'present', mode: 'replace' })
+    ).toEqual({ kind: 'absent' })
   })
   it('consumables stay addable when the device already has native items (keyed-array §6.4)', () => {
     const feeder: AssignmentFacts = {

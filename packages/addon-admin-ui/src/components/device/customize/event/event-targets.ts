@@ -51,15 +51,14 @@ export function eventCardTargets(): readonly EventCardTarget[] {
 
 function pulseView(target: CustomizeCatalogTarget): PulseCatalogView | null {
   if (target.shape !== 'pulse') return null
-  const apply = pulseApply(target.apply)
+  const apply = 'add' as const
   if (
     target.timestampPath === undefined ||
     target.counterPath === undefined ||
     target.debounceMs === undefined ||
     target.edges === undefined ||
     target.defaultEdge === undefined ||
-    !target.edges.includes(target.defaultEdge) ||
-    apply === null
+    !target.edges.includes(target.defaultEdge)
   ) {
     return null
   }
@@ -92,9 +91,4 @@ export function eventBadgeKey(text: string, state: string): string {
   if (text === 'pending') return 'customize.event.checking'
   if (text === 'unknown' || text === 'unreadable') return 'customize.event.badge.unavailable'
   return `customize.event.badge.${state}`
-}
-
-function pulseApply(apply: CustomizeCatalogTarget['apply']): 'add' | 'replace' | null {
-  if (apply === 'add' || apply === 'replace') return apply
-  return null
 }

@@ -55,14 +55,13 @@ const RUNNING_CUSTOMIZE_DEVICE_TYPES = [
 /** Generic Customize target for the running boolean (D936). */
 const runningCustomize = {
   version: 1,
-  advanced: 'derive',
   targets: [
     {
       id: 'running',
       cardinality: 'scalar',
       vocabulary: { cap: 'running-state', stateField: 'running' },
       deviceTypes: RUNNING_CUSTOMIZE_DEVICE_TYPES,
-      apply: 'add-or-replace',
+      apply: 'add',
       path: 'running',
       sources: [
         { kind: 'switch', transforms: [{ kind: 'identity' }] },

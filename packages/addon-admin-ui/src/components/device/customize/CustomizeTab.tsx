@@ -3,7 +3,7 @@
  * (D663). It stores nothing: the assignment cards merge a feature into the
  * block, identity writes the authorities that already exist, links are the
  * D648 slot. What it claims about the block is one of five answered states
- * (D315). Order: identity, status, cards, then Advanced (in-tab).
+ * (D315). Order: identity, status, extension cards, linked devices (D944).
  */
 import {
   COMPOSER_ADDON_ID,
@@ -31,7 +31,6 @@ import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
-import { CustomizeAdvancedSection } from './CustomizeAdvancedSection'
 import { ComposedCustomizeBody } from './ComposedCustomizeBody'
 import { scalarCardTargets } from './scalar/ScalarOverrideCard'
 import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
@@ -102,7 +101,6 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
     for (const { cap } of eventCardTargets()) s.add(cap)
     return s
   }, [])
-  const editable = handle.state.kind === 'none' || handle.state.kind === 'present'
   return (
     <div className="flex flex-col gap-3">
       <IdentityRow device={device} />
@@ -127,7 +125,6 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
       />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
       <LinkedDevicesTable device={device} />
-      {editable && <CustomizeAdvancedSection device={device} handle={handle} />}
     </div>
   )
 }

@@ -117,10 +117,12 @@ describe('state-derived capability events', () => {
     ])
   })
 
-  it('does not plan a state-derived event for replace mode', () => {
+  it('refuses a state-derived event that would replace a native doorbell (D944)', () => {
     const verdict = validateComposition(composition(), context(doorbellCapability, true))
 
-    expect(verdict.ok).toBe(true)
+    expect(verdict.ok).toBe(false)
+    if (verdict.ok) return
+    expect(verdict.problems.map((item) => item.code)).toContain('native-capability-replace')
     expect(verdict.events).toEqual([])
   })
 

@@ -6,10 +6,11 @@ date: 2026-10-26
 supersedes: D941 (derived advanced parameters only; the one card editor stays)
 applies-to:
   - packages/types/src/capabilities/customize-spec.ts
-  - packages/types/src/capabilities/advanced-parameters.ts
   - packages/types/src/capabilities/*.cap.ts
+  - packages/types/src/composition/validate-composition.ts
   - packages/addon-admin-ui/src/components/device/customize/**
   - scripts/lib/customize-project.ts
+  - scripts/check-customize-apply-add.ts
 ---
 
 ## Context

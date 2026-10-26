@@ -109,18 +109,9 @@ export interface CustomizeCatalogTarget {
   readonly advancedExpression: boolean
 }
 
-export interface CustomizeCatalogAdvancedParameter {
-  readonly path: string
-  readonly kind: CustomizeCatalogValueKind
-  readonly label: string
-  readonly unit?: string
-  readonly enumValues?: readonly string[]
-}
-
 export interface CustomizeCatalogEntry {
   readonly version: 1
   readonly targets: readonly CustomizeCatalogTarget[]
-  readonly advancedParameters: readonly CustomizeCatalogAdvancedParameter[]
 }
 
 export type CustomizeCatalog = Readonly<Record<string, CustomizeCatalogEntry>>

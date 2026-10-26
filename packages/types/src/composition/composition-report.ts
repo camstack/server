@@ -39,6 +39,8 @@ export const CompositionProblemCodeSchema = z.enum([
   'target-unreadable',
   /** An ADDED field that reads a source but can say neither `null` nor `'unknown'` — nothing to fall back to (D393, D663). */
   'not-replaceable',
+  /** An existing-target feature would replace a capability the device already serves (D944). */
+  'native-capability-replace',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 
@@ -109,9 +111,11 @@ export function compositionFieldKey(
 }
 
 /**
- * What a feature does to its target (D663): `new` builds a capability on a new
- * device; on an existing device it `add`s a capability the device lacks, or
- * `replace`s named fields of one it has natively.
+ * What a feature does to its target (D663, D944): `new` builds a capability on a
+ * new device; on an existing device it `add`s a capability the device lacks.
+ * Replacing a capability the device already serves is refused
+ * (`native-capability-replace`), not planned. `replace` remains on the claim
+ * wire for a claim the hub already holds.
  */
 export const CompositionFeatureModeSchema = z.enum(['new', 'add', 'replace'])
 export type CompositionFeatureMode = z.infer<typeof CompositionFeatureModeSchema>

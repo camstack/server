@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -27,13 +26,6 @@ export const TemperatureSensorStatusSchema = z.object({
 })
 
 export type TemperatureSensorStatus = z.infer<typeof TemperatureSensorStatusSchema>
-
-/** Advanced rows only (D939). No card target, so a composed device keeps the generic card. */
-const temperatureSensorCustomize = {
-  version: 1,
-  advanced: 'derive',
-  targets: [],
-} as const satisfies CapabilityCustomizeSpec
 
 export const temperatureSensorCapability = {
   name: 'temperature-sensor',
@@ -66,7 +58,6 @@ export const temperatureSensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
-  customize: temperatureSensorCustomize,
 } as const satisfies CapabilityDefinition
 
 export type ITemperatureSensorProvider = InferProvider<typeof temperatureSensorCapability>

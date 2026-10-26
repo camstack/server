@@ -10,13 +10,12 @@ import type { DeviceType } from '../device/device-type.js'
 
 export type CustomizeCardinality = 'scalar' | 'keyedArray' | 'event'
 export type CustomizeValueKind = 'boolean' | 'number' | 'string' | 'enum'
-export type CustomizeApplyMode = 'add' | 'replace' | 'add-or-replace'
+/** An extension is offered only when the device lacks the capability (D944). */
+export type CustomizeApplyMode = 'add'
 
 export interface CapabilityCustomizeSpec {
   readonly version: 1
   readonly targets: readonly CapabilityCustomizeTarget[]
-  /** Opt-in advanced parameters: derive from runtime schema or an explicit path list (D939). */
-  readonly advanced?: 'derive' | readonly string[]
 }
 
 export type CapabilityCustomizeTarget =

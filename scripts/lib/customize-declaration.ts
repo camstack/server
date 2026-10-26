@@ -31,12 +31,6 @@ import {
   type CustomizePathResult,
   type CustomizeValueLeafKind,
 } from './customize-path.ts'
-import {
-  collectCustomizeOwnedPaths,
-  collectEventTimestampPaths,
-  deriveAdvancedParameters,
-} from '../../packages/types/src/capabilities/advanced-parameters.ts'
-
 export type CustomizeViolationRule =
   | 'no-runtime-state'
   | 'empty-targets'
@@ -69,9 +63,6 @@ export type CustomizeViolationRule =
   | 'source-modes'
   | 'bad-source-mode'
   | 'event-claims-scalar'
-  | 'advanced-wildcard'
-  | 'advanced-unknown-path'
-  | 'advanced-excluded'
 
 export interface CustomizeViolation {
   readonly capName: string
@@ -124,66 +115,14 @@ export function judgeCustomize(view: CustomizeCapView): readonly CustomizeViolat
   if (runtime === undefined) {
     return [fail(view, undefined, 'no-runtime-state', 'declares customize but no runtimeState')]
   }
-  // A card target is what skips the generic fields card. `advanced: 'derive'`
-  // may stand alone so an existing device lists the derived rows and a
-  // composed device keeps that generic card.
   if (spec.targets.length === 0) {
-    if (spec.advanced !== 'derive') {
-      return [fail(view, undefined, 'empty-targets', 'customize declares no targets')]
-    }
-    return judgeAdvanced(view, spec, runtime)
+    return [fail(view, undefined, 'empty-targets', 'customize declares no targets')]
   }
   return [
     ...duplicateTargetIds(view, spec),
     ...spec.targets.flatMap((target) => judgeTarget(view, target, runtime)),
     ...eventClaimsScalar(view, spec),
-    ...judgeAdvanced(view, spec, runtime),
   ]
-}
-
-function judgeAdvanced(
-  view: CustomizeCapView,
-  spec: CapabilityCustomizeSpec,
-  runtime: z.ZodObject<z.core.$ZodLooseShape>,
-): readonly CustomizeViolation[] {
-  const advanced = spec.advanced
-  if (advanced === undefined || advanced === 'derive') return []
-  const owned = collectCustomizeOwnedPaths(spec)
-  const eventTs = collectEventTimestampPaths(spec)
-  const allowed = new Set(deriveAdvancedParameters(runtime, owned, eventTs).map((row) => row.path))
-  const shape = objectShape(runtime)
-  const topKeys = shape === undefined ? new Set<string>() : new Set(Object.keys(shape))
-  const violations: CustomizeViolation[] = []
-  for (const path of advanced) {
-    if (path.includes('*')) {
-      violations.push(
-        fail(view, undefined, 'advanced-wildcard', `advanced path \`${path}\` contains a wildcard`),
-      )
-      continue
-    }
-    if (!topKeys.has(path)) {
-      violations.push(
-        fail(
-          view,
-          undefined,
-          'advanced-unknown-path',
-          `advanced path \`${path}\` is not a top-level runtime key`,
-        ),
-      )
-      continue
-    }
-    if (!allowed.has(path)) {
-      violations.push(
-        fail(
-          view,
-          undefined,
-          'advanced-excluded',
-          `advanced path \`${path}\` is excluded by the derivation filter`,
-        ),
-      )
-    }
-  }
-  return violations
 }
 
 function judgeTarget(
@@ -212,7 +151,7 @@ function judgeScalar(
     ...judgeLeafPath(view, target.id, resolved),
     ...judgeValueSources(view, target.id, resolved, target.sources),
     ...judgeCompanions(view, target.id, runtime, target.companions),
-    ...judgeAddCoverage(view, target.id, target.apply, runtime, target.path, target.companions),
+    ...judgeAddCoverage(view, target.id, runtime, target.path, target.companions),
   ]
 }
 
@@ -225,7 +164,7 @@ function judgeKeyed(
     ...shared(view, target, runtime),
     ...judgeItemArray(view, target, runtime),
     ...judgeCompanions(view, target.id, runtime, target.companions),
-    ...judgeAddCoverage(view, target.id, target.apply, runtime, target.path, target.companions),
+    ...judgeAddCoverage(view, target.id, runtime, target.path, target.companions),
   ]
 }
 
@@ -420,12 +359,10 @@ function judgeCompanions(
 function judgeAddCoverage(
   view: CustomizeCapView,
   targetId: string,
-  apply: ScalarCustomizeTarget['apply'],
   runtime: z.ZodType,
   targetPath: string,
   companions: readonly CustomizeCompanion[] | undefined,
 ): readonly CustomizeViolation[] {
-  if (apply === 'replace') return []
   const shape = objectShape(runtime)
   if (shape === undefined) return []
   const covered = new Set<string>([
@@ -868,4 +805,4 @@ function fail(
   }
 }
 
-export { loadCustomizeCaps } from './customize-load.ts'
+export { loadCustomizeCaps, loadRuntimeFieldUnits } from './customize-load.ts'

@@ -67,7 +67,7 @@ function withEntry<V>(map: ReadonlyMap<number, V>, key: number, value: V): Reado
 }
 
 function nativeTakenReason(addonId: string, when: string): string {
-  return `a native provider (${addonId}) ${when} — the cap is not grafted and its claim is kept; edit or restart the block to replace the native instead`
+  return `a native provider (${addonId}) ${when} — the cap is not grafted and its claim is kept`
 }
 
 export class ComposerGrafts {
@@ -107,9 +107,16 @@ export class ComposerGrafts {
     if (ports === undefined) return
     const { deviceId } = input
     const added = input.enabled && input.settled ? addedCapsOf(input.features) : []
+    // A cap the device now serves itself is no longer an add (D944 refuses the
+    // replace). The graft still comes off: a native always wins.
+    const nativeNow = new Set(
+      [...input.nativeCaps.entries()]
+        .filter(([, owner]) => owner !== COMPOSER_ADDON_ID)
+        .map(([cap]) => cap),
+    )
     const replaced = new Set(input.features.filter((f) => f.mode === 'replace').map((f) => f.cap))
     for (const cap of ports.grafted(deviceId)) {
-      if (!replaced.has(cap)) continue
+      if (!nativeNow.has(cap) && !replaced.has(cap)) continue
       this.logger.info(
         'a native provider serves a grafted cap — the graft is removed; the claim stays',
         { tags: { deviceId }, meta: { cap } },

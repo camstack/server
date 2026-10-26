@@ -16,6 +16,7 @@ import { DeviceType } from '../../packages/types/src/device/device-type.ts'
 import {
   judgeCustomize,
   loadCustomizeCaps,
+  loadRuntimeFieldUnits,
   type CustomizeCapView,
   type CustomizeViolation,
 } from '../lib/customize-declaration.ts'
@@ -63,7 +64,7 @@ function percentageTarget(): ScalarCustomizeTarget {
     id: 'percentage',
     cardinality: 'scalar',
     vocabulary: { cap: 'demo', stateField: 'percentage' },
-    apply: 'replace',
+    apply: 'add',
     path: 'percentage',
     sources: [
       { kind: 'field', valueKinds: ['number', 'string'], transforms: [{ kind: 'identity' }] },
@@ -99,7 +100,7 @@ function spanTarget(timeoutMs: number): SpanEventCustomizeTarget {
     cardinality: 'event',
     shape: 'span',
     vocabulary: { cap: 'demo', eventName: 'onMotionChanged' },
-    apply: 'replace',
+    apply: 'add',
     applyAuthority: { kind: 'camera-sensors', timeoutField: 'motionCooldownMs' },
     eventName: 'onMotionChanged',
     combine: 'any',
@@ -186,7 +187,7 @@ describe('customize declaration guard', () => {
 
   it('rejects add mode that leaves a required companion unset', () => {
     const runtime = z.object({ percentage: z.number().nullable(), charging: z.string() })
-    const target = { ...percentageTarget(), apply: 'add-or-replace' as const }
+    const target = { ...percentageTarget(), apply: 'add' as const }
     const found = judgeCustomize(view(runtime, { version: 1, targets: [target] }))
     expect(rules(found)).toContain('missing-companion')
   })
@@ -249,61 +250,12 @@ describe('customize declaration guard', () => {
     expect(JSON.stringify(projected).includes('Zod')).toBe(false)
   })
 
-  it('rejects advanced wildcard, unknown, and excluded explicit paths', () => {
-    const wildcard = judgeCustomize(
-      view(percentageState, {
-        version: 1,
-        advanced: ['pct*'],
-        targets: [percentageTarget()],
-      }),
-    )
-    expect(rules(wildcard)).toContain('advanced-wildcard')
-
-    const unknown = judgeCustomize(
-      view(percentageState, {
-        version: 1,
-        advanced: ['missing'],
-        targets: [percentageTarget()],
-      }),
-    )
-    expect(rules(unknown)).toContain('advanced-unknown-path')
-
-    const runtime = z.object({
-      percentage: z.number().nullable(),
-      lastFetchedAt: z.number(),
-    })
-    const excluded = judgeCustomize(
-      view(runtime, {
-        version: 1,
-        advanced: ['lastFetchedAt'],
-        targets: [percentageTarget()],
-      }),
-    )
-    expect(rules(excluded)).toContain('advanced-excluded')
-
-    const noUnit = judgeCustomize(
-      view(z.object({ percentage: z.number().nullable(), watts: z.number() }), {
-        version: 1,
-        advanced: ['watts'],
-        targets: [percentageTarget()],
-      }),
-    )
-    expect(rules(noUnit)).toContain('advanced-excluded')
-  })
-
-  it("accepts advanced: 'derive' with no card targets", () => {
-    const runtime = z.object({
-      celsius: z.number().meta({ unit: '°C', label: 'Temperature' }),
-      lastFetchedAt: z.number(),
-    })
-    const alone = judgeCustomize(view(runtime, { version: 1, advanced: 'derive', targets: [] }))
-    expect(alone).toEqual([])
-
-    const bare = judgeCustomize(view(runtime, { version: 1, targets: [] }))
+  it('rejects a customize declaration with no targets', () => {
+    const bare = judgeCustomize(view(percentageState, { version: 1, targets: [] }))
     expect(rules(bare)).toContain('empty-targets')
   })
 
-  it("accepts advanced: 'derive' on battery and running-state", async () => {
+  it('accepts battery and running-state as add-only extensions', async () => {
     const caps = await loadCustomizeCaps()
     const battery = caps.find((cap) => cap.capName === 'battery')
     const running = caps.find((cap) => cap.capName === 'running-state')
@@ -311,57 +263,39 @@ describe('customize declaration guard', () => {
     expect(running).toBeDefined()
     if (battery !== undefined) expect(judgeCustomize(battery)).toEqual([])
     if (running !== undefined) expect(judgeCustomize(running)).toEqual([])
+    expect(battery?.customize?.targets.every((target) => target.apply === 'add')).toBe(true)
+    expect(running?.customize?.targets.every((target) => target.apply === 'add')).toBe(true)
   })
 
-  it('projects derived advanced parameters for battery and running-state', async () => {
-    const caps = await loadCustomizeCaps()
-    const battery = projectCustomize(caps.find((cap) => cap.capName === 'battery')!)
-    // D944 §4: a labelled reading publishes its base unit into the derived
-    // advanced list. `volts` is that reading (base `V`); unlabelled quantities stay out.
-    expect(battery.advancedParameters.map((row) => row.path)).toEqual([
-      'binary',
-      'charging',
-      'sleeping',
-      'volts',
-    ])
-    expect(battery.advancedParameters.find((row) => row.path === 'volts')).toMatchObject({
-      kind: 'number',
-      unit: 'V',
-      label: 'Voltage',
-    })
-    expect(battery.advancedParameters.find((row) => row.path === 'charging')).toMatchObject({
-      kind: 'enum',
-      label: 'Charging source',
-    })
-
-    const running = projectCustomize(caps.find((cap) => cap.capName === 'running-state')!)
-    expect(running.advancedParameters).toEqual([])
+  it('publishes a labelled reading base unit, and leaves an unlabelled quantity out', async () => {
+    const units = await loadRuntimeFieldUnits()
+    // D944 §4: the stored base of a labelled reading is the convert-unit
+    // source. There is no Advanced list for it to land in.
+    expect(units.battery).toMatchObject({ percentage: '%', volts: 'V' })
+    expect(units['temperature-sensor']).toMatchObject({ celsius: '°C' })
+    expect(units['power-meter']?.watts).toBe('W')
+    expect(units['power-meter']?.volts).toBeUndefined()
   })
 
   it('declares the customize caps, and the catalog matches the projection', async () => {
     const caps = await loadCustomizeCaps()
     expect(caps.map((cap) => cap.capName).toSorted()).toEqual([
-      'ambient-light-sensor',
       'battery',
-      'binary',
       'consumables',
       'doorbell',
-      'humidity-sensor',
       'motion',
-      'power-meter',
       'running-state',
-      'switch',
-      'temperature-sensor',
     ])
-    expect(CAP_CUSTOMIZE_CATALOG['temperature-sensor']?.targets).toEqual([])
-    expect(CAP_CUSTOMIZE_CATALOG['temperature-sensor']?.advancedParameters).toEqual([
-      { path: 'celsius', kind: 'number', label: 'Temperature', unit: '°C' },
+    expect(CAP_CUSTOMIZE_CATALOG['temperature-sensor']).toBeUndefined()
+    expect(CAP_CUSTOMIZE_CATALOG.battery?.targets.every((target) => target.apply === 'add')).toBe(
+      true,
+    )
+    expect(CAP_CUSTOMIZE_CATALOG.motion?.targets[0]?.apply).toBe('add')
+    expect(CAP_CUSTOMIZE_CATALOG.motion?.targets[0]?.sourceModes).toEqual([
+      'in-addition',
+      'confirm',
+      'replace',
     ])
-    expect(CAP_CUSTOMIZE_CATALOG['humidity-sensor']?.advancedParameters).toEqual([
-      { path: 'percent', kind: 'number', label: 'Humidity', unit: '%' },
-    ])
-    expect(CAP_CUSTOMIZE_CATALOG.switch?.targets).toEqual([])
-    expect(CAP_CUSTOMIZE_CATALOG.binary?.targets).toEqual([])
     for (const cap of caps) {
       expect(judgeCustomize(cap)).toEqual([])
       expect(CAP_CUSTOMIZE_CATALOG[cap.capName]).toEqual(projectCustomize(cap))

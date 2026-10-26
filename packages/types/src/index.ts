@@ -1223,12 +1223,13 @@ export {
 export { CAP_CUSTOMIZE_CATALOG } from './generated/customize-catalog.js'
 export type {
   CustomizeCatalog,
-  CustomizeCatalogAdvancedParameter,
   CustomizeCatalogField,
   CustomizeCatalogSource,
   CustomizeCatalogTarget,
   CustomizeCatalogTransform,
 } from './capabilities/customize-catalog.js'
+export { CAP_RUNTIME_FIELD_UNITS } from './generated/customize-catalog.js'
+export { runtimeFieldUnit } from './capabilities/runtime-field-unit.js'
 export {
   compositionFillStatus,
   decodeCompositionToCards,

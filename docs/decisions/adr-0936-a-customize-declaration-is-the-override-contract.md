@@ -35,7 +35,8 @@ projects `CAP_CUSTOMIZE_CATALOG` with field kinds, nullability and allowed
 transforms, and no Zod. A saved assignment is an `OverrideDraft`; effective
 authority is `CustomizeAssignmentStatus`. Both types are `z.infer` of their
 schemas. Battery, running-state, consumables, doorbell and motion all
-declare it.
+declare it. [D944](adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md)
+limits every target to `apply: 'add'` and removes `advanced: 'derive'`.
 
 Identity, numeric self-transforms and linked devices stay outside. They are
 different authorities, not copies of this card.

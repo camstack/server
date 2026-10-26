@@ -121,14 +121,13 @@ const BATTERY_DEVICE_TYPES = [
 /** Generic Customize target for the percentage reading (D936). */
 const batteryCustomize = {
   version: 1,
-  advanced: 'derive',
   targets: [
     {
       id: 'percentage',
       cardinality: 'scalar',
       vocabulary: { cap: 'battery', stateField: 'percentage' },
       deviceTypes: BATTERY_DEVICE_TYPES,
-      apply: 'add-or-replace',
+      apply: 'add',
       path: 'percentage',
       sources: [
         {

@@ -319,6 +319,10 @@ function isNativeCap(target: CompositionTargetFound, cap: string): boolean {
   return owner !== undefined && owner !== COMPOSER_ADDON_ID
 }
 
+function isPlanProblem(value: FeatureTarget | CompositionProblem): value is CompositionProblem {
+  return 'code' in value
+}
+
 /** What the features of a composition land on, once the target has been read. */
 type PlanTarget =
   | { readonly kind: 'new'; readonly type: DeviceType }
@@ -348,16 +352,43 @@ function planTargetOf(
   return { kind: 'existing', found: target }
 }
 
-function featureTargetOf(target: PlanTarget, cap: string): FeatureTarget {
+const NATIVE_REPLACE_KEPT = new Set<CompositionProblem['code']>([
+  'not-composable',
+  'unknown-capability',
+  'reserved-variant',
+])
+
+/** A native override is refused, unless the cap cannot be composed at all — that reason stays. */
+function nativeReplaceOrBlock(
+  refusal: CompositionProblem,
+  probed: CompositionPlanResult,
+): CompositionPlanResult {
+  const kept = probed.problems.filter((item) => NATIVE_REPLACE_KEPT.has(item.code))
+  if (kept.length > 0) return { problems: kept, fields: [], features: [], events: [] }
+  return refused(refusal)
+}
+
+function featureTargetOf(
+  target: PlanTarget,
+  cap: string,
+  at: string,
+): FeatureTarget | CompositionProblem {
   if (target.kind === 'new') return { mode: 'new', deviceType: target.type }
-  const mode = isNativeCap(target.found, cap) ? 'replace' : 'add'
-  return { mode, deviceType: target.found.type }
+  if (isNativeCap(target.found, cap)) {
+    return problem(
+      'native-capability-replace',
+      at,
+      `native-capability-replace: stored override replaces native capability \`${cap}\` on device ${target.found.deviceId} — refused (D944)`,
+    )
+  }
+  return { mode: 'add', deviceType: target.found.type }
 }
 
 /**
  * The static plan. `target` describes an EXISTING target device (one read);
- * it is ignored for a new one. On an existing target each feature REPLACES a
- * cap the device has natively, else ADDS it (D663).
+ * it is ignored for a new one. On an existing target each feature ADDS a cap
+ * the device lacks. A feature that would replace a native capability is
+ * refused by name (D944). A new device is unchanged.
  */
 export function planComposition(
   composition: Composition,
@@ -367,16 +398,30 @@ export function planComposition(
   const planTarget = planTargetOf(composition, target)
   if ('code' in planTarget) return refused(planTarget)
   const results = composition.features.map((feature, index): CompositionPlanResult => {
-    const result =
-      feature.kind === 'passthrough'
-        ? refused(
-            problem(
-              'reserved-variant',
-              `features[${index}]`,
-              `whole-capability passthrough of \`${feature.cap}\` arrives in slice 3`,
-            ),
-          )
-        : planFeature(feature, index, featureTargetOf(planTarget, feature.cap), lookupCap)
+    const at = `features[${index}]`
+    if (feature.kind === 'passthrough') {
+      return refused(
+        problem(
+          'reserved-variant',
+          at,
+          `whole-capability passthrough of \`${feature.cap}\` arrives in slice 3`,
+        ),
+      )
+    }
+    const featureTarget = featureTargetOf(planTarget, feature.cap, at)
+    if (isPlanProblem(featureTarget)) {
+      if (!compositionFeatureEnabled(feature) || planTarget.kind !== 'existing') {
+        return { problems: [], fields: [], features: [], events: [] }
+      }
+      const probed = planFeature(
+        feature,
+        index,
+        { mode: 'add', deviceType: planTarget.found.type },
+        lookupCap,
+      )
+      return nativeReplaceOrBlock(featureTarget, probed)
+    }
+    const result = planFeature(feature, index, featureTarget, lookupCap)
     return compositionFeatureEnabled(feature)
       ? result
       : { problems: result.problems, fields: [], features: [], events: [] }
@@ -622,7 +667,16 @@ export function validateComposition(
 ): CompositionValidation {
   const plan = planComposition(composition, ctx.lookupCap, ctx.target ?? undefined)
   const self = candidateSelf(composition, ctx, plan)
-  const cycles = cycleProblems(composition, ctx, plan.fields, self)
+  const refusedFeatures = plan.problems
+    .filter((item) => item.code === 'native-capability-replace')
+    .map((item) => item.path)
+  const cycles = cycleProblems(composition, ctx, plan.fields, self).filter((item) => {
+    if (refusedFeatures.some((at) => item.path === at || item.path.startsWith(`${at}.`))) {
+      return false
+    }
+    // A refused native override is not a writer, so its self-read is not a cycle.
+    return refusedFeatures.length === 0 || item.path !== 'features'
+  })
   const problems = [...plan.problems, ...sourceProblems(plan.fields, ctx, self), ...cycles]
   return {
     ok: problems.length === 0,

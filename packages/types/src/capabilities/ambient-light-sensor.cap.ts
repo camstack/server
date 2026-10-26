@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -20,13 +19,6 @@ export const AmbientLightSensorStatusSchema = z.object({
 })
 
 export type AmbientLightSensorStatus = z.infer<typeof AmbientLightSensorStatusSchema>
-
-/** Advanced rows only (D939). No card target, so a composed device keeps the generic card. */
-const ambientLightSensorCustomize = {
-  version: 1,
-  advanced: 'derive',
-  targets: [],
-} as const satisfies CapabilityCustomizeSpec
 
 export const ambientLightSensorCapability = {
   name: 'ambient-light-sensor',
@@ -59,7 +51,6 @@ export const ambientLightSensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
-  customize: ambientLightSensorCustomize,
 } as const satisfies CapabilityDefinition
 
 export type IAmbientLightSensorProvider = InferProvider<typeof ambientLightSensorCapability>

@@ -7,21 +7,9 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 11 caps. Field keys are `runtimeState` paths. No Zod.
+ * 5 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
-  'ambient-light-sensor': {
-    version: 1,
-    targets: [],
-    advancedParameters: [
-      {
-        path: 'lux',
-        kind: 'number',
-        label: 'Illuminance',
-        unit: 'lx',
-      },
-    ],
-  },
   'battery': {
     version: 1,
     targets: [
@@ -29,7 +17,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
         id: 'percentage',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Button, DeviceType.Switch, DeviceType.PetFeeder, DeviceType.Container, DeviceType.Thermostat],
-        apply: 'add-or-replace',
+        apply: 'add',
         vocabularyCap: 'battery',
         vocabularyStateField: 'percentage',
         sources: [
@@ -83,46 +71,6 @@ export const CAP_CUSTOMIZE_CATALOG = {
             when: 'add',
           },
         ],
-      },
-    ],
-    advancedParameters: [
-      {
-        path: 'binary',
-        kind: 'boolean',
-        label: 'Binary indicator',
-      },
-      {
-        path: 'charging',
-        kind: 'enum',
-        label: 'Charging source',
-        enumValues: [
-          'dc',
-          'solar',
-          'none',
-          'unknown',
-        ],
-      },
-      {
-        path: 'sleeping',
-        kind: 'boolean',
-        label: 'Sleeping',
-      },
-      {
-        path: 'volts',
-        kind: 'number',
-        label: 'Voltage',
-        unit: 'V',
-      },
-    ],
-  },
-  'binary': {
-    version: 1,
-    targets: [],
-    advancedParameters: [
-      {
-        path: 'on',
-        kind: 'boolean',
-        label: 'On',
       },
     ],
   },
@@ -267,7 +215,6 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
     ],
-    advancedParameters: [],
   },
   'doorbell': {
     version: 1,
@@ -311,19 +258,6 @@ export const CAP_CUSTOMIZE_CATALOG = {
         debounceMs: 2000,
       },
     ],
-    advancedParameters: [],
-  },
-  'humidity-sensor': {
-    version: 1,
-    targets: [],
-    advancedParameters: [
-      {
-        path: 'percent',
-        kind: 'number',
-        label: 'Humidity',
-        unit: '%',
-      },
-    ],
   },
   'motion': {
     version: 1,
@@ -332,7 +266,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
         id: 'detected',
         cardinality: 'event',
         deviceTypes: [DeviceType.Camera],
-        apply: 'replace',
+        apply: 'add',
         vocabularyCap: 'motion',
         vocabularyEvent: 'onMotionChanged',
         sources: [
@@ -368,25 +302,6 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
     ],
-    advancedParameters: [],
-  },
-  'power-meter': {
-    version: 1,
-    targets: [],
-    advancedParameters: [
-      {
-        path: 'kwhTotal',
-        kind: 'number',
-        label: 'Energy',
-        unit: 'kWh',
-      },
-      {
-        path: 'watts',
-        kind: 'number',
-        label: 'Power',
-        unit: 'W',
-      },
-    ],
   },
   'running-state': {
     version: 1,
@@ -395,7 +310,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
         id: 'running',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.MediaPlayer, DeviceType.WaterHeater, DeviceType.Humidifier, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.PetFeeder],
-        apply: 'add-or-replace',
+        apply: 'add',
         vocabularyCap: 'running-state',
         vocabularyStateField: 'running',
         sources: [
@@ -483,29 +398,31 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
     ],
-    advancedParameters: [],
-  },
-  'switch': {
-    version: 1,
-    targets: [],
-    advancedParameters: [
-      {
-        path: 'on',
-        kind: 'boolean',
-        label: 'On',
-      },
-    ],
-  },
-  'temperature-sensor': {
-    version: 1,
-    targets: [],
-    advancedParameters: [
-      {
-        path: 'celsius',
-        kind: 'number',
-        label: 'Temperature',
-        unit: '°C',
-      },
-    ],
   },
 } as const satisfies CustomizeCatalog
+
+/**
+ * Unit meta on runtime-state fields. The composed-device row reads this;
+ * it is not an override list (D944).
+ */
+export const CAP_RUNTIME_FIELD_UNITS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+  'ambient-light-sensor': {
+    lux: 'lx',
+  },
+  'battery': {
+    percentage: '%',
+    volts: 'V',
+  },
+  'humidity-sensor': {
+    percent: '%',
+  },
+  'power-meter': {
+    watts: 'W',
+    kwhTotal: 'kWh',
+  },
+  'temperature-sensor': {
+    celsius: '°C',
+  },
+}

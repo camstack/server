@@ -2556,10 +2556,6 @@
       },
       "duplicateKey": "An item with key \"{{key}}\" already exists."
     },
-    "advancedSection": {
-      "title": "Advanced parameters",
-      "choose": "Choose…"
-    },
     "fieldsCard": {
       "removeWhat": "Remove the {{cap}} customization?",
       "from": "From {{name}} · {{field}}",

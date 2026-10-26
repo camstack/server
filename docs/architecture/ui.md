@@ -647,17 +647,18 @@ one place that correctly keeps `addonId`, because it restarts the SERVING addon.
 `?tab=customize` (admin-only, every device type) is the device's view of what it
 TAKES from other devices. Order, top to bottom: an identity row (name, room,
 hidden, role), the customization's status (not shown when there is none), one
-card per declared `customize` target the device type can take (scalar, keyed
-array, pulse, span — battery, running-state, consumables, doorbell, motion),
-the **Linked devices** table, then an in-tab
-**Advanced parameters** section (`CollapsibleCard`, derived from
-`CAP_CUSTOMIZE_CATALOG[].advancedParameters` for caps the device is bound to).
-A card field and an Advanced parameter are the same row: current value, "No
-override" or the entry, and "+ Add override" (from a device, formula, and
-convert unit when the field's unit has another unit in its dimension). Convert
-unit and a formula bound to this device's own value are the old numeric
-self-transforms; there is no separate card. Formula and convert unit open a
-dialog; there is no step wizard, no free text input, and no Advanced modal. Removing the last card entry deletes the block
+card per declared `customize` target the device type can take and does not
+already serve (scalar, keyed array, pulse, span — battery, running-state,
+consumables, doorbell, motion; `apply: 'add'` only, [D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md)),
+then the **Linked devices** table. A card is absent when the device provides
+that capability natively. Motion stays on a camera through the camera-sensors
+authority; its source modes (in-addition, confirm, replace) are that
+extension's behaviour. A row is current value, "No override" or the entry, and
+"+ Add override" (from a device, formula, and convert unit when the field's
+unit has another unit in its dimension). Convert unit and a formula bound to
+this device's own value are the old numeric self-transforms; there is no
+separate card. Formula and convert unit open a dialog; there is no step wizard
+and no free text input. Removing the last card entry deletes the block
 (after confirm). Composed devices (`addonId === 'composer'`) use the same
 card editor here, not a separate build route.
 `/build/compositions/new` is the create step (type, role, name, room); after

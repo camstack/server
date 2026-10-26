@@ -3,8 +3,8 @@
  * apply is not rendered (D676 ruling 13); a fact not read yet is `pending` /
  * `unknown`, never absent (D315). The catalog target decides the rule: a
  * camera-sensors span follows the sensor read, a keyed array with read-only
- * native items stays addable, an add-only composition is absent when the
- * device already serves the cap, and add-or-replace replaces a native cap.
+ * native items stays addable, and every other extension is absent when the
+ * device already serves the cap (D944).
  * Whether a cap is the device's OWN is the validator's rule over `getBindings`
  * (G8): a non-blank owner that is not the composer.
  */
@@ -59,7 +59,7 @@ export type AssignmentAvailability =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unknown'; readonly reason: string }
   | { readonly kind: 'absent' }
-  | { readonly kind: 'present'; readonly mode: 'add' | 'replace' }
+  | { readonly kind: 'present'; readonly mode: 'add' }
 
 type Unread = { readonly kind: 'pending' } | { readonly kind: 'unknown'; readonly reason: string }
 
@@ -95,8 +95,5 @@ export function assignmentAvailability(
   if (pendingNative !== null) return pendingNative
   const native = facts.nativeCaps.kind === 'known' ? facts.nativeCaps.value : new Set<string>()
   if (offer.nativeItemsReadOnly) return addable(facts, offer.cap)
-  if (offer.apply === 'add') {
-    return native.has(offer.cap) ? { kind: 'absent' } : addable(facts, offer.cap)
-  }
-  return native.has(offer.cap) ? { kind: 'present', mode: 'replace' } : addable(facts, offer.cap)
+  return native.has(offer.cap) ? { kind: 'absent' } : addable(facts, offer.cap)
 }

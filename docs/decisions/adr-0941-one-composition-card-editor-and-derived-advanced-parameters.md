@@ -39,7 +39,9 @@ A customization and a composed device are the same composition block and open in
 
 Advanced parameters are not a second editor. A cap opts in on its customize declaration with `advanced: 'derive'` or an explicit path list. Derivation is one filter for every cap: booleans, string enums, numbers that declare a unit, and strings whose schema max is at most 80 characters. Always excluded: `lastFetchedAt`, ids, nested objects and arrays, config and secret fields, paths the card already owns, and `*At` timestamps unless the cap declares that path as an event timestamp (and a path the card owns is still excluded). No opt-in means nothing from that cap. A cap may opt in with `advanced: 'derive'` and no card targets: the derived rows show on an existing device's Advanced section, and a composed device keeps the generic fields card. A declared card target is what replaces that card. Codegen writes the list into `CAP_CUSTOMIZE_CATALOG`. The customize-declaration guard refuses a wildcard, a path that is not in the schema, a path the filter excludes, and a declaration that has neither targets nor `advanced: 'derive'`.
 
-This amends D936 (the declaration is still the contract; advanced is part of that contract). D676 still holds: the tab stores nothing.
+This amends D936 (the declaration is still the contract). D676 still holds: the tab stores nothing.
+
+[D944](adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md) removes derived advanced parameters, the Advanced section, and `apply` other than `add`. The one card editor, convert unit, and a formula over this device's own value stay. Unit meta for a composed-device row is `CAP_RUNTIME_FIELD_UNITS`, not an override list.
 
 ## Consequences
 

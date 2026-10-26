@@ -14,6 +14,7 @@ import { DeviceType } from '../packages/types/src/device/device-type.ts'
 import {
   judgeCustomize,
   loadCustomizeCaps,
+  loadRuntimeFieldUnits,
   type CustomizeCapView,
 } from './lib/customize-declaration.ts'
 import { projectCustomize } from './lib/customize-project.ts'
@@ -41,13 +42,18 @@ async function main(): Promise<void> {
   const entries = caps
     .map((cap) => `  '${cap.capName}': ${print(projectCustomize(cap), 2)},`)
     .join('\n')
-  const out = render(caps, entries)
+  const units = await loadRuntimeFieldUnits()
+  const unitEntries = Object.keys(units)
+    .toSorted()
+    .map((cap) => `  '${cap}': ${print(units[cap], 2)},`)
+    .join('\n')
+  const out = render(caps, entries, unitEntries)
   writeIfChanged(OUTPUT, out)
   // eslint-disable-next-line no-console
   console.log(`customize catalog → ${path.relative(ROOT, OUTPUT)} (${caps.length} caps)`)
 }
 
-function render(caps: readonly CustomizeCapView[], entries: string): string {
+function render(caps: readonly CustomizeCapView[], entries: string, unitEntries: string): string {
   return `// AUTO-GENERATED — do not edit manually.
 // Regenerate with: npx tsx scripts/generate-customize-catalog.ts
 /* eslint-disable */
@@ -62,6 +68,16 @@ import { DeviceType } from '../device/device-type.js'
 export const CAP_CUSTOMIZE_CATALOG = {
 ${entries}
 } as const satisfies CustomizeCatalog
+
+/**
+ * Unit meta on runtime-state fields. The composed-device row reads this;
+ * it is not an override list (D944).
+ */
+export const CAP_RUNTIME_FIELD_UNITS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+${unitEntries}
+}
 `
 }
 

@@ -22,7 +22,7 @@ const motionCustomize = {
       shape: 'span',
       vocabulary: { cap: 'motion', eventName: 'onMotionChanged' },
       deviceTypes: [DeviceType.Camera],
-      apply: 'replace',
+      apply: 'add',
       applyAuthority: { kind: 'camera-sensors', timeoutField: 'motionCooldownMs' },
       eventName: 'onMotionChanged',
       start: 'rising-edge',

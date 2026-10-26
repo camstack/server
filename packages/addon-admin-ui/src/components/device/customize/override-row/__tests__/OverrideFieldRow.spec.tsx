@@ -1,6 +1,6 @@
 /**
  * A numeric override row offers from-device, formula, and convert-unit.
- * Advanced uses that row: no free text input.
+ * No free text input on the row itself.
  */
 import { DeviceType, type Composition, type DeviceInfo } from '@camstack/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
 import { presentState } from '../../kinds/__tests__/customization-fixture'
 import type { CustomizationHandle, CustomizationSaveOutcome } from '../../use-customization'
-import { CustomizeAdvancedSection } from '../../CustomizeAdvancedSection'
+import { OverrideFieldRow } from '../OverrideFieldRow'
 
 vi.mock('../../../../composition-editor/LivePreview', () => ({ LivePreview: () => null }))
 
@@ -158,16 +158,25 @@ function handleOf(composition: Composition | null): CustomizationHandle {
   }
 }
 
-function expand(): void {
-  fireEvent.click(screen.getByTestId('customize-advanced-section-header'))
+function fieldRow(handle: CustomizationHandle, unit: string): ReactNode {
+  return (
+    <OverrideFieldRow
+      deviceId={DEVICE.id}
+      self={SELF}
+      selfName={DEVICE.name}
+      cap={unit === '%' ? 'humidity-sensor' : 'temperature-sensor'}
+      fieldPath={unit === '%' ? 'percent' : 'celsius'}
+      label={unit === '%' ? 'Humidity' : 'Temperature'}
+      unit={unit}
+      handle={handle}
+      names={new Map()}
+    />
+  )
 }
 
 describe('numeric override row', () => {
-  it('offers from a device, formula, and convert unit, and advanced has no text input', () => {
-    const { container } = render(
-      <CustomizeAdvancedSection device={DEVICE} handle={handleOf(null)} />,
-    )
-    expand()
+  it('offers from a device, formula, and convert unit, and the row has no text input', () => {
+    const { container } = render(fieldRow(handleOf(null), '°C'))
     expect(container.querySelector('input')).toBeNull()
     fireEvent.click(screen.getByTestId('override-add-temperature-sensor-celsius'))
     const row = screen.getByTestId('override-row-temperature-sensor-celsius')
@@ -186,11 +195,10 @@ describe('numeric override row', () => {
       }),
     )
     const handle = { ...handleOf(null), save }
-    render(<CustomizeAdvancedSection device={DEVICE} handle={handle} />)
-    expand()
-    const row = screen.getByTestId('override-row-temperature-sensor-celsius')
-    fireEvent.click(within(row).getByTestId('override-add-temperature-sensor-celsius'))
-    fireEvent.click(within(row).getByRole('menuitem', { name: 'Convert unit' }))
+    render(fieldRow(handle, '°C'))
+    const temperature = screen.getByTestId('override-row-temperature-sensor-celsius')
+    fireEvent.click(within(temperature).getByTestId('override-add-temperature-sensor-celsius'))
+    fireEvent.click(within(temperature).getByRole('menuitem', { name: 'Convert unit' }))
     fireEvent.change(screen.getByRole('combobox', { name: 'Target unit' }), {
       target: { value: '°F' },
     })
@@ -229,11 +237,10 @@ describe('numeric override row', () => {
       }),
     )
     const handle = { ...handleOf(null), save }
-    render(<CustomizeAdvancedSection device={DEVICE} handle={handle} />)
-    expand()
-    const row = screen.getByTestId('override-row-temperature-sensor-celsius')
-    fireEvent.click(within(row).getByTestId('override-add-temperature-sensor-celsius'))
-    fireEvent.click(within(row).getByRole('menuitem', { name: 'Formula' }))
+    render(fieldRow(handle, '°C'))
+    const temperature = screen.getByTestId('override-row-temperature-sensor-celsius')
+    fireEvent.click(within(temperature).getByTestId('override-add-temperature-sensor-celsius'))
+    fireEvent.click(within(temperature).getByRole('menuitem', { name: 'Formula' }))
     fireEvent.click(screen.getByTestId('formula-self-native'))
     const expr = screen.getByRole('textbox')
     fireEvent.change(expr, { target: { value: 'v * 2' } })
@@ -265,12 +272,11 @@ describe('numeric override row', () => {
   })
 
   it('hides convert unit when the field unit has no other unit', () => {
-    render(<CustomizeAdvancedSection device={DEVICE} handle={handleOf(null)} />)
-    expand()
-    const row = screen.getByTestId('override-row-humidity-sensor-percent')
-    fireEvent.click(within(row).getByTestId('override-add-humidity-sensor-percent'))
-    expect(within(row).getByRole('menuitem', { name: 'From a device' })).toBeTruthy()
-    expect(within(row).getByRole('menuitem', { name: 'Formula' })).toBeTruthy()
-    expect(within(row).queryByRole('menuitem', { name: 'Convert unit' })).toBeNull()
+    render(fieldRow(handleOf(null), '%'))
+    const humidity = screen.getByTestId('override-row-humidity-sensor-percent')
+    fireEvent.click(within(humidity).getByTestId('override-add-humidity-sensor-percent'))
+    expect(within(humidity).getByRole('menuitem', { name: 'From a device' })).toBeTruthy()
+    expect(within(humidity).getByRole('menuitem', { name: 'Formula' })).toBeTruthy()
+    expect(within(humidity).queryByRole('menuitem', { name: 'Convert unit' })).toBeNull()
   })
 })

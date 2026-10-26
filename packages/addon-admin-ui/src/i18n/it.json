@@ -2617,10 +2617,6 @@
       },
       "duplicateKey": "Esiste già un elemento con chiave \"{{key}}\"."
     },
-    "advancedSection": {
-      "title": "Parametri avanzati",
-      "choose": "Scegli…"
-    },
     "fieldsCard": {
       "removeWhat": "Rimuovere la personalizzazione {{cap}}?",
       "from": "Da {{name}} · {{field}}",
