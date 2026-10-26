@@ -7,7 +7,10 @@
  * product and bin forms), and 503 "Utility dishwasher" (`/devices/503` —
  * every item ok, so the section starts collapsed on "All OK") and 504
  * "Mopping robot" (`/devices/504` — two tanks, a bin and a product). Their Customize
- * tabs (`?tab=customize`) list the consumables each device already has. Data
+ * tabs (`?tab=customize`) list the consumables each device already has.
+ * `/devices/510?tab=customize` is an HA sensor whose only native cap is
+ * `numeric-sensor`, so Battery is offered (D944). `/devices/511?tab=customize`
+ * is the same type with a native battery, so the card is absent. Data
  * is invented.
  */
 import { defineFixtures } from './_define'
@@ -38,6 +41,7 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
   503: appliance(503, 'Utility dishwasher', 'dishwasher', 'bosch-home-connect'),
   504: appliance(504, 'Mopping robot', 'vacuum', 'provider-dreame'),
   510: appliance(510, 'Filter life', 'sensor', 'provider-homeassistant'),
+  511: appliance(511, 'Hall sensor', 'sensor', 'provider-homeassistant'),
 }
 
 const entry = (capName: string, nativeAddonId: string) => ({
@@ -71,6 +75,11 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
     entry('vacuum-control', 'provider-dreame'),
     entry('consumables', 'provider-dreame'),
     entry('running-state', 'provider-dreame'),
+  ],
+  510: [entry('numeric-sensor', 'provider-homeassistant')],
+  511: [
+    entry('numeric-sensor', 'provider-homeassistant'),
+    entry('battery', 'provider-homeassistant'),
   ],
 }
 
@@ -402,7 +411,9 @@ export default defineFixtures({
           ? [{ cap: 'battery' }, { cap: 'consumables' }, { cap: 'running-state' }]
           : i.deviceType === 'vacuum'
             ? [{ cap: 'running-state' }]
-            : [],
+            : i.deviceType === 'sensor'
+              ? [{ cap: 'battery' }]
+              : [],
     }),
     'deviceExtension.listSlots': [],
     'deviceExtension.listCandidates': { candidates: [] },

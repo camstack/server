@@ -539,6 +539,55 @@ describe('CustomizeTab — a composed device', () => {
   })
 })
 
+const SENSOR = {
+  ...FEEDER,
+  id: 510,
+  name: 'Filter life',
+  addonId: 'provider-homeassistant',
+  stableId: 'appliance-510',
+  type: 'sensor',
+}
+
+describe('CustomizeTab — battery on a sensor (D944)', () => {
+  const loadedNone: Query = {
+    status: 'success',
+    data: { state: 'loaded', view: null },
+    refetch: vi.fn(async () => undefined),
+  }
+  const numericOnly = {
+    status: 'success' as const,
+    data: {
+      entries: [{ capName: 'numeric-sensor', nativeAddonId: 'provider-homeassistant' }],
+    },
+  }
+  function renderSensor(): void {
+    device.current = SENSOR
+    composable.current = { status: 'success', data: { caps: [{ cap: 'battery' }] } }
+    customization.current = loadedNone
+    renderTab()
+  }
+  it('offers the Battery add card when native caps are known and lack battery', () => {
+    bindings.current = numericOnly
+    renderSensor()
+    expect(screen.getByRole('heading', { name: 'Battery' })).toBeTruthy()
+    expect(screen.getByTestId('scalar-add-battery')).toBeTruthy()
+  })
+  it('hides the Battery card when the sensor already serves battery natively', () => {
+    bindings.current = {
+      status: 'success',
+      data: {
+        entries: [
+          { capName: 'numeric-sensor', nativeAddonId: 'provider-homeassistant' },
+          { capName: 'battery', nativeAddonId: 'provider-homeassistant' },
+        ],
+      },
+    }
+    renderSensor()
+    expect(screen.queryByRole('heading', { name: 'Battery' })).toBeNull()
+    expect(screen.queryByTestId('scalar-add-battery')).toBeNull()
+  })
+})
+
 describe('CustomizeTab — the Motion card (spec U8, D676)', () => {
   const motion = (): HTMLElement | null => screen.queryByRole('heading', { name: 'Motion' })
   it('a camera whose sensor read answered is offered the Motion card', () => {
