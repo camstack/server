@@ -667,18 +667,19 @@ create the operator lands on the device Customize tab when the composed row
 exists. `/build/compositions/<id>` is the same card editor when the device is
 not ready yet. Hrefs come only from `lib/customization-routes.ts`.
 
-- **One shared component, not the D636 picker.** Every card adds a device through
-  the same `CustomizeDevicePickerDialog` (a device) or `AssignmentFieldPicker` (a device,
-  then one of ITS fields), inside an `AssignmentSection` of `AssignmentRow`s
-  (`components/device/customize/assignments/`). The notification smart picker
-  (D636, `pages/system/DevicePicker.tsx`) is a selection editor whose model is
-  byte-identical with the viewer's; it has no live value, no capability filter,
-  no single mode and no field step, and teaching it those would push
-  customize-only concepts into a file the viewer must mirror. The assignment
-  picker only REUSES its search semantics (`pickerSearchText` /
-  `pickerQueryTokens`), so a query matches the same way everywhere. Candidate
-  reads are bounded: one slim `listAll` and one `listDeviceIdsByCaps` per source
-  cap, never a `getBindings` per candidate (D648 measured up to 5.24 s).
+- **Extension dialogs share one source selector (D944 §5).** Battery, motion,
+  doorbell, running, consumables and formula bindings pick a device and value
+  through `SourceSelector`
+  (`components/device/customize/source-selector/SourceSelector.tsx`): the left
+  column is the ui-library `DevicePicker` (scrolls inside the column,
+  `parentDeviceId` for “in &lt;parent&gt;”, incompatible devices collapsed);
+  the right column groups wireable values by capability vocabulary and renders
+  declaration behaviour parameters below. Assignment linked-devices may still use
+  `CustomizeDevicePickerDialog` or `AssignmentFieldPicker` (device then field
+  via `sourceFor`). The notification smart picker (D636) stays a selection
+  editor only — no live value or field step. Candidate reads stay bounded: one
+  slim `listAll` and one `listDeviceIdsByCaps` per source cap, never
+  `getBindings` per candidate (D648).
 - **Extension cards save at once, through the authority that already owns them**
   — the device's ONE composition (`planCustomizationSave`: create / update with
   `expectedUpdatedAt` / delete), `pipelineOrchestrator.setCameraSensors`, or

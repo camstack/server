@@ -562,6 +562,12 @@
       "notes": ""
     },
     {
+      "need": "Pick the device and value that feed a Customize extension (or a later helper)",
+      "admin": "`SourceSelector` (`components/device/customize/source-selector/SourceSelector.tsx`)",
+      "viewer": "—",
+      "notes": "Left column = ui-library `DevicePicker`; behaviour params from the customize catalog (D944)"
+    },
+    {
       "need": "Pick a timezone / icon / unit / model",
       "admin": "`TimezoneSelector`, `IconPicker`, `UnitPicker`, `ModelPicker`",
       "viewer": "—",
