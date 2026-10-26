@@ -44,6 +44,7 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceDialog } from '../components/integrations/AddDeviceDialog'
+import { AddMatterDeviceDialog } from '../components/integrations/AddMatterDeviceDialog'
 import { AdoptDevicesModal } from '../components/integrations/AdoptDevicesModal'
 import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
 import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
@@ -61,6 +62,7 @@ export function IntegrationDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const system = useSystem()
   const [showAddDevice, setShowAddDevice] = useState(false)
+  const [adoptAfterCommission, setAdoptAfterCommission] = useState(false)
   const [showScan, setShowScan] = useState(false)
   const handleSetupIntegration = useCallback(
     (seed: IntegrationFormSeed) => {
@@ -128,11 +130,6 @@ export function IntegrationDetailPage() {
    */
   const isFixed = integration?.info?.['fixed'] === true
 
-  const addDeviceLabel = !fabReady
-    ? t('integrations.addDeviceLoading', { defaultValue: 'Loading…' })
-    : integrationKind === 'device-adoption'
-      ? t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })
-      : t('integrations.addDevice')
   // Broker kind for a `device-adoption` integration — sourced from the same
   // available-types entry the wizard uses (the addon manifest's `brokerKind`).
   // Drives the config modal's broker re-link step.
@@ -142,6 +139,16 @@ export function IntegrationDetailPage() {
     const entry = (availableTypes ?? []).find((a) => a.addonId === addonId)
     return entry?.brokerKind ?? null
   }, [availableTypes, integration?.addonId, typesReady])
+  // Matter commissions a shared device (pairing code) before the operator
+  // adopts the node. Other device-adoption integrations go straight to adopt.
+  const isMatter = integrationBrokerKind === 'matter'
+  const addDeviceLabel = !fabReady
+    ? t('integrations.addDeviceLoading', { defaultValue: 'Loading…' })
+    : isMatter
+      ? t('integrations.addMatter.title', { defaultValue: 'Add Matter device' })
+      : integrationKind === 'device-adoption'
+        ? t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })
+        : t('integrations.addDevice')
 
   const integrationCanTest = useMemo(() => {
     const addonId = integration?.addonId
@@ -168,6 +175,7 @@ export function IntegrationDetailPage() {
   useEffect(() => {
     if (searchParams.get('add') !== '1') return
     if (!fabReady) return
+    setAdoptAfterCommission(false)
     setShowAddDevice(true)
     setSearchParams(
       (prev) => {
@@ -444,7 +452,10 @@ export function IntegrationDetailPage() {
           )}
           {!isFixed && (
             <button
-              onClick={() => setShowAddDevice(true)}
+              onClick={() => {
+                setAdoptAfterCommission(false)
+                setShowAddDevice(true)
+              }}
               disabled={!fabReady}
               className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               title={addDeviceLabel}
@@ -612,13 +623,26 @@ export function IntegrationDetailPage() {
           : { onDeleteDevice: (d: { id: number }) => removeMutation.mutate({ deviceId: d.id }) })}
       />
 
-      {showAddDevice && integrationId && integrationKind === 'device-adoption' && (
-        <AdoptDevicesModal
-          addonId={integration.addonId}
-          integrationId={integrationId}
+      {showAddDevice && integrationId && isMatter && !adoptAfterCommission && (
+        <AddMatterDeviceDialog
           onClose={() => setShowAddDevice(false)}
+          onCommissioned={() => setAdoptAfterCommission(true)}
         />
       )}
+
+      {showAddDevice &&
+        integrationId &&
+        integrationKind === 'device-adoption' &&
+        (!isMatter || adoptAfterCommission) && (
+          <AdoptDevicesModal
+            addonId={integration.addonId}
+            integrationId={integrationId}
+            onClose={() => {
+              setShowAddDevice(false)
+              setAdoptAfterCommission(false)
+            }}
+          />
+        )}
 
       {showAddDevice && integrationId && integrationKind === 'device-provider' && (
         <AddDeviceDialog

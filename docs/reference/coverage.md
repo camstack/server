@@ -14,14 +14,14 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**213 units · 7120 source files · 200 units claimed by at least one document (7058 files).**
+**213 units · 7122 source files · 200 units claimed by at least one document (7060 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1029 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-0880-core-block-passwords-and-waste-source-credentials-are-keychain-backed-and-a-read-only-scan-finds-what-no-code-writes.md`, +1 more | 2026-10-18 |
-| `packages/addon-admin-ui/src/components` | 524 | `admin-ui` | `architecture/ui.md`, `ui/admin-patterns.md`, `ui/conventions.md`, +70 more, 4 ADRs | 2026-10-26 |
+| `packages/addon-admin-ui/src/components` | 525 | `admin-ui` | `architecture/ui.md`, `ui/admin-patterns.md`, `ui/conventions.md`, +70 more, 4 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 470 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +165 more, 27 ADRs | 2026-10-14 |
-| `scripts` | 420 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +131 more, 14 ADRs | 2026-10-26 |
+| `scripts` | 421 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +131 more, 14 ADRs | 2026-10-26 |
 | `packages/system/src/builtins` | 387 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +162 more, 21 ADRs | 2026-10-26 |
 | `packages/ui-library/src/composites` | 340 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +51 more, 3 ADRs | 2026-10-26 |
 | `packages/types/src/capabilities` | 209 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md`, +184 more, 41 ADRs | 2026-10-26 |
@@ -64,7 +64,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/develop` | 27 | — | `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/addon-provider-reolink/src/clips` | 26 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-20-clip-export.md` _(covers)_, +19 more | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +10 more, 2 ADRs | 2026-08-26 |
-| `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
+| `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
 | `packages/addon-import-alexa` | 24 | `ecosystem-exports` | — | — |
 | `packages/addon-notifiers` | 24 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md`, 1 ADR | 2026-10-07 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |
