@@ -1,5 +1,5 @@
 ---
-id: DNNN
+id: D945
 title: An addon is published when its built output changes, not when a library it bundles changes
 status: accepted
 date: 2026-10-26

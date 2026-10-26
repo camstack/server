@@ -118,7 +118,7 @@ rejected alternative is not a decision; do not manufacture one.
    `scripts/check-decision-ids-unique.ts` — rebase on `origin/main` before
    numbering.
 2. Copy `docs/decisions/template.md` to `adr-NNNN-<rule-as-a-slug>.md`; set
-   `id: DNNNN`, `status`, `date`, `applies-to`.
+   `id: D945N`, `status`, `date`, `applies-to`.
 3. State it as a rule someone could violate; the Context must contain the
    **failure**; fill in Enforcement even when it is "review only".
 4. Never edit an accepted record. Supersede it (`supersedes: DNN`) and set the
