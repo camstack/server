@@ -19,7 +19,7 @@ const liveSwitch = {
  *  with no state-bearing cap in the table. */
 const liveSensor = {
   'device-status': { online: true, lastChangedAt: 1785834159635 },
-  'temperature-sensor': { celsius: 29, unit: 'C', lastFetchedAt: 1785840999527 },
+  'temperature-sensor': { celsius: 29, lastFetchedAt: 1785840999527 },
   battery: { percentage: 100 },
 }
 

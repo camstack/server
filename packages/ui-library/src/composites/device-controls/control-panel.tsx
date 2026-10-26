@@ -1,15 +1,22 @@
 import { useUiText } from '../../contexts/ui-text'
+import { useOptionalSystem } from '../../contexts/system-context.js'
 import { useState, type ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
 import { cn } from '../../lib/cn.js'
 import { formatNumeric } from '../../lib/format-numeric.js'
+import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
 import {
   formatControlDateTime,
   type ControlDateTimeFormat,
 } from '../../lib/format-control-datetime.js'
 import type { ControlPanelProps } from './types.js'
-import type { ControlStatus } from '@camstack/types'
+import {
+  isReadingQuantity,
+  type ControlStatus,
+  type DeviceDisplayOverride,
+  type ReadingQuantity,
+} from '@camstack/types'
 
 // ── Datetime input normalization helpers ──────────────────────────────────────
 //
@@ -37,6 +44,17 @@ export function toTimeInput(value: string): string {
 
 /** Trim an HA datetime value to the `<input type=datetime-local>` shape
  *  ('YYYY-MM-DDTHH:MM'). Accepts both 'T'- and space-separated forms. */
+interface DatetimeEditor {
+  readonly type: 'date' | 'time' | 'datetime-local'
+  readonly value: string
+}
+
+function datetimeEditor(format: ControlDateTimeFormat, rawValue: string): DatetimeEditor {
+  if (format === 'date') return { type: 'date', value: toDateInput(rawValue) }
+  if (format === 'time') return { type: 'time', value: toTimeInput(rawValue) }
+  return { type: 'datetime-local', value: toDateTimeInput(rawValue) }
+}
+
 export function toDateTimeInput(value: string): string {
   const normalized = value.includes('T') ? value : value.replace(' ', 'T')
   return normalized.slice(0, 16)
@@ -207,25 +225,44 @@ interface ControlWidgetProps {
    *  a read-only locale-formatted span in `compact` and the editable native
    *  input in `full`. */
   readonly layout: 'compact' | 'full'
+  /** Quantity of a numeric control, from the device descriptor. */
+  readonly quantity?: ReadingQuantity
+  readonly display?: DeviceDisplayOverride
 }
 
-function ControlWidget({ slice, busy, setValueFn, layout }: ControlWidgetProps): ReactNode {
+function ControlWidget({
+  slice,
+  busy,
+  setValueFn,
+  layout,
+  quantity,
+  display,
+}: ControlWidgetProps): ReactNode {
   const t = useUiText()
   const kind = slice.kind
 
   switch (kind) {
     case 'numeric': {
       const numericValue = typeof slice.value === 'number' ? slice.value : Number(slice.value)
+      const resolved =
+        quantity === undefined
+          ? undefined
+          : resolveSensorDisplay({ quantity, display, capName: 'control' })
+      const toShown = resolved?.toDisplayValue ?? ((raw: number): number => raw)
+      const toBase = resolved?.fromDisplayValue ?? ((shown: number): number => shown)
+      const unit = resolved !== undefined && resolved.unit.length > 0 ? resolved.unit : undefined
       return (
         <NumericControl
-          value={numericValue}
+          value={toShown(numericValue)}
           busy={busy}
           onCommit={(v) => {
-            setValueFn({ control: { kind: 'numeric', value: v } })
+            setValueFn({ control: { kind: 'numeric', value: toBase(v) } })
           }}
-          min={slice.min}
-          max={slice.max}
-          step={slice.step}
+          unit={unit}
+          min={slice.min === undefined ? undefined : toShown(slice.min)}
+          max={slice.max === undefined ? undefined : toShown(slice.max)}
+          step={slice.step === undefined ? undefined : toShown(slice.step)}
+          precision={resolved?.precision}
         />
       )
     }
@@ -302,13 +339,9 @@ function ControlWidget({ slice, busy, setValueFn, layout }: ControlWidgetProps):
         )
       }
 
-      const inputType = format === 'date' ? 'date' : format === 'time' ? 'time' : 'datetime-local'
-      const inputValue =
-        format === 'date'
-          ? toDateInput(rawValue)
-          : format === 'time'
-            ? toTimeInput(rawValue)
-            : toDateTimeInput(rawValue)
+      const editor = datetimeEditor(format, rawValue)
+      const inputType = editor.type
+      const inputValue = editor.value
       return (
         <input
           type={inputType}
@@ -345,6 +378,7 @@ export function ControlPanel({
   layout,
   optimistic,
 }: ControlPanelProps): ReactNode {
+  const info = useOptionalSystem()?.getDeviceInfo(deviceId) ?? null
   const { cap, slice, available } = useDeviceCapability({
     trpc,
     deviceId,
@@ -359,6 +393,9 @@ export function ControlPanel({
   if (display === undefined) return null
 
   const busy = !available
+  const chosen = info?.sourceInfo?.quantity
+  const quantity =
+    isReadingQuantity(chosen) && chosen !== 'device' && chosen !== 'none' ? chosen : undefined
 
   const setValueFn: SetValueFn = (input) => {
     if (!busy && cap) {
@@ -375,7 +412,14 @@ export function ControlPanel({
       // the FILL control column instead of overflowing the fixed 140px box.
       className="inline-flex min-w-0 max-w-full items-center gap-1 rounded border border-border px-2 py-1 transition-colors"
     >
-      <ControlWidget slice={display} busy={busy} setValueFn={setValueFn} layout={layout} />
+      <ControlWidget
+        slice={display}
+        busy={busy}
+        setValueFn={setValueFn}
+        layout={layout}
+        quantity={quantity}
+        display={info?.display}
+      />
     </div>
   )
 }

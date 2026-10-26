@@ -13,7 +13,18 @@
  * save.
  */
 
-import { Input, Select } from '@camstack/ui-library'
+import {
+  isReadingQuantity,
+  type DeviceDisplayOverride,
+  type ReadingQuantity,
+} from '@camstack/types'
+import {
+  Input,
+  Select,
+  resolveSensorDisplay,
+  useDeviceManagerGetDevice,
+  type ResolvedSensorDisplay,
+} from '@camstack/ui-library'
 import type { WireableField } from './recipe-parts'
 import { useTranslation } from 'react-i18next'
 
@@ -23,11 +34,14 @@ export type ConditionValue = ScalarValue | readonly (string | number)[]
 export interface ScalarValueInputProps {
   readonly value: ScalarValue
   readonly field: WireableField | undefined
+  readonly deviceId?: number
+  readonly cap?: string
   readonly onChange: (next: ScalarValue) => void
 }
 
-export function ScalarValueInput({ value, field, onChange }: ScalarValueInputProps) {
+export function ScalarValueInput({ value, field, deviceId, cap, onChange }: ScalarValueInputProps) {
   const { t } = useTranslation()
+  const bridge = useReadingBridge(field, deviceId, cap)
   if (field?.kind === 'boolean') {
     return (
       <Select
@@ -52,18 +66,26 @@ export function ScalarValueInput({ value, field, onChange }: ScalarValueInputPro
   }
 
   if (field?.kind === 'number') {
+    const shown = typeof value === 'number' && bridge ? bridge.toDisplayValue(value) : value
     return (
-      <Input
-        type="number"
-        value={typeof value === 'number' ? String(value) : ''}
-        placeholder="0"
-        onChange={(e) => {
-          // Mid-typing "" and "-" are not numbers. Keeping the last valid value
-          // rather than writing NaN keeps the recipe serialisable at all times.
-          const parsed = Number(e.target.value)
-          if (e.target.value !== '' && !Number.isNaN(parsed)) onChange(parsed)
-        }}
-      />
+      <span className="inline-flex items-center gap-1">
+        <Input
+          type="number"
+          value={typeof shown === 'number' ? String(shown) : ''}
+          placeholder="0"
+          onChange={(e) => {
+            // Mid-typing "" and "-" are not numbers. Keeping the last valid value
+            // rather than writing NaN keeps the recipe serialisable at all times.
+            const parsed = Number(e.target.value)
+            if (e.target.value !== '' && !Number.isNaN(parsed)) {
+              onChange(bridge ? bridge.fromDisplayValue(parsed) : parsed)
+            }
+          }}
+        />
+        {bridge !== undefined && bridge.unit.length > 0 ? (
+          <span className="text-xs text-foreground-subtle">{bridge.unit}</span>
+        ) : null}
+      </span>
     )
   }
 
@@ -79,16 +101,22 @@ export function ScalarValueInput({ value, field, onChange }: ScalarValueInputPro
 export interface ListValueInputProps {
   readonly value: readonly (string | number)[]
   readonly field: WireableField | undefined
+  readonly deviceId?: number
+  readonly cap?: string
   readonly onChange: (next: readonly (string | number)[]) => void
 }
 
 /** `is one of` — a comma-separated list, parsed to the field's own type so a
  *  numeric field is not compared against strings that can never equal it. */
-export function ListValueInput({ value, field, onChange }: ListValueInputProps) {
+export function ListValueInput({ value, field, deviceId, cap, onChange }: ListValueInputProps) {
   const { t } = useTranslation()
+  const bridge = useReadingBridge(field, deviceId, cap)
+  const shown = bridge
+    ? value.map((part) => (typeof part === 'number' ? bridge.toDisplayValue(part) : part))
+    : value
   return (
     <Input
-      value={value.join(', ')}
+      value={shown.join(', ')}
       placeholder={t('automation.valueInput.oneTwoThree', 'one, two, three')}
       onChange={(e) => {
         const parts = e.target.value
@@ -97,7 +125,10 @@ export function ListValueInput({ value, field, onChange }: ListValueInputProps) 
           .filter((p) => p !== '')
         onChange(
           field?.kind === 'number'
-            ? parts.map((p) => Number(p)).filter((n) => !Number.isNaN(n))
+            ? parts
+                .map((p) => Number(p))
+                .filter((n) => !Number.isNaN(n))
+                .map((n) => (bridge ? bridge.fromDisplayValue(n) : n))
             : parts,
         )
       }}
@@ -124,4 +155,33 @@ export function toList(value: ConditionValue): readonly (string | number)[] {
   if (isList(value)) return value
   if (typeof value === 'boolean') return []
   return [value]
+}
+
+function concreteQuantity(
+  declared: ReadingQuantity | undefined,
+  deviceQuantity: ReadingQuantity | undefined,
+): ReadingQuantity | undefined {
+  if (declared === undefined || declared === 'none') return undefined
+  if (declared !== 'device') return declared
+  if (deviceQuantity === undefined || deviceQuantity === 'device' || deviceQuantity === 'none') {
+    return undefined
+  }
+  return deviceQuantity
+}
+
+/** Display bridge for a numeric threshold. The recipe stores the base unit. */
+function useReadingBridge(
+  field: WireableField | undefined,
+  deviceId: number | undefined,
+  cap: string | undefined,
+): ResolvedSensorDisplay | undefined {
+  const id = deviceId ?? 0
+  const numeric = field?.kind === 'number' && field.quantity !== undefined
+  const { data } = useDeviceManagerGetDevice({ deviceId: id }, { enabled: numeric && id > 0 })
+  const raw = data?.sourceInfo?.quantity
+  const deviceQuantity = isReadingQuantity(raw) ? raw : undefined
+  const quantity = concreteQuantity(field?.quantity, deviceQuantity)
+  if (quantity === undefined) return undefined
+  const display: DeviceDisplayOverride | undefined = data?.display
+  return resolveSensorDisplay({ quantity, display, capName: cap })
 }

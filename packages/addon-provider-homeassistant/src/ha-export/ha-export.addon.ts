@@ -45,6 +45,7 @@ import {
   EventCategory,
   type IAddonHttpRoute,
   type IDeviceExportProvider,
+  isReadingQuantity,
   type IOauthIntegrationProvider,
   NC_HISTORY_LIMIT_MAX,
   nodePin,
@@ -1778,6 +1779,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       type: string
       features: readonly string[]
       metadata?: Readonly<Record<string, unknown>> | null
+      sourceInfo?: { readonly quantity?: string }
     },
     snapshotRaw: unknown,
     /**
@@ -1861,6 +1863,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     if (items.held) heldBack = true
     const manufacturer = readString(device.metadata ?? {}, 'manufacturer')
     const model = readString(device.metadata ?? {}, 'model')
+    const readingQuantity = device.sourceInfo?.quantity
     const catalogDevice: CatalogDevice = {
       id: device.id,
       name: device.name,
@@ -1882,6 +1885,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
        */
       capSlices: snapshot,
       itemEntities: items.entities,
+      ...(isReadingQuantity(readingQuantity) ? { readingQuantity } : {}),
     }
     return { device: catalogDevice, heldBack }
   }

@@ -60,13 +60,7 @@ interface NumericDescriptor {
   readonly kind: 'numeric'
   /** Field in the slice that holds the numeric value. */
   readonly field: string
-  /** Canonical display unit for TYPED roles (temperature → '°C', humidity → '%',
-   *  ambient-light → 'lx', pressure → 'hPa'). When present the UI renders this
-   *  directly WITHOUT consulting the slice or sourceInfo.
-   *  For the generic `numeric-sensor` role this is `undefined` — the unit is
-   *  read live from the slice (`slice.unit`). */
-  readonly canonicalUnit?: string
-  /** Quantity of the stored number. Absent on a polymorphic numeric-sensor. */
+  /** Quantity of the stored number. `device` reads `sourceInfo.quantity`. */
   readonly quantity?: ReadingQuantity
   /** Accessor into DeviceProxy['state'] — returns a typed slice handle. */
   readonly getSliceHandle: (state: DeviceProxy['state']) => SliceHandle<unknown>
@@ -163,13 +157,9 @@ export function hasBatteryNumericValue(slice: unknown, field: string): boolean {
  * avoids dynamic string indexing — each one is a concrete property
  * access on the typed `DeviceProxy['state']` shape.
  *
- * Canonical unit rules:
- *  - Typed roles (temperature/humidity/ambient-light/pressure/power/energy)
- *    carry a `canonicalUnit` constant. The slice is normalised to one unit
- *    so no per-device lookup is needed.
- *  - Generic `numeric-sensor` has no `canonicalUnit`. The unit is read live
- *    from the slice (`slice.unit`) as populated by the provider from the
- *    upstream source on every state push.
+ * The unit comes from the descriptor's quantity through `resolveSensorDisplay`.
+ * A generic numeric sensor uses quantity `device` and the device's
+ * `sourceInfo.quantity`.
  */
 export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
   // ── Numeric sensors ──────────────────────────────────────────────────
@@ -177,34 +167,30 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
     kind: 'numeric',
     field: 'celsius',
     quantity: 'temperature',
-    canonicalUnit: '°C',
     getSliceHandle: (s) => s.temperatureSensor,
   },
   'humidity-sensor': {
     kind: 'numeric',
     field: 'percent',
     quantity: 'humidity',
-    canonicalUnit: '%',
     getSliceHandle: (s) => s.humiditySensor,
   },
   'ambient-light-sensor': {
     kind: 'numeric',
     field: 'lux',
     quantity: 'illuminance',
-    canonicalUnit: 'lx',
     getSliceHandle: (s) => s.ambientLightSensor,
   },
   'pressure-sensor': {
     kind: 'numeric',
     field: 'hpa',
     quantity: 'pressure',
-    canonicalUnit: 'hPa',
     getSliceHandle: (s) => s.pressureSensor,
   },
   'numeric-sensor': {
-    // No canonicalUnit — unit is read live from the slice (slice.unit).
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
   // ── Weather roles (wind/rain/uv/solar/soil) ──────────────────────────
@@ -215,70 +201,67 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
   'wind-sensor': {
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
   'rain-sensor': {
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
   'uv-sensor': {
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
   'solar-radiation-sensor': {
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
   'soil-moisture-sensor': {
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
   'power-sensor': {
     kind: 'numeric',
     field: 'watts',
     quantity: 'power',
-    canonicalUnit: 'W',
     getSliceHandle: (s) => s.powerMeter,
   },
   'energy-sensor': {
     kind: 'numeric',
     field: 'kwhTotal',
     quantity: 'energy',
-    canonicalUnit: 'kWh',
     getSliceHandle: (s) => s.powerMeter,
   },
   'voltage-sensor': {
     kind: 'numeric',
     field: 'volts',
     quantity: 'voltage',
-    canonicalUnit: 'V',
     getSliceHandle: (s) => s.powerMeter,
   },
   'current-sensor': {
     kind: 'numeric',
     field: 'amps',
     quantity: 'current',
-    canonicalUnit: 'A',
     getSliceHandle: (s) => s.powerMeter,
   },
   'battery-sensor': {
-    // Numeric battery level (HA sensor.* with device_class 'battery').
-    // Hosted as the generic numeric-sensor cap; HA reports '%' via
-    // unit_of_measurement so the live slice unit wins, '%' as fallback.
     kind: 'numeric',
     field: 'value',
     quantity: 'percentage',
-    canonicalUnit: '%',
     getSliceHandle: (s) => s.numericSensor,
   },
   'generic-sensor': {
-    // No canonicalUnit — unit is read live from the slice (slice.unit).
     kind: 'numeric',
     field: 'value',
+    quantity: 'device',
     getSliceHandle: (s) => s.numericSensor,
   },
 

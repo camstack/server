@@ -40,6 +40,8 @@ export interface ResolvedSensorDisplay {
   readonly precision: number | undefined
   /** Convert a base-unit value into the display unit. */
   readonly toDisplayValue: (raw: number) => number
+  /** Convert a display-unit value back into the stored base. */
+  readonly fromDisplayValue: (shown: number) => number
   /** Text and unit for one base-unit sample. */
   readonly format: (raw: number) => { readonly text: string; readonly unit: string }
 }
@@ -86,6 +88,11 @@ export function resolveSensorDisplay(input: SensorDisplayInput): ResolvedSensorD
     return tryConvertUnit(raw, base, unit) ?? raw
   }
 
+  const fromDisplayValue = (shown: number): number => {
+    if (scales || base === undefined || unit.length === 0 || unit === base) return shown
+    return tryConvertUnit(shown, unit, base) ?? shown
+  }
+
   const format = (raw: number): { readonly text: string; readonly unit: string } => {
     if (quantity !== undefined && !overrideOk) {
       const rendered = formatReading({ value: raw, quantity, preference, precision })
@@ -94,5 +101,5 @@ export function resolveSensorDisplay(input: SensorDisplayInput): ResolvedSensorD
     return { text: formatNumeric(toDisplayValue(raw), precision), unit }
   }
 
-  return { unit, precision, toDisplayValue, format }
+  return { unit, precision, toDisplayValue, fromDisplayValue, format }
 }

@@ -4,17 +4,14 @@
  *
  * Renders:
  *  - Typed numeric sensors: value in `text-3xl font-semibold tabular-nums` +
- *    canonical unit from ROLE_DESCRIPTOR (e.g. temperature-sensor → '°C').
- *  - Generic numeric-sensor: value + unit read live from the slice
- *    (`slice.unit`, populated by the HA provider from state attributes).
+ *    the unit `resolveSensorDisplay` derives from the quantity.
+ *  - Generic numeric-sensor: the same formatter, with the device's quantity.
  *  - Binary sensors: coloured state badge ("Detected"/"Clear" etc.) — same
  *    labels and colours as SensorValueAtom's binary branch.
  *  - Presence: Home/Away/zone-name badge — same labels as SensorValueAtom.
  *  - All: sensor name label below the value.
  *
- * Unit resolution uses the same logic as SensorValueAtom (live slice.unit
- * wins, ROLE_DESCRIPTOR canonicalUnit as fallback) — the two surfaces stay
- * in sync.
+ * Unit resolution uses the same formatter as SensorValueAtom.
  */
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'

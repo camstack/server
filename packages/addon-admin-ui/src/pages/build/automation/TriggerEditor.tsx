@@ -236,6 +236,8 @@ function DeviceStateFields({ trigger, devices, onChange }: DeviceStateFieldsProp
             <ScalarValueInput
               value={trigger.becomes}
               field={descriptor}
+              deviceId={selection.deviceId}
+              cap={selection.cap}
               onChange={(becomes) =>
                 onChange(buildStateTrigger(selection, { ...options, becomes }))
               }

@@ -31,7 +31,9 @@ import {
   FanDirectionSchema,
   HvacModeSchema,
   MediaPlayerRepeatSchema,
+  type ReadingQuantity,
   type WebrtcStreamTarget,
+  baseUnitOf,
 } from '@camstack/types'
 import { cameraStreamEntities } from './camera-entities.js'
 import { type PlatformSupport, UNNEGOTIATED_SUPPORT } from './component-support.js'
@@ -1939,7 +1941,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         platform: 'sensor',
         field: 'desiccantLeftDays',
         label: 'Desiccant remaining',
-        unit: 'd',
+        unit: 's',
         entityCategory: 'diagnostic',
         enabledByDefault: false,
       },
@@ -2246,6 +2248,7 @@ function readFiniteNumber(
  */
 export function controlEntitySpecs(
   slice: Readonly<Record<string, unknown>> | undefined,
+  quantity?: ReadingQuantity,
 ): readonly EntitySpec[] {
   const kind = typeof slice?.['kind'] === 'string' ? slice['kind'] : null
   const primary = derivedEntityId('control')
@@ -2278,7 +2281,7 @@ export function controlEntitySpecs(
     const min = readFiniteNumber(slice, 'min') ?? PERCENT_RANGE.min
     const max = readFiniteNumber(slice, 'max') ?? PERCENT_RANGE.max
     const step = readFiniteNumber(slice, 'step') ?? PERCENT_RANGE.step
-    const unit = typeof slice?.['unit'] === 'string' ? slice['unit'] : undefined
+    const unit = quantity === undefined ? undefined : baseUnitOf(quantity)
     if (min < max && step > 0) {
       return [
         {
@@ -2682,8 +2685,18 @@ export function buildDerivedPlan(
      */
     if (cap === 'control') {
       specs.push(
-        ...controlEntitySpecs(device.capSlices?.['control']).map((spec) =>
+        ...controlEntitySpecs(device.capSlices?.['control'], device.readingQuantity).map((spec) =>
           degradeUnsupported(spec, options),
+        ),
+      )
+      continue
+    }
+    if (cap === 'numeric-sensor') {
+      const unit =
+        device.readingQuantity === undefined ? undefined : baseUnitOf(device.readingQuantity)
+      specs.push(
+        ...capEntitySpecs(cap).map((spec) =>
+          degradeUnsupported(unit === undefined ? spec : { ...spec, unit }, options),
         ),
       )
       continue

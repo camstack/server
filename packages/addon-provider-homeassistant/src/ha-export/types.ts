@@ -19,7 +19,7 @@
  * documented exception ({@link syntheticDeviceKeyFor}).
  */
 
-import type { WebrtcStreamTarget } from '@camstack/types'
+import type { ReadingQuantity, WebrtcStreamTarget } from '@camstack/types'
 import type { ItemEntity } from './item-entities.js'
 
 /**
@@ -319,6 +319,12 @@ export interface CatalogDevice {
   readonly ptzPresets?: readonly string[]
   /** Slices present on the device, used to decide battery/charger entities. */
   readonly slices: readonly string[]
+  /**
+   * Quantity of a polymorphic reading (`numeric-sensor`, numeric `control`),
+   * copied from `SourceInfo.quantity`. The export advertises that quantity's
+   * base unit. Absent when the device has not chosen one.
+   */
+  readonly readingQuantity?: ReadingQuantity
   /**
    * capability → its status slice, as the reconcile last read it.
    *

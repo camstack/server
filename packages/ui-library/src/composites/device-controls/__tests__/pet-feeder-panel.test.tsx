@@ -12,7 +12,7 @@ function makeSlice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
     food2: null,
     lowFood: false,
     batteryPower: 88,
-    desiccantLeftDays: 12,
+    desiccantLeftDays: 12 * 86_400,
     feeding: false,
     status: 'normal',
     error: null,

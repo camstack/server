@@ -68,12 +68,16 @@ export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowPr
           <ListValueInput
             value={toList(leaf.value)}
             field={descriptor}
+            deviceId={leaf.deviceId}
+            cap={leaf.cap}
             onChange={(value) => onChange({ ...leaf, value })}
           />
         ) : (
           <ScalarValueInput
             value={toScalar(leaf.value)}
             field={descriptor}
+            deviceId={leaf.deviceId}
+            cap={leaf.cap}
             onChange={(value) => onChange({ ...leaf, value })}
           />
         )}

@@ -16,7 +16,7 @@
  * Mirrors the AC card's `useDeviceCapability` + inferred-cap pattern so
  * the row and hero never diverge. Actions are gated on `available`.
  */
-import { useUiText } from '../../contexts/ui-text'
+import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
@@ -34,7 +34,7 @@ import {
   WifiOff,
   Wind,
 } from 'lucide-react'
-import type { PetFeederStatus } from '@camstack/types'
+import { formatReading, type PetFeederStatus } from '@camstack/types'
 import { PET_FEEDER_MANUAL_FEED_MAX, PET_FEEDER_MANUAL_FEED_MIN } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
@@ -49,6 +49,14 @@ const VOLUME_MAX = 9
 /** Amber kibble accent for the bowl fill; destructive red when low. */
 const KIBBLE = '#f59e0b'
 const KIBBLE_LOW = '#ef4444'
+
+function desiccantLabel(t: UiTextFn, seconds: number): string {
+  const rendered = formatReading({ value: seconds, quantity: 'duration' })
+  return t('uiLibrary.petFeeder.desiccant', '{{text}}{{unit}} desiccant', {
+    text: rendered.text,
+    unit: rendered.unit,
+  })
+}
 
 function clampPortion(grams: number): number {
   return Math.min(PET_FEEDER_MANUAL_FEED_MAX, Math.max(PET_FEEDER_MANUAL_FEED_MIN, grams))
@@ -187,9 +195,7 @@ export function PetFeederPanel({
             {display.desiccantLeftDays !== null && (
               <Readout
                 icon={<Wind className="h-3.5 w-3.5" />}
-                label={t('uiLibrary.petFeeder.desiccant', '{{days}}d desiccant', {
-                  days: display.desiccantLeftDays,
-                })}
+                label={desiccantLabel(t, display.desiccantLeftDays)}
               />
             )}
             {onBatteries && (

@@ -11,10 +11,18 @@ vi.mock('../../../hooks/use-device-capability', () => ({
   useDeviceCapability: () => mockResult,
 }))
 
+const getDeviceInfo = vi.fn()
+
+vi.mock('../../../contexts/system-context', () => ({
+  useOptionalSystem: () => ({ getDeviceInfo }),
+}))
+
 const trpc = {} as never
 
 beforeEach(() => {
   setValue.mockReset()
+  getDeviceInfo.mockReset()
+  getDeviceInfo.mockReturnValue(null)
   mockResult = {
     cap: { setValue },
     slice: undefined,
@@ -302,10 +310,11 @@ describe('ControlPanel', () => {
   })
 
   describe('numeric kind — unit/min/max/step', () => {
-    it('shows the unit label when unit is present in the slice', () => {
+    it('shows the unit label from the device quantity', () => {
+      getDeviceInfo.mockReturnValue({ sourceInfo: { quantity: 'temperature' } })
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 21, options: [], lastChangedAt: 0, unit: '°C' },
+        slice: { kind: 'numeric', value: 21, options: [], lastChangedAt: 0 },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
@@ -397,9 +406,13 @@ describe('ControlPanel', () => {
 
   describe('numeric kind — precision display', () => {
     it('formats the initial value with toFixed(precision) when precision is set', () => {
+      getDeviceInfo.mockReturnValue({
+        sourceInfo: { quantity: 'temperature' },
+        display: { precision: 1 },
+      })
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 24.567, options: [], lastChangedAt: 0, precision: 1 },
+        slice: { kind: 'numeric', value: 24.567, options: [], lastChangedAt: 0 },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
@@ -409,6 +422,10 @@ describe('ControlPanel', () => {
     })
 
     it('formats the stepper increment result with precision', () => {
+      getDeviceInfo.mockReturnValue({
+        sourceInfo: { quantity: 'temperature' },
+        display: { precision: 1 },
+      })
       mockResult = {
         cap: { setValue },
         slice: {
@@ -417,7 +434,6 @@ describe('ControlPanel', () => {
           options: [],
           lastChangedAt: 0,
           step: 0.5,
-          precision: 1,
         },
         available: true,
       }

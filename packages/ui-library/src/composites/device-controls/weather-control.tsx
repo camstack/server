@@ -488,7 +488,9 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
               {temperature !== undefined ? temperature.text : '—'}
             </span>
             <span className="text-base text-foreground-subtle">
-              {temperature !== undefined ? temperature.unit : '°C'}
+              {temperature !== undefined
+                ? temperature.unit
+                : formatReading({ value: 0, quantity: 'temperature' }).unit}
             </span>
             <span className="text-xs text-foreground-subtle ml-2 capitalize">{meta.label}</span>
           </div>
