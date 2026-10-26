@@ -68,6 +68,11 @@ export type ColorRgbTriplet = z.infer<typeof RgbTripletSchema>
 export type ColorHsvTriplet = z.infer<typeof HsvTripletSchema>
 export type ColorInput = z.infer<typeof ColorInputSchema>
 
+export function parseColorInput(value: unknown): ColorInput | null {
+  const parsed = ColorInputSchema.safeParse(value)
+  return parsed.success ? parsed.data : null
+}
+
 export const colorCapability = {
   name: 'color',
   scope: 'device',

@@ -27,6 +27,7 @@ import {
 } from '@camstack/types'
 import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
 import { normalizedNativeOwner } from '../core-blocks/composition-sources.js'
+import { invokeActuatorCall } from './actuator-invoke.js'
 import { type ComposedDeviceHandle, isComposedDevice } from './composed-device.js'
 import { Composer, type NativeShadowChangedData } from './composer.js'
 import { NodeDeadlineTimer } from './deadline-timer.js'
@@ -201,6 +202,34 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
       grafts,
       now: () => Date.now(),
       newTimer: () => new NodeDeadlineTimer(() => Date.now()),
+      readActuatorMember: async (deviceId) => {
+        try {
+          const bindings = await api.deviceManager.getBindings.query({ deviceId })
+          const found = await api.deviceManager.getDevice.query({ deviceId })
+          return {
+            kind: 'ready',
+            caps: bindings.entries.map((entry) => entry.capName),
+            features: found === null ? [] : [...found.features],
+          }
+        } catch (err: unknown) {
+          return { kind: 'unreadable', error: errMsg(err) }
+        }
+      },
+      invokeActuator: (call) =>
+        invokeActuatorCall(
+          {
+            switchSetState: async (deviceId, on) => {
+              await api.switch.setState.mutate({ deviceId, on })
+            },
+            setBrightness: async (deviceId, percentage) => {
+              await api.brightness.setBrightness.mutate({ deviceId, percentage })
+            },
+            setColor: async (deviceId, color) => {
+              await api.color.setColor.mutate({ deviceId, color })
+            },
+          },
+          call,
+        ),
     })
     // `device.state-changed` is not in the typed catalog: the shared parser (R9).
     this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {

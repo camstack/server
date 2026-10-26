@@ -40,7 +40,7 @@ export const groupStatusCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Sensor],
+  deviceTypes: [DeviceType.Sensor, DeviceType.Switch, DeviceType.Light],
   methods: {},
   status: {
     schema: GroupStatusSchema,

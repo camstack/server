@@ -13,6 +13,7 @@ import {
 } from '../composition.js'
 import type { CompositionProblem } from '../composition-report.js'
 import { problem } from '../plan-result.js'
+import { reducerForActive } from './actuator.js'
 import { type GroupTemplate, groupTemplate } from './catalog.js'
 import { type GroupHelperSpec, type HelperMember, type HelperSpec } from './spec.js'
 
@@ -95,7 +96,11 @@ function draftOf(template: GroupTemplate, spec: GroupHelperSpec): unknown {
     template.companions.map((companion) => [companion.fieldPath, expressionSource(companion.expr)]),
   )
   return {
-    target: { kind: 'new', type: template.deviceType, role: template.role },
+    target: {
+      kind: 'new',
+      type: template.deviceType,
+      ...(template.role === undefined ? {} : { role: template.role }),
+    },
     helper: spec,
     features: [
       {
@@ -117,6 +122,44 @@ function draftOf(template: GroupTemplate, spec: GroupHelperSpec): unknown {
       },
     ],
   }
+}
+
+function criterionProblems(
+  template: GroupTemplate,
+  spec: GroupHelperSpec,
+): readonly CompositionProblem[] {
+  if (template.family === 'actuator') {
+    if (spec.active === undefined) {
+      return [
+        problem(
+          'kind-mismatch',
+          'helper.active',
+          `a ${template.id} group needs an active criterion (at-least-one or all)`,
+        ),
+      ]
+    }
+    const reducer = reducerForActive(spec.active)
+    if (spec.aggregate !== reducer) {
+      return [
+        problem(
+          'kind-mismatch',
+          'helper.aggregate',
+          `active \`${spec.active}\` aggregates by \`${reducer}\`, not \`${spec.aggregate}\``,
+        ),
+      ]
+    }
+    return []
+  }
+  if (spec.active !== undefined) {
+    return [
+      problem(
+        'kind-mismatch',
+        'helper.active',
+        `a ${template.id} group has no active criterion — that belongs to an actuator group`,
+      ),
+    ]
+  }
+  return []
 }
 
 function parseDraft(draft: unknown): HelperCompileResult {
@@ -144,6 +187,8 @@ export function compileHelper(spec: HelperSpec): HelperCompileResult {
       ],
     }
   }
+  const criterion = criterionProblems(template, spec)
+  if (criterion.length > 0) return { ok: false, problems: criterion }
   if (!template.aggregates.includes(spec.aggregate)) {
     const allowed = template.aggregates.join(', ')
     return {

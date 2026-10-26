@@ -34,6 +34,7 @@ import type { FanControlStatusSchema } from '../capabilities/fan-control.cap.js'
 import type { FeatureProbeStatusSchema } from '../capabilities/feature-probe.cap.js'
 import type { FloodStatusSchema } from '../capabilities/flood.cap.js'
 import type { GasStatusSchema } from '../capabilities/gas.cap.js'
+import type { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
 import type { groupStatusCapability } from '../capabilities/group-status.cap.js'
 import type { HeatingValveStatusSchema } from '../capabilities/heating-valve.cap.js'
 import type { HumidifierStatusSchema } from '../capabilities/humidifier.cap.js'
@@ -117,6 +118,7 @@ export type CapStatusTypeMap = {
   readonly 'feature-probe': z.infer<typeof FeatureProbeStatusSchema>
   readonly 'flood': z.infer<typeof FloodStatusSchema>
   readonly 'gas': z.infer<typeof GasStatusSchema>
+  readonly 'group-commands': z.infer<(typeof groupCommandsCapability)['status']['schema']>
   readonly 'group-status': z.infer<(typeof groupStatusCapability)['status']['schema']>
   readonly 'heating-valve': z.infer<typeof HeatingValveStatusSchema>
   readonly 'humidifier': z.infer<typeof HumidifierStatusSchema>
@@ -204,6 +206,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'feature-probe',
   'flood',
   'gas',
+  'group-commands',
   'group-status',
   'heating-valve',
   'humidifier',

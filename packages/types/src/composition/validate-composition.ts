@@ -33,6 +33,7 @@ import {
   sourceKinds,
   unavailableFor,
 } from './field-kinds.js'
+import { groupTemplate } from './helpers/catalog.js'
 import { helperSaveProblems, type HelperMemberFact } from './helpers/save.js'
 import { type CompositionPlanResult, compositionFieldAt, problem, refused } from './plan-result.js'
 import {
@@ -176,11 +177,24 @@ function composableCap(
  * required field. A REPLACE needs none of it: the cap is bound (a fact), the
  * native keeps serving its methods, and only the named fields are owned (D663).
  */
+/**
+ * Caps an actuator helper is allowed to serve. A free composition, and a
+ * reading group, get an empty set — `has-commands` stays for them.
+ */
+function actuatorCommandCaps(composition: Composition): ReadonlySet<string> {
+  const spec = composition.helper
+  if (spec === undefined) return new Set()
+  const template = groupTemplate(spec.templateId)
+  if (template === null || template.family !== 'actuator') return new Set()
+  return new Set(template.commandCaps)
+}
+
 function builtCapProblems(
   { def, state, fields: targetFields }: ComposableCap,
   feature: CompositionFieldsFeature,
   at: string,
   deviceType: DeviceType,
+  servedCommands: ReadonlySet<string>,
 ): readonly CompositionProblem[] {
   const problems: CompositionProblem[] = []
   if (def.deviceTypes !== undefined && !def.deviceTypes.includes(deviceType)) {
@@ -195,7 +209,7 @@ function builtCapProblems(
   const served = Object.entries(def.methods)
     .filter(([name, m]) => m.systemOnly !== true && def.composedMethods?.[name] === undefined)
     .map(([name]) => `\`${name}\``)
-  if (served.length > 0) {
+  if (served.length > 0 && !servedCommands.has(def.name)) {
     problems.push(
       problem(
         'has-commands',
@@ -291,12 +305,15 @@ function planFeature(
   featureIndex: number,
   target: FeatureTarget,
   lookupCap: CapabilityLookup,
+  servedCommands: ReadonlySet<string>,
 ): CompositionPlanResult {
   const at = `features[${featureIndex}]`
   const cap = composableCap(feature, at, lookupCap)
   if ('code' in cap) return refused(cap)
   const capProblems: CompositionProblem[] =
-    target.mode === 'replace' ? [] : [...builtCapProblems(cap, feature, at, target.deviceType)]
+    target.mode === 'replace'
+      ? []
+      : [...builtCapProblems(cap, feature, at, target.deviceType, servedCommands)]
   if (feature.commands !== undefined && Object.keys(feature.commands).length > 0) {
     capProblems.push(
       problem('reserved-variant', `${at}.commands`, 'commands (`forward`) arrive in slice 3'),
@@ -405,6 +422,7 @@ export function planComposition(
 ): CompositionPlanResult {
   const planTarget = planTargetOf(composition, target)
   if ('code' in planTarget) return refused(planTarget)
+  const servedCommands = actuatorCommandCaps(composition)
   const results = composition.features.map((feature, index): CompositionPlanResult => {
     const at = `features[${index}]`
     if (feature.kind === 'passthrough') {
@@ -426,10 +444,11 @@ export function planComposition(
         index,
         { mode: 'add', deviceType: planTarget.found.type },
         lookupCap,
+        servedCommands,
       )
       return nativeReplaceOrBlock(featureTarget, probed)
     }
-    const result = planFeature(feature, index, featureTarget, lookupCap)
+    const result = planFeature(feature, index, featureTarget, lookupCap, servedCommands)
     return compositionFeatureEnabled(feature)
       ? result
       : { problems: result.problems, fields: [], features: [], events: [] }

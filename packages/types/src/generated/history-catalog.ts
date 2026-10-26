@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 41 caps with series (75 series), 31 caps answered `'none'`.
+ * 41 caps with series (75 series), 32 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -203,6 +203,7 @@ export const HISTORY_NONE_CAPS: readonly string[] = [
   'doorbell',
   'event-emitter',
   'feature-probe',
+  'group-commands',
   'group-status',
   'image',
   'image-settings',

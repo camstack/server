@@ -571,8 +571,15 @@ offline rather than publishing false. A member that is gone fails the field.
 `motion.isDetected` on a composed group reads `detected` from the slice and
 throws when that field is unknown. The common source selector (#236) is asked
 through `sourcePickForTemplate`: one device type, the catalog fields, up to
-64 members. Switch and light groups, statistics and integral are not this
-slice.
+64 members. A switch or light group uses the same template: the operator
+picks `at-least-one` or `all`, and a command is sent to every member that
+binds that capability, including one that is offline. One member's failure
+is recorded on `group-commands` and does not cancel the others. A light
+exposes brightness and colour only while every member binds them; colour
+modes are the features they all share. The live set follows membership and
+`device.bindings-changed`. Statistics and integral are not this slice. Fan,
+cover, valve, lock, media player and climate are not this slice either:
+their commands are not an on/off fan-out.
 
 ## Deleting a device: who cleans what (D864)
 

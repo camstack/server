@@ -26,14 +26,19 @@ export interface HelperCompanion {
 
 export interface GroupTemplate {
   readonly id: GroupTemplateId
-  readonly family: 'numeric' | 'binary'
+  readonly family: 'numeric' | 'binary' | 'actuator'
   readonly summary: string
   readonly deviceType: DeviceType
-  readonly role: DeviceRole
+  readonly role: DeviceRole | undefined
   /** Members are this one device type. */
   readonly memberDeviceType: DeviceType
   readonly outputCap: string
   readonly outputField: string
+  /**
+   * Methods the composer fans out. Empty for a reading. A free composition
+   * still cannot serve these caps (`has-commands`).
+   */
+  readonly commandCaps: readonly string[]
   /** Quantity of the output reading. `device` is chosen per numeric sensor. */
   readonly quantity: ReadingQuantity
   readonly baseUnit: string | undefined
@@ -68,6 +73,7 @@ function numeric(input: {
     family: 'numeric',
     deviceType: DeviceType.Sensor,
     memberDeviceType: DeviceType.Sensor,
+    commandCaps: [],
     baseUnit: baseUnitOf(input.quantity),
     aggregates: NUMERIC_AGGREGATES,
     accept: [{ cap: input.outputCap, fieldPath: input.outputField }],
@@ -89,6 +95,7 @@ function binary(input: {
     family: 'binary',
     deviceType: DeviceType.Sensor,
     memberDeviceType: DeviceType.Sensor,
+    commandCaps: [],
     quantity: 'none',
     baseUnit: undefined,
     aggregates: BINARY_AGGREGATES,
@@ -267,7 +274,46 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
     accept: [{ cap: 'binary', fieldPath: 'on' }],
     companions: [CHANGED],
   }),
+  actuator({
+    id: 'switch',
+    summary:
+      'On when at least one switch is on, or when all of them are. Offline and unknown members are left out of that decision, never read as off, and still receive the command.',
+    deviceType: DeviceType.Switch,
+    outputCap: 'switch',
+    commandCaps: ['switch'],
+  }),
+  actuator({
+    id: 'light',
+    summary:
+      'On when at least one light is on, or when all of them are. Brightness and colour are offered only when every member has them. A command is not sent to a member that lacks it.',
+    deviceType: DeviceType.Light,
+    outputCap: 'switch',
+    commandCaps: ['switch', 'brightness', 'color'],
+  }),
 ]
+
+function actuator(input: {
+  readonly id: GroupTemplateId
+  readonly summary: string
+  readonly deviceType: DeviceType
+  readonly outputCap: string
+  readonly commandCaps: readonly string[]
+}): GroupTemplate {
+  return {
+    ...input,
+    family: 'actuator',
+    role: undefined,
+    memberDeviceType: input.deviceType,
+    outputField: 'on',
+    quantity: 'none',
+    baseUnit: undefined,
+    aggregates: BINARY_AGGREGATES,
+    defaultAggregate: 'any',
+    empty: 'offline',
+    accept: [{ cap: 'switch', fieldPath: 'on' }],
+    companions: [CHANGED],
+  }
+}
 
 const BY_ID: ReadonlyMap<GroupTemplateId, GroupTemplate> = new Map(
   GROUP_TEMPLATES.map((template) => [template.id, template]),

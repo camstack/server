@@ -53,7 +53,7 @@ export function sourcePickForTemplate(template: GroupTemplate): SourcePickReques
     deviceTypes: [template.memberDeviceType],
     accept: template.accept.map((field) => ({ ...field, valueKind })),
     history: { required: false, minRetentionMs: null },
-    mustBindCaps: [],
+    mustBindCaps: template.family === 'actuator' ? [template.outputCap] : [],
     exclude: [],
   }
 }

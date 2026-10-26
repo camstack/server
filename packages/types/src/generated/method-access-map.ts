@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1384 method paths across 182 capabilities.
+ * Coverage: 1385 method paths across 183 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -482,6 +482,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'filesystemBrowse.listAllowedRoots': { capName: "filesystem-browse", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'flood.getStatus': { capName: "flood", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'gas.getStatus': { capName: "gas", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'groupCommands.getStatus': { capName: "group-commands", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'groupStatus.getStatus': { capName: "group-status", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'heatingValve.getStatus': { capName: "heating-valve", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'humidifier.getStatus': { capName: "humidifier", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1484,6 +1485,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "filesystem-browse",
   "flood",
   "gas",
+  "group-commands",
   "group-status",
   "heating-valve",
   "humidifier",
@@ -1634,6 +1636,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "feature-probe",
   "flood",
   "gas",
+  "group-commands",
   "group-status",
   "heating-valve",
   "humidifier",

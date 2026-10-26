@@ -15,6 +15,7 @@ import { numericSensorCapability } from '../../../capabilities/numeric-sensor.ca
 import { powerMeterCapability } from '../../../capabilities/power-meter.cap.js'
 import { pressureSensorCapability } from '../../../capabilities/pressure-sensor.cap.js'
 import { smokeCapability } from '../../../capabilities/smoke.cap.js'
+import { switchCapability } from '../../../capabilities/switch.cap.js'
 import { temperatureSensorCapability } from '../../../capabilities/temperature-sensor.cap.js'
 import { DeviceRole, DeviceType } from '../../../device/device-type.js'
 import type { ReadingQuantity } from '../../../units/quantity.js'
@@ -64,6 +65,7 @@ const lookupCap = buildCapabilityLookup([
   smokeCapability,
   binaryCapability,
   groupStatusCapability,
+  switchCapability,
 ])
 
 function ref(n: number): CompositionSourceRef {
@@ -209,15 +211,18 @@ describe('template compile and save', () => {
       const field = template.accept[0]
       expect(field, template.id).toBeDefined()
       if (field === undefined) continue
+      const base = group(template.id, template.defaultAggregate, [
+        member(1, field.cap, field.fieldPath),
+      ])
       const compiled = compileHelper(
-        group(template.id, template.defaultAggregate, [member(1, field.cap, field.fieldPath)]),
+        template.family === 'actuator' ? { ...base, active: 'at-least-one' } : base,
       )
       expect(compiled.ok, template.id).toBe(true)
       if (!compiled.ok) continue
       const quantity = template.quantity === 'device' ? 'power' : template.quantity
       const judged = validateComposition(
         compiled.composition,
-        context(compiled.composition, quantity),
+        context(compiled.composition, quantity, template.memberDeviceType),
       )
       expect(judged.problems, template.id).toEqual([])
     }
@@ -391,14 +396,18 @@ describe('a free expression is not a helper', () => {
   })
 })
 
-function context(composition: Composition, quantity: ReadingQuantity): ValidateCompositionContext {
+function context(
+  composition: Composition,
+  quantity: ReadingQuantity,
+  deviceType: DeviceType = DeviceType.Sensor,
+): ValidateCompositionContext {
   const sources = new Map<string, CompositionSourceDescription>()
   for (const [index, item] of composition.helper?.members.entries() ?? []) {
     sources.set(compositionSourceKey(item.source), {
       kind: 'found',
       deviceId: 4000 + index,
       caps: new Set([item.cap]),
-      deviceType: DeviceType.Sensor,
+      deviceType,
       quantity,
     })
   }

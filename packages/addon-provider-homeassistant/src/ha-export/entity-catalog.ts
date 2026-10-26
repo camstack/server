@@ -2325,6 +2325,13 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'never means the reading.',
   },
   {
+    cap: 'group-commands',
+    reason:
+      'The last fan-out a helper group attempted (D944), one row per member. ' +
+      'It is session-only and has no history. The command an automation sends ' +
+      'is the member capability (switch, brightness, colour), not this record.',
+  },
+  {
     cap: 'recording-onboard',
     reason:
       'An EDITOR of the CAMERA\u2019s own recorder: a weekly schedule of windows per ' +

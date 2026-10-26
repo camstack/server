@@ -3,9 +3,9 @@
  * composer (D659). Every consumer (exporters, NC, UI, HomeKit) reads it
  * through its bindings, unchanged.
  *
- * It serves NO command method: slice 1 refuses any cap with one
- * (`has-commands`), and commands arrive with `forward` in slice 3. So each
- * composed cap is registered with an EMPTY native provider, and `getStatus`
+ * A reading group serves no command. An actuator helper's `switch` (and, on
+ * a light, `brightness` / `color` when every member binds them) fans the
+ * call out through `actuatorDispatcher` (D944). `getStatus`
  * (R4) is the kernel's: `registerNativeCap` installs a default that reads the
  * device's runtime slice for any cap declaring both `status` and
  * `runtimeState` (`device-cap-proxy.ts`, "Default `getStatus`"), on the
@@ -20,22 +20,37 @@
  * `deviceMeta`: a failed meta read builds a device as `generic`, and the
  * declaration is the authority for what this device is.
  */
+import { actuatorDispatcher, type ActuatorDispatchInput } from './actuator-dispatch.js'
 import {
   BaseDevice,
+  brightnessCapability,
   type CapabilityDefinition,
+  colorCapability,
   type DeviceConstructor,
   type DeviceContext,
   type DeviceFeature,
-  type DeviceType,
+  DeviceType,
   errMsg,
+  groupCommandsCapability,
+  GroupCommandResultSchema,
+  type GroupCommandResult,
   type IDevice,
   motionCapability,
+  switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import type { ComposedWriteTarget, WriteOutcome } from './composition-runtime.js'
 import type { SlicePatch } from './slice-assembler.js'
 
 const COMPOSED_DEVICE_CONFIG_SCHEMA: z.ZodObject<Record<string, never>> = z.object({})
+
+function priorResults(slice: unknown): readonly GroupCommandResult[] {
+  if (!isRecord(slice) || !Array.isArray(slice.results)) return []
+  return slice.results.flatMap((row) => {
+    const parsed = GroupCommandResultSchema.safeParse(row)
+    return parsed.success ? [parsed.data] : []
+  })
+}
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -58,12 +73,18 @@ export class ComposedDevice
   extends BaseDevice<typeof COMPOSED_DEVICE_CONFIG_SCHEMA>
   implements ComposedDeviceHandle
 {
-  readonly features: readonly DeviceFeature[] = []
+  private sharedFeatures: readonly DeviceFeature[] = []
+  private extraCaps: ReadonlySet<string> = new Set()
+
+  get features(): readonly DeviceFeature[] {
+    return this.sharedFeatures
+  }
 
   constructor(ctx: DeviceContext, type: DeviceType, caps: readonly CapabilityDefinition[]) {
     super(ctx, COMPOSED_DEVICE_CONFIG_SCHEMA, { type })
-    // No command, and `getStatus` is the kernel default over the runtime slice (see the header).
     // Motion's `isDetected` is a slice answer (D944): the group reads `detected`.
+    // Switch fans a command out. Every other composed cap stays an empty native;
+    // `getStatus` is the kernel default over the runtime slice.
     for (const cap of caps) {
       if (cap.name === motionCapability.name) {
         const read = (): unknown => this.runtimeState.getCapState(motionCapability.name)
@@ -72,10 +93,90 @@ export class ComposedDevice
         })
         continue
       }
+      if (cap.name === switchCapability.name) {
+        ctx.registerNativeCap(switchCapability, {
+          setState: async (input) => {
+            await this.dispatch('switch', 'setState', { on: input.on })
+          },
+        })
+        continue
+      }
       ctx.registerNativeCap(cap, {})
+    }
+    if (type === DeviceType.Switch || type === DeviceType.Light) {
+      ctx.registerNativeCap(groupCommandsCapability, {})
     }
     // NOT presumed reachable: available only once the runtime has seeded every cap.
     this.markOnline(false)
+  }
+
+  /**
+   * Register or drop brightness and colour, and publish the shared colour
+   * modes. Switch stays: it is the active state, registered with the device.
+   */
+  syncShared(caps: readonly string[], modes: readonly DeviceFeature[]): void {
+    this.ensureExtra(brightnessCapability.name, caps.includes(brightnessCapability.name), () => {
+      this.ctx.registerNativeCap(brightnessCapability, {
+        setBrightness: async (input) => {
+          await this.dispatch('brightness', 'setBrightness', { percentage: input.percentage })
+        },
+      })
+    })
+    this.ensureExtra(colorCapability.name, caps.includes(colorCapability.name), () => {
+      this.ctx.registerNativeCap(colorCapability, {
+        setColor: async (input) => {
+          await this.dispatch('color', 'setColor', { color: input.color })
+        },
+      })
+    })
+    this.sharedFeatures = [...modes]
+    void this.refreshFeatures()
+  }
+
+  /** Keep each member's latest attempt. A later command replaces that member only. */
+  recordCommands(incoming: readonly GroupCommandResult[]): void {
+    const prior = priorResults(this.runtimeState.getCapState(groupCommandsCapability.name))
+    const byDevice = new Map<number, GroupCommandResult>(prior.map((row) => [row.deviceId, row]))
+    for (const row of incoming) byDevice.set(row.deviceId, row)
+    try {
+      this.runtimeState.setCapState(groupCommandsCapability.name, {
+        results: [...byDevice.values()],
+      })
+    } catch (err: unknown) {
+      this.ctx.logger.error('actuator group could not store command results', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
+  private ensureExtra(capName: string, want: boolean, register: () => void): void {
+    const has = this.extraCaps.has(capName)
+    if (want && !has) {
+      register()
+      this.extraCaps = new Set([...this.extraCaps, capName])
+      return
+    }
+    if (!want && has) {
+      this.ctx.unregisterNativeCap?.(capName)
+      this.extraCaps = new Set([...this.extraCaps].filter((name) => name !== capName))
+    }
+  }
+
+  private async dispatch(
+    cap: string,
+    method: string,
+    args: ActuatorDispatchInput['args'],
+  ): Promise<void> {
+    const run = actuatorDispatcher()
+    if (run === null) {
+      this.ctx.logger.warn('actuator group command was not sent — fan-out is not attached', {
+        tags: { deviceId: this.id },
+        meta: { cap, method },
+      })
+      throw new Error('actuator fan-out is not attached')
+    }
+    await run({ groupDeviceId: this.id, cap, method, args })
   }
 
   seed(capName: string, slice: SlicePatch): WriteOutcome {

@@ -1,4 +1,20 @@
 export {
+  FAN_OUT_CONCURRENCY,
+  LIGHT_SHARED_CAPS,
+  type FanOutCall,
+  type FanOutFailed,
+  type FanOutMember,
+  type FanOutMemberResult,
+  type FanOutOk,
+  type LightSharedCap,
+  activeForReducer,
+  fanOutTargets,
+  reducerForActive,
+  runFanOut,
+  sharedColorModes,
+  sharedLightCaps,
+} from './actuator.js'
+export {
   type AggregateCounts,
   type AggregateEmpty,
   type AggregateOutcome,
@@ -36,7 +52,9 @@ export {
   sourcePickForTemplate,
 } from './source-pick.js'
 export {
+  ACTIVE_CRITERIA,
   AGGREGATE_REDUCERS,
+  ActiveCriterionSchema,
   AggregateReducerSchema,
   BINARY_AGGREGATES,
   GROUP_TEMPLATE_IDS,
@@ -46,6 +64,7 @@ export {
   HelperSpecSchema,
   MAX_HELPER_MEMBERS,
   NUMERIC_AGGREGATES,
+  type ActiveCriterion,
   type AggregateReducer,
   type BinaryAggregate,
   type GroupHelperSpec,

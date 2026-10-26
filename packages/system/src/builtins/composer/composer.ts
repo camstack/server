@@ -54,6 +54,7 @@ import {
   type ComposerApplyResult,
   type ComposerBlock,
   type ComposerBlockVerdict,
+  type FanOutCall,
   type CompositionBlockState,
   type CompositionFieldState,
   composedDeviceStableId,
@@ -66,6 +67,11 @@ import {
 } from '@camstack/types'
 import type { DeviceStateChangedData } from '../shared/device-state-changed.js'
 import { ClaimGate, type ClaimKey } from './claim-gate.js'
+import {
+  ActuatorGroups,
+  type ActuatorMemberLookup,
+  isActuatorGroupDevice,
+} from './actuator-groups.js'
 import type { ComposedDeviceHandle } from './composed-device.js'
 import {
   type ComposerDeclare,
@@ -172,6 +178,13 @@ export interface ComposerDeps {
   readonly grafts?: ComposerGraftPorts
   readonly now: () => number
   readonly newTimer: () => DeadlineTimer
+  /**
+   * Member capabilities and the command that reaches one member. Absent in
+   * tests that predate actuator groups: those compositions still aggregate,
+   * and a command names that fan-out was not attached.
+   */
+  readonly readActuatorMember?: (deviceId: number) => Promise<ActuatorMemberLookup>
+  readonly invokeActuator?: (call: FanOutCall) => Promise<void>
 }
 
 interface RuntimeRebuild {
@@ -191,6 +204,7 @@ export class Composer {
   private readonly claimGate: ClaimGate
   private readonly targets: TargetDescriptions
   private readonly grafts: ComposerGrafts
+  private readonly actuators: ActuatorGroups | null
   /** The rows the composer owns, read ONCE before its first withdrawal decision. */
   private readonly rowSeed: ConfirmedSeed<PersistedComposedRow>
   /**
@@ -224,6 +238,7 @@ export class Composer {
       this.grafts.describing(deviceId)
       return deps.describeTarget(deviceId)
     })
+    this.actuators = this.attachActuators(deps)
     this.waits = new ApplyWaits(deps.logger)
     this.rowSeed = composedRowSeed({
       logger: deps.logger,
@@ -286,10 +301,34 @@ export class Composer {
     this.dispatch(
       await this.deps.tracker.onBindingsChanged(data.deviceId, data.capName, data.reason),
     )
+    await this.chained(() => this.actuators?.onMemberBindings(data.deviceId))
   }
 
   shutdown(): void {
     for (const entry of this.live.values()) entry.runtime?.stop()
+    this.actuators?.shutdown()
+  }
+
+  private attachActuators(deps: ComposerDeps): ActuatorGroups | null {
+    const read = deps.readActuatorMember
+    const invoke = deps.invokeActuator
+    if (read === undefined || invoke === undefined) return null
+    return new ActuatorGroups({
+      logger: deps.logger.child('actuators'),
+      now: deps.now,
+      resolve: (ref) => {
+        const found = deps.tracker.resolution(ref)
+        return found.kind === 'found'
+          ? { kind: 'found', deviceId: found.deviceId }
+          : { kind: 'other' }
+      },
+      readMember: read,
+      deviceOf: (blockId) => {
+        const device = this.composed.get(composedDeviceStableId(blockId))
+        return device !== null && isActuatorGroupDevice(device) ? device : null
+      },
+      invoke,
+    })
   }
 
   /** Run `work` after every apply already queued, whether that settled or failed. */
@@ -342,6 +381,9 @@ export class Composer {
     await Promise.all(rebuilt.stopped.map((runtime) => runtime.quiesce()))
     const unreleasedClaims = await this.releaseConfirmed(releasing)
     await this.syncSources(rebuilt)
+    await this.actuators?.sync(
+      input.blocks.map((block) => ({ id: block.id, helper: block.composition.helper })),
+    )
     await this.reconcileClaims()
     return {
       blocks: planned.map((p) => this.verdict(p.block.id)),

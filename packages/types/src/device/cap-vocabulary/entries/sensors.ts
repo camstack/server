@@ -17,6 +17,7 @@ type SensorCap =
   | 'enum-sensor'
   | 'flood'
   | 'gas'
+  | 'group-commands'
   | 'group-status'
   | 'humidity-sensor'
   | 'motion'
@@ -349,6 +350,11 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
         icon: 'flame',
       },
     ],
+  },
+
+  'group-commands': {
+    scope: 'device',
+    noun: t('Group command', 'Comando di gruppo'),
   },
 
   'group-status': {

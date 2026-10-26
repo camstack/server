@@ -2011,6 +2011,7 @@ export {
 export {
   type ColorHsvTriplet,
   type ColorInput,
+  parseColorInput,
   type ColorRgbTriplet,
   type ColorStatus,
   ColorStatusSchema,
@@ -2203,6 +2204,14 @@ export {
   type IFloodProvider,
 } from './flood.cap.js'
 export { type GasStatus, GasStatusSchema, gasCapability, type IGasProvider } from './gas.cap.js'
+export {
+  type GroupCommandResult,
+  GroupCommandResultSchema,
+  type GroupCommands,
+  GroupCommandsSchema,
+  groupCommandsCapability,
+  type IGroupCommandsProvider,
+} from './group-commands.cap.js'
 export {
   type GroupStatus,
   GroupStatusSchema,
@@ -3166,6 +3175,7 @@ import type { featureProbeCapability } from './feature-probe.cap.js'
 import type { filesystemBrowseCapability } from './filesystem-browse.cap.js'
 import type { floodCapability } from './flood.cap.js'
 import type { gasCapability } from './gas.cap.js'
+import type { groupCommandsCapability } from './group-commands.cap.js'
 import type { groupStatusCapability } from './group-status.cap.js'
 import type { heatingValveCapability } from './heating-valve.cap.js'
 import type { humidifierCapability } from './humidifier.cap.js'
@@ -3390,6 +3400,7 @@ type AnyCapability =
   | typeof smokeCapability
   | typeof carbonMonoxideCapability
   | typeof gasCapability
+  | typeof groupCommandsCapability
   | typeof groupStatusCapability
   | typeof tamperCapability
   | typeof vibrationCapability
