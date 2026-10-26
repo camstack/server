@@ -111,8 +111,6 @@ function PulseForm(props: EventPulseDialogProps): ReactNode {
           debounceSec={debounceSec}
           onDebounceSecChange={setDebounceSec}
           sourceModes={[]}
-          pendingMode="in-addition"
-          onPendingModeChange={() => undefined}
           timeoutSec={0}
           onTimeoutSecChange={() => undefined}
           cooldownSec={null}

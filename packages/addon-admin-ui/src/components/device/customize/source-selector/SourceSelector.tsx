@@ -10,7 +10,6 @@ import {
   type DeviceListState,
   ErrorBox,
   Input,
-  type PickerItem,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
@@ -47,8 +46,9 @@ import {
   removeEventPick,
   updateEventPickMode,
 } from './source-selector-event-add'
-import { EventEdgeField, NumberSecondsField, SpanPendingMode } from './source-selector-event-params'
+import { EventEdgeField, NumberSecondsField } from './source-selector-event-params'
 import { wireableFieldsForDestination } from './source-selector-fields'
+import { compatiblePickerItems } from './source-selector-parent-detail'
 
 export type { EventPickedRow }
 
@@ -112,8 +112,6 @@ export interface SourceSelectorEventProps {
   readonly debounceSec: number
   readonly onDebounceSecChange: (seconds: number) => void
   readonly sourceModes: readonly CameraSensorMode[]
-  readonly pendingMode: CameraSensorMode
-  readonly onPendingModeChange: (mode: CameraSensorMode) => void
   readonly timeoutSec: number
   readonly onTimeoutSecChange: (seconds: number) => void
   readonly cooldownSec: number | null
@@ -148,16 +146,6 @@ function toCandidates(
     addonId: row.addonId,
     stableId: row.stableId,
     caps: capIndex.get(row.id) ?? [],
-  }))
-}
-
-function pickerItems(devices: readonly SourceCandidateDevice[]): readonly PickerItem<number>[] {
-  return devices.map((row) => ({
-    id: row.id,
-    name: row.name,
-    type: row.type,
-    parentDeviceId: row.parentDeviceId,
-    ...(row.location !== null ? { location: row.location } : {}),
   }))
 }
 
@@ -249,10 +237,14 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
         cap,
         path,
         props.shape,
-        props.pendingMode,
+        props.sourceModes[0] ?? 'in-addition',
       ),
     )
   }
+  const compatibleDeviceItems = useMemo(
+    () => compatiblePickerItems(compatible, fleet),
+    [compatible, fleet],
+  )
   const deviceColumn = (
     <div className="flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]">
       <h3 className="text-[11px] font-medium text-foreground-muted">
@@ -265,7 +257,7 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
         />
       ) : (
         <DevicePicker
-          devices={pickerItems(compatible)}
+          devices={compatibleDeviceItems}
           listState={listState}
           value={props.device === null ? [] : [props.device.id]}
           selection="single"
@@ -355,11 +347,6 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
         )}
         {props.shape === 'span' && (
           <>
-            <SpanPendingMode
-              mode={props.pendingMode}
-              modes={props.sourceModes}
-              onChange={props.onPendingModeChange}
-            />
             <NumberSecondsField
               label={t('customize.event.timeout')}
               value={props.timeoutSec}

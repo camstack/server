@@ -42,6 +42,15 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
   504: appliance(504, 'Mopping robot', 'vacuum', 'provider-dreame'),
   510: appliance(510, 'Filter life', 'sensor', 'provider-homeassistant'),
   511: appliance(511, 'Hall sensor', 'sensor', 'provider-homeassistant'),
+  513: {
+    ...appliance(513, 'Zigbee hub', 'container', 'provider-homeassistant'),
+    location: 'Kitchen',
+  },
+  512: {
+    ...appliance(512, 'Cupboard sensor', 'sensor', 'provider-homeassistant'),
+    location: 'Kitchen',
+    parentDeviceId: 513,
+  },
 }
 
 const entry = (capName: string, nativeAddonId: string) => ({
@@ -81,6 +90,8 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
     entry('numeric-sensor', 'provider-homeassistant'),
     entry('battery', 'provider-homeassistant'),
   ],
+  512: [entry('battery', 'provider-homeassistant')],
+  513: [],
 }
 
 const DISHWASHER = {
@@ -266,6 +277,7 @@ const SLICES: Readonly<Record<string, unknown>> = {
     phase: null,
     lastFetchedAt: null,
   },
+  '512/battery': { percentage: 82, lastFetchedAt: NOW },
 }
 
 const WIREABLE: Readonly<Record<number, unknown>> = {
@@ -293,6 +305,9 @@ const WIREABLE: Readonly<Record<number, unknown>> = {
   },
   510: {
     caps: [{ cap: 'numeric-sensor', fields: [{ path: 'value', kind: 'number' }] }],
+  },
+  512: {
+    caps: [{ cap: 'battery', fields: [{ path: 'percentage', kind: 'number' }] }],
   },
 }
 
@@ -403,8 +418,20 @@ export default defineFixtures({
       input.stableId === 'appliance-501'
         ? { state: 'loaded', view: FILTER_VIEW }
         : { state: 'loaded', view: null },
-    'deviceState.getSnapshot': (input: { deviceId: number }) =>
-      input.deviceId === 510 ? { 'numeric-sensor': { value: 40 } } : null,
+    'deviceState.getSnapshot': (input: { deviceId: number }) => {
+      if (input.deviceId === 510) return { 'numeric-sensor': { value: 40 } }
+      if (input.deviceId === 512) return { battery: { percentage: 82 } }
+      return null
+    },
+    'deviceManager.listDeviceIdsByCaps': (input: { capNames: readonly string[] }) => {
+      const cap = input.capNames[0]
+      if (cap === undefined) return []
+      const ids: number[] = []
+      for (const [deviceId, entries] of Object.entries(BINDINGS)) {
+        if (entries.some((row) => row.capName === cap)) ids.push(Number(deviceId))
+      }
+      return ids
+    },
     'coreBlocks.listComposableCaps': (i: { deviceType: string }) => ({
       caps:
         i.deviceType === 'dishwasher'

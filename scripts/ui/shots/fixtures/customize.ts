@@ -29,7 +29,11 @@ const device = (id: number, name: string, location: string, type: string, isCame
 const FLEET = [
   device(101, 'Driveway', 'Front of house', 'camera', true),
   device(102, 'Garden', 'Front of house', 'camera', true),
-  device(301, 'Porch motion sensor', 'Front of house', 'sensor'),
+  device(399, 'Porch hub', 'Front of house', 'container'),
+  {
+    ...device(301, 'Porch motion sensor', 'Front of house', 'sensor'),
+    parentDeviceId: 399,
+  },
   device(307, 'Front door button', 'Front of house', 'switch'),
   device(302, 'Gate contact', 'Front of house', 'sensor'),
   device(303, 'Porch light', 'Front of house', 'light'),
@@ -326,7 +330,13 @@ export default defineFixtures({
         ? FRONT_DOOR_CUSTOMIZATION
         : { state: 'loaded', view: null },
     'coreBlocks.listComposableCaps': {
-      caps: [{ cap: 'motion' }, { cap: 'battery' }, { cap: 'doorbell' }, { cap: 'running-state' }],
+      caps: [
+        { cap: 'motion' },
+        { cap: 'battery' },
+        { cap: 'doorbell' },
+        { cap: 'running-state' },
+        { cap: 'consumables' },
+      ],
     },
     'deviceManager.getBindings': (input: { deviceId?: number }) => {
       if (input.deviceId === 101) {
@@ -377,6 +387,11 @@ export default defineFixtures({
           ],
         }
       }
+      if (i.deviceId === 801) {
+        return {
+          caps: [{ cap: 'battery', fields: [{ path: 'percentage', kind: 'number' }] }],
+        }
+      }
       return { caps: [] }
     },
     'deviceState.getSnapshot': (i: { deviceId: number }) => {
@@ -387,6 +402,7 @@ export default defineFixtures({
         }
       }
       if (i.deviceId === 306) return { switch: { on: true, lastChangedAt: 1_700_000_000_000 } }
+      if (i.deviceId === 801) return { battery: { percentage: 82 } }
       return {}
     },
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) => {
@@ -409,6 +425,8 @@ export default defineFixtures({
       if (cap === 'motion') return [301, 302]
       if (cap === 'binary') return [301, 302]
       if (cap === 'switch') return [306]
+      if (cap === 'battery') return [801]
+      if (cap === 'consumables') return [801]
       return []
     },
     'addonSettings.getDeviceSettings': { sections: [] },

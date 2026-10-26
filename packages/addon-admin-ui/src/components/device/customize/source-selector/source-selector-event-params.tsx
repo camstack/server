@@ -1,8 +1,7 @@
-import type { CameraSensorMode, CustomizeEventEdge } from '@camstack/types'
+import type { CustomizeEventEdge } from '@camstack/types'
 import { Input, Select } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ModeLine } from '../event/event-mode-line'
 
 export interface EventEdgeFieldProps {
   readonly edges: readonly CustomizeEventEdge[]
@@ -53,15 +52,4 @@ export function NumberSecondsField({ label, value, onChange }: NumberSecondsFiel
       />
     </label>
   )
-}
-
-export interface SpanPendingModeProps {
-  readonly mode: CameraSensorMode
-  readonly modes: readonly CameraSensorMode[]
-  readonly onChange: (mode: CameraSensorMode) => void
-}
-
-export function SpanPendingMode({ mode, modes, onChange }: SpanPendingModeProps): ReactNode {
-  const { t } = useTranslation()
-  return <ModeLine mode={mode} modes={modes} name={t('customize.motion.add')} onChange={onChange} />
 }

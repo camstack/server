@@ -69,9 +69,6 @@ function SpanForm(props: EventSpanDialogProps): ReactNode {
     spanPickedFromSources(props.sources),
   )
   const [device, setDevice] = useState<PickerDevice | null>(null)
-  const [pendingMode, setPendingMode] = useState<CameraSensorMode>(
-    props.sourceModes[0] ?? 'in-addition',
-  )
   const [timeoutSec, setTimeoutSec] = useState(props.timeoutMs / 1000)
   const [cooldownSec, setCooldownSec] = useState((props.cooldownMs ?? 0) / 1000)
   const sources = spanSourcesFromPicked(picked)
@@ -112,8 +109,6 @@ function SpanForm(props: EventSpanDialogProps): ReactNode {
           debounceSec={0}
           onDebounceSecChange={() => undefined}
           sourceModes={props.sourceModes}
-          pendingMode={pendingMode}
-          onPendingModeChange={setPendingMode}
           timeoutSec={timeoutSec}
           onTimeoutSecChange={setTimeoutSec}
           cooldownSec={props.cooldownMs === null ? null : cooldownSec}
