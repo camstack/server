@@ -59,7 +59,7 @@ function cloud(calls: Call[], gateways: readonly string[] = ['g1']): FetchFn {
       return {
         ok: true,
         status: 200,
-        json: async () => gateways.map((deviceId) => ({ deviceId })),
+        json: async () => gateways.map((deviceId) => ({ deviceId, deviceType: 'k40' })),
       }
     }
     return {

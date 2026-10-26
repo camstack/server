@@ -39,13 +39,18 @@ The authorize query is the HomeCom Easy public client: `client_id`
 `pointt.gateway.list`, `pointt.gateway.users`, `pointt.gateway.resource.dashapp`,
 `pointt.castt.flow.token-exchange`, `bacon`, `hcc.tariff.read`. On 2026-10-26 a request with that
 scope was answered by SingleKey with the login page. The code exchange still needs the operator's
-account. The REST paths (`/v2/gateways`, `/v2/gateways/<id>/system`) come from the same public
-client; the constants live in `homecom-oauth.ts` and the paths in `homecom-api-client.ts`.
+account. Reads and writes go to the PointT resource API
+(`GET`/`PUT /pointt-api/api/v1/gateways/<id>/resource/…`), the same resources the MIT-licensed
+`homecom_alt` library uses today. A write body is `{ "value": … }`. The path names live in
+`homecom-pointt.ts`; this addon does not copy that library.
 
 ## Rotated tokens are stored
 
 SingleKey rotates the refresh token on every use. The client reports each rotation
-(`onTokensRotated`) **before** the new access token is used, and the addon writes the pair through
+(`onTokensRotated`) **before** the new access token is used. A data call that is answered `401`
+refreshes once (the SingleKey `refresh_token` grant) and retries that call. A second `401`, or a
+refresh the token endpoint refuses, is `HomeComAuthError` and the manager asks the operator to sign
+in again. The addon writes the pair through
 `integrations.setSettings` (one write, serialised per integration, `token` + `refresh` named as secret
 keys). If the stored secrets cannot be read back (the keychain is locked) nothing is written — the
 hub refuses an overwrite of a secret the addon could not read — and a line says so, without values.
@@ -57,7 +62,12 @@ settings echo of that write is not seen as a changed connection.
 
 ## Gateways
 
-There is no built-in gateway id. At start the manager lists the account's gateways (`/v2/gateways`):
+There is no built-in gateway id. At start the manager lists the account's gateways
+(`GET /pointt-api/api/v1/gateways/`). Each row's `deviceType` selects the resource tree:
+`k40` and `k30` (boiler / heat pump), `icom` (heat pump) and `rrc2` (thermostat) read
+`/heatingCircuits` and `/dhwCircuits`; `wddw2` is domestic hot water only; `rac` is one air
+conditioner under `/airConditioning`. Any other type, including `commodule`, is refused by name
+(`HomeCom does not serve device type "…"`).
 
 - a stored `gatewayId` is used when the account still has it, and refused with a named error when it
   does not — silently moving to another gateway would control a different house;
@@ -67,8 +77,15 @@ There is no built-in gateway id. At start the manager lists the account's gatewa
 One integration controls one gateway. For a second heat pump add a second HomeCom account entry
 with the other gateway's id.
 
+The connection test does not refresh tokens (a refresh would rotate the stored one with nowhere to
+write it). It lists the gateways and reads `/resource/gateway/DateTime`, or
+`/resource/gateway/versionFirmware` when the clock is absent, and names which one answered.
+
 ## What is supported
 
-Heating circuits (climate: setpoint, operation mode) and domestic hot water (water heater: target,
-operation mode), adopted from the cloud snapshot. Brand (`bosch` / `buderus`) and region are kept;
+Heating circuits publish `climate-control` (setpoint, operation mode, room temperature). Domestic
+hot water publishes `water-heater` (target, operation mode, current temperature). An air conditioner
+also publishes fan speed and louver swing on that same climate cap. A resource the device does not
+have is logged and left empty; heat-source, ventilation, pool, energy and zone readings are not
+published on a cap, and that drop is logged once. Brand (`bosch` / `buderus`) and region are kept;
 both use the same PointT origin.

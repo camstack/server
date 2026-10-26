@@ -18,7 +18,7 @@ function cloud(gateways: readonly unknown[], requested: string[]): FetchFn {
     return {
       ok: true,
       status: 200,
-      json: async () => ({ heatingCircuits: [], domesticHotWater: null }),
+      json: async () => ({ references: [] }),
     }
   }
 }
@@ -63,17 +63,24 @@ describe('HomeCom gateway discovery', () => {
     const chosen: string[] = []
     const manager = mgr(
       conn(),
-      cloud([{ deviceId: '101' }, { deviceId: '102' }], requested),
+      cloud(
+        [
+          { deviceId: '101', deviceType: 'k40' },
+          { deviceId: '102', deviceType: 'k40' },
+        ],
+        requested,
+      ),
       chosen,
     )
     await manager.start()
     expect(manager.getInfo().info['gateways']).toEqual([
-      { gatewayId: '101', name: '101' },
-      { gatewayId: '102', name: '102' },
+      { gatewayId: '101', name: '101', model: 'k40', deviceType: 'k40' },
+      { gatewayId: '102', name: '102', model: 'k40', deviceType: 'k40' },
     ])
     expect(manager.getInfo().info['gatewayId']).toBe('101')
     expect(chosen).toEqual(['101'])
-    expect(requested.some((u) => u.includes('/v2/gateways/101/system'))).toBe(true)
+    expect(requested.some((u) => u.includes('/resource/heatingCircuits'))).toBe(true)
+    expect(requested.some((u) => u.includes('/v2/gateways/'))).toBe(false)
     expect(requested.some((u) => u.includes('gateway-k40'))).toBe(false)
     await manager.stop()
   })
@@ -83,13 +90,19 @@ describe('HomeCom gateway discovery', () => {
     const chosen: string[] = []
     const manager = mgr(
       conn({ gatewayId: '102' }),
-      cloud([{ deviceId: '101' }, { deviceId: '102' }], requested),
+      cloud(
+        [
+          { deviceId: '101', deviceType: 'k40' },
+          { deviceId: '102', deviceType: 'k40' },
+        ],
+        requested,
+      ),
       chosen,
     )
     await manager.start()
     expect(manager.getInfo().info['gatewayId']).toBe('102')
     expect(chosen).toEqual([])
-    expect(requested.some((u) => u.includes('/v2/gateways/102/system'))).toBe(true)
+    expect(requested.some((u) => u.includes('/gateways/102/resource/'))).toBe(true)
     await manager.stop()
   })
 

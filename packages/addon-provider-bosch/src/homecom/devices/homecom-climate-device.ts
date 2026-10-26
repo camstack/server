@@ -87,8 +87,9 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
         await this.requireClient().setCircuitMode(this.#circuitId, apiMode)
         this.refreshFromSnapshot()
       },
-      setFanMode: async () => {
-        throw new Error('HomeCom climate: fan mode not supported')
+      setFanMode: async ({ fanMode }) => {
+        await this.requireClient().setFanMode(this.#circuitId, fanMode)
+        this.refreshFromSnapshot()
       },
       setPreset: async () => {
         throw new Error('HomeCom climate: presets not supported')
@@ -103,11 +104,13 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
       setTargetHumidity: async () => {
         throw new Error('HomeCom climate: humidity not supported')
       },
-      setSwingVertical: async () => {
-        throw new Error('HomeCom climate: swing not supported')
+      setSwingVertical: async ({ on }) => {
+        await this.requireClient().setSwingVertical(this.#circuitId, on)
+        this.refreshFromSnapshot()
       },
-      setSwingHorizontal: async () => {
-        throw new Error('HomeCom climate: swing not supported')
+      setSwingHorizontal: async ({ on }) => {
+        await this.requireClient().setSwingHorizontal(this.#circuitId, on)
+        this.refreshFromSnapshot()
       },
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)

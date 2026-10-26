@@ -88,10 +88,14 @@ describe('HomeCom connection-test', () => {
         refreshTokens: async () => ({ token: 't', refresh: 'r' }),
         listGateways: async () => [],
         fetchSystem: async () => emptySnapshot,
+        probeGateway: async () => ({ resource: '/gateway/DateTime', value: '2024-01-01T00:00:00' }),
         setCircuitSetpoint: async () => undefined,
         setCircuitMode: async () => undefined,
         setDhwTarget: async () => undefined,
         setDhwMode: async () => undefined,
+        setFanMode: async () => undefined,
+        setSwingVertical: async () => undefined,
+        setSwingHorizontal: async () => undefined,
       }),
     })
     const none = await empty.testSettings({
@@ -115,10 +119,14 @@ describe('HomeCom connection-test', () => {
           throw new Error('The gateway list failed (HTTP 404).')
         },
         fetchSystem: async () => emptySnapshot,
+        probeGateway: async () => ({ resource: '/gateway/DateTime', value: '2024-01-01T00:00:00' }),
         setCircuitSetpoint: async () => undefined,
         setCircuitMode: async () => undefined,
         setDhwTarget: async () => undefined,
         setDhwMode: async () => undefined,
+        setFanMode: async () => undefined,
+        setSwingVertical: async () => undefined,
+        setSwingHorizontal: async () => undefined,
       }),
     })
     const listed = await failed.testSettings({

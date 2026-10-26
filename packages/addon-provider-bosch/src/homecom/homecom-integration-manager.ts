@@ -92,6 +92,8 @@ export class HomeComIntegrationManager {
         createHomeComApiClient(config, gatewayId, {
           fetchFn,
           onTokensRotated,
+          logger: this.#logger,
+          deviceType: this.#gateways.find((gateway) => gateway.gatewayId === gatewayId)?.deviceType,
         }))
     this.#pollIntervalMs = options.pollIntervalMs ?? 60_000
   }
@@ -126,7 +128,7 @@ export class HomeComIntegrationManager {
       this.#gatewayId = gatewayId
       client = this.#makeClient(this.#connection, gatewayId)
       this.#client = client
-      const snapshot = await this.fetchWithTokenRefresh(client)
+      const snapshot = await client.fetchSystem()
       const surface: HomeComConnectionSurface = {
         gatewayId: this.#gatewayId ?? '',
         client,
@@ -174,27 +176,13 @@ export class HomeComIntegrationManager {
     const client = this.#client
     if (!client) return
     try {
-      const snapshot = await this.fetchWithTokenRefresh(client)
+      const snapshot = await client.fetchSystem()
       this.#surfaceSink.updateSnapshot(this.#id, snapshot)
       this.#lastCheckedAt = Date.now()
     } catch (err: unknown) {
       this.#logger.warn('HomeCom poll failed', {
         meta: { integrationId: this.#id, error: errMsg(err) },
       })
-    }
-  }
-
-  private async fetchWithTokenRefresh(client: HomeComApiClient) {
-    return this.withTokenRefresh(client, () => client.fetchSystem())
-  }
-
-  private async withTokenRefresh<T>(client: HomeComApiClient, call: () => Promise<T>): Promise<T> {
-    try {
-      return await call()
-    } catch (err: unknown) {
-      if (!(err instanceof HomeComAuthError)) throw err
-      await client.refreshTokens()
-      return call()
     }
   }
 
@@ -205,7 +193,7 @@ export class HomeComIntegrationManager {
    */
   private async resolveGatewayId(): Promise<string> {
     const lister = this.#makeClient(this.#connection, '')
-    this.#gateways = await this.withTokenRefresh(lister, () => lister.listGateways())
+    this.#gateways = await lister.listGateways()
     const stored = this.#connection.gatewayId
     if (stored !== undefined) {
       if (!this.#gateways.some((g) => g.gatewayId === stored)) {

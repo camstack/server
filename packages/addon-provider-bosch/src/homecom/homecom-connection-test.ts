@@ -1,5 +1,6 @@
 import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
 import { homeComConfigSchema, type HomeComConfig } from './config.js'
+import { unsupportedDeviceTypeMessage } from './homecom-device-type.js'
 import {
   createHomeComApiClient,
   HomeComAuthError,
@@ -12,7 +13,7 @@ export interface HomeComConnectionTestDeps {
   readonly makeClient?: (config: HomeComConfig, gatewayId: string) => HomeComApiClient
 }
 
-const TEST_LABEL = 'Lists the account gateways and reads the heat-pump system snapshot'
+const TEST_LABEL = 'Lists the account gateways and reads the gateway clock'
 const NO_GATEWAY = 'This Bosch account has no HomeCom gateway.'
 
 function signInIncomplete(paths: readonly string[]): string {
@@ -25,6 +26,7 @@ function signInIncomplete(paths: readonly string[]): string {
 function listFailureMessage(err: unknown): string | null {
   if (err instanceof HomeComGatewayListError) return err.message
   if (err instanceof Error && err.message.startsWith('The gateway list failed')) return err.message
+  if (err instanceof Error && err.message.includes('did not answer')) return err.message
   return null
 }
 
@@ -33,7 +35,9 @@ export function buildHomeComConnectionTestProvider(
 ): IConnectionTestProvider {
   const { logger } = deps
   const makeClient =
-    deps.makeClient ?? ((config, gatewayId) => createHomeComApiClient(config, gatewayId))
+    deps.makeClient ??
+    ((config, gatewayId) =>
+      createHomeComApiClient(config, gatewayId, { refreshOnUnauthorized: false }))
 
   return {
     describeTest: async () => ({ label: TEST_LABEL }),
@@ -67,8 +71,15 @@ export function buildHomeComConnectionTestProvider(
             error: `Gateway ${gatewayId} is not on this account.`,
           }
         }
-        await makeClient(parsed.data, gatewayId).fetchSystem()
-        return { outcome: 'validated', latencyMs: Date.now() - startedAt }
+        const listed = gateways.find((gateway) => gateway.gatewayId === gatewayId)
+        const probe = await makeClient(parsed.data, gatewayId).probeGateway()
+        const refusal = unsupportedDeviceTypeMessage(listed?.deviceType)
+        if (refusal !== null) return { outcome: 'rejected', error: refusal }
+        return {
+          outcome: 'validated',
+          latencyMs: Date.now() - startedAt,
+          detail: `Gateway ${gatewayId} (${listed?.deviceType}) answered ${probe.resource}.`,
+        }
       } catch (err: unknown) {
         const listed = listFailureMessage(err)
         if (listed !== null) {
