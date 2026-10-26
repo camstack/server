@@ -1259,6 +1259,9 @@ export const useFloodGetStatus: typeof trpc.flood.getStatus.useQuery = trpc.floo
 /** Generated alias around `trpc.gas.getStatus.useQuery`. */
 export const useGasGetStatus: typeof trpc.gas.getStatus.useQuery = trpc.gas.getStatus.useQuery
 
+/** Generated alias around `trpc.groupStatus.getStatus.useQuery`. */
+export const useGroupStatusGetStatus: typeof trpc.groupStatus.getStatus.useQuery = trpc.groupStatus.getStatus.useQuery
+
 /** Generated alias around `trpc.heatingValve.getStatus.useQuery`. */
 export const useHeatingValveGetStatus: typeof trpc.heatingValve.getStatus.useQuery = trpc.heatingValve.getStatus.useQuery
 

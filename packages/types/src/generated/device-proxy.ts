@@ -46,6 +46,7 @@ import type { fanControlCapability } from '../capabilities/fan-control.cap.js'
 import type { featureProbeCapability } from '../capabilities/feature-probe.cap.js'
 import type { floodCapability } from '../capabilities/flood.cap.js'
 import type { gasCapability } from '../capabilities/gas.cap.js'
+import type { groupStatusCapability } from '../capabilities/group-status.cap.js'
 import type { heatingValveCapability } from '../capabilities/heating-valve.cap.js'
 import type { humidifierCapability } from '../capabilities/humidifier.cap.js'
 import type { humiditySensorCapability } from '../capabilities/humidity-sensor.cap.js'
@@ -152,6 +153,7 @@ export interface DeviceProxyState {
   readonly featureProbe: SliceHandle<InferRuntimeState<typeof featureProbeCapability>>
   readonly flood: SliceHandle<InferRuntimeState<typeof floodCapability>>
   readonly gas: SliceHandle<InferRuntimeState<typeof gasCapability>>
+  readonly groupStatus: SliceHandle<InferRuntimeState<typeof groupStatusCapability>>
   readonly heatingValve: SliceHandle<InferRuntimeState<typeof heatingValveCapability>>
   readonly humidifier: SliceHandle<InferRuntimeState<typeof humidifierCapability>>
   readonly humiditySensor: SliceHandle<InferRuntimeState<typeof humiditySensorCapability>>
@@ -254,6 +256,7 @@ export interface DeviceProxy {
   readonly featureProbe?: InferDeviceProxyCap<typeof featureProbeCapability>
   readonly flood?: InferDeviceProxyCap<typeof floodCapability>
   readonly gas?: InferDeviceProxyCap<typeof gasCapability>
+  readonly groupStatus?: InferDeviceProxyCap<typeof groupStatusCapability>
   readonly heatingValve?: InferDeviceProxyCap<typeof heatingValveCapability>
   readonly humidifier?: InferDeviceProxyCap<typeof humidifierCapability>
   readonly humiditySensor?: InferDeviceProxyCap<typeof humiditySensorCapability>
@@ -628,6 +631,10 @@ export function createDeviceProxy(
 
   const gasInterface = {
     getStatus: (input?: unknown) => dispatch('gas', 'gas', 'getStatus', 'query', input),
+  }
+
+  const groupStatusInterface = {
+    getStatus: (input?: unknown) => dispatch('group-status', 'groupStatus', 'getStatus', 'query', input),
   }
 
   const heatingValveInterface = {
@@ -1299,6 +1306,7 @@ export function createDeviceProxy(
       featureProbe: createSliceHandle<InferRuntimeState<typeof featureProbeCapability>>(stateSource, binding.deviceId, 'feature-probe'),
       flood: createSliceHandle<InferRuntimeState<typeof floodCapability>>(stateSource, binding.deviceId, 'flood'),
       gas: createSliceHandle<InferRuntimeState<typeof gasCapability>>(stateSource, binding.deviceId, 'gas'),
+      groupStatus: createSliceHandle<InferRuntimeState<typeof groupStatusCapability>>(stateSource, binding.deviceId, 'group-status'),
       heatingValve: createSliceHandle<InferRuntimeState<typeof heatingValveCapability>>(stateSource, binding.deviceId, 'heating-valve'),
       humidifier: createSliceHandle<InferRuntimeState<typeof humidifierCapability>>(stateSource, binding.deviceId, 'humidifier'),
       humiditySensor: createSliceHandle<InferRuntimeState<typeof humiditySensorCapability>>(stateSource, binding.deviceId, 'humidity-sensor'),
@@ -1382,6 +1390,7 @@ export function createDeviceProxy(
     ...(bound('feature-probe') ? { featureProbe: featureProbeInterface } : {}),
     ...(bound('flood') ? { flood: floodInterface } : {}),
     ...(bound('gas') ? { gas: gasInterface } : {}),
+    ...(bound('group-status') ? { groupStatus: groupStatusInterface } : {}),
     ...(bound('heating-valve') ? { heatingValve: heatingValveInterface } : {}),
     ...(bound('humidifier') ? { humidifier: humidifierInterface } : {}),
     ...(bound('humidity-sensor') ? { humiditySensor: humiditySensorInterface } : {}),

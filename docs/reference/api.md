@@ -2640,7 +2640,7 @@
 
 ### `group-status` → `groupStatus.*`
 
-- **Source:** `packages/types/src/capabilities/group-status.cap.ts:58`
+- **Source:** `packages/types/src/capabilities/group-status.cap.ts:38`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IGroupStatusProvider`

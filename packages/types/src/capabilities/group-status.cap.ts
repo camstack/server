@@ -35,27 +35,7 @@ export const GroupStatusSchema: z.ZodObject<{
 })
 export type GroupStatus = z.infer<typeof GroupStatusSchema>
 
-function asCapability<T extends CapabilityDefinition>(value: T): T {
-  return value
-}
-
-interface GroupStatusCapabilityDef {
-  readonly name: 'group-status'
-  readonly scope: 'device'
-  readonly deviceNative: true
-  readonly mode: 'singleton'
-  readonly deviceTypes: readonly [DeviceType.Sensor]
-  readonly methods: Record<string, never>
-  readonly status: {
-    readonly schema: typeof GroupStatusSchema
-    readonly kind: 'push'
-  }
-  readonly runtimeState: typeof GroupStatusSchema
-  readonly durability: 'session'
-  readonly history: 'none'
-}
-
-export const groupStatusCapability: GroupStatusCapabilityDef = asCapability({
+export const groupStatusCapability = {
   name: 'group-status',
   scope: 'device',
   deviceNative: true,
@@ -76,6 +56,6 @@ export const groupStatusCapability: GroupStatusCapabilityDef = asCapability({
    */
   durability: 'session',
   history: 'none',
-})
+} as const satisfies CapabilityDefinition
 
 export type IGroupStatusProvider = InferProvider<typeof groupStatusCapability>
