@@ -38,9 +38,9 @@ import {
   type ViewSwitchOption,
 } from '@camstack/ui-library'
 import { LayoutGrid, Plug, Plus, Radar, RefreshCw, Table2 } from 'lucide-react'
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminPage } from '../components/AdminPage'
 import { IntegrationGrid } from '../components/integrations/integration-grid'
 import {
@@ -48,6 +48,10 @@ import {
   type IntegrationsView,
 } from '../components/integrations/integrations-view-preference'
 import { IntegrationWizard } from '../components/integrations/IntegrationWizard'
+import {
+  readIntegrationSeed,
+  type IntegrationFormSeed,
+} from '../components/integrations/integration-setup-seed'
 import {
   buildIntegrationColumns,
   type Integration,
@@ -83,14 +87,35 @@ const EXPAND_PARAM = 'expand'
 export function IntegrationsPage(): ReactNode {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const system = useSystem()
   const [searchParams] = useSearchParams()
 
   const [view, setView] = useIntegrationsView()
   const [wizardOpen, setWizardOpen] = useState(false)
-  const handleOpenWizard = useCallback(() => setWizardOpen(true), [])
-  const handleCloseWizard = useCallback(() => setWizardOpen(false), [])
+  const [wizardSeed, setWizardSeed] = useState<IntegrationFormSeed | null>(null)
+  const handleOpenWizard = useCallback(() => {
+    setWizardSeed(null)
+    setWizardOpen(true)
+  }, [])
+  const handleCloseWizard = useCallback(() => {
+    setWizardOpen(false)
+    setWizardSeed(null)
+  }, [])
+  const handleSetupIntegration = useCallback((seed: IntegrationFormSeed) => {
+    setScanOpen(false)
+    setWizardSeed(seed)
+    setWizardOpen(true)
+  }, [])
   const [scanOpen, setScanOpen] = useState(false)
+
+  useEffect(() => {
+    const routeSeed = readIntegrationSeed(location.state)
+    if (routeSeed === null) return
+    setWizardSeed(routeSeed)
+    setWizardOpen(true)
+    navigate('/integrations', { replace: true, state: null })
+  }, [location.state, navigate])
   const handleOpenScan = useCallback(() => setScanOpen(true), [])
   const handleCloseScan = useCallback(() => setScanOpen(false), [])
 
@@ -394,8 +419,12 @@ export function IntegrationsPage(): ReactNode {
         />
       )}
 
-      <IntegrationWizard open={wizardOpen} onClose={handleCloseWizard} />
-      <ScanNetworkModal open={scanOpen} onClose={handleCloseScan} />
+      <IntegrationWizard open={wizardOpen} onClose={handleCloseWizard} seed={wizardSeed} />
+      <ScanNetworkModal
+        open={scanOpen}
+        onClose={handleCloseScan}
+        onSetupIntegration={handleSetupIntegration}
+      />
     </AdminPage>
   )
 }

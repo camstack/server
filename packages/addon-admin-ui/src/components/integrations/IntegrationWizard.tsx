@@ -9,6 +9,7 @@ import {
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverDevices,
   useIntegrationsCreate,
+  useIntegrationsGetAvailableTypes,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, X } from 'lucide-react'
@@ -20,6 +21,7 @@ import { useOverdueDeadline } from '../../hooks/useOverdueDeadline'
 import { BrokerStep } from './BrokerStep'
 import { DeviceDiscoveryStep } from './DeviceDiscoveryStep'
 import { ProviderConfigForm } from './ProviderConfigForm'
+import type { IntegrationFormSeed } from './integration-setup-seed'
 import { ProviderPicker } from './ProviderPicker'
 
 /**
@@ -69,9 +71,11 @@ const CREATE_OVERDUE_MS = 20_000
 interface IntegrationWizardProps {
   open: boolean
   onClose: () => void
+  /** Skip the picker and open the config step with these values (a scan proposal). */
+  seed?: IntegrationFormSeed | null
 }
 
-export function IntegrationWizard({ open, onClose }: IntegrationWizardProps) {
+export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWizardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -95,6 +99,25 @@ export function IntegrationWizard({ open, onClose }: IntegrationWizardProps) {
   // config step's Test button: an integration with no declared test must say so
   // rather than offering a button that can only answer "cannot be tested".
   const [canTest, setCanTest] = useState<boolean>(false)
+  const [formSeed, setFormSeed] = useState<Readonly<Record<string, unknown>>>({})
+  const [appliedSeed, setAppliedSeed] = useState('')
+
+  const seedHost = seed?.config['host']
+  const seedIdentity =
+    seed === null
+      ? ''
+      : `${seed.addonId}\0${seed.name}\0${typeof seedHost === 'string' ? seedHost : ''}`
+  if (open && seed !== null && appliedSeed !== seedIdentity) {
+    setAppliedSeed(seedIdentity)
+    setSelectedAddonId(seed.addonId)
+    setPendingName(seed.name)
+    setFormSeed({ ...seed.config })
+    setStep('config')
+  }
+
+  const availableTypes = useIntegrationsGetAvailableTypes(undefined, {
+    enabled: open && seed !== null,
+  })
 
   // Fetch the provider addon's global settings schema via the Phase 5
   // three-level API, then strip the inline `value` from each leaf so
@@ -120,6 +143,14 @@ export function IntegrationWizard({ open, onClose }: IntegrationWizardProps) {
 
   const discoverDevicesMutation = useDeviceManagerDiscoverDevices()
   const discoveredDevices = discoverDevicesMutation.data
+
+  useEffect(() => {
+    if (!open || seed === null) return
+    const match = availableTypes.data?.find((row) => row.addonId === seed.addonId)
+    if (!match) return
+    setCanTest(match.canTest)
+    setDiscoveryMode(match.discoveryMode)
+  }, [open, seed, availableTypes.data])
 
   useEffect(() => {
     if (step !== 'discovery' || !createdProviderId || !selectedAddonId) return
@@ -292,6 +323,8 @@ export function IntegrationWizard({ open, onClose }: IntegrationWizardProps) {
     setCreatedIntegrationId(null)
     setPickerError(null)
     setCanTest(false)
+    setFormSeed({})
+    setAppliedSeed('')
   }
 
   function handleClose() {
@@ -362,11 +395,17 @@ export function IntegrationWizard({ open, onClose }: IntegrationWizardProps) {
           )}
           {step === 'config' && selectedAddonId && (
             <ProviderConfigForm
+              key={seedIdentity.length > 0 ? seedIdentity : selectedAddonId}
               addonId={selectedAddonId}
               configSchema={(configSchema ?? null) as ConfigUISchema | null}
               canTest={canTest}
+              initialName={typeof formSeed['host'] === 'string' ? pendingName : undefined}
+              initialConfig={{ ...formSeed }}
               onSave={handleConfigSave}
-              onBack={() => setStep('picker')}
+              onBack={() => {
+                setFormSeed({})
+                setStep('picker')
+              }}
             />
           )}
           {step === 'broker' && brokerKind && (

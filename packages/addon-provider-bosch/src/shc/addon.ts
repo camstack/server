@@ -5,6 +5,8 @@ import {
   type CreateDeviceSpec,
   connectionTestCapability,
   type DeviceConstructor,
+  type DeviceSummary,
+  type DiscoveryCandidate,
   DeviceType,
   deviceAdoptionCapability,
   EventCategory,
@@ -17,7 +19,14 @@ import {
 import { boschShcActions } from './custom-actions.js'
 import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
 import { registerShcClient } from './shc-register.js'
-import { browseShcControllers, resolveShcPairingHost } from './shc-controller-discovery.js'
+import {
+  browseShcControllers,
+  proposeShcControllers,
+  resolveShcPairingHost,
+  shcDiscoveryCandidates,
+  shcDiscoverySummary,
+  type ShcDiscoveredHost,
+} from './shc-controller-discovery.js'
 import { ShcClimateRoomDevice } from './devices/shc-climate-room-device.js'
 import { ShcRoomClimateDevice } from './devices/shc-room-climate-device.js'
 import { ShcSwitchDevice } from './devices/shc-switch-device.js'
@@ -74,20 +83,14 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       customActions: boschShcActions,
       actionHandlers: {
         discoverController: async () => {
-          try {
-            const hosts = await browseShcControllers()
-            return {
-              hosts: hosts.map((found) => ({ host: found.host, name: found.name })),
-              summary:
-                hosts.length === 0
-                  ? 'No controller found on the network.'
-                  : `Found ${hosts.length} controller${hosts.length === 1 ? '' : 's'}.`,
-            }
-          } catch (err) {
-            this.ctx.logger.warn('SHC controller discovery failed', {
-              meta: { error: errMsg(err) },
-            })
-            return { hosts: [], summary: 'No controller found on the network.' }
+          const { proposals, summary } = await this.discoverShcControllers()
+          return {
+            hosts: proposals.map((found) => ({
+              host: found.host,
+              name: found.name,
+              id: found.id,
+            })),
+            summary,
           }
         },
         registerClient: async (input) => {
@@ -128,6 +131,33 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
     return false
   }
 
+  /**
+   * LAN mDNS probe. This addon is hub-only, so the socket is the hub's.
+   * The operator's hub is on br0 (its own LAN address), the same path the
+   * hub already uses to announce itself — multicast UDP 5353 reaches the
+   * LAN. The probe asks for a unicast reply and does not bind 5353, which
+   * the hub's announcer holds. Agents do not run this addon.
+   */
+  override async supportsDiscovery(): Promise<boolean> {
+    return true
+  }
+
+  override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
+    const { proposals } = await this.discoverShcControllers()
+    return shcDiscoveryCandidates(proposals).map((candidate) => ({
+      stableId: candidate.stableId,
+      type: DeviceType.Hub,
+      suggestedName: candidate.suggestedName,
+      prefilledConfig: { ...candidate.prefilledConfig },
+    }))
+  }
+
+  override async adoptDiscoveredDevice(_input: {
+    candidate: DiscoveryCandidate
+  }): Promise<DeviceSummary> {
+    throw new Error('Bosch SHC controllers are paired from the integration form')
+  }
+
   protected async onGetCreationSchema(_type: DeviceType): Promise<ConfigUISchema | null> {
     return null
   }
@@ -149,6 +179,53 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-shc generateStableId: shcDeviceId required')
     }
     return `bosch-shc:${integrationId}:${shcDeviceId}`
+  }
+
+  private async discoverShcControllers(): Promise<{
+    readonly proposals: readonly ShcDiscoveredHost[]
+    readonly summary: string
+  }> {
+    let found: readonly ShcDiscoveredHost[] = []
+    try {
+      found = await browseShcControllers()
+    } catch (err) {
+      this.ctx.logger.warn('SHC controller discovery failed', {
+        meta: { error: errMsg(err) },
+      })
+    }
+    const known = await this.knownControllerHosts()
+    const proposals = proposeShcControllers(found, known)
+    if (found.length > proposals.length) {
+      this.ctx.logger.info('SHC discovery skipped controllers already added', {
+        meta: { found: found.length, proposed: proposals.length },
+      })
+    }
+    return { proposals, summary: shcDiscoverySummary(found.length, proposals.length) }
+  }
+
+  private async knownControllerHosts(): Promise<readonly string[]> {
+    try {
+      const all = await this.ctx.api.integrations.list.query()
+      const hosts: string[] = []
+      for (const integration of all) {
+        if (integration.addonId !== this.ctx.id) continue
+        try {
+          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+          const connection = connectionFromSettings(settings)
+          if (connection) hosts.push(connection.host)
+        } catch (err) {
+          this.ctx.logger.warn('SHC discovery: settings read failed', {
+            meta: { integrationId: integration.id, error: errMsg(err) },
+          })
+        }
+      }
+      return hosts
+    } catch (err) {
+      this.ctx.logger.warn('SHC discovery: integration list failed', {
+        meta: { error: errMsg(err) },
+      })
+      return []
+    }
   }
 
   private requireClients(): ShcClientRegistry {

@@ -46,6 +46,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceDialog } from '../components/integrations/AddDeviceDialog'
 import { AdoptDevicesModal } from '../components/integrations/AdoptDevicesModal'
 import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
+import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
 import { ScanNetworkModal } from '../components/integrations/ScanNetworkModal'
 import { NodeAddonsSettingsPanel } from '../components/settings/NodeAddonsSettingsPanel'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
@@ -61,6 +62,13 @@ export function IntegrationDetailPage() {
   const system = useSystem()
   const [showAddDevice, setShowAddDevice] = useState(false)
   const [showScan, setShowScan] = useState(false)
+  const handleSetupIntegration = useCallback(
+    (seed: IntegrationFormSeed) => {
+      setShowScan(false)
+      navigate('/integrations', { state: { integrationSeed: seed } })
+    },
+    [navigate],
+  )
   const [showConfig, setShowConfig] = useState(false)
   const [showLogs, setShowLogs] = useState(false)
 
@@ -626,6 +634,7 @@ export function IntegrationDetailPage() {
           open={showScan}
           scope={{ addonId: integration.addonId, label: integration.name }}
           onClose={() => setShowScan(false)}
+          onSetupIntegration={handleSetupIntegration}
         />
       )}
 

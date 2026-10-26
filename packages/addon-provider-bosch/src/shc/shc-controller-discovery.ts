@@ -3,7 +3,15 @@ import { createSocket, type Socket } from 'node:dgram'
 export interface ShcDiscoveredHost {
   readonly host: string
   readonly name: string
+  /** Stable identity (SRV hostname without `.local`, else a serial, else the IP). */
+  readonly id: string
 }
+
+/** `prefilledConfig` flag: the scan opens the integration form instead of adopting a device. */
+export const SHC_SETUP_INTEGRATION_KEY = 'setupIntegration'
+
+/** Top bit of the question class: ask for a unicast reply (RFC 6762). */
+const MDNS_QU_CLASS = 0x8001
 
 export const SHC_MDNS_SERVICE = '_http._tcp.local'
 export const SHC_CONTROLLER_NAME_PREFIX = 'Bosch SHC'
@@ -84,6 +92,21 @@ function ipv4(buf: Buffer, offset: number, length: number): string | null {
   return `${buf[offset] ?? 0}.${buf[offset + 1] ?? 0}.${buf[offset + 2] ?? 0}.${buf[offset + 3] ?? 0}`
 }
 
+/** Identity used to recognise a controller already stored on an integration. */
+export function shcControllerId(input: {
+  readonly name: string
+  readonly host: string
+  readonly serviceHost?: string
+}): string {
+  const service = input.serviceHost?.trim().toLowerCase() ?? ''
+  if (service.length > 0) {
+    return service.endsWith('.local') ? service.slice(0, -'.local'.length) : service
+  }
+  const serial = /\[([^\]]+)\]/.exec(input.name)?.[1]?.trim().toLowerCase() ?? ''
+  if (serial.length > 0) return serial
+  return input.host
+}
+
 function hostsFromRecords(records: readonly DnsRecord[]): readonly ShcDiscoveredHost[] {
   const instances: string[] = []
   const srv = new Map<string, string>()
@@ -111,9 +134,59 @@ function hostsFromRecords(records: readonly DnsRecord[]): readonly ShcDiscovered
     if (host === undefined || seen.has(host)) continue
     seen.add(host)
     const label = instance.split('._')[0] ?? instance
-    out.push({ host, name: label })
+    const id = shcControllerId({
+      name: label,
+      host,
+      ...(viaSrv !== undefined ? { serviceHost: viaSrv } : {}),
+    })
+    out.push({ host, name: label, id })
   }
   return out
+}
+
+function identityKeys(found: ShcDiscoveredHost): readonly string[] {
+  const host = found.host.trim().toLowerCase()
+  const id = found.id.trim().toLowerCase()
+  const keys = [host, id]
+  if (id.length > 0 && !id.endsWith('.local')) keys.push(`${id}.local`)
+  return keys
+}
+
+/** Controllers whose host or id is already stored on an integration are not proposed again. */
+export function proposeShcControllers(
+  found: readonly ShcDiscoveredHost[],
+  existingHosts: readonly string[],
+): readonly ShcDiscoveredHost[] {
+  const known = new Set(
+    existingHosts.map((host) => host.trim().toLowerCase()).filter((host) => host.length > 0),
+  )
+  return found.filter((item) => !identityKeys(item).some((key) => known.has(key)))
+}
+
+export interface ShcDiscoveryCandidateShape {
+  readonly stableId: string
+  readonly suggestedName: string
+  readonly prefilledConfig: Readonly<Record<string, unknown>>
+}
+
+export function shcDiscoveryCandidates(
+  proposals: readonly ShcDiscoveredHost[],
+): readonly ShcDiscoveryCandidateShape[] {
+  return proposals.map((found) => ({
+    stableId: `bosch-shc:${found.id}`,
+    suggestedName: found.name,
+    prefilledConfig: {
+      host: found.host,
+      [SHC_SETUP_INTEGRATION_KEY]: true,
+    },
+  }))
+}
+
+export function shcDiscoverySummary(foundCount: number, proposedCount: number): string {
+  if (proposedCount === 0 && foundCount > 0) return 'Controller already added.'
+  if (proposedCount === 0) return 'No controller found on the network.'
+  const noun = proposedCount === 1 ? 'controller' : 'controllers'
+  return `Found ${proposedCount} ${noun}.`
 }
 
 /** Hosts advertised as a Bosch Smart Home Controller on one mDNS message. */
@@ -152,7 +225,7 @@ export function mdnsPtrQuery(service: string): Buffer {
   header.writeUInt16BE(1, 4)
   const tail = Buffer.alloc(4)
   tail.writeUInt16BE(PTR, 0)
-  tail.writeUInt16BE(1, 2)
+  tail.writeUInt16BE(MDNS_QU_CLASS, 2)
   return Buffer.concat([header, ...encoded, Buffer.from([0]), tail])
 }
 

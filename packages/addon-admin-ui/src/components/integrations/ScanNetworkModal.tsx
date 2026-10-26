@@ -25,6 +25,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react
 import type { ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
 import { useTranslation } from 'react-i18next'
+import { integrationSetupSeed, type IntegrationFormSeed } from './integration-setup-seed'
 
 interface ScanScope {
   readonly addonId: string
@@ -36,13 +37,23 @@ interface ScanNetworkModalProps {
   readonly onClose: () => void
   /** When set, the modal scans ONLY this provider and shows its extra-param form. */
   readonly scope?: ScanScope
+  /**
+   * A candidate flagged `setupIntegration` opens the add-integration form
+   * (host prefilled) instead of adopting a device. Pairing stays on that form.
+   */
+  readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
 }
 
 type AllScanData = NonNullable<ReturnType<typeof useDeviceManagerDiscoverAllProviders>['data']>
 type Group = AllScanData['groups'][number]
 type Candidate = Group['candidates'][number]
 
-export function ScanNetworkModal({ open, onClose, scope }: ScanNetworkModalProps) {
+export function ScanNetworkModal({
+  open,
+  onClose,
+  scope,
+  onSetupIntegration,
+}: ScanNetworkModalProps) {
   const { t } = useTranslation()
   const adopt = useDeviceManagerAdoptDevice()
   const [adopted, setAdopted] = useState<ReadonlySet<string>>(new Set())
@@ -64,6 +75,12 @@ export function ScanNetworkModal({ open, onClose, scope }: ScanNetworkModalProps
 
   const handleAdopt = useCallback(
     async (addonId: string, candidate: Candidate) => {
+      const seed = integrationSetupSeed(addonId, candidate)
+      if (seed !== null) {
+        onSetupIntegration?.(seed)
+        onClose()
+        return
+      }
       setAdopting((prev) => new Set(prev).add(candidate.stableId))
       try {
         await adopt.mutateAsync({ addonId, candidate })
@@ -78,7 +95,7 @@ export function ScanNetworkModal({ open, onClose, scope }: ScanNetworkModalProps
         })
       }
     },
-    [adopt],
+    [adopt, onClose, onSetupIntegration],
   )
 
   const renderCandidate = useCallback(
