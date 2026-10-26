@@ -21,6 +21,7 @@ import {
 import { Boxes } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { HelperActuatorExtras } from './HelperActuatorExtras'
 import {
   fieldStateOf,
   groupStatusFromSnapshot,
@@ -44,6 +45,7 @@ interface FleetRow {
   readonly online: boolean
   readonly addonId: string
   readonly stableId: string
+  readonly features: readonly string[]
 }
 
 export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps): ReactNode {
@@ -88,7 +90,7 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
   const snapshotRead = snapshotReadOf(snapshot.status, snapshot.data, snapshot.error?.message)
   const reading = outputReading(snapshotRead, template)
   const status = groupStatusFromSnapshot(snapshotRead)
-  const rows = fleet.status === 'success' ? fleet.data : []
+  const rows = fleet.status === 'success' ? fleet.data.map(fleetRow) : []
   const fleetKind = fleetKindOf(fleet.status)
   const excluded = namedExcluded(
     composition.helper.members.map(
@@ -182,6 +184,20 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
             )}
           </div>
         )}
+        <HelperActuatorExtras
+          template={template}
+          members={composition.helper.members}
+          fleet={rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            addonId: row.addonId,
+            stableId: row.stableId,
+            features: row.features,
+          }))}
+          fleetKind={fleetKind}
+          snapshot={snapshotRead}
+          nameOf={(id) => rows.find((row) => row.id === id)?.name ?? String(id)}
+        />
       </div>
     </SectionCard>
   )
@@ -234,6 +250,24 @@ function snapshotReadOf(
   if (status === 'pending') return { kind: 'pending' }
   if (status === 'error') return { kind: 'error', message: message ?? '' }
   return { kind: 'answered', caps: snapshotCaps(data) }
+}
+
+function fleetRow(item: {
+  readonly id: number
+  readonly name: string
+  readonly online: boolean
+  readonly addonId: string
+  readonly stableId: string
+  readonly features?: readonly string[]
+}): FleetRow {
+  return {
+    id: item.id,
+    name: item.name,
+    online: item.online,
+    addonId: item.addonId,
+    stableId: item.stableId,
+    features: item.features ?? [],
+  }
 }
 
 function fleetKindOf(status: 'pending' | 'error' | 'success'): 'pending' | 'error' | 'answered' {

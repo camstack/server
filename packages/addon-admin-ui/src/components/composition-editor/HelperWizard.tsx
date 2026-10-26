@@ -2,7 +2,7 @@
  * New or edit a group helper as its template (D944). Three steps: template,
  * reducer / name / room, members via the common source selector.
  */
-import { type GroupTemplateId, groupTemplate } from '@camstack/types'
+import { ACTIVE_CRITERIA, type GroupTemplateId, groupTemplate } from '@camstack/types'
 import { Button, Input, Select } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +14,7 @@ import {
   type HelperFormDraft,
   memberRequest,
   type RefusalLine,
+  withActive,
   withAggregate,
   withName,
   withRoom,
@@ -52,21 +53,40 @@ export function HelperWizard({ initial, start, saving, onSave }: HelperWizardPro
       {step === 'template' && <HelperTemplatePicker onPick={pickTemplate} />}
       {step === 'parameters' && draft !== null && template !== null && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-[11px]">
-            {t('helper.reducer')}
-            <Select
-              aria-label={t('helper.reducer')}
-              value={draft.aggregate}
-              onChange={(event) => {
-                const next = template.aggregates.find((item) => item === event.target.value)
-                if (next !== undefined) setDraft(withAggregate(draft, next))
-              }}
-              options={template.aggregates.map((item) => ({
-                value: item,
-                label: t(`helper.aggregate.${item}`),
-              }))}
-            />
-          </label>
+          {template.family === 'actuator' && draft.active !== null ? (
+            <label className="flex flex-col gap-1 text-[11px]">
+              {t('helper.criterion')}
+              <Select
+                aria-label={t('helper.criterion')}
+                data-testid="helper-criterion"
+                value={draft.active}
+                onChange={(event) => {
+                  const next = ACTIVE_CRITERIA.find((item) => item === event.target.value)
+                  if (next !== undefined) setDraft(withActive(draft, next))
+                }}
+                options={ACTIVE_CRITERIA.map((item) => ({
+                  value: item,
+                  label: t(`helper.active.${item}`),
+                }))}
+              />
+            </label>
+          ) : (
+            <label className="flex flex-col gap-1 text-[11px]">
+              {t('helper.reducer')}
+              <Select
+                aria-label={t('helper.reducer')}
+                value={draft.aggregate}
+                onChange={(event) => {
+                  const next = template.aggregates.find((item) => item === event.target.value)
+                  if (next !== undefined) setDraft(withAggregate(draft, next))
+                }}
+                options={template.aggregates.map((item) => ({
+                  value: item,
+                  label: t(`helper.aggregate.${item}`),
+                }))}
+              />
+            </label>
+          )}
           <label className="flex flex-col gap-1 text-[11px]">
             {t('helper.name')}
             <Input

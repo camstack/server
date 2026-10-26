@@ -9691,7 +9691,8 @@
   "helper": {
     "group": {
       "readings": "Letture",
-      "binary": "Sensori binari"
+      "binary": "Sensori binari",
+      "actuators": "Attuatori"
     },
     "template": {
       "temperature": "Temperatura",
@@ -9721,7 +9722,11 @@
       "occupancy": "Occupazione",
       "occupancySummary": "Acceso quando uno (o tutti) i sensori segnalano una presenza.",
       "binary": "Binario",
-      "binarySummary": "Acceso quando uno (o tutti) i sensori sono accesi."
+      "binarySummary": "Acceso quando uno (o tutti) i sensori sono accesi.",
+      "switch": "Gruppo di interruttori",
+      "switchSummary": "Acceso se almeno uno lo è, oppure solo se lo sono tutti. I membri offline restano fuori da quella decisione e ricevono comunque il comando.",
+      "light": "Gruppo di luci",
+      "lightSummary": "Come un gruppo di interruttori. Luminosità e colore compaiono solo se ogni luce li ha."
     },
     "aggregate": {
       "mean": "Media",
@@ -9764,6 +9769,29 @@
     "excluded": "Esclusi",
     "excludedPending": "Lettura di quali membri sono esclusi…",
     "excludedUnnamed": "Alcuni membri sono esclusi e i loro nomi non sono in questa lettura.",
-    "offlineCounted": "I sensori offline restano fuori e vengono contati."
+    "offlineCounted": "I sensori offline restano fuori e vengono contati.",
+    "criterion": "Attivo quando",
+    "active": {
+      "at-least-one": "Almeno uno è acceso",
+      "all": "Tutti sono accesi"
+    },
+    "sharedCaps": "Comandi in comune",
+    "sharedPending": "Controllo di cosa sa fare ogni membro.",
+    "sharedUnavailable": "Non è stato possibile leggere le capacità di un membro.",
+    "sharedNone": "Nessun comando opzionale è in comune a tutti i membri.",
+    "commandTitle": "Ultimo comando",
+    "commandNone": "Nessun comando inviato.",
+    "commandOk": "Inviato",
+    "commandFailed": "Non riuscito",
+    "cap": {
+      "switch": "Interruttore",
+      "brightness": "Luminosità",
+      "color": "Colore"
+    },
+    "mode": {
+      "light-color-rgb": "Colore",
+      "light-color-hsv": "Tinta",
+      "light-color-mired": "Bianco"
+    }
   }
 }

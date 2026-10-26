@@ -11,6 +11,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
+  commandResultsFromSnapshot,
   draftForTemplate,
   draftFromHelper,
   groupStatusFromSnapshot,
@@ -20,7 +21,9 @@ import {
   namedExcluded,
   outputReading,
   refusalFromMessage,
+  sharedCapsView,
   specFromDraft,
+  withActive,
   withAggregate,
   withTemplate,
 } from '../helper-form-model'
@@ -61,7 +64,61 @@ describe('helper template groups', () => {
         id: 'binary',
         templateIds: ['motion', 'contact', 'leak', 'smoke', 'occupancy', 'binary'],
       },
+      { id: 'actuators', templateIds: ['switch', 'light'] },
     ])
+  })
+
+  it('stores the active criterion on a switch group and not on a temperature group', () => {
+    const draft = draftForTemplate('switch')
+    expect(draft?.active).toBe('at-least-one')
+    expect(draft?.aggregate).toBe('any')
+    if (draft === null) return
+    const all = withActive(draft, 'all')
+    expect(all.aggregate).toBe('all')
+    expect(specFromDraft(all).active).toBe('all')
+    const back = draftFromHelper(specFromDraft(all), 'Porch', '')
+    expect(back?.active).toBe('all')
+    expect(draftForTemplate('temperature')?.active).toBeNull()
+    expect(specFromDraft(draftForTemplate('temperature') ?? draft).active).toBeUndefined()
+  })
+
+  it('does not treat an unanswered member as a light with no shared controls', () => {
+    expect(
+      sharedCapsView([
+        { kind: 'ready', caps: ['switch', 'brightness', 'color'], features: [] },
+        { kind: 'pending' },
+      ]),
+    ).toEqual({ kind: 'pending' })
+    expect(
+      sharedCapsView([
+        { kind: 'ready', caps: ['switch', 'brightness', 'color'], features: ['light-color-rgb'] },
+        { kind: 'ready', caps: ['switch', 'brightness'], features: [] },
+      ]),
+    ).toEqual({ kind: 'ready', caps: ['switch', 'brightness'], modes: [] })
+  })
+
+  it('reads a per-member command result and leaves an absent slice as none', () => {
+    expect(commandResultsFromSnapshot({ kind: 'answered', caps: {} })).toEqual({ kind: 'none' })
+    expect(commandResultsFromSnapshot({ kind: 'pending' })).toEqual({ kind: 'pending' })
+    expect(
+      commandResultsFromSnapshot({
+        kind: 'answered',
+        caps: {
+          'group-commands': {
+            results: [
+              {
+                deviceId: 2,
+                cap: 'switch',
+                method: 'setState',
+                ok: false,
+                error: 'relay refused',
+                at: 5,
+              },
+            ],
+          },
+        },
+      }).kind,
+    ).toBe('rows')
   })
 
   it('starts a temperature group on mean and a power group on sum', () => {
@@ -188,6 +245,7 @@ function specAsDraft(spec: GroupHelperSpec) {
   return {
     templateId: spec.templateId,
     aggregate: spec.aggregate,
+    active: spec.active ?? null,
     name: '',
     room: '',
     members: spec.members,

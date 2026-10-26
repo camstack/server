@@ -1,6 +1,6 @@
 /**
- * Phase 1a templates, grouped Readings / Binary sensors. One line says
- * what exclusion does. Math, integral and statistics stay hidden.
+ * Group templates: readings, binary sensors, switch and light groups.
+ * One line says what exclusion does. Math, integral and statistics stay hidden.
  */
 import { type GroupTemplateId, groupTemplate } from '@camstack/types'
 import { Button } from '@camstack/ui-library'
@@ -17,7 +17,11 @@ export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): Rea
   return (
     <div className="flex flex-col gap-4" data-testid="helper-template-picker">
       {helperTemplateGroups().map((group) => (
-        <section key={group.id} aria-label={t(`helper.group.${group.id}`)}>
+        <section
+          key={group.id}
+          aria-label={t(`helper.group.${group.id}`)}
+          data-testid={`helper-group-${group.id}`}
+        >
           <h3 className="text-[10px] font-semibold uppercase tracking-wider text-foreground-subtle">
             {t(`helper.group.${group.id}`)}
           </h3>

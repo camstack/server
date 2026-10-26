@@ -4,10 +4,12 @@
  * A composition with no `helper` stays a free expression.
  */
 import {
+  type ActiveCriterion,
   type AggregateReducer,
   type Composition,
   type CompositionProblem,
   compileHelper,
+  GroupCommandsSchema,
   type GroupHelperSpec,
   type GroupTemplate,
   type GroupTemplateId,
@@ -16,11 +18,14 @@ import {
   type HelperMember,
   type HelperSpec,
   MAX_HELPER_MEMBERS,
+  reducerForActive,
+  sharedColorModes,
+  sharedLightCaps,
   type SourcePickRequest,
   sourcePickForTemplate,
 } from '@camstack/types'
 
-export type HelperTemplateGroupId = 'readings' | 'binary'
+export type HelperTemplateGroupId = 'readings' | 'binary' | 'actuators'
 
 export interface HelperTemplateGroup {
   readonly id: HelperTemplateGroupId
@@ -30,6 +35,8 @@ export interface HelperTemplateGroup {
 export interface HelperFormDraft {
   readonly templateId: GroupTemplateId
   readonly aggregate: AggregateReducer
+  /** Set on an actuator template. Readings leave it null. */
+  readonly active: ActiveCriterion | null
   readonly name: string
   readonly room: string
   readonly members: readonly HelperMember[]
@@ -55,6 +62,35 @@ export type OutputReading =
   | { readonly kind: 'empty' }
   | { readonly kind: 'number'; readonly value: number; readonly unit: string | undefined }
   | { readonly kind: 'boolean'; readonly value: boolean }
+
+export type MemberCapRead =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'error' }
+  | {
+      readonly kind: 'ready'
+      readonly caps: readonly string[]
+      readonly features: readonly string[]
+    }
+
+export type SharedCapsView =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'unavailable' }
+  | { readonly kind: 'ready'; readonly caps: readonly string[]; readonly modes: readonly string[] }
+
+export interface CommandResultRow {
+  readonly deviceId: number
+  readonly cap: string
+  readonly method: string
+  readonly ok: boolean
+  readonly error: string | null
+  readonly at: number
+}
+
+export type CommandResultsView =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'unavailable'; readonly message: string }
+  | { readonly kind: 'none' }
+  | { readonly kind: 'rows'; readonly rows: readonly CommandResultRow[] }
 
 export type GroupStatusRead =
   | { readonly kind: 'pending' }
@@ -100,6 +136,8 @@ const BINARY: readonly GroupTemplateId[] = [
   'binary',
 ]
 
+const ACTUATORS: readonly GroupTemplateId[] = ['switch', 'light']
+
 const REFUSAL_MARKER = 'was refused — '
 const REFUSAL_PART = /^(.+?) \[([a-z0-9-]+)\]: (.+)$/
 
@@ -107,6 +145,7 @@ export function helperTemplateGroups(): readonly HelperTemplateGroup[] {
   return [
     { id: 'readings', templateIds: READINGS },
     { id: 'binary', templateIds: BINARY },
+    { id: 'actuators', templateIds: ACTUATORS },
   ]
 }
 
@@ -116,6 +155,7 @@ export function draftForTemplate(templateId: GroupTemplateId): HelperFormDraft |
   return {
     templateId,
     aggregate: template.defaultAggregate,
+    active: template.family === 'actuator' ? 'at-least-one' : null,
     name: '',
     room: '',
     members: [],
@@ -129,9 +169,12 @@ export function draftFromHelper(
 ): HelperFormDraft | null {
   const template = groupTemplate(spec.templateId)
   if (template === null || !template.aggregates.includes(spec.aggregate)) return null
+  if (template.family === 'actuator' && spec.active === undefined) return null
+  if (template.family !== 'actuator' && spec.active !== undefined) return null
   return {
     templateId: spec.templateId,
     aggregate: spec.aggregate,
+    active: spec.active ?? null,
     name,
     room,
     members: spec.members.map(copyMember),
@@ -151,6 +194,12 @@ export function withAggregate(
   const template = groupTemplate(draft.templateId)
   if (template === null || !template.aggregates.includes(aggregate)) return draft
   return { ...draft, aggregate }
+}
+
+export function withActive(draft: HelperFormDraft, active: ActiveCriterion): HelperFormDraft {
+  const template = groupTemplate(draft.templateId)
+  if (template === null || template.family !== 'actuator') return draft
+  return { ...draft, active, aggregate: reducerForActive(active) }
 }
 
 export function withName(draft: HelperFormDraft, name: string): HelperFormDraft {
@@ -176,10 +225,13 @@ export function memberRequest(draft: HelperFormDraft): SourcePickRequest | null 
 }
 
 export function specFromDraft(draft: HelperFormDraft): GroupHelperSpec {
+  const template = groupTemplate(draft.templateId)
+  const actuator = template?.family === 'actuator' && draft.active !== null
   return {
     kind: 'group',
     templateId: draft.templateId,
-    aggregate: draft.aggregate,
+    aggregate: actuator && draft.active !== null ? reducerForActive(draft.active) : draft.aggregate,
+    ...(actuator && draft.active !== null ? { active: draft.active } : {}),
     members: draft.members.map(copyMember),
   }
 }
@@ -248,6 +300,38 @@ export function groupStatusFromSnapshot(read: SnapshotRead): GroupStatusRead {
   const total = countField(slice.total)
   if (included === null || excluded === null || total === null) return { kind: 'absent' }
   return { kind: 'ready', included, excluded, total }
+}
+
+/** Optional light controls, only once every member's bindings have answered. */
+export function sharedCapsView(reads: readonly MemberCapRead[]): SharedCapsView {
+  if (reads.length === 0 || reads.some((read) => read.kind === 'pending'))
+    return { kind: 'pending' }
+  if (reads.some((read) => read.kind === 'error')) return { kind: 'unavailable' }
+  const ready = reads.flatMap((read) => (read.kind === 'ready' ? [read] : []))
+  const caps = sharedLightCaps(ready.map((read) => read.caps))
+  const modes = caps.includes('color') ? sharedColorModes(ready.map((read) => read.features)) : []
+  return { kind: 'ready', caps: [...caps], modes: [...modes] }
+}
+
+export function commandResultsFromSnapshot(read: SnapshotRead): CommandResultsView {
+  if (read.kind === 'pending') return { kind: 'pending' }
+  if (read.kind === 'error') return { kind: 'unavailable', message: read.message }
+  const slice = read.caps['group-commands']
+  if (slice === undefined) return { kind: 'none' }
+  const parsed = GroupCommandsSchema.safeParse(slice)
+  if (!parsed.success) return { kind: 'unavailable', message: 'group-commands' }
+  if (parsed.data.results.length === 0) return { kind: 'none' }
+  return {
+    kind: 'rows',
+    rows: parsed.data.results.map((row) => ({
+      deviceId: row.deviceId,
+      cap: row.cap,
+      method: row.method,
+      ok: row.ok,
+      error: row.error ?? null,
+      at: row.at,
+    })),
+  }
 }
 
 export function fieldStateOf(

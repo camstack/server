@@ -9669,7 +9669,8 @@
   "helper": {
     "group": {
       "readings": "Readings",
-      "binary": "Binary sensors"
+      "binary": "Binary sensors",
+      "actuators": "Actuators"
     },
     "template": {
       "temperature": "Temperature",
@@ -9699,7 +9700,11 @@
       "occupancy": "Occupancy",
       "occupancySummary": "On when any (or all) of the sensors say someone is there.",
       "binary": "Binary",
-      "binarySummary": "On when any (or all) of the sensors are on."
+      "binarySummary": "On when any (or all) of the sensors are on.",
+      "switch": "Switch group",
+      "switchSummary": "On when at least one is on, or only when every one is. Offline members stay out of that decision and still receive the command.",
+      "light": "Light group",
+      "lightSummary": "Same as a switch group. Brightness and colour appear only when every light has them."
     },
     "aggregate": {
       "mean": "Mean",
@@ -9742,6 +9747,29 @@
     "excluded": "Left out",
     "excludedPending": "Reading which members are left out…",
     "excludedUnnamed": "Some members are left out, and their names are not in this reading.",
-    "offlineCounted": "Sensors that are offline are left out and counted."
+    "offlineCounted": "Sensors that are offline are left out and counted.",
+    "criterion": "Active when",
+    "active": {
+      "at-least-one": "At least one is on",
+      "all": "All are on"
+    },
+    "sharedCaps": "Shared controls",
+    "sharedPending": "Checking what every member can do.",
+    "sharedUnavailable": "A member's capabilities could not be read.",
+    "sharedNone": "No optional control is shared by every member.",
+    "commandTitle": "Last command",
+    "commandNone": "No command sent yet.",
+    "commandOk": "Sent",
+    "commandFailed": "Failed",
+    "cap": {
+      "switch": "Switch",
+      "brightness": "Brightness",
+      "color": "Colour"
+    },
+    "mode": {
+      "light-color-rgb": "Colour",
+      "light-color-hsv": "Hue",
+      "light-color-mired": "White"
+    }
   }
 }
