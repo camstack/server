@@ -1,9 +1,11 @@
 /**
  * Reads `display-palette` for the admin shell (D939). Pending stays pending.
- * An error or an `unknown` result is said out loud; painting falls back to
- * the bundled preset inside {@link useClassPainter}.
+ * A hub that never answered, or answered `unknown`, is said out loud; painting
+ * falls back to the bundled preset inside {@link useClassPainter}. A failed
+ * refetch keeps the palette the hub last answered.
  */
 import type { JSX, ReactNode } from 'react'
+import type { PaletteResult } from '@camstack/types'
 import { useTranslation } from 'react-i18next'
 import {
   DisplayPaletteProvider,
@@ -18,14 +20,30 @@ export interface DisplayPaletteGateProps {
 
 export function DisplayPaletteGate({ children }: DisplayPaletteGateProps): JSX.Element {
   const query = useDisplayPaletteGetPalette({})
-  const value: DisplayPaletteView = query.isPending
-    ? { status: 'pending' }
-    : query.isError || query.data === undefined
-      ? { status: 'unknown', reason: query.isError ? String(query.error) : 'no palette' }
-      : query.data.status === 'unknown'
-        ? { status: 'unknown', reason: query.data.reason }
-        : { status: 'ready', palette: query.data }
-  return <DisplayPaletteProvider value={value}>{children}</DisplayPaletteProvider>
+  return <DisplayPaletteProvider value={paletteViewOf(query)}>{children}</DisplayPaletteProvider>
+}
+
+/** The parts of the palette query the view is decided from. */
+export interface PaletteQueryState {
+  readonly isPending: boolean
+  readonly isError: boolean
+  readonly error: unknown
+  readonly data: PaletteResult | undefined
+}
+
+/**
+ * The last palette the hub ANSWERED wins: a failed background refetch (a
+ * window-focus refresh while the socket reconnects) keeps it. Only a query
+ * that never answered reads as unknown.
+ */
+export function paletteViewOf(query: PaletteQueryState): DisplayPaletteView {
+  if (query.data !== undefined) {
+    return query.data.status === 'unknown'
+      ? { status: 'unknown', reason: query.data.reason }
+      : { status: 'ready', palette: query.data }
+  }
+  if (query.isPending) return { status: 'pending' }
+  return { status: 'unknown', reason: query.isError ? String(query.error) : 'no palette' }
 }
 
 /** One line when the store cannot be read. Pending renders nothing. */
