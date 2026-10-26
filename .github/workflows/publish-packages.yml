@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: ""
+      dry_run:
+        description: "Build and print the final publish set and each output decision (bundle unchanged / dist differs) without bumping, publishing, or tagging."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -148,11 +153,14 @@ jobs:
               # artifact, and @camstack/server for anything in its pinned
               # closure. Both live in scripts/ci/publish-scope.mjs, under test
               # against the real workspace (scripts/__tests__).
-              echo "mode=affected (direct + bundlers + closure)" >> $GITHUB_OUTPUT
+              echo "mode=affected (direct + bundle candidates + closure)" >> $GITHUB_OUTPUT
+              # Own files only. The bundle cascade is applied once below, and
+              # a package it ADDS is a candidate: published only when its
+              # built output differs (the step after the build).
               PROJECTS=$(CHANGED_FILES="$CHANGED" node -e "
                 import('./scripts/ci/publish-scope.mjs').then((m) => {
                   const files=(process.env.CHANGED_FILES||'').split(',').filter(Boolean);
-                  const dirs=m.resolvePublishSet(files);
+                  const dirs=m.directOwners(files);
                   const names=dirs.map((d)=>require('./'+d+'/package.json').name);
                   console.log(JSON.stringify(names));
                 });
@@ -163,9 +171,11 @@ jobs:
           # Pass through to the filter step: nx-detected projects (JSON
           # array of nx project names) + force_packages (comma-separated
           # npm package names like "@camstack/types").
-          # The filter resolves each to a real workspace package dir,
-          # de-duplicates, and excludes `private: true` packages.
-          PUBLISHABLE=$(NX_PROJECTS="$PROJECTS" FORCE_LIST="$FORCE" node --input-type=module -e "
+          # The filter resolves each to a workspace package dir and
+          # de-duplicates. Private packages stay in the INPUT so a change to
+          # one can still cascade; partitionPublishSet drops them from the
+          # set that is bumped and published.
+          SCOPE_JSON=$(NX_PROJECTS="$PROJECTS" FORCE_LIST="$FORCE" node --input-type=module -e "
             const fs = (await import('node:fs')).default, path = (await import('node:path')).default;
             const require = (await import('node:module')).createRequire(import.meta.url);
             const nxProjects = JSON.parse(process.env.NX_PROJECTS || '[]');
@@ -197,8 +207,6 @@ jobs:
                 }
                 continue;
               }
-              const pj = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'),'utf-8'));
-              if (pj.private) continue;
               resolved.add(dir);
             }
 
@@ -220,19 +228,27 @@ jobs:
             // scope=all (nx show projects) put server before types/sdk and
             // the closure gate waited on pins this loop had not reached
             // (2026-10-04 run 37223477606).
-            const { applyCascades } = await import('./scripts/ci/publish-scope.mjs');
-            console.log(applyCascades([...resolved]).join(','));
+            const { partitionPublishSet } = await import('./scripts/ci/publish-scope.mjs');
+            const part = partitionPublishSet([...resolved]);
+            console.log(JSON.stringify({
+              packages: part.all.join(','),
+              keep: part.keep.join(','),
+              candidates: part.candidates.join(','),
+              serverFromClosure: part.serverFromClosure ? 'true' : 'false',
+            }));
           ")
 
-          echo "packages=${PUBLISHABLE}" >> $GITHUB_OUTPUT
-          echo "Publishable: ${PUBLISHABLE}"
+          # JSON, not the package csv: keep / candidates / server-from-closure
+          # travel to the output step. `packages` is still the full cascade
+          # (what gets built). The output step narrows it.
+          node -e 'const fs=require("fs"); const p=JSON.parse(process.argv[1]); const o=process.env.GITHUB_OUTPUT; fs.appendFileSync(o, "packages="+p.packages+"\n"+"keep="+p.keep+"\n"+"candidates="+p.candidates+"\n"+"server_from_closure="+p.serverFromClosure+"\n"); console.log("Publishable: "+p.packages); console.log("Candidates: "+p.candidates);' "$SCOPE_JSON"
           if [ -n "$FORCE" ]; then
             echo "  (force_packages override: $FORCE)"
           fi
 
       # ── Bump versions ─────────────────────────────────────────────
       - name: Bump package versions
-        if: steps.detect.outputs.packages != ''
+        if: steps.detect.outputs.packages != '' && github.event.inputs.dry_run != 'true'
         run: |
           BUMP="${{ github.event.inputs.bump }}"
           EXACT="${{ github.event.inputs.exact_version }}"
@@ -318,6 +334,24 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
 
+      # Candidates are packages the bundle cascade added and nothing else.
+      # Hash each built tarball against the registry (version stamps
+      # normalised). Equal → drop it and, on a real run, revert the bump so
+      # the commit does not record it. The server then pins the registry
+      # version (VERIFIED_UNCHANGED tells pin-root-deps the copy was compared,
+      # so the stale-pin refusal does not fire). dry_run prints the same
+      # decisions and does not revert, because it never bumped.
+      - name: Drop bundlers whose built output is unchanged
+        id: output
+        if: steps.detect.outputs.packages != ''
+        env:
+          PUBLISH_KEEP: ${{ steps.detect.outputs.keep }}
+          PUBLISH_CANDIDATES: ${{ steps.detect.outputs.candidates }}
+          PUBLISH_SERVER_FROM_CLOSURE: ${{ steps.detect.outputs.server_from_closure }}
+          PUBLISH_EFFECTIVE: ${{ env.PUBLISH_PACKAGES_OVERRIDE }}
+          PUBLISH_REVERT_DROPPED: ${{ github.event.inputs.dry_run != 'true' }}
+        run: node scripts/ci/publish-output.mjs --from-env
+
       # ── Pin root-package dependency closures ──────────────────────
       # The workspace declares @camstack/* deps as "*" (always link local);
       # the PUBLISHED @camstack/server (the single root package for every node
@@ -327,15 +361,14 @@ jobs:
       # Pinned to THIS run's post-bump workspace versions; the restore step
       # below puts "*" back so the bump commit never carries pins.
       - name: Pin root-package deps for publish
-        if: steps.detect.outputs.packages != ''
-        run: PUBLISH_SET="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}" node scripts/ci/pin-root-deps.mjs pin
+        if: steps.output.outputs.packages != '' && github.event.inputs.dry_run != 'true'
+        run: PUBLISH_SET="${{ steps.output.outputs.packages }}" VERIFIED_UNCHANGED="${{ steps.output.outputs.dropped }}" node scripts/ci/pin-root-deps.mjs pin
 
       # ── Publish ───────────────────────────────────────────────────
       - name: Publish to npm
-        if: steps.detect.outputs.packages != ''
+        if: steps.output.outputs.packages != '' && github.event.inputs.dry_run != 'true'
         run: |
-          # The viewer gate may have dropped the orchestrator from the set.
-          PKGS_CSV="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}"
+          PKGS_CSV="${{ steps.output.outputs.packages }}"
           # Belt: server last even if detect order regresses. The closure
           # gate below waits for pins on npm — packages after server in this
           # loop can never land in time (2026-10-04 run 37223477606).
@@ -515,12 +548,12 @@ jobs:
       # the reused runner workspace must stay pin-free ("*" in git, exact
       # only inside the published artifacts).
       - name: Restore root-package deps
-        if: always() && steps.detect.outputs.packages != ''
+        if: always() && steps.detect.outputs.packages != '' && github.event.inputs.dry_run != 'true'
         run: node scripts/ci/pin-root-deps.mjs restore
 
       # ── Tag + Commit ──────────────────────────────────────────────
       - name: Commit version bumps + create publish tag
-        if: steps.detect.outputs.packages != ''
+        if: steps.output.outputs.packages != '' && github.event.inputs.dry_run != 'true'
         run: |
           set -e
           TAG="publish-$(date -u +%Y%m%d-%H%M%S)"
@@ -585,12 +618,22 @@ jobs:
       - name: Job Summary
         if: steps.detect.outputs.packages != ''
         run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            {
+              echo "## Publish dry run"
+              echo ""
+              echo "Final set: \`${{ steps.output.outputs.packages }}\`"
+              echo ""
+              echo "Dropped: \`${{ steps.output.outputs.dropped }}\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           echo "## Packages Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Package | Version |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
 
-          PKGS_CSV="${PUBLISH_PACKAGES_OVERRIDE:-${{ steps.detect.outputs.packages }}}"
+          PKGS_CSV="${{ steps.output.outputs.packages }}"
           IFS=',' read -ra PKGS <<< "$PKGS_CSV"
           for pkg in "${PKGS[@]}"; do
             NAME=$(node -p "require('./$pkg/package.json').name")

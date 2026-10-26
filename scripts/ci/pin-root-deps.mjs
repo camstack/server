@@ -52,10 +52,22 @@ function npmLatestVersion(name) {
   }
 }
 
-const mode = process.argv[2]
-if (mode !== 'pin' && mode !== 'restore') {
-  console.error('Usage: pin-root-deps.mjs pin|restore')
-  process.exit(1)
+/**
+ * The version the published root must pin for `dep`:
+ *   • dep publishes this run (or no publish set was provided) → its
+ *     workspace version (== what lands on npm in this run);
+ *   • otherwise → the version already on npm (fall back to workspace if
+ *     the registry lookup fails — best effort beats an unresolvable pin).
+ *
+ * A candidate dropped because its built output matched the registry is
+ * absent from `publishSet`, so this returns the registry version — the
+ * server keeps pinning the tarball that is already installed.
+ */
+export function resolvePinnedVersion(dep, entry, options = {}) {
+  const set = options.publishSet ?? publishSet
+  const lookup = options.lookup ?? npmLatestVersion
+  if (set.size === 0 || set.has(entry.dir)) return entry.version
+  return lookup(dep) ?? entry.version
 }
 
 /** name → { version, dir } for every workspace package (post-bump). */
@@ -76,18 +88,6 @@ function buildWorkspaceIndex() {
 }
 
 /**
- * The version the published root must pin for `dep`:
- *   • dep publishes this run (or no publish set was provided) → its
- *     workspace version (== what lands on npm in this run);
- *   • otherwise → the version already on npm (fall back to workspace if
- *     the registry lookup fails — best effort beats an unresolvable pin).
- */
-function resolvePinnedVersion(dep, entry) {
-  if (publishSet.size === 0 || publishSet.has(entry.dir)) return entry.version
-  return npmLatestVersion(dep) ?? entry.version
-}
-
-/**
  * A pin taken from the REGISTRY must not carry a stale copy of a package this
  * run publishes. On 2026-09-19 the closure pinned `@camstack/types@1.2.231`
  * next to `@camstack/system@1.2.273 (npm — not in this publish set)`, and the
@@ -98,9 +98,18 @@ function resolvePinnedVersion(dep, entry) {
  * step that knows which pins come from npm, and refuses rather than ship a
  * closure that disagrees with itself.
  */
+function verifiedUnchangedDirs() {
+  return (process.env.VERIFIED_UNCHANGED ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+}
+
 function refuseStalePins() {
   if (publishSet.size === 0) return
-  const stale = staleRegistryPins([...publishSet])
+  const stale = staleRegistryPins([...publishSet], process.cwd(), {
+    verifiedUnchanged: verifiedUnchangedDirs(),
+  })
   if (stale.length === 0) return
   for (const { pinned, publishes } of stale) {
     console.error(
@@ -164,5 +173,13 @@ function restore() {
   }
 }
 
-if (mode === 'pin') pin()
-else restore()
+const invokedDirectly = process.argv[1]?.endsWith('pin-root-deps.mjs') === true
+if (invokedDirectly) {
+  const mode = process.argv[2]
+  if (mode !== 'pin' && mode !== 'restore') {
+    console.error('Usage: pin-root-deps.mjs pin|restore')
+    process.exit(1)
+  }
+  if (mode === 'pin') pin()
+  else restore()
+}

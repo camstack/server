@@ -1224,6 +1224,22 @@ reachable as `npm run publish`) is a local escape hatch, not the route.
   what goes stale — and the job **fails** if `@camstack/server` is missing from
   the workspace index. Packages outside the closure (`cli`,
   every independently deployed addon) still publish alone.
+- **A bundle candidate publishes only when its built output changes.** The
+  cascade still selects every package that compiles another package's source
+  into its artifact (an authoritative copy, D545) — that select is what gets
+  built. After the build, `scripts/ci/publish-output.mjs` hashes the tarball
+  (`npm pack --dry-run` file list and bytes, version stamps, absolute build
+  paths, vite content hashes, and a bare host-provided
+  `@module-federation/runtime` import normalised) and the same hash of the
+  version already on the registry.
+  Equal, and the package was selected only by the cascade: it is dropped, and
+  the server keeps pinning the registry version. Different: it is published.
+  A package whose own files changed, a `force_packages` entry, an
+  `include_dependents` dependent, and the server itself are not asked.
+  Run 40374002262 is the case: a ui-library field and the admin Integrations
+  grid published admin-ui, ui-library and the server, and would have dropped
+  agent-ui, benchmark, model-studio, osd-manager and training. `dry_run` on
+  the workflow prints those decisions and does not publish.
 - **Dependent cascade (opt-in, rarely right).** It publishes everything that
   DEPENDS on a changed library — a dozen addons that pin nothing, declare
   `@camstack/*` as `"*"`, and resolve whatever the closure installed. It was

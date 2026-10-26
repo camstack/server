@@ -33,6 +33,13 @@
  *     exact pins, so a closure member reaches a node through a new server and
  *     through nothing else.
  *
+ * A package this module adds ONLY because it bundles another package's source
+ * is a candidate, not a decision. `publish-output.mjs` publishes it when the
+ * built tarball differs from the registry and drops it when the bytes match
+ * (run 40374002262 republished five UI addons whose bundles do not contain
+ * the ui-library edit). `resolvePublishSet` still returns the full cascade —
+ * the set that must be BUILT so the comparison has something to hash.
+ *
  * Usage:
  *   node scripts/ci/publish-scope.mjs <comma-separated changed files>
  *   → prints the comma-separated package DIRECTORIES to publish
@@ -219,6 +226,33 @@ function ownerOf(file) {
   return match === null ? null : match[1]
 }
 
+/** Package dirs whose own files are in `changedFiles`, private included. */
+export function directOwners(changedFiles, root = process.cwd()) {
+  const packages = readWorkspace(root)
+  const direct = []
+  const seen = new Set()
+  for (const file of changedFiles) {
+    const dir = ownerOf(file)
+    if (dir === null || !packages.has(dir) || seen.has(dir)) continue
+    seen.add(dir)
+    direct.push(dir)
+  }
+  return direct
+}
+
+function serverPackageDir(packages) {
+  return [...packages].find(([, pj]) => pj.name === '@camstack/server')?.[0]
+}
+
+/** Names `@camstack/server` pins. Empty when the workspace has no server. */
+function serverClosureNames(packages) {
+  const server = [...packages].find(([, pj]) => pj.name === '@camstack/server')
+  if (server === undefined) return new Set()
+  return new Set(
+    Object.keys(server[1].dependencies ?? {}).filter((name) => name.startsWith('@camstack/')),
+  )
+}
+
 /**
  * The two cascades, applied to a set of package DIRS.
  *
@@ -296,19 +330,24 @@ export function orderForPublish(dirs) {
  * blind spot is exactly what put the wrong `system` on the hub.
  *
  * Returns `[{ pinned, publishes }]`, empty when the closure is consistent.
+ *
+ * `verifiedUnchanged` is the exception the output check earns: a candidate
+ * whose built tarball matches the registry is not a stale copy of what this
+ * run publishes — the bytes were compared. Pinning it at the registry
+ * version is the point of dropping it. Passing a dir here without that
+ * comparison re-opens 2026-09-19.
  */
-export function staleRegistryPins(publishDirs, root = process.cwd()) {
+export function staleRegistryPins(publishDirs, root = process.cwd(), options = {}) {
   const packages = readWorkspace(root)
   const publishing = new Set([...publishDirs].filter((dir) => packages.has(dir)))
+  const verified = new Set(options.verifiedUnchanged ?? [])
   const serverEntry = [...packages].find(([, pj]) => pj.name === '@camstack/server')
   if (serverEntry === undefined) return []
-  const closureNames = new Set(
-    Object.keys(serverEntry[1].dependencies ?? {}).filter((name) => name.startsWith('@camstack/')),
-  )
+  const closureNames = serverClosureNames(packages)
   const bundles = bundledSources(root, packages)
   const stale = []
   for (const [dir, pj] of packages) {
-    if (!closureNames.has(pj.name) || publishing.has(dir)) continue
+    if (!closureNames.has(pj.name) || publishing.has(dir) || verified.has(dir)) continue
     for (const target of bundles.get(dir) ?? []) {
       if (publishing.has(target)) stale.push({ pinned: dir, publishes: target })
     }
@@ -319,13 +358,58 @@ export function staleRegistryPins(publishDirs, root = process.cwd()) {
 }
 
 export function resolvePublishSet(changedFiles, root = process.cwd()) {
+  return applyCascades(directOwners(changedFiles, root), root)
+}
+
+/**
+ * Split the cascade into packages that publish unconditionally and packages
+ * selected ONLY because they bundle something in that set.
+ *
+ * `dirs` is the pre-cascade set: own files, `force_packages`, nx dependents,
+ * `scope=all`. Those publish. A bundler `applyCascades` adds on top of them
+ * is a candidate (`publish-output.mjs` keeps it only when the built output
+ * differs). The server is never a candidate — a closure member reaches a
+ * node through it, or it was named directly.
+ */
+export function partitionPublishSet(dirs, root = process.cwd()) {
   const packages = readWorkspace(root)
-  const direct = new Set()
-  for (const file of changedFiles) {
-    const dir = ownerOf(file)
-    if (dir !== null && packages.has(dir)) direct.add(dir)
+  const known = [...new Set(dirs)].filter((dir) => packages.has(dir))
+  const all = applyCascades(known, root)
+  const inputPublic = new Set(known.filter((dir) => packages.get(dir).private !== true))
+  const server = serverPackageDir(packages)
+  const candidates = all.filter((dir) => !inputPublic.has(dir) && dir !== server)
+  const keep = all.filter((dir) => inputPublic.has(dir) || dir === server)
+  const serverFromClosure = server !== undefined && all.includes(server) && !inputPublic.has(server)
+  return { keep, candidates, all, serverFromClosure }
+}
+
+/**
+ * Drop candidates that are not in `changedCandidates`. When the server was
+ * pulled in only by the closure and nothing left in the set is a closure
+ * member, drop the server too — its pins would not change.
+ */
+export function finalizePublishSet(partition, changedCandidates, root = process.cwd()) {
+  const packages = readWorkspace(root)
+  const changed = changedCandidates instanceof Set ? changedCandidates : new Set(changedCandidates)
+  const server = serverPackageDir(packages)
+  const dropped = []
+  const selected = []
+  for (const dir of partition.keep) {
+    if (dir === server) continue
+    selected.push(dir)
   }
-  return applyCascades(direct, root)
+  for (const dir of partition.candidates) {
+    if (changed.has(dir)) selected.push(dir)
+    else dropped.push(dir)
+  }
+  if (server !== undefined && partition.keep.includes(server)) {
+    const closure = serverClosureNames(packages)
+    const stillNeeded =
+      !partition.serverFromClosure || selected.some((dir) => closure.has(packages.get(dir)?.name))
+    if (stillNeeded) selected.push(server)
+    else dropped.push(server)
+  }
+  return { publish: orderForPublish(selected), dropped }
 }
 
 const invokedDirectly = process.argv[1]?.endsWith('publish-scope.mjs') === true

@@ -63,19 +63,31 @@ it is operator-only (D704).
 | `bump` | `patch` | `patch` / `minor` / `major` |
 | `scope` | `affected` | `affected` (changed since the last `publish-*` tag) or `all` |
 | `include_dependents` | `false` | OFF = only packages whose OWN files changed. ON = the full nx-affected cascade — only for a deliberate change that must propagate to every dependent |
-| `force_packages` | `""` | comma-separated extras |
+| `force_packages` | `""` | comma-separated extras, always published (not demoted to a bundle candidate) |
 | `exact_version` | `""` | pin every selected package to one version (restart a line) |
+| `dry_run` | `false` | build, print the final set and each output decision, do not bump or publish |
 
 ```bash
 gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected -f include_dependents=false
+gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected -f dry_run=true
 gh run list --workflow="Publish Packages" --limit 1
 gh run watch <run-id>
 ```
 
-**A capability change** (`*.cap.ts`) must also force `@camstack/system`, which
-bundles the cap definitions the hub serves and which nx-affected does not mark
-changed for an edit under `packages/types`:
-`-f force_packages=@camstack/system,@camstack/server`.
+**A package the bundle cascade adds is published only when its built output
+changes.** Own files, `force_packages` and `include_dependents` still publish
+unconditionally, and `@camstack/server` still publishes when a closure member
+does. A bundler selected only because it inlines something (admin pages
+inlining `ui-library`, `system` inlining `types`) is hashed against the
+registry tarball after the build. The same bytes → dropped, and the server
+keeps the pin it already has. `dry_run=true` prints one line per package
+(`bundle unchanged` or `dist differs: N files`) and stops before the bump.
+
+**A capability change** (`*.cap.ts`) selects `@camstack/system` as that kind
+of candidate, because system inlines the cap definitions the hub serves.
+The output check publishes system when those bytes differ, and
+`@camstack/server` with it. `force_packages=@camstack/system,@camstack/server`
+still publishes both even when the built output matches.
 
 The workflow bumps, builds, publishes, commits the bumps as
 `chore: publish packages (patch) [skip ci]` and pushes a `publish-<ts>` tag
