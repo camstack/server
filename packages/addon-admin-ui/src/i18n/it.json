@@ -1689,7 +1689,29 @@
     "viewTable": "Tabella",
     "viewGrid": "Griglia",
     "viewLabel": "Vista",
-    "openNamed": "Apri {{name}}"
+    "openNamed": "Apri {{name}}",
+    "addMatter": {
+      "title": "Aggiungi dispositivo Matter",
+      "help": "In Home Assistant apri il dispositivo e scegli Condividi dispositivo. Incolla qui il codice numerico o il codice MT:. Il dispositivo resta anche in Home Assistant.",
+      "noBroker": "Crea prima il fabric Matter dalle impostazioni di questa integrazione.",
+      "code": "Codice di abbinamento",
+      "progress": "Avanzamento dell'abbinamento",
+      "working": "Aggiunta in corso…",
+      "submit": "Aggiungi dispositivo",
+      "failure": {
+        "expired": "Il codice di abbinamento è scaduto. Condividi di nuovo il dispositivo e incolla il nuovo codice.",
+        "notFound": "Nessun dispositivo Matter con quel codice trovato sulla rete.",
+        "wrongCode": "Il codice di abbinamento è stato rifiutato.",
+        "invalid": "Inserisci un codice manuale di 11 o 21 cifre, oppure un codice che inizia con MT:.",
+        "unknown": "Abbinamento non riuscito."
+      },
+      "phase": {
+        "discovering": "Ricerca del dispositivo",
+        "pase": "Apertura di una sessione sicura",
+        "commissioning": "Aggiunta a CamStack",
+        "done": "Aggiunto"
+      }
+    }
   },
   "serverManagement": {
     "title": "Gestione server",

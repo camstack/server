@@ -1689,7 +1689,29 @@
     "viewTable": "Table",
     "viewGrid": "Grid",
     "viewLabel": "Layout",
-    "openNamed": "Open {{name}}"
+    "openNamed": "Open {{name}}",
+    "addMatter": {
+      "title": "Add Matter device",
+      "help": "In Home Assistant, open the device and choose Share device. Paste the numeric code or the MT: code here. The device stays in Home Assistant.",
+      "noBroker": "Create the Matter fabric from this integration’s settings first.",
+      "code": "Pairing code",
+      "progress": "Commissioning progress",
+      "working": "Adding…",
+      "submit": "Add device",
+      "failure": {
+        "expired": "The pairing code expired. Share the device again and paste the new code.",
+        "notFound": "No Matter device with that code was found on the network.",
+        "wrongCode": "The pairing code was rejected.",
+        "invalid": "Enter an 11-digit or 21-digit manual code, or a code that starts with MT:.",
+        "unknown": "Commissioning failed."
+      },
+      "phase": {
+        "discovering": "Looking for the device",
+        "pase": "Opening a secure session",
+        "commissioning": "Adding it to CamStack",
+        "done": "Added"
+      }
+    }
   },
   "ai": {
     "addProfile": "Add profile",

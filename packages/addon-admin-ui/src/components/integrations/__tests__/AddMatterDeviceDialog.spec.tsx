@@ -103,8 +103,8 @@ describe('AddMatterDeviceDialog', () => {
     harness.publish.mockImplementation(() => undefined)
     render(renderDialog())
     pasteAndSubmit('MT:ABCD')
-    expect(screen.getByText('PASE')).toBeTruthy()
-    expect(screen.getByText('Discovering')).toBeTruthy()
+    expect(screen.getByText('Opening a secure session')).toBeTruthy()
+    expect(screen.getByText('Looking for the device')).toBeTruthy()
   })
 
   it('offers adopt once commissioning finishes', () => {
