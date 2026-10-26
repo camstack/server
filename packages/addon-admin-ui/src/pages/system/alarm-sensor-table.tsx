@@ -33,11 +33,12 @@ import {
   DeviceList,
   type DeviceListColumn,
   Switch,
+  useDeviceLabelById,
   useUiText,
 } from '@camstack/ui-library'
 import { adminUiText } from '../../i18n/ui-text-bridge'
 import { Loader2 } from 'lucide-react'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactElement } from 'react'
 import {
   type AlarmCoverageCell,
   type AlarmSensorCell,
@@ -221,6 +222,48 @@ function WordsCell({ name, variant, words }: WordsCellProps) {
 /** Hidden below `sm`: the phone keeps Name, State and the switch. */
 const WIDE_ONLY = 'hidden sm:table-cell'
 
+interface AlarmDeviceNameProps {
+  readonly id: number
+  readonly stored: string
+}
+
+function AlarmDeviceName({ id, stored }: AlarmDeviceNameProps): ReactElement {
+  const label = useDeviceLabelById(id, 'compact', stored)
+  return <span className="truncate text-xs font-medium text-foreground">{label}</span>
+}
+
+interface AlarmNamedSwitchProps {
+  readonly deviceId: number
+  readonly storedName: string
+  readonly phraseKey: string
+  readonly phraseFallback: string
+  readonly checked: boolean
+  readonly onCheckedChange: (next: boolean) => void
+  readonly disabled: boolean
+  readonly testId: string
+  readonly busy: boolean
+  readonly waiting: boolean
+  readonly title?: string
+}
+
+function AlarmNamedSwitch(props: AlarmNamedSwitchProps): ReactElement {
+  const name = useDeviceLabelById(props.deviceId, 'compact', props.storedName)
+  return (
+    <Switch
+      checked={props.checked}
+      onCheckedChange={props.onCheckedChange}
+      disabled={props.disabled}
+      data-device-id={String(props.deviceId)}
+      data-testid={props.testId}
+      aria-label={i18n.t(props.phraseKey, props.phraseFallback, { name })}
+      aria-busy={props.busy ? true : undefined}
+      aria-disabled={props.waiting ? true : undefined}
+      className={props.waiting ? 'opacity-50' : undefined}
+      {...(props.title !== undefined ? { title: props.title } : {})}
+    />
+  )
+}
+
 function sensorColumns(props: AlarmSensorTableProps): readonly DeviceListColumn<AlarmSensorRow>[] {
   const { mode, inFlight, onSwitch, zones, disabled } = props
   return [
@@ -235,7 +278,7 @@ function sensorColumns(props: AlarmSensorTableProps): readonly DeviceListColumn<
             data-testid="alarm-cell-name"
             data-muted={r.listedUncovered ? 'true' : undefined}
           >
-            <span className="truncate text-xs font-medium text-foreground">{r.device.name}</span>
+            <AlarmDeviceName id={r.device.id} stored={r.device.name} />
             {place === '' ? null : (
               <span
                 className="truncate text-[10px] text-foreground-subtle"
@@ -286,21 +329,17 @@ function sensorColumns(props: AlarmSensorTableProps): readonly DeviceListColumn<
         return (
           <span className="inline-flex items-center justify-end gap-1">
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-            <Switch
+            <AlarmNamedSwitch
+              deviceId={r.device.id}
+              storedName={r.device.name}
+              phraseKey="system.alarmSensorTable.blocksArming2"
+              phraseFallback="Blocks arming: {{name}}"
               checked={r.blocks}
               onCheckedChange={(next) => onSwitch(r, 'blocks', next)}
               disabled={disabled}
-              data-device-id={String(r.device.id)}
-              data-testid="alarm-switch-blocks"
-              aria-label={i18n.t(
-                'system.alarmSensorTable.blocksArming2',
-                'Blocks arming: {{name}}',
-                { name: r.device.name },
-              )}
-              aria-busy={busy ? true : undefined}
-              // Not `disabled`: a press is still answered BY NAME (the refusal line).
-              aria-disabled={waiting ? true : undefined}
-              className={waiting ? 'opacity-50' : undefined}
+              testId="alarm-switch-blocks"
+              busy={busy}
+              waiting={waiting}
             />
           </span>
         )
@@ -333,24 +372,21 @@ function sensorColumns(props: AlarmSensorTableProps): readonly DeviceListColumn<
         return (
           <span className="inline-flex items-center justify-end gap-1">
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-            <Switch
+            <AlarmNamedSwitch
+              deviceId={r.device.id}
+              storedName={r.device.name}
+              phraseKey="system.alarmSensorTable.secureOnArmCloseLock"
+              phraseFallback="Secure on arm (close/lock/off): {{name}}"
               checked={r.secureOnArm}
               onCheckedChange={(next) => onSwitch(r, 'secureOnArm', next)}
               disabled={disabled}
-              data-device-id={String(r.device.id)}
-              data-testid="alarm-switch-secure"
-              aria-label={i18n.t(
-                'system.alarmSensorTable.secureOnArmCloseLock',
-                'Secure on arm (close/lock/off): {{name}}',
-                { name: r.device.name },
-              )}
+              testId="alarm-switch-secure"
+              busy={busy}
+              waiting={waiting}
               title={i18n.t(
                 'system.alarmSensorTable.closeLockOrTurnOff',
                 'Close, lock, or turn off when this mode arms',
               )}
-              aria-busy={busy ? true : undefined}
-              aria-disabled={waiting ? true : undefined}
-              className={waiting ? 'opacity-50' : undefined}
             />
           </span>
         )

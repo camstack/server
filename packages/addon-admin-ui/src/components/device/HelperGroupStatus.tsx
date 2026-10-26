@@ -16,7 +16,11 @@ import {
   StatCard,
   useCoreBlocksGetComposition,
   useDeviceManagerListAll,
+  useDeviceNameIndex,
+  useDeviceNameNouns,
   useDeviceStateGetSnapshot,
+  resolveDeviceLabel,
+  useDeviceLabelById,
 } from '@camstack/ui-library'
 import { Boxes } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
@@ -60,6 +64,8 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
   const snapshot = useDeviceStateGetSnapshot({ deviceId }, { enabled: blockId !== null })
   const fleet = useDeviceManagerListAll({ projection: 'slim' }, { enabled: blockId !== null })
   const [lives, setLives] = useState<ReadonlyMap<string, MemberLive>>(() => new Map())
+  const nameIndex = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
   const report = useCallback((key: string, live: MemberLive) => {
     setLives((current) => {
       const previous = current.get(key)
@@ -196,7 +202,14 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
           }))}
           fleetKind={fleetKind}
           snapshot={snapshotRead}
-          nameOf={(id) => rows.find((row) => row.id === id)?.name ?? String(id)}
+          nameOf={(id) => {
+            if (nameIndex === null) {
+              return rows.find((row) => row.id === id)?.name ?? String(id)
+            }
+            const known = nameIndex.byId.get(id)
+            if (known === undefined) return String(id)
+            return resolveDeviceLabel(known, 'compact', nameIndex, nouns)
+          }}
         />
       </div>
     </SectionCard>
@@ -230,7 +243,9 @@ function MemberProbe({
     deviceOnline: fleetKind === 'answered' ? (row === null ? null : row.online) : true,
     field,
   })
-  const name = row?.name ?? member.source.stableId
+  const stored = row?.name ?? member.source.stableId
+  const formatted = useDeviceLabelById(row?.id ?? 0, 'compact', stored)
+  const name = row === null ? stored : formatted
   const key = memberKey(member)
   useEffect(() => {
     onLive(key, { name, presence })

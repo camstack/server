@@ -11,7 +11,10 @@ import {
 import {
   HISTORY_SELECTION_MAX,
   normalizeSelection,
+  resolveDeviceLabel,
   seriesRefId,
+  type DeviceNameIndex,
+  type DeviceNameNouns,
   type HistorySeriesRef,
 } from '@camstack/ui-library'
 
@@ -104,6 +107,18 @@ export function buildCatalog(
 /** What the picker's search matches: subject, room, metric, key, unit. */
 export function candidateSearchText(c: SeriesCandidate): string {
   return [c.subjectName, c.location, c.metric, c.info.key, c.info.unit ?? '', c.nodeId].join(' ')
+}
+
+/** The name the history charts and picker paint. Search keeps `subjectName`. */
+export function seriesSubjectLabel(
+  candidate: SeriesCandidate,
+  index: DeviceNameIndex | null,
+  nouns: DeviceNameNouns,
+): string {
+  if (candidate.ref.subject.kind !== 'device' || index === null) return candidate.subjectName
+  const device = index.byId.get(candidate.ref.subject.deviceId)
+  if (device === undefined) return candidate.subjectName
+  return resolveDeviceLabel(device, 'compact', index, nouns)
 }
 
 // ── Built-in panels ─────────────────────────────────────────────────────

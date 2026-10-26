@@ -67,6 +67,7 @@ import { Badge } from '../primitives/badge'
 import { Button } from '../primitives/button'
 import { CopyButton } from './copy-button'
 import type { DeviceItemDevice } from './device-item/helpers'
+import { DeviceName, useDeviceLabel } from './device-name'
 import { DeviceList } from './device-list'
 import type { DeviceListColumn, GenericPageSizeSelector } from './device-list/generic-mode'
 import { PAGE_SIZE_ALL } from '../hooks/use-persisted-page-size'
@@ -324,6 +325,26 @@ interface ExportRowToggleProps {
   readonly onToggle: (device: DeviceItemDevice, action: ExportAction) => void
 }
 
+interface ExportSelectCellProps {
+  readonly device: DeviceItemDevice
+  readonly checked: boolean
+  readonly onToggle: () => void
+}
+
+function ExportSelectCell({ device, checked, onToggle }: ExportSelectCellProps): ReactElement {
+  const t = useUiText()
+  const label = useDeviceLabel(device, 'compact')
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onToggle}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={t('uiLibrary.deviceExport.select', 'Select {{name}}', { name: label })}
+    />
+  )
+}
+
 /**
  * Per-row Expose/Exposed toggle. Reflects whether the row's device is exposed
  * to THIS exporter and flips it through the SAME runner the bulk buttons use —
@@ -341,6 +362,7 @@ function ExportRowToggle({
   onToggle,
 }: ExportRowToggleProps): ReactElement {
   const t = useUiText()
+  const deviceLabel = useDeviceLabel(device, 'compact')
   const handleClick = (e: MouseEvent): void => {
     e.stopPropagation()
     if (busy) return
@@ -354,8 +376,8 @@ function ExportRowToggle({
       onClick={handleClick}
       aria-label={
         exposed
-          ? t('uiLibrary.deviceExport.unexposeDevice', 'Unexpose {{name}}', { name: device.name })
-          : t('uiLibrary.deviceExport.exposeDevice', 'Expose {{name}}', { name: device.name })
+          ? t('uiLibrary.deviceExport.unexposeDevice', 'Unexpose {{name}}', { name: deviceLabel })
+          : t('uiLibrary.deviceExport.exposeDevice', 'Expose {{name}}', { name: deviceLabel })
       }
       title={
         exposed
@@ -699,14 +721,10 @@ export function DeviceExportPanel({
         header: '',
         headerClassName: 'w-8',
         cell: (device) => (
-          <input
-            type="checkbox"
+          <ExportSelectCell
+            device={device}
             checked={selectedIds.has(String(device.id))}
-            onChange={() => toggleSelection(String(device.id))}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={t('uiLibrary.deviceExport.select', 'Select {{name}}', {
-              name: device.name,
-            })}
+            onToggle={() => toggleSelection(String(device.id))}
           />
         ),
       },
@@ -729,7 +747,11 @@ export function DeviceExportPanel({
         key: 'name',
         header: t('uiLibrary.deviceExport.colName', 'Name'),
         cell: (device) => (
-          <span className="text-xs font-medium text-foreground">{device.name}</span>
+          <DeviceName
+            device={device}
+            form="compact"
+            className="text-xs font-medium text-foreground"
+          />
         ),
       },
       {

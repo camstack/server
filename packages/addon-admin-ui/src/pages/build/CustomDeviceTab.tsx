@@ -16,6 +16,7 @@ import {
   ItemFormDialog,
   TABLE_SCROLL_MAX_H,
   useCoreBlocksListCompositions,
+  useDeviceLabelById,
   useItemFormUrl,
 } from '@camstack/ui-library'
 import { Boxes } from 'lucide-react'
@@ -398,13 +399,15 @@ function RowName({ row }: RowNameProps) {
 /** Composed names open the device. Customizations open its Customize tab. */
 function RowNameLink({ row }: RowNameProps) {
   const { t } = useTranslation()
+  const label = useDeviceLabelById(row.reportedDeviceId ?? 0, 'compact', row.name)
+  const shown = row.reportedDeviceId === null ? row.name : label
   if (row.reportedDeviceId === null) {
     if (row.kind === 'composed') {
       return <span className="text-xs font-medium text-foreground">{row.name}</span>
     }
     return (
       <span className="text-xs text-foreground-subtle">
-        {t('build.customDeviceTab.notReported', { name: row.name })}
+        {t('build.customDeviceTab.notReported', { name: shown })}
       </span>
     )
   }
@@ -416,7 +419,7 @@ function RowNameLink({ row }: RowNameProps) {
       className="text-xs font-medium text-foreground hover:underline"
       onClick={(e) => e.stopPropagation()}
     >
-      {row.name}
+      {shown}
     </Link>
   )
 }

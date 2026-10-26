@@ -1,4 +1,4 @@
-import { resolveParentNames } from '../../lib/device-parent'
+import { resolveParentNames } from '@camstack/ui-library'
 /**
  * Notification RULES management page (slice D1 — list + CRUD shell).
  *

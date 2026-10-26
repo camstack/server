@@ -63,6 +63,7 @@ import {
   SectionCard,
   SegmentedChoice,
   Select,
+  useDeviceLabel,
   useDeviceManagerListAll,
   useDeviceSnapshotImage,
   useSystem,
@@ -530,10 +531,10 @@ export function AiTestChatPage() {
 
           {attachMode === 'snapshot' && (
             <CameraPicker
-              onPick={(device) => {
+              onPick={(device, label) => {
                 setPending({
                   ref: { kind: 'snapshot', deviceId: device.id },
-                  label: t('ai.snapshotOf', 'Snapshot of {{name}}', { name: device.name }),
+                  label: t('ai.snapshotOf', 'Snapshot of {{name}}', { name: label }),
                 })
                 setAttachMode('none')
               }}
@@ -708,7 +709,7 @@ function AttachmentThumb({ attachment }: { readonly attachment: TestChatAttachme
 // ── Pickers ─────────────────────────────────────────────────────────
 
 interface CameraPickerProps {
-  readonly onPick: (device: DeviceInfo) => void
+  readonly onPick: (device: DeviceInfo, label: string) => void
 }
 
 function CameraPicker({ onPick }: CameraPickerProps) {
@@ -744,14 +745,15 @@ function CameraTile({
   onPick,
 }: {
   readonly device: DeviceInfo
-  readonly onPick: (device: DeviceInfo) => void
+  readonly onPick: (device: DeviceInfo, label: string) => void
 }) {
   const { t } = useTranslation()
+  const label = useDeviceLabel(device, 'compact')
   const { src } = useDeviceSnapshotImage(device.id, { width: PICKER_THUMB_W })
   return (
     <button // ui-check-ok: camera tile in the picker grid; Button chrome fights the card
       type="button"
-      onClick={() => onPick(device)}
+      onClick={() => onPick(device, label)}
       className="overflow-hidden rounded-md border border-border bg-surface text-left transition-colors hover:border-primary/50"
     >
       <span className="block aspect-video w-full bg-background-elevated">
@@ -761,7 +763,7 @@ function CameraTile({
       </span>
       <span className="flex items-center gap-1 px-2 py-1">
         {!device.online && <Badge variant="warning">{t('common.off')}</Badge>}
-        <span className="truncate text-[10px] text-foreground">{device.name}</span>
+        <span className="truncate text-[10px] text-foreground">{label}</span>
       </span>
     </button>
   )

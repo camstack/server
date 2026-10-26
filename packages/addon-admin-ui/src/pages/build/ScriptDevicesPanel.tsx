@@ -10,7 +10,7 @@
  */
 
 import { coreBlockAddonId } from '@camstack/types'
-import { Badge, useDeviceManagerListAll } from '@camstack/ui-library'
+import { Badge, DeviceName, useDeviceManagerListAll } from '@camstack/ui-library'
 import { Loader2 } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -119,7 +119,16 @@ export function ScriptDevicesPanel({ blockId }: ScriptDevicesPanelProps): ReactN
                   className="text-sm font-medium hover:underline"
                   title={t('build.scriptDevicesPanel.openDeviceDetail', 'Open device detail')}
                 >
-                  {device.name}
+                  <DeviceName
+                    device={{
+                      id: device.id,
+                      name: device.name,
+                      type: device.type,
+                      stableId: device.stableId ?? '',
+                      parentDeviceId: null,
+                    }}
+                    form="compact"
+                  />
                 </Link>
                 <Badge variant="info" style="outline">
                   {device.type}

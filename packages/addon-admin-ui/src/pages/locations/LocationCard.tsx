@@ -30,12 +30,14 @@ import {
   Button,
   DataTable,
   DataTableFilterBar,
+  DeviceName,
   IconButton,
   Input,
   KebabMenu,
   SECTION_CARD,
   SECTION_HEADER,
   useDataTableFilter,
+  useDeviceLabel,
   type DataColumn,
   type DataTableFilterConfig,
   type KebabMenuItem,
@@ -44,7 +46,7 @@ import { ChevronDown, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { DeviceTypeIcon, StatusDot } from './device-glyphs'
+import { DeviceTypeIcon, LabeledStatusDot } from './device-glyphs'
 import { LocationDescriptionField } from './LocationDescriptionField'
 import { LocationZoneField } from './LocationZoneField'
 import { LocationIconPicker } from './LocationIconPicker'
@@ -55,7 +57,7 @@ import {
   type LocationCardMemberRow,
   type LocationCardRow,
 } from './location-card-rows'
-import { linkedChildren, type SiteDevice } from './site-locations'
+import { linkedChildren, siteDeviceFields, type SiteDevice } from './site-locations'
 
 export interface LocationCardProps {
   readonly name: string
@@ -162,7 +164,7 @@ export function LocationCard({
       notSortableReason: t('locations.columns.noSort'),
       render: (row) => (
         <span className="flex items-center gap-1.5">
-          <StatusDot online={row.device.online} deviceName={row.device.name} />
+          <LabeledStatusDot device={row.device} />
           <span className="text-xs text-foreground-muted">
             {row.device.online ? t('common.online') : t('common.offline')}
           </span>
@@ -326,6 +328,7 @@ interface MemberCellProps {
 function MemberCell({ row, onToggle }: MemberCellProps) {
   const { t } = useTranslation()
   const { device, accessories, open } = row
+  const label = useDeviceLabel(siteDeviceFields(device), 'compact')
   const Chevron = open ? ChevronDown : ChevronRight
   return (
     <span className="flex items-center gap-1.5">
@@ -339,7 +342,7 @@ function MemberCell({ row, onToggle }: MemberCellProps) {
             open
               ? 'locations.locationCard.collapseAccessories'
               : 'locations.locationCard.expandAccessories',
-            { count: accessories.length, name: device.name },
+            { count: accessories.length, name: label },
           )}
           className="h-auto shrink-0 gap-0.5 p-0.5 text-foreground-subtle hover:text-foreground"
         >
@@ -355,7 +358,7 @@ function MemberCell({ row, onToggle }: MemberCellProps) {
         to={`/devices/${String(device.id)}`}
         className="min-w-0 truncate text-xs text-foreground hover:underline"
       >
-        {device.name}
+        <DeviceName device={siteDeviceFields(device)} form="compact" />
       </Link>
     </span>
   )
@@ -366,7 +369,7 @@ interface AccessoryCellProps {
 }
 
 function AccessoryCell({ row }: AccessoryCellProps) {
-  const { device } = row
+  const { device, parent } = row
   return (
     <span className="flex items-center gap-1.5 pl-6">
       <span aria-hidden="true" className="text-[10px] text-foreground-subtle">
@@ -377,7 +380,11 @@ function AccessoryCell({ row }: AccessoryCellProps) {
         to={`/devices/${String(device.id)}`}
         className="min-w-0 truncate text-xs text-foreground-muted hover:underline"
       >
-        {device.name}
+        <DeviceName
+          device={siteDeviceFields(device)}
+          form="nested"
+          parent={siteDeviceFields(parent)}
+        />
       </Link>
     </span>
   )

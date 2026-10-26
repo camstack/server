@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**213 units · 7128 source files · 200 units claimed by at least one document (7066 files).**
+**213 units · 7127 source files · 200 units claimed by at least one document (7065 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -41,8 +41,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline/src/pipeline-runner` | 57 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-provider-reolink` | 56 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +22 more, 2 ADRs | 2026-10-26 |
 | `packages/types/src/composition` | 54 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +10 more | 2026-10-26 |
-| `packages/addon-admin-ui/src/lib` | 51 | `admin-ui` | `architecture/ui.md`, `ui/admin-patterns.md`, `ui/conventions.md` _(covers)_, +20 more, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-hikvision` | 51 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +12 more, 2 ADRs | 2026-10-26 |
+| `packages/addon-admin-ui/src/lib` | 50 | `admin-ui` | `architecture/ui.md`, `ui/admin-patterns.md`, `ui/conventions.md` _(covers)_, +20 more, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-dreame` | 50 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, `decisions/adr-0371-a-device-signal-is-a-level-the-recorder-holds-and-a-publisher-names-the-slot-its-stream-is.md`, +3 more, 2 ADRs | 2026-10-26 |
 | `packages/types/src/device` | 50 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md`, +24 more, 1 ADR | 2026-10-26 |
 | `packages/addon-ai` | 49 | `ai` | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 |

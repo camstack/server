@@ -7,8 +7,14 @@
  * Integrations pages already call) and this module only reshapes it.
  */
 import type { DeviceInfo } from '@camstack/types'
-import { resolveParentNames } from './device-parent'
-import { deviceIntegrationResolver, deviceTypeMeta } from '@camstack/ui-library'
+import {
+  deviceNameNouns,
+  indexDeviceNames,
+  resolveDeviceLabel,
+  resolveParentNames,
+  deviceIntegrationResolver,
+  deviceTypeMeta,
+} from '@camstack/ui-library'
 import type { AddonPageInfo } from '../layouts/AddonPageLoader'
 import type { SearchItem } from './global-search'
 import { type NavSection, resolveAddonPageIcon } from './nav-items'
@@ -84,21 +90,27 @@ export function buildDeviceSearchItems(
   // lookup inside the same array, and doing it inside the map would make this
   // quadratic on a 1 096-device fleet.
   const parents = resolveParentNames(devices)
+  const nouns = deviceNameNouns(i18n.language.startsWith('it') ? 'it' : 'en')
+  const nameIndex = indexDeviceNames(devices)
   // The integration a row BELONGS to, by the one rule (`integrationId`
   // first, `addonId` for legacy rows) — so "blocks" finds a composed device
   // served by `composer` (D659), the way the Devices filter files it.
   const integrationOf = deviceIntegrationResolver(integrations)
   return devices.map((device) => {
     const idText = String(device.id)
-    const label = device.name || device.stableId || `#${idText}`
+    const formatted = resolveDeviceLabel(device, 'compact', nameIndex, nouns)
+    const label = formatted.length > 0 ? formatted : device.stableId || `#${idText}`
     const parentName = parents.get(device.id)
+    const parentInTitle =
+      parentName !== undefined &&
+      (label === parentName || label.split(SUBTITLE_SEPARATOR).includes(parentName))
     const resolved = integrationOf(device)
     const integrationName = resolved.kind === 'resolved' ? resolved.integration.name : ''
     return {
       key: `device:${idText}`,
       domain: 'device' as const,
       label,
-      subtitle: deviceSubtitle(device, idText, label, parentName),
+      subtitle: deviceSubtitle(device, idText, label, parentInTitle ? undefined : parentName),
       // Exact-only (see `SearchItem.identifiers`). `#102` is here as well as
       // `102` because `deviceSubtitle` PRINTS the `#` form — an operator who
       // copies what the row showed him must not get zero results back.
@@ -109,6 +121,7 @@ export function buildDeviceSearchItems(
       // inside the Baby monitor, which is how an operator actually looks for a
       // child device whose own name says nothing about where it lives.
       keywords: [
+        ...(device.name.length > 0 && device.name !== label ? [device.name] : []),
         device.stableId,
         device.addonId,
         device.location ?? '',

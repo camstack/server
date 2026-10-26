@@ -12,11 +12,13 @@ import type { ExtensionCandidate } from '@camstack/types'
 import {
   Button,
   DataTable,
+  DeviceName,
   SECTION_CARD,
   SECTION_HEADER,
   useDeviceExtensionListCandidates,
   useDeviceExtensionListSlots,
   useDeviceExtensionSetSlot,
+  useDeviceLabel,
   type DataColumn,
   type PickerItem,
 } from '@camstack/ui-library'
@@ -32,9 +34,9 @@ import {
   withLinked,
 } from '../../components/device/customize/kinds/linked-devices-model'
 import { customizePath } from '../../lib/customization-routes'
-import { DeviceTypeIcon, StatusDot } from './device-glyphs'
+import { DeviceTypeIcon, LabeledStatusDot } from './device-glyphs'
 import { QuickAddDevicesDialog } from './QuickAddDevicesDialog'
-import type { SiteDevice } from './site-locations'
+import { siteDeviceFields, type SiteDevice } from './site-locations'
 
 export interface CameraLinksSectionProps {
   readonly room: string | null
@@ -71,7 +73,7 @@ interface CameraLinksBlockProps {
 function candidateItem(c: ExtensionCandidate): PickerItem<number> {
   return {
     id: c.deviceId,
-    name: c.parentName === null ? c.name : `${c.parentName} · ${c.name}`,
+    name: c.name,
     type: c.type,
     location: c.location,
   }
@@ -79,6 +81,7 @@ function candidateItem(c: ExtensionCandidate): PickerItem<number> {
 
 function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
   const { t } = useTranslation()
+  const cameraLabel = useDeviceLabel(siteDeviceFields(camera), 'full')
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [picking, setPicking] = useState(false)
@@ -149,7 +152,11 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
               to={`/devices/${String(row.deviceId)}`}
               className="min-w-0 truncate text-xs text-foreground hover:underline"
             >
-              {name}
+              {device !== undefined ? (
+                <DeviceName device={siteDeviceFields(device)} form="compact" />
+              ) : (
+                name
+              )}
             </Link>
             {row.implied && (
               <span className="text-[10px] text-foreground-subtle">
@@ -178,7 +185,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
           <span className="text-xs text-foreground-subtle">—</span>
         ) : (
           <span className="flex items-center gap-1.5">
-            <StatusDot online={device.online} deviceName={device.name} />
+            <LabeledStatusDot device={device} />
             <span className="text-xs text-foreground-muted">
               {device.online ? t('common.online') : t('common.offline')}
             </span>
@@ -196,7 +203,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
       <header className={`${SECTION_HEADER} flex min-h-9 items-center gap-1.5`}>
         <DeviceTypeIcon type={camera.type} />
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-          {camera.name}
+          <DeviceName device={siteDeviceFields(camera)} form="full" />
         </h2>
         <Button variant="ghost" size="sm" onClick={() => navigate(customizePath(camera.id))}>
           <Link2 className="h-3.5 w-3.5" aria-hidden />
@@ -207,7 +214,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
           size="sm"
           disabled={present === null}
           onClick={() => setPicking(true)}
-          aria-label={t('locations.links.addNamed', { camera: camera.name })}
+          aria-label={t('locations.links.addNamed', { camera: cameraLabel })}
         >
           {t('locations.room.add')}
         </Button>
@@ -248,7 +255,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
         ))}
       <QuickAddDevicesDialog
         open={picking}
-        title={t('locations.links.pickTitle', { camera: camera.name })}
+        title={t('locations.links.pickTitle', { camera: cameraLabel })}
         items={items}
         listState={
           offered.status === 'error'

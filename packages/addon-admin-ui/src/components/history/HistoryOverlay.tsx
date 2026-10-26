@@ -17,6 +17,8 @@ import {
   linePoints,
   readItemId,
   stateRow,
+  useDeviceNameIndex,
+  useDeviceNameNouns,
   useHistoryReads,
   useUiText,
   type HistoryWindow,
@@ -25,7 +27,12 @@ import {
 } from '@camstack/ui-library'
 import { LineChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { readItemOf, type OverlayPart, type SeriesCandidate } from './history-page-model'
+import {
+  readItemOf,
+  seriesSubjectLabel,
+  type OverlayPart,
+  type SeriesCandidate,
+} from './history-page-model'
 
 export interface HistoryOverlayProps {
   readonly part: OverlayPart
@@ -33,10 +40,6 @@ export interface HistoryOverlayProps {
 }
 
 const SYNC_KEY = 'history-page'
-
-function labelOf(c: SeriesCandidate): string {
-  return `${c.subjectName} · ${c.metric}`
-}
 
 /**
  * A series' colour slot is its place among the series of ITS chart, in
@@ -46,6 +49,10 @@ function labelOf(c: SeriesCandidate): string {
 export function HistoryOverlay({ part, window }: HistoryOverlayProps) {
   const { t } = useTranslation()
   const ut = useUiText()
+  const nameIndex = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
+  const labelOf = (c: SeriesCandidate): string =>
+    `${seriesSubjectLabel(c, nameIndex, nouns)} · ${c.metric}`
   const all = useMemo(() => [...part.lines, ...part.states, ...part.energy], [part])
   const items = useMemo(() => all.map((c) => readItemOf(c.ref)), [all])
   const reads = useHistoryReads(items, window, false)
@@ -147,7 +154,7 @@ export function HistoryOverlay({ part, window }: HistoryOverlayProps) {
           title={t('history.page.energy', 'Energy')}
           layers={energy.map((e, slot) => ({
             id: e.c.id,
-            label: e.c.subjectName,
+            label: seriesSubjectLabel(e.c, nameIndex, nouns),
             colorIndex: slot,
           }))}
           buckets={energyBucketsMerged}

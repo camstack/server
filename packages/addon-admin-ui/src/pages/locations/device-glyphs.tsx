@@ -1,4 +1,7 @@
+import type { ReactElement } from 'react'
+import { useDeviceLabel } from '@camstack/ui-library'
 import i18n from '../../i18n/index'
+import { siteDeviceFields, type SiteDevice } from './site-locations'
 /**
  * The two glyphs every Locations row carries: a type icon and a status dot.
  *
@@ -106,6 +109,16 @@ export interface StatusDotProps {
  * cannot see colour. A colour-only status is a status half the operators do
  * not get.
  */
+interface LabeledStatusDotProps {
+  readonly device: SiteDevice
+}
+
+/** Status dot named with the same label the row paints. */
+export function LabeledStatusDot({ device }: LabeledStatusDotProps): ReactElement {
+  const label = useDeviceLabel(siteDeviceFields(device), 'compact')
+  return <StatusDot online={device.online} deviceName={label} />
+}
+
 export function StatusDot({ online, deviceName }: StatusDotProps) {
   return (
     <span

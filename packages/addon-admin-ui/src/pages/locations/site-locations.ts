@@ -1,3 +1,5 @@
+import type { DeviceNameFields } from '@camstack/ui-library'
+
 /**
  * Physical (site) locations — rooms/areas devices belong to, not storage disks.
  *
@@ -24,6 +26,21 @@ export interface SiteDevice {
    */
   readonly stableId?: string
   readonly primaryChildEntityId?: string | null
+}
+
+export function siteDeviceFields(device: SiteDevice): DeviceNameFields {
+  return {
+    id: device.id,
+    name: device.name,
+    type: device.type,
+    stableId: device.stableId ?? '',
+    parentDeviceId: device.parentDeviceId,
+    location: device.location,
+    ...(device.role !== undefined && device.role !== null ? { role: device.role } : {}),
+    ...(device.primaryChildEntityId !== undefined && device.primaryChildEntityId !== null
+      ? { primaryChildEntityId: device.primaryChildEntityId }
+      : {}),
+  }
 }
 
 export interface SiteLocationGroup {

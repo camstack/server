@@ -357,13 +357,14 @@ describe('finding a device by id — buildDeviceSearchItems + filterSearchItems'
   // gets truncated away first, so it was carrying the width without carrying
   // the answer.
   describe('buildDeviceSearchItems — the container', () => {
-    it('names the container right after the id, ahead of the opaque stableId', () => {
+    it('puts the container in the title and does not repeat it under the id', () => {
       const items = buildDeviceSearchItems([
         device({ id: 106, name: 'Baby monitor' }),
         device({ id: 642, name: 'Baby monitor Floodlight', parentDeviceId: 106 }),
       ])
       const child = items.find((i) => i.key === 'device:642')
-      expect(child?.subtitle).toBe('#642 · Baby monitor · stable-642 · camera')
+      expect(child?.label).toBe('Baby monitor · Floodlight')
+      expect(child?.subtitle).toBe('#642 · stable-642 · camera')
     })
 
     it('says nothing for a top-level device', () => {
@@ -373,7 +374,7 @@ describe('finding a device by id — buildDeviceSearchItems + filterSearchItems'
 
     it('a container outside the listing is named by id, never dropped', () => {
       const items = buildDeviceSearchItems([device({ id: 7, parentDeviceId: 99 })])
-      expect(items[0]?.subtitle).toContain('#99')
+      expect(`${items[0]?.label ?? ''} ${items[0]?.subtitle ?? ''}`).toContain('#99')
     })
 
     it('matches on the container — "baby" finds the floodlight inside it', () => {

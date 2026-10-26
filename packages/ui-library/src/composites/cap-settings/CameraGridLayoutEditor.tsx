@@ -20,6 +20,7 @@
  * would be wrong.
  */
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
+import { useDeviceLabel } from '../device-name'
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import {
   AlertCircle,
@@ -595,6 +596,14 @@ function GridCellBox({ cell, selected, onSelect, onDragStart }: GridCellBoxProps
   )
 }
 
+interface CameraOptionLabelProps {
+  readonly camera: DeviceInfo
+}
+
+function CameraOptionLabel({ camera }: CameraOptionLabelProps): string {
+  return useDeviceLabel(camera, 'compact')
+}
+
 interface CellInspectorProps {
   readonly cell: GridLayoutCell
   readonly index: number
@@ -628,7 +637,7 @@ function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspect
         >
           {cameras.map((camera) => (
             <option key={camera.id} value={String(camera.id)}>
-              {camera.name}
+              <CameraOptionLabel camera={camera} />
             </option>
           ))}
         </select>

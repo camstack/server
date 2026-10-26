@@ -9,10 +9,12 @@ import {
   HISTORY_SELECTION_MAX,
   TABLE_SCROLL_MAX_H,
   useDataTableFilter,
+  useDeviceNameIndex,
+  useDeviceNameNouns,
   type DataColumn,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
-import { candidateSearchText, type SeriesCandidate } from './history-page-model'
+import { candidateSearchText, seriesSubjectLabel, type SeriesCandidate } from './history-page-model'
 
 export interface SeriesPickerProps {
   readonly catalog: readonly SeriesCandidate[]
@@ -26,6 +28,10 @@ const KIND_NODE = 'node'
 
 export function SeriesPicker({ catalog, selected, onChange, loading }: SeriesPickerProps) {
   const { t } = useTranslation()
+  const index = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
+  const subjectOf = (candidate: SeriesCandidate): string =>
+    seriesSubjectLabel(candidate, index, nouns)
   const filter = useDataTableFilter(catalog, {
     searchText: (c) => [candidateSearchText(c)],
     facetGroups: [
@@ -43,7 +49,7 @@ export function SeriesPicker({ catalog, selected, onChange, loading }: SeriesPic
           <div className="min-w-0">
             <div className="truncate text-foreground">{c.metric}</div>
             <div className="truncate text-[10px] text-foreground-subtle">
-              {c.location !== '' ? `${c.subjectName} · ${c.location}` : c.subjectName}
+              {c.location !== '' ? `${subjectOf(c)} · ${c.location}` : subjectOf(c)}
             </div>
           </div>
         ),
@@ -56,7 +62,7 @@ export function SeriesPicker({ catalog, selected, onChange, loading }: SeriesPic
         sortValue: (c) => c.info.unit ?? '',
       },
     ],
-    [t],
+    [t, index, nouns],
   )
   const atMax = selected.size >= HISTORY_SELECTION_MAX
   return (
@@ -136,7 +142,7 @@ export function SeriesPicker({ catalog, selected, onChange, loading }: SeriesPic
             onChange(new Set([...kept, ...added].slice(0, HISTORY_SELECTION_MAX)))
           },
           isSelectable: (c) => selected.has(c.id) || !atMax,
-          rowLabel: (c) => `${c.subjectName} · ${c.metric}`,
+          rowLabel: (c) => `${subjectOf(c)} · ${c.metric}`,
           pageLabel: t('history.picker.selectPage', 'Select every series on this page'),
         }}
       />

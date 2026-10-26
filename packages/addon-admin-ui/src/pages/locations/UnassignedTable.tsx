@@ -24,19 +24,28 @@ import {
   Checkbox,
   DataTable,
   DataTableFilterBar,
+  DeviceName,
   Select,
   TEXT_HINT,
   TEXT_SECTION_LABEL,
+  resolveDeviceLabel,
   type SelectOption,
   useDataTableFilter,
+  useDeviceNameIndex,
+  useDeviceNameNouns,
   type DataColumn,
   type DataTableFilterConfig,
 } from '@camstack/ui-library'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { DeviceTypeIcon, StatusDot } from './device-glyphs'
-import { cascadeFollowerCount, unregisteredLocationOf, type SiteDevice } from './site-locations'
+import { DeviceTypeIcon, LabeledStatusDot } from './device-glyphs'
+import {
+  cascadeFollowerCount,
+  siteDeviceFields,
+  unregisteredLocationOf,
+  type SiteDevice,
+} from './site-locations'
 
 /** Only the name: the row's id is a link the operator follows, not a term
  *  they type, and the type has its own chips. */
@@ -70,6 +79,12 @@ export function UnassignedTable({
   onAssign,
 }: UnassignedTableProps) {
   const { t } = useTranslation()
+  const nameIndex = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
+  const labelOf = (device: SiteDevice): string =>
+    nameIndex === null
+      ? device.name
+      : resolveDeviceLabel(siteDeviceFields(device), 'compact', nameIndex, nouns)
   const [selectedIds, setSelectedIds] = useState<readonly number[]>([])
   const [bulkLocation, setBulkLocation] = useState('')
 
@@ -134,7 +149,7 @@ export function UnassignedTable({
           checked={selected.includes(device.id)}
           onChange={() => toggle(device.id)}
           aria-label={t('locations.unassignedTable.select', 'Select {{name}}', {
-            name: device.name,
+            name: labelOf(device),
           })}
         />
       ),
@@ -152,7 +167,7 @@ export function UnassignedTable({
               to={`/devices/${String(device.id)}`}
               className="truncate text-xs text-foreground hover:underline"
             >
-              {device.name}
+              <DeviceName device={siteDeviceFields(device)} form="compact" />
             </Link>
             {ghost !== null && (
               // The room exists on the row and nowhere else — say so instead of
@@ -177,7 +192,7 @@ export function UnassignedTable({
       sortValue: (device) => (device.online ? 1 : 0),
       render: (device) => (
         <span className="flex items-center gap-1.5">
-          <StatusDot online={device.online} deviceName={device.name} />
+          <LabeledStatusDot device={device} />
           <span className="text-xs text-foreground-muted">
             {device.online ? t('common.online') : t('common.offline')}
           </span>
@@ -203,7 +218,7 @@ export function UnassignedTable({
       render: (device) => (
         <Select
           aria-label={t('locations.unassignedTable.locationFor', 'Location for {{name}}', {
-            name: device.name,
+            name: labelOf(device),
           })}
           value=""
           disabled={busy || locations.length === 0}
