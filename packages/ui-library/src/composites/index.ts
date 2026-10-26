@@ -532,6 +532,8 @@ export {
   retrainReviewBadgeLook,
 } from './training/retrain-review-badge'
 
+export { ViewSwitch, type ViewSwitchOption, type ViewSwitchProps } from './view-switch'
+
 // --- Charts (uPlot; D899) ---
 export * from './charts/index.js'
 

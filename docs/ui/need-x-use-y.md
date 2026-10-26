@@ -34,6 +34,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | Paginate a table | `DataTable` `pageSize` (+ `page` / `onPageChange`); a remembered size: `PageSizeSelect` + `usePersistedPageSize` | — | |
 | Select rows for a bulk action | `DataTable` `selection` (needs `rowKey`) | — | Bulk = selection → preview → exact ids, never a predicate |
 | A table of devices | `DeviceList` | — | `DeviceList mode="generic"` for rows that expand |
+| Switch a list between table and grid | `ViewSwitch` | — | The control remembers nothing. The page stores the choice (the page-size pattern: guarded `localStorage`, a safe default). One option is not rendered. `DataTable` itself never becomes a card stack |
 | A label / value setting row | `SettingRow` inside `SectionCard` | `Row`, `ToggleRow`, `SelectRow`, `StepperRow` inside `Section` | `SettingRow` stacks below `sm` |
 | A form generated from a settings schema | `ConfigFormBuilder` (`AddonGlobalSettingsForm` for an addon's global schema) | — | Placement follows the schema, see `docs/architecture/ui.md` |
 | A labelled form field | `FormField` + `Input` / `Select` / `Checkbox` / `Switch` | `ToggleRow`, `SelectRow` | |

@@ -406,6 +406,12 @@
       "notes": "`DeviceList mode=\"generic\"` for rows that expand"
     },
     {
+      "need": "Switch a list between table and grid",
+      "admin": "`ViewSwitch`",
+      "viewer": "—",
+      "notes": "The control remembers nothing. The page stores the choice (the page-size pattern: guarded `localStorage`, a safe default). One option is not rendered. `DataTable` itself never becomes a card stack"
+    },
+    {
       "need": "A label / value setting row",
       "admin": "`SettingRow` inside `SectionCard`",
       "viewer": "`Row`, `ToggleRow`, `SelectRow`, `StepperRow` inside `Section`",
@@ -12497,6 +12503,51 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "ViewSwitch",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/view-switch.tsx",
+      "summary": "ViewSwitch — a segmented table | grid (or any two-or-more) choice.",
+      "props": [
+        {
+          "name": "options",
+          "type": "readonly ViewSwitchOption<T>[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "T",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(id: T) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "Names the group for assistive tech (\"Layout\")."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": "Prefix for `data-testid` on the group (`${testId}`) and each option (`${testId}-${id}`)."
         }
       ]
     },
