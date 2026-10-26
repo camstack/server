@@ -140,5 +140,8 @@ export {
   bundledCamstack,
   paintHex,
   paletteResultSchema,
+  // Which child a container presents as itself — read by the shared
+  // device-name rule, whose viewer copy may only import from this entry.
+  resolveContainerPrimaryChild,
 } from './index.js'
 export type { PaletteReady, PaletteResult, PaletteEntryId, PalettePresetId } from './index.js'
