@@ -70,7 +70,7 @@ import type { userManagementCapability } from '../capabilities/user-management.c
  */
 export interface SystemProxy {
   readonly addonPages: Pick<InferProvider<typeof addonPagesCapability>, 'listPages'>
-  readonly addons: Pick<InferProvider<typeof addonsCapability>, 'list' | 'getLogs' | 'listPackages' | 'installPackage' | 'installFromWorkspace' | 'isWorkspaceAvailable' | 'listWorkspacePackages' | 'uninstallPackage' | 'listInstallations' | 'reloadPackages' | 'searchAvailable' | 'listUpdates' | 'updatePackage' | 'rollbackPackage' | 'forceRefresh' | 'restartServer' | 'getLastRestart' | 'listFrameworkPackages' | 'listCapabilityProviders' | 'setCapabilityProviderEnabled' | 'getVersions' | 'restartAddon' | 'retryLoad' | 'getAutoUpdateSettings' | 'setAutoUpdateSettings' | 'getAddonAutoUpdate' | 'setAddonAutoUpdate' | 'applyAutoUpdateToAll' | 'custom' | 'startJob' | 'getJob' | 'listJobs' | 'cancelJob' | 'onAddonLogs'>
+  readonly addons: Pick<InferProvider<typeof addonsCapability>, 'list' | 'getLogs' | 'listPackages' | 'installPackage' | 'installFromWorkspace' | 'isWorkspaceAvailable' | 'listWorkspacePackages' | 'uninstallPackage' | 'listInstallations' | 'reloadPackages' | 'searchAvailable' | 'listUpdates' | 'updatePackage' | 'rollbackPackage' | 'forceRefresh' | 'restartServer' | 'getLastRestart' | 'listFrameworkPackages' | 'listCapabilityProviders' | 'setCapabilityProviderEnabled' | 'getVersions' | 'getPackageDocs' | 'restartAddon' | 'retryLoad' | 'getAutoUpdateSettings' | 'setAutoUpdateSettings' | 'getAddonAutoUpdate' | 'setAddonAutoUpdate' | 'applyAutoUpdateToAll' | 'custom' | 'startJob' | 'getJob' | 'listJobs' | 'cancelJob' | 'onAddonLogs'>
   readonly addonSettings: Pick<InferProvider<typeof addonSettingsCapability>, 'getGlobalSettings' | 'updateGlobalSettings' | 'getIntegrationSettings'>
   readonly addonWidgets: Pick<InferProvider<typeof addonWidgetsCapability>, 'listWidgets'>
   readonly alerts: Pick<InferProvider<typeof alertsCapability>, 'emit' | 'update' | 'list' | 'getUnreadCount' | 'markRead' | 'markAllRead' | 'dismiss'>
@@ -167,6 +167,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listCapabilityProviders: (input?: unknown) => dispatch('addons', 'listCapabilityProviders', 'query', input),
     setCapabilityProviderEnabled: (input?: unknown) => dispatch('addons', 'setCapabilityProviderEnabled', 'mutation', input),
     getVersions: (input?: unknown) => dispatch('addons', 'getVersions', 'query', input),
+    getPackageDocs: (input?: unknown) => dispatch('addons', 'getPackageDocs', 'query', input),
     restartAddon: (input?: unknown) => dispatch('addons', 'restartAddon', 'mutation', input),
     retryLoad: (input?: unknown) => dispatch('addons', 'retryLoad', 'mutation', input),
     getAutoUpdateSettings: (input?: unknown) => dispatch('addons', 'getAutoUpdateSettings', 'query', input),

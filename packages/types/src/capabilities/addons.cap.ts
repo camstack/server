@@ -137,6 +137,24 @@ const PackageVersionInfoSchema = z.object({
   distTags: z.array(z.string()).readonly(),
 })
 
+/**
+ * One published document. `ok` is markdown from the registry. `missing` means
+ * the registry answered and the file was not there. `error` is a registry or
+ * tarball failure — never an empty string standing in for either.
+ */
+const PackageDocBodySchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('ok'), markdown: z.string() }),
+  z.object({ status: z.literal('missing') }),
+  z.object({ status: z.literal('error'), message: z.string() }),
+])
+
+const PackageDocsSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  readme: PackageDocBodySchema,
+  changelog: PackageDocBodySchema,
+})
+
 const SearchResultSchema = z.object({
   name: z.string(),
   version: z.string(),
@@ -579,6 +597,19 @@ export const addonsCapability = {
       z.object({ name: z.string() }),
       z.array(PackageVersionInfoSchema).readonly(),
     ),
+    /**
+     * README and CHANGELOG for one registry package, read on the hub and
+     * cached. `version` omitted resolves the `latest` dist-tag. The browser
+     * never talks to the registry.
+     */
+    getPackageDocs: method(
+      z.object({
+        name: z.string().min(1),
+        version: z.string().min(1).optional(),
+      }),
+      PackageDocsSchema,
+      { auth: 'admin' },
+    ),
     restartAddon: method(z.object({ addonId: z.string() }), RestartAddonResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -710,6 +741,8 @@ export {
   LogStreamEntrySchema,
   PackageInstallationSchema,
   PackageInstallationsSchema,
+  PackageDocBodySchema,
+  PackageDocsSchema,
   PackageUpdateSchema,
   PackageVersionInfoSchema,
   SearchResultSchema,

@@ -4,7 +4,7 @@
 
 # Guards
 
-193 repository guards: 188 in `scripts/`,
+194 repository guards: 189 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
@@ -215,13 +215,14 @@ violation the guard was written for, so a broken guard cannot pass in silence.
 | `packages/addon-pipeline/src/__tests__/guards/per-macro-slider-reaches-the-pool.guard.ts` | A per-macro confidence slider must be able to LOWER the detector. |
 | `server/backend/src/__tests__/guards/core-router-classification.guard.ts` | GUARD: every hand-written CORE (non-cap) tRPC router is explicitly classified, and its source agrees with the classification. |
 
-## Available but not wired into CI (4)
+## Available but not wired into CI (5)
 
 Run manually, from a hook, or via another script. If one of these encodes a
 rule that matters, wiring it into `checks.yml` is a one-line change.
 
 | Guard | Refuses |
 | --- | --- |
+| `scripts/check-addon-readme-changelog.ts` | Every published addon package ships a README and a CHANGELOG, and both are in `files` so `npm pack` includes them. |
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
 | `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |

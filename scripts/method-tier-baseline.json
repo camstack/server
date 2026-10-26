@@ -13,6 +13,7 @@
   "addons.getJob": "admin",
   "addons.getLastRestart": "admin",
   "addons.getLogs": "protected",
+  "addons.getPackageDocs": "admin",
   "addons.getVersions": "protected",
   "addons.installFromWorkspace": "admin",
   "addons.installPackage": "admin",

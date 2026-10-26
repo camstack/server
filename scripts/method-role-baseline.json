@@ -21,6 +21,7 @@
   "addons.getJob": "admin",
   "addons.getLastRestart": "admin",
   "addons.getLogs": "admin",
+  "addons.getPackageDocs": "admin",
   "addons.getVersions": "admin",
   "addons.installFromWorkspace": "admin",
   "addons.installPackage": "admin",

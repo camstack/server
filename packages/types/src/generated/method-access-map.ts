@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1383 method paths across 182 capabilities.
+ * Coverage: 1384 method paths across 182 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -37,6 +37,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'addons.getJob': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.getLastRestart': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.getLogs': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'addons.getPackageDocs': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.getVersions': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.installFromWorkspace': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addons.installPackage': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

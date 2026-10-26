@@ -2086,6 +2086,7 @@ export function buildAddonsProvider(
       return { success: true as const }
     },
     getVersions: async (input) => ps.getPackageVersions(input.name),
+    getPackageDocs: async (input) => ps.getPackageDocs(input.name, input.version),
     restartAddon: async (input) => ar.restartAddon(input.addonId),
     retryLoad: async (input) => {
       await ar.retryAddonLoad(input.packageName)

@@ -92,6 +92,9 @@ export const useAddonsSetCapabilityProviderEnabled: typeof trpc.addons.setCapabi
 /** Generated alias around `trpc.addons.getVersions.useQuery`. */
 export const useAddonsGetVersions: typeof trpc.addons.getVersions.useQuery = trpc.addons.getVersions.useQuery
 
+/** Generated alias around `trpc.addons.getPackageDocs.useQuery`. */
+export const useAddonsGetPackageDocs: typeof trpc.addons.getPackageDocs.useQuery = trpc.addons.getPackageDocs.useQuery
+
 /** Generated alias around `trpc.addons.restartAddon.useMutation`. */
 export const useAddonsRestartAddon: typeof trpc.addons.restartAddon.useMutation = trpc.addons.restartAddon.useMutation
 

@@ -669,6 +669,14 @@ export function createCapRouter_addons(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getVersions(input as any)
       }),
+    getPackageDocs: adminProcedure
+      .input(addonsCapability.methods.getPackageDocs.input.loose())
+      .output(addonsCapability.methods.getPackageDocs.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('addons', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getPackageDocs(input as any)
+      }),
     restartAddon: adminProcedure
       .input(addonsCapability.methods.restartAddon.input.loose())
       .output(addonsCapability.methods.restartAddon.output)

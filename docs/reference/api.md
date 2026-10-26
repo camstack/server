@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**182 capabilities · 1383 methods.**
+**182 capabilities · 1384 methods.**
 
 ## Method index
 
@@ -47,6 +47,7 @@
 | `addons.listCapabilityProviders` | query | protected | addons |
 | `addons.setCapabilityProviderEnabled` | mutation | admin | addons |
 | `addons.getVersions` | query | protected | addons |
+| `addons.getPackageDocs` | query | admin | addons |
 | `addons.restartAddon` | mutation | admin | addons |
 | `addons.retryLoad` | mutation | admin | addons |
 | `addons.getAutoUpdateSettings` | query | admin | addons |
@@ -1487,7 +1488,7 @@
 
 ### `addons` → `addons.*`
 
-- **Source:** `packages/types/src/capabilities/addons.cap.ts:342`
+- **Source:** `packages/types/src/capabilities/addons.cap.ts:360`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonsProvider`
@@ -1515,6 +1516,7 @@
 | listCapabilityProviders | `addons.listCapabilityProviders` | query | protected | `{ capName: string }` | `({ addonId: string; mode: "singleton" \| "collection"; isActive: boolean })[]` |
 | setCapabilityProviderEnabled | `addons.setCapabilityProviderEnabled` | mutation | admin | `{ capName: string; addonId: string; enabled: boolean }` | `{ success: true }` |
 | getVersions | `addons.getVersions` | query | protected | `{ name: string }` | `PackageVersionInfoSchema[]` |
+| getPackageDocs | `addons.getPackageDocs` | query | admin | `{ name: string; version?: string }` | `{ name: string; version: string; readme: { status: "ok"; markdown: string } \| { status: "missing" } \| { status: "error"; message: string }; changelog: { status: "ok"; markdown: string } \| { status: "missing" } \| { status: "error"; message: string } }` |
 | restartAddon | `addons.restartAddon` | mutation | admin | `{ addonId: string }` | `unknown` |
 | retryLoad | `addons.retryLoad` | mutation | admin | `{ packageName: string }` | `{ success: true }` |
 | getAutoUpdateSettings | `addons.getAutoUpdateSettings` | query | admin | `void` | `AutoUpdateSettingsSchema` |

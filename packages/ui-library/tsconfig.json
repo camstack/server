@@ -15,7 +15,13 @@
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
-    "isolatedDeclarations": true
+    "isolatedDeclarations": true,
+    // This checkout's built types. A git worktree's root node_modules is the
+    // main checkout, so Node would otherwise typecheck a sibling tree's dist.
+    "paths": {
+      "@camstack/types": ["../types/dist/index.d.ts"],
+      "@camstack/types/*": ["../types/dist/*"]
+    }
   },
   "include": [
     "src"

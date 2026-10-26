@@ -38,6 +38,14 @@ import {
   DEFAULT_UPDATE_CHECK_INTERVAL_SECONDS,
 } from '../updates/update-check-scheduler.js'
 import { buildRestartMarker } from '../updates/restart-marker.js'
+import {
+  createPackageDocsReader,
+  type PackageDocs,
+  type PackageDocsReader,
+  type RegistryFetch,
+  type TarballFetch,
+} from './package-docs.js'
+import { readPackedChangelog } from './read-packed-file.js'
 import { AddonRegistryService } from './addon-registry.service'
 import { computeDistBuildId, resolveHubClosurePackageDir } from './package-dir-utils.js'
 
@@ -1084,7 +1092,7 @@ export class AddonPackageService {
         this.logger.debug('Registry returned non-ok status', {
           meta: { name, status: response.status },
         })
-        return []
+        throw new Error(`registry GET ${name} → ${response.status}`)
       }
 
       const data = await fetchJsonObject(response)
@@ -1128,7 +1136,63 @@ export class AddonPackageService {
     } catch (error: unknown) {
       const msg = errMsg(error)
       this.logger.warn('Failed to fetch versions', { meta: { name, error: msg } })
-      return cached?.versions ?? []
+      if (cached) return cached.versions
+      throw error
+    }
+  }
+
+  /**
+   * README (packument) and CHANGELOG (tarball) for one published package.
+   * Cached inside the reader. Registry failures stay typed on the document
+   * that failed — this method does not throw them away as an empty string.
+   */
+  async getPackageDocs(name: string, version?: string): Promise<PackageDocs> {
+    return this.docsReader().load(name, version)
+  }
+
+  private packageDocsReader: PackageDocsReader | null = null
+
+  private docsReader(): PackageDocsReader {
+    if (this.packageDocsReader) return this.packageDocsReader
+    const reader = createPackageDocsReader({
+      client: {
+        fetchPackument: (packageName) => this.fetchPackumentDocument(packageName),
+        fetchTarball: (url) => this.fetchTarballDocument(url),
+        readChangelog: (bytes) => readPackedChangelog(bytes),
+      },
+    })
+    this.packageDocsReader = reader
+    return reader
+  }
+
+  private async fetchPackumentDocument(name: string): Promise<RegistryFetch> {
+    const encodedName = name.replace('/', '%2F')
+    const url = `${this.resolveRegistryBase()}/${encodedName}`
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(AddonPackageService.REGISTRY_TIMEOUT_MS),
+      })
+      if (!response.ok) {
+        return { ok: false, message: `registry GET ${name} → ${response.status}` }
+      }
+      const body: unknown = await response.json()
+      return { ok: true, body }
+    } catch (error: unknown) {
+      return { ok: false, message: errMsg(error) }
+    }
+  }
+
+  private async fetchTarballDocument(url: string): Promise<TarballFetch> {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(AddonPackageService.REGISTRY_TIMEOUT_MS),
+      })
+      if (!response.ok) {
+        return { ok: false, message: `tarball GET ${url} → ${response.status}` }
+      }
+      return { ok: true, bytes: Buffer.from(await response.arrayBuffer()) }
+    } catch (error: unknown) {
+      return { ok: false, message: errMsg(error) }
     }
   }
 

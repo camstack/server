@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7089 source files · 1197 file(s) in no subsystem.**
+**31 subsystems · 7091 source files · 1197 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -41,7 +41,7 @@ commits. A generated page may not.
 | Storage, retention and backup | 120 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, `design/2026-08-03-db-remediation-plan.md` _(covers)_, +57 more, 11 ADRs | 2026-10-22 | ⚠️ |
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +19 more, 5 ADRs | 2026-10-26 | ✅ |
 | Auth, scopes and method tiers | 96 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +28 more, 3 ADRs | 2026-10-21 | ⚠️ |
-| The hub API surface | 156 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +101 more, 18 ADRs | 2026-10-26 | ⚠️ |
+| The hub API surface | 158 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +101 more, 18 ADRs | 2026-10-26 | ⚠️ |
 | Shared types, schemas and enums | 99 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-26 | ⚠️ |
 | Update, release, OTA and agent delivery | 57 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +30 more, 10 ADRs | 2026-10-25 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 264 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +41 more, 20 ADRs | 2026-10-26 | ⚠️ |
@@ -225,8 +225,8 @@ The Fastify + tRPC server itself: routers, HTTP routes, the event bus wiring and
 
 - **Owner doc**: — none
 - **Code**: `server/backend/src/api/**`, `server/backend/src/core/app-links/**`, `server/backend/src/core/addon/**`, `server/backend/src/core/addon-bridge/**`, `server/backend/src/core/addon-pages/**`, `server/backend/src/core/addon-widgets/**`, `server/backend/src/core/config/**`, `server/backend/src/core/events/**`, `server/backend/src/core/feature/**`, `server/backend/src/core/lifecycle/**`, `server/backend/src/core/repl/**`, `server/backend/src/core/*.ts`, `server/backend/src/*.ts`, `server/backend/src/server-root/**`, `packages/system/src/http/**`, `packages/system/src/events/**`, `packages/system/src/repl/**`, `packages/system/src/download/**`
-- **Files**: 156 (99 claimed by some document)
-- **Uncovered**: `server/backend/src/api/core` (10), `server/backend/src/core/addon` (10), `server/backend/src/api/trpc` (9), `server/backend/src/api` (7), `server/backend/src` (6), `server/backend/src/api/static` (2), +11 more directories
+- **Files**: 158 (99 claimed by some document)
+- **Uncovered**: `server/backend/src/core/addon` (12), `server/backend/src/api/core` (10), `server/backend/src/api/trpc` (9), `server/backend/src/api` (7), `server/backend/src` (6), `server/backend/src/api/static` (2), +11 more directories
 
 ### ⚠️ Shared types, schemas and enums
 
