@@ -337,6 +337,9 @@ describe('CustomDeviceTab', () => {
     })
 
     expect(composed.textContent).toContain('Porch (composto)')
+    expect(screen.getByRole('link', { name: 'Porch (composto)' }).getAttribute('href')).toBe(
+      '/devices/4603',
+    )
     expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy()
 
     // A customization's name opens the device it changes, on the Customize tab.

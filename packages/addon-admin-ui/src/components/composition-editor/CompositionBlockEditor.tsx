@@ -58,11 +58,12 @@ export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps)
     const deviceId = view.state.kind === 'answered' ? (view.state.state?.deviceId ?? null) : null
     return (
       <HelperWizard
+        purpose="edit"
         initial={helperDraft}
         start="parameters"
         saving={update.isPending}
-        onSave={(draft) =>
-          writeHelper(draft, async (next, name) => {
+        onSave={async (draft) => {
+          const lines = await writeHelper(draft, async (next, name) => {
             await update.mutateAsync({
               blockId: view.block.id,
               expectedUpdatedAt: view.block.updatedAt,
@@ -76,7 +77,9 @@ export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps)
             }
             await read.refetch()
           })
-        }
+          if (lines.length > 0) return { kind: 'refused', lines }
+          return { kind: 'saved', deviceId: deviceId ?? 0 }
+        }}
       />
     )
   }

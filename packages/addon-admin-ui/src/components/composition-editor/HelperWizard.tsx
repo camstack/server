@@ -1,23 +1,27 @@
 /**
  * New or edit a group helper as its template (D944). Three steps: template,
- * reducer / name / room, members via the common source selector.
+ * reducer / name, members via the common source selector. Back keeps the
+ * draft. A different template replaces it.
  */
 import { ACTIVE_CRITERIA, type GroupTemplateId, groupTemplate } from '@camstack/types'
 import { Button, Input, Select } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { type ReactNode, useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { SourceSelector } from '../device/customize/source-selector/SourceSelector'
+import { devicePath } from '../../lib/customization-routes'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
 import {
   canSaveDraft,
   draftForTemplate,
   type HelperFormDraft,
+  type HelperSaveIntent,
+  type HelperSaveResult,
   memberRequest,
   type RefusalLine,
   withActive,
   withAggregate,
   withName,
-  withRoom,
   withTemplate,
 } from './helper-form-model'
 
@@ -26,22 +30,60 @@ type WizardStep = 'template' | 'parameters' | 'members'
 export interface HelperWizardProps {
   readonly initial: HelperFormDraft | null
   readonly start: WizardStep
+  readonly purpose: 'create' | 'edit'
   readonly saving: boolean
-  readonly onSave: (draft: HelperFormDraft) => Promise<readonly RefusalLine[]>
+  readonly onSave: (draft: HelperFormDraft, intent: HelperSaveIntent) => Promise<HelperSaveResult>
+  readonly onDraftChange?: (draft: HelperFormDraft | null) => void
 }
 
-export function HelperWizard({ initial, start, saving, onSave }: HelperWizardProps): ReactNode {
+interface CreatedDevice {
+  readonly deviceId: number
+  readonly name: string
+}
+
+export function HelperWizard({
+  initial,
+  start,
+  purpose,
+  saving,
+  onSave,
+  onDraftChange,
+}: HelperWizardProps): ReactNode {
   const { t } = useTranslation()
   const [step, setStep] = useState<WizardStep>(initial === null ? 'template' : start)
   const [draft, setDraft] = useState<HelperFormDraft | null>(initial)
   const [refusals, setRefusals] = useState<readonly RefusalLine[]>([])
+  const [created, setCreated] = useState<CreatedDevice | null>(null)
+
+  useEffect(() => {
+    onDraftChange?.(draft)
+  }, [draft, onDraftChange])
 
   const pickTemplate = (templateId: GroupTemplateId): void => {
     setDraft((current) =>
       current === null ? draftForTemplate(templateId) : withTemplate(current, templateId),
     )
     setRefusals([])
+    setCreated(null)
     setStep('parameters')
+  }
+
+  const save = (intent: HelperSaveIntent): void => {
+    if (draft === null) return
+    const savingDraft = draft
+    void (async () => {
+      const result = await onSave(savingDraft, intent)
+      if (result.kind === 'refused') {
+        setRefusals(result.lines)
+        return
+      }
+      if (intent === 'again') {
+        setCreated({ deviceId: result.deviceId, name: savingDraft.name.trim() })
+        setDraft(null)
+        setStep('template')
+        setRefusals([])
+      }
+    })()
   }
 
   const request = draft === null ? null : memberRequest(draft)
@@ -49,6 +91,19 @@ export function HelperWizard({ initial, start, saving, onSave }: HelperWizardPro
 
   return (
     <div className="flex flex-col gap-3" data-testid="helper-wizard">
+      {created !== null && (
+        <p role="status" className="text-xs text-foreground" data-testid="helper-created">
+          <Trans
+            i18nKey="helper.created"
+            values={{ name: created.name === '' ? t('helper.newHelper') : created.name }}
+            components={{
+              device: (
+                <Link to={devicePath(created.deviceId)} className="text-primary hover:underline" />
+              ),
+            }}
+          />
+        </p>
+      )}
       <p className="text-[11px] text-foreground-muted">{t(`helper.step.${step}`)}</p>
       {step === 'template' && <HelperTemplatePicker onPick={pickTemplate} />}
       {step === 'parameters' && draft !== null && template !== null && (
@@ -75,6 +130,7 @@ export function HelperWizard({ initial, start, saving, onSave }: HelperWizardPro
               {t('helper.reducer')}
               <Select
                 aria-label={t('helper.reducer')}
+                data-testid="helper-reducer"
                 value={draft.aggregate}
                 onChange={(event) => {
                   const next = template.aggregates.find((item) => item === event.target.value)
@@ -94,14 +150,6 @@ export function HelperWizard({ initial, start, saving, onSave }: HelperWizardPro
               data-testid="helper-name"
               value={draft.name}
               onChange={(event) => setDraft(withName(draft, event.target.value))}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-[11px]">
-            {t('helper.room')}
-            <Input
-              aria-label={t('helper.room')}
-              value={draft.room}
-              onChange={(event) => setDraft(withRoom(draft, event.target.value))}
             />
           </label>
         </div>
@@ -150,18 +198,33 @@ export function HelperWizard({ initial, start, saving, onSave }: HelperWizardPro
             {t('helper.next')}
           </Button>
         )}
-        {step === 'members' && draft !== null && (
+        {step === 'members' && draft !== null && purpose === 'edit' && (
           <Button
             data-testid="helper-save"
             disabled={!canSaveDraft(draft) || saving}
-            onClick={() => {
-              void (async () => {
-                setRefusals(await onSave(draft))
-              })()
-            }}
+            onClick={() => save('open')}
           >
             {t('helper.save')}
           </Button>
+        )}
+        {step === 'members' && draft !== null && purpose === 'create' && (
+          <>
+            <Button
+              data-testid="helper-save-open"
+              disabled={!canSaveDraft(draft) || saving}
+              onClick={() => save('open')}
+            >
+              {t('helper.saveOpen')}
+            </Button>
+            <Button
+              variant="outline"
+              data-testid="helper-save-more"
+              disabled={!canSaveDraft(draft) || saving}
+              onClick={() => save('again')}
+            >
+              {t('helper.saveMore')}
+            </Button>
+          </>
         )}
       </div>
     </div>

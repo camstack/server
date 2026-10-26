@@ -9776,6 +9776,15 @@
       "light-color-rgb": "Colour",
       "light-color-hsv": "Hue",
       "light-color-mired": "White"
-    }
+    },
+    "newComposition": "New composition",
+    "newOf": "New {{name}}",
+    "saveOpen": "Save and open device",
+    "saveMore": "Save and create more",
+    "created": "<device>{{name}}</device> was created.",
+    "supportedOperations": "Supported operations",
+    "detailsOf": "Details for {{name}}",
+    "devicePending": "The new device is not in the list yet.",
+    "noTemplates": "No helper types are available."
   }
 }

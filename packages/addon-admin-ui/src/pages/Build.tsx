@@ -112,21 +112,24 @@ export function BuildPage() {
   const requestCreate = (): void => {
     setParams(
       (prev) => {
-        // Compositions: one router write of `new=1`. A follow-up that rebuilds
-        // the query from the router's previous snapshot drops `new` (it was
-        // historically applied with history.replaceState) and the chooser
-        // closes in the same turn.
-        if (tab === 'custom-device') {
-          const copy = new URLSearchParams(window.location.search)
-          copy.set('tab', 'custom-device')
-          copy.delete('block')
-          copy.delete('create')
-          copy.set('new', '1')
-          return copy
-        }
         const copy = new URLSearchParams(prev)
         copy.set('create', '1')
         copy.delete('block')
+        return copy
+      },
+      { replace: true },
+    )
+  }
+
+  /** One router write. A second write from a stale snapshot drops `new`. */
+  const openCustomDevice = (mode: 'helper' | 'blank'): void => {
+    setParams(
+      () => {
+        const copy = new URLSearchParams(window.location.search)
+        copy.set('tab', 'custom-device')
+        copy.delete('block')
+        copy.delete('create')
+        copy.set('new', mode)
         return copy
       },
       { replace: true },
@@ -145,8 +148,7 @@ export function BuildPage() {
     )
   }
 
-  const newLabel =
-    tab === 'automations' ? 'New automation' : tab === 'scripts' ? 'New script' : 'New composition'
+  const newLabel = tab === 'automations' ? 'New automation' : 'New script'
 
   const chrome = navChromeForPath('/build', { t, isAdmin: true }) ?? {
     icon: Hammer,
@@ -165,9 +167,29 @@ export function BuildPage() {
       sectionsLabel={`${chrome.title} sections`}
       fill
       actions={
-        <Button type="button" onClick={requestCreate} data-testid="build-new">
-          <Plus className="h-4 w-4" /> {newLabel}
-        </Button>
+        tab === 'custom-device' ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => openCustomDevice('blank')}
+              data-testid="build-new-composition"
+            >
+              <Plus className="h-4 w-4" /> {t('helper.newComposition')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => openCustomDevice('helper')}
+              data-testid="build-new-helper"
+            >
+              <Plus className="h-4 w-4" /> {t('helper.newHelper')}
+            </Button>
+          </div>
+        ) : (
+          <Button type="button" onClick={requestCreate} data-testid="build-new">
+            <Plus className="h-4 w-4" /> {newLabel}
+          </Button>
+        )
       }
       sections={[
         {

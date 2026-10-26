@@ -19,13 +19,16 @@ import {
   useItemFormUrl,
 } from '@camstack/ui-library'
 import { Boxes } from 'lucide-react'
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { CompositionBlockEditor } from '../../components/composition-editor/CompositionBlockEditor'
-import { CompositionCreateForm } from '../../components/composition-editor/CompositionCreateForm'
+import {
+  type CompositionCreateMode,
+  CompositionCreateForm,
+} from '../../components/composition-editor/CompositionCreateForm'
 import { useDeviceList } from '../../hooks/useDevice'
-import { customizePath } from '../../lib/customization-routes'
+import { customizePath, devicePath } from '../../lib/customization-routes'
 import {
   buildCompositionRows,
   type CompositionRow,
@@ -71,19 +74,38 @@ export interface CustomDeviceTabProps {
   readonly onCreateConsumed?: () => void
 }
 
+function createModeOf(raw: string | null, createRequested: boolean): CompositionCreateMode | null {
+  if (raw === 'blank') return 'blank'
+  if (raw === 'helper' || raw === '1') return 'helper'
+  if (createRequested) return 'helper'
+  return null
+}
+
 export function CustomDeviceTab({
   createRequested = false,
   onCreateConsumed,
 }: CustomDeviceTabProps = {}) {
   const { t } = useTranslation()
+  const [params, setParams] = useSearchParams()
   const compositions = useCoreBlocksListCompositions({}, { refetchInterval: POLL_MS })
   const fleet = useFleetLookup()
   const formUrl = useItemFormUrl({ editKey: 'block', newKey: 'new' })
   const editingId = formUrl.state.mode === 'edit' ? formUrl.state.id : null
-  const isNew = editingId === null && (createRequested || formUrl.state.mode === 'new')
+  const createMode = editingId === null ? createModeOf(params.get('new'), createRequested) : null
+  const isNew = createMode !== null
+  const [createTitle, setCreateTitle] = useState('')
 
   const closeDialog = (): void => {
     formUrl.close()
+    setParams(
+      () => {
+        const copy = new URLSearchParams(window.location.search)
+        copy.delete('new')
+        copy.delete('block')
+        return copy
+      },
+      { replace: true },
+    )
     onCreateConsumed?.()
   }
 
@@ -100,15 +122,16 @@ export function CustomDeviceTab({
         onClose={closeDialog}
         title={
           isNew
-            ? t('build.customDeviceTab.newComposedDevice', 'New composed device')
+            ? createTitle ||
+              (createMode === 'blank' ? t('helper.newComposition') : t('helper.newHelper'))
             : t('build.customDeviceTab.editComposedDevice', 'Edit composed device')
         }
         icon={Boxes}
         width="xl"
         testId="composed-device-editor"
       >
-        {isNew ? (
-          <CompositionCreateForm />
+        {isNew && createMode !== null ? (
+          <CompositionCreateForm key={createMode} mode={createMode} onTitle={setCreateTitle} />
         ) : editingId !== null ? (
           <CompositionBlockEditor blockId={editingId} />
         ) : null}
@@ -372,23 +395,25 @@ function RowName({ row }: RowNameProps) {
   )
 }
 
-/** Composed: plain name (row click / Edit opens dialog). Customization: device link. */
+/** Composed names open the device. Customizations open its Customize tab. */
 function RowNameLink({ row }: RowNameProps) {
   const { t } = useTranslation()
-  if (row.kind === 'composed') {
-    return <span className="text-xs font-medium text-foreground">{row.name}</span>
-  }
   if (row.reportedDeviceId === null) {
+    if (row.kind === 'composed') {
+      return <span className="text-xs font-medium text-foreground">{row.name}</span>
+    }
     return (
       <span className="text-xs text-foreground-subtle">
         {t('build.customDeviceTab.notReported', { name: row.name })}
       </span>
     )
   }
+  const to =
+    row.kind === 'composed' ? devicePath(row.reportedDeviceId) : customizePath(row.reportedDeviceId)
   return (
     <Link
-      to={customizePath(row.reportedDeviceId)}
-      className="text-xs text-foreground hover:underline"
+      to={to}
+      className="text-xs font-medium text-foreground hover:underline"
       onClick={(e) => e.stopPropagation()}
     >
       {row.name}

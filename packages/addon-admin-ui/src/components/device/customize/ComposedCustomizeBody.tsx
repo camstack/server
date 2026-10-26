@@ -97,11 +97,12 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
       <div className="flex flex-col gap-3">
         <IdentityRow device={device} />
         <HelperWizard
+          purpose="edit"
           initial={helperDraft}
           start="parameters"
           saving={update.isPending}
-          onSave={(draft) =>
-            writeHelper(draft, async (next, name) => {
+          onSave={async (draft) => {
+            const lines = await writeHelper(draft, async (next, name) => {
               await update.mutateAsync({
                 blockId: view.block.id,
                 expectedUpdatedAt: view.block.updatedAt,
@@ -118,7 +119,9 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
               }
               await read.refetch()
             })
-          }
+            if (lines.length > 0) return { kind: 'refused', lines }
+            return { kind: 'saved', deviceId: device.id }
+          }}
         />
       </div>
     )

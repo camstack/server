@@ -26,6 +26,37 @@ describe('GroupedTilePicker', () => {
     expect(screen.queryByText('nothing')).toBeNull()
   })
 
+  it('opens a tile detail without choosing that tile', () => {
+    const onPick = vi.fn()
+    render(
+      <GroupedTilePicker
+        emptyMessage="nothing"
+        onPick={onPick}
+        groups={[
+          {
+            id: 'readings',
+            label: 'Readings',
+            tiles: [
+              {
+                key: 'temperature',
+                label: 'Temperature',
+                icon: <span />,
+                testId: 'tile-temperature',
+                detailLabel: 'Temperature details',
+                detail: <p>Mean, median</p>,
+              },
+            ],
+          },
+        ]}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Temperature details' }))
+    expect(onPick).not.toHaveBeenCalled()
+    expect(screen.getByText('Mean, median')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('tile-temperature'))
+    expect(onPick).toHaveBeenCalledWith('temperature')
+  })
+
   it('says so when there is no group', () => {
     render(
       <GroupedTilePicker emptyMessage="No provider is installed." onPick={() => {}} groups={[]} />,

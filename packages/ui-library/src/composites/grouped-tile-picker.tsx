@@ -8,7 +8,10 @@
  * a grid, which toolbar-button chrome fights. One place owns that look so the
  * pickers stay identical.
  */
-import type { JSX, ReactNode } from 'react'
+import { Info } from 'lucide-react'
+import { type JSX, type ReactNode, useState } from 'react'
+import { BottomSheet } from '../primitives/bottom-sheet'
+import { IconButton } from '../primitives/icon-button'
 
 export interface TilePickerTile {
   /** Unique within the picker; handed back to `onPick`. */
@@ -16,6 +19,13 @@ export interface TilePickerTile {
   readonly label: string
   readonly icon: ReactNode
   readonly testId?: string
+  /**
+   * Extra facts for the tile (supported operations, a shared-capability list).
+   * A tap target beside the name — it does not choose the tile.
+   */
+  readonly detail?: ReactNode
+  /** Accessible name of the detail control. Required when `detail` is set. */
+  readonly detailLabel?: string
 }
 
 export interface TilePickerGroup {
@@ -37,6 +47,11 @@ export function GroupedTilePicker({
   onPick,
   emptyMessage,
 }: GroupedTilePickerProps): JSX.Element {
+  const [openKey, setOpenKey] = useState<string | null>(null)
+  const openTile =
+    openKey === null
+      ? null
+      : (groups.flatMap((group) => group.tiles).find((tile) => tile.key === openKey) ?? null)
   return (
     <div className="space-y-4">
       {groups.length === 0 && <p className="text-xs text-foreground-subtle">{emptyMessage}</p>}
@@ -47,20 +62,42 @@ export function GroupedTilePicker({
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {group.tiles.map((tile) => (
-              <button // ui-check-ok: the library's one tile — icon over label in a grid
-                key={tile.key}
-                type="button"
-                data-testid={tile.testId}
-                onClick={() => onPick(tile.key)}
-                className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-3 text-xs transition-colors hover:border-primary/50 hover:bg-surface-hover"
-              >
-                {tile.icon}
-                <span className="text-center font-medium text-foreground">{tile.label}</span>
-              </button>
+              <div key={tile.key} className="relative">
+                <button // ui-check-ok: the library's one tile — icon over label in a grid
+                  type="button"
+                  data-testid={tile.testId}
+                  onClick={() => onPick(tile.key)}
+                  className="flex h-full w-full flex-col items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-3 text-xs transition-colors hover:border-primary/50 hover:bg-surface-hover"
+                >
+                  {tile.icon}
+                  <span className="text-center font-medium text-foreground">{tile.label}</span>
+                </button>
+                {tile.detail !== undefined && tile.detailLabel !== undefined && (
+                  <div className="absolute top-1 right-1">
+                    <IconButton
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      icon={Info}
+                      aria-label={tile.detailLabel}
+                      onClick={() =>
+                        setOpenKey((current) => (current === tile.key ? null : tile.key))
+                      }
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
       ))}
+      {/* A popover portaled to document.body paints behind a top-layer dialog.
+          This sheet is a child of the picker, so the tap still reaches it. */}
+      {openTile?.detail !== undefined && (
+        <BottomSheet open onClose={() => setOpenKey(null)}>
+          {openTile.detail}
+        </BottomSheet>
+      )}
     </div>
   )
 }

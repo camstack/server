@@ -1,111 +1,138 @@
 /**
- * Create step for /build/compositions/new — type, role, name, room.
+ * Create step inside the Build dialog. `blank` is a free composition.
+ * `helper` is the template wizard. The room is set later, on the device.
  */
-import { COMPOSED_DEVICE_STABLE_ID_PREFIX, DeviceRole, DeviceType } from '@camstack/types'
+import {
+  COMPOSED_DEVICE_STABLE_ID_PREFIX,
+  DeviceRole,
+  DeviceType,
+  groupTemplate,
+} from '@camstack/types'
 import {
   Button,
   deviceRoleMetaOf,
+  deviceTypeMeta,
   deviceTypeMetaOf,
+  Input,
   Select,
+  type UiTextFn,
   useCoreBlocksCreateComposition,
   useDeviceManagerListPersistedByAddon,
-  useDeviceManagerSetLocation,
   useDeviceManagerSetName,
   useUiText,
 } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { customizePath } from '../../lib/customization-routes'
+import { customizePath, devicePath } from '../../lib/customization-routes'
 import { buildSkeletonComposition } from './build-skeleton'
 import { HelperWizard } from './HelperWizard'
-import { writeHelper } from './helper-form-model'
+import {
+  type HelperFormDraft,
+  helperKindName,
+  type HelperSaveIntent,
+  type HelperSaveResult,
+  type RefusalLine,
+  refusalFromMessage,
+  writeHelper,
+} from './helper-form-model'
 
-const FIELD_CLASS = 'px-1.5 py-0.5 text-[11px] bg-background border border-border rounded'
+export type CompositionCreateMode = 'blank' | 'helper'
 
-export function CompositionCreateForm(): ReactNode {
+export interface CompositionCreateFormProps {
+  readonly mode: CompositionCreateMode
+  readonly onTitle: (title: string) => void
+}
+
+interface TitleSink {
+  readonly onTitle: (title: string) => void
+}
+
+interface FleetRow {
+  readonly id: number
+  readonly stableId: string
+}
+
+export function CompositionCreateForm({ mode, onTitle }: CompositionCreateFormProps): ReactNode {
+  if (mode === 'helper') return <HelperCreate onTitle={onTitle} />
+  return <BlankCompositionForm onTitle={onTitle} />
+}
+
+function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const { t } = useTranslation()
   const uiText = useUiText()
   const navigate = useNavigate()
   const create = useCoreBlocksCreateComposition()
   const setName = useDeviceManagerSetName()
-  const setLocation = useDeviceManagerSetLocation()
+  const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
+  const [draft, setDraft] = useState<HelperFormDraft | null>(null)
+  const title = titleForDraft(draft, t, uiText)
+
+  useEffect(() => {
+    onTitle(title)
+  }, [onTitle, title])
+
+  const save = async (
+    next: HelperFormDraft,
+    intent: HelperSaveIntent,
+  ): Promise<HelperSaveResult> => {
+    let deviceId: number | null = null
+    const lines = await writeHelper(next, async (composition, name) => {
+      const { block } = await create.mutateAsync({
+        block: {
+          ...(name === '' ? {} : { name }),
+          enabled: true,
+          composition,
+        },
+      })
+      const id = await deviceIdForBlock(block.id, async () => {
+        const refreshed = await fleet.refetch()
+        return refreshed.data ?? fleet.data
+      })
+      if (id === null) throw new Error(t('helper.devicePending'))
+      deviceId = id
+      if (name !== '') await setName.mutateAsync({ deviceId: id, name })
+      if (intent === 'open') navigate(devicePath(id), { replace: true })
+    })
+    const savedId = deviceId
+    if (lines.length > 0 || savedId === null) return { kind: 'refused', lines: refused(lines, t) }
+    return { kind: 'saved', deviceId: savedId }
+  }
+
+  return (
+    <div className="flex flex-col gap-3" data-testid="composition-create-form">
+      <HelperWizard
+        purpose="create"
+        initial={null}
+        start="template"
+        saving={create.isPending}
+        onDraftChange={setDraft}
+        onSave={save}
+      />
+    </div>
+  )
+}
+
+function BlankCompositionForm({ onTitle }: TitleSink): ReactNode {
+  const { t } = useTranslation()
+  const uiText = useUiText()
+  const navigate = useNavigate()
+  const create = useCoreBlocksCreateComposition()
+  const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
   const [type, setType] = useState(DeviceType.Sensor)
   const [role, setRole] = useState<DeviceRole | null>(DeviceRole.TemperatureSensor)
   const [name, setNameValue] = useState('')
-  const [room, setRoom] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<'choose' | 'blank' | 'helper'>('choose')
-
   const composition = buildSkeletonComposition({ type, role })
 
-  if (mode === 'choose') {
-    return (
-      <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:p-4">
-        <h2 className="text-sm font-semibold">{t('build.customDeviceTab.newComposedDevice')}</h2>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            data-testid="blank-composition"
-            onClick={() => setMode('blank')}
-          >
-            {t('helper.blank')}
-          </Button>
-          <Button data-testid="new-helper" onClick={() => setMode('helper')}>
-            {t('helper.newHelper')}
-          </Button>
-        </div>
-      </section>
-    )
-  }
-
-  if (mode === 'helper') {
-    return (
-      <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:p-4">
-        <Button variant="ghost" size="sm" onClick={() => setMode('choose')}>
-          {t('helper.back')}
-        </Button>
-        <h2 className="text-sm font-semibold">{t('helper.newHelper')}</h2>
-        <HelperWizard
-          initial={null}
-          start="template"
-          saving={create.isPending}
-          onSave={(draft) =>
-            writeHelper(draft, async (composition, name) => {
-              const { block } = await create.mutateAsync({
-                block: {
-                  ...(name === '' ? {} : { name }),
-                  enabled: true,
-                  composition,
-                },
-              })
-              const stableId = `${COMPOSED_DEVICE_STABLE_ID_PREFIX}${block.id}`
-              const refreshed = await fleet.refetch()
-              const rows = refreshed.data ?? fleet.data
-              const row = rows?.find((item) => item.stableId === stableId)
-              if (row !== undefined) {
-                if (name !== '') await setName.mutateAsync({ deviceId: row.id, name })
-                if (draft.room.trim() !== '') {
-                  await setLocation.mutateAsync({ deviceId: row.id, location: draft.room.trim() })
-                }
-                navigate(customizePath(row.id), { replace: true })
-                return
-              }
-              navigate(`/build/compositions/${encodeURIComponent(block.id)}`, { replace: true })
-            })
-          }
-        />
-      </section>
-    )
-  }
+  useEffect(() => {
+    onTitle(t('helper.newComposition'))
+  }, [onTitle, t])
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:p-4">
-      <Button variant="ghost" size="sm" onClick={() => setMode('choose')}>
-        {t('helper.back')}
-      </Button>
-      <h2 className="text-sm font-semibold">{t('build.customDeviceTab.newComposedDevice')}</h2>
+    <div className="flex flex-col gap-3" data-testid="blank-composition-form">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-[11px]">
           {t('compositionEditor.targetType')}
@@ -139,15 +166,11 @@ export function CompositionCreateForm(): ReactNode {
         </label>
         <label className="flex flex-col gap-1 text-[11px]">
           {t('compositionEditor.name')}
-          <input
-            className={FIELD_CLASS}
+          <Input
+            aria-label={t('compositionEditor.name')}
             value={name}
             onChange={(e) => setNameValue(e.target.value)}
           />
-        </label>
-        <label className="flex flex-col gap-1 text-[11px]">
-          {t('customize.identity.room')}
-          <input className={FIELD_CLASS} value={room} onChange={(e) => setRoom(e.target.value)} />
         </label>
       </div>
       {error !== null && (
@@ -159,38 +182,85 @@ export function CompositionCreateForm(): ReactNode {
         disabled={composition === null || create.isPending}
         onClick={() => {
           if (composition === null) return
-          void (async () => {
-            setError(null)
-            try {
-              const trimmed = name.trim()
-              const { block } = await create.mutateAsync({
-                block: {
-                  ...(trimmed === '' ? {} : { name: trimmed }),
-                  enabled: true,
-                  composition,
-                },
-              })
-              const stableId = `${COMPOSED_DEVICE_STABLE_ID_PREFIX}${block.id}`
+          void saveBlank({
+            composition,
+            name,
+            create: (block) => create.mutateAsync({ block }),
+            rename: (deviceId, nextName) => setName.mutateAsync({ deviceId, name: nextName }),
+            readFleet: async () => {
               const refreshed = await fleet.refetch()
-              const rows = refreshed.data ?? fleet.data
-              const row = rows?.find((d) => d.stableId === stableId)
-              if (row !== undefined) {
-                if (trimmed !== '') await setName.mutateAsync({ deviceId: row.id, name: trimmed })
-                if (room.trim() !== '') {
-                  await setLocation.mutateAsync({ deviceId: row.id, location: room.trim() })
-                }
-                navigate(customizePath(row.id), { replace: true })
-                return
-              }
-              navigate(`/build/compositions/${encodeURIComponent(block.id)}`, { replace: true })
-            } catch (err: unknown) {
-              setError(err instanceof Error ? err.message : String(err))
-            }
-          })()
+              return refreshed.data ?? fleet.data
+            },
+            onError: (message) => setError(message),
+            onOpen: (deviceId) => navigate(customizePath(deviceId), { replace: true }),
+            pending: t('helper.devicePending'),
+          })
         }}
       >
         {t('compositionEditor.save')}
       </Button>
-    </section>
+    </div>
   )
+}
+
+interface BlankSave {
+  readonly composition: NonNullable<ReturnType<typeof buildSkeletonComposition>>
+  readonly name: string
+  readonly pending: string
+  readonly create: (block: {
+    readonly name?: string
+    readonly enabled: true
+    readonly composition: NonNullable<ReturnType<typeof buildSkeletonComposition>>
+  }) => Promise<{ readonly block: { readonly id: string } }>
+  readonly rename: (deviceId: number, name: string) => Promise<unknown>
+  readonly readFleet: () => Promise<readonly FleetRow[] | undefined>
+  readonly onError: (message: string | null) => void
+  readonly onOpen: (deviceId: number) => void
+}
+
+async function saveBlank(input: BlankSave): Promise<void> {
+  input.onError(null)
+  try {
+    const trimmed = input.name.trim()
+    const { block } = await input.create({
+      ...(trimmed === '' ? {} : { name: trimmed }),
+      enabled: true,
+      composition: input.composition,
+    })
+    const id = await deviceIdForBlock(block.id, input.readFleet)
+    if (id === null) {
+      input.onError(input.pending)
+      return
+    }
+    if (trimmed !== '') await input.rename(id, trimmed)
+    input.onOpen(id)
+  } catch (err: unknown) {
+    input.onError(err instanceof Error ? err.message : String(err))
+  }
+}
+
+function titleForDraft(draft: HelperFormDraft | null, t: TFunction, uiText: UiTextFn): string {
+  if (draft === null) return t('helper.newHelper')
+  const template = groupTemplate(draft.templateId)
+  if (template === null) return t('helper.newHelper')
+  const name = helperKindName({
+    family: template.family,
+    templateLabel: t(`helper.template.${template.id}`),
+    typeLabel: deviceTypeMeta(template.deviceType, uiText).label,
+  })
+  return t('helper.newOf', { name })
+}
+
+async function deviceIdForBlock(
+  blockId: string,
+  read: () => Promise<readonly FleetRow[] | undefined>,
+): Promise<number | null> {
+  const stableId = `${COMPOSED_DEVICE_STABLE_ID_PREFIX}${blockId}`
+  const rows = await read()
+  return rows?.find((item) => item.stableId === stableId)?.id ?? null
+}
+
+function refused(lines: readonly RefusalLine[], t: TFunction): readonly RefusalLine[] {
+  if (lines.length > 0) return lines
+  return refusalFromMessage(t('helper.devicePending'))
 }

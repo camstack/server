@@ -29,8 +29,8 @@ export function CompositionEditorPage(): ReactNode {
   )
 
   if (isNew) {
-    // One create entry: the Build chooser (`?tab=custom-device&new=1`).
-    return <Navigate to={`${BUILD_CUSTOM_DEVICE_PATH}&new=1`} replace />
+    // One helper entry: the type tiles (`?tab=custom-device&new=helper`).
+    return <Navigate to={`${BUILD_CUSTOM_DEVICE_PATH}&new=helper`} replace />
   }
 
   if (read.status === 'success' && read.data.state === 'loaded' && read.data.view !== null) {

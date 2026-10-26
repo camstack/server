@@ -210,13 +210,37 @@ export function withRoom(draft: HelperFormDraft, room: string): HelperFormDraft 
   return { ...draft, room }
 }
 
-/** A new template keeps the name and room and drops the previous members. */
+/**
+ * The same template keeps every choice. A different template starts over:
+ * name, operation, criterion and members belong to the template that was open.
+ */
 export function withTemplate(draft: HelperFormDraft, templateId: GroupTemplateId): HelperFormDraft {
   if (templateId === draft.templateId) return draft
-  const next = draftForTemplate(templateId)
-  if (next === null) return draft
-  return { ...next, name: draft.name, room: draft.room }
+  return draftForTemplate(templateId) ?? draft
 }
+
+/**
+ * Dialog title noun. Actuators use the template name ("Light group").
+ * A sensor appends the device-type word when the template name does not
+ * already contain it ("Temperature" + "Sensor" → "Temperature sensor").
+ */
+export function helperKindName(input: {
+  readonly family: GroupTemplate['family']
+  readonly templateLabel: string
+  readonly typeLabel: string
+}): string {
+  if (input.family === 'actuator') return input.templateLabel
+  const type = input.typeLabel.trim()
+  const template = input.templateLabel.trim()
+  if (type === '' || template.toLowerCase().includes(type.toLowerCase())) return template
+  return `${template} ${type.toLowerCase()}`
+}
+
+export type HelperSaveIntent = 'open' | 'again'
+
+export type HelperSaveResult =
+  | { readonly kind: 'saved'; readonly deviceId: number }
+  | { readonly kind: 'refused'; readonly lines: readonly RefusalLine[] }
 
 export function memberRequest(draft: HelperFormDraft): SourcePickRequest | null {
   const template = groupTemplate(draft.templateId)

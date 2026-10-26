@@ -9798,6 +9798,15 @@
       "light-color-rgb": "Colore",
       "light-color-hsv": "Tinta",
       "light-color-mired": "Bianco"
-    }
+    },
+    "newComposition": "Nuova composizione",
+    "newOf": "Nuovo {{name}}",
+    "saveOpen": "Salva e apri il dispositivo",
+    "saveMore": "Salva e creane un altro",
+    "created": "<device>{{name}}</device> è stato creato.",
+    "supportedOperations": "Operazioni disponibili",
+    "detailsOf": "Dettagli di {{name}}",
+    "devicePending": "Il nuovo dispositivo non è ancora nell'elenco.",
+    "noTemplates": "Nessun tipo di helper è disponibile."
   }
 }

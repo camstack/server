@@ -181,20 +181,35 @@ describe('Build New composition', () => {
     window.history.replaceState(null, '', '/build?tab=custom-device')
   })
 
-  it('clicking New composition opens the helper / blank chooser and leaves it open', async () => {
+  it('New composition opens a blank composition, and New helper opens the type tiles', async () => {
     renderAt('/build?tab=custom-device', <BuildPage />)
-    expect(screen.getByTestId('build-new').textContent).toContain('New composition')
+    expect(screen.getByTestId('build-new-composition').textContent).toContain('New composition')
+    expect(screen.getByTestId('build-new-helper').textContent).toContain('New helper')
 
-    fireEvent.click(screen.getByTestId('build-new'))
+    fireEvent.click(screen.getByTestId('build-new-helper'))
 
-    expect(await screen.findByTestId('blank-composition')).toBeTruthy()
-    expect(screen.getByTestId('new-helper')).toBeTruthy()
-    expect(window.location.search).toContain('new=1')
+    expect(await screen.findByTestId('helper-template-picker')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
+    expect(window.location.search).toContain('new=helper')
     expect(window.location.search).toContain('tab=custom-device')
-    expect(screen.getByTestId('blank-composition')).toBeTruthy()
+
+    fireEvent.click(screen.getByTestId('build-new-composition'))
+    expect(await screen.findByTestId('blank-composition-form')).toBeTruthy()
+    expect(screen.queryByTestId('helper-template-picker')).toBeNull()
+    expect(window.location.search).toContain('new=blank')
   })
 
-  it('opens the same chooser from /build/compositions/new', async () => {
+  it('names the dialog after the chosen helper type', async () => {
+    renderAt('/build?tab=custom-device', <BuildPage />)
+    fireEvent.click(screen.getByTestId('build-new-helper'))
+    fireEvent.click(await screen.findByTestId('helper-template-temperature'))
+    expect(await screen.findByRole('heading', { name: 'New Temperature sensor' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    fireEvent.click(screen.getByTestId('helper-template-light'))
+    expect(await screen.findByRole('heading', { name: 'New Light group' })).toBeTruthy()
+  })
+
+  it('opens the helper type tiles from /build/compositions/new', async () => {
     renderAt(
       '/build/compositions/new',
       <Routes>
@@ -203,11 +218,10 @@ describe('Build New composition', () => {
         <Route path="/build" element={<BuildPage />} />
       </Routes>,
     )
-    expect(await screen.findByTestId('blank-composition')).toBeTruthy()
-    expect(screen.getByTestId('new-helper')).toBeTruthy()
+    expect(await screen.findByTestId('helper-template-picker')).toBeTruthy()
     expect(window.location.pathname).toBe('/build')
     expect(window.location.search).toContain('tab=custom-device')
-    expect(window.location.search).toContain('new=1')
+    expect(window.location.search).toContain('new=helper')
   })
 
   it('Edit opens a helper as its wizard', async () => {

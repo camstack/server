@@ -1,9 +1,14 @@
 /**
- * Group templates: readings, binary sensors, switch and light groups.
- * One line says what exclusion does. Math, integral and statistics stay hidden.
+ * Group templates as tiles: the device-type icon and the name.
+ * What the template can do sits on the info control, not under the name.
  */
-import { type GroupTemplateId, groupTemplate } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+import {
+  ACTIVE_CRITERIA,
+  GROUP_TEMPLATE_IDS,
+  type GroupTemplateId,
+  groupTemplate,
+} from '@camstack/types'
+import { deviceRoleMeta, deviceTypeMeta, GroupedTilePicker } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { helperTemplateGroups } from './helper-form-model'
@@ -15,47 +20,67 @@ export interface HelperTemplatePickerProps {
 export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): ReactNode {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-col gap-4" data-testid="helper-template-picker">
-      {helperTemplateGroups().map((group) => (
-        <section
-          key={group.id}
-          aria-label={t(`helper.group.${group.id}`)}
-          data-testid={`helper-group-${group.id}`}
-        >
-          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-foreground-subtle">
-            {t(`helper.group.${group.id}`)}
-          </h3>
-          <p className="mb-1.5 mt-1 text-[11px] text-foreground-muted">
-            {t('helper.offlineCounted')}
+    <div data-testid="helper-template-picker">
+      <GroupedTilePicker
+        emptyMessage={t('helper.noTemplates')}
+        onPick={(key) => {
+          if (!isGroupTemplateId(key)) return
+          onPick(key)
+        }}
+        groups={helperTemplateGroups().map((group) => ({
+          id: group.id,
+          label: t(`helper.group.${group.id}`),
+          tiles: group.templateIds.flatMap((id) => {
+            const template = groupTemplate(id)
+            if (template === null) return []
+            const label = t(`helper.template.${id}`)
+            const Icon =
+              template.role === undefined
+                ? deviceTypeMeta(template.deviceType).icon
+                : deviceRoleMeta(template.role).icon
+            return [
+              {
+                key: id,
+                label,
+                testId: `helper-template-${id}`,
+                icon: <Icon className="h-5 w-5 text-foreground-muted" aria-hidden />,
+                detailLabel: t('helper.detailsOf', { name: label }),
+                detail: <TemplateDetail templateId={id} />,
+              },
+            ]
+          }),
+        }))}
+      />
+    </div>
+  )
+}
+
+function isGroupTemplateId(value: string): value is GroupTemplateId {
+  return GROUP_TEMPLATE_IDS.some((id) => id === value)
+}
+
+function TemplateDetail({ templateId }: { readonly templateId: GroupTemplateId }): ReactNode {
+  const { t } = useTranslation()
+  const template = groupTemplate(templateId)
+  if (template === null) return null
+  const operations =
+    template.family === 'actuator'
+      ? ACTIVE_CRITERIA.map((item) => t(`helper.active.${item}`))
+      : template.aggregates.map((item) => t(`helper.aggregate.${item}`))
+  const shared = template.commandCaps.filter((cap) => cap !== 'switch')
+  return (
+    <div className="max-w-xs space-y-1 text-xs">
+      <p className="font-medium text-foreground">{t('helper.supportedOperations')}</p>
+      <p className="text-foreground-muted">{operations.join(', ')}</p>
+      {shared.length > 0 && (
+        <>
+          <p className="font-medium text-foreground">{t('helper.sharedCaps')}</p>
+          <p className="text-foreground-muted">
+            {shared.map((cap) => t(`helper.cap.${cap}`)).join(', ')}
           </p>
-          <ul className="flex flex-col gap-1.5">
-            {group.templateIds.map((id) => {
-              const template = groupTemplate(id)
-              if (template === null) return null
-              return (
-                <li key={id}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-auto w-full justify-start px-3 py-2 text-left"
-                    data-testid={`helper-template-${id}`}
-                    onClick={() => onPick(id)}
-                  >
-                    <span className="flex min-w-0 flex-col items-start gap-0.5">
-                      <span className="text-xs font-medium text-foreground">
-                        {t(`helper.template.${id}`)}
-                      </span>
-                      <span className="text-[11px] font-normal whitespace-normal text-foreground-muted">
-                        {t(`helper.template.${id}Summary`)}
-                      </span>
-                    </span>
-                  </Button>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      ))}
+        </>
+      )}
+      <p className="text-foreground-subtle">{t('helper.offlineCounted')}</p>
     </div>
   )
 }

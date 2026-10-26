@@ -3,15 +3,8 @@
  * device's Customize tab when the persisted list already names it.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { type ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
-
-interface StubProps {
-  readonly children?: ReactNode
-  readonly onClick?: () => void
-  readonly disabled?: boolean
-}
 
 const navigate = vi.hoisted(() => vi.fn())
 const create = vi.hoisted(() => vi.fn(async () => ({ block: { id: 'blk-new' } })))
@@ -21,18 +14,11 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return { ...actual, useNavigate: () => navigate }
 })
 
-vi.mock('@camstack/ui-library', () => {
+vi.mock('@camstack/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   const row = { id: 4700, stableId: 'composed-blk-new', name: 'New sensor' }
   return {
-    Button: ({ children, onClick, disabled }: StubProps) => (
-      <button type="button" disabled={disabled} onClick={onClick}>
-        {children}
-      </button>
-    ),
-    Select: () => null,
-    useUiText: () => (key: string, fallback?: string) => fallback ?? key,
-    deviceTypeMetaOf: () => ({ label: 'Sensor' }),
-    deviceRoleMetaOf: () => ({ label: 'Temperature' }),
+    ...actual,
     useCoreBlocksCreateComposition: () => ({ mutateAsync: create, isPending: false }),
     useDeviceManagerListPersistedByAddon: () => ({
       data: [row],
@@ -46,10 +32,10 @@ vi.mock('@camstack/ui-library', () => {
 const { CompositionCreateForm } = await import('../CompositionCreateForm')
 
 describe('CompositionCreateForm', () => {
-  it('has no Incomplete badge, and Save opens the new device Customize tab', async () => {
-    render(<CompositionCreateForm />)
+  it('has no Incomplete badge, and a blank save opens the new device', async () => {
+    render(<CompositionCreateForm mode="blank" onTitle={() => undefined} />)
     expect(screen.queryByText('Incomplete')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Blank composition' }))
+    expect(screen.queryByLabelText('Room')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(navigate).toHaveBeenCalledWith('/devices/4700?tab=customize', { replace: true }),

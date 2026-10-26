@@ -10,6 +10,10 @@ export const COMPOSITION_EDITOR_ROUTE = '/build/compositions/:blockId' // hub-pa
 /** `/build` with the Custom Device tab selected (compositions list). */
 export const BUILD_CUSTOM_DEVICE_PATH = '/build?tab=custom-device' // hub-path-ok: react-router path
 
+export function devicePath(deviceId: number): string {
+  return `/devices/${deviceId}` // hub-path-ok: react-router path
+}
+
 export function customizePath(deviceId: number): string {
   return `/devices/${deviceId}?tab=${CUSTOMIZE_TAB_ID}` // hub-path-ok: react-router path
 }

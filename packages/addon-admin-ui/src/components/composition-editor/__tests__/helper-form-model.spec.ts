@@ -23,6 +23,7 @@ import {
   refusalFromMessage,
   sharedCapsView,
   specFromDraft,
+  helperKindName,
   withActive,
   withAggregate,
   withTemplate,
@@ -135,17 +136,40 @@ describe('helper template groups', () => {
     expect(withAggregate(draft, 'all').aggregate).toBe('all')
   })
 
-  it('changing template keeps the name and drops members from the previous reading', () => {
+  it('keeps every choice when the template stays, and resets them when it changes', () => {
     const draft = draftForTemplate('temperature')
     expect(draft).not.toBeNull()
     if (draft === null) return
-    const named = { ...draft, name: 'Veranda', room: 'Porch', members: [porch] }
+    const named = { ...draft, name: 'Veranda', aggregate: 'max' as const, members: [porch] }
+    expect(withTemplate(named, 'temperature')).toBe(named)
     const next = withTemplate(named, 'humidity')
     expect(next.templateId).toBe('humidity')
-    expect(next.name).toBe('Veranda')
-    expect(next.room).toBe('Porch')
+    expect(next.name).toBe('')
     expect(next.members).toEqual([])
     expect(next.aggregate).toBe('mean')
+  })
+
+  it('names a new helper from the template and the device type', () => {
+    expect(
+      helperKindName({
+        family: 'numeric',
+        templateLabel: 'Temperature',
+        typeLabel: 'Sensor',
+      }),
+    ).toBe('Temperature sensor')
+    expect(helperKindName({ family: 'binary', templateLabel: 'Motion', typeLabel: 'Sensor' })).toBe(
+      'Motion sensor',
+    )
+    expect(
+      helperKindName({
+        family: 'binary',
+        templateLabel: 'Motion sensor',
+        typeLabel: 'Sensor',
+      }),
+    ).toBe('Motion sensor')
+    expect(
+      helperKindName({ family: 'actuator', templateLabel: 'Light group', typeLabel: 'Light' }),
+    ).toBe('Light group')
   })
 })
 
