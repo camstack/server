@@ -145,7 +145,7 @@ function PulseForm(props: EventPulseDialogProps): ReactNode {
           devices={devices}
           fleet={fleet}
           hostId={props.host.id}
-          room={room}
+          groupByLocation={room !== null}
           lockedIds={lockedIds}
           onPick={setDevice}
         />
@@ -304,7 +304,7 @@ interface PulsePickerProps {
   readonly devices: PulseDeviceQuery
   readonly fleet: readonly PickerDevice[]
   readonly hostId: number
-  readonly room: string | null
+  readonly groupByLocation: boolean
   readonly lockedIds: readonly number[]
   readonly onPick: (device: PickerDevice) => void
 }
@@ -313,7 +313,7 @@ function PulsePicker({
   devices,
   fleet,
   hostId,
-  room,
+  groupByLocation,
   lockedIds,
   onPick,
 }: PulsePickerProps): ReactNode {
@@ -332,7 +332,7 @@ function PulsePicker({
       listState={listStateOf(devices.status)}
       value={[]}
       selection="single"
-      {...(room !== null ? { groupBy: 'location' as const } : {})}
+      {...(groupByLocation ? { groupBy: 'location' as const } : {})}
       lockedIds={lockedIds}
       lockedNote={t('customize.scalar.fit.kind')}
       onChange={(next) => {
