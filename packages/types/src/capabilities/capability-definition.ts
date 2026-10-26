@@ -653,6 +653,8 @@ export const HISTORY_DEFAULT_MIN_INTERVAL_MS = 10_000
 export type ComposedMethodAnswer =
   | { readonly kind: 'refuse'; readonly reason: string }
   | { readonly kind: 'answer'; readonly value: unknown }
+  /** Read one field of the composed slice. Unknown is a throw, never false (D393). */
+  | { readonly kind: 'slice'; readonly field: string }
 
 // ── Capability Definition ────────────────────────────────────────────
 

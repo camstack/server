@@ -41,6 +41,12 @@ export const CompositionProblemCodeSchema = z.enum([
   'not-replaceable',
   /** An existing-target feature would replace a capability the device already serves (D944). */
   'native-capability-replace',
+  /** Helper members do not share one quantity (D944 §4). */
+  'mixed-quantity',
+  /** A helper spec is present and the stored features are not its compile. */
+  'helper-mismatch',
+  /** A member is the wrong device type or the wrong field for the template. */
+  'member-constraint',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 
@@ -61,7 +67,14 @@ export type CompositionFieldKind = z.infer<typeof CompositionFieldKindSchema>
  * for a REPLACED field of an existing device, whose claim is released so the
  * native provider's reading shows again; else the (composed) device goes offline.
  */
-export const CompositionUnavailableModeSchema = z.enum(['null', 'offline', 'unknown', 'release'])
+export const CompositionUnavailableModeSchema = z.enum([
+  'null',
+  'offline',
+  'unknown',
+  'release',
+  /** Optional numeric: leave the key out and keep the device online. */
+  'omit',
+])
 export type CompositionUnavailableMode = z.infer<typeof CompositionUnavailableModeSchema>
 
 /**

@@ -550,7 +550,19 @@ export class CompositionRuntime {
     this.markWritten(cap, entries)
   }
 
+  /** An omitted optional reading must leave the slice, not keep the previous number (D944). */
+  private clearsOmitted(cap: string): boolean {
+    return this.recordsOf(cap).some(
+      (record) => record.plan.unavailable === 'omit' && record.outcome?.state === 'unavailable',
+    )
+  }
+
   private patchCap(cap: string, touched: ReadonlySet<string>): void {
+    if (this.clearsOmitted(cap)) {
+      const entries = this.entriesFor(cap, this.recordsOf(cap))
+      if (this.write(cap, 'seed', entries)) this.markWritten(cap, entries)
+      return
+    }
     const entries = this.entriesFor(
       cap,
       this.recordsOf(cap).filter(

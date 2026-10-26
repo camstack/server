@@ -54,6 +54,8 @@ const EXEMPT_MEASUREMENT_CAPS: ReadonlySet<string> = new Set([
   'air-quality-sensor',
   'ambient-light-sensor',
   'battery',
+  // Helper member counts (D944). The event is the output cap's, not the count.
+  'group-status',
   'network-link',
   'binary',
   'connectivity',

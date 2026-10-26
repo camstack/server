@@ -517,8 +517,20 @@ export class CoreBlocksAddon extends BaseAddon {
       describe: (sources, targets) =>
         describeCompositionSources(
           {
-            listByAddon: async (addonId) =>
-              requireApi().deviceManager.listAll.query({ addonId, projection: 'slim' }),
+            listByAddon: async (addonId) => {
+              const rows = await requireApi().deviceManager.listAll.query({
+                addonId,
+                projection: 'slim',
+              })
+              return rows.map((row) => ({
+                id: row.id,
+                stableId: row.stableId,
+                type: row.type,
+                ...(row.sourceInfo?.quantity === undefined
+                  ? {}
+                  : { quantity: row.sourceInfo.quantity }),
+              }))
+            },
             bindings: async (deviceId) =>
               (await requireApi().deviceManager.getBindings.query({ deviceId })).entries,
           },

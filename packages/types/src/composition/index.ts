@@ -3,6 +3,7 @@
  * inside @camstack/types import the deep modules, never this file.
  */
 export * from './composable-caps.js'
+export * from './helpers/index.js'
 export * from './composition.js'
 export * from './composition-events.js'
 export * from './composition-graph.js'

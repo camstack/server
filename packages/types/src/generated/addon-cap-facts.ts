@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 74 caps with 348 state leaves.
+ * Coverage: 1 advance-derived caps, 75 caps with 351 state leaves.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -97,6 +97,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "filesystem-browse",
   "flood",
   "gas",
+  "group-status",
   "heating-valve",
   "humidifier",
   "humidity-sensor",
@@ -239,6 +240,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "feature-probe": [{"path":"deviceType","valueType":"string"}, {"path":"model","valueType":"string"}, {"path":"channelCount","valueType":"number"}, {"path":"lastProbedAt","valueType":"number"}],
   "flood": [{"path":"flooded","valueType":"boolean"}],
   "gas": [{"path":"detected","valueType":"boolean"}],
+  "group-status": [{"path":"included","valueType":"number"}, {"path":"excluded","valueType":"number"}, {"path":"total","valueType":"number"}],
   "heating-valve": [{"path":"position","valueType":"number"}],
   "humidifier": [{"path":"on","valueType":"boolean"}, {"path":"currentHumidity","valueType":"number"}, {"path":"targetHumidity","valueType":"number"}, {"path":"mode","valueType":"string"}, {"path":"action","valueType":"string"}, {"path":"minHumidity","valueType":"number"}, {"path":"maxHumidity","valueType":"number"}],
   "humidity-sensor": [{"path":"percent","valueType":"number"}],

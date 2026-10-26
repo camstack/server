@@ -8,6 +8,7 @@
 import { compileExpressionSafe } from '../expression/compile.js'
 import { EXPRESSION_INJECTED_NOW } from '../expression/expression-source.js'
 import {
+  type CompositionAggregateSource,
   type CompositionFieldRead,
   type CompositionFieldSource,
   fieldReads,
@@ -41,6 +42,15 @@ interface KindsRefused {
 }
 type KindsResult = KindsFound | KindsRefused
 
+function aggregateKinds(source: CompositionAggregateSource): KindsResult {
+  if (source.publish !== 'value') return { ok: true, kinds: new Set(['number']) }
+  if (source.reducer === 'any' || source.reducer === 'all') {
+    return { ok: true, kinds: new Set(['boolean']) }
+  }
+  if (source.empty === 'null') return { ok: true, kinds: new Set(['number', 'null']) }
+  return { ok: true, kinds: new Set(['number']) }
+}
+
 function readKinds(read: CompositionFieldRead, lookupCap: CapabilityLookup): KindsResult {
   const def = lookupCap(read.cap)
   const schema = def?.runtimeState ?? def?.status?.schema
@@ -71,6 +81,7 @@ export function sourceKinds(
   if (source.kind === 'code') {
     return { ok: false, code: 'reserved-variant', message: 'code fields arrive in slice 4' }
   }
+  if (source.kind === 'aggregate') return aggregateKinds(source)
   const bindingKinds = new Map<string, ExpressionKindSet>()
   for (const [name, binding] of Object.entries(source.bindings)) {
     if (binding.kind === 'literal') {

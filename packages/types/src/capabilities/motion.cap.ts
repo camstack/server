@@ -159,12 +159,17 @@ export const motionCapability = {
   methods: {
     /**
      * Pull the current motion state synchronously. Convenience shortcut
-     * for consumers that don't need the full status object; equivalent
-     * to `getStatus()?.detected ?? false`. Will likely be folded into
-     * `getStatus` once the auto-injected status surface lands in every
-     * consumer.
+     * for consumers that don't need the full status object. A composed
+     * group answers from its slice (D944): unknown throws, it is not off.
      */
     isDetected: method(z.object({ deviceId: z.number() }), z.boolean()),
+  },
+  /**
+   * A composed motion group serves `isDetected` from `detected` (D944).
+   * Without this the cap stays uncomposable (`has-commands`).
+   */
+  composedMethods: {
+    isDetected: { kind: 'slice', field: 'detected' },
   },
   events: {
     /**

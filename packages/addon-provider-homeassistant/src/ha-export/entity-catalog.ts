@@ -2316,6 +2316,15 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'group-status',
+    reason:
+      'Bookkeeping for a helper group (D944): how many members were included, ' +
+      'excluded, or named. The value an operator automates on is the output ' +
+      'capability (the temperature, the motion, the watts). These counts are ' +
+      'session-only, have no history, and would publish a second entity that ' +
+      'never means the reading.',
+  },
+  {
     cap: 'recording-onboard',
     reason:
       'An EDITOR of the CAMERA\u2019s own recorder: a weekly schedule of windows per ' +

@@ -19,6 +19,7 @@ import {
   type CompositionBlockInput,
   type CompositionBlockPatch,
   type CompositionBlockState,
+  type CompositionSourceDescription,
   type CompositionSourceRef,
   type CompositionStateRead,
   type CompositionValidation,
@@ -134,11 +135,30 @@ function existingTarget(composition: Composition): CompositionSourceRef | null {
   return composition.target.kind === 'existing' ? composition.target.device : null
 }
 
+interface JudgedSave {
+  readonly validation: CompositionValidation
+  readonly memberDeviceIds: readonly number[]
+}
+
+function helperMemberDeviceIds(
+  composition: Composition,
+  sources: ReadonlyMap<string, CompositionSourceDescription>,
+): readonly number[] {
+  const helper = composition.helper
+  if (helper === undefined) return []
+  const ids: number[] = []
+  for (const member of helper.members) {
+    const found = sources.get(compositionSourceKey(member.source))
+    if (found?.kind === 'found') ids.push(found.deviceId)
+  }
+  return ids
+}
+
 async function validateAgainstStore(
   deps: CompositionApiDeps,
   composition: Composition,
   blockId: string | null,
-): Promise<CompositionValidation> {
+): Promise<JudgedSave> {
   if (!deps.store.isLoaded()) {
     throw new Error(
       `${NOT_LOADED_REASON} — a composition cannot be judged against the stored ones until it has; retry shortly`,
@@ -159,7 +179,7 @@ async function validateAgainstStore(
     ...storedCustomizationTargets(blocks),
   ])
   const stored = storedPeers(blocks, read.targets, deps.lookupCap, blockId)
-  return validateComposition(composition, {
+  const validation = validateComposition(composition, {
     lookupCap: deps.lookupCap,
     sources: read.sources,
     self,
@@ -175,6 +195,7 @@ async function validateAgainstStore(
     peers: stored.peers,
     unreadTargets: stored.unread,
   })
+  return { validation, memberDeviceIds: helperMemberDeviceIds(composition, read.sources) }
 }
 
 function describeProblems(validation: CompositionValidation): readonly string[] {
@@ -185,11 +206,17 @@ function refuse(
   deps: CompositionApiDeps,
   subject: RefusalSubject,
   validation: CompositionValidation,
+  memberDeviceIds: readonly number[],
 ): never {
   const problems = describeProblems(validation)
-  deps.logger.warn('composition save refused', {
-    meta: { name: subject.name, blockId: subject.blockId, problems },
-  })
+  const meta = { name: subject.name, blockId: subject.blockId, problems }
+  if (memberDeviceIds.length === 0) {
+    deps.logger.warn('composition save refused', { meta })
+  } else {
+    for (const deviceId of memberDeviceIds) {
+      deps.logger.warn('composition save refused', { tags: { deviceId }, meta })
+    }
+  }
   throw new Error(
     `core-blocks: the composition "${subject.name}" was refused — ${problems.join('; ')}`,
   )
@@ -364,9 +391,9 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
     createComposition: ({ block, caller }) =>
       serialized(async () => {
         const name = await nameOnCreate(deps, block)
-        const validation = await validateAgainstStore(deps, block.composition, null)
-        if (!validation.ok && problemsBlockSave(validation.problems)) {
-          refuse(deps, { name, blockId: null }, validation)
+        const judged = await validateAgainstStore(deps, block.composition, null)
+        if (!judged.validation.ok && problemsBlockSave(judged.validation.problems)) {
+          refuse(deps, { name, blockId: null }, judged.validation, judged.memberDeviceIds)
         }
         const created = await deps.store.createComposition({ ...block, name }, caller.userId)
         deps.logger.info('composition created', {
@@ -381,9 +408,14 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
         refuseIfChanged(deps, blockId, expectedUpdatedAt)
         await refuseRetarget(deps, blockId, block)
         if (block.composition !== undefined) {
-          const validation = await validateAgainstStore(deps, block.composition, blockId)
-          if (!validation.ok && problemsBlockSave(validation.problems)) {
-            refuse(deps, { name: block.name ?? blockId, blockId }, validation)
+          const judged = await validateAgainstStore(deps, block.composition, blockId)
+          if (!judged.validation.ok && problemsBlockSave(judged.validation.problems)) {
+            refuse(
+              deps,
+              { name: block.name ?? blockId, blockId },
+              judged.validation,
+              judged.memberDeviceIds,
+            )
           }
         }
         const updated = await deps.store.updateComposition(blockId, block)
@@ -440,7 +472,7 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
     },
 
     validateComposition: async ({ composition, blockId }) =>
-      validateAgainstStore(deps, composition, blockId ?? null),
+      (await validateAgainstStore(deps, composition, blockId ?? null)).validation,
 
     listComposableCaps: async ({ deviceType }) => ({
       caps: [...describeComposableCaps(deps.capabilityDefinitions, deviceType)],

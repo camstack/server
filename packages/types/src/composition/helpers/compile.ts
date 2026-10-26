@@ -1,0 +1,175 @@
+/**
+ * Project a helper spec onto the composition the composer already runs (D944).
+ * Pure: it stores nothing. A group does not compile to `avg(...)` / `any(...)`.
+ */
+import { DeviceType } from '../../device/device-type.js'
+import {
+  type Composition,
+  type CompositionAggregateSource,
+  type CompositionFieldRead,
+  type CompositionFieldSource,
+  CompositionSchema,
+  type CompositionSourceRef,
+} from '../composition.js'
+import type { CompositionProblem } from '../composition-report.js'
+import { problem } from '../plan-result.js'
+import { type GroupTemplate, groupTemplate } from './catalog.js'
+import { type GroupHelperSpec, type HelperMember, type HelperSpec } from './spec.js'
+
+export interface HelperCompiled {
+  readonly ok: true
+  readonly composition: Composition
+}
+
+export interface HelperRefused {
+  readonly ok: false
+  readonly problems: readonly CompositionProblem[]
+}
+
+export type HelperCompileResult = HelperCompiled | HelperRefused
+
+function sameSource(a: CompositionSourceRef, b: CompositionSourceRef): boolean {
+  return a.addonId === b.addonId && a.stableId === b.stableId
+}
+
+function sameMember(a: HelperMember, b: HelperMember): boolean {
+  return sameSource(a.source, b.source) && a.cap === b.cap && a.fieldPath === b.fieldPath
+}
+
+function accepted(template: GroupTemplate, member: HelperMember): boolean {
+  return template.accept.some(
+    (field) => field.cap === member.cap && field.fieldPath === member.fieldPath,
+  )
+}
+
+function memberProblems(
+  template: GroupTemplate,
+  spec: GroupHelperSpec,
+): readonly CompositionProblem[] {
+  return spec.members.flatMap((member, index) => {
+    const at = `helper.members[${index}]`
+    const problems: CompositionProblem[] = []
+    if (!accepted(template, member)) {
+      const allowed = template.accept.map((field) => `${field.cap}.${field.fieldPath}`).join(' or ')
+      problems.push(
+        problem(
+          'member-constraint',
+          at,
+          `a ${template.id} group reads ${allowed}; this member is ${member.cap}.${member.fieldPath}`,
+        ),
+      )
+    }
+    const earlier = spec.members.slice(0, index).some((other) => sameMember(other, member))
+    if (earlier)
+      problems.push(problem('member-constraint', at, 'this member is already in the group'))
+    return problems
+  })
+}
+
+function aggregateSource(
+  template: GroupTemplate,
+  spec: GroupHelperSpec,
+  reads: readonly CompositionFieldRead[],
+  publish: CompositionAggregateSource['publish'],
+): CompositionAggregateSource {
+  return {
+    kind: 'aggregate',
+    reducer: spec.aggregate,
+    reads: [...reads],
+    publish,
+    empty: template.empty,
+  }
+}
+
+function expressionSource(expr: string): CompositionFieldSource {
+  return { kind: 'expression', expr, bindings: {} }
+}
+
+function draftOf(template: GroupTemplate, spec: GroupHelperSpec): unknown {
+  const reads: CompositionFieldRead[] = spec.members.map((member) => ({
+    source: member.source,
+    cap: member.cap,
+    fieldPath: member.fieldPath,
+  }))
+  const companions = Object.fromEntries(
+    template.companions.map((companion) => [companion.fieldPath, expressionSource(companion.expr)]),
+  )
+  return {
+    target: { kind: 'new', type: template.deviceType, role: template.role },
+    helper: spec,
+    features: [
+      {
+        kind: 'fields',
+        cap: template.outputCap,
+        fields: {
+          [template.outputField]: aggregateSource(template, spec, reads, 'value'),
+          ...companions,
+        },
+      },
+      {
+        kind: 'fields',
+        cap: 'group-status',
+        fields: {
+          included: aggregateSource(template, spec, reads, 'included'),
+          excluded: aggregateSource(template, spec, reads, 'excluded'),
+          total: aggregateSource(template, spec, reads, 'total'),
+        },
+      },
+    ],
+  }
+}
+
+function parseDraft(draft: unknown): HelperCompileResult {
+  const parsed = CompositionSchema.safeParse(draft)
+  if (parsed.success) return { ok: true, composition: parsed.data }
+  const message = parsed.error.issues.map((issue) => issue.message).join('; ')
+  return {
+    ok: false,
+    problems: [problem('helper-mismatch', 'helper', `the template did not compile: ${message}`)],
+  }
+}
+
+/** Compile a group template to a new-device composition. Refusals are named. */
+export function compileHelper(spec: HelperSpec): HelperCompileResult {
+  const template = groupTemplate(spec.templateId)
+  if (template === null) {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'member-constraint',
+          'helper.templateId',
+          `unknown template \`${spec.templateId}\``,
+        ),
+      ],
+    }
+  }
+  if (!template.aggregates.includes(spec.aggregate)) {
+    const allowed = template.aggregates.join(', ')
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'kind-mismatch',
+          'helper.aggregate',
+          `a ${template.id} group aggregates by ${allowed}, not \`${spec.aggregate}\``,
+        ),
+      ],
+    }
+  }
+  const members = memberProblems(template, spec)
+  if (members.length > 0) return { ok: false, problems: members }
+  return parseDraft(draftOf(template, spec))
+}
+
+/** The built body, ignoring `helper`, so a save can demand one writer. */
+export function sameHelperBody(stored: Composition, compiled: Composition): boolean {
+  return (
+    JSON.stringify(stored.target) === JSON.stringify(compiled.target) &&
+    JSON.stringify(stored.features) === JSON.stringify(compiled.features)
+  )
+}
+
+export function templateDeviceType(spec: HelperSpec): DeviceType | null {
+  return groupTemplate(spec.templateId)?.memberDeviceType ?? null
+}

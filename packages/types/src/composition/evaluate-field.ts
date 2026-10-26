@@ -38,7 +38,9 @@ import {
   type StatefulExpressionMemory,
 } from '../expression/expression-source.js'
 import { tryConvertUnit } from '../units/convert.js'
+import { evaluateAggregate, type AggregateReadResult } from './helpers/aggregate.js'
 import {
+  type CompositionAggregateSource,
   type CompositionExpressionSource,
   type CompositionFieldRead,
   type CompositionFieldSource,
@@ -244,6 +246,36 @@ function expressionOutcome(
   }
 }
 
+function aggregateRead(reading: SourceReading): AggregateReadResult {
+  if (reading.state === 'unavailable') {
+    return { state: 'unavailable', fatal: reading.fatal, reason: reading.reason }
+  }
+  return {
+    state: reading.state,
+    value: reading.value,
+    ...(reading.state === 'stale' ? { reason: reading.reason } : {}),
+  }
+}
+
+function aggregateField(source: CompositionAggregateSource, read: SourceReader): FieldOutcome {
+  const outcome = evaluateAggregate({
+    reducer: source.reducer,
+    members: source.reads.map((item) => aggregateRead(read(item))),
+    publish: source.publish,
+    empty: source.empty,
+  })
+  if (outcome.kind === 'value') {
+    return { state: 'fresh', value: outcome.value, reason: null, deadline: null }
+  }
+  return {
+    state: 'unavailable',
+    value: null,
+    reason: outcome.reason,
+    fatal: outcome.fatal,
+    confirmed: true,
+  }
+}
+
 export function evaluateCompositionField(input: EvaluateCompositionFieldInput): FieldOutcome {
   const { source } = input
   switch (source.kind) {
@@ -251,6 +283,8 @@ export function evaluateCompositionField(input: EvaluateCompositionFieldInput): 
       return fromReading(input.read(source), source)
     case 'expression':
       return expressionOutcome(source, input.read, input.now, input.stateful)
+    case 'aggregate':
+      return aggregateField(source, input.read)
     case 'code':
       return {
         state: 'unavailable',

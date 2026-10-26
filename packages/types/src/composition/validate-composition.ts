@@ -11,6 +11,7 @@
 import type { CapabilityDefinition } from '../capabilities/capability-definition.js'
 import type { z } from 'zod'
 import type { DeviceType } from '../device/device-type.js'
+import type { ReadingQuantity } from '../units/quantity.js'
 import {
   COMPOSED_DEVICE_STABLE_ID_PREFIX,
   COMPOSER_ADDON_ID,
@@ -32,6 +33,7 @@ import {
   sourceKinds,
   unavailableFor,
 } from './field-kinds.js'
+import { helperSaveProblems, type HelperMemberFact } from './helpers/save.js'
 import { type CompositionPlanResult, compositionFieldAt, problem, refused } from './plan-result.js'
 import {
   CompositionGraphError,
@@ -66,6 +68,10 @@ export interface CompositionSourceFound {
   readonly kind: 'found'
   readonly deviceId: number
   readonly caps: ReadonlySet<string>
+  /** Present when the row was read. A helper group requires this one type. */
+  readonly deviceType?: DeviceType
+  /** Present when the device declares one. Mixed quantities are refused. */
+  readonly quantity?: ReadingQuantity
 }
 export interface CompositionSourceAbsent {
   readonly kind: 'absent'
@@ -254,6 +260,8 @@ function planTopLevelField(
   const role = roleOf(source)
   const unavailable = unavailableFor(tf, role, mode, def.name, fieldAt)
   if (!unavailable.ok) return refused(unavailable.problem)
+  const omitEmpty =
+    source.kind === 'aggregate' && source.publish === 'value' && source.empty === 'omit'
   const plan: CompositionFieldPlan = {
     cap: def.name,
     path,
@@ -261,7 +269,7 @@ function planTopLevelField(
     kind: tf.kind,
     nullable: tf.nullable,
     required: tf.required,
-    unavailable: unavailable.unavailable,
+    unavailable: omitEmpty ? 'omit' : unavailable.unavailable,
     role,
     source,
     reads: [...fieldReads(source)],
@@ -677,7 +685,19 @@ export function validateComposition(
     // A refused native override is not a writer, so its self-read is not a cycle.
     return refusedFeatures.length === 0 || item.path !== 'features'
   })
-  const problems = [...plan.problems, ...sourceProblems(plan.fields, ctx, self), ...cycles]
+  const facts: ReadonlyMap<string, HelperMemberFact> = new Map(
+    [...ctx.sources].flatMap(([key, source]) =>
+      source.kind === 'found'
+        ? [[key, { deviceType: source.deviceType, quantity: source.quantity }] as const]
+        : [],
+    ),
+  )
+  const problems = [
+    ...plan.problems,
+    ...sourceProblems(plan.fields, ctx, self),
+    ...cycles,
+    ...helperSaveProblems(composition, facts),
+  ]
   return {
     ok: problems.length === 0,
     problems,

@@ -458,6 +458,7 @@
   "filesystemBrowse.listAllowedRoots": "admin",
   "flood.getStatus": "viewer",
   "gas.getStatus": "viewer",
+  "groupStatus.getStatus": "viewer",
   "heatingValve.getStatus": "viewer",
   "humidifier.getStatus": "viewer",
   "humidifier.setMode": "viewer",

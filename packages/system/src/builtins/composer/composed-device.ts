@@ -29,12 +29,26 @@ import {
   type DeviceType,
   errMsg,
   type IDevice,
+  motionCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import type { ComposedWriteTarget, WriteOutcome } from './composition-runtime.js'
 import type { SlicePatch } from './slice-assembler.js'
 
 const COMPOSED_DEVICE_CONFIG_SCHEMA: z.ZodObject<Record<string, never>> = z.object({})
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** Unknown is a throw, never `false` (D393). */
+function sliceBoolean(slice: unknown, field: string): boolean {
+  if (isRecord(slice)) {
+    const value = slice[field]
+    if (typeof value === 'boolean') return value
+  }
+  throw new Error(`composed ${field} is unknown — not a stand-in value`)
+}
 
 export interface ComposedDeviceHandle extends ComposedWriteTarget {
   readonly name: string
@@ -49,7 +63,17 @@ export class ComposedDevice
   constructor(ctx: DeviceContext, type: DeviceType, caps: readonly CapabilityDefinition[]) {
     super(ctx, COMPOSED_DEVICE_CONFIG_SCHEMA, { type })
     // No command, and `getStatus` is the kernel default over the runtime slice (see the header).
-    for (const cap of caps) ctx.registerNativeCap(cap, {})
+    // Motion's `isDetected` is a slice answer (D944): the group reads `detected`.
+    for (const cap of caps) {
+      if (cap.name === motionCapability.name) {
+        const read = (): unknown => this.runtimeState.getCapState(motionCapability.name)
+        ctx.registerNativeCap(motionCapability, {
+          isDetected: async () => sliceBoolean(read(), 'detected'),
+        })
+        continue
+      }
+      ctx.registerNativeCap(cap, {})
+    }
     // NOT presumed reachable: available only once the runtime has seeded every cap.
     this.markOnline(false)
   }

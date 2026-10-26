@@ -21,6 +21,8 @@ import { z } from 'zod'
 import { DeviceRole, DeviceType } from '../device/device-type.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
+import { HelperSpecSchema, MAX_HELPER_MEMBERS } from './helpers/spec.js'
+import { CompositionSourceRefSchema, type CompositionSourceRef } from './source-ref.js'
 
 /** The owner of every composed device: the `composer` builtin. */
 export const COMPOSER_ADDON_ID = 'composer'
@@ -38,12 +40,7 @@ export const MAX_COMPOSITION_FIELDS_PER_FEATURE = 32
 /** Longest snippet a `code` source may carry (slice 4). */
 export const MAX_COMPOSITION_CODE_LENGTH = 20_000
 
-export const CompositionSourceRefSchema = z.object({
-  /** The owning addon; `stableId` is unique only within it. */
-  addonId: z.string().min(1),
-  stableId: z.string().min(1),
-})
-export type CompositionSourceRef = z.infer<typeof CompositionSourceRefSchema>
+export { CompositionSourceRefSchema, type CompositionSourceRef } from './source-ref.js'
 
 /** One field of one capability of one source device. */
 export const CompositionFieldReadSchema = z.object({
@@ -97,10 +94,27 @@ export const CompositionCodeSourceSchema = z.object({
 })
 export type CompositionCodeSource = z.infer<typeof CompositionCodeSourceSchema>
 
+/**
+ * `aggregate`: a group reducer. Offline and unknown reads are excluded, not
+ * folded in as 0 or false (D944). Free expressions stay `expression` so a
+ * stale member is still included there.
+ */
+export const CompositionAggregateSourceSchema = z.object({
+  kind: z.literal('aggregate'),
+  reducer: z.enum(['mean', 'median', 'min', 'max', 'sum', 'any', 'all']),
+  reads: z.array(CompositionFieldReadSchema).min(1).max(MAX_HELPER_MEMBERS),
+  /** `value` is the reading; the others are the member counts. */
+  publish: z.enum(['value', 'included', 'excluded', 'total']),
+  /** What a `value` publish does when nobody is included. Counts ignore this. */
+  empty: z.enum(['null', 'omit', 'offline']),
+})
+export type CompositionAggregateSource = z.infer<typeof CompositionAggregateSourceSchema>
+
 export const CompositionFieldSourceSchema = z.discriminatedUnion('kind', [
   CompositionFromSourceSchema,
   CompositionExpressionSourceSchema,
   CompositionCodeSourceSchema,
+  CompositionAggregateSourceSchema,
 ])
 export type CompositionFieldSource = z.infer<typeof CompositionFieldSourceSchema>
 
@@ -208,6 +222,12 @@ export const CompositionSchema = z
   .object({
     target: CompositionTargetSchema,
     features: z.array(CompositionFeatureSchema).min(1).max(MAX_COMPOSITION_FEATURES),
+    /**
+     * Present when the block is a helper template. Absent on a free
+     * composition (the room example, device 4603). The editor reads this,
+     * never the compiled features.
+     */
+    helper: HelperSpecSchema.optional(),
   })
   .superRefine((composition, ctx) => {
     const seen = new Set<string>()
@@ -255,6 +275,8 @@ export function fieldReads(source: CompositionFieldSource): readonly Composition
           ? [{ source: binding.source, cap: binding.cap, fieldPath: binding.fieldPath }]
           : [],
       )
+    case 'aggregate':
+      return source.reads
     case 'code':
       return []
   }

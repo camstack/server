@@ -66,8 +66,28 @@ function unanswered(def: CapabilityDefinition): readonly string[] {
     .map(([name]) => name)
 }
 
-function composedMethod(answer: ComposedMethodAnswer): GraftMethod {
+function isSliceRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** A slice field that is present. Unknown throws — it is not false or 0 (D393). */
+function sliceField(slice: Readonly<Record<string, unknown>> | null, field: string): unknown {
+  const value = slice?.[field]
+  if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string') {
+    return value
+  }
+  throw new Error(`composed ${field} is unknown — not a stand-in value`)
+}
+
+function composedMethod(
+  answer: ComposedMethodAnswer,
+  readSlice: () => Promise<Readonly<Record<string, unknown>> | null>,
+): GraftMethod {
   if (answer.kind === 'answer') return async () => answer.value
+  if (answer.kind === 'slice') {
+    const field = answer.field
+    return async () => sliceField(await readSlice(), field)
+  }
   return async () => {
     throw new Error(answer.reason)
   }
@@ -190,8 +210,12 @@ export class GraftHost implements ComposerGraftPorts {
   }
 
   private providerFor(deviceId: number, def: CapabilityDefinition): GraftProvider {
+    const readSlice = async (): Promise<Readonly<Record<string, unknown>> | null> => {
+      const slice = await this.readMerged(deviceId, def.name)
+      return isSliceRecord(slice) ? slice : null
+    }
     const answers = Object.entries(def.composedMethods ?? {}).map(
-      ([name, answer]) => [name, composedMethod(answer)] as const,
+      ([name, answer]) => [name, composedMethod(answer, readSlice)] as const,
     )
     const withStatus =
       def.status === undefined && def.runtimeState === undefined

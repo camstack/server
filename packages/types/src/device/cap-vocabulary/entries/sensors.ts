@@ -17,6 +17,7 @@ type SensorCap =
   | 'enum-sensor'
   | 'flood'
   | 'gas'
+  | 'group-status'
   | 'humidity-sensor'
   | 'motion'
   | 'numeric-sensor'
@@ -346,6 +347,34 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
         whenTrue: t('When {device} detects gas', 'Quando {device} rileva gas'),
         whenFalse: t('When the gas clears on {device}', 'Quando il gas su {device} rientra'),
         icon: 'flame',
+      },
+    ],
+  },
+
+  'group-status': {
+    scope: 'device',
+    noun: t('Group', 'Gruppo'),
+    state: [
+      {
+        kind: 'numeric',
+        field: 'included',
+        quantity: t('the members reporting', 'i membri che rispondono'),
+        label: t('Reporting', 'Rispondono'),
+        icon: 'users',
+      },
+      {
+        kind: 'numeric',
+        field: 'excluded',
+        quantity: t('the members left out', 'i membri esclusi'),
+        label: t('Excluded', 'Esclusi'),
+        icon: 'users',
+      },
+      {
+        kind: 'numeric',
+        field: 'total',
+        quantity: t('the member count', 'il numero di membri'),
+        label: t('Members', 'Membri'),
+        icon: 'sigma',
       },
     ],
   },

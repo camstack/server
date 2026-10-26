@@ -4,12 +4,18 @@ applies-to:
   - packages/types/src/device/**
   - packages/types/src/device-extension/**
   - packages/types/src/composition/**
+  - packages/types/src/capabilities/group-status.cap.ts
+  - packages/types/src/capabilities/motion.cap.ts
   - packages/system/src/builtins/composer/composition-runtime.ts
+  - packages/system/src/builtins/composer/composed-device.ts
+  - packages/system/src/builtins/composer/graft-host.ts
   - packages/system/src/builtins/composer/composer.addon.ts
+  - packages/system/src/builtins/core-blocks/composition-api.ts
+  - packages/system/src/builtins/core-blocks/composition-sources.ts
 covers:
   - packages/addon-provider-*/**
   - packages/system/src/builtins/device-manager/removal-cleanup.ts
-last-verified: 2026-10-06
+last-verified: 2026-10-26
 ---
 
 # The device model
@@ -531,6 +537,42 @@ runner (a group of one) for every declarative composition. Existing devices are 
   (`stale-wrapper-activations.ts`).
 - **Rolling back below D659 erases compositions**: an older build strips
   `source` and rewrites the row. Export them first.
+
+### Helpers: a group is a template, not an expression
+
+[D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md).
+A helper is an ordinary built device (`target.kind: 'new'`). The editor stores
+a `composition.helper` spec — template id, reducer, members as
+`{ addonId, stableId }` plus the field they read — and `compileHelper` projects
+that onto features the composer already runs. Reading the block back returns
+the spec, so the editor does not reopen it as an expression. A composition
+with no `helper` is a free expression: device 4603's room average is that, and
+`avg` / `any` still include a stale value.
+
+Phase 1a is group templates only, one per base reading (temperature, humidity,
+pressure, illuminance, power, energy, battery, numeric) and one per binary
+reading (motion, contact, leak, smoke, occupancy, binary). A numeric group
+reduces by mean, median, min, max or sum. A binary group reduces by any or
+all. Members are one device type (`Sensor`) and one catalog field. Occupancy
+reads `motion.detected` or `binary.on`; a presence zone is not a boolean and
+is not a member.
+
+The projection is a field source `kind: 'aggregate'`, not `avg(...)`. Offline,
+stale and unknown members are excluded and counted. They are never read as 0
+or false (D393). The counts are the `group-status` capability (`included`,
+`excluded`, `total`), session durability, no history — the series a later
+statistic reads is the output cap's own history block. The output stays in the
+members' base unit. A save that finds two quantities on one group is refused
+`mixed-quantity`. Nobody reporting writes `null` on a nullable reading, omits
+an optional one (`power-meter.watts`, `kwhTotal` — the slice is replaced so
+the previous number does not linger), or takes a non-nullable boolean device
+offline rather than publishing false. A member that is gone fails the field.
+
+`motion.isDetected` on a composed group reads `detected` from the slice and
+throws when that field is unknown. The common source selector (#236) is asked
+through `sourcePickForTemplate`: one device type, the catalog fields, up to
+64 members. Switch and light groups, statistics and integral are not this
+slice.
 
 ## Deleting a device: who cleans what (D864)
 

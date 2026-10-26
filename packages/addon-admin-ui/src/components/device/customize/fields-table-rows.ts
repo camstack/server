@@ -67,6 +67,8 @@ export function describeFieldSource(
     }
     case 'expression':
       return source.expr
+    case 'aggregate':
+      return `${source.reducer} (${source.reads.length})`
     case 'code':
       return 'code'
   }

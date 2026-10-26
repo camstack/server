@@ -2204,6 +2204,12 @@ export {
 } from './flood.cap.js'
 export { type GasStatus, GasStatusSchema, gasCapability, type IGasProvider } from './gas.cap.js'
 export {
+  type GroupStatus,
+  GroupStatusSchema,
+  groupStatusCapability,
+  type IGroupStatusProvider,
+} from './group-status.cap.js'
+export {
   type HeatingValveStatus,
   HeatingValveStatusSchema,
   heatingValveCapability,
@@ -3160,6 +3166,7 @@ import type { featureProbeCapability } from './feature-probe.cap.js'
 import type { filesystemBrowseCapability } from './filesystem-browse.cap.js'
 import type { floodCapability } from './flood.cap.js'
 import type { gasCapability } from './gas.cap.js'
+import type { groupStatusCapability } from './group-status.cap.js'
 import type { heatingValveCapability } from './heating-valve.cap.js'
 import type { humidifierCapability } from './humidifier.cap.js'
 import type { humiditySensorCapability } from './humidity-sensor.cap.js'
@@ -3383,6 +3390,7 @@ type AnyCapability =
   | typeof smokeCapability
   | typeof carbonMonoxideCapability
   | typeof gasCapability
+  | typeof groupStatusCapability
   | typeof tamperCapability
   | typeof vibrationCapability
   | typeof connectivityCapability

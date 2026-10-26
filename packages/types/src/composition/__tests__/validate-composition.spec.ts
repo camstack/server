@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { binaryCapability } from '../../capabilities/binary.cap.js'
-import type { CapabilityDefinition } from '../../capabilities/capability-definition.js'
+import { method, type CapabilityDefinition } from '../../capabilities/capability-definition.js'
 import { deviceStatusCapability } from '../../capabilities/device-status.cap.js'
 import { motionCapability } from '../../capabilities/motion.cap.js'
 import { temperatureSensorCapability } from '../../capabilities/temperature-sensor.cap.js'
@@ -58,6 +58,18 @@ const ENUM_CAP = {
   }),
 } as const satisfies CapabilityDefinition
 
+/** A cap with a served method and no composed answer — still `has-commands`. */
+const COMMANDED_CAP = {
+  name: 'test-commanded',
+  scope: 'device',
+  mode: 'singleton',
+  deviceTypes: [DeviceType.Sensor],
+  methods: {
+    poke: method(z.object({}), z.boolean()),
+  },
+  runtimeState: z.object({ on: z.boolean() }),
+} as const satisfies CapabilityDefinition
+
 const lookupCap = buildCapabilityLookup([
   temperatureSensorCapability,
   binaryCapability,
@@ -65,6 +77,7 @@ const lookupCap = buildCapabilityLookup([
   deviceStatusCapability,
   LEVEL_CAP,
   ENUM_CAP,
+  COMMANDED_CAP,
 ])
 
 const ROOM = roomCompositionExample({
@@ -218,13 +231,11 @@ describe('reserved variants are refused by name, with their slice', () => {
 
 describe('capability fit', () => {
   it('refuses a cap with a method a composed device cannot serve, naming it', () => {
-    const c = single('motion', {
-      detected: { kind: 'from', source: M1, cap: 'motion', fieldPath: 'detected' },
+    const c = single('test-commanded', {
+      on: { kind: 'from', source: M1, cap: 'binary', fieldPath: 'on' },
     })
     const result = validateComposition(c, ctx(c))
-    expect(result.problems.find((p) => p.code === 'has-commands')?.message).toContain(
-      '`isDetected`',
-    )
+    expect(result.problems.find((p) => p.code === 'has-commands')?.message).toContain('`poke`')
   })
   it('refuses a cap the device type does not offer', () => {
     const c = single(

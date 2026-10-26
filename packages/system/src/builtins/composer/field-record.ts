@@ -211,7 +211,9 @@ export function writable(record: FieldRecord): ExpressionValue | undefined {
       return null
     case 'unknown':
       return 'unknown'
-    default:
+    case 'omit':
+    case 'offline':
+    case 'release':
       return undefined
   }
 }

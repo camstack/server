@@ -20,12 +20,15 @@ import {
   compositionSourceKey,
   type DeviceType,
   errMsg,
+  type ReadingQuantity,
 } from '@camstack/types'
 
 export interface SourceRowView {
   readonly id: number
   readonly stableId: string
   readonly type: DeviceType
+  /** The device's stored quantity, when it declares one (D944 §4). */
+  readonly quantity?: ReadingQuantity
 }
 
 /** One `getBindings` entry: the cap, and the addon serving it natively. */
@@ -110,7 +113,13 @@ function describeSource(
   const bound = bindings.get(lookup.row.id)
   if (bound === undefined) return { kind: 'unreadable', error: 'its bindings were not read' }
   if ('error' in bound) return { kind: 'unreadable', error: bound.error }
-  return { kind: 'found', deviceId: lookup.row.id, caps: new Set(bound.map((b) => b.capName)) }
+  return {
+    kind: 'found',
+    deviceId: lookup.row.id,
+    caps: new Set(bound.map((b) => b.capName)),
+    deviceType: lookup.row.type,
+    ...(lookup.row.quantity === undefined ? {} : { quantity: lookup.row.quantity }),
+  }
 }
 
 function describeTarget(
