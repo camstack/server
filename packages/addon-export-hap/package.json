@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-export-hap",
-  "version": "1.2.180",
+  "version": "1.2.181",
   "description": "HomeKit (HAP) exporter for CamStack devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table.",
   "keywords": [
     "camstack",
