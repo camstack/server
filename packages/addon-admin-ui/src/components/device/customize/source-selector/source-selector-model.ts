@@ -81,7 +81,9 @@ function catalogTarget(cap: string, targetId: string): CustomizeCatalogTarget | 
   return CAP_CUSTOMIZE_CATALOG[cap].targets.find((row) => row.id === targetId) ?? null
 }
 
-function destinationSources(destination: SourceDestination): readonly CustomizeCatalogSource[] {
+export function destinationSources(
+  destination: SourceDestination,
+): readonly CustomizeCatalogSource[] {
   const target = catalogTarget(destination.cap, destination.targetId)
   if (target === null) return []
   if (target.cardinality === 'keyedArray') {
@@ -166,10 +168,16 @@ export function judgeSourceCompatibility(
     if (field.kind === 'enum') return { kind: 'incompatible', reason: 'kind' }
     return { kind: 'direct' }
   }
+  const target = catalogTarget(destination.cap, destination.targetId)
+  if (target?.cardinality === 'event' && field.kind === 'boolean') {
+    const sources = destinationSources(destination)
+    if (declarationSourceForField(sources, offerFromField(field)) !== null) {
+      return { kind: 'direct' }
+    }
+  }
   const sources = destinationSources(destination)
   if (sources.length === 0) return { kind: 'incompatible', reason: 'kind' }
 
-  const target = catalogTarget(destination.cap, destination.targetId)
   const keyed = target?.cardinality === 'keyedArray' && destination.fieldPath !== undefined
 
   if (field.kind === 'enum' && !keyed) {

@@ -80,25 +80,14 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceStateGetSnapshot: () => ({ status: 'success' as const, data: {} }),
     DevicePicker: (p: {
       devices: readonly { id: number; name: string }[]
-      lockedIds?: readonly number[]
-      lockedNote?: string
       onChange: (ids: number[]) => void
     }) => (
-      <div>
-        {p.devices.map((device) => {
-          const locked = p.lockedIds?.includes(device.id) === true
-          return (
-            <button
-              key={device.id}
-              type="button"
-              disabled={locked}
-              onClick={() => !locked && p.onChange([device.id])}
-            >
-              {device.name}
-              {locked ? ` (${p.lockedNote})` : ''}
-            </button>
-          )
-        })}
+      <div data-testid="event-pulse-picker">
+        {p.devices.map((device) => (
+          <button key={device.id} type="button" onClick={() => p.onChange([device.id])}>
+            {device.name}
+          </button>
+        ))}
       </div>
     ),
   }
@@ -107,7 +96,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 const { EventPulseDialog } = await import('../EventPulseDialog')
 
 describe('EventPulseDialog', () => {
-  it('locks incompatible devices and titles the add override dialog', () => {
+  it('hides incompatible devices behind disclosure and adds a switch source', () => {
     render(
       <EventPulseDialog
         open
@@ -128,10 +117,13 @@ describe('EventPulseDialog', () => {
       />,
     )
     expect(screen.getByRole('heading', { name: 'Add Doorbell override' })).toBeTruthy()
-    const light = screen.getByRole('button', { name: /Garage light/ })
-    expect(light).toHaveProperty('disabled', true)
-    expect(light.textContent).toContain('Not compatible')
+    expect(screen.queryByRole('button', { name: /^Garage light/ })).toBeNull()
+    expect(screen.getByTestId('source-incompatible-devices')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /1 not compatible/i }))
+    expect(screen.getByText('Garage light')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /^Porch switch/ }))
+    fireEvent.click(screen.getByTestId('source-value-switch.on'))
+    expect(screen.getByTestId('source-picked-list')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Save override' })).not.toBeDisabled()
   })
 })

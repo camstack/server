@@ -6,17 +6,13 @@ import type { CompositionSourceRef, DeviceInfo, KeyedArrayLiteral } from '@camst
 import { evaluateExpressionSource } from '@camstack/types'
 import {
   Button,
-  DevicePicker,
-  type DeviceListState,
   Dialog,
   DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  ErrorBox,
   Input,
-  type PickerItem,
   Select,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
@@ -31,12 +27,10 @@ import {
   type PickerDevice,
   type WireableCatalog,
 } from '../source-picker-model'
-import { scalarFitReasonI18nKey } from '../scalar/scalar-reason'
 import { ScalarPreviewLine } from '../scalar/ScalarPreviewLine'
-import { ScalarTransformControls } from '../scalar/ScalarTransformControls'
 import type { ScalarPreview } from '../scalar/scalar-preview'
 import type { ScalarTransformDraft } from '../scalar/scalar-form'
-import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { SourceSelector, type SourceFieldPick } from '../source-selector/SourceSelector'
 import {
   defaultEnumMapping,
   defaultKeyedTransform,
@@ -84,19 +78,13 @@ const FIELD_LABEL: Readonly<Record<string, string>> = {
   status: 'customize.keyed.field.status',
 }
 
-function listStateOf(status: 'pending' | 'error' | 'success'): DeviceListState {
-  if (status === 'pending') return 'pending'
-  if (status === 'error') return 'failed'
-  return 'answered'
-}
-
 export function KeyedArrayItemDialog(props: KeyedArrayItemDialogProps): ReactNode {
   const { t } = useTranslation()
   const heading =
     props.mode === 'change' ? t('customize.keyed.changeTitle') : t('customize.keyed.addTitle')
   return (
     <Dialog open={props.open} onOpenChange={(next) => (next ? undefined : props.onClose())}>
-      <DialogContent width="md" placement="sheet-on-mobile" scroll="body" aria-label={heading}>
+      <DialogContent width="xl" placement="sheet-on-mobile" scroll="body" aria-label={heading}>
         <DialogHeader>
           <DialogTitle>{heading}</DialogTitle>
         </DialogHeader>
@@ -181,10 +169,16 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
     selected,
     snapshot.status === 'success' ? snapshot.data : null,
   )
-  const room =
-    typeof props.host.location === 'string' && props.host.location.length > 0
-      ? props.host.location
-      : null
+  const applyFieldPick = (pick: SourceFieldPick | null): void => {
+    if (pick === null) {
+      setFieldKey(null)
+      return
+    }
+    const offer = offers.find((row) => row.cap === pick.cap && row.path === pick.path)
+    if (offer === undefined) return
+    const verdict = keyedFieldFit(props.cap, props.targetId, fieldPath, offer)
+    pickOffer(offer, verdict)
+  }
   const onLabel = (value: string): void => {
     setLabel(value)
     if (!keyTouched) setKey(itemKeyFromLabel(value))
@@ -217,6 +211,7 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
             }))}
             onChange={(event) => {
               setFieldPath(event.target.value)
+              setDevice(null)
               setFieldKey(null)
               setTransform({ kind: 'identity' })
             }}
@@ -250,84 +245,28 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
             />
           </label>
         ))}
-        <section className="flex flex-col gap-1" aria-label={t('customize.scalar.stepDevice')}>
-          <h3 className="text-[11px] font-medium text-foreground-muted">
-            {t('customize.scalar.stepDevice')}
-          </h3>
-          {device !== null ? (
-            <p className="flex flex-wrap items-center gap-2 text-xs text-foreground">
-              {device.name}
-              <Button variant="ghost" size="sm" onClick={() => setDevice(null)}>
-                {t('customize.scalar.changeDevice')}
-              </Button>
-            </p>
-          ) : devices.status === 'error' ? (
-            <ErrorBox
-              title={t('customize.picker.devicesFailed')}
-              message={devices.error?.message ?? ''}
-            />
-          ) : (
-            <DevicePicker
-              devices={pickerItems(fleet, props.host.id)}
-              listState={listStateOf(devices.status)}
-              value={[]}
-              selection="single"
-              {...(room !== null ? { groupBy: 'location' as const } : {})}
-              onChange={(next) => {
-                const id = next[0]
-                const picked = id === undefined ? undefined : fleet.find((row) => row.id === id)
-                if (picked === undefined) return
-                setDevice(picked)
-                setFieldKey(null)
-              }}
-              noun="device"
-              showAll
-              testId="keyed-device-picker"
-            />
-          )}
-        </section>
-        {device !== null && (
-          <ul className="flex flex-col gap-1">
-            {offers.map((offer) => {
-              const verdict = keyedFieldFit(props.cap, props.targetId, fieldPath, offer)
-              const id = `${offer.cap}.${offer.path}`
-              const usable =
-                verdict.ok && (verdict.mode === 'scalar' || offer.enumValues.length > 0)
-              return (
-                <li key={id} className="flex flex-wrap items-center gap-2 text-[11px]">
-                  <label className="flex items-center gap-2 text-foreground">
-                    <input
-                      type="radio"
-                      name="keyed-field"
-                      checked={fieldKey === id}
-                      disabled={!usable}
-                      onChange={() => pickOffer(offer, verdict)}
-                    />
-                    <span>
-                      {vocabularyFieldLabel(offer.cap, offer.path, i18n.language)}
-                      {offer.unit !== null ? ` (${offer.unit})` : ''}
-                    </span>
-                  </label>
-                  {!verdict.ok && (
-                    <span className="text-foreground-subtle">
-                      {t(scalarFitReasonI18nKey(verdict.reason))}
-                    </span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        {fit?.ok === true && fit.mode === 'scalar' && (
-          <ScalarTransformControls
-            control={fit.fit.transforms.includes('linear') ? 'choice' : 'none'}
-            transforms={fit.fit.transforms}
-            declared={fit.fit.declared}
-            unit={fit.fit.sourceUnit}
-            value={transform}
-            onChange={setTransform}
-          />
-        )}
+        <SourceSelector
+          kind="keyed"
+          enabled={props.open}
+          hostId={props.host.id}
+          fieldPath={fieldPath}
+          destination={{
+            cap: props.cap,
+            targetId: props.targetId,
+            fieldPath,
+            title: t(FIELD_LABEL[fieldPath] ?? fieldPath),
+          }}
+          device={device}
+          field={fieldPickOf(fieldKey)}
+          transform={transform}
+          onDeviceChange={(next) => {
+            setDevice(next)
+            setFieldKey(null)
+            setTransform({ kind: 'identity' })
+          }}
+          onFieldChange={applyFieldPick}
+          onTransformChange={setTransform}
+        />
         {fit?.ok === true && fit.mode === 'enum' && selected !== null && (
           <EnumMapRows
             values={selected.enumValues}
@@ -487,18 +426,11 @@ function binding(value: unknown): number | string | boolean | null | undefined {
   return undefined
 }
 
-function pickerItems(
-  fleet: readonly PickerDevice[],
-  hostId: number,
-): readonly PickerItem<number>[] {
-  return fleet
-    .filter((row) => row.id !== hostId)
-    .map((row) => ({
-      id: row.id,
-      name: row.name,
-      type: row.type,
-      ...(row.location !== null ? { location: row.location } : {}),
-    }))
+function fieldPickOf(fieldKey: string | null): SourceFieldPick | null {
+  if (fieldKey === null) return null
+  const dot = fieldKey.indexOf('.')
+  if (dot <= 0) return null
+  return { cap: fieldKey.slice(0, dot), path: fieldKey.slice(dot + 1) }
 }
 
 function seedDevice(

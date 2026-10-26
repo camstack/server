@@ -2,11 +2,13 @@ import type { DeviceSnapshot, PickerDevice, WireableCatalog } from '../source-pi
 import { formatLiveValue, pickerFieldRows, readPath } from '../source-picker-model'
 import { keyedFieldOffers } from '../keyed/keyed-fit'
 import { scalarFieldOffers } from '../scalar/scalar-fit'
+import type { EventShape } from '../event/event-fit'
 import {
   destinationIsKeyed,
   type SourceDestination,
   type SourceWireableField,
 } from './source-selector-model'
+import { wireableEventFields } from './source-selector-event-fields'
 
 export function wireableFieldsForDestination(
   destination: SourceDestination,
@@ -14,7 +16,11 @@ export function wireableFieldsForDestination(
   snapshotAnswered: boolean,
   snapshot: DeviceSnapshot | null,
   device: PickerDevice | null,
+  eventShape: EventShape | null = null,
 ): readonly SourceWireableField[] {
+  if (eventShape !== null) {
+    return wireableEventFields(destination, catalog, eventShape, snapshotAnswered, snapshot)
+  }
   if (destination.pickerTargetKind !== undefined && device !== null) {
     return pickerFieldRows(device, catalog, snapshot, destination.pickerTargetKind).map((row) => ({
       cap: row.cap,

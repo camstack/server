@@ -3,11 +3,13 @@
  * column is the ui-library `DevicePicker`; Build-your-self helpers (D944 §3)
  * import this component next — they must not grow a second device list.
  */
+import type { CameraSensorMode, CustomizeEventEdge } from '@camstack/types'
 import {
   Button,
   DevicePicker,
   type DeviceListState,
   ErrorBox,
+  Input,
   type PickerItem,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
@@ -37,7 +39,18 @@ import {
   type SourceCompatibility,
   type SourceDestination,
 } from './source-selector-model'
+import { ModeLine } from '../event/event-mode-line'
+import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import {
+  appendEventPick,
+  type EventPickedRow,
+  removeEventPick,
+  updateEventPickMode,
+} from './source-selector-event-add'
+import { EventEdgeField, NumberSecondsField, SpanPendingMode } from './source-selector-event-params'
 import { wireableFieldsForDestination } from './source-selector-fields'
+
+export type { EventPickedRow }
 
 export interface SourceFieldPick {
   readonly cap: string
@@ -82,10 +95,36 @@ export interface SourceSelectorFormulaProps {
   readonly onFieldChange: (field: SourceFieldPick | null) => void
 }
 
+export interface SourceSelectorEventProps {
+  readonly kind: 'event'
+  readonly shape: 'pulse' | 'span'
+  readonly destination: SourceDestination
+  readonly hostId: number
+  readonly enabled: boolean
+  readonly devicePickerTestId: string
+  readonly device: PickerDevice | null
+  readonly picked: readonly EventPickedRow[]
+  readonly onDeviceChange: (device: PickerDevice | null) => void
+  readonly onPickedChange: (rows: readonly EventPickedRow[]) => void
+  readonly edges: readonly CustomizeEventEdge[]
+  readonly edge: CustomizeEventEdge
+  readonly onEdgeChange: (edge: CustomizeEventEdge) => void
+  readonly debounceSec: number
+  readonly onDebounceSecChange: (seconds: number) => void
+  readonly sourceModes: readonly CameraSensorMode[]
+  readonly pendingMode: CameraSensorMode
+  readonly onPendingModeChange: (mode: CameraSensorMode) => void
+  readonly timeoutSec: number
+  readonly onTimeoutSecChange: (seconds: number) => void
+  readonly cooldownSec: number | null
+  readonly onCooldownSecChange: (seconds: number) => void
+}
+
 export type SourceSelectorProps =
   | SourceSelectorScalarProps
   | SourceSelectorKeyedProps
   | SourceSelectorFormulaProps
+  | SourceSelectorEventProps
 
 function listStateOf(
   devices: 'pending' | 'error' | 'success',
@@ -171,13 +210,17 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
   const wireable = useDeviceManagerGetWireableFields({ deviceId })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: props.device === null ? 0 : deviceId })
   const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const eventShape = props.kind === 'event' ? props.shape : null
   const fields = wireableFieldsForDestination(
     props.destination,
     catalog,
     snapshot.status === 'success',
     snapshot.status === 'success' ? snapshot.data : null,
     props.device,
+    eventShape,
   )
+  const devicePickerTestId =
+    props.kind === 'event' ? props.devicePickerTestId : 'source-selector-device-picker'
   const { groups, incompatible: incompatibleValues } = groupSourceValues(
     fields,
     props.destination,
@@ -188,13 +231,27 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
     const id = ids[0]
     if (id === undefined) {
       props.onDeviceChange(null)
-      props.onFieldChange(null)
+      if (props.kind !== 'event') props.onFieldChange(null)
       return
     }
     const next = fleet.find((row) => row.id === id) ?? null
     props.onDeviceChange(next)
-    props.onFieldChange(null)
+    if (props.kind !== 'event') props.onFieldChange(null)
     setMobileStep('value')
+  }
+  const pickEventValue = (cap: string, path: string): void => {
+    if (props.kind !== 'event' || props.device === null) return
+    props.onPickedChange(
+      appendEventPick(
+        props.picked,
+        props.device,
+        catalog,
+        cap,
+        path,
+        props.shape,
+        props.pendingMode,
+      ),
+    )
   }
   const deviceColumn = (
     <div className="flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]">
@@ -216,7 +273,7 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
           onChange={pickDevice}
           noun="device"
           showAll
-          testId="source-selector-device-picker"
+          testId={devicePickerTestId}
         />
       )}
       {incompatible.length > 0 && (
@@ -243,8 +300,86 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
       )}
     </div>
   )
+  const pickedList =
+    props.kind === 'event' && props.picked.length > 0 ? (
+      <ul data-testid="source-picked-list" className="flex flex-col gap-2">
+        {props.picked.map((row) => (
+          <li
+            key={`${row.addonId}/${row.stableId}/${row.cap}.${row.fieldPath}`}
+            className="flex flex-col gap-1 text-xs"
+          >
+            <span className="text-foreground">
+              {row.deviceName} · {vocabularyFieldLabel(row.cap, row.fieldPath, i18n.language)}
+            </span>
+            {props.shape === 'span' && row.mode !== undefined && (
+              <ModeLine
+                mode={row.mode}
+                modes={props.sourceModes}
+                name={row.stableId}
+                onChange={(mode) =>
+                  props.onPickedChange(updateEventPickMode(props.picked, row, mode))
+                }
+              />
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => props.onPickedChange(removeEventPick(props.picked, row))}
+            >
+              {t('customize.event.clear')}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    ) : null
+
+  const eventParams =
+    props.kind === 'event' ? (
+      <div className="flex flex-col gap-2">
+        {props.shape === 'pulse' && (
+          <>
+            <EventEdgeField edges={props.edges} edge={props.edge} onChange={props.onEdgeChange} />
+            <label className="flex flex-col gap-1 text-[11px] text-foreground">
+              {t('customize.event.debounce')}
+              <Input
+                type="number"
+                aria-label={t('customize.event.debounce')}
+                value={Number.isFinite(props.debounceSec) ? props.debounceSec : 0}
+                onChange={(event) => {
+                  const next = Number(event.target.value)
+                  if (Number.isFinite(next) && next >= 0) props.onDebounceSecChange(next)
+                }}
+              />
+            </label>
+          </>
+        )}
+        {props.shape === 'span' && (
+          <>
+            <SpanPendingMode
+              mode={props.pendingMode}
+              modes={props.sourceModes}
+              onChange={props.onPendingModeChange}
+            />
+            <NumberSecondsField
+              label={t('customize.event.timeout')}
+              value={props.timeoutSec}
+              onChange={props.onTimeoutSecChange}
+            />
+            {props.cooldownSec !== null && (
+              <NumberSecondsField
+                label={t('customize.event.cooldown')}
+                value={props.cooldownSec}
+                onChange={props.onCooldownSecChange}
+              />
+            )}
+          </>
+        )}
+      </div>
+    ) : null
+
   const valueColumn = (
     <div className="flex min-h-0 flex-col gap-2">
+      {pickedList}
       {props.device !== null && (
         <h3 className="text-[11px] font-medium text-foreground">{props.device.name}</h3>
       )}
@@ -270,7 +405,10 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
               </h4>
               <ul className="mt-1 flex flex-col gap-1">
                 {group.rows.map((row) => {
-                  const selected = props.field?.cap === row.cap && props.field.path === row.path
+                  const selected =
+                    props.kind !== 'event' &&
+                    props.field?.cap === row.cap &&
+                    props.field.path === row.path
                   return (
                     <li key={`${row.cap}.${row.path}`}>
                       <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
@@ -280,6 +418,10 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
                           checked={selected}
                           data-testid={`source-value-${row.cap}.${row.path}`}
                           onChange={() => {
+                            if (props.kind === 'event') {
+                              pickEventValue(row.cap, row.path)
+                              return
+                            }
                             props.onFieldChange({ cap: row.cap, path: row.path })
                             if (props.kind === 'formula') return
                             const nextFit = fieldFitForRow(
@@ -352,6 +494,7 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
           onChange={props.onTransformChange}
         />
       )}
+      {eventParams}
     </div>
   )
   return (
@@ -434,7 +577,7 @@ function fieldFit(
   catalog: WireableCatalog,
   snapshot: DeviceSnapshot | null,
 ): ScalarFieldFit | null {
-  if (props.kind === 'formula') return null
+  if (props.kind === 'formula' || props.kind === 'event') return null
   if (props.device === null || props.field === null) return null
   return fieldFitForRow(props, catalog, snapshot, props.field.cap, props.field.path)
 }
