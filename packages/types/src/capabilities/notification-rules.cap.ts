@@ -174,6 +174,12 @@ export const NcSystemEventKindSchema = z.enum([
   'detection-blind',
   'motion-noisy',
   'motion-calm',
+  // D931 (2026-10-26): a packages rule's LLM confirm failed closed three
+  // times in a row (`package-llm-silent`) and then answered again
+  // (`package-llm-answered`). One open notice per camera. Scene-difference
+  // parcels are not emitted until the confirm says yes.
+  'package-llm-silent',
+  'package-llm-answered',
   // ── RECORDING THAT SHOULD BE WRITING AND IS NOT ───────────────────────
   //
   // `recording-stalled`: the camera's recording is ON (enabled, not switched
@@ -2007,6 +2013,8 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
       { value: 'detection-blind', label: 'Camera detecting nothing' },
       { value: 'motion-noisy', label: 'Camera motion constant, no subject' },
       { value: 'motion-calm', label: 'Camera motion calm again' },
+      { value: 'package-llm-silent', label: 'Package confirm not answering' },
+      { value: 'package-llm-answered', label: 'Package confirm answering again' },
       { value: 'recording-stalled', label: 'Recording stalled' },
       { value: 'recording-healthy', label: 'Recording healthy again' },
       { value: 'recording-degraded', label: 'Recording degraded (restart storm)' },

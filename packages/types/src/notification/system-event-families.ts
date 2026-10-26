@@ -44,6 +44,8 @@ export const NC_SYSTEM_EVENT_FAMILY: Readonly<
   'detection-blind': 'device-events',
   'motion-noisy': 'device-events',
   'motion-calm': 'device-events',
+  'package-llm-silent': 'device-events',
+  'package-llm-answered': 'device-events',
   'recording-stalled': 'device-events',
   'recording-healthy': 'device-events',
   'recording-degraded': 'device-events',
@@ -156,6 +158,12 @@ export const NC_SYSTEM_EVENT_KIND_GROUP_SPECS: readonly NcSystemEventKindGroupSp
     family: 'device-events',
     label: 'Motion without a subject',
     kinds: ['motion-noisy', 'motion-calm'],
+  },
+  {
+    id: 'package-llm',
+    family: 'device-events',
+    label: 'Package confirm',
+    kinds: ['package-llm-silent', 'package-llm-answered'],
   },
   {
     id: 'recording',

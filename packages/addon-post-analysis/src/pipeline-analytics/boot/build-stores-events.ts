@@ -325,6 +325,26 @@ export class BuildStores extends BuildStoresBase {
       resolveZoneMembershipMinOverlap: async (deviceId) =>
         (await this.resolveDeviceTrackingSettings(deviceId)).zoneMembershipMinOverlap,
       confirmPackage: (input) => this.deps.confirmPackage(input),
+      onLlmSilence: (edge) => {
+        const deviceId = edge.phase === 'silent' ? edge.note.deviceId : edge.deviceId
+        this.ctx.eventBus.emit({
+          id: randomUUID(),
+          timestamp: new Date(),
+          source: { type: 'device', id: deviceId, deviceId },
+          category:
+            edge.phase === 'silent'
+              ? EventCategory.PipelinePackageLlmSilent
+              : EventCategory.PipelinePackageLlmAnswered,
+          data:
+            edge.phase === 'silent'
+              ? {
+                  deviceId,
+                  reason: edge.note.reason,
+                  latencyMs: edge.note.latencyMs,
+                }
+              : { deviceId },
+        })
+      },
       // NC package-event trigger (D-2): evaluate on the durable insert. Guarded
       // by the center's own `evaluationActive` (post-processing node only).
       // A pick-up's instant rides on the row itself (`ev.observedAt`, D684).

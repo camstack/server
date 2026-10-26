@@ -1080,7 +1080,7 @@ selected event kinds belong to, stated once in `NC_SYSTEM_EVENT_FAMILY`
 
 | family | kinds | filters it may carry |
 | --- | --- | --- |
-| `device-events` | device/stream liveness, the switch, battery, consumable and tank band crossings, `detection-blind`, `motion-noisy` / `motion-calm` (16 kinds) | `deviceIds`, `excludeDeviceIds`, `deviceTypes`, `consumableLowPercent` |
+| `device-events` | device/stream liveness, the switch, battery, consumable and tank band crossings, `detection-blind`, `motion-noisy` / `motion-calm`, recording health, device attention, `package-llm-silent` / `package-llm-answered` (20 kinds) | `deviceIds`, `excludeDeviceIds`, `deviceTypes`, `consumableLowPercent` |
 | `system` | nodes (incl. `node-restarting`), `addon-crash-loop`, addon/server/wrapper updates (incl. `node-updating`), `backup-completed`, `export-completed`, the three `alert-*` kinds (16 kinds) | `nodeIds`, `packageNames` |
 | `alarm` | the panel's nine transitions (`NC_ALARM_SYSTEM_EVENT_KINDS`) | `deviceIds` (the camera whose rule set the alarm off) |
 

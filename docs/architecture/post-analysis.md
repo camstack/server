@@ -2780,9 +2780,13 @@ Verified traps in this table's fine print (2026-08-02):
   **detect by scene difference** opens the candidate from a native zone-crop
   diff after a person leaves (the package model is then extra evidence, not
   the gate; a downscaled preview is refused), and **confirm with the LLM**
-  asks `llm.generateVision` once before the event. Yes stores the verdict.
-  No drops and logs. No answer emits `packagePossible` so the notification
-  can say "possible". The chain and cadence are in
+  asks `llm.generateVision` once before the event (8 s, no retry). Yes stores
+  the verdict. No, and any unanswered confirm (timeout, error, no image, no
+  client), drop the candidate and log the reason with `tags: { deviceId }`
+  ([D931](../decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md),
+  fail-closed 2026-10-26). Three unanswered confirms in a row on one camera
+  raise one `package-llm-silent` system event; the next answer raises
+  `package-llm-answered`. The chain and cadence are in
   [object-detection.md](object-detection.md#the-package-drop-gate-chain).
 - The movement machine's `loiteringThresholdSec` (60), `velocityThreshold`
   (2) and `enteringFrames` (5) are hardcoded — only `stationaryThresholdSec`

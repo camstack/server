@@ -1298,6 +1298,31 @@ export function incomingFromSystemEvent(
         ...(identity !== undefined ? { deviceType: identity.type } : {}),
       })
     }
+    case 'pipeline.package-llm-silent':
+    case 'pipeline.package-llm-answered': {
+      // One subject for both edges so the answer supersedes the silence.
+      const deviceId = numberField(data, 'deviceId')
+      if (deviceId === undefined) return null
+      const silent = event.category === 'pipeline.package-llm-silent'
+      const reason = stringField(data, 'reason')
+      const latencyMs = numberField(data, 'latencyMs')
+      if (silent && (reason === undefined || latencyMs === undefined)) return null
+      const identity = lookup(deviceId)
+      return systemSubject({
+        facts,
+        kind: silent ? 'package-llm-silent' : 'package-llm-answered',
+        subject: `package-llm:${deviceId}`,
+        titleKey: silent ? 'system.package-llm-silent.title' : 'system.package-llm-answered.title',
+        bodyKey: silent ? 'system.package-llm-silent.body' : 'system.package-llm-answered.body',
+        textParams: {
+          ...deviceTextParams(deviceId, identity),
+          ...(reason !== undefined ? { reason } : {}),
+          ...(latencyMs !== undefined ? { message: String(latencyMs) } : {}),
+        },
+        deviceId,
+        ...(identity !== undefined ? { deviceType: identity.type } : {}),
+      })
+    }
     case 'recording.health.stalled': {
       const deviceId = numberField(data, 'deviceId')
       const idleMs = numberField(data, 'idleMs')

@@ -87,6 +87,9 @@ export const NC_SYSTEM_EVENT_CATEGORIES: readonly EventCategory[] = [
   // Constant motion with no subject, and its recovery (D907).
   EventCategory.PipelineMotionNoisy,
   EventCategory.PipelineMotionCalm,
+  // Package LLM confirm silent / answering again (D931). One edge per camera.
+  EventCategory.PipelinePackageLlmSilent,
+  EventCategory.PipelinePackageLlmAnswered,
   // Recording health (stall / recover / restart-storm) — emitted by the
   // recorder once it lands; subscribe early so a deploy order cannot miss them.
   EventCategory.RecordingHealthStalled,

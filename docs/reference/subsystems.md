@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7095 source files · 1197 file(s) in no subsystem.**
+**31 subsystems · 7096 source files · 1197 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -31,7 +31,7 @@ commits. A generated page may not.
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 142 | `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, `architecture/inference-devices.md`, +61 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 199 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +100 more, 27 ADRs | 2026-10-26 | ✅ |
-| Post-analysis — tracking, the confirmation gate and media | 500 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +170 more, 29 ADRs | 2026-10-14 | ✅ |
+| Post-analysis — tracking, the confirmation gate and media | 501 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +170 more, 29 ADRs | 2026-10-14 | ✅ |
 | Face, plate and embedding recognition | 50 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +26 more, 4 ADRs | 2026-10-04 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 261 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +84 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, `design/2026-08-25-scrub-advanced-analysis.md` _(covers)_, +93 more, 19 ADRs | 2026-10-26 | ⚠️ |
@@ -135,7 +135,7 @@ Everything that happens after the pipeline emits a frame: tracks, the confirmati
 
 - **Owner doc**: `docs/architecture/post-analysis.md`
 - **Code**: `packages/addon-post-analysis/src/pipeline-analytics/**`, `packages/addon-post-analysis/src/shared/**`, `packages/addon-post-analysis/src/durable/**`, `packages/addon-post-analysis/src/_analytics-schemas/**`, `packages/addon-post-analysis/python/**`, `packages/types/src/media/**`
-- **Files**: 500 (480 claimed by some document)
+- **Files**: 501 (481 claimed by some document)
 - **Uncovered**: `packages/addon-post-analysis/src/shared/frame` (10), `packages/addon-post-analysis/python` (6), `packages/addon-post-analysis/src/_analytics-schemas` (1), `packages/addon-post-analysis/src/shared` (1), `packages/addon-post-analysis/src/shared/clip` (1), `packages/addon-post-analysis/src/shared/llm-vision` (1)
 
 ### ⚠️ Face, plate and embedding recognition

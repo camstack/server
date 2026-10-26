@@ -140,6 +140,10 @@
   "system.motion-noisy.body": "La camera {{deviceName}} è stata in movimento il {{duty}}% degli ultimi {{minutes}} minuti ({{sessions}} sessioni) senza alcun rilevamento. Il detector funziona — regola le zone di movimento o la sensibilità di questa camera.",
   "system.motion-calm.title": "Movimento di nuovo calmo — {{deviceName}}",
   "system.motion-calm.body": "La camera {{deviceName}} non è più in movimento continuo ({{duty}}% degli ultimi {{minutes}} minuti, {{sessions}} sessioni)",
+  "system.package-llm-silent.title": "Conferma pacco senza risposta — {{deviceName}}",
+  "system.package-llm-silent.body": "La conferma pacco della camera {{deviceName}} non risponde ({{reason}}, ultima chiamata {{message}} ms). Un pacco da differenza di scena non viene segnalato finché la conferma non dice sì.",
+  "system.package-llm-answered.title": "Conferma pacco di nuovo in risposta — {{deviceName}}",
+  "system.package-llm-answered.body": "La conferma pacco della camera {{deviceName}} ha risposto di nuovo.",
   "system.addon-update-available.title": {
     "one": "{{count}} aggiornamento addon disponibile",
     "other": "{{count}} aggiornamenti addon disponibili"

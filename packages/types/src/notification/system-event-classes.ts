@@ -100,6 +100,15 @@ export const NC_SYSTEM_EVENT_CLASS_SPECS: readonly NcSystemEventClassSpec[] = [
     snapshotSection: null,
   },
   {
+    id: 'package-llm-confirm',
+    family: 'device-events',
+    label: 'Package confirm (not answering / answering again)',
+    bad: ['package-llm-silent'],
+    recovery: ['package-llm-answered'],
+    snapshotLabel: 'Cameras whose package confirm is not answering',
+    snapshotSection: null,
+  },
+  {
     id: 'recording-health',
     family: 'device-events',
     label: 'Recording health (stalled or degraded / recording again)',

@@ -118,6 +118,8 @@ describe('the system-event subscription topology', () => {
         EventCategory.PipelineDetectionBlind,
         EventCategory.PipelineMotionCalm,
         EventCategory.PipelineMotionNoisy,
+        EventCategory.PipelinePackageLlmAnswered,
+        EventCategory.PipelinePackageLlmSilent,
         EventCategory.PipelineNodeInferenceUnavailable,
         EventCategory.RecordingExportCompleted,
         EventCategory.RecordingHealthDegraded,

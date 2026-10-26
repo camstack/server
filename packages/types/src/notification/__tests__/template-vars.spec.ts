@@ -85,6 +85,8 @@ describe('the SERVED template catalog holds back kinds the viewer cannot parse',
       'device-attention-resolved',
       'rule-broken',
       'rule-repaired',
+      'package-llm-silent',
+      'package-llm-answered',
     ])
   })
 

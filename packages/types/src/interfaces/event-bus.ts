@@ -518,6 +518,20 @@ export interface StorageLocationsChangedPayload {
  * when a camera is assigned to or unassigned from an agent runner. Used by
  * the UI / metrics dashboard. No frame data.
  */
+export type PipelinePackageLlmSilenceReason = 'timeout' | 'error'
+
+/** The open edge: the confirm is not answering. `latencyMs` is the last call. */
+export type PipelinePackageLlmSilencePayload = {
+  readonly deviceId: number
+  readonly reason: PipelinePackageLlmSilenceReason
+  readonly latencyMs: number
+}
+
+/** The recovery edge. The camera is the subject; the answer itself is the package row. */
+export type PipelinePackageLlmAnsweredPayload = {
+  readonly deviceId: number
+}
+
 export type PipelineMotionNoisePayload = {
   readonly deviceId: number
   /** The rolling window the figures are over, in ms. */
@@ -1284,6 +1298,10 @@ export interface EventCatalog {
   'pipeline.motion-noisy': PipelineMotionNoisePayload
   /** The camera's motion fell back, or a detection arrived (D907). */
   'pipeline.motion-calm': PipelineMotionNoisePayload
+  /** Package LLM confirm failed closed for the streak, one camera (D931). */
+  'pipeline.package-llm-silent': PipelinePackageLlmSilencePayload
+  /** A package LLM confirm returned yes or no after a silence edge (D931). */
+  'pipeline.package-llm-answered': PipelinePackageLlmAnsweredPayload
   /** Per-camera pipeline config changed — orchestrator hot-reloads the assigned runner. */
   'pipeline.camera-updated': {
     readonly deviceId: number

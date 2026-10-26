@@ -51,6 +51,8 @@ describe('every kind has exactly one family', () => {
       'detection-blind',
       'motion-noisy',
       'motion-calm',
+      'package-llm-silent',
+      'package-llm-answered',
       'recording-stalled',
       'recording-healthy',
       'recording-degraded',

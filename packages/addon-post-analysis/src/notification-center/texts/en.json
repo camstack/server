@@ -121,6 +121,10 @@
   "system.motion-noisy.body": "Camera {{deviceName}} has been in motion {{duty}}% of the last {{minutes}} minutes ({{sessions}} sessions) without a single detection. The detector is fine — tune this camera's motion zones or sensitivity.",
   "system.motion-calm.title": "Motion calm again — {{deviceName}}",
   "system.motion-calm.body": "Camera {{deviceName}} is no longer in constant motion ({{duty}}% of the last {{minutes}} minutes, {{sessions}} sessions)",
+  "system.package-llm-silent.title": "Package confirm not answering — {{deviceName}}",
+  "system.package-llm-silent.body": "Camera {{deviceName}} package confirm is not answering ({{reason}}, last call {{message}} ms). A scene-difference parcel is not reported until the confirm says yes.",
+  "system.package-llm-answered.title": "Package confirm answering — {{deviceName}}",
+  "system.package-llm-answered.body": "Camera {{deviceName}} package confirm answered again.",
   "system.recording-stalled.title": "Recording stalled — {{deviceName}}",
   "system.recording-stalled.body": {
     "one": "Camera {{deviceName}} has not written a recording segment for {{minutes}} minute",

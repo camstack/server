@@ -586,6 +586,19 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
       }),
   },
   {
+    name: 'pipeline.package-llm-silent',
+    build: () =>
+      fromBus('pipeline.package-llm-silent', {
+        deviceId: 102,
+        reason: 'timeout',
+        latencyMs: 8_000,
+      }),
+  },
+  {
+    name: 'pipeline.package-llm-answered',
+    build: () => fromBus('pipeline.package-llm-answered', { deviceId: 102 }),
+  },
+  {
     name: 'recording.health.stalled',
     build: () =>
       fromBus('recording.health.stalled', {

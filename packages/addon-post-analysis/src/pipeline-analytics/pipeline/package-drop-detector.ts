@@ -38,12 +38,17 @@ import type {
 import type { PackageDropSettings } from '../package-settings.js'
 import { type PackageCollector, pickupInstantOf } from './package/package-collector-mirror.js'
 import type { PackageLlmConfirmOutcome } from './package/package-llm-confirm.js'
+import {
+  packageLlmAlertReason,
+  PackageLlmSilence,
+  type PackageLlmSilenceEdge,
+  type PackageLlmUncertainDetail,
+} from './package/package-llm-silence.js'
 import { packageReferenceArea } from './package/package-reference-area.js'
 import type { StationaryEntry } from './stationary/stationary-types.js'
 import { computeStationaryEntryZones } from './stationary/stationary-zones.js'
 
 interface PackageLlmEventFields {
-  readonly packagePossible?: true
   readonly packageLlmVerdict?: PackageLlmVerdict
 }
 
@@ -133,14 +138,18 @@ export interface PackageDropDetectorDeps {
   readonly onError?: (scope: string, err: unknown) => void
   /**
    * Vision confirm for a packages rule with `confirmWithLlm` (D931).
-   * Absent means the caller did not wire a client: an uncertain delivery
-   * is emitted as a possible package rather than dropped.
+   * Absent is an uncertain confirm: the candidate is dropped.
    */
   readonly confirmPackage?: (input: {
     readonly deviceId: number
     readonly entryId: string
     readonly zoneIds: readonly string[]
   }) => Promise<PackageLlmConfirmOutcome>
+  /**
+   * Silence / recovery edge for the package-confirm system event (D931).
+   * One open edge per camera. A missing reporter is logged, not swallowed.
+   */
+  readonly onLlmSilence?: (edge: PackageLlmSilenceEdge) => void
 }
 
 export class PackageDropDetector {
@@ -148,15 +157,15 @@ export class PackageDropDetector {
   /** Per-device mirror of the last LOGGED value of the `packageDropEnabled`
    *  switch, so gate 0 logs a transition instead of one line per promotion. */
   private readonly disabledLogged = new Map<number, boolean>()
+  private readonly llmSilence = new PackageLlmSilence()
 
   constructor(deps: PackageDropDetectorDeps) {
     this.deps = deps
   }
 
   /**
-   * LLM gate (D931). `null` means the delivery is dropped (the model said no).
-   * An empty object means emit as today. A possible flag or a verdict is
-   * spread onto the row.
+   * LLM gate (D931). `null` means the delivery is dropped (no, or no yes).
+   * An empty object means the rule did not ask. A verdict is spread onto the row.
    */
   private async llmFields(
     entry: StationaryEntry,
@@ -170,17 +179,16 @@ export class PackageDropDetector {
     if (!wants) return {}
     const confirm = this.deps.confirmPackage
     if (!confirm) {
-      this.deps.logger.info('package llm confirm unavailable — emitting as possible package', {
-        tags,
-        meta: { entryId: entry.id },
-      })
-      return { packagePossible: true }
+      this.dropUncertain(entry, tags, 'unwired', 0)
+      return null
     }
+    const started = Date.now()
     const outcome = await confirm({
       deviceId: entry.deviceId,
       entryId: entry.id,
       zoneIds: hitZones,
     })
+    const latencyMs = Date.now() - started
     if (outcome.kind === 'no') {
       this.deps.logger.info('package dropped — llm said no parcel', {
         tags,
@@ -188,16 +196,56 @@ export class PackageDropDetector {
           entryId: entry.id,
           reason: outcome.verdict.reason,
           confidence: outcome.verdict.confidence,
+          latencyMs,
         },
       })
+      this.reportLlmSilence(this.llmSilence.noteAnswered(entry.deviceId), tags)
       return null
     }
-    if (outcome.kind === 'yes') return { packageLlmVerdict: outcome.verdict }
-    this.deps.logger.info('package llm confirm uncertain — emitting as possible package', {
+    if (outcome.kind === 'yes') {
+      this.reportLlmSilence(this.llmSilence.noteAnswered(entry.deviceId), tags)
+      return { packageLlmVerdict: outcome.verdict }
+    }
+    this.dropUncertain(entry, tags, outcome.reason, latencyMs)
+    return null
+  }
+
+  /** Fail-closed (D931): no `yes` is no event. The drop is logged (D391). */
+  private dropUncertain(
+    entry: StationaryEntry,
+    tags: { readonly deviceId: number },
+    detail: PackageLlmUncertainDetail,
+    latencyMs: number,
+  ): void {
+    this.deps.logger.info('package llm confirm uncertain — dropping candidate', {
       tags,
-      meta: { entryId: entry.id, reason: outcome.reason },
+      meta: { entryId: entry.id, reason: detail, latencyMs },
     })
-    return { packagePossible: true }
+    this.reportLlmSilence(
+      this.llmSilence.noteUncertain({
+        deviceId: entry.deviceId,
+        reason: packageLlmAlertReason(detail),
+        detail,
+        latencyMs,
+      }),
+      tags,
+    )
+  }
+
+  private reportLlmSilence(
+    edge: PackageLlmSilenceEdge | null,
+    tags: { readonly deviceId: number },
+  ): void {
+    if (edge === null) return
+    const report = this.deps.onLlmSilence
+    if (report === undefined) {
+      this.deps.logger.warn('package llm silence edge has no reporter', {
+        tags,
+        meta: { phase: edge.phase },
+      })
+      return
+    }
+    report(edge)
   }
 
   /** Log the `packageDropEnabled` switch only when it MOVES for a device. */
@@ -214,6 +262,7 @@ export class PackageDropDetector {
   /** Drop a device's gate-log mirror (unbind / teardown). */
   forgetDevice(deviceId: number): void {
     this.disabledLogged.delete(deviceId)
+    this.llmSilence.forget(deviceId)
   }
 
   /** Single entrypoint — bridge the registry's `onChange` here. Never

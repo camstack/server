@@ -3,7 +3,8 @@
  *
  * The images are the zone crops the caller already holds (JPEG bytes, the
  * `llm.generateVision` contract — no new base64 field). One call, no retry.
- * No answer is not a drop: the caller emits a possible package.
+ * The 8 s bound stays: the 2026-10-26 confirms that timed out never returned
+ * a latency to raise it against. No `yes` is a drop; the caller decides that.
  */
 
 import { randomUUID } from 'node:crypto'

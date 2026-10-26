@@ -217,10 +217,10 @@ export const OBJECT_COLUMNS = [
    */
   { name: 'observedAt', type: 'INTEGER' as const },
   /**
-   * A package delivery the vision model did not confirm (D931). BOOLEAN so a
-   * read comes back `true`, not the INTEGER 1 SQLite stores. Absent on every
-   * row that was not an uncertain LLM confirm. DECLARED, or the backend drops
-   * the key on write (see `frameId`).
+   * A package delivery written when an uncertain LLM confirm still emitted
+   * (D931, before 2026-10-26). A confirm that does not say yes now writes no
+   * row. BOOLEAN so a read of an old row comes back `true`. DECLARED, or the
+   * backend drops the key on a row that still carries it (see `frameId`).
    */
   { name: 'packagePossible', type: 'BOOLEAN' as const },
   /**

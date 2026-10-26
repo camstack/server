@@ -351,6 +351,14 @@ export enum EventCategory {
   /** The recovery edge of {@link PipelineMotionNoisy}: the motion fell back, or a detection arrived. */
   PipelineMotionCalm = 'pipeline.motion-calm',
   /**
+   * A camera's package LLM confirm has failed closed three times in a row
+   * (D931, 2026-10-26). One edge per camera until
+   * {@link PipelinePackageLlmAnswered}.
+   */
+  PipelinePackageLlmSilent = 'pipeline.package-llm-silent',
+  /** The recovery edge of {@link PipelinePackageLlmSilent}: a confirm returned yes or no. */
+  PipelinePackageLlmAnswered = 'pipeline.package-llm-answered',
+  /**
    * Per-camera pipeline config was mutated by the orchestrator
    * (a settings change via `setAgentInferenceDevices` /
    * `setCameraStepToggle` / `setCameraStepSettings`). Orchestrator

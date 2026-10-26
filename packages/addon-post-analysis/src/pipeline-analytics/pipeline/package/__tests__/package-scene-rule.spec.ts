@@ -11,6 +11,7 @@ import type { IScopedLogger, ObjectEvent, Zone, ZoneRule } from '@camstack/types
 import { describe, expect, it } from 'vitest'
 import { PACKAGE_DROP_DEFAULTS } from '../../../package-settings.js'
 import { PackageDropDetector, type PackageObjectEventClient } from '../../package-drop-detector.js'
+import { PACKAGE_LLM_SILENCE_STREAK, type PackageLlmSilenceEdge } from '../package-llm-silence.js'
 import type { StationaryEntry } from '../../stationary/stationary-types.js'
 import { PackageStillnessTracker } from '../package-stillness-tracker.js'
 import {
@@ -167,11 +168,11 @@ function leaveWithBlob(crop: PackageZoneLuma, occluders?: StepEnv['occluders']) 
 
 function recordingLogger(): {
   logger: IScopedLogger
-  lines: { message: string; deviceId: unknown }[]
+  lines: { message: string; deviceId: unknown; meta: unknown }[]
 } {
-  const lines: { message: string; deviceId: unknown }[] = []
-  const at = (message: string, ctx?: { tags?: Record<string, unknown> }): void => {
-    lines.push({ message, deviceId: ctx?.tags?.['deviceId'] })
+  const lines: { message: string; deviceId: unknown; meta: unknown }[] = []
+  const at = (message: string, ctx?: { tags?: Record<string, unknown>; meta?: unknown }): void => {
+    lines.push({ message, deviceId: ctx?.tags?.['deviceId'], meta: ctx?.meta })
   }
   const logger: IScopedLogger = {
     debug: at,
@@ -295,23 +296,12 @@ describe('package llm confirm', () => {
     expect(PACKAGE_LLM_CONFIRM_TIMEOUT_MS).toBeGreaterThan(0)
   })
 
-  async function deliver(
-    confirm: (input: { readonly deviceId: number }) => Promise<PackageLlmConfirmOutcome>,
-  ) {
-    const events = makeEvents()
-    const { logger, lines } = recordingLogger()
-    const detector = new PackageDropDetector({
-      events,
-      emit: { delivered: () => {}, pickedUp: () => {} },
-      logger,
-      resolveZones: async () => [ZONE],
-      resolvePackageRules: async () => [rule({ llm: true })],
-      resolveSettings: async () => PACKAGE_DROP_DEFAULTS,
-      resolveZoneMembershipMinOverlap: async () => 0,
-      confirmPackage: confirm,
-    })
+  async function promotedEntry(id = 'pkg-llm'): Promise<{
+    readonly entry: StationaryEntry
+    readonly timestamp: number
+  }> {
     const { looks } = leaveWithBlob(WITH_BLOB)
-    const tracker = new PackageStillnessTracker({ newId: () => 'pkg-llm' })
+    const tracker = new PackageStillnessTracker({ newId: () => id })
     let entry: StationaryEntry | null = null
     let stamp = T0 + 2_000 + PACKAGE_SCENE_DIFF_SETTLE_MS
     for (const look of looks) {
@@ -331,11 +321,26 @@ describe('package llm confirm', () => {
       if (promoted !== undefined) entry = promoted
     }
     if (entry === null) throw new Error('expected a promoted parcel')
-    await detector.onStationaryChange({
-      phase: 'appeared',
-      entry,
-      timestamp: stamp,
+    return { entry, timestamp: stamp }
+  }
+
+  async function deliver(
+    confirm: (input: { readonly deviceId: number }) => Promise<PackageLlmConfirmOutcome>,
+  ) {
+    const events = makeEvents()
+    const { logger, lines } = recordingLogger()
+    const detector = new PackageDropDetector({
+      events,
+      emit: { delivered: () => {}, pickedUp: () => {} },
+      logger,
+      resolveZones: async () => [ZONE],
+      resolvePackageRules: async () => [rule({ llm: true })],
+      resolveSettings: async () => PACKAGE_DROP_DEFAULTS,
+      resolveZoneMembershipMinOverlap: async () => 0,
+      confirmPackage: confirm,
     })
+    const { entry, timestamp } = await promotedEntry()
+    await detector.onStationaryChange({ phase: 'appeared', entry, timestamp })
     return { events, lines }
   }
 
@@ -369,10 +374,80 @@ describe('package llm confirm', () => {
     expect(line?.deviceId).toBe(DEVICE)
   })
 
-  it('emits a possible package when the llm times out', async () => {
-    const { events } = await deliver(async () => ({ kind: 'uncertain', reason: 'timeout' }))
+  it('drops an uncertain confirm and logs the reason with the device', async () => {
+    const { events, lines } = await deliver(async () => ({ kind: 'uncertain', reason: 'timeout' }))
+    expect(events.rows).toHaveLength(0)
+    const line = lines.find((l) => l.message.includes('llm confirm uncertain'))
+    expect(line?.deviceId).toBe(DEVICE)
+    expect(line?.meta).toMatchObject({ reason: 'timeout' })
+  })
+
+  it('drops an unwired confirm the same way', async () => {
+    const events = makeEvents()
+    const { logger, lines } = recordingLogger()
+    const detector = new PackageDropDetector({
+      events,
+      emit: { delivered: () => {}, pickedUp: () => {} },
+      logger,
+      resolveZones: async () => [ZONE],
+      resolvePackageRules: async () => [rule({ llm: true })],
+      resolveSettings: async () => PACKAGE_DROP_DEFAULTS,
+      resolveZoneMembershipMinOverlap: async () => 0,
+    })
+    const { entry, timestamp } = await promotedEntry('pkg-unwired')
+    await detector.onStationaryChange({ phase: 'appeared', entry, timestamp })
+    expect(events.rows).toHaveLength(0)
+    const line = lines.find((l) => l.message.includes('llm confirm uncertain'))
+    expect(line?.deviceId).toBe(DEVICE)
+    expect(line?.meta).toMatchObject({ reason: 'unwired' })
+  })
+
+  it('raises one silence edge after the streak and clears it when a confirm answers', async () => {
+    const events = makeEvents()
+    const { logger } = recordingLogger()
+    const edges: PackageLlmSilenceEdge[] = []
+    let answer = false
+    const yes = {
+      package: true as const,
+      confidence: 0.9,
+      reason: 'carton',
+    }
+    const detector = new PackageDropDetector({
+      events,
+      emit: { delivered: () => {}, pickedUp: () => {} },
+      logger,
+      resolveZones: async () => [ZONE],
+      resolvePackageRules: async () => [rule({ llm: true })],
+      resolveSettings: async () => PACKAGE_DROP_DEFAULTS,
+      resolveZoneMembershipMinOverlap: async () => 0,
+      confirmPackage: async () =>
+        answer ? { kind: 'yes', verdict: yes } : { kind: 'uncertain', reason: 'unreachable' },
+      onLlmSilence: (edge) => {
+        edges.push(edge)
+      },
+    })
+    const fire = async (id: string): Promise<void> => {
+      const { entry, timestamp } = await promotedEntry(id)
+      await detector.onStationaryChange({ phase: 'appeared', entry, timestamp })
+    }
+    for (let i = 0; i < PACKAGE_LLM_SILENCE_STREAK + 1; i += 1) {
+      await fire(`streak-${String(i)}`)
+    }
+    expect(events.rows).toHaveLength(0)
+    expect(edges).toEqual([
+      {
+        phase: 'silent',
+        note: {
+          deviceId: DEVICE,
+          reason: 'error',
+          detail: 'unreachable',
+          latencyMs: expect.any(Number),
+        },
+      },
+    ])
+    answer = true
+    await fire('streak-yes')
     expect(events.rows).toHaveLength(1)
-    expect(events.rows[0]?.packagePossible).toBe(true)
-    expect(events.rows[0]?.packageLlmVerdict).toBeUndefined()
+    expect(edges[1]).toEqual({ phase: 'answered', deviceId: DEVICE })
   })
 })

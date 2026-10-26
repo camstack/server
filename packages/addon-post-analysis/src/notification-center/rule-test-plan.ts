@@ -320,6 +320,8 @@ function systemEventSubject(
   if (kind === 'detection-blind') return `detection-blind:${scope.deviceId ?? 0}`
   if (kind === 'motion-noisy' || kind === 'motion-calm')
     return `motion-noise:${scope.deviceId ?? 0}`
+  if (kind === 'package-llm-silent' || kind === 'package-llm-answered')
+    return `package-llm:${scope.deviceId ?? 0}`
   // Per RUNNER, per node — a group runner is one outage, and it must not share
   // a dedup slot with the node going away.
   if (kind === 'addon-crash-loop') {
@@ -561,6 +563,9 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
               // motion and the sessions it took.
               duty: '55',
               sessions: '96',
+              // `package-llm-silent`: timeout or error. The last call's ms rides
+              // `message` below, which the catalog already knows by that name.
+              reason: 'timeout',
               // `addon-crash-loop` names the addons the dead runner hosted.
               addons: TEST_CRASHED_RUNNER,
               list: '@camstack/addon-pipeline 1.0.1 (current 1.0.0)',
@@ -570,7 +575,10 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
               title: systemEventKind.startsWith('alert-') ? 'Recording location full' : 'Export',
               // An alert episode's own facts (`alert-critical`, …): a blank
               // placeholder would deliver "Resolved: " with nothing after it.
-              message: 'No free space left on the recording location',
+              message:
+                systemEventKind === 'package-llm-silent'
+                  ? '8000'
+                  : 'No free space left on the recording location',
               severity: systemEventKind === 'alert-error' ? 'error' : 'critical',
               category: 'recorder.placement',
               source: 'recorder',

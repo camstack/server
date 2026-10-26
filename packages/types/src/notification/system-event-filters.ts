@@ -97,6 +97,7 @@ export function systemEventFilterApplies(
         kind.startsWith('stream-') ||
         kind === 'detection-blind' ||
         kind.startsWith('motion-') ||
+        kind.startsWith('package-llm-') ||
         kind.startsWith('recording-') ||
         kind === 'alarm-triggered'
         // export-completed is a SYSTEM fact (D637): the export is the operator's own job, not a device's.
@@ -108,7 +109,12 @@ export function systemEventFilterApplies(
     // Recording kinds are camera-only by construction (like streams); a type
     // filter would only fail closed, so they are excluded here.
     case 'deviceTypes':
-      return kind.startsWith('device-') || kind === 'detection-blind' || kind.startsWith('motion-')
+      return (
+        kind.startsWith('device-') ||
+        kind === 'detection-blind' ||
+        kind.startsWith('motion-') ||
+        kind.startsWith('package-llm-')
+      )
     // Node liveness, the node that lost its accelerators, and the four update
     // kinds — an update is always pinned to the node it landed on (or is
     // available for), which is what makes "only the hub" expressible.

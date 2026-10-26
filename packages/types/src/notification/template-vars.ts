@@ -98,6 +98,8 @@ const DEVICE_EVENTS: readonly NcSystemEventKind[] = [
   'detection-blind',
   'motion-noisy',
   'motion-calm',
+  'package-llm-silent',
+  'package-llm-answered',
   'recording-stalled',
   'recording-healthy',
   'recording-degraded',
@@ -686,7 +688,12 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     families: ['rule'],
     fields: [...RULE_TEXT],
     kinds: ['system'],
-    systemEventKinds: ['recording-degraded', ...DEVICE_ATTENTION, ...ALERT_EPISODE],
+    systemEventKinds: [
+      'recording-degraded',
+      ...DEVICE_ATTENTION,
+      ...ALERT_EPISODE,
+      'package-llm-silent',
+    ],
   },
   {
     name: 'ruleName',
@@ -769,7 +776,12 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     families: ['rule'],
     fields: [...RULE_TEXT],
     kinds: ['system'],
-    systemEventKinds: ['storage-location-low', 'storage-location-critical', 'storage-location-ok'],
+    systemEventKinds: [
+      'storage-location-low',
+      'storage-location-critical',
+      'storage-location-ok',
+      'package-llm-silent',
+    ],
   },
   {
     name: 'package',
@@ -1186,6 +1198,10 @@ export const NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS: readonly NcSystemEventKin
   // kinds would fail the whole catalog parse on them.
   'rule-broken',
   'rule-repaired',
+  // D931: the package-confirm pair. A phone that has not mirrored the kinds
+  // would fail the catalog parse on them. `message` carries the last latency.
+  'package-llm-silent',
+  'package-llm-answered',
 ]
 
 /**

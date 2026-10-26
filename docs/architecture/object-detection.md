@@ -394,6 +394,15 @@ chain was unfalsifiable:
    and ≤ `packageDropMaxBboxAreaFrac` (default 0.04 of the **full frame** —
    [D205](../decisions/adr-0205-a-package-has-a-plausible-size-and-a-deliverer.md))
 
+A packages rule with `confirmWithLlm` adds a gate after those five
+([D931](../decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md)).
+The event is emitted only when the vision confirm says yes. `no` and
+`uncertain` (timeout at 8 s, provider error, unparseable answer, no image,
+no client) drop the candidate and log the reason with `tags: { deviceId }`.
+Three uncertain confirms in a row on one camera raise one `package-llm-silent`
+system event (camera, `timeout` or `error`, last latency). The next yes or no
+raises `package-llm-answered`. Fail-open is not a setting.
+
 Both ends of gate 5 are MEASUREMENTS, not guesses. The recurring `package`
 boxes this install has ever produced are on 101 and occupy **0.0796–0.0947 of
 the frame** — and 348/350 of them were ONE static object, the streetlight's
