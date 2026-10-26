@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-wyze",
-  "version": "0.2.158",
+  "version": "0.2.159",
   "description": "Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink)",
   "keywords": [
     "camstack",

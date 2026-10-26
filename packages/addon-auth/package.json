@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-auth",
-  "version": "1.2.168",
+  "version": "1.2.169",
   "description": "Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner.",
   "keywords": [
     "camstack",

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-velux",
-  "version": "0.2.146",
+  "version": "0.2.147",
   "description": "Velux KLF-200 device-provider addon for CamStack — local-gateway window + shutter covers (positional, no tilt)",
   "keywords": [
     "camstack",

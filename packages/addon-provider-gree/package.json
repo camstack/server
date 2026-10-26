@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-gree",
-  "version": "0.2.142",
+  "version": "0.2.143",
   "description": "Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control",
   "keywords": [
     "camstack",
