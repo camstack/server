@@ -26,6 +26,7 @@ import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { BatteryBadge } from '../battery-badge'
 import { NetworkLinkBadge } from '../network-link-badge'
 import { HoverZoomImage } from '../hover-zoom-image'
+import { useDeviceLabel } from '../device-name'
 import type { DeviceItemDevice } from './helpers'
 
 export interface DeviceItemPreviewProps {
@@ -60,6 +61,7 @@ export function DeviceItemPreview({
   showStatusPills = false,
 }: DeviceItemPreviewProps): ReactNode {
   const liveActive = enabled && device.online
+  const deviceLabel = useDeviceLabel(device, 'compact')
   // 480 px covers both states this one `src` has to serve: a 28 px thumbnail
   // and the 288 x 196 hover-zoom portal. It used to be the frame AS CAPTURED —
   // a 4 K JPEG, base64 over the WebSocket, into a 28 px box, once per camera row.
@@ -92,7 +94,7 @@ export function DeviceItemPreview({
       {enabled && (
         <HoverZoomImage
           src={offline ? null : snapshot.src}
-          alt={device.name}
+          alt={deviceLabel}
           placeholder={placeholder}
           thumbClassName="h-7 w-7 rounded"
         />

@@ -42,7 +42,9 @@ import {
   useSystem,
   VodPlaybackProvider,
   ZoneEditingProvider,
+  useDeviceLabel,
   useUiText,
+  type DeviceNameFields,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -314,7 +316,7 @@ export function DeviceDetailPage() {
   }, [aggregateData])
 
   const device = deviceData
-  const name = String(device?.name ?? params.deviceId ?? 'Device')
+  const storedName = String(device?.name ?? params.deviceId ?? 'Device')
   const isOnline = device?.online === true
   const status = isOnline ? 'online' : 'offline'
   const provider = String(device?.addonId ?? 'rtsp')
@@ -409,6 +411,15 @@ export function DeviceDetailPage() {
     { deviceId: parentDeviceId ?? 0 },
     { enabled: parentDeviceId !== null },
   )
+  const pendingDevice: DeviceNameFields = {
+    id: Number.isFinite(deviceId) ? deviceId : 0,
+    name: storedName,
+    type: 'unknown',
+    stableId: '',
+    parentDeviceId: null,
+  }
+  const name = useDeviceLabel(device ?? pendingDevice, 'full')
+  const parentLabel = useDeviceLabel(parentDevice ?? pendingDevice, 'full')
   const isMobile = useIsMobile()
   // Reflect the device's REAL enabled state (was hardcoded `true`, so the
   // Enable/Disable toggle never changed after a disable). `enable`/`disable`
@@ -944,13 +955,11 @@ export function DeviceDetailPage() {
                 onClick={() => navigate(`/devices/${parentDeviceId}`)}
                 className="text-[10px] text-foreground-subtle hover:text-primary transition-colors mt-0.5 inline-flex items-center gap-1"
                 title={t('deviceDetail.openParentDevice', 'Open parent device {{name}}', {
-                  name: parentDevice.name,
+                  name: parentLabel,
                 })}
               >
                 <span>↑</span>
-                <span className="truncate">
-                  {String(parentDevice.name ?? `Device #${parentDeviceId}`)}
-                </span>
+                <span className="truncate">{parentLabel}</span>
               </button>
             )}
             {/* Capability icons hidden on small viewports to keep the

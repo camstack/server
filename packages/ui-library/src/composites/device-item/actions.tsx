@@ -21,6 +21,7 @@
  * finds its cap unbound returns `null` so the row stays compact.
  */
 import { useUiText } from '../../contexts/ui-text'
+import { useDeviceLabel } from '../device-name'
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Activity, Gamepad2 } from 'lucide-react'
@@ -75,6 +76,7 @@ export function DeviceItemActions({
   // list-level context rather than a threaded prop. Hooks must run before the
   // early returns below, so read it here unconditionally.
   const containerChildren = useContainerChildren(device.id)
+  const deviceLabel = useDeviceLabel(device, 'compact')
   const placement: ControlPlacement = controlPlacement ?? 'right'
   const enabled = !device.disabled
   if (!enabled) return null
@@ -147,7 +149,7 @@ export function DeviceItemActions({
       )}
       {showPtz && <PtzQuickAction trpc={trpc} deviceId={device.id} />}
       {showReboot && (
-        <RebootQuickAction trpc={trpc} deviceId={device.id} deviceName={device.name} />
+        <RebootQuickAction trpc={trpc} deviceId={device.id} deviceName={deviceLabel} />
       )}
       {/*
         Last in the run, and the quietest thing in it. Unlike PTZ and reboot

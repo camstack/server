@@ -23,6 +23,7 @@ import {
   useDeviceStateGetSnapshot,
 } from '../../generated/system-hooks'
 import { cn } from '../../lib/cn'
+import { DeviceName } from '../device-name'
 import { formatControlDateTime } from '../../lib/format-control-datetime'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import {
@@ -212,7 +213,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
         className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4 min-h-[96px]"
         data-testid="sensor-hero-quiet"
       >
-        <span className="text-sm text-foreground-subtle">{device.name}</span>
+        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
       </div>
     )
   }
@@ -223,7 +224,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     // Nothing resolved yet — show a waiting state.
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4 min-h-[96px]">
-        <span className="text-sm text-foreground-subtle">{device.name}</span>
+        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
         <span className="text-xs text-foreground-subtle italic">
           {t('uiLibrary.sensorHeroCard.awaiting', 'Awaiting state…')}
         </span>
@@ -283,7 +284,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
               : t('uiLibrary.sensorHeroCard.clear', 'Clear')}
           </span>
         )}
-        <span className="text-sm text-foreground-subtle">{device.name}</span>
+        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
       </div>
     )
   }
@@ -304,7 +305,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
         >
           {label}
         </span>
-        <span className="text-sm text-foreground-subtle">{device.name}</span>
+        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
       </div>
     )
   }
@@ -315,7 +316,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     if (slice.value === '') {
       return (
         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4 min-h-[96px]">
-          <span className="text-sm text-foreground-subtle">{device.name}</span>
+          <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
           <span className="text-xs text-foreground-subtle italic">
             {t('uiLibrary.sensorHeroCard.awaiting', 'Awaiting state…')}
           </span>
@@ -331,7 +332,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4">
         <span className="text-3xl font-semibold tabular-nums text-foreground">{formatted}</span>
-        <span className="text-sm text-foreground-subtle">{device.name}</span>
+        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
       </div>
     )
   }
@@ -342,7 +343,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4">
         <span className="text-xl font-semibold text-foreground">{slice.value}</span>
-        <span className="text-sm text-foreground-subtle">{device.name}</span>
+        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
       </div>
     )
   }
@@ -362,7 +363,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
       >
         {label}
       </span>
-      <span className="text-sm text-foreground-subtle">{device.name}</span>
+      <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
     </div>
   )
 }

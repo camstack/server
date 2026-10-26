@@ -27,6 +27,8 @@ import { useUiText } from '../../contexts/ui-text'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { useDeviceState } from '../../hooks/use-device-proxy'
 import { NAME_TEXT_CLASS } from '../device-list/columns'
+import { DeviceName, useDeviceLabelById } from '../device-name'
+import type { DeviceNameForm } from '../device-name'
 import { RunningBadge } from '../running-badge'
 import type {
   DeviceItemDevice,
@@ -84,6 +86,11 @@ export interface DeviceItemHeaderProps {
    * have nowhere to scroll to. The table row passes `'scroll'`.
    */
   readonly nameOverflow?: DeviceNameOverflow
+  /**
+   * `nested` when this row is already drawn under its parent. Otherwise
+   * `compact`: a child shown on its own names the container.
+   */
+  readonly nameForm?: DeviceNameForm
 }
 
 export function DeviceItemHeader({
@@ -99,6 +106,7 @@ export function DeviceItemHeader({
   onNavigateToParent,
   stacked = false,
   nameOverflow = 'truncate',
+  nameForm = 'compact',
 }: DeviceItemHeaderProps): ReactNode {
   const t = useUiText()
   // A Container shows its primary child's icon; resolve that child set from the
@@ -120,6 +128,11 @@ export function DeviceItemHeader({
   // "Under: <parent>"). They live in the same cell and are governed by the
   // same policy — a full name over an ellipsised parent badge reads as broken.
   const lineClass = nameOverflow === 'scroll' ? NAME_TEXT_CLASS : 'truncate'
+  const nameParent =
+    nameForm === 'nested' && parent !== null
+      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
+      : undefined
+  const parentLabel = useDeviceLabelById(parent?.id ?? 0, 'compact', parent?.name)
   return (
     <div
       className={cn(
@@ -166,18 +179,18 @@ export function DeviceItemHeader({
           {flags.showIntegrationIcon && integrationIcon && (
             <span className="flex-shrink-0">{integrationIcon}</span>
           )}
-          <span
-            data-testid="device-name"
+          <DeviceName
+            device={device}
+            form={nameForm}
+            {...(nameParent !== undefined ? { parent: nameParent } : {})}
+            testId="device-name"
             className={cn(
               'font-semibold text-foreground',
               stacked
                 ? 'text-[13px] leading-snug line-clamp-2 break-words'
                 : cn(lineClass, variant === 'minimal' ? 'text-[10.5px]' : 'text-[11px]'),
             )}
-            title={device.name}
-          >
-            {device.name}
-          </span>
+          />
         </div>
 
         {(flags.showId || flags.showStableId) && (
@@ -216,13 +229,13 @@ export function DeviceItemHeader({
               nameOverflow === 'scroll' ? 'md:max-w-full' : 'max-w-full',
             )}
             title={t('uiLibrary.deviceItemHeader.openParent', 'Open parent: {{name}} (#{{id}})', {
-              name: parent.name,
+              name: parentLabel,
               id: parent.id,
             })}
           >
             <Network className="h-2.5 w-2.5 shrink-0" />
             <span className={lineClass}>
-              {t('uiLibrary.deviceItemHeader.under', 'Under: {{name}}', { name: parent.name })}
+              {t('uiLibrary.deviceItemHeader.under', 'Under: {{name}}', { name: parentLabel })}
             </span>
           </button>
         )}

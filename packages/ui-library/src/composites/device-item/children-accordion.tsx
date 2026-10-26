@@ -20,7 +20,8 @@ import type { DeviceItemDevice } from './helpers'
 import { useIconGlyphsVersion } from '../icon-glyphs'
 import { RunningBadge } from '../running-badge'
 import { useDeviceState } from '../../hooks/use-device-proxy'
-import { childListName, deviceLeadIcon, hasMotionTriggerFeature, maySupportSwitch } from './helpers'
+import { deviceLeadIcon, hasMotionTriggerFeature, maySupportSwitch } from './helpers'
+import { DeviceName } from '../device-name'
 import { useRoleDisplayDefaults } from './role-display-defaults-context'
 
 interface ChildrenAccordionProps {
@@ -131,9 +132,17 @@ function ChildRow({ trpc, child, onNavigate, parentName }: ChildRowProps): React
         <RunningBadge running={runningBadge}>
           <ChildIcon className="h-3 w-3 text-foreground-subtle flex-shrink-0" />
         </RunningBadge>
-        <span className="text-[10.5px] text-foreground flex-1 truncate">
-          {childListName(child, parentName)}
-        </span>
+        <DeviceName
+          device={child}
+          form="nested"
+          parent={{
+            id: child.parentDeviceId ?? 0,
+            name: parentName,
+            type: 'unknown',
+            stableId: '',
+          }}
+          className="text-[10.5px] text-foreground flex-1 truncate"
+        />
         {showMotionTrigger && (
           <ChildMotionTriggerToggle trpc={trpc} deviceId={child.id} features={child.features} />
         )}

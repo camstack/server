@@ -6,7 +6,6 @@ import { cn } from '../../lib/cn'
 import { DeviceItem } from '../device-item'
 import { groupChildrenByLayout } from '../device-item/child-layout'
 import type { DeviceItemDevice, DeviceItemParent } from '../device-item/helpers'
-import { childListName } from '../device-item/helpers'
 import {
   COLUMN_BREAKPOINT_CLASS,
   NAME_COLUMN_PIN_CLASS,
@@ -484,10 +483,14 @@ function AccessorySubRow({
   return (
     <DeviceItem
       trpc={trpc}
-      device={{ ...accessory, name: childListName(accessory, parentName) }}
+      device={accessory}
       view="table"
       integrationIcon={null}
-      parent={null}
+      parent={
+        accessory.parentDeviceId === null
+          ? null
+          : { id: accessory.parentDeviceId, name: parentName }
+      }
       isAccessoryRow
       showChildrenAccordion={false}
       onNavigate={onNavigate ?? undefined}

@@ -19,6 +19,7 @@
 import { type ReactNode } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useUiText } from '../../contexts/ui-text'
+import { useDeviceLabel } from '../device-name'
 import { useConfirm } from '../confirm-dialog'
 import { IconAction } from '../device-list/icon-action'
 import type { DeviceItemDevice } from './helpers'
@@ -32,9 +33,10 @@ export interface DeviceDeleteActionProps {
 export function DeviceDeleteAction({ device, onDelete }: DeviceDeleteActionProps): ReactNode {
   const t = useUiText()
   const confirm = useConfirm()
+  const deviceLabel = useDeviceLabel(device, 'full')
 
   const requestDelete = async (): Promise<void> => {
-    const label = device.name.trim() !== '' ? device.name : `#${String(device.id)}`
+    const label = deviceLabel.trim() !== '' ? deviceLabel : `#${String(device.id)}`
     const confirmed = await confirm({
       title: t('uiLibrary.deviceDeleteAction.title', 'Delete device?'),
       message: t(

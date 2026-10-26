@@ -1,6 +1,7 @@
 import { DeviceFeature, DeviceType } from '@camstack/types'
 import {
   DiscoveryPanel,
+  useDeviceLabelById,
   DoorbellRecentPanel,
   useDoorbellEvents,
   useNetworkQualityGetDeviceStats,
@@ -48,6 +49,8 @@ export function OverviewTab({ device }: OverviewTabProps) {
   //     through internal API calls.
   //   - `addonId` (string): owning integration, used for ProviderIcon.
   const numericId = typeof device.id === 'number' ? device.id : null
+  const storedName = typeof device.name === 'string' ? device.name : ''
+  const deviceLabel = useDeviceLabelById(numericId ?? 0, 'full', storedName)
   const type = String(device.type ?? '')
   // Camera-only panels (Phase / Detection FPS / Inference / Stream
   // brokers / Stream network) are skipped on Lights / Switches / Sensors
@@ -123,7 +126,7 @@ export function OverviewTab({ device }: OverviewTabProps) {
           per-device actions rather than in Config — it is a one-shot operation
           on the device's identity, not a setting. ── */}
       {isCamera && numericId !== null && (
-        <MigrateDeviceCard deviceId={numericId} deviceName={String(device.name ?? '')} />
+        <MigrateDeviceCard deviceId={numericId} deviceName={deviceLabel} />
       )}
 
       {/* ── Notifications — the notification centre's own per-device setting

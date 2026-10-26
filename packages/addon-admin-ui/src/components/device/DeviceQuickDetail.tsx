@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  useDeviceLabelById,
   useDeviceManagerGetDevice,
   useDeviceSeriesList,
 } from '@camstack/ui-library'
@@ -46,11 +47,12 @@ function DeviceQuickDetailModal({
   const series = useDeviceSeriesList(deviceId)
   const showHistory = historyTabVisible(series.presence, series.list)
   const visibleTab: QuickTabId = tab === 'history' && !showHistory ? 'info' : tab
-  const name =
-    typeof device?.name === 'string' && device.name.length > 0
-      ? device.name
-      : `#${String(deviceId)}`
   const deviceName = typeof device?.name === 'string' ? device.name : ''
+  const name = useDeviceLabelById(
+    deviceId,
+    'full',
+    deviceName.length > 0 ? deviceName : `#${String(deviceId)}`,
+  )
   const deviceLocation = typeof device?.location === 'string' ? device.location : ''
   const tabs: readonly (readonly [QuickTabId, string])[] = [
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],

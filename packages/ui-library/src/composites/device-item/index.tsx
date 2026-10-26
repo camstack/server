@@ -23,6 +23,7 @@ import { useContainerChildren } from './container-children-context'
 import { DeviceDeleteAction } from './device-delete-action'
 import { DeviceItemFeatures } from './features'
 import { DeviceItemHeader } from './header'
+import { useDeviceLabel } from '../device-name'
 import {
   type DeviceItemDevice,
   type DeviceItemParent,
@@ -74,6 +75,16 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   const flags = resolveFlags(props)
   const variant = props.variant ?? 'compact'
   const view = props.view ?? 'card'
+  const nameForm = props.isAccessoryRow ? 'nested' : 'compact'
+  const nameParent =
+    nameForm === 'nested' && parent
+      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
+      : undefined
+  const rowLabel = useDeviceLabel(
+    device,
+    nameForm,
+    nameParent !== undefined ? { parent: nameParent } : undefined,
+  )
 
   const enabled = !device.disabled
   const isCamera = device.isCamera ?? device.type.toLowerCase() === 'camera'
@@ -210,7 +221,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
               onChange={selection.onToggle}
               onClick={(e) => e.stopPropagation()}
               aria-label={t('uiLibrary.deviceItem.select', 'Select {{name}}', {
-                name: device.name,
+                name: rowLabel,
               })}
               className="flex-shrink-0"
             />
@@ -221,6 +232,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
             variant={variant}
             flags={flags}
             parent={parent ?? null}
+            nameForm={nameForm}
             integrationIcon={integrationIcon ?? null}
             hasChildren={hasChildren}
             expanded={expanded}
@@ -324,7 +336,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
               onChange={selection.onToggle}
               onClick={(e) => e.stopPropagation()}
               aria-label={t('uiLibrary.deviceItem.select', 'Select {{name}}', {
-                name: device.name,
+                name: rowLabel,
               })}
               className="flex-shrink-0 mt-0.5"
             />
@@ -335,6 +347,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
             variant={variant}
             flags={flags}
             parent={parent ?? null}
+            nameForm={nameForm}
             integrationIcon={integrationIcon ?? null}
             hasChildren={hasChildren}
             expanded={expanded}
@@ -476,6 +489,16 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
   // the inline control). Resolve the child set from the list-level context
   // rather than receiving it as a threaded prop.
   const containerChildren = useContainerChildren(device.id)
+  const nameForm = isAccessoryRow ? 'nested' : 'compact'
+  const nameParent =
+    nameForm === 'nested' && parent
+      ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }
+      : undefined
+  const rowLabel = useDeviceLabel(
+    device,
+    nameForm,
+    nameParent !== undefined ? { parent: nameParent } : undefined,
+  )
 
   return (
     <tr
@@ -574,7 +597,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
               onChange={selection.onToggle}
               onClick={(e) => e.stopPropagation()}
               aria-label={t('uiLibrary.deviceItem.select', 'Select {{name}}', {
-                name: device.name,
+                name: rowLabel,
               })}
               className="flex-shrink-0"
             />
@@ -585,6 +608,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             variant={variant}
             flags={flags}
             parent={parent}
+            nameForm={nameForm}
             integrationIcon={integrationIcon}
             hasChildren={hasChildren}
             expanded={expanded}
