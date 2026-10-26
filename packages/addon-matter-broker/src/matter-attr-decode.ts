@@ -256,7 +256,7 @@ function decodeElectricalPower(attributeId: number, value: unknown): DecodedAttr
       const mw = asNumber(value)
       return mw === null
         ? null
-        : { cap: 'power-meter', patch: { watts: mw / 1000, unit: 'W', lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { watts: mw / 1000, lastFetchedAt: Date.now() } }
     }
     case MatterAttributeId.Voltage: {
       const mv = asNumber(value)

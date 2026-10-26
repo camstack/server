@@ -270,7 +270,7 @@ describe('listSeries', () => {
     expect(info?.lastTs).toBe(T0 + 60_000)
   })
 
-  it('takes a unitFrom unit from the device itself, and says unknown when it cannot', async () => {
+  it('reports the catalog base unit, not a slice sibling', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor, 2: DeviceType.Sensor } })
     await h.runtime.registry.ensure('cap:weather.temperature', SUBJECT, '', T0)
     await h.runtime.registry.ensure(
@@ -279,10 +279,10 @@ describe('listSeries', () => {
       '',
       T0,
     )
-    h.slices.set('1:weather', { temperature: 21, temperatureUnit: 'F' })
+    h.slices.set('1:weather', { temperature: 21 })
     const one = await h.runtime.query.listSeries(SUBJECT)
-    expect(one[0]?.unit).toBe('F')
+    expect(one[0]?.unit).toBe('°C')
     const two = await h.runtime.query.listSeries({ kind: 'device', deviceId: 2 })
-    expect(two[0]?.unit).toBeNull()
+    expect(two[0]?.unit).toBe('°C')
   })
 })

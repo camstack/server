@@ -8768,7 +8768,7 @@
       "kind": "function",
       "area": "lib",
       "file": "packages/ui-library/src/lib/resolve-sensor-display.ts",
-      "summary": "Shared, pure resolution of a sensor's DISPLAY unit + precision + value transform. One function so the two renderers (`SensorValueAtom`, `SensorHeroCard`) can never diverge — they duplicated this precedence before."
+      "summary": "Shared resolution of a sensor's display string. The stored number is always the quantity's base unit (D944 §4). A display preference (default metric) or an operator override picks the label; the value is converted to …"
     },
     {
       "name": "resolveStepDefaultModel",

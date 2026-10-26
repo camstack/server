@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType, type ReadingQuantity } from '@camstack/types'
 import type {
   UnraidArrayDiskInfo,
   UnraidContainerInfo,
@@ -70,8 +70,8 @@ export type UnraidEntityIdentity = z.infer<typeof UnraidEntityIdentitySchema>
 /** A live numeric reading carried on a `numeric` descriptor. */
 export interface UnraidNumericValue {
   readonly value: number
-  readonly unit?: string
-  readonly precision?: number
+  /** Quantity the value is already stored in (base unit). */
+  readonly quantity: ReadingQuantity
 }
 
 /**
@@ -114,19 +114,16 @@ export function slugifyKey(value: string): string {
     .slice(0, 48)
 }
 
-const PERCENT = '%'
-const WATT = 'W'
-
 /** Clamp a raw percentage into 0..100 (defensive — a hung feed can overshoot). */
 function pct(value: number): number {
   if (!Number.isFinite(value)) return 0
   return Math.max(0, Math.min(100, value))
 }
 
-/** Bytes → whole GiB, rounded to 1 decimal (array/disk capacity display). */
-function toGiB(bytes: number): number {
-  if (!Number.isFinite(bytes) || bytes <= 0) return 0
-  return Math.round((bytes / 1024 ** 3) * 10) / 10
+/** A byte count. Negative or non-finite input is an empty reading, not a guess. */
+function bytes(value: number): number {
+  if (!Number.isFinite(value) || value < 0) return 0
+  return value
 }
 
 /** Array capacity + parity + CPU + notification-count metric descriptors. */
@@ -153,7 +150,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array usage',
       role: DeviceRole.NumericSensor,
-      numeric: { value: usagePercent, unit: PERCENT, precision: 1 },
+      numeric: { value: usagePercent, quantity: 'percentage' },
     },
     {
       key: 'array_total',
@@ -162,7 +159,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array total',
       role: DeviceRole.NumericSensor,
-      numeric: { value: toGiB(totalKb * 1024), unit: 'GiB', precision: 1 },
+      numeric: { value: bytes(totalKb * 1024), quantity: 'information' },
     },
     {
       key: 'array_used',
@@ -171,7 +168,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array used',
       role: DeviceRole.NumericSensor,
-      numeric: { value: toGiB(usedKb * 1024), unit: 'GiB', precision: 1 },
+      numeric: { value: bytes(usedKb * 1024), quantity: 'information' },
     },
     {
       key: 'array_free',
@@ -180,7 +177,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array free',
       role: DeviceRole.NumericSensor,
-      numeric: { value: toGiB(array.capacityKb.free * 1024), unit: 'GiB', precision: 1 },
+      numeric: { value: bytes(array.capacityKb.free * 1024), quantity: 'information' },
     },
     {
       key: 'cpu_usage',
@@ -189,7 +186,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'CPU usage',
       role: DeviceRole.NumericSensor,
-      numeric: { value: pct(cpu.percent), unit: PERCENT, precision: 1 },
+      numeric: { value: pct(cpu.percent), quantity: 'percentage' },
     },
     {
       key: 'parity_check_progress',
@@ -198,7 +195,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Parity check progress',
       role: DeviceRole.NumericSensor,
-      numeric: { value: pct(array.parityCheck?.progress ?? 0), unit: PERCENT, precision: 0 },
+      numeric: { value: pct(array.parityCheck?.progress ?? 0), quantity: 'percentage' },
     },
     {
       key: 'active_notifications',
@@ -207,7 +204,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Active notifications',
       role: DeviceRole.NumericSensor,
-      numeric: { value: Math.max(0, notifications.activeCount), precision: 0 },
+      numeric: { value: Math.max(0, notifications.activeCount), quantity: 'count' },
     },
   ]
 
@@ -232,7 +229,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'CPU power',
       role: DeviceRole.PowerSensor,
-      numeric: { value: Math.max(0, cpu.powerW), unit: WATT, precision: 1 },
+      numeric: { value: Math.max(0, cpu.powerW), quantity: 'power' },
     })
   }
   return out
@@ -340,7 +337,7 @@ function diskDescriptors(disks: readonly UnraidArrayDiskInfo[]): UnraidEntityDes
       deviceType: DeviceType.Sensor,
       name: `${disk.name} usage`,
       role: DeviceRole.NumericSensor,
-      numeric: { value: usagePercent, unit: PERCENT, precision: 1 },
+      numeric: { value: usagePercent, quantity: 'percentage' },
     })
     // `problem` semantics: the binary is ON when the disk is UNhealthy.
     out.push({
@@ -378,7 +375,7 @@ function dockerDescriptors(containers: readonly UnraidContainerInfo[]): UnraidEn
       deviceType: DeviceType.Sensor,
       name: `${container.name} CPU`,
       role: DeviceRole.NumericSensor,
-      numeric: { value: pct(container.cpuPercent), unit: PERCENT, precision: 1 },
+      numeric: { value: pct(container.cpuPercent), quantity: 'percentage' },
     })
     out.push({
       key: `container_${slug}_memory`,
@@ -387,7 +384,7 @@ function dockerDescriptors(containers: readonly UnraidContainerInfo[]): UnraidEn
       deviceType: DeviceType.Sensor,
       name: `${container.name} memory`,
       role: DeviceRole.NumericSensor,
-      numeric: { value: pct(container.memPercent), unit: PERCENT, precision: 1 },
+      numeric: { value: pct(container.memPercent), quantity: 'percentage' },
     })
     out.push(
       buttonDescriptor(`restart_container_${slug}`, `Restart ${container.name}`, {

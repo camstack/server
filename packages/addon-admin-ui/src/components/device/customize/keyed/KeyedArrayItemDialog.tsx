@@ -124,8 +124,8 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
     ),
   )
   const [unit, setUnit] = useState(
-    props.seed?.literals.find((literal) => literal.path === 'remaining.unit')?.value ??
-      literalChoices(props.cap, props.targetId, 'remaining.value', 'remaining.unit')[0] ??
+    props.seed?.literals.find((literal) => literal.path === 'remaining.kind')?.value ??
+      literalChoices(props.cap, props.targetId, 'remaining.value', 'remaining.kind')[0] ??
       '',
   )
   const devices = useDeviceManagerListAll({ projection: 'slim' })

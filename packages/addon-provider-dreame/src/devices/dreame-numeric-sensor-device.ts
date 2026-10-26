@@ -5,6 +5,7 @@ import {
   type InferNativeProvider,
   type NumericSensorStatus,
 } from '@camstack/types'
+import { dreameQuantity, dreameToBase } from '../dreame-reading.js'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 
@@ -39,9 +40,11 @@ export class DreameNumericSensorDevice extends DreameChildDevice {
     this.#siid = cfg.siid
     this.#piid = cfg.piid
     this.#unit = cfg.unit
+    const quantity = dreameQuantity(cfg.unit)
     void this.updateSourceInfo({
       id: `${this.dreameDeviceId}:sensor:${cfg.siid}-${cfg.piid}`,
       system: 'dreame',
+      ...(quantity !== null ? { quantity } : {}),
     })
   }
 
@@ -51,29 +54,47 @@ export class DreameNumericSensorDevice extends DreameChildDevice {
     return typeof v === 'number' && Number.isFinite(v) ? v : null
   }
 
-  #slice(value: number): NumericSensorStatus {
-    return {
-      value,
-      ...(this.#unit !== undefined ? { unit: this.#unit } : {}),
-      lastFetchedAt: Date.now(),
+  #slice(value: number): NumericSensorStatus | null {
+    const quantity = dreameQuantity(this.#unit)
+    if (quantity === null) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity: 'device', unit: this.#unit ?? '', reason: 'unknown-unit' },
+      })
+      return null
     }
+    const stored = dreameToBase(value, this.#unit, quantity)
+    if (stored === null) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity, unit: this.#unit ?? '', reason: 'unknown-unit' },
+      })
+      return null
+    }
+    return { value: stored, lastFetchedAt: Date.now() }
   }
 
   protected override registerControlCap(): void {
     const provider: InferNativeProvider<typeof numericSensorCapability> = {
       getStatus: async () =>
-        this.runtimeState.getCapState<NumericSensorStatus>(CAP_NAME) ?? this.#slice(0),
+        this.runtimeState.getCapState<NumericSensorStatus>(CAP_NAME) ?? {
+          value: 0,
+          lastFetchedAt: 0,
+        },
     }
     this.ctx.registerNativeCap(numericSensorCapability, provider)
     const initial = this.#readValue()
-    this.runtimeState.setCapState(CAP_NAME, this.#slice(initial ?? 0))
+    const slice = initial === null ? null : this.#slice(initial)
+    if (slice !== null) this.runtimeState.setCapState(CAP_NAME, slice)
   }
 
   protected override recomputeSlice(): void {
     const value = this.#readValue()
     if (value === null) return
+    const slice = this.#slice(value)
+    if (slice === null) return
     const current = this.runtimeState.getCapState<NumericSensorStatus>(CAP_NAME)
-    if (current?.value === value) return
-    this.runtimeState.setCapState(CAP_NAME, this.#slice(value))
+    if (current?.value === slice.value) return
+    this.runtimeState.setCapState(CAP_NAME, slice)
   }
 }

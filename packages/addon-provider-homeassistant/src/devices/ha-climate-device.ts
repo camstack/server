@@ -1,5 +1,6 @@
 import {
   climateControlCapability,
+  ingestReading,
   type DeviceContext,
   type InferNativeProvider,
   type ClimateControlStatus,
@@ -65,6 +66,16 @@ export class HaClimateDevice extends HaBaseChildDevice {
     if (state.state === 'unavailable' || state.state === 'unknown') return
     this.swingModes = readStringArray(state.attributes, 'swing_modes')
     this.swingHorizontalModes = readStringArray(state.attributes, 'swing_horizontal_modes')
+    const unit = readStringAttr(state.attributes, 'temperature_unit')
+    if (unit !== null) {
+      const probe = ingestReading({ value: 0, rawUnit: unit, quantity: 'temperature' })
+      if (!probe.ok) {
+        this.deviceLogger.warn('numeric reading refused', {
+          tags: { deviceId: this.id },
+          meta: { quantity: 'temperature', unit, reason: probe.reason },
+        })
+      }
+    }
     this.runtimeState.setCapState('climate-control', climateSliceFromState(state))
   }
 
@@ -131,6 +142,12 @@ export function climateSliceFromState(state: HaEntityState): ClimateControlStatu
   const attrs = state.attributes
 
   const mode = sanitizeHvacMode(state.state)
+  const tempUnit = readStringAttr(attrs, 'temperature_unit') ?? undefined
+  const celsius = (raw: number | null): number | null => {
+    if (raw === null) return null
+    const result = ingestReading({ value: raw, rawUnit: tempUnit, quantity: 'temperature' })
+    return result.ok ? result.value : null
+  }
   const availableModes = readStringArray(attrs, 'hvac_modes')
     .map(sanitizeHvacMode)
     .filter((m): m is HvacMode => m !== null)
@@ -146,16 +163,16 @@ export function climateSliceFromState(state: HaEntityState): ClimateControlStatu
     availableFanModes,
     preset,
     availablePresets,
-    target: readNumberAttr(attrs, 'temperature'),
-    targetHigh: readNumberAttr(attrs, 'target_temp_high'),
-    targetLow: readNumberAttr(attrs, 'target_temp_low'),
+    target: celsius(readNumberAttr(attrs, 'temperature')),
+    targetHigh: celsius(readNumberAttr(attrs, 'target_temp_high')),
+    targetLow: celsius(readNumberAttr(attrs, 'target_temp_low')),
     targetHumidity: readNumberAttr(attrs, 'target_humidity'),
-    currentTemp: readNumberAttr(attrs, 'current_temperature'),
+    currentTemp: celsius(readNumberAttr(attrs, 'current_temperature')),
     currentHumidity: readNumberAttr(attrs, 'current_humidity'),
     ...readSwing(attrs),
-    minTemp: readNumberAttr(attrs, 'min_temp'),
-    maxTemp: readNumberAttr(attrs, 'max_temp'),
-    tempStep: readNumberAttr(attrs, 'target_temp_step'),
+    minTemp: celsius(readNumberAttr(attrs, 'min_temp')),
+    maxTemp: celsius(readNumberAttr(attrs, 'max_temp')),
+    tempStep: celsius(readNumberAttr(attrs, 'target_temp_step')),
     lastFetchedAt,
   }
 }

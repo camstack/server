@@ -1,27 +1,20 @@
 /**
- * Shared, pure resolution of a sensor's DISPLAY unit + precision + value
- * transform. One function so the two renderers (`SensorValueAtom`,
- * `SensorHeroCard`) can never diverge — they duplicated this precedence before.
- *
- * Resolution order (device override → role default → live slice →
- * ROLE_DESCRIPTOR canonicalUnit). `??` everywhere, never `||`: `precision: 0`
- * is a legal override and must win over a slice `precision: 2`.
- *
- * Conversion happens at RENDER only — storage stays in source units. An
- * override unit converts the raw slice value ONLY when it shares a dimension
- * with the source unit (`canConvertUnit`); on refusal the display falls back to
- * identity + the SOURCE unit so a unit label and its value math can never
- * disagree. Precision applies AFTER conversion (by construction — the caller
- * runs `formatNumeric(toDisplayValue(raw), precision)`).
+ * Shared resolution of a sensor's display string. The stored number is always
+ * the quantity's base unit (D944 §4). A display preference (default metric)
+ * or an operator override picks the label; the value is converted to match.
  */
-import type { DeviceDisplayOverride, RoleDisplayDefault } from '@camstack/types'
-import { canConvertUnit, normalizeUnit, tryConvertUnit } from '@camstack/types'
-
-/** Table keys are canonical spellings; providers often send `C` / `F` / `celsius`. */
-function canonUnit(raw: string | undefined): string | undefined {
-  if (raw === undefined) return undefined
-  return normalizeUnit(raw) ?? raw
-}
+import type { DeviceDisplayOverride, ReadingQuantity, RoleDisplayDefault } from '@camstack/types'
+import {
+  DEFAULT_DISPLAY_PREFERENCE,
+  baseUnitOf,
+  canConvertUnit,
+  displayUnitFor,
+  formatReading,
+  normalizeUnit,
+  tryConvertUnit,
+  type DisplayPreference,
+} from '@camstack/types'
+import { formatNumeric } from './format-numeric'
 
 export interface SensorDisplayInput {
   /** Per-device override from the row (`DeviceInfo.display`). */
@@ -30,60 +23,76 @@ export interface SensorDisplayInput {
   readonly capName?: string
   /** Role default (`roleDisplayDefaults[device.role]`). */
   readonly roleDefault?: RoleDisplayDefault
-  /** Live slice unit (the unit the raw VALUE is actually in, for generic sensors). */
-  readonly sliceUnit?: string
-  /** Live slice precision. */
-  readonly slicePrecision?: number
-  /** ROLE_DESCRIPTOR canonical unit fallback (typed roles). */
-  readonly canonicalUnit?: string
+  /** Quantity of the stored number. `device` reads `deviceQuantity`. */
+  readonly quantity?: ReadingQuantity
+  /** The device's chosen quantity when `quantity` is `device`. */
+  readonly deviceQuantity?: ReadingQuantity
+  /** Precision declared on the reading, when the operator has not overridden it. */
+  readonly declarationPrecision?: number
+  /** Read-time preference. Defaults to metric. */
+  readonly preference?: DisplayPreference
 }
 
 export interface ResolvedSensorDisplay {
-  /** Display unit — `''` when none resolves anywhere. */
+  /** Display unit — `''` when the quantity has none. */
   readonly unit: string
   /** Display precision (int 0-10) or undefined for auto-format. */
   readonly precision: number | undefined
-  /** Convert a raw slice value into the display unit. Identity unless an
-   *  override unit differs from the source unit AND both share a dimension. */
+  /** Convert a base-unit value into the display unit. */
   readonly toDisplayValue: (raw: number) => number
+  /** Text and unit for one base-unit sample. */
+  readonly format: (raw: number) => { readonly text: string; readonly unit: string }
 }
 
-const identity = (raw: number): number => raw
+function canonUnit(raw: string | undefined): string | undefined {
+  if (raw === undefined) return undefined
+  return normalizeUnit(raw) ?? raw
+}
+
+function concreteQuantity(input: SensorDisplayInput): ReadingQuantity | undefined {
+  if (input.quantity === undefined) return undefined
+  if (input.quantity === 'device') {
+    const chosen = input.deviceQuantity
+    if (chosen === undefined || chosen === 'device') return undefined
+    return chosen
+  }
+  return input.quantity
+}
 
 export function resolveSensorDisplay(input: SensorDisplayInput): ResolvedSensorDisplay {
   const perCap = input.capName !== undefined ? input.display?.perCap?.[input.capName] : undefined
-
-  // Precision: device perCap → device-level → role default → live slice.
   const precision =
     perCap?.precision ??
     input.display?.precision ??
     input.roleDefault?.precision ??
-    input.slicePrecision
+    input.declarationPrecision
 
-  // The unit the raw VALUE is actually in: live slice unit wins, else the
-  // typed role's canonical unit. Normalize before convert (UNIT_TABLE keys
-  // only) — Ecowitt / HA often publish `C` rather than `°C`.
-  const sourceUnit = canonUnit(input.sliceUnit ?? input.canonicalUnit)
-  // Operator-chosen override unit (device perCap → device-level → role default).
+  const quantity = concreteQuantity(input)
+  const preference = input.preference ?? DEFAULT_DISPLAY_PREFERENCE
+  const base = quantity === undefined ? undefined : baseUnitOf(quantity)
+  const preferred = quantity === undefined ? undefined : displayUnitFor(quantity, preference)
   const overrideUnit = canonUnit(perCap?.unit ?? input.display?.unit ?? input.roleDefault?.unit)
-
-  // Real conversion only when the override differs from the source AND both
-  // share a dimension. sourceUnit/overrideUnit are narrowed to string here, so
-  // no casts are needed to feed `tryConvertUnit`.
-  if (
+  const overrideOk =
     overrideUnit !== undefined &&
-    sourceUnit !== undefined &&
-    overrideUnit !== sourceUnit &&
-    canConvertUnit(sourceUnit, overrideUnit)
-  ) {
-    return {
-      unit: overrideUnit,
-      precision,
-      toDisplayValue: (raw: number): number => tryConvertUnit(raw, sourceUnit, overrideUnit) ?? raw,
-    }
+    base !== undefined &&
+    overrideUnit !== base &&
+    canConvertUnit(base, overrideUnit)
+  const unit = overrideOk ? overrideUnit : (preferred ?? '')
+
+  const scales = quantity === 'duration' || quantity === 'information' || quantity === 'duration-ms'
+
+  const toDisplayValue = (raw: number): number => {
+    if (scales || base === undefined || unit.length === 0 || unit === base) return raw
+    return tryConvertUnit(raw, base, unit) ?? raw
   }
 
-  // No override, same unit, cross-dimension refusal, or no source unit: show
-  // the source unit and render the value verbatim (label and math consistent).
-  return { unit: sourceUnit ?? '', precision, toDisplayValue: identity }
+  const format = (raw: number): { readonly text: string; readonly unit: string } => {
+    if (quantity !== undefined && !overrideOk) {
+      const rendered = formatReading({ value: raw, quantity, preference, precision })
+      return { text: rendered.text, unit: rendered.unit }
+    }
+    return { text: formatNumeric(toDisplayValue(raw), precision), unit }
+  }
+
+  return { unit, precision, toDisplayValue, format }
 }

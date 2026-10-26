@@ -19,12 +19,9 @@ const trpc = {} as never
 const FULL_SLICE = {
   condition: 'partlycloudy',
   temperature: 21.4,
-  temperatureUnit: '°C',
   humidity: 63,
   pressure: 1013,
-  pressureUnit: 'hPa',
   windSpeed: 12.5,
-  windSpeedUnit: 'km/h',
   windBearing: 240,
   lastFetchedAt: 0,
 }
@@ -108,18 +105,14 @@ describe('WeatherHeroCard', () => {
     expect(screen.getByText('21')).toBeTruthy()
     expect(screen.getByText('Partly cloudy')).toBeTruthy()
     expect(screen.getByText('63%')).toBeTruthy() // humidity
-    expect(screen.getByText('13 km/h')).toBeTruthy() // wind speed rounded + unit
-    expect(screen.getByText('1013 hPa')).toBeTruthy() // pressure + unit
+    expect(screen.getByText('13m/s')).toBeTruthy()
+    expect(screen.getByText('1013hPa')).toBeTruthy()
   })
 
-  it('omits the unit suffix when the unit is null (no trailing space)', () => {
-    mockResult = {
-      ...mockResult,
-      slice: { ...FULL_SLICE, windSpeedUnit: null, pressureUnit: null },
-    }
+  it('labels wind and pressure with the base unit', () => {
     render(<WeatherHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    expect(screen.getByText('13')).toBeTruthy() // wind speed, no unit
-    expect(screen.getByText('1013')).toBeTruthy() // pressure, no unit
+    expect(screen.getByText('13m/s')).toBeTruthy()
+    expect(screen.getByText('1013hPa')).toBeTruthy()
   })
 
   it('renders the bespoke sky scene with the condition glyph', () => {

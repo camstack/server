@@ -186,11 +186,11 @@ describe('energy and water — one key per child, units from the description', (
     })
     expect(totalSlice).toEqual({
       cap: 'power-meter',
-      status: { kwhTotal: 12.5, unit: 'kWh', lastFetchedAt: 1 },
+      status: { kwhTotal: 12.5, lastFetchedAt: 1 },
     })
     expect(cycleSlice).toEqual({
       cap: 'numeric-sensor',
-      status: { value: 740, unit: 'Wh', lastFetchedAt: 1 },
+      status: { value: 0.74, lastFetchedAt: 1 },
     })
   })
 
@@ -210,7 +210,7 @@ describe('energy and water — one key per child, units from the description', (
     if (!binding) throw new Error('no binding')
     expect(
       childSliceFromValue({ binding, entity: kwh.entityByName(binding.key), raw: 12.5, nowMs: 1 }),
-    ).toEqual({ cap: 'power-meter', status: { kwhTotal: 12.5, unit: 'kWh', lastFetchedAt: 1 } })
+    ).toEqual({ cap: 'power-meter', status: { kwhTotal: 12.5, lastFetchedAt: 1 } })
   })
 
   it('a counter whose unit is not declared is not a kWh meter — it is published raw and unitless', () => {
@@ -232,14 +232,14 @@ describe('energy and water — one key per child, units from the description', (
     expect(slice).toEqual({ cap: 'numeric-sensor', status: { value: 12_500, lastFetchedAt: 1 } })
   })
 
-  it('water keeps ONE unit for the whole series, whatever the magnitude', () => {
+  it('water stays litres whatever the magnitude', () => {
     const water = byKey(bindings, 'BSH.Common.Option.WaterConsumption')
     if (!water) throw new Error('no water binding')
     const entity = description.entityByName(water.key)
     const small = childSliceFromValue({ binding: water, entity, raw: 9.5, nowMs: 1 })
     const large = childSliceFromValue({ binding: water, entity, raw: 20_000, nowMs: 2 })
-    expect(small).toMatchObject({ status: { unit: 'l', value: 9.5 } })
-    expect(large).toMatchObject({ status: { unit: 'l', value: 20_000 } })
+    expect(small).toMatchObject({ status: { value: 9.5 } })
+    expect(large).toMatchObject({ status: { value: 20_000 } })
   })
 
   it('forecasts are percentages and not energy sensors', () => {
@@ -255,7 +255,7 @@ describe('energy and water — one key per child, units from the description', (
         raw: 69,
         nowMs: 1,
       }),
-    ).toEqual({ cap: 'numeric-sensor', status: { value: 69, unit: '%', lastFetchedAt: 1 } })
+    ).toEqual({ cap: 'numeric-sensor', status: { value: 69, lastFetchedAt: 1 } })
   })
 })
 

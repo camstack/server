@@ -3,7 +3,10 @@ import {
   BaseDevice,
   switchCapability,
   numericSensorCapability,
+  ingestReading,
+  quantityFromUnit,
   type DeviceContext,
+  type ReadingQuantity,
   type DeviceFeature,
   type InferNativeProvider,
   type NumericSensorStatus,
@@ -45,6 +48,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   private readonly brokerId: string
   private readonly caps: readonly MqttHaCap[]
   private readonly unitOfMeasurement: string | null
+  /** Null when the discovery unit is not a known quantity — samples stay null. */
+  private readonly readingQuantity: ReadingQuantity | null
 
   constructor(ctx: DeviceContext) {
     const persisted = mqttHaDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -53,8 +58,19 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     this.brokerId = persisted.brokerId
     this.caps = persisted.capabilities.filter(isKnownCap)
     this.unitOfMeasurement = persisted.unitOfMeasurement ?? null
+    this.readingQuantity = learnQuantity(this.unitOfMeasurement)
     this.online = true
-    void this.updateSourceInfo({ id: this.entityKey, system: 'mqtt-ha' })
+    if (this.unitOfMeasurement !== null && this.readingQuantity === null) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity: 'device', unit: this.unitOfMeasurement, reason: 'unknown-unit' },
+      })
+    }
+    void this.updateSourceInfo({
+      id: this.entityKey,
+      system: 'mqtt-ha',
+      ...(this.readingQuantity !== null ? { quantity: this.readingQuantity } : {}),
+    })
   }
 
   override async onActivate(): Promise<void> {
@@ -83,27 +99,38 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private registerNumericSensor(): void {
-    const COLD: NumericSensorStatus = {
-      value: 0,
-      lastFetchedAt: 0,
-      ...(this.unitOfMeasurement !== null ? { unit: this.unitOfMeasurement } : {}),
-    }
+    const COLD: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof numericSensorCapability> = {
       getStatus: async () => {
         const live = mqttHaStateGateway.getSensorState(this.brokerId, this.entityKey)
         if (live === null) {
           return this.runtimeState.getCapState<NumericSensorStatus>('numeric-sensor') ?? COLD
         }
-        return {
-          value: live.value,
-          lastFetchedAt: live.lastFetchedAt,
-          ...(this.unitOfMeasurement !== null ? { unit: this.unitOfMeasurement } : {}),
-        }
+        return { value: this.toBase(live.value), lastFetchedAt: live.lastFetchedAt }
       },
     }
     this.ctx.registerNativeCap(numericSensorCapability, provider)
     this.runtimeState.setCapState('numeric-sensor', COLD)
   }
+
+  private toBase(value: number): number | null {
+    if (this.readingQuantity === null) return null
+    const rawUnit = this.unitOfMeasurement ?? undefined
+    const result = ingestReading({ value, rawUnit, quantity: this.readingQuantity })
+    if (result.ok) return result.value
+    this.ctx.logger.warn('numeric reading refused', {
+      tags: { deviceId: this.id },
+      meta: { quantity: this.readingQuantity, unit: rawUnit ?? '', reason: result.reason },
+    })
+    return null
+  }
+}
+
+function learnQuantity(unit: string | null): ReadingQuantity | null {
+  if (unit === null) return 'none'
+  const learned = quantityFromUnit(unit)
+  if (learned === undefined || learned === 'device') return null
+  return learned
 }
 
 /** Resolve discovery metadata for outbound MQTT commands (injected at adopt time). */

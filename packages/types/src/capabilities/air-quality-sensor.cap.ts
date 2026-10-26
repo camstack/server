@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Multi-metric air-quality slice. Covers CO₂, total VOCs, particulate
@@ -13,27 +14,17 @@ import { DeviceType } from '../device/device-type.js'
  */
 export const AirQualitySensorStatusSchema = z.object({
   /** Carbon dioxide concentration in ppm. */
-  co2Ppm: z.number().min(0).optional(),
+  co2Ppm: z.number().min(0).optional().meta(readingMeta('concentration-volume')),
   /** Total volatile organic compounds in ppb. */
-  vocPpb: z.number().min(0).optional(),
+  vocPpb: z.number().min(0).optional().meta(readingMeta('concentration-ppb')),
   /** Particulate matter ≤ 2.5 μm in µg/m³. */
-  pm25: z.number().min(0).optional(),
+  pm25: z.number().min(0).optional().meta(readingMeta('concentration-mass')),
   /** Particulate matter ≤ 10 μm in µg/m³. */
-  pm10: z.number().min(0).optional(),
+  pm10: z.number().min(0).optional().meta(readingMeta('concentration-mass')),
   /** Composite AQI value (typically 0..500). */
-  aqi: z.number().optional(),
+  aqi: z.number().optional().meta(readingMeta('index')),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
-  /** Live display unit of the single metric this slice carries (e.g. HA
-   *  `attributes.unit_of_measurement` → 'ppm' / 'ppb' / 'µg/m³'). Each
-   *  upstream `sensor.*` entity surfaces ONE device_class, so one unit
-   *  per slice is unambiguous. */
-  unit: z.string().optional(),
-  /** Suggested decimal places for numeric display.
-   *  Populated live from the upstream source when provided (e.g. HA
-   *  `attributes.suggested_display_precision`). Falls back to
-   *  auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
 })
 
 export type AirQualitySensorStatus = z.infer<typeof AirQualitySensorStatusSchema>
@@ -65,8 +56,8 @@ export const airQualitySensorCapability = {
     fields: {
       co2Ppm: { kind: 'gauge', unit: 'ppm', deadband: 5 },
       vocPpb: { kind: 'gauge', unit: 'ppb', deadband: 5 },
-      pm25: { kind: 'gauge', unit: 'ug/m3', deadband: 1 },
-      pm10: { kind: 'gauge', unit: 'ug/m3', deadband: 1 },
+      pm25: { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
+      pm10: { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
       aqi: { kind: 'gauge', unit: 'count', deadband: 1 },
     },
   },

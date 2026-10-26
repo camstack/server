@@ -66,7 +66,7 @@ export function requiredTopLevelKeys(schema: z.ZodType): readonly string[] {
 /**
  * The proper prefixes of `path` whose schema accepts `undefined`: a required
  * leaf under one of them is required only once something writes that parent
- * (`remaining.unit` is required only when `remaining` is present).
+ * (`remaining.kind` is required only when `remaining` is present).
  */
 export function optionalAncestors(schema: z.ZodType, path: string): readonly string[] {
   const segments = path.split('.')

@@ -32,7 +32,7 @@ const VACUUM_SLICE: ConsumablesStatus = {
       status: 'ok',
       lastResetAt: null,
       resettable: true,
-      remaining: { value: 190, unit: 'hours' },
+      remaining: { value: 190, kind: 'duration' },
     },
     {
       key: 'clean-water',
@@ -59,7 +59,7 @@ const VACUUM_SLICE: ConsumablesStatus = {
       status: null,
       lastResetAt: null,
       resettable: false,
-      remaining: { value: 12, unit: 'cycles' },
+      remaining: { value: 12, kind: 'count' },
     },
   ],
 }
@@ -175,14 +175,14 @@ describe('one entity set per consumable item', () => {
     expect(component(plan, 'sensor', 'consumable_main_brush_remaining')).toMatchObject({
       unique_id: '503_consumable_main-brush_remaining',
       device_class: 'duration',
-      unit_of_measurement: 'h',
+      unit_of_measurement: 's',
       state_class: 'measurement',
     })
   })
 
   it('gives a cycle counter a count, not a duration', () => {
     const cycles = component(plan, 'sensor', 'consumable_descaler_remaining')
-    expect(cycles.unit_of_measurement).toBe('cycles')
+    expect(cycles.unit_of_measurement).toBeUndefined()
     expect(cycles.device_class).toBeUndefined()
   })
 

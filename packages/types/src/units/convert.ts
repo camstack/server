@@ -33,7 +33,7 @@ export class UnitConversionError extends Error {
 
 /** Resolve a unit's `UnitSpec`, or `undefined` when the spelling is unknown. */
 function specFor(unit: string): UnitSpec | undefined {
-  return Object.hasOwn(UNIT_TABLE, unit) ? UNIT_TABLE[unit as keyof typeof UNIT_TABLE] : undefined
+  return Object.hasOwn(UNIT_TABLE, unit) ? UNIT_TABLE[unit] : undefined
 }
 
 /** The dimension a unit belongs to, or `undefined` for an unknown unit. */
@@ -100,6 +100,18 @@ export function canConvertUnit(from: string, to: string): boolean {
  * Every known unit spelling in a dimension (table insertion order — canonical
  * unit first). Powers the UI's same-dimension unit picker.
  */
+/**
+ * Convert a difference, not a reading. Affine units (°F) shift an absolute
+ * value by their offset; a step of 1°F is 5/9°C, so the offset is cancelled.
+ */
+export function tryConvertDelta(value: number, from: string, to: string): number | undefined {
+  if (from === to) return value
+  const origin = tryConvertUnit(0, from, to)
+  const shifted = tryConvertUnit(value, from, to)
+  if (origin === undefined || shifted === undefined) return undefined
+  return shifted - origin
+}
+
 export function unitsForDimension(dimension: UnitDimension): readonly string[] {
   const out: string[] = []
   for (const [unit, spec] of Object.entries(UNIT_TABLE)) {

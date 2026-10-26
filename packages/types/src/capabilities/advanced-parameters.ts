@@ -4,6 +4,7 @@
 import { z } from 'zod'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { isZodSecret } from '../device/zod-secret.js'
+import { QUANTITY_BASE, isReadingQuantity } from '../units/quantity.js'
 
 export const ADVANCED_SHORT_STRING_MAX = 80
 
@@ -19,6 +20,7 @@ export interface DerivedAdvancedParameter {
 
 interface ZodMetaBag {
   readonly unit?: unknown
+  readonly quantity?: unknown
   readonly label?: unknown
   readonly config?: unknown
 }
@@ -78,8 +80,15 @@ function layersOf(schema: z.ZodType): readonly z.ZodType[] {
 
 function unitOnSchema(schema: z.ZodType): string | undefined {
   for (const layer of layersOf(schema)) {
-    const unit = metaOf(layer)?.unit
+    const meta = metaOf(layer)
+    const unit = meta?.unit
     if (typeof unit === 'string' && unit.length > 0) return unit
+    // A labelled reading publishes its base unit. Unlabelled quantities stay
+    // out of the advanced list — they are readings, not parameters.
+    if (isReadingQuantity(meta?.quantity) && typeof meta?.label === 'string') {
+      const base = QUANTITY_BASE[meta.quantity]
+      if (base !== 'none' && base !== 'device') return base
+    }
   }
   return undefined
 }

@@ -41,7 +41,7 @@ function feederPlans(): readonly CompositionFieldPlan[] {
             label: 'Desiccant',
             fields: {
               'remaining.value': DAYS,
-              'remaining.unit': { kind: 'expression', expr: '"days"', bindings: {} },
+              'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
               status: {
                 kind: 'expression',
                 expr: 'd <= 0 ? "replace" : "ok"',
@@ -74,7 +74,7 @@ describe('assembleSlice (D663)', () => {
           entry('consumables.lastChangedAt', 1_000),
           entry('consumables.lastFetchedAt', 1_000),
           entry('consumables.items[desiccant].remaining.value', 0),
-          entry('consumables.items[desiccant].remaining.unit', 'days'),
+          entry('consumables.items[desiccant].remaining.kind', 'duration'),
           entry('consumables.items[desiccant].status', 'replace'),
         ],
         LOOKUP_CAP,
@@ -90,7 +90,7 @@ describe('assembleSlice (D663)', () => {
           status: 'replace',
           lastResetAt: null,
           resettable: false,
-          remaining: { value: 0, unit: 'days' },
+          remaining: { value: 0, kind: 'duration' },
         },
       ],
     })

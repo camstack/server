@@ -37,19 +37,17 @@ import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { DeviceDisplayOverride } from '@camstack/types'
-import { DeviceType, normalizeUnit, unitDimension } from '@camstack/types'
+import { DeviceType, baseUnitOf, unitDimension } from '@camstack/types'
 import {
   ROLE_DESCRIPTOR,
   deviceRoleMetaOf,
   deviceTypeMetaOf,
   resolveDisplayIcon,
   useIconGlyphsVersion,
-  useDeviceCapSlice,
   useDeviceManagerGetDevice,
   useDeviceManagerGetRoleDisplayDefaults,
   useDeviceManagerSetDisplay,
   useDeviceManagerSetRoleDisplayDefaults,
-  useSystem,
   useUiText,
 } from '@camstack/ui-library'
 import { PrecisionInput } from '../../shared/PrecisionInput'
@@ -99,13 +97,6 @@ function formFromOverride(display: DeviceDisplayOverride | undefined): DisplayFo
   }
 }
 
-/** Read a live cap slice's `unit` field defensively (`unknown` slice). */
-function sliceUnitOf(slice: unknown): string | undefined {
-  if (typeof slice !== 'object' || slice === null) return undefined
-  const raw = (slice as Record<string, unknown>)['unit']
-  return typeof raw === 'string' ? raw : undefined
-}
-
 function parsePrecision(raw: string): number | undefined {
   if (raw.trim() === '') return undefined
   const parsed = Number.parseInt(raw, 10)
@@ -140,7 +131,6 @@ export function DisplaySection({ deviceId }: DisplaySectionProps): ReactNode {
   // Re-render when the lazy glyph table arrives (a role default's glyph may not be loaded yet).
   useIconGlyphsVersion()
   const { t } = useTranslation()
-  const system = useSystem()
   const queryClient = useQueryClient()
 
   const { data: device } = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
@@ -155,15 +145,14 @@ export function DisplaySection({ deviceId }: DisplaySectionProps): ReactNode {
   const labelIsDrawn =
     role !== null || (device?.parentDeviceId !== null && device?.parentDeviceId !== undefined)
 
-  // Live source unit: the sensor cap name equals its role string. Typed roles
-  // also carry a fixed canonical unit; the live slice unit wins when present.
-  // Normalize before `unitDimension` — providers often send `C` / `F`, and the
-  // unit table only knows canonical spellings (D699 display picker).
-  const slice = useDeviceCapSlice(system.trpcClient, deviceId, role ?? '')
-  const canonicalUnit = descriptor?.kind === 'numeric' ? descriptor.canonicalUnit : undefined
-  const sourceUnitRaw = sliceUnitOf(slice) ?? canonicalUnit
-  const sourceUnit =
-    sourceUnitRaw !== undefined ? (normalizeUnit(sourceUnitRaw) ?? sourceUnitRaw) : undefined
+  // The stored number is the quantity base. The picker offers units of that
+  // dimension; an override converts from the base at read time.
+  const chosen = device?.sourceInfo?.quantity
+  const quantity =
+    descriptor?.kind === 'numeric'
+      ? (descriptor.quantity ?? (chosen !== undefined && chosen !== 'device' ? chosen : undefined))
+      : undefined
+  const sourceUnit = quantity !== undefined ? baseUnitOf(quantity) : undefined
   const dimension = sourceUnit !== undefined ? unitDimension(sourceUnit) : undefined
 
   const [form, setForm] = useState<DisplayForm | null>(null)

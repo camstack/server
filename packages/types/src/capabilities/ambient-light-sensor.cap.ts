@@ -2,25 +2,21 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Ambient illuminance reading in lux. Drives Home Assistant `sensor`
  * entries with `device_class: illuminance`.
  */
 export const AmbientLightSensorStatusSchema = z.object({
-  /** Current illuminance in lux (lx). */
-  lux: z.number().min(0).meta({ unit: 'lx', label: 'Illuminance' }),
+  /** Current illuminance in lux (lx). `null` when the sample was refused (D393). */
+  lux: z
+    .number()
+    .min(0)
+    .nullable()
+    .meta(readingMeta('illuminance', { precision: 0, label: 'Illuminance' })),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
-  /** Live display unit from the upstream source (e.g. HA
-   *  `attributes.unit_of_measurement`). The UI prefers this over the
-   *  role's canonical unit. Absent → fall back to the canonical unit. */
-  unit: z.string().optional(),
-  /** Suggested decimal places for numeric display.
-   *  Populated live from the upstream source when provided (e.g. HA
-   *  `attributes.suggested_display_precision`). Falls back to
-   *  auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
 })
 
 export type AmbientLightSensorStatus = z.infer<typeof AmbientLightSensorStatusSchema>

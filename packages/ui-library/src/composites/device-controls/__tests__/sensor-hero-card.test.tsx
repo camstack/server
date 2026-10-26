@@ -99,10 +99,13 @@ describe('SensorHeroCard', () => {
     })
   })
 
-  describe('numeric-sensor role — unit from slice, not sourceInfo', () => {
-    it('renders value + unit from slice.unit when slice has unit field', () => {
-      mockSlice = { value: -85, unit: 'dBm', lastFetchedAt: 1700000000000 }
-      mockDeviceData = makeDevice({ role: 'numeric-sensor' })
+  describe('numeric-sensor role — unit from the device quantity', () => {
+    it('renders value + unit from sourceInfo.quantity', () => {
+      mockSlice = { value: -85, lastFetchedAt: 1700000000000 }
+      mockDeviceData = makeDevice({
+        role: 'numeric-sensor',
+        sourceInfo: { id: 'sensor.rssi', system: 'ha', quantity: 'signal-level' },
+      })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.getByText('-85')).toBeTruthy()
       expect(screen.getByText('dBm')).toBeTruthy()

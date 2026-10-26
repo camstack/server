@@ -1,12 +1,13 @@
 import {
   airQualitySensorCapability,
-  normalizeUnit,
   type DeviceContext,
   type InferNativeProvider,
   type AirQualitySensorStatus,
   type DeviceRole,
+  type ReadingQuantity,
 } from '@camstack/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
+import { takeReading } from '../ha-reading.js'
 import type { HaEntityState } from '../ha-types.js'
 
 const COLD_START: AirQualitySensorStatus = { lastFetchedAt: 0 }
@@ -38,31 +39,23 @@ export class HaAirQualityDevice extends HaBaseChildDevice {
     const value = Number(state.state)
     if (!Number.isFinite(value)) return
     const lastFetchedAt = Date.parse(state.last_updated) || Date.now()
-    const deviceClass =
-      typeof state.attributes['device_class'] === 'string'
-        ? (state.attributes['device_class'] as string)
-        : null
-    // Live display metadata — one HA entity surfaces one metric, so a single
-    // unit/precision per slice is unambiguous.
-    const unit = normalizeUnit(
-      typeof state.attributes['unit_of_measurement'] === 'string'
-        ? state.attributes['unit_of_measurement']
-        : undefined,
+    const deviceClassRaw = state.attributes['device_class']
+    const deviceClass = typeof deviceClassRaw === 'string' ? deviceClassRaw : null
+    const quantity = airQuantity(deviceClass)
+    if (quantity === undefined) return
+    const unitRaw = state.attributes['unit_of_measurement']
+    const stored = takeReading(
+      this.deviceLogger,
+      this.id,
+      value,
+      typeof unitRaw === 'string' ? unitRaw : undefined,
+      quantity,
     )
-    const precision =
-      typeof state.attributes['suggested_display_precision'] === 'number'
-        ? state.attributes['suggested_display_precision']
-        : undefined
+    if (stored === null) return
     const prev =
       this.runtimeState.getCapState<AirQualitySensorStatus>('air-quality-sensor') ?? COLD_START
-    const update = applyDeviceClass(prev, deviceClass, value, lastFetchedAt)
-    if (update !== null) {
-      this.runtimeState.setCapState('air-quality-sensor', {
-        ...update,
-        ...(unit !== undefined ? { unit } : {}),
-        ...(precision !== undefined ? { precision } : {}),
-      })
-    }
+    const update = applyDeviceClass(prev, deviceClass, stored, lastFetchedAt)
+    if (update !== null) this.runtimeState.setCapState('air-quality-sensor', update)
   }
 
   private registerCap(): void {
@@ -74,6 +67,23 @@ export class HaAirQualityDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(airQualitySensorCapability, provider)
+  }
+}
+
+function airQuantity(deviceClass: string | null): ReadingQuantity | undefined {
+  switch (deviceClass) {
+    case 'co2':
+      return 'concentration-volume'
+    case 'volatile_organic_compounds':
+      return 'concentration-ppb'
+    case 'pm25':
+    case 'pm2_5':
+    case 'pm10':
+      return 'concentration-mass'
+    case 'aqi':
+      return 'index'
+    default:
+      return undefined
   }
 }
 

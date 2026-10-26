@@ -185,7 +185,7 @@ describe('ConsumablesPanel', () => {
     expect(container.querySelector('.border-warning\\/40')).toBeTruthy()
   })
 
-  it('renders "0 days" and the Replace badge for a zero remaining value', () => {
+  it('renders "0 s" and the Replace badge for a zero remaining duration', () => {
     mockResult.slice = status([
       {
         key: 'tank',
@@ -194,11 +194,11 @@ describe('ConsumablesPanel', () => {
         status: 'replace',
         lastResetAt: null,
         resettable: false,
-        remaining: { value: 0, unit: 'days' },
+        remaining: { value: 0, kind: 'duration' },
       },
     ])
     render(<ConsumablesPanel deviceId={1} />)
-    expect(screen.getByText('0 days')).toBeTruthy()
+    expect(screen.getByText('0 s')).toBeTruthy()
     expect(screen.getByText('Replace')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Replaced' })).toBeNull()
   })
@@ -212,14 +212,14 @@ describe('ConsumablesPanel', () => {
         status: 'ok',
         lastResetAt: null,
         resettable: false,
-        remaining: { value: null, unit: 'days' },
+        remaining: { value: null, kind: 'duration' },
       },
     ])
     render(<ConsumablesPanel deviceId={1} />)
     expect(screen.getByText('OK')).toBeTruthy()
     expect(screen.getByText('—')).toBeTruthy()
     expect(screen.queryByText('0')).toBeNull()
-    expect(screen.queryByText('0 days')).toBeNull()
+    expect(screen.queryByText('0 s')).toBeNull()
   })
 
   it('renders exactly as before for an item without remaining (Dreame etc.)', () => {

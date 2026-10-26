@@ -2,20 +2,19 @@ import {
   weatherCapability,
   type DeviceContext,
   type InferNativeProvider,
+  type ReadingQuantity,
   type WeatherStatus,
 } from '@camstack/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
+import { takeReading } from '../ha-reading.js'
 import type { HaEntityState } from '../ha-types.js'
 
 const COLD_START: WeatherStatus = {
   condition: null,
   temperature: null,
-  temperatureUnit: null,
   humidity: null,
   pressure: null,
-  pressureUnit: null,
   windSpeed: null,
-  windSpeedUnit: null,
   windBearing: null,
   lastFetchedAt: 0,
 }
@@ -49,16 +48,13 @@ export class HaWeatherDevice extends HaBaseChildDevice {
     const attrs = state.attributes
     const slice: WeatherStatus = {
       condition: state.state,
-      temperature: readNumberAttr(attrs, 'temperature'),
-      temperatureUnit: readStringAttr(attrs, 'temperature_unit'),
+      temperature: this.readBase(attrs, 'temperature', 'temperature_unit', 'temperature'),
       // Clamp to the schema's [0,100] contract: an external provider may
       // report a slightly out-of-range value (e.g. 100.5) which would make
       // setCapState throw and silently drop the WHOLE push (temp/condition/…).
       humidity: clampOrNull(readNumberAttr(attrs, 'humidity'), 0, 100),
-      pressure: readNumberAttr(attrs, 'pressure'),
-      pressureUnit: readStringAttr(attrs, 'pressure_unit'),
-      windSpeed: readNumberAttr(attrs, 'wind_speed'),
-      windSpeedUnit: readStringAttr(attrs, 'wind_speed_unit'),
+      pressure: this.readBase(attrs, 'pressure', 'pressure_unit', 'pressure'),
+      windSpeed: this.readBase(attrs, 'wind_speed', 'wind_speed_unit', 'speed'),
       windBearing: readNumberAttr(attrs, 'wind_bearing'),
       lastFetchedAt,
     }
@@ -72,6 +68,19 @@ export class HaWeatherDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(weatherCapability, provider)
+  }
+
+  /** One weather attribute, converted into the quantity's base unit. */
+  private readBase(
+    attrs: Record<string, unknown>,
+    valueKey: string,
+    unitKey: string,
+    quantity: ReadingQuantity,
+  ): number | null {
+    const raw = readNumberAttr(attrs, valueKey)
+    if (raw === null) return null
+    const unit = readStringAttr(attrs, unitKey)
+    return takeReading(this.deviceLogger, this.id, raw, unit ?? undefined, quantity)
   }
 }
 

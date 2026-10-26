@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Unified user-settable input cap. Models HA's `number` /
@@ -44,45 +45,26 @@ export type ControlKind = z.infer<typeof ControlKindSchema>
  * (empty array for the other kinds). It lives in the slice because
  * HA `select.*` entities may update their options at runtime.
  *
- * The `unit`/`min`/`max`/`step` fields are meaningful for
- * `kind === 'numeric'` and are absent (undefined) for all other
- * kinds. They are populated live from HA attributes on each state
- * push — consistent with `options` and the sensor-unit approach.
+ * Numeric `min` / `max` / `step` live in the slice and share the device
+ * quantity (`SourceInfo.quantity`, D944). Display precision is a read-time
+ * preference. A datetime control's shape is `SourceInfo.dateTimeShape`.
  */
 export const ControlStatusSchema = z.object({
   kind: ControlKindSchema,
   /** Current value. Numeric kind → number; select/text/datetime → string.
    *  Datetime values are ISO 8601 strings (full timestamp, date-only,
    *  or time-only — HA accepts all three forms). */
-  value: z.union([z.number(), z.string()]),
+  value: z.union([z.number().meta(readingMeta('device')), z.string()]),
   /** Acceptable values when `kind === 'select'`. Empty for other kinds. */
   options: z.array(z.string()),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
-  /** Display unit-of-measurement (e.g. '°C', '%', 'lx').
-   *  Populated live from HA `attributes.unit_of_measurement` on each push.
-   *  Meaningful for `kind === 'numeric'`; absent for other kinds. */
-  unit: z.string().optional(),
-  /** Minimum allowed value. Populated live from HA `attributes.min`.
-   *  Meaningful for `kind === 'numeric'`; absent for other kinds. */
-  min: z.number().optional(),
-  /** Maximum allowed value. Populated live from HA `attributes.max`.
-   *  Meaningful for `kind === 'numeric'`; absent for other kinds. */
-  max: z.number().optional(),
-  /** Step increment. Populated live from HA `attributes.step`.
-   *  Meaningful for `kind === 'numeric'`; absent for other kinds. */
-  step: z.number().optional(),
-  /** Suggested decimal places for numeric display. Populated live from HA
-   *  `attributes.suggested_display_precision`, or derived from `step` when the
-   *  HA attribute is absent. Meaningful for `kind === 'numeric'`; absent for
-   *  other kinds. Falls back to auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
-  /** Date-picker granularity for `kind === 'datetime'`. 'date' → date-only,
-   *  'time' → time-only, 'datetime' → full timestamp. Absent for other kinds
-   *  (UI defaults to 'datetime'). Derived live from the device's HA domain
-   *  (date.* / time.* / datetime.*) or, for input_datetime, from the entity's
-   *  `has_date`/`has_time` attributes on each push. */
-  format: z.enum(['date', 'time', 'datetime']).optional(),
+  /** Minimum allowed value, in the device quantity's base unit. */
+  min: z.number().optional().meta(readingMeta('device')),
+  /** Maximum allowed value, in the device quantity's base unit. */
+  max: z.number().optional().meta(readingMeta('device')),
+  /** Step increment, in the device quantity's base unit. */
+  step: z.number().optional().meta(readingMeta('device')),
 })
 
 export type ControlStatus = z.infer<typeof ControlStatusSchema>

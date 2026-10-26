@@ -261,6 +261,7 @@ jobs:
             scripts/check-desktop-update-feeds.ts \
             scripts/check-runtime-state-durability.ts \
             scripts/check-cap-history-declared.ts \
+            scripts/check-no-state-unit-sibling.ts \
             scripts/check-customize-declaration.ts \
             scripts/check-customize-bespoke-card.ts \
             scripts/check-customize-parameters.ts \

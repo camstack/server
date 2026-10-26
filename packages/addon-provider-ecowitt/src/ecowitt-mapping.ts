@@ -1,5 +1,5 @@
 import type { BatteryUnit, Quantity, SensorCategory } from '@apocaliss92/nodewitt'
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole, type ReadingQuantity } from '@camstack/types'
 
 /**
  * Pure mapping from an Ecowitt {@link Quantity} to the camstack typed sensor cap
@@ -57,6 +57,36 @@ export function capForQuantity(quantity: Quantity | string): EcowittSensorCap {
  * the generic `numeric-sensor` cap but carry a typed role, so the UI renders a
  * wind / rain / UV / solar glyph instead of a bare hash.
  */
+/** Ecowitt quantity → the stored reading quantity. Unknown names return null. */
+export function readingQuantityFor(quantity: Quantity | string): ReadingQuantity | null {
+  switch (quantity) {
+    case 'temperature':
+      return 'temperature'
+    case 'humidity':
+      return 'humidity'
+    case 'pressure':
+      return 'pressure'
+    case 'wind_speed':
+      return 'speed'
+    case 'wind_direction':
+      return 'angle'
+    case 'precipitation':
+      return 'precipitation'
+    case 'precipitation_rate':
+      return 'precipitation-rate'
+    case 'uv':
+      return 'index'
+    case 'irradiance':
+      return 'irradiance'
+    case 'lightning_distance':
+      return 'length'
+    case 'lightning_count':
+      return 'count'
+    default:
+      return null
+  }
+}
+
 export function roleForQuantity(quantity: Quantity | string): DeviceRole {
   switch (quantity) {
     case 'temperature':

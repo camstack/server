@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Atmospheric pressure reading in hectopascals. Drives Home Assistant
@@ -11,19 +12,13 @@ import { DeviceType } from '../device/device-type.js'
  * `sourceInfo`.
  */
 export const PressureSensorStatusSchema = z.object({
-  /** Current pressure in hPa. */
-  hpa: z.number(),
+  /** Current pressure in hPa. `null` when the sample was refused (D393). */
+  hpa: z
+    .number()
+    .nullable()
+    .meta(readingMeta('pressure', { precision: 0 })),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
-  /** Live display unit from the upstream source (e.g. HA
-   *  `attributes.unit_of_measurement`). The UI prefers this over the
-   *  role's canonical unit. Absent → fall back to the canonical unit. */
-  unit: z.string().optional(),
-  /** Suggested decimal places for numeric display.
-   *  Populated live from the upstream source when provided (e.g. HA
-   *  `attributes.suggested_display_precision`). Falls back to
-   *  auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
 })
 
 export type PressureSensorStatus = z.infer<typeof PressureSensorStatusSchema>

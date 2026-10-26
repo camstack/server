@@ -310,7 +310,7 @@ describe('2 — the added slices, as the status aggregate shows them', () => {
         {
           key: 'desiccant',
           label: 'Desiccant',
-          remaining: { value: 0, unit: 'days' },
+          remaining: { value: 0, kind: 'duration' },
           status: 'replace',
           level: null,
           lastResetAt: null,
@@ -351,7 +351,7 @@ describe('4 — a source change is event-driven', () => {
     expect(consumables?.['items']).toEqual([
       expect.objectContaining({
         key: 'desiccant',
-        remaining: { value: 30, unit: 'days' },
+        remaining: { value: 30, kind: 'duration' },
         status: 'ok',
       }),
     ])
@@ -505,7 +505,7 @@ describe('8 — a gone source', () => {
     expect(s.reason).toContain(DESICCANT_DAYS.stableId)
     const consumables = await slice(FEEDER, 'consumables')
     expect(consumables?.['items']).toEqual([
-      expect.objectContaining({ key: 'desiccant', remaining: { value: null, unit: 'days' } }),
+      expect.objectContaining({ key: 'desiccant', remaining: { value: null, kind: 'duration' } }),
     ])
     await w.ha.push(id(BATTERY_STATUS), 'enum-sensor', { value: 'low', lastFetchedAt: T0 + 2 })
     await settle()

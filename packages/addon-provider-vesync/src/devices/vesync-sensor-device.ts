@@ -17,7 +17,7 @@ const AQ_CAP = airQualitySensorCapability.name
 const NUMERIC_CAP = numericSensorCapability.name
 
 const AQ_COLD_START: AirQualitySensorStatus = { lastFetchedAt: 0 }
-const FILTER_COLD_START: NumericSensorStatus = { value: 0, unit: '%', lastFetchedAt: 0 }
+const FILTER_COLD_START: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
 
 /**
  * One VeSync purifier read-only metric (`air-quality` or `filter-life`) as a
@@ -50,6 +50,7 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
     void this.updateSourceInfo({
       id: `${this.accountId}:${this.purifierNativeId}:${this.kind}`,
       system: 'vesync',
+      ...(this.kind === 'filter-life' ? { quantity: 'percentage' as const } : {}),
     })
   }
 
@@ -120,7 +121,7 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
 /** Map a purifier snapshot's air-quality PM2.5 onto the air-quality-sensor slice. */
 function airQualitySlice(purifier: VeSyncPurifierSnapshot, now: number): AirQualitySensorStatus {
   return {
-    ...(purifier.airQuality !== undefined ? { pm25: purifier.airQuality, unit: 'µg/m³' } : {}),
+    ...(purifier.airQuality !== undefined ? { pm25: purifier.airQuality } : {}),
     lastFetchedAt: now,
   }
 }
@@ -129,7 +130,6 @@ function airQualitySlice(purifier: VeSyncPurifierSnapshot, now: number): AirQual
 function filterLifeSlice(purifier: VeSyncPurifierSnapshot, now: number): NumericSensorStatus {
   return {
     value: purifier.filterLifePercent ?? 0,
-    unit: '%',
     lastFetchedAt: now,
   }
 }

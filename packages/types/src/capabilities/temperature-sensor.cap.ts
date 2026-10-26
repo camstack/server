@@ -2,38 +2,28 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Single-metric temperature reading. Drives Home Assistant `sensor`
  * entries with `device_class: temperature` and any future native
  * thermometer.
  *
- * Unit normalisation: providers convert to Celsius before storing.
- * The slice value is always Celsius so cross-cap aggregators
- * (climate-control's `currentTemp`, energy analytics) can compose
- * without per-source unit fixups. The canonical display unit (`°C`) is
- * a descriptor constant in the UI (ROLE_DESCRIPTOR), not stored in
- * `sourceInfo`.
+ * The number is Celsius (D944). Providers convert on ingest. A failed
+ * conversion is `null`, never a guess. Display unit is a read-time preference.
  *
  * Status `lastFetchedAt` lets staleness-aware consumers detect a
  * frozen feed (provider hung) distinct from a "temperature hasn't
  * changed" steady state.
  */
 export const TemperatureSensorStatusSchema = z.object({
-  /** Current temperature in Celsius. */
-  celsius: z.number().meta({ unit: '°C', label: 'Temperature' }),
+  /** Current temperature in Celsius. `null` when the sample was refused (D393). */
+  celsius: z
+    .number()
+    .nullable()
+    .meta(readingMeta('temperature', { precision: 1, label: 'Temperature' })),
   /** Ms epoch when the slice was last updated (push or poll). */
   lastFetchedAt: z.number(),
-  /** Live display unit from the upstream source (e.g. HA
-   *  `attributes.unit_of_measurement`). The UI prefers this over the
-   *  role's canonical unit, so a Fahrenheit feed renders '°F' not '°C'.
-   *  Absent → the UI falls back to the role's canonical unit. */
-  unit: z.string().optional(),
-  /** Suggested decimal places for numeric display.
-   *  Populated live from the upstream source when provided (e.g. HA
-   *  `attributes.suggested_display_precision`). Falls back to
-   *  auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
 })
 
 export type TemperatureSensorStatus = z.infer<typeof TemperatureSensorStatusSchema>

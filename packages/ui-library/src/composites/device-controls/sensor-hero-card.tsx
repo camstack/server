@@ -18,14 +18,13 @@
  */
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
-import type { DeviceDisplayOverride, DeviceProxy, SliceHandle } from '@camstack/types'
+import type { DeviceDisplayOverride, DeviceProxy, SliceHandle, SourceInfo } from '@camstack/types'
 import { useDeviceProxy, useDeviceStateSlice } from '../../hooks/use-device-proxy'
 import {
   useDeviceManagerGetDevice,
   useDeviceManagerGetRoleDisplayDefaults,
 } from '../../generated/system-hooks'
 import { cn } from '../../lib/cn'
-import { formatNumeric } from '../../lib/format-numeric'
 import { formatControlDateTime } from '../../lib/format-control-datetime'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import {
@@ -135,6 +134,7 @@ interface SensorDeviceRow {
   readonly role?: string | null
   /** Operator-authored per-device display override (mirrors `DeviceInfo.display`). */
   readonly display?: DeviceDisplayOverride
+  readonly sourceInfo?: SourceInfo
 }
 
 // ── Inner display component (needs the device row resolved) ──────────────────
@@ -210,10 +210,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     // precedence as SensorValueAtom so the hero and the row never diverge
     // (device override → role default → live slice → canonical unit). Storage
     // stays in source units; precision applies AFTER conversion.
-    const sliceRecord = slice as Record<string, unknown>
-    const liveUnit = typeof sliceRecord['unit'] === 'string' ? sliceRecord['unit'] : undefined
-    const slicePrecision =
-      typeof sliceRecord['precision'] === 'number' ? sliceRecord['precision'] : undefined
+    const deviceQuantity = device.sourceInfo?.quantity
     const resolved = resolveSensorDisplay({
       display: device.display,
       capName: device.role === 'numeric-sensor' ? 'numeric-sensor' : undefined,
@@ -221,12 +218,12 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
         device.role != null
           ? roleDefaultsData?.defaults[device.role]
           : roleDefaultsData?.defaults['temperature-sensor'],
-      sliceUnit: liveUnit,
-      slicePrecision,
-      canonicalUnit: descriptor.canonicalUnit,
+      quantity: descriptor.quantity ?? 'device',
+      deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
     })
-    const unit = resolved.unit
-    const formatted = formatNumeric(resolved.toDisplayValue(rawValue), resolved.precision)
+    const rendered = resolved.format(rawValue)
+    const unit = rendered.unit
+    const formatted = rendered.text
     const occupancyOn =
       occupancySlice !== undefined &&
       isBinarySliceValue(occupancySlice) &&
@@ -298,7 +295,8 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     }
     // Prefer the per-sensor format the provider seeded into the slice (date /
     // time / datetime); fall back to the descriptor default for older adoptions.
-    const format = readSliceDateTimeFormat(slice) ?? descriptor.format
+    const format =
+      device.sourceInfo?.dateTimeShape ?? readSliceDateTimeFormat(slice) ?? descriptor.format
     // formatControlDateTime never throws; falls back to the raw value if unparseable.
     const formatted = formatControlDateTime(slice.value, format)
     return (

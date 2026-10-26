@@ -85,7 +85,6 @@ export class DreoHeaterDevice extends DreoChildDevice {
     if (temperature !== undefined) {
       this.runtimeState.setCapState(TEMP_CAP, {
         celsius: temperature,
-        unit: '°C',
         lastFetchedAt: now,
       })
     }

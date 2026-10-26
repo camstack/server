@@ -11,7 +11,12 @@
  */
 import type { JSX } from 'react'
 import { Package } from 'lucide-react'
-import { consumableFormOf, type ConsumableItem, type ConsumableRemaining } from '@camstack/types'
+import {
+  consumableFormOf,
+  formatReading,
+  type ConsumableItem,
+  type ConsumableRemaining,
+} from '@camstack/types'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { Button } from '../../primitives/button'
 import {
@@ -24,27 +29,15 @@ import {
 /** `value` null = unknown (D393) — renders an em-dash, never a fake `0`. */
 function formatRemaining(t: UiTextFn, r: ConsumableRemaining): string {
   if (r.value === null) return '—'
-  const count = r.value
-  switch (r.unit) {
-    case 'days':
-      return t(
-        'uiLibrary.consumablesPanel.days',
-        { one: '{{count}} day', other: '{{count}} days' },
-        { count },
-      )
-    case 'hours':
-      return t(
-        'uiLibrary.consumablesPanel.hours',
-        { one: '{{count}} hour', other: '{{count}} hours' },
-        { count },
-      )
-    case 'cycles':
-      return t(
-        'uiLibrary.consumablesPanel.cycles',
-        { one: '{{count}} cycle', other: '{{count}} cycles' },
-        { count },
-      )
+  if (r.kind === 'count') {
+    return t(
+      'uiLibrary.consumablesPanel.cycles',
+      { one: '{{count}} cycle', other: '{{count}} cycles' },
+      { count: r.value },
+    )
   }
+  const rendered = formatReading({ value: r.value, quantity: 'duration', precision: 0 })
+  return rendered.unit.length === 0 ? rendered.text : `${rendered.text} ${rendered.unit}`
 }
 
 /** Format a ms-epoch as a compact local date for the "replaced" hint. */

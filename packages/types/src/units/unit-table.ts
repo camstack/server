@@ -30,6 +30,7 @@ export type UnitDimension =
   | 'speed'
   | 'precipitation-rate'
   | 'length'
+  | 'area'
   | 'illuminance'
   | 'irradiance'
   | 'power'
@@ -41,6 +42,15 @@ export type UnitDimension =
   | 'concentration-mass'
   | 'mass'
   | 'percentage'
+  | 'volume'
+  | 'duration'
+  | 'information'
+  | 'angle'
+  | 'sound-level'
+  | 'signal-level'
+  | 'colour-temperature'
+  | 'bitrate'
+  | 'rate'
 
 /**
  * Linear conversion spec: `canonical = value * factor + offset`. Temperature is
@@ -58,7 +68,7 @@ export interface UnitSpec {
  * `factor = 5/9`, `offset = -160/9` (kept as exact expressions, not rounded
  * decimals). K derives from `°C = K − 273.15`.
  */
-export const UNIT_TABLE = {
+export const UNIT_TABLE: Readonly<Record<string, UnitSpec>> = {
   // ── temperature (canonical •°C — the only offset family) ──
   '°C': { dimension: 'temperature', factor: 1, offset: 0 },
   '°F': { dimension: 'temperature', factor: 5 / 9, offset: -160 / 9 },
@@ -92,6 +102,9 @@ export const UNIT_TABLE = {
   in: { dimension: 'length', factor: 0.0254, offset: 0 },
   ft: { dimension: 'length', factor: 0.3048, offset: 0 },
   mi: { dimension: 'length', factor: 1609.344, offset: 0 },
+
+  // ── area (canonical •m²) ──
+  'm²': { dimension: 'area', factor: 1, offset: 0 },
 
   // ── illuminance (single-unit — identity-only) ──
   lx: { dimension: 'illuminance', factor: 1, offset: 0 },
@@ -135,7 +148,40 @@ export const UNIT_TABLE = {
 
   // ── percentage (single-unit passthrough) ──
   '%': { dimension: 'percentage', factor: 1, offset: 0 },
-} as const satisfies Readonly<Record<string, UnitSpec>>
+
+  // ── volume (canonical •L) ──
+  L: { dimension: 'volume', factor: 1, offset: 0 },
+  mL: { dimension: 'volume', factor: 0.001, offset: 0 },
+  gal: { dimension: 'volume', factor: 3.785411784, offset: 0 },
+
+  // ── duration (canonical •s). Media position uses ms and stays on this scale. ──
+  s: { dimension: 'duration', factor: 1, offset: 0 },
+  ms: { dimension: 'duration', factor: 0.001, offset: 0 },
+  min: { dimension: 'duration', factor: 60, offset: 0 },
+  h: { dimension: 'duration', factor: 3600, offset: 0 },
+  d: { dimension: 'duration', factor: 86400, offset: 0 },
+
+  // ── information (canonical •B). Binary steps are the display scale. ──
+  B: { dimension: 'information', factor: 1, offset: 0 },
+  KiB: { dimension: 'information', factor: 1024, offset: 0 },
+  MiB: { dimension: 'information', factor: 1024 ** 2, offset: 0 },
+  GiB: { dimension: 'information', factor: 1024 ** 3, offset: 0 },
+  TiB: { dimension: 'information', factor: 1024 ** 4, offset: 0 },
+  kB: { dimension: 'information', factor: 1000, offset: 0 },
+  MB: { dimension: 'information', factor: 1e6, offset: 0 },
+  GB: { dimension: 'information', factor: 1e9, offset: 0 },
+
+  // ── angle (canonical •°) ──
+  '°': { dimension: 'angle', factor: 1, offset: 0 },
+
+  // ── single-unit families (identity only — dB is not a linear scale) ──
+  dBFS: { dimension: 'sound-level', factor: 1, offset: 0 },
+  dBm: { dimension: 'signal-level', factor: 1, offset: 0 },
+  mired: { dimension: 'colour-temperature', factor: 1, offset: 0 },
+  kbps: { dimension: 'bitrate', factor: 1, offset: 0 },
+  Mbps: { dimension: 'bitrate', factor: 1000, offset: 0 },
+  fps: { dimension: 'rate', factor: 1, offset: 0 },
+}
 
 /** Union of every canonical unit key present in `UNIT_TABLE`. */
 export type KnownUnit = keyof typeof UNIT_TABLE

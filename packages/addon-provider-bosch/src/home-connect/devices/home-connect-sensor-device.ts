@@ -119,6 +119,12 @@ export class HomeConnectSensorDevice extends BaseDevice<typeof homeConnectSensor
       raw: client.getFeatures(this.#haId).get(this.#binding.key),
       nowMs: Date.now(),
     })
+    if (slice?.cap === 'numeric-sensor' && slice.status.value === null) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity: 'device', unit: '', reason: 'unknown-unit' },
+      })
+    }
     if (slice === null) {
       // Unknown: say so by being offline. The last slice stays what it was (stale, not zero).
       this.markOnline(false)

@@ -474,9 +474,8 @@ export const DEFAULT_RUNTIME_STATE_DURABILITY: RuntimeStateDurability = 'session
 
 /**
  * Unit of a recorded history series. A closed set: the History tab formats by
- * it. `'ug/m3'` is the ASCII-safe id of micrograms per cubic metre — render it
- * through {@link HISTORY_UNIT_LABELS}. A series whose unit is a per-device fact
- * names a sibling field with {@link CapabilityHistoryField.unitFrom} instead.
+ * it. The symbol is the quantity's stored base (D944), including `µg/m³` and
+ * `m/s`. A per-device quantity (`numeric-sensor`) has no fixed unit.
  */
 export type HistoryUnit =
   | '%'
@@ -491,7 +490,7 @@ export type HistoryUnit =
   | 'lx'
   | 'ppm'
   | 'ppb'
-  | 'ug/m3'
+  | 'µg/m³'
   | 'hPa'
   | 'count'
   | 'ratio'
@@ -501,8 +500,9 @@ export type HistoryUnit =
   | 'bytes'
   | 'kbps'
   | 'fps'
+  | 'm/s'
 
-/** Display label per {@link HistoryUnit} (only `'ug/m3'` differs from its id). */
+/** Display label per {@link HistoryUnit}. */
 export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
   '%': '%',
   dBFS: 'dBFS',
@@ -516,7 +516,7 @@ export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
   lx: 'lx',
   ppm: 'ppm',
   ppb: 'ppb',
-  'ug/m3': 'µg/m³',
+  'µg/m³': 'µg/m³',
   hPa: 'hPa',
   count: 'count',
   ratio: 'ratio',
@@ -526,6 +526,7 @@ export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
   bytes: 'bytes',
   kbps: 'kbps',
   fps: 'fps',
+  'm/s': 'm/s',
 }
 
 /** One `runtimeState` field recorded as a history series. */
@@ -559,7 +560,8 @@ export interface CapabilityHistoryField {
   readonly unit?: HistoryUnit
   /**
    * Path of a SIBLING `runtimeState` field (a string or enum) that carries this
-   * device's unit — `weather.temperature` takes it from `temperatureUnit`. The
+   * device's quantity. A series stores the quantity base, so `unit` is that
+   * symbol (`°C`, `hPa`, `m/s`). `unitFrom` is not allowed. The
    * catalog records the path; the reader resolves it per device. Mutually
    * exclusive with {@link unit}.
    */

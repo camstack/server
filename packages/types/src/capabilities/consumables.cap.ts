@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Generic device-consumables capability — the ONE place a device reports what
@@ -81,16 +82,14 @@ export function consumableFormOf(item: {
   return item.form ?? FORM_OF_KIND[consumableKindOf(item)]
 }
 
-/** Units a remaining-life counter is reported in. Closed: the panel renders
- *  each. */
-export const ConsumableRemainingUnitSchema = z.enum(['days', 'hours', 'cycles'])
-export type ConsumableRemainingUnit = z.infer<typeof ConsumableRemainingUnitSchema>
+/** Whether `remaining.value` is a duration in seconds or a dimensionless count. */
+export const ConsumableRemainingKindSchema = z.enum(['duration', 'count'])
+export type ConsumableRemainingKind = z.infer<typeof ConsumableRemainingKindSchema>
 
-/** Remaining life as a COUNT, not a percentage (the PetKit desiccant reports
- *  days). `value` null = unknown (D393). */
+/** Remaining life. `value` null = unknown (D393). Duration is seconds. */
 export const ConsumableRemainingSchema = z.object({
-  value: z.number().min(0).nullable(),
-  unit: ConsumableRemainingUnitSchema,
+  value: z.number().min(0).nullable().meta(readingMeta('device')),
+  kind: ConsumableRemainingKindSchema,
 })
 export type ConsumableRemaining = z.infer<typeof ConsumableRemainingSchema>
 
@@ -105,7 +104,7 @@ export const ConsumableItemSchema = z.object({
   /** Display name. */
   label: z.string().min(1),
   /** Remaining life % (`wear`) or fill % (`supply`, `waste`) when known (0..100). */
-  level: z.number().min(0).max(100).nullable(),
+  level: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** The provider's discrete verdict when known (binary mode). */
   status: ConsumableStatusSchema.nullable(),
   /** What the item is — decides whether low or full is bad. Absent = `wear`. */
@@ -193,7 +192,7 @@ const consumablesCustomize = {
           path: 'remaining.value',
           sources: [{ kind: 'numeric', transforms: [{ kind: 'identity' }] }],
           literals: [
-            { path: 'remaining.unit', values: [...ConsumableRemainingUnitSchema.options] },
+            { path: 'remaining.kind', values: [...ConsumableRemainingKindSchema.options] },
           ],
         },
         {
@@ -332,7 +331,6 @@ export const consumablesCapability = {
         status: { kind: 'enum', displayName: 'Status' },
         'remaining.value': {
           kind: 'gauge',
-          unitFrom: 'remaining.unit',
           deadband: 1,
           displayName: 'Remaining',
         },

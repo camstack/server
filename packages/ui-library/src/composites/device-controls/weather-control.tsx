@@ -31,7 +31,7 @@ import {
   Gauge,
   Navigation,
 } from 'lucide-react'
-import type { WeatherStatus } from '@camstack/types'
+import { formatReading, type ReadingQuantity, type WeatherStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { defaultUiText, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
@@ -197,10 +197,11 @@ function useWeather(trpc: DeviceControlProps['trpc'], deviceId: number) {
   })
 }
 
-/** Format a temperature + unit readout (e.g. `21°C`). */
-function formatTemp(temp: number | null, unit: string | null): string {
-  if (temp === null) return '—'
-  return `${Math.round(temp)}${unit ?? '°'}`
+/** Format a base-unit weather reading (metric). */
+function formatWeather(value: number | null, quantity: ReadingQuantity): string {
+  if (value === null) return '—'
+  const rendered = formatReading({ value, quantity, precision: 0 })
+  return rendered.unit.length === 0 ? rendered.text : `${rendered.text}${rendered.unit}`
 }
 
 // ── Inline ──────────────────────────────────────────────────────────────────
@@ -222,7 +223,7 @@ export function WeatherInlineControl({ trpc, deviceId }: DeviceControlProps): Re
       <span className={cn('inline-flex', tint.accent)} title={meta.label} aria-label={meta.label}>
         {inlineGlyph(meta.glyph)}
       </span>
-      <span className="tabular-nums">{formatTemp(slice.temperature, slice.temperatureUnit)}</span>
+      <span className="tabular-nums">{formatWeather(slice.temperature, 'temperature')}</span>
     </div>
   )
 }
@@ -470,7 +471,10 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
 
   const meta = weatherConditionMeta(slice.condition, t)
   const tint = weatherTint(slice.condition)
-  const unit = slice.temperatureUnit ?? '°'
+  const temperature =
+    slice.temperature === null
+      ? undefined
+      : formatReading({ value: slice.temperature, quantity: 'temperature', precision: 0 })
 
   return (
     <div className="flex flex-col items-stretch gap-4 rounded-lg border border-border bg-surface p-4">
@@ -481,9 +485,11 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
           {/* Temperature — large readable label */}
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-semibold tabular-nums text-foreground">
-              {slice.temperature !== null ? Math.round(slice.temperature) : '—'}
+              {temperature !== undefined ? temperature.text : '—'}
             </span>
-            <span className="text-base text-foreground-subtle">{unit}</span>
+            <span className="text-base text-foreground-subtle">
+              {temperature !== undefined ? temperature.unit : '°C'}
+            </span>
             <span className="text-xs text-foreground-subtle ml-2 capitalize">{meta.label}</span>
           </div>
 
@@ -509,14 +515,14 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
                   )
                 }
                 label={t('uiLibrary.weatherControl.wind', 'Wind')}
-                value={`${Math.round(slice.windSpeed)} ${slice.windSpeedUnit ?? ''}`.trim()}
+                value={formatWeather(slice.windSpeed, 'speed')}
               />
             )}
             {slice.pressure !== null && (
               <Readout
                 icon={<Gauge className="h-3.5 w-3.5" />}
                 label={t('uiLibrary.weatherControl.pressure', 'Pressure')}
-                value={`${Math.round(slice.pressure)} ${slice.pressureUnit ?? ''}`.trim()}
+                value={formatWeather(slice.pressure, 'pressure')}
               />
             )}
           </div>

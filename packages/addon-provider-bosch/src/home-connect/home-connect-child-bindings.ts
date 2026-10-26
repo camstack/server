@@ -5,7 +5,7 @@ import type {
   NumericSensorStatus,
   PowerMeterStatus,
 } from '@camstack/types'
-import { DeviceRole } from '@camstack/types'
+import { DeviceRole, ingestReading, quantityFromUnit } from '@camstack/types'
 import type {
   HomeConnectDescriptionStore,
   HomeConnectEntityView,
@@ -292,19 +292,21 @@ export function childSliceFromValue(input: {
         ? null
         : {
             cap: 'power-meter',
-            status: { kwhTotal: kwh, unit: 'kWh', lastFetchedAt: nowMs },
+            status: { kwhTotal: kwh, lastFetchedAt: nowMs },
           }
     }
     case 'numeric-sensor': {
       if (typeof raw !== 'number' || !Number.isFinite(raw)) return null
       const unit = input.entity === undefined ? (binding.unit ?? null) : resolveUnit(input.entity)
+      const quantity = unit === null ? 'none' : quantityFromUnit(unit)
+      const stored =
+        quantity === undefined || quantity === 'device'
+          ? null
+          : ingestReading({ value: raw, rawUnit: unit ?? undefined, quantity })
+      const value = stored !== null && stored.ok ? stored.value : null
       return {
         cap: 'numeric-sensor',
-        status: {
-          value: raw,
-          ...(unit !== null ? { unit } : {}),
-          lastFetchedAt: nowMs,
-        },
+        status: { value, lastFetchedAt: nowMs },
       }
     }
   }

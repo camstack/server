@@ -8,8 +8,11 @@ import {
   type DeviceFeature,
   errMsg,
   humiditySensorCapability,
+  ingestReading,
   type InferNativeProvider,
   numericSensorCapability,
+  quantityFromUnit,
+  type ReadingQuantity,
   pressureSensorCapability,
   temperatureSensorCapability,
 } from '@camstack/types'
@@ -18,6 +21,7 @@ import { ecowittFacades } from '../ecowitt-gateway.js'
 import {
   batteryModeForUnit,
   capForQuantity,
+  readingQuantityFor,
   type EcowittSensorCap,
   valueFieldForCap,
 } from '../ecowitt-mapping.js'
@@ -83,6 +87,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   private readonly gatewayId: string
   private readonly capName: EcowittSensorCap
   private readonly valueKey: string
+  private readonly ecowittQuantity: string
   /**
    * Which battery cap (if any) was registered for this sensor:
    *   - `'percent'` → the typed `battery` cap (percentage),
@@ -102,8 +107,14 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     const cap = capForQuantity(persisted.quantity)
     this.capName = SUPPORTED_CAPS.has(cap) ? cap : 'numeric-sensor'
     this.valueKey = valueFieldForCap(this.capName)
+    this.ecowittQuantity = String(persisted.quantity)
     this.online = true
-    void this.updateSourceInfo({ id: this.sensorId, system: 'ecowitt' })
+    const named = readingQuantityFor(persisted.quantity)
+    void this.updateSourceInfo({
+      id: this.sensorId,
+      system: 'ecowitt',
+      ...(this.capName === 'numeric-sensor' && named !== null ? { quantity: named } : {}),
+    })
   }
 
   private resolveSensor(): Sensor | null {
@@ -155,10 +166,10 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     const sensor = this.resolveSensor()
     if (sensor === null) return
     const lastFetchedAt = sensor.lastUpdated || Date.now()
+    const stored = this.toBase(sensor.value, sensor.unit)
     const slice: Record<string, unknown> = {
-      [this.valueKey]: clampForCap(this.capName, sensor.value),
+      [this.valueKey]: stored === null ? null : clampForCap(this.capName, stored),
       lastFetchedAt,
-      ...(sensor.unit.length > 0 ? { unit: sensor.unit } : {}),
     }
     this.runtimeState.setCapState(this.capName, slice)
 
@@ -182,7 +193,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
       typeof sensor.battery === 'number' &&
       Number.isFinite(sensor.battery)
     ) {
-      const next = { value: sensor.battery, unit: 'V', lastFetchedAt }
+      const next = { value: sensor.battery, lastFetchedAt }
       this.runtimeState.setCapState(BATTERY_VOLTAGE_CAP, next)
     }
   }
@@ -299,6 +310,37 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
 
   private readSlice<T extends Record<string, unknown>>(fallback: T): T {
     return this.runtimeState.getCapState<T>(this.capName) ?? fallback
+  }
+
+  /** Station number → the quantity's base. An unknown unit publishes null. */
+  private toBase(value: number, unit: string): number | null {
+    const named = readingQuantityFor(this.ecowittQuantity)
+    const fromUnit = unit.length === 0 ? undefined : quantityFromUnit(unit)
+    const quantity: ReadingQuantity | null =
+      named ?? (unit.length === 0 ? 'none' : (fromUnit ?? null))
+    if (quantity === null || quantity === 'device') {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity: 'device', unit, reason: 'unknown-unit' },
+      })
+      return null
+    }
+    const result = ingestReading({
+      value,
+      rawUnit: unit.length > 0 ? unit : undefined,
+      quantity,
+    })
+    if (!result.ok) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity, unit, reason: result.reason },
+      })
+      return null
+    }
+    if (this.capName === 'numeric-sensor' && this.sourceInfo.quantity !== quantity) {
+      void this.updateSourceInfo({ quantity })
+    }
+    return result.value
   }
 }
 

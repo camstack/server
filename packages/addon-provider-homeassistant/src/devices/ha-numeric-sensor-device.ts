@@ -5,8 +5,9 @@ import {
   pressureSensorCapability,
   numericSensorCapability,
   enumSensorCapability,
-  normalizeUnit,
+  quantityFromUnit,
   type DeviceContext,
+  type ReadingQuantity,
   type InferNativeProvider,
   type DeviceRole,
   type EnumSensorStatus,
@@ -17,6 +18,7 @@ import {
   type PressureSensorStatus,
 } from '@camstack/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
+import { takeReading } from '../ha-reading.js'
 import type { HaEntityState } from '../ha-types.js'
 
 const SUPPORTED_CAP_NAMES = [
@@ -35,6 +37,14 @@ const VALUE_FIELD: Record<SupportedCapName, string> = {
   'ambient-light-sensor': 'lux',
   'pressure-sensor': 'hpa',
   'numeric-sensor': 'value',
+}
+
+/** Typed sensors already name their quantity. The generic sensor learns it. */
+const FIXED_QUANTITY: Partial<Record<SupportedCapName, ReadingQuantity>> = {
+  'temperature-sensor': 'temperature',
+  'humidity-sensor': 'humidity',
+  'ambient-light-sensor': 'illuminance',
+  'pressure-sensor': 'pressure',
 }
 
 /**
@@ -99,22 +109,11 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
     const value = Number(state.state)
     const lastFetchedAt = Date.parse(state.last_updated) || Date.now()
     if (Number.isFinite(value)) {
-      // Unit + precision are extracted for ALL caps (typed + generic) so the UI
-      // renders every numeric sensor with the live HA unit_of_measurement and
-      // suggested decimal precision. The live unit overrides the role's canonical
-      // unit (e.g. a Fahrenheit temperature feed renders '°F' not '°C').
       const unitRaw =
         typeof state.attributes['unit_of_measurement'] === 'string'
           ? state.attributes['unit_of_measurement']
           : undefined
-      const precisionRaw =
-        typeof state.attributes['suggested_display_precision'] === 'number'
-          ? state.attributes['suggested_display_precision']
-          : undefined
-      this.runtimeState.setCapState(
-        this.capName,
-        this.buildSlice(value, lastFetchedAt, unitRaw, precisionRaw),
-      )
+      this.runtimeState.setCapState(this.capName, this.buildSlice(value, lastFetchedAt, unitRaw))
       return
     }
     // Non-numeric state (e.g. 'unavailable' / 'unknown') — leave the numeric
@@ -136,27 +135,38 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
     value: number,
     lastFetchedAt: number,
     unitRaw: string | undefined,
-    precisionRaw: number | undefined,
   ): Record<string, unknown> {
+    const quantity = this.resolveQuantity(unitRaw)
+    const stored =
+      quantity === null ? null : takeReading(this.deviceLogger, this.id, value, unitRaw, quantity)
     if (this.capName === 'numeric-sensor') {
-      // numeric-sensor slice carries live unit + precision from HA attributes.
-      const unit = normalizeUnit(unitRaw)
-      const slice: NumericSensorStatus = {
-        value,
-        lastFetchedAt,
-        ...(unit !== undefined ? { unit } : {}),
-        ...(precisionRaw !== undefined ? { precision: precisionRaw } : {}),
-      }
+      const slice: NumericSensorStatus = { value: stored, lastFetchedAt }
       return slice
     }
-    // Typed sensor slices: carry the live HA unit + precision. The UI prefers
-    // the slice unit over the role's canonical unit so variable-unit feeds
-    // (°C/°F, lx, hPa/kPa) render verbatim; canonical stays as the fallback.
-    const baseSlice: Record<string, unknown> = { [this.valueKey]: value, lastFetchedAt }
-    const unit = normalizeUnit(unitRaw)
-    if (unit !== undefined) baseSlice['unit'] = unit
-    if (precisionRaw !== undefined) baseSlice['precision'] = precisionRaw
-    return baseSlice
+    return { [this.valueKey]: stored, lastFetchedAt }
+  }
+
+  /**
+   * Typed sensors already name their quantity. A generic numeric sensor
+   * learns it once from the unit and stores it on the device, so later
+   * samples convert against the same quantity.
+   */
+  private resolveQuantity(unitRaw: string | undefined): ReadingQuantity | null {
+    const fixed = FIXED_QUANTITY[this.capName]
+    if (fixed !== undefined) return fixed
+    const stored = this.sourceInfo.quantity
+    if (stored !== undefined && stored !== 'device') return stored
+    if (unitRaw === undefined) return 'none'
+    const learned = quantityFromUnit(unitRaw)
+    if (learned === undefined || learned === 'device') {
+      this.deviceLogger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: { quantity: 'device', unit: unitRaw, reason: 'unknown-unit' },
+      })
+      return null
+    }
+    void this.updateSourceInfo({ quantity: learned })
+    return learned
   }
 
   /**

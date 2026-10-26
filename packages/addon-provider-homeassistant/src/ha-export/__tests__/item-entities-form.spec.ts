@@ -77,7 +77,7 @@ describe('form, kind and label are attributes of the level and status sensors', 
     item('main-brush', 'Main brush', {
       status: 'ok',
       resettable: true,
-      remaining: { value: 3, unit: 'days' },
+      remaining: { value: 3, kind: 'duration' },
     }),
     item('clean-water', 'Clean water tank', { kind: 'supply', form: 'tank' }),
   ])

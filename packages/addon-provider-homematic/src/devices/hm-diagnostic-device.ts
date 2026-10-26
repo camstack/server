@@ -8,6 +8,9 @@ import {
   type InferNativeProvider,
   type NumericSensorStatus,
   type TemperatureSensorStatus,
+  ingestReading,
+  quantityFromUnit,
+  type ReadingQuantity,
 } from '@camstack/types'
 import type { HmValue, ValueChangedEvent } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
@@ -30,8 +33,7 @@ export const hmDiagnosticSchema = hmChildSchema.extend({
 export type HmDiagnosticConfig = z.infer<typeof hmDiagnosticSchema>
 
 /** Cold-start slices keyed by cap. */
-const COLD_NUMERIC = (unit: string | undefined): NumericSensorStatus =>
-  unit !== undefined ? { value: 0, unit, lastFetchedAt: 0 } : { value: 0, lastFetchedAt: 0 }
+const COLD_NUMERIC: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
 const COLD_BINARY: BinaryStatus = { on: false, lastChangedAt: 0 }
 const COLD_TEMP: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
 
@@ -81,7 +83,7 @@ export class HmDiagnosticDevice extends HmChildDevice<typeof hmDiagnosticSchema>
       }
       case 'numeric-sensor':
       default: {
-        const cold = COLD_NUMERIC(this.unit)
+        const cold = COLD_NUMERIC
         const provider: InferNativeProvider<typeof numericSensorCapability> = {
           getStatus: async () =>
             this.runtimeState.getCapState<NumericSensorStatus>('numeric-sensor') ?? cold,
@@ -109,14 +111,45 @@ export class HmDiagnosticDevice extends HmChildDevice<typeof hmDiagnosticSchema>
       return
     }
     if (typeof value !== 'number') return
+    const stored = this.toBase(value)
+    if (stored === null) return
     if (this.capName === 'temperature-sensor') {
-      this.runtimeState.setCapState('temperature-sensor', { celsius: value, lastFetchedAt: now })
+      this.runtimeState.setCapState('temperature-sensor', { celsius: stored, lastFetchedAt: now })
       return
     }
-    const next: NumericSensorStatus =
-      this.unit !== undefined
-        ? { value, unit: this.unit, lastFetchedAt: now }
-        : { value, lastFetchedAt: now }
-    this.runtimeState.setCapState('numeric-sensor', next)
+    this.runtimeState.setCapState('numeric-sensor', { value: stored, lastFetchedAt: now })
+  }
+
+  /** Upstream diagnostic number → the quantity's base. Unknown units publish nothing. */
+  private toBase(value: number): number | null {
+    const quantity = this.readingQuantity()
+    if (quantity === null) {
+      this.warnRefusal('unknown-unit')
+      return null
+    }
+    const result = ingestReading({ value, rawUnit: this.unit, quantity })
+    if (!result.ok) {
+      this.warnRefusal(result.reason)
+      return null
+    }
+    if (this.capName === 'numeric-sensor' && this.sourceInfo.quantity !== quantity) {
+      void this.updateSourceInfo({ quantity })
+    }
+    return result.value
+  }
+
+  private readingQuantity(): ReadingQuantity | null {
+    if (this.capName === 'temperature-sensor') return 'temperature'
+    if (this.unit === undefined) return 'none'
+    const learned = quantityFromUnit(this.unit)
+    if (learned === undefined || learned === 'device') return null
+    return learned
+  }
+
+  private warnRefusal(reason: string): void {
+    this.ctx.logger.warn('numeric reading refused', {
+      tags: { deviceId: this.id },
+      meta: { quantity: this.readingQuantity() ?? 'device', unit: this.unit ?? '', reason },
+    })
   }
 }

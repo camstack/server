@@ -1953,11 +1953,8 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
     },
   },
   /**
-   * The cap carries its OWN unit next to each measurement
-   * (`temperatureUnit`, `pressureUnit`, `windSpeedUnit`), so no static
-   * `unit_of_measurement` can be honest for a provider reporting °F.
-   * Declaring one anyway is how a dashboard comes to say 71 °C. Humidity
-   * is the exception: a percentage is a percentage.
+   * Weather numbers are stored in the quantity base (°C, hPa, m/s). The
+   * export advertises those symbols. A Fahrenheit dashboard converts at read.
    */
   weather: {
     platform: 'sensor',
@@ -1968,6 +1965,8 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         platform: 'sensor',
         field: 'temperature',
         label: 'Temperature',
+        unit: '°C',
+        deviceClass: 'temperature',
         icon: 'mdi:thermometer',
       },
       humidity: {
@@ -1981,6 +1980,8 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         platform: 'sensor',
         field: 'pressure',
         label: 'Pressure',
+        unit: 'hPa',
+        deviceClass: 'pressure',
         icon: 'mdi:gauge',
         enabledByDefault: false,
       },
@@ -1988,6 +1989,8 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         platform: 'sensor',
         field: 'windSpeed',
         label: 'Wind speed',
+        unit: 'm/s',
+        deviceClass: 'wind_speed',
         icon: 'mdi:weather-windy',
         enabledByDefault: false,
       },

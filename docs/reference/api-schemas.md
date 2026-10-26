@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**960 shared schemas.**
+**959 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -92,7 +92,7 @@ Enum: `"device" \| "integration"`
 
 ### `AdoptionListCandidatesOutputSchema`
 
-- `candidates`: `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: {…} = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: {…}; children?: {…}[] })[] })[] })[]`
+- `candidates`: `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: {…} = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: {…}; children?: {…}[] })[] })[] })[]`
 - `totalCount`: `number`
 - `page`: `number`
 - `pageSize`: `number`
@@ -125,8 +125,6 @@ Enum: `"device" \| "integration"`
 - `pm10?`: `number`
 - `aqi?`: `number`
 - `lastFetchedAt`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
 
 ### `AlarmArmModeSchema`
 
@@ -175,10 +173,8 @@ Enum: `"active" \| "in-progress" \| "completed" \| "failed" \| "dismissed"`
 
 ### `AmbientLightSensorStatusSchema`
 
-- `lux`: `number`
+- `lux`: `number \| null`
 - `lastFetchedAt`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
 
 ### `AnalyticsLtsSeriesSchema`
 
@@ -1271,14 +1267,14 @@ Enum: `"part" \| "tank" \| "product" \| "bin"`
 
 Enum: `"wear" \| "supply" \| "waste"`
 
+### `ConsumableRemainingKindSchema`
+
+Enum: `"duration" \| "count"`
+
 ### `ConsumableRemainingSchema`
 
 - `value`: `number \| null`
-- `unit`: `ConsumableRemainingUnitSchema`
-
-### `ConsumableRemainingUnitSchema`
-
-Enum: `"days" \| "hours" \| "cycles"`
+- `kind`: `ConsumableRemainingKindSchema`
 
 ### `ConsumablesStatusSchema`
 
@@ -1304,12 +1300,9 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `value`: `number \| string`
 - `options`: `string[]`
 - `lastChangedAt`: `number`
-- `unit?`: `string`
 - `min?`: `number`
 - `max?`: `number`
 - `step?`: `number`
-- `precision?`: `number`
-- `format?`: `"date" \| "time" \| "datetime"`
 
 ### `CoreBlockCompileInputSchema`
 
@@ -1537,7 +1530,7 @@ Enum: `"info" \| "warning" \| "error"`
 
 ### `DeviceDiscoveryStatusSchema`
 
-- `discovered`: `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: {…} = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: {…}; children?: {…}[] })[] })[] })[]`
+- `discovered`: `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "dishwasher"; status: DiscoveredChildStatusSchema; metadata?: {…} = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: {…}; children?: {…}[] })[] })[] })[]`
 - `lastDiscoveryAt`: `number \| null`
 - `lastError`: `string \| null`
 
@@ -1618,7 +1611,7 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `config`: `Record<string, unknown>`
 - `secretConfigPaths?`: `string[]`
 - `metadata?`: `Record<string, unknown> \| null`
-- `sourceInfo?`: `{ id: string; system: string; uniqueId?: string; raw?: Record<string, unknown> }`
+- `sourceInfo?`: `{ id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }`
 - `integrationId?`: `string`
 - `linkDeviceId?`: `number \| null`
 - `primaryChildEntityId?`: `string \| null`
@@ -1910,14 +1903,10 @@ Enum: `"image" \| "text"`
 - `updatedAt`: `number`
 - `data`: `RecordBodySchema`
 
-### `EnumSensorDateTimeFormatSchema`
-
-Enum: `"date" \| "time" \| "datetime"`
-
 ### `EnumSensorStatusSchema`
 
 - `value`: `string`
-- `format?`: `EnumSensorDateTimeFormatSchema`
+- `timestamp?`: `boolean`
 - `lastFetchedAt`: `number`
 
 ### `EventDensityBucketSchema`
@@ -2426,10 +2415,8 @@ Enum: `"appConnections" \| "notificationTaps" \| "internal" \| "publicEndpoint"`
 
 ### `HumiditySensorStatusSchema`
 
-- `percent`: `number`
+- `percent`: `number \| null`
 - `lastFetchedAt`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
 
 ### `HvacModeSchema`
 
@@ -4353,9 +4340,7 @@ Enum: `"text" \| "markdown" \| "html"`
 
 ### `NumericSensorStatusSchema`
 
-- `value`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
+- `value`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `OauthIntegrationDescriptorSchema`
@@ -4755,8 +4740,6 @@ Enum: `"f32le" \| "s16le"`
 - `va?`: `number`
 - `powerFactor?`: `number`
 - `lastFetchedAt`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
 
 ### `PresenceStatusSchema`
 
@@ -4768,10 +4751,8 @@ Enum: `"f32le" \| "s16le"`
 
 ### `PressureSensorStatusSchema`
 
-- `hpa`: `number`
+- `hpa`: `number \| null`
 - `lastFetchedAt`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
 
 ### `PrivacyMaskOptionsSchema`
 
@@ -6407,10 +6388,8 @@ Enum: `"jwt-signing-key"`
 
 ### `TemperatureSensorStatusSchema`
 
-- `celsius`: `number`
+- `celsius`: `number \| null`
 - `lastFetchedAt`: `number`
-- `unit?`: `string`
-- `precision?`: `number`
 
 ### `TerminalInstanceInfoSchema`
 
@@ -7064,12 +7043,9 @@ Enum: `"cosine" \| "dot" \| "euclidean"`
 
 - `condition`: `string \| null`
 - `temperature`: `number \| null`
-- `temperatureUnit`: `string \| null`
 - `humidity`: `number \| null`
 - `pressure`: `number \| null`
-- `pressureUnit`: `string \| null`
 - `windSpeed`: `number \| null`
-- `windSpeedUnit`: `string \| null`
 - `windBearing`: `number \| null`
 - `lastFetchedAt`: `number`
 

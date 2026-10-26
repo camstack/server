@@ -93,7 +93,7 @@ describe('keyed items are recorded per item key', () => {
       7,
       'consumables',
       slice([
-        item({ key: 'filter', status: 'ok', remaining: { value: 12, unit: 'days' } }),
+        item({ key: 'filter', status: 'ok', remaining: { value: 12, kind: 'duration' } }),
         item({ key: 'salt', status: 'low' }),
       ]),
     )
@@ -136,7 +136,7 @@ describe('keyed items are recorded per item key', () => {
 })
 
 describe('listSeries names an item series after the item', () => {
-  it('uses the item label and its unitFrom, and the key once the item is gone', async () => {
+  it('uses the item label, and the key once the item is gone', async () => {
     h = await makeHarness({ devices: { 7: DeviceType.Vacuum } })
     emitState(
       h,
@@ -144,13 +144,13 @@ describe('listSeries names an item series after the item', () => {
       'consumables',
       slice([
         item({ key: 'cleanWater', label: 'Clean water', level: 80 }),
-        item({ key: 'filter', label: 'Filter', remaining: { value: 12, unit: 'hours' } }),
+        item({ key: 'filter', label: 'Filter', remaining: { value: 12, kind: 'duration' } }),
       ]),
     )
     await h.settle()
     h.slices.set(
       '7:consumables',
-      slice([item({ key: 'filter', label: 'Filter', remaining: { value: 12, unit: 'hours' } })]),
+      slice([item({ key: 'filter', label: 'Filter', remaining: { value: 12, kind: 'duration' } })]),
     )
     const infos = await h.runtime.query.listSeries({ kind: 'device', deviceId: 7 })
     const byId = new Map(infos.map((s) => [`${s.key}|${s.scope}`, s]))
@@ -161,7 +161,7 @@ describe('listSeries names an item series after the item', () => {
     })
     expect(byId.get(`${REMAINING}|filter`)).toMatchObject({
       displayName: 'Filter · Remaining',
-      unit: 'hours',
+      unit: null,
     })
   })
 })

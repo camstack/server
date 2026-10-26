@@ -136,7 +136,7 @@ function planItemField(ctx: ItemArrayContext, leaf: ItemLeaf): CompositionPlanRe
     kind: tf.kind,
     nullable: tf.nullable,
     // Relative to the leaf's own schema: a leaf under an OPTIONAL parent
-    // (`remaining.unit`) reads `true` although it is required only once that
+    // (`remaining.kind`) reads `true` although it is required only once that
     // parent is written (missingLeaves applies that rule).
     required: tf.required,
     unavailable: unavailable.unavailable,

@@ -63,7 +63,7 @@ default ON, per-device opt-out owned by this addon
 3. A value that is not a finite number (or boolean for a boolean field, or a
    non-empty string for an enum field) is not a reading: `null` is UNKNOWN and
    never becomes 0. A field with `skipWhenSet: '<sibling>'` is not read while
-   that sibling is set (an `enum-sensor` with a `format` carries a timestamp).
+   that sibling is set (an `enum-sensor` with `timestamp: true` carries a timestamp).
 4. Against the last RECORDED value (seeded from the newest raw row at boot, so a
    restart repeats nothing): the same value is `unchanged`; a change smaller than
    `deadband` (absolute) or `deadbandPct` (of the last recorded value) is
@@ -95,7 +95,7 @@ of every series that has none, and sets `ready`.
 `history.items: { path, key, label?, fields }` records one series per (item
 field, item key) of an array such as `consumables.items`: the item key is the
 series scope, so store, rollups, retention and queries treat it like any
-scoped series. Item fields (and their `unitFrom` / `skipWhenSet`) are paths
+scoped series. Item fields (and their `skipWhenSet`) are paths
 INSIDE the item; the guard judges them against the item schema. An item with
 no string key (or one over 128 characters) is skipped and counted
 `item-key-invalid`; past 64 items per slice the rest are counted
@@ -235,8 +235,8 @@ power meter). The device's `cap:power-meter.kwhTotal` when it has that series
 (`tw_sum` / 3.6e9 kWh). Never raw; `derivedFrom` names the source key. One place
 makes the choice, so two charts of one device cannot disagree, and it covers
 history recorded before the key existed.
-`listSeries` resolves a `unitFrom` unit from the device's own current slice and
-answers `null` (unknown) when it cannot.
+`listSeries` reports the catalog `unit`. That symbol is the quantity's base
+(°C, hPa, m/s, B, s). A series does not take its unit from a sibling field.
 
 ## Node and storage series
 

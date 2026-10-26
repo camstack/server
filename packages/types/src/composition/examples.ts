@@ -160,7 +160,7 @@ export function feederCustomizationExample(sources: FeederExampleSources): Compo
             label: 'Desiccant',
             fields: {
               'remaining.value': { kind: 'expression', expr: 'number(d)', bindings: days },
-              'remaining.unit': { kind: 'expression', expr: '"days"', bindings: {} },
+              'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
               status: {
                 kind: 'expression',
                 expr: 'number(d) == null ? null : (number(d) <= 0 ? "replace" : "ok")',

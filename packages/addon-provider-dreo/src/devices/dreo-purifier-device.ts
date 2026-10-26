@@ -130,7 +130,7 @@ export class DreoPurifierDevice extends DreoChildDevice {
 
     const pm25 = purifier.pm25
     const aqSlice: AirQualitySensorStatus = {
-      ...(pm25 !== undefined ? { pm25, unit: 'µg/m³' } : {}),
+      ...(pm25 !== undefined ? { pm25 } : {}),
       lastFetchedAt: now,
     }
     this.runtimeState.setCapState(AQ_CAP, aqSlice)

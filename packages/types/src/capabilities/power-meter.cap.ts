@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Multi-metric electrical meter. One slice can carry any combination
@@ -20,30 +21,25 @@ import { DeviceType } from '../device/device-type.js'
  */
 export const PowerMeterStatusSchema = z.object({
   /** Instantaneous power draw in watts. */
-  watts: z.number().optional().meta({ unit: 'W', label: 'Power' }),
+  watts: z
+    .number()
+    .optional()
+    .meta(readingMeta('power', { label: 'Power' })),
   /** Cumulative energy in kilowatt-hours since the meter was reset. */
-  kwhTotal: z.number().optional().meta({ unit: 'kWh', label: 'Energy' }),
+  kwhTotal: z
+    .number()
+    .optional()
+    .meta(readingMeta('energy', { label: 'Energy' })),
   /** Voltage in volts. */
-  volts: z.number().optional(),
+  volts: z.number().optional().meta(readingMeta('voltage')),
   /** Current in amperes. */
-  amps: z.number().optional(),
-  /** Apparent power in volt-amperes (W × power-factor reciprocal). */
-  va: z.number().optional(),
+  amps: z.number().optional().meta(readingMeta('current')),
+  /** Apparent power in volt-amperes. */
+  va: z.number().optional().meta(readingMeta('apparent-power')),
   /** Power factor (0..1) if reported. */
-  powerFactor: z.number().min(0).max(1).optional(),
+  powerFactor: z.number().min(0).max(1).optional().meta(readingMeta('ratio')),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
-  /** Live display unit of the single metric this slice carries (e.g. HA
-   *  `attributes.unit_of_measurement` → 'V' / 'A' / 'W' / 'kW' / 'kWh').
-   *  Each upstream `sensor.*` entity surfaces ONE device_class, so one
-   *  unit per slice is unambiguous. The UI prefers this over the role's
-   *  canonical unit so a 'kW' / 'Wh' feed renders verbatim. */
-  unit: z.string().optional(),
-  /** Suggested decimal places for numeric display.
-   *  Populated live from the upstream source when provided (e.g. HA
-   *  `attributes.suggested_display_precision`). Falls back to
-   *  auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
 })
 
 export type PowerMeterStatus = z.infer<typeof PowerMeterStatusSchema>

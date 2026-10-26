@@ -51,6 +51,14 @@ parallel `private cachedX` fields — read and write through
 The slice must include `lastFetchedAt: z.number()`. Convention:
 `runtimeState = StatusSchema.extend({ lastFetchedAt: z.number() })`.
 
+**A numeric reading is stored in the base unit of its quantity (D944 §4).**
+The quantity and an optional display precision live on the declaration
+(`.meta({ quantity, precision })`), not as `unit` / `precision` siblings on
+the slice. A polymorphic reading (`numeric-sensor`, a numeric `control`)
+stores the quantity once on `SourceInfo`. Providers convert on ingest; an
+unknown unit is logged with `tags: { deviceId }` and published as null.
+Display unit (°F, imperial) is a read-time preference and defaults to metric.
+
 **One exception: a camera's `motion` slice (D696).** No camera provider writes
 it, not even a boot seed. The orchestrator is its only writer, with the
 EFFECTIVE motion (the camera's own motion combined with its attached sensors),

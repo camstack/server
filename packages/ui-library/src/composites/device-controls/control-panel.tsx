@@ -223,11 +223,9 @@ function ControlWidget({ slice, busy, setValueFn, layout }: ControlWidgetProps):
           onCommit={(v) => {
             setValueFn({ control: { kind: 'numeric', value: v } })
           }}
-          unit={slice.unit}
           min={slice.min}
           max={slice.max}
           step={slice.step}
-          precision={slice.precision}
         />
       )
     }
@@ -279,7 +277,7 @@ function ControlWidget({ slice, busy, setValueFn, layout }: ControlWidgetProps):
 
     case 'datetime': {
       const rawValue = String(slice.value)
-      const format: ControlDateTimeFormat = slice.format ?? 'datetime'
+      const format: ControlDateTimeFormat = 'datetime'
 
       // Read-only (at-a-glance) context: render the value in the user's locale
       // instead of an editable input. Editing stays in the full/detail layout.

@@ -161,6 +161,7 @@ describe('UNIT_TABLE integrity', () => {
     ]
     for (const unit of canonical) {
       const spec = UNIT_TABLE[unit]
+      if (spec === undefined) throw new Error(unit)
       expect(spec.factor, `${unit} factor`).toBe(1)
       expect(spec.offset, `${unit} offset`).toBe(0)
     }

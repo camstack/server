@@ -82,7 +82,6 @@ describe('HomeConnectSensorDevice — unknown is not zero', () => {
     client.emitFeature(HA_ID, REMAINING.key, 5400)
     expect(t.runtimeState().getCapState<NumericSensorStatus>('numeric-sensor')).toMatchObject({
       value: 5400,
-      unit: 's',
     })
     expect(device.online).toBe(true)
   })
@@ -173,7 +172,6 @@ describe('HomeConnectSensorDevice — the other caps', () => {
     const { t } = await sensor(binding)
     expect(t.runtimeState().getCapState<PowerMeterStatus>('power-meter')).toMatchObject({
       kwhTotal: 12.5,
-      unit: 'kWh',
     })
   })
 })

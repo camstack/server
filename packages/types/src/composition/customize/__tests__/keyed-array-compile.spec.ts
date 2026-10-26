@@ -89,7 +89,7 @@ describe('keyed-array compiler', () => {
       {
         ...levelItem('filter', 'Filter'),
         draft: { ...levelItem('filter', 'Filter').draft, fieldPath: 'remaining.value' },
-        literals: [{ path: 'remaining.unit', value: 'days' }],
+        literals: [{ path: 'remaining.kind', value: 'duration' }],
       },
     ])
     expect(days.ok).toBe(true)

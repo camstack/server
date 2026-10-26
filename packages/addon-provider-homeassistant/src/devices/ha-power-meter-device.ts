@@ -1,12 +1,13 @@
 import {
   powerMeterCapability,
-  normalizeUnit,
   type DeviceContext,
   type InferNativeProvider,
   type PowerMeterStatus,
   type DeviceRole,
+  type ReadingQuantity,
 } from '@camstack/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
+import { takeReading } from '../ha-reading.js'
 import type { HaEntityState } from '../ha-types.js'
 
 const COLD_START: PowerMeterStatus = { lastFetchedAt: 0 }
@@ -54,31 +55,22 @@ export class HaPowerMeterDevice extends HaBaseChildDevice {
     const lastFetchedAt = Date.parse(state.last_updated) || Date.now()
 
     // HA `device_class` attribute determines which slice field to set.
-    const deviceClass =
-      typeof state.attributes['device_class'] === 'string'
-        ? (state.attributes['device_class'] as string)
-        : this.haDeviceClass
-    // Live display metadata — one HA entity surfaces one metric, so a single
-    // unit/precision per slice is unambiguous. The UI prefers slice.unit over
-    // the role's canonical unit (handles 'kW' / 'Wh' vs canonical 'W' / 'kWh').
-    const unit = normalizeUnit(
-      typeof state.attributes['unit_of_measurement'] === 'string'
-        ? state.attributes['unit_of_measurement']
-        : undefined,
+    const deviceClassRaw = state.attributes['device_class']
+    const deviceClass = typeof deviceClassRaw === 'string' ? deviceClassRaw : this.haDeviceClass
+    const quantity = powerQuantity(deviceClass)
+    if (quantity === undefined) return
+    const unitRaw = state.attributes['unit_of_measurement']
+    const stored = takeReading(
+      this.deviceLogger,
+      this.id,
+      value,
+      typeof unitRaw === 'string' ? unitRaw : undefined,
+      quantity,
     )
-    const precision =
-      typeof state.attributes['suggested_display_precision'] === 'number'
-        ? state.attributes['suggested_display_precision']
-        : undefined
+    if (stored === null) return
     const prev = this.runtimeState.getCapState<PowerMeterStatus>('power-meter') ?? COLD_START
-    const update = applyDeviceClass(prev, deviceClass, value, lastFetchedAt)
-    if (update !== null) {
-      this.runtimeState.setCapState('power-meter', {
-        ...update,
-        ...(unit !== undefined ? { unit } : {}),
-        ...(precision !== undefined ? { precision } : {}),
-      })
-    }
+    const update = applyDeviceClass(prev, deviceClass, stored, lastFetchedAt)
+    if (update !== null) this.runtimeState.setCapState('power-meter', update)
   }
 
   private registerPowerMeterCap(): void {
@@ -88,6 +80,21 @@ export class HaPowerMeterDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(powerMeterCapability, provider)
+  }
+}
+
+function powerQuantity(deviceClass: string | null): ReadingQuantity | undefined {
+  switch (deviceClass) {
+    case 'power':
+      return 'power'
+    case 'energy':
+      return 'energy'
+    case 'voltage':
+      return 'voltage'
+    case 'current':
+      return 'current'
+    default:
+      return undefined
   }
 }
 

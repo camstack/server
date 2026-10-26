@@ -184,11 +184,10 @@ export const CAP_CUSTOMIZE_CATALOG = {
             ],
             literals: [
               {
-                path: 'remaining.unit',
+                path: 'remaining.kind',
                 values: [
-                  'days',
-                  'hours',
-                  'cycles',
+                  'duration',
+                  'count',
                 ],
               },
             ],

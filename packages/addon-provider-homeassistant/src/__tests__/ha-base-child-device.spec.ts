@@ -9,7 +9,6 @@ import {
 import { HaCoverDevice } from '../devices/ha-cover-device.js'
 import { HaNumericSensorDevice } from '../devices/ha-numeric-sensor-device.js'
 import { HaControlDevice } from '../devices/ha-control-device.js'
-import { precisionFromStep } from '../devices/ha-control-device.js'
 import { HaLockDevice } from '../devices/ha-lock-device.js'
 
 interface BrokerApiStubs {
@@ -252,9 +251,10 @@ describe('HaBaseChildDevice sourceInfo', () => {
   })
 })
 
-describe('HaNumericSensorDevice handleStatePush — unit in slice', () => {
-  it('populates unit + precision in the numeric-sensor slice from state attributes on push', () => {
-    // This test verifies that the live unit flows through the slice, not sourceInfo.
+describe('HaNumericSensorDevice handleStatePush — quantity on the device', () => {
+  it('stores the base value and learns the quantity; the slice has no unit sibling', () => {
+    // The number is already in the quantity base (dBm). The quantity is written
+    // once on the device, not copied onto every sample.
     // We drive handleStatePush indirectly via the event bus, then read the
     // cap status through runtimeState.
     let runtimeStateRef: IDeviceRuntimeState | null = null
@@ -349,11 +349,11 @@ describe('HaNumericSensorDevice handleStatePush — unit in slice', () => {
       },
     })
 
-    // The numeric-sensor slice should now carry unit + precision
     const slice = device.runtimeState.getCapState<Record<string, unknown>>('numeric-sensor')
     expect(slice?.['value']).toBe(-85)
-    expect(slice?.['unit']).toBe('dBm')
-    expect(slice?.['precision']).toBe(0)
+    expect(slice?.['unit']).toBeUndefined()
+    expect(slice?.['precision']).toBeUndefined()
+    expect(device.sourceInfo.quantity).toBe('signal-level')
   })
 })
 
@@ -420,8 +420,8 @@ function instantiateControlDevice(config: Record<string, unknown>): HaControlDev
   return new HaControlDevice(ctx)
 }
 
-describe('HaNumericSensorDevice handleStatePush — typed sensor precision', () => {
-  it('populates precision in the temperature-sensor slice when suggested_display_precision is present', () => {
+describe('HaNumericSensorDevice handleStatePush — typed temperature', () => {
+  it('stores celsius when the upstream unit is already the base', () => {
     let runtimeStateRef: IDeviceRuntimeState | null = null
     let eventHandler: ((event: { data: unknown }) => void) | null = null
     const setMetadataMutate = vi.fn(async () => {})
@@ -515,10 +515,10 @@ describe('HaNumericSensorDevice handleStatePush — typed sensor precision', () 
 
     const slice = device.runtimeState.getCapState<TemperatureSensorStatus>('temperature-sensor')
     expect(slice?.celsius).toBeCloseTo(24.567)
-    expect(slice?.precision).toBe(1)
+    expect(slice).not.toHaveProperty('precision')
   })
 
-  it('leaves precision absent in the temperature-sensor slice when suggested_display_precision is not in attributes', () => {
+  it('stores celsius when suggested_display_precision is absent', () => {
     let runtimeStateRef: IDeviceRuntimeState | null = null
     let eventHandler: ((event: { data: unknown }) => void) | null = null
 
@@ -606,42 +606,12 @@ describe('HaNumericSensorDevice handleStatePush — typed sensor precision', () 
 
     const slice = device.runtimeState.getCapState<TemperatureSensorStatus>('temperature-sensor')
     expect(slice?.celsius).toBeCloseTo(22.0)
-    expect(slice?.precision).toBeUndefined()
+    expect(slice).not.toHaveProperty('precision')
   })
 })
 
-describe('precisionFromStep', () => {
-  it('returns 1 for step=0.5', () => {
-    expect(precisionFromStep(0.5)).toBe(1)
-  })
-
-  it('returns 1 for step=0.1', () => {
-    expect(precisionFromStep(0.1)).toBe(1)
-  })
-
-  it('returns 2 for step=0.01', () => {
-    expect(precisionFromStep(0.01)).toBe(2)
-  })
-
-  it('returns 0 for step=1 (integer step)', () => {
-    expect(precisionFromStep(1)).toBe(0)
-  })
-
-  it('returns 0 for step=5 (integer step)', () => {
-    expect(precisionFromStep(5)).toBe(0)
-  })
-
-  it('returns undefined for step=undefined', () => {
-    expect(precisionFromStep(undefined)).toBeUndefined()
-  })
-
-  it('returns undefined for step=0 (invalid)', () => {
-    expect(precisionFromStep(0)).toBeUndefined()
-  })
-})
-
-describe('HaControlDevice — numeric slice precision', () => {
-  it('populates precision from suggested_display_precision on state push', () => {
+describe('HaControlDevice — numeric slice in the base unit', () => {
+  it('stores a celsius setpoint without a precision sibling', () => {
     let runtimeStateRef: IDeviceRuntimeState | null = null
     let eventHandler: ((event: { data: unknown }) => void) | null = null
 
@@ -737,10 +707,16 @@ describe('HaControlDevice — numeric slice precision', () => {
 
     const slice = device.runtimeState.getCapState<ControlStatus>('control')
     expect(slice?.kind).toBe('numeric')
-    expect(slice?.precision).toBe(1)
+    if (slice?.kind === 'numeric') {
+      expect(slice.value).toBeCloseTo(24.567)
+      expect(slice.min).toBe(10)
+      expect(slice.max).toBe(30)
+      expect(slice.step).toBe(0.5)
+    }
+    expect(slice).not.toHaveProperty('precision')
   })
 
-  it('derives precision from step when suggested_display_precision is absent', () => {
+  it('stores a unitless number as-is in the base', () => {
     let runtimeStateRef: IDeviceRuntimeState | null = null
     let eventHandler: ((event: { data: unknown }) => void) | null = null
 
@@ -834,8 +810,13 @@ describe('HaControlDevice — numeric slice precision', () => {
 
     const slice = device.runtimeState.getCapState<ControlStatus>('control')
     expect(slice?.kind).toBe('numeric')
-    // step=0.5 → derived precision=1
-    expect(slice?.precision).toBe(1)
+    if (slice?.kind === 'numeric') {
+      expect(slice.value).toBe(50)
+      expect(slice.min).toBe(0)
+      expect(slice.max).toBe(100)
+      expect(slice.step).toBe(0.5)
+    }
+    expect(slice).not.toHaveProperty('unit')
   })
 })
 

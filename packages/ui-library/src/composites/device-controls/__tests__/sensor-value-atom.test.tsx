@@ -255,15 +255,13 @@ describe('SensorValueAtom', () => {
     })
   })
 
-  describe('numeric-sensor role — unit from slice, not sourceInfo', () => {
-    it('renders value + unit from slice.unit when slice has landed (unit from slice)', () => {
-      // numeric-sensor: unit lives in the slice (populated live from HA attributes).
-      // sourceInfo is NOT read for unit resolution.
-      mockSlice = { value: 2941713, unit: 'dBm', lastFetchedAt: 1700000000000 }
+  describe('numeric-sensor role — unit from the device quantity', () => {
+    it('renders value + unit from the device quantity', () => {
+      mockSlice = { value: 2941713, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'numeric-sensor',
-        // No sourceInfo — should not be needed for unit resolution
+        sourceInfo: { id: 'sensor.rssi', system: 'ha', quantity: 'signal-level' },
       }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
@@ -271,15 +269,16 @@ describe('SensorValueAtom', () => {
       expect(badge.textContent).toContain('dBm')
     })
 
-    it('renders value + unit from slice.unit (unit=s in slice)', () => {
-      mockSlice = { value: 2941713, unit: 's', lastFetchedAt: 1700000000000 }
+    it('renders a duration from the device quantity', () => {
+      mockSlice = { value: 30, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'numeric-sensor',
+        sourceInfo: { id: 'sensor.runtime', system: 'ha', quantity: 'duration' },
       }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
-      expect(badge.textContent).toContain('2941713')
+      expect(badge.textContent).toContain('30')
       expect(badge.textContent).toContain('s')
     })
 
@@ -312,19 +311,20 @@ describe('SensorValueAtom', () => {
     })
   })
 
-  describe('weather roles — value + unit from the numeric-sensor slice', () => {
-    // Ecowitt/HA emit wind/rain/uv/solar/soil on the numeric-sensor cap with a
-    // typed role for the icon. Without a ROLE_DESCRIPTOR entry the value was
-    // invisible; these assert each weather role renders the slice value + unit.
+  describe('weather roles — value + unit from the device quantity', () => {
     it.each([
-      ['wind-sensor', 5.2, 'm/s'],
-      ['rain-sensor', 12.4, 'mm/Hr'],
-      ['uv-sensor', 7, ''],
-      ['solar-radiation-sensor', 845, 'W/m²'],
-      ['soil-moisture-sensor', 38, '%'],
-    ])('renders %s value + unit from the slice', (role, value, unit) => {
-      mockSlice = { value, unit, lastFetchedAt: 1700000000000 }
-      const device: DeviceItemDevice = { ...baseDevice, role }
+      ['wind-sensor', 'speed', 5.2, 'm/s'],
+      ['rain-sensor', 'precipitation', 12.4, 'mm'],
+      ['uv-sensor', 'index', 7, ''],
+      ['solar-radiation-sensor', 'irradiance', 845, 'W/m²'],
+      ['soil-moisture-sensor', 'percentage', 38, '%'],
+    ] as const)('renders %s from the device quantity', (role, quantity, value, unit) => {
+      mockSlice = { value, lastFetchedAt: 1700000000000 }
+      const device: DeviceItemDevice = {
+        ...baseDevice,
+        role,
+        sourceInfo: { id: 'sensor.weather', system: 'ha', quantity },
+      }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
       expect(badge).not.toBeNull()
@@ -488,14 +488,17 @@ describe('SensorValueAtom', () => {
     })
   })
 
-  describe('live slice unit overrides the role canonical unit', () => {
-    it('temperature-sensor renders °F from the slice, not the canonical °C', () => {
-      // Fahrenheit feed: the live unit_of_measurement in the slice wins.
-      mockSlice = { celsius: 70, unit: '°F', lastFetchedAt: 1700000000000 }
-      const device: DeviceItemDevice = { ...baseDevice, role: 'temperature-sensor' }
+  describe('an operator override converts from the base unit', () => {
+    it('temperature-sensor renders °F when the display override says so', () => {
+      mockSlice = { celsius: 0, lastFetchedAt: 1700000000000 }
+      const device: DeviceItemDevice = {
+        ...baseDevice,
+        role: 'temperature-sensor',
+        display: { unit: '°F' },
+      }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
-      expect(badge.textContent).toContain('70')
+      expect(badge.textContent).toContain('32')
       expect(badge.textContent).toContain('°F')
       expect(badge.textContent).not.toContain('°C')
     })

@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7053 source files · 1196 file(s) in no subsystem.**
+**31 subsystems · 7060 source files · 1196 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -27,7 +27,7 @@ commits. A generated page may not.
 | Transport and cross-node routing | 101 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +52 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 305 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md`, +213 more, 51 ADRs | 2026-10-24 | ✅ |
 | Device model and the provider contract | 107 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +54 more, 6 ADRs | 2026-10-24 | ✅ |
-| Device providers (per vendor) | 589 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, +73 more, 14 ADRs | 2026-10-24 | ✅ |
+| Device providers (per vendor) | 591 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, +73 more, 14 ADRs | 2026-10-24 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 142 | `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, `architecture/inference-devices.md`, +61 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 199 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +100 more, 27 ADRs | 2026-10-24 | ✅ |
@@ -42,7 +42,7 @@ commits. A generated page may not.
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +19 more, 5 ADRs | 2026-10-24 | ✅ |
 | Auth, scopes and method tiers | 96 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +28 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 156 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +101 more, 18 ADRs | 2026-10-25 | ⚠️ |
-| Shared types, schemas and enums | 95 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-24 | ⚠️ |
+| Shared types, schemas and enums | 98 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-24 | ⚠️ |
 | Update, release, OTA and agent delivery | 57 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +30 more, 10 ADRs | 2026-10-25 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 264 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +41 more, 20 ADRs | 2026-10-06 | ⚠️ |
 | Remote access and networking | 51 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +16 more | 2026-10-21 | ⚠️ |
@@ -53,7 +53,7 @@ commits. A generated page may not.
 | Admin UI and the shared component library | 1237 | `architecture/ui.md`, `ui/conventions.md`, `ui/admin-patterns.md`, +147 more, 15 ADRs | 2026-10-24 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 158 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +14 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 584 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +154 more, 14 ADRs | 2026-10-25 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 586 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +154 more, 14 ADRs | 2026-10-25 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -99,7 +99,7 @@ Twenty vendor integrations that turn a camera, a plug or a robot vacuum into dev
 
 - **Owner doc**: `docs/architecture/device-model.md`
 - **Code**: `packages/addon-provider-*/**`
-- **Files**: 589 (589 claimed by some document)
+- **Files**: 591 (591 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Decode and the data planes
@@ -234,7 +234,7 @@ The vocabulary every package agrees on — the Zod schemas, enums, catalogues an
 
 - **Owner doc**: — none
 - **Code**: `packages/types/src/schemas/**`, `packages/types/src/helpers/**`, `packages/types/src/enums/**`, `packages/types/src/catalogs/**`, `packages/types/src/types/**`, `packages/types/src/units/**`, `packages/types/src/util/**`, `packages/types/src/utils/**`, `packages/types/src/deps/**`, `packages/types/src/*.ts`
-- **Files**: 95 (95 claimed by some document)
+- **Files**: 98 (98 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Update, release, OTA and agent delivery
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 584 (327 claimed by some document)
-- **Uncovered**: `scripts` (147), `scripts/ui/shots/fixtures` (36), `packages/cli/src/commands` (12), `e2e/fixtures` (9), `scripts/lib` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
+- **Files**: 586 (327 claimed by some document)
+- **Uncovered**: `scripts` (148), `scripts/ui/shots/fixtures` (36), `packages/cli/src/commands` (12), `scripts/lib` (10), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
 
 ## Claimed by no subsystem
 

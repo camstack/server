@@ -85,7 +85,6 @@ export class DreoHumidifierDevice extends DreoChildDevice {
     if (percent !== null) {
       this.runtimeState.setCapState(HUMIDITY_CAP, {
         percent,
-        unit: '%',
         lastFetchedAt: now,
       })
     }

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Weather provider cap. Models HA `weather.*` entities — a read-only
@@ -22,25 +23,21 @@ import { DeviceType } from '../device/device-type.js'
  * Forecast deferred — current conditions only for v1.
  */
 export const WeatherStatusSchema = z.object({
-  /** Verbatim HA condition state (`sunny`, `cloudy`, `rainy`, …). Null
-   *  when no condition has been reported yet. */
+  /** Verbatim condition state (`sunny`, `cloudy`, `rainy`, …). Null when none yet. */
   condition: z.string().nullable(),
-  /** Current temperature in the reported unit. Null when not provided. */
-  temperature: z.number().nullable(),
-  /** Temperature unit string (e.g. `°C` / `°F`). Null when not provided. */
-  temperatureUnit: z.string().nullable(),
+  /** Current temperature in Celsius. Null when not provided or refused. */
+  temperature: z
+    .number()
+    .nullable()
+    .meta(readingMeta('temperature', { precision: 1 })),
   /** Relative humidity (0..100). Null when not provided. */
-  humidity: z.number().min(0).max(100).nullable(),
-  /** Barometric pressure in the reported unit. Null when not provided. */
-  pressure: z.number().nullable(),
-  /** Pressure unit string (e.g. `hPa` / `inHg`). Null when not provided. */
-  pressureUnit: z.string().nullable(),
-  /** Wind speed in the reported unit. Null when not provided. */
-  windSpeed: z.number().nullable(),
-  /** Wind-speed unit string (e.g. `km/h` / `mph`). Null when not provided. */
-  windSpeedUnit: z.string().nullable(),
+  humidity: z.number().min(0).max(100).nullable().meta(readingMeta('humidity')),
+  /** Barometric pressure in hPa. Null when not provided or refused. */
+  pressure: z.number().nullable().meta(readingMeta('pressure')),
+  /** Wind speed in metres per second. Null when not provided or refused. */
+  windSpeed: z.number().nullable().meta(readingMeta('speed')),
   /** Wind bearing in degrees (0..360, meteorological). Null when not provided. */
-  windBearing: z.number().nullable(),
+  windBearing: z.number().nullable().meta(readingMeta('angle')),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
 })
@@ -74,14 +71,14 @@ export const weatherCapability = {
    */
   durability: 'session',
   /**
-   * History (D850): recorded series. Units follow the sibling `*Unit` fields.
+   * History (D850): recorded series. Numbers are the quantity base (D944).
    */
   history: {
     fields: {
-      temperature: { kind: 'gauge', unitFrom: 'temperatureUnit', deadband: 0.2 },
+      temperature: { kind: 'gauge', unit: '°C', deadband: 0.2 },
       humidity: { kind: 'gauge', unit: '%', deadband: 1 },
-      pressure: { kind: 'gauge', unitFrom: 'pressureUnit', deadband: 0.5 },
-      windSpeed: { kind: 'gauge', unitFrom: 'windSpeedUnit', deadband: 0.5 },
+      pressure: { kind: 'gauge', unit: 'hPa', deadband: 0.5 },
+      windSpeed: { kind: 'gauge', unit: 'm/s', deadband: 0.5 },
     },
   },
 } as const satisfies CapabilityDefinition

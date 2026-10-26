@@ -29,7 +29,6 @@ import {
   ConsumableItemSchema,
   ConsumableStatusSchema,
   type ConsumableKind,
-  type ConsumableRemainingUnit,
   consumableFormOf,
   consumableKindOf,
 } from '@camstack/types'
@@ -94,13 +93,6 @@ const STATUS_UNKNOWN = 'unknown'
 
 function consumableEntity(key: string, facet: ItemFacet): string {
   return `${CONSUMABLE_PREFIX}_${toSlug(key)}_${facet}`
-}
-
-/** Home Assistant's own duration units; a cycle count is a plain count. */
-const REMAINING_UNIT: Readonly<Record<ConsumableRemainingUnit, string>> = {
-  days: 'd',
-  hours: 'h',
-  cycles: 'cycles',
 }
 
 // ── form ────────────────────────────────────────────────────────────────
@@ -212,7 +204,7 @@ function consumableEntities(item: ExportConsumableItem): readonly ItemEntity[] {
     })
   }
   if (item.remaining !== undefined) {
-    const isDuration = item.remaining.unit !== 'cycles'
+    const isDuration = item.remaining.kind === 'duration'
     out.push({
       ...base,
       facet: 'remaining',
@@ -220,7 +212,7 @@ function consumableEntities(item: ExportConsumableItem): readonly ItemEntity[] {
       uniqueSuffix: unique('remaining'),
       platform: 'sensor',
       label: `${item.label} remaining`,
-      unit: REMAINING_UNIT[item.remaining.unit],
+      ...(isDuration ? { unit: 's' } : {}),
       stateClass: 'measurement',
       ...(isDuration ? { deviceClass: 'duration' } : {}),
       icon: isDuration ? 'mdi:timer-sand' : 'mdi:counter',

@@ -174,11 +174,9 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
       case 'numeric': {
         const numeric = descriptor.numeric
         if (numeric === undefined) return
-        const slice: NumericSensorStatus = {
-          value: numeric.value,
-          lastFetchedAt: now,
-          ...(numeric.unit !== undefined ? { unit: numeric.unit } : {}),
-          ...(numeric.precision !== undefined ? { precision: numeric.precision } : {}),
+        const slice: NumericSensorStatus = { value: numeric.value, lastFetchedAt: now }
+        if (this.sourceInfo.quantity !== numeric.quantity) {
+          void this.updateSourceInfo({ quantity: numeric.quantity })
         }
         this.runtimeState.setCapState(numericSensorCapability.name, slice)
         return

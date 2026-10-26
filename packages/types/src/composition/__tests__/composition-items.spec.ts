@@ -44,7 +44,7 @@ describe('item-array fields (D663)', () => {
           label: 'Desiccant',
           fields: {
             'remaining.value': days,
-            'remaining.unit': { kind: 'expression', expr: '"days"', bindings: {} },
+            'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
             status: {
               kind: 'expression',
               expr: 'd <= 0 ? "replace" : "ok"',
@@ -57,7 +57,7 @@ describe('item-array fields (D663)', () => {
     )
     expect(plan.problems).toEqual([])
     const item = plan.fields.filter((f) => f.item !== undefined)
-    expect(item.map((f) => f.path).sort()).toEqual(['remaining.unit', 'remaining.value', 'status'])
+    expect(item.map((f) => f.path).sort()).toEqual(['remaining.kind', 'remaining.value', 'status'])
     expect(item.every((f) => f.item?.key === 'desiccant' && f.item.label === 'Desiccant')).toBe(
       true,
     )
@@ -171,7 +171,7 @@ describe('item-array fields (D663)', () => {
     expect(plan.problems).toEqual([
       expect.objectContaining({
         code: 'missing-field',
-        path: 'features[0].items.d.fields.remaining.unit',
+        path: 'features[0].items.d.fields.remaining.kind',
       }),
     ])
   })

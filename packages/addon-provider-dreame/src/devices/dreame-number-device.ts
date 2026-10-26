@@ -5,7 +5,9 @@ import {
   type ControlStatus,
   type DeviceContext,
   type InferNativeProvider,
+  type ReadingQuantity,
 } from '@camstack/types'
+import { dreameQuantity, dreameStep, dreameToBase, dreameToUpstream } from '../dreame-reading.js'
 import { dreameChildSchema } from './dreame-child-device.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 
@@ -36,23 +38,27 @@ export type DreameNumberConfig = z.infer<typeof dreameNumberSchema>
 export class DreameNumberDevice extends DreameChildDevice {
   readonly #siid: number
   readonly #piid: number
-  readonly #min: number
-  readonly #max: number
-  readonly #step: number
   readonly #unit: string | undefined
+  readonly #quantity: ReadingQuantity | null
+  readonly #baseMin: number
+  readonly #baseMax: number
+  readonly #baseStep: number | undefined
 
   constructor(ctx: DeviceContext) {
     super(ctx, DeviceRole.NumericControl)
     const cfg = dreameNumberSchema.parse(ctx.persistedConfig ?? {})
     this.#siid = cfg.siid
     this.#piid = cfg.piid
-    this.#min = cfg.min
-    this.#max = cfg.max
-    this.#step = cfg.step
     this.#unit = cfg.unit
+    this.#quantity = dreameQuantity(cfg.unit)
+    this.#baseMin = this.#toBase(cfg.min) ?? cfg.min
+    this.#baseMax = this.#toBase(cfg.max) ?? cfg.max
+    this.#baseStep =
+      this.#quantity === null ? cfg.step : dreameStep(cfg.step, cfg.unit, this.#quantity)
     void this.updateSourceInfo({
       id: `${this.dreameDeviceId}:number:${cfg.siid}-${cfg.piid}`,
       system: 'dreame',
+      ...(this.#quantity !== null ? { quantity: this.#quantity } : {}),
     })
   }
 
@@ -62,28 +68,53 @@ export class DreameNumberDevice extends DreameChildDevice {
     return typeof v === 'number' && Number.isFinite(v) ? v : null
   }
 
-  #slice(value: number): ControlStatus {
+  #toBase(value: number): number | null {
+    if (this.#quantity === null) return null
+    return dreameToBase(value, this.#unit, this.#quantity)
+  }
+
+  #slice(upstream: number): ControlStatus | null {
+    const value = this.#toBase(upstream)
+    if (value === null) {
+      this.ctx.logger.warn('numeric reading refused', {
+        tags: { deviceId: this.id },
+        meta: {
+          quantity: this.#quantity ?? 'device',
+          unit: this.#unit ?? '',
+          reason: 'unknown-unit',
+        },
+      })
+      return null
+    }
     return {
       kind: 'numeric',
       value,
       options: [],
       lastChangedAt: Date.now(),
-      min: this.#min,
-      max: this.#max,
-      step: this.#step,
-      ...(this.#unit !== undefined ? { unit: this.#unit } : {}),
+      min: this.#baseMin,
+      max: this.#baseMax,
+      ...(this.#baseStep !== undefined ? { step: this.#baseStep } : {}),
     }
   }
 
   protected override registerControlCap(): void {
     const provider: InferNativeProvider<typeof controlCapability> = {
       getStatus: async () =>
-        this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ??
-        this.#slice(this.#read() ?? this.#min),
+        this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ?? {
+          kind: 'numeric',
+          value: 0,
+          options: [],
+          lastChangedAt: 0,
+        },
       setValue: async ({ control }) => {
         if (control.kind !== 'numeric') {
           throw new Error(
             `DreameNumberDevice: expected a numeric value (device=${this.dreameDeviceId}, ${this.#siid}/${this.#piid})`,
+          )
+        }
+        if (this.#quantity === null) {
+          throw new Error(
+            `DreameNumberDevice: unknown unit (device=${this.dreameDeviceId}, ${this.#siid}/${this.#piid})`,
           )
         }
         const handle = this.resolveHandle()
@@ -92,21 +123,31 @@ export class DreameNumberDevice extends DreameChildDevice {
             `DreameNumberDevice: handle unavailable (device=${this.dreameDeviceId}, ${this.#siid}/${this.#piid})`,
           )
         }
-        // Clamp to the declared range so an out-of-bounds UI value is never written.
-        const clamped = Math.min(this.#max, Math.max(this.#min, control.value))
-        await handle.setProperty({ siid: this.#siid, piid: this.#piid, value: clamped })
-        this.runtimeState.setCapState(CAP_NAME, this.#slice(clamped))
+        const clamped = Math.min(this.#baseMax, Math.max(this.#baseMin, control.value))
+        const upstream = dreameToUpstream(clamped, this.#unit, this.#quantity)
+        if (upstream === null) {
+          throw new Error(
+            `DreameNumberDevice: cannot convert back (device=${this.dreameDeviceId}, ${this.#siid}/${this.#piid})`,
+          )
+        }
+        await handle.setProperty({ siid: this.#siid, piid: this.#piid, value: upstream })
+        const slice = this.#slice(upstream)
+        if (slice !== null) this.runtimeState.setCapState(CAP_NAME, slice)
       },
     }
     this.ctx.registerNativeCap(controlCapability, provider)
-    this.runtimeState.setCapState(CAP_NAME, this.#slice(this.#read() ?? this.#min))
+    const initial = this.#read()
+    const slice = initial === null ? null : this.#slice(initial)
+    if (slice !== null) this.runtimeState.setCapState(CAP_NAME, slice)
   }
 
   protected override recomputeSlice(): void {
     const value = this.#read()
     if (value === null) return
+    const slice = this.#slice(value)
+    if (slice === null) return
     const current = this.runtimeState.getCapState<ControlStatus>(CAP_NAME)
-    if (current?.value === value) return
-    this.runtimeState.setCapState(CAP_NAME, this.#slice(value))
+    if (current?.value === slice.value) return
+    this.runtimeState.setCapState(CAP_NAME, slice)
   }
 }

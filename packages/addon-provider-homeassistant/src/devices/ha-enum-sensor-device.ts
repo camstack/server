@@ -26,9 +26,9 @@ export class HaEnumSensorDevice extends HaBaseChildDevice {
   /**
    * Locale-render shape for a `DateTimeSensor`-role sensor (HA
    * `device_class=timestamp` → `'datetime'`, `date` → `'date'`). Read from the
-   * persisted child config (threaded by the HA mapping) and seeded into the cap
-   * slice alongside `value` so the UI renders the ISO string locale-formatted.
-   * `undefined` for a plain enum sensor — the slice then omits `format`.
+   * persisted child config (threaded by the HA mapping) and stored once on the
+   * device. A timestamp sensor marks the slice so history does not learn the
+   * ISO string as an enum state.
    */
   private readonly dateTimeFormat: EnumSensorDateTimeFormat | undefined
 
@@ -37,16 +37,17 @@ export class HaEnumSensorDevice extends HaBaseChildDevice {
     super(ctx, persisted.role !== undefined ? { role: persisted.role } : {})
     const parsedFormat = EnumSensorDateTimeFormatSchema.safeParse(persisted.dateTimeFormat)
     this.dateTimeFormat = parsedFormat.success ? parsedFormat.data : undefined
+    if (this.dateTimeFormat !== undefined) {
+      void this.updateSourceInfo({ dateTimeShape: this.dateTimeFormat })
+    }
     this.registerCap()
     this.runtimeState.setCapState('enum-sensor', this.coldStart())
   }
 
-  /** Cold-start slice — carries the format up-front so the UI can render the
-   *  correct shape the instant a value lands, with no slice churn. */
   private coldStart(): EnumSensorStatus {
     return {
       ...COLD_START,
-      ...(this.dateTimeFormat !== undefined ? { format: this.dateTimeFormat } : {}),
+      ...(this.dateTimeFormat !== undefined ? { timestamp: true } : {}),
     }
   }
 
@@ -55,7 +56,7 @@ export class HaEnumSensorDevice extends HaBaseChildDevice {
     const lastFetchedAt = Date.parse(state.last_updated) || Date.now()
     this.runtimeState.setCapState('enum-sensor', {
       value: state.state,
-      ...(this.dateTimeFormat !== undefined ? { format: this.dateTimeFormat } : {}),
+      ...(this.dateTimeFormat !== undefined ? { timestamp: true } : {}),
       lastFetchedAt,
     })
   }

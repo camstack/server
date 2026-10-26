@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ReadingQuantitySchema } from '../units/quantity.js'
 
 /**
  * Identity envelope for a device's upstream-system metadata.
@@ -18,12 +19,12 @@ import { z } from 'zod'
  *      providers detect renames by matching `uniqueId` and patch `id`
  *      in-place so dispatch keeps working.
  *
- * **Rendering metadata is NOT stored here.** Display fields (`unit`,
- * `precision`) live in the cap STATUS SLICE so they flow live with every
- * state push and are the single source of truth. The `device_class` tag is
- * an HA-specific input that is consumed at the discovery boundary
- * (`ha-domain-mapping`) to derive the CamStack `DeviceRole`; it is never
- * stored after that point.
+ * **Display unit and precision are NOT stored here.** They are a read-time
+ * preference (D944). A polymorphic reading stores its `quantity` here once,
+ * at adopt, and a date/time value stores `dateTimeShape` the same way —
+ * neither is repeated on each sample. The `device_class` tag is an
+ * HA-specific input consumed at the discovery boundary (`ha-domain-mapping`)
+ * to derive the CamStack `DeviceRole`; it is never stored after that point.
  *
  * The `raw` escape hatch carries provider-specific attributes that don't
  * fit the structured slots (HA `attributes` whitelist, Reolink `deviceCache`
@@ -40,6 +41,11 @@ export const SourceInfoSchema = z.object({
   /** Immutable upstream identifier when available (HA `unique_id`, … ).
    *  Used to detect rename when `id` changes. */
   uniqueId: z.string().optional(),
+
+  /** Quantity of a polymorphic reading, written once at adopt (D944). */
+  quantity: ReadingQuantitySchema.optional(),
+  /** Date / time / datetime shape of a string reading, written once at adopt. */
+  dateTimeShape: z.enum(['date', 'time', 'datetime']).optional(),
 
   // ── Free-form passthrough ───────────────────────────────────────
   /** Provider-specific extras that don't fit the structured slots.
@@ -133,9 +139,45 @@ export function normalizeUnit(raw: string | null | undefined): string | undefine
   if (lower === 'mph') return 'mph'
   if (lower === 'm/s') return 'm/s'
   if (lower === 'm') return 'm'
+  if (lower === 'm²' || lower === 'm2') return 'm²'
+  if (lower === 'mm') return 'mm'
+  if (lower === 'cm') return 'cm'
   if (lower === 'km') return 'km'
+  if (lower === 'in' || lower === 'inch' || lower === 'inches') return 'in'
+  if (lower === 'ft' || lower === 'foot' || lower === 'feet') return 'ft'
   if (lower === 'kg') return 'kg'
   if (lower === 'g') return 'g'
+  if (
+    lower === 'l' ||
+    lower === 'liter' ||
+    lower === 'litre' ||
+    lower === 'liters' ||
+    lower === 'litres'
+  )
+    return 'L'
+  if (lower === 'ml') return 'mL'
+  if (lower === 'gal' || lower === 'gallon' || lower === 'gallons') return 'gal'
+  if (lower === 's' || lower === 'sec' || lower === 'second' || lower === 'seconds') return 's'
+  if (lower === 'ms') return 'ms'
+  if (lower === 'min' || lower === 'minute' || lower === 'minutes') return 'min'
+  if (lower === 'h' || lower === 'hr' || lower === 'hour' || lower === 'hours') return 'h'
+  if (lower === 'd' || lower === 'day' || lower === 'days') return 'd'
+  if (lower === 'b' || lower === 'byte' || lower === 'bytes') return 'B'
+  if (lower === 'kib') return 'KiB'
+  if (lower === 'mib') return 'MiB'
+  if (lower === 'gib') return 'GiB'
+  if (lower === 'tib') return 'TiB'
+  if (lower === 'kb') return 'kB'
+  if (lower === 'mb') return 'MB'
+  if (lower === 'gb') return 'GB'
+  if (lower === 'dbm') return 'dBm'
+  if (lower === 'dbfs') return 'dBFS'
+  if (lower === 'inhg') return 'inHg'
+  if (lower === 'mm/h') return 'mm/h'
+  if (lower === 'w/m²' || lower === 'w/m2') return 'W/m²'
+  if (lower === '°' || lower === 'deg' || lower === 'degree' || lower === 'degrees') return '°'
+  if (lower === 'kbps') return 'kbps'
+  if (lower === 'fps') return 'fps'
   return trimmed
 }
 

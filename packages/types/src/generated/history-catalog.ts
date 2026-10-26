@@ -17,8 +17,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'air-quality-sensor': {
     'co2Ppm': { kind: 'gauge', unit: 'ppm', deadband: 5 },
     'vocPpb': { kind: 'gauge', unit: 'ppb', deadband: 5 },
-    'pm25': { kind: 'gauge', unit: 'ug/m3', deadband: 1 },
-    'pm10': { kind: 'gauge', unit: 'ug/m3', deadband: 1 },
+    'pm25': { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
+    'pm10': { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
     'aqi': { kind: 'gauge', unit: 'count', deadband: 1 },
   },
   'alarm-panel': {
@@ -67,7 +67,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'powerOn': { kind: 'boolean' },
   },
   'enum-sensor': {
-    'value': { kind: 'enum', skipWhenSet: 'format' },
+    'value': { kind: 'enum', skipWhenSet: 'timestamp' },
   },
   'fan-control': {
     'percentage': { kind: 'gauge', unit: '%', minIntervalMs: 0 },
@@ -107,7 +107,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'rssiDbm': { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
   },
   'numeric-sensor': {
-    'value': { kind: 'gauge', unitFrom: 'unit', minIntervalMs: 30000 },
+    'value': { kind: 'gauge', minIntervalMs: 30000 },
   },
   'pet-feeder': {
     'foodLevel': { kind: 'gauge' },
@@ -165,10 +165,10 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'targetTemp': { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
   },
   'weather': {
-    'temperature': { kind: 'gauge', unitFrom: 'temperatureUnit', deadband: 0.2 },
+    'temperature': { kind: 'gauge', unit: '°C', deadband: 0.2 },
     'humidity': { kind: 'gauge', unit: '%', deadband: 1 },
-    'pressure': { kind: 'gauge', unitFrom: 'pressureUnit', deadband: 0.5 },
-    'windSpeed': { kind: 'gauge', unitFrom: 'windSpeedUnit', deadband: 0.5 },
+    'pressure': { kind: 'gauge', unit: 'hPa', deadband: 0.5 },
+    'windSpeed': { kind: 'gauge', unit: 'm/s', deadband: 0.5 },
   },
 }
 
@@ -185,7 +185,7 @@ export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItem
     fields: {
       'level': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'Level' },
       'status': { kind: 'enum', displayName: 'Status', values: ['ok', 'low', 'empty', 'full', 'replace'] },
-      'remaining.value': { kind: 'gauge', unitFrom: 'remaining.unit', deadband: 1, displayName: 'Remaining' },
+      'remaining.value': { kind: 'gauge', deadband: 1, displayName: 'Remaining' },
     },
   },
 }

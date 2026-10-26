@@ -45,13 +45,15 @@ describe('composedMethods (D663)', () => {
     }
     expect(ConsumableItemSchema.safeParse(base).success).toBe(true)
     expect(
-      ConsumableItemSchema.safeParse({ ...base, remaining: { value: 12, unit: 'days' } }).success,
+      ConsumableItemSchema.safeParse({ ...base, remaining: { value: 12, kind: 'duration' } })
+        .success,
     ).toBe(true)
     expect(
-      ConsumableItemSchema.safeParse({ ...base, remaining: { value: null, unit: 'days' } }).success,
+      ConsumableItemSchema.safeParse({ ...base, remaining: { value: null, kind: 'duration' } })
+        .success,
     ).toBe(true)
     expect(
-      ConsumableItemSchema.safeParse({ ...base, remaining: { value: 3, unit: 'weeks' } }).success,
+      ConsumableItemSchema.safeParse({ ...base, remaining: { value: 3, kind: 'weeks' } }).success,
     ).toBe(false)
   })
 })

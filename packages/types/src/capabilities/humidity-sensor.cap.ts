@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Single-metric humidity reading. Drives Home Assistant `sensor`
@@ -12,19 +13,15 @@ import { DeviceType } from '../device/device-type.js'
  * `sourceInfo`.
  */
 export const HumiditySensorStatusSchema = z.object({
-  /** Current relative humidity, 0..100. */
-  percent: z.number().min(0).max(100).meta({ unit: '%', label: 'Humidity' }),
+  /** Current relative humidity, 0..100. `null` when the sample was refused (D393). */
+  percent: z
+    .number()
+    .min(0)
+    .max(100)
+    .nullable()
+    .meta(readingMeta('humidity', { precision: 0, label: 'Humidity' })),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
-  /** Live display unit from the upstream source (e.g. HA
-   *  `attributes.unit_of_measurement`). The UI prefers this over the
-   *  role's canonical unit. Absent → fall back to the canonical unit. */
-  unit: z.string().optional(),
-  /** Suggested decimal places for numeric display.
-   *  Populated live from the upstream source when provided (e.g. HA
-   *  `attributes.suggested_display_precision`). Falls back to
-   *  auto-formatting when absent. */
-  precision: z.number().int().min(0).max(10).optional(),
 })
 
 export type HumiditySensorStatus = z.infer<typeof HumiditySensorStatusSchema>

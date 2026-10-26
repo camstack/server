@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { readingMeta } from '../units/quantity.js'
 
 /**
  * Battery status snapshot. Emitted by providers whose device is
@@ -26,7 +27,12 @@ export const BatteryStatusSchema = z.object({
    * Consumers must SKIP a null rather than coerce it — `battery-band` already
    * declines to band a non-finite reading, which is the correct shape.
    */
-  percentage: z.number().min(0).max(100).nullable().meta({ unit: '%', label: 'Charge' }),
+  percentage: z
+    .number()
+    .min(0)
+    .max(100)
+    .nullable()
+    .meta(readingMeta('percentage', { label: 'Charge' })),
   /**
    * Charging source. `'dc'` covers wall/USB adapters; `'solar'` is
    * Reolink-specific for the Solar Panel 2 accessory (will become

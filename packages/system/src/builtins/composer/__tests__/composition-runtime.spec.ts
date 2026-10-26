@@ -1432,7 +1432,7 @@ function consumablesPlan(): readonly CompositionFieldPlan[] {
             label: 'Desiccant',
             fields: {
               'remaining.value': DAYS,
-              'remaining.unit': { kind: 'expression', expr: '"days"', bindings: {} },
+              'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
               status: {
                 kind: 'expression',
                 expr: 'd <= 0 ? "replace" : "ok"',
@@ -1479,7 +1479,7 @@ describe('item arrays: records keyed per item, the whole array written (D663, ru
               status: 'ok',
               lastResetAt: null,
               resettable: false,
-              remaining: { value: 12, unit: 'days' },
+              remaining: { value: 12, kind: 'duration' },
             },
             {
               key: 'filter',
@@ -1507,7 +1507,7 @@ describe('item arrays: records keyed per item, the whole array written (D663, ru
       expect.objectContaining({
         key: 'desiccant',
         status: 'replace',
-        remaining: { value: 0, unit: 'days' },
+        remaining: { value: 0, kind: 'duration' },
       }),
       expect.objectContaining({ key: 'filter', status: 'ok' }),
     ])
@@ -1520,7 +1520,7 @@ describe('item arrays: records keyed per item, the whole array written (D663, ru
     runtime.onSourcesChanged(new Set([compositionSliceKey(DAYS_SOURCE, 'numeric-sensor')]))
     const last = target.writes.at(-1)
     expect(last?.values['items']).toEqual([
-      expect.objectContaining({ key: 'desiccant', remaining: { value: null, unit: 'days' } }),
+      expect.objectContaining({ key: 'desiccant', remaining: { value: null, kind: 'duration' } }),
       expect.objectContaining({ key: 'filter' }),
     ])
     expect(target.availability).toEqual([true])

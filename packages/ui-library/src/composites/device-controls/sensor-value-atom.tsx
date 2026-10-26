@@ -20,7 +20,7 @@
  * at the call site; narrowing occurs after `useDeviceStateSlice`.
  */
 import type { ReactNode } from 'react'
-import type { DeviceProxy, SliceHandle } from '@camstack/types'
+import type { DeviceProxy, ReadingQuantity, SliceHandle } from '@camstack/types'
 import {
   useDeviceProxy,
   useDeviceStateSlice,
@@ -28,7 +28,6 @@ import {
 } from '../../hooks/use-device-proxy'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
-import { formatNumeric } from '../../lib/format-numeric'
 import {
   formatControlDateTime,
   type ControlDateTimeFormat,
@@ -67,6 +66,8 @@ interface NumericDescriptor {
    *  For the generic `numeric-sensor` role this is `undefined` — the unit is
    *  read live from the slice (`slice.unit`). */
   readonly canonicalUnit?: string
+  /** Quantity of the stored number. Absent on a polymorphic numeric-sensor. */
+  readonly quantity?: ReadingQuantity
   /** Accessor into DeviceProxy['state'] — returns a typed slice handle. */
   readonly getSliceHandle: (state: DeviceProxy['state']) => SliceHandle<unknown>
 }
@@ -175,24 +176,28 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
   'temperature-sensor': {
     kind: 'numeric',
     field: 'celsius',
+    quantity: 'temperature',
     canonicalUnit: '°C',
     getSliceHandle: (s) => s.temperatureSensor,
   },
   'humidity-sensor': {
     kind: 'numeric',
     field: 'percent',
+    quantity: 'humidity',
     canonicalUnit: '%',
     getSliceHandle: (s) => s.humiditySensor,
   },
   'ambient-light-sensor': {
     kind: 'numeric',
     field: 'lux',
+    quantity: 'illuminance',
     canonicalUnit: 'lx',
     getSliceHandle: (s) => s.ambientLightSensor,
   },
   'pressure-sensor': {
     kind: 'numeric',
     field: 'hpa',
+    quantity: 'pressure',
     canonicalUnit: 'hPa',
     getSliceHandle: (s) => s.pressureSensor,
   },
@@ -235,24 +240,28 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
   'power-sensor': {
     kind: 'numeric',
     field: 'watts',
+    quantity: 'power',
     canonicalUnit: 'W',
     getSliceHandle: (s) => s.powerMeter,
   },
   'energy-sensor': {
     kind: 'numeric',
     field: 'kwhTotal',
+    quantity: 'energy',
     canonicalUnit: 'kWh',
     getSliceHandle: (s) => s.powerMeter,
   },
   'voltage-sensor': {
     kind: 'numeric',
     field: 'volts',
+    quantity: 'voltage',
     canonicalUnit: 'V',
     getSliceHandle: (s) => s.powerMeter,
   },
   'current-sensor': {
     kind: 'numeric',
     field: 'amps',
+    quantity: 'current',
     canonicalUnit: 'A',
     getSliceHandle: (s) => s.powerMeter,
   },
@@ -262,6 +271,7 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
     // unit_of_measurement so the live slice unit wins, '%' as fallback.
     kind: 'numeric',
     field: 'value',
+    quantity: 'percentage',
     canonicalUnit: '%',
     getSliceHandle: (s) => s.numericSensor,
   },
@@ -486,24 +496,17 @@ export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNo
     // has never pushed a real value and showing "0" is misleading.
     if (numericIsColStart) return null
 
-    // Unit + precision + render-time conversion via the shared resolver
-    // (device override → role default → live slice → canonical unit). Storage
-    // stays in source units; precision applies AFTER conversion. Cold-start
-    // suppression above already ran on the RAW value, so converting here is safe.
-    const sliceRecord = slice as Record<string, unknown>
-    const liveUnit = typeof sliceRecord['unit'] === 'string' ? sliceRecord['unit'] : undefined
-    const slicePrecision =
-      typeof sliceRecord['precision'] === 'number' ? sliceRecord['precision'] : undefined
+    const deviceQuantity = device.sourceInfo?.quantity
     const resolved = resolveSensorDisplay({
       display: device.display,
       capName: device.role === 'numeric-sensor' ? 'numeric-sensor' : undefined,
       roleDefault: device.role != null ? roleDefaultsData?.defaults[device.role] : undefined,
-      sliceUnit: liveUnit,
-      slicePrecision,
-      canonicalUnit: descriptor.canonicalUnit,
+      quantity: descriptor.quantity ?? 'device',
+      deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
     })
-    const unit = resolved.unit
-    const formatted = formatNumeric(resolved.toDisplayValue(rawValue), resolved.precision)
+    const rendered = resolved.format(rawValue)
+    const unit = rendered.unit
+    const formatted = rendered.text
     return (
       <span
         className={cn('inline-flex items-baseline gap-0.5 tabular-nums text-xs text-foreground')}
@@ -548,7 +551,8 @@ export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNo
     if (slice.value === '') return null
     // Prefer the per-sensor format the provider seeded into the slice (date /
     // time / datetime); fall back to the descriptor default for older adoptions.
-    const format = readSliceDateTimeFormat(slice) ?? descriptor.format
+    const format =
+      device.sourceInfo?.dateTimeShape ?? readSliceDateTimeFormat(slice) ?? descriptor.format
     // formatControlDateTime never throws and falls back to the raw value when
     // it cannot parse the ISO string.
     const formatted = formatControlDateTime(slice.value, format)

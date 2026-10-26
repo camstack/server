@@ -127,12 +127,11 @@ describe('HaWeatherDevice', () => {
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]!
     expect(pushed['condition']).toBe('partlycloudy')
     expect(pushed['temperature']).toBe(21.4)
-    expect(pushed['temperatureUnit']).toBe('°C')
     expect(pushed['humidity']).toBe(63)
     expect(pushed['pressure']).toBe(1013)
-    expect(pushed['pressureUnit']).toBe('hPa')
-    expect(pushed['windSpeed']).toBe(12.5)
-    expect(pushed['windSpeedUnit']).toBe('km/h')
+    expect(pushed['windSpeed']).toBeCloseTo(12.5 / 3.6)
+    expect(pushed['temperatureUnit']).toBeUndefined()
+    expect(pushed['windSpeedUnit']).toBeUndefined()
     expect(pushed['windBearing']).toBe(240)
     expect(pushed['lastFetchedAt']).toBe(Date.parse('2026-06-06T10:00:00.000Z'))
   })
@@ -164,12 +163,9 @@ describe('HaWeatherDevice', () => {
     const pushed = setCapStateCalls[setCapStateCalls.length - 1]!
     expect(pushed['condition']).toBe('sunny')
     expect(pushed['temperature']).toBeNull()
-    expect(pushed['temperatureUnit']).toBeNull()
     expect(pushed['humidity']).toBeNull()
     expect(pushed['pressure']).toBeNull()
-    expect(pushed['pressureUnit']).toBeNull()
     expect(pushed['windSpeed']).toBeNull()
-    expect(pushed['windSpeedUnit']).toBeNull()
     expect(pushed['windBearing']).toBeNull()
   })
 

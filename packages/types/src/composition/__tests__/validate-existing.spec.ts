@@ -570,7 +570,11 @@ describe('existing targets (D663)', () => {
       status: { kind: 'expression', expr: 'o ? "ok" : "replace"', bindings: { o: on } },
     }
     const unit = {
-      'remaining.unit': { kind: 'expression', expr: 'o ? "days" : "hours"', bindings: { o: on } },
+      'remaining.kind': {
+        kind: 'expression',
+        expr: 'o ? "duration" : "count"',
+        bindings: { o: on },
+      },
     }
     const itemModes = (v: {
       fields: readonly { path: string; item?: unknown; unavailable: string }[]
@@ -585,7 +589,7 @@ describe('existing targets (D663)', () => {
       ])
       const refused = validateComposition(consumables(unit), ctx(found({})))
       expect(refused.problems.map((p) => [p.code, p.path])).toEqual([
-        ['not-replaceable', 'features[0].items.desiccant.fields.remaining.unit'],
+        ['not-replaceable', 'features[0].items.desiccant.fields.remaining.kind'],
       ])
     })
 
@@ -599,7 +603,7 @@ describe('existing targets (D663)', () => {
       expect(itemModes(v)).toEqual([
         ['level', 'release'],
         ['status', 'release'],
-        ['remaining.unit', 'release'],
+        ['remaining.kind', 'release'],
       ])
     })
   })

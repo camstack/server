@@ -232,9 +232,9 @@ export interface NumericStateTrigger<C extends VocabCapName> {
   /** The quantity WITH its article, as it reads in a sentence ("the temperature" / "la temperatura"). */
   readonly quantity: L10n
   readonly label: L10n
-  /** Display unit; omit when the device states it (see `unitField`). */
+  /** Display unit. The stored number is the quantity base; this is the label. */
   readonly unit?: string
-  /** A status field carrying the device's own unit (`numeric-sensor.unit`). */
+  /** @deprecated D944 removed slice unit siblings. Kept so old rows still parse. */
   readonly unitField?: CapStatusField<C>
   readonly icon: VocabIcon
 }

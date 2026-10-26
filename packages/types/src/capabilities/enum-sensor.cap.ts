@@ -19,12 +19,11 @@ export type EnumSensorDateTimeFormat = z.infer<typeof EnumSensorDateTimeFormatSc
 export const EnumSensorStatusSchema = z.object({
   value: z.string(),
   /**
-   * Set for `DateTimeSensor`-role sensors so the UI renders the ISO `value`
-   * as a locale date/time/datetime; absent for plain enum sensors. HA
-   * `device_class=timestamp` → `'datetime'`, `device_class=date` → `'date'`,
-   * a time-only sensor → `'time'`.
+   * Set when `value` is a timestamp rather than an enum state, so history
+   * does not learn ISO strings as states. The display shape (date / time /
+   * datetime) lives on `SourceInfo.dateTimeShape`, written once at adopt.
    */
-  format: EnumSensorDateTimeFormatSchema.optional(),
+  timestamp: z.boolean().optional(),
   /** Ms epoch when the slice was last updated. */
   lastFetchedAt: z.number(),
 })
@@ -55,9 +54,9 @@ export const enumSensorCapability = {
    * History (D850): the value as an `enum` series (an appliance's program or
    * operation state, an HVAC action). The option set is per device, so the
    * value list is LEARNED as values are first seen (bounded). A sensor with a
-   * `format` carries a timestamp, not a state, and is not recorded.
+   * `timestamp` carries a clock, not a state, and is not recorded.
    */
-  history: { fields: { value: { kind: 'enum', skipWhenSet: 'format' } } },
+  history: { fields: { value: { kind: 'enum', skipWhenSet: 'timestamp' } } },
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
