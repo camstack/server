@@ -28,7 +28,7 @@ function cleanPaste(input: string): string {
     .trim()
 }
 
-function paramsOf(input: string): URLSearchParams {
+function paramsFromUrl(input: string): URLSearchParams | undefined {
   try {
     const url = new URL(input)
     const merged = new URLSearchParams(url.search)
@@ -37,9 +37,27 @@ function paramsOf(input: string): URLSearchParams {
     }
     return merged
   } catch {
-    // "code=…&state=…" copied from a network panel, with or without a leading ? or #.
-    return new URLSearchParams(input.replace(/^[?#]/, ''))
+    return undefined
   }
+}
+
+function paramsOf(input: string): URLSearchParams {
+  const direct = paramsFromUrl(input)
+  if (direct) return direct
+  // A Location value copied already percent-encoded (`…%3A%2F%2F…%3Fcode%3D…` or `#` as `%23`).
+  if (input.includes('%')) {
+    try {
+      const decoded = decodeURIComponent(input)
+      if (decoded !== input) {
+        const again = paramsFromUrl(decoded)
+        if (again) return again
+      }
+    } catch (err) {
+      if (!(err instanceof URIError)) throw err
+    }
+  }
+  // "code=…&state=…" copied from a network panel, with or without a leading ? or #.
+  return new URLSearchParams(input.replace(/^[?#]/, ''))
 }
 
 /**

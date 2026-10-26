@@ -32,10 +32,15 @@ attempt), a denied login, and a code that was already used or has expired (`inva
 
 The access and refresh token fields remain editable: pasting a pair by hand still works.
 
-> **Unverified against a live account.** The client id, redirect scheme, scope and the REST paths
-> (`/v2/gateways`, `/v2/gateways/<id>/system`) come from the public community PointT client, not from
-> this repository or from a captured session. Confirm the sign-in once on a real account; if the
-> exchange is refused, the constants are in `homecom-oauth.ts` and the paths in `homecom-api-client.ts`.
+The authorize query is the HomeCom Easy public client: `client_id`
+`762162C0-FA2D-4540-AE66-6489F189FADC`, redirect `com.bosch.tt.dashtt.pointt://app/login`,
+`response_type=code`, `prompt=login`, PKCE S256, `style_id=tt_bsch`, and the scope
+`openid email profile offline_access` plus `pointt.gateway.claiming`, `pointt.gateway.removal`,
+`pointt.gateway.list`, `pointt.gateway.users`, `pointt.gateway.resource.dashapp`,
+`pointt.castt.flow.token-exchange`, `bacon`, `hcc.tariff.read`. On 2026-10-26 a request with that
+scope was answered by SingleKey with the login page. The code exchange still needs the operator's
+account. The REST paths (`/v2/gateways`, `/v2/gateways/<id>/system`) come from the same public
+client; the constants live in `homecom-oauth.ts` and the paths in `homecom-api-client.ts`.
 
 ## Rotated tokens are stored
 

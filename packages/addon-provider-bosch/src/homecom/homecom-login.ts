@@ -6,6 +6,7 @@ import {
   HOMECOM_CLIENT_ID,
   HOMECOM_REDIRECT_URI,
   HOMECOM_SCOPE,
+  HOMECOM_STYLE_ID,
   HOMECOM_TOKEN_URL,
 } from './homecom-oauth.js'
 
@@ -77,6 +78,7 @@ export function beginHomeComSignIn(): HomeComSignInStart {
   url.searchParams.set('state', state)
   url.searchParams.set('nonce', b64url(randomBytes(16)))
   url.searchParams.set('prompt', 'login')
+  url.searchParams.set('style_id', HOMECOM_STYLE_ID)
   return { authorizeUrl: url.toString(), verifier, state }
 }
 

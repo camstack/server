@@ -1,14 +1,18 @@
 /**
- * Public OAuth client of the HomeCom Easy / PointT mobile app, signed in through SingleKey ID.
+ * Public OAuth client of the HomeCom Easy app, signed in through SingleKey ID.
  *
- * These are the PUBLIC values the app itself ships (a PKCE client has no secret). They are not
- * derivable from this repository; they come from the community PointT client (`homecom_alt`) and
- * have to be confirmed against a live account — see docs/addons/addon-provider-bosch-homecom.md.
+ * A PKCE client has no secret. The values are the ones SingleKey accepts for this client id
+ * today: the same authorize query the MIT-licensed `homecom_alt` client records
+ * (`OAUTH_LOGIN_PARAMS` — parameters, not copied code) and that the Home Assistant integration
+ * opens. `pointt.gateway.resource.dopair` is not a scope this client may request; SingleKey
+ * answers `misconfigured-application` and never shows the login page. The scope it does accept
+ * names `pointt.gateway.resource.dashapp`, and the Bosch app sends `style_id=tt_bsch`.
  */
 export const HOMECOM_CLIENT_ID = '762162C0-FA2D-4540-AE66-6489F189FADC'
 export const HOMECOM_REDIRECT_URI = 'com.bosch.tt.dashtt.pointt://app/login'
 export const HOMECOM_AUTHORIZE_URL = 'https://singlekey-id.com/auth/connect/authorize'
 export const HOMECOM_TOKEN_URL = 'https://singlekey-id.com/auth/connect/token'
+export const HOMECOM_STYLE_ID = 'tt_bsch'
 export const HOMECOM_SCOPE = [
   'openid',
   'email',
@@ -18,7 +22,7 @@ export const HOMECOM_SCOPE = [
   'pointt.gateway.removal',
   'pointt.gateway.list',
   'pointt.gateway.users',
-  'pointt.gateway.resource.dopair',
+  'pointt.gateway.resource.dashapp',
   'pointt.castt.flow.token-exchange',
   'bacon',
   'hcc.tariff.read',
