@@ -4,12 +4,12 @@
 
 # Guards
 
-190 repository guards: 185 in `scripts/`,
+191 repository guards: 186 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (181)
+## Enforced by CI checks (182)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -55,6 +55,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-container-priority-in-sync.ts` | The container-child precedence has ONE definition and two copies that cannot import it. This makes that fact checkable instead of asking for it in a comment. |
 | `scripts/check-customize-bespoke-card.ts` | Customize bespoke-card guard (D936). A cap that declares `customize` is offered by the generic scalar, keyed-array and event cards. A component or builder named after that cap outside those folders is a second card, and a new override ha… |
 | `scripts/check-customize-declaration.ts` | Customize declaration guard (D936). A cap may offer a generic override only by declaring `customize`, and that declaration has to name paths, types and vocabulary the cap actually has. |
+| `scripts/check-customize-parameters.ts` | Customize parameter guard (D944). An extension's transform parameters — threshold, comparison, dwell, scale, offset, clamp, debounce, edges, source modes, timeout — have to appear on the catalog the editor reads. |
 | `scripts/check-dbfs-era.ts` | Every absolute-dBFS constant states which amplitude era it was calibrated in (D460). |
 | `scripts/check-decision-ids-unique.ts` | Decision-id guard — two records may never claim the same `D<n>`. |
 | `scripts/check-declared-device-single-owner.ts` | Declared-device ownership guard — there is ONE get-or-create for a device an addon declares, and it is `DeclaredDevices`. |

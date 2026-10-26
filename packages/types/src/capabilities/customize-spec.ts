@@ -81,9 +81,13 @@ export interface InvertTransformSpec {
   readonly kind: 'invert'
 }
 
+export type ThresholdComparison = 'gte' | 'lte'
+
 export interface ThresholdTransformSpec {
   readonly kind: 'threshold'
-  readonly comparison: 'gte' | 'lte'
+  /** Comparisons the editor may offer. `comparison` is the default. */
+  readonly comparisons: readonly ThresholdComparison[]
+  readonly comparison: ThresholdComparison
   readonly defaultThreshold: number
   readonly defaultStartDwellMs: number
   readonly defaultStopDwellMs: number
@@ -233,7 +237,9 @@ export interface EventCustomizeTargetBase extends CustomizeTargetBase {
  */
 export interface PulseEventCustomizeTarget extends EventCustomizeTargetBase {
   readonly shape: 'pulse'
+  /** Edges the editor may offer. `defaultEdge` is the one a new pulse starts on. */
   readonly edges: readonly CustomizeEventEdge[]
+  readonly defaultEdge: CustomizeEventEdge
   readonly timestampPath: string
   readonly counterPath: string
   /** The composer already tracks this path's advance (D670). */

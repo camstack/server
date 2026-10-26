@@ -263,6 +263,7 @@ jobs:
             scripts/check-cap-history-declared.ts \
             scripts/check-customize-declaration.ts \
             scripts/check-customize-bespoke-card.ts \
+            scripts/check-customize-parameters.ts \
             scripts/check-history-single-mechanism.ts \
             scripts/check-runtime-state-row-writers.ts \
             scripts/check-durable-state-declared.ts \

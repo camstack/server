@@ -43,6 +43,18 @@ export const CAP_CUSTOMIZE_CATALOG = {
               'identity',
               'linear',
             ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+              {
+                kind: 'linear',
+                defaultScale: 1,
+                defaultOffset: 0,
+                clampMin: 0,
+                clampMax: 100,
+              },
+            ],
           },
         ],
         sourceReport: {
@@ -138,6 +150,18 @@ export const CAP_CUSTOMIZE_CATALOG = {
                   'identity',
                   'linear',
                 ],
+                transforms: [
+                  {
+                    kind: 'identity',
+                  },
+                  {
+                    kind: 'linear',
+                    defaultScale: 1,
+                    defaultOffset: 0,
+                    clampMin: 0,
+                    clampMax: 100,
+                  },
+                ],
               },
             ],
           },
@@ -150,6 +174,11 @@ export const CAP_CUSTOMIZE_CATALOG = {
                 kind: 'numeric',
                 transformKinds: [
                   'identity',
+                ],
+                transforms: [
+                  {
+                    kind: 'identity',
+                  },
                 ],
               },
             ],
@@ -180,6 +209,19 @@ export const CAP_CUSTOMIZE_CATALOG = {
                 kind: 'enum',
                 transformKinds: [
                   'enum-map',
+                ],
+                transforms: [
+                  {
+                    kind: 'enum-map',
+                    outputValues: [
+                      'ok',
+                      'low',
+                      'empty',
+                      'full',
+                      'replace',
+                    ],
+                    unmapped: null,
+                  },
                 ],
               },
             ],
@@ -236,10 +278,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
           {
             kind: 'binary',
             transformKinds: [],
+            transforms: [],
           },
           {
             kind: 'switch',
             transformKinds: [],
+            transforms: [],
           },
         ],
         sourceReport: {
@@ -255,6 +299,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
         edges: [
           'rising',
         ],
+        defaultEdge: 'rising',
         timestampPath: 'lastPressedAt',
         counterPath: 'pressCountSinceStart',
         highWater: 'composer-advance',
@@ -289,10 +334,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
           {
             kind: 'binary',
             transformKinds: [],
+            transforms: [],
           },
           {
             kind: 'switch',
             transformKinds: [],
+            transforms: [],
           },
         ],
         sourceReport: {
@@ -352,6 +399,11 @@ export const CAP_CUSTOMIZE_CATALOG = {
             transformKinds: [
               'identity',
             ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
           },
           {
             kind: 'binary',
@@ -359,12 +411,34 @@ export const CAP_CUSTOMIZE_CATALOG = {
               'identity',
               'invert',
             ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+              {
+                kind: 'invert',
+              },
+            ],
           },
           {
             kind: 'numeric',
             requiredUnit: 'W',
             transformKinds: [
               'threshold',
+            ],
+            transforms: [
+              {
+                kind: 'threshold',
+                comparisons: [
+                  'gte',
+                  'lte',
+                ],
+                comparison: 'gte',
+                defaultThreshold: 5,
+                defaultStartDwellMs: 30000,
+                defaultStopDwellMs: 180000,
+                thresholdUnit: 'W',
+              },
             ],
           },
         ],

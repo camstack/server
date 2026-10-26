@@ -71,6 +71,10 @@ export const PulseOverrideDraftSchema = z.object({
   targetId: z.string().min(1),
   enabled: z.boolean(),
   debounceMs: z.number().nonnegative(),
+  edges: z
+    .array(z.enum(['rising', 'button', 'native-event']))
+    .min(1)
+    .optional(),
   sources: z.array(OverrideSourceSchema).min(1),
 })
 export type PulseOverrideDraft = z.infer<typeof PulseOverrideDraftSchema>

@@ -82,6 +82,7 @@ function pulseTarget(): PulseEventCustomizeTarget {
     applyAuthority: { kind: 'composition-claim' },
     eventName: 'onPressed',
     edges: ['rising'],
+    defaultEdge: 'rising',
     timestampPath: 'lastPressedAt',
     counterPath: 'pressCount',
     highWater: 'composer-advance',

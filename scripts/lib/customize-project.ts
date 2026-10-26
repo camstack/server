@@ -12,6 +12,7 @@ import type {
   CustomizeCatalogSource,
   CustomizeCatalogTarget,
   CustomizeCatalogTrait,
+  CustomizeCatalogTransform,
   CustomizeCatalogValueKind,
 } from '../../packages/types/src/capabilities/customize-catalog.ts'
 import {
@@ -23,6 +24,7 @@ import {
 import type {
   CapabilityCustomizeTarget,
   CustomizeSourceSpec,
+  CustomizeTransformSpec,
   EventCustomizeTarget,
   EventSourceSpec,
   KeyedArrayCustomizeTarget,
@@ -32,6 +34,7 @@ import type {
   ScalarCustomizeTarget,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
 import type { CustomizeCapView } from './customize-declaration.ts'
+import { assertProjectedParameters } from './customize-parameters.ts'
 import { arrayElement, isValueLeaf, resolveCustomizePath } from './customize-path.ts'
 
 type Schema = z.ZodType
@@ -56,11 +59,13 @@ export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry 
   if (spec === undefined || runtime === undefined) {
     throw new Error(`customize catalog: ${view.capName} has nothing to project`)
   }
-  return {
-    version: 1,
+  const entry = {
+    version: 1 as const,
     targets: spec.targets.map((target) => projectTarget(view, target, runtime)),
     advancedParameters: projectAdvancedParameters(view, runtime),
   }
+  assertProjectedParameters(view.capName, spec, entry)
+  return entry
 }
 
 function projectAdvancedParameters(
@@ -168,6 +173,7 @@ function projectEvent(
     return {
       ...shared,
       edges: target.edges,
+      defaultEdge: target.defaultEdge,
       timestampPath: target.timestampPath,
       counterPath: target.counterPath,
       highWater: target.highWater,
@@ -245,11 +251,46 @@ function projectDeclaredSource(source: CustomizeSourceSpec): CustomizeCatalogSou
       ? { requiredUnit: source.requiredUnit }
       : {}),
     transformKinds: source.transforms.map((transform) => transform.kind),
+    transforms: source.transforms.map(projectTransform),
+  }
+}
+
+function projectTransform(transform: CustomizeTransformSpec): CustomizeCatalogTransform {
+  switch (transform.kind) {
+    case 'identity':
+    case 'invert':
+      return { kind: transform.kind }
+    case 'threshold':
+      return {
+        kind: 'threshold',
+        comparisons: transform.comparisons,
+        comparison: transform.comparison,
+        defaultThreshold: transform.defaultThreshold,
+        defaultStartDwellMs: transform.defaultStartDwellMs,
+        defaultStopDwellMs: transform.defaultStopDwellMs,
+        ...(transform.thresholdUnit !== undefined
+          ? { thresholdUnit: transform.thresholdUnit }
+          : {}),
+      }
+    case 'linear':
+      return {
+        kind: 'linear',
+        defaultScale: transform.defaultScale,
+        defaultOffset: transform.defaultOffset,
+        ...(transform.clampMin !== undefined ? { clampMin: transform.clampMin } : {}),
+        ...(transform.clampMax !== undefined ? { clampMax: transform.clampMax } : {}),
+      }
+    case 'enum-map':
+      return {
+        kind: 'enum-map',
+        outputValues: transform.outputValues,
+        unmapped: transform.unmapped,
+      }
   }
 }
 
 function projectEventSource(source: EventSourceSpec): CustomizeCatalogSource {
-  return { kind: source.kind, transformKinds: [] }
+  return { kind: source.kind, transformKinds: [], transforms: [] }
 }
 
 function requireLeaf(

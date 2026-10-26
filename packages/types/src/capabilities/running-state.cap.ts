@@ -75,6 +75,7 @@ const runningCustomize = {
           transforms: [
             {
               kind: 'threshold',
+              comparisons: ['gte', 'lte'],
               comparison: 'gte',
               defaultThreshold: RUNNING_POWER_THRESHOLD_WATTS,
               defaultStartDwellMs: RUNNING_POWER_START_DELAY_MS,

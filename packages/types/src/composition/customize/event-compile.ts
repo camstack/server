@@ -4,6 +4,7 @@
  * authority is that list, not a claim on `detected`.
  */
 import type { CustomizeCatalogTarget } from '../../capabilities/customize-catalog.js'
+import type { CustomizeEventEdge } from '../../capabilities/customize-spec.js'
 import { CAP_CUSTOMIZE_CATALOG } from '../../generated/customize-catalog.js'
 import type { CustomizeCatalog } from '../../capabilities/customize-catalog.js'
 import type {
@@ -66,13 +67,16 @@ export function compilePulseOverride(
   ) {
     return fail('path')
   }
-  if (!(target.edges ?? []).includes('rising')) return fail('edge')
+  const edges = chosenEdges(input.draft.edges, target)
+  if (edges === null) return fail('edge')
   const pairs = pairSources(input)
   if (!pairs.ok) return pairs
   if (pairs.value.length === 0) return fail('sources')
   const debounce = unsignedToken(input.draft.debounceMs)
   if (debounce === null) return fail('debounce')
   const ordered = pairs.value.toSorted((a, b) => pairKey(a).localeCompare(pairKey(b)))
+  const calls = edgeCalls(edges, ordered.length, debounce)
+  if (calls === null) return fail('edge')
   return {
     ok: true,
     value: {
@@ -80,7 +84,7 @@ export function compilePulseOverride(
       cap: input.draft.cap,
       enabled: input.draft.enabled,
       fields: {
-        [timestampPath]: expression(pulseExpr(ordered.length, debounce), pulseBindings(ordered)),
+        [timestampPath]: expression(pulseExpr(calls), pulseBindings(ordered)),
         [counterPath]: expression(`count(${timestampPath})`, {
           [timestampPath]: fromRead(input.device, input.draft.cap, timestampPath),
         }),
@@ -142,12 +146,40 @@ function pairKey(pair: PulsePair): string {
   return `${pair.source.addonId}/${pair.source.stableId}#${pair.source.cap}#${pair.source.fieldPath}`
 }
 
-function pulseExpr(count: number, debounce: string): string {
-  const roses: string[] = []
+function chosenEdges(
+  draftEdges: readonly CustomizeEventEdge[] | undefined,
+  target: CustomizeCatalogTarget,
+): readonly CustomizeEventEdge[] | null {
+  const allowed = target.edges ?? []
+  const chosen = draftEdges ?? (target.defaultEdge !== undefined ? [target.defaultEdge] : [])
+  if (chosen.length === 0) return null
+  if (chosen.some((edge) => !allowed.includes(edge))) return null
+  return chosen
+}
+
+function edgeCalls(
+  edges: readonly CustomizeEventEdge[],
+  count: number,
+  debounce: string,
+): readonly string[] | null {
+  const calls: string[] = []
   for (let index = 0; index < count; index += 1) {
-    roses.push(`rose(active${index}, changed${index}, ${debounce})`)
+    for (const edge of edges) {
+      const call = edgeCall(edge, index, debounce)
+      if (call === null) return null
+      calls.push(call)
+    }
   }
-  return `latest(${roses.join(', ')})`
+  return calls
+}
+
+function edgeCall(edge: CustomizeEventEdge, index: number, debounce: string): string | null {
+  if (edge === 'rising') return `rose(active${index}, changed${index}, ${debounce})`
+  return null
+}
+
+function pulseExpr(calls: readonly string[]): string {
+  return `latest(${calls.join(', ')})`
 }
 
 function pulseBindings(pairs: readonly PulsePair[]): CompositionExpressionSource['bindings'] {

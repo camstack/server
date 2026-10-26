@@ -16,10 +16,37 @@ import type {
 
 export type CustomizeCatalogValueKind = 'boolean' | 'number' | 'string' | 'enum'
 
+export type CustomizeCatalogTransform =
+  | { readonly kind: 'identity' }
+  | { readonly kind: 'invert' }
+  | {
+      readonly kind: 'threshold'
+      readonly comparisons: readonly ('gte' | 'lte')[]
+      readonly comparison: 'gte' | 'lte'
+      readonly defaultThreshold: number
+      readonly defaultStartDwellMs: number
+      readonly defaultStopDwellMs: number
+      readonly thresholdUnit?: string
+    }
+  | {
+      readonly kind: 'linear'
+      readonly defaultScale: number
+      readonly defaultOffset: number
+      readonly clampMin?: number
+      readonly clampMax?: number
+    }
+  | {
+      readonly kind: 'enum-map'
+      readonly outputValues: readonly string[]
+      readonly unmapped: string | null
+    }
+
 export interface CustomizeCatalogSource {
   readonly kind: string
   readonly valueKinds?: readonly CustomizeValueKind[]
   readonly transformKinds: readonly string[]
+  /** Every declared parameter, including its default. The editor reads only this. */
+  readonly transforms: readonly CustomizeCatalogTransform[]
   readonly requiredUnit?: string
 }
 
@@ -62,6 +89,7 @@ export interface CustomizeCatalogTarget {
   readonly applyAuthority?: CustomizeApplyAuthority
   readonly eventName?: string
   readonly edges?: readonly CustomizeEventEdge[]
+  readonly defaultEdge?: CustomizeEventEdge
   readonly timestampPath?: string
   readonly counterPath?: string
   readonly highWater?: 'composer-advance'

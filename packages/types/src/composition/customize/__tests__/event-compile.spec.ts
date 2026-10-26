@@ -74,6 +74,52 @@ describe('compilePulseOverride', () => {
     expect(decoded?.draft.debounceMs).toBe(2_000)
   })
 
+  it('refuses an edge the declaration does not allow instead of emitting rose', () => {
+    const compiled = compilePulseOverride({
+      draft: {
+        kind: 'pulse',
+        cap: 'doorbell',
+        targetId: 'pressed',
+        enabled: true,
+        debounceMs: 2_000,
+        edges: ['button'],
+        sources: [SWITCH],
+      },
+      device: CAMERA_101,
+      changedAtFields: ['lastChangedAt'],
+    })
+    expect(compiled.ok).toBe(false)
+    if (compiled.ok) return
+    expect(compiled.reason).toBe('edge')
+  })
+
+  it('emits rose once per source when the chosen edge is rising', () => {
+    const second = {
+      addonId: GATE_SENSOR.addonId,
+      stableId: GATE_SENSOR.stableId,
+      cap: 'binary',
+      fieldPath: 'on',
+    }
+    const compiled = compilePulseOverride({
+      draft: {
+        kind: 'pulse',
+        cap: 'doorbell',
+        targetId: 'pressed',
+        enabled: true,
+        debounceMs: 2_000,
+        edges: ['rising'],
+        sources: [SWITCH, second],
+      },
+      device: CAMERA_101,
+      changedAtFields: ['lastChangedAt', 'lastChangedAt'],
+    })
+    expect(compiled.ok).toBe(true)
+    if (!compiled.ok) return
+    expect(compiled.value.fields.lastPressedAt).toMatchObject({
+      expr: 'latest(rose(active0, changed0, 2000), rose(active1, changed1, 2000))',
+    })
+  })
+
   it('decodes a stored pulse whose keys the hub wrote in another order', () => {
     const compiled = compilePulseOverride({
       draft: {

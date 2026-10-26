@@ -687,8 +687,12 @@ function judgeEdges(
   view: CustomizeCapView,
   target: EventCustomizeTarget & { readonly shape: 'pulse' },
 ): readonly CustomizeViolation[] {
-  if (target.edges.length === 0)
+  if (target.edges.length === 0) {
     return [fail(view, target.id, 'empty-edges', 'a pulse names no edge')]
+  }
+  if (!target.edges.includes(target.defaultEdge)) {
+    return [fail(view, target.id, 'default-edge', 'defaultEdge is not one of the allowed edges')]
+  }
   const needsLevel = target.edges.includes('rising') || target.edges.includes('button')
   const hasLevel = target.sources.some(
     (source) => source.kind === 'binary' || source.kind === 'switch',
@@ -815,8 +819,13 @@ function transformRange(transform: CustomizeTransformSpec): string | undefined {
     return undefined
   }
   if (transform.kind === 'threshold') {
-    if (transform.defaultStartDwellMs < 0 || transform.defaultStopDwellMs < 0)
+    if (transform.comparisons.length === 0) return 'threshold names no comparison'
+    if (!transform.comparisons.includes(transform.comparison)) {
+      return 'threshold comparison is not one of comparisons'
+    }
+    if (transform.defaultStartDwellMs < 0 || transform.defaultStopDwellMs < 0) {
       return 'threshold dwell is negative'
+    }
   }
   return undefined
 }

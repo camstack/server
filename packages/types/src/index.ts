@@ -1227,6 +1227,7 @@ export type {
   CustomizeCatalogField,
   CustomizeCatalogSource,
   CustomizeCatalogTarget,
+  CustomizeCatalogTransform,
 } from './capabilities/customize-catalog.js'
 export {
   compositionFillStatus,
@@ -1240,6 +1241,7 @@ export type {
   CapabilityCustomizeSpec,
   CapabilityCustomizeTarget,
   CustomizeCardinality,
+  CustomizeEventEdge,
   EventCustomizeTarget,
   PulseEventCustomizeTarget,
   SpanEventCustomizeTarget,

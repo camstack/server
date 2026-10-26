@@ -2484,7 +2484,7 @@
 
 ### `doorbell` → `doorbell.*`
 
-- **Source:** `packages/types/src/capabilities/doorbell.cap.ts:70`
+- **Source:** `packages/types/src/capabilities/doorbell.cap.ts:71`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `button, camera`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IDoorbellProvider`
@@ -3930,7 +3930,7 @@
 
 ### `running-state` → `runningState.*`
 
-- **Source:** `packages/types/src/capabilities/running-state.cap.ts:104`
+- **Source:** `packages/types/src/capabilities/running-state.cap.ts:105`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, light, siren, switch, sensor, thermostat, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, container, image, pet-feeder, dishwasher`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IRunningStateProvider`

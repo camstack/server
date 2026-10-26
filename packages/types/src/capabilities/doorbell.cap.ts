@@ -20,6 +20,7 @@ const doorbellCustomize = {
       applyAuthority: { kind: 'composition-claim' },
       eventName: 'onPressed',
       edges: ['rising'],
+      defaultEdge: 'rising',
       timestampPath: 'lastPressedAt',
       counterPath: 'pressCountSinceStart',
       highWater: 'composer-advance',
