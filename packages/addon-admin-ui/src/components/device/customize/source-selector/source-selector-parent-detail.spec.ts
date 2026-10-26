@@ -51,9 +51,9 @@ describe('compatiblePickerItems', () => {
 
 describe('sourceRowLabel', () => {
   it('names the only motion child as its container', () => {
-    const parent = named(399, 'Sensore movimento veranda', 'container', null)
+    const parent = named(399, 'Porch motion sensor', 'container', null)
     const motion = named(301, 'Motion', 'sensor', 399, 'motion-sensor')
-    expect(sourceRowLabel(motion, [parent, motion])).toBe('Sensore movimento veranda')
-    expect(sourceRowLabel(parent, [parent, motion])).toBe('Sensore movimento veranda')
+    expect(sourceRowLabel(motion, [parent, motion])).toBe('Porch motion sensor')
+    expect(sourceRowLabel(parent, [parent, motion])).toBe('Porch motion sensor')
   })
 })

@@ -63,7 +63,7 @@ const device = (id: number, name: string, stableId: string, addonId: string, onl
   metadata: {},
 })
 
-const HELPER = device(910, 'Veranda', 'composed-blk-veranda', 'composer', true)
+const HELPER = device(910, 'Front door', 'composed-blk-veranda', 'composer', true)
 const PORCH = device(911, 'Porch', 'sensor.porch', 'provider-homeassistant', true)
 const GARDEN = device(912, 'Garden', 'sensor.garden', 'provider-homeassistant', false)
 const LIGHTS = {
@@ -87,7 +87,7 @@ const DESK = {
 
 const BLOCK = {
   id: 'blk-veranda',
-  name: 'Veranda',
+  name: 'Front door',
   code: '',
   enabled: true,
   placement: 'hub',

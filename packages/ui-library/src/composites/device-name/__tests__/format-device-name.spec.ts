@@ -1,5 +1,5 @@
 /**
- * The ten devices from the operator's hub (2026-10-26), both locales.
+ * Ten device shapes, both locales.
  * A wrong short noun ("Sensore di movimento" beside a container already
  * called "Sensore movimento") fails here.
  */
@@ -19,198 +19,198 @@ function row(partial: DeviceNameFields): DeviceNameFields {
 }
 
 const motionParent = row({
-  id: 3297,
-  name: 'Sensore movimento veranda',
+  id: 201,
+  name: 'Porch motion sensor',
   type: 'container',
-  stableId: 'p3297',
+  stableId: 'p201',
   parentDeviceId: null,
 })
 const motion = row({
-  id: 3299,
+  id: 202,
   name: 'Motion',
   type: 'sensor',
   role: 'motion-sensor',
-  parentDeviceId: 3297,
-  stableId: 'm3299',
-  location: 'Veranda',
+  parentDeviceId: 201,
+  stableId: 'm202',
+  location: 'Porch',
 })
 const battery = row({
-  id: 3298,
+  id: 203,
   name: 'Battery',
   type: 'sensor',
   role: 'battery-sensor',
-  parentDeviceId: 3297,
-  stableId: 'b3298',
+  parentDeviceId: 201,
+  stableId: 'b203',
 })
 const illumination = row({
-  id: 3300,
+  id: 204,
   name: 'Illumination',
   type: 'sensor',
   role: 'ambient-light-sensor',
-  parentDeviceId: 3297,
-  stableId: 'i3300',
+  parentDeviceId: 201,
+  stableId: 'i204',
 })
 const update = row({
-  id: 3301,
+  id: 205,
   name: 'Update',
   type: 'update',
-  parentDeviceId: 3297,
-  stableId: 'u3301',
+  parentDeviceId: 201,
+  stableId: 'u205',
 })
 const motionFamily = [motion, battery, illumination, update]
 
 const robot = row({
-  id: 4384,
-  name: 'Robot piano terra',
+  id: 211,
+  name: 'Garden robot',
   type: 'container',
-  stableId: 'r4384',
+  stableId: 'r211',
   parentDeviceId: null,
 })
 const vacuum = row({
-  id: 4385,
-  name: 'Robot piano terra',
+  id: 212,
+  name: 'Garden robot',
   type: 'vacuum',
-  parentDeviceId: 4384,
-  stableId: 'v4385',
+  parentDeviceId: 211,
+  stableId: 'v212',
 })
 const robotCamera = row({
-  id: 4878,
-  name: 'Robot piano terra Camera',
+  id: 213,
+  name: 'Garden robot Camera',
   type: 'camera',
-  parentDeviceId: 4384,
-  stableId: 'c4878',
+  parentDeviceId: 211,
+  stableId: 'c213',
 })
 const robotSwitch = row({
-  id: 4879,
-  name: 'Robot piano terra ch1',
+  id: 214,
+  name: 'Garden robot ch1',
   type: 'switch',
-  parentDeviceId: 4384,
-  stableId: 's4879',
+  parentDeviceId: 211,
+  stableId: 's214',
 })
 const robotFamily = [vacuum, robotCamera, robotSwitch]
 
 const switchParent = row({
-  id: 3395,
-  name: 'Switch luci terrazza terra',
+  id: 221,
+  name: 'Porch light switch',
   type: 'container',
-  stableId: 'p3395',
+  stableId: 'p221',
   parentDeviceId: null,
 })
 const terraceLights = row({
-  id: 3396,
-  name: 'Luci terrazza terra',
+  id: 222,
+  name: 'Porch lights',
   type: 'switch',
-  parentDeviceId: 3395,
-  stableId: 'c3396',
+  parentDeviceId: 221,
+  stableId: 'c222',
 })
 
 const windowParent = row({
-  id: 3239,
-  name: 'Sensore contatto finestra veranda',
+  id: 231,
+  name: 'Porch window contact',
   type: 'container',
-  stableId: 'w3239',
+  stableId: 'w231',
   parentDeviceId: null,
 })
 const temperature = row({
-  id: 3241,
+  id: 232,
   name: 'Temperatura',
   type: 'sensor',
   role: 'temperature-sensor',
-  parentDeviceId: 3239,
-  stableId: 't3241',
+  parentDeviceId: 231,
+  stableId: 't232',
 })
 const contact = row({
-  id: 3243,
-  name: 'Sensore contatto finestra veranda',
+  id: 233,
+  name: 'Porch window contact',
   type: 'sensor',
   role: 'contact-sensor',
-  parentDeviceId: 3239,
-  stableId: 'c3243',
+  parentDeviceId: 231,
+  stableId: 'c233',
 })
 const windowBattery = row({
-  id: 3242,
+  id: 234,
   name: 'Batteria',
   type: 'sensor',
   role: 'battery-sensor',
-  parentDeviceId: 3239,
-  stableId: 'b3242',
+  parentDeviceId: 231,
+  stableId: 'b234',
 })
 const lastSeen = row({
-  id: 3244,
+  id: 235,
   name: 'Last seen',
   type: 'sensor',
   role: 'datetime-sensor',
-  parentDeviceId: 3239,
-  stableId: 'l3244',
+  parentDeviceId: 231,
+  stableId: 'l235',
 })
 const identify = row({
-  id: 3245,
+  id: 236,
   name: 'Identifica',
   type: 'button',
-  parentDeviceId: 3239,
-  stableId: 'i3245',
+  parentDeviceId: 231,
+  stableId: 'i236',
 })
 const windowFamily = [temperature, contact, windowBattery, lastSeen, identify]
 
 const porchCamera = row({
-  id: 584,
-  name: 'Videocamera veranda',
+  id: 101,
+  name: 'Porch camera',
   type: 'camera',
-  stableId: 'cam584',
+  stableId: 'cam101',
   parentDeviceId: null,
 })
 const siren = row({
-  id: 585,
-  name: 'Videocamera veranda Siren',
+  id: 102,
+  name: 'Porch camera Siren',
   type: 'siren',
-  parentDeviceId: 584,
-  stableId: 'sir585',
+  parentDeviceId: 101,
+  stableId: 'sir102',
 })
 
 const climateParent = row({
-  id: 554,
-  name: 'Climatizzatore camera Daniel',
+  id: 241,
+  name: 'Bedroom climate unit',
   type: 'container',
-  stableId: 'ac554',
+  stableId: 'ac241',
   parentDeviceId: null,
-  primaryChildEntityId: 'climate555',
+  primaryChildEntityId: 'climate242',
 })
 const climate = row({
-  id: 555,
-  name: 'Climatizzatore camera Daniel',
+  id: 242,
+  name: 'Bedroom climate unit',
   type: 'climate',
-  parentDeviceId: 554,
-  stableId: 'climate555',
+  parentDeviceId: 241,
+  stableId: 'climate242',
 })
 const climateLight = row({
-  id: 556,
+  id: 243,
   name: 'Light',
   type: 'light',
-  parentDeviceId: 554,
-  stableId: 'l556',
+  parentDeviceId: 241,
+  stableId: 'l243',
 })
 const climateFamily = [climate, climateLight]
 
 const gateway = row({
-  id: 289,
-  name: 'Ecowitt Gateway',
+  id: 251,
+  name: 'Weather station',
   type: 'container',
-  stableId: 'e289',
+  stableId: 'e251',
   parentDeviceId: null,
 })
 const gatewayChild = row({
-  id: 290,
-  name: 'Ecowitt Gateway — gateway',
+  id: 252,
+  name: 'Weather station — gateway',
   type: 'container',
-  parentDeviceId: 289,
-  stableId: 'g290',
+  parentDeviceId: 251,
+  stableId: 'g252',
 })
 const weather = row({
-  id: 291,
-  name: 'Ecowitt Gateway — outdoor',
+  id: 253,
+  name: 'Weather station — outdoor',
   type: 'weather',
-  parentDeviceId: 289,
-  stableId: 'w291',
+  parentDeviceId: 251,
+  stableId: 'w253',
 })
 const gatewayFamily = [gatewayChild, weather]
 
@@ -229,119 +229,119 @@ function bind(
 }
 
 const IT: Record<number, NameCase> = {
-  3299: {
-    id: 3299,
-    compact: 'Sensore movimento veranda',
-    full: 'Sensore movimento veranda · Movimento',
+  202: {
+    id: 202,
+    compact: 'Porch motion sensor',
+    full: 'Porch motion sensor · Movimento',
     nested: 'Movimento',
   },
-  3298: {
-    id: 3298,
-    compact: 'Sensore movimento veranda · Batteria',
-    full: 'Sensore movimento veranda · Batteria',
+  203: {
+    id: 203,
+    compact: 'Porch motion sensor · Batteria',
+    full: 'Porch motion sensor · Batteria',
     nested: 'Batteria',
   },
-  4878: {
-    id: 4878,
-    compact: 'Robot piano terra · Telecamera',
-    full: 'Robot piano terra · Telecamera',
+  213: {
+    id: 213,
+    compact: 'Garden robot · Telecamera',
+    full: 'Garden robot · Telecamera',
     nested: 'Telecamera',
   },
-  4385: {
-    id: 4385,
-    compact: 'Robot piano terra',
-    full: 'Robot piano terra',
+  212: {
+    id: 212,
+    compact: 'Garden robot',
+    full: 'Garden robot',
     nested: 'Aspirapolvere',
   },
-  3396: {
-    id: 3396,
-    compact: 'Switch luci terrazza terra',
-    full: 'Switch luci terrazza terra · Luci terrazza terra',
-    nested: 'Luci terrazza terra',
+  222: {
+    id: 222,
+    compact: 'Porch light switch',
+    full: 'Porch light switch · Porch lights',
+    nested: 'Porch lights',
   },
-  3241: {
-    id: 3241,
-    compact: 'Sensore contatto finestra veranda · Temperatura',
-    full: 'Sensore contatto finestra veranda · Temperatura',
+  232: {
+    id: 232,
+    compact: 'Porch window contact · Temperatura',
+    full: 'Porch window contact · Temperatura',
     nested: 'Temperatura',
   },
-  3243: {
-    id: 3243,
-    compact: 'Sensore contatto finestra veranda',
-    full: 'Sensore contatto finestra veranda',
+  233: {
+    id: 233,
+    compact: 'Porch window contact',
+    full: 'Porch window contact',
     nested: 'Contatto',
   },
-  585: {
-    id: 585,
-    compact: 'Videocamera veranda · Sirena',
-    full: 'Videocamera veranda · Sirena',
+  102: {
+    id: 102,
+    compact: 'Porch camera · Sirena',
+    full: 'Porch camera · Sirena',
     nested: 'Sirena',
   },
-  555: {
-    id: 555,
-    compact: 'Climatizzatore camera Daniel',
-    full: 'Climatizzatore camera Daniel',
+  242: {
+    id: 242,
+    compact: 'Bedroom climate unit',
+    full: 'Bedroom climate unit',
     nested: 'Condizionatore',
   },
-  290: {
-    id: 290,
-    compact: 'Ecowitt Gateway · gateway',
-    full: 'Ecowitt Gateway · gateway',
+  252: {
+    id: 252,
+    compact: 'Weather station · gateway',
+    full: 'Weather station · gateway',
     nested: 'gateway',
   },
 }
 
 const EN: Record<number, NameCase> = {
-  3299: {
-    id: 3299,
-    compact: 'Sensore movimento veranda',
-    full: 'Sensore movimento veranda · Motion',
+  202: {
+    id: 202,
+    compact: 'Porch motion sensor',
+    full: 'Porch motion sensor · Motion',
     nested: 'Motion',
   },
-  3298: {
-    id: 3298,
-    compact: 'Sensore movimento veranda · Battery',
-    full: 'Sensore movimento veranda · Battery',
+  203: {
+    id: 203,
+    compact: 'Porch motion sensor · Battery',
+    full: 'Porch motion sensor · Battery',
     nested: 'Battery',
   },
-  4878: {
-    id: 4878,
-    compact: 'Robot piano terra · Camera',
-    full: 'Robot piano terra · Camera',
+  213: {
+    id: 213,
+    compact: 'Garden robot · Camera',
+    full: 'Garden robot · Camera',
     nested: 'Camera',
   },
-  4385: {
-    id: 4385,
-    compact: 'Robot piano terra',
-    full: 'Robot piano terra',
+  212: {
+    id: 212,
+    compact: 'Garden robot',
+    full: 'Garden robot',
     nested: 'Vacuum',
   },
-  3396: IT[3396]!,
-  3241: {
-    id: 3241,
-    compact: 'Sensore contatto finestra veranda · Temperature',
-    full: 'Sensore contatto finestra veranda · Temperature',
+  222: IT[222]!,
+  232: {
+    id: 232,
+    compact: 'Porch window contact · Temperature',
+    full: 'Porch window contact · Temperature',
     nested: 'Temperature',
   },
-  3243: {
-    id: 3243,
-    compact: 'Sensore contatto finestra veranda',
-    full: 'Sensore contatto finestra veranda',
+  233: {
+    id: 233,
+    compact: 'Porch window contact',
+    full: 'Porch window contact',
     nested: 'Contact',
   },
-  585: {
-    id: 585,
-    compact: 'Videocamera veranda · Siren',
-    full: 'Videocamera veranda · Siren',
+  102: {
+    id: 102,
+    compact: 'Porch camera · Siren',
+    full: 'Porch camera · Siren',
     nested: 'Siren',
   },
-  555: {
-    id: 555,
-    compact: 'Climatizzatore camera Daniel',
-    full: 'Climatizzatore camera Daniel',
+  242: {
+    id: 242,
+    compact: 'Bedroom climate unit',
+    full: 'Bedroom climate unit',
     nested: 'Climate',
   },
-  290: IT[290]!,
+  252: IT[252]!,
 }
 
 const BOUNDS: readonly Bound[] = [
@@ -383,19 +383,19 @@ describe('formatDeviceName — hub examples', () => {
   }
 
   it('with-location on the motion sensor appends the room', () => {
-    expect(label(BOUNDS[0]!, 'with-location', 'it')).toBe('Sensore movimento veranda · Veranda')
+    expect(label(BOUNDS[0]!, 'with-location', 'it')).toBe('Porch motion sensor · Porch')
   })
 
   it('a top-level camera keeps its stored name in every form', () => {
     const nouns = deviceNameNouns('it')
     const context = { parent: null, siblings: [] }
     for (const form of ['compact', 'full', 'nested', 'with-location'] as const) {
-      expect(formatDeviceName(porchCamera, form, context, nouns)).toBe('Videocamera veranda')
+      expect(formatDeviceName(porchCamera, form, context, nouns)).toBe('Porch camera')
     }
   })
 
   it('an operator caption wins over the stock noun', () => {
-    const captioned = { ...motion, display: { label: 'Sala' } }
+    const captioned = { ...motion, display: { label: 'Hall' } }
     const nouns = deviceNameNouns('it')
     expect(
       formatDeviceName(
@@ -404,10 +404,10 @@ describe('formatDeviceName — hub examples', () => {
         { parent: motionParent, siblings: motionFamily },
         nouns,
       ),
-    ).toBe('Sala')
+    ).toBe('Hall')
     expect(
       formatDeviceName(captioned, 'full', { parent: motionParent, siblings: motionFamily }, nouns),
-    ).toBe('Sensore movimento veranda · Sala')
+    ).toBe('Porch motion sensor · Hall')
   })
 
   it('userNamed keeps a stock word as the noun', () => {

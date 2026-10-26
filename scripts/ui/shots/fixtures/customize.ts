@@ -29,7 +29,7 @@ const device = (id: number, name: string, location: string, type: string, isCame
 const FLEET = [
   device(101, 'Driveway', 'Front of house', 'camera', true),
   device(102, 'Garden', 'Front of house', 'camera', true),
-  device(399, 'Sensore movimento veranda', 'Front of house', 'container'),
+  device(399, 'Porch motion sensor', 'Front of house', 'container'),
   {
     ...device(301, 'Motion', 'Front of house', 'sensor'),
     parentDeviceId: 399,

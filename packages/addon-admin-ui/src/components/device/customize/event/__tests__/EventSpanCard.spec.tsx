@@ -25,9 +25,9 @@ const MOTION: CandidateDevice = {
   id: 301,
   name: 'Motion',
   addonId: 'provider-homeassistant',
-  stableId: 'binary_sensor.veranda',
+  stableId: 'binary_sensor.porch',
   type: 'binary_sensor',
-  location: 'Veranda',
+  location: 'Porch',
   isCamera: false,
   integration: null,
   parentDeviceId: 399,
@@ -35,11 +35,11 @@ const MOTION: CandidateDevice = {
 
 const PARENT: CandidateDevice = {
   id: 399,
-  name: 'Sensore movimento veranda',
+  name: 'Porch motion sensor',
   addonId: 'provider-homeassistant',
-  stableId: 'device.veranda',
+  stableId: 'device.porch',
   type: 'hub',
-  location: 'Veranda',
+  location: 'Porch',
   isCamera: false,
   integration: null,
   parentDeviceId: null,
@@ -112,7 +112,7 @@ describe('EventSpanCard', () => {
         }}
       />,
     )
-    expect(screen.getByText('Motion · Sensore movimento veranda')).toBeTruthy()
+    expect(screen.getByText('Porch motion sensor · Motion')).toBeTruthy()
   })
 
   it('does not render an empty reason after the sensors could not be read', () => {

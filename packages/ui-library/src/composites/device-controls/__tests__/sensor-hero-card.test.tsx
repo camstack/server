@@ -110,7 +110,7 @@ describe('SensorHeroCard', () => {
       mockDeviceData = makeDevice({
         id: 910,
         addonId: 'composer',
-        name: 'Veranda',
+        name: 'Porch',
         role: 'temperature-sensor',
       })
       render(<SensorHeroCard trpc={trpc} deviceId={910} features={[]} />)
@@ -124,12 +124,12 @@ describe('SensorHeroCard', () => {
       mockSnapshot = { status: 'success', data: { 'group-status': { included: 1, total: 2 } } }
       mockDeviceData = makeDevice({
         addonId: 'composer',
-        name: 'Veranda',
+        name: 'Porch',
         role: 'temperature-sensor',
       })
       render(<SensorHeroCard trpc={trpc} deviceId={910} features={[]} />)
       expect(screen.queryByText(/Awaiting state/)).toBeNull()
-      expect(screen.getByText('Veranda')).toBeTruthy()
+      expect(screen.getByText('Porch')).toBeTruthy()
     })
   })
 

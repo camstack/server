@@ -12,28 +12,28 @@ import type { DeviceNameFields } from '../format-device-name'
 import { useDeviceLabelById } from '../use-device-label'
 
 const parent: DeviceNameFields = {
-  id: 3297,
-  name: 'Sensore movimento veranda',
+  id: 201,
+  name: 'Porch motion sensor',
   type: 'container',
-  stableId: 'p3297',
+  stableId: 'p201',
   parentDeviceId: null,
 }
 const motion: DeviceNameFields = {
-  id: 3299,
+  id: 202,
   name: 'Motion',
   type: 'sensor',
   role: 'motion-sensor',
-  parentDeviceId: 3297,
-  stableId: 'm3299',
-  location: 'Veranda',
+  parentDeviceId: 201,
+  stableId: 'm202',
+  location: 'Porch',
 }
 const battery: DeviceNameFields = {
-  id: 3298,
+  id: 203,
   name: 'Battery',
   type: 'sensor',
   role: 'battery-sensor',
-  parentDeviceId: 3297,
-  stableId: 'b3298',
+  parentDeviceId: 201,
+  stableId: 'b203',
 }
 
 const italian: UiTextFn = (key, fallback) => {
@@ -59,12 +59,12 @@ describe('DeviceName', () => {
   it('renders the stored name while the fleet has not answered', () => {
     paint(<DeviceName device={motion} form="compact" />, null)
     expect(screen.getByText('Motion')).toBeTruthy()
-    expect(screen.queryByText('#3299')).toBeNull()
+    expect(screen.queryByText('#202')).toBeNull()
   })
 
   it('uses the fleet once it has answered', () => {
     paint(<DeviceName device={motion} form="full" />, [parent, motion, battery])
-    expect(screen.getByText('Sensore movimento veranda · Movimento')).toBeTruthy()
+    expect(screen.getByText('Porch motion sensor · Movimento')).toBeTruthy()
   })
 
   it('a passed parent does not wait for the fleet', () => {
@@ -76,12 +76,12 @@ describe('DeviceName', () => {
   })
 
   it('useDeviceLabelById is #id until the list answers, then the label', () => {
-    paint(<ById id={3299} />, null)
-    expect(screen.getByText('#3299')).toBeTruthy()
+    paint(<ById id={202} />, null)
+    expect(screen.getByText('#202')).toBeTruthy()
   })
 
   it('useDeviceLabelById names a device the list answered with', () => {
-    paint(<ById id={3299} />, [parent, motion, battery])
-    expect(screen.getByText('Sensore movimento veranda')).toBeTruthy()
+    paint(<ById id={202} />, [parent, motion, battery])
+    expect(screen.getByText('Porch motion sensor')).toBeTruthy()
   })
 })

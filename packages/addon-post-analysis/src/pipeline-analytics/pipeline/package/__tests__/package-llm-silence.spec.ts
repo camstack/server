@@ -5,7 +5,7 @@ import {
   type PackageLlmSilenceNote,
 } from '../package-llm-silence.js'
 
-const DEVICE = 615
+const DEVICE = 102
 
 function note(latencyMs: number): PackageLlmSilenceNote {
   return { deviceId: DEVICE, reason: 'timeout', detail: 'timeout', latencyMs }

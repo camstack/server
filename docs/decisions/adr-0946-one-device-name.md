@@ -1,5 +1,5 @@
 ---
-id: DNNN
+id: D946
 title: A device is named by one function, and the stored name is not that string
 status: accepted
 date: 2026-10-26
@@ -12,7 +12,7 @@ applies-to:
 
 ## Context
 
-The same child was painted ten different ways: the stored string, the stored string with the parent prefix cut off, `name · parent`, `parent · name`, the parent alone, and a second line that said "in &lt;parent&gt;" under a title that already named the parent. A motion sensor stored as `Motion` under `Sensore movimento veranda` read as `Motion · Sensore movimento veranda` in a picker and as `Motion` in the device list. Each screen had invented the rule.
+The same child was painted ten different ways: the stored string, the stored string with the parent prefix cut off, `name · parent`, `parent · name`, the parent alone, and a second line that said "in &lt;parent&gt;" under a title that already named the parent. A motion sensor stored as `Motion` under `Porch motion sensor` read as `Motion · Porch motion sensor` in a picker and as `Motion` in the device list. Each screen had invented the rule.
 
 The stored name cannot be rewritten to fix this. It is what the integration reported, what search matches, and what the identity editor changes.
 

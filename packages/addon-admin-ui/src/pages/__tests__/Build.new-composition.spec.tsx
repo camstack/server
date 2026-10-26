@@ -124,7 +124,7 @@ function helperView(): CompositionView {
   return answered(
     block({
       id: 'blk-veranda',
-      name: 'Veranda',
+      name: 'Front door',
       source: { kind: 'composition', composition: compiled.composition },
     }),
     910,

@@ -924,7 +924,7 @@ that rots.
 | D943 | [The product release is its own version line, starting at 0.1.0 beta](adr-0943-the-product-release-is-not-the-npm-version.md) | ✅ accepted | 2026-10-25 |
 | D944 | [Customize attaches a fixed set of extensions; everything else is a built device](adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md) | ✅ accepted (supersedes D941 (derived advanced parameters only; the one card editor stays)) | 2026-10-26 |
 | D945 | [An addon is published when its built output changes, not when a library it bundles changes](adr-0945-an-addon-is-published-when-its-built-output-changes.md) | ✅ accepted | 2026-10-26 |
-| DNNN | [A device is named by one function, and the stored name is not that string](adr-DNNN-one-device-name.md) | ✅ accepted | 2026-10-26 |
+| D946 | [A device is named by one function, and the stored name is not that string](adr-0946-one-device-name.md) | ✅ accepted | 2026-10-26 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

@@ -3,7 +3,7 @@
  *
  * A single timeout is the call's bound doing its job. Three uncertain confirms
  * in a row, with no yes and no no between them, is the provider not answering
- * — the shape camera 615 showed on 2026-10-26 (nine timeouts, zero answers).
+ * — the shape camera 102 showed on 2026-10-26 (nine timeouts, zero answers).
  * A time window would also count a timeout that a later answer already closed.
  * The streak resets on any answer. A further uncertain while the edge is
  * open does not raise again.

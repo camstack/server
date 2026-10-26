@@ -139,7 +139,7 @@ describe('helper template groups', () => {
     const draft = draftForTemplate('temperature')
     expect(draft).not.toBeNull()
     if (draft === null) return
-    const named = { ...draft, name: 'Veranda', aggregate: 'max' as const, members: [porch] }
+    const named = { ...draft, name: 'Front door', aggregate: 'max' as const, members: [porch] }
     expect(withTemplate(named, 'temperature')).toBe(named)
     const next = withTemplate(named, 'humidity')
     expect(next.templateId).toBe('humidity')
@@ -153,7 +153,7 @@ describe('helper template groups', () => {
 describe('editing a stored helper', () => {
   it('reopens the spec as the template, not as an expression', () => {
     const spec = temperature([porch, garden])
-    const draft = draftFromHelper(spec, 'Veranda', 'Porch')
+    const draft = draftFromHelper(spec, 'Front door', 'Porch')
     expect(draft?.templateId).toBe('temperature')
     expect(draft?.aggregate).toBe('mean')
     expect(draft?.members).toEqual([porch, garden])
@@ -172,7 +172,7 @@ describe('editing a stored helper', () => {
 describe('refusals', () => {
   it('shows mixed-quantity by its code and the server reason', () => {
     const text =
-      'core-blocks: the composition "Veranda" was refused — helper.members [mixed-quantity]: a numeric group requires one quantity; members report temperature and humidity'
+      'core-blocks: the composition "Front door" was refused — helper.members [mixed-quantity]: a numeric group requires one quantity; members report temperature and humidity'
     expect(refusalFromMessage(text)).toEqual([
       {
         path: 'helper.members',
