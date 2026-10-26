@@ -1920,6 +1920,9 @@ function AddonActionSelectField({
 
   const params = resolveActionParams(field, values)
   const missingParam = Object.keys(field.paramsFromForm ?? {}).some((k) => params[k] === undefined)
+  const valueKey = field.mapOption.value
+  const labelKey = field.mapOption.label
+  const descKey = field.mapOption.description
 
   // Refresh whenever any `refreshOn` key changes — serialise into a
   // dependency string the useEffect can diff on.
@@ -1927,8 +1930,25 @@ function AddonActionSelectField({
     .map((k) => `${k}=${JSON.stringify(values[k])}`)
     .join('|')
 
+  // Calling the action updates the parent (the mutation goes pending, then
+  // settles). Add integration builds a new `onAction` on that render. Depending
+  // on the function identity re-enters this effect and `setLoading` until React
+  // hits its update limit (#185) — Bosch SHC's discover select loads immediately,
+  // so opening it is enough. Read the latest callback from a ref; reload only
+  // when the inputs that define the request change.
+  const onActionRef = useRef(onAction)
+  onActionRef.current = onAction
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  const paramsRef = useRef(params)
+  paramsRef.current = params
+  const valueRef = useRef(value)
+  valueRef.current = value
+  const hasAction = onAction !== undefined
+
   useEffect(() => {
-    if (!onAction || missingParam) {
+    const run = onActionRef.current
+    if (!run || missingParam) {
       setOptions(null)
       setError(null)
       return
@@ -1936,7 +1956,8 @@ function AddonActionSelectField({
     let cancelled = false
     setLoading(true)
     setError(null)
-    onAction(field.action, field.key, params)
+    const requested = paramsRef.current
+    run(field.action, field.key, requested)
       .then((res) => {
         if (cancelled) return
         // Convention: the action returns an envelope `{<plural>: [...]}` —
@@ -1955,13 +1976,14 @@ function AddonActionSelectField({
           }
         }
         setOptions(list)
+        const current = valueRef.current
         if (
           field.hideWhenFewerThan !== undefined &&
           list.length === 1 &&
-          (typeof value !== 'string' || value.length === 0)
+          (typeof current !== 'string' || current.length === 0)
         ) {
           const only = list[0]?.[valueKey]
-          if (typeof only === 'string' && only.length > 0) onChange(only)
+          if (typeof only === 'string' && only.length > 0) onChangeRef.current(only)
         }
       })
       .catch((err: unknown) => {
@@ -1975,11 +1997,15 @@ function AddonActionSelectField({
     return () => {
       cancelled = true
     }
-  }, [refreshKey, onAction, field.action, field.key])
-
-  const valueKey = field.mapOption.value
-  const labelKey = field.mapOption.label
-  const descKey = field.mapOption.description
+  }, [
+    refreshKey,
+    missingParam,
+    hasAction,
+    field.action,
+    field.key,
+    field.hideWhenFewerThan,
+    valueKey,
+  ])
 
   if (!onAction && field.hideWhenFewerThan !== undefined) return null
   if (
