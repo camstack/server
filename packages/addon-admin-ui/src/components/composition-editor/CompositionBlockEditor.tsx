@@ -7,14 +7,17 @@ import {
   ErrorBox,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
+  useDeviceManagerSetLocation,
 } from '@camstack/ui-library'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CompositionFieldsCardList } from '../device/customize/cards/CompositionFieldsCardList'
-import { skeletonFillStatus } from './build-skeleton'
-import { scalarCardTargets } from '../device/customize/scalar/ScalarOverrideCard'
-import { keyedArrayCardTargets } from '../device/customize/keyed/KeyedArrayCard'
 import { eventCardTargets } from '../device/customize/event/event-targets'
+import { keyedArrayCardTargets } from '../device/customize/keyed/KeyedArrayCard'
+import { scalarCardTargets } from '../device/customize/scalar/ScalarOverrideCard'
+import { skeletonFillStatus } from './build-skeleton'
+import { HelperWizard } from './HelperWizard'
+import { draftFromHelper, isHelperComposition, writeHelper } from './helper-form-model'
 
 export interface CompositionBlockEditorProps {
   readonly blockId: string
@@ -24,6 +27,7 @@ export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps)
   const { t } = useTranslation()
   const read = useCoreBlocksGetComposition({ blockId })
   const update = useCoreBlocksUpdateComposition()
+  const setLocation = useDeviceManagerSetLocation()
   const skipCaps = useMemo(() => {
     const s = new Set<string>()
     for (const { cap } of scalarCardTargets()) s.add(cap)
@@ -45,6 +49,37 @@ export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps)
   if (view === null) return <p>{t('compositionEditor.notFound', { blockId })}</p>
   const composition = coreBlockComposition(view.block)
   if (composition === null) return <p>{t('compositionEditor.notComposition')}</p>
+
+  if (isHelperComposition(composition)) {
+    const helperDraft = draftFromHelper(composition.helper, view.block.name, '')
+    if (helperDraft === null) {
+      return <p role="alert">{t('helper.unreadable')}</p>
+    }
+    const deviceId = view.state.kind === 'answered' ? (view.state.state?.deviceId ?? null) : null
+    return (
+      <HelperWizard
+        initial={helperDraft}
+        start="parameters"
+        saving={update.isPending}
+        onSave={(draft) =>
+          writeHelper(draft, async (next, name) => {
+            await update.mutateAsync({
+              blockId: view.block.id,
+              expectedUpdatedAt: view.block.updatedAt,
+              block: {
+                composition: next,
+                ...(name === '' ? {} : { name }),
+              },
+            })
+            if (deviceId !== null && draft.room.trim() !== '') {
+              await setLocation.mutateAsync({ deviceId, location: draft.room.trim() })
+            }
+            await read.refetch()
+          })
+        }
+      />
+    )
+  }
 
   const fill = skeletonFillStatus(composition)
   const deviceStub = {

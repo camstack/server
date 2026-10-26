@@ -6,8 +6,8 @@
 import type { CameraSensorMode, CustomizeEventEdge } from '@camstack/types'
 import {
   Button,
-  DevicePicker,
   type DeviceListState,
+  DevicePicker,
   ErrorBox,
   Input,
   useDeviceManagerGetWireableFields,
@@ -18,28 +18,22 @@ import { ChevronDown } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCapIndex } from '../assignments/use-cap-index'
+import { keyedFieldFit } from '../keyed/keyed-fit'
 import type { Known } from '../known'
-import { type PickerDevice, toPickerDevices, type WireableCatalog } from '../source-picker-model'
 import { ScalarTransformControls } from '../scalar/ScalarTransformControls'
+import { type ScalarFieldFit, scalarFieldFit } from '../scalar/scalar-fit'
 import {
   defaultScalarTransform,
-  scalarControl,
   type ScalarTransformDraft,
+  scalarControl,
 } from '../scalar/scalar-form'
-import { scalarFieldFit, type ScalarFieldFit } from '../scalar/scalar-fit'
-import { keyedFieldFit } from '../keyed/keyed-fit'
+import { type PickerDevice, toPickerDevices, type WireableCatalog } from '../source-picker-model'
 
 type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>>
-import {
-  groupSourceValues,
-  indexCapsForDestination,
-  partitionSourceDevices,
-  type SourceCandidateDevice,
-  type SourceCompatibility,
-  type SourceDestination,
-} from './source-selector-model'
+
 import { ModeLine } from '../event/event-mode-line'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
 import {
   appendEventPick,
   type EventPickedRow,
@@ -48,6 +42,14 @@ import {
 } from './source-selector-event-add'
 import { EventEdgeField, NumberSecondsField } from './source-selector-event-params'
 import { wireableFieldsForDestination } from './source-selector-fields'
+import {
+  groupSourceValues,
+  indexCapsForDestination,
+  partitionSourceDevices,
+  type SourceCandidateDevice,
+  type SourceCompatibility,
+  type SourceDestination,
+} from './source-selector-model'
 import { compatiblePickerItems } from './source-selector-parent-detail'
 
 export type { EventPickedRow }
@@ -123,6 +125,9 @@ export type SourceSelectorProps =
   | SourceSelectorKeyedProps
   | SourceSelectorFormulaProps
   | SourceSelectorEventProps
+  | SourceSelectorMembersProps
+
+type SingleSelectorProps = Exclude<SourceSelectorProps, SourceSelectorMembersProps>
 
 function listStateOf(
   devices: 'pending' | 'error' | 'success',
@@ -169,6 +174,11 @@ function conversionKey(name: 'threshold' | 'scale' | 'invert' | 'enum-map'): str
 }
 
 export function SourceSelector(props: SourceSelectorProps): ReactNode {
+  if (props.kind === 'members') return <SourceSelectorMembers {...props} />
+  return <SourceSelectorSingle {...props} />
+}
+
+function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
   const [mobileStep, setMobileStep] = useState<'device' | 'value'>('device')
   const [incompatibleOpen, setIncompatibleOpen] = useState(false)
@@ -560,7 +570,7 @@ function fieldFitForRow(
 }
 
 function fieldFit(
-  props: SourceSelectorProps,
+  props: SingleSelectorProps,
   catalog: WireableCatalog,
   snapshot: DeviceSnapshot | null,
 ): ScalarFieldFit | null {

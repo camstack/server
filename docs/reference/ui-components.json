@@ -562,10 +562,10 @@
       "notes": ""
     },
     {
-      "need": "Pick the device and value that feed a Customize extension (or a later helper)",
+      "need": "Pick the device and value that feed a Customize extension, or the members of a group helper",
       "admin": "`SourceSelector` (`components/device/customize/source-selector/SourceSelector.tsx`)",
       "viewer": "—",
-      "notes": "Left column = ui-library `DevicePicker`; behaviour params from the customize catalog (D944)"
+      "notes": "Left column = ui-library `DevicePicker`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944)"
     },
     {
       "need": "Pick a timezone / icon / unit / model",

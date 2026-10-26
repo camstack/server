@@ -4,18 +4,22 @@
 import { COMPOSED_DEVICE_STABLE_ID_PREFIX, DeviceRole, DeviceType } from '@camstack/types'
 import {
   Button,
+  deviceRoleMetaOf,
+  deviceTypeMetaOf,
   Select,
   useCoreBlocksCreateComposition,
   useDeviceManagerListPersistedByAddon,
   useDeviceManagerSetLocation,
   useDeviceManagerSetName,
+  useUiText,
 } from '@camstack/ui-library'
-import { deviceRoleMetaOf, deviceTypeMetaOf, useUiText } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { customizePath } from '../../lib/customization-routes'
 import { buildSkeletonComposition } from './build-skeleton'
+import { HelperWizard } from './HelperWizard'
+import { writeHelper } from './helper-form-model'
 
 const FIELD_CLASS = 'px-1.5 py-0.5 text-[11px] bg-background border border-border rounded'
 
@@ -32,11 +36,75 @@ export function CompositionCreateForm(): ReactNode {
   const [name, setNameValue] = useState('')
   const [room, setRoom] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [mode, setMode] = useState<'choose' | 'blank' | 'helper'>('choose')
 
   const composition = buildSkeletonComposition({ type, role })
 
+  if (mode === 'choose') {
+    return (
+      <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:p-4">
+        <h2 className="text-sm font-semibold">{t('build.customDeviceTab.newComposedDevice')}</h2>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            data-testid="blank-composition"
+            onClick={() => setMode('blank')}
+          >
+            {t('helper.blank')}
+          </Button>
+          <Button data-testid="new-helper" onClick={() => setMode('helper')}>
+            {t('helper.newHelper')}
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
+  if (mode === 'helper') {
+    return (
+      <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:p-4">
+        <Button variant="ghost" size="sm" onClick={() => setMode('choose')}>
+          {t('helper.back')}
+        </Button>
+        <h2 className="text-sm font-semibold">{t('helper.newHelper')}</h2>
+        <HelperWizard
+          initial={null}
+          start="template"
+          saving={create.isPending}
+          onSave={(draft) =>
+            writeHelper(draft, async (composition, name) => {
+              const { block } = await create.mutateAsync({
+                block: {
+                  ...(name === '' ? {} : { name }),
+                  enabled: true,
+                  composition,
+                },
+              })
+              const stableId = `${COMPOSED_DEVICE_STABLE_ID_PREFIX}${block.id}`
+              const refreshed = await fleet.refetch()
+              const rows = refreshed.data ?? fleet.data
+              const row = rows?.find((item) => item.stableId === stableId)
+              if (row !== undefined) {
+                if (name !== '') await setName.mutateAsync({ deviceId: row.id, name })
+                if (draft.room.trim() !== '') {
+                  await setLocation.mutateAsync({ deviceId: row.id, location: draft.room.trim() })
+                }
+                navigate(customizePath(row.id), { replace: true })
+                return
+              }
+              navigate(`/build/compositions/${encodeURIComponent(block.id)}`, { replace: true })
+            })
+          }
+        />
+      </section>
+    )
+  }
+
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:p-4">
+      <Button variant="ghost" size="sm" onClick={() => setMode('choose')}>
+        {t('helper.back')}
+      </Button>
       <h2 className="text-sm font-semibold">{t('build.customDeviceTab.newComposedDevice')}</h2>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-[11px]">

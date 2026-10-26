@@ -11,15 +11,23 @@ import {
   ErrorBox,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
+  useDeviceManagerSetLocation,
+  useDeviceManagerSetName,
 } from '@camstack/ui-library'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
+import { HelperWizard } from '../../composition-editor/HelperWizard'
+import {
+  draftFromHelper,
+  isHelperComposition,
+  writeHelper,
+} from '../../composition-editor/helper-form-model'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
-import { IdentityRow } from './IdentityRow'
-import { scalarCardTargets } from './scalar/ScalarOverrideCard'
-import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
 import { eventCardTargets } from './event/event-targets'
+import { IdentityRow } from './IdentityRow'
+import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
+import { scalarCardTargets } from './scalar/ScalarOverrideCard'
 
 export interface ComposedCustomizeBodyProps {
   readonly device: DeviceInfo
@@ -35,6 +43,8 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     { enabled: blockId !== null },
   )
   const update = useCoreBlocksUpdateComposition()
+  const setName = useDeviceManagerSetName()
+  const setLocation = useDeviceManagerSetLocation()
   const skipCaps = useMemo(() => {
     const s = new Set<string>()
     for (const { cap } of scalarCardTargets()) s.add(cap)
@@ -76,6 +86,42 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   const composition = coreBlockComposition(view.block)
   if (composition === null) {
     return <p className="text-xs text-foreground-subtle">{t('compositionEditor.notComposition')}</p>
+  }
+
+  if (isHelperComposition(composition)) {
+    const helperDraft = draftFromHelper(composition.helper, device.name, device.location ?? '')
+    if (helperDraft === null) {
+      return <p role="alert">{t('helper.unreadable')}</p>
+    }
+    return (
+      <div className="flex flex-col gap-3">
+        <IdentityRow device={device} />
+        <HelperWizard
+          initial={helperDraft}
+          start="parameters"
+          saving={update.isPending}
+          onSave={(draft) =>
+            writeHelper(draft, async (next, name) => {
+              await update.mutateAsync({
+                blockId: view.block.id,
+                expectedUpdatedAt: view.block.updatedAt,
+                block: {
+                  composition: next,
+                  ...(name === '' ? {} : { name }),
+                },
+              })
+              if (name !== '' && name !== device.name) {
+                await setName.mutateAsync({ deviceId: device.id, name })
+              }
+              if (draft.room.trim() !== '' && draft.room.trim() !== (device.location ?? '')) {
+                await setLocation.mutateAsync({ deviceId: device.id, location: draft.room.trim() })
+              }
+              await read.refetch()
+            })
+          }
+        />
+      </div>
+    )
   }
 
   const handle = {

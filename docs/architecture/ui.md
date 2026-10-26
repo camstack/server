@@ -55,7 +55,7 @@ applies-to:
 covers:
   - packages/addon-admin-ui/src/**
   - packages/ui-library/src/**
-last-verified: 2026-10-24
+last-verified: 2026-10-26
 ---
 
 # Admin UI
@@ -660,12 +660,20 @@ unit has another unit in its dimension). Convert unit and a formula bound to
 this device's own value are the old numeric self-transforms; there is no
 separate card. Formula and convert unit open a dialog; there is no step wizard
 and no free text input. Removing the last card entry deletes the block
-(after confirm). Composed devices (`addonId === 'composer'`) use the same
-card editor here, not a separate build route.
-`/build/compositions/new` is the create step (type, role, name, room); after
-create the operator lands on the device Customize tab when the composed row
-exists. `/build/compositions/<id>` is the same card editor when the device is
-not ready yet. Hrefs come only from `lib/customization-routes.ts`.
+(after confirm). A free composition (`addonId === 'composer'`, no `helper`)
+uses that same card editor here. A helper opens as its template instead.
+`/build/compositions/new` starts with a choice: a blank composition (type,
+role, name, room) or a **helper**. A helper is a template, not an expression:
+Readings or Binary sensors, one line of what exclusion does, then the reducer
+(mean / median / min / max / sum, or any / all), name and room, then members
+from the common `SourceSelector` in multi-select, limited to that template's
+device type and catalog field. After create the operator lands on the device
+page. `/build/compositions/<id>` opens a stored helper as that same template
+(`composition.helper`); a free expression (no `helper` key) stays on the card
+editor. The helper's device page shows the output reading and "N of M members
+reporting" from `group-status`, and names the members left out. A save the
+server refuses (`mixed-quantity` and the other named codes) is shown with
+that reason. Hrefs come only from `lib/customization-routes.ts`.
 
 - **Extension dialogs share one source selector (D944 §5).** Battery, motion,
   doorbell, running, consumables and formula bindings pick a device and value

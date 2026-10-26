@@ -49,6 +49,7 @@ describe('CompositionCreateForm', () => {
   it('has no Incomplete badge, and Save opens the new device Customize tab', async () => {
     render(<CompositionCreateForm />)
     expect(screen.queryByText('Incomplete')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Blank composition' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(navigate).toHaveBeenCalledWith('/devices/4700?tab=customize', { replace: true }),

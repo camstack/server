@@ -1,18 +1,19 @@
-import { useNavigate } from 'react-router-dom'
-import { Wifi } from 'lucide-react'
+import { DeviceFeature, DeviceType } from '@camstack/types'
 import {
   DiscoveryPanel,
   DoorbellRecentPanel,
-  WidgetSlot,
   useDoorbellEvents,
   useNetworkQualityGetDeviceStats,
+  WidgetSlot,
 } from '@camstack/ui-library'
-import { DeviceFeature, DeviceType } from '@camstack/types'
-import { DeviceInfoAdapter } from '../overview-adapters/DeviceInfoAdapter'
-import { DeviceNotificationMute } from '../DeviceNotificationMute'
-import { MigrateDeviceCard } from '../MigrateDeviceCard'
-import { ResyncButton } from '../ResyncButton'
+import { Wifi } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { DeviceNotificationMute } from '../DeviceNotificationMute'
+import { HelperGroupStatus } from '../HelperGroupStatus'
+import { MigrateDeviceCard } from '../MigrateDeviceCard'
+import { DeviceInfoAdapter } from '../overview-adapters/DeviceInfoAdapter'
+import { ResyncButton } from '../ResyncButton'
 
 interface OverviewTabProps {
   device: Record<string, unknown>
@@ -92,6 +93,11 @@ export function OverviewTab({ device }: OverviewTabProps) {
 
   return (
     <div className="space-y-5">
+      {device.addonId === 'composer' &&
+        numericId !== null &&
+        typeof device.stableId === 'string' && (
+          <HelperGroupStatus deviceId={numericId} stableId={device.stableId} />
+        )}
       {/* The live stream is now the page-level Hero (left column on
           desktop / first row on mobile) — surfacing it again here
           would render the same WebRTC session twice on every load. */}
