@@ -6,7 +6,6 @@ date: 2026-10-25
 supersedes:
 applies-to:
   - packages/types/src/composition/cards/**
-  - packages/types/src/capabilities/advanced-parameters.ts
   - packages/types/src/capabilities/customize-spec.ts
   - packages/types/src/capabilities/customize-catalog.ts
   - packages/types/src/capabilities/battery.cap.ts
@@ -26,7 +25,6 @@ applies-to:
   - packages/addon-admin-ui/src/components/device/customize/override-row/OverrideFieldRow.tsx
   - packages/addon-admin-ui/src/components/device/customize/override-row/ConvertUnitDialog.tsx
   - packages/addon-admin-ui/src/components/device/customize/override-row/merge-override.ts
-  - packages/addon-admin-ui/src/components/device/customize/CustomizeAdvancedSection.tsx
 ---
 
 ## Context
