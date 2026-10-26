@@ -1,8 +1,9 @@
 import { Input, useIntegrationsGetAvailableTypes } from '@camstack/ui-library'
 import { Loader2, Search, Settings } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { shouldAutofocusSearch } from './search-autofocus'
 
 interface ProviderPickerProps {
   onSelect: (
@@ -25,8 +26,14 @@ export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: Pro
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const { data: providerTypes, isLoading } = useIntegrationsGetAvailableTypes()
+
+  useEffect(() => {
+    if (isLoading || !shouldAutofocusSearch()) return
+    searchRef.current?.focus()
+  }, [isLoading])
 
   const filtered = useMemo(() => {
     const list = providerTypes ?? []
@@ -58,6 +65,7 @@ export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: Pro
           aria-hidden
         />
         <Input
+          ref={searchRef}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

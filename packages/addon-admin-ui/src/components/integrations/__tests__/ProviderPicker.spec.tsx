@@ -4,7 +4,22 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+function setPointer(coarse: boolean): void {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: (query: string) => ({
+      matches: coarse && query.includes('pointer: coarse'),
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  })
+}
 
 const providers = vi.hoisted(() => ({
   list: [
@@ -49,6 +64,11 @@ import { ProviderPicker } from '../ProviderPicker'
 describe('ProviderPicker', () => {
   beforeEach(() => {
     providers.list = providers.list.slice()
+    setPointer(false)
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'matchMedia')
   })
 
   it('renders a 2-column grid of providers and filters by search', () => {
@@ -78,5 +98,24 @@ describe('ProviderPicker', () => {
     const card = screen.getByTestId('provider-pick-provider-reolink')
     expect(card.querySelector('svg')).toBeNull()
     expect(card.textContent).not.toContain('>')
+  })
+
+  it('focuses the search when the picker opens on a fine pointer', () => {
+    render(
+      <MemoryRouter>
+        <ProviderPicker onSelect={vi.fn()} onClose={vi.fn()} />
+      </MemoryRouter>,
+    )
+    expect(document.activeElement).toBe(screen.getByTestId('provider-picker-search'))
+  })
+
+  it('does not focus the search on a coarse pointer', () => {
+    setPointer(true)
+    render(
+      <MemoryRouter>
+        <ProviderPicker onSelect={vi.fn()} onClose={vi.fn()} />
+      </MemoryRouter>,
+    )
+    expect(document.activeElement).not.toBe(screen.getByTestId('provider-picker-search'))
   })
 })

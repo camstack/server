@@ -1683,7 +1683,12 @@
     "search": "Search integrations…",
     "searchProviders": "Search integrations…",
     "settings": "Settings",
-    "toggleHint": "Click to toggle"
+    "toggleHint": "Click to toggle",
+    "open": "Open",
+    "loadFailed": "Integrations could not be loaded.",
+    "viewTable": "Table",
+    "viewGrid": "Grid",
+    "viewLabel": "Layout"
   },
   "ai": {
     "addProfile": "Add profile",

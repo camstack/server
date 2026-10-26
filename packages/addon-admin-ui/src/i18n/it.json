@@ -1683,7 +1683,12 @@
     "search": "Cerca integrazioni…",
     "searchProviders": "Cerca integrazioni…",
     "settings": "Impostazioni",
-    "toggleHint": "Clic per commutare"
+    "toggleHint": "Clic per commutare",
+    "open": "Apri",
+    "loadFailed": "Impossibile caricare le integrazioni.",
+    "viewTable": "Tabella",
+    "viewGrid": "Griglia",
+    "viewLabel": "Vista"
   },
   "serverManagement": {
     "title": "Gestione server",

@@ -17,6 +17,10 @@
  * Page-level "New Integration" wizard is preserved; the legacy
  * "Add Device" + per-section accordion + global type/search filters
  * have moved INTO the nested `<DeviceList>` (Phase 2 Task 12).
+ *
+ * The toolbar switches the list between the table and a card grid. The
+ * choice is remembered in this browser; the table stays the default.
+ * Pending, empty and error are the same in both layouts.
  */
 
 import {
@@ -26,15 +30,23 @@ import {
   type DeviceItemDevice,
   type DeviceItemParent,
   DeviceList,
+  ErrorBox,
   useDeviceManagerListAll,
   useIntegrationsList,
   useSystem,
+  ViewSwitch,
+  type ViewSwitchOption,
 } from '@camstack/ui-library'
-import { Plug, Plus, Radar, RefreshCw } from 'lucide-react'
+import { LayoutGrid, Plug, Plus, Radar, RefreshCw, Table2 } from 'lucide-react'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminPage } from '../components/AdminPage'
+import { IntegrationGrid } from '../components/integrations/integration-grid'
+import {
+  useIntegrationsView,
+  type IntegrationsView,
+} from '../components/integrations/integrations-view-preference'
 import { IntegrationWizard } from '../components/integrations/IntegrationWizard'
 import {
   buildIntegrationColumns,
@@ -74,6 +86,7 @@ export function IntegrationsPage(): ReactNode {
   const system = useSystem()
   const [searchParams] = useSearchParams()
 
+  const [view, setView] = useIntegrationsView()
   const [wizardOpen, setWizardOpen] = useState(false)
   const handleOpenWizard = useCallback(() => setWizardOpen(true), [])
   const handleCloseWizard = useCallback(() => setWizardOpen(false), [])
@@ -114,6 +127,7 @@ export function IntegrationsPage(): ReactNode {
   const {
     data: integrations,
     isLoading: integrationsLoading,
+    isError: integrationsFailed,
     refetch: refetchIntegrations,
   } = useIntegrationsList(undefined)
 
@@ -123,6 +137,7 @@ export function IntegrationsPage(): ReactNode {
   const {
     data: devices,
     isLoading: devicesLoading,
+    isError: devicesFailed,
     refetch: refetchDevices,
   } = useDeviceManagerListAll({ projection: 'slim' })
 
@@ -269,8 +284,17 @@ export function IntegrationsPage(): ReactNode {
     void refetchDevices()
   }, [refetchIntegrations, refetchDevices])
 
-  const isLoading = integrationsLoading || devicesLoading
+  const listFailed = integrationsFailed === true || devicesFailed === true
+  // An unanswered list is not an empty one (D315). `?? []` above is only for
+  // the row map; the empty copy waits until both queries have answered.
+  const awaiting =
+    !listFailed &&
+    (integrationsLoading || devicesLoading || integrations === undefined || devices === undefined)
   const hasIntegrations = integrationList.length > 0
+  const viewOptions: readonly ViewSwitchOption<IntegrationsView>[] = [
+    { id: 'table', label: t('integrations.viewTable', 'Table'), icon: Table2 },
+    { id: 'grid', label: t('integrations.viewGrid', 'Grid'), icon: LayoutGrid },
+  ]
 
   return (
     <AdminPage
@@ -278,13 +302,20 @@ export function IntegrationsPage(): ReactNode {
       title={t('nav.integrations', 'Integrations')}
       actions={
         <>
+          <ViewSwitch
+            ariaLabel={t('integrations.viewLabel', 'Layout')}
+            value={view}
+            onChange={setView}
+            options={viewOptions}
+            testId="integrations-view"
+          />
           <button
             onClick={handleRefresh}
-            disabled={isLoading}
+            disabled={awaiting}
             className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
-            <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-3.5 w-3.5', awaiting && 'animate-spin')} />
           </button>
           <button
             onClick={handleOpenScan}
@@ -304,9 +335,15 @@ export function IntegrationsPage(): ReactNode {
         </>
       }
     >
-      {/* Loading skeleton */}
-      {isLoading && (
-        <div className="space-y-2">
+      {listFailed && (
+        <ErrorBox
+          message={t('integrations.loadFailed', 'Integrations could not be loaded.')}
+          onRetry={handleRefresh}
+        />
+      )}
+
+      {awaiting && (
+        <div className="space-y-2" data-testid="integrations-pending">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -316,8 +353,7 @@ export function IntegrationsPage(): ReactNode {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && !hasIntegrations && (
+      {!listFailed && !awaiting && !hasIntegrations && (
         <div className="flex flex-col items-center py-20 text-foreground-subtle">
           <p className="text-sm">
             {t('integrations.noIntegrationsConfigured', 'No integrations configured.')}
@@ -331,9 +367,7 @@ export function IntegrationsPage(): ReactNode {
         </div>
       )}
 
-      {/* Table — unified generic-mode DeviceList. Each integration row expands
-          to a nested device list filtered to that integration. */}
-      {!isLoading && hasIntegrations && (
+      {!listFailed && !awaiting && hasIntegrations && view === 'table' && (
         <DeviceList
           mode="generic"
           items={tableRows}
@@ -342,6 +376,18 @@ export function IntegrationsPage(): ReactNode {
           columns={integrationColumns}
           onRowClick={onRowClick}
           isExpanded={isExpanded}
+          renderExpanded={renderExpanded}
+          searchPlaceholder={t('integrations.search', { defaultValue: 'Search integrations…' })}
+          emptyLabel={t('integrations.empty', { defaultValue: 'No integrations found.' })}
+        />
+      )}
+
+      {!listFailed && !awaiting && hasIntegrations && view === 'grid' && (
+        <IntegrationGrid
+          rows={tableRows}
+          isExpanded={isExpanded}
+          onToggleExpand={setExpand}
+          onOpen={onRowClick}
           renderExpanded={renderExpanded}
           searchPlaceholder={t('integrations.search', { defaultValue: 'Search integrations…' })}
           emptyLabel={t('integrations.empty', { defaultValue: 'No integrations found.' })}

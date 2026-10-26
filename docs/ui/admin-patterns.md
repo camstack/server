@@ -253,6 +253,14 @@ Log destinations) were a third such table until 2026-10-08 — `AddonCollectionP
 one collapsible row per addon. They are a pill selector now; see
 "Integration pages" below.
 
+`/integrations` keeps that table as the default and offers a card grid beside
+it (`ViewSwitch` in the page toolbar). The choice is remembered in this
+browser under `camstack.admin.integrations.view` (guarded `localStorage`;
+default `table`). A card shows the row's icon, name, provider, status and
+device count, and the row's actions: expand (the nested device list is still
+`DeviceList`) and open (the row click). Pending, empty and error are drawn
+once, above either layout. `DataTable` still does not turn itself into cards.
+
 ### What an export entry shows, and why the rest could go
 
 `DeviceExportPanel`'s device table is device TYPE, NAME, EXPORT and a selection
