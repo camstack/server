@@ -9,6 +9,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@camstack/sdk', () => ({ createSystem: mocks.createSystem }))
 vi.mock('../connection-health', () => ({ reportSdkConnectionState: vi.fn() }))
 vi.mock('../../i18n', () => ({ default: mocks.i18n }))
+vi.mock('../admin-session', () => ({
+  sessionKeeper: () => ({ refreshNow: async () => undefined, ensureFresh: async () => undefined }),
+}))
+vi.mock('../mount', () => ({ hubOrigin: () => 'https://hub.test' }))
 
 describe('backend System language', () => {
   beforeEach(() => {

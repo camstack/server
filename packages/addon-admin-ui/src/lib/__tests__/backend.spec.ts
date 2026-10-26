@@ -22,6 +22,16 @@ vi.mock('../connection-health', () => ({
   reportSdkConnectionState: mocks.reportSdkConnectionState,
 }))
 
+// `backend` is re-imported after `vi.resetModules()` in every test. Its real
+// i18n, session and mount modules are heavy; under a loaded full run that
+// import outlived the 5 s budget, and a timed-out test kept emitting into the
+// next one. None of them is what these tests judge.
+vi.mock('../../i18n', () => ({ default: { language: 'en' } }))
+vi.mock('../admin-session', () => ({
+  sessionKeeper: () => ({ refreshNow: async () => undefined, ensureFresh: async () => undefined }),
+}))
+vi.mock('../mount', () => ({ hubOrigin: () => 'https://hub.test' }))
+
 describe('backend System ownership', () => {
   beforeEach(() => {
     vi.resetModules()
