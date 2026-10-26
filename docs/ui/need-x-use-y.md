@@ -68,5 +68,5 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | Code or JSON shown verbatim | `CodeBlock` | — | |
 | A QR code | `QrCode` | — | |
 | A paged carousel | — | `CarouselPager` | |
-| A chart over time | `TimeSeriesChart`, `StateTimeline`, `BarSeries`, `Sparkline` (D899) | — | One unit per chart on a device surface; slots, never hex; see `admin-patterns.md` |
+| A chart over time | `TimeSeriesChart`, `StateTimeline`, `BarSeries`, `Sparkline` (D899) | — | One unit per chart on a device surface; slots, never hex; the selected point's tooltip is built into the chart (mouse, touch, arrow keys). `Tooltip` is for a control hint. See `admin-patterns.md` |
 | A device's recorded history | `DeviceHistoryView` | — | The device History tab and the camera Live Stats tab are the same component |

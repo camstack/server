@@ -366,6 +366,16 @@ enforces — keep them when you feed it:
   a flat line.
 - **The x axis is WALL TIME**, and charts that answer the same question share
   a cursor (`syncKey`).
+- **The selected point has one tooltip**, drawn by the shared chart host.
+  Mouse hover moves it and leaving the plot hides it. A tap selects the
+  nearest point; a finger drag scrubs along the series (vertical page scroll
+  still works when the gesture starts vertical); a second tap or a tap
+  outside hides it. Arrow keys move the selection while the chart is focused,
+  and the same text is announced (`aria-live`). It stays inside the chart and
+  flips at the edges. A line shows the time and each visible series' value
+  with its unit (the stored base unit, through the quantity formatter and the
+  display preference). A state shows its label and how long that span lasts.
+  A bar shows the bucket's range and its value.
 - **One unit per chart on a device surface.** Several value axes appear only
   where the reader chose what to overlay (System → History).
 - **Pending, absent, empty are three screens** (`pending`, `emptyMessage`, and

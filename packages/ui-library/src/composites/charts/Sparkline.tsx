@@ -4,10 +4,12 @@
  * by (an epoch, a time); the value next to it names what the line is.
  */
 import { useCallback, useMemo, type JSX } from 'react'
+import type { DisplayPreference, ReadingQuantity } from '@camstack/types'
 import type uPlot from 'uplot'
 import { cn } from '../../lib/cn'
 import { resolveChartColor, type ChartChromeToken, type ChartSeriesToken } from './chart-palette'
-import { UPlotHost, type ChartPlotOptions } from './uplot-host'
+import { lineTooltipBody, nearestPointIndex } from './chart-tooltip-model'
+import { UPlotHost, type ChartPlotOptions, type ChartTooltipSpec } from './uplot-host'
 
 export interface SparklinePoint {
   readonly x: number
@@ -26,6 +28,10 @@ export interface SparklineProps {
   readonly widthClassName?: string
   /** Start the value axis at zero (default true). */
   readonly zeroBased?: boolean
+  readonly unit?: string | null
+  readonly quantity?: ReadingQuantity
+  /** Display preference for a base-unit sample in the point tooltip. Default metric. */
+  readonly displayPreference?: DisplayPreference
   readonly className?: string
 }
 
@@ -36,8 +42,30 @@ export function Sparkline({
   height = 32,
   widthClassName = 'w-40',
   zeroBased = true,
+  unit = null,
+  quantity,
+  displayPreference,
   className,
 }: SparklineProps): JSX.Element {
+  const tooltip = useMemo<ChartTooltipSpec>(() => {
+    const xs = points.map((point) => point.x)
+    return {
+      xMin: xs[0] ?? 0,
+      xMax: xs.at(-1) ?? 0,
+      stops: xs,
+      resolve: (dataX) => {
+        const index = nearestPointIndex(xs, dataX)
+        if (index === null) return null
+        const point = points[index]
+        if (point === undefined) return null
+        return lineTooltipBody({
+          timeLabel: String(point.x),
+          preference: displayPreference,
+          series: [{ id: 'value', label: ariaLabel, value: point.v, unit, quantity }],
+        })
+      },
+    }
+  }, [points, ariaLabel, unit, quantity, displayPreference])
   const data = useMemo<uPlot.AlignedData>(
     () => [points.map((p) => p.x), points.map((p) => p.v)],
     [points],
@@ -83,6 +111,9 @@ export function Sparkline({
         data={data}
         height={height}
         inline
+        tooltip={tooltip}
+        kind="spark"
+        label={ariaLabel}
       />
     </span>
   )

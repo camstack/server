@@ -2,6 +2,7 @@
  * The pure half of `TimeSeriesChart`: which series go on which value axis,
  * the aligned data uPlot draws, and what the readout says at an index.
  */
+import type { ReadingQuantity } from '@camstack/types'
 import {
   alignSeries,
   sharedGapSpans,
@@ -20,6 +21,8 @@ export interface TimeSeriesDef {
   readonly label: string
   /** `null` is an unknown unit; series sharing a unit share an axis. */
   readonly unit?: string | null
+  /** Stored base-unit quantity (D944 §4). The tooltip formats through it. */
+  readonly quantity?: ReadingQuantity
   readonly points: readonly TimePoint[]
   /** Categorical slot (`chartSeriesStyle`); the caller keeps it stable across filters. */
   readonly colorIndex: number

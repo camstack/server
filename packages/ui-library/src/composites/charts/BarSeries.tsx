@@ -9,6 +9,7 @@
  * and every bucket is also a real button for keyboard and screen readers.
  */
 import { useCallback, useMemo, useRef, useState, type JSX, type ReactNode } from 'react'
+import type { DisplayPreference } from '@camstack/types'
 import type uPlot from 'uplot'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
@@ -31,8 +32,9 @@ import {
   type BarBucket,
   type BarLayerDef,
 } from './bar-series-model'
+import { barRangeLabel, barTooltipBody, bucketSelectionIndex } from './chart-tooltip-model'
 import type { ChartRange } from './TimeSeriesChart'
-import { UPlotHost, type ChartPlotOptions } from './uplot-host'
+import { UPlotHost, type ChartPlotOptions, type ChartTooltipSpec } from './uplot-host'
 
 export type { BarBucket, BarLayerDef } from './bar-series-model'
 
@@ -45,6 +47,8 @@ export interface BarSeriesProps<TId extends string = string> {
   readonly range: ChartRange
   readonly unit?: string | null
   readonly formatValue?: (v: number, unit: string | null) => string
+  /** Display preference for base-unit samples in the point tooltip. Default metric. */
+  readonly displayPreference?: DisplayPreference
   /** Plot height in px. Default 100 (24 when `compact`). */
   readonly height?: number
   /** Stack the layers (default true for more than one layer). */
@@ -78,6 +82,7 @@ export function BarSeries<TId extends string = string>({
   range,
   unit = null,
   formatValue,
+  displayPreference,
   height,
   stacked,
   showTotal = false,
@@ -111,6 +116,33 @@ export function BarSeries<TId extends string = string>({
   )
   const totals = useMemo(() => bucketTotals(buckets, layers.length), [buckets, layers.length])
   const [cursorIdx, setCursorIdx] = useState<number | null>(null)
+  const tooltip = useMemo<ChartTooltipSpec>(
+    () => ({
+      xMin: range.from,
+      xMax: range.to,
+      stops: buckets.map((bucket) => bucket.t),
+      resolve: (dataX) => {
+        const index = bucketSelectionIndex(buckets, bucketMs, dataX)
+        if (index === null) return null
+        const bucket = buckets[index]
+        if (bucket === undefined) return null
+        return barTooltipBody({
+          rangeLabel: barRangeLabel(bucket.t, bucketMs, range.to - range.from),
+          preference: displayPreference,
+          layers: layers.map((layer, li) => ({
+            id: layer.id,
+            label: layer.label,
+            value: bucket.values[li] ?? null,
+            unit,
+          })),
+        })
+      },
+      onDataX: (dataX) => {
+        setCursorIdx(dataX === null ? null : bucketSelectionIndex(buckets, bucketMs, dataX))
+      },
+    }),
+    [buckets, bucketMs, range, layers, unit, displayPreference],
+  )
 
   const live = useRef({ buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt })
   live.current = { buckets, tops, range, selectedIndex, onSelect, bucketLabel, fmt }
@@ -280,6 +312,9 @@ export function BarSeries<TId extends string = string>({
       buildOptions={buildOptions}
       data={data}
       height={plotHeight}
+      tooltip={tooltip}
+      kind="bars"
+      label={title}
     />
   )
 

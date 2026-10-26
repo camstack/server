@@ -11,6 +11,7 @@
  * for the cross-device History page, where the reader chose the series.
  */
 import { useCallback, useMemo, useRef, useState, type JSX, type ReactNode } from 'react'
+import type { DisplayPreference } from '@camstack/types'
 import type uPlot from 'uplot'
 import { useUiText } from '../../contexts/ui-text'
 import { ChartFrame, ChartPlaceholder, type ChartLegendEntry } from './chart-frame'
@@ -28,14 +29,21 @@ import {
   type ValueAxisSpec,
 } from './chart-uplot'
 import { ChartWindowToggle, type ChartWindowToggleProps } from './chart-window'
+import { lineTooltipBody, nearestPointIndex } from './chart-tooltip-model'
 import {
   buildTimeSeriesModel,
   latestValues,
   readoutAt,
   unitKey,
   type TimeSeriesDef,
+  type TimeSeriesModel,
 } from './time-series-model'
-import { UPlotHost, type ChartPlotOptions, type UPlotCtor } from './uplot-host'
+import {
+  UPlotHost,
+  type ChartPlotOptions,
+  type ChartTooltipSpec,
+  type UPlotCtor,
+} from './uplot-host'
 
 export type { TimeSeriesDef } from './time-series-model'
 
@@ -59,6 +67,8 @@ export interface TimeSeriesChartProps<TId extends string = string> {
   readonly syncKey?: string
   /** Value formatter per unit; default: bytes binary, `%` glued, unit after a space. */
   readonly formatValue?: (v: number, unit: string | null) => string
+  /** Display preference for base-unit samples in the point tooltip. Default metric. */
+  readonly displayPreference?: DisplayPreference
   /** Axis layout per unit; default by unit (°C floats, `%` floors at 10, bytes binary). */
   readonly axisFor?: (unit: string | null) => ValueAxisSpec
   /** Shown when no series has a known value. */
@@ -73,6 +83,48 @@ export interface TimeSeriesChartProps<TId extends string = string> {
 
 const DEFAULT_HEIGHT = 120
 
+function seriesSpan(range: ChartRange | undefined, xs: readonly number[]): number {
+  if (range !== undefined) return range.to - range.from
+  if (xs.length < 2) return 0
+  return (xs[xs.length - 1] ?? 0) - (xs[0] ?? 0)
+}
+
+interface SeriesTooltipInput {
+  readonly model: TimeSeriesModel
+  readonly series: readonly TimeSeriesDef[]
+  readonly range: ChartRange | undefined
+  readonly preference: DisplayPreference | undefined
+  readonly onDataX: (dataX: number | null) => void
+}
+
+function seriesTooltip(input: SeriesTooltipInput): ChartTooltipSpec {
+  const span = seriesSpan(input.range, input.model.xs)
+  return {
+    xMin: input.range?.from ?? input.model.xs[0] ?? 0,
+    xMax: input.range?.to ?? input.model.xs.at(-1) ?? 0,
+    stops: input.model.xs,
+    resolve: (dataX) => {
+      const index = nearestPointIndex(input.model.xs, dataX)
+      if (index === null) return null
+      const at = input.model.xs[index]
+      if (at === undefined) return null
+      const values = readoutAt(input.model, index)
+      return lineTooltipBody({
+        timeLabel: formatCursorTime(at, span),
+        preference: input.preference,
+        series: input.series.map((sample, i) => ({
+          id: sample.id,
+          label: sample.label,
+          value: values[i] ?? null,
+          quantity: sample.quantity,
+          unit: sample.unit ?? null,
+        })),
+      })
+    },
+    onDataX: input.onDataX,
+  }
+}
+
 export function TimeSeriesChart<TId extends string = string>({
   title,
   series,
@@ -82,6 +134,7 @@ export function TimeSeriesChart<TId extends string = string>({
   area = false,
   syncKey,
   formatValue,
+  displayPreference,
   axisFor,
   emptyMessage,
   pending = false,
@@ -251,6 +304,20 @@ export function TimeSeriesChart<TId extends string = string>({
     [optionsKey, fmt, specFor],
   )
 
+  const tooltip = useMemo(
+    () =>
+      seriesTooltip({
+        model,
+        series,
+        range,
+        preference: displayPreference,
+        onDataX: (dataX) => {
+          setCursorIdx(dataX === null ? null : nearestPointIndex(model.xs, dataX))
+        },
+      }),
+    [model, series, range, displayPreference],
+  )
+
   const shown = readoutAt(model, cursorIdx)
   const legend: ChartLegendEntry[] = series.map((s, i) => {
     const style = chartSeriesStyle(s.colorIndex)
@@ -319,7 +386,15 @@ export function TimeSeriesChart<TId extends string = string>({
       placeholder={placeholder}
       className={className}
     >
-      <UPlotHost optionsKey={optionsKey} buildOptions={buildOptions} data={data} height={height} />
+      <UPlotHost
+        optionsKey={optionsKey}
+        buildOptions={buildOptions}
+        data={data}
+        height={height}
+        tooltip={tooltip}
+        kind="lines"
+        label={title}
+      />
     </ChartFrame>
   )
 }

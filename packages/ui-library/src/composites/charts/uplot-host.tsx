@@ -13,6 +13,7 @@
  */
 import { useEffect, useRef, useState, type JSX } from 'react'
 import type uPlot from 'uplot'
+import { ChartTooltipShell, type ChartKind, type ChartTooltipSpec } from './chart-tooltip-host'
 
 export type UPlotCtor = typeof uPlot
 
@@ -54,7 +55,15 @@ export interface UPlotHostProps {
   readonly className?: string
   /** Render a `<span class="block">` host, for a plot inside phrasing content. */
   readonly inline?: boolean
+  /** Point tooltip. Absent on a plot that has nothing to select. */
+  readonly tooltip?: ChartTooltipSpec | null
+  /** Which chart this plot is, so a shot can aim the pointer at one of them. */
+  readonly kind?: ChartKind
+  /** Accessible name for the focusable plot. */
+  readonly label?: string
 }
+
+export type { ChartKind, ChartTooltipSpec }
 
 export function UPlotHost({
   optionsKey,
@@ -64,6 +73,9 @@ export function UPlotHost({
   onInstance,
   className,
   inline = false,
+  tooltip = null,
+  kind,
+  label,
 }: UPlotHostProps): JSX.Element {
   const hostRef = useRef<HTMLElement | null>(null)
   const plotRef = useRef<uPlot | null>(null)
@@ -88,6 +100,9 @@ export function UPlotHost({
     const width = Math.max(1, Math.floor(el.clientWidth))
     const opts = { ...latest.current.buildOptions(width, ctor), width, height }
     const u = new ctor(opts, latest.current.data, el)
+    // The finger hits uPlot's overlay, and touch-action is not inherited.
+    u.over.style.touchAction = 'pan-y'
+    u.root.style.touchAction = 'pan-y'
     plotRef.current = u
     latest.current.onInstance?.(u)
     return () => {
@@ -126,9 +141,14 @@ export function UPlotHost({
   const setHost = (el: HTMLElement | null): void => {
     hostRef.current = el
   }
-  return inline ? (
+  const plot = inline ? (
     <span ref={setHost} className={className ?? 'block w-full min-w-0'} data-chart-plot="" />
   ) : (
     <div ref={setHost} className={className ?? 'w-full min-w-0'} data-chart-plot="" />
+  )
+  return (
+    <ChartTooltipShell spec={tooltip} plotRef={plotRef} kind={kind} label={label} inline={inline}>
+      {plot}
+    </ChartTooltipShell>
   )
 }

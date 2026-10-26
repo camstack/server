@@ -28,8 +28,9 @@ import {
   type ChartSwatchToken,
 } from './chart-palette'
 import { chartCursor, timeAxis } from './chart-uplot'
+import { stateSpanAt, stateTooltipBody } from './chart-tooltip-model'
 import type { ChartRange } from './TimeSeriesChart'
-import { UPlotHost, type ChartPlotOptions } from './uplot-host'
+import { UPlotHost, type ChartPlotOptions, type ChartTooltipSpec } from './uplot-host'
 
 export interface StateRowDef {
   readonly id: string
@@ -64,6 +65,40 @@ export interface StateTimelineProps {
 /** Pixel height of one row band — matches the `h-5` label cells. */
 const ROW_PX = 20
 const AXIS_PX = 22
+
+function stateStops(rows: readonly StateRowDef[], from: number, to: number): readonly number[] {
+  const found = new Set<number>([from])
+  for (const row of rows) {
+    for (const segment of row.segments) {
+      if (segment.from >= from && segment.from < to) found.add(segment.from)
+    }
+  }
+  return [...found].sort((a, b) => a - b)
+}
+
+function stateTooltip(rows: readonly StateRowDef[], range: ChartRange): ChartTooltipSpec {
+  const span = range.to - range.from
+  return {
+    xMin: range.from,
+    xMax: range.to,
+    stops: stateStops(rows, range.from, range.to),
+    resolve: (dataX) =>
+      stateTooltipBody({
+        timeLabel: formatCursorTime(dataX, span),
+        rows: rows.map((row) => {
+          const hit = stateSpanAt(row.segments, dataX)
+          const state = hit?.state ?? null
+          const stateLabel = state === null ? null : (row.stateLabel?.(state) ?? state)
+          return {
+            id: row.id,
+            label: row.label,
+            stateLabel,
+            spanMs: state === null ? null : (hit?.spanMs ?? null),
+          }
+        }),
+      }),
+  }
+}
 
 /** The colour role of a state on a row: a categorical slot, or the recessive "off". */
 export function stateStyle(
@@ -161,6 +196,13 @@ export function StateTimeline({
     [optionsKey],
   )
 
+  const tooltip = useMemo<ChartTooltipSpec>(
+    () => ({
+      ...stateTooltip(rows, range),
+      onDataX: (dataX) => setCursorT(dataX),
+    }),
+    [rows, range],
+  )
   const durations = useMemo(() => rows.map((r) => r.totals ?? timeInState(r.segments)), [rows])
   const summary = rows
     .map((row, i) => {
@@ -229,6 +271,9 @@ export function StateTimeline({
               buildOptions={buildOptions}
               data={data}
               height={rows.length * ROW_PX + AXIS_PX}
+              tooltip={tooltip}
+              kind="states"
+              label={title}
             />
           </div>
         </div>
