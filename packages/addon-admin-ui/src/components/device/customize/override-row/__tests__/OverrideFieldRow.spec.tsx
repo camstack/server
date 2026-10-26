@@ -13,8 +13,8 @@ import { OverrideFieldRow } from '../OverrideFieldRow'
 
 vi.mock('../../../../composition-editor/LivePreview', () => ({ LivePreview: () => null }))
 
-vi.mock('../../SourcePicker', () => ({
-  SourcePicker: () => null,
+vi.mock('../../source-selector/SourceSelector', () => ({
+  SourceSelector: () => null,
 }))
 
 vi.mock('@camstack/ui-library', () => {

@@ -22,7 +22,8 @@ import {
 } from '@camstack/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DeviceFields, type SourcePick } from '../SourcePicker'
+import { DeviceFields } from '../source-picker-device-fields'
+import type { SourcePick } from '../source-picker-pick'
 import type { PickerDevice } from '../source-picker-model'
 import { toPickerDevices } from '../source-picker-model'
 

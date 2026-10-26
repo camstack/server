@@ -33,7 +33,11 @@ import { aggregateMessageKey, formulaOneLiner } from '../cards/field-entry-copy'
 import { currentComposition } from '../customization-read'
 import { featureOf } from '../customization-save'
 import { FormulaFieldDialog } from '../formula/FormulaFieldDialog'
-import { SourcePicker, type SourcePick } from '../SourcePicker'
+import { SourceSelector } from '../source-selector/SourceSelector'
+import type { SourcePick } from '../source-picker-pick'
+import { sourcePickOf } from '../source-picker-pick'
+import type { PickerDevice, WireableCatalog } from '../source-picker-model'
+import { useDeviceManagerGetWireableFields, useDeviceStateGetSnapshot } from '@camstack/ui-library'
 import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
@@ -171,11 +175,12 @@ export function OverrideFieldRow({
           </DialogHeader>
           <DialogBody>
             {dialog === 'from' && (
-              <SourcePicker
+              <FromDevicePicker
                 title={t('customize.override.fromDevice')}
-                targetKind={valueKind ?? (unit !== undefined ? 'number' : null)}
+                hostId={deviceId}
+                valueKind={valueKind ?? (unit !== undefined ? 'number' : null)}
                 onCancel={close}
-                onPick={(pick: SourcePick) => {
+                onConfirm={(pick) => {
                   saveSource(pick.source, dropConvert())
                   close()
                 }}
@@ -327,6 +332,68 @@ function EntryText({ entry, names, language, unknownDevice }: EntryTextProps): R
           {t(aggregateMessageKey(entry.aggregate))}
         </span>
       )}
+    </div>
+  )
+}
+
+function FromDevicePicker({
+  title,
+  hostId,
+  valueKind,
+  onCancel,
+  onConfirm,
+}: {
+  readonly title: string
+  readonly hostId: number
+  readonly valueKind: CompositionFieldKind | null
+  readonly onCancel: () => void
+  readonly onConfirm: (pick: SourcePick) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  const [device, setDevice] = useState<PickerDevice | null>(null)
+  const [field, setField] = useState<{ cap: string; path: string } | null>(null)
+  const wireable = useDeviceManagerGetWireableFields({ deviceId: device?.id ?? 0 })
+  const snapshot = useDeviceStateGetSnapshot({ deviceId: device?.id ?? 0 })
+  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  return (
+    <div className="flex flex-col gap-2">
+      <SourceSelector
+        kind="formula"
+        enabled
+        hostId={hostId}
+        destination={{
+          cap: 'override',
+          targetId: 'field',
+          title,
+          pickerTargetKind: valueKind,
+        }}
+        device={device}
+        field={field}
+        onDeviceChange={setDevice}
+        onFieldChange={setField}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button variant="ghost" onClick={onCancel}>
+          {t('customize.picker.cancel')}
+        </Button>
+        <Button
+          disabled={device === null || field === null}
+          onClick={() => {
+            if (device === null || field === null) return
+            const pick = sourcePickOf(
+              device,
+              field.cap,
+              field.path,
+              catalog,
+              snapshot.status === 'success' ? snapshot.data : null,
+              valueKind,
+            )
+            if (pick !== null) onConfirm(pick)
+          }}
+        >
+          {t('customize.scalar.save')}
+        </Button>
+      </div>
     </div>
   )
 }

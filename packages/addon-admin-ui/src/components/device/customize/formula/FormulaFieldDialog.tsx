@@ -23,7 +23,14 @@ import { nextBindingName } from '../../../composition-editor/draft-reducer'
 import { ExpressionInput } from '../../../composition-editor/ExpressionInput'
 import { LivePreview } from '../../../composition-editor/LivePreview'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
-import { SourcePicker } from '../SourcePicker'
+import { SourceSelector } from '../source-selector/SourceSelector'
+import { sourcePickOf } from '../source-picker-pick'
+import { toPickerDevices, type WireableCatalog } from '../source-picker-model'
+import {
+  useDeviceManagerGetWireableFields,
+  useDeviceManagerListAll,
+  useDeviceStateGetSnapshot,
+} from '@camstack/ui-library'
 
 const NO_NAMES: ReadonlyMap<string, string> = new Map()
 
@@ -75,6 +82,13 @@ export function FormulaFieldDialog({
     initial.kind === 'expression' ? initial : { kind: 'expression', expr: 'null', bindings: {} }
   const [draft, setDraft] = useState(seed)
   const [picker, setPicker] = useState<PickerMode>('idle')
+  const [pickDevice, setPickDevice] = useState<ReturnType<typeof toPickerDevices>[number] | null>(
+    null,
+  )
+  const [pickField, setPickField] = useState<{ cap: string; path: string } | null>(null)
+  const wireable = useDeviceManagerGetWireableFields({ deviceId: pickDevice?.id ?? 0 })
+  const snapshot = useDeviceStateGetSnapshot({ deviceId: pickDevice?.id ?? 0 })
+  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
   const problem = formulaProblem(draft.expr, draft.bindings)
   const bindingNames = Object.keys(draft.bindings)
 
@@ -169,27 +183,62 @@ export function FormulaFieldDialog({
           )}
           <LivePreview source={draft} />
           {picker === 'add-binding' && (
-            <SourcePicker
-              title={t('compositionEditor.addSource')}
-              targetKind={null}
-              onCancel={() => setPicker('idle')}
-              onPick={(pick) => {
-                const name = nextBindingName(bindingNames)
-                setDraft({
-                  ...draft,
-                  bindings: {
-                    ...draft.bindings,
-                    [name]: {
-                      kind: 'from',
-                      source: pick.ref,
-                      cap: pick.cap,
-                      fieldPath: pick.path,
-                    },
-                  },
-                })
-                setPicker('idle')
-              }}
-            />
+            <div className="flex flex-col gap-2 border border-border rounded-md p-2">
+              <SourceSelector
+                kind="formula"
+                enabled={open}
+                hostId={-1}
+                destination={{
+                  cap: 'formula',
+                  targetId: 'binding',
+                  title: t('compositionEditor.addSource'),
+                  acceptAnyField: true,
+                }}
+                device={pickDevice}
+                field={pickField}
+                onDeviceChange={setPickDevice}
+                onFieldChange={setPickField}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setPicker('idle')}>
+                  {t('customize.picker.cancel')}
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={pickDevice === null || pickField === null}
+                  onClick={() => {
+                    if (pickDevice === null || pickField === null) return
+                    const pick = sourcePickOf(
+                      pickDevice,
+                      pickField.cap,
+                      pickField.path,
+                      catalog,
+                      snapshot.status === 'success' ? snapshot.data : null,
+                      null,
+                    )
+                    if (pick === null) return
+                    const name = nextBindingName(bindingNames)
+                    setDraft({
+                      ...draft,
+                      bindings: {
+                        ...draft.bindings,
+                        [name]: {
+                          kind: 'from',
+                          source: pick.ref,
+                          cap: pick.cap,
+                          fieldPath: pick.path,
+                        },
+                      },
+                    })
+                    setPickDevice(null)
+                    setPickField(null)
+                    setPicker('idle')
+                  }}
+                >
+                  {t('compositionEditor.addSource')}
+                </Button>
+              </div>
+            </div>
           )}
         </DialogBody>
         <DialogFooter>

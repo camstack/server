@@ -86,8 +86,8 @@ vi.mock('../../assignments/use-source-candidates', () => ({
   useCandidateDevices: () => ({ kind: 'known' as const, value: fleet.current }),
 }))
 
-vi.mock('../../SourcePicker', () => ({
-  SourcePicker: () => null,
+vi.mock('../../source-selector/SourceSelector', () => ({
+  SourceSelector: () => null,
 }))
 
 vi.mock('../../../../composition-editor/LivePreview', () => ({ LivePreview: () => null }))

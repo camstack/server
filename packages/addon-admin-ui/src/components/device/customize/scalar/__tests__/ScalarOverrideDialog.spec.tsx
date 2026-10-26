@@ -40,6 +40,16 @@ const METER = {
 }
 const GARAGE = { ...METER, id: 304, name: 'Garage lamp', stableId: 'lamp', location: 'Garage' }
 
+vi.mock('../../assignments/use-cap-index', () => ({
+  useCapIndex: () => ({
+    kind: 'known' as const,
+    value: new Map<number, readonly string[]>([
+      [305, ['power-meter']],
+      [304, ['light']],
+    ]),
+  }),
+}))
+
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
@@ -118,16 +128,12 @@ describe('ScalarOverrideDialog', () => {
     )
     expect(screen.queryByText(/Suggested ·/)).toBeNull()
     expect(screen.getAllByRole('button', { name: /Porch power meter/ })).toHaveLength(1)
-    expect(screen.getByRole('button', { name: /Garage lamp/ })).toBeTruthy()
-    expect(screen.getByTestId('picker-selection').textContent).toBe('single')
-    expect(screen.getByTestId('picker-group').textContent).toBe('location')
-    expect(screen.getByTestId('picker-value').textContent).toBe('')
+    expect(screen.getByTestId('source-incompatible-devices')).toBeTruthy()
+    expect(screen.getByTestId('source-selector')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Save override' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Porch power meter/ }))
-    const voltage = screen.getByRole('radio', { name: /voltage/ })
-    expect(voltage).toHaveProperty('disabled', true)
-    expect(screen.getByText('Not compatible')).toBeTruthy()
-    fireEvent.click(screen.getByRole('radio', { name: /Power/ }))
+    expect(screen.getByTestId('source-incompatible-values')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('source-value-power-meter.watts'))
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/8\.4 W/)
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/30/)
     fireEvent.click(screen.getByRole('button', { name: 'Save override' }))

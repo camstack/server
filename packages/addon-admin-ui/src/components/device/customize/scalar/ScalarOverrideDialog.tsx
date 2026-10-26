@@ -1,27 +1,22 @@
 /**
- * Add or change one scalar override: one source device, a compatible field,
- * declaration transforms, and a live preview. Same-room devices share a
- * location group in the picker and nothing is preselected.
+ * Add or change one scalar override via the shared source selector (D944 §5).
  */
 import type { CompositionFieldsFeature, CompositionSourceRef, DeviceInfo } from '@camstack/types'
 import {
   Button,
-  DevicePicker,
-  type DeviceListState,
   Dialog,
   DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  ErrorBox,
-  type PickerItem,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
 } from '@camstack/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { SourceSelector } from '../source-selector/SourceSelector'
 import {
   readPath,
   toPickerDevices,
@@ -29,23 +24,13 @@ import {
   type WireableCatalog,
 } from '../source-picker-model'
 import { ScalarPreviewLine } from './ScalarPreviewLine'
-import { ScalarTransformControls } from './ScalarTransformControls'
-import { scalarFitReasonI18nKey } from './scalar-reason'
+import { scalarFieldFit, scalarFieldOffers, type ScalarFieldOffer } from './scalar-fit'
 import {
-  scalarFieldFit,
-  scalarFieldOffers,
-  type ScalarFieldFit,
-  type ScalarFieldOffer,
-} from './scalar-fit'
-import {
-  defaultScalarTransform,
-  scalarControl,
   scalarFeatureFromForm,
   type ScalarFormSource,
   type ScalarTransformDraft,
 } from './scalar-form'
 import { previewScalarOverride } from './scalar-preview'
-import { vocabularyFieldLabel } from '../vocabulary-field-label'
 
 export interface ScalarDialogSeed {
   readonly source: ScalarFormSource
@@ -67,12 +52,6 @@ export interface ScalarOverrideDialogProps {
   readonly onSave: (feature: CompositionFieldsFeature) => void
 }
 
-function listStateOf(status: 'pending' | 'error' | 'success'): DeviceListState {
-  if (status === 'pending') return 'pending'
-  if (status === 'error') return 'failed'
-  return 'answered'
-}
-
 export function ScalarOverrideDialog(props: ScalarOverrideDialogProps): ReactNode {
   const { t } = useTranslation()
   const heading =
@@ -81,7 +60,7 @@ export function ScalarOverrideDialog(props: ScalarOverrideDialogProps): ReactNod
       : t('customize.scalar.addTitle', { title: props.title })
   return (
     <Dialog open={props.open} onOpenChange={(next) => (next ? undefined : props.onClose())}>
-      <DialogContent width="md" placement="sheet-on-mobile" scroll="body" aria-label={heading}>
+      <DialogContent width="xl" placement="sheet-on-mobile" scroll="body" aria-label={heading}>
         <DialogHeader>
           <DialogTitle>{heading}</DialogTitle>
         </DialogHeader>
@@ -92,7 +71,7 @@ export function ScalarOverrideDialog(props: ScalarOverrideDialogProps): ReactNod
 }
 
 function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: string }): ReactNode {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const fleet = useMemo(
     () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
@@ -113,6 +92,14 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
   const [transform, setTransform] = useState<ScalarTransformDraft>(
     props.seed?.transform ?? { kind: 'identity' },
   )
+  const fieldPick =
+    fieldKey === null
+      ? null
+      : (() => {
+          const [cap, path] = fieldKey.split('.')
+          if (cap === undefined || path === undefined) return null
+          return { cap, path }
+        })()
   const selected = offers.find((offer) => fieldId(offer) === fieldKey) ?? null
   const fit = selected === null ? null : scalarFieldFit(props.cap, props.targetId, selected)
   const source =
@@ -147,121 +134,35 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
             sourceValue,
             nowMs: Date.now(),
           })
-  const room =
-    typeof props.host.location === 'string' && props.host.location.length > 0
-      ? props.host.location
-      : null
-  const pickDevice = (id: number): void => {
-    const next = fleet.find((row) => row.id === id)
-    if (next === undefined) return
-    setDevice(next)
-    setFieldKey(null)
-    setTransform({ kind: 'identity' })
-  }
-  const pickField = (offer: ScalarFieldOffer): void => {
-    const nextFit = scalarFieldFit(props.cap, props.targetId, offer)
-    if (!nextFit.ok) return
-    setFieldKey(fieldId(offer))
-    setTransform(defaultScalarTransform(nextFit))
-  }
   return (
     <>
       <DialogBody className="flex flex-col gap-3 p-2 sm:p-4">
-        <section className="flex flex-col gap-1" aria-label={t('customize.scalar.stepDevice')}>
-          <h3 className="text-[11px] font-medium text-foreground-muted">
-            {t('customize.scalar.stepDevice')}
-          </h3>
-          {device !== null ? (
-            <p className="flex flex-wrap items-center gap-2 text-xs text-foreground">
-              {device.name}
-              <Button variant="ghost" size="sm" onClick={() => setDevice(null)}>
-                {t('customize.scalar.changeDevice')}
-              </Button>
-            </p>
-          ) : (
-            <>
-              {devices.status === 'error' ? (
-                <ErrorBox
-                  title={t('customize.picker.devicesFailed')}
-                  message={devices.error?.message ?? ''}
-                />
-              ) : (
-                <DevicePicker
-                  devices={pickerItems(fleet, props.host.id)}
-                  listState={listStateOf(devices.status)}
-                  value={[]}
-                  selection="single"
-                  {...(room !== null ? { groupBy: 'location' as const } : {})}
-                  onChange={(next) => {
-                    const id = next[0]
-                    if (id !== undefined) pickDevice(id)
-                  }}
-                  noun="device"
-                  showAll
-                  testId="scalar-device-picker"
-                />
-              )}
-            </>
-          )}
-        </section>
-        {device !== null && (
-          <section className="flex flex-col gap-1" aria-label={t('customize.scalar.stepField')}>
-            <h3 className="text-[11px] font-medium text-foreground-muted">
-              {t('customize.scalar.stepField')}
-            </h3>
-            {wireable.status === 'pending' && (
-              <p role="status" className="text-[11px] text-foreground-subtle">
-                {t('customize.picker.loadingFields')}
-              </p>
-            )}
-            {wireable.status === 'error' && (
-              <ErrorBox
-                title={t('customize.picker.fieldsFailed')}
-                message={wireable.error?.message ?? ''}
-              />
-            )}
-            {wireable.status === 'success' && (
-              <ul className="flex flex-col gap-1">
-                {offers.map((offer) => {
-                  const verdict = scalarFieldFit(props.cap, props.targetId, offer)
-                  const id = fieldId(offer)
-                  return (
-                    <li key={id} className="flex flex-wrap items-center gap-2 text-[11px]">
-                      <label className="flex items-center gap-2 text-foreground">
-                        <input
-                          type="radio"
-                          name="scalar-field"
-                          checked={fieldKey === id}
-                          disabled={!verdict.ok}
-                          onChange={() => pickField(offer)}
-                        />
-                        <span>
-                          {vocabularyFieldLabel(offer.cap, offer.path, i18n.language)}
-                          {offer.unit !== null ? ` (${offer.unit})` : ''}
-                        </span>
-                      </label>
-                      {!verdict.ok && (
-                        <span className="text-foreground-subtle">
-                          {t(scalarFitReasonI18nKey(verdict.reason))}
-                        </span>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </section>
-        )}
-        {fit !== null && fit.ok && (
-          <ScalarTransformControls
-            control={scalarControl(fit.transforms)}
-            transforms={fit.transforms}
-            declared={fit.declared}
-            unit={fit.sourceUnit}
-            value={transform}
-            onChange={setTransform}
-          />
-        )}
+        <SourceSelector
+          kind="scalar"
+          enabled={props.open}
+          hostId={props.host.id}
+          destination={{
+            cap: props.cap,
+            targetId: props.targetId,
+            title: props.title,
+          }}
+          device={device}
+          field={fieldPick}
+          transform={transform}
+          onDeviceChange={(next) => {
+            setDevice(next)
+            setFieldKey(null)
+            setTransform({ kind: 'identity' })
+          }}
+          onFieldChange={(next) => {
+            if (next === null) {
+              setFieldKey(null)
+              return
+            }
+            setFieldKey(`${next.cap}.${next.path}`)
+          }}
+          onTransformChange={setTransform}
+        />
         {preview !== null && <ScalarPreviewLine preview={preview} />}
       </DialogBody>
       <DialogFooter className="flex flex-wrap gap-2">
@@ -289,7 +190,7 @@ function fieldId(offer: ScalarFieldOffer): string {
 function formSource(
   device: PickerDevice | null,
   offer: ScalarFieldOffer,
-  fit: ScalarFieldFit,
+  fit: { readonly sourceUnit: string | null },
   catalog: WireableCatalog,
 ): ScalarFormSource | null {
   if (device === null) return null
@@ -308,20 +209,6 @@ function formSource(
     sourceUnit: fit.sourceUnit,
     changedAtField: changedAt,
   }
-}
-
-function pickerItems(
-  fleet: readonly PickerDevice[],
-  hostId: number,
-): readonly PickerItem<number>[] {
-  return fleet
-    .filter((row) => row.id !== hostId)
-    .map((row) => ({
-      id: row.id,
-      name: row.name,
-      type: row.type,
-      ...(row.location !== null ? { location: row.location } : {}),
-    }))
 }
 
 function seedDevice(

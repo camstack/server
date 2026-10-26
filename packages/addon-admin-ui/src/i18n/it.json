@@ -2639,6 +2639,15 @@
       "selfNative": "Il valore nativo di questo dispositivo",
       "targetUnit": "Unità di destinazione",
       "publish": "Pubblica il valore convertito"
+    },
+    "sourceSelector": {
+      "pickDevice": "Scegli la sorgente per {{title}}",
+      "notCompatibleDevices": "{{count}} non compatibili",
+      "otherValues": "Altri valori (non compatibili)",
+      "direct": "diretto",
+      "withConversion": "con {{name}}",
+      "backToDevices": "Torna ai dispositivi",
+      "noDevice": "Scegli un dispositivo a sinistra."
     }
   },
   "compositionEditor": {

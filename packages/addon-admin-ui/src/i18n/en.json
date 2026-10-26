@@ -2578,6 +2578,15 @@
       "selfNative": "This device's native value",
       "targetUnit": "Target unit",
       "publish": "Publish converted value"
+    },
+    "sourceSelector": {
+      "pickDevice": "Pick the source for {{title}}",
+      "notCompatibleDevices": "{{count}} not compatible",
+      "otherValues": "Other values (not compatible)",
+      "direct": "direct",
+      "withConversion": "with {{name}}",
+      "backToDevices": "Back to devices",
+      "noDevice": "Pick a device on the left."
     }
   },
   "compositionEditor": {
