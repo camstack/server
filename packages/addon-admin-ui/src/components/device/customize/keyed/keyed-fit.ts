@@ -110,7 +110,13 @@ export function keyedFieldFit(
   return {
     ok: true,
     mode: 'scalar',
-    fit: { ok: true, valueKind: 'number', sourceUnit: source.requiredUnit ?? null, transforms },
+    fit: {
+      ok: true,
+      valueKind: 'number',
+      sourceUnit: source.requiredUnit ?? null,
+      transforms,
+      declared: source.transforms,
+    },
   }
 }
 

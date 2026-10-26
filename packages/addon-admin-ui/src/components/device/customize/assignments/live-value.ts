@@ -5,6 +5,11 @@
  * anything.
  */
 import { SOURCE_CAP_ACTIVE_FIELD } from '@camstack/types'
+import {
+  BATTERY_BADGE_LOW_KEY,
+  BATTERY_BADGE_NORMAL_KEY,
+  binaryBatteryIsLow,
+} from '@camstack/ui-library'
 import type { QueryErrorLike } from '../known'
 import { readPath } from '../source-picker-model'
 import i18n from '../../../../i18n/index'
@@ -20,7 +25,7 @@ export type LiveValue =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unknown'; readonly reason: string }
   | { readonly kind: 'absent' }
-  | { readonly kind: 'value'; readonly value: unknown }
+  | { readonly kind: 'value'; readonly value: unknown; readonly binary?: boolean }
 
 export interface LiveSliceQuery {
   readonly status: 'pending' | 'error' | 'success'
@@ -34,7 +39,9 @@ function isSlice(value: unknown): value is Readonly<Record<string, unknown>> {
 
 function fieldOf(slice: Readonly<Record<string, unknown>>, path: string): LiveValue {
   const value = readPath(slice, path)
-  return value === undefined ? { kind: 'absent' } : { kind: 'value', value }
+  if (value === undefined) return { kind: 'absent' }
+  if (path === 'percentage' && slice.binary === true) return { kind: 'value', value, binary: true }
+  return { kind: 'value', value }
 }
 
 export function liveValueOf(query: LiveSliceQuery, pushed: unknown, path: string): LiveValue {
@@ -63,6 +70,22 @@ export interface LiveValueDisplay {
   readonly text: string
   readonly tone: LiveValueTone
   readonly title?: string
+}
+
+type LiveNumber = Extract<LiveValue, { kind: 'value' }>
+
+function numberDisplay(raw: number, value: LiveNumber, target: LiveValueTarget): LiveValueDisplay {
+  if (value.binary === true && target.cap === 'battery' && target.path === 'percentage') {
+    const low = binaryBatteryIsLow(raw)
+    return {
+      text: i18n.t(low ? BATTERY_BADGE_LOW_KEY : BATTERY_BADGE_NORMAL_KEY),
+      tone: low ? 'warning' : 'normal',
+    }
+  }
+  return {
+    text: target.path === 'percentage' ? `${Math.round(raw)} %` : String(raw),
+    tone: 'normal',
+  }
 }
 
 function booleanDisplay(
@@ -96,12 +119,7 @@ export function liveValueDisplay(
       const raw = value.value
       if (raw === null) return { text: '—', tone: 'muted' }
       if (typeof raw === 'boolean') return booleanDisplay(raw, target, labels)
-      if (typeof raw === 'number') {
-        return {
-          text: target.path === 'percentage' ? `${Math.round(raw)} %` : String(raw),
-          tone: 'normal',
-        }
-      }
+      if (typeof raw === 'number') return numberDisplay(raw, value, target)
       if (typeof raw === 'string') return { text: raw, tone: 'normal' }
       return { text: JSON.stringify(raw), tone: 'normal' }
     }

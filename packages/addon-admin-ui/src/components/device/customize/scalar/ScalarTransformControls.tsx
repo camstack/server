@@ -2,17 +2,22 @@
  * Transform controls generated from the declaration: invert, threshold
  * with named watt defaults, or linear scale.
  */
-import type { ScalarTransformDraft } from './scalar-form'
+import type { CustomizeCatalogTransform } from '@camstack/types'
 import { Checkbox, Input, Select } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ScalarControl } from './scalar-form'
-import { defaultThreshold } from './scalar-form'
 import type { ScalarTransformKind } from './scalar-fit'
+import {
+  type ScalarControl,
+  type ScalarTransformDraft,
+  declaredOf,
+  draftFromDeclared,
+} from './scalar-form'
 
 export interface ScalarTransformControlsProps {
   readonly control: ScalarControl
   readonly transforms: readonly ScalarTransformKind[]
+  readonly declared: readonly CustomizeCatalogTransform[]
   readonly unit: string | null
   readonly value: ScalarTransformDraft
   readonly onChange: (next: ScalarTransformDraft) => void
@@ -21,6 +26,7 @@ export interface ScalarTransformControlsProps {
 export function ScalarTransformControls({
   control,
   transforms,
+  declared,
   unit,
   value,
   onChange,
@@ -40,7 +46,7 @@ export function ScalarTransformControls({
             value: kind,
             label: t(`customize.scalar.transform.${kind}`),
           }))}
-          onChange={(event) => onChange(transformOfKind(event.target.value, unit))}
+          onChange={(event) => onChange(transformOfKind(event.target.value, declared))}
         />
       )}
       {value.kind === 'invert' || (control === 'invert' && value.kind !== 'threshold') ? (
@@ -55,31 +61,64 @@ export function ScalarTransformControls({
         </label>
       ) : null}
       {value.kind === 'threshold' && (
-        <ThresholdFields unit={unit} value={value} onChange={onChange} />
+        <ThresholdFields declared={declared} unit={unit} value={value} onChange={onChange} />
       )}
-      {value.kind === 'linear' && <LinearFields value={value} onChange={onChange} />}
+      {value.kind === 'linear' && (
+        <LinearFields declared={declared} value={value} onChange={onChange} />
+      )}
     </div>
   )
 }
 
-function transformOfKind(kind: string, unit: string | null): ScalarTransformDraft {
+function transformOfKind(
+  kind: string,
+  declared: readonly CustomizeCatalogTransform[],
+): ScalarTransformDraft {
+  const match = declaredOf(declared, kindOf(kind))
+  if (match !== null) return draftFromDeclared(match)
   if (kind === 'invert') return { kind: 'invert' }
-  if (kind === 'threshold') return defaultThreshold(unit)
-  if (kind === 'linear') return { kind: 'linear', scale: 1, offset: 0 }
   return { kind: 'identity' }
 }
 
+function kindOf(kind: string): CustomizeCatalogTransform['kind'] {
+  if (kind === 'invert' || kind === 'threshold' || kind === 'linear' || kind === 'enum-map') {
+    return kind
+  }
+  return 'identity'
+}
+
 interface ThresholdFieldsProps {
+  readonly declared: readonly CustomizeCatalogTransform[]
   readonly unit: string | null
   readonly value: Extract<ScalarTransformDraft, { kind: 'threshold' }>
   readonly onChange: (next: ScalarTransformDraft) => void
 }
 
-function ThresholdFields({ unit, value, onChange }: ThresholdFieldsProps): ReactNode {
+function ThresholdFields({ declared, unit, value, onChange }: ThresholdFieldsProps): ReactNode {
   const { t } = useTranslation()
   const suffix = unit ?? ''
+  const spec = declaredOf(declared, 'threshold')
+  const comparisons = spec?.kind === 'threshold' ? spec.comparisons : []
   return (
     <div className="flex flex-col gap-2 text-[11px] text-foreground">
+      {comparisons.length > 0 && (
+        <label className="flex flex-col gap-1">
+          {t('customize.scalar.comparison')}
+          <Select
+            aria-label={t('customize.scalar.comparison')}
+            value={value.comparison}
+            options={comparisons.map((comparison) => ({
+              value: comparison,
+              label: t(`customize.scalar.comparisonValue.${comparison}`),
+            }))}
+            onChange={(event) => {
+              const comparison = comparisons.find((item) => item === event.target.value)
+              if (comparison === undefined) return
+              onChange({ ...value, comparison })
+            }}
+          />
+        </label>
+      )}
       <NumberField
         label={t('customize.scalar.threshold', { unit: suffix })}
         value={value.threshold}
@@ -100,12 +139,25 @@ function ThresholdFields({ unit, value, onChange }: ThresholdFieldsProps): React
 }
 
 interface LinearFieldsProps {
+  readonly declared: readonly CustomizeCatalogTransform[]
   readonly value: Extract<ScalarTransformDraft, { kind: 'linear' }>
   readonly onChange: (next: ScalarTransformDraft) => void
 }
 
-function LinearFields({ value, onChange }: LinearFieldsProps): ReactNode {
+interface ClampBounds {
+  readonly min: number
+  readonly max: number
+}
+
+function clampBounds(spec: CustomizeCatalogTransform | null): ClampBounds | null {
+  if (spec === null || spec.kind !== 'linear') return null
+  if (spec.clampMin === undefined || spec.clampMax === undefined) return null
+  return { min: spec.clampMin, max: spec.clampMax }
+}
+
+function LinearFields({ declared, value, onChange }: LinearFieldsProps): ReactNode {
   const { t } = useTranslation()
+  const bounds = clampBounds(declaredOf(declared, 'linear'))
   return (
     <div className="flex flex-col gap-2 text-[11px] text-foreground">
       <NumberField
@@ -118,6 +170,24 @@ function LinearFields({ value, onChange }: LinearFieldsProps): ReactNode {
         value={value.offset}
         onChange={(offset) => onChange({ ...value, offset })}
       />
+      {bounds !== null && (
+        <NumberField
+          label={t('customize.scalar.clampMin')}
+          value={value.clampMin ?? bounds.min}
+          onChange={(clampMin) =>
+            onChange({ ...value, clampMin, clampMax: value.clampMax ?? bounds.max })
+          }
+        />
+      )}
+      {bounds !== null && (
+        <NumberField
+          label={t('customize.scalar.clampMax')}
+          value={value.clampMax ?? bounds.max}
+          onChange={(clampMax) =>
+            onChange({ ...value, clampMin: value.clampMin ?? bounds.min, clampMax })
+          }
+        />
+      )}
     </div>
   )
 }

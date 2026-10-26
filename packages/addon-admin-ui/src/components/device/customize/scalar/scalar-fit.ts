@@ -2,7 +2,11 @@
  * Which fields of a source device a declared scalar target can read (D936).
  * A number with the wrong unit is named, never accepted.
  */
-import { CAP_CUSTOMIZE_CATALOG, type CustomizeCatalogTarget } from '@camstack/types'
+import {
+  CAP_CUSTOMIZE_CATALOG,
+  type CustomizeCatalogTarget,
+  type CustomizeCatalogTransform,
+} from '@camstack/types'
 import type { DeviceSnapshot, WireableCatalog } from '../source-picker-model'
 import { readPath } from '../source-picker-model'
 import {
@@ -28,6 +32,8 @@ export interface ScalarFieldFit {
   readonly valueKind: 'boolean' | 'number' | 'string'
   readonly sourceUnit: string | null
   readonly transforms: readonly ScalarTransformKind[]
+  /** Declared parameters for those transforms. The form copies defaults from here. */
+  readonly declared: readonly CustomizeCatalogTransform[]
 }
 
 export type ScalarFieldVerdict =
@@ -122,5 +128,6 @@ export function scalarFieldFit(
     valueKind: field.kind,
     sourceUnit: source.requiredUnit ?? null,
     transforms,
+    declared: source.transforms,
   }
 }

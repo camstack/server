@@ -2315,7 +2315,13 @@
         "ring": "Ultimo campanello: {{when}}",
         "unknown": "Ultimo campanello: sconosciuto"
       },
-      "doorbellCount": "{{count}} campanelli dall’avvio"
+      "doorbellCount": "{{count}} campanelli dall’avvio",
+      "edge": "Fronte",
+      "edgeValue": {
+        "rising": "Fronte di salita",
+        "button": "Pressione",
+        "native-event": "Evento nativo"
+      }
     },
     "doorbell": {
       "title": "Campanello",
@@ -2360,7 +2366,12 @@
       "refetchFailed": "Non è stato possibile rileggere i sensori collegati dopo la modifica: ricarica per modificarli di nuovo",
       "cameraLevelUnknown": "Sconosciuto: l'orchestratore non ha sentito la camera stessa da quando è partito, oppure è più vecchio di questa vista",
       "cameraLevelOwn": "Il movimento della camera stessa, come l'ha detto l'ultima volta ({{at}}) — non quello che ne fanno i sensori",
-      "tooMany": "Una camera accetta al massimo {{max}} sensori"
+      "tooMany": "Una camera accetta al massimo {{max}} sensori",
+      "modeLine": {
+        "in-addition": "Il suo movimento conta anche come movimento di questa camera.",
+        "confirm": "Il movimento della camera conta solo mentre questo sensore è attivo.",
+        "replace": "Finché questo sensore è pronto, il movimento della camera da solo non conta."
+      }
     },
     "assign": {
       "search": "Cerca un dispositivo",
@@ -2547,7 +2558,14 @@
         "dwell": "L'anteprima soglia è nel passo trasformazione.",
         "no-value": "Nessun valore live dalla sorgente.",
         "empty": "Nessun valore in anteprima."
-      }
+      },
+      "comparison": "Confronto",
+      "comparisonValue": {
+        "gte": "Maggiore o uguale",
+        "lte": "Minore o uguale"
+      },
+      "clampMin": "Minimo",
+      "clampMax": "Massimo"
     },
     "keyed": {
       "title": {

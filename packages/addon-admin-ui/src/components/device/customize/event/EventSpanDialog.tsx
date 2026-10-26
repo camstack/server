@@ -32,7 +32,7 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCapIndex } from '../assignments/use-cap-index'
 import { useLiveValue } from '../assignments/use-live-value'
-import { toPickerDevices, type PickerDevice, type WireableCatalog } from '../source-picker-model'
+import { toPickerDevices, type WireableCatalog } from '../source-picker-model'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
 import { eventDeclarationCaps, eventSourceFromWireable } from './event-fit'
 import { eventPickerItems, eventPickerLockedIds } from './event-picker'
@@ -54,8 +54,6 @@ export interface EventSpanDialogProps {
   readonly onClose: () => void
   readonly onSave: (compiled: SpanCompiled) => void
 }
-
-const MODES: readonly CameraSensorMode[] = ['in-addition', 'confirm', 'replace']
 
 function listStateOf(status: 'pending' | 'error' | 'success'): DeviceListState {
   if (status === 'pending') return 'pending'
@@ -87,6 +85,9 @@ function SpanForm(props: EventSpanDialogProps): ReactNode {
   const fleet = devices.status === 'success' ? toPickerDevices(devices.data) : []
   const [sources, setSources] = useState<readonly SpanFormSource[]>(props.sources)
   const [pendingId, setPendingId] = useState<number | null>(null)
+  const [pendingMode, setPendingMode] = useState<CameraSensorMode>(
+    props.sourceModes[0] ?? 'in-addition',
+  )
   const [timeoutSec, setTimeoutSec] = useState(props.timeoutMs / 1000)
   const [cooldownSec, setCooldownSec] = useState((props.cooldownMs ?? 0) / 1000)
   const pending = pendingId === null ? null : (fleet.find((row) => row.id === pendingId) ?? null)
@@ -123,7 +124,7 @@ function SpanForm(props: EventSpanDialogProps): ReactNode {
       stableId: pending.stableId,
       cap: active.cap,
       fieldPath: active.fieldPath,
-      mode: 'in-addition',
+      mode: pendingMode,
       label: pending.name,
     }
     if (sources.some((row) => row.addonId === next.addonId && row.stableId === next.stableId)) {
@@ -137,38 +138,37 @@ function SpanForm(props: EventSpanDialogProps): ReactNode {
     <>
       <DialogBody className="flex flex-col gap-3 p-2 sm:p-4">
         <p className="text-[11px] text-foreground-muted">{t('customize.event.spanBody')}</p>
+        <ModeLine
+          mode={pendingMode}
+          modes={props.sourceModes}
+          name={t('customize.motion.add')}
+          onChange={setPendingMode}
+        />
         <ul className="flex flex-col gap-2">
           {sources.map((source) => (
             <li
               key={`${source.addonId}/${source.stableId}`}
-              className="flex flex-wrap items-center gap-2 text-xs"
+              className="flex flex-col gap-1 text-xs"
             >
               <span className="text-foreground">
                 {source.label.length > 0
                   ? source.label
                   : vocabularyFieldLabel(source.cap, source.fieldPath, i18n.language)}
               </span>
-              {props.sourceModes.length > 1 ? (
-                <Select
-                  aria-label={t('customize.motion.modeFor', { name: source.stableId })}
-                  value={source.mode}
-                  options={props.sourceModes.map((mode) => ({
-                    value: mode,
-                    label: t(`customize.motion.mode.${mode}`),
-                  }))}
-                  onChange={(event) => {
-                    const mode = modeOf(event.target.value)
-                    if (mode === null) return
-                    setSources(
-                      sources.map((row) =>
-                        row.addonId === source.addonId && row.stableId === source.stableId
-                          ? { ...row, mode }
-                          : row,
-                      ),
-                    )
-                  }}
-                />
-              ) : null}
+              <ModeLine
+                mode={source.mode}
+                modes={props.sourceModes}
+                name={source.stableId}
+                onChange={(mode) =>
+                  setSources(
+                    sources.map((row) =>
+                      row.addonId === source.addonId && row.stableId === source.stableId
+                        ? { ...row, mode }
+                        : row,
+                    ),
+                  )
+                }
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -252,8 +252,37 @@ function SpanForm(props: EventSpanDialogProps): ReactNode {
   )
 }
 
-function modeOf(value: string): CameraSensorMode | null {
-  return MODES.find((mode) => mode === value) ?? null
+function modeOf(value: string, allowed: readonly CameraSensorMode[]): CameraSensorMode | null {
+  return allowed.find((mode) => mode === value) ?? null
+}
+
+interface ModeLineProps {
+  readonly mode: CameraSensorMode
+  readonly modes: readonly CameraSensorMode[]
+  readonly name: string
+  readonly onChange: (mode: CameraSensorMode) => void
+}
+
+function ModeLine({ mode, modes, name, onChange }: ModeLineProps): ReactNode {
+  const { t } = useTranslation()
+  if (modes.length === 0) return null
+  return (
+    <div className="flex flex-col gap-1">
+      <Select
+        aria-label={t('customize.motion.modeFor', { name })}
+        value={mode}
+        options={modes.map((item) => ({
+          value: item,
+          label: t(`customize.motion.mode.${item}`),
+        }))}
+        onChange={(event) => {
+          const next = modeOf(event.target.value, modes)
+          if (next !== null) onChange(next)
+        }}
+      />
+      <p className="text-[11px] text-foreground-muted">{t(`customize.motion.modeLine.${mode}`)}</p>
+    </div>
+  )
 }
 
 interface NumberSecondsProps {

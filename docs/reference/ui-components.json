@@ -1373,6 +1373,20 @@
       ]
     },
     {
+      "name": "BATTERY_BADGE_LOW_KEY",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/binary-battery.ts",
+      "summary": "Binary battery copy lives with the badge. A binary source has no real percentage: normal is the full stand-in, low is anything under the threshold."
+    },
+    {
+      "name": "BATTERY_BADGE_NORMAL_KEY",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/binary-battery.ts",
+      "summary": "Binary battery copy lives with the badge. A binary source has no real percentage: normal is the full stand-in, low is anything under the threshold."
+    },
+    {
       "name": "BatteryBadge",
       "kind": "component",
       "area": "composites",
@@ -1398,6 +1412,20 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "BINARY_BATTERY_LOW_BELOW",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/binary-battery.ts",
+      "summary": "Binary battery copy lives with the badge. A binary source has no real percentage: normal is the full stand-in, low is anything under the threshold."
+    },
+    {
+      "name": "binaryBatteryIsLow",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/binary-battery.ts",
+      "summary": "Binary battery copy lives with the badge. A binary source has no real percentage: normal is the full stand-in, low is anything under the threshold."
     },
     {
       "name": "bindsToModel",

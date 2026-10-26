@@ -256,6 +256,7 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
           <ScalarTransformControls
             control={scalarControl(fit.transforms)}
             transforms={fit.transforms}
+            declared={fit.declared}
             unit={fit.sourceUnit}
             value={transform}
             onChange={setTransform}

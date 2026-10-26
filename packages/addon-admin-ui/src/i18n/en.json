@@ -2254,7 +2254,13 @@
         "ring": "Last ring: {{when}}",
         "unknown": "Last ring: unknown"
       },
-      "doorbellCount": "{{count}} rings since restart"
+      "doorbellCount": "{{count}} rings since restart",
+      "edge": "Edge",
+      "edgeValue": {
+        "rising": "Rising edge",
+        "button": "Button press",
+        "native-event": "Native event"
+      }
     },
     "doorbell": {
       "title": "Doorbell",
@@ -2299,7 +2305,12 @@
       "refetchFailed": "The attached sensors could not be re-read after the change: reload to edit them again",
       "cameraLevelUnknown": "Unknown: the orchestrator has not heard the camera itself since it started, or is older than this view",
       "cameraLevelOwn": "The camera's own motion, as it last said it ({{at}}) — not what the sensors make of it",
-      "tooMany": "A camera takes at most {{max}} sensors"
+      "tooMany": "A camera takes at most {{max}} sensors",
+      "modeLine": {
+        "in-addition": "Its motion counts as this camera's motion too.",
+        "confirm": "The camera's own motion counts only while this sensor is active.",
+        "replace": "While this sensor is ready, the camera's own motion no longer counts on its own."
+      }
     },
     "assign": {
       "search": "Search a device",
@@ -2486,7 +2497,14 @@
         "dwell": "Threshold preview is shown in the transform step.",
         "no-value": "No live value from the source yet.",
         "empty": "No preview value."
-      }
+      },
+      "comparison": "Comparison",
+      "comparisonValue": {
+        "gte": "At or above",
+        "lte": "At or below"
+      },
+      "clampMin": "Minimum",
+      "clampMax": "Maximum"
     },
     "keyed": {
       "title": {

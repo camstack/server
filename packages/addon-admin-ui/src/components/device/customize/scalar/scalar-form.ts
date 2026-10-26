@@ -1,15 +1,13 @@
 /**
- * Named defaults for a scalar override form, and the feature the existing
- * save path stores. The compiler output is the stored composition.
+ * Named defaults for a scalar override form, read from the catalog
+ * declaration (D944). The compiler output is the stored composition.
  */
 import {
   type CompositionFieldsFeature,
   type CompositionSourceRef,
+  type CustomizeCatalogTransform,
   type ScalarCompileInput,
   compileScalarOverride,
-  RUNNING_POWER_START_DELAY_MS,
-  RUNNING_POWER_STOP_DELAY_MS,
-  RUNNING_POWER_THRESHOLD_WATTS,
 } from '@camstack/types'
 import type { ScalarFieldFit, ScalarTransformKind } from './scalar-fit'
 export type ScalarTransformDraft = ScalarCompileInput['draft']['transform']
@@ -41,19 +39,55 @@ export function scalarControl(transforms: readonly ScalarTransformKind[]): Scala
 
 export function defaultScalarTransform(fit: ScalarFieldFit): ScalarTransformDraft {
   if (fit.transforms.includes('identity')) return { kind: 'identity' }
-  if (fit.transforms.includes('threshold')) return defaultThreshold(fit.sourceUnit)
-  if (fit.transforms.includes('linear')) return { kind: 'linear', scale: 1, offset: 0 }
+  if (fit.transforms.includes('threshold')) {
+    const declared = declaredOf(fit.declared, 'threshold')
+    if (declared !== null) return draftFromDeclared(declared)
+  }
+  if (fit.transforms.includes('linear')) {
+    const declared = declaredOf(fit.declared, 'linear')
+    if (declared !== null) return draftFromDeclared(declared)
+  }
   return { kind: 'invert' }
 }
 
-export function defaultThreshold(unit: string | null): ScalarTransformDraft {
-  const watts = unit === 'W'
+export function draftFromDeclared(transform: CustomizeCatalogTransform): ScalarTransformDraft {
+  switch (transform.kind) {
+    case 'identity':
+      return { kind: 'identity' }
+    case 'invert':
+      return { kind: 'invert' }
+    case 'threshold':
+      return {
+        kind: 'threshold',
+        comparison: transform.comparison,
+        threshold: transform.defaultThreshold,
+        startDwellMs: transform.defaultStartDwellMs,
+        stopDwellMs: transform.defaultStopDwellMs,
+      }
+    case 'linear':
+      return linearDraft(transform)
+    case 'enum-map':
+      return { kind: 'identity' }
+  }
+}
+
+export function declaredOf(
+  declared: readonly CustomizeCatalogTransform[],
+  kind: CustomizeCatalogTransform['kind'],
+): CustomizeCatalogTransform | null {
+  return declared.find((row) => row.kind === kind) ?? null
+}
+
+function linearDraft(
+  transform: Extract<CustomizeCatalogTransform, { kind: 'linear' }>,
+): ScalarTransformDraft {
   return {
-    kind: 'threshold',
-    comparison: 'gte',
-    threshold: watts ? RUNNING_POWER_THRESHOLD_WATTS : 0,
-    startDwellMs: watts ? RUNNING_POWER_START_DELAY_MS : 0,
-    stopDwellMs: watts ? RUNNING_POWER_STOP_DELAY_MS : 0,
+    kind: 'linear',
+    scale: transform.defaultScale,
+    offset: transform.defaultOffset,
+    ...(transform.clampMin !== undefined && transform.clampMax !== undefined
+      ? { clampMin: transform.clampMin, clampMax: transform.clampMax }
+      : {}),
   }
 }
 

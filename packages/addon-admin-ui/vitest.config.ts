@@ -33,6 +33,10 @@ export default defineConfig({
         find: '@camstack/types',
         replacement: path.join(repoRoot, 'packages/types/dist/index.mjs'),
       },
+      {
+        find: '@camstack/ui-library',
+        replacement: path.join(repoRoot, 'packages/ui-library/src/index.ts'),
+      },
     ],
   },
   test: {

@@ -7,6 +7,7 @@ import {
   CAP_CUSTOMIZE_CATALOG,
   type CameraSensorMode,
   type CustomizeCatalogTarget,
+  type CustomizeEventEdge,
   type DeviceType,
 } from '@camstack/types'
 
@@ -15,6 +16,8 @@ export interface PulseCatalogView {
   readonly timestampPath: string
   readonly counterPath: string
   readonly debounceMs: number
+  readonly edges: readonly CustomizeEventEdge[]
+  readonly defaultEdge: CustomizeEventEdge
   readonly apply: 'add' | 'replace'
   readonly deviceTypes: readonly DeviceType[]
 }
@@ -53,6 +56,9 @@ function pulseView(target: CustomizeCatalogTarget): PulseCatalogView | null {
     target.timestampPath === undefined ||
     target.counterPath === undefined ||
     target.debounceMs === undefined ||
+    target.edges === undefined ||
+    target.defaultEdge === undefined ||
+    !target.edges.includes(target.defaultEdge) ||
     apply === null
   ) {
     return null
@@ -62,6 +68,8 @@ function pulseView(target: CustomizeCatalogTarget): PulseCatalogView | null {
     timestampPath: target.timestampPath,
     counterPath: target.counterPath,
     debounceMs: target.debounceMs,
+    edges: target.edges,
+    defaultEdge: target.defaultEdge,
     apply,
     deviceTypes: target.deviceTypes,
   }

@@ -6,6 +6,7 @@ import {
   type CameraSensorsConfig,
   type CompositionFieldsFeature,
   type CompositionSourceRef,
+  type CustomizeEventEdge,
   compilePulseOverride,
   compileSpanOverride,
   type SpanCompiled,
@@ -35,6 +36,7 @@ export interface PulseFormInput {
   readonly device: CompositionSourceRef
   readonly enabled: boolean
   readonly debounceMs: number
+  readonly edges?: readonly CustomizeEventEdge[]
   readonly sources: readonly PulseFormSource[]
 }
 
@@ -65,6 +67,7 @@ export function pulseFeatureFromForm(input: PulseFormInput): CompositionFieldsFe
       targetId: input.targetId,
       enabled: input.enabled,
       debounceMs: input.debounceMs,
+      ...(input.edges !== undefined ? { edges: [...input.edges] } : {}),
       sources: input.sources.map((source) => ({
         addonId: source.addonId,
         stableId: source.stableId,

@@ -24,6 +24,11 @@ import {
 } from 'lucide-react'
 import { useUiText } from '../contexts/ui-text'
 import { cn } from '../lib/cn'
+import {
+  BATTERY_BADGE_LOW_KEY,
+  BATTERY_BADGE_NORMAL_KEY,
+  binaryBatteryIsLow,
+} from './binary-battery'
 
 export interface BatteryStatusLike {
   /** `null` means no reading has landed yet (cold seed) — NOT a flat 0 %
@@ -35,10 +40,6 @@ export interface BatteryStatusLike {
    *  instead of a misleading exact percentage. */
   readonly binary?: boolean
 }
-
-/** A binary battery is "low" below this stand-in percentage (normal maps to
- *  100, low to a sub-threshold value). Keep in sync with the HA container. */
-const BINARY_LOW_THRESHOLD = 50
 
 export interface BatteryBadgeProps {
   readonly status: BatteryStatusLike | null | undefined
@@ -97,7 +98,7 @@ export function BatteryBadge({
 
   // Binary LOW_BAT source: no real charge level — show "Normal"/"Low".
   if (binary === true) {
-    const low = percentage < BINARY_LOW_THRESHOLD
+    const low = binaryBatteryIsLow(percentage)
     const BinIcon = low ? BatteryWarning : BatteryFull
     return (
       <span
@@ -113,11 +114,7 @@ export function BatteryBadge({
         }
       >
         <BinIcon className="h-3.5 w-3.5" />
-        <span>
-          {low
-            ? t('uiLibrary.batteryBadge.low', 'Low')
-            : t('uiLibrary.batteryBadge.normal', 'Normal')}
-        </span>
+        <span>{low ? t(BATTERY_BADGE_LOW_KEY, 'Low') : t(BATTERY_BADGE_NORMAL_KEY, 'Normal')}</span>
       </span>
     )
   }

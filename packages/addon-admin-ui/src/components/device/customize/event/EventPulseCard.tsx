@@ -97,16 +97,10 @@ export function EventPulseCard({
     const outcome = await handle.save(next)
     setError(outcome.kind === 'refused' ? outcome.reason : null)
   }
-  const seed: PulseFormSource | null =
-    source === null
-      ? null
-      : {
-          addonId: source.addonId,
-          stableId: source.stableId,
-          cap: source.cap,
-          fieldPath: source.fieldPath,
-          changedAtField: decoded?.changedAtFields[0] ?? '',
-        }
+  const seedSources = pulseSources(decoded)
+  const storedEdge = decoded?.draft.edges?.[0]
+  const edge =
+    storedEdge !== undefined && view.edges.includes(storedEdge) ? storedEdge : view.defaultEdge
   const fieldLabel =
     source === null ? '' : vocabularyFieldLabel(source.cap, source.fieldPath, i18n.language)
   const noOverride = stored.kind === 'known' && stored.value === null
@@ -243,7 +237,9 @@ export function EventPulseCard({
         target={handle.target}
         enabled={storedFeature?.enabled !== false}
         debounceMs={decoded?.draft.debounceMs ?? view.debounceMs}
-        seed={seed}
+        edges={view.edges}
+        edge={edge}
+        sources={seedSources}
         canSave={answered && !handle.saving}
         onClose={() => setOpen(false)}
         onSave={(feature) => {
@@ -338,4 +334,15 @@ function sourcePresence(
   if (devices === 'pending') return 'pending'
   if (devices === 'unknown') return 'unknown'
   return found ? 'present' : 'absent'
+}
+
+function pulseSources(decoded: ReturnType<typeof decodePulseOverride>): readonly PulseFormSource[] {
+  if (decoded === null) return []
+  return decoded.draft.sources.map((source, index) => ({
+    addonId: source.addonId,
+    stableId: source.stableId,
+    cap: source.cap,
+    fieldPath: source.fieldPath,
+    changedAtField: decoded.changedAtFields[index] ?? '',
+  }))
 }

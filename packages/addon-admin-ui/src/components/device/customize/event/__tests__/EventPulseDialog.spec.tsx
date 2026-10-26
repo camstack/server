@@ -119,7 +119,9 @@ describe('EventPulseDialog', () => {
         target={DISHWASHER}
         enabled
         debounceMs={2000}
-        seed={null}
+        edges={['rising']}
+        edge="rising"
+        sources={[]}
         canSave
         onClose={() => undefined}
         onSave={() => undefined}

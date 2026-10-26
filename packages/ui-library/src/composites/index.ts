@@ -25,6 +25,12 @@ export type { AudioWaveformProps } from './audio-waveform'
 export { AudioWaveform } from './audio-waveform'
 export type { BatteryBadgeProps, BatteryStatusLike } from './battery-badge'
 export { BatteryBadge } from './battery-badge'
+export {
+  BATTERY_BADGE_LOW_KEY,
+  BATTERY_BADGE_NORMAL_KEY,
+  BINARY_BATTERY_LOW_BELOW,
+  binaryBatteryIsLow,
+} from './binary-battery'
 export type { RunningBadgeProps, RunningStatusLineProps } from './running-badge'
 export { RunningBadge, RunningStatusLine } from './running-badge'
 export { runningDurationSince, runningStatusParts } from './running-status'

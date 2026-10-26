@@ -692,15 +692,26 @@ not ready yet. Hrefs come only from `lib/customization-routes.ts`.
 - **A row's live value is four-state** (`assignments/live-value.ts`): `pending`,
   `unknown` (the read failed, the reason in the title), `absent` (the slice
   answered and does not carry the field) and `value`. The first answer is a
-  `deviceState.getCapSlice` read; later changes are the pushed slice.
+  `deviceState.getCapSlice` read; later changes are the pushed slice. A battery
+  slice with `binary: true` shows the badge's Normal / Low labels, the same
+  strings as `BatteryBadge`, never a stand-in percentage.
+- **Behaviour parameters come from the catalog** ([D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md)).
+  The editor does not keep a second default: a threshold's comparison, value
+  and dwell, a linear scale's offset and clamp, a pulse's edges and debounce,
+  and a span's modes and timeout are the declaration, projected into
+  `CAP_CUSTOMIZE_CATALOG`. A new pulse can name several sources. A span shows
+  each source's mode, with one line of what that mode means, on the row from
+  the first source.
 - **Motion is the span card** (D673): the first row is the camera's own
   motion — "always included", "only when confirmed" or "replaced", from the
   status's `cameraMotion`, with its LIVE raw level from `cameraLevel` (the
   camera's `motion` slice is the effective value now, D696) — then one row per
-  sensor with an In addition / Confirm / Replace select. Modes are offered only
-  against an orchestrator that carries `cameraMotion`; nothing is editable until
-  the stored list was READ. `notForwarded` and `notEnforced` are warnings: a
-  camera that cannot enforce a mode says so instead of looking suppressed.
+  sensor. Each sensor row carries its mode (In addition / Confirm / Replace)
+  and one line of what that mode means, including the first sensor. Modes are
+  offered only against an orchestrator that carries `cameraMotion`; nothing is
+  editable until the stored list was READ. `notForwarded` and `notEnforced`
+  are warnings: a camera that cannot enforce a mode says so instead of looking
+  suppressed.
 - **Linked devices** is a `<DeviceList mode="generic">` (the same table, search
   and type filter as the collection pages); "Controls with the camera" is read-only
   text (there is no per-device backend switch), "Tracked events" writes

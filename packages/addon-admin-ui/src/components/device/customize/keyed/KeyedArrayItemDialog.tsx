@@ -322,6 +322,7 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
           <ScalarTransformControls
             control={fit.fit.transforms.includes('linear') ? 'choice' : 'none'}
             transforms={fit.fit.transforms}
+            declared={fit.fit.declared}
             unit={fit.fit.sourceUnit}
             value={transform}
             onChange={setTransform}

@@ -38,6 +38,45 @@ describe('event form apply', () => {
     expect(feature?.fields.pressCountSinceStart).toMatchObject({ expr: 'count(lastPressedAt)' })
   })
 
+  it('passes the chosen edge through, and refuses one the compiler cannot evaluate', () => {
+    const source = {
+      addonId: DOORBELL_SWITCH.addonId,
+      stableId: DOORBELL_SWITCH.stableId,
+      cap: 'switch',
+      fieldPath: 'on',
+      changedAtField: 'lastChangedAt',
+    }
+    const second = {
+      addonId: GATE_SENSOR.addonId,
+      stableId: GATE_SENSOR.stableId,
+      cap: 'binary',
+      fieldPath: 'on',
+      changedAtField: 'lastChangedAt',
+    }
+    const rising = pulseFeatureFromForm({
+      cap: 'doorbell',
+      targetId: 'pressed',
+      device: CAMERA_101,
+      enabled: true,
+      debounceMs: 2_000,
+      edges: ['rising'],
+      sources: [source, second],
+    })
+    expect(rising?.fields.lastPressedAt).toMatchObject({
+      expr: 'latest(rose(active0, changed0, 2000), rose(active1, changed1, 2000))',
+    })
+    const refused = pulseFeatureFromForm({
+      cap: 'doorbell',
+      targetId: 'pressed',
+      device: CAMERA_101,
+      enabled: true,
+      debounceMs: 2_000,
+      edges: ['button'],
+      sources: [source],
+    })
+    expect(refused).toBeNull()
+  })
+
   it('applies a span through setCameraSensors and motionCooldownMs', () => {
     const compiled = spanApplyFromForm({
       cap: 'motion',

@@ -71,4 +71,20 @@ describe('liveValueDisplay', () => {
     const press = { deviceId: 101, cap: 'doorbell', path: 'lastPressedAt' }
     expect(liveValueDisplay({ kind: 'value', value: null }, press, LABELS).text).toBe('—')
   })
+
+  it('a binary battery prints Normal or Low, not a percentage', () => {
+    const battery = { deviceId: 103, cap: 'battery', path: 'percentage' }
+    const normal = liveValueOf(
+      { status: 'success', data: { percentage: 100, binary: true } },
+      undefined,
+      'percentage',
+    )
+    expect(liveValueDisplay(normal, battery, LABELS).text).toBe('Normal')
+    const low = liveValueOf(
+      { status: 'success', data: { percentage: 10, binary: true } },
+      undefined,
+      'percentage',
+    )
+    expect(liveValueDisplay(low, battery, LABELS).text).toBe('Low')
+  })
 })
