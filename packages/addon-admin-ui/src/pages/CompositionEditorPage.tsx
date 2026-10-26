@@ -1,13 +1,13 @@
 /**
- * /build/compositions/new and /build/compositions/:blockId (D676, D941).
+ * /build/compositions/:blockId (D676, D941).
+ * `/build/compositions/new` redirects to the Build chooser — one create entry.
  */
 import { Boxes } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AdminPage } from '../components/AdminPage'
 import { CompositionBlockEditor } from '../components/composition-editor/CompositionBlockEditor'
-import { CompositionCreateForm } from '../components/composition-editor/CompositionCreateForm'
 import { EDITOR_SHELL_SURFACE } from '../components/composition-editor/editor-surface'
 import { BUILD_CUSTOM_DEVICE_PATH, customizePath } from '../lib/customization-routes'
 import { coreBlockComposition } from '@camstack/types'
@@ -29,11 +29,8 @@ export function CompositionEditorPage(): ReactNode {
   )
 
   if (isNew) {
-    return page(
-      <section className={`${EDITOR_SHELL_SURFACE} flex flex-col gap-2`}>
-        <CompositionCreateForm />
-      </section>,
-    )
+    // One create entry: the Build chooser (`?tab=custom-device&new=1`).
+    return <Navigate to={`${BUILD_CUSTOM_DEVICE_PATH}&new=1`} replace />
   }
 
   if (read.status === 'success' && read.data.state === 'loaded' && read.data.view !== null) {

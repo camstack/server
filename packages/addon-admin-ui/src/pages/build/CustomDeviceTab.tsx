@@ -5,6 +5,7 @@
  * Customizations stay links to the device.
  */
 
+import type { CompositionListRead } from '@camstack/types'
 import {
   Badge,
   Button,
@@ -18,7 +19,7 @@ import {
   useItemFormUrl,
 } from '@camstack/ui-library'
 import { Boxes } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { CompositionBlockEditor } from '../../components/composition-editor/CompositionBlockEditor'
@@ -61,7 +62,11 @@ function useFleetLookup(): FleetLookup {
 }
 
 export interface CustomDeviceTabProps {
-  /** Header "New composition" from Build — open create once, then clear. */
+  /**
+   * Legacy `?create=1` on this tab. The header writes `?new=1` directly.
+   * Cleared when the dialog closes (`onCreateConsumed`), never in the same
+   * turn it opens — that second router write dropped `new` and closed the chooser.
+   */
   readonly createRequested?: boolean
   readonly onCreateConsumed?: () => void
 }
@@ -74,71 +79,25 @@ export function CustomDeviceTab({
   const compositions = useCoreBlocksListCompositions({}, { refetchInterval: POLL_MS })
   const fleet = useFleetLookup()
   const formUrl = useItemFormUrl({ editKey: 'block', newKey: 'new' })
+  const editingId = formUrl.state.mode === 'edit' ? formUrl.state.id : null
+  const isNew = editingId === null && (createRequested || formUrl.state.mode === 'new')
 
-  useEffect(() => {
-    if (!createRequested) return
-    formUrl.openNew()
+  const closeDialog = (): void => {
+    formUrl.close()
     onCreateConsumed?.()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createRequested])
+  }
 
   const read = compositions.data
-  if (compositions.error != null && read === undefined) {
-    return (
-      <ErrorBox
-        title={t(
-          'build.customDeviceTab.couldNotReadTheCompositions',
-          'Could not read the compositions',
-        )}
-        message={errorMessage(compositions.error)}
-        onRetry={() => void compositions.refetch()}
-      />
-    )
-  }
-  if (read === undefined) {
-    return (
-      <p className="p-4 text-sm text-foreground-subtle">
-        {t('build.customDeviceTab.loadingCompositions', 'Loading compositions…')}
-      </p>
-    )
-  }
-  if (read.state === 'not-loaded') {
-    return (
-      <Card>
-        <div className="space-y-1 p-4">
-          <p className="text-sm text-warning">
-            {t(
-              'build.customDeviceTab.theCompositionStoreHasNot',
-              'The composition store has not been read yet.',
-            )}
-          </p>
-          <p className="text-xs text-foreground-subtle">
-            {t(
-              'build.customDeviceTab.thisIsNotTheSame',
-              'This is not the same as having none — the list appears once the hub has read it (',
-            )}
-            {read.reason}).
-          </p>
-        </div>
-      </Card>
-    )
-  }
-  const refreshError = compositions.error != null ? errorMessage(compositions.error) : null
-  const lists = buildCompositionRows(read.views, fleet)
-  const editingId = formUrl.state.mode === 'edit' ? formUrl.state.id : null
-  const isNew = formUrl.state.mode === 'new'
+  const body = compositionBody(read, compositions.error, () => void compositions.refetch(), fleet, {
+    onEditComposed: (blockId) => formUrl.openEdit(blockId),
+  })
 
   return (
     <>
-      <CompositionLists
-        lists={lists}
-        fleet={fleet}
-        refreshError={refreshError}
-        onEditComposed={(blockId) => formUrl.openEdit(blockId)}
-      />
+      {body}
       <ItemFormDialog
         open={isNew || editingId !== null}
-        onClose={() => formUrl.close()}
+        onClose={closeDialog}
         title={
           isNew
             ? t('build.customDeviceTab.newComposedDevice', 'New composed device')
@@ -155,6 +114,71 @@ export function CustomDeviceTab({
         ) : null}
       </ItemFormDialog>
     </>
+  )
+}
+
+function notLoadedNote(reason: string): ReactNode {
+  return (
+    <Card>
+      <div className="space-y-1 p-4">
+        <p className="text-sm text-warning">
+          {i18n.t(
+            'build.customDeviceTab.theCompositionStoreHasNot',
+            'The composition store has not been read yet.',
+          )}
+        </p>
+        <p className="text-xs text-foreground-subtle">
+          {i18n.t(
+            'build.customDeviceTab.thisIsNotTheSame',
+            'This is not the same as having none — the list appears once the hub has read it (',
+          )}
+          {reason}).
+        </p>
+      </div>
+    </Card>
+  )
+}
+
+interface CompositionBodyHandlers {
+  readonly onEditComposed: (blockId: string) => void
+}
+
+function compositionBody(
+  read: CompositionListRead | undefined,
+  error: unknown,
+  refetch: () => void,
+  fleet: FleetLookup,
+  handlers: CompositionBodyHandlers,
+): ReactNode {
+  if (error != null && read === undefined) {
+    return (
+      <ErrorBox
+        title={i18n.t(
+          'build.customDeviceTab.couldNotReadTheCompositions',
+          'Could not read the compositions',
+        )}
+        message={errorMessage(error)}
+        onRetry={refetch}
+      />
+    )
+  }
+  if (read === undefined) {
+    return (
+      <p className="p-4 text-sm text-foreground-subtle">
+        {i18n.t('build.customDeviceTab.loadingCompositions', 'Loading compositions…')}
+      </p>
+    )
+  }
+  if (read.state === 'not-loaded') return notLoadedNote(read.reason)
+  const refreshError = error != null ? errorMessage(error) : null
+  const lists = buildCompositionRows(read.views, fleet)
+  return (
+    <CompositionLists
+      lists={lists}
+      fleet={fleet}
+      refreshError={refreshError}
+      onEditComposed={handlers.onEditComposed}
+    />
   )
 }
 

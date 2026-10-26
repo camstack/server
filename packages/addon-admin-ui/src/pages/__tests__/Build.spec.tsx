@@ -56,8 +56,8 @@ function renderBuild(initialEntry: string): void {
 }
 
 describe('BuildPage section tabs', () => {
-  it('renders a tablist and switching to Scripts sets tab=scripts, clearing block and create', () => {
-    renderBuild('/build?tab=automations&block=blk-1&create=1&keep=yes')
+  it('renders a tablist and switching to Scripts sets tab=scripts, clearing block, create and new', () => {
+    renderBuild('/build?tab=automations&block=blk-1&create=1&new=1&keep=yes')
 
     expect(screen.getByRole('tablist', { name: 'Build-your-self sections' })).toBeTruthy()
 
@@ -70,6 +70,7 @@ describe('BuildPage section tabs', () => {
     expect(location).toContain('tab=scripts')
     expect(location).not.toContain('block=')
     expect(location).not.toContain('create=')
+    expect(location).not.toContain('new=')
     expect(location).toContain('keep=yes')
     expect(screen.getByTestId('section-scripts').getAttribute('aria-selected')).toBe('true')
     expect(screen.getByTestId('scripts-body')).toBeTruthy()

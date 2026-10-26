@@ -24,7 +24,8 @@ function isTab(value: string | null): value is BuildTab {
 }
 
 const BLOCKS_KEY = ['coreBlocks', 'list', 'build-counts'] as const
-const EDITOR_OWNED = ['block', 'create'] as const
+/** `new` is the composition chooser (`useItemFormUrl`). Cleared on leaving a section so it cannot reopen another tab's create dialog. */
+const EDITOR_OWNED = ['block', 'create', 'new'] as const
 
 function countScripts(blocks: readonly CoreBlock[]): number {
   return blocks.filter((b) => coreBlockSourceKind(b) === 'code').length
@@ -111,6 +112,18 @@ export function BuildPage() {
   const requestCreate = (): void => {
     setParams(
       (prev) => {
+        // Compositions: one router write of `new=1`. A follow-up that rebuilds
+        // the query from the router's previous snapshot drops `new` (it was
+        // historically applied with history.replaceState) and the chooser
+        // closes in the same turn.
+        if (tab === 'custom-device') {
+          const copy = new URLSearchParams(window.location.search)
+          copy.set('tab', 'custom-device')
+          copy.delete('block')
+          copy.delete('create')
+          copy.set('new', '1')
+          return copy
+        }
         const copy = new URLSearchParams(prev)
         copy.set('create', '1')
         copy.delete('block')
@@ -120,10 +133,11 @@ export function BuildPage() {
     )
   }
 
+  /** Drop `create` without resurrecting params the router snapshot never saw. */
   const clearCreate = (): void => {
     setParams(
-      (prev) => {
-        const copy = new URLSearchParams(prev)
+      () => {
+        const copy = new URLSearchParams(window.location.search)
         copy.delete('create')
         return copy
       },

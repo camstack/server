@@ -368,14 +368,17 @@ describe('CustomDeviceTab', () => {
     )
   })
 
-  it('opens the create dialog when createRequested pulses', async () => {
+  it('opens the create dialog when createRequested is set, without rewriting the URL', async () => {
+    const consumed = vi.fn()
     render(
       <MemoryRouter>
-        <CustomDeviceTab createRequested onCreateConsumed={vi.fn()} />
+        <CustomDeviceTab createRequested onCreateConsumed={consumed} />
       </MemoryRouter>,
     )
     expect(await screen.findByTestId('composed-device-editor')).toBeTruthy()
-    expect(window.location.search).toContain('new=')
+    expect(screen.getByTestId('composition-create-form')).toBeTruthy()
+    expect(consumed).not.toHaveBeenCalled()
+    expect(window.location.search).not.toContain('new=')
   })
 
   it('a failed composition shows its reason, and a source that is gone is marked missing', () => {
