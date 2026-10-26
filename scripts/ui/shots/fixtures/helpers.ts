@@ -87,6 +87,32 @@ export default defineFixtures({
       input.deviceId === 911 || input.deviceId === 912
         ? { caps: [{ cap: 'temperature-sensor', fields: [{ path: 'celsius', kind: 'number' }] }] }
         : { caps: [] },
+    'deviceManager.getBindings': (input: { deviceId?: number }) => ({
+      deviceId: input.deviceId ?? 0,
+      entries: [
+        {
+          capName: 'temperature-sensor',
+          kind: 'native' as const,
+          providerAddonId: 'composer',
+          providerNodeId: 'hub',
+          nativeAddonId: 'composer',
+        },
+        {
+          capName: 'group-status',
+          kind: 'native' as const,
+          providerAddonId: 'composer',
+          providerNodeId: 'hub',
+          nativeAddonId: 'composer',
+        },
+        {
+          capName: 'device-status',
+          kind: 'native' as const,
+          providerAddonId: 'composer',
+          providerNodeId: 'hub',
+          nativeAddonId: 'composer',
+        },
+      ],
+    }),
     'deviceState.getSnapshot': (input: { deviceId?: number }) => {
       if (input.deviceId === 910) {
         return {

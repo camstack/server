@@ -70,13 +70,9 @@ export function RunningStatusLine({
 }: RunningStatusLineProps): ReactNode {
   const t = useUiText()
   const parts = runningStatusParts(running, since, phase, now)
-  if (parts.key === 'unknown') {
-    return (
-      <p className={cn('text-[11px] text-foreground-subtle', className)}>
-        {t('uiLibrary.runningStatus.unknown', 'Unknown')}
-      </p>
-    )
-  }
+  // No boolean yet (a sensor, a group helper): the badge is absent too.
+  // Drawing "Unknown" reads as a failed reading.
+  if (parts.key === 'unknown' || (running !== true && running !== false)) return null
   if (parts.key === 'idle') {
     const base = t('uiLibrary.runningStatus.idle', 'Idle')
     const text =

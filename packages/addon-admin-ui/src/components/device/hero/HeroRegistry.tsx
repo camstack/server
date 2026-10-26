@@ -135,7 +135,8 @@ export function resolveHero(deviceType: DeviceType): HeroComponent {
 function DeviceHeroRunningLine({ deviceId }: { readonly deviceId: number }): ReactElement {
   const system = useSystem()
   const slice = useDeviceState(system.trpcClient, deviceId, (s) => s.runningState)
-  const running = slice === undefined || slice.running === null ? null : slice.running
+  if (slice === undefined || (slice.running !== true && slice.running !== false)) return <></>
+  const running = slice.running
   return (
     <RunningStatusLine
       running={running}

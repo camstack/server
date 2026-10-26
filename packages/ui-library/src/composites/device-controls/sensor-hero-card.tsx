@@ -20,6 +20,7 @@ import { useDeviceProxy, useDeviceStateSlice } from '../../hooks/use-device-prox
 import {
   useDeviceManagerGetDevice,
   useDeviceManagerGetRoleDisplayDefaults,
+  useDeviceStateGetSnapshot,
 } from '../../generated/system-hooks'
 import { cn } from '../../lib/cn'
 import { formatControlDateTime } from '../../lib/format-control-datetime'
@@ -34,6 +35,7 @@ import {
   type SensorDescriptor,
 } from './sensor-value-atom'
 import type { DeviceControlProps } from './control-registry'
+import { resolveSensorHeroReading, ROLE_OUTPUT_CAP } from './sensor-hero-source'
 
 // ── Internal slice-value type guards (same as sensor-value-atom) ─────────────
 
@@ -185,7 +187,37 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
   const descriptor: SensorDescriptor | undefined = useBinaryBattery
     ? BINARY_BATTERY_DESCRIPTOR
     : roleDescriptor
-  const slice: unknown = useBinaryBattery ? binaryBatterySlice : numericSlice
+  const liveSlice: unknown = useBinaryBattery ? binaryBatterySlice : numericSlice
+  const snapshot = useDeviceStateGetSnapshot({ deviceId: device.id }, { staleTime: 5_000 })
+  const capName = useBinaryBattery
+    ? 'binary'
+    : device.role != null
+      ? ROLE_OUTPUT_CAP[device.role]
+      : ROLE_OUTPUT_CAP['temperature-sensor']
+  const snapshotStatus =
+    snapshot.status === 'success' || snapshot.status === 'error' ? snapshot.status : 'pending'
+  const resolution = resolveSensorHeroReading({
+    addonId: device.addonId,
+    role: device.role,
+    descriptor,
+    capName,
+    live: liveSlice,
+    snapshotStatus,
+    snapshotCaps: snapshot.data,
+  })
+
+  if (resolution.kind === 'quiet') {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4 min-h-[96px]"
+        data-testid="sensor-hero-quiet"
+      >
+        <span className="text-sm text-foreground-subtle">{device.name}</span>
+      </div>
+    )
+  }
+
+  const slice: unknown = resolution.kind === 'value' ? resolution.slice : undefined
 
   if (descriptor === undefined || slice === undefined) {
     // Nothing resolved yet — show a waiting state.
@@ -213,8 +245,8 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
       capName: device.role === 'numeric-sensor' ? 'numeric-sensor' : undefined,
       roleDefault:
         device.role != null
-          ? roleDefaultsData?.defaults[device.role]
-          : roleDefaultsData?.defaults['temperature-sensor'],
+          ? roleDefaultsData?.defaults?.[device.role]
+          : roleDefaultsData?.defaults?.['temperature-sensor'],
       quantity: descriptor.quantity ?? 'device',
       deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
     })

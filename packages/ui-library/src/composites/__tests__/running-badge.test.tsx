@@ -31,9 +31,10 @@ describe('RunningBadge', () => {
 describe('RunningStatusLine', () => {
   const now = 1_700_000_000_000
 
-  it('unknown never says Idle', () => {
-    render(<RunningStatusLine running={null} since={null} phase={null} now={now} />)
-    expect(screen.getByText('Unknown')).toBeTruthy()
+  it('unknown is not drawn as a reading', () => {
+    const view = render(<RunningStatusLine running={null} since={null} phase={null} now={now} />)
+    expect(view.container.textContent).toBe('')
+    expect(screen.queryByText('Unknown')).toBeNull()
     expect(screen.queryByText('Idle')).toBeNull()
   })
 })

@@ -18,9 +18,12 @@ export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): Rea
     <div className="flex flex-col gap-4" data-testid="helper-template-picker">
       {helperTemplateGroups().map((group) => (
         <section key={group.id} aria-label={t(`helper.group.${group.id}`)}>
-          <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-foreground-subtle">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-foreground-subtle">
             {t(`helper.group.${group.id}`)}
           </h3>
+          <p className="mb-1.5 mt-1 text-[11px] text-foreground-muted">
+            {t('helper.offlineCounted')}
+          </p>
           <ul className="flex flex-col gap-1.5">
             {group.templateIds.map((id) => {
               const template = groupTemplate(id)

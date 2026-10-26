@@ -25,10 +25,12 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
 
 let mockDeviceData: unknown
 let mockRoleDefaults: { defaults: Record<string, unknown> } | undefined
+let mockSnapshot: { status: 'pending' | 'error' | 'success'; data?: unknown }
 
 vi.mock('../../../generated/system-hooks', () => ({
   useDeviceManagerGetDevice: vi.fn(() => ({ data: mockDeviceData })),
   useDeviceManagerGetRoleDisplayDefaults: vi.fn(() => ({ data: mockRoleDefaults })),
+  useDeviceStateGetSnapshot: vi.fn(() => mockSnapshot),
 }))
 
 const trpc = {} as never
@@ -37,6 +39,7 @@ beforeEach(() => {
   mockSlice = undefined
   mockDeviceData = undefined
   mockRoleDefaults = undefined
+  mockSnapshot = { status: 'pending' }
 })
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -96,6 +99,37 @@ describe('SensorHeroCard', () => {
       mockDeviceData = makeDevice({ role: 'temperature-sensor' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.getByText(/Awaiting state/)).toBeTruthy()
+    })
+
+    it('draws a composed device from the snapshot when the live slice has not landed', () => {
+      mockSlice = undefined
+      mockSnapshot = {
+        status: 'success',
+        data: { 'temperature-sensor': { celsius: 21.4 } },
+      }
+      mockDeviceData = makeDevice({
+        id: 910,
+        addonId: 'composer',
+        name: 'Veranda',
+        role: 'temperature-sensor',
+      })
+      render(<SensorHeroCard trpc={trpc} deviceId={910} features={[]} />)
+      expect(screen.getByText('21.4')).toBeTruthy()
+      expect(screen.getByText('°C')).toBeTruthy()
+      expect(screen.queryByText(/Awaiting state/)).toBeNull()
+    })
+
+    it('does not claim awaiting state when a composed device has no primary reading', () => {
+      mockSlice = undefined
+      mockSnapshot = { status: 'success', data: { 'group-status': { included: 1, total: 2 } } }
+      mockDeviceData = makeDevice({
+        addonId: 'composer',
+        name: 'Veranda',
+        role: 'temperature-sensor',
+      })
+      render(<SensorHeroCard trpc={trpc} deviceId={910} features={[]} />)
+      expect(screen.queryByText(/Awaiting state/)).toBeNull()
+      expect(screen.getByText('Veranda')).toBeTruthy()
     })
   })
 
