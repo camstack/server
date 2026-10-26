@@ -1,11 +1,12 @@
 /**
  * An OPEN alert episode, as the STATE SUMMARY reads it (D647).
  */
+import type { ConsumableForm, IScopedLogger } from '@camstack/types'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import {
-  incomingFromBatteryBand,
   incomingFromConsumableBand,
   incomingFromProviderConsumableBand,
+  incomingFromUnmeasuredBattery,
   type NcIncomingEvent,
   type NcProviderConsumableAttention,
   type NcSystemEventFacts,
@@ -13,7 +14,6 @@ import {
 import type { NcSystemEventSubject } from '../rule-engine.js'
 import { alertSubjectDeviceId, type NcAlertRow } from './alert-episode.js'
 import { parseConsumableSubject } from './consumable-subject.js'
-import type { ConsumableForm } from '@camstack/types'
 
 export interface NcOpenAlert {
   readonly family: 'battery' | 'consumable'
@@ -30,19 +30,22 @@ export interface NcUnmeasuredEpisodeInput {
   readonly detail?: string
 }
 
+/** `battery:<deviceId>` — nothing else. A `tank:` subject is not one of these. */
+export function isBatterySubject(subject: string): boolean {
+  const deviceId = alertSubjectDeviceId(subject)
+  return deviceId !== undefined && subject === `battery:${String(deviceId)}`
+}
+
 function unmeasuredEpisode(input: NcUnmeasuredEpisodeInput): NcIncomingEvent | null {
   const deviceId = alertSubjectDeviceId(input.subject)
   if (deviceId === undefined) return null
   const identity = input.lookup(deviceId)
   const facts = input.facts
   if (input.family === 'battery') {
-    return incomingFromBatteryBand({
-      facts,
-      deviceId,
-      band: 'low',
-      reading: { percentage: 0, lastUpdated: 0, binary: true },
-      identity,
-    })
+    // No reading has arrived. Unknown is not 0, and it is not a binary sensor
+    // (D393). The sentence names the device and no percentage.
+    if (!isBatterySubject(input.subject)) return null
+    return incomingFromUnmeasuredBattery({ facts, deviceId, identity })
   }
   const parts = parseConsumableSubject(input.subject)
   if (parts !== null && parts.legacy) {
@@ -115,10 +118,20 @@ export interface NcOpenAlertInput {
   readonly facts: NcSystemEventFacts
   readonly restated: NcIncomingEvent | null
   readonly lookup: (deviceId: number) => NcDeviceIdentity | undefined
+  readonly logger?: IScopedLogger
 }
 
 export function openAlertOf(row: NcAlertRow, input: NcOpenAlertInput): NcOpenAlert | null {
   const parts = parseConsumableSubject(row.subject)
+  const battery = isBatterySubject(row.subject)
+  if (parts === null && !battery) {
+    const deviceId = alertSubjectDeviceId(row.subject)
+    input.logger?.warn('open alert skipped — subject is neither a battery nor a consumable', {
+      ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+      meta: { subject: row.subject },
+    })
+    return null
+  }
   const family: NcOpenAlert['family'] = parts !== null ? 'consumable' : 'battery'
   const incoming =
     input.restated ??

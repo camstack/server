@@ -2137,6 +2137,8 @@ that: it opened at 25 and has nothing left to raise.
   provider verdict on subject `consumable:<deviceId>:<key>` and emit only
   `device-consumable-low` / `-normal`. Wording follows `form` (part, tank,
   product, bin). Removed `device-tank-*` kinds are not parsed anymore ([D935](../decisions/adr-0935-the-device-tank-kinds-leave-the-schema.md)).
+  A leftover `tank:<deviceId>:<key>` alert is not a battery: it is skipped, and
+  closed when that key is seen as a consumable or by one boot sweep (D934).
 - **Held back from the served template catalog.** The installed viewers parse
   `getTemplateCatalog` as a whole, with a strict kind enum, so
   `servedTemplateVars()` drops `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` until
@@ -2271,7 +2273,7 @@ event, so neither would ever do anything).
 
 **What it says.** One block per section — the D637 kind GROUPS
 (`state-summary/state-model.ts`): devices offline or switched off, streams
-offline, low batteries, consumables, tanks, cameras detecting nothing, nodes
+offline, low batteries, consumables, cameras detecting nothing, nodes
 with problems (offline / cannot infer), addons stopped (crash-looped runners),
 addon updates, server updates (server and container). Addons stopped and addon
 updates are two groups since [D708](../decisions/adr-0708-a-system-summary-sends-addons-stopped-and-addon-updates-apart-and-a-crash-loop-closes-on-the-runner-state.md) — a crash and an update are acted on
@@ -2294,7 +2296,7 @@ the instant raises read, RAM only on the schedule (D447):
 
 | section | mirror |
 | --- | --- |
-| battery, consumables, tanks | the open alert episodes (`NcDeviceAlerts.openEpisodes`, durable rows; after a restart an episode whose reading has not arrived is worded without a number — `alerts/open-alert.ts`) |
+| battery, consumables | the open alert episodes (`NcDeviceAlerts.openEpisodes`, durable rows). A battery whose reading has not arrived is worded with `system.device-battery-low.body.unmeasured` — no percentage, and not the binary sentence (D393). A leftover `tank:` subject is skipped and closed by the D934 sweep; it is not a battery line |
 | devices offline, nodes offline | the liveness ledger, past the 5-minute hold-off the instant path waits too |
 | switched off, streams, detecting nothing, cannot infer, crash loops, updates | `notification-center:system-state` (`state-summary/system-state-ledger.ts`) |
 

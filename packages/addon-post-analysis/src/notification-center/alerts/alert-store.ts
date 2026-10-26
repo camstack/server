@@ -28,7 +28,9 @@ import { type DurableKindDeps } from '../../durable/durable-wiring.js'
 import { ncDurableRecordKinds } from '../nc-durable-record-kinds.js'
 import { BootWindowRows } from '../boot-window-rows.js'
 import { alertSubjectDeviceId, type NcAlertRow } from './alert-episode.js'
+import { parseConsumableSubject } from './consumable-subject.js'
 import type { NcAlertRowPort } from './device-alerts.js'
+import { parseTankSubject, type NcTankSubjectParts } from './tank-subject.js'
 
 /**
  * @durable class=ledger owner=notification-center
@@ -124,8 +126,25 @@ export function mergeBootWindowAlertRow(
   return provisional.lastNotifiedAt > stored.lastNotifiedAt ? provisional : stored
 }
 
+/** How many open `tank:` leftovers the boot sweep closed, and how many it left. */
+export interface NcTankLeftoverSweepCounts {
+  readonly closed: number
+  readonly kept: number
+}
+
+/**
+ * Who still owns a device, for the boot sweep.
+ *
+ * `true` the directory lists it, `false` an answered directory does not,
+ * `undefined` the directory has not answered — absence is not evidence (D49).
+ */
+export interface NcTankLeftoverSweepInput {
+  readonly liveOwner: (deviceId: number) => boolean | undefined
+}
+
 export class NcAlertStore {
   private readonly ledger: DurableLedger<NcAlertRow>
+  private readonly logger: IScopedLogger
   /**
    * THE BOOT WINDOW (D698). Battery slices arrive from the moment the centre
    * starts, and the ledger is read only in the back-fill. A row written in that
@@ -138,6 +157,7 @@ export class NcAlertStore {
   private readonly bootWindow: BootWindowRows<NcAlertRow>
 
   constructor(deps: DurableKindDeps & { readonly logger: IScopedLogger }) {
+    this.logger = deps.logger
     this.ledger = new DurableLedger({
       spec: NC_ALERTS_SPEC,
       kind: deps.records.kind(ncDurableRecordKinds['device-alerts']),
@@ -157,6 +177,41 @@ export class NcAlertStore {
     const loaded = (await this.ledger.load()).length
     this.bootWindow.settle()
     return loaded
+  }
+
+  /**
+   * Close open `tank:<id>:<key>` leftovers once (D934). Idempotent.
+   *
+   * A row closes when the same key is already a consumable episode in this
+   * ledger, or when an answered directory has no device for it. A live device
+   * whose key has not been seen yet is kept — the next consumable observation
+   * closes it. `battery:` rows are not tank subjects and are never touched.
+   * Deletes go through this ledger (D679).
+   */
+  async sweepOpenTankLeftovers(
+    input: NcTankLeftoverSweepInput,
+  ): Promise<NcTankLeftoverSweepCounts> {
+    const known = consumableKeysOf(this.ledger.snapshot())
+    const closing: TankClose[] = []
+    let kept = 0
+    for (const row of this.ledger.snapshot()) {
+      if (!row.alerting) continue
+      const tank = parseTankSubject(row.subject)
+      if (tank === null) continue
+      const reason = tankCloseReason(tank, known, input.liveOwner(tank.deviceId))
+      if (reason === 'keep') kept += 1
+      else closing.push({ row, reason })
+    }
+    for (const item of closing) {
+      const deviceId = alertSubjectDeviceId(item.row.subject)
+      await this.ledger.forget(item.row.subject)
+      this.logger.info('leftover tank alert closed', {
+        ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+        meta: { subject: item.row.subject, reason: item.reason },
+      })
+    }
+    this.logger.info('leftover tank alert sweep', { meta: { closed: closing.length, kept } })
+    return { closed: closing.length, kept }
   }
 
   /** Drop a deleted device's mirrored rows (the durable ones go by `deleteWhere`, D871). */
@@ -194,4 +249,34 @@ export class NcAlertStore {
       answered: () => this.ledger.hasAnswered(),
     }
   }
+}
+
+type TankCloseReason = 'consumable key already known' | 'no live owner' | 'keep'
+
+interface TankClose {
+  readonly row: NcAlertRow
+  readonly reason: Exclude<TankCloseReason, 'keep'>
+}
+
+function consumableKey(deviceId: number, key: string): string {
+  return `${String(deviceId)}:${key}`
+}
+
+function consumableKeysOf(rows: readonly NcAlertRow[]): ReadonlySet<string> {
+  const keys = new Set<string>()
+  for (const row of rows) {
+    const parts = parseConsumableSubject(row.subject)
+    if (parts !== null) keys.add(consumableKey(parts.deviceId, parts.key))
+  }
+  return keys
+}
+
+function tankCloseReason(
+  tank: NcTankSubjectParts,
+  known: ReadonlySet<string>,
+  owner: boolean | undefined,
+): TankCloseReason {
+  if (known.has(consumableKey(tank.deviceId, tank.key))) return 'consumable key already known'
+  if (owner === false) return 'no live owner'
+  return 'keep'
 }

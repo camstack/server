@@ -44,6 +44,7 @@ import type { NcDeviceIdentity } from '../device-directory.js'
 import {
   isProviderVerdictDetail,
   type NcOpenAlert,
+  isBatterySubject,
   openAlertOf,
   providerVerdictDetail,
 } from './open-alert.js'
@@ -78,6 +79,7 @@ import {
   withAlertDetail,
 } from './alert-episode.js'
 import { deriveBatteryBand, type NcBatteryBand, type NcBatteryReading } from './battery-band.js'
+import { tankSubject } from './tank-subject.js'
 
 /**
  * The THREE cluster settings, and no fourth (the operator's D-2 and D-4).
@@ -293,6 +295,7 @@ export class NcDeviceAlerts {
    */
   /** One item from the consumables slice — every form (D934). */
   observeConsumableItem(deviceId: number, sliceItem: NcConsumableSliceItem): void {
+    this.closeTankLeftover(deviceId, sliceItem.key)
     if (sliceItem.wear !== null) {
       this.observeConsumable(deviceId, sliceItem.wear)
       return
@@ -483,13 +486,15 @@ export class NcDeviceAlerts {
     for (const row of this.deps.rows.all()) {
       if (!row.alerting) continue
       const restated = this.restatementOf(row.subject)
+      const logger = this.logger()
       const open = openAlertOf(row, {
         facts,
         restated: restated === null ? null : restated(facts),
         lookup: this.deps.lookup,
+        ...(logger !== undefined ? { logger } : {}),
       })
       if (open !== null) out.push(open)
-      else {
+      else if (parseConsumableSubject(row.subject) !== null || isBatterySubject(row.subject)) {
         this.logger()?.debug('open alert left out of the state summary — it cannot be worded', {
           ...tagsOf(row.subject),
           meta: { subject: row.subject },
@@ -581,6 +586,17 @@ export class NcDeviceAlerts {
       }
     }
     this.absentThresholds = absent
+  }
+
+  /**
+   * A leftover `tank:<id>:<key>` ends when that key is seen on the consumables
+   * slice (D934). Silent: no recovery. A real `battery:` row is a different
+   * subject and is not touched.
+   */
+  private closeTankLeftover(deviceId: number, key: string): void {
+    const subject = tankSubject(deviceId, key)
+    if (this.deps.rows.get(subject) === undefined) return
+    this.dropRow(subject, 'closed — the same key is a consumable (D934)')
   }
 
   /** Remove one row, mirror and durable, with a line that names why. */

@@ -92,6 +92,7 @@
   "system.device-battery-low.title": "Batteria scarica — {{deviceName}}",
   "system.device-battery-low.body": "{{deviceName}} è al {{percentage}}% di batteria",
   "system.device-battery-low.body.binary": "{{deviceName}} segnala la batteria scarica",
+  "system.device-battery-low.body.unmeasured": "{{deviceName}} ha la batteria scarica",
   "system.device-battery-normal.title": "Batteria rientrata — {{deviceName}}",
   "system.device-battery-normal.body": "{{deviceName}} è risalito al {{percentage}}% di batteria",
   "system.device-battery-normal.body.binary": "{{deviceName}} non segnala più la batteria scarica",

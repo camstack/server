@@ -308,7 +308,18 @@ export async function runBootBackfill(host: BootLifecycleHost): Promise<void> {
   if (
     !(await phase('deviceAlerts', async () => {
       const rows = await host.alertStore.load()
-      host.logger.info('device alert ledger reseeded', { meta: { rows } })
+      const directoryAnswered = host.deviceDirectory.answeredGeneration() > 0
+      const tankLeftovers = await host.alertStore.sweepOpenTankLeftovers({
+        liveOwner: (deviceId) =>
+          directoryAnswered ? host.deviceDirectory.get(deviceId) !== undefined : undefined,
+      })
+      host.logger.info('device alert ledger reseeded', {
+        meta: {
+          rows,
+          tankLeftoversClosed: tankLeftovers.closed,
+          tankLeftoversKept: tankLeftovers.kept,
+        },
+      })
     }))
   ) {
     return

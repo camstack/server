@@ -11,7 +11,11 @@ applies-to:
   - packages/types/src/notification/system-event-families.ts
   - packages/addon-post-analysis/src/notification-center/alerts/consumable-routing.ts
   - packages/addon-post-analysis/src/notification-center/alerts/device-alerts.ts
+  - packages/addon-post-analysis/src/notification-center/alerts/open-alert.ts
+  - packages/addon-post-analysis/src/notification-center/alerts/alert-store.ts
+  - packages/addon-post-analysis/src/notification-center/alerts/tank-subject.ts
   - packages/addon-post-analysis/src/notification-center/event-intake.ts
+  - packages/addon-post-analysis/src/notification-center/boot-lifecycle.ts
   - packages/addon-post-analysis/src/notification-center/state-summary/**
 ---
 
@@ -33,7 +37,11 @@ has one **Consumables** section, grouped by device. Nothing rewrites stored rows
 ## Consequences
 
 - Leftover `tank:<deviceId>:<key>` rows are closed silently when the item is seen
-  on the consumables slice.
+  on the consumables slice. At boot, one idempotent sweep closes every open
+  leftover whose key is already a consumable episode, or whose device an
+  answered directory does not list. A `battery:` row is never one of these.
+  A subject that is neither `battery:<id>` nor a consumable is skipped — it is
+  not worded as a battery, and a missing level is not 0% (D393).
 
 ## Enforcement
 

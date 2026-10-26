@@ -38,4 +38,13 @@ each reader skips the row with one WARN line and continues.
 The legacy tail, the remap and the guard were deleted; old rows with tank kinds
 are skipped when read.
 
-Residue removed: leftover tank episodes, tank subjects, the skip test.
+Schema residue removed: the tank-kind tail, the remap and the skip test.
+Ledger rows still named `tank:<deviceId>:<key>` are not a tank kind and are
+not a battery — [D934](adr-0934-a-consumable-of-every-form-is-one-low-signal-and-one-summary-section.md)
+closes them.
+
+## Amended 2026-10-26
+
+An open `tank:` alert was read as a binary battery (the evening summary listed
+a dishwasher twice). `openAlertOf` skips any subject that is neither
+`battery:<id>` nor a consumable, and the D934 boot sweep closes the leftover.

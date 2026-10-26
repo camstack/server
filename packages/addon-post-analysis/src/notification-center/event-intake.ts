@@ -925,6 +925,32 @@ export function incomingFromBatteryBand(input: NcBatteryBandSubjectInput): NcInc
   })
 }
 
+/** A low battery whose reading has not arrived — no percentage, not binary (D393). */
+export interface NcUnmeasuredBatteryInput {
+  readonly facts: NcSystemEventFacts
+  readonly deviceId: number
+  readonly identity: NcDeviceIdentity | undefined
+}
+
+/**
+ * The summary sentence for a battery episode whose slice has not been read
+ * since boot. It names the device and nothing else: a missing level is not
+ * 0%, and it is not the binary indicator's sentence.
+ */
+export function incomingFromUnmeasuredBattery(input: NcUnmeasuredBatteryInput): NcIncomingEvent {
+  const kind = 'device-battery-low'
+  return systemSubject({
+    facts: input.facts,
+    kind,
+    subject: `battery:${input.deviceId}`,
+    titleKey: `system.${kind}.title`,
+    bodyKey: `system.${kind}.body.unmeasured`,
+    textParams: deviceTextParams(input.deviceId, input.identity),
+    deviceId: input.deviceId,
+    ...(input.identity !== undefined ? { deviceType: input.identity.type } : {}),
+  })
+}
+
 /** One consumable item, as the notification needs to word it. */
 export interface NcConsumableItemReading {
   readonly key: string

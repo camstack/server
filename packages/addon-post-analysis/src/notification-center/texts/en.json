@@ -92,6 +92,7 @@
   "system.device-battery-low.title": "Battery low — {{deviceName}}",
   "system.device-battery-low.body": "{{deviceName}} is down to {{percentage}}% battery",
   "system.device-battery-low.body.binary": "{{deviceName}} reports a low battery",
+  "system.device-battery-low.body.unmeasured": "{{deviceName}} has a low battery",
   "system.device-battery-normal.title": "Battery back to normal — {{deviceName}}",
   "system.device-battery-normal.body": "{{deviceName}} is back to {{percentage}}% battery",
   "system.device-battery-normal.body.binary": "{{deviceName}} no longer reports a low battery",
