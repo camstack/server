@@ -3,18 +3,11 @@
  * imports, CUSTOMIZED — through the real components (`feeder-world.ts` says
  * which are real and which are faked at the edge, and why nothing is pre-seeded).
  *
- * Three customizations, one per device (one-per-target holds):
+ * One customization (one-per-target holds):
  *   - FEEDER: ADDS `consumables` (the desiccant, read through `number(d)` from
- *     the `enum-sensor` HA really registers) and `battery` — both GRAFTED;
- *   - FOOD (`binary_sensor.freshelement_3_food_level`): "Invert state", a
- *     REPLACE of `binary.on` reading its own native (rule 5);
- *   - BATTERY_CAM (synthetic, native battery): `charging` REPLACED from
- *     ANOTHER device, the feeder's `battery_charging` child.
- *
- * A replaced field is served on EVERY getStatus path — the D13 resolver
- * (`getNativeProvider` → the claimed-status overlay), the hub's status
- * aggregate, and a child→child call through `createParentUnownedCallHandler`
- * with its `claimedStatus` wired to the real registry (S3).
+ *     the `enum-sensor` HA really registers) and `battery` — both GRAFTED.
+ *   - FOOD and BATTERY_CAM already serve `binary` and `battery`. A stored
+ *     override of those native capabilities is refused (D944) and grafts nothing.
  *
  * WHAT STAYS FOR THE LIVE CHECK (Task 16) — this spec runs the hub-style path,
  * with a `capabilityRegistry`, and cannot see:
@@ -24,25 +17,15 @@
  *   - `LocalChildRegistry` routing after a retract (an ungraft re-sends
  *     `updateCaps`; that the hub stops routing the (cap, device) to the
  *     composer runner is only observable live);
- *   - the UDS paths themselves (sibling short-circuit, `callCapOnChild`): here
- *     the child→child entry is `createParentUnownedCallHandler`, the one of the
- *     three transport entries a hub-local harness can drive.
+ *   - the UDS paths themselves (sibling short-circuit, `callCapOnChild`).
  */
 import {
   type Composition,
   CompositionSchema,
   type CompositionSourceRef,
-  compositionSourceKey,
-  EventCategory,
   feederCustomizationExample,
-  type StatusOverlayAnswer,
 } from '@camstack/types'
-import type { ServiceBroker } from 'moleculer'
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest'
-import type { HubNodeRegistry } from '../../../kernel/moleculer/node-registry.js'
-import type { CapRoute } from '../../../kernel/transport/cap-route.js'
-import type { CapRouteResolver } from '../../../kernel/transport/cap-route-resolver.js'
-import { createParentUnownedCallHandler } from '../../../kernel/transport/parent-unowned-call.js'
 import { OWNED_FIELDS_KEY } from '../../device-manager/field-ownership.js'
 import { NodeDeadlineTimer } from '../deadline-timer.js'
 import {
@@ -70,8 +53,6 @@ const DISK_DEBOUNCE_MS = 1_100
 /** Zero-delay turns a converge's event cascade takes to go quiet; generous, and still a bound. */
 const SETTLE_TURNS = 60
 
-const FOOD_BLOCK = 'blk-2'
-const CAM_BLOCK = 'blk-3'
 const FEEDER_BLOCK = 'blk-1'
 
 function from(source: CompositionSourceRef, cap: string, fieldPath: string) {
@@ -172,84 +153,11 @@ async function claimsOn(ref: CompositionSourceRef): Promise<readonly string[]> {
     .map((c) => `${c.capName}:${c.fields.join(',')}`)
 }
 
-/** Every `setCapSlice`-emitted change of `cap` on `ref`, in order (the PUBLIC channel). */
-function stateEvents(ref: CompositionSourceRef, cap: string, since = 0) {
-  return w.events.slice(since).flatMap((e) => {
-    // The originals only: a parent-scope copy (`via`) re-carries the same data.
-    if (e.category !== EventCategory.DeviceStateChanged || e.via !== undefined) return []
-    const data = e.data
-    if (data['deviceId'] !== id(ref) || data['capName'] !== cap) return []
-    return [data]
-  })
-}
-
 function releases(since = 0): readonly unknown[] {
   return w.hubCalls
     .slice(since)
     .filter((c) => c.path === 'deviceState.releaseClaim')
     .map((c) => c.input)
-}
-
-/** No co-resident sibling owns the device: route STRAIGHT to the HA runner's own provider. */
-function childToChildHandler() {
-  const resolver = {
-    // The route's shape is this fake's own: `dispatch` below reads only its cap.
-    resolveCapRoute: (capName: string): CapRoute => ({
-      kind: 'hub-in-process',
-      capName,
-      ref: { invoke: async () => null },
-    }),
-    dispatch: async (route: CapRoute, method: string, args: unknown) => {
-      const deviceId =
-        typeof args === 'object' && args !== null ? Reflect.get(args, 'deviceId') : undefined
-      if (typeof deviceId !== 'number') throw new Error('no deviceId')
-      const fn = w.ha.runnerProvider(deviceId, route.capName)[method]
-      if (fn === undefined) throw new Error(`HA serves no ${route.capName}.${method}`)
-      return fn(args)
-    },
-  }
-  const handler = createParentUnownedCallHandler({
-    // The handler calls only `resolveCapRoute` + `dispatch`; documented test
-    // boundary, as `parent-unowned-call-claimed-status.spec.ts`.
-    getResolver: () => resolver as unknown as CapRouteResolver,
-    broker: { nodeID: 'hub' } as unknown as ServiceBroker,
-    nodeRegistry: { listNativeCapEntriesForDevice: () => [] } as unknown as HubNodeRegistry,
-    claimedStatus: (capName, deviceId): Promise<StatusOverlayAnswer> =>
-      w.capabilities.resolveClaimedStatus(capName, deviceId),
-  })
-  return (capName: string, method: string, args: unknown): Promise<unknown> =>
-    handler({ capName, method, args })
-}
-
-interface ThreePaths {
-  readonly resolver: unknown
-  readonly aggregate: unknown
-  readonly childToChild: unknown
-}
-
-/** getStatus of (cap, device) on all three hub paths. */
-async function getStatusEverywhere(ref: CompositionSourceRef, cap: string): Promise<ThreePaths> {
-  const deviceId = id(ref)
-  const native = w.capabilities.getNativeProvider<ProviderRecord>(cap, deviceId)
-  const getStatus = native?.['getStatus']
-  if (getStatus === undefined) throw new Error(`no native ${cap}@${deviceId}`)
-  return {
-    resolver: await getStatus({ deviceId }),
-    aggregate: (await w.dm.provider.getDeviceStatusAggregate({ deviceId, caps: [cap] }))[cap],
-    childToChild: await childToChildHandler()(cap, 'getStatus', { deviceId }),
-  }
-}
-
-/** Each path judged on its own (`expect.soft`), so a red names WHICH path answered the native. */
-async function expectEverywhere(
-  ref: CompositionSourceRef,
-  cap: string,
-  expected: unknown,
-): Promise<void> {
-  const paths = await getStatusEverywhere(ref, cap)
-  expect.soft(paths.resolver, 'the D13 resolver (getNativeProvider)').toEqual(expected)
-  expect.soft(paths.aggregate, 'getDeviceStatusAggregate').toEqual(expected)
-  expect.soft(paths.childToChild, 'child→child (createParentUnownedCallHandler)').toEqual(expected)
 }
 
 async function pushOn(ref: CompositionSourceRef, on: boolean, at: number): Promise<void> {
@@ -260,13 +168,10 @@ async function pushOn(ref: CompositionSourceRef, on: boolean, at: number): Promi
 async function bootCustomized(): Promise<void> {
   await w.blocks.load()
   expect(await create(feederCustomizationExample(SOURCES))).toBe(FEEDER_BLOCK)
-  expect(await create(INVERT_FOOD)).toBe(FOOD_BLOCK)
-  expect(await create(CAM_CHARGING)).toBe(CAM_BLOCK)
   // The composer's own rows read empty once, then the claims index reads empty
   // once: each needs the next apply's read to agree before anything is claimed (D49).
   await converge(3)
-  for (const b of [FEEDER_BLOCK, FOOD_BLOCK, CAM_BLOCK])
-    expect(await state(b), b).toMatchObject({ status: 'running' })
+  expect(await state(FEEDER_BLOCK)).toMatchObject({ status: 'running' })
 }
 
 beforeEach(async () => {
@@ -360,56 +265,25 @@ describe('4 — a source change is event-driven', () => {
   })
 })
 
-describe('5 — the replace witness, on every getStatus path (S3)', () => {
-  it('FOOD: !on of its own native, and native writes never oscillate the effective value', async () => {
-    expect(await slice(FOOD, 'binary')).toMatchObject({ on: true })
-    await expectEverywhere(FOOD, 'binary', expect.objectContaining({ on: true }))
-    const mark = w.events.length
-    const effective: boolean[] = []
-    for (const [i, native] of [true, false, true, false].entries()) {
-      await pushOn(FOOD, native, T0 + 1 + i)
-      const now = await slice(FOOD, 'binary')
-      effective.push(now?.['on'] === true)
-    }
-    expect(effective).toEqual([false, true, false, true])
-    // The PUBLIC channel: each native write first re-emits the merge (the
-    // native's new lastChangedAt under the STILL-composed `on`), then the
-    // composer's new `on` — so each native write is exactly ONE flip of `on`
-    // on the channel, starting from the effective `true` before it. A native
-    // leaking onto the channel adds a flip back per write.
-    const flips = stateEvents(FOOD, 'binary', mark)
-      .map((d) => Reflect.get(Reflect.get(d, 'slice') ?? {}, 'on'))
-      .filter((on, i, all) => i === 0 || on !== all[i - 1])
-    expect(flips).toEqual([true, false, true, false, true])
-    await expectEverywhere(FOOD, 'binary', expect.objectContaining({ on: true }))
-  })
-
-  it('BATTERY_CAM: charging from another device; percentage stays native; wakeForStream still reaches HA', async () => {
-    await pushOn(BATTERY_CHARGING, true, T0 + 1)
-    await expectEverywhere(BATTERY_CAM, 'battery', { ...CAM_NATIVE, charging: 'dc' })
-    // A native write under the claim: its unowned fields follow the native, and
-    // the public channel never carries the native `charging: 'none'`.
-    const mark = w.events.length
-    const next = { ...CAM_NATIVE, percentage: 70, lastUpdated: T0 + 2 }
-    await w.ha.push(id(BATTERY_CAM), 'battery', next)
-    await settle()
-    const published = stateEvents(BATTERY_CAM, 'battery', mark).map((d) => Reflect.get(d, 'slice'))
-    expect(published).toEqual([{ ...next, charging: 'dc' }])
-    await expectEverywhere(BATTERY_CAM, 'battery', { ...next, charging: 'dc' })
-    await expect(
-      childToChildHandler()('battery', 'wakeForStream', {
-        deviceId: id(BATTERY_CAM),
-        timeoutMs: 1000,
-      }),
-    ).resolves.toEqual({ awoke: true, durationMs: 0 })
+describe('5 — a native capability is not replaced (D944)', () => {
+  it('refuses invert-state, a cross-device binary override, and a native battery override', async () => {
+    const before = w.blocks.list().length
+    await expect(create(INVERT_FOOD)).rejects.toThrow('native-capability-replace')
+    await expect(create(FOOD_FROM_CHARGING)).rejects.toThrow('native-capability-replace')
+    await expect(create(CAM_CHARGING)).rejects.toThrow('native-capability-replace')
+    expect(w.blocks.list()).toHaveLength(before)
+    expect(await slice(FOOD, 'binary')).toMatchObject({ on: false })
+    expect(await slice(BATTERY_CAM, 'battery')).toEqual(CAM_NATIVE)
+    expect(await claimsOn(FOOD)).toEqual([])
+    expect(await claimsOn(BATTERY_CAM)).toEqual([])
   })
 })
 
 describe('6 — restore exactly', () => {
-  it('deleting the three blocks hands every field back: last native slices, no graft, no $owned, no claim; HA natives untouched', async () => {
+  it('deleting the feeder block hands every field back: last native slices, no graft, no $owned, no claim; HA natives untouched', async () => {
     await pushOn(FOOD, true, T0 + 1)
     const lastFoodNative = { on: true, lastChangedAt: T0 + 1 }
-    for (const b of [FEEDER_BLOCK, FOOD_BLOCK, CAM_BLOCK]) await w.blocks.delete(b)
+    await w.blocks.delete(FEEDER_BLOCK)
     await converge(2)
     await vi.advanceTimersByTimeAsync(DISK_DEBOUNCE_MS)
     await settle()
@@ -451,44 +325,49 @@ describe('7 — boot safety: a restart from the persisted rows only', () => {
     return await w.persisted()
   }
 
-  it('the owned values are served from the row while core_blocks has not loaded; nothing is released, no native flash', async () => {
+  it('the grafted battery is served from the row while core_blocks has not loaded; nothing is released', async () => {
+    const claims = await claimsOn(FEEDER)
+    expect(claims.some((claim) => claim.startsWith('battery:'))).toBe(true)
     const persisted = await persistedAfterBoot()
     await restart(persisted)
 
-    expect(await slice(FOOD, 'binary')).toMatchObject({ on: true })
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: null })
     await converge() // core_blocks not loaded: nothing is claimed or released (D49)
     expect(w.blocks.isLoaded()).toBe(false)
     expect(releases()).toEqual([])
-    expect(await claimsOn(FOOD)).toEqual(['binary:on'])
-    expect(await slice(FOOD, 'binary')).toMatchObject({ on: true })
+    expect(await claimsOn(FEEDER)).toEqual(claims)
 
     await converge(3)
     expect(w.blocks.isLoaded()).toBe(true)
-    expect(await state(FOOD_BLOCK)).toMatchObject({ status: 'running' })
+    expect(await state(FEEDER_BLOCK)).toMatchObject({ status: 'running' })
     expect(releases()).toEqual([])
-    await expectEverywhere(FOOD, 'binary', expect.objectContaining({ on: true }))
-    // The native `on: false` was re-pushed at boot: it never reached the public channel.
-    const ons = stateEvents(FOOD, 'binary').map((d) =>
-      Reflect.get(Reflect.get(d, 'slice') ?? {}, 'on'),
-    )
-    expect(ons.length).toBeGreaterThan(0)
-    expect(ons.every((on) => on === true)).toBe(true)
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: null })
   })
 
   it('a persisted claim whose source cannot be read on the first applies is NOT released (Task 9)', async () => {
     const persisted = await persistedAfterBoot()
-    const chargingId = id(BATTERY_CHARGING)
-    await restart(persisted, [`${chargingId}#binary`])
+    const desiccantId = id(DESICCANT_DAYS)
+    await restart(persisted, [`${desiccantId}#enum-sensor`])
     await converge(4)
     expect(releases()).toEqual([])
-    expect(await claimsOn(BATTERY_CAM)).toEqual(['battery:charging'])
-    expect(await state(CAM_BLOCK)).toMatchObject({ status: 'starting' })
+    expect((await claimsOn(FEEDER)).some((claim) => claim.startsWith('consumables:'))).toBe(true)
+    const failedRead = w.hubCalls.some((call) => {
+      const input = call.input
+      if (typeof input !== 'object' || input === null) return false
+      return (
+        Reflect.get(input, 'deviceId') === desiccantId &&
+        Reflect.get(input, 'capName') === 'enum-sensor'
+      )
+    })
+    expect(failedRead).toBe(true)
+    // An added cap keeps its graft when the source re-read throws (D49). It does not release.
+    expect(await state(FEEDER_BLOCK)).toMatchObject({ status: 'running' })
 
     w.failingSliceReads.clear()
-    await pushOn(BATTERY_CHARGING, true, T0 + 20)
+    await w.ha.push(id(DESICCANT_DAYS), 'enum-sensor', { value: '30', lastFetchedAt: T0 + 20 })
+    await settle()
     await converge()
-    expect(await state(CAM_BLOCK)).toMatchObject({ status: 'running' })
-    expect(await slice(BATTERY_CAM, 'battery')).toMatchObject({ charging: 'dc' })
+    expect(await state(FEEDER_BLOCK)).toMatchObject({ status: 'running' })
     expect(releases()).toEqual([])
   })
 })
@@ -530,69 +409,23 @@ describe('9 — a gone target', () => {
   })
 })
 
-describe('10 — a source unavailable hands the field back; back, it is re-claimed (S1b)', () => {
-  async function customizeFoodFromCharging(): Promise<void> {
-    const stored = w.blocks.get(FOOD_BLOCK)
-    if (stored === null) throw new Error('no FOOD block')
-    await w.compositions.updateComposition({
-      blockId: FOOD_BLOCK,
-      expectedUpdatedAt: stored.updatedAt,
-      block: { composition: FOOD_FROM_CHARGING },
-      caller: CALLER,
-    })
-    await pushOn(FOOD, true, T0 + 1)
-    await pushOn(BATTERY_CHARGING, true, T0 + 2)
-    await converge()
-    expect(await slice(FOOD, 'binary')).toMatchObject({ on: false })
-    expect(await state(FOOD_BLOCK)).toMatchObject({ status: 'running' })
-  }
-
-  it('unregistered → released after ONE apply: native on every path, one native event, degraded by name; registered → re-claimed', async () => {
-    await customizeFoodFromCharging()
-    const chargingId = id(BATTERY_CHARGING)
-    const mark = w.events.length
-    w.ha.unregister(chargingId, 'binary')
+describe('10 — a source unavailable on an added cap (S1b, D49)', () => {
+  it('contrast (a): the source merely OFFLINE is stale — the composed values stay, nothing is released (D49)', async () => {
+    await w.ha.push(id(DESICCANT_DAYS), 'enum-sensor', { value: '30', lastFetchedAt: T0 + 1 })
     await settle()
     await converge()
-
-    expect(await claimsOn(FOOD)).toEqual([])
-    const nativeFood = { on: true, lastChangedAt: T0 + 1 }
-    expect(await slice(FOOD, 'binary')).toEqual(nativeFood)
-    await expectEverywhere(FOOD, 'binary', nativeFood)
-    const foodEvents = stateEvents(FOOD, 'binary', mark)
-    expect(foodEvents).toHaveLength(1)
-    expect(Reflect.get(foodEvents[0] ?? {}, 'slice')).toEqual(nativeFood)
-    expect(foodEvents[0]).not.toHaveProperty('native')
-    const degraded = await state(FOOD_BLOCK)
-    expect(degraded.status).toBe('degraded')
-    expect(degraded.reason).toContain('binary.on')
-    expect(degraded.reason).toContain(compositionSourceKey(BATTERY_CHARGING))
-
-    // The same unregister releases BATTERY_CAM's charging: its native 'none'
-    // shows on every path — never 'unknown', although the enum could say it.
-    expect(await claimsOn(BATTERY_CAM)).toEqual([])
-    await expectEverywhere(BATTERY_CAM, 'battery', CAM_NATIVE)
-
-    w.ha.register(chargingId, 'binary')
-    await pushOn(BATTERY_CHARGING, true, T0 + 3)
-    await converge()
-    expect(await claimsOn(FOOD)).toEqual(['binary:on'])
-    expect(await slice(FOOD, 'binary')).toMatchObject({ on: false })
-    expect(await state(FOOD_BLOCK)).toMatchObject({ status: 'running' })
-    expect(await claimsOn(BATTERY_CAM)).toEqual(['battery:charging'])
-    expect(await slice(BATTERY_CAM, 'battery')).toMatchObject({ charging: 'dc' })
-  })
-
-  it('contrast (a): the source merely OFFLINE is stale — the composed values stay, nothing is released (D49)', async () => {
-    await customizeFoodFromCharging()
     const mark = w.hubCalls.length
-    await w.ha.push(id(BATTERY_CHARGING), 'device-status', { online: false, lastChangedAt: T0 + 5 })
+    await w.ha.push(id(DESICCANT_DAYS), 'device-status', { online: false, lastChangedAt: T0 + 5 })
     await settle()
     await converge()
     expect(releases(mark)).toEqual([])
-    expect(await slice(FOOD, 'binary')).toMatchObject({ on: false })
-    expect(await slice(BATTERY_CAM, 'battery')).toMatchObject({ charging: 'dc' })
-    expect(await claimsOn(FOOD)).toEqual(['binary:on'])
+    const consumables = await slice(FEEDER, 'consumables')
+    expect(consumables?.['items']).toEqual([
+      expect.objectContaining({
+        key: 'desiccant',
+        remaining: { value: 30, kind: 'duration' },
+      }),
+    ])
   })
 
   it('contrast (b): an ADDED cap has no native to hand back to — battery_status gone writes percentage null, releases nothing', async () => {
