@@ -164,6 +164,10 @@ const NC_SYSTEM_EVENT_GROUP_HINTS: Readonly<Record<string, string>> = {
   // Not blind: the motion source fires on nothing (D907).
   'motion-noise':
     'A camera whose motion fires constantly with no subject for an hour — a quarter of the time in motion, or 40 sessions — and (optionally) its return to calm. The detector is fine; tune the motion zones or sensitivity.',
+  // Its own group: the package confirm is a vision model on some node, not
+  // the camera — silent here means no package is announced at all (D931).
+  'package-llm':
+    'A camera whose package confirm stopped answering — three checks in a row with no answer from the vision model, so possible packages are not announced — and its return when the model answers again.',
   recording:
     'A camera whose recording is on but no footage is landing (stall), a writer that burned its restart budget (degraded), and (optionally) the return to healthy writing.',
   'device-attention':

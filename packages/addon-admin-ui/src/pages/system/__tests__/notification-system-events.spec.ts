@@ -57,6 +57,7 @@ describe('D637 — the field authors ONE family', () => {
       'consumables',
       'detection-blind',
       'motion-noise',
+      'package-llm',
       'recording',
       'device-attention',
     ])
