@@ -27,12 +27,17 @@ export interface CameraStatusQueryView {
   readonly data?: CameraSensorsCarrier | undefined
 }
 
-/** present ONLY when the status answered WITH a `cameraSensors` key (CS-1 always populates it). */
+/**
+ * present ONLY when the status answered WITH a `cameraSensors` key (CS-1 always
+ * populates it). A failed refetch that still holds that answer stays present.
+ */
 export function cameraSensorsPresence(query: CameraStatusQueryView): CameraSensorsPresence {
+  if (query.data !== undefined) {
+    return query.data.cameraSensors === undefined ? 'absent' : 'present'
+  }
   if (query.status === 'pending') return 'pending'
   if (query.status === 'error') return 'unknown'
-  if (query.data === undefined) return 'pending'
-  return query.data.cameraSensors === undefined ? 'absent' : 'present'
+  return 'pending'
 }
 
 /** The registry's ANSWERED absence wins; anything else defers to the status read. */
@@ -54,6 +59,8 @@ export type CameraSensorsRefetchOutcome = 'answered' | 'failed'
 export interface CameraSensorsRead {
   readonly presence: CameraSensorsPresence
   readonly status: CameraSensorsStatus | null
+  /** Set when the status read failed and no answer is held. */
+  readonly failureReason: string | null
   readonly refetch: () => Promise<CameraSensorsRefetchOutcome>
 }
 
@@ -79,13 +86,16 @@ export function useCameraSensors(deviceId: number, isCamera: boolean): CameraSen
     { enabled: isCamera && orchestrator !== 'absent' },
   )
   const refetch = (): Promise<CameraSensorsRefetchOutcome> => refetchOutcome(query.refetch)
-  if (!isCamera) return { presence: 'absent', status: null, refetch }
+  const held = query.data !== undefined
+  const failureReason = !held && query.status === 'error' ? (query.error?.message ?? null) : null
+  if (!isCamera) return { presence: 'absent', status: null, failureReason: null, refetch }
   return {
     presence: resolveCameraSensorsPresence(orchestrator, {
       status: query.status,
       data: query.data,
     }),
     status: query.data?.cameraSensors ?? null,
+    failureReason,
     refetch,
   }
 }

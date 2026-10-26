@@ -11,6 +11,7 @@ interface FakeSystem {
 const mocks = vi.hoisted(() => ({
   createSystem: vi.fn(),
   reportSdkConnectionState: vi.fn(),
+  applyQueryTransportOnline: vi.fn(),
   systems: [] as FakeSystem[],
 }))
 
@@ -20,6 +21,10 @@ vi.mock('@camstack/sdk', () => ({
 
 vi.mock('../connection-health', () => ({
   reportSdkConnectionState: mocks.reportSdkConnectionState,
+}))
+
+vi.mock('../query-socket-online', () => ({
+  applyQueryTransportOnline: mocks.applyQueryTransportOnline,
 }))
 
 // `backend` is re-imported after `vi.resetModules()` in every test. Its real
@@ -37,6 +42,7 @@ describe('backend System ownership', () => {
     vi.resetModules()
     mocks.createSystem.mockReset()
     mocks.reportSdkConnectionState.mockReset()
+    mocks.applyQueryTransportOnline.mockReset()
     mocks.systems.length = 0
     localStorage.clear()
 
@@ -67,6 +73,7 @@ describe('backend System ownership', () => {
 
     expect(first.close).toHaveBeenCalledOnce()
     expect(mocks.reportSdkConnectionState.mock.calls).toEqual([['connected'], ['connected']])
+    expect(mocks.applyQueryTransportOnline.mock.calls).toEqual([['connected'], ['connected']])
   })
 
   it('continues forwarding state from the active socket', async () => {
@@ -78,5 +85,6 @@ describe('backend System ownership', () => {
     active.emit('disconnected')
 
     expect(mocks.reportSdkConnectionState.mock.calls).toEqual([['connected'], ['disconnected']])
+    expect(mocks.applyQueryTransportOnline.mock.calls).toEqual([['connected'], ['disconnected']])
   })
 })

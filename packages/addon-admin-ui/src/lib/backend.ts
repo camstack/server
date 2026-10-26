@@ -16,6 +16,7 @@ import { createSystem, type System } from '@camstack/sdk'
 import i18n from '../i18n'
 import { sessionKeeper } from './admin-session'
 import { reportSdkConnectionState } from './connection-health'
+import { applyQueryTransportOnline } from './query-socket-online'
 import { hubOrigin } from './mount'
 
 let instance: System | null = null
@@ -53,7 +54,9 @@ export function getSystem(): System {
       // generations so an old socket cannot leave the global banner stuck in
       // "live connection interrupted" while the active socket is healthy.
       onConnectionChange: (state) => {
-        if (generation === instanceGeneration) reportSdkConnectionState(state)
+        if (generation !== instanceGeneration) return
+        reportSdkConnectionState(state)
+        applyQueryTransportOnline(state)
       },
     })
     // NOTE: `init()` is intentionally NOT fired here. AppShell owns

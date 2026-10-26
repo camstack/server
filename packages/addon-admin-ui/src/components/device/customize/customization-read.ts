@@ -55,26 +55,32 @@ export type CustomizationState =
   | CustomizationNone
   | CustomizationPresent
 
+function failureReason(message: string | undefined): string {
+  const trimmed = message?.trim() ?? ''
+  return trimmed.length > 0 ? trimmed : i18n.t('helpers.customize.requestFailed')
+}
+
 export function resolveCustomization(query: CustomizationQueryView): CustomizationState {
+  // A failed background refetch keeps `data`. Only a read that never answered
+  // is unknown — the same rule as the palette gate.
+  const data = query.data
+  if (data !== undefined) {
+    if (data.state === 'not-loaded') return { kind: 'not-loaded', reason: data.reason }
+    if (data.view === null) return { kind: 'none' }
+    const composition = coreBlockComposition(data.view.block)
+    if (composition === null) {
+      return {
+        kind: 'unknown',
+        reason: i18n.t('helpers.customizationRead.notAComposition', { id: data.view.block.id }),
+      }
+    }
+    return { kind: 'present', view: data.view, composition }
+  }
   if (query.status === 'pending') return { kind: 'pending' }
   if (query.status === 'error') {
-    return {
-      kind: 'unknown',
-      reason: query.error?.message ?? i18n.t('helpers.customize.requestFailed'),
-    }
+    return { kind: 'unknown', reason: failureReason(query.error?.message) }
   }
-  const data = query.data
-  if (data === undefined) return { kind: 'pending' }
-  if (data.state === 'not-loaded') return { kind: 'not-loaded', reason: data.reason }
-  if (data.view === null) return { kind: 'none' }
-  const composition = coreBlockComposition(data.view.block)
-  if (composition === null) {
-    return {
-      kind: 'unknown',
-      reason: i18n.t('helpers.customizationRead.notAComposition', { id: data.view.block.id }),
-    }
-  }
-  return { kind: 'present', view: data.view, composition }
+  return { kind: 'pending' }
 }
 
 export function currentComposition(state: CustomizationState): Composition | null {

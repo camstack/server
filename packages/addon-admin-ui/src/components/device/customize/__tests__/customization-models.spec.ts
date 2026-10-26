@@ -68,6 +68,20 @@ describe('resolveCustomization — D315', () => {
       reason: 'FORBIDDEN',
     })
   })
+  it('a failed background refetch keeps the customization the hub already answered', () => {
+    const state = resolveCustomization({
+      status: 'error',
+      error: { message: 'Unknown error' },
+      data: { state: 'loaded', view: view(STORED) },
+    })
+    expect(state.kind).toBe('present')
+    if (state.kind === 'present') expect(state.composition).toEqual(STORED)
+  })
+  it('a failed read with a blank message still names a reason', () => {
+    const state = resolveCustomization({ status: 'error', error: { message: '   ' } })
+    expect(state.kind).toBe('unknown')
+    if (state.kind === 'unknown') expect(state.reason.trim().length).toBeGreaterThan(0)
+  })
   it('a table that has not loaded is not-loaded, never none', () => {
     expect(
       resolveCustomization({
