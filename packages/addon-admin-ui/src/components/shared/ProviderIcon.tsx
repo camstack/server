@@ -16,12 +16,17 @@ const PROVIDERS: Record<string, { icon: LucideIcon; color: string; label: string
 
 interface ProviderIconProps {
   type: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   showLabel?: boolean
 }
 
-const SIZES = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6' }
-const CONTAINER_SIZES = { sm: 'h-7 w-7', md: 'h-8 w-8', lg: 'h-10 w-10' }
+const SIZES = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6', xl: 'h-16 w-16' }
+const CONTAINER_SIZES = {
+  sm: 'h-7 w-7',
+  md: 'h-8 w-8',
+  lg: 'h-10 w-10',
+  xl: 'h-16 w-16',
+}
 
 /**
  * Resolve a free-form provider hint to a registry key. Devices and

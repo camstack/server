@@ -1688,7 +1688,8 @@
     "loadFailed": "Integrations could not be loaded.",
     "viewTable": "Table",
     "viewGrid": "Grid",
-    "viewLabel": "Layout"
+    "viewLabel": "Layout",
+    "openNamed": "Open {{name}}"
   },
   "ai": {
     "addProfile": "Add profile",

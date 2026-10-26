@@ -40,22 +40,30 @@ function renderGrid(expandedId: string | null = null) {
 }
 
 describe('IntegrationGrid', () => {
-  it('shows the table facts and both row actions on each card', () => {
+  it('shows the table facts, opens from one card control, and keeps expand separate', () => {
     const { onOpen, onToggleExpand } = renderGrid()
     const card = screen.getByTestId('integration-card-int_reolink')
     expect(within(card).getByText('Reolink')).toBeTruthy()
-    expect(within(card).getByText('provider-reolink')).toBeTruthy()
+    expect(card.textContent?.includes('provider-reolink')).toBe(true)
     expect(within(card).getByText('2 devices')).toBeTruthy()
     expect(within(card).getByText('Running')).toBeTruthy()
+
+    const openers = within(card).getAllByRole('button', { name: /^Open / })
+    expect(openers).toHaveLength(1)
+    expect(within(card).queryByRole('button', { name: /^Open$/ })).toBeNull()
+    fireEvent.click(openers[0] ?? card)
+    expect(onOpen).toHaveBeenCalledWith(reolink)
+    expect(onToggleExpand).not.toHaveBeenCalled()
+
     fireEvent.click(within(card).getByRole('button', { name: 'Expand' }))
     expect(onToggleExpand).toHaveBeenCalledWith('provider-reolink')
-    fireEvent.click(within(card).getByRole('button', { name: 'Open' }))
-    expect(onOpen).toHaveBeenCalledWith(reolink)
+    expect(onOpen).toHaveBeenCalledTimes(1)
 
     const stopped = screen.getByTestId('integration-card-int_onvif')
     expect(within(stopped).getByText('Disabled')).toBeTruthy()
+    expect(within(stopped).getAllByRole('button', { name: /^Open / })).toHaveLength(1)
     expect(within(stopped).getByRole('button', { name: 'Expand' })).toBeTruthy()
-    expect(within(stopped).getByRole('button', { name: 'Open' })).toBeTruthy()
+    expect(within(stopped).queryByRole('button', { name: /^Open$/ })).toBeNull()
   })
 
   it('renders the nested list when the card is expanded', () => {

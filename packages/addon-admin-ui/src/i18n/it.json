@@ -1688,7 +1688,8 @@
     "loadFailed": "Impossibile caricare le integrazioni.",
     "viewTable": "Tabella",
     "viewGrid": "Griglia",
-    "viewLabel": "Vista"
+    "viewLabel": "Vista",
+    "openNamed": "Apri {{name}}"
   },
   "serverManagement": {
     "title": "Gestione server",

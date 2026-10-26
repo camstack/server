@@ -3,7 +3,7 @@
  * Integrations page views: the last layout is remembered, and pending / empty /
  * error stay the same list whether the operator is on the table or the grid.
  */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'
@@ -116,7 +116,7 @@ describe('Integrations page views', () => {
     render(renderPage())
     const card = screen.getByTestId('integration-card-int_reolink')
     expect(card).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    fireEvent.click(within(card).getByRole('button', { name: 'Open Reolink' }))
     expect(screen.getByTestId('where').textContent).toBe('/integrations/int_reolink')
   })
 
