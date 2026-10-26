@@ -313,6 +313,7 @@ export { DeviceBatchToolbar } from './device-list/batch-toolbar'
 // DeviceBatchActionsBar is an internal detail of DeviceList (rendered only by
 // its batchActions path) — intentionally NOT re-exported from the public barrel.
 export * from './device-meta'
+export * from './device-name'
 export * from './icon-glyphs'
 export * from './icon-picker'
 export { DeviceMultiSelectField, DeviceSelectField } from './device-select-field'

@@ -4,6 +4,7 @@ import {
   type CustomFieldRendererMap,
   type CustomFieldRendererProps,
   CustomFieldRenderersProvider,
+  DeviceFleetFromServer,
   RoleDisplayDefaultsFromServer,
   SystemProvider,
   ThemeProvider,
@@ -291,7 +292,9 @@ function AppShell({ children }: AppShellProps) {
               devices table, a detail page's children, a room card — draws the
               same glyph without a query of its own. */}
             <RoleDisplayDefaultsFromServer>
-              {bootReady ? children : <BootSplash />}
+              {/* One slim fleet for every device name. A row reads its parent
+                  from this cache; it does not call getDevice. */}
+              <DeviceFleetFromServer>{bootReady ? children : <BootSplash />}</DeviceFleetFromServer>
             </RoleDisplayDefaultsFromServer>
             {bootReady && <ReconnectOverlay />}
             {bootError !== null && bootReady && (

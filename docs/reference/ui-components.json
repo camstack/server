@@ -568,6 +568,12 @@
       "notes": ""
     },
     {
+      "need": "A device's name",
+      "admin": "`DeviceName` (`compact` in lists, pickers, history, export and alarms; `full` on the page title, breadcrumb, hero and confirms; `nested` under a parent row; `with-location` when the room is not already on the line)",
+      "viewer": "`formatDeviceName` in `src/data/device-name.ts` (not yet on screens)",
+      "notes": "One rule. The stored name stays in search and in the identity editor. Parent names come from one slim fleet list"
+    },
+    {
       "need": "Pick the device and value that feed a Customize extension, or the members of a group helper",
       "admin": "`SourceSelector` (`components/device/customize/source-selector/SourceSelector.tsx`)",
       "viewer": "—",
@@ -3488,6 +3494,20 @@
       "summary": "Selectable per-page sizes. The table default (50) is intentionally one of them."
     },
     {
+      "name": "DEVICE_NAME_FORMS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
+      "summary": "One display name for a device."
+    },
+    {
+      "name": "DEVICE_NAME_JOIN",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
+      "summary": "Middle dot used between a container and its noun, and before a room."
+    },
+    {
       "name": "DEVICE_PICKER_GROUP_STORAGE_KEY",
       "kind": "constant",
       "area": "composites",
@@ -3502,6 +3522,13 @@
       "summary": ""
     },
     {
+      "name": "DEVICE_ROLE_NOUNS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
+      "summary": "Short nouns and the stock words they replace."
+    },
+    {
       "name": "DEVICE_TYPE_CONTROL",
       "kind": "constant",
       "area": "composites",
@@ -3514,6 +3541,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
       "summary": ""
+    },
+    {
+      "name": "DEVICE_TYPE_NOUNS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
+      "summary": "Short nouns and the stock words they replace."
     },
     {
       "name": "DeviceActivityPanel",
@@ -3799,6 +3833,42 @@
       ]
     },
     {
+      "name": "DeviceFleetFromServer",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-fleet.tsx",
+      "summary": "The one `deviceManager.listAll` subscriber for names. Same query key the pickers already use, so a second observer does not fetch a second fleet.",
+      "props": [
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "DeviceFleetProvider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-fleet.tsx",
+      "summary": "One slim fleet, shared. A row reads its parent from this index — never a `getDevice` per row (the Customize bounded-read rule). `null` is \"not answered yet\": a label then keeps the stored name, so a list does not flas…",
+      "props": [
+        {
+          "name": "devices",
+          "type": "readonly DeviceNameFields[] | null",
+          "optional": false,
+          "doc": "`null` while the list has not answered. An array, including empty, has."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DeviceGrid",
       "kind": "component",
       "area": "composites",
@@ -3899,6 +3969,58 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-select-field.tsx",
       "summary": ""
+    },
+    {
+      "name": "DeviceName",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/DeviceName.tsx",
+      "summary": "The one place a device's name is painted. Pass `form` for the surface: `compact` in a list or picker, `full` on a page title, `nested` under the parent row, `with-location` when the room belongs on the line.",
+      "props": [
+        {
+          "name": "device",
+          "type": "DeviceNameFields",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "form",
+          "type": "DeviceNameForm",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "parent",
+          "type": "DeviceNameFields | null",
+          "optional": true,
+          "doc": "Skip the fleet when the caller already holds the parent row."
+        },
+        {
+          "name": "siblings",
+          "type": "readonly DeviceNameFields[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "deviceNameNouns",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
+      "summary": "Noun table for a locale. Tests and the viewer parity spec use this directly."
     },
     {
       "name": "deviceOptionLabel",
@@ -5203,6 +5325,13 @@
       ]
     },
     {
+      "name": "foldDeviceName",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
+      "summary": "Hyphen, underscore and whitespace fold together — the namesake comparison."
+    },
+    {
       "name": "formatChartBytes",
       "kind": "function",
       "area": "composites",
@@ -5229,6 +5358,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/format-control-datetime.ts",
       "summary": "Format an HA-native datetime control value in the user's locale."
+    },
+    {
+      "name": "formatDeviceName",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
+      "summary": "The label for `form`. A top-level device keeps its stored name. A child uses the noun: `compact` may stand in for the container when this child is what the container is, `full` always names both unless they fold toget…"
     },
     {
       "name": "formatLastSeen",
@@ -6123,6 +6259,13 @@
       ]
     },
     {
+      "name": "indexDeviceNames",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-fleet.tsx",
+      "summary": "Build the parent/child maps once per fleet answer."
+    },
+    {
       "name": "InferenceConfigSelector",
       "kind": "component",
       "area": "composites",
@@ -6304,6 +6447,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/data-table-filter.ts",
       "summary": "Per-instance filtering for a `DataTable` (or any row list): a search box and a set of facet chips, both DERIVED from the rows the instance renders."
+    },
+    {
+      "name": "isDeviceNameStock",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
+      "summary": "Short nouns and the stock words they replace."
     },
     {
       "name": "isFieldVisible",
@@ -7404,6 +7554,13 @@
           "doc": "Kind brand icons keyed as `addonId:kind`."
         }
       ]
+    },
+    {
+      "name": "nounSpecFor",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
+      "summary": "Role wins when it has a noun; otherwise the type. Unknown types fall back."
     },
     {
       "name": "OCCUPANCY_KEY",
@@ -8719,6 +8876,13 @@
       "summary": "resolveDeviceIntegration — the ONE answer to \"which integration does this device belong to\"."
     },
     {
+      "name": "resolveDeviceLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/use-device-label.ts",
+      "summary": "Label for a device the caller already holds. While the fleet has not answered and no parent was passed, this is the stored name — not `#id`."
+    },
+    {
       "name": "resolveDisplayIcon",
       "kind": "function",
       "area": "composites",
@@ -9137,6 +9301,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/webrtc-diagnostics/RunReport.tsx",
       "summary": "One hub session run, rendered: the verdict first, then the evidence by layer (hub candidates → timeline → path → media). Every unmeasured value reads \"unknown\" (D393), never 0."
+    },
+    {
+      "name": "sameDeviceName",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
+      "summary": "One display name for a device."
     },
     {
       "name": "sameLocationSuggestions",
@@ -11143,6 +11314,13 @@
       ]
     },
     {
+      "name": "stripDeviceParentPrefix",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
+      "summary": "Drop a parent prefix. `\" — \"` before a space, case-insensitive, so a provider that capitalised the parent differently still strips, and an em-dash child does not keep a dangling dash."
+    },
+    {
       "name": "stripParentNamePrefix",
       "kind": "function",
       "area": "composites",
@@ -12004,11 +12182,39 @@
       "summary": "DeviceContext — current device id (and optional cached device snapshot) for the page subtree."
     },
     {
+      "name": "useDeviceLabel",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/use-device-label.ts",
+      "summary": "`useDeviceLabel` is the string `DeviceName` renders — sort keys, aria labels, confirm copy and search titles call it instead of painting `device.name`."
+    },
+    {
+      "name": "useDeviceLabelById",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/use-device-label.ts",
+      "summary": "`#id` until the fleet answers, and `#id` when the id is not in it."
+    },
+    {
       "name": "useDeviceListPageSize",
       "kind": "hook",
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-device-list-page-size.ts",
       "summary": "useDeviceListPageSize — global page-size preference for the device-list surfaces (Devices, Integrations, integration detail)."
+    },
+    {
+      "name": "useDeviceNameIndex",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/device-fleet.tsx",
+      "summary": "One slim fleet, shared. A row reads its parent from this index — never a `getDevice` per row (the Customize bounded-read rule). `null` is \"not answered yet\": a label then keeps the stored name, so a list does not flas…"
+    },
+    {
+      "name": "useDeviceNameNouns",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/use-device-label.ts",
+      "summary": "`useDeviceLabel` is the string `DeviceName` renders — sort keys, aria labels, confirm copy and search titles call it instead of painting `device.name`."
     },
     {
       "name": "useDeviceNetworkLink",
