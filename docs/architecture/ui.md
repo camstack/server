@@ -645,8 +645,9 @@ one place that correctly keeps `addonId`, because it restarts the SERVING addon.
 ## A device is customized in ONE tab, and the tab stores nothing ([D676](../decisions/adr-0676-the-customization-ui-stores-nothing-and-shows-only-what-the-backend-serves.md))
 
 `?tab=customize` (admin-only, every device type) is the device's view of what it
-TAKES from other devices. Order, top to bottom: an identity row (name, room,
-hidden, role), the customization's status (not shown when there is none), one
+TAKES from other devices. Order, top to bottom: an identity block (name, room,
+type, role, hidden, icon, and — where something draws them — label, unit and
+precision), the customization's status (not shown when there is none), one
 card per declared `customize` target the device type can take and does not
 already serve (scalar, keyed array, pulse, span — battery, running-state,
 consumables, doorbell, motion; `apply: 'add'` only, [D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md)),
@@ -678,10 +679,15 @@ not ready yet. Hrefs come only from `lib/customization-routes.ts`.
   `pickerQueryTokens`), so a query matches the same way everywhere. Candidate
   reads are bounded: one slim `listAll` and one `listDeviceIdsByCaps` per source
   cap, never a `getBindings` per candidate (D648 measured up to 5.24 s).
-- **A change saves at once, through the authority that already owns it** — the
-  device's ONE composition (`planCustomizationSave`: create / update with
+- **Extension cards save at once, through the authority that already owns them**
+  — the device's ONE composition (`planCustomizationSave`: create / update with
   `expectedUpdatedAt` / delete), `pipelineOrchestrator.setCameraSensors`, or
-  `deviceExtension.setSlot`; there is no Save button. One write is held until
+  `deviceExtension.setSlot`. Identity and the display override do not: name,
+  room, role, hidden, icon, label, unit and precision wait for the one Save
+  the quick-detail modal already uses (`QuickDetailSaveProvider`). Overview's
+  Device info is read-only facts (id, stable id, provider, integration, parent,
+  capabilities, hardware); it has no per-field save, and the Overview Display
+  section is gone. An extension-card write is held until
   its refetch lands and a concurrent one is refused by name
   (`customize.saveInFlight`). A refusal is shown on the card by name; removing a
   row asks first, and says so when it empties the customization.
@@ -728,7 +734,8 @@ not ready yet. Hrefs come only from `lib/customization-routes.ts`.
   candidates: a container is never suggested, only the child it stands for
   (its stored pick, else the automatic one), named after it; its other
   children stay in the list. `assignments/room-suggestions.ts`.
-- Type is read-only and not shown; the identity is name, room, hidden and role.
+- Type is read-only in the identity block. Name, room, role, hidden and the
+  display override are edited there and written by that one Save.
   Numeric publish-as-unit and a script over the device's own value are override
   entries on that field's row, not a second card.
 - **The tab is drawn at the device page's density, from the library.** Every

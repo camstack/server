@@ -2253,7 +2253,8 @@
       "noRole": "— nessuno —",
       "name": "Nome",
       "room": "Stanza",
-      "hidden": "Nascosto"
+      "hidden": "Nascosto",
+      "type": "Tipo"
     },
     "picker": {
       "search": "Cerca un dispositivo",
@@ -4429,7 +4430,9 @@
       "provider": "Provider",
       "capabilities": "Capability",
       "none": "Nessuna",
-      "autoPopulatedByTheDriver": "Compilato automaticamente dal driver a ogni connessione. Sola lettura."
+      "autoPopulatedByTheDriver": "Compilato automaticamente dal driver a ogni connessione. Sola lettura.",
+      "integration": "Integrazione",
+      "parent": "Padre"
     }
   },
   "shared": {

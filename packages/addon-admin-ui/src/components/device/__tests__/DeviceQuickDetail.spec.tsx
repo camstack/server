@@ -28,6 +28,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn() }),
     useDeviceManagerSetLocation: () => ({ mutateAsync: vi.fn() }),
+    useDeviceManagerSetRole: () => ({ mutateAsync: vi.fn() }),
+    useDeviceManagerSetDisplay: () => ({ mutateAsync: vi.fn() }),
     useSystem: () => ({ trpcClient: {} }),
   }
 })
@@ -46,7 +48,6 @@ vi.mock('../overview-adapters/DeviceInfoAdapter', async () => {
   }
 })
 
-vi.mock('../tabs/DisplaySection', () => ({ DisplaySection: () => <div>display</div> }))
 vi.mock('../tabs/DeviceAggregateSection', () => ({
   DeviceAggregateSection: () => <div>export</div>,
 }))

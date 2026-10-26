@@ -7,8 +7,9 @@
  * Integration detail, nested Integrations expand, ChildrenList, …) draws
  * the glyph from that context — call sites do not wire the button.
  *
- * Body reuses Overview / Export primitives (Device Info, Display, Export).
- * History is its own tab, shown only after listSeries answers with a series.
+ * Body reuses the Overview device-info facts and the Export form. Name, room
+ * and display are edited on the full page's Customize tab. History is its
+ * own tab, shown only after listSeries answers with a series.
  */
 import {
   DeviceContextProvider,
@@ -29,9 +30,8 @@ import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
 import { QuickDetailSaveProvider } from './quick-detail-save'
 import { DeviceAggregateSection } from './tabs/DeviceAggregateSection'
 import { isDeviceExportSection } from './tabs/device-export-tab'
-import { DisplaySection } from './tabs/DisplaySection'
 
-type QuickTabId = 'info' | 'display' | 'export' | 'history'
+type QuickTabId = 'info' | 'export' | 'history'
 
 function DeviceQuickDetailModal({
   deviceId,
@@ -54,7 +54,6 @@ function DeviceQuickDetailModal({
   const deviceLocation = typeof device?.location === 'string' ? device.location : ''
   const tabs: readonly (readonly [QuickTabId, string])[] = [
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
-    ['display', t('deviceQuickDetail.tabDisplay', { defaultValue: 'Display' })],
     ['export', t('deviceQuickDetail.tabExport', { defaultValue: 'Export' })],
     ...(showHistory
       ? [['history', t('deviceQuickDetail.tabHistory', { defaultValue: 'History' })] as const]
@@ -66,9 +65,17 @@ function DeviceQuickDetailModal({
       <DialogContent width="lg" scroll="body">
         <QuickDetailSaveProvider
           deviceId={deviceId}
-          deviceName={deviceName}
-          deviceLocation={deviceLocation}
-          deviceReady={device != null}
+          seed={
+            device != null
+              ? {
+                  name: deviceName,
+                  location: deviceLocation,
+                  role: typeof device.role === 'string' ? device.role : null,
+                  display: device.display,
+                }
+              : null
+          }
+          showOpenFull
           onClose={onClose}
         >
           <DialogHeader>
@@ -96,9 +103,6 @@ function DeviceQuickDetailModal({
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
               <div className={visibleTab === 'info' ? undefined : 'hidden'}>
                 <DeviceInfoAdapter />
-              </div>
-              <div className={visibleTab === 'display' ? undefined : 'hidden'}>
-                <DisplaySection deviceId={deviceId} />
               </div>
               <div className={visibleTab === 'export' ? undefined : 'hidden'}>
                 <DeviceAggregateSection deviceId={deviceId} sectionFilter={isDeviceExportSection} />

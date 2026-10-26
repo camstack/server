@@ -12,7 +12,6 @@ import { DeviceInfoAdapter } from '../overview-adapters/DeviceInfoAdapter'
 import { DeviceNotificationMute } from '../DeviceNotificationMute'
 import { MigrateDeviceCard } from '../MigrateDeviceCard'
 import { ResyncButton } from '../ResyncButton'
-import { DisplaySection } from './DisplaySection'
 import { useTranslation } from 'react-i18next'
 
 interface OverviewTabProps {
@@ -200,20 +199,9 @@ export function OverviewTab({ device }: OverviewTabProps) {
         </div>
       )}
 
-      {/* ── Device Info ── */}
-      {/* Delegates to DeviceInfoAdapter so the inline name + location
-       *  edit affordances (EditableNameRow / LocationRow) replace the
-       *  read-only label rows the legacy block had. The adapter also
-       *  pulls fresh device snapshot via deviceManager.getDevice so
-       *  rename/relocate mutations reflect immediately without a page
-       *  refresh. */}
+      {/* ── Device Info — read-only facts. Name, room, type and display
+          are edited on Customize and saved with that tab's one Save. ── */}
       <DeviceInfoAdapter />
-
-      {/* ── Display customization — EVERY device. The section itself decides
-       *  which rows apply (unit/precision for numeric roles, the label where
-       *  something draws it); gating it on a role here left a camera or a
-       *  container with no way to change its icon. ── */}
-      {numericId !== null && <DisplaySection deviceId={numericId} />}
     </div>
   )
 }

@@ -5,11 +5,10 @@
  * lands inside the Overview tab instead of duplicating the data
  * inline.
  *
- * Two sub-tabs:
- *   - "Identity"  — operator-organisational labels (name / location)
- *                    and identity facts (id / stableId / type /
- *                    provider / capabilities). Name + location are
- *                    inline-editable; the rest is read-only.
+ * Two sub-tabs, both read-only. Name, room, type and display live on
+ * Customize and save with that tab's one Save.
+ *   - "Identity"  — id, stable id, provider, integration, parent,
+ *                    capabilities. A container may still pick its primary child.
  *   - "Hardware"  — driver-populated metadata blob (manufacturer /
  *                    model / firmware / hardware / serial / uid /
  *                    mac / itemNo / …). Read-only — drivers refresh
@@ -31,9 +30,6 @@ import {
 import { CapabilityBadges } from '../../shared/CapabilityBadges'
 import { ProviderIcon } from '../../shared/ProviderIcon'
 import { InfoRow } from './shared/overview-primitives'
-import { useQuickDetailSave } from '../quick-detail-save'
-import { EditableNameRow } from './shared/EditableNameRow'
-import { LocationRow } from './shared/LocationRow'
 import { PrimaryChildRow } from './shared/PrimaryChildRow'
 import { useTranslation } from 'react-i18next'
 
@@ -82,15 +78,16 @@ export function DeviceInfoAdapter() {
   )
   const device = (fetched as Record<string, unknown> | undefined) ?? cached ?? null
   const [activeSubTab, setActiveSubTab] = useState<SubTabId>('identity')
-  const quickSave = useQuickDetailSave()
-  const identity = quickSave?.identity ?? null
 
   if (deviceId === null || !device) return null
 
   const stableId = String(device.stableId ?? '')
-  const name = String(device.name ?? '')
-  const type = String(device.type ?? '')
   const provider = String(device.addonId ?? '')
+  const integrationId =
+    typeof device.integrationId === 'string' && device.integrationId.length > 0
+      ? device.integrationId
+      : null
+  const parentDeviceId = typeof device.parentDeviceId === 'number' ? device.parentDeviceId : null
   const features = (device.features as readonly string[] | undefined) ?? []
   // Generic per-device infra caps every device carries — excluded from the
   // "Capabilities" fallback so it surfaces only what the device actually does.
@@ -104,7 +101,6 @@ export function DeviceInfoAdapter() {
   // Show DeviceFeature flags when present (curated, camera-rich); otherwise
   // fall back to the device's native caps so sensors aren't shown as "None".
   const capabilityList = features.length > 0 ? features : nativeCaps
-  const location = (device.location as string | null | undefined) ?? null
   const metadata = (device.metadata as Record<string, unknown> | null | undefined) ?? null
   const hasHardware = metadata !== null && Object.keys(metadata).length > 0
 
@@ -144,24 +140,21 @@ export function DeviceInfoAdapter() {
               </span>
             }
           />
-          <EditableNameRow
-            deviceId={deviceId}
-            initialName={name}
-            {...(identity !== null && quickSave !== null
-              ? { bound: { value: identity.name, onChange: quickSave.setIdentityName } }
-              : {})}
-          />
-          <LocationRow
-            deviceId={deviceId}
-            initialLocation={location}
-            {...(identity !== null && quickSave !== null
-              ? { bound: { value: identity.location, onChange: quickSave.setIdentityLocation } }
-              : {})}
-          />
           {/* Container-only: pick which child is primary. Self-gates to
            *  multi-child containers — renders nothing otherwise. */}
           <PrimaryChildRow deviceId={deviceId} />
-          <InfoRow label={t('overviewAdapters.deviceInfoAdapter.type', 'Type')} value={type} />
+          {integrationId !== null && (
+            <InfoRow
+              label={t('overviewAdapters.deviceInfoAdapter.integration', 'Integration')}
+              value={<span className="font-mono text-[11px]">{integrationId}</span>}
+            />
+          )}
+          {parentDeviceId !== null && (
+            <InfoRow
+              label={t('overviewAdapters.deviceInfoAdapter.parent', 'Parent')}
+              value={<span className="font-mono text-[11px]">{`#${String(parentDeviceId)}`}</span>}
+            />
+          )}
           <InfoRow
             label={t('overviewAdapters.deviceInfoAdapter.provider', 'Provider')}
             value={<ProviderIcon type={provider} size="sm" showLabel />}

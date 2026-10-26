@@ -136,6 +136,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerSetLocation: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListLocations: () => ({ data: [] }),
+    useDeviceManagerGetRoleDisplayDefaults: () => ({ data: { defaults: {} } }),
+    useDeviceManagerSetRoleDisplayDefaults: () => ({ mutate: vi.fn(), isPending: false }),
     // The Presets section (Task 13) reads these facts; unanswered here, so it only says "Checking…".
     useCoreBlocksListComposableCaps: () => composable.current,
     useDeviceManagerGetBindings: () => bindings.current,

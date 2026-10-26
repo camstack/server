@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import type { AssignmentFacts } from './assignment-availability'
 import { type CustomizationState, currentComposition } from './customization-read'
 import { IdentityRow } from './IdentityRow'
+import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { KeyedArrayCustomizeList } from './keyed/KeyedArrayCard'
 import { ScalarCustomizeList } from './scalar/ScalarOverrideCard'
 import { EventCustomizeList } from './event/EventCustomizeList'
@@ -67,12 +68,27 @@ export function CustomizeTab({ deviceId }: CustomizeTabProps): ReactNode {
       </p>
     )
   }
-  if (device.addonId === COMPOSER_ADDON_ID) return <ComposedCustomizeBody device={device} />
+  const body =
+    device.addonId === COMPOSER_ADDON_ID ? (
+      <ComposedCustomizeBody device={device} />
+    ) : (
+      <CustomizeBody
+        device={device}
+        target={{ addonId: device.addonId, stableId: device.stableId }}
+      />
+    )
   return (
-    <CustomizeBody
-      device={device}
-      target={{ addonId: device.addonId, stableId: device.stableId }}
-    />
+    <QuickDetailSaveProvider
+      deviceId={device.id}
+      seed={{
+        name: device.name,
+        location: device.location ?? '',
+        role: device.role ?? null,
+        display: device.display,
+      }}
+    >
+      {body}
+    </QuickDetailSaveProvider>
   )
 }
 

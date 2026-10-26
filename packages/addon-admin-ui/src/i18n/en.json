@@ -2192,7 +2192,8 @@
       "noRole": "— none —",
       "name": "Name",
       "room": "Room",
-      "hidden": "Hidden"
+      "hidden": "Hidden",
+      "type": "Type"
     },
     "picker": {
       "search": "Search a device",
@@ -4368,7 +4369,9 @@
       "provider": "Provider",
       "capabilities": "Capabilities",
       "none": "None",
-      "autoPopulatedByTheDriver": "Auto-populated by the driver on every connect. Read-only."
+      "autoPopulatedByTheDriver": "Auto-populated by the driver on every connect. Read-only.",
+      "integration": "Integration",
+      "parent": "Parent"
     }
   },
   "shared": {

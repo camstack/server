@@ -7,7 +7,7 @@ supersedes:
 applies-to:
   - packages/addon-admin-ui/src/components/device/customize/override-row/OverrideFieldRow.tsx
   - packages/addon-admin-ui/src/components/device/customize/override-row/merge-override.ts
-  - packages/addon-admin-ui/src/components/device/tabs/DisplaySection.tsx
+  - packages/addon-admin-ui/src/components/device/customize/IdentityDisplayFields.tsx
   - packages/types/src/composition/presets/numeric-transforms.ts
   - packages/types/src/composition/cards/classify-field.ts
 ---
@@ -30,7 +30,7 @@ appear on cameras just because a camera has a numeric field somewhere.
 Keep the display / value split:
 
 - **Display** (unit, precision, icon, label, hidden) writes only through
-  `deviceManager.setDisplay` / Overview `DisplaySection`. The stored slice is
+  `deviceManager.setDisplay` / Customize's identity block. The stored slice is
   unchanged; `resolveSensorDisplay` converts for render.
 - **Value** (unit convert, expression script, invert) writes a self-`replace`
   feature on the device's ONE customization composition (D663), reading the
@@ -58,5 +58,5 @@ another unit in the same dimension.
 
 - Spec + plan under (planning repo: superpowers) (2026-10-02 numeric device transforms).
 - Tests: `cards.spec.ts` (convert-unit round-trip), `OverrideFieldRow.spec.tsx`,
-  `DisplaySection.spec.tsx` (dimension-filtered units).
+  `identity-display.spec.tsx` (dimension-filtered units, one Save).
 - Review only for "no meta.valueTransform" until a guard is worth the cost.

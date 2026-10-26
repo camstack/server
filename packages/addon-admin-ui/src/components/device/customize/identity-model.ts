@@ -1,7 +1,7 @@
 /**
  * The ONE display override with `hidden` set or cleared (D676 ruling 3). Every
- * other key is kept — `DisplaySection` writes the same object, so the two can
- * never disagree — and an override with nothing left is cleared (`null`).
+ * other key is kept — the identity draft writes the same object on Save — and
+ * an override with nothing left is cleared (`null`).
  */
 import {
   type DeviceDisplayOverride,

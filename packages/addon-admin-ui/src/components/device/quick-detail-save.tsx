@@ -1,12 +1,13 @@
 /**
- * One Save for the device quick-detail modal. Sections register a dirty
- * slice; the footer flushes every dirty slice plus the identity draft.
- * The same deferred-save idea the export section already uses
- * (`useFormSaveController`), collected here instead of per section.
+ * One Save for identity, display and any section that registers (the export
+ * form). The quick-detail modal and the device Customize tab share it, so a
+ * name, a room, a role and a display override are not written field by field.
  */
 import {
+  useDeviceManagerSetDisplay,
   useDeviceManagerSetLocation,
   useDeviceManagerSetName,
+  useDeviceManagerSetRole,
   useConfirm,
   Button,
 } from '@camstack/ui-library'
@@ -23,11 +24,15 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
+  displayFormsEqual,
   identityDirty,
   identitySaveRefusal,
+  identityWrites,
   quickDetailSaveState,
   seedIdentityDraft,
+  type DisplayForm,
   type IdentityDraft,
+  type IdentitySeed,
   type QuickDetailSlice,
 } from './identity-draft'
 
@@ -41,6 +46,8 @@ interface QuickDetailSaveApi {
   readonly identity: IdentityDraft | null
   readonly setIdentityName: (name: string) => void
   readonly setIdentityLocation: (location: string) => void
+  readonly setIdentityRole: (role: string | null) => void
+  readonly setIdentityDisplay: (patch: Partial<DisplayForm>) => void
   readonly register: (contribution: QuickDetailContribution) => () => void
 }
 
@@ -52,18 +59,18 @@ export function useQuickDetailSave(): QuickDetailSaveApi | null {
 
 export interface QuickDetailSaveProviderProps {
   readonly deviceId: number
-  readonly deviceName: string
-  readonly deviceLocation: string
-  readonly deviceReady: boolean
-  readonly onClose: () => void
+  /** `null` until the device row has loaded. */
+  readonly seed: IdentitySeed | null
+  /** The modal offers "Open full detail". The device page does not. */
+  readonly showOpenFull?: boolean
+  readonly onClose?: () => void
   readonly children: ReactNode
 }
 
 export function QuickDetailSaveProvider({
   deviceId,
-  deviceName,
-  deviceLocation,
-  deviceReady,
+  seed,
+  showOpenFull = false,
   onClose,
   children,
 }: QuickDetailSaveProviderProps): ReactNode {
@@ -71,14 +78,19 @@ export function QuickDetailSaveProvider({
   const [contributions, setContributions] = useState<readonly QuickDetailContribution[]>([])
   const fns = useRef(new Map<string, Pick<QuickDetailContribution, 'save' | 'discard'>>())
 
-  if (deviceReady) {
-    const next = seedIdentityDraft(identity, deviceName, deviceLocation)
+  if (seed !== null) {
+    const next = seedIdentityDraft(identity, seed)
     const changed =
       identity === null ||
       next.name !== identity.name ||
       next.location !== identity.location ||
+      next.role !== identity.role ||
+      !displayFormsEqual(next.display, identity.display) ||
       next.baseName !== identity.baseName ||
-      next.baseLocation !== identity.baseLocation
+      next.baseLocation !== identity.baseLocation ||
+      next.baseRole !== identity.baseRole ||
+      !displayFormsEqual(next.baseDisplay, identity.baseDisplay) ||
+      next.persistedDisplay !== identity.persistedDisplay
     if (changed) setIdentity(next)
   }
 
@@ -124,6 +136,14 @@ export function QuickDetailSaveProvider({
       setIdentityLocation: (location: string) => {
         setIdentity((prev) => (prev === null ? prev : { ...prev, location }))
       },
+      setIdentityRole: (role: string | null) => {
+        setIdentity((prev) => (prev === null ? prev : { ...prev, role }))
+      },
+      setIdentityDisplay: (patch: Partial<DisplayForm>) => {
+        setIdentity((prev) =>
+          prev === null ? prev : { ...prev, display: { ...prev.display, ...patch } },
+        )
+      },
       register,
     }),
     [identity, register],
@@ -136,6 +156,7 @@ export function QuickDetailSaveProvider({
         identity={identity}
         contributions={contributions}
         onIdentitySaved={(next) => setIdentity(next)}
+        showOpenFull={showOpenFull}
         onClose={onClose}
       >
         {children}
@@ -149,6 +170,7 @@ function QuickDetailSaveBody({
   identity,
   contributions,
   onIdentitySaved,
+  showOpenFull,
   onClose,
   children,
 }: {
@@ -156,7 +178,8 @@ function QuickDetailSaveBody({
   readonly identity: IdentityDraft | null
   readonly contributions: readonly QuickDetailContribution[]
   readonly onIdentitySaved: (next: IdentityDraft) => void
-  readonly onClose: () => void
+  readonly showOpenFull: boolean
+  readonly onClose: (() => void) | undefined
   readonly children: ReactNode
 }): ReactNode {
   return (
@@ -167,6 +190,7 @@ function QuickDetailSaveBody({
         identity={identity}
         contributions={contributions}
         onIdentitySaved={onIdentitySaved}
+        showOpenFull={showOpenFull}
         onClose={onClose}
       />
     </>
@@ -182,13 +206,15 @@ function QuickDetailSaveFooter({
   identity,
   contributions,
   onIdentitySaved,
+  showOpenFull,
   onClose,
 }: {
   readonly deviceId: number
   readonly identity: IdentityDraft | null
   readonly contributions: readonly QuickDetailContribution[]
   readonly onIdentitySaved: (next: IdentityDraft) => void
-  readonly onClose: () => void
+  readonly showOpenFull: boolean
+  readonly onClose: (() => void) | undefined
 }): ReactNode {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -198,6 +224,8 @@ function QuickDetailSaveFooter({
   const [pending, setPending] = useState(false)
   const setName = useDeviceManagerSetName()
   const setLocation = useDeviceManagerSetLocation()
+  const setRole = useDeviceManagerSetRole()
+  const setDisplay = useDeviceManagerSetDisplay()
 
   const identitySlice: QuickDetailSlice = {
     dirty: identityDirty(identity),
@@ -216,6 +244,8 @@ function QuickDetailSaveFooter({
         ...identity,
         name: identity.baseName,
         location: identity.baseLocation,
+        role: identity.baseRole,
+        display: identity.baseDisplay,
       })
     }
     for (const contribution of contributions) contribution.discard()
@@ -234,17 +264,35 @@ function QuickDetailSaveFooter({
     setPending(true)
     void (async () => {
       try {
-        if (identity !== null && identity.name !== identity.baseName) {
-          await setName.mutateAsync({ deviceId, name: identity.name.trim() })
+        const writes = identity !== null ? identityWrites(identity) : {}
+        if (identity !== null && writes.name !== undefined) {
+          await setName.mutateAsync({ deviceId, name: writes.name })
         }
-        if (identity !== null && identity.location !== identity.baseLocation) {
-          const location = identity.location.trim()
-          await setLocation.mutateAsync({ deviceId, location: location === '' ? null : location })
+        if (identity !== null && writes.location !== undefined) {
+          await setLocation.mutateAsync({ deviceId, location: writes.location })
+        }
+        if (identity !== null && writes.role !== undefined) {
+          await setRole.mutateAsync({ deviceId, role: writes.role })
+        }
+        if (identity !== null && writes.display !== undefined) {
+          await setDisplay.mutateAsync({ deviceId, display: writes.display })
         }
         if (identity !== null) {
           const name = identity.name.trim()
           const location = identity.location.trim()
-          onIdentitySaved({ name, location, baseName: name, baseLocation: location })
+          onIdentitySaved({
+            ...identity,
+            name,
+            location,
+            baseName: name,
+            baseLocation: location,
+            baseRole: identity.role,
+            baseDisplay: identity.display,
+            persistedDisplay:
+              writes.display !== undefined
+                ? (writes.display ?? undefined)
+                : identity.persistedDisplay,
+          })
         }
         for (const contribution of contributions) {
           if (contribution.dirty) await contribution.save()
@@ -272,8 +320,8 @@ function QuickDetailSaveFooter({
         })
         if (!ok) return
       }
-      navigate(`/devices/${String(deviceId)}`)
-      onClose()
+      navigate(`/devices/${String(deviceId)}?tab=customize`)
+      onClose?.()
     })()
   }
 
@@ -281,9 +329,13 @@ function QuickDetailSaveFooter({
     <div className="sticky bottom-0 z-10 mt-3 flex flex-col gap-2 border-t border-border bg-background px-1 pt-3">
       {state.error !== null && <p className="text-xs text-danger">{state.error}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onOpenFull}>
-          {t('deviceQuickDetail.openFull', 'Open full detail')}
-        </Button>
+        {showOpenFull ? (
+          <Button type="button" variant="outline" size="sm" onClick={onOpenFull}>
+            {t('deviceQuickDetail.openFull', 'Open full detail')}
+          </Button>
+        ) : (
+          <span />
+        )}
         <div className="flex items-center gap-2">
           <Button
             type="button"
