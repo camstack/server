@@ -5,7 +5,9 @@
 import type { CompositionFieldKind, CompositionSourceRef } from '@camstack/types'
 import {
   Button,
+  DeviceName,
   ErrorBox,
+  useDeviceLabel,
   useDeviceManagerGetWireableFields,
   useDeviceStateGetSnapshot,
 } from '@camstack/ui-library'
@@ -60,7 +62,7 @@ export function DeviceFields({
         className="h-auto px-0 text-[11px] text-primary"
         onClick={onBack}
       >
-        ← {device.name}
+        ← <DeviceName device={device} form="compact" />
       </Button>
       {snapshot.status === 'error' && (
         <p role="alert" className="text-[10px] text-warning">

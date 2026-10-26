@@ -5,6 +5,7 @@ import { compositionSourceKey, decodeCompositionToCards, type DeviceInfo } from 
 import { Boxes } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useDeviceLabel } from '@camstack/ui-library'
 import { CustomizeCard } from '../CustomizeCard'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { currentComposition } from '../customization-read'
@@ -25,6 +26,7 @@ export function CompositionFieldsCardList({
   skipCaps,
 }: CompositionFieldsCardListProps): ReactNode {
   const { i18n } = useTranslation()
+  const selfLabel = useDeviceLabel(device, 'compact')
   const current = currentComposition(handle.state)
   const devices = useCandidateDevices(current !== null)
   const names = useMemo(() => {
@@ -59,7 +61,7 @@ export function CompositionFieldsCardList({
           >
             <FieldsCardBody
               deviceId={device.id}
-              selfName={device.name}
+              selfName={selfLabel}
               card={card}
               handle={handle}
               names={names}

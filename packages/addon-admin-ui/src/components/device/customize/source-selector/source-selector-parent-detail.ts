@@ -1,43 +1,63 @@
+/**
+ * Customize rows and the picker beside them share one label. The picker's
+ * primary line is `DeviceName`; this is the same string for a card that
+ * already holds the fleet.
+ */
 import {
-  parentDetailOf,
-  resolveParentNames,
-  type ParentResolvable,
+  deviceNameNouns,
+  indexDeviceNames,
+  resolveDeviceLabel,
+  type DeviceNameFields,
+  type DeviceNameNouns,
   type PickerItem,
 } from '@camstack/ui-library'
 import type { SourceCandidateDevice } from './source-selector-model'
 
-/**
- * A Customize card row: the device's own name, and — when it lives under a
- * container — that container's name from the same map the picker turns into
- * "in &lt;parent&gt;". A top-level device stays its own name.
- */
-export function sourceRowLabel(
-  name: string,
-  deviceId: number | null,
-  fleet: readonly ParentResolvable[],
-): string {
-  if (deviceId === null) return name
-  const parent = resolveParentNames(fleet).get(deviceId)
-  if (parent === undefined || parent.length === 0) return name
-  return `${name} · ${parent}`
+export interface DeviceNameSource {
+  readonly id: number
+  readonly name: string
+  readonly type: string
+  readonly stableId: string
+  readonly parentDeviceId?: number | null
+  readonly location?: string | null
+  readonly role?: string | null
+  readonly primaryChildEntityId?: string | null
 }
 
-/** Compatible rows only; parent names still resolve from the full fleet. */
+export function candidateFields(entry: DeviceNameSource): DeviceNameFields {
+  return {
+    id: entry.id,
+    name: entry.name,
+    type: entry.type,
+    stableId: entry.stableId,
+    parentDeviceId: entry.parentDeviceId ?? null,
+    ...(entry.location !== undefined && entry.location !== null
+      ? { location: entry.location }
+      : {}),
+    ...(entry.role !== undefined && entry.role !== null ? { role: entry.role } : {}),
+    ...(entry.primaryChildEntityId !== undefined && entry.primaryChildEntityId !== null
+      ? { primaryChildEntityId: entry.primaryChildEntityId }
+      : {}),
+  }
+}
+
+export function sourceRowLabel(
+  device: DeviceNameFields,
+  fleet: readonly DeviceNameFields[],
+  nouns: DeviceNameNouns = deviceNameNouns('en'),
+): string {
+  return resolveDeviceLabel(device, 'compact', indexDeviceNames(fleet), nouns)
+}
+
+/** Compatible rows. The picker paints the label; `name` stays the stored string so search still finds it. */
 export function compatiblePickerItems(
   compatible: readonly SourceCandidateDevice[],
-  fleet: readonly ParentResolvable[],
 ): readonly PickerItem<number>[] {
-  const parents = resolveParentNames(fleet)
-  return compatible.map((row) => {
-    const base: PickerItem<number> = {
-      id: row.id,
-      name: row.name,
-      type: row.type,
-      parentDeviceId: row.parentDeviceId,
-      ...(row.location !== null ? { location: row.location } : {}),
-    }
-    const detail = parentDetailOf(parents.get(row.id))
-    if (detail === undefined) return base
-    return { ...base, detail }
-  })
+  return compatible.map((row) => ({
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    parentDeviceId: row.parentDeviceId,
+    ...(row.location !== null ? { location: row.location } : {}),
+  }))
 }

@@ -11,14 +11,21 @@ import {
   type ScalarRead,
   type ScalarSourcePresence,
 } from '@camstack/types'
-import { Badge, Button, Checkbox, ErrorBox } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  Checkbox,
+  ErrorBox,
+  useDeviceLabel,
+  type DeviceNameFields,
+} from '@camstack/ui-library'
 import { BellRing } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentAvailability } from '../assignment-availability'
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
-import { sourceRowLabel } from '../source-selector/source-selector-parent-detail'
+import { candidateFields } from '../source-selector/source-selector-parent-detail'
 import { useLiveValue } from '../assignments/use-live-value'
 import { CustomizeCard } from '../CustomizeCard'
 import { currentComposition } from '../customization-read'
@@ -31,6 +38,14 @@ import { EventPulseDialog } from './EventPulseDialog'
 import type { PulseFormSource } from './event-form'
 import { doorbellRingStatus } from './event-status-text'
 import { eventBadgeKey, type PulseCatalogView } from './event-targets'
+
+const PLACEHOLDER_DEVICE: DeviceNameFields = {
+  id: 0,
+  name: '',
+  type: 'unknown',
+  stableId: '',
+  parentDeviceId: null,
+}
 
 export interface EventPulseCardProps {
   readonly device: DeviceInfo
@@ -79,6 +94,11 @@ export function EventPulseCard({
             compositionSourceKey(source),
         ) ?? null)
   const presence = sourcePresence(recognized, devices.kind, sourceDevice !== null)
+  const sourceLabel = useDeviceLabel(
+    sourceDevice === null ? PLACEHOLDER_DEVICE : candidateFields(sourceDevice),
+    'compact',
+  )
+  const hostLabel = useDeviceLabel(device, 'full')
   const projection = projectPulseAssignment({
     cap,
     targetId: view.id,
@@ -150,20 +170,7 @@ export function EventPulseCard({
               {recognized && source !== null && (
                 <p className="text-xs text-foreground">
                   {t('customize.scalar.override', {
-                    name:
-                      sourceDevice === null
-                        ? source.stableId
-                        : sourceRowLabel(
-                            sourceDevice.name,
-                            sourceDevice.id,
-                            devices.kind === 'known'
-                              ? devices.value.map((entry) => ({
-                                  id: entry.id,
-                                  name: entry.name,
-                                  parentDeviceId: entry.parentDeviceId ?? null,
-                                }))
-                              : [],
-                          ),
+                    name: sourceDevice === null ? source.stableId : sourceLabel,
                     field: fieldLabel,
                   })}
                 </p>
@@ -214,7 +221,7 @@ export function EventPulseCard({
                       const next = withoutFeature(current, cap)
                       void confirmRemove(
                         t('customize.doorbell.removeWhat', {
-                          name: sourceDevice?.name ?? device.name,
+                          name: sourceDevice === null ? hostLabel : sourceLabel,
                         }),
                         next === null,
                       ).then((ok) => {

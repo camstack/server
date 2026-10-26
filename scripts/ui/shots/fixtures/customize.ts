@@ -33,6 +33,7 @@ const FLEET = [
   {
     ...device(301, 'Motion', 'Front of house', 'sensor'),
     parentDeviceId: 399,
+    role: 'motion-sensor',
   },
   device(307, 'Front door button', 'Front of house', 'switch'),
   device(302, 'Gate contact', 'Front of house', 'sensor'),

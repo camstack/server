@@ -9,6 +9,7 @@ import {
   Button,
   ErrorBox,
   useAddonSettingsGetDeviceSettings,
+  useDeviceNameNouns,
   usePipelineOrchestratorApplyDeviceSettingsPatch,
   usePipelineOrchestratorSetCameraSensors,
 } from '@camstack/ui-library'
@@ -21,7 +22,7 @@ import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
 import { useLiveValue } from '../assignments/use-live-value'
 import { CustomizeCard } from '../CustomizeCard'
-import { sourceRowLabel } from '../source-selector/source-selector-parent-detail'
+import { candidateFields, sourceRowLabel } from '../source-selector/source-selector-parent-detail'
 import { extractOrchestratorCameraSettings } from '../../../pipeline/cameras/camera-card-model'
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import { applySpan, type SpanFormSource } from './event-form'
@@ -151,7 +152,7 @@ export function EventSpanCard({
                 <ul className="flex flex-col gap-1">
                   {projection.rows.map((row) => (
                     <li key={row.key} className="text-xs text-foreground">
-                      {sensorRowLabel(row, fleet)}
+                      <SensorRowName row={row} fleet={fleet} />
                       {row.reason !== null ? ` — ${t(`customize.motion.state.${row.state}`)}` : ''}
                     </li>
                   ))}
@@ -251,20 +252,19 @@ function SensorsUnreadable({ reason }: SensorsUnreadableProps): ReactNode {
   return <ErrorBox title={t('customize.motion.unreadable', { reason: named })} message={named} />
 }
 
-function sensorRowLabel(row: SpanSensorRow, fleet: Known<readonly CandidateDevice[]>): string {
+interface SensorRowNameProps {
+  readonly row: SpanSensorRow
+  readonly fleet: Known<readonly CandidateDevice[]>
+}
+
+function SensorRowName({ row, fleet }: SensorRowNameProps): ReactNode {
+  const nouns = useDeviceNameNouns()
   if (fleet.kind !== 'known') return row.name
   const device = fleet.value.find(
     (entry) => entry.addonId === row.addonId && entry.stableId === row.stableId,
   )
-  return sourceRowLabel(
-    row.name,
-    device?.id ?? null,
-    fleet.value.map((entry) => ({
-      id: entry.id,
-      name: entry.name,
-      parentDeviceId: entry.parentDeviceId ?? null,
-    })),
-  )
+  if (device === undefined) return row.name
+  return sourceRowLabel(candidateFields(device), fleet.value.map(candidateFields), nouns)
 }
 
 function readReason(read: SpanRead): string {

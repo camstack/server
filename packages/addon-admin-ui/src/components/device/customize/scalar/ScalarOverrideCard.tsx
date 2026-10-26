@@ -14,7 +14,13 @@ import {
   type ScalarRead,
   type ScalarSourcePresence,
 } from '@camstack/types'
-import { Badge, Button, ErrorBox } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  ErrorBox,
+  useDeviceLabel,
+  type DeviceNameFields,
+} from '@camstack/ui-library'
 import { Activity, BatteryMedium, type LucideIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -27,7 +33,7 @@ import {
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
 import { LiveValueText } from '../assignments/LiveValueText'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
-import { sourceRowLabel } from '../source-selector/source-selector-parent-detail'
+import { candidateFields } from '../source-selector/source-selector-parent-detail'
 import { CustomizeCard } from '../CustomizeCard'
 import { currentComposition } from '../customization-read'
 import { featureOf, withFeature, withoutFeature } from '../customization-save'
@@ -36,6 +42,14 @@ import type { CustomizationHandle } from '../use-customization'
 import { ScalarOverrideDialog, type ScalarDialogSeed } from './ScalarOverrideDialog'
 import { scalarBadge } from './scalar-badge'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
+
+const PLACEHOLDER_DEVICE: DeviceNameFields = {
+  id: 0,
+  name: '',
+  type: 'unknown',
+  stableId: '',
+  parentDeviceId: null,
+}
 
 const ICONS: Readonly<Record<string, LucideIcon>> = {
   battery: BatteryMedium,
@@ -98,20 +112,12 @@ export function ScalarOverrideCard({
             compositionSourceKey({ addonId: row.addonId, stableId: row.stableId }) ===
             compositionSourceKey(decoded.draft.source),
         ) ?? null)
-  const sourceName =
-    sourceDevice === null
-      ? null
-      : sourceRowLabel(
-          sourceDevice.name,
-          sourceDevice.id,
-          devices.kind === 'known'
-            ? devices.value.map((entry) => ({
-                id: entry.id,
-                name: entry.name,
-                parentDeviceId: entry.parentDeviceId ?? null,
-              }))
-            : [],
-        )
+  const sourceLabel = useDeviceLabel(
+    sourceDevice === null ? PLACEHOLDER_DEVICE : candidateFields(sourceDevice),
+    'compact',
+  )
+  const sourceName = sourceDevice === null ? null : sourceLabel
+  const hostLabel = useDeviceLabel(device, 'full')
   const presence = sourcePresence(recognized, devices.kind, sourceDevice !== null)
   const projection = projectScalarAssignment({
     cap,
@@ -135,7 +141,7 @@ export function ScalarOverrideCard({
     if (current === null) return
     const next = withoutFeature(current, cap)
     const named =
-      sourceName ?? (decoded === null ? device.name : compositionSourceKey(decoded.draft.source))
+      sourceName ?? (decoded === null ? hostLabel : compositionSourceKey(decoded.draft.source))
     if (await confirmRemove(t('customize.scalar.removeWhat', { name: named }), next === null)) {
       await save(next)
     }

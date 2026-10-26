@@ -43,6 +43,7 @@ import { SelectedChip } from './SelectedChip.js'
 import { DeviceFilterBar, typeLabel } from './device-filter-bar'
 import type { PickerFleetView } from './device-fleet-view'
 import { withResolvedParentDetail } from './device-parent.js'
+import { useDeviceLabelById } from '../device-name'
 import { usePickerSiteZones, useStoredGroupBy } from './device-picker-grouping'
 import {
   applyPickerFilters,
@@ -174,6 +175,47 @@ function isDeviceNoun(noun: PickerNoun): boolean {
   return noun === 'camera' || noun === 'device'
 }
 
+/** Compact label for a device id. String ids (nodes, packages) keep the stored text. */
+function usePickerDeviceLabel(id: number | string, stored: string): string {
+  const lookedUp = useDeviceLabelById(typeof id === 'number' ? id : 0, 'compact', stored)
+  return typeof id === 'number' ? lookedUp : stored
+}
+
+function PickerDeviceName({
+  id,
+  stored,
+  className,
+}: {
+  readonly id: number | string
+  readonly stored: string
+  readonly className?: string
+}): JSX.Element {
+  const label = usePickerDeviceLabel(id, stored)
+  return <span className={className}>{label}</span>
+}
+
+function PickerChip({
+  id,
+  stored,
+  removed,
+  onRemove,
+}: {
+  readonly id: number | string
+  readonly stored: string
+  readonly removed: boolean
+  readonly onRemove?: () => void
+}): JSX.Element {
+  const label = usePickerDeviceLabel(id, stored)
+  return (
+    <SelectedChip
+      testId={`picker-chip-${String(id)}`}
+      label={label}
+      warning={removed}
+      {...(onRemove !== undefined ? { onRemove } : {})}
+    />
+  )
+}
+
 /** One selected id as a chip: its name, or what `device-selection` says about it. */
 interface PickerChip<Id extends PickerId> {
   readonly id: Id
@@ -242,9 +284,12 @@ export function DevicePicker<Id extends PickerId = number>({
   const t = useUiText()
   const groupTitle = groupTitleProp ?? ((group: PickerGroup<Id>) => deviceGroupTitle(group, t))
   const lockedNote = lockedNoteProp ?? t('uiLibrary.devicePicker.alreadyAdded', 'Already added')
-  // Container/hub children get a second line (`in <parent>`) from the same
-  // listing — `parentDeviceId` is already on the slim projection.
-  const devices = useMemo(() => withResolvedParentDetail(devicesIn), [devicesIn])
+  // A device's primary line already names its container. A second `in <parent>`
+  // would say it twice. Other nouns keep that hint.
+  const devices = useMemo(
+    () => (isDeviceNoun(noun) ? devicesIn : withResolvedParentDetail(devicesIn)),
+    [devicesIn, noun],
+  )
   const judge: PickerFleetView<Id> = fleet ?? {
     state: listState,
     devices: listState === 'answered' ? devices : undefined,
@@ -298,11 +343,11 @@ export function DevicePicker<Id extends PickerId = number>({
             </span>
           ) : (
             overflow.shown.map((chip) => (
-              <SelectedChip
+              <PickerChip
                 key={chip.id}
-                testId={`picker-chip-${String(chip.id)}`}
-                label={chip.label}
-                warning={chip.removed}
+                id={chip.id}
+                stored={chip.label}
+                removed={chip.removed}
                 {...(!disabled
                   ? { onRemove: () => onChange(value.filter((id) => id !== chip.id)) }
                   : {})}
@@ -723,7 +768,7 @@ function PickerRowView<Id extends PickerId>({
         data-device-id={String(row.device.id)}
       />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{row.device.name}</span>
+        <PickerDeviceName id={row.device.id} stored={row.device.name} className="truncate" />
         {second !== undefined && (
           <span className="truncate text-[10px] text-foreground-subtle">{second}</span>
         )}

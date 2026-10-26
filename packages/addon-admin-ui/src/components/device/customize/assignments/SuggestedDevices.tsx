@@ -4,7 +4,7 @@
  * that IS the picker's own pick (add it, or use it as the field's device).
  * Drawn from the tab's list-row chrome; it owns no data and writes nothing.
  */
-import { Button, LIST_ROW, TEXT_SECTION_LABEL } from '@camstack/ui-library'
+import { Button, LIST_ROW, TEXT_SECTION_LABEL, useDeviceLabelById } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -26,9 +26,43 @@ export interface SuggestedDevicesProps {
   readonly onPickAll?: () => void
 }
 
-function secondLine(device: SuggestedDevice, inContainer: string | null): string | null {
-  const parts = [inContainer, device.detail].filter((p): p is string => p !== null && p !== '')
-  return parts.length === 0 ? null : parts.join(' · ')
+interface SuggestedRowProps {
+  readonly device: SuggestedDevice
+  readonly action: 'add' | 'use'
+  readonly onPick: (id: number) => void
+}
+
+function SuggestedRow({ device, action, onPick }: SuggestedRowProps): ReactNode {
+  const { t } = useTranslation()
+  const label = useDeviceLabelById(device.id, 'compact', device.name)
+  const inContainer =
+    device.container === null || label.includes(device.container)
+      ? null
+      : t('customize.suggest.in', { container: device.container })
+  const second = [inContainer, device.detail]
+    .filter((part): part is string => part !== null && part !== '')
+    .join(' · ')
+  return (
+    <li className={`${LIST_ROW} flex items-center gap-3`}>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs text-foreground break-words">{label}</div>
+        {second !== '' && (
+          <div className="text-[11px] text-foreground-subtle break-words">{second}</div>
+        )}
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        aria-label={t(
+          action === 'add' ? 'customize.suggest.addNamed' : 'customize.suggest.useNamed',
+          { name: label },
+        )}
+        onClick={() => onPick(device.id)}
+      >
+        {t(action === 'add' ? 'customize.suggest.add' : 'customize.suggest.use')}
+      </Button>
+    </li>
+  )
 }
 
 export function SuggestedDevices({
@@ -52,35 +86,9 @@ export function SuggestedDevices({
         )}
       </div>
       <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
-        {devices.map((device) => {
-          // A name that already carries its container (linked: "Container · child") is not told twice.
-          const inContainer =
-            device.container === null || device.name.includes(device.container)
-              ? null
-              : t('customize.suggest.in', { container: device.container })
-          const second = secondLine(device, inContainer)
-          return (
-            <li key={device.id} className={`${LIST_ROW} flex items-center gap-3`}>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs text-foreground break-words">{device.name}</div>
-                {second !== null && (
-                  <div className="text-[11px] text-foreground-subtle break-words">{second}</div>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label={t(
-                  action === 'add' ? 'customize.suggest.addNamed' : 'customize.suggest.useNamed',
-                  { name: device.name },
-                )}
-                onClick={() => onPick(device.id)}
-              >
-                {t(action === 'add' ? 'customize.suggest.add' : 'customize.suggest.use')}
-              </Button>
-            </li>
-          )
-        })}
+        {devices.map((device) => (
+          <SuggestedRow key={device.id} device={device} action={action} onPick={onPick} />
+        ))}
       </ul>
     </section>
   )

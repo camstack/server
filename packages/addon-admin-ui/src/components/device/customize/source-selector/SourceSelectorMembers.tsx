@@ -128,8 +128,8 @@ export function SourceSelectorMembers({
   const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
   const direct = directAcceptFields(catalogFields(catalog), request)
   const pickerItems = useMemo(
-    () => compatiblePickerItems(partitioned.compatible.map(toCandidate), fleet),
-    [partitioned.compatible, fleet],
+    () => compatiblePickerItems(partitioned.compatible.map(toCandidate)),
+    [partitioned.compatible],
   )
   const apply = (
     ids: readonly number[],

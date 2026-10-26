@@ -8,6 +8,7 @@ import type { CompositionFieldKind } from '@camstack/types'
 import {
   Button,
   type DeviceListState,
+  DeviceName,
   DevicePicker,
   Dialog,
   DialogBody,
@@ -145,7 +146,7 @@ export function AssignmentFieldPicker({
                   <FieldDeviceStep excludeDeviceIds={excludeDeviceIds} onSelect={setDevice} />
                 ) : (
                   <p className="flex items-center gap-2 text-xs text-foreground">
-                    {device.name}
+                    <DeviceName device={device} form="compact" />
                     <Button
                       variant="ghost"
                       size="sm"

@@ -7,6 +7,7 @@ import type { CameraSensorMode, CustomizeEventEdge } from '@camstack/types'
 import {
   Button,
   type DeviceListState,
+  DeviceName,
   DevicePicker,
   ErrorBox,
   Input,
@@ -254,10 +255,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     )
     if (next !== null) eventBinding.onPickedChange(next)
   }, [eventBinding, declared])
-  const compatibleDeviceItems = useMemo(
-    () => compatiblePickerItems(compatible, fleet),
-    [compatible, fleet],
-  )
+  const compatibleDeviceItems = useMemo(() => compatiblePickerItems(compatible), [compatible])
   const deviceColumn = (
     <div className="flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]">
       <h3 className="text-[11px] font-medium text-foreground-muted">
@@ -381,7 +379,11 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     <div className="flex min-h-0 flex-col gap-2">
       {pickedList}
       {props.device !== null && (
-        <h3 className="text-[11px] font-medium text-foreground">{props.device.name}</h3>
+        <DeviceName
+          device={props.device}
+          form="full"
+          className="text-[11px] font-medium text-foreground"
+        />
       )}
       {props.device === null ? (
         <p className="text-[11px] text-foreground-subtle">
