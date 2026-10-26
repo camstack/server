@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-pipeline-orchestrator",
-  "version": "1.2.628",
+  "version": "1.2.629",
   "description": "Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance",
   "keywords": [
     "camstack",

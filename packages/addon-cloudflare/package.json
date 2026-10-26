@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-cloudflare",
-  "version": "1.2.145",
+  "version": "1.2.146",
   "description": "Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Multi-entry npm package shipping 2 addons under a single bundle.",
   "keywords": [
     "camstack",

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-pipeline",
-  "version": "1.2.626",
+  "version": "1.2.627",
   "description": "Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle.",
   "keywords": [
     "camstack",
