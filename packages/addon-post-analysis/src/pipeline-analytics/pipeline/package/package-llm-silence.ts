@@ -1,7 +1,7 @@
 /**
  * One open "package confirm is not answering" edge per camera (D931).
  *
- * A single timeout is the 8 s bound doing its job. Three uncertain confirms
+ * A single timeout is the call's bound doing its job. Three uncertain confirms
  * in a row, with no yes and no no between them, is the provider not answering
  * — the shape camera 615 showed on 2026-10-26 (nine timeouts, zero answers).
  * A time window would also count a timeout that a later answer already closed.

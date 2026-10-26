@@ -3,16 +3,23 @@
  *
  * The images are the zone crops the caller already holds (JPEG bytes, the
  * `llm.generateVision` contract — no new base64 field). One call, no retry.
- * The 8 s bound stays: the 2026-10-26 confirms that timed out never returned
- * a latency to raise it against. No `yes` is a drop; the caller decides that.
+ * The bound is {@link PACKAGE_LLM_CONFIRM_TIMEOUT_MS}. No `yes` is a drop;
+ * the caller decides that.
  */
 
 import { randomUUID } from 'node:crypto'
 import { PackageLlmVerdictSchema, type PackageLlmVerdict } from '@camstack/types'
 import { parseModelJson } from '../../../shared/llm-vision/parse-model-json.js'
 
-/** The call's own bound. The provider is told the same number. */
-export const PACKAGE_LLM_CONFIRM_TIMEOUT_MS = 8_000
+/**
+ * The call's own bound. The provider is told the same number, and it
+ * overrides the profile's own timeout. Two crops on a small local vision model
+ * (qwen3-vl-4b MLX, 2026-10-24: p50 13 s, p90 22 s, max 42 s over 857 calls)
+ * need well over the 8 s this was: every confirm timed out before the first
+ * token. 30 s clears the p90; a confirm that still runs out is dropped
+ * (fail-closed, D931) and counted towards the silence alert.
+ */
+export const PACKAGE_LLM_CONFIRM_TIMEOUT_MS = 30_000
 
 export const PACKAGE_LLM_CONFIRM_CONSUMER = 'package-confirm'
 
