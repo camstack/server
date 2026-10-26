@@ -142,6 +142,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useCoreBlocksListComposableCaps: () => composable.current,
     useDeviceManagerGetBindings: () => bindings.current,
     useDeviceManagerGetWireableFields: () => ({ status: 'pending', data: undefined }),
+    useDeviceStateGetSnapshot: () => ({ status: 'pending', data: undefined }),
     // The Advanced editor (Task 19) validates the draft on the server; not under test here.
     useCoreBlocksValidateComposition: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListAll: () => fleet.current,

@@ -127,7 +127,7 @@ export function OverrideFieldRow({
         <LiveValueText target={{ deviceId, cap, path: fieldPath }} />
       </div>
       {entry === null ? (
-        <p className="text-xs text-foreground-subtle">{t('customize.scalar.noOverride')}</p>
+        <p className="text-xs text-foreground-subtle">{t('customize.override.none')}</p>
       ) : (
         <EntryText
           entry={entry}
@@ -269,7 +269,7 @@ function AddMenu({
         disabled={saving}
         data-testid={`override-add-${cap}-${fieldPath}`}
       >
-        {t('customize.scalar.add')}
+        {t('customize.override.add')}
       </DropdownTrigger>
       <DropdownContent>
         <DropdownItem onClick={onFrom}>{t('customize.override.fromDevice')}</DropdownItem>
@@ -391,7 +391,7 @@ function FromDevicePicker({
             if (pick !== null) onConfirm(pick)
           }}
         >
-          {t('customize.scalar.save')}
+          {t('customize.override.save')}
         </Button>
       </div>
     </div>

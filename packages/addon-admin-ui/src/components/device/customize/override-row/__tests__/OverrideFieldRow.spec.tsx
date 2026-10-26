@@ -109,6 +109,8 @@ vi.mock('@camstack/ui-library', () => {
     DialogBody: ({ children }: { readonly children?: ReactNode }) => <div>{children}</div>,
     DialogFooter: ({ children }: { readonly children?: ReactNode }) => <div>{children}</div>,
     useConfirm: () => async () => true,
+    useDeviceManagerGetWireableFields: () => ({ status: 'pending', data: undefined }),
+    useDeviceStateGetSnapshot: () => ({ status: 'pending', data: undefined }),
     useDeviceManagerGetBindings: () => ({
       data: {
         entries: [

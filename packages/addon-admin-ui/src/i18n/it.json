@@ -2638,7 +2638,10 @@
       "convertSummary": "{{from}} → {{to}}",
       "selfNative": "Il valore nativo di questo dispositivo",
       "targetUnit": "Unità di destinazione",
-      "publish": "Pubblica il valore convertito"
+      "publish": "Pubblica il valore convertito",
+      "none": "Nessun override",
+      "add": "+ Aggiungi override",
+      "save": "Salva override"
     },
     "sourceSelector": {
       "pickDevice": "Scegli la sorgente per {{title}}",

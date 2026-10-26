@@ -116,7 +116,7 @@ describe('EventPulseDialog', () => {
         onSave={() => undefined}
       />,
     )
-    expect(screen.getByRole('heading', { name: 'Add Doorbell override' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Add Doorbell' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /^Garage light/ })).toBeNull()
     expect(screen.getByTestId('source-incompatible-devices')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /1 not compatible/i }))
@@ -124,6 +124,6 @@ describe('EventPulseDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Porch switch/ }))
     fireEvent.click(screen.getByTestId('source-value-switch.on'))
     expect(screen.getByTestId('source-picked-list')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Save override' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Save' })).not.toBeDisabled()
   })
 })

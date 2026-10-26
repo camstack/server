@@ -52,6 +52,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useConfirm: () => async () => confirm.answer,
+    useDeviceManagerGetWireableFields: () => ({ status: 'pending', data: undefined }),
+    useDeviceStateGetSnapshot: () => ({ status: 'pending', data: undefined }),
   }
 })
 vi.mock('../../assignments/use-source-candidates', () => ({
@@ -117,7 +119,7 @@ describe('ScalarOverrideCard', () => {
       />,
     )
     expect(screen.getByRole('status').textContent).toMatch(/Checking capabilities/)
-    expect(screen.queryByRole('button', { name: /Add override/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: '+ Add' })).toBeNull()
   })
 
   it('a native card shows the effective value, Native, and add', () => {
@@ -132,8 +134,8 @@ describe('ScalarOverrideCard', () => {
     )
     expect(screen.getByText('Native')).toBeTruthy()
     expect(screen.getByText('73 %')).toBeTruthy()
-    expect(screen.getByText('No override')).toBeTruthy()
-    expect(screen.getByRole('button', { name: /Add override/ })).toBeTruthy()
+    expect(screen.getByText('Not added')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '+ Add' })).toBeTruthy()
   })
 
   it('an assigned source is named and removable', async () => {
@@ -153,7 +155,7 @@ describe('ScalarOverrideCard', () => {
       />,
     )
     expect(screen.getByText('Assigned · Garage sensor')).toBeTruthy()
-    expect(screen.getByText(/Override: Garage sensor/)).toBeTruthy()
+    expect(screen.getByText(/Source: Garage sensor/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
     await waitFor(() => expect(handle.save).toHaveBeenCalledWith(null))
   })
@@ -254,7 +256,7 @@ describe('ScalarOverrideCard', () => {
         target={running}
       />,
     )
-    expect(screen.getByRole('button', { name: /Add override/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '+ Add' })).toBeTruthy()
   })
 
   it('is absent only after applicability answered no', () => {
