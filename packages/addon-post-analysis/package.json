@@ -37,7 +37,9 @@
     "dist",
     "python",
     "assets",
-    "THIRD_PARTY_MODELS.md"
+    "THIRD_PARTY_MODELS.md",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "camstack": {
     "displayName": "Post-Analysis",

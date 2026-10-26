@@ -60,7 +60,9 @@
     "assets",
     "native/afm/camstack-afm",
     "native/afm/camstack-afm.swift",
-    "THIRD_PARTY_MODELS.md"
+    "THIRD_PARTY_MODELS.md",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "node scripts/build-afm.mjs && vite build",

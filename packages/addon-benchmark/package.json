@@ -68,7 +68,9 @@
   },
   "files": [
     "dist",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup --no-dts && vite build",

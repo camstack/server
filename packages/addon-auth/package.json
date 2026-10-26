@@ -36,7 +36,9 @@
   },
   "files": [
     "dist",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "camstack": {
     "displayName": "Authentication",

@@ -59,7 +59,9 @@
   "files": [
     "dist",
     "i18n",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build",

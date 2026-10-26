@@ -59,7 +59,9 @@
   "files": [
     "dist",
     "assets",
-    "lambda-template"
+    "lambda-template",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build",

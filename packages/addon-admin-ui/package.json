@@ -15,7 +15,9 @@
   },
   "files": [
     "dist",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     "./server/addon": {

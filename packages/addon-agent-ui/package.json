@@ -22,7 +22,9 @@
   "files": [
     "dist",
     "package.json",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build && vite build -c vite.lib.config.ts",

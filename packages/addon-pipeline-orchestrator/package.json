@@ -75,7 +75,9 @@
   },
   "files": [
     "dist",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build && vite build --config vite.widgets.config.ts",

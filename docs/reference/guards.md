@@ -9,7 +9,7 @@
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (184)
+## Enforced by CI checks (185)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -25,6 +25,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-addon-install-links.ts` | Addon install-link guard (D860) — **every "install an addon for X" offer must name a capability a published addon package actually declares.** ## The failure this catches An "Add destination" button on the Logging page linked to the addo… |
 | `scripts/check-addon-page-css.ts` | Addon-page CSS guard — every addon page's Tailwind classes ship in the admin-ui stylesheet (D747). |
 | `scripts/check-addon-pin-refusal.ts` | Pinned-`addonId` refusal guard — an unresolvable collection pin must never degrade into another provider's answer. |
+| `scripts/check-addon-readme-changelog.ts` | Every published addon package ships a README and a CHANGELOG, and both are in `files` so `npm pack` includes them. |
 | `scripts/check-addon-root-is-the-only-load-path.ts` | Addon load-path guard — an addon is loaded ONLY from `<dataDir>/addons`. |
 | `scripts/check-addon-types-entry.ts` | Addon `types` entry guard — a self-contained addon build does not emit `.d.ts`, so a `package.json` `types` field points at a file that never exists and breaks tooling that trusts the declaration. |
 | `scripts/check-admin-i18n.ts` | Guard: no user-visible literal in the admin UI (or in the ui-library the admin renders) bypasses i18n. |
@@ -215,14 +216,13 @@ violation the guard was written for, so a broken guard cannot pass in silence.
 | `packages/addon-pipeline/src/__tests__/guards/per-macro-slider-reaches-the-pool.guard.ts` | A per-macro confidence slider must be able to LOWER the detector. |
 | `server/backend/src/__tests__/guards/core-router-classification.guard.ts` | GUARD: every hand-written CORE (non-cap) tRPC router is explicitly classified, and its source agrees with the classification. |
 
-## Available but not wired into CI (5)
+## Available but not wired into CI (4)
 
 Run manually, from a hook, or via another script. If one of these encodes a
 rule that matters, wiring it into `checks.yml` is a one-line change.
 
 | Guard | Refuses |
 | --- | --- |
-| `scripts/check-addon-readme-changelog.ts` | Every published addon package ships a README and a CHANGELOG, and both are in `files` so `npm pack` includes them. |
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
 | `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |

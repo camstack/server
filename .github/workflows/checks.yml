@@ -166,6 +166,7 @@ jobs:
             scripts/check-log-channel-gated.ts \
             scripts/check-no-dynamic-eval.ts \
             scripts/check-addon-entries.ts \
+            scripts/check-addon-readme-changelog.ts \
             scripts/check-storage-access-declarations.ts \
             scripts/check-pkg-allowlist.ts \
             scripts/check-store-census-not-on-a-timer.ts \
