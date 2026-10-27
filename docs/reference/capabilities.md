@@ -42,7 +42,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `climate-control` | 9 | ✓ | ✓ | 5 series | — | `bosch-homecom` |
 | `color` | 2 | ✓ | ✓ | none | — | — |
 | `connectivity` | 1 | ✓ | ✓ | 1 series | — | — |
-| `consumables` | 2 | ✓ | ✓ | 3 per item | — | `bosch-home-connect` `provider-dreame` |
+| `consumables` | 2 | ✓ | ✓ | 3 per item | — | `bosch-home-connect` `provider-dreame` `provider-petkit` |
 | `contact` | 1 | ✓ | ✓ | 1 series | — | — |
 | `control` | 2 | ✓ | ✓ | none | — | — |
 | `cover` | 6 | ✓ | ✓ | 1 series | — | — |
@@ -84,7 +84,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `notifier` | 3 | ✓ | ✓ | none | — | — |
 | `numeric-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `osd` | 2 | ✓ | — | — | — | — |
-| `pet-feeder` | 11 | ✓ | ✓ | 5 series | — | `provider-petkit` |
+| `pet-feeder` | 11 | ✓ | ✓ | 6 series | — | `provider-petkit` |
 | `pipeline-analytics` | 88 | — | — | — | — | `pipeline-analytics` |
 | `power-meter` | 1 | ✓ | ✓ | 6 series | — | — |
 | `presence` | 1 | ✓ | ✓ | 1 series | — | — |

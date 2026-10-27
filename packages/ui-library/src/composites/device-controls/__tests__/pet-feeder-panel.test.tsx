@@ -7,7 +7,10 @@ import { PetFeederInlineControl, PetFeederHeroCard } from '../pet-feeder-panel'
 /** Full default slice; spread overrides on top — no `as` casts in tests. */
 function makeSlice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
   return {
-    foodLevel: 120,
+    foodLevel: 1,
+    bowlFood: 120,
+    eating: false,
+    supportsMarkRefilled: false,
     food1: null,
     food2: null,
     lowFood: false,
@@ -108,7 +111,7 @@ describe('PetFeederInlineControl', () => {
 describe('PetFeederHeroCard', () => {
   it('renders the bowl readout, maintenance actions and settings', () => {
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    expect(screen.getByText('g in bowl')).toBeTruthy()
+    expect(screen.getByText('in bowl')).toBeTruthy()
     expect(screen.getByText('Call pet')).toBeTruthy()
     expect(screen.getByLabelText('Child lock')).toBeTruthy()
     expect(screen.getByLabelText('Feed sound')).toBeTruthy()
@@ -162,6 +165,20 @@ describe('PetFeederHeroCard', () => {
     render(<PetFeederHeroCard trpc={trpc} deviceId={2} features={[]} />)
     fireEvent.click(screen.getByText('Cancel feed'))
     expect(cancelFeed).toHaveBeenCalledWith({})
+  })
+
+  it('offers Mark refilled only when the model supports it', () => {
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.queryByText('Mark refilled')).toBeNull()
+    mockResult = { ...mockResult, slice: makeSlice({ supportsMarkRefilled: true }) }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={2} features={[]} />)
+    expect(screen.getByText('Mark refilled')).toBeTruthy()
+  })
+
+  it('shows the bowl amount, not the tank level', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ foodLevel: 1, bowlFood: 37 }) }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('37')).toBeTruthy()
   })
 
   it('flags low food in the readout', () => {

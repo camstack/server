@@ -1,8 +1,8 @@
 /**
  * Pet-feeder controls for a `DeviceType.PetFeeder` device.
  *
- * Reads the `pet-feeder` cap status slice (foodLevel / food1 / food2 /
- * lowFood / batteryPower / feeding / status / error /
+ * Reads the `pet-feeder` cap status slice (bowlFood / foodLevel / food1 / food2 /
+ * lowFood / batteryPower / eating / feeding / status / error /
  * errorCode / isDualHopper + the four persisted settings) and renders:
  *   - PetFeederInlineControl (device-list row): a compact food-level +
  *     battery readout with a one-tap Feed button (default portion).
@@ -119,8 +119,7 @@ export function PetFeederPanel({
           )}
         >
           <UtensilsCrossed className="h-3.5 w-3.5" aria-hidden />
-          {display.foodLevel ?? '—'}
-          <span className="text-foreground-subtle">g</span>
+          {display.bowlFood ?? '—'}
         </span>
         {display.batteryPower !== null && (
           <span className="inline-flex items-center gap-0.5 text-xs tabular-nums text-foreground-subtle">
@@ -163,17 +162,17 @@ export function PetFeederPanel({
 
       {/* ── Hero: food-bowl fill gauge + battery / feeding ─────── */}
       <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-surface-subtle/40 p-3">
-        <BowlGauge grams={display.foodLevel} low={display.lowFood} eating={display.feeding} />
+        <BowlGauge grams={display.bowlFood} low={display.lowFood} eating={display.eating} />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-baseline gap-1">
             <span
               className="text-3xl font-bold leading-none tabular-nums"
               style={{ color: display.lowFood ? KIBBLE_LOW : KIBBLE }}
             >
-              {display.foodLevel ?? '—'}
+              {display.bowlFood ?? '—'}
             </span>
             <span className="text-sm text-foreground-subtle">
-              {t('uiLibrary.petFeeder.inBowl', 'g in bowl')}
+              {t('uiLibrary.petFeeder.inBowl', 'in bowl')}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-subtle">
@@ -262,19 +261,21 @@ export function PetFeederPanel({
       )}
 
       {/* ── Maintenance actions ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid auto-cols-fr grid-flow-col gap-2">
         <ActionButton
           icon={<PawPrint className="h-4 w-4" />}
           label={t('uiLibrary.petFeeder.callPet', 'Call pet')}
           busy={busy}
           onClick={() => void cap.callPet({})}
         />
-        <ActionButton
-          icon={<UtensilsCrossed className="h-4 w-4" />}
-          label={t('uiLibrary.petFeeder.markRefilled', 'Mark refilled')}
-          busy={busy}
-          onClick={() => void cap.markFoodReplenished({})}
-        />
+        {display.supportsMarkRefilled && (
+          <ActionButton
+            icon={<UtensilsCrossed className="h-4 w-4" />}
+            label={t('uiLibrary.petFeeder.markRefilled', 'Mark refilled')}
+            busy={busy}
+            onClick={() => void cap.markFoodReplenished({})}
+          />
+        )}
       </div>
       {display.feeding && (
         <button
@@ -393,7 +394,7 @@ function Readout({ icon, label }: { readonly icon: ReactNode; readonly label: st
 
 /**
  * Signature element — a food bowl whose kibble fills proportionally to the
- * bowl reading (0–200 g). Amber when stocked, red when the low-food flag is
+ * bowl reading (`bowlFood`). Amber when stocked, red when the low-food flag is
  * set; the kibble mound bobs while the pet is eating.
  */
 function BowlGauge({
@@ -419,7 +420,7 @@ function BowlGauge({
       aria-label={
         grams === null
           ? t('uiLibrary.petFeeder.levelUnknown', 'Food level unknown')
-          : t('uiLibrary.petFeeder.gramsInBowl', '{{grams}} grams in bowl', { grams })
+          : t('uiLibrary.petFeeder.gramsInBowl', '{{grams}} in bowl', { grams })
       }
       className="shrink-0"
     >

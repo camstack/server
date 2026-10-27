@@ -7327,7 +7327,7 @@
       "offline": "Offline",
       "feedNow": "Feed now",
       "feed": "Feed",
-      "inBowl": "g in bowl",
+      "inBowl": "in bowl",
       "desiccant": "{{days}}d desiccant",
       "onBattery": "On battery",
       "feeding": "Feeding…",
@@ -7348,7 +7348,7 @@
       "decreaseVolume": "Decrease volume",
       "increaseVolume": "Increase volume",
       "levelUnknown": "Food level unknown",
-      "gramsInBowl": "{{grams}} grams in bowl",
+      "gramsInBowl": "{{grams}} in bowl",
       "decreasePortion": "Decrease {{label}} portion",
       "increasePortion": "Increase {{label}} portion"
     },

@@ -53,10 +53,20 @@ const gramsPortion = z
   .max(PET_FEEDER_MANUAL_FEED_MAX)
 
 export const PetFeederStatusSchema = z.object({
-  /** Food currently in the bowl (grams). Null when the device has not
-   *  reported a reading yet. On dual-hopper models this is the combined
-   *  bowl reading; per-hopper levels live in `food1`/`food2`. */
+  /** Food in the TANK (hopper), as the feeder's own sensor reports it
+   *  (`state.food`). A coarse level code, not grams — `0` is empty. The
+   *  amount in the bowl is `bowlFood`. On dual-hopper models this is the
+   *  combined reading; per-hopper levels live in `food1`/`food2`. Null when
+   *  the device has not reported yet. */
   foodLevel: z.number().nullable().meta(readingMeta('none')),
+  /** Food in the BOWL as the feeder reports it (`state.bowl`), in the
+   *  feeder's own units. Null when the model reports none. */
+  bowlFood: z.number().nullable().meta(readingMeta('none')),
+  /** True while the pet is eating (`state.eating`). */
+  eating: z.boolean(),
+  /** Whether `markFoodReplenished` does anything on this model. When false
+   *  the client must not offer it. */
+  supportsMarkRefilled: z.boolean(),
   /** Hopper-1 food level (grams) on dual-hopper feeders; null on
    *  single-hopper models. */
   food1: z.number().nullable().meta(readingMeta('none')),
@@ -64,8 +74,8 @@ export const PetFeederStatusSchema = z.object({
    *  single-hopper models. */
   food2: z.number().nullable().meta(readingMeta('none')),
   /** Derived low-food flag — mirrors the HA `food_level` binary_sensor
-   *  (`device_class: problem`, on = low). True when the bowl is empty /
-   *  below the feeder's low threshold. */
+   *  (`device_class: problem`, on = low). True when the tank reports empty,
+   *  or, on a dual-hopper model, when EITHER hopper is empty. */
   lowFood: z.boolean(),
   /** Battery charge 0..100 (%). Null on mains-powered models or when the
    *  device has no battery reading. */
@@ -137,7 +147,9 @@ export const petFeederCapability = {
       kind: 'mutation',
       auth: 'protected',
     }),
-    /** Mark a hopper as refilled (D4H/D4S/D4SH). */
+    /** Tell the PetKit cloud a hopper was refilled so it stops its low-food
+     *  reminders (D4H/D4S/D4SH only — see `supportsMarkRefilled`). It does not
+     *  change any sensor reading. */
     markFoodReplenished: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -208,6 +220,7 @@ export const petFeederCapability = {
   history: {
     fields: {
       foodLevel: { kind: 'gauge' },
+      bowlFood: { kind: 'gauge' },
       food1: { kind: 'gauge' },
       food2: { kind: 'gauge' },
       batteryPower: { kind: 'gauge', unit: '%', deadband: 2 },

@@ -4,6 +4,7 @@ import {
   type DeviceContext,
   DeviceType,
   errMsg,
+  consumablesCapability,
   type InferNativeProvider,
   type PetFeederStatus,
   petFeederCapability,
@@ -13,7 +14,14 @@ import {
   coldStartFeederStatus,
   type FeederReading,
   mapFeederToStatus,
+  supportsFoodReplenished,
 } from '../petkit-feeder-mapping.js'
+import {
+  FEEDER_CONSUMABLES_CAP,
+  FEEDER_DESICCANT_KEY,
+  type FeederConsumablesSlice,
+  writeFeederConsumables,
+} from '../petkit-feeder-consumables.js'
 import { petkitConnections } from '../petkit-gateway.js'
 import { petkitSession } from '../petkit-session.js'
 
@@ -70,8 +78,11 @@ export function extractFeederReading(feeder: FeederDevice): FeederReading {
   const powerMode = numOrNull(inner?.['pim']) ?? numOrNull(state['pim'])
   return {
     online: feeder.online,
+    deviceType: feeder.deviceType,
     isDualHopper: feeder.isDualHopper,
     feeding: feeder.feeding,
+    eating: boolFrom01(inner?.['eating']) ?? false,
+    bowl: numOrNull(inner?.['bowl']),
     food: feeder.food ?? null,
     food1: feeder.food1 ?? null,
     food2: feeder.food2 ?? null,
@@ -137,6 +148,7 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCap()
+    this.registerConsumablesCap()
     this.runtimeState.setCapState(PET_FEEDER_CAP, coldStartFeederStatus(this.dualHopper))
     // Re-poll whenever the account surface is (re)published (restore may race
     // the account login, so the handle can be null at activate time).
@@ -182,7 +194,10 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     }
     void petkitSession.ok(this.integrationId)
     const reading = extractFeederReading(handle)
-    this.runtimeState.setCapState(PET_FEEDER_CAP, mapFeederToStatus(reading, Date.now()))
+    const now = Date.now()
+    const status = mapFeederToStatus(reading, now)
+    this.runtimeState.setCapState(PET_FEEDER_CAP, status)
+    writeFeederConsumables(this.runtimeState, status, now)
     this.markOnline(reading.online)
   }
 
@@ -191,6 +206,44 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     const slice = this.runtimeState.getCapState<PetFeederStatus>(PET_FEEDER_CAP)
     const fetchedAt = slice?.lastFetchedAt ?? 0
     if (!slice || Date.now() - fetchedAt > STALE_MS) await this.refreshFromCloud()
+  }
+
+  /**
+   * `consumables`: the tank and the desiccant, read from the feeder's sensors.
+   * Only the desiccant resets (`resetDesiccant`); the tank is refilled by
+   * putting food in it, and the sensor says so on the next poll.
+   */
+  private registerConsumablesCap(): void {
+    const provider: InferNativeProvider<typeof consumablesCapability> = {
+      getStatus: async ({ deviceId }) => {
+        if (deviceId !== this.id) return null
+        await this.ensureFresh()
+        return (
+          this.runtimeState.getCapState<FeederConsumablesSlice>(FEEDER_CONSUMABLES_CAP) ?? {
+            items: [],
+            lastChangedAt: 0,
+            lastFetchedAt: 0,
+          }
+        )
+      },
+      reset: async ({ key }) => {
+        if (key !== FEEDER_DESICCANT_KEY) {
+          throw new Error(`petkit feeder: "${key}" has no reset action (the sensor drives it)`)
+        }
+        await this.requireHandle().resetDesiccant()
+        await this.refreshFromCloud()
+      },
+    }
+    this.ctx.registerNativeCap(consumablesCapability, provider)
+    if (
+      this.runtimeState.getCapState<FeederConsumablesSlice>(FEEDER_CONSUMABLES_CAP) === undefined
+    ) {
+      this.runtimeState.setCapState(FEEDER_CONSUMABLES_CAP, {
+        items: [],
+        lastChangedAt: 0,
+        lastFetchedAt: 0,
+      })
+    }
   }
 
   private registerCap(): void {
@@ -226,7 +279,13 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
         await this.refreshFromCloud()
       },
       markFoodReplenished: async () => {
-        await this.requireHandle().markFoodReplenished()
+        const handle = this.requireHandle()
+        if (!supportsFoodReplenished(handle.deviceType)) {
+          throw new Error(
+            `petkit feeder: "mark refilled" is not supported on model "${handle.deviceType}"`,
+          )
+        }
+        await handle.markFoodReplenished()
         await this.refreshFromCloud()
       },
       callPet: async () => {

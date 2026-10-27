@@ -29,11 +29,17 @@ export const PETKIT_POWER_MODE_BATTERY = 2
 export interface FeederReading {
   /** Cloud reachability — false ⇒ the feeder is not reaching the PetKit cloud. */
   readonly online: boolean
+  /** PetKit device type string (`d4sh`, `feeder`, …) — gates model-only commands. */
+  readonly deviceType: string
   /** True for D4S/D4SH dual-hopper hardware (derived from the device type). */
   readonly isDualHopper: boolean
   /** True while a manual feed is in progress. */
   readonly feeding: boolean
-  /** Combined bowl food reading (`state.food`). */
+  /** True while the pet is eating (`state.eating`). */
+  readonly eating: boolean
+  /** Food in the bowl (`state.bowl`), the feeder's own units. */
+  readonly bowl: number | null
+  /** Tank (hopper) level code (`state.food`) — NOT the bowl; 0 = empty. */
   readonly food: number | null
   /** Hopper-1 food reading (`state.food1`) — dual-hopper only. */
   readonly food1: number | null
@@ -87,6 +93,28 @@ export function decodeFeederError(
   return `feeder_error_${errorCode}`
 }
 
+/** Models the library documents the "added" (mark refilled) endpoint for. */
+const REPLENISH_MODELS: ReadonlySet<string> = new Set(['d4h', 'd4s', 'd4sh'])
+
+/** Whether `markFoodReplenished` does anything on this PetKit model. */
+export function supportsFoodReplenished(deviceType: string): boolean {
+  return REPLENISH_MODELS.has(deviceType.trim().toLowerCase())
+}
+
+/** A tank/hopper level of zero or less is the sensor saying "empty". */
+function isEmptyReading(value: number | null): boolean {
+  return value !== null && value <= 0
+}
+
+/**
+ * Low food = the tank sensor says empty; on a dual-hopper model, EITHER hopper
+ * empty counts (the combined sum hides one empty side).
+ */
+function resolveLowFood(reading: FeederReading, tank: number | null): boolean {
+  if (isEmptyReading(tank)) return true
+  return reading.isDualHopper && (isEmptyReading(reading.food1) || isEmptyReading(reading.food2))
+}
+
 /** Clamp a battery reading into the cap's 0..100 range; pass through null. */
 function clampBattery(batteryPower: number | null): number | null {
   if (batteryPower === null) return null
@@ -94,8 +122,8 @@ function clampBattery(batteryPower: number | null): number | null {
 }
 
 /**
- * Resolve the single `foodLevel` bowl reading. On dual-hopper models the cap
- * exposes the combined bowl (per-hopper levels live in `food1`/`food2`); when
+ * Resolve the single `foodLevel` tank reading. On dual-hopper models the cap
+ * exposes the combined tank (per-hopper levels live in `food1`/`food2`); when
  * the combined `food` field is absent it is derived from the two hoppers.
  */
 function resolveFoodLevel(reading: FeederReading): number | null {
@@ -121,9 +149,12 @@ export function mapFeederToStatus(reading: FeederReading, now: number): PetFeede
   const foodLevel = resolveFoodLevel(reading)
   return {
     foodLevel,
+    bowlFood: reading.bowl,
+    eating: reading.eating,
+    supportsMarkRefilled: supportsFoodReplenished(reading.deviceType),
     food1: reading.isDualHopper ? reading.food1 : null,
     food2: reading.isDualHopper ? reading.food2 : null,
-    lowFood: foodLevel !== null && foodLevel <= 0,
+    lowFood: resolveLowFood(reading, foodLevel),
     batteryPower: clampBattery(reading.batteryPower),
     desiccantLeftDays: desiccantSeconds(reading.desiccantLeftDays),
     feeding: reading.feeding,
@@ -148,6 +179,9 @@ export function mapFeederToStatus(reading: FeederReading, now: number): PetFeede
 export function coldStartFeederStatus(isDualHopper: boolean): PetFeederStatus {
   return {
     foodLevel: null,
+    bowlFood: null,
+    eating: false,
+    supportsMarkRefilled: false,
     food1: null,
     food2: null,
     lowFood: false,

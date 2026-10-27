@@ -58,6 +58,9 @@
             "name": "pet-feeder"
           },
           {
+            "name": "consumables"
+          },
+          {
             "name": "connection-test"
           }
         ]

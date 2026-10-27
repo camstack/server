@@ -13,8 +13,11 @@ import {
 function singleHopperReading(overrides: Partial<FeederReading> = {}): FeederReading {
   return {
     online: true,
+    deviceType: 'feeder',
     isDualHopper: false,
     feeding: false,
+    eating: false,
+    bowl: null,
     food: 120,
     food1: null,
     food2: null,
@@ -100,6 +103,9 @@ describe('mapFeederToStatus — single hopper', () => {
     const slice = mapFeederToStatus(singleHopperReading(), NOW)
     expect(slice).toEqual({
       foodLevel: 120,
+      bowlFood: null,
+      eating: false,
+      supportsMarkRefilled: false,
       food1: null,
       food2: null,
       lowFood: false,
@@ -118,8 +124,25 @@ describe('mapFeederToStatus — single hopper', () => {
     })
   })
 
-  it('derives lowFood when the bowl is empty', () => {
+  it('derives lowFood when the tank reports empty', () => {
     expect(mapFeederToStatus(singleHopperReading({ food: 0 }), NOW).lowFood).toBe(true)
+  })
+
+  it('keeps the bowl amount and the eating flag apart from the tank level', () => {
+    const slice = mapFeederToStatus(singleHopperReading({ food: 1, bowl: 35, eating: true }), NOW)
+    expect(slice.foodLevel).toBe(1)
+    expect(slice.bowlFood).toBe(35)
+    expect(slice.eating).toBe(true)
+  })
+
+  it('offers "mark refilled" only on the models the library documents it for', () => {
+    const supports = (deviceType: string): boolean =>
+      mapFeederToStatus(singleHopperReading({ deviceType }), NOW).supportsMarkRefilled
+    expect(supports('feeder')).toBe(false)
+    expect(supports('d3')).toBe(false)
+    expect(supports('d4h')).toBe(true)
+    expect(supports('D4S')).toBe(true)
+    expect(supports('d4sh')).toBe(true)
   })
 
   it('does not surface per-hopper levels on a single-hopper model', () => {
@@ -160,6 +183,12 @@ describe('mapFeederToStatus — dual hopper', () => {
     expect(slice.foodLevel).toBe(75)
   })
 
+  it('flags lowFood when ONE hopper is empty even though the sum is not', () => {
+    const slice = mapFeederToStatus(dualHopperReading({ food1: 0, food2: 60, food: null }), NOW)
+    expect(slice.foodLevel).toBe(60)
+    expect(slice.lowFood).toBe(true)
+  })
+
   it('leaves foodLevel null when neither hopper reports', () => {
     const slice = mapFeederToStatus(dualHopperReading({ food1: null, food2: null }), NOW)
     expect(slice.foodLevel).toBeNull()
@@ -172,6 +201,9 @@ describe('coldStartFeederStatus', () => {
     const cold = coldStartFeederStatus(true)
     expect(cold.status).toBeNull()
     expect(cold.foodLevel).toBeNull()
+    expect(cold.bowlFood).toBeNull()
+    expect(cold.eating).toBe(false)
+    expect(cold.supportsMarkRefilled).toBe(false)
     expect(cold.isDualHopper).toBe(true)
     expect(cold.lastFetchedAt).toBe(0)
   })

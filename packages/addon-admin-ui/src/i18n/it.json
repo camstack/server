@@ -7349,7 +7349,7 @@
       "offline": "Offline",
       "feedNow": "Eroga ora",
       "feed": "Eroga",
-      "inBowl": "g nella ciotola",
+      "inBowl": "nella ciotola",
       "desiccant": "{{days}} g di essiccante",
       "onBattery": "A batteria",
       "feeding": "Erogazione…",
@@ -7370,7 +7370,7 @@
       "decreaseVolume": "Abbassa il volume",
       "increaseVolume": "Alza il volume",
       "levelUnknown": "Livello del cibo sconosciuto",
-      "gramsInBowl": "{{grams}} grammi nella ciotola",
+      "gramsInBowl": "{{grams}} nella ciotola",
       "decreasePortion": "Riduci la porzione {{label}}",
       "increasePortion": "Aumenta la porzione {{label}}"
     },

@@ -4702,6 +4702,9 @@ Enum: `"f32le" \| "s16le"`
 ### `PetFeederStatusSchema`
 
 - `foodLevel`: `number \| null`
+- `bowlFood`: `number \| null`
+- `eating`: `boolean`
+- `supportsMarkRefilled`: `boolean`
 - `food1`: `number \| null`
 - `food2`: `number \| null`
 - `lowFood`: `boolean`
