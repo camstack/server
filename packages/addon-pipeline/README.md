@@ -10,7 +10,7 @@ Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entr
 - **Detection Pipeline** (`detection-pipeline`): Unified detection pipeline — object detection, face/plate recognition, classification, segmentation
   - Node placement: `any-node`, runner group `detection`.
   - Capabilities: `pipeline-executor`, `detection-pipeline`, `load-contribution`.
-- **Motion Detection (WASM)** (`motion-wasm`): WASM-accelerated motion detection with blur, dilation, and connected component labeling
+- **Motion Detection** (`motion-wasm`): WASM-accelerated motion detection with blur, dilation, and connected component labeling
   - Node placement: `any-node`, runner group `detection`.
   - Capabilities: `motion-detection`.
 - **Audio Analyzer** (`audio-analyzer`): Audio level metering (dB/RMS) with optional classification

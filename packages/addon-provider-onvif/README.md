@@ -4,7 +4,7 @@ ONVIF camera device provider addon for CamStack
 
 ## What it does
 
-- **ONVIF Camera Provider** (`provider-onvif`): Discovery automatica di camere ONVIF sulla rete locale
+- **ONVIF** (`provider-onvif`): Discovery automatica di camere ONVIF sulla rete locale
   - Node placement: `any-node`.
   - Capabilities: `device-provider`.
 

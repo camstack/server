@@ -1,5 +1,5 @@
 /**
- * Alexa Smart Home export — customActions catalog.
+ * Alexa Export — customActions catalog.
  *
  * The settings page drives these through
  * `api.addons.custom.{query,mutate}({ addonId, action, input })`: every action

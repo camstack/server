@@ -4,7 +4,7 @@ Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. T
 
 ## What it does
 
-- **Alexa Smart Home export** (`export-alexa`): Hub-side OAuth provider + Smart Home directive handler. Pairs with a user-owned AWS Lambda that forwards Alexa directives to this addon. Skeleton: AcceptGrant + Discovery implemented; CameraStream / RTC / Doorbell push in next dispatch.
+- **Alexa Export** (`export-alexa`): Hub-side OAuth provider + Smart Home directive handler. Pairs with a user-owned AWS Lambda that forwards Alexa directives to this addon. Skeleton: AcceptGrant + Discovery implemented; CameraStream / RTC / Doorbell push in next dispatch.
   - Node placement: `hub-only`.
   - Capabilities: `device-export`, `addon-routes`, `oauth-integration`.
 

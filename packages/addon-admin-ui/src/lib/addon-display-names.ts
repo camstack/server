@@ -5,7 +5,7 @@
  * `{ addonId, mode, isActive }`, so pages cross-reference `addons.list`.
  *
  * Preference: the ADDON-level `name` ("Cloudflare Tunnel", "Tailscale
- * Ingress (Serve/Funnel)") wins over the bundle-level `packageDisplayName`
+ * Funnel") wins over the bundle-level `packageDisplayName`
  * ("Cloudflare", "Tailscale") — a bundle ships multiple addons, and
  * labelling two rows of one page with the same bundle name is ambiguous.
  * (`Integrations.tsx` groups by PACKAGE and correctly prefers

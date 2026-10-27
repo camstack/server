@@ -33,7 +33,7 @@
   "globalSettings.s_auth-advanced.authKey.label": "Chiave di pre-autenticazione",
   "globalSettings.s_auth-advanced.authKey.description": "Token tskey-auth-* della console di amministrazione Tailscale. Lascia vuoto con il flusso di reindirizzamento nel browser.",
   "globalSettings.s_tailscale-ingress.title": "Ingresso Tailscale",
-  "globalSettings.s_tailscale-ingress.description": "⚠️ Richiede l'addon Tailscale Client installato E l'host unito a una tailnet: apri prima Sistema → Mesh Networks → Connetti. Esponi l'hub tramite Tailscale Serve (HTTPS nella tailnet) o Funnel (raggiungibile pubblicamente su internet).",
+  "globalSettings.s_tailscale-ingress.description": "⚠️ Richiede l'addon Tailscale installato E l'host unito a una tailnet: apri prima Sistema → Mesh Networks → Connetti. Esponi l'hub tramite Tailscale Serve (HTTPS nella tailnet) o Funnel (raggiungibile pubblicamente su internet).",
   "globalSettings.s_tailscale-ingress.mode.label": "Modalità",
   "globalSettings.s_tailscale-ingress.mode.description": "Serve = solo nella tailnet (il visitatore deve essere nella stessa tailnet). Funnel = raggiungibile pubblicamente su internet.",
   "globalSettings.s_tailscale-ingress.mode.o_serve.label": "Serve (privato, nella tailnet)",

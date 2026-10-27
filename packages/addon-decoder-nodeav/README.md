@@ -4,7 +4,7 @@ Standalone in-process node-av decoder addon for CamStack
 
 ## What it does
 
-- **Decoder (node-av)** (`decoder-nodeav`): The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap.
+- **Video Decoder** (`decoder-nodeav`): The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap.
   - Node placement: `any-node`.
   - Capabilities: `decoder`, `audio-codec`.
 

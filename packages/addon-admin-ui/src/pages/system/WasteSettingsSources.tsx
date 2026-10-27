@@ -1,5 +1,5 @@
 /**
- * Waste Collections Settings — DataTable + Country → Service via ConfigFormBuilder.
+ * Waste Collection Settings — DataTable + Country → Service via ConfigFormBuilder.
  */
 import type { ConfigUISchema } from '@camstack/types'
 import {

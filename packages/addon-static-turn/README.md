@@ -4,7 +4,7 @@ Static / self-hosted (coturn) TURN provider for CamStack
 
 ## What it does
 
-- **Static TURN (coturn / custom)** (`static-turn`).
+- **TURN Server** (`static-turn`).
   - Node placement: `hub-only`, runner group `net-access`.
   - Capabilities: `turn-provider`.
 

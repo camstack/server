@@ -1,6 +1,6 @@
 # packages/addon-export-alexa
 
-Alexa Smart Home export. Alexa Cloud → a Lambda → `POST /addon/export-alexa/directive`
+Alexa Export. Alexa Cloud → a Lambda → `POST /addon/export-alexa/directive`
 on this hub. Account linking is the core OAuth server's
 (`/api/oauth2/authorize?integration=export-alexa`); this addon only declares the
 descriptor (`oauth-integration.ts`).

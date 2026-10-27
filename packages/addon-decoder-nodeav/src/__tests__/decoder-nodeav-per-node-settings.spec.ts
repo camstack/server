@@ -208,7 +208,7 @@ describe('decoder-nodeav — decoder cap surface (D763)', () => {
   it('answers getInfo with its identity and hwaccel, and no session mode or priority', async () => {
     const { addon } = await makeAddon({ localNodeId: 'hub' })
     const info = await addon.getInfo()
-    expect(info).toMatchObject({ id: 'decoder-nodeav', name: 'Decoder (node-av)', hwaccel: 'auto' })
+    expect(info).toMatchObject({ id: 'decoder-nodeav', name: 'Video Decoder', hwaccel: 'auto' })
     expect(Object.keys(info)).not.toContain('isPullMode')
     expect(Object.keys(info)).not.toContain('priority')
   })

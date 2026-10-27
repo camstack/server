@@ -516,10 +516,10 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
       sections: [
         {
           id: 'tailscale-ingress',
-          title: 'Tailscale Ingress',
+          title: 'Tailscale Funnel',
           titleKey: 'tailscale:globalSettings.s_tailscale-ingress.title',
           description:
-            '⚠️ Requires the Tailscale Client addon installed AND the host joined to a tailnet — open System → Mesh Networks → Connect first. Expose the hub via Tailscale Serve (in-tailnet HTTPS) or Funnel (publicly reachable on the internet).',
+            '⚠️ Requires the Tailscale addon installed AND the host joined to a tailnet — open System → Mesh Networks → Connect first. Expose the hub via Tailscale Serve (in-tailnet HTTPS) or Funnel (publicly reachable on the internet).',
           descriptionKey: 'tailscale:globalSettings.s_tailscale-ingress.description',
           columns: 1,
           fields: [

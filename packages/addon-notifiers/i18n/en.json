@@ -43,7 +43,7 @@
   "descriptor.s_pushover.expire.label": "Emergency Expire (seconds)",
   "descriptor.s_pushover.expire.description": "How long emergency alerts keep retrying. Emergency only. Max 10800.",
   "emailDescriptor.s_email.title": "Email",
-  "emailDescriptor.s_email.description": "Send via a Connectivity → Email provider (Google Services or SMTP). Install and Verify a provider first.",
+  "emailDescriptor.s_email.description": "Send via a Connectivity → Email provider (Google or Email (SMTP)). Install and Verify a provider first.",
   "emailDescriptor.s_email.to.label": "To",
   "emailDescriptor.s_email.to.description": "Recipient address, or comma-separated list.",
   "emailDescriptor.s_email.smtpAddonId.label": "Email provider",

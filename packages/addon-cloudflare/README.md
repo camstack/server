@@ -7,7 +7,7 @@ Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Mult
 - **Cloudflare Tunnel** (`cloudflare-tunnel`).
   - Node placement: `hub-only`, runner group `net-access`.
   - Capabilities: `network-access`.
-- **Cloudflare TURN Relay** (`cloudflare-turn`).
+- **Cloudflare TURN** (`cloudflare-turn`).
   - Node placement: `hub-only`, runner group `net-access`.
   - Capabilities: `turn-provider`.
 

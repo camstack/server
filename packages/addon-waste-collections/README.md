@@ -4,7 +4,7 @@ Waste collection schedules via the vendored HACS waste_collection_schedule Pytho
 
 ## What it does
 
-- **Waste Collections** (`waste-collections`): Fetches municipal waste collection schedules through the HACS waste_collection_schedule source catalog (full set) and exposes them as calendars.
+- **Waste Collection** (`waste-collections`): Fetches municipal waste collection schedules through the HACS waste_collection_schedule source catalog (full set) and exposes them as calendars.
   - Node placement: `hub-only`.
   - Capabilities: `calendar-source`.
 

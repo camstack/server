@@ -17,13 +17,13 @@ describe('buildAddonDisplayNameMap', () => {
       {
         manifest: {
           id: 'cloudflare-turn',
-          name: 'Cloudflare TURN Relay',
+          name: 'Cloudflare TURN',
           packageDisplayName: 'Cloudflare',
         },
       },
     ])
     expect(map.get('cloudflare-tunnel')).toBe('Cloudflare Tunnel')
-    expect(map.get('cloudflare-turn')).toBe('Cloudflare TURN Relay')
+    expect(map.get('cloudflare-turn')).toBe('Cloudflare TURN')
   })
 
   it('falls back to packageDisplayName, then the id', () => {

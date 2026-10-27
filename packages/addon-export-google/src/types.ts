@@ -1,5 +1,5 @@
 /**
- * Persisted shapes for the Google Home export addon.
+ * Persisted shapes for the Google Home Export addon.
  *
  * All of it lives on `this.config` (the kernel's typed addon store). There is
  * no sidecar file and no second registry — the same conclusion

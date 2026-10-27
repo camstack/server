@@ -88,7 +88,7 @@ describe('getAvailableTypes — supportsLocationImport flag', () => {
     const addon: FakeAddonRow = {
       manifest: {
         id: 'provider-homeassistant',
-        name: 'Home Assistant Provider',
+        name: 'Home Assistant',
         description: 'Adopt HA devices',
         capabilities: [{ name: 'device-adoption' }],
         supportsLocationImport: true,
@@ -174,7 +174,7 @@ describe('getAvailableTypes — supportsLocationImport flag', () => {
     const addon: FakeAddonRow = {
       manifest: {
         id: 'provider-homeassistant',
-        name: 'Home Assistant Provider',
+        name: 'Home Assistant',
         description: 'Adopt HA devices',
         capabilities: [{ name: 'device-adoption' }],
         supportsLocationImport: false,

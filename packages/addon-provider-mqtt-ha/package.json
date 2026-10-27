@@ -31,7 +31,7 @@
     "./package.json": "./package.json"
   },
   "camstack": {
-    "displayName": "MQTT HA Discovery Import",
+    "displayName": "MQTT Discovery",
     "addons": [
       {
         "id": "provider-mqtt-ha",

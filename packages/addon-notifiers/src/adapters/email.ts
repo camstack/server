@@ -52,7 +52,7 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
   }))
   const providerDescription =
     options.length === 0
-      ? 'No Email provider installed. Open Connectivity → Email, install Google Services or SMTP, then Verify.'
+      ? 'No Email provider installed. Open Connectivity → Email, install Google or Email (SMTP), then Verify.'
       : 'Which Connectivity → Email entry delivers this target. Verify it under Connectivity → Email if the label says not verified.'
   return {
     kind: EMAIL_KIND,
@@ -67,7 +67,7 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
           title: 'Email',
           titleKey: 'notifiers:emailDescriptor.s_email.title',
           description:
-            'Send via a Connectivity → Email provider (Google Services or SMTP). Install and Verify a provider first.',
+            'Send via a Connectivity → Email provider (Google or Email (SMTP)). Install and Verify a provider first.',
           descriptionKey: 'notifiers:emailDescriptor.s_email.description',
           fields: [
             {

@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-google-services",
   "version": "0.2.32",
-  "description": "Google Services — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider.",
+  "description": "Google — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider.",
   "keywords": [
     "camstack",
     "addon",
@@ -31,7 +31,7 @@
     "./package.json": "./package.json"
   },
   "camstack": {
-    "displayName": "Google Services",
+    "displayName": "Google",
     "addons": [
       {
         "id": "google-services",

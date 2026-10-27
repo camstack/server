@@ -4,7 +4,7 @@ Home Assistant device provider addon for CamStack
 
 ## What it does
 
-- **Home Assistant Provider** (`provider-homeassistant`): Adopt Home Assistant devices into CamStack via WebSocket
+- **Home Assistant** (`provider-homeassistant`): Adopt Home Assistant devices into CamStack via WebSocket
   - Node placement: `hub-only`.
   - Capabilities: `broker`, `device-adoption`, `vacuum-control`, `lawn-mower-control`, `running-state`, `valve`, `humidifier`, `water-heater`, `weather`, `image`, `update`, `notification-output`, `addon-routes`, `calendar-source`.
 - **Home Assistant Export** (`homeassistant-export`): Pushes CamStack entities to the CamStack Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value.

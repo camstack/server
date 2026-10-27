@@ -43,7 +43,7 @@
   "descriptor.s_pushover.expire.label": "Scadenza emergenza (secondi)",
   "descriptor.s_pushover.expire.description": "Per quanto tempo gli avvisi di emergenza continuano a essere ripetuti. Solo emergenza. Massimo 10800.",
   "emailDescriptor.s_email.title": "Email",
-  "emailDescriptor.s_email.description": "Invio tramite un provider Connettività → Email (Google Services o SMTP). Installa e verifica prima un provider.",
+  "emailDescriptor.s_email.description": "Invio tramite un provider Connettività → Email (Google o Email (SMTP)). Installa e verifica prima un provider.",
   "emailDescriptor.s_email.to.label": "A",
   "emailDescriptor.s_email.to.description": "Indirizzo del destinatario, o elenco separato da virgole.",
   "emailDescriptor.s_email.smtpAddonId.label": "Provider email",

@@ -14,7 +14,7 @@ export const GoogleBrokerBodySchema = entryBody({
 export type GoogleBrokerBody = z.infer<typeof GoogleBrokerBodySchema>
 
 export const googleBrokersEntryKind = defineEntryKind('brokers', {
-  title: 'Google Services brokers',
+  title: 'Google brokers',
   schema: GoogleBrokerBodySchema,
   writeTrigger: 'an operator adds or edits a Google OAuth broker',
 })

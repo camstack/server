@@ -16,7 +16,7 @@ const PROVIDER = {
   kinds: [
     {
       kind: 'alexa',
-      label: 'Alexa Import',
+      label: 'Alexa',
       signIn: { basePath: '/addon/import-alexa/login' },
     },
   ],
@@ -24,7 +24,7 @@ const PROVIDER = {
 
 const TILE = {
   addonId: 'import-alexa',
-  name: 'Alexa Import',
+  name: 'Alexa',
   description: 'Import the devices of an Amazon Alexa account',
   iconUrl: null,
   color: 'primary',
@@ -50,7 +50,7 @@ export default defineFixtures({
       {
         manifest: {
           id: 'import-alexa',
-          name: 'Alexa Import',
+          name: 'Alexa',
           version: '1.2.3',
           packageName: '@camstack/addon-import-alexa',
           packageVersion: '1.2.3',

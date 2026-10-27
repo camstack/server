@@ -5,7 +5,7 @@ import {
   userError,
 } from '@camstack/types'
 /**
- * Google Services — hub-only broker kind `google` + calendar-source + Gmail smtp.
+ * Google — hub-only broker kind `google` + calendar-source + Gmail smtp.
  * One OAuth account = one broker entry; feature caps aggregate connected brokers.
  */
 import {

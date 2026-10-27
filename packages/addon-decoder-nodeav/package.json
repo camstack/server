@@ -30,7 +30,7 @@
     "./package.json": "./package.json"
   },
   "camstack": {
-    "displayName": "Decoder (node-av)",
+    "displayName": "Video Decoder",
     "system": false,
     "addons": [
       {

@@ -4,7 +4,7 @@ SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `s
 
 ## What it does
 
-- **SMTP Email (Nodemailer)** (`smtp-nodemailer`): Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts).
+- **Email (SMTP)** (`smtp-nodemailer`): Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts).
   - Node placement: `hub-only`.
   - Capabilities: `smtp-provider`.
 

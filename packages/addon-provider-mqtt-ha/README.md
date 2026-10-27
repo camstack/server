@@ -4,7 +4,7 @@ Home Assistant MQTT discovery import provider for CamStack — adopts entities p
 
 ## What it does
 
-- **MQTT HA Discovery Import** (`provider-mqtt-ha`): Import devices from Home Assistant MQTT discovery (homeassistant/+/+/config) via a configured MQTT broker
+- **MQTT Discovery** (`provider-mqtt-ha`): Import devices from Home Assistant MQTT discovery (homeassistant/+/+/config) via a configured MQTT broker
   - Node placement: `hub-only`.
   - Capabilities: `device-provider`, `device-adoption`.
 

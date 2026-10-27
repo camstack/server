@@ -165,7 +165,7 @@ export default class DecoderNodeAvAddon
   }> {
     return {
       id: 'decoder-nodeav',
-      name: 'Decoder (node-av)',
+      name: 'Video Decoder',
       // Active decode hwaccel state (per-node projected) — the orchestrator
       // reads this via the `decoder` cap (nodePin), not an addon-id lookup.
       hwaccel: this.config.hwaccel,

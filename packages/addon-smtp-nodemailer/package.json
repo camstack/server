@@ -30,7 +30,7 @@
     "./package.json": "./package.json"
   },
   "camstack": {
-    "displayName": "SMTP Email (Nodemailer)",
+    "displayName": "Email (SMTP)",
     "addons": [
       {
         "id": "smtp-nodemailer",

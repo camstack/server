@@ -99,8 +99,8 @@ beforeEach(() => {
     {
       manifest: {
         id: 'google-services',
-        name: 'Google Services',
-        packageDisplayName: 'Google Services',
+        name: 'Google',
+        packageDisplayName: 'Google',
         capabilities: [{ name: 'calendar-source' }, { name: 'smtp-provider' }],
       },
       process: { state: 'running' },
@@ -129,7 +129,7 @@ describe('Connectivity SectionedPage', () => {
   it('calendars section lists google-services and waste-collections', () => {
     renderAt('/system/integrations?tab=calendars')
     const pills = screen.getByRole('navigation', { name: /Calendars integrations/i })
-    expect(within(pills).getByText('Google Services')).toBeTruthy()
+    expect(within(pills).getByText('Google')).toBeTruthy()
     expect(within(pills).getByText('Waste')).toBeTruthy()
     expect(within(pills).queryByText('Alexa')).toBeNull()
   })
@@ -137,7 +137,7 @@ describe('Connectivity SectionedPage', () => {
   it('email section lists google-services and smtp-nodemailer', () => {
     renderAt('/system/integrations?tab=email')
     const pills = screen.getByRole('navigation', { name: /Email integrations/i })
-    expect(within(pills).getByText('Google Services')).toBeTruthy()
+    expect(within(pills).getByText('Google')).toBeTruthy()
     expect(within(pills).getByText('SMTP')).toBeTruthy()
     expect(within(pills).queryByText('Waste')).toBeNull()
   })

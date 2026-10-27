@@ -4,7 +4,7 @@ Alexa device-import provider for CamStack — imports the smart-home devices in 
 
 ## What it does
 
-- **Alexa Import** (`import-alexa`): Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). Maps Alexa capability interfaces onto typed CamStack device caps.
+- **Alexa** (`import-alexa`): Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). Maps Alexa capability interfaces onto typed CamStack device caps.
   - Node placement: `any-node`.
   - Capabilities: `device-provider`, `broker`, `device-adoption`, `addon-routes`.
 

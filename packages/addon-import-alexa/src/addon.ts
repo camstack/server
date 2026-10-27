@@ -102,7 +102,7 @@ const ALEXA_DEVICE_TYPES: readonly DeviceType[] = [
  */
 export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   protected readonly addonId = 'import-alexa'
-  protected readonly providerName = 'Alexa Import'
+  protected readonly providerName = 'Alexa'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> =
     Object.fromEntries(ALEXA_DEVICE_TYPES.map((t) => [t, AlexaDevice]))
 

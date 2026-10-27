@@ -1,5 +1,5 @@
 /**
- * Google Home export addon — hub-side.
+ * Google Home Export addon — hub-side.
  *
  * Architecture:
  *

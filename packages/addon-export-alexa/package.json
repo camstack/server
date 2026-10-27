@@ -29,7 +29,7 @@
     "./package.json": "./package.json"
   },
   "camstack": {
-    "displayName": "Alexa Smart Home export",
+    "displayName": "Alexa Export",
     "addons": [
       {
         "id": "export-alexa",

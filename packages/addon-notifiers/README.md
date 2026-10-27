@@ -4,7 +4,7 @@ System notifiers addon for CamStack — a `notification-output` collection provi
 
 ## What it does
 
-- **Notifiers** (`notifiers`): Push-notification delivery targets (ntfy, Pushover, Gotify, Telegram, Discord, generic webhook, Zentik). One canonical notification is degraded per target's declared capabilities.
+- **Notifications** (`notifiers`): Push-notification delivery targets (ntfy, Pushover, Gotify, Telegram, Discord, generic webhook, Zentik). One canonical notification is degraded per target's declared capabilities.
   - Node placement: `hub-only`, runner group `notifiers`.
   - Capabilities: `notification-output`, `addon-routes`.
 

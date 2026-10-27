@@ -4,7 +4,7 @@ Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and 
 
 ## What it does
 
-- **Bosch SHC** (`bosch-shc`): Adopt Bosch Smart Home Controller (SHC) devices via account onboarding — scaffold
+- **Bosch Smart Home** (`bosch-shc`): Adopt Bosch Smart Home Controller (SHC) devices via account onboarding — scaffold
   - Node placement: `hub-only`.
   - Capabilities: `device-provider`, `device-adoption`, `connection-test`.
 - **Bosch Home Connect** (`bosch-home-connect`): Adopt Bosch Home Connect appliances via account onboarding — scaffold

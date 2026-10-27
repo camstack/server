@@ -39,7 +39,7 @@ export type NetworkTunnelStartedData = z.infer<typeof NetworkTunnelStartedDataSc
 
 /**
  * Optional, richer endpoint shape returned by providers that expose
- * MORE than one ingress concurrently (Tailscale Ingress with mixed
+ * MORE than one ingress concurrently (Tailscale Funnel with mixed
  * serve+funnel rules, future ngrok multi-tunnel, …). Each entry carries
  * the originating provider config (mode + sourcePort) so the
  * orchestrator UI can label rows distinctly. Providers that expose only

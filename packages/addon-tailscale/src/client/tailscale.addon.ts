@@ -122,7 +122,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
    */
   private cli: TailscaleCli | null = null
   /** Used by the orchestrator + UI labels. */
-  readonly displayName = 'Tailscale Client'
+  readonly displayName = 'Tailscale'
   readonly kind = 'tailscale-client' as const
 
   // ── Auto-rejoin state (#174) ──────────────────────────────────────

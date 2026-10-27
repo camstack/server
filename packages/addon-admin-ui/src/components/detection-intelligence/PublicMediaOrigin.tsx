@@ -3,7 +3,7 @@
  * shareable event-media URLs, by probing the hub's `network-access` providers.
  *
  * The event-media route lives on the hub; any active `network-access` tunnel
- * (Cloudflare, Tailscale Ingress, ngrok, …) fronts the whole hub, so its
+ * (Cloudflare, Tailscale Funnel, ngrok, …) fronts the whole hub, so its
  * `getStatus().endpoint.url` IS the public origin of the media route. We
  * enumerate the providers and probe each one's status; the first CONNECTED
  * endpoint wins. If no tunnel is up, there is no public origin and callers

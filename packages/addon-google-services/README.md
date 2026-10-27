@@ -4,7 +4,7 @@ Google Services — Google brokers (OAuth2): Calendar as calendar-source, Gmail 
 
 ## What it does
 
-- **Google Services** (`google-services`): Google brokers (OAuth2 accounts): Calendar as calendar-source, Gmail send as smtp-provider.
+- **Google** (`google-services`): Google brokers (OAuth2 accounts): Calendar as calendar-source, Gmail send as smtp-provider.
   - Node placement: `hub-only`.
   - Capabilities: `broker`, `calendar-source`, `smtp-provider`, `addon-routes`.
 

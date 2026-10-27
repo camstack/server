@@ -38,7 +38,7 @@ export function buildNotifierAdapters(smtp?: EmailSmtpClient): readonly Notifier
   const emailSmtp: EmailSmtpClient = smtp ?? {
     async sendEmail() {
       throw new Error(
-        'email: no smtp-provider client — install Google Services or SMTP Email under Connectivity → Email and Verify it',
+        'email: no smtp-provider client — install Google or Email (SMTP) under Connectivity → Email and Verify it',
       )
     },
   }

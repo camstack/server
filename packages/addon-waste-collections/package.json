@@ -30,7 +30,7 @@
     "./package.json": "./package.json"
   },
   "camstack": {
-    "displayName": "Waste Collections",
+    "displayName": "Waste Collection",
     "addons": [
       {
         "id": "waste-collections",

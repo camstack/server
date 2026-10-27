@@ -49,7 +49,7 @@ const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [
  */
 export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig> {
   protected readonly addonId = 'provider-mqtt-ha'
-  protected readonly providerName = 'MQTT HA Discovery Import'
+  protected readonly providerName = 'MQTT Discovery'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> =
     Object.fromEntries(
       MQTT_HA_DEVICE_TYPES.map((t) => [

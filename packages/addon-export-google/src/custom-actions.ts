@@ -1,5 +1,5 @@
 /**
- * Google Home export — customActions catalog.
+ * Google Home Export — customActions catalog.
  *
  * One entry. The settings form's `addon-action-button` dispatches through the
  * generic `api.addons.custom.mutate({ addonId, action, input })` channel and

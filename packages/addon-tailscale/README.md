@@ -4,10 +4,10 @@ Tailscale bundle for CamStack — joins the host to a tailnet (client) and expos
 
 ## What it does
 
-- **Tailscale Client** (`tailscale-client`).
+- **Tailscale** (`tailscale-client`).
   - Node placement: `hub-only`, runner group `net-access`.
   - Capabilities: `mesh-network`, `network-access`.
-- **Tailscale Ingress (Serve/Funnel)** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first.
+- **Tailscale Funnel** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first.
   - Node placement: `hub-only`, runner group `net-access`.
   - Capabilities: `network-access`.
 
