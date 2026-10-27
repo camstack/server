@@ -1,11 +1,15 @@
 import { errMsg, type IDeviceAdoptionProvider, type IScopedLogger } from '@camstack/types'
 import type { AdoptionFilter, AdoptionStatus } from '@camstack/types'
 import type { MqttHaDiscoveryStore } from './mqtt-ha-discovery-store.js'
-import { buildMqttHaEntityCandidate, mappableMqttHaEntity } from './mqtt-ha-discovery.js'
+import {
+  adoptableMqttHaDevices,
+  buildMqttHaDeviceCandidate,
+  type MqttHaAdoptable,
+} from './mqtt-ha-discovery.js'
 
 const ENTITIES_FILTER: AdoptionFilter = {
-  id: 'entities',
-  label: 'Entities',
+  id: 'devices',
+  label: 'Devices',
   isDefault: true,
 }
 
@@ -15,9 +19,9 @@ export interface MqttHaAdoptionProviderDeps {
   readonly listAdoptedMqttHa: () => Promise<
     ReadonlyArray<{ readonly id: number; readonly config: Record<string, unknown> }>
   >
-  readonly adoptEntity: (input: {
+  readonly adoptDevice: (input: {
     readonly brokerId: string
-    readonly entityKey: string
+    readonly adoptable: MqttHaAdoptable
     readonly integrationId: string
     readonly name: string
   }) => Promise<{ readonly deviceId: number }>
@@ -25,16 +29,21 @@ export interface MqttHaAdoptionProviderDeps {
   readonly logger: IScopedLogger
 }
 
-async function adoptedDeviceIdForEntity(
+/**
+ * A device adopted as a group carries `deviceKey`; a lone entity (or one gang)
+ * carries only `entityKey`, which is its candidate id.
+ */
+async function adoptedDeviceIdFor(
   brokerId: string,
-  entityKey: string,
+  nativeId: string,
   listAdopted: MqttHaAdoptionProviderDeps['listAdoptedMqttHa'],
 ): Promise<number | null> {
   for (const d of await listAdopted()) {
     if (
       d.config['system'] === 'mqtt-ha' &&
       d.config['brokerId'] === brokerId &&
-      d.config['entityKey'] === entityKey
+      (d.config['deviceKey'] === nativeId ||
+        (d.config['deviceKey'] === undefined && d.config['entityKey'] === nativeId))
     ) {
       return d.id
     }
@@ -49,21 +58,20 @@ export function buildMqttHaAdoptionProvider(
     store,
     getMqttBrokerIdForIntegration,
     listAdoptedMqttHa,
-    adoptEntity,
+    adoptDevice,
     removeDevice,
     logger,
   } = deps
 
   async function candidatesForBroker(brokerId: string) {
-    const entities = store.listForBroker(brokerId).filter(mappableMqttHaEntity)
     const out = []
-    for (const entity of entities) {
-      const adoptedDeviceId = await adoptedDeviceIdForEntity(
+    for (const adoptable of adoptableMqttHaDevices(store.listForBroker(brokerId))) {
+      const adoptedDeviceId = await adoptedDeviceIdFor(
         brokerId,
-        entity.entityKey,
+        adoptable.device.nativeId,
         listAdoptedMqttHa,
       )
-      out.push(buildMqttHaEntityCandidate({ entity, adoptedDeviceId }))
+      out.push(buildMqttHaDeviceCandidate({ adoptable, adoptedDeviceId }))
     }
     return out
   }
@@ -94,14 +102,12 @@ export function buildMqttHaAdoptionProvider(
 
     getCandidate: async ({ integrationId, childNativeId }) => {
       const brokerId = await getMqttBrokerIdForIntegration(integrationId)
-      const entity = store.get(brokerId, childNativeId)
-      if (entity === null || !mappableMqttHaEntity(entity)) return null
-      const adoptedDeviceId = await adoptedDeviceIdForEntity(
-        brokerId,
-        entity.entityKey,
-        listAdoptedMqttHa,
+      const adoptable = adoptableMqttHaDevices(store.listForBroker(brokerId)).find(
+        (a) => a.device.nativeId === childNativeId,
       )
-      return buildMqttHaEntityCandidate({ entity, adoptedDeviceId })
+      if (adoptable === undefined) return null
+      const adoptedDeviceId = await adoptedDeviceIdFor(brokerId, childNativeId, listAdoptedMqttHa)
+      return buildMqttHaDeviceCandidate({ adoptable, adoptedDeviceId })
     },
 
     getStatus: async () => {
@@ -153,31 +159,27 @@ export function buildMqttHaAdoptionProvider(
       }[] = []
       let failures = 0
 
-      for (const entityKey of childNativeIds) {
-        const entity = store.get(brokerId, entityKey)
-        if (entity === null || !mappableMqttHaEntity(entity)) {
-          logger.warn('mqtt-ha adopt: entity not in discovery inventory — skipping', {
-            meta: { brokerId, entityKey },
+      const adoptables = adoptableMqttHaDevices(store.listForBroker(brokerId))
+      for (const nativeId of childNativeIds) {
+        const adoptable = adoptables.find((a) => a.device.nativeId === nativeId)
+        if (adoptable === undefined) {
+          logger.warn('mqtt-ha adopt: device not in discovery inventory — skipping', {
+            meta: { brokerId, nativeId },
           })
           failures++
           continue
         }
         try {
-          const name = perCandidate?.[entityKey]?.name ?? entity.name
-          const { deviceId } = await adoptEntity({
-            brokerId,
-            entityKey,
-            integrationId,
-            name,
-          })
+          const name = perCandidate?.[nativeId]?.name ?? adoptable.device.name
+          const { deviceId } = await adoptDevice({ brokerId, adoptable, integrationId, name })
           adopted.push({
-            childNativeId: entityKey,
+            childNativeId: nativeId,
             parentDeviceId: deviceId,
             accessoryDeviceIds: [],
           })
         } catch (err: unknown) {
-          logger.warn('mqtt-ha adopt: failed for entity', {
-            meta: { brokerId, entityKey, error: errMsg(err) },
+          logger.warn('mqtt-ha adopt: failed for device', {
+            meta: { brokerId, nativeId, error: errMsg(err) },
           })
           failures++
         }

@@ -16,7 +16,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'percentage',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Button, DeviceType.Switch, DeviceType.PetFeeder, DeviceType.Container, DeviceType.Thermostat],
+        deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Button, DeviceType.Switch, DeviceType.PetFeeder, DeviceType.Container, DeviceType.Thermostat, DeviceType.EventEmitter],
         apply: 'add',
         vocabularyCap: 'battery',
         vocabularyStateField: 'percentage',

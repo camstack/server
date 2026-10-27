@@ -1,17 +1,4 @@
-import type { MqttHaDiscoveredEntity } from './mqtt-ha-discovery-types.js'
-import { decodeSensorPayload, decodeSwitchPayload } from './mqtt-ha-discovery-parser.js'
-
-export interface MqttHaSwitchState {
-  readonly on: boolean
-  readonly lastChangedAt: number
-}
-
-export interface MqttHaSensorState {
-  readonly value: number
-  readonly lastFetchedAt: number
-}
-
-type EntityState = MqttHaSwitchState | MqttHaSensorState
+import type { TopicPayloadReader } from './mqtt-ha-entity-codec.js'
 
 export type MqttHaPublish = (input: {
   readonly brokerId: string
@@ -19,67 +6,71 @@ export type MqttHaPublish = (input: {
   readonly payload: string
 }) => Promise<void>
 
+/** Called for each message on one of an entity's topics (state or availability). */
+export type MqttHaEntityListener = (topic: string, payload: string) => void
+
 /**
- * Live MQTT state keyed by (brokerId, entityKey). Devices read from here;
- * broker sessions write on each state_topic message.
+ * Live MQTT payloads keyed by (brokerId, topic), and the devices listening to
+ * them by (brokerId, entityKey). The broker session writes every message;
+ * a device decodes what it needs with its entities' own templates, so one
+ * JSON state topic can feed a dozen entities without being parsed for them.
  */
 export class MqttHaStateGateway {
-  private readonly states = new Map<string, EntityState>()
+  private readonly payloads = new Map<string, string>()
+  private readonly listeners = new Map<string, Set<MqttHaEntityListener>>()
   private publishImpl: MqttHaPublish | null = null
 
   setPublisher(publish: MqttHaPublish): void {
     this.publishImpl = publish
   }
 
-  private key(brokerId: string, entityKey: string): string {
-    return `${brokerId}\0${entityKey}`
+  private topicKey(brokerId: string, topic: string): string {
+    return `${brokerId}\0${topic}`
   }
 
-  applyStateMessage(entity: MqttHaDiscoveredEntity, payload: string): void {
-    const k = this.key(entity.brokerId, entity.entityKey)
-    const now = Date.now()
-    if (entity.component === 'switch') {
-      const on = decodeSwitchPayload(payload, entity)
-      if (on === null) return
-      this.states.set(k, { on, lastChangedAt: now })
-      return
+  recordMessage(brokerId: string, topic: string, payload: string): void {
+    this.payloads.set(this.topicKey(brokerId, topic), payload)
+  }
+
+  readPayload(brokerId: string, topic: string): string | undefined {
+    return this.payloads.get(this.topicKey(brokerId, topic))
+  }
+
+  readerFor(brokerId: string): TopicPayloadReader {
+    return (topic) => this.readPayload(brokerId, topic)
+  }
+
+  /** Listen to the messages that reach one entity; returns the unsubscribe. */
+  subscribeEntity(brokerId: string, entityKey: string, listener: MqttHaEntityListener): () => void {
+    const key = this.topicKey(brokerId, entityKey)
+    let set = this.listeners.get(key)
+    if (set === undefined) {
+      set = new Set()
+      this.listeners.set(key, set)
     }
-    const value = decodeSensorPayload(payload)
-    if (value === null) return
-    this.states.set(k, { value, lastFetchedAt: now })
+    set.add(listener)
+    return () => {
+      set.delete(listener)
+      if (set.size === 0) this.listeners.delete(key)
+    }
   }
 
-  getSwitchState(brokerId: string, entityKey: string): MqttHaSwitchState | null {
-    const state = this.states.get(this.key(brokerId, entityKey))
-    if (state === undefined || !('on' in state)) return null
-    return state
+  notifyEntity(brokerId: string, entityKey: string, topic: string, payload: string): void {
+    const set = this.listeners.get(this.topicKey(brokerId, entityKey))
+    if (set === undefined) return
+    for (const listener of [...set]) listener(topic, payload)
   }
 
-  getSensorState(brokerId: string, entityKey: string): MqttHaSensorState | null {
-    const state = this.states.get(this.key(brokerId, entityKey))
-    if (state === undefined || !('value' in state)) return null
-    return state
-  }
-
-  setSwitchStateLocal(brokerId: string, entityKey: string, on: boolean): void {
-    this.states.set(this.key(brokerId, entityKey), { on, lastChangedAt: Date.now() })
-  }
-
-  async publishSwitchCommand(entity: MqttHaDiscoveredEntity, on: boolean): Promise<void> {
+  async publish(brokerId: string, topic: string, payload: string): Promise<void> {
     const publish = this.publishImpl
     if (publish === null) throw new Error('mqtt-ha: MQTT publisher not wired')
-    if (entity.commandTopic === null) {
-      throw new Error('mqtt-ha: switch entity has no command_topic')
-    }
-    const payload = on ? entity.payloadOn : entity.payloadOff
-    await publish({ brokerId: entity.brokerId, topic: entity.commandTopic, payload })
-    this.setSwitchStateLocal(entity.brokerId, entity.entityKey, on)
+    await publish({ brokerId, topic, payload })
   }
 
   clearBroker(brokerId: string): void {
     const prefix = `${brokerId}\0`
-    for (const k of this.states.keys()) {
-      if (k.startsWith(prefix)) this.states.delete(k)
+    for (const k of this.payloads.keys()) {
+      if (k.startsWith(prefix)) this.payloads.delete(k)
     }
   }
 }

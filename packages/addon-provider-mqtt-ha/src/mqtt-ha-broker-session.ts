@@ -6,6 +6,8 @@ import {
   parseDiscoveryConfigTopic,
 } from './mqtt-ha-discovery-parser.js'
 import type { MqttHaStateGateway } from './mqtt-ha-state-gateway.js'
+import { entityTopics } from './mqtt-ha-entity-codec.js'
+import type { MqttHaDiscoveredEntity } from './mqtt-ha-discovery-types.js'
 
 const DISCOVERY_SUBSCRIBE = 'homeassistant/+/+/config'
 
@@ -33,8 +35,10 @@ export interface MqttHaBrokerSessionDeps {
  */
 export class MqttHaBrokerSession {
   private client: MqttClient | null = null
-  private readonly stateTopics = new Map<string, string>()
-  private readonly topicToEntityKey = new Map<string, string>()
+  /** entityKey → the topics it listens to (state, per-field, availability). */
+  private readonly entityTopicList = new Map<string, readonly string[]>()
+  /** topic → the entities listening to it (a JSON state topic feeds many). */
+  private readonly topicEntities = new Map<string, Set<string>>()
   private running = false
 
   constructor(private readonly deps: MqttHaBrokerSessionDeps) {}
@@ -53,8 +57,8 @@ export class MqttHaBrokerSession {
     this.running = false
     const client = this.client
     this.client = null
-    this.stateTopics.clear()
-    this.topicToEntityKey.clear()
+    this.entityTopicList.clear()
+    this.topicEntities.clear()
     if (client !== null) {
       await new Promise<void>((resolve) => {
         client.end(false, {}, () => resolve())
@@ -95,7 +99,7 @@ export class MqttHaBrokerSession {
           })
         }
       })
-      for (const topic of this.stateTopics.values()) {
+      for (const topic of this.topicEntities.keys()) {
         client.subscribe(topic, { qos: 0 })
       }
     })
@@ -124,11 +128,12 @@ export class MqttHaBrokerSession {
       this.handleDiscoveryConfig(discovery.component, discovery.objectId, payload)
       return
     }
-    const entityKey = this.topicToEntityKey.get(topic)
-    if (entityKey === undefined) return
-    const entity = this.deps.store.get(this.deps.brokerId, entityKey)
-    if (entity === null) return
-    this.deps.stateGateway.applyStateMessage(entity, payload)
+    const entityKeys = this.topicEntities.get(topic)
+    if (entityKeys === undefined) return
+    this.deps.stateGateway.recordMessage(this.deps.brokerId, topic, payload)
+    for (const entityKey of [...entityKeys]) {
+      this.deps.stateGateway.notifyEntity(this.deps.brokerId, entityKey, topic, payload)
+    }
   }
 
   private handleDiscoveryConfig(component: string, objectId: string, payload: string): void {
@@ -145,33 +150,50 @@ export class MqttHaBrokerSession {
         objectId,
       )
       if (existing !== null) {
-        this.unsubscribeStateTopic(existing.entityKey)
+        this.untrackEntity(existing.entityKey)
         this.deps.store.remove(this.deps.brokerId, existing.entityKey)
       }
       return
     }
     if (parsed === null) return
 
-    const prior = this.deps.store.get(this.deps.brokerId, parsed.entityKey)
     this.deps.store.upsert(parsed)
-    if (prior === null || prior.stateTopic !== parsed.stateTopic) {
-      if (prior !== null) this.unsubscribeStateTopic(prior.entityKey)
-      this.subscribeStateTopic(parsed.entityKey, parsed.stateTopic)
+    this.trackEntity(parsed)
+  }
+
+  /** (Re)subscribe the topics of one entity; an unchanged set is left alone. */
+  private trackEntity(entity: MqttHaDiscoveredEntity): void {
+    const next = entityTopics(entity)
+    const prior = this.entityTopicList.get(entity.entityKey)
+    if (prior !== undefined) {
+      if (prior.length === next.length && prior.every((t, i) => t === next[i])) return
+      this.untrackEntity(entity.entityKey)
+    }
+    this.entityTopicList.set(entity.entityKey, next)
+    for (const topic of next) {
+      let keys = this.topicEntities.get(topic)
+      if (keys === undefined) {
+        keys = new Set()
+        this.topicEntities.set(topic, keys)
+        this.client?.subscribe(topic, { qos: 0 })
+      }
+      keys.add(entity.entityKey)
     }
   }
 
-  private subscribeStateTopic(entityKey: string, topic: string): void {
-    this.stateTopics.set(entityKey, topic)
-    this.topicToEntityKey.set(topic, entityKey)
-    this.client?.subscribe(topic, { qos: 0 })
-  }
-
-  private unsubscribeStateTopic(entityKey: string): void {
-    const topic = this.stateTopics.get(entityKey)
-    if (topic === undefined) return
-    this.stateTopics.delete(entityKey)
-    this.topicToEntityKey.delete(topic)
-    this.client?.unsubscribe(topic)
+  private untrackEntity(entityKey: string): void {
+    const topics = this.entityTopicList.get(entityKey)
+    if (topics === undefined) return
+    this.entityTopicList.delete(entityKey)
+    for (const topic of topics) {
+      const keys = this.topicEntities.get(topic)
+      if (keys === undefined) continue
+      keys.delete(entityKey)
+      if (keys.size === 0) {
+        this.topicEntities.delete(topic)
+        this.client?.unsubscribe(topic)
+      }
+    }
   }
 
   async publish(topic: string, payload: string): Promise<void> {

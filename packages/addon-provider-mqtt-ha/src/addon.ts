@@ -13,15 +13,14 @@ import {
   type SystemEvent,
 } from '@camstack/types'
 import { buildMqttHaAdoptionProvider } from './mqtt-ha-adoption-provider.js'
-import { buildMqttHaStableId } from './mqtt-ha-discovery-parser.js'
+import { buildMqttHaDeviceStableId, buildMqttHaStableId } from './mqtt-ha-discovery-parser.js'
 import { MqttHaDiscoveryStore } from './mqtt-ha-discovery-store.js'
-import { mapMqttHaComponentToCamStack } from './mqtt-ha-domain-mapping.js'
 import {
   MqttHaBrokerSessionManager,
   type BrokerConnectionDetails,
 } from './mqtt-ha-broker-session.js'
 import { mqttHaStateGateway } from './mqtt-ha-state-gateway.js'
-import { MqttHaDevice, wireMqttHaDiscoveryStore } from './devices/mqtt-ha-device.js'
+import { MqttHaDevice } from './devices/mqtt-ha-device.js'
 
 type MqttHaProviderConfig = Record<string, never>
 
@@ -32,12 +31,18 @@ type MqttHaProviderConfig = Record<string, never>
  */
 const MQTT_BROKER_ADDON_ID = 'mqtt-broker'
 
-const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [DeviceType.Switch, DeviceType.Sensor]
+const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [
+  DeviceType.Switch,
+  DeviceType.Light,
+  DeviceType.Sensor,
+  DeviceType.Thermostat,
+  DeviceType.EventEmitter,
+]
 
 /**
  * MQTT Home Assistant discovery IMPORT addon. Subscribes to
  * `homeassistant/+/+/config` on a broker from the `mqtt-broker` cap and adopts
- * v1 `sensor` + `switch` entities via `device-adoption`.
+ * one device per physical device (zigbee2mqtt included) via `device-adoption`.
  */
 export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig> {
   protected readonly addonId = 'provider-mqtt-ha'
@@ -56,7 +61,6 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
 
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
-    wireMqttHaDiscoveryStore(this.discoveryStore)
 
     this.sessionManager = new MqttHaBrokerSessionManager({
       addonId: this.ctx.id,
@@ -133,10 +137,13 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
     const brokerId = typeof config?.['brokerId'] === 'string' ? config['brokerId'] : null
     const entityKey = typeof config?.['entityKey'] === 'string' ? config['entityKey'] : null
+    const deviceKey = typeof config?.['deviceKey'] === 'string' ? config['deviceKey'] : null
     if (brokerId === null || entityKey === null) {
       throw new Error('mqtt-ha: stable id requires brokerId and entityKey')
     }
-    return buildMqttHaStableId(brokerId, entityKey)
+    return deviceKey !== null
+      ? buildMqttHaDeviceStableId(brokerId, deviceKey)
+      : buildMqttHaStableId(brokerId, entityKey)
   }
 
   private requireSessionManager(): MqttHaBrokerSessionManager {
@@ -231,37 +238,45 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
         }
         return out
       },
-      adoptEntity: async ({ brokerId, entityKey, integrationId, name }) => {
-        const entity = this.discoveryStore.get(brokerId, entityKey)
-        if (entity === null) throw new Error(`mqtt-ha adopt: unknown entity ${entityKey}`)
-        const mapping = mapMqttHaComponentToCamStack(entity.component)
+      adoptDevice: async ({ brokerId, adoptable, integrationId, name }) => {
+        const { device: physical, plan } = adoptable
+        const first = plan.members[0]
+        if (first === undefined)
+          throw new Error(`mqtt-ha adopt: ${physical.nativeId} has no members`)
         const config = {
-          entityKey,
           brokerId,
-          component: entity.component,
-          stateTopic: entity.stateTopic,
-          commandTopic: entity.commandTopic,
-          capabilities: [...mapping.capabilities],
-          unitOfMeasurement: entity.unitOfMeasurement,
-          payloadOn: entity.payloadOn,
-          payloadOff: entity.payloadOff,
+          entityKey: first.entityKey,
+          ...(physical.kind === 'device' ? { deviceKey: physical.nativeId } : {}),
+          entities: [...plan.members],
+          bindings: plan.bindings,
+          meter: plan.meter,
+          capabilities: [...plan.capabilities],
           system: 'mqtt-ha',
           integrationId,
           name,
         }
-        const stableId = this.generateStableId(mapping.deviceType, config)
+        const stableId = this.generateStableId(plan.deviceType, config)
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('mqtt-ha adopt: kernel.devices unavailable')
 
         const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
         if (existing) return { deviceId: existing.id }
 
-        const device = await devices.create(stableId, MqttHaDevice, config, null, {
-          type: mapping.deviceType,
+        const created = await devices.create(stableId, MqttHaDevice, config, null, {
+          type: plan.deviceType,
           name,
           integrationId,
         })
-        return { deviceId: device.id }
+        this.ctx.logger.info('mqtt-ha: device adopted', {
+          tags: { deviceId: created.id },
+          meta: {
+            stableId,
+            type: plan.deviceType,
+            capabilities: plan.capabilities.join(','),
+            skippedEntities: plan.skipped.join(','),
+          },
+        })
+        return { deviceId: created.id }
       },
       removeDevice: async (id) => {
         await this.ctx.kernel.devices?.remove(id)

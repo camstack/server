@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   buildMqttHaEntityKey,
   buildMqttHaStableId,
-  decodeSensorPayload,
-  decodeSwitchPayload,
   parseDiscoveryConfigPayload,
   parseDiscoveryConfigTopic,
 } from '../mqtt-ha-discovery-parser.js'
@@ -116,24 +114,10 @@ describe('parseDiscoveryConfigPayload', () => {
     expect(
       parseDiscoveryConfigPayload({
         brokerId: 'mqtt_001',
-        component: 'light',
+        component: 'camera',
         objectId: 'x',
         payload: JSON.stringify({ state_topic: 'a/b' }),
       }),
     ).toBeNull()
-  })
-})
-
-describe('payload decoders', () => {
-  it('decodeSwitchPayload honours custom on/off payloads', () => {
-    const entity = { payloadOn: '1', payloadOff: '0' }
-    expect(decodeSwitchPayload('1', entity)).toBe(true)
-    expect(decodeSwitchPayload('0', entity)).toBe(false)
-    expect(decodeSwitchPayload('maybe', entity)).toBeNull()
-  })
-
-  it('decodeSensorPayload parses numbers', () => {
-    expect(decodeSensorPayload('21.5')).toBe(21.5)
-    expect(decodeSensorPayload('not-a-number')).toBeNull()
   })
 })

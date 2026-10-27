@@ -1729,8 +1729,8 @@
 
 ### `battery` → `battery.*`
 
-- **Source:** `packages/types/src/capabilities/battery.cap.ts:153`
-- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, pet-feeder, container, thermostat`
+- **Source:** `packages/types/src/capabilities/battery.cap.ts:155`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, pet-feeder, container, thermostat, event-emitter`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IBatteryProvider`
 - **runtimeState:** `BatteryStatusSchema`

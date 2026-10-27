@@ -2,7 +2,13 @@
 
 IMPORT addon: subscribes to Home Assistant MQTT discovery on a broker from the
 `mqtt-broker` cap (`mqttBroker.getBrokerConfig`), surfaces candidates via
-`device-adoption`, materialises v1 `sensor` + `switch` entities as flat devices.
+`device-adoption`. One candidate = one physical device (all entities sharing a
+discovery `device` block; a multi-actuator box is split per gang). Mapping is by
+component + `device_class` + unit, never by model (`mqtt-ha-domain-mapping.ts`);
+power / energy / voltage / current fold into `power-meter` (D951); battery is the
+`battery` cap. State is decoded per entity with its `value_template`
+(`mqtt-ha-template.ts`), so zigbee2mqtt's JSON topics and plain topics share a path.
+Not exposed: link quality, `update`/`select`/`number`/`lock`/`cover`, diagnostic and config entities.
 
 Integration settings must carry `mqttBrokerId` (id from Connectivity → MQTT brokers).
 

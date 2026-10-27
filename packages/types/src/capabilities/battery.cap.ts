@@ -116,6 +116,8 @@ const BATTERY_DEVICE_TYPES = [
   DeviceType.PetFeeder,
   DeviceType.Container,
   DeviceType.Thermostat,
+  // A battery remote / wireless button imported as an event emitter.
+  DeviceType.EventEmitter,
 ] as const
 
 /** Generic Customize target for the percentage reading (D936). */

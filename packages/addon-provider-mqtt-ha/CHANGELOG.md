@@ -9,4 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- zigbee2mqtt devices import as ONE device each: every entity of a discovery
+  `device` block is grouped, and mapped by component, `device_class` and unit
+  onto existing caps (switch, brightness, colour temperature, contact, motion,
+  temperature, humidity, illuminance, battery, climate, event emitter). Power,
+  energy, voltage and current fold into the load's `power-meter`. JSON state
+  topics are read through each entity's `value_template`.
+- Light, thermostat and event-emitter device types.
+
 - Package README and changelog, included in the published files list.
