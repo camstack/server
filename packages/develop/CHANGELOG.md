@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The published package now includes its README and CHANGELOG.
+
+### Changed
+
+- The camstack-addon skill explains how to write a changelog entry with changelog:add.
+
 ## [0.1.36] - 2026-10-27
 
 ### Added
