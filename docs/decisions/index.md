@@ -4,7 +4,7 @@
 
 # Decisions
 
-914 architecture decision records. One file per decision, never
+915 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -929,6 +929,7 @@ that rots.
 | D948 | [A detection notification can ask 'was this right?': the button marks the track for retraining, records who was ASKED, and a channel with no buttons gets links that confirm before they claim](adr-0948-a-detection-verdict-button-marks-the-track-for-retraining-and-records-who-was-asked.md) | ✅ accepted | 2026-10-27 |
 | D949 | [Echo speech signs in as an import broker, never with a login of its own](adr-0949-echo-speech-signs-in-as-an-import-broker.md) | 💭 proposed (supersedes D947) | 2026-10-27 |
 | D950 | [A broker is created, edited and signed in through one dialog, and a kind declares its own sign-in](adr-0950-a-broker-is-created-edited-and-signed-in-through-one-dialog-a-kind-declares-its-sign-in.md) | ✅ accepted | 2026-10-27 |
+| D951 | [Power and energy are a feature of the electrical device, not a sensor beside it](adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md) | ✅ accepted | 2026-10-27 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

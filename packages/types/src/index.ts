@@ -1276,6 +1276,7 @@ export {
 } from './composition/customize/scalar-decode.js'
 export {
   mergeScalarTarget,
+  targetFeature,
   ownedSlice,
   removeScalarTarget,
   scalarTargetCount,

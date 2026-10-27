@@ -31,9 +31,15 @@ export const PowerMeterStatusSchema = z.object({
     .optional()
     .meta(readingMeta('energy', { label: 'Energy' })),
   /** Voltage in volts. */
-  volts: z.number().optional().meta(readingMeta('voltage')),
+  volts: z
+    .number()
+    .optional()
+    .meta(readingMeta('voltage', { label: 'Voltage' })),
   /** Current in amperes. */
-  amps: z.number().optional().meta(readingMeta('current')),
+  amps: z
+    .number()
+    .optional()
+    .meta(readingMeta('current', { label: 'Current' })),
   /** Apparent power in volt-amperes. */
   va: z.number().optional().meta(readingMeta('apparent-power')),
   /** Power factor (0..1) if reported. */

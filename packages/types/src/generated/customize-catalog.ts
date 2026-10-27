@@ -570,6 +570,8 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
   'power-meter': {
     watts: 'W',
     kwhTotal: 'kWh',
+    volts: 'V',
+    amps: 'A',
   },
   'temperature-sensor': {
     celsius: '°C',

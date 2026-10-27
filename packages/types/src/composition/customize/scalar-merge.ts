@@ -94,3 +94,19 @@ export function ownedSlice(
     fields: Object.fromEntries(Object.entries(stored.fields).filter(([path]) => owned.has(path))),
   }
 }
+
+/**
+ * The stored feature as ONE target sees it: null when the cap's feature holds
+ * only its neighbours' readings (no assignment of this target), else the whole
+ * feature. A cap with one target sees what is stored.
+ */
+export function targetFeature(
+  stored: CompositionFieldsFeature | null,
+  cap: string,
+  targetId: string,
+): CompositionFieldsFeature | null {
+  if (stored === null) return null
+  const target = find(cap, targetId)
+  if (target === null || scalarTargetCount(cap) < 2) return stored
+  return stored.fields[valuePath(target)] === undefined ? null : stored
+}

@@ -10,7 +10,7 @@ import { DeviceType } from '../../../device/device-type.js'
 import type { CompositionSourceRef } from '../../composition.js'
 import { compileScalarOverride } from '../scalar-compile.js'
 import { decodeScalarOverride } from '../scalar-decode.js'
-import { mergeScalarTarget, removeScalarTarget } from '../scalar-merge.js'
+import { mergeScalarTarget, removeScalarTarget, targetFeature } from '../scalar-merge.js'
 import type { ScalarCompileInput } from '../scalar-compile.js'
 
 const HOST: CompositionSourceRef = { addonId: 'provider-x', stableId: 'plug-1' }
@@ -126,5 +126,12 @@ describe('two targets of one cap share one stored feature', () => {
         targetId: 'kwhTotal',
       }),
     ).toBeNull()
+  })
+
+  it('a feature stored for a neighbour is no assignment of this target', () => {
+    const only = mergeScalarTarget(null, watts, 'power-meter', 'watts')
+    expect(targetFeature(only, 'power-meter', 'kwhTotal')).toBeNull()
+    expect(targetFeature(only, 'power-meter', 'watts')).toBe(only)
+    expect(targetFeature(null, 'power-meter', 'watts')).toBeNull()
   })
 })
