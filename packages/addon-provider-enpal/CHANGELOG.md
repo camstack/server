@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-27
+
 ### Added
 
 - Enpal solar box provider: InfluxDB 2.x source with the local device page as fallback, device adoption for PV, battery, grid, house and heat pump.

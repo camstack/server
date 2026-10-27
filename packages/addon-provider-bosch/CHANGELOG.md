@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.29] - 2026-10-27
+
 ### Changed
 
 - The Smart Home Controller addon is shown as "Bosch Smart Home" (was "Bosch SHC").

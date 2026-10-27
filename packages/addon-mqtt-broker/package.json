@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-mqtt-broker",
-  "version": "1.2.146",
+  "version": "1.2.147",
   "description": "MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.",
   "keywords": [
     "camstack",

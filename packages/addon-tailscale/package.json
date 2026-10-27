@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-tailscale",
-  "version": "1.2.146",
+  "version": "1.2.147",
   "description": "Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle.",
   "keywords": [
     "camstack",

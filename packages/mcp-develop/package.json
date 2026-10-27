@@ -1,6 +1,6 @@
 {
   "name": "@camstack/mcp-develop",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "description": "MCP server for CamStack plugin authors — catalogue, scaffold, validate, find_example, and track review (wraps @camstack/develop).",
   "keywords": [
     "camstack",

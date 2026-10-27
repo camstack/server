@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-dreo",
-  "version": "0.2.148",
+  "version": "0.2.149",
   "description": "Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket)",
   "keywords": [
     "camstack",
