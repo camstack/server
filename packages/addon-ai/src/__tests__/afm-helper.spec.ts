@@ -317,5 +317,7 @@ describe('AppleFmHelper against a real child whose stdin is closed', () => {
       helper.dispose()
       fs.rmSync(dir, { recursive: true, force: true })
     }
-  })
+    // A real child that lives 2 s, plus two requests bounded at 5 s each: the
+    // default 5 s test bound is shorter than the case under a loaded full run.
+  }, 15_000)
 })
