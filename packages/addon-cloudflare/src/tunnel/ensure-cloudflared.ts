@@ -164,6 +164,70 @@ export interface EnsureCloudflaredDeps {
   readonly download: (url: string, dest: string) => Promise<void>
   /** Extract the `cloudflared` entry of `.tgz` into the directory `intoDir`. */
   readonly extract: (archive: string, intoDir: string) => Promise<void>
+  /** Remove one entry of the bin dir (a file, a symlink itself, or a directory tree). */
+  readonly remove?: (entry: string) => Promise<void>
+}
+
+/** Remove an entry without ever following a symlink out of its directory. */
+async function removeEntry(entry: string): Promise<void> {
+  const st = await fsp.lstat(entry)
+  if (st.isDirectory()) await fsp.rm(entry, { recursive: true, force: true })
+  else await fsp.unlink(entry)
+}
+
+/** Bytes an entry occupies; symlinks count as themselves, never their target. */
+async function entryBytes(entry: string): Promise<number> {
+  const st = await fsp.lstat(entry)
+  if (!st.isDirectory()) return st.size
+  let total = 0
+  for (const name of await fsp.readdir(entry)) total += await entryBytes(path.join(entry, name))
+  return total
+}
+
+/** Scratch dirs of provisions running in THIS process; a sweep must not touch them. */
+const activeScratch = new Set<string>()
+
+/**
+ * The bin dir is owned by this addon: it holds the current binary and nothing
+ * else. Remove every other entry (crashed `.provision-*` dirs, old archives,
+ * backups, `.old` files). Never follows a symlink, never removes `binDir`
+ * itself; a failure on one entry is a warning, never a failed provision.
+ */
+async function sweepBinDir(
+  binDir: string,
+  keep: ReadonlySet<string>,
+  deps: EnsureCloudflaredDeps,
+  logger: IScopedLogger,
+): Promise<void> {
+  let names: string[]
+  try {
+    names = await fsp.readdir(binDir)
+  } catch {
+    return // no bin dir yet: nothing to sweep
+  }
+  const removed: string[] = []
+  let freed = 0
+  for (const name of names) {
+    const entry = path.join(binDir, name)
+    if (keep.has(name) || activeScratch.has(entry)) continue
+    try {
+      const bytes = await entryBytes(entry)
+      await (deps.remove ?? removeEntry)(entry)
+      removed.push(name)
+      freed += bytes
+    } catch (err) {
+      logger.warn('could not remove a stale entry from the cloudflared bin dir', {
+        meta: { entry: name, error: err instanceof Error ? err.message : String(err) },
+        tags: PROVISION_TAGS,
+      })
+    }
+  }
+  if (removed.length > 0) {
+    logger.info('removed stale entries from the cloudflared bin dir', {
+      meta: { removed, bytesFreed: freed },
+      tags: PROVISION_TAGS,
+    })
+  }
 }
 
 const DEFAULT_DEPS: EnsureCloudflaredDeps = {
@@ -204,8 +268,13 @@ export async function ensureCloudflared(opts: EnsureCloudflaredOptions): Promise
     }
   }
 
+  const binName = os.platform() === 'win32' ? 'cloudflared.exe' : 'cloudflared'
   const onPath = await probe('cloudflared')
-  if (versionAtLeast(onPath.version, MIN_CLOUDFLARED_VERSION)) return 'cloudflared'
+  if (versionAtLeast(onPath.version, MIN_CLOUDFLARED_VERSION)) {
+    // PATH wins, so binDir's cached copy is stale too: sweep all of it.
+    await sweepBinDir(opts.binDir, new Set(), deps, opts.logger)
+    return 'cloudflared'
+  }
   if (onPath.runs) {
     opts.logger.warn('cloudflared on PATH is below the minimum — skipping it for the pinned copy', {
       meta: { found: formatVersion(onPath.version), required: REQUIRED },
@@ -213,14 +282,14 @@ export async function ensureCloudflared(opts: EnsureCloudflaredOptions): Promise
     })
   }
 
-  const cached = path.join(
-    opts.binDir,
-    os.platform() === 'win32' ? 'cloudflared.exe' : 'cloudflared',
-  )
+  const cached = path.join(opts.binDir, binName)
   const haveCached = fs.existsSync(cached)
   if (haveCached) {
     const c = await probe(cached)
-    if (versionAtLeast(c.version, MIN_CLOUDFLARED_VERSION)) return cached
+    if (versionAtLeast(c.version, MIN_CLOUDFLARED_VERSION)) {
+      await sweepBinDir(opts.binDir, new Set([binName]), deps, opts.logger)
+      return cached
+    }
     opts.logger.warn('cached cloudflared is below the minimum — replacing it', {
       meta: {
         found: c.runs ? formatVersion(c.version) : 'not runnable',
@@ -248,6 +317,7 @@ export async function ensureCloudflared(opts: EnsureCloudflaredOptions): Promise
   // final rename is atomic); the working cached binary is only replaced after
   // the candidate is verified.
   const scratch = await fsp.mkdtemp(path.join(opts.binDir, '.provision-'))
+  activeScratch.add(scratch)
   try {
     const downloaded = path.join(scratch, asset.fileName)
     await deps.download(url, downloaded)
@@ -272,6 +342,7 @@ export async function ensureCloudflared(opts: EnsureCloudflaredOptions): Promise
       )
     }
     await fsp.rename(candidate, cached)
+    await sweepBinDir(opts.binDir, new Set([binName]), deps, opts.logger)
     opts.logger.info('cloudflared ready', {
       meta: {
         path: cached,
@@ -292,6 +363,7 @@ export async function ensureCloudflared(opts: EnsureCloudflaredOptions): Promise
     })
     throw err
   } finally {
+    activeScratch.delete(scratch)
     await fsp.rm(scratch, { recursive: true, force: true })
   }
 }

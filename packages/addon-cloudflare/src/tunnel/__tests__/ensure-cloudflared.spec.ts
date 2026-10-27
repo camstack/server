@@ -217,4 +217,86 @@ describe('ensureCloudflared minimum version', () => {
       }),
     ).rejects.toThrow(/checksum/i)
   })
+
+  describe('binDir sweep', () => {
+    const leftovers = (): string[] => {
+      fs.mkdirSync(path.join(binDir, '.provision-dead'))
+      fs.writeFileSync(path.join(binDir, '.provision-dead', 'x'), 'partial')
+      fs.writeFileSync(path.join(binDir, 'cloudflared-darwin-amd64.tgz'), 'old archive')
+      fs.writeFileSync(path.join(binDir, 'cloudflared.2025.4.2.bak'), 'bak')
+      fs.writeFileSync(path.join(binDir, 'cloudflared.new'), 'new')
+      fs.writeFileSync(path.join(binDir, 'cloudflared.exe.old'), 'old')
+      return fs.readdirSync(binDir).filter((n) => n !== binName)
+    }
+
+    it('removes every leftover after a replacement and logs what it freed', async () => {
+      fs.writeFileSync(path.join(binDir, binName), banner('2025.4.2'))
+      leftovers()
+      const l = logger()
+      await ensureCloudflared({
+        binDir,
+        logger: l.log,
+        deps: harness({}).deps,
+        checksums: checksumsFor(goodContent),
+      })
+      expect(fs.readdirSync(binDir)).toEqual([binName])
+      expect(l.lines.join('\n')).toMatch(/cloudflared\.new/)
+      expect(l.lines.join('\n')).toMatch(/bytes/i)
+    })
+
+    it('removes leftovers when the cached copy is reused, keeping the binary', async () => {
+      const cached = path.join(binDir, binName)
+      fs.writeFileSync(cached, banner('2026.11.0'))
+      leftovers()
+      const h = harness({})
+      expect(await ensureCloudflared({ binDir, logger: logger().log, deps: h.deps })).toBe(cached)
+      expect(h.downloads).toHaveLength(0)
+      expect(fs.readdirSync(binDir)).toEqual([binName])
+      expect(fs.readFileSync(cached, 'utf8')).toBe(banner('2026.11.0'))
+    })
+
+    it('sweeps the stale cached copy too when PATH cloudflared is used', async () => {
+      fs.writeFileSync(path.join(binDir, binName), banner('2025.4.2'))
+      leftovers()
+      const got = await ensureCloudflared({
+        binDir,
+        logger: logger().log,
+        deps: harness({ pathVersion: '2026.10.5' }).deps,
+      })
+      expect(got).toBe('cloudflared')
+      expect(fs.readdirSync(binDir)).toEqual([])
+    })
+
+    it('unlinks a symlink pointing outside binDir and leaves its target untouched', async () => {
+      const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-outside-'))
+      try {
+        fs.writeFileSync(path.join(outside, 'keep.txt'), 'precious')
+        fs.symlinkSync(outside, path.join(binDir, 'link-dir'))
+        fs.symlinkSync(path.join(outside, 'keep.txt'), path.join(binDir, 'link-file'))
+        const cached = path.join(binDir, binName)
+        fs.writeFileSync(cached, banner('2026.11.0'))
+        await ensureCloudflared({ binDir, logger: logger().log, deps: harness({}).deps })
+        expect(fs.readdirSync(binDir)).toEqual([binName])
+        expect(fs.readFileSync(path.join(outside, 'keep.txt'), 'utf8')).toBe('precious')
+      } finally {
+        fs.rmSync(outside, { recursive: true, force: true })
+      }
+    })
+
+    it('a removal error warns and does not fail provisioning', async () => {
+      const cached = path.join(binDir, binName)
+      fs.writeFileSync(cached, banner('2026.11.0'))
+      fs.writeFileSync(path.join(binDir, 'cloudflared.bak'), 'bak')
+      const l = logger()
+      const h = harness({})
+      const deps: EnsureCloudflaredDeps = {
+        ...h.deps,
+        remove: async () => {
+          throw new Error('EBUSY')
+        },
+      }
+      expect(await ensureCloudflared({ binDir, logger: l.log, deps })).toBe(cached)
+      expect(l.lines.join('\n')).toMatch(/EBUSY/)
+    })
+  })
 })
