@@ -60,6 +60,7 @@ import {
   DEFAULT_DEPARTURE_CONFIG,
   DEFAULT_MATCH_CONFIG,
   ENTRY_TTL_MS,
+  WATCHED_GAP_CAP_MS,
   entryToView,
   GATE_SESSION_GAP_MS,
   GATE_WARMUP_MS,
@@ -324,6 +325,19 @@ export class StationaryObjectRegistry {
    *  so quiet minutes must not age the entries (see {@link sweep}). */
   private readonly lastFrameAtByDevice = new Map<number, number>()
   /**
+   * WATCHED time each entry has gone unconfirmed, in ms. Entry expiry is judged
+   * on this, never on the span between two frame timestamps: a session-dispatch
+   * camera's silence between motion sessions would otherwise be counted in full
+   * the moment the next session's first frame arrives (measured: a car parked
+   * 3.3 h was retired after seconds of watching, 316 s after its last
+   * confirmation). Each frame adds its delta from the previous one, capped at
+   * {@link WATCHED_GAP_CAP_MS}; a confirmation resets it. `confirmedAt` is the
+   * `lastConfirmedAt` the counter was last reset for, so a changed value (any of
+   * the places that confirm an entry) restarts the count without a hook at each.
+   * An entry that was just hydrated has no record here and starts at zero.
+   */
+  private readonly unconfirmedWatched = new Map<string, { confirmedAt: number; ms: number }>()
+  /**
    * Entries carrying ONE unconfirmed departure read, per device (D49, D174,
    * D279).
    *
@@ -454,8 +468,29 @@ export class StationaryObjectRegistry {
   /** Record that a frame was processed for a device — advances the OBSERVED
    *  clock that drives entry expiry in {@link sweep}. */
   noteFrame(deviceId: number, timestamp: number): void {
-    const prev = this.lastFrameAtByDevice.get(deviceId) ?? 0
-    if (timestamp > prev) this.lastFrameAtByDevice.set(deviceId, timestamp)
+    const known = this.lastFrameAtByDevice.get(deviceId)
+    const prev = known ?? 0
+    if (timestamp <= prev) return
+    this.lastFrameAtByDevice.set(deviceId, timestamp)
+    const ids = this.idsByDevice.get(deviceId)
+    if (!ids) return
+    const delta = known === undefined ? 0 : Math.min(timestamp - known, WATCHED_GAP_CAP_MS)
+    for (const id of ids) {
+      const e = this.ledger.get(id)
+      if (!e) continue
+      const rec = this.unconfirmedWatched.get(id)
+      if (!rec || rec.confirmedAt !== e.lastConfirmedAt) {
+        this.unconfirmedWatched.set(id, { confirmedAt: e.lastConfirmedAt, ms: 0 })
+      } else {
+        rec.ms += delta
+      }
+    }
+  }
+
+  /** Watched ms an entry has gone unconfirmed (0 when not yet tracked). */
+  private watchedUnconfirmedMs(e: StationaryEntry): number {
+    const rec = this.unconfirmedWatched.get(e.id)
+    return rec && rec.confirmedAt === e.lastConfirmedAt ? rec.ms : 0
   }
 
   /**
@@ -820,12 +855,14 @@ export class StationaryObjectRegistry {
    * logged by `MacMiniAgent.localdomain` and by `agent-a`, the same
    * rows, seven seconds apart.
    *
-   * Expiry is measured against the device's latest processed-frame timestamp
-   * ({@link noteFrame}), NOT the wall clock: a session-dispatch camera emits
-   * no frames between motion sessions, and that silence says nothing about
-   * the object. Only when the camera has actually been WATCHING for `ttl`
+   * Expiry is measured in WATCHED time ({@link noteFrame}): the sum of the
+   * gaps between consecutive processed frames, each capped at
+   * {@link WATCHED_GAP_CAP_MS}, since the entry's last confirmation. Neither the
+   * wall clock nor the span between frame timestamps: a session-dispatch
+   * camera emits no frames between motion sessions, and a silent gap must not
+   * age the object. Only when the camera has actually been WATCHING for `ttl`
    * beyond the last confirmation (frames flowed, object never matched) is the
-   * object considered removed. A device with no recorded frame yet never
+   * object considered removed. A freshly hydrated entry starts at zero. A device with no recorded frame yet never
    * expires its entries. `now` only stamps the departed telemetry.
    */
   async sweep(now: number): Promise<readonly StationaryEntry[]> {
@@ -849,7 +886,8 @@ export class StationaryObjectRegistry {
           ids.delete(id)
           continue
         }
-        const overdue = observedAt - e.lastConfirmedAt > ttl
+        const watchedMs = this.watchedUnconfirmedMs(e)
+        const overdue = watchedMs > ttl
         // A TTL RETIREMENT NEEDS THE DETECTOR TO HAVE PROVED ITSELF.
         //
         // Being overdue is a clock, not evidence. The departure path already
@@ -869,7 +907,7 @@ export class StationaryObjectRegistry {
         // detected at all. Twelve TTLs of observed time (one hour at the
         // default) is far past any detector gap this fleet produces, and it
         // retires under its own reason so the two are never confused in a log.
-        const unprovenBackstop = observedAt - e.lastConfirmedAt > ttl * 12
+        const unprovenBackstop = watchedMs > ttl * 12
         if (overdue && !proven && !unprovenBackstop) {
           this.bumpStrikeCounters(deviceId, { ttlHeldUnproven: 1 })
           continue
@@ -887,7 +925,8 @@ export class StationaryObjectRegistry {
               className: e.className,
               reason: proven ? 'ttl' : 'ttl-unproven',
               ttlMs: ttl,
-              unconfirmedForMs: observedAt - e.lastConfirmedAt,
+              unconfirmedForMs: watchedMs,
+              wallGapMs: observedAt - e.lastConfirmedAt,
               parkedForMs: observedAt - e.becameStationaryAt,
             },
           })
@@ -1028,6 +1067,7 @@ export class StationaryObjectRegistry {
     for (const id of ids) {
       this.dirty.delete(id)
       this.weakRuns.delete(id)
+      this.unconfirmedWatched.delete(id)
       this.ledger.evict(id)
     }
     this.idsByDevice.delete(deviceId)
@@ -1255,6 +1295,7 @@ export class StationaryObjectRegistry {
   }
 
   private dropEntry(deviceId: number, id: string): void {
+    this.unconfirmedWatched.delete(id)
     const dropped = this.ledger.get(id)
     this.idsByDevice.get(deviceId)?.delete(id)
     this.dirty.delete(id)

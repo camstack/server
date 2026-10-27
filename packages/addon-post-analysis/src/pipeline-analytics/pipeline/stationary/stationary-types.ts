@@ -147,6 +147,16 @@ export const SESSION_STILLNESS_MIN_POINTS = 4
  *  long (object removed while unobserved, or a long occlusion) → retire it. */
 export const ENTRY_TTL_MS = 5 * 60_000
 
+/**
+ * The most one gap between two consecutive processed frames counts toward an
+ * entry's WATCHED unconfirmed time. Frames inside a motion session arrive every
+ * 0.2-2 s; the silence between on-motion sessions is tens of seconds to hours.
+ * 10 s sits above any real in-session cadence (a slower frame still counts
+ * nearly in full) and far below a session gap, so a gap contributes at most
+ * one bound, never its length. Under-counting only delays a retirement.
+ */
+export const WATCHED_GAP_CAP_MS = 10_000
+
 // ── Departure confirmation (D279) ───────────────────────────────────────────
 
 /**

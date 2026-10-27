@@ -20,6 +20,7 @@ import { makeAnalyticsRecordsNow, type FakeRecords } from '../../../__tests__/fa
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { createNoopLogger } from '../../../../embedding-encoder/shared/noop-logger.js'
+import { watchFrames } from './watch-frames.js'
 import { StationaryObjectRegistry } from '../stationary-registry.js'
 import type { StationaryEntry } from '../stationary-types.js'
 
@@ -79,7 +80,7 @@ describe('a TTL retirement needs evidence, not just a clock', () => {
     await reg.promote(entry())
     // A different vehicle crosses the view: the detector is provably fine.
     frameWithAPassingVehicle(reg, T0 + TTL + 1_000)
-    reg.noteFrame(DEV, T0 + TTL * 2)
+    watchFrames(reg, DEV, T0, T0 + TTL * 2)
     await reg.sweep(T0 + TTL * 2)
     expect(reg.count(DEV)).toBe(0)
   })
@@ -89,7 +90,7 @@ describe('a TTL retirement needs evidence, not just a clock', () => {
   // arm, which never comes if nothing is detected at all.
   it('retires anyway at the backstop, so a held entry cannot become immortal', async () => {
     await reg.promote(entry())
-    reg.noteFrame(DEV, T0 + TTL * 13)
+    watchFrames(reg, DEV, T0, T0 + TTL * 13, 5_000)
     await reg.sweep(T0 + TTL * 13)
     expect(reg.count(DEV)).toBe(0)
   })

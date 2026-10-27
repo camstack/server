@@ -7,6 +7,7 @@ import {
 import { StationaryObjectRegistry, type StationaryChangePhase } from '../stationary-registry.js'
 import type { IScopedLogger, LogExtras } from '@camstack/types'
 import { DEFAULT_DEPARTURE_CONFIG, type StationaryEntry } from '../stationary-types.js'
+import { watchFrames } from './watch-frames.js'
 import { createNoopLogger } from '../../../../embedding-encoder/shared/noop-logger.js'
 
 function makeEntry(over: Partial<StationaryEntry> = {}): StationaryEntry {
@@ -79,7 +80,7 @@ describe('StationaryObjectRegistry', () => {
     // the last confirmation — not the sweep that noticed.
     await reg2.promote(makeEntry({ id: 'e1', lastConfirmedAt: 1_000 }))
     proveDetectorWorks(reg2, 102, 500_000)
-    reg2.noteFrame(102, 1_000_000)
+    watchFrames(reg2, 102, 1_000, 1_000_000, 5_000)
     await reg2.sweep(1_000_000)
     const departed = seen.find((c) => c.phase === 'departed')
     expect(departed).toBeDefined()
@@ -174,7 +175,7 @@ describe('StationaryObjectRegistry', () => {
 
     // Frames flow up to t=112k; only 'fresh' is confirmed on them.
     proveDetectorWorks(reg, 102, 111_000)
-    reg.noteFrame(102, 112_000)
+    watchFrames(reg, 102, 100_000, 112_000)
     reg.applyFrameOutcome({
       deviceId: 102,
       confirmed: [
@@ -268,7 +269,7 @@ describe('StationaryObjectRegistry', () => {
     })
     await reg.promote(makeEntry({ id: 'stale', deviceId: 102, lastConfirmedAt: 100_000 }))
     proveDetectorWorks(reg, 102, 111_000)
-    reg.noteFrame(102, 112_000) // observed age 12k > per-device 10k TTL
+    watchFrames(reg, 102, 100_000, 112_000) // watched 12k > per-device 10k TTL
 
     const retired = await reg.sweep(999_000)
     expect(retired.map((e) => e.id)).toEqual(['stale'])

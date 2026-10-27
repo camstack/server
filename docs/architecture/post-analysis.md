@@ -960,6 +960,17 @@ them, so this is not dropped work. The TTL pass was already safe by accident
 collapse pass had no such guard. Reads (`list`, `listViews`, `deviceIds`) stay
 available on every node — only MUTATION is scoped.
 
+**Expiry counts WATCHED time.** An entry's TTL is judged on the time the camera
+actually watched since the entry's last confirmation: each processed frame adds
+its gap from the previous one, capped at `WATCHED_GAP_CAP_MS` (10 s), and a
+confirmation resets it. The silence between two on-motion sessions therefore
+counts as one bound, not its length — comparing frame timestamps used to retire
+a car parked 3.3 h seconds into the next session (`unconfirmedForMs` 316 052)
+as soon as a passing vehicle let the detector prove itself. A hydrated entry
+starts at zero. The retirement line carries `unconfirmedForMs` (watched) and
+`wallGapMs` (the old span, for diagnosis); the 12-TTL unproven backstop uses the
+same watched time.
+
 Cost of getting this wrong, measured over 24 h on the live hub while promotion
 was still anchored to track survival: 119 promotions, 65% of the entries retired
 inside 300 s (below the TTL, so by a wake), and **38% of the tracks promotion
