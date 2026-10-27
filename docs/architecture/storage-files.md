@@ -15,6 +15,12 @@ covers:
   - packages/system/src/builtins/sqlite-storage/file-host-worker.ts
   - packages/system/src/builtins/sqlite-storage/vector-provider.ts
   - packages/system/src/builtins/sqlite-storage/database-snapshot-provider.ts
+  - scripts/migrations/2026-10-27-quantity-field-names.ts
+  - scripts/migrations/quantity-field-migration.ts
+  - scripts/migrations/quantity-field-stores.ts
+  - scripts/migrations/quantity-field-rewrite.ts
+  - scripts/migrations/quantity-field-renames.ts
+  - scripts/migrations/hub-liveness.ts
 ---
 
 # The engine's database files
@@ -137,6 +143,44 @@ secret fields and the guards: [records.md](records.md).
   pipeline-analytics declares `tracks`, `media`, `object-events` and nothing else. An agent's settings store forwards to the hub (D332), so the old agent-only legacy declares
   recreated the shells ON THE HUB. A legacy table is dropped by hand, offline, on the operator's hubs
   (`DROP TABLE` plus its `_collection_declarations` row in the same file).
+
+## Offline migrations
+
+A change to what is STORED (a renamed field, a re-keyed row) is not migrated at
+boot. It is a standalone script in `scripts/migrations/`, dated, run by hand
+with the hub stopped. It never opens a live file (D679, D693, D328).
+
+The first one is `2026-10-27-quantity-field-names.ts` (planning issue #260,
+`power-meter.watts` becomes `power`, and so on; the map is
+`quantity-field-renames.ts`). It covers every place a `(cap, field)` pair is
+persisted, found by reading the code that writes it:
+
+| File | Store | What names the field |
+| --- | --- | --- |
+| `camstack.db` | `device-runtime-state` | the cap-slice keys and the `$owned` claims (D663) |
+| `camstack.db` | `addon-settings`, `addon-device-settings`, `system-settings`, `<addonId>:addon-devices` and the other scoped copies | OSD bindings (`capName`/`valuePath`), exporter and provider bindings |
+| `camstack.db` | `records`, every kind | compositions, customizations, helpers, recipes, notification rules (`cap`/`fieldPath`, `kind: 'fields'`) |
+| `history.db` | `device-history:metrics`, `series` | the key `cap:<cap>.<field>`; `raw` and the rollups follow the series id |
+
+A field is rewritten only when its cap matches the map, so `battery.volts` and
+`power-meter.volts` are different pairs. Free expression code and the `args` of
+a `cap` action are not rewritten; the dry run lists them as advisories. When a
+new-name entry already exists the new value wins, and a history series merges
+point by point (the existing point wins); both are counted.
+
+Runbook:
+
+1. Stop the hub and wait for it to exit. The script refuses while a process
+   holds the files, while a file changed in the last 30 s, and when it cannot
+   tell (`--assume-stopped` is the operator's explicit override).
+2. `npx tsx scripts/migrations/2026-10-27-quantity-field-names.ts --data-dir <dir>`
+   is a dry run: a per-store, per-`(cap, field)` count table, nothing written.
+3. Add `--apply --backup-dir <dir>`: each file is copied (with `-wal`/`-shm`)
+   and checksummed, then rewritten in one transaction. The script recounts
+   inside that transaction (old keys 0, new keys equal old plus new before,
+   minus merges) and runs `PRAGMA integrity_check`; any mismatch rolls the file
+   back and exits 1 with the backup left in place.
+4. Start the hub. A second `--apply` changes nothing.
 
 ## What is not here
 
