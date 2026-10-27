@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Alexa sign-in follows Amazon's current login pages
+
 ## [0.2.157] - 2026-10-27
 
 ### Fixed
