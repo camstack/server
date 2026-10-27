@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.647 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.648 | the update itself | — |
 
 ## Framework (5)
 
@@ -34,7 +34,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.484 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.485 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
 | `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.277 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.169 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.169 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
