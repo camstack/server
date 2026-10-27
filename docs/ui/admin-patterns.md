@@ -17,7 +17,7 @@ applies-to:
   - packages/addon-admin-ui/src/components/access/CredentialTable.tsx
 covers:
   - packages/addon-admin-ui/src/**
-last-verified: 2026-10-21
+last-verified: 2026-10-27
 ---
 
 # Admin UI page patterns
@@ -545,6 +545,16 @@ Message brokers are per ADDON on Connectivity (Home Assistant, Homematic, MQTT,
 Matter, Alexa import): the body's Connections panel is `BrokerManager
 addonId=…`, which lists only the connections that provider owns and offers only
 its kinds.
+
+**A broker is made and edited in ONE dialog** ([D950](../decisions/adr-0950-a-broker-is-created-edited-and-signed-in-through-one-dialog-a-kind-declares-its-sign-in.md)).
+Anything that needs a broker mounts `BrokerPicker kind=…` (the existing ones plus
+"Create new…", which opens `BrokerEditorDialog` stacked over the caller and
+returns with the new broker chosen); Connectivity's Add / Edit open the same
+dialog. Never a second create form, and never `if (kind === …)` in these
+components: a kind's interactive sign-in is its `signIn.basePath` on
+`broker.listProviders` (`BrokerSignInPanel` drives it), and the form layout is
+the schema's (`arrangeBrokerSchema`: required fields first; defaulted and
+sign-in-filled fields under a collapsed Advanced).
 
 ## System is one page with tabs; a page with its own `?tab=` stays out
 
