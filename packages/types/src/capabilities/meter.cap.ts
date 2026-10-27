@@ -4,7 +4,7 @@ import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
 /**
- * A monotonic total between resets (D944). Energy uses `power-meter.kwhTotal`
+ * A monotonic total between resets (D944). Energy uses `power-meter.energy`
  * so dashboards keep one series; every other instantaneous reading lands here.
  * `value` is the time integral in the source quantity's accumulated base
  * (base-unit seconds, or kWh on the power meter). `null` is a gap, never zero.

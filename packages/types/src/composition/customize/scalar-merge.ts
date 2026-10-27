@@ -1,6 +1,6 @@
 /**
  * Several scalar targets of ONE capability share one stored `fields` feature
- * (D951): "Power and energy" assigns watts, energy, voltage and current, each
+ * (D951): "Power and energy" assigns power, energy, voltage and current, each
  * from its own device. A target owns its value path and the companion paths it
  * writes. Merging replaces only what the target owns; removing takes only what
  * no other target of the cap still needs (a companion such as the clock is

@@ -45,15 +45,15 @@ class Arm implements DeadlineTimer {
   }
 }
 
-function point(t: number, watts: number) {
+function point(t: number, power: number) {
   return {
     t,
     samples: 1,
-    mean: watts,
+    mean: power,
     twMean: null,
-    min: watts,
-    max: watts,
-    last: watts,
+    min: power,
+    max: power,
+    last: power,
     delta: null,
     state: null,
     states: null,
@@ -68,7 +68,7 @@ function integral(reset: IntegralHelperSpec['reset']): IntegralHelperSpec {
     source: {
       source: { addonId: 'demo', stableId: 'meter' },
       cap: 'power-meter',
-      fieldPath: 'watts',
+      fieldPath: 'power',
     },
   }
 }
@@ -123,8 +123,8 @@ describe('history helpers', () => {
     }
     const first = await run()
     const second = await run()
-    const value = published[0]?.find((write) => write.path === 'kwhTotal')?.value
-    const again = published[1]?.find((write) => write.path === 'kwhTotal')?.value
+    const value = published[0]?.find((write) => write.path === 'energy')?.value
+    const again = published[1]?.find((write) => write.path === 'energy')?.value
     expect(value).toBeGreaterThan(0)
     expect(again).toBe(value)
     expect(published[0]?.find((write) => write.path === 'excluded')?.value).toBe(1)

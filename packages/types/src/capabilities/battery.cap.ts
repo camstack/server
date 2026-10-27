@@ -27,7 +27,7 @@ export const BatteryStatusSchema = z.object({
    * Consumers must SKIP a null rather than coerce it — `battery-band` already
    * declines to band a non-finite reading, which is the correct shape.
    */
-  percentage: z
+  level: z
     .number()
     .min(0)
     .max(100)
@@ -42,7 +42,7 @@ export const BatteryStatusSchema = z.object({
    * `'unknown'` is the absence of an answer: the provider has not read the
    * power fields yet, or the firmware reported neither. Before it existed,
    * two unreadable fields produced `'none'`, and a camera nobody had reached
-   * was drawn "on battery alone" — the same D315 defect `percentage` closed
+   * was drawn "on battery alone" — the same D315 defect `level` closed
    * by going nullable. Consumers SKIP it (no charger state published, no
    * glyph, no HomeKit ChargingState) rather than coerce it either way.
    */
@@ -61,7 +61,7 @@ export const BatteryStatusSchema = z.object({
    * that only report charge. A second reading on this cap, not a second
    * `numeric-sensor` on the same device.
    */
-  volts: z
+  voltage: z
     .number()
     .nullable()
     .optional()
@@ -99,7 +99,7 @@ export const BatteryStatusSchema = z.object({
   /**
    * True when the source is a BINARY low-battery indicator (HA
    * `binary_sensor` device_class=battery / `LOW_BAT`) that has no real
-   * charge level — `percentage` is then a coarse stand-in (100 = normal,
+   * charge level — `level` is then a coarse stand-in (100 = normal,
    * sub-threshold = low). UI MUST render "Normal"/"Low" instead of a
    * misleading exact percentage. Absent/false → genuine 0–100 % reading.
    */
@@ -125,12 +125,12 @@ const batteryCustomize = {
   version: 1,
   targets: [
     {
-      id: 'percentage',
+      id: 'level',
       cardinality: 'scalar',
-      vocabulary: { cap: 'battery', stateField: 'percentage' },
+      vocabulary: { cap: 'battery', stateField: 'level' },
       deviceTypes: BATTERY_DEVICE_TYPES,
       apply: 'add',
-      path: 'percentage',
+      path: 'level',
       sources: [
         {
           kind: 'field',
@@ -215,9 +215,9 @@ export const batteryCapability = {
     schema: BatteryStatusSchema,
     kind: 'push',
     // Unknown, never 0 % (D315, D663): the same cold-seed defect this schema's
-    // `percentage` doc already explains. No live consumer reads this as a
+    // `level` doc already explains. No live consumer reads this as a
     // number — `device-aggregation.ts` only checks its presence (D663).
-    empty: { percentage: null, charging: 'unknown', sleeping: false, lastUpdated: 0 },
+    empty: { level: null, charging: 'unknown', sleeping: false, lastUpdated: 0 },
   },
   /**
    * Runtime-state slice — every provider that registers this cap
@@ -242,8 +242,8 @@ export const batteryCapability = {
    */
   history: {
     fields: {
-      percentage: { kind: 'gauge', unit: '%' },
-      volts: { kind: 'gauge', unit: 'V' },
+      level: { kind: 'gauge', unit: '%' },
+      voltage: { kind: 'gauge', unit: 'V' },
     },
   },
   customize: batteryCustomize,

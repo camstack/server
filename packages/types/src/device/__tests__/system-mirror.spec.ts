@@ -82,7 +82,7 @@ describe('SystemMirror', () => {
   it('warm-boots from getAllBindings + getAllSnapshots in one round-trip each', async () => {
     const { api } = makeApi({
       bindings: [mkBinding(1, ['battery']), mkBinding(2, ['motion'])],
-      snapshots: { '1': { battery: { sleeping: true, percentage: 50 } } },
+      snapshots: { '1': { battery: { sleeping: true, level: 50 } } },
     })
     const sm = new SystemMirror(api)
     await sm.init()
@@ -92,7 +92,7 @@ describe('SystemMirror', () => {
 
     const dev1 = sm.getDeviceById(1)
     expect(dev1).not.toBeNull()
-    expect(dev1?.state.battery.value).toEqual({ sleeping: true, percentage: 50 })
+    expect(dev1?.state.battery.value).toEqual({ sleeping: true, level: 50 })
 
     const dev2 = sm.getDeviceById(2)
     expect(dev2?.state.battery.value).toBeUndefined() // no battery slice mirrored
@@ -110,7 +110,7 @@ describe('SystemMirror', () => {
   it('updates the mirror in place on device.state-changed events', async () => {
     const { api, emitState } = makeApi({
       bindings: [mkBinding(1, ['battery'])],
-      snapshots: { '1': { battery: { sleeping: false, percentage: 80 } } },
+      snapshots: { '1': { battery: { sleeping: false, level: 80 } } },
     })
     const sm = new SystemMirror(api)
     await sm.init()
@@ -118,9 +118,9 @@ describe('SystemMirror', () => {
     const dev = sm.getDeviceById(1)
     expect(dev?.state.battery.value?.sleeping).toBe(false)
 
-    emitState({ deviceId: 1, capName: 'battery', slice: { sleeping: true, percentage: 79 } })
+    emitState({ deviceId: 1, capName: 'battery', slice: { sleeping: true, level: 79 } })
     expect(dev?.state.battery.value?.sleeping).toBe(true)
-    expect(dev?.state.battery.value?.percentage).toBe(79)
+    expect(dev?.state.battery.value?.level).toBe(79)
 
     sm.dispose()
   })
@@ -128,7 +128,7 @@ describe('SystemMirror', () => {
   it('fans out to per-handle subscribers on push events', async () => {
     const { api, emitState } = makeApi({
       bindings: [mkBinding(1, ['battery'])],
-      snapshots: { '1': { battery: { sleeping: false, percentage: 80 } } },
+      snapshots: { '1': { battery: { sleeping: false, level: 80 } } },
     })
     const sm = new SystemMirror(api)
     await sm.init()
@@ -138,8 +138,8 @@ describe('SystemMirror', () => {
     dev?.state.battery.subscribe(cb)
     cb.mockClear() // ignore the seed call
 
-    emitState({ deviceId: 1, capName: 'battery', slice: { sleeping: true, percentage: 50 } })
-    expect(cb).toHaveBeenCalledWith({ sleeping: true, percentage: 50 })
+    emitState({ deviceId: 1, capName: 'battery', slice: { sleeping: true, level: 50 } })
+    expect(cb).toHaveBeenCalledWith({ sleeping: true, level: 50 })
 
     // Wrong device or wrong cap → ignored.
     emitState({ deviceId: 2, capName: 'battery', slice: { sleeping: true } })

@@ -66,7 +66,7 @@ const INVERT: Composition = CompositionSchema.parse({
   ],
 })
 
-/** `battery` ADDED to FEEDER: `percentage` from FEEDER's own native `binary.on`, `charging` from CAM. */
+/** `battery` ADDED to FEEDER: `level` from FEEDER's own native `binary.on`, `charging` from CAM. */
 const ADD_BATTERY: Composition = CompositionSchema.parse({
   target: { kind: 'existing', device: FEEDER },
   features: [
@@ -74,7 +74,7 @@ const ADD_BATTERY: Composition = CompositionSchema.parse({
       kind: 'fields',
       cap: 'battery',
       fields: {
-        percentage: {
+        level: {
           kind: 'expression',
           expr: 'on ? 100 : 0',
           bindings: { on: from(FEEDER, 'binary', 'on') },
@@ -131,13 +131,13 @@ function seedHub(hub: FakeHub): void {
     CAM,
     CAM_ID,
     {
-      battery: { percentage: 80, charging: 'dc', sleeping: false, lastUpdated: 7 },
+      battery: { level: 80, charging: 'dc', sleeping: false, lastUpdated: 7 },
     },
     DeviceType.Camera,
   )
   ROOM_EXAMPLE_TEMPERATURE_SOURCES.forEach((ref, i) =>
     hub.add(ref, 11 + i, {
-      'temperature-sensor': { celsius: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
+      'temperature-sensor': { temperature: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
     }),
   )
   ROOM_EXAMPLE_MOTION_SOURCES.forEach((ref, i) =>
@@ -346,7 +346,7 @@ describe('D670 — existing-target state is seeded before ownership', () => {
   it('keeps the old runtime running when an edit seed read fails', async () => {
     await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
-    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ level: 0 })
 
     seedReadFailure = 'offline'
     const patchesBefore = calls('patch:').length
@@ -360,7 +360,7 @@ describe('D670 — existing-target state is seeded before ownership', () => {
     await flush()
 
     expect(calls('patch:')).toHaveLength(patchesBefore + 1)
-    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 100 })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ level: 100 })
   })
 })
 
@@ -444,7 +444,7 @@ describe('rule 1 — the target is resolved and described once per plan change',
     expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({
       owner: 'b1',
       mode: 'add',
-      fields: ['percentage', 'charging', 'sleeping', 'lastUpdated'],
+      fields: ['level', 'charging', 'sleeping', 'lastUpdated'],
     })
     // No device is declared for an existing target: the row is not the composer's (D663).
     expect(declared.at(-1)).toEqual([])
@@ -621,7 +621,7 @@ describe('rule 4 — a block whose row exists but whose plan fails keeps its cla
     expect(state?.fields.map((field) => field.path).sort()).toEqual([
       'charging',
       'lastUpdated',
-      'percentage',
+      'level',
       'sleeping',
     ])
     expect(state?.fields.every((field) => field.state === 'stale' && field.cap === 'battery')).toBe(
@@ -921,8 +921,8 @@ describe('Task 10 fix round 1 — an unserved add is named (I-1), native always 
     hub.seedClaim(FEEDER_ID, 'battery', {
       owner: 'b-gone',
       mode: 'add',
-      fields: ['percentage'],
-      values: { percentage: 100 },
+      fields: ['level'],
+      values: { level: 100 },
     })
     composer = makeComposer()
     await composer.apply(input([]))
@@ -960,12 +960,12 @@ describe('rule 6 — self reads come from the NATIVE view, never the merge (no s
   it('a native field the composition does NOT claim: `device.state-changed` IS the native (no shadow ever comes)', async () => {
     await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
-    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ level: 0 })
     const slice = { on: true, lastChangedAt: 6 }
     hub.setSlice(FEEDER_ID, 'binary', slice)
     await composer.onStateChanged({ deviceId: FEEDER_ID, capName: 'binary', slice })
     await flush()
-    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 100 })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ level: 100 })
   })
 })
 
@@ -973,8 +973,8 @@ describe('C-1 — what the tracker takes as the native follows the claim the hub
   const PERSISTED = {
     owner: 'b1',
     mode: 'add',
-    fields: ['percentage', 'charging', 'sleeping', 'lastUpdated'],
-    values: { percentage: 0, charging: 'dc', sleeping: false, lastUpdated: 1 },
+    fields: ['level', 'charging', 'sleeping', 'lastUpdated'],
+    values: { level: 0, charging: 'dc', sleeping: false, lastUpdated: 1 },
   } as const
 
   it('boot with a persisted claim and a FAILING target-state read: ownership waits, the claim is held; the read recovers → the composed value', async () => {
@@ -1004,7 +1004,7 @@ describe('C-1 — what the tracker takes as the native follows the claim the hub
     expect(healed.blocks[0]).toEqual({ blockId: 'b1', status: 'running' })
     expect(hub.claim(FEEDER_ID, 'battery')).toMatchObject({
       owner: 'b1',
-      values: { percentage: 0 },
+      values: { level: 0 },
     })
     expect(calls('release:')).toEqual([])
     // Under the seeded claim the merged event is the composer's own: ignored.
@@ -1014,7 +1014,7 @@ describe('C-1 — what the tracker takes as the native follows the claim the hub
       slice: hub.effective(FEEDER_ID, 'battery') ?? {},
     })
     await flush()
-    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ level: 0 })
   })
 
   it('a composition that also replaces a native cap is refused and claims nothing (D944)', async () => {
@@ -1038,8 +1038,8 @@ describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the cl
   const PERSISTED_CAM = {
     owner: 'b1',
     mode: 'add',
-    fields: ['percentage', 'charging', 'sleeping', 'lastUpdated'],
-    values: { percentage: 0, charging: 'dc', sleeping: false, lastUpdated: 1 },
+    fields: ['level', 'charging', 'sleeping', 'lastUpdated'],
+    values: { level: 0, charging: 'dc', sleeping: false, lastUpdated: 1 },
   } as const
 
   it('N-2: a failed source read and an unconfirmed unregistration release nothing', async () => {
@@ -1082,7 +1082,7 @@ describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the cl
     await composer.apply(input([block({ composition: ADD_BATTERY })]))
     await flush()
     expect(merged).toBe(true)
-    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ percentage: 0 })
+    expect(hub.claim(FEEDER_ID, 'battery')?.values).toMatchObject({ level: 0 })
     expect(calls('patch:')).toEqual([])
   })
 
@@ -1094,7 +1094,7 @@ describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the cl
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: from(CAM, 'battery', 'percentage'),
+            level: from(CAM, 'battery', 'level'),
             charging: from(CAM, 'battery', 'charging'),
             sleeping: { kind: 'expression', expr: 'false', bindings: {} },
             lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
@@ -1114,7 +1114,7 @@ describe('fix round 2 — only a CONFIRMED unavailability releases (N-2), the cl
       reason: 'native-registered',
       addonId: HA,
     })
-    hub.setSlice(11, 'temperature-sensor', { celsius: 25, lastFetchedAt: 990_100 })
+    hub.setSlice(11, 'temperature-sensor', { temperature: 25, lastFetchedAt: 990_100 })
     const applied = composer.apply(
       input([
         block({ id: 'room', name: 'Living room', composition: ROOM }),

@@ -20,7 +20,7 @@ afterEach(async () => {
 
 /** A tank level `vacuum-control` declared before D915 — no cap declares it now. */
 const RETIRED = 'cap:vacuum-control.cleanWater.level'
-const BATTERY = 'cap:battery.percentage'
+const BATTERY = 'cap:battery.level'
 
 async function seedRetired(harness: Harness, deviceId: number, values: readonly number[]) {
   for (const value of values) {
@@ -46,7 +46,7 @@ describe('listOrphans', () => {
   it('reports a series whose key no cap declares, with its row counts per tier', async () => {
     h = await makeHarness({ devices: { 7: DeviceType.Vacuum } })
     await seedRetired(h, 7, [10, 20, 30])
-    emitState(h, 7, 'battery', { percentage: 80 })
+    emitState(h, 7, 'battery', { level: 80 })
     await h.settle()
     const { series, truncated } = await h.runtime.listOrphans()
     expect(truncated).toBe(false)
@@ -64,8 +64,8 @@ describe('listOrphans', () => {
 
   it('reports every series of a device absent from the listing, and nothing is purged', async () => {
     h = await makeHarness({ devices: { 7: DeviceType.Sensor, 8: DeviceType.Sensor } })
-    emitState(h, 7, 'battery', { percentage: 80 })
-    emitState(h, 8, 'battery', { percentage: 60 })
+    emitState(h, 7, 'battery', { level: 80 })
+    emitState(h, 8, 'battery', { level: 60 })
     await h.settle()
     h.devices.delete(7)
     await h.runtime.reconcile()
@@ -84,7 +84,7 @@ describe('listOrphans', () => {
 
   it('a device that comes back is no longer orphan', async () => {
     h = await makeHarness({ devices: { 7: DeviceType.Sensor } })
-    emitState(h, 7, 'battery', { percentage: 80 })
+    emitState(h, 7, 'battery', { level: 80 })
     await h.settle()
     h.devices.delete(7)
     await h.runtime.reconcile()
@@ -115,7 +115,7 @@ describe('deleteOrphans', () => {
 
   it('refuses a series that is not orphan, and an unknown id, deleting nothing', async () => {
     h = await makeHarness({ devices: { 7: DeviceType.Sensor } })
-    emitState(h, 7, 'battery', { percentage: 80 })
+    emitState(h, 7, 'battery', { level: 80 })
     await h.settle()
     h.advance(6 * 60_000)
     await h.settle()
@@ -132,7 +132,7 @@ describe('deleteOrphans', () => {
 
   it('re-judges at delete time: a device that came back is refused', async () => {
     h = await makeHarness({ devices: { 7: DeviceType.Sensor } })
-    emitState(h, 7, 'battery', { percentage: 80 })
+    emitState(h, 7, 'battery', { level: 80 })
     await h.settle()
     h.devices.delete(7)
     await h.runtime.reconcile()

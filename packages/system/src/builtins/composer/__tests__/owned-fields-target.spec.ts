@@ -4,8 +4,8 @@ import type { TargetAsyncFailure } from '../composition-runtime.js'
 import { type OwnedFieldsApi, OwnedFieldsTarget } from '../owned-fields-target.js'
 import { type RecordingLogger, recordingLogger } from './fixtures.js'
 
-const FIELDS = ['percentage', 'charging', 'sleeping', 'lastUpdated']
-const SEED = { percentage: 15, charging: 'unknown', sleeping: false, lastUpdated: 1_000 }
+const FIELDS = ['level', 'charging', 'sleeping', 'lastUpdated']
+const SEED = { level: 15, charging: 'unknown', sleeping: false, lastUpdated: 1_000 }
 const OK: ClaimOutcome = { ok: true, changed: true }
 
 let log: RecordingLogger
@@ -114,7 +114,7 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
     const t = target(api({ claimFields, patchOwnedFields }))
     expect(t.seed('battery', SEED)).toEqual({ ok: true })
     await settle()
-    expect(t.patch('battery', { percentage: 100 })).toEqual({ ok: true })
+    expect(t.patch('battery', { level: 100 })).toEqual({ ok: true })
     await settle()
     expect(claimFields).toHaveBeenCalledWith({
       deviceId: 50,
@@ -128,14 +128,14 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
       deviceId: 50,
       capName: 'battery',
       owner: 'blk-1',
-      values: { percentage: 100 },
+      values: { level: 100 },
     })
   })
 
   it('a claim carries the FULL planned field set even when fewer values are handed over: a planned field with no value is HELD, never native (S5)', async () => {
     const claimFields = vi.fn<OwnedFieldsApi['claimFields']>(async () => OK)
     const t = target(api({ claimFields }))
-    t.seed('battery', { percentage: 15 })
+    t.seed('battery', { level: 15 })
     await settle()
     expect(claimFields).toHaveBeenCalledWith({
       deviceId: 50,
@@ -143,7 +143,7 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
       owner: 'blk-1',
       mode: 'add',
       fields: FIELDS,
-      values: { percentage: 15 },
+      values: { level: 15 },
     })
   })
 
@@ -172,7 +172,7 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
       async (): Promise<ClaimOutcome> => ({
         ok: false,
         code: 'field-not-claimed',
-        message: 'battery.percentage is not claimed',
+        message: 'battery.level is not claimed',
       }),
     )
     const t = target(api({ claimFields, patchOwnedFields }))
@@ -180,7 +180,7 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
     t.onAsyncFailure((cap, f) => failures.push([cap, f]))
     t.seed('battery', SEED)
     await settle()
-    t.patch('battery', { percentage: 100 })
+    t.patch('battery', { level: 100 })
     await settle()
     expect(failures).toEqual([
       [
@@ -188,11 +188,11 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
         {
           kind: 'refused',
           code: 'field-not-claimed',
-          message: 'battery.percentage is not claimed',
+          message: 'battery.level is not claimed',
         },
       ],
     ])
-    t.patch('battery', { ...SEED, percentage: 100 })
+    t.patch('battery', { ...SEED, level: 100 })
     await settle()
     expect(claimFields).toHaveBeenCalledTimes(2)
   })
@@ -208,7 +208,7 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
     t.onAsyncFailure((cap, f) => failures.push([cap, f]))
     t.seed('battery', SEED)
     await settle()
-    t.patch('battery', { percentage: 1 })
+    t.patch('battery', { level: 1 })
     await settle()
     expect(failures).toEqual([
       ['battery', { kind: 'refused', code: 'row-unreadable', message: 'disk' }],
@@ -233,15 +233,15 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
     const t = target(api({ patchOwnedFields }))
     t.seed('battery', SEED)
     await settle()
-    t.patch('battery', { percentage: 1 }) // in flight
-    t.patch('battery', { percentage: 2 })
+    t.patch('battery', { level: 1 }) // in flight
+    t.patch('battery', { level: 2 })
     t.patch('battery', { charging: 'dc' })
-    t.patch('battery', { percentage: 3 })
+    t.patch('battery', { level: 3 })
     release()
     await settle()
     expect(patchOwnedFields).toHaveBeenCalledTimes(2)
     expect(patchOwnedFields.mock.calls[1]?.[0]).toMatchObject({
-      values: { percentage: 3, charging: 'dc' },
+      values: { level: 3, charging: 'dc' },
     })
     expect(
       log.lines
@@ -264,14 +264,14 @@ describe('OwnedFieldsTarget — the claim-backed write target (D663, S5)', () =>
     const patchOwnedFields = vi.fn<OwnedFieldsApi['patchOwnedFields']>(async () => OK)
     const t = target(api({ claimFields, patchOwnedFields }))
     t.seed('battery', SEED) // in flight
-    t.patch('battery', { percentage: 1 })
-    t.seed('battery', { ...SEED, percentage: 7 })
+    t.patch('battery', { level: 1 })
+    t.seed('battery', { ...SEED, level: 7 })
     release()
     await settle()
     expect(claimFields).toHaveBeenCalledTimes(1)
     expect(patchOwnedFields).toHaveBeenCalledTimes(1)
     expect(patchOwnedFields.mock.calls[0]?.[0]).toMatchObject({
-      values: { ...SEED, percentage: 7 },
+      values: { ...SEED, level: 7 },
     })
   })
 
@@ -361,15 +361,15 @@ describe('withhold — a released field is handed back (S1b)', () => {
 
   it('withhold of ONE of two fields re-claims the other alone', async () => {
     const a = api({})
-    const t = target(a, ['percentage', 'charging'])
-    t.seed('battery', { percentage: 15, charging: 'dc' })
+    const t = target(a, ['level', 'charging'])
+    t.seed('battery', { level: 15, charging: 'dc' })
     await settle()
     t.withhold('battery', ['charging'])
-    t.patch('battery', { percentage: 80 })
+    t.patch('battery', { level: 80 })
     await settle()
     expect(a.releaseClaim).not.toHaveBeenCalled()
     expect(a.claimFields).toHaveBeenLastCalledWith(
-      expect.objectContaining({ fields: ['percentage'], values: { percentage: 80 } }),
+      expect.objectContaining({ fields: ['level'], values: { level: 80 } }),
     )
   })
 
@@ -385,30 +385,30 @@ describe('withhold — a released field is handed back (S1b)', () => {
       )
       .mockResolvedValue(OK)
     const patchOwnedFields = vi.fn<OwnedFieldsApi['patchOwnedFields']>(async () => OK)
-    const t = target(api({ claimFields, patchOwnedFields }), ['percentage', 'charging'])
-    t.seed('battery', { percentage: 15, charging: 'dc' }) // claim [percentage, charging] in flight
+    const t = target(api({ claimFields, patchOwnedFields }), ['level', 'charging'])
+    t.seed('battery', { level: 15, charging: 'dc' }) // claim [level, charging] in flight
     t.withhold('battery', ['charging'])
     release()
     await settle()
-    t.patch('battery', { percentage: 80 })
+    t.patch('battery', { level: 80 })
     await settle()
     expect(patchOwnedFields).not.toHaveBeenCalled()
     expect(claimFields).toHaveBeenCalledTimes(2)
     expect(claimFields).toHaveBeenLastCalledWith(
-      expect.objectContaining({ fields: ['percentage'], values: { percentage: 80 } }),
+      expect.objectContaining({ fields: ['level'], values: { level: 80 } }),
     )
   })
 
   it('a value for a withheld field is never sent — even when the runtime hands it over', async () => {
     const a = api({})
-    const t = target(a, ['percentage', 'charging'])
-    t.seed('battery', { percentage: 15, charging: 'dc' })
+    const t = target(a, ['level', 'charging'])
+    t.seed('battery', { level: 15, charging: 'dc' })
     await settle()
     t.withhold('battery', ['charging'])
-    t.patch('battery', { percentage: 80, charging: 'ac' })
+    t.patch('battery', { level: 80, charging: 'ac' })
     await settle()
     expect(a.claimFields).toHaveBeenLastCalledWith(
-      expect.objectContaining({ fields: ['percentage'], values: { percentage: 80 } }),
+      expect.objectContaining({ fields: ['level'], values: { level: 80 } }),
     )
   })
 

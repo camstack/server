@@ -14,12 +14,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
     version: 1,
     targets: [
       {
-        id: 'percentage',
+        id: 'level',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Button, DeviceType.Switch, DeviceType.PetFeeder, DeviceType.Container, DeviceType.Thermostat, DeviceType.EventEmitter],
         apply: 'add',
         vocabularyCap: 'battery',
-        vocabularyStateField: 'percentage',
+        vocabularyStateField: 'level',
         sources: [
           {
             kind: 'field',
@@ -49,7 +49,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
           status: 'assignment-status',
         },
         advancedExpression: true,
-        path: 'percentage',
+        path: 'level',
         valueKind: 'number',
         nullable: true,
         companions: [
@@ -307,12 +307,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
     version: 1,
     targets: [
       {
-        id: 'watts',
+        id: 'power',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
-        vocabularyStateField: 'watts',
+        vocabularyStateField: 'power',
         sources: [
           {
             kind: 'numeric',
@@ -331,7 +331,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
           status: 'assignment-status',
         },
         advancedExpression: true,
-        path: 'watts',
+        path: 'power',
         valueKind: 'number',
         nullable: false,
         companions: [
@@ -343,12 +343,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
       {
-        id: 'kwhTotal',
+        id: 'energy',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
-        vocabularyStateField: 'kwhTotal',
+        vocabularyStateField: 'energy',
         sources: [
           {
             kind: 'numeric',
@@ -367,7 +367,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
           status: 'assignment-status',
         },
         advancedExpression: true,
-        path: 'kwhTotal',
+        path: 'energy',
         valueKind: 'number',
         nullable: false,
         companions: [
@@ -379,12 +379,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
       {
-        id: 'volts',
+        id: 'voltage',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
-        vocabularyStateField: 'volts',
+        vocabularyStateField: 'voltage',
         sources: [
           {
             kind: 'numeric',
@@ -403,7 +403,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
           status: 'assignment-status',
         },
         advancedExpression: true,
-        path: 'volts',
+        path: 'voltage',
         valueKind: 'number',
         nullable: false,
         companions: [
@@ -415,12 +415,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
         ],
       },
       {
-        id: 'amps',
+        id: 'current',
         cardinality: 'scalar',
         deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
-        vocabularyStateField: 'amps',
+        vocabularyStateField: 'current',
         sources: [
           {
             kind: 'numeric',
@@ -439,7 +439,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
           status: 'assignment-status',
         },
         advancedExpression: true,
-        path: 'amps',
+        path: 'current',
         valueKind: 'number',
         nullable: false,
         companions: [
@@ -558,22 +558,22 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
   Record<string, Readonly<Record<string, string>>>
 > = {
   'ambient-light-sensor': {
-    lux: 'lx',
+    illuminance: 'lx',
   },
   'battery': {
-    percentage: '%',
-    volts: 'V',
+    level: '%',
+    voltage: 'V',
   },
   'humidity-sensor': {
-    percent: '%',
+    humidity: '%',
   },
   'power-meter': {
-    watts: 'W',
-    kwhTotal: 'kWh',
-    volts: 'V',
-    amps: 'A',
+    power: 'W',
+    energy: 'kWh',
+    voltage: 'V',
+    current: 'A',
   },
   'temperature-sensor': {
-    celsius: '°C',
+    temperature: '°C',
   },
 }

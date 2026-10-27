@@ -27,14 +27,14 @@ import type { ClaimsIndexView } from '../device-state-mirror.js'
 import { OWNED_FIELDS_KEY } from '../field-ownership.js'
 import { harness, loadedIndex, NOT_LOADED_INDEX } from './mirror-harness.js'
 
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
 const OWNED = {
   owner: 'blk-1',
   mode: 'replace' as const,
-  fields: ['percentage'],
-  values: { percentage: 90 },
+  fields: ['level'],
+  values: { level: 90 },
 }
-const MERGED = { ...NATIVE, percentage: 90 }
+const MERGED = { ...NATIVE, level: 90 }
 const DEVICE = 7
 const UNCLAIMED_DEVICE = 8
 
@@ -144,12 +144,12 @@ describe('getDeviceStatusAggregate under a replace claim, claims already known',
     f.h.mirror.applySingleCapUpdate(DEVICE, 'battery', {
       ...NATIVE,
       charging: 'solar',
-      percentage: 3,
+      level: 3,
     })
     expect((await aggregate(f))['battery']).toEqual({
       ...NATIVE,
       charging: 'solar',
-      percentage: 90,
+      level: 90,
     })
   })
 

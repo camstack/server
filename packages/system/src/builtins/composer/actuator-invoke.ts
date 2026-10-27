@@ -15,9 +15,9 @@ import {
 
 export interface ActuatorInvokeApi {
   switchSetState(deviceId: number, on: boolean): Promise<void>
-  setBrightness(deviceId: number, percentage: number): Promise<void>
+  setBrightness(deviceId: number, level: number): Promise<void>
   setColor(deviceId: number, color: ColorInput): Promise<void>
-  fanSetPercentage(deviceId: number, percentage: number): Promise<void>
+  fanSetPercentage(deviceId: number, speed: number): Promise<void>
   fanSetPreset(deviceId: number, preset: string): Promise<void>
   fanSetDirection(deviceId: number, direction: FanDirection): Promise<void>
   fanSetOscillating(deviceId: number, oscillating: boolean): Promise<void>
@@ -76,14 +76,14 @@ export async function invokeActuatorCall(api: ActuatorInvokeApi, call: FanOutCal
     case 'switch.setState':
       return api.switchSetState(id, flag(args, 'on', where))
     case 'brightness.setBrightness':
-      return api.setBrightness(id, finiteNumber(args, 'percentage', where))
+      return api.setBrightness(id, finiteNumber(args, 'level', where))
     case 'color.setColor': {
       const color = parseColorInput(args.color)
       if (color === null) throw new Error('color.setColor needs a colour mode')
       return api.setColor(id, color)
     }
     case 'fan-control.setPercentage':
-      return api.fanSetPercentage(id, finiteNumber(args, 'percentage', where))
+      return api.fanSetPercentage(id, finiteNumber(args, 'speed', where))
     case 'fan-control.setPreset':
       return api.fanSetPreset(id, text(args, 'preset', where))
     case 'fan-control.setDirection': {

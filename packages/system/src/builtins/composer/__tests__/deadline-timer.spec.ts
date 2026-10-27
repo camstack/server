@@ -36,9 +36,9 @@ function readings(): Map<string, SourceReading> {
     compositionReadKey({ source: source!, cap, fieldPath })
   const fresh = (value: number | boolean | null): SourceReading => ({ state: 'fresh', value })
   return new Map<string, SourceReading>([
-    [k(T1, 'temperature-sensor', 'celsius'), fresh(21.0)],
-    [k(T2, 'temperature-sensor', 'celsius'), fresh(21.5)],
-    [k(T3, 'temperature-sensor', 'celsius'), fresh(21.4)],
+    [k(T1, 'temperature-sensor', 'temperature'), fresh(21.0)],
+    [k(T2, 'temperature-sensor', 'temperature'), fresh(21.5)],
+    [k(T3, 'temperature-sensor', 'temperature'), fresh(21.4)],
     [k(T1, 'temperature-sensor', 'lastFetchedAt'), fresh(990_000)],
     [k(T2, 'temperature-sensor', 'lastFetchedAt'), fresh(995_000)],
     [k(T3, 'temperature-sensor', 'lastFetchedAt'), fresh(980_000)],

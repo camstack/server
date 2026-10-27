@@ -533,7 +533,7 @@ export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
 export interface CapabilityHistoryField {
   /**
    * `gauge` — a level, averaged in a rollup. `counter` — a MONOTONIC hardware
-   * meter only (`kwhTotal`); a drop is a reset, never a negative reading. A
+   * meter only (`energy`); a drop is a reset, never a negative reading. A
    * counter that restarts with the addon (`pressCountSinceStart`) is not one.
    * `boolean` — stored 0/1; a rollup gives the fraction of time true.
    * `enum` — a STATE (a `z.enum`, or a `z.string` whose values are learned):
@@ -571,7 +571,7 @@ export interface CapabilityHistoryField {
   readonly deadband?: number
   /**
    * Drop a change smaller than this percentage of the last recorded value
-   * (RELATIVE) — for a wide-range gauge such as lux. Applied together with
+   * (RELATIVE) — for a wide-range gauge such as illuminance. Applied together with
    * {@link deadband} when both are set: a change must clear both.
    */
   readonly deadbandPct?: number
@@ -749,7 +749,7 @@ export interface CapabilityDefinition<
    * redeclare it, they just write through `this.runtimeState
    * .setCapState('<capName>', value)`. Examples:
    *
-   *   - `batteryCapability.runtimeState`: `{ percentage, charging,
+   *   - `batteryCapability.runtimeState`: `{ level, charging,
    *     sleeping, lastUpdated }`. A Reolink Argus, a sensor proxy,
    *     an ONVIF battery cam — every provider stores the
    *     same shape under `state.battery`.

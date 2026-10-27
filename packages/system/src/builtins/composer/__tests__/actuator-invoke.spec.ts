@@ -49,7 +49,7 @@ describe('invoking a fan-out call on one member', () => {
     await invokeActuatorCall(api, call('cover', 'setPosition', { position: 30 }))
     await invokeActuatorCall(api, call('cover', 'setTiltPosition', { tiltPosition: 80 }))
     await invokeActuatorCall(api, call('valve', 'setPosition', { position: 0 }))
-    await invokeActuatorCall(api, call('fan-control', 'setPercentage', { percentage: 60 }))
+    await invokeActuatorCall(api, call('fan-control', 'setPercentage', { speed: 60 }))
     await invokeActuatorCall(api, call('fan-control', 'setDirection', { direction: 'reverse' }))
     await invokeActuatorCall(api, call('lock-control', 'lock'))
     await invokeActuatorCall(api, call('lock-control', 'unlock', { code: '1234' }))
@@ -91,7 +91,8 @@ describe('invoking a fan-out call on one member', () => {
     const api = recordingApi(seen)
     const args: FanOutCall['args'] = {
       on: true,
-      percentage: 10,
+      level: 10,
+      speed: 10,
       preset: 'turbo',
       direction: 'forward',
       oscillating: true,
@@ -101,7 +102,7 @@ describe('invoking a fan-out call on one member', () => {
       mode: 'cool',
       target: 20,
       fanMode: 'auto',
-      color: { mode: 'mired', mireds: 250 },
+      color: { mode: 'mired', colorTemperature: 250 },
     }
     for (const id of ACTUATOR_TEMPLATE_IDS) {
       for (const row of ACTUATOR_METHODS[id]) {

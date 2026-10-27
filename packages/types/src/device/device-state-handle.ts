@@ -364,7 +364,7 @@ export function createMirrorSource(
  *
  *   const dev = createDeviceProxy(api, binding)
  *   dev.state.battery.value           // BatteryStatus | undefined
- *   dev.state.battery.value?.percentage
+ *   dev.state.battery.value?.level
  *
  * Two-arg form (deprecated path, kept for spec compatibility):
  * passes the api directly, builds a per-handle lazy source. New

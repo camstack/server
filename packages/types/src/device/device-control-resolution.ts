@@ -231,9 +231,13 @@ export interface SensorMapping {
  *  separately by callers (it reads a raw string `value`, not a numeric field),
  *  so it intentionally has no entry here. */
 export const SENSOR_MAP: Readonly<Record<string, SensorMapping>> = {
-  'temperature-sensor': { capKey: 'temperatureSensor', field: 'celsius', fallbackUnit: '°C' },
-  'humidity-sensor': { capKey: 'humiditySensor', field: 'percent', fallbackUnit: '%' },
-  'ambient-light-sensor': { capKey: 'ambientLightSensor', field: 'lux', fallbackUnit: 'lx' },
+  'temperature-sensor': { capKey: 'temperatureSensor', field: 'temperature', fallbackUnit: '°C' },
+  'humidity-sensor': { capKey: 'humiditySensor', field: 'humidity', fallbackUnit: '%' },
+  'ambient-light-sensor': {
+    capKey: 'ambientLightSensor',
+    field: 'illuminance',
+    fallbackUnit: 'lx',
+  },
   'numeric-sensor': { capKey: 'numericSensor', field: 'value' },
 }
 

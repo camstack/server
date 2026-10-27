@@ -10,14 +10,14 @@ describe('network-link — the seed is unknown, not a wire', () => {
   it('seeds with type unknown and no signal, and the schema accepts it', () => {
     expect(NetworkLinkStatusSchema.parse(NETWORK_LINK_UNKNOWN)).toEqual({
       type: 'unknown',
-      signalPercent: null,
+      signal: null,
       lastUpdated: 0,
     })
   })
 
   it('refuses a signal outside 0..100 — a provider must normalise, never pass through', () => {
     expect(() =>
-      NetworkLinkStatusSchema.parse({ type: 'wifi', signalPercent: 250, lastUpdated: 1 }),
+      NetworkLinkStatusSchema.parse({ type: 'wifi', signal: 250, lastUpdated: 1 }),
     ).toThrow()
   })
 })

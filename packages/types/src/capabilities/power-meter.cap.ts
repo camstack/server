@@ -20,28 +20,28 @@ import { readingMeta } from '../units/quantity.js'
  * in real-world devices.
  */
 export const PowerMeterStatusSchema = z.object({
-  /** Instantaneous power draw in watts. */
-  watts: z
+  /** Instantaneous power draw (watts). */
+  power: z
     .number()
     .optional()
     .meta(readingMeta('power', { label: 'Power' })),
   /** Cumulative energy in kilowatt-hours since the meter was reset. */
-  kwhTotal: z
+  energy: z
     .number()
     .optional()
     .meta(readingMeta('energy', { label: 'Energy' })),
-  /** Voltage in volts. */
-  volts: z
+  /** Voltage (volts). */
+  voltage: z
     .number()
     .optional()
     .meta(readingMeta('voltage', { label: 'Voltage' })),
   /** Current in amperes. */
-  amps: z
+  current: z
     .number()
     .optional()
     .meta(readingMeta('current', { label: 'Current' })),
   /** Apparent power in volt-amperes. */
-  va: z.number().optional().meta(readingMeta('apparent-power')),
+  apparentPower: z.number().optional().meta(readingMeta('apparent-power')),
   /** Power factor (0..1) if reported. */
   powerFactor: z.number().min(0).max(1).optional().meta(readingMeta('ratio')),
   /** Ms epoch when the slice was last updated. */
@@ -102,14 +102,14 @@ function powerTarget(id: string, unit: string) {
   } as const
 }
 
-/** "Power and energy" extension: watts, energy, voltage and current from other devices (D951). */
+/** "Power and energy" extension: power, energy, voltage and current from other devices (D951). */
 const powerMeterCustomize = {
   version: 1,
   targets: [
-    powerTarget('watts', 'W'),
-    powerTarget('kwhTotal', 'kWh'),
-    powerTarget('volts', 'V'),
-    powerTarget('amps', 'A'),
+    powerTarget('power', 'W'),
+    powerTarget('energy', 'kWh'),
+    powerTarget('voltage', 'V'),
+    powerTarget('current', 'A'),
   ],
 } as const satisfies CapabilityCustomizeSpec
 
@@ -127,22 +127,22 @@ export const powerMeterCapability = {
   runtimeState: PowerMeterStatusSchema,
 
   /**
-   * Runtime-state durability: **restored** — as `numeric-sensor`; `kwhTotal` is an accumulator whose restored value is the baseline.
+   * Runtime-state durability: **restored** — as `numeric-sensor`; `energy` is an accumulator whose restored value is the baseline.
    *
    * See `RuntimeStateDurability`. Enforced by
    * `scripts/check-runtime-state-durability.ts`.
    */
   durability: 'restored',
   /**
-   * History (D850): recorded series. Gauges are floored at 30 s; `kwhTotal` is the one monotonic meter (counter).
+   * History (D850): recorded series. Gauges are floored at 30 s; `energy` is the one monotonic meter (counter).
    */
   history: {
     fields: {
-      watts: { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
-      kwhTotal: { kind: 'counter', unit: 'kWh', deadband: 0.01, minIntervalMs: 60000 },
-      volts: { kind: 'gauge', unit: 'V', deadband: 1, minIntervalMs: 30000 },
-      amps: { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
-      va: { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
+      power: { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
+      energy: { kind: 'counter', unit: 'kWh', deadband: 0.01, minIntervalMs: 60000 },
+      voltage: { kind: 'gauge', unit: 'V', deadband: 1, minIntervalMs: 30000 },
+      current: { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
+      apparentPower: { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
       powerFactor: { kind: 'gauge', unit: 'ratio', deadband: 0.01, minIntervalMs: 60000 },
     },
   },

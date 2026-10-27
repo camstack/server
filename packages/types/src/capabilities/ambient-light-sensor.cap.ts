@@ -9,7 +9,7 @@ import { readingMeta } from '../units/quantity.js'
  */
 export const AmbientLightSensorStatusSchema = z.object({
   /** Current illuminance in lux (lx). `null` when the sample was refused (D393). */
-  lux: z
+  illuminance: z
     .number()
     .min(0)
     .nullable()
@@ -45,7 +45,7 @@ export const ambientLightSensorCapability = {
    */
   history: {
     fields: {
-      lux: { kind: 'gauge', unit: 'lx', deadbandPct: 10, minIntervalMs: 60000 },
+      illuminance: { kind: 'gauge', unit: 'lx', deadbandPct: 10, minIntervalMs: 60000 },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides

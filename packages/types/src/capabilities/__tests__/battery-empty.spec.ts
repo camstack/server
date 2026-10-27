@@ -7,7 +7,7 @@ describe('battery cap status.empty', () => {
     expect(empty).toBeDefined()
     expect(batteryCapability.status.schema.safeParse(empty).success).toBe(true)
     expect(empty).toMatchObject({
-      percentage: null,
+      level: null,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,

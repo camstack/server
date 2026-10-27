@@ -11,7 +11,7 @@ const porchRaw = {
       kind: 'fields' as const,
       cap: 'temperature-sensor',
       fields: {
-        celsius: {
+        temperature: {
           kind: 'expression' as const,
           expr: 'round(avg(t1, t2), 1)',
           bindings: {
@@ -22,7 +22,7 @@ const porchRaw = {
                   'ha:ha_001:dev:6cddfefa9609eb6e5778e65913b93b86-sensor.termostato_porch_temperature',
               },
               cap: 'temperature-sensor',
-              fieldPath: 'celsius',
+              fieldPath: 'temperature',
               kind: 'from' as const,
             },
             t2: {
@@ -32,7 +32,7 @@ const porchRaw = {
                   'ha:ha_001:dev:e5f545dc7f0d92d18e8eee5ded55b777-sensor.clima_porch_temperature',
               },
               cap: 'temperature-sensor',
-              fieldPath: 'celsius',
+              fieldPath: 'temperature',
               kind: 'from' as const,
             },
           },

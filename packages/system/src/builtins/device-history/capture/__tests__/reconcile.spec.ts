@@ -8,17 +8,17 @@ afterEach(async () => {
   await h.close()
 })
 
-const BATTERY = 'cap:battery.percentage'
+const BATTERY = 'cap:battery.level'
 const FIVE_MIN = 300_000
 
 describe('reconcile', () => {
   it('fills a change whose event was dropped, stamped at the reconcile time', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     await h.settle()
     // The event announcing 70 never arrives; the mirror knows it.
     h.advance(FIVE_MIN)
-    h.setSnapshots({ '1': { battery: { percentage: 70 } } })
+    h.setSnapshots({ '1': { battery: { level: 70 } } })
     await h.runtime.reconcile()
     await h.settle()
     const points = await rawOf(h, BATTERY, 1)
@@ -29,7 +29,7 @@ describe('reconcile', () => {
 
   it('records the baseline of a series it has never seen', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    h.setSnapshots({ '1': { battery: { percentage: 55 } } })
+    h.setSnapshots({ '1': { battery: { level: 55 } } })
     await h.runtime.reconcile()
     await h.settle()
     expect((await rawOf(h, BATTERY, 1)).map((p) => p.value)).toEqual([55])
@@ -37,10 +37,10 @@ describe('reconcile', () => {
 
   it('adds nothing when the mirror agrees with what is recorded', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     await h.settle()
     h.advance(FIVE_MIN)
-    h.setSnapshots({ '1': { battery: { percentage: 80 } } })
+    h.setSnapshots({ '1': { battery: { level: 80 } } })
     await h.runtime.reconcile()
     await h.settle()
     expect(await rawOf(h, BATTERY, 1)).toHaveLength(1)
@@ -62,7 +62,7 @@ describe('reconcile', () => {
       h.logs.some((l) => l.level === 'warn' && l.message.includes('reconcile read failed')),
     ).toBe(true)
     // The next pass, with the hub back, works.
-    h.setSnapshots({ '1': { battery: { percentage: 12 } } })
+    h.setSnapshots({ '1': { battery: { level: 12 } } })
     await h.runtime.reconcile()
     await h.settle()
     expect((await rawOf(h, BATTERY, 1)).map((p) => p.value)).toEqual([12])
@@ -75,8 +75,8 @@ describe('reconcile', () => {
     })
     await h.runtime.setEnabled(2, false)
     h.setSnapshots({
-      '1': { battery: { percentage: 1 } },
-      '2': { battery: { percentage: 2 } },
+      '1': { battery: { level: 1 } },
+      '2': { battery: { level: 2 } },
       '3': { motion: { detected: true } },
     })
     await h.runtime.reconcile()

@@ -476,7 +476,7 @@ export async function adoptHa(
     wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
   })
   await ha.push(camId, 'battery', {
-    percentage: 80,
+    level: 80,
     charging: 'none',
     sleeping: false,
     lastUpdated: at,

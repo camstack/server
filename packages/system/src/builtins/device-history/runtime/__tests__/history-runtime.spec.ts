@@ -11,12 +11,12 @@ afterEach(async () => {
   await h.close()
 })
 
-const BATTERY = 'cap:battery.percentage'
+const BATTERY = 'cap:battery.level'
 
 describe('a dropped point is forgotten, so the next reconcile re-emits it', () => {
   it('evicts the "recorded" value of points the store never took', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     const failing = vi.spyOn(h.runtime.store, 'upsertRaw').mockRejectedValue(new Error('down'))
     h.advance(MAX_BUFFER_AGE_MS + 1_000)
     await h.runtime.flushNow()
@@ -24,7 +24,7 @@ describe('a dropped point is forgotten, so the next reconcile re-emits it', () =
     expect(h.runtime.capture.lastRecorded(BATTERY, 'd:1')).toBeUndefined()
 
     failing.mockRestore()
-    h.setSnapshots({ '1': { battery: { percentage: 80 } } })
+    h.setSnapshots({ '1': { battery: { level: 80 } } })
     await h.runtime.reconcile()
     await h.settle()
     // Without the eviction the unchanged 80 would be "already recorded" and the hole would stay.
@@ -37,7 +37,7 @@ describe('a dropped point is forgotten, so the next reconcile re-emits it', () =
     )
     h = await makeHarness({ devices })
     vi.spyOn(h.runtime.store, 'upsertRaw').mockRejectedValue(new Error('down'))
-    for (let id = 1; id <= 12; id++) emitState(h, id, 'battery', { percentage: 80 })
+    for (let id = 1; id <= 12; id++) emitState(h, id, 'battery', { level: 80 })
     h.advance(MAX_BUFFER_AGE_MS + 1_000)
     await h.runtime.flushNow()
     const tagged = h.logs.filter((l) => l.level === 'warn' && l.tags['deviceId'] !== undefined)
@@ -66,13 +66,13 @@ describe('the queue is bounded while a flush hangs', () => {
 describe('one aggregated INFO per pass (D391)', () => {
   it('names the skips, refusals, deletes and flush failures since the last report, then goes quiet', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Hub, 2: DeviceType.Camera } })
-    emitState(h, 1, 'battery', { percentage: 1 })
+    emitState(h, 1, 'battery', { level: 1 })
     emitState(h, 2, 'motion', { detected: true })
     await h.runtime.ingest.record('nobody', [
       { key: 'addon:x/y', subject: { kind: 'node', nodeId: 'hub' }, scope: '', ts: T0, value: 1 },
     ])
     vi.spyOn(h.runtime.store, 'upsertRaw').mockRejectedValueOnce(new Error('disk'))
-    emitState(h, 2, 'battery', { percentage: 5 })
+    emitState(h, 2, 'battery', { level: 5 })
     await h.runtime.flushNow()
 
     h.runtime.reportWindow()
@@ -93,7 +93,7 @@ describe('one aggregated INFO per pass (D391)', () => {
 describe('row counts move with the writes instead of rescanning', () => {
   it('counts once, then follows writes and deletes without another scan', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 50 })
+    emitState(h, 1, 'battery', { level: 50 })
     await h.settle()
     const count = vi.spyOn(h.runtime.store, 'countRows')
     await h.runtime.refreshCounts()
@@ -103,7 +103,7 @@ describe('row counts move with the writes instead of rescanning', () => {
     expect(raw()).toBe(1)
 
     h.advance(60_000)
-    emitState(h, 1, 'battery', { percentage: 40 })
+    emitState(h, 1, 'battery', { level: 40 })
     await h.settle()
     expect(raw()).toBe(2)
     h.advance(31_000 + FIVE_MINUTES_MS)

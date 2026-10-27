@@ -97,7 +97,7 @@ function isEdgeLatch(record: FieldRecord): boolean {
  * block must fail. An expression that FAILED on answered values is not an
  * outage and is not held. Nothing known (no seed, nothing written) stays
  * unavailable.
- * A measurement (`battery.percentage = level`) is NOT held: D393.
+ * A measurement (`battery.level`) is NOT held: D393.
  */
 function holdLatchedValue(record: FieldRecord, outcome: FieldOutcome): FieldOutcome {
   if (outcome.state !== 'unavailable' || outcome.fatal || outcome.expressionFailed) return outcome

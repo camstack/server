@@ -258,7 +258,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Full brightness', 'Luminosità massima'),
         phrase: t('Set {device} to full brightness', 'Porta {device} alla massima luminosità'),
         icon: 'sun',
-        args: { percentage: 100 },
+        args: { level: 100 },
       },
       {
         id: 'brightness.half',
@@ -266,7 +266,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Half brightness', 'Luminosità a metà'),
         phrase: t('Dim {device} to half', 'Abbassa {device} a metà luminosità'),
         icon: 'sun-dim',
-        args: { percentage: 50 },
+        args: { level: 50 },
       },
       {
         id: 'brightness.off',
@@ -274,20 +274,20 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Brightness off', 'Luminosità a zero'),
         phrase: t('Dim {device} to zero', 'Abbassa {device} a zero'),
         icon: 'lightbulb-off',
-        args: { percentage: 0 },
+        args: { level: 0 },
       },
       {
         id: 'brightness.set',
         method: 'setBrightness',
         label: t('Set brightness', 'Imposta la luminosità'),
         phrase: t(
-          'Set the brightness of {device} to {percentage}',
-          'Imposta la luminosità di {device} a {percentage}',
+          'Set the brightness of {device} to {level}',
+          'Imposta la luminosità di {device} a {level}',
         ),
         icon: 'sun-medium',
         openArgs: [
           {
-            key: 'percentage',
+            key: 'level',
             label: PERCENT,
             offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
           },
@@ -297,7 +297,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'percentage',
+        field: 'level',
         quantity: t('the brightness', 'la luminosità'),
         label: t('Brightness', 'Luminosità'),
         unit: '%',
@@ -306,7 +306,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
     ],
     events: {
       onBrightnessChanged: {
-        notOperatorFacing: 'the `percentage` state trigger reads the same change',
+        notOperatorFacing: 'the `level` state trigger reads the same change',
       },
     },
   },
@@ -321,7 +321,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Warm white', 'Bianco caldo'),
         phrase: t('Set {device} to warm white', 'Imposta {device} su bianco caldo'),
         icon: 'sun',
-        args: { color: { mode: 'mired', mireds: 370 } },
+        args: { color: { mode: 'mired', colorTemperature: 370 } },
       },
       {
         id: 'color.coolWhite',
@@ -329,7 +329,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Cool white', 'Bianco freddo'),
         phrase: t('Set {device} to cool white', 'Imposta {device} su bianco freddo'),
         icon: 'snowflake',
-        args: { color: { mode: 'mired', mireds: 200 } },
+        args: { color: { mode: 'mired', colorTemperature: 200 } },
       },
       {
         id: 'color.red',
@@ -931,7 +931,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Fan off', 'Ventilatore spento'),
         phrase: t('Stop {device}', 'Ferma {device}'),
         icon: 'power-off',
-        args: { percentage: 0 },
+        args: { speed: 0 },
       },
       {
         id: 'fan.full',
@@ -939,20 +939,20 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Fan full', 'Ventilatore al massimo'),
         phrase: t('Run {device} at full speed', 'Porta {device} alla massima velocità'),
         icon: 'fan',
-        args: { percentage: 100 },
+        args: { speed: 100 },
       },
       {
         id: 'fan.speed',
         method: 'setPercentage',
         label: t('Set speed', 'Imposta la velocità'),
         phrase: t(
-          'Set the speed of {device} to {percentage}',
-          'Imposta la velocità di {device} al {percentage}',
+          'Set the speed of {device} to {speed}',
+          'Imposta la velocità di {device} al {speed}',
         ),
         icon: 'fan',
         openArgs: [
           {
-            key: 'percentage',
+            key: 'speed',
             label: t('Speed', 'Velocità'),
             offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
           },
@@ -1012,7 +1012,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'percentage',
+        field: 'speed',
         quantity: t('the speed', 'la velocità'),
         label: t('Speed', 'Velocità'),
         unit: '%',

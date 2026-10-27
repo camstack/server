@@ -107,7 +107,7 @@ function expressionOf(source: CompositionFieldSource): string {
 function threshold(over: Partial<ThresholdHelperSpec> = {}): ThresholdHelperSpec {
   return {
     kind: 'threshold',
-    source: reading(1, 'temperature-sensor', 'celsius'),
+    source: reading(1, 'temperature-sensor', 'temperature'),
     high: 25,
     low: 20,
     onForMs: 0,
@@ -236,8 +236,8 @@ describe('expression helper', () => {
       kind: 'expression',
       expr: 'inlet - outlet',
       inputs: [
-        { name: 'inlet', member: reading(1, 'temperature-sensor', 'celsius') },
-        { name: 'outlet', member: reading(2, 'temperature-sensor', 'celsius') },
+        { name: 'inlet', member: reading(1, 'temperature-sensor', 'temperature') },
+        { name: 'outlet', member: reading(2, 'temperature-sensor', 'temperature') },
       ],
       output: 'number',
       ...over,
@@ -320,7 +320,7 @@ describe('derivative', () => {
       kind: 'derivative',
       window: { kind: 'rolling', span: '1h' },
       per: 'hour',
-      source: reading(1, 'temperature-sensor', 'celsius'),
+      source: reading(1, 'temperature-sensor', 'temperature'),
       ...over,
     }
   }

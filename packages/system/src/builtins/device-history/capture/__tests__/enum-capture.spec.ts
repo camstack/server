@@ -156,14 +156,14 @@ describe('a learned (string) enum', () => {
 describe('derived energy', () => {
   const POWER: HistoryCatalog = {
     'power-meter': {
-      watts: { kind: 'gauge', unit: 'W' },
-      kwhTotal: { kind: 'counter', unit: 'kWh' },
+      power: { kind: 'gauge', unit: 'W' },
+      energy: { kind: 'counter', unit: 'kWh' },
     },
   }
 
-  it('integrates watts into kWh per bucket when the device has no meter', async () => {
+  it('integrates power into kWh per bucket when the device has no meter', async () => {
     h = await makeHarness({ catalog: POWER, devices: { 3: DeviceType.Switch } })
-    emitState(h, 3, 'power-meter', { watts: 1200 })
+    emitState(h, 3, 'power-meter', { power: 1200 })
     h.advance(2 * FIVE_MINUTES_MS)
     await h.settle()
     h.advance(60_000)
@@ -177,7 +177,7 @@ describe('derived energy', () => {
       maxPoints: 100,
     })
     expect(out.resolution).toBe('5m')
-    expect(out.series[0]?.derivedFrom).toBe('cap:power-meter.watts')
+    expect(out.series[0]?.derivedFrom).toBe('cap:power-meter.power')
     // 1 200 W for 5 minutes = 0.1 kWh.
     expect(out.series[0]?.points[0]?.delta).toBeCloseTo(0.1, 9)
     const list = await h.runtime.query.listSeries({ kind: 'device', deviceId: 3 })
@@ -186,11 +186,11 @@ describe('derived energy', () => {
 
   it('prefers the meter when the device has both, and counts a reset from zero', async () => {
     h = await makeHarness({ catalog: POWER, devices: { 3: DeviceType.Switch } })
-    emitState(h, 3, 'power-meter', { watts: 5000, kwhTotal: 10 })
+    emitState(h, 3, 'power-meter', { power: 5000, energy: 10 })
     h.advance(FIVE_MINUTES_MS)
-    emitState(h, 3, 'power-meter', { kwhTotal: 10.5 })
+    emitState(h, 3, 'power-meter', { energy: 10.5 })
     h.advance(FIVE_MINUTES_MS)
-    emitState(h, 3, 'power-meter', { kwhTotal: 0.2 })
+    emitState(h, 3, 'power-meter', { energy: 0.2 })
     h.advance(FIVE_MINUTES_MS)
     await h.settle()
     h.advance(60_000)
@@ -203,7 +203,7 @@ describe('derived energy', () => {
       resolution: '5m',
       maxPoints: 100,
     })
-    expect(out.series[0]?.derivedFrom).toBe('cap:power-meter.kwhTotal')
+    expect(out.series[0]?.derivedFrom).toBe('cap:power-meter.energy')
     const deltas = out.series[0]?.points.map((p) => p.delta) ?? []
     expect(deltas[0]).toBe(0)
     expect(deltas[1]).toBeCloseTo(0.5, 9)

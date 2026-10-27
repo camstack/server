@@ -244,14 +244,14 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
             switchSetState: async (deviceId, on) => {
               await api.switch.setState.mutate({ deviceId, on })
             },
-            setBrightness: async (deviceId, percentage) => {
-              await api.brightness.setBrightness.mutate({ deviceId, percentage })
+            setBrightness: async (deviceId, level) => {
+              await api.brightness.setBrightness.mutate({ deviceId, level })
             },
             setColor: async (deviceId, color) => {
               await api.color.setColor.mutate({ deviceId, color })
             },
-            fanSetPercentage: async (deviceId, percentage) => {
-              await api.fanControl.setPercentage.mutate({ deviceId, percentage })
+            fanSetPercentage: async (deviceId, speed) => {
+              await api.fanControl.setPercentage.mutate({ deviceId, speed })
             },
             fanSetPreset: async (deviceId, preset) => {
               await api.fanControl.setPreset.mutate({ deviceId, preset })

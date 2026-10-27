@@ -62,14 +62,14 @@ export function isApplianceKind(value: string): value is ApplianceKind {
   return APPLIANCE_KINDS.some((kind) => kind === value)
 }
 
-/** The member step: one watts reading, from a sensor or from the plug itself. */
+/** The member step: one power reading, from a sensor or from the plug itself. */
 export function sourcePickForAppliance(): SourcePickRequest {
   return {
     purpose: 'reading',
     multiple: false,
     max: 1,
     deviceTypes: [DeviceType.Sensor, DeviceType.Switch],
-    accept: [{ cap: 'power-meter', fieldPath: 'watts', valueKind: 'number' }],
+    accept: [{ cap: 'power-meter', fieldPath: 'power', valueKind: 'number' }],
     history: { required: false, minRetentionMs: null },
     mustBindCaps: [],
     exclude: [] as readonly CompositionSourceRef[],

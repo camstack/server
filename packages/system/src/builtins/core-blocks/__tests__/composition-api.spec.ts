@@ -52,7 +52,7 @@ const ROOM_SOURCE_BINDINGS: readonly BoundCapView[] = [
 /**
  * Battery ADDED to a sensor that already has native `binary` and lacks battery
  * (D944: Customize only adds a capability the device does not provide).
- * `percentage` reads that device's own native `binary.on` — a self-read of a
+ * `level` reads that device's own native `binary.on` — a self-read of a
  * field this composition does not write, so it is not a graph edge (D663 rule 5).
  */
 function addBattery(expr = 'on ? 100 : 0', device = FEEDER): Composition {
@@ -63,7 +63,7 @@ function addBattery(expr = 'on ? 100 : 0', device = FEEDER): Composition {
         kind: 'fields',
         cap: 'battery',
         fields: {
-          percentage: {
+          level: {
             kind: 'expression',
             expr,
             bindings: { on: { kind: 'from', source: device, cap: 'binary', fieldPath: 'on' } },
@@ -111,11 +111,11 @@ function celsiusFrom(source: CompositionSourceRef): Composition {
             ...f,
             fields: {
               ...f.fields,
-              celsius: {
+              temperature: {
                 kind: 'from' as const,
                 source,
                 cap: 'temperature-sensor',
-                fieldPath: 'celsius',
+                fieldPath: 'temperature',
               },
             },
           }
@@ -421,7 +421,7 @@ describe('validateComposition', () => {
     expect(result.problems.map((p) => p.code)).toContain('cycle')
     // No unreadable device in the loop: the plain message, unchanged.
     expect(result.problems.find((p) => p.code === 'cycle')?.message).toMatch(
-      /^a field reads itself: composer\/composed-b1#temperature-sensor\.celsius → /,
+      /^a field reads itself: composer\/composed-b1#temperature-sensor\.temperature → /,
     )
     expect(stored).toHaveLength(1)
   })
@@ -431,7 +431,7 @@ describe('validateComposition', () => {
     const result = await buildCompositionApi(deps()).validateComposition({ composition: ROOM })
     expect(result.ok).toBe(false)
     expect(result.problems.every((p) => p.code === 'source-missing')).toBe(true)
-    expect(result.problems.map((p) => p.path)).toContain('features[0].fields.celsius')
+    expect(result.problems.map((p) => p.path)).toContain('features[0].fields.temperature')
     expect(stored).toEqual([])
     expect(converged).toBe(0)
   })
@@ -645,11 +645,11 @@ describe('customizing an existing device (D663, D944)', () => {
           kind: 'fields',
           cap: 'temperature-sensor',
           fields: {
-            celsius: {
+            temperature: {
               kind: 'from',
               source: composedDeviceRef('b1'),
               cap: 'temperature-sensor',
-              fieldPath: 'celsius',
+              fieldPath: 'temperature',
             },
           },
         },
@@ -680,11 +680,11 @@ describe('customizing an existing device (D663, D944)', () => {
     // FEEDER's customization p1 (stored FIRST, so its nodes are walked first)
     // ADDS battery — the device has no native battery (D944). Unread, so nothing
     // is replaced and every self-read of a field it writes is an edge:
-    //   percentage reads charging (own output) and b1's celsius;
-    //   charging reads percentage (own output).
+    //   level reads charging (own output) and b1's temperature;
+    //   charging reads level (own output).
     // q1 relays FEEDER charging; the candidate b1 reads q1.
-    // Real cycle: b1 → q1 → FEEDER.charging → FEEDER.percentage → b1.
-    // Artefact: FEEDER.percentage ↔ FEEDER.charging.
+    // Real cycle: b1 → q1 → FEEDER.charging → FEEDER.level → b1.
+    // Artefact: FEEDER.level ↔ FEEDER.charging.
     const room = composedDeviceRef('b1')
     const feeder = CompositionSchema.parse({
       target: { kind: 'existing', device: FEEDER },
@@ -693,23 +693,28 @@ describe('customizing an existing device (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: {
+            level: {
               kind: 'expression',
               expr: 'charging ? c : 0',
               bindings: {
                 charging: { kind: 'from', source: FEEDER, cap: 'battery', fieldPath: 'charging' },
-                c: { kind: 'from', source: room, cap: 'temperature-sensor', fieldPath: 'celsius' },
+                c: {
+                  kind: 'from',
+                  source: room,
+                  cap: 'temperature-sensor',
+                  fieldPath: 'temperature',
+                },
               },
             },
             charging: {
               kind: 'expression',
-              expr: 'percentage > 0 ? "dc" : "unknown"',
+              expr: 'level > 0 ? "dc" : "unknown"',
               bindings: {
-                percentage: {
+                level: {
                   kind: 'from',
                   source: FEEDER,
                   cap: 'battery',
-                  fieldPath: 'percentage',
+                  fieldPath: 'level',
                 },
               },
             },
@@ -727,7 +732,12 @@ describe('customizing an existing device (D663, D944)', () => {
               ...f,
               fields: {
                 ...f.fields,
-                celsius: { kind: 'from', source: FEEDER, cap: 'battery', fieldPath: 'charging' },
+                temperature: {
+                  kind: 'from',
+                  source: FEEDER,
+                  cap: 'battery',
+                  fieldPath: 'charging',
+                },
               },
             }
           : f,

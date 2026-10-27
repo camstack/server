@@ -52,10 +52,10 @@ function unitConstant(to: string): CompositionExpressionSource {
 /** Primary numeric field that also publishes the cap's `unit` string. */
 const UNIT_COMPANION_FIELD: Readonly<Record<string, string>> = {
   'numeric-sensor': 'value',
-  'temperature-sensor': 'celsius',
-  'humidity-sensor': 'percent',
-  'pressure-sensor': 'hpa',
-  'ambient-light-sensor': 'lux',
+  'temperature-sensor': 'temperature',
+  'humidity-sensor': 'humidity',
+  'pressure-sensor': 'pressure',
+  'ambient-light-sensor': 'illuminance',
 }
 
 /** `unit` when converting that cap's primary numeric field; otherwise none. */

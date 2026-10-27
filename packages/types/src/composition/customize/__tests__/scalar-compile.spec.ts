@@ -39,7 +39,7 @@ describe('scalar compiler', () => {
       feature: featureOf(id),
       device: compileInput(id).device,
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
     })
     expect(decoded).not.toBeNull()
     if (decoded === null) return
@@ -97,7 +97,7 @@ describe('scalar compiler', () => {
     })
     expect(numberLinear.ok).toBe(true)
     if (!numberLinear.ok) return
-    expect(numberLinear.value.fields['percentage']).toEqual({
+    expect(numberLinear.value.fields['level']).toEqual({
       kind: 'expression',
       expr: 'clamp(x * 2 + 1, 0, 100)',
       bindings: {
@@ -123,15 +123,13 @@ describe('scalar compiler', () => {
     })
     expect(stringLinear.ok).toBe(true)
     if (!stringLinear.ok) return
-    const percentage = stringLinear.value.fields['percentage']
-    expect(percentage?.kind === 'expression' ? percentage.expr : '').toBe(
-      'clamp(number(x) * 1 + 0, 0, 100)',
-    )
+    const level = stringLinear.value.fields['level']
+    expect(level?.kind === 'expression' ? level.expr : '').toBe('clamp(number(x) * 1 + 0, 0, 100)')
     const decoded = decodeScalarOverride({
       feature: stringLinear.value,
       device: stringBase.device,
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
     })
     expect(decoded?.draft.transform).toEqual({
       kind: 'linear',
@@ -262,7 +260,7 @@ describe('scalar compiler', () => {
       },
       device: compileInput('battery-add-number').device,
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
     })
     expect(decoded).toBeNull()
   })
@@ -276,7 +274,7 @@ describe('scalar assignment status', () => {
   it('no assignment is Native', () => {
     const projected = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'known', value: null },
       sourcePresence: 'absent',
@@ -284,7 +282,7 @@ describe('scalar assignment status', () => {
     })
     expect(projected.text).toBe('Native')
     expect(projected.status).toEqual({
-      targetId: 'percentage',
+      targetId: 'level',
       configured: false,
       source: 'native',
       state: 'active',
@@ -295,7 +293,7 @@ describe('scalar assignment status', () => {
   it('a present source is Assigned · cap.field', () => {
     const projected = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'known', value: feature },
       sourcePresence: 'present',
@@ -311,7 +309,7 @@ describe('scalar assignment status', () => {
   it('a missing source on a replacement is Native · source missing', () => {
     const projected = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'known', value: feature },
       sourcePresence: 'absent',
@@ -329,7 +327,7 @@ describe('scalar assignment status', () => {
   it('a missing source on an added field stays assigned', () => {
     const projected = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'known', value: addFeature },
       sourcePresence: 'absent',
@@ -346,7 +344,7 @@ describe('scalar assignment status', () => {
   it('an unanswered read is pending and a failed read is unknown, never 0', () => {
     const pending = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'pending' },
       sourcePresence: 'present',
@@ -358,7 +356,7 @@ describe('scalar assignment status', () => {
 
     const unknown = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'unknown', reason: 'source read failed' },
       sourcePresence: 'present',
@@ -371,7 +369,7 @@ describe('scalar assignment status', () => {
 
     const sourcePending = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'known', value: feature },
       sourcePresence: 'pending',
@@ -383,7 +381,7 @@ describe('scalar assignment status', () => {
 
     const sourceUnknown = projectScalarAssignment({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device,
       stored: { kind: 'known', value: feature },
       sourcePresence: 'unknown',

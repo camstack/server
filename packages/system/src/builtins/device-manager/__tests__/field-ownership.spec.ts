@@ -12,12 +12,12 @@ import {
   splitRuntimeBlob,
 } from '../field-ownership.js'
 
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
 const OWNED = {
   owner: 'blk-1',
   mode: 'replace' as const,
-  fields: ['percentage'],
-  values: { percentage: 90 },
+  fields: ['level'],
+  values: { level: 90 },
 }
 const restored = () => ({ durability: 'restored' as const, volatileFields: [] })
 const session = () => ({ durability: 'session' as const, volatileFields: [] })
@@ -26,7 +26,7 @@ describe('field ownership (D663)', () => {
   it('merged = native with the owned fields replaced', () => {
     expect(mergeOwned(NATIVE, OWNED, BatteryStatusSchema)).toEqual({
       kind: 'slice',
-      slice: { ...NATIVE, percentage: 90 },
+      slice: { ...NATIVE, level: 90 },
     })
   })
 
@@ -37,21 +37,21 @@ describe('field ownership (D663)', () => {
   it('a claimed field with NO value is HELD, naming it — never answered from the native slice (S5)', () => {
     const r = mergeOwned(
       NATIVE,
-      { ...OWNED, fields: ['percentage', 'charging'], values: { percentage: 90 } },
+      { ...OWNED, fields: ['level', 'charging'], values: { level: 90 } },
       BatteryStatusSchema,
     )
     expect(r).toEqual({ kind: 'held', reason: 'claimed fields with no value yet: charging' })
   })
 
   it('a merge the schema refuses is HELD, naming the fields', () => {
-    const r = mergeOwned(NATIVE, { ...OWNED, values: { percentage: 900 } }, BatteryStatusSchema)
+    const r = mergeOwned(NATIVE, { ...OWNED, values: { level: 900 } }, BatteryStatusSchema)
     expect(r).toMatchObject({ kind: 'held' })
-    expect(r.kind === 'held' && r.reason).toContain('percentage')
+    expect(r.kind === 'held' && r.reason).toContain('level')
   })
 
   it('an add claim with no native slice merges the owned values alone', () => {
     const r = mergeOwned(null, { ...OWNED, mode: 'add' }, null)
-    expect(r).toEqual({ kind: 'slice', slice: { percentage: 90 } })
+    expect(r).toEqual({ kind: 'slice', slice: { level: 90 } })
   })
 
   it('the row round-trips: native slices + $owned (owner, mode, fields, values), values only for restored caps', () => {

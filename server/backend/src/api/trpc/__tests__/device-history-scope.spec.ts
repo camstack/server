@@ -25,7 +25,7 @@ const deviceFive: TokenScope = {
   access: ['view'],
 }
 
-const window = { key: 'cap:battery.percentage', from: 0, to: 1 }
+const window = { key: 'cap:battery.level', from: 0, to: 1 }
 
 describe('device-history reads honour device scope', () => {
   for (const [method, input] of [

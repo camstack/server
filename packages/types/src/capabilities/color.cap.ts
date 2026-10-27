@@ -46,11 +46,11 @@ const HsvTripletSchema = z.object({
 const ColorInputSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('rgb'), rgb: RgbTripletSchema }),
   z.object({ mode: z.literal('hsv'), hsv: HsvTripletSchema }),
-  z.object({ mode: z.literal('mired'), mireds: z.number().int().min(50).max(1000) }),
+  z.object({ mode: z.literal('mired'), colorTemperature: z.number().int().min(50).max(1000) }),
 ])
 
 export const ColorStatusSchema = z.object({
-  /** Active color mode — which of `rgb` / `hsv` / `mireds` reflects
+  /** Active color mode — which of `rgb` / `hsv` / `colorTemperature` reflects
    *  the bulb's current state. */
   mode: z.enum(['rgb', 'hsv', 'mired']),
   /** Populated when `mode === 'rgb'`. */
@@ -58,7 +58,7 @@ export const ColorStatusSchema = z.object({
   /** Populated when `mode === 'hsv'`. */
   hsv: HsvTripletSchema.optional(),
   /** Populated when `mode === 'mired'`. */
-  mireds: z.number().int().optional().meta(readingMeta('colour-temperature')),
+  colorTemperature: z.number().int().optional().meta(readingMeta('colour-temperature')),
   /** Ms epoch of the last operator-driven change. */
   lastChangedAt: z.number(),
 })
@@ -101,7 +101,7 @@ export const colorCapability = {
         mode: z.enum(['rgb', 'hsv', 'mired']),
         rgb: RgbTripletSchema.optional(),
         hsv: HsvTripletSchema.optional(),
-        mireds: z.number().int().optional(),
+        colorTemperature: z.number().int().optional(),
         lastChangedAt: z.number(),
       }),
     },

@@ -1812,12 +1812,12 @@
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IBrightnessProvider`
 - **runtimeState:** `BrightnessStatusSchema`
-- **Events:** `onBrightnessChanged` → `{ deviceId: number; percentage: number; lastChangedAt: number }`
+- **Events:** `onBrightnessChanged` → `{ deviceId: number; level: number; lastChangedAt: number }`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `brightness.getStatus` | query | protected | `{ deviceId: number }` | `BrightnessStatusSchema` |
-| setBrightness | `brightness.setBrightness` | mutation | protected | `{ deviceId: number; percentage: number }` | `void` |
+| setBrightness | `brightness.setBrightness` | mutation | protected | `{ deviceId: number; level: number }` | `void` |
 
 ### `broker` → `broker.*`
 
@@ -1978,12 +1978,12 @@
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IColorProvider`
 - **runtimeState:** `ColorStatusSchema`
-- **Events:** `onColorChanged` → `{ deviceId: number; mode: "rgb" \| "hsv" \| "mired"; rgb?: { r: number; g: number; b: number }; hsv?: { h: number; s: number; v: number }; mireds?: number; lastChangedAt: number }`
+- **Events:** `onColorChanged` → `{ deviceId: number; mode: "rgb" \| "hsv" \| "mired"; rgb?: { r: number; g: number; b: number }; hsv?: { h: number; s: number; v: number }; colorTemperature?: number; lastChangedAt: number }`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `color.getStatus` | query | protected | `{ deviceId: number }` | `ColorStatusSchema` |
-| setColor | `color.setColor` | mutation | protected | `{ deviceId: number; color: { mode: "rgb"; rgb: { r: number; g: number; b: number } } \| { mode: "hsv"; hsv: { h: number; s: number; v: number } } \| { mode: "mired"; mireds: number } }` | `void` |
+| setColor | `color.setColor` | mutation | protected | `{ deviceId: number; color: { mode: "rgb"; rgb: { r: number; g: number; b: number } } \| { mode: "hsv"; hsv: { h: number; s: number; v: number } } \| { mode: "mired"; colorTemperature: number } }` | `void` |
 
 ### `composer` → `composer.*`
 
@@ -2643,7 +2643,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `fanControl.getStatus` | query | protected | `{ deviceId: number }` | `FanControlStatusSchema` |
-| setPercentage | `fanControl.setPercentage` | mutation | protected | `{ deviceId: number; percentage: number }` | `void` |
+| setPercentage | `fanControl.setPercentage` | mutation | protected | `{ deviceId: number; speed: number }` | `void` |
 | setPreset | `fanControl.setPreset` | mutation | protected | `{ deviceId: number; preset: string }` | `void` |
 | setDirection | `fanControl.setDirection` | mutation | protected | `{ deviceId: number; direction: FanDirectionSchema }` | `void` |
 | setOscillating | `fanControl.setOscillating` | mutation | protected | `{ deviceId: number; oscillating: boolean }` | `void` |
@@ -3055,7 +3055,7 @@
 | stop | `mediaPlayer.stop` | mutation | protected | `{ deviceId: number }` | `void` |
 | next | `mediaPlayer.next` | mutation | protected | `{ deviceId: number }` | `void` |
 | previous | `mediaPlayer.previous` | mutation | protected | `{ deviceId: number }` | `void` |
-| seek | `mediaPlayer.seek` | mutation | protected | `{ deviceId: number; positionMs: number }` | `void` |
+| seek | `mediaPlayer.seek` | mutation | protected | `{ deviceId: number; position: number }` | `void` |
 | setVolume | `mediaPlayer.setVolume` | mutation | protected | `{ deviceId: number; volumeLevel: number }` | `void` |
 | setMute | `mediaPlayer.setMute` | mutation | protected | `{ deviceId: number; muted: boolean }` | `void` |
 | setShuffle | `mediaPlayer.setShuffle` | mutation | protected | `{ deviceId: number; shuffle: boolean }` | `void` |
@@ -3803,7 +3803,7 @@
 
 ### `presence` → `presence.*`
 
-- **Source:** `packages/types/src/capabilities/presence.cap.ts:50`
+- **Source:** `packages/types/src/capabilities/presence.cap.ts:47`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `presence`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPresenceProvider`

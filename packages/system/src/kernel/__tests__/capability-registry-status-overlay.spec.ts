@@ -27,8 +27,8 @@ import {
 } from '@camstack/types'
 import { CapabilityRegistry } from '../capability-registry.js'
 
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
-const OWNED_SLICE = { ...NATIVE, percentage: 90 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const OWNED_SLICE = { ...NATIVE, level: 90 }
 const DEVICE = 7
 const OTHER_DEVICE = 8
 const UNCLAIMED: StatusOverlayAnswer = { kind: 'unclaimed' }
@@ -307,7 +307,7 @@ describe('CapabilityRegistry.resolveClaimedStatus — parsed with the cap status
 
   it('an unparseable merged slice is `null` ("not reported", D315) with ONE tagged warn per (cap, device) transition', async () => {
     const { reg, logger } = newRegistry()
-    let slice: Record<string, unknown> = { ...OWNED_SLICE, percentage: 'quite full' }
+    let slice: Record<string, unknown> = { ...OWNED_SLICE, level: 'quite full' }
     reg.setStatusOverlay(
       knownOverlay((cap, id) =>
         cap === 'battery' && id === DEVICE ? { kind: 'claimed', slice } : UNCLAIMED,
@@ -334,7 +334,7 @@ describe('CapabilityRegistry.resolveClaimedStatus — parsed with the cap status
       kind: 'claimed',
       slice: OWNED_SLICE,
     })
-    slice = { ...OWNED_SLICE, percentage: 'quite full' }
+    slice = { ...OWNED_SLICE, level: 'quite full' }
     expect(await reg.resolveClaimedStatus('battery', DEVICE)).toEqual({
       kind: 'claimed',
       slice: null,

@@ -612,8 +612,8 @@ describe('SystemMirror — utility methods', () => {
 
     it('where: custom predicate over info + proxy', async () => {
       const { sm, h } = await makeFleet()
-      h.applyState(1, 'battery', { sleeping: true, percentage: 30 })
-      h.applyState(5, 'battery', { sleeping: false, percentage: 80 })
+      h.applyState(1, 'battery', { sleeping: true, level: 30 })
+      h.applyState(5, 'battery', { sleeping: false, level: 80 })
       await flushMicrotasks()
 
       const result = sm.query({
@@ -741,9 +741,9 @@ describe('SystemMirror — utility methods', () => {
         h.deviceInfos.set(2, mkInfo(2))
         h.deviceInfos.set(3, mkInfo(3))
         h.deviceInfos.set(4, mkInfo(4))
-        h.applyState(1, 'battery', { sleeping: true, percentage: 30 })
-        h.applyState(2, 'battery', { sleeping: false, percentage: 80 })
-        h.applyState(3, 'battery', { sleeping: true, percentage: 12 })
+        h.applyState(1, 'battery', { sleeping: true, level: 30 })
+        h.applyState(2, 'battery', { sleeping: false, level: 80 })
+        h.applyState(3, 'battery', { sleeping: true, level: 12 })
       })
     }
 
@@ -756,19 +756,16 @@ describe('SystemMirror — utility methods', () => {
 
     it('mapState: extract a derived value per device', async () => {
       const { sm } = await withBatteries()
-      const percentages = sm.mapState<{ percentage: number }, number>(
-        'battery',
-        (s) => s.percentage,
-      )
+      const percentages = sm.mapState<{ level: number }, number>('battery', (s) => s.level)
       expect([...percentages].toSorted((a, b) => a - b)).toEqual([12, 30, 80])
       sm.dispose()
     })
 
     it('findState: returns the first match or null', async () => {
       const { sm } = await withBatteries()
-      const lowest = sm.findState<{ percentage: number }>('battery', (s) => s.percentage < 20)
+      const lowest = sm.findState<{ level: number }>('battery', (s) => s.level < 20)
       expect(lowest?.deviceId).toBe(3)
-      const none = sm.findState<{ percentage: number }>('battery', (s) => s.percentage > 99)
+      const none = sm.findState<{ level: number }>('battery', (s) => s.level > 99)
       expect(none).toBeNull()
       sm.dispose()
     })
@@ -784,7 +781,7 @@ describe('SystemMirror — utility methods', () => {
     it('countByState filters by predicate over slice', async () => {
       const { sm } = await withBatteries()
       expect(sm.countByState<{ sleeping: boolean }>('battery', (s) => s.sleeping)).toBe(2)
-      expect(sm.countByState<{ percentage: number }>('battery', (s) => s.percentage > 50)).toBe(1)
+      expect(sm.countByState<{ level: number }>('battery', (s) => s.level > 50)).toBe(1)
       sm.dispose()
     })
   })
@@ -916,7 +913,7 @@ describe('SystemMirror — utility methods', () => {
     it('resolves immediately when the slice already matches', async () => {
       const { sm } = await makeReadySm((h) => {
         h.upsertBinding(mkBinding(1, ['battery']))
-        h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
+        h.applyState(1, 'battery', { sleeping: false, level: 80 })
       })
       const result = await sm.waitForState<{ sleeping: boolean }>(
         1,
@@ -932,7 +929,7 @@ describe('SystemMirror — utility methods', () => {
       const { sm, h } = await makeReadySm((harness) => {
         harness.upsertBinding(mkBinding(1, ['battery']))
       })
-      const promise = sm.waitForState<{ sleeping: boolean; percentage: number }>(
+      const promise = sm.waitForState<{ sleeping: boolean; level: number }>(
         1,
         'battery',
         (s) => !s.sleeping,
@@ -940,13 +937,13 @@ describe('SystemMirror — utility methods', () => {
       )
 
       // Two non-matching pushes, then a matching one.
-      h.applyState(1, 'battery', { sleeping: true, percentage: 30 })
-      h.applyState(1, 'battery', { sleeping: true, percentage: 28 })
-      h.applyState(1, 'battery', { sleeping: false, percentage: 90 })
+      h.applyState(1, 'battery', { sleeping: true, level: 30 })
+      h.applyState(1, 'battery', { sleeping: true, level: 28 })
+      h.applyState(1, 'battery', { sleeping: false, level: 90 })
 
       const result = await promise
       expect(result.sleeping).toBe(false)
-      expect(result.percentage).toBe(90)
+      expect(result.level).toBe(90)
       sm.dispose()
     })
 
@@ -973,7 +970,7 @@ describe('SystemMirror — utility methods', () => {
       await flushMicrotasks()
 
       // Real match:
-      h.applyState(1, 'battery', { sleeping: false, percentage: 50 })
+      h.applyState(1, 'battery', { sleeping: false, level: 50 })
 
       const result = await promise
       expect(result.sleeping).toBe(false)
@@ -1170,11 +1167,11 @@ describe('SystemMirror — utility methods', () => {
     it('dump() returns a deep copy — caller mutations do not leak', async () => {
       const { sm } = await makeReadySm((h) => {
         h.upsertBinding(mkBinding(1, ['battery']))
-        h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
+        h.applyState(1, 'battery', { sleeping: false, level: 80 })
       })
-      const dump = sm.dump(1) as { state: { battery: { percentage: number } } }
-      dump.state.battery.percentage = 999
-      expect(sm.getDeviceById(1)?.state.battery.value?.percentage).toBe(80)
+      const dump = sm.dump(1) as { state: { battery: { level: number } } }
+      dump.state.battery.level = 999
+      expect(sm.getDeviceById(1)?.state.battery.value?.level).toBe(80)
       sm.dispose()
     })
   })

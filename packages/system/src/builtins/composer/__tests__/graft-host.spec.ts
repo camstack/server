@@ -129,9 +129,9 @@ describe('graft — the provider is the cap’s composedMethods', () => {
       durationMs: 0,
     })
     await expect(battery['getStatus']?.({ deviceId: FEEDER_ID })).resolves.toBeNull()
-    merged.set(`${FEEDER_ID}#battery`, { percentage: 100, charging: 'none' })
+    merged.set(`${FEEDER_ID}#battery`, { level: 100, charging: 'none' })
     await expect(battery['getStatus']?.({ deviceId: FEEDER_ID })).resolves.toEqual({
-      percentage: 100,
+      level: 100,
       charging: 'none',
     })
     expect(host.grafted(FEEDER_ID)).toEqual(new Set(['battery']))

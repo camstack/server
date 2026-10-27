@@ -17,7 +17,7 @@ import { readingMeta } from '../units/quantity.js'
  */
 export const TemperatureSensorStatusSchema = z.object({
   /** Current temperature in Celsius. `null` when the sample was refused (D393). */
-  celsius: z
+  temperature: z
     .number()
     .nullable()
     .meta(readingMeta('temperature', { precision: 1, label: 'Temperature' })),
@@ -52,7 +52,7 @@ export const temperatureSensorCapability = {
    */
   history: {
     fields: {
-      celsius: { kind: 'gauge', unit: '°C', deadband: 0.1 },
+      temperature: { kind: 'gauge', unit: '°C', deadband: 0.1 },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides

@@ -243,8 +243,8 @@ describe('template compile and save', () => {
 
   it('compiles a temperature group and reads back as the same spec', () => {
     const spec = group('temperature', 'mean', [
-      member(1, 'temperature-sensor', 'celsius'),
-      member(2, 'temperature-sensor', 'celsius'),
+      member(1, 'temperature-sensor', 'temperature'),
+      member(2, 'temperature-sensor', 'temperature'),
     ])
     const compiled = compileHelper(spec)
     expect(compiled.ok).toBe(true)
@@ -265,7 +265,7 @@ describe('template compile and save', () => {
 
   it('compiles seventeen members, past the expression call cap', () => {
     const members = Array.from({ length: 17 }, (_, index) =>
-      member(index + 1, 'temperature-sensor', 'celsius'),
+      member(index + 1, 'temperature-sensor', 'temperature'),
     )
     const compiled = compileHelper(group('temperature', 'mean', members))
     expect(compiled.ok).toBe(true)
@@ -312,7 +312,7 @@ describe('template compile and save', () => {
       ]),
     )
     const temperature = compileHelper(
-      group('temperature', 'min', [member(1, 'temperature-sensor', 'celsius')]),
+      group('temperature', 'min', [member(1, 'temperature-sensor', 'temperature')]),
     )
     expect(numeric.ok && temperature.ok).toBe(true)
     if (!numeric.ok || !temperature.ok) return
@@ -326,7 +326,7 @@ describe('template compile and save', () => {
 
   it('refuses a temperature member that reports another quantity', () => {
     const compiled = compileHelper(
-      group('temperature', 'mean', [member(1, 'temperature-sensor', 'celsius')]),
+      group('temperature', 'mean', [member(1, 'temperature-sensor', 'temperature')]),
     )
     expect(compiled.ok).toBe(true)
     if (!compiled.ok) return
@@ -340,7 +340,7 @@ describe('template compile and save', () => {
 
   it('refuses features that are not the compiled template', () => {
     const compiled = compileHelper(
-      group('humidity', 'mean', [member(1, 'humidity-sensor', 'percent')]),
+      group('humidity', 'mean', [member(1, 'humidity-sensor', 'humidity')]),
     )
     expect(compiled.ok).toBe(true)
     if (!compiled.ok) return
@@ -362,7 +362,7 @@ describe('template compile and save', () => {
       multiple: true,
       max: 64,
       deviceTypes: [DeviceType.Sensor],
-      accept: [{ cap: 'power-meter', fieldPath: 'watts', valueKind: 'number' }],
+      accept: [{ cap: 'power-meter', fieldPath: 'power', valueKind: 'number' }],
     })
   })
 })
@@ -377,12 +377,12 @@ describe('a free expression is not a helper', () => {
 
   it('still averages a stale sensor into the room temperature', () => {
     const feature = room.features.find((item) => item.cap === 'temperature-sensor')
-    const source = feature?.kind === 'fields' ? feature.fields.celsius : undefined
+    const source = feature?.kind === 'fields' ? feature.fields.temperature : undefined
     expect(source?.kind).toBe('expression')
     if (source === undefined || t1 === undefined || t2 === undefined || t3 === undefined) return
     const reading = (value: SourceReading, item: CompositionSourceRef) =>
       [
-        compositionReadKey({ source: item, cap: 'temperature-sensor', fieldPath: 'celsius' }),
+        compositionReadKey({ source: item, cap: 'temperature-sensor', fieldPath: 'temperature' }),
         value,
       ] as const
     const outcome = evaluateCompositionField({

@@ -24,7 +24,7 @@ import { OWNED_FIELDS_KEY } from '../field-ownership.js'
 import { type Harness, registerCamera, setup } from './device-manager-harness.js'
 
 const PROVIDERS = { reloadableProviders: ['provider-hikvision', 'provider-reolink'] }
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
 const OWNER = 'blk-1'
 
 async function cameraWithBattery(h: Harness, stableId = 'cam-a'): Promise<number> {
@@ -54,7 +54,7 @@ describe('claimFields / patchOwnedFields — the planned field set is explicit (
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
 
-    const c = await claim(h, id, ['percentage', 'charging'], { percentage: 90 })
+    const c = await claim(h, id, ['level', 'charging'], { level: 90 })
     expect(c).toEqual({ ok: true, changed: true })
     expect(await h.deviceState.listClaims({})).toEqual({
       state: 'loaded',
@@ -64,7 +64,7 @@ describe('claimFields / patchOwnedFields — the planned field set is explicit (
           capName: 'battery',
           owner: OWNER,
           mode: 'replace',
-          fields: ['percentage', 'charging'],
+          fields: ['level', 'charging'],
         },
       ],
     })
@@ -80,7 +80,7 @@ describe('claimFields / patchOwnedFields — the planned field set is explicit (
     expect(p).toEqual({ ok: true, changed: true })
     expect(await h.capSlice(id, 'battery')).toEqual({
       ...NATIVE,
-      percentage: 90,
+      level: 90,
       charging: 'unknown',
     })
   })
@@ -88,7 +88,7 @@ describe('claimFields / patchOwnedFields — the planned field set is explicit (
   it('a value outside the claim is refused by name — on a patch, and on the claim itself (not stored)', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
+    await claim(h, id, ['level'], { level: 90 })
 
     const patch = await h.deviceState.patchOwnedFields({
       deviceId: id,
@@ -101,7 +101,7 @@ describe('claimFields / patchOwnedFields — the planned field set is explicit (
 
     const id2 = await cameraWithBattery(h, 'cam-b')
     const rowWrites = h.settings.writeDeviceRuntimeState.mock.calls.length
-    const bad = await claim(h, id2, ['percentage'], { percentage: 1, sleeping: true })
+    const bad = await claim(h, id2, ['level'], { level: 1, sleeping: true })
     expect(bad).toMatchObject({ ok: false, code: 'field-not-claimed' })
     if (!bad.ok) expect(bad.message).toContain('sleeping')
     // Refused before either store was touched.
@@ -112,7 +112,7 @@ describe('claimFields / patchOwnedFields — the planned field set is explicit (
 
   it('an unknown device is a named refusal, never a throw', async () => {
     const h = await setup(PROVIDERS)
-    expect(await claim(h, 999_999, ['percentage'], {})).toMatchObject({
+    expect(await claim(h, 999_999, ['level'], {})).toMatchObject({
       ok: false,
       code: 'unknown-device',
     })
@@ -126,7 +126,7 @@ describe('the index is written BEFORE the row on a claim, AFTER it on a release'
     const rowWrites = h.settings.writeDeviceRuntimeState.mock.calls.length
     h.settings.writeAddonStore.mockRejectedValueOnce(new Error('sqlite busy'))
 
-    await expect(claim(h, id, ['percentage'], { percentage: 90 })).rejects.toThrow('sqlite busy')
+    await expect(claim(h, id, ['level'], { level: 90 })).rejects.toThrow('sqlite busy')
 
     expect(h.settings.writeDeviceRuntimeState.mock.calls.length).toBe(rowWrites)
     expect(await h.capSlice(id, 'battery')).toEqual(NATIVE)
@@ -138,7 +138,7 @@ describe('the index is written BEFORE the row on a claim, AFTER it on a release'
     const id = await cameraWithBattery(h)
     h.settings.writeDeviceRuntimeState.mockRejectedValueOnce(new Error('sqlite busy'))
 
-    await expect(claim(h, id, ['percentage'], { percentage: 90 })).rejects.toThrow('sqlite busy')
+    await expect(claim(h, id, ['level'], { level: 90 })).rejects.toThrow('sqlite busy')
 
     // The native stands; the index still names the device (a crash here leaves
     // at worst an index entry with no row claim — never the reverse).
@@ -154,7 +154,7 @@ describe('the index is written BEFORE the row on a claim, AFTER it on a release'
   it('a release removes the entry after the row: the row is rewritten without $owned, then the listing is empty', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
+    await claim(h, id, ['level'], { level: 90 })
 
     const r = await h.deviceState.releaseClaim({ deviceId: id, capName: 'battery', owner: OWNER })
     expect(r).toEqual({ ok: true, changed: true })
@@ -167,14 +167,14 @@ describe('the index is written BEFORE the row on a claim, AFTER it on a release'
   it('a re-claim by another owner is refused and the first owner keeps its index entry', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
+    await claim(h, id, ['level'], { level: 90 })
 
     const other = await h.deviceState.claimFields({
       deviceId: id,
       capName: 'battery',
       owner: 'blk-2',
       mode: 'replace',
-      fields: ['percentage'],
+      fields: ['level'],
       values: {},
     })
     expect(other).toMatchObject({ ok: false, code: 'owned-by-other' })
@@ -198,13 +198,13 @@ describe('listClaims — an index that has not loaded says so (D315)', () => {
     const h = await setup(PROVIDERS)
     const a = await cameraWithBattery(h, 'cam-a')
     const b = await cameraWithBattery(h, 'cam-b')
-    await claim(h, a, ['percentage'], { percentage: 1 })
+    await claim(h, a, ['level'], { level: 1 })
     await h.deviceState.claimFields({
       deviceId: b,
       capName: 'battery',
       owner: 'other-9',
       mode: 'replace',
-      fields: ['percentage'],
+      fields: ['level'],
       values: {},
     })
     const listing = await h.deviceState.listClaims({ ownerPrefix: 'blk-' })
@@ -216,7 +216,7 @@ describe('the index and the seed (S6, ruling M)', () => {
   it('removeDevice prunes the index (i)', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
+    await claim(h, id, ['level'], { level: 90 })
 
     await h.provider.removeDevice({ deviceId: id })
 
@@ -247,8 +247,8 @@ describe('the index and the seed (S6, ruling M)', () => {
       expect(reads.mock.invocationCallOrder.at(-1) ?? Infinity).toBeLessThan(firstWrite)
 
       // Read once per process: a claim and a later native write do not re-read.
-      await claim(h, a, ['percentage'], { percentage: 90 })
-      await h.setCapSlice(a, 'battery', { ...NATIVE, percentage: 41 })
+      await claim(h, a, ['level'], { level: 90 })
+      await h.setCapSlice(a, 'battery', { ...NATIVE, level: 41 })
       await vi.advanceTimersByTimeAsync(1_100)
       expect(readsOf()).toBe(1)
     } finally {
@@ -331,9 +331,9 @@ describe('the index and the seed (S6, ruling M)', () => {
     const id = await cameraWithBattery(h) // the first write seeded it
     const view = vi.spyOn(FieldClaimsIndex.prototype, 'view')
     try {
-      await h.setCapSlice(id, 'battery', { ...NATIVE, percentage: 41, lastUpdated: 2 })
+      await h.setCapSlice(id, 'battery', { ...NATIVE, level: 41, lastUpdated: 2 })
       expect(view).not.toHaveBeenCalled()
-      expect(await h.capSlice(id, 'battery')).toMatchObject({ percentage: 41 })
+      expect(await h.capSlice(id, 'battery')).toMatchObject({ level: 41 })
     } finally {
       view.mockRestore()
     }
@@ -342,16 +342,16 @@ describe('the index and the seed (S6, ruling M)', () => {
   it('getNativeCapSlice answers the shadow; getCapSlice answers the merge', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
-    await h.setCapSlice(id, 'battery', { ...NATIVE, percentage: 41 })
+    await claim(h, id, ['level'], { level: 90 })
+    await h.setCapSlice(id, 'battery', { ...NATIVE, level: 41 })
 
     expect(await h.deviceState.getCapSlice({ deviceId: id, capName: 'battery' })).toEqual({
       ...NATIVE,
-      percentage: 90,
+      level: 90,
     })
     expect(await h.deviceState.getNativeCapSlice({ deviceId: id, capName: 'battery' })).toEqual({
       ...NATIVE,
-      percentage: 41,
+      level: 41,
     })
   })
 
@@ -369,7 +369,7 @@ describe('the index and the seed (S6, ruling M)', () => {
               capName: 'battery',
               owner: 'x',
               mode: 'replace',
-              fields: ['percentage'],
+              fields: ['level'],
             },
             'garbage',
           ],
@@ -387,17 +387,17 @@ describe('the index and the seed (S6, ruling M)', () => {
           battery: {
             owner: OWNER,
             mode: 'replace',
-            fields: ['percentage'],
-            values: { percentage: 90 },
+            fields: ['level'],
+            values: { level: 90 },
           },
         },
       })
       const reads = h.settings.readDeviceRuntimeState
       reads.mockClear()
 
-      await h.setCapSlice(id, 'battery', { ...NATIVE, percentage: 41 })
+      await h.setCapSlice(id, 'battery', { ...NATIVE, level: 41 })
       expect(reads.mock.calls.filter(([d]) => d === id)).toHaveLength(1)
-      expect(await h.capSlice(id, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+      expect(await h.capSlice(id, 'battery')).toEqual({ ...NATIVE, level: 90 })
 
       await vi.advanceTimersByTimeAsync(1_100)
       const lastRow = h.settings.writeDeviceRuntimeState.mock.calls.at(-1)?.[1]
@@ -405,8 +405,8 @@ describe('the index and the seed (S6, ruling M)', () => {
         battery: {
           owner: OWNER,
           mode: 'replace',
-          fields: ['percentage'],
-          values: { percentage: 90 },
+          fields: ['level'],
+          values: { level: 90 },
         },
       })
     } finally {
@@ -417,7 +417,7 @@ describe('the index and the seed (S6, ruling M)', () => {
   it('a competing claim is refused by the ROW before the index is touched: the index never names an owner the row refused (I-3)', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
+    await claim(h, id, ['level'], { level: 90 })
     const indexWrites = h.settings.writeAddonStore.mock.calls.length
     // Were the index written first, this would make the claim REJECT instead of refuse.
     h.settings.writeAddonStore.mockRejectedValueOnce(new Error('sqlite busy'))
@@ -427,7 +427,7 @@ describe('the index and the seed (S6, ruling M)', () => {
       capName: 'battery',
       owner: 'blk-2',
       mode: 'replace',
-      fields: ['percentage'],
+      fields: ['level'],
       values: {},
     })
     expect(other).toMatchObject({ ok: false, code: 'owned-by-other' })
@@ -441,7 +441,7 @@ describe('the index and the seed (S6, ruling M)', () => {
   it('an index write that fails during removeDevice does not block the removal — it is logged, tagged, and the entry stays stale', async () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
-    await claim(h, id, ['percentage'], { percentage: 90 })
+    await claim(h, id, ['level'], { level: 90 })
     h.settings.writeAddonStore.mockRejectedValueOnce(new Error('sqlite busy'))
 
     await expect(h.provider.removeDevice({ deviceId: id })).resolves.toBeUndefined()
@@ -465,13 +465,13 @@ describe('a device whose migration is in flight takes no claim, patch or release
     await gate.reached
 
     const refusal = { ok: false, code: 'migration-in-flight' }
-    expect(await claim(h, sourceId, ['percentage'], { percentage: 90 })).toMatchObject(refusal)
+    expect(await claim(h, sourceId, ['level'], { level: 90 })).toMatchObject(refusal)
     expect(
       await h.deviceState.patchOwnedFields({
         deviceId: targetId,
         capName: 'battery',
         owner: OWNER,
-        values: { percentage: 1 },
+        values: { level: 1 },
       }),
     ).toMatchObject(refusal)
     expect(
@@ -485,7 +485,7 @@ describe('a device whose migration is in flight takes no claim, patch or release
 
     gate.release()
     await migration
-    expect(await claim(h, sourceId, ['percentage'], { percentage: 90 })).toEqual({
+    expect(await claim(h, sourceId, ['level'], { level: 90 })).toEqual({
       ok: true,
       changed: true,
     })

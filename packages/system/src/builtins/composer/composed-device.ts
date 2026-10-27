@@ -143,7 +143,7 @@ export class ComposedDevice
     this.ensureExtra(brightnessCapability.name, caps.includes(brightnessCapability.name), () => {
       this.ctx.registerNativeCap(brightnessCapability, {
         setBrightness: async (input) => {
-          await this.dispatch('brightness', 'setBrightness', { percentage: input.percentage })
+          await this.dispatch('brightness', 'setBrightness', { level: input.level })
         },
       })
     })
@@ -170,8 +170,7 @@ export class ComposedDevice
       this.dispatch(cap, method, present(args))
     this.ensureExtra(fanControlCapability.name, caps.includes(fanControlCapability.name), () => {
       this.ctx.registerNativeCap(fanControlCapability, {
-        setPercentage: (input) =>
-          call('fan-control', 'setPercentage', { percentage: input.percentage }),
+        setPercentage: (input) => call('fan-control', 'setPercentage', { speed: input.speed }),
         setPreset: (input) => call('fan-control', 'setPreset', { preset: input.preset }),
         setDirection: (input) =>
           call('fan-control', 'setDirection', { direction: input.direction }),
@@ -214,7 +213,7 @@ export class ComposedDevice
         stop: () => call('media-player', 'stop', {}),
         next: () => call('media-player', 'next', {}),
         previous: () => call('media-player', 'previous', {}),
-        seek: (input) => call('media-player', 'seek', { positionMs: input.positionMs }),
+        seek: (input) => call('media-player', 'seek', { position: input.position }),
         setMute: (input) => call('media-player', 'setMute', { muted: input.muted }),
         setShuffle: (input) => call('media-player', 'setShuffle', { shuffle: input.shuffle }),
         setRepeat: (input) => call('media-player', 'setRepeat', { repeat: input.repeat }),

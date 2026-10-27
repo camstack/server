@@ -166,7 +166,7 @@ describe('HA actuator caps — Phase C2', () => {
 
     it('status schema accepts fully-populated ceiling-fan sample', () => {
       const sample = {
-        percentage: 60,
+        speed: 60,
         preset: 'quiet',
         availablePresets: ['quiet', 'normal', 'turbo'],
         direction: 'forward' as const,
@@ -178,7 +178,7 @@ describe('HA actuator caps — Phase C2', () => {
 
     it('status schema accepts a minimal single-speed exhaust-fan sample', () => {
       const sample = {
-        percentage: null,
+        speed: null,
         preset: '',
         availablePresets: [],
         direction: null,
@@ -190,7 +190,7 @@ describe('HA actuator caps — Phase C2', () => {
 
     it('setPercentage rejects > 100', () => {
       expect(() =>
-        fanControlCapability.methods.setPercentage.input.parse({ deviceId: 1, percentage: 120 }),
+        fanControlCapability.methods.setPercentage.input.parse({ deviceId: 1, speed: 120 }),
       ).toThrow()
     })
 

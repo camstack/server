@@ -322,7 +322,7 @@ function writesFor(helper: HistoryHelperSpec, answer: HistoryValue): readonly Se
     helper.kind !== 'integral'
       ? { cap: 'numeric-sensor', path: 'value' }
       : helper.output === 'energy'
-        ? { cap: 'power-meter', path: 'kwhTotal' }
+        ? { cap: 'power-meter', path: 'energy' }
         : { cap: 'meter', path: 'value' }
   const total = answer.included + answer.excluded
   return [

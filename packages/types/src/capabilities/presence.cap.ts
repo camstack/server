@@ -38,9 +38,6 @@ export const PresenceStatusSchema = z.object({
   location: z.string().nullable(),
   /** GPS coordinates when available. Null otherwise. */
   gps: GpsLocationSchema.nullable(),
-  /** Optional battery level of the tracking device (0..100). Null
-   *  when not reported. */
-  batteryPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })
@@ -73,14 +70,7 @@ export const presenceCapability = {
    * `scripts/check-runtime-state-durability.ts`.
    */
   durability: 'restored',
-  /**
-   * History (D850): recorded series.
-   */
-  history: {
-    fields: {
-      batteryPercent: { kind: 'gauge', unit: '%', deadband: 1 },
-    },
-  },
+  history: 'none',
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],

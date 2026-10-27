@@ -15,12 +15,12 @@ import { OWNED_FIELDS_KEY } from '../field-ownership.js'
 import { flushDebounce, harness, loadedIndex, NOT_LOADED_INDEX } from './mirror-harness.js'
 
 const realPolicy = runtimeStatePolicyFor
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
 const OWNED = {
   owner: 'blk-1',
   mode: 'replace' as const,
-  fields: ['percentage'],
-  values: { percentage: 90 },
+  fields: ['level'],
+  values: { level: 90 },
 }
 const REFUSAL = 'runtime-state row unreadable'
 /** A whole `audio-metrics` slice (session-only): an `add` claim must build a slice its schema accepts. */
@@ -52,28 +52,28 @@ describe('a device with NO claims behaves exactly as before (the live-hub contra
     expect(h.events).toEqual([])
     await h.mirror.ensureSeeded(101, h.settings, NOT_LOADED_INDEX) // already seeded: no read
     expect(h.mirror.applySingleCapUpdate(101, 'battery', NATIVE)).toBe(false) // identical: no emit
-    expect(h.mirror.applySingleCapUpdate(101, 'battery', { ...NATIVE, percentage: 41 })).toBe(true)
+    expect(h.mirror.applySingleCapUpdate(101, 'battery', { ...NATIVE, level: 41 })).toBe(true)
     h.mirror.applySingleCapUpdate(101, 'audio-metrics', { avgDbfs: -40 })
     h.mirror.scheduleRuntimeStateDiskWrite(101, h.settings, 'battery')
     await flushDebounce()
 
     expect(h.events).toEqual([
-      { capName: 'battery', slice: { ...NATIVE, percentage: 41 } },
+      { capName: 'battery', slice: { ...NATIVE, level: 41 } },
       { capName: 'audio-metrics', slice: { avgDbfs: -40 } },
     ])
     expect(h.events.every((e) => !('native' in e))).toBe(true)
     expect(h.shadows).toEqual([])
     expect(new Set(h.categories)).toEqual(new Set([EventCategory.DeviceStateChanged]))
     expect(h.mirror.snapshotForDevice(101)).toEqual({
-      battery: { ...NATIVE, percentage: 41 },
+      battery: { ...NATIVE, level: 41 },
       'audio-metrics': { avgDbfs: -40 },
     })
-    expect(h.mirror.capSlice(101, 'battery')).toEqual({ ...NATIVE, percentage: 41 })
+    expect(h.mirror.capSlice(101, 'battery')).toEqual({ ...NATIVE, level: 41 })
     expect(h.mirror.capSlice(101, 'never-written')).toBeNull()
     expect(h.mirror.allSnapshots()).toEqual({ '101': h.mirror.snapshotForDevice(101) })
     expect(h.mirror.ownedCaps(101).size).toBe(0)
     expect(h.mirror.effectiveIfClaimed(101, 'battery')).toBeNull()
-    expect(h.writes).toEqual([{ deviceId: 101, blob: { battery: { ...NATIVE, percentage: 41 } } }])
+    expect(h.writes).toEqual([{ deviceId: 101, blob: { battery: { ...NATIVE, level: 41 } } }])
     expect(h.writes[0]?.blob).not.toHaveProperty(OWNED_FIELDS_KEY)
     expect(h.logs).toEqual([])
   })
@@ -84,9 +84,9 @@ describe('a device with NO claims behaves exactly as before (the live-hub contra
     const reads = vi.spyOn(h.settings, 'readDeviceRuntimeState')
     await h.mirror.ensureSeeded(101, h.settings, NOT_LOADED_INDEX)
     expect(reads).toHaveBeenCalledTimes(1)
-    expect(h.mirror.applySingleCapUpdate(101, 'battery', { ...NATIVE, percentage: 41 })).toBe(true)
-    expect(h.events).toEqual([{ capName: 'battery', slice: { ...NATIVE, percentage: 41 } }])
-    expect(h.mirror.snapshotForDevice(101)).toEqual({ battery: { ...NATIVE, percentage: 41 } })
+    expect(h.mirror.applySingleCapUpdate(101, 'battery', { ...NATIVE, level: 41 })).toBe(true)
+    expect(h.events).toEqual([{ capName: 'battery', slice: { ...NATIVE, level: 41 } }])
+    expect(h.mirror.snapshotForDevice(101)).toEqual({ battery: { ...NATIVE, level: 41 } })
     await h.mirror.ensureSeeded(101, h.settings, NOT_LOADED_INDEX)
     expect(reads).toHaveBeenCalledTimes(1)
   })
@@ -106,15 +106,15 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     const c = await h.mirror.claim(7, 'battery', OWNED, h.settings)
     expect(c).toEqual({ ok: true, changed: true })
     expect(h.shadows).toEqual([]) // a claim moves no native: nothing for the owner yet
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
-    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, percentage: 90 } })
-    expect(h.shadows).toEqual([{ capName: 'battery', native: { ...NATIVE, percentage: 41 } }])
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
-    expect(h.mirror.nativeSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 41 })
-    expect(h.mirror.snapshotForDevice(7)).toEqual({ battery: { ...NATIVE, percentage: 90 } })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
+    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, level: 90 } })
+    expect(h.shadows).toEqual([{ capName: 'battery', native: { ...NATIVE, level: 41 } }])
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
+    expect(h.mirror.nativeSlice(7, 'battery')).toEqual({ ...NATIVE, level: 41 })
+    expect(h.mirror.snapshotForDevice(7)).toEqual({ battery: { ...NATIVE, level: 90 } })
     expect(h.mirror.effectiveIfClaimed(7, 'battery')).toEqual({
       kind: 'slice',
-      slice: { ...NATIVE, percentage: 90 },
+      slice: { ...NATIVE, level: 90 },
     })
   })
 
@@ -122,12 +122,12 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     const h = harness(realPolicy)
     h.mirror.seedMirror(7, { battery: NATIVE })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
-    for (const percentage of [10, 20, 30]) {
-      h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage })
-      expect(h.mirror.capSlice(7, 'battery')?.percentage).toBe(90)
-      expect(h.events.at(-1)?.slice.percentage).toBe(90)
+    for (const level of [10, 20, 30]) {
+      h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level })
+      expect(h.mirror.capSlice(7, 'battery')?.level).toBe(90)
+      expect(h.events.at(-1)?.slice.level).toBe(90)
     }
-    expect(h.mirror.nativeSlice(7, 'battery')?.percentage).toBe(30)
+    expect(h.mirror.nativeSlice(7, 'battery')?.level).toBe(30)
   })
 
   it('a claimed field the composer has not written yet is HELD — the event stream never shows the native value for it (S5)', async () => {
@@ -136,7 +136,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     const c = await h.mirror.claim(
       7,
       'battery',
-      { ...OWNED, fields: ['percentage', 'charging'], values: { percentage: 90 } },
+      { ...OWNED, fields: ['level', 'charging'], values: { level: 90 } },
       h.settings,
     )
     expect(c).toEqual({ ok: true, changed: true })
@@ -146,10 +146,10 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
       kind: 'held',
       reason: 'claimed fields with no value yet: charging',
     })
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
     expect(h.events.filter((e) => e.capName === 'battery')).toEqual([])
     // The owner still learns the native, held or not — its derived field depends on it.
-    expect(h.shadows).toEqual([{ capName: 'battery', native: { ...NATIVE, percentage: 41 } }])
+    expect(h.shadows).toEqual([{ capName: 'battery', native: { ...NATIVE, level: 41 } }])
     const held = h.logs.filter((l) => l.message.includes('held'))
     expect(held).toHaveLength(1)
     expect(held[0]?.extras).toMatchObject({ tags: { deviceId: 7 } })
@@ -158,7 +158,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     expect(p).toEqual({ ok: true, changed: true })
     expect(h.events.at(-1)).toEqual({
       capName: 'battery',
-      slice: { ...NATIVE, percentage: 90, charging: 'unknown' },
+      slice: { ...NATIVE, level: 90, charging: 'unknown' },
     })
   })
 
@@ -169,7 +169,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     expect(h.mirror.capSlice(7, 'battery')).toBeNull()
     expect(h.events).toEqual([])
     h.mirror.applySingleCapUpdate(7, 'battery', NATIVE)
-    expect(h.events).toEqual([{ capName: 'battery', slice: { ...NATIVE, percentage: 90 } }])
+    expect(h.events).toEqual([{ capName: 'battery', slice: { ...NATIVE, level: 90 } }])
     expect(h.shadows).toEqual([{ capName: 'battery', native: NATIVE }])
   })
 
@@ -177,29 +177,29 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     const h = harness(realPolicy)
     h.mirror.seedMirror(7, { battery: NATIVE })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
-    await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 900 }, h.settings)
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 900 }, h.settings)
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
     expect(h.mirror.effectiveIfClaimed(7, 'battery')).toMatchObject({ kind: 'held' })
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
     expect(h.events.filter((e) => e.capName === 'battery')).toHaveLength(1) // only the claim's emit
     const warns = h.logs.filter((l) => l.level === 'warn' && l.message.includes('held'))
     expect(warns).toHaveLength(1)
     expect(warns[0]?.extras).toMatchObject({ tags: { deviceId: 7 } })
-    expect(JSON.stringify(warns[0]?.extras)).toContain('percentage')
+    expect(JSON.stringify(warns[0]?.extras)).toContain('level')
   })
 
   it('release emits the native slice EXACTLY (deep-equal to the last native write)', async () => {
     const h = harness(realPolicy)
     h.mirror.seedMirror(7, { battery: NATIVE })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
     const r = await h.mirror.release(7, 'battery', 'blk-1', h.settings)
     expect(r).toEqual({ ok: true, changed: true })
-    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, percentage: 41 } })
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 41 })
+    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, level: 41 } })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 41 })
     expect(h.mirror.ownedCaps(7).size).toBe(0)
     expect(h.mirror.effectiveIfClaimed(7, 'battery')).toBeNull()
-    expect(h.writes.at(-1)?.blob).toEqual({ battery: { ...NATIVE, percentage: 41 } })
+    expect(h.writes.at(-1)?.blob).toEqual({ battery: { ...NATIVE, level: 41 } })
   })
 
   it('release of an add claim removes the cap and emits nothing', async () => {
@@ -223,7 +223,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
       await h.mirror.claim(7, 'battery', { ...OWNED, owner: 'blk-2' }, h.settings),
     ).toMatchObject({ ok: false, code: 'owned-by-other' })
     expect(
-      await h.mirror.patchOwned(7, 'battery', 'blk-2', { percentage: 1 }, h.settings),
+      await h.mirror.patchOwned(7, 'battery', 'blk-2', { level: 1 }, h.settings),
     ).toMatchObject({ ok: false, code: 'owned-by-other' })
     expect(
       await h.mirror.patchOwned(7, 'battery', 'blk-1', { charging: 'dc' }, h.settings),
@@ -244,7 +244,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     })
     // Nothing above changed the claim.
     expect(h.mirror.ownedCaps(7).get('battery')).toEqual(OWNED)
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
   })
 
   it('claim resolves only after the row write landed (write-through)', async () => {
@@ -279,16 +279,17 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     h.mirror.seedMirror(7, { battery: NATIVE })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
     expect(h.writes).toHaveLength(1)
-    await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 91 }, h.settings)
+    await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 91 }, h.settings)
     expect(h.writes).toHaveLength(1) // not yet: debounced
     await flushDebounce()
     expect(h.writes).toHaveLength(2)
     expect(h.writes[1]?.blob[OWNED_FIELDS_KEY]).toEqual({
-      battery: { ...OWNED, values: { percentage: 91 } },
+      battery: { ...OWNED, values: { level: 91 } },
     })
-    expect(
-      await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 91 }, h.settings),
-    ).toEqual({ ok: true, changed: false })
+    expect(await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 91 }, h.settings)).toEqual({
+      ok: true,
+      changed: false,
+    })
     await flushDebounce()
     expect(h.writes).toHaveLength(2)
   })
@@ -316,17 +317,17 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
   it('seedMirror never overwrites a slice already in memory, and an in-memory claim wins over the disk copy (S6)', async () => {
     const h = harness(realPolicy)
     await h.mirror.ensureSeeded(7, h.settings, loadedIndex([]))
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 55 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 55 })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
     h.mirror.seedMirror(7, {
       battery: NATIVE,
       zones: { zones: [] },
-      [OWNED_FIELDS_KEY]: { battery: { ...OWNED, owner: 'blk-stale', values: { percentage: 1 } } },
+      [OWNED_FIELDS_KEY]: { battery: { ...OWNED, owner: 'blk-stale', values: { level: 1 } } },
     })
-    expect(h.mirror.nativeSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 55 })
+    expect(h.mirror.nativeSlice(7, 'battery')).toEqual({ ...NATIVE, level: 55 })
     expect(h.mirror.nativeSlice(7, 'zones')).toEqual({ zones: [] }) // a gap is filled
     expect(h.mirror.ownedCaps(7).get('battery')).toEqual(OWNED)
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
   })
 
   it('a malformed $owned entry on the row is dropped by name and logged once with tags.deviceId', () => {
@@ -362,7 +363,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     expect(initial).not.toHaveProperty(OWNED_FIELDS_KEY)
     // …while the mirror got both halves, and serves the merged view.
     expect(restarted.mirror.ownedCaps(7).get('battery')).toEqual(OWNED)
-    expect(restarted.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    expect(restarted.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
   })
 
   it('ensureSeeded on a device the LOADED index does not name knows its CLAIMS without a read — and that never licenses a row write (S6, D447, D677)', async () => {
@@ -408,7 +409,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     expect(reads).toHaveBeenCalledTimes(1)
     expect(h.mirror.isSeeded(7)).toBe(true)
     expect(h.mirror.ownedCaps(7).get('battery')).toEqual(OWNED)
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
     expect(h.events).toEqual([]) // a seed is population, not a transition
   })
 
@@ -447,25 +448,25 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
       'battery',
       {
         ...OWNED,
-        fields: ['percentage', 'charging'],
-        values: { percentage: 90, charging: 'unknown' },
+        fields: ['level', 'charging'],
+        values: { level: 90, charging: 'unknown' },
       },
       h.settings,
     )
-    expect(h.events.at(-1)?.slice).toEqual({ ...NATIVE, percentage: 90, charging: 'unknown' })
+    expect(h.events.at(-1)?.slice).toEqual({ ...NATIVE, level: 90, charging: 'unknown' })
 
     const narrowed = await h.mirror.claim(
       7,
       'battery',
-      { ...OWNED, fields: ['percentage'], values: {} },
+      { ...OWNED, fields: ['level'], values: {} },
       h.settings,
     )
     expect(narrowed).toEqual({ ok: true, changed: true })
-    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, percentage: 90 } })
-    expect(h.mirror.ownedCaps(7).get('battery')?.values).toEqual({ percentage: 90 })
-    expect(h.mirror.ownedCaps(7).get('battery')?.fields).toEqual(['percentage'])
+    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, level: 90 } })
+    expect(h.mirror.ownedCaps(7).get('battery')?.values).toEqual({ level: 90 })
+    expect(h.mirror.ownedCaps(7).get('battery')?.fields).toEqual(['level'])
     expect(h.writes.at(-1)?.blob[OWNED_FIELDS_KEY]).toEqual({
-      battery: { ...OWNED, fields: ['percentage'], values: { percentage: 90 } },
+      battery: { ...OWNED, fields: ['level'], values: { level: 90 } },
     })
 
     const writesBefore = h.writes.length
@@ -475,7 +476,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     ).toMatchObject({ ok: false, code: 'invalid-slice' })
     expect(h.writes).toHaveLength(writesBefore)
     expect(h.events).toHaveLength(eventsBefore)
-    expect(h.mirror.ownedCaps(7).get('battery')?.fields).toEqual(['percentage'])
+    expect(h.mirror.ownedCaps(7).get('battery')?.fields).toEqual(['level'])
   })
 
   it('a re-claim of a restored doorbell keeps lastPressedAt the row already holds', async () => {
@@ -517,7 +518,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
       await h.mirror.claim(
         7,
         'battery',
-        { ...OWNED, values: { percentage: 90, charging: 'dc' } },
+        { ...OWNED, values: { level: 90, charging: 'dc' } },
         h.settings,
       ),
     ).toMatchObject({ ok: false, code: 'field-not-claimed' })
@@ -528,13 +529,13 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     const h = harness(realPolicy)
     h.mirror.seedMirror(7, { battery: NATIVE })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
-    await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 91 }, h.settings)
+    await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 91 }, h.settings)
     expect(h.shadows).toEqual([]) // owned writes move no native
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 42 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 42 })
     expect(h.shadows).toEqual([
-      { capName: 'battery', native: { ...NATIVE, percentage: 41 } },
-      { capName: 'battery', native: { ...NATIVE, percentage: 42 } },
+      { capName: 'battery', native: { ...NATIVE, level: 41 } },
+      { capName: 'battery', native: { ...NATIVE, level: 42 } },
     ])
     expect(h.events.every((e) => !('native' in e))).toBe(true)
     // An `add` claim has no native to shadow, even when the device also writes the cap.
@@ -548,7 +549,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
 
   it('seedMirror in `replace` mode makes the mirror answer exactly the blob — the migration reseed (I-1)', async () => {
     const h = harness(realPolicy)
-    h.mirror.seedMirror(7, { battery: { ...NATIVE, percentage: 55 }, zones: { zones: [] } })
+    h.mirror.seedMirror(7, { battery: { ...NATIVE, level: 55 }, zones: { zones: [] } })
     await h.mirror.claim(7, 'battery', OWNED, h.settings)
     const swappedRow = { battery: NATIVE, 'device-status': { online: true, lastChangedAt: 1 } }
     h.mirror.seedMirror(7, swappedRow, 'replace')
@@ -558,29 +559,29 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     expect(h.mirror.effectiveIfClaimed(7, 'battery')).toBeNull()
     expect(h.mirror.isSeeded(7)).toBe(true)
     // …and the default stays fill-gaps for the boot path.
-    h.mirror.seedMirror(7, { battery: { ...NATIVE, percentage: 1 } })
+    h.mirror.seedMirror(7, { battery: { ...NATIVE, level: 1 } })
     expect(h.mirror.capSlice(7, 'battery')).toEqual(NATIVE)
   })
 
   it('a re-seed never makes a pending debounced write look persisted — the newer value lands (I-2)', async () => {
     const h = harness(realPolicy)
     h.mirror.seedMirror(7, { battery: NATIVE })
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
     h.mirror.scheduleRuntimeStateDiskWrite(7, h.settings, 'battery')
     // A worker restart re-loads the row while the write is still in its window.
     h.mirror.seedMirror(7, { battery: NATIVE })
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 41 }) // memory kept
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 41 }) // memory kept
     await flushDebounce()
-    expect(h.writes).toEqual([{ deviceId: 7, blob: { battery: { ...NATIVE, percentage: 41 } } }])
+    expect(h.writes).toEqual([{ deviceId: 7, blob: { battery: { ...NATIVE, level: 41 } } }])
   })
 
   it('a claim that so far exists only on the row is found by patchOwned and release — no zombie (I-3)', async () => {
     const patched = harness(realPolicy)
     patched.rows.set(7, { battery: NATIVE, [OWNED_FIELDS_KEY]: { battery: OWNED } })
     expect(
-      await patched.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 80 }, patched.settings),
+      await patched.mirror.patchOwned(7, 'battery', 'blk-1', { level: 80 }, patched.settings),
     ).toEqual({ ok: true, changed: true })
-    expect(patched.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 80 })
+    expect(patched.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 80 })
 
     const released = harness(realPolicy)
     released.rows.set(7, { battery: NATIVE, [OWNED_FIELDS_KEY]: { battery: OWNED } })
@@ -619,13 +620,13 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     expect(h.writes).toEqual([
       { deviceId: 7, blob: { battery: NATIVE, [OWNED_FIELDS_KEY]: { battery: OWNED } } },
     ])
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
 
     // The same for a release: the claim stays until the row says otherwise.
     write.mockRejectedValueOnce(new Error('disk full'))
     await expect(h.mirror.release(7, 'battery', 'blk-1', h.settings)).rejects.toThrow('disk full')
     expect(h.mirror.ownedCaps(7).get('battery')).toEqual(OWNED)
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
     expect(h.logs.filter((l) => l.message.startsWith('release write-through failed'))).toHaveLength(
       1,
     )
@@ -641,7 +642,7 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
     h.failReads.add(7)
     const outcomes = [
       await h.mirror.claim(7, 'battery', OWNED, h.settings),
-      await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 1 }, h.settings),
+      await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 1 }, h.settings),
       await h.mirror.release(7, 'battery', 'blk-1', h.settings),
     ]
     for (const o of outcomes) expect(o).toMatchObject({ ok: false, code: 'row-unreadable' })

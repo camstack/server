@@ -10,13 +10,13 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 42 caps with series (77 series), 33 caps answered `'none'`.
+ * 41 caps with series (75 series), 34 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
   'air-quality-sensor': {
-    'co2Ppm': { kind: 'gauge', unit: 'ppm', deadband: 5 },
-    'vocPpb': { kind: 'gauge', unit: 'ppb', deadband: 5 },
+    'co2': { kind: 'gauge', unit: 'ppm', deadband: 5 },
+    'voc': { kind: 'gauge', unit: 'ppb', deadband: 5 },
     'pm25': { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
     'pm10': { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
     'aqi': { kind: 'gauge', unit: 'count', deadband: 1 },
@@ -25,17 +25,17 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'state': { kind: 'enum', values: ['disarmed', 'armed_home', 'armed_away', 'armed_night', 'armed_vacation', 'armed_custom_bypass', 'arming', 'disarming', 'pending', 'triggered'] },
   },
   'ambient-light-sensor': {
-    'lux': { kind: 'gauge', unit: 'lx', deadbandPct: 10, minIntervalMs: 60000 },
+    'illuminance': { kind: 'gauge', unit: 'lx', deadbandPct: 10, minIntervalMs: 60000 },
   },
   'battery': {
-    'percentage': { kind: 'gauge', unit: '%' },
-    'volts': { kind: 'gauge', unit: 'V' },
+    'level': { kind: 'gauge', unit: '%' },
+    'voltage': { kind: 'gauge', unit: 'V' },
   },
   'binary': {
     'on': { kind: 'boolean' },
   },
   'brightness': {
-    'percentage': { kind: 'gauge', unit: '%', minIntervalMs: 0 },
+    'level': { kind: 'gauge', unit: '%', minIntervalMs: 0 },
   },
   'carbon-monoxide': {
     'detected': { kind: 'boolean' },
@@ -60,10 +60,10 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'online': { kind: 'boolean' },
   },
   'dishwasher': {
-    'progressPercent': { kind: 'gauge', unit: '%', deadband: 2 },
+    'progress': { kind: 'gauge', unit: '%', deadband: 2 },
     'state': { kind: 'enum', values: ['idle', 'running', 'paused', 'finished', 'error', 'unavailable'] },
     'operationState': { kind: 'enum', values: ['Inactive', 'Ready', 'DelayedStart', 'Run', 'Pause', 'ActionRequired', 'Finished', 'Error', 'Aborting'] },
-    'remainingSeconds': { kind: 'gauge', unit: 's', minIntervalMs: 60000 },
+    'remaining': { kind: 'gauge', unit: 's', minIntervalMs: 60000 },
     'doorOpen': { kind: 'boolean' },
     'powerOn': { kind: 'boolean' },
   },
@@ -71,7 +71,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'value': { kind: 'enum', skipWhenSet: 'timestamp' },
   },
   'fan-control': {
-    'percentage': { kind: 'gauge', unit: '%', minIntervalMs: 0 },
+    'speed': { kind: 'gauge', unit: '%', minIntervalMs: 0 },
     'oscillating': { kind: 'boolean' },
   },
   'flood': {
@@ -88,7 +88,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'on': { kind: 'boolean' },
   },
   'humidity-sensor': {
-    'percent': { kind: 'gauge', unit: '%', deadband: 0.5 },
+    'humidity': { kind: 'gauge', unit: '%', deadband: 0.5 },
   },
   'lawn-mower-control': {
     'batteryLevel': { kind: 'gauge', unit: '%', deadband: 2 },
@@ -107,33 +107,29 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean', excludeDeviceTypes: [DeviceType.Camera] },
   },
   'network-link': {
-    'signalPercent': { kind: 'gauge', unit: '%', deadband: 3, minIntervalMs: 60000 },
-    'rssiDbm': { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
+    'signal': { kind: 'gauge', unit: '%', deadband: 3, minIntervalMs: 60000 },
+    'rssi': { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
   },
   'numeric-sensor': {
     'value': { kind: 'gauge', minIntervalMs: 30000 },
   },
   'pet-feeder': {
     'foodLevel': { kind: 'gauge' },
-    'bowlFood': { kind: 'gauge' },
     'food1': { kind: 'gauge' },
     'food2': { kind: 'gauge' },
     'batteryPower': { kind: 'gauge', unit: '%', deadband: 2 },
     'desiccantLeftDays': { kind: 'gauge', unit: 's' },
   },
   'power-meter': {
-    'watts': { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
-    'kwhTotal': { kind: 'counter', unit: 'kWh', deadband: 0.01, minIntervalMs: 60000 },
-    'volts': { kind: 'gauge', unit: 'V', deadband: 1, minIntervalMs: 30000 },
-    'amps': { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
-    'va': { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
+    'power': { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
+    'energy': { kind: 'counter', unit: 'kWh', deadband: 0.01, minIntervalMs: 60000 },
+    'voltage': { kind: 'gauge', unit: 'V', deadband: 1, minIntervalMs: 30000 },
+    'current': { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
+    'apparentPower': { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
     'powerFactor': { kind: 'gauge', unit: 'ratio', deadband: 0.01, minIntervalMs: 60000 },
   },
-  'presence': {
-    'batteryPercent': { kind: 'gauge', unit: '%', deadband: 1 },
-  },
   'pressure-sensor': {
-    'hpa': { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
+    'pressure': { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
   },
   'running-state': {
     'running': { kind: 'boolean' },
@@ -154,7 +150,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'tampered': { kind: 'boolean' },
   },
   'temperature-sensor': {
-    'celsius': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'temperature': { kind: 'gauge', unit: '°C', deadband: 0.1 },
   },
   'vacuum-control': {
     'batteryLevel': { kind: 'gauge', unit: '%', deadband: 2 },
@@ -218,6 +214,7 @@ export const HISTORY_NONE_CAPS: readonly string[] = [
   'native-object-detection',
   'navigation',
   'notifier',
+  'presence',
   'privacy-mask',
   'ptz-autotrack',
   'recording-onboard',

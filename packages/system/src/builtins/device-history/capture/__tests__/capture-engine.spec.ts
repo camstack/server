@@ -9,12 +9,12 @@ afterEach(async () => {
   await h.close()
 })
 
-const BATTERY = 'cap:battery.percentage'
+const BATTERY = 'cap:battery.level'
 
 describe('capture is driven by the generated catalog', () => {
   it('records only catalogued fields of catalogued caps', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80, voltage: 3.1, charging: false })
+    emitState(h, 1, 'battery', { level: 80, cycles: 3, charging: false })
     emitState(h, 1, 'a-cap-with-no-history-block', { value: 5 })
     await h.settle()
     const keys = h.runtime.registry
@@ -37,7 +37,7 @@ describe('capture is driven by the generated catalog', () => {
 
   it('never records null or absent as zero', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: null })
+    emitState(h, 1, 'battery', { level: null })
     emitState(h, 1, 'battery', {})
     await h.settle()
     expect(await rawOf(h, BATTERY, 1)).toEqual([])
@@ -58,7 +58,7 @@ describe('real devices only', () => {
     h = await makeHarness({
       devices: { 1: DeviceType.Hub, 2: DeviceType.Container, 3: DeviceType.Sensor },
     })
-    for (const id of [1, 2, 3]) emitState(h, id, 'battery', { percentage: 50 })
+    for (const id of [1, 2, 3]) emitState(h, id, 'battery', { level: 50 })
     await h.settle()
     expect(seriesOf(h, BATTERY, 1)).toBeUndefined()
     expect(seriesOf(h, BATTERY, 2)).toBeUndefined()
@@ -80,7 +80,7 @@ describe('real devices only', () => {
     h = await makeHarness()
     // The hub knows the device; the directory (listed at boot) does not yet.
     h.devices.set(9, DeviceType.Sensor)
-    emitState(h, 9, 'battery', { percentage: 44 })
+    emitState(h, 9, 'battery', { level: 44 })
     expect(h.runtime.status().capture.pointsEmitted).toBe(0)
     await vi.waitFor(() => expect(h.runtime.status().capture.pointsEmitted).toBe(1))
     await h.settle()
@@ -89,7 +89,7 @@ describe('real devices only', () => {
 
   it('drops the parked event, and says so, when the device never appears', async () => {
     h = await makeHarness()
-    emitState(h, 77, 'battery', { percentage: 44 })
+    emitState(h, 77, 'battery', { level: 44 })
     await vi.waitFor(() => expect(h.runtime.status().capture.skipped['unknown-device']).toBe(1))
     expect(h.runtime.status().capture.pointsEmitted).toBe(0)
   })
@@ -98,11 +98,11 @@ describe('real devices only', () => {
 describe('change-only', () => {
   it('writes one point for a repeated value and a second for a change', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     h.advance(60_000)
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     h.advance(60_000)
-    emitState(h, 1, 'battery', { percentage: 79 })
+    emitState(h, 1, 'battery', { level: 79 })
     await h.settle()
     expect((await rawOf(h, BATTERY, 1)).map((p) => p.value)).toEqual([80, 79])
     expect(h.runtime.status().capture.skipped['unchanged']).toBe(1)
@@ -110,14 +110,14 @@ describe('change-only', () => {
 
   it('remembers the last recorded value across a restart, so a restart repeats nothing', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     await h.settle()
     await h.restart()
     h.advance(60_000)
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     await h.settle()
     expect(await rawOf(h, BATTERY, 1)).toHaveLength(1)
-    emitState(h, 1, 'battery', { percentage: 79 })
+    emitState(h, 1, 'battery', { level: 79 })
     await h.settle()
     expect(await rawOf(h, BATTERY, 1)).toHaveLength(2)
   })
@@ -188,19 +188,19 @@ describe('deadband and the capture floor', () => {
 describe('per-device opt-out', () => {
   it('stops capture and counts it, and resumes when re-enabled', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     await h.settle()
     await h.runtime.setEnabled(1, false)
     expect(h.runtime.isEnabled(1)).toBe(false)
     h.advance(60_000)
-    emitState(h, 1, 'battery', { percentage: 70 })
+    emitState(h, 1, 'battery', { level: 70 })
     await h.settle()
     expect((await rawOf(h, BATTERY, 1)).map((p) => p.value)).toEqual([80])
     expect(h.runtime.status().capture.skipped['opted-out']).toBe(1)
     expect(h.runtime.status().optedOutDevices).toBe(1)
     await h.runtime.setEnabled(1, true)
     h.advance(60_000)
-    emitState(h, 1, 'battery', { percentage: 60 })
+    emitState(h, 1, 'battery', { level: 60 })
     await h.settle()
     expect((await rawOf(h, BATTERY, 1)).map((p) => p.value)).toEqual([80, 60])
   })
@@ -220,7 +220,7 @@ describe('per-device opt-out', () => {
 
   it('keeps the history of an opted-out device', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     await h.settle()
     await h.runtime.setEnabled(1, false)
     await h.settle()

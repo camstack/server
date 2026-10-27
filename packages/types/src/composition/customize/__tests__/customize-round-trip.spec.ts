@@ -11,7 +11,7 @@ import type { CustomizeStored } from '../stored.js'
 
 function targetIdOf(stored: CustomizeStored): string {
   if (stored.family !== 'composition') return ''
-  if (stored.feature.cap === 'battery') return 'percentage'
+  if (stored.feature.cap === 'battery') return 'level'
   if (stored.feature.cap === 'running-state') return 'running'
   return 'items'
 }

@@ -13,7 +13,7 @@ import { readingMeta } from '../units/quantity.js'
  */
 export const HumiditySensorStatusSchema = z.object({
   /** Current relative humidity, 0..100. `null` when the sample was refused (D393). */
-  percent: z
+  humidity: z
     .number()
     .min(0)
     .max(100)
@@ -50,7 +50,7 @@ export const humiditySensorCapability = {
    */
   history: {
     fields: {
-      percent: { kind: 'gauge', unit: '%', deadband: 0.5 },
+      humidity: { kind: 'gauge', unit: '%', deadband: 0.5 },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides

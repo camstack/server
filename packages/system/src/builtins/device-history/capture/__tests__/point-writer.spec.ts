@@ -10,12 +10,12 @@ afterEach(async () => {
   await h.close()
 })
 
-const BATTERY = 'cap:battery.percentage'
+const BATTERY = 'cap:battery.level'
 
 describe('the raw write buffer', () => {
   it('keeps a batch the store would not take and writes it at the next flush', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
+    emitState(h, 1, 'battery', { level: 80 })
     const failing = vi
       .spyOn(h.runtime.store, 'upsertRaw')
       .mockRejectedValueOnce(new Error('disk full'))
@@ -31,8 +31,8 @@ describe('the raw write buffer', () => {
 
   it('drops points older than a minute with an ERROR naming the count and the devices (D391)', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor, 2: DeviceType.Sensor } })
-    emitState(h, 1, 'battery', { percentage: 80 })
-    emitState(h, 2, 'battery', { percentage: 70 })
+    emitState(h, 1, 'battery', { level: 80 })
+    emitState(h, 2, 'battery', { level: 70 })
     vi.spyOn(h.runtime.store, 'upsertRaw').mockRejectedValue(new Error('store down'))
     h.advance(MAX_BUFFER_AGE_MS + 1_000)
     await h.runtime.flushNow()
@@ -49,7 +49,7 @@ describe('the raw write buffer', () => {
     h = await makeHarness({
       devices: { 1: DeviceType.Sensor, 2: DeviceType.Sensor, 3: DeviceType.Sensor },
     })
-    for (const id of [1, 2, 3]) emitState(h, id, 'battery', { percentage: 50 + id })
+    for (const id of [1, 2, 3]) emitState(h, id, 'battery', { level: 50 + id })
     const spy = vi.spyOn(h.runtime.store, 'upsertRaw')
     await h.runtime.flushNow()
     expect(spy).toHaveBeenCalledTimes(1)

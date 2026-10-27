@@ -87,7 +87,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `pet-feeder` | 11 | ✓ | ✓ | 6 series | — | `provider-petkit` |
 | `pipeline-analytics` | 88 | — | — | — | — | `pipeline-analytics` |
 | `power-meter` | 1 | ✓ | ✓ | 6 series | — | — |
-| `presence` | 1 | ✓ | ✓ | 1 series | — | — |
+| `presence` | 1 | ✓ | ✓ | none | — | — |
 | `pressure-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `privacy-mask` | 4 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` `provider-reolink` |
 | `ptz` | 17 | ✓ | — | — | — | — |

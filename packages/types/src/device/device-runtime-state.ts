@@ -48,7 +48,7 @@ export interface IDeviceRuntimeState {
   ): Readonly<T> | undefined
 
   /** Read a single key inside a slice. Convenience for the common
-   *  case of reading a primitive (`battery.percentage`). */
+   *  case of reading a primitive (`battery.level`). */
   getCapField(capName: string, key: string): unknown
 
   /**
@@ -241,7 +241,7 @@ export class DeviceRuntimeState implements IDeviceRuntimeState {
     const next = merge ? { ...current, ...value } : { ...value }
     const parsed = schema.parse(next) as Record<string, unknown>
     // Equality check before commit — back-to-back identical writes
-    // (e.g. battery push every minute with the same percentage)
+    // (e.g. battery push every minute with the same level)
     // should NOT churn listeners or disk. Unless the hub REFUSED the
     // last write of this cap: the slice is not mirrored, so the same
     // value must go out again (ruling S6).

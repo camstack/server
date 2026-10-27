@@ -93,7 +93,7 @@ interface StatusProvider<S> {
 }
 
 interface TemperatureStatus {
-  readonly celsius: number
+  readonly temperature: number
 }
 
 /** `device-manager-api.spec.ts`'s recording AddonApi, over every namespace. */
@@ -222,7 +222,7 @@ beforeEach(async () => {
   hub = new FakeHub()
   ROOM_EXAMPLE_TEMPERATURE_SOURCES.forEach((ref, i) =>
     hub.add(ref, TEMPERATURE_ID_BASE + i, {
-      'temperature-sensor': { celsius: [21.0, 21.5, 21.4][i], lastFetchedAt: T0 - 10_000 + i },
+      'temperature-sensor': { temperature: [21.0, 21.5, 21.4][i], lastFetchedAt: T0 - 10_000 + i },
     }),
   )
   ROOM_EXAMPLE_MOTION_SOURCES.forEach((ref, i) =>
@@ -369,11 +369,15 @@ describe('the composed room is a normal device', () => {
     expect(typeof binary?.getStatus).toBe('function')
     expect(typeof temperature?.getStatus).toBe('function')
     await expect(binary?.getStatus({ deviceId: id })).resolves.toMatchObject({ on: true })
-    await expect(temperature?.getStatus({ deviceId: id })).resolves.toMatchObject({ celsius: 21.3 })
+    await expect(temperature?.getStatus({ deviceId: id })).resolves.toMatchObject({
+      temperature: 21.3,
+    })
   })
 
   it('holds the average temperature and the occupancy', () => {
-    expect(room().runtimeState.getCapState('temperature-sensor')).toMatchObject({ celsius: 21.3 })
+    expect(room().runtimeState.getCapState('temperature-sensor')).toMatchObject({
+      temperature: 21.3,
+    })
     expect(room().runtimeState.getCapState('binary')).toMatchObject({ on: true })
     expect(room().online).toBe(true)
   })
@@ -394,7 +398,7 @@ describe('the composed room is a normal device', () => {
       'temperature-sensor',
     ])
     expect(composedWrites.find((w) => w.capName === 'temperature-sensor')?.slice).toMatchObject({
-      celsius: 21.3,
+      temperature: 21.3,
     })
     expect(composedWrites.find((w) => w.capName === 'binary')?.slice).toMatchObject({ on: true })
   })

@@ -310,7 +310,7 @@ describe('SystemMirror — integration', () => {
       const h = makeHarness()
       h.upsertBinding(mkBinding(1, ['battery', 'snapshot']))
       h.upsertBinding(mkBinding(2, ['motion']))
-      h.applyState(1, 'battery', { sleeping: true, percentage: 42 })
+      h.applyState(1, 'battery', { sleeping: true, level: 42 })
       h.applyState(2, 'motion', { detected: false })
 
       const sm = new SystemMirror(h.api)
@@ -324,7 +324,7 @@ describe('SystemMirror — integration', () => {
 
       const dev1 = sm.getDeviceById(1)
       expect(dev1).not.toBeNull()
-      expect(dev1!.state.battery.value).toEqual({ sleeping: true, percentage: 42 })
+      expect(dev1!.state.battery.value).toEqual({ sleeping: true, level: 42 })
       expect(dev1!.state.motion.value).toBeUndefined() // device 1 has no motion slice
 
       const dev2 = sm.getDeviceById(2)
@@ -378,7 +378,7 @@ describe('SystemMirror — integration', () => {
     it('push event updates mirror in place; subsequent reads see new slice', async () => {
       const h = makeHarness()
       h.upsertBinding(mkBinding(1, ['battery']))
-      h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
+      h.applyState(1, 'battery', { sleeping: false, level: 80 })
 
       const sm = new SystemMirror(h.api)
       await sm.init()
@@ -387,11 +387,11 @@ describe('SystemMirror — integration', () => {
       expect(dev!.state.battery.value!.sleeping).toBe(false)
 
       // Worker reports the cam went to sleep.
-      h.applyState(1, 'battery', { sleeping: true, percentage: 79 })
+      h.applyState(1, 'battery', { sleeping: true, level: 79 })
       await flushMicrotasks()
 
       expect(dev!.state.battery.value!.sleeping).toBe(true)
-      expect(dev!.state.battery.value!.percentage).toBe(79)
+      expect(dev!.state.battery.value!.level).toBe(79)
 
       sm.dispose()
     })
@@ -413,12 +413,12 @@ describe('SystemMirror — integration', () => {
       cb2.mockClear()
       cb3.mockClear()
 
-      h.applyState(1, 'battery', { sleeping: true, percentage: 30 })
+      h.applyState(1, 'battery', { sleeping: true, level: 30 })
       await flushMicrotasks()
 
-      expect(cb1).toHaveBeenCalledWith({ sleeping: true, percentage: 30 })
-      expect(cb2).toHaveBeenCalledWith({ sleeping: true, percentage: 30 })
-      expect(cb3).toHaveBeenCalledWith({ sleeping: true, percentage: 30 })
+      expect(cb1).toHaveBeenCalledWith({ sleeping: true, level: 30 })
+      expect(cb2).toHaveBeenCalledWith({ sleeping: true, level: 30 })
+      expect(cb3).toHaveBeenCalledWith({ sleeping: true, level: 30 })
 
       sm.dispose()
     })
@@ -438,7 +438,7 @@ describe('SystemMirror — integration', () => {
       cb2.mockClear()
 
       off1()
-      h.applyState(1, 'battery', { sleeping: true, percentage: 1 })
+      h.applyState(1, 'battery', { sleeping: true, level: 1 })
       await flushMicrotasks()
 
       expect(cb1).not.toHaveBeenCalled()
@@ -523,7 +523,7 @@ describe('SystemMirror — integration', () => {
     it('a slice flipping back to undefined removes it from the device map', async () => {
       const h = makeHarness()
       h.upsertBinding(mkBinding(1, ['battery']))
-      h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
+      h.applyState(1, 'battery', { sleeping: false, level: 80 })
       const sm = new SystemMirror(h.api)
       await sm.init()
 
@@ -719,9 +719,9 @@ describe('SystemMirror — integration', () => {
       h.upsertBinding(mkBinding(1, ['battery']))
       h.upsertBinding(mkBinding(2, ['battery']))
       h.upsertBinding(mkBinding(3, ['battery']))
-      h.applyState(1, 'battery', { sleeping: true, percentage: 30 })
-      h.applyState(2, 'battery', { sleeping: false, percentage: 95 })
-      h.applyState(3, 'battery', { sleeping: true, percentage: 12 })
+      h.applyState(1, 'battery', { sleeping: true, level: 30 })
+      h.applyState(2, 'battery', { sleeping: false, level: 95 })
+      h.applyState(3, 'battery', { sleeping: true, level: 12 })
 
       const sm = new SystemMirror(h.api)
       await sm.init()
@@ -740,18 +740,18 @@ describe('SystemMirror — integration', () => {
     it('getSystemState dumps the full mirror as a deep copy', async () => {
       const h = makeHarness()
       h.upsertBinding(mkBinding(1, ['battery']))
-      h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
+      h.applyState(1, 'battery', { sleeping: false, level: 80 })
 
       const sm = new SystemMirror(h.api)
       await sm.init()
 
       const state = sm.getSystemState()
-      expect(state.get(1)?.get('battery')).toEqual({ sleeping: false, percentage: 80 })
+      expect(state.get(1)?.get('battery')).toEqual({ sleeping: false, level: 80 })
 
       // Mutate the copy — mirror should be unaffected.
       const copy = state.get(1)?.get('battery')
-      if (copy) copy.percentage = 999
-      expect(sm.getDeviceById(1)?.state.battery.value?.percentage).toBe(80)
+      if (copy) copy.level = 999
+      expect(sm.getDeviceById(1)?.state.battery.value?.level).toBe(80)
 
       sm.dispose()
     })
@@ -781,8 +781,8 @@ describe('SystemMirror — integration', () => {
       const h = makeHarness()
       h.upsertBinding(mkBinding(1, ['battery']))
       h.upsertBinding(mkBinding(2, ['battery']))
-      h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
-      h.applyState(2, 'battery', { sleeping: true, percentage: 30 })
+      h.applyState(1, 'battery', { sleeping: false, level: 80 })
+      h.applyState(2, 'battery', { sleeping: true, level: 30 })
 
       const sm = new SystemMirror(h.api)
       await sm.init()
@@ -886,7 +886,7 @@ describe('SystemMirror — integration', () => {
     it('refresh() on a mirror handle is a no-op (push-only mode)', async () => {
       const h = makeHarness()
       h.upsertBinding(mkBinding(1, ['battery']))
-      h.applyState(1, 'battery', { sleeping: false, percentage: 80 })
+      h.applyState(1, 'battery', { sleeping: false, level: 80 })
 
       const getCapSliceSpy = vi.spyOn(h.api.deviceState.getCapSlice, 'query')
 
@@ -902,7 +902,7 @@ describe('SystemMirror — integration', () => {
       expect(getCapSliceSpy).not.toHaveBeenCalled()
 
       // Value still reflects whatever the mirror has from the bus.
-      expect(dev.state.battery.value!.percentage).toBe(80)
+      expect(dev.state.battery.value!.level).toBe(80)
 
       sm.dispose()
     })

@@ -44,7 +44,7 @@ import { freshSnapshotDataDir } from './scratch-data-dir.js'
 type ISnapshotProvider = InferProvider<typeof snapshotCapability>
 
 const SLEEPING_BATTERY: BatteryStatus = {
-  percentage: 96,
+  level: 96,
   charging: 'none',
   sleeping: true,
   lastUpdated: 1_700_000_000_000,

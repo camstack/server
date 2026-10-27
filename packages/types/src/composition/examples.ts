@@ -46,7 +46,7 @@ function named(
 }
 
 export function roomCompositionExample(input: RoomExampleInput): Composition {
-  const t = named('t', input.temperatureSources, 'temperature-sensor', 'celsius')
+  const t = named('t', input.temperatureSources, 'temperature-sensor', 'temperature')
   const f = named('f', input.temperatureSources, 'temperature-sensor', 'lastFetchedAt')
   const d = named('d', input.motionSources, 'motion', 'detected')
   const m = named('m', input.motionSources, 'motion', 'lastDetectedAt')
@@ -65,7 +65,7 @@ export function roomCompositionExample(input: RoomExampleInput): Composition {
         kind: 'fields',
         cap: 'temperature-sensor',
         fields: {
-          celsius: {
+          temperature: {
             kind: 'expression',
             expr: `round(avg(${Object.keys(t).join(', ')}), 1)`,
             bindings: t,
@@ -107,7 +107,7 @@ export function roomCompositionExample(input: RoomExampleInput): Composition {
  * an `enum-sensor` whose `value` is the raw STRING state — `number(d)` reads it,
  * and anything that is not a number is `null`, never 0 (D393). The battery
  * status sensor is an `enum-sensor` too (`unavailable` keeps its cold `''`, so
- * `percentage` is `null`). `charging` maps `battery_charging` off to
+ * `level` is `null`). `charging` maps `battery_charging` off to
  * `'unknown'`, never `'none'`: off does not prove "on battery alone" (the
  * operator confirms the real semantics live).
  */
@@ -174,7 +174,7 @@ export function feederCustomizationExample(sources: FeederExampleSources): Compo
         kind: 'fields',
         cap: 'battery',
         fields: {
-          percentage: {
+          level: {
             kind: 'expression',
             expr: 's == "low" ? 15 : (s == "normal" ? 100 : null)',
             bindings: { s: from(sources.batteryStatus, 'enum-sensor', 'value') },

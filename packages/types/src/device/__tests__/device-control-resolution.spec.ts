@@ -108,7 +108,7 @@ describe('motion-trigger + sensor maps', () => {
   it('SENSOR_MAP maps kebab caps to their camelCase router key + field', () => {
     expect(SENSOR_MAP['temperature-sensor']).toEqual({
       capKey: 'temperatureSensor',
-      field: 'celsius',
+      field: 'temperature',
       fallbackUnit: '°C',
     })
     expect(SENSOR_MAP['numeric-sensor']).toEqual({ capKey: 'numericSensor', field: 'value' })

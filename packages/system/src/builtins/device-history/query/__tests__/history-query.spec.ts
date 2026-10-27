@@ -11,7 +11,7 @@ afterEach(async () => {
   await h.close()
 })
 
-const KEY = 'cap:battery.percentage'
+const KEY = 'cap:battery.level'
 const SUBJECT = { kind: 'device', deviceId: 1 } as const
 
 function row(seriesId: number, bucketStart: number, mean: number): RollupRow {
@@ -250,7 +250,7 @@ describe('listSeries', () => {
         scope: '',
         kind: 'gauge',
         unit: '%',
-        displayName: 'battery percentage',
+        displayName: 'battery level',
         source: 'cap',
         values: null,
         firstTs: T0 - 400 * DAY_MS,
@@ -261,8 +261,8 @@ describe('listSeries', () => {
 
   it('keeps the span of a series across a restart (written by the flush, not just remembered)', async () => {
     h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
-    h.runtime.capture.handleState(1, 'battery', { percentage: 80 }, T0)
-    h.runtime.capture.handleState(1, 'battery', { percentage: 70 }, T0 + 60_000)
+    h.runtime.capture.handleState(1, 'battery', { level: 80 }, T0)
+    h.runtime.capture.handleState(1, 'battery', { level: 70 }, T0 + 60_000)
     await h.runtime.flushNow()
     await h.restart()
     const [info] = await h.runtime.query.listSeries(SUBJECT)

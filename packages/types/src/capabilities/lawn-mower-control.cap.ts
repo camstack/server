@@ -30,7 +30,7 @@ export const LawnMowerControlStatusSchema = z.object({
   batteryLevel: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** 0..100 mowing-completion percentage of the current task, or null when no
    *  task is active / progress is unavailable. */
-  progressPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
+  progress: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Current device/event code (dynamic — mostly status, sometimes an error),
    *  or null when unknown. */
   currentCode: z.number().nullable().meta(readingMeta('none')),

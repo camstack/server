@@ -8,12 +8,12 @@ import {
 describe('compositionFillStatus', () => {
   const unfilled = {
     code: 'missing-field' as const,
-    path: 'features[0].fields.celsius',
-    message: '`temperature-sensor.celsius` is required and has no source',
+    path: 'features[0].fields.temperature',
+    message: '`temperature-sensor.temperature` is required and has no source',
   }
   const cycle = {
     code: 'cycle' as const,
-    path: 'features[0].fields.celsius',
+    path: 'features[0].fields.temperature',
     message: 'cycle',
   }
 

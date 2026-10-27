@@ -36,9 +36,9 @@ export const NetworkLinkStatusSchema = z.object({
    * one whose reading has not landed must not be drawn at 0 %. Consumers
    * SKIP a null rather than coerce it.
    */
-  signalPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
+  signal: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Raw received signal strength in dBm, when the firmware reports one. */
-  rssiDbm: z.number().optional().meta(readingMeta('signal-level')),
+  rssi: z.number().optional().meta(readingMeta('signal-level')),
   /** Network name of a wireless link, when the firmware reports it. */
   ssid: z.string().optional(),
   /** Ms epoch of the last observation. Lets consumers reason about freshness. */
@@ -50,7 +50,7 @@ export type NetworkLinkStatus = z.infer<typeof NetworkLinkStatusSchema>
 /** The slice a provider seeds before its first read: nothing is known yet. */
 export const NETWORK_LINK_UNKNOWN: NetworkLinkStatus = {
   type: 'unknown',
-  signalPercent: null,
+  signal: null,
   lastUpdated: 0,
 }
 
@@ -69,9 +69,9 @@ export function signalPercentFromBars(bars: number | undefined, maxBars: number)
  * below is 0 %, -50 dBm and above is 100 %, linear between. Non-finite or
  * positive input is not an RSSI: `null`.
  */
-export function signalPercentFromRssi(rssiDbm: number | undefined): number | null {
-  if (rssiDbm === undefined || !Number.isFinite(rssiDbm) || rssiDbm > 0) return null
-  const clamped = Math.min(-50, Math.max(-100, rssiDbm))
+export function signalPercentFromRssi(rssi: number | undefined): number | null {
+  if (rssi === undefined || !Number.isFinite(rssi) || rssi > 0) return null
+  const clamped = Math.min(-50, Math.max(-100, rssi))
   return Math.round((clamped + 100) * 2)
 }
 
@@ -128,8 +128,8 @@ export const networkLinkCapability = {
    */
   history: {
     fields: {
-      signalPercent: { kind: 'gauge', unit: '%', deadband: 3, minIntervalMs: 60000 },
-      rssiDbm: { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
+      signal: { kind: 'gauge', unit: '%', deadband: 3, minIntervalMs: 60000 },
+      rssi: { kind: 'gauge', unit: 'dBm', deadband: 2, minIntervalMs: 60000 },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides

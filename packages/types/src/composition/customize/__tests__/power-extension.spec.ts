@@ -67,7 +67,7 @@ describe('power-meter is a feature of any electrical device', () => {
     const entry = CAP_CUSTOMIZE_CATALOG['power-meter']
     expect(entry).toBeDefined()
     const ids = entry?.targets.map((target) => target.id)
-    expect(ids).toEqual(['watts', 'kwhTotal', 'volts', 'amps'])
+    expect(ids).toEqual(['power', 'energy', 'voltage', 'current'])
     for (const target of entry?.targets ?? []) {
       expect(target.cardinality).toBe('scalar')
       expect(target.apply).toBe('add')
@@ -78,20 +78,20 @@ describe('power-meter is a feature of any electrical device', () => {
 })
 
 describe('two targets of one cap share one stored feature', () => {
-  const watts = compiled(input('watts', WATTS_SENSOR, 'watts', 'W'))
-  const energy = compiled(input('kwhTotal', KWH_SENSOR, 'kwhTotal', 'kWh'))
+  const power = compiled(input('power', WATTS_SENSOR, 'power', 'W'))
+  const energy = compiled(input('energy', KWH_SENSOR, 'energy', 'kWh'))
 
   it('merges the second target without losing the first', () => {
     const merged = mergeScalarTarget(
-      mergeScalarTarget(null, watts, 'power-meter', 'watts'),
+      mergeScalarTarget(null, power, 'power-meter', 'power'),
       energy,
       'power-meter',
-      'kwhTotal',
+      'energy',
     )
-    expect(Object.keys(merged.fields).toSorted()).toEqual(['kwhTotal', 'lastFetchedAt', 'watts'])
+    expect(Object.keys(merged.fields).toSorted()).toEqual(['energy', 'lastFetchedAt', 'power'])
     for (const [targetId, source] of [
-      ['watts', WATTS_SENSOR],
-      ['kwhTotal', KWH_SENSOR],
+      ['power', WATTS_SENSOR],
+      ['energy', KWH_SENSOR],
     ] as const) {
       const decoded = decodeScalarOverride({
         feature: merged,
@@ -105,33 +105,33 @@ describe('two targets of one cap share one stored feature', () => {
 
   it('removing one target leaves the other, removing both leaves nothing', () => {
     const both = mergeScalarTarget(
-      mergeScalarTarget(null, watts, 'power-meter', 'watts'),
+      mergeScalarTarget(null, power, 'power-meter', 'power'),
       energy,
       'power-meter',
-      'kwhTotal',
+      'energy',
     )
-    const onlyEnergy = removeScalarTarget(both, 'power-meter', 'watts')
+    const onlyEnergy = removeScalarTarget(both, 'power-meter', 'power')
     expect(onlyEnergy).not.toBeNull()
-    expect(Object.keys(onlyEnergy?.fields ?? {}).toSorted()).toEqual(['kwhTotal', 'lastFetchedAt'])
-    expect(removeScalarTarget(onlyEnergy, 'power-meter', 'kwhTotal')).toBeNull()
+    expect(Object.keys(onlyEnergy?.fields ?? {}).toSorted()).toEqual(['energy', 'lastFetchedAt'])
+    expect(removeScalarTarget(onlyEnergy, 'power-meter', 'energy')).toBeNull()
   })
 
   it('a target not stored reads as absent, not as the neighbour', () => {
-    const only = mergeScalarTarget(null, watts, 'power-meter', 'watts')
+    const only = mergeScalarTarget(null, power, 'power-meter', 'power')
     expect(
       decodeScalarOverride({
         feature: only,
         device: HOST,
         cap: 'power-meter',
-        targetId: 'kwhTotal',
+        targetId: 'energy',
       }),
     ).toBeNull()
   })
 
   it('a feature stored for a neighbour is no assignment of this target', () => {
-    const only = mergeScalarTarget(null, watts, 'power-meter', 'watts')
-    expect(targetFeature(only, 'power-meter', 'kwhTotal')).toBeNull()
-    expect(targetFeature(only, 'power-meter', 'watts')).toBe(only)
-    expect(targetFeature(null, 'power-meter', 'watts')).toBeNull()
+    const only = mergeScalarTarget(null, power, 'power-meter', 'power')
+    expect(targetFeature(only, 'power-meter', 'energy')).toBeNull()
+    expect(targetFeature(only, 'power-meter', 'power')).toBe(only)
+    expect(targetFeature(null, 'power-meter', 'power')).toBeNull()
   })
 })

@@ -54,7 +54,7 @@ describe('HA actuator caps — Phase C1', () => {
     it('status schema accepts mired mode sample', () => {
       const sample = {
         mode: 'mired' as const,
-        mireds: 370,
+        colorTemperature: 370,
         lastChangedAt: 1,
       }
       expect(ColorStatusSchema.parse(sample)).toEqual(sample)
@@ -86,11 +86,11 @@ describe('HA actuator caps — Phase C1', () => {
       ).toThrow()
     })
 
-    it('setColor input — mired branch rejects negative mireds', () => {
+    it('setColor input — mired branch rejects negative colorTemperature', () => {
       expect(() =>
         colorCapability.methods.setColor.input.parse({
           deviceId: 7,
-          color: { mode: 'mired', mireds: -10 },
+          color: { mode: 'mired', colorTemperature: -10 },
         }),
       ).toThrow()
     })

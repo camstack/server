@@ -25,12 +25,12 @@ import { runtimeStatePolicyFor } from '@camstack/types'
 import { isPlainRecord, OWNED_FIELDS_KEY } from '../field-ownership.js'
 import { flushDebounce, harness, type Harness } from './mirror-harness.js'
 
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
 const CLAIM = {
   owner: 'blk-1',
   mode: 'replace' as const,
-  fields: ['percentage'],
-  values: { percentage: 90 },
+  fields: ['level'],
+  values: { level: 90 },
 }
 
 interface Deferred {
@@ -69,14 +69,14 @@ describe('N-5 — readers see the claim from the moment it is accepted', () => {
     const pending = h.mirror.claim(7, 'battery', CLAIM, h.settings)
     await settle()
 
-    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, percentage: 90 })
-    expect(h.mirror.snapshotForDevice(7)).toEqual({ battery: { ...NATIVE, percentage: 90 } })
+    expect(h.mirror.capSlice(7, 'battery')).toEqual({ ...NATIVE, level: 90 })
+    expect(h.mirror.snapshotForDevice(7)).toEqual({ battery: { ...NATIVE, level: 90 } })
     // Nothing is EMITTED until the row has it — the event is the durable truth.
     expect(h.events).toEqual([])
 
     gate.resolve()
     expect(await pending).toEqual({ ok: true, changed: true })
-    expect(h.events).toEqual([{ capName: 'battery', slice: { ...NATIVE, percentage: 90 } }])
+    expect(h.events).toEqual([{ capName: 'battery', slice: { ...NATIVE, level: 90 } }])
   })
 
   it('a claim with a valueless field HOLDS the cap during its write (S5)', async () => {
@@ -86,7 +86,7 @@ describe('N-5 — readers see the claim from the moment it is accepted', () => {
     const pending = h.mirror.claim(
       7,
       'battery',
-      { ...CLAIM, fields: ['percentage', 'charging'] },
+      { ...CLAIM, fields: ['level', 'charging'] },
       h.settings,
     )
     await settle()
@@ -106,7 +106,7 @@ describe('N-5 — readers see the claim from the moment it is accepted', () => {
     const gate = deferNextWrite(h)
     const pending = h.mirror.claim(7, 'battery', CLAIM, h.settings)
     await settle()
-    expect(h.mirror.capSlice(7, 'battery')?.percentage).toBe(90)
+    expect(h.mirror.capSlice(7, 'battery')?.level).toBe(90)
 
     gate.reject(new Error('sqlite busy'))
     await expect(pending).rejects.toThrow('sqlite busy')
@@ -130,15 +130,15 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
     const pending = h.mirror.claim(7, 'battery', CLAIM, h.settings)
     await vi.advanceTimersByTimeAsync(0)
 
-    const patch = await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 95 }, h.settings)
+    const patch = await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 95 }, h.settings)
     expect(patch).toEqual({ ok: true, changed: true })
 
     gate.reject(new Error('sqlite busy'))
     await expect(pending).rejects.toThrow('sqlite busy')
 
     // Not erased: the owner was told the patch landed, and it did.
-    expect(h.mirror.ownedCaps(7).get('battery')?.values).toEqual({ percentage: 95 })
-    expect(h.mirror.capSlice(7, 'battery')?.percentage).toBe(95)
+    expect(h.mirror.ownedCaps(7).get('battery')?.values).toEqual({ level: 95 })
+    expect(h.mirror.capSlice(7, 'battery')?.level).toBe(95)
     expect(h.logs.some((l) => l.level === 'warn' && l.message.includes('newer'))).toBe(true)
 
     await flushDebounce()
@@ -148,14 +148,14 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
       battery: {
         owner: 'blk-1',
         mode: 'replace',
-        fields: ['percentage'],
-        values: { percentage: 95 },
+        fields: ['level'],
+        values: { level: 95 },
       },
     })
     // And what was rolled back is never what gets persisted: no write carries 90.
-    expect(
-      h.writes.some((w) => JSON.stringify(ownedOnRow(w.blob)).includes('"percentage":90')),
-    ).toBe(false)
+    expect(h.writes.some((w) => JSON.stringify(ownedOnRow(w.blob)).includes('"level":90'))).toBe(
+      false,
+    )
   })
 
   it('claim write LANDS after the patch: the emitted view is the PATCHED merge, not the claim-local one', async () => {
@@ -164,21 +164,21 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
     const gate = deferNextWrite(h)
     const pending = h.mirror.claim(7, 'battery', CLAIM, h.settings)
     await vi.advanceTimersByTimeAsync(0)
-    await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 95 }, h.settings)
+    await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 95 }, h.settings)
 
     gate.resolve()
     await pending
 
-    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, percentage: 95 } })
-    expect(h.events.some((e) => e.slice.percentage === 90)).toBe(false)
-    expect(h.mirror.capSlice(7, 'battery')?.percentage).toBe(95)
+    expect(h.events.at(-1)).toEqual({ capName: 'battery', slice: { ...NATIVE, level: 95 } })
+    expect(h.events.some((e) => e.slice.level === 90)).toBe(false)
+    expect(h.mirror.capSlice(7, 'battery')?.level).toBe(95)
     await flushDebounce()
     expect(ownedOnRow(h.writes.at(-1)?.blob ?? {})).toEqual({
       battery: {
         owner: 'blk-1',
         mode: 'replace',
-        fields: ['percentage'],
-        values: { percentage: 95 },
+        fields: ['level'],
+        values: { level: 95 },
       },
     })
   })
@@ -189,7 +189,7 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
     const gate = deferNextWrite(h)
     const pending = h.mirror.claim(7, 'battery', CLAIM, h.settings)
     await vi.advanceTimersByTimeAsync(0)
-    await h.mirror.patchOwned(7, 'battery', 'blk-1', { percentage: 95 }, h.settings)
+    await h.mirror.patchOwned(7, 'battery', 'blk-1', { level: 95 }, h.settings)
     gate.reject(new Error('sqlite busy'))
     await expect(pending).rejects.toThrow()
     const writes = h.writes.length
@@ -199,7 +199,7 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
     const again = await h.mirror.claim(
       7,
       'battery',
-      { ...CLAIM, values: { percentage: 95 } },
+      { ...CLAIM, values: { level: 95 } },
       h.settings,
     )
     expect(again).toEqual({ ok: true, changed: true })
@@ -208,8 +208,8 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
       battery: {
         owner: 'blk-1',
         mode: 'replace',
-        fields: ['percentage'],
-        values: { percentage: 95 },
+        fields: ['level'],
+        values: { level: 95 },
       },
     })
   })
@@ -224,8 +224,8 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
 
     const wider = {
       ...CLAIM,
-      fields: ['percentage', 'charging'],
-      values: { percentage: 1, charging: 'dc' },
+      fields: ['level', 'charging'],
+      values: { level: 1, charging: 'dc' },
     }
     const reclaim = h.mirror.claim(7, 'battery', wider, h.settings)
     await vi.advanceTimersByTimeAsync(0)
@@ -239,7 +239,7 @@ describe('N-4 — a same-owner patch in the window survives the claim write, eit
       battery: {
         owner: 'blk-1',
         mode: 'replace',
-        fields: ['percentage', 'charging'],
+        fields: ['level', 'charging'],
         values: wider.values,
       },
     })
@@ -287,7 +287,7 @@ describe('N-4 — one row write in flight per device', () => {
     const writes = vi.spyOn(h.settings, 'writeDeviceRuntimeState')
     const pending = h.mirror.claim(7, 'battery', CLAIM, h.settings)
     await vi.advanceTimersByTimeAsync(0)
-    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, percentage: 41 })
+    h.mirror.applySingleCapUpdate(7, 'battery', { ...NATIVE, level: 41 })
     h.mirror.scheduleRuntimeStateDiskWrite(7, h.settings, 'battery')
     await flushDebounce()
     expect(writes).toHaveBeenCalledTimes(1)
@@ -297,7 +297,7 @@ describe('N-4 — one row write in flight per device', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(writes).toHaveBeenCalledTimes(2)
     const last = h.writes.at(-1)?.blob ?? {}
-    expect(last.battery).toEqual({ ...NATIVE, percentage: 41 })
+    expect(last.battery).toEqual({ ...NATIVE, level: 41 })
     expect(ownedOnRow(last)).toHaveProperty('battery')
   })
 })

@@ -39,9 +39,11 @@ describe('composition cards', () => {
     )
     expect(temp?.card.cardKind).toBe('fields')
     if (temp?.card.cardKind !== 'fields') return
-    expect(temp.card.entries.celsius).toMatchObject({ kind: 'from', aggregate: 'avg-round-1' })
+    expect(temp.card.entries.temperature).toMatchObject({ kind: 'from', aggregate: 'avg-round-1' })
     expect(
-      temp.card.entries.celsius?.kind === 'from' ? temp.card.entries.celsius.sources.length : 0,
+      temp.card.entries.temperature?.kind === 'from'
+        ? temp.card.entries.temperature.sources.length
+        : 0,
     ).toBe(2)
     expect(temp.card.entries.lastFetchedAt).toMatchObject({ kind: 'from', aggregate: 'max' })
   })
@@ -88,14 +90,14 @@ describe('composition cards', () => {
           kind: 'fields' as const,
           cap: 'battery',
           fields: {
-            percentage: {
+            level: {
               kind: 'expression' as const,
               expr: 'v > 20',
               bindings: {
                 v: {
                   source: { addonId: 'provider-demo', stableId: 'src-1' },
                   cap: 'battery',
-                  fieldPath: 'percentage',
+                  fieldPath: 'level',
                   kind: 'from' as const,
                 },
               },
@@ -108,12 +110,12 @@ describe('composition cards', () => {
     const { model } = decodeCompositionToCards(composition)
     const card = model.cards[0]
     if (card?.card.cardKind !== 'fields') throw new Error('expected fields card')
-    expect(card.card.entries.percentage?.kind).toBe('formula')
-    const edited = setFormulaExpr(model, 'battery', 'percentage', 'v > 30')
+    expect(card.card.entries.level?.kind).toBe('formula')
+    const edited = setFormulaExpr(model, 'battery', 'level', 'v > 30')
     const encoded = encodeCardsToComposition(edited)
     const feature = encoded.features[0]
     if (feature === undefined || feature.kind !== 'fields') throw new Error('missing feature')
-    expect(feature.fields.percentage).toMatchObject({ kind: 'expression', expr: 'v > 30' })
+    expect(feature.fields.level).toMatchObject({ kind: 'expression', expr: 'v > 30' })
   })
 
   it('classifies a self convert expression as convert-unit and writes it back', () => {
@@ -126,7 +128,7 @@ describe('composition cards', () => {
           kind: 'from',
           source: self,
           cap: 'temperature-sensor',
-          fieldPath: 'celsius',
+          fieldPath: 'temperature',
         },
       },
     }
@@ -135,7 +137,7 @@ describe('composition cards', () => {
       kind: 'convert-unit',
       from: '°C',
       to: '°F',
-      source: { source: self, cap: 'temperature-sensor', fieldPath: 'celsius' },
+      source: { source: self, cap: 'temperature-sensor', fieldPath: 'temperature' },
     })
     expect(fieldEntryToSource(entry, source)).toEqual(source)
   })
@@ -150,7 +152,7 @@ describe('composition cards', () => {
           kind: 'from',
           source: self,
           cap: 'temperature-sensor',
-          fieldPath: 'celsius',
+          fieldPath: 'temperature',
         },
       },
     }
@@ -160,7 +162,7 @@ describe('composition cards', () => {
     expect(entry.bindings.v).toMatchObject({
       kind: 'from',
       source: self,
-      fieldPath: 'celsius',
+      fieldPath: 'temperature',
     })
     expect(fieldEntryToSource(entry, undefined)).toEqual(source)
   })

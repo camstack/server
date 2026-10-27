@@ -20,7 +20,7 @@ beforeEach(async () => {
   store = new HistoryStore(rd.door)
   await store.declare()
   const series = await store.insertSeries({
-    key: 'cap:battery.percentage',
+    key: 'cap:battery.level',
     subject: 'd:1',
     deviceId: 1,
     scope: '',
@@ -145,7 +145,7 @@ describe('every history statement is a primary-key range', () => {
 
   it('series identity lookup uses the unique identity index', async () => {
     const sql = await statementOf(
-      () => store.findSeries('cap:battery.percentage', 'd:1', ''),
+      () => store.findSeries('cap:battery.level', 'd:1', ''),
       'device-history:series',
       'SELECT',
     )

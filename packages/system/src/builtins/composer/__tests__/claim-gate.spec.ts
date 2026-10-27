@@ -54,7 +54,7 @@ describe('two consecutive applies must agree (D49)', () => {
   })
 
   it('names the claims of one owner, for a block whose plan is held (D659 placeholder rule)', () => {
-    gate.seed([PERSISTED, { ...BATTERY, mode: 'add', fields: ['percentage'] }])
+    gate.seed([PERSISTED, { ...BATTERY, mode: 'add', fields: ['level'] }])
     expect(gate.claimsOf('b1')).toEqual([ON])
     expect(gate.claimsOf('nobody')).toEqual([])
   })

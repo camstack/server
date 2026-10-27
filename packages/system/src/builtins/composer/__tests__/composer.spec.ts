@@ -31,7 +31,7 @@ const ROOM = roomCompositionExample({
 function seedHub(hub: FakeHub): void {
   ROOM_EXAMPLE_TEMPERATURE_SOURCES.forEach((ref, i) =>
     hub.add(ref, 11 + i, {
-      'temperature-sensor': { celsius: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
+      'temperature-sensor': { temperature: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
       'device-status': { online: true, lastChangedAt: 1 },
     }),
   )
@@ -160,7 +160,7 @@ describe('apply', () => {
     expect(result.acted).toBe(true)
     expect(targets.get('composed-b1')?.writes[0]).toMatchObject({
       cap: 'temperature-sensor',
-      values: { celsius: 21.3 },
+      values: { temperature: 21.3 },
     })
   })
 
@@ -294,7 +294,7 @@ describe('apply', () => {
     await composer.apply(input())
     const [state] = composer.getStates(['b1'])
     expect(state).toMatchObject({ blockId: 'b1', deviceId: 1900, status: 'running' })
-    expect(state?.fields.find((f) => f.path === 'celsius')).toMatchObject({
+    expect(state?.fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'fresh',
       value: 21.3,
     })
@@ -414,13 +414,13 @@ describe('events', () => {
     await composer.apply(input())
     const target = targets.get('composed-b1')
     const before = target?.writes.length ?? 0
-    const slice = { celsius: 24.0, lastFetchedAt: 995_000 }
+    const slice = { temperature: 24.0, lastFetchedAt: 995_000 }
     hub.setSlice(11, 'temperature-sensor', slice)
     await composer.onStateChanged({ deviceId: 11, capName: 'temperature-sensor', slice })
     expect(target?.writes.slice(before)).toContainEqual(
       expect.objectContaining({
         cap: 'temperature-sensor',
-        values: expect.objectContaining({ celsius: 22.3 }),
+        values: expect.objectContaining({ temperature: 22.3 }),
       }),
     )
   })
@@ -514,7 +514,7 @@ describe('hardening', () => {
 
   it('a block whose device never built does not re-open a source it shares with a healthy block (D3, no auto-repair)', async () => {
     const [T1] = ROOM_EXAMPLE_TEMPERATURE_SOURCES
-    const celsius = { source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' }
+    const temperature = { source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' }
     hub.remove(T1!)
     unbuilt = new Set(['composed-b1'])
     const both = input({
@@ -525,10 +525,10 @@ describe('hardening', () => {
     })
     await composer.apply(both)
     expect(targets.has('composed-b1')).toBe(false)
-    expect(tracker.read(celsius)).toMatchObject({ state: 'unavailable', fatal: true })
+    expect(tracker.read(temperature)).toMatchObject({ state: 'unavailable', fatal: true })
     // The source comes back, but nothing the OPERATOR did happened: it stays gone.
     hub.add(T1!, 11, {
-      'temperature-sensor': { celsius: 21.0, lastFetchedAt: 990_000 },
+      'temperature-sensor': { temperature: 21.0, lastFetchedAt: 990_000 },
       'device-status': { online: true, lastChangedAt: 1 },
     })
     const lists = hub.calls.filter((c) => c.startsWith('list:')).length
@@ -536,14 +536,16 @@ describe('hardening', () => {
     await composer.apply(both)
     await composer.apply(both)
     expect(hub.calls.filter((c) => c.startsWith('list:')).length).toBe(lists)
-    expect(tracker.read(celsius)).toMatchObject({ state: 'unavailable', fatal: true })
-    expect(composer.getStates(['b2'])[0]?.fields.find((f) => f.path === 'celsius')).toMatchObject({
+    expect(tracker.read(temperature)).toMatchObject({ state: 'unavailable', fatal: true })
+    expect(
+      composer.getStates(['b2'])[0]?.fields.find((f) => f.path === 'temperature'),
+    ).toMatchObject({
       state: 'unavailable',
     })
     // An operator restart of the unbuilt block is what re-opens it.
     await composer.apply({ ...both, restartBlockIds: ['b1'] })
     expect(hub.calls.filter((c) => c.startsWith('list:')).length).toBeGreaterThan(lists)
-    expect(tracker.read(celsius)).toMatchObject({ state: 'fresh', value: 21.0 })
+    expect(tracker.read(temperature)).toMatchObject({ state: 'fresh', value: 21.0 })
   })
 
   it('overlapping applies are serialized: one declaration, not two', async () => {

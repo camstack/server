@@ -410,7 +410,7 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
       },
       {
         kind: 'numeric',
-        field: 'progressPercent',
+        field: 'progress',
         quantity: t('the cycle progress', 'l’avanzamento del lavaggio'),
         label: t('Progress', 'Avanzamento'),
         unit: '%',
@@ -786,11 +786,11 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
         id: 'media.seek',
         method: 'seek',
         label: t('Seek', 'Vai al punto'),
-        phrase: t('Move {device} to {positionMs}', 'Porta {device} al punto {positionMs}'),
+        phrase: t('Move {device} to {position}', 'Porta {device} al punto {position}'),
         icon: 'fast-forward',
         openArgs: [
           {
-            key: 'positionMs',
+            key: 'position',
             label: t('Position', 'Posizione'),
             offer: { kind: 'number', min: 0, step: 1000, unit: 'ms' },
           },

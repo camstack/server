@@ -124,8 +124,8 @@ Enum: `"device" \| "integration"`
 
 ### `AirQualitySensorStatusSchema`
 
-- `co2Ppm?`: `number`
-- `vocPpb?`: `number`
+- `co2?`: `number`
+- `voc?`: `number`
 - `pm25?`: `number`
 - `pm10?`: `number`
 - `aqi?`: `number`
@@ -178,7 +178,7 @@ Enum: `"active" \| "in-progress" \| "completed" \| "failed" \| "dismissed"`
 
 ### `AmbientLightSensorStatusSchema`
 
-- `lux`: `number \| null`
+- `illuminance`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `AnalyticsLtsSeriesSchema`
@@ -517,11 +517,11 @@ Enum: `"queued" \| "running" \| "succeeded" \| "failed" \| "cancelled"`
 
 ### `BatteryStatusSchema`
 
-- `percentage`: `number \| null`
+- `level`: `number \| null`
 - `charging`: `"dc" \| "solar" \| "none" \| "unknown"`
 - `sleeping`: `boolean`
 - `lastUpdated`: `number`
-- `volts?`: `number \| null`
+- `voltage?`: `number \| null`
 - `lastContactAt?`: `number`
 - `lastFullRefreshAt?`: `number`
 - `binary?`: `boolean`
@@ -540,7 +540,7 @@ Enum: `"queued" \| "running" \| "succeeded" \| "failed" \| "cancelled"`
 
 ### `BrightnessStatusSchema`
 
-- `percentage`: `number`
+- `level`: `number`
 - `lastChangedAt`: `number`
 
 ### `BrokerAddInputSchema`
@@ -1137,7 +1137,7 @@ Enum: `"authorised"`
 - `mode`: `"rgb" \| "hsv" \| "mired"`
 - `rgb?`: `{ r: number; g: number; b: number }`
 - `hsv?`: `{ h: number; s: number; v: number }`
-- `mireds?`: `number`
+- `colorTemperature?`: `number`
 - `lastChangedAt`: `number`
 
 ### `ComposerApplyInputSchema`
@@ -1735,9 +1735,9 @@ Enum: `"idle" \| "running" \| "paused" \| "finished" \| "error" \| "unavailable"
 - `program`: `string \| null`
 - `selectedProgram`: `string \| null`
 - `availablePrograms`: `string[]`
-- `remainingSeconds`: `number \| null`
-- `delayedStartSeconds`: `number \| null`
-- `progressPercent`: `number \| null`
+- `remaining`: `number \| null`
+- `delayedStart`: `number \| null`
+- `progress`: `number \| null`
 - `doorOpen`: `boolean \| null`
 - `doorLocked`: `boolean \| null`
 - `remoteStartAllowed`: `boolean \| null`
@@ -2221,7 +2221,7 @@ Enum: `"ok" \| "missing" \| "foreign" \| "unavailable"`
 
 ### `FanControlStatusSchema`
 
-- `percentage`: `number \| null`
+- `speed`: `number \| null`
 - `percentageStep?`: `number`
 - `preset`: `string`
 - `availablePresets`: `string[]`
@@ -2445,7 +2445,7 @@ Enum: `"appConnections" \| "notificationTaps" \| "internal" \| "publicEndpoint"`
 
 ### `HumiditySensorStatusSchema`
 
-- `percent`: `number \| null`
+- `humidity`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `HvacModeSchema`
@@ -2720,7 +2720,7 @@ Enum: `"idle" \| "mowing" \| "paused" \| "docked" \| "error"`
 
 - `activity`: `LawnMowerActivitySchema`
 - `batteryLevel`: `number \| null`
-- `progressPercent`: `number \| null`
+- `progress`: `number \| null`
 - `currentCode`: `number \| null`
 - `currentCodeLabel`: `string \| null`
 - `severity`: `DeviceCodeSeveritySchema`
@@ -3291,8 +3291,8 @@ Enum: `"off" \| "on" \| "idle" \| "playing" \| "paused" \| "buffering" \| "stand
 - `source`: `string`
 - `availableSources`: `string[]`
 - `currentMedia`: `{ type: string; title: string; artist?: string; album?: string; imageUrl?: string } \| null`
-- `positionMs`: `number \| null`
-- `durationMs`: `number \| null`
+- `position`: `number \| null`
+- `duration`: `number \| null`
 - `shuffle`: `boolean \| null`
 - `repeat`: `MediaPlayerRepeatSchema \| null`
 - `lastChangedAt`: `number`
@@ -4313,8 +4313,8 @@ Enum: `"shared" \| "per-class"`
 ### `NetworkLinkStatusSchema`
 
 - `type`: `"wifi" \| "ethernet" \| "cellular" \| "unknown"`
-- `signalPercent`: `number \| null`
-- `rssiDbm?`: `number`
+- `signal`: `number \| null`
+- `rssi?`: `number`
 - `ssid?`: `string`
 - `lastUpdated`: `number`
 
@@ -4774,11 +4774,11 @@ Enum: `"f32le" \| "s16le"`
 
 ### `PowerMeterStatusSchema`
 
-- `watts?`: `number`
-- `kwhTotal?`: `number`
-- `volts?`: `number`
-- `amps?`: `number`
-- `va?`: `number`
+- `power?`: `number`
+- `energy?`: `number`
+- `voltage?`: `number`
+- `current?`: `number`
+- `apparentPower?`: `number`
 - `powerFactor?`: `number`
 - `lastFetchedAt`: `number`
 
@@ -4787,12 +4787,11 @@ Enum: `"f32le" \| "s16le"`
 - `state`: `string`
 - `location`: `string \| null`
 - `gps`: `{ latitude: number; longitude: number; accuracyMeters: number } \| null`
-- `batteryPercent`: `number \| null`
 - `lastChangedAt`: `number`
 
 ### `PressureSensorStatusSchema`
 
-- `hpa`: `number \| null`
+- `pressure`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `PrivacyMaskOptionsSchema`
@@ -6429,7 +6428,7 @@ Enum: `"jwt-signing-key"`
 
 ### `TemperatureSensorStatusSchema`
 
-- `celsius`: `number \| null`
+- `temperature`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `TerminalInstanceInfoSchema`
@@ -6953,7 +6952,7 @@ Enum: `"uninstalled" \| "not-installed" \| "refused" \| "failed" \| "pending-rec
 - `batteryLevel`: `number \| null`
 - `fanSpeed`: `string \| null`
 - `availableFanSpeeds`: `string[]`
-- `progressPercent`: `number \| null`
+- `progress`: `number \| null`
 - `errorCode`: `number \| null`
 - `errorLabel`: `string \| null`
 - `lastChangedAt`: `number`

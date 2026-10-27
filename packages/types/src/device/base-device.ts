@@ -70,7 +70,7 @@ export abstract class BaseDevice<
    * `device-local-state.ts`. Drivers access via:
    *
    *   `this.state.battery.sleeping = true`        // patches the battery slice
-   *   `const pct = this.state.battery.percentage` // reads the battery slice
+   *   `const pct = this.state.battery.level` // reads the battery slice
    *   `this.state.deviceStatus.online = true`     // mirrors `markOnline(true)`
    *
    * Adding a new cap with `runtimeState:` automatically extends this
@@ -113,7 +113,7 @@ export abstract class BaseDevice<
    * shape; drivers don't redeclare it, they just write through.
    *
    * Read: `this.runtimeState.getCapState('battery')` →
-   *   `{percentage, charging, sleeping, lastUpdated}` for any
+   *   `{level, charging, sleeping, lastUpdated}` for any
    *   provider that registers `batteryCapability`.
    * Write: `this.runtimeState.setCapState('battery', { … })`.
    *

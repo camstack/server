@@ -63,10 +63,10 @@ export const MediaPlayerStatusSchema = z.object({
   currentMedia: MediaInfoSchema.nullable(),
   /** Current playback position in ms. Null when not seekable or
    *  nothing is playing. Pair with `DeviceFeature.MediaPlayerSeek`. */
-  positionMs: z.number().int().nonnegative().nullable().meta(readingMeta('duration-ms')),
+  position: z.number().int().nonnegative().nullable().meta(readingMeta('duration-ms')),
   /** Total duration of the current media in ms. Null when unknown
    *  (live stream) or nothing is playing. */
-  durationMs: z.number().int().nonnegative().nullable().meta(readingMeta('duration-ms')),
+  duration: z.number().int().nonnegative().nullable().meta(readingMeta('duration-ms')),
   /** Shuffle toggle. Null when no shuffle surface.
    *  Pair with `DeviceFeature.MediaPlayerShuffle`. */
   shuffle: z.boolean().nullable(),
@@ -109,7 +109,7 @@ export const mediaPlayerCapability = {
     seek: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
-        positionMs: z.number().int().nonnegative(),
+        position: z.number().int().nonnegative(),
       }),
       z.void(),
       { kind: 'mutation', auth: 'protected' },
@@ -188,7 +188,7 @@ export const mediaPlayerCapability = {
   /**
    * History (D850): volume (a level an operator or an automation sets; the
    * default 10 s floor folds a slider drag into its end value) and mute.
-   * `positionMs` is not recorded: it moves continuously while playing.
+   * `position` is not recorded: it moves continuously while playing.
    */
   history: {
     fields: {

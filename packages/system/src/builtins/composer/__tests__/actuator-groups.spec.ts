@@ -28,7 +28,7 @@ function appliance(kind: ApplianceHelperSpec['appliance']): ApplianceHelperSpec 
     member: {
       source: { addonId: 'lights', stableId: 'a' },
       cap: 'power-meter',
-      fieldPath: 'watts',
+      fieldPath: 'power',
     },
   }
 }
@@ -269,7 +269,7 @@ describe('actuator groups beyond switch and light', () => {
     caps.set(2, ['switch'])
     await world.groups.onMemberBindings(2)
     expect(world.group.shared).toEqual(['switch'])
-    await expect(dispatch('fan-control', 'setPercentage', { percentage: 50 })).rejects.toThrow(
+    await expect(dispatch('fan-control', 'setPercentage', { speed: 50 })).rejects.toThrow(
       /does not share fan-control/,
     )
     await dispatch('switch', 'setState', { on: true })

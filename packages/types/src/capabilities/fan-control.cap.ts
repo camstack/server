@@ -28,7 +28,7 @@ export type FanDirection = z.infer<typeof FanDirectionSchema>
 export const FanControlStatusSchema = z.object({
   /** Active speed as 0..100 inclusive. Null when the device has no
    *  speed surface (single-speed fan). */
-  percentage: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
+  speed: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** Speed granularity the device accepts (HA `percentage_step`, e.g. 25 for
    *  a 4-speed fan). Absent when unknown — the UI then falls back to step 1. */
   percentageStep: z.number().positive().optional().meta(readingMeta('percentage')),
@@ -59,7 +59,7 @@ export const fanControlCapability = {
     setPercentage: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
-        percentage: z.number().min(0).max(100),
+        speed: z.number().min(0).max(100),
       }),
       z.void(),
       { kind: 'mutation', auth: 'protected' },
@@ -95,7 +95,7 @@ export const fanControlCapability = {
   },
   /**
    * Runtime-state slice — mirrored by the kernel. UI fan speed
-   * sliders read `percentage` for live updates.
+   * sliders read `speed` for live updates.
    */
   runtimeState: FanControlStatusSchema,
 
@@ -111,7 +111,7 @@ export const fanControlCapability = {
    */
   history: {
     fields: {
-      percentage: { kind: 'gauge', unit: '%', minIntervalMs: 0 },
+      speed: { kind: 'gauge', unit: '%', minIntervalMs: 0 },
       oscillating: { kind: 'boolean' },
     },
   },

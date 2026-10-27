@@ -16,9 +16,9 @@ const UNKNOWN: DishwasherStatus = {
   program: null,
   selectedProgram: null,
   availablePrograms: [],
-  remainingSeconds: null,
-  delayedStartSeconds: null,
-  progressPercent: null,
+  remaining: null,
+  delayedStart: null,
+  progress: null,
   doorOpen: null,
   doorLocked: null,
   remoteStartAllowed: null,
@@ -57,8 +57,8 @@ describe('DishwasherStatusSchema', () => {
       program: 'Dishcare.Dishwasher.Program.Eco50',
       selectedProgram: 'Dishcare.Dishwasher.Program.Eco50',
       availablePrograms: ['Dishcare.Dishwasher.Program.Eco50', 'Dishcare.Dishwasher.Program.Auto2'],
-      remainingSeconds: 2520,
-      progressPercent: 35,
+      remaining: 2520,
+      progress: 35,
       doorOpen: false,
       remoteStartAllowed: false,
       powerOn: true,
@@ -108,12 +108,12 @@ describe('DishwasherStatusSchema', () => {
   })
 
   it('rejects progress outside 0..100', () => {
-    expect(() => DishwasherStatusSchema.parse({ ...UNKNOWN, progressPercent: 101 })).toThrow()
+    expect(() => DishwasherStatusSchema.parse({ ...UNKNOWN, progress: 101 })).toThrow()
   })
 
   it('rejects a fractional or negative remaining time (seconds are whole)', () => {
-    expect(() => DishwasherStatusSchema.parse({ ...UNKNOWN, remainingSeconds: 1.5 })).toThrow()
-    expect(() => DishwasherStatusSchema.parse({ ...UNKNOWN, remainingSeconds: -1 })).toThrow()
+    expect(() => DishwasherStatusSchema.parse({ ...UNKNOWN, remaining: 1.5 })).toThrow()
+    expect(() => DishwasherStatusSchema.parse({ ...UNKNOWN, remaining: -1 })).toThrow()
   })
 })
 

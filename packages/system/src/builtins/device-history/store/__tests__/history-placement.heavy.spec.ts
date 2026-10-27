@@ -56,7 +56,7 @@ describe('device-history placement over the real router', () => {
     await store.declare()
 
     const series = await store.insertSeries({
-      key: 'cap:battery.percentage',
+      key: 'cap:battery.level',
       subject: 'd:1',
       deviceId: 1,
       scope: '',

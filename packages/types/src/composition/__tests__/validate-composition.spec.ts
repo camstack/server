@@ -147,9 +147,9 @@ describe('the room is valid', () => {
     expect(result.problems).toEqual([])
     expect(result.ok).toBe(true)
     expect(result.fields.map((f) => [f.cap, f.path, f.role, f.unavailable])).toEqual([
-      // D944 §4: celsius is nullable (a refused sample is null, D393), so a new
+      // D944 §4: temperature is nullable (a refused sample is null, D393), so a new
       // device says unavailable with null rather than by taking the field offline.
-      ['temperature-sensor', 'celsius', 'derived', 'null'],
+      ['temperature-sensor', 'temperature', 'derived', 'null'],
       ['temperature-sensor', 'lastFetchedAt', 'derived', 'offline'],
       ['binary', 'on', 'derived', 'offline'],
       ['binary', 'lastChangedAt', 'clock', 'offline'],
@@ -200,7 +200,7 @@ describe('reserved variants are refused by name, with their slice', () => {
         {
           kind: 'fields',
           cap: 'test-level',
-          fields: { level: tempFrom('celsius'), lastFetchedAt: tempFrom('lastFetchedAt') },
+          fields: { level: tempFrom('temperature'), lastFetchedAt: tempFrom('lastFetchedAt') },
           commands: { reset: { kind: 'forward', source: T1, cap: 'x', method: 'y' } },
         },
       ],
@@ -240,7 +240,7 @@ describe('capability fit', () => {
   it('refuses a cap the device type does not offer', () => {
     const c = single(
       'temperature-sensor',
-      { celsius: tempFrom('celsius'), lastFetchedAt: tempFrom('lastFetchedAt') },
+      { temperature: tempFrom('temperature'), lastFetchedAt: tempFrom('lastFetchedAt') },
       DeviceType.Light,
     )
     expect(codes(c)).toContain('wrong-device-type')
@@ -252,22 +252,22 @@ describe('capability fit', () => {
 
 describe('fields', () => {
   it('a required field with no source', () => {
-    expect(codes(single('temperature-sensor', { celsius: tempFrom('celsius') }))).toContain(
+    expect(codes(single('temperature-sensor', { temperature: tempFrom('temperature') }))).toContain(
       'missing-field',
     )
   })
   it('an unknown field and a nested path', () => {
     const c = single('temperature-sensor', {
-      celsius: tempFrom('celsius'),
+      temperature: tempFrom('temperature'),
       lastFetchedAt: tempFrom('lastFetchedAt'),
-      fahrenheit: tempFrom('celsius'),
-      'a.b': tempFrom('celsius'),
+      fahrenheit: tempFrom('temperature'),
+      'a.b': tempFrom('temperature'),
     })
     expect(codes(c)).toEqual(expect.arrayContaining(['unknown-field', 'nested-field']))
   })
   it('a boolean source into a number field', () => {
     const c = single('temperature-sensor', {
-      celsius: { kind: 'from', source: M1, cap: 'motion', fieldPath: 'detected' },
+      temperature: { kind: 'from', source: M1, cap: 'motion', fieldPath: 'detected' },
       lastFetchedAt: tempFrom('lastFetchedAt'),
     })
     expect(codes(c)).toContain('kind-mismatch')
@@ -275,7 +275,7 @@ describe('fields', () => {
   it('a possible null into a non-nullable field — and max() is accepted where latest() is not', () => {
     const f = (expr: string) =>
       single('temperature-sensor', {
-        celsius: tempFrom('celsius'),
+        temperature: tempFrom('temperature'),
         lastFetchedAt: { kind: 'expression', expr, bindings: { a: tempFrom('lastFetchedAt') } },
       })
     expect(codes(f('latest(a)'))).toContain('may-be-null')
@@ -292,7 +292,11 @@ describe('fields', () => {
   it("a call whose argument count is outside the builtin's minArgs/maxArgs is refused by name", () => {
     // `abs` takes exactly one argument (builtins.ts); two is refused, not silently accepted.
     const c = single('temperature-sensor', {
-      celsius: { kind: 'expression', expr: 'abs(a, a)', bindings: { a: tempFrom('celsius') } },
+      temperature: {
+        kind: 'expression',
+        expr: 'abs(a, a)',
+        bindings: { a: tempFrom('temperature') },
+      },
       lastFetchedAt: tempFrom('lastFetchedAt'),
     })
     const result = validateComposition(c, ctx(c))
@@ -362,7 +366,7 @@ describe('sources', () => {
 
   it('source-field-unknown: an unknown source capability is named', () => {
     const c = single('temperature-sensor', {
-      celsius: { kind: 'from', source: T1, cap: 'no-such-cap', fieldPath: 'x' },
+      temperature: { kind: 'from', source: T1, cap: 'no-such-cap', fieldPath: 'x' },
       lastFetchedAt: tempFrom('lastFetchedAt'),
     })
     const result = validateComposition(c, ctx(c))
@@ -373,7 +377,7 @@ describe('sources', () => {
 
   it('source-field-unknown: an unknown field on a known source capability is named', () => {
     const c = single('temperature-sensor', {
-      celsius: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'bogus' },
+      temperature: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'bogus' },
       lastFetchedAt: tempFrom('lastFetchedAt'),
     })
     const result = validateComposition(c, ctx(c))
@@ -387,7 +391,7 @@ describe('sources', () => {
     // This composition composes `temperature-sensor` only — `binary.on` is a
     // real field on a real cap, just not one THIS device writes.
     const c = single('temperature-sensor', {
-      celsius: { kind: 'from', source: self, cap: 'binary', fieldPath: 'on' },
+      temperature: { kind: 'from', source: self, cap: 'binary', fieldPath: 'on' },
       lastFetchedAt: tempFrom('lastFetchedAt'),
     })
     const result = validateComposition(c, ctx(c, { self }))
@@ -413,7 +417,7 @@ describe('cycles', () => {
   it('refuses, by name, two stored peers that target the same device', () => {
     const self = composedDeviceRef('b1')
     const c = single('test-level', {
-      level: tempFrom('celsius'),
+      level: tempFrom('temperature'),
       lastFetchedAt: tempFrom('lastFetchedAt'),
     })
     const stolenTarget = composedDeviceRef('b3')

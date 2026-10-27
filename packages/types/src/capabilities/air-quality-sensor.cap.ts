@@ -14,9 +14,9 @@ import { readingMeta } from '../units/quantity.js'
  */
 export const AirQualitySensorStatusSchema = z.object({
   /** Carbon dioxide concentration in ppm. */
-  co2Ppm: z.number().min(0).optional().meta(readingMeta('concentration-volume')),
+  co2: z.number().min(0).optional().meta(readingMeta('concentration-volume')),
   /** Total volatile organic compounds in ppb. */
-  vocPpb: z.number().min(0).optional().meta(readingMeta('concentration-ppb')),
+  voc: z.number().min(0).optional().meta(readingMeta('concentration-ppb')),
   /** Particulate matter ≤ 2.5 μm in µg/m³. */
   pm25: z.number().min(0).optional().meta(readingMeta('concentration-mass')),
   /** Particulate matter ≤ 10 μm in µg/m³. */
@@ -54,8 +54,8 @@ export const airQualitySensorCapability = {
    */
   history: {
     fields: {
-      co2Ppm: { kind: 'gauge', unit: 'ppm', deadband: 5 },
-      vocPpb: { kind: 'gauge', unit: 'ppb', deadband: 5 },
+      co2: { kind: 'gauge', unit: 'ppm', deadband: 5 },
+      voc: { kind: 'gauge', unit: 'ppb', deadband: 5 },
       pm25: { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
       pm10: { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
       aqi: { kind: 'gauge', unit: 'count', deadband: 1 },

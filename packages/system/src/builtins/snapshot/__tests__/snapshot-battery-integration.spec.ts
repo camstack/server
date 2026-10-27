@@ -57,7 +57,7 @@ function makeLogger(): IScopedLogger {
  */
 function makeBatteryProviderWithState() {
   const state = {
-    percentage: 80,
+    level: 80,
     charging: 'none' as const,
     sleeping: false,
     lastUpdated: Date.now(),

@@ -28,7 +28,7 @@ describe('a history.db written before the enum columns existed', () => {
         records: [
           {
             data: {
-              key: 'cap:battery.percentage',
+              key: 'cap:battery.level',
               source: 'cap',
               owner_addon: 'device-history',
               subject_kind: 'device',

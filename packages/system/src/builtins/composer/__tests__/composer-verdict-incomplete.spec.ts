@@ -9,7 +9,7 @@ describe('composer verdict — incomplete', () => {
       fields: [],
       events: [],
       problems: [
-        'features[0].fields.celsius: `temperature-sensor.celsius` is required and has no source',
+        'features[0].fields.temperature: `temperature-sensor.temperature` is required and has no source',
       ],
       declaration: null,
       shape: null,
@@ -33,7 +33,7 @@ describe('composer verdict — incomplete', () => {
       ...base,
       planned: {
         ...base.planned,
-        problems: [...base.planned.problems, 'features[0].fields.celsius: cycle detected'],
+        problems: [...base.planned.problems, 'features[0].fields.temperature: cycle detected'],
       },
     }
     expect(verdictOf('b1', entry, false).status).toBe('failed')

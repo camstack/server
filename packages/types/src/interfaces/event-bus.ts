@@ -1410,15 +1410,15 @@ export interface EventCatalog {
    * by hand (see also `BatteryStatus` in `capabilities/battery.cap.ts`).
    *
    * "By hand" failed exactly as the repo's no-duplicate-shapes rule predicts:
-   * `percentage` became nullable in the cap and stayed `number` here, so this
+   * `level` became nullable in the cap and stayed `number` here, so this
    * copy refused the very value the cap now defines. Kept in lock-step is a
    * hope; the compiler noticing is the only reason it was caught.
    */
   'battery.onStatusChanged': {
     readonly deviceId: number
     readonly status: {
-      /** `null` = NOT YET KNOWN. See `BatteryStatusSchema.percentage`. */
-      readonly percentage: number | null
+      /** `null` = NOT YET KNOWN. See `BatteryStatusSchema.level`. */
+      readonly level: number | null
       /** `'unknown'` = the power source was never read. See `BatteryStatusSchema.charging`. */
       readonly charging: 'dc' | 'solar' | 'none' | 'unknown'
       readonly sleeping: boolean

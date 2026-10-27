@@ -193,14 +193,14 @@ type CompositionExpressionBindings = Extract<
 
 function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
   const member = spec.member
-  if (member.cap !== 'power-meter' || member.fieldPath !== 'watts') {
+  if (member.cap !== 'power-meter' || member.fieldPath !== 'power') {
     return {
       ok: false,
       problems: [
         problem(
           'member-constraint',
           'helper.member',
-          'an appliance helper reads power-meter.watts',
+          'an appliance helper reads power-meter.power',
         ),
       ],
     }
@@ -259,7 +259,7 @@ function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
         kind: 'fields',
         cap: 'power-meter',
         fields: {
-          watts: read,
+          power: read,
           lastFetchedAt: clock,
         },
       },

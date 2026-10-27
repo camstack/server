@@ -58,13 +58,13 @@ function input(updatedAt = 1, restartBlockIds: readonly string[] = []): Composer
 }
 
 function celsiusState(): unknown {
-  return composer.getStates(['b1'])[0]?.fields.find((f) => f.path === 'celsius')
+  return composer.getStates(['b1'])[0]?.fields.find((f) => f.path === 'temperature')
 }
 
-/** Every `celsius` value the composed device was asked to hold. */
+/** Every `temperature` value the composed device was asked to hold. */
 function celsiusWrites(): readonly unknown[] {
   return target.writes.flatMap((w) =>
-    w.cap === 'temperature-sensor' && 'celsius' in w.values ? [w.values['celsius']] : [],
+    w.cap === 'temperature-sensor' && 'temperature' in w.values ? [w.values['temperature']] : [],
   )
 }
 
@@ -72,7 +72,7 @@ beforeEach(async () => {
   hub = new FakeHub()
   ROOM_EXAMPLE_TEMPERATURE_SOURCES.forEach((ref, i) =>
     hub.add(ref, 11 + i, {
-      'temperature-sensor': { celsius: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
+      'temperature-sensor': { temperature: [21.0, 21.5, 21.4][i], lastFetchedAt: 990_000 + i },
     }),
   )
   ROOM_EXAMPLE_MOTION_SOURCES.forEach((ref, i) =>
@@ -144,10 +144,10 @@ describe('the sofa sensor is deleted', () => {
     await composer.onDeviceUnregistered(SOFA_ID)
   })
 
-  it('celsius is unavailable — null in the state, never a number — and the device goes offline', () => {
+  it('temperature is unavailable — null in the state, never a number — and the device goes offline', () => {
     expect(celsiusState()).toMatchObject({ state: 'unavailable', value: null })
     expect(target.availability.at(-1)).toBe(false)
-    // D944 §4 made `celsius` nullable: a refused sample is null (D393). The
+    // D944 §4 made `temperature` nullable: a refused sample is null (D393). The
     // composer therefore writes that null, so the device state cannot keep
     // the stale 21.3. One null, after the boot average — not a second number.
     expect(celsiusWritesBefore).toEqual([21.3])
@@ -200,7 +200,9 @@ describe('the sofa sensor is deleted', () => {
   })
 
   it('NO auto-repair: the source coming back — events included — leaves the block failed', async () => {
-    hub.add(SOFA, SOFA_NEW_ID, { 'temperature-sensor': { celsius: 20, lastFetchedAt: 999_000 } })
+    hub.add(SOFA, SOFA_NEW_ID, {
+      'temperature-sensor': { temperature: 20, lastFetchedAt: 999_000 },
+    })
     await composer.onBindingsChanged({
       deviceId: SOFA_NEW_ID,
       capName: 'temperature-sensor',
@@ -210,7 +212,7 @@ describe('the sofa sensor is deleted', () => {
     await composer.onStateChanged({
       deviceId: SOFA_NEW_ID,
       capName: 'temperature-sensor',
-      slice: { celsius: 20, lastFetchedAt: 999_000 },
+      slice: { temperature: 20, lastFetchedAt: 999_000 },
     })
     const result = await composer.apply(input())
     expect(result.blocks[0]).toMatchObject({
@@ -222,7 +224,9 @@ describe('the sofa sensor is deleted', () => {
   })
 
   it('only the operator ends it: an edit (new updatedAt) re-resolves and runs again', async () => {
-    hub.add(SOFA, SOFA_NEW_ID, { 'temperature-sensor': { celsius: 21.5, lastFetchedAt: 999_000 } })
+    hub.add(SOFA, SOFA_NEW_ID, {
+      'temperature-sensor': { temperature: 21.5, lastFetchedAt: 999_000 },
+    })
     const result = await composer.apply(input(2))
     expect(result.blocks[0]).toEqual({ blockId: 'b1', status: 'running' })
     expect(celsiusState()).toMatchObject({ state: 'fresh', value: 21.3 })
@@ -230,7 +234,9 @@ describe('the sofa sensor is deleted', () => {
   })
 
   it('…or a restart', async () => {
-    hub.add(SOFA, SOFA_NEW_ID, { 'temperature-sensor': { celsius: 21.5, lastFetchedAt: 999_000 } })
+    hub.add(SOFA, SOFA_NEW_ID, {
+      'temperature-sensor': { temperature: 21.5, lastFetchedAt: 999_000 },
+    })
     const result = await composer.apply(input(1, ['b1']))
     expect(result.blocks[0]).toEqual({ blockId: 'b1', status: 'running' })
     expect(celsiusState()).toMatchObject({ state: 'fresh', value: 21.3 })

@@ -70,11 +70,11 @@ export const DishwasherStatusSchema = z.object({
   /** Feature keys of the programs the appliance currently offers — drives the UI selector. */
   availablePrograms: z.array(z.string()),
   /** Seconds remaining on the active cycle, or null when not running / not known. */
-  remainingSeconds: z.number().int().nonnegative().nullable().meta(readingMeta('duration')),
+  remaining: z.number().int().nonnegative().nullable().meta(readingMeta('duration')),
   /** Seconds the delayed start is set to (time until the cycle starts), or null. */
-  delayedStartSeconds: z.number().int().nonnegative().nullable().meta(readingMeta('duration')),
+  delayedStart: z.number().int().nonnegative().nullable().meta(readingMeta('duration')),
   /** Cycle completion 0..100, or null when not applicable. */
-  progressPercent: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
+  progress: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
   /** True when the door is reported open; null when the door state is not known. */
   doorOpen: z.boolean().nullable(),
   /** True when the door is latched (locked) during a cycle; null when not reported. */
@@ -283,12 +283,12 @@ export const dishwasherCapability = {
   durability: 'session',
   history: {
     fields: {
-      progressPercent: { kind: 'gauge', unit: '%', deadband: 2 },
+      progress: { kind: 'gauge', unit: '%', deadband: 2 },
       // The coarse and the appliance's own state: change-only enums.
       state: { kind: 'enum' },
       operationState: { kind: 'enum' },
       // Counts down every poll; one point a minute draws a cycle exactly enough.
-      remainingSeconds: { kind: 'gauge', unit: 's', minIntervalMs: 60_000 },
+      remaining: { kind: 'gauge', unit: 's', minIntervalMs: 60_000 },
       doorOpen: { kind: 'boolean' },
       powerOn: { kind: 'boolean' },
     },

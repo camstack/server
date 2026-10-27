@@ -122,25 +122,25 @@ describe('HA sensor cap family — phase B', () => {
         cap: temperatureSensorCapability,
         name: 'temperature-sensor',
         schema: TemperatureSensorStatusSchema,
-        sample: { celsius: 21.5, lastFetchedAt: 1 },
+        sample: { temperature: 21.5, lastFetchedAt: 1 },
       },
       {
         cap: humiditySensorCapability,
         name: 'humidity-sensor',
         schema: HumiditySensorStatusSchema,
-        sample: { percent: 55, lastFetchedAt: 1 },
+        sample: { humidity: 55, lastFetchedAt: 1 },
       },
       {
         cap: ambientLightSensorCapability,
         name: 'ambient-light-sensor',
         schema: AmbientLightSensorStatusSchema,
-        sample: { lux: 230, lastFetchedAt: 1 },
+        sample: { illuminance: 230, lastFetchedAt: 1 },
       },
       {
         cap: pressureSensorCapability,
         name: 'pressure-sensor',
         schema: PressureSensorStatusSchema,
-        sample: { hpa: 1013.25, lastFetchedAt: 1 },
+        sample: { pressure: 1013.25, lastFetchedAt: 1 },
       },
     ] as const
 
@@ -159,18 +159,18 @@ describe('HA sensor cap family — phase B', () => {
     })
 
     it('humidity-sensor: rejects values outside 0..100', () => {
-      expect(HumiditySensorStatusSchema.safeParse({ percent: -1, lastFetchedAt: 0 }).success).toBe(
+      expect(HumiditySensorStatusSchema.safeParse({ humidity: -1, lastFetchedAt: 0 }).success).toBe(
         false,
       )
-      expect(HumiditySensorStatusSchema.safeParse({ percent: 101, lastFetchedAt: 0 }).success).toBe(
-        false,
-      )
+      expect(
+        HumiditySensorStatusSchema.safeParse({ humidity: 101, lastFetchedAt: 0 }).success,
+      ).toBe(false)
     })
 
-    it('ambient-light-sensor: rejects negative lux', () => {
-      expect(AmbientLightSensorStatusSchema.safeParse({ lux: -1, lastFetchedAt: 0 }).success).toBe(
-        false,
-      )
+    it('ambient-light-sensor: rejects negative illuminance', () => {
+      expect(
+        AmbientLightSensorStatusSchema.safeParse({ illuminance: -1, lastFetchedAt: 0 }).success,
+      ).toBe(false)
     })
 
     it('temperature-sensor lives on Thermostat devices too', () => {
@@ -182,17 +182,17 @@ describe('HA sensor cap family — phase B', () => {
   describe('B3 — multi-metric + generic sensors', () => {
     it('power-meter accepts any subset of optional fields', () => {
       expect(PowerMeterStatusSchema.parse({ lastFetchedAt: 1 })).toEqual({ lastFetchedAt: 1 })
-      expect(PowerMeterStatusSchema.parse({ watts: 42, lastFetchedAt: 1 })).toEqual({
-        watts: 42,
+      expect(PowerMeterStatusSchema.parse({ power: 42, lastFetchedAt: 1 })).toEqual({
+        power: 42,
         lastFetchedAt: 1,
       })
       expect(
         PowerMeterStatusSchema.parse({
-          watts: 42,
-          kwhTotal: 100,
-          volts: 230,
-          amps: 0.18,
-          va: 41.4,
+          power: 42,
+          energy: 100,
+          voltage: 230,
+          current: 0.18,
+          apparentPower: 41.4,
           powerFactor: 0.99,
           lastFetchedAt: 1,
         }),
@@ -207,14 +207,14 @@ describe('HA sensor cap family — phase B', () => {
 
     it('air-quality-sensor accepts any subset of pollutant fields', () => {
       expect(AirQualitySensorStatusSchema.parse({ lastFetchedAt: 1 })).toEqual({ lastFetchedAt: 1 })
-      expect(AirQualitySensorStatusSchema.parse({ co2Ppm: 800, lastFetchedAt: 1 })).toEqual({
-        co2Ppm: 800,
+      expect(AirQualitySensorStatusSchema.parse({ co2: 800, lastFetchedAt: 1 })).toEqual({
+        co2: 800,
         lastFetchedAt: 1,
       })
       expect(
         AirQualitySensorStatusSchema.parse({
-          co2Ppm: 600,
-          vocPpb: 200,
+          co2: 600,
+          voc: 200,
           pm25: 12,
           pm10: 18,
           aqi: 35,
@@ -224,9 +224,9 @@ describe('HA sensor cap family — phase B', () => {
     })
 
     it('air-quality-sensor rejects negative pollutant values', () => {
-      expect(
-        AirQualitySensorStatusSchema.safeParse({ co2Ppm: -10, lastFetchedAt: 0 }).success,
-      ).toBe(false)
+      expect(AirQualitySensorStatusSchema.safeParse({ co2: -10, lastFetchedAt: 0 }).success).toBe(
+        false,
+      )
       expect(AirQualitySensorStatusSchema.safeParse({ pm25: -1, lastFetchedAt: 0 }).success).toBe(
         false,
       )

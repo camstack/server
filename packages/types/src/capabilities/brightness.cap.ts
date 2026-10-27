@@ -10,14 +10,14 @@ import { readingMeta } from '../units/quantity.js'
  * controls to this single-method surface.
  *
  * The cap is intentionally minimal: a single `setBrightness({deviceId,
- * percentage})` mutation plus the auto-injected `getStatus`. Drivers
+ * level})` mutation plus the auto-injected `getStatus`. Drivers
  * that expose richer controls (color temperature, scenes, schedules)
  * should surface those via the device's `getSettingsUISchema()`
  * instead of bloating this cap.
  */
 export const BrightnessStatusSchema = z.object({
   /** Current level as 0..100 inclusive. Firmware-reported. */
-  percentage: z.number().min(0).max(100).meta(readingMeta('percentage')),
+  level: z.number().min(0).max(100).meta(readingMeta('percentage')),
   /** Ms epoch of the last operator-driven change. Useful for UI freshness. */
   lastChangedAt: z.number(),
 })
@@ -34,7 +34,7 @@ export const brightnessCapability = {
     setBrightness: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
-        percentage: z.number().min(0).max(100),
+        level: z.number().min(0).max(100),
       }),
       z.void(),
       { kind: 'mutation', auth: 'protected' },
@@ -49,7 +49,7 @@ export const brightnessCapability = {
     onBrightnessChanged: {
       data: z.object({
         deviceId: z.number(),
-        percentage: z.number().min(0).max(100),
+        level: z.number().min(0).max(100),
         lastChangedAt: z.number(),
       }),
     },
@@ -77,7 +77,7 @@ export const brightnessCapability = {
    */
   history: {
     fields: {
-      percentage: { kind: 'gauge', unit: '%', minIntervalMs: 0 },
+      level: { kind: 'gauge', unit: '%', minIntervalMs: 0 },
     },
   },
 } as const satisfies CapabilityDefinition

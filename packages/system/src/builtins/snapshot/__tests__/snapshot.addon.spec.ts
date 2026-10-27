@@ -358,7 +358,7 @@ describe('SnapshotAddon (wrapper)', () => {
 
   function batterySlice(sleeping: boolean): BatteryStatus {
     return {
-      percentage: 80,
+      level: 80,
       charging: 'none',
       sleeping,
       lastUpdated: Date.now(),

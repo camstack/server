@@ -52,7 +52,7 @@ export const CompositionProblemCodeSchema = z.enum([
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 
-/** One refusal, named (D391). `path` points into the composition, e.g. `features[0].fields.celsius`. */
+/** One refusal, named (D391). `path` points into the composition, e.g. `features[0].fields.temperature`. */
 export const CompositionProblemSchema = z.object({
   code: CompositionProblemCodeSchema,
   path: z.string(),

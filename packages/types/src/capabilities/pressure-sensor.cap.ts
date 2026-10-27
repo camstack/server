@@ -13,7 +13,7 @@ import { readingMeta } from '../units/quantity.js'
  */
 export const PressureSensorStatusSchema = z.object({
   /** Current pressure in hPa. `null` when the sample was refused (D393). */
-  hpa: z
+  pressure: z
     .number()
     .nullable()
     .meta(readingMeta('pressure', { precision: 0 })),
@@ -48,7 +48,7 @@ export const pressureSensorCapability = {
    */
   history: {
     fields: {
-      hpa: { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
+      pressure: { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides

@@ -178,7 +178,7 @@ export function integralDraft(
 ): { readonly draft: unknown; readonly problems: readonly CompositionProblem[] } {
   const problems = [...historyProblems(spec.source)]
   const kind = declaredSeriesKind(spec.source)
-  const watts = spec.source.cap === 'power-meter' && spec.source.fieldPath === 'watts'
+  const isPower = spec.source.cap === 'power-meter' && spec.source.fieldPath === 'power'
   if (kind === 'counter' || kind === 'boolean' || kind === 'enum') {
     problems.push(
       problem(
@@ -188,21 +188,21 @@ export function integralDraft(
       ),
     )
   }
-  if (spec.output === 'energy' && !watts) {
+  if (spec.output === 'energy' && !isPower) {
     problems.push(
       problem(
         'kind-mismatch',
         'helper.output',
-        'energy is the integral of power-meter.watts; another reading uses the meter',
+        'energy is the integral of power-meter.power; another reading uses the meter',
       ),
     )
   }
-  if (spec.output === 'meter' && watts) {
+  if (spec.output === 'meter' && isPower) {
     problems.push(
       problem(
         'kind-mismatch',
         'helper.output',
-        'power integrates to power-meter.kwhTotal, which energy dashboards already read',
+        'power integrates to power-meter.energy, which energy dashboards already read',
       ),
     )
   }
@@ -214,7 +214,7 @@ export function integralDraft(
     draft: draft({
       role: energy ? DeviceRole.EnergySensor : DeviceRole.NumericSensor,
       cap: energy ? 'power-meter' : 'meter',
-      field: energy ? 'kwhTotal' : 'value',
+      field: energy ? 'energy' : 'value',
       empty: 'offline',
       spec,
       member: spec.source,

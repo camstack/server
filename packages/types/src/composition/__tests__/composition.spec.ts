@@ -46,7 +46,7 @@ describe('the room example', () => {
     expect(composition.features.map((f) => f.cap)).toEqual(['temperature-sensor', 'binary'])
     const temperature = composition.features[0]
     expect(temperature?.kind === 'fields' ? Object.keys(temperature.fields) : []).toEqual([
-      'celsius',
+      'temperature',
       'lastFetchedAt',
     ])
   })
@@ -73,8 +73,8 @@ describe('keys', () => {
       'provider-homeassistant/sensor.living_room_temperature#temperature-sensor',
     )
     expect(
-      compositionReadKey({ source: SENSOR, cap: 'temperature-sensor', fieldPath: 'celsius' }),
-    ).toBe('provider-homeassistant/sensor.living_room_temperature#temperature-sensor.celsius')
+      compositionReadKey({ source: SENSOR, cap: 'temperature-sensor', fieldPath: 'temperature' }),
+    ).toBe('provider-homeassistant/sensor.living_room_temperature#temperature-sensor.temperature')
   })
 
   it('mints the composed device identity from the block id', () => {

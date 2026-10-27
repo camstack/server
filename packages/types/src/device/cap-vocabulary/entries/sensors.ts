@@ -48,7 +48,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'co2Ppm',
+        field: 'co2',
         quantity: t('the CO₂', 'la CO₂'),
         label: t('CO₂', 'CO₂'),
         unit: 'ppm',
@@ -56,7 +56,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
       },
       {
         kind: 'numeric',
-        field: 'vocPpb',
+        field: 'voc',
         quantity: t('the VOC level', 'il livello di COV'),
         label: t('VOC', 'COV'),
         unit: 'ppb',
@@ -94,7 +94,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'lux',
+        field: 'illuminance',
         quantity: t('the light level', 'la luminosità'),
         label: t('Illuminance', 'Illuminamento'),
         unit: 'lx',
@@ -398,7 +398,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'percent',
+        field: 'humidity',
         quantity: t('the humidity', 'l’umidità'),
         label: t('Humidity', 'Umidità'),
         unit: '%',
@@ -462,7 +462,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'watts',
+        field: 'power',
         quantity: t('the power draw', 'il consumo'),
         label: t('Power', 'Potenza'),
         unit: 'W',
@@ -470,7 +470,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
       },
       {
         kind: 'numeric',
-        field: 'kwhTotal',
+        field: 'energy',
         quantity: t('the energy used', 'l’energia consumata'),
         label: t('Energy', 'Energia'),
         unit: 'kWh',
@@ -478,7 +478,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
       },
       {
         kind: 'numeric',
-        field: 'volts',
+        field: 'voltage',
         quantity: t('the voltage', 'la tensione'),
         label: t('Voltage', 'Tensione'),
         unit: 'V',
@@ -486,7 +486,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
       },
       {
         kind: 'numeric',
-        field: 'amps',
+        field: 'current',
         quantity: t('the current', 'la corrente'),
         label: t('Current', 'Corrente'),
         unit: 'A',
@@ -506,14 +506,6 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
         phrase: t('When {device} is at {value}', 'Quando {device} è in {value}'),
         icon: 'map-pin',
       },
-      {
-        kind: 'numeric',
-        field: 'batteryPercent',
-        quantity: t('the phone battery', 'la batteria del telefono'),
-        label: t('Battery', 'Batteria'),
-        unit: '%',
-        icon: 'battery',
-      },
     ],
   },
 
@@ -523,7 +515,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'hpa',
+        field: 'pressure',
         quantity: t('the pressure', 'la pressione'),
         label: t('Pressure', 'Pressione'),
         unit: 'hPa',
@@ -571,7 +563,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'celsius',
+        field: 'temperature',
         quantity: t('the temperature', 'la temperatura'),
         label: t('Temperature', 'Temperatura'),
         unit: '°C',
@@ -654,7 +646,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'percentage',
+        field: 'level',
         quantity: t('the battery level', 'il livello della batteria'),
         label: t('Battery', 'Batteria'),
         unit: '%',
@@ -699,7 +691,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     events: {
       onStatusChanged: {
         notOperatorFacing:
-          'the percentage / sleeping / charging state triggers each read one field of this change',
+          'the level / sleeping / charging state triggers each read one field of this change',
       },
     },
     extraEvents: [
@@ -724,7 +716,7 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
     state: [
       {
         kind: 'numeric',
-        field: 'signalPercent',
+        field: 'signal',
         quantity: t('the signal strength', 'l’intensità del segnale'),
         label: t('Signal', 'Segnale'),
         unit: '%',

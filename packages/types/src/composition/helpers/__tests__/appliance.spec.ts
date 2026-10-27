@@ -1,7 +1,7 @@
 /**
  * An appliance helper is one power reading plus a type. It compiles to that
  * device type's running-state (power at or above a threshold, with dwells)
- * and to the same watts as a reading.
+ * and to the same power as a reading.
  */
 import { describe, expect, it } from 'vitest'
 import { powerMeterCapability } from '../../../capabilities/power-meter.cap.js'
@@ -22,7 +22,7 @@ import type { Composition } from '../../composition.js'
 const PLUG = {
   source: { addonId: 'provider-homeassistant', stableId: 'sensor.plug_power' },
   cap: 'power-meter',
-  fieldPath: 'watts',
+  fieldPath: 'power',
 }
 
 function appliance(
@@ -73,12 +73,12 @@ describe('appliance helper', () => {
     expect(runningSource.bindings.x).toMatchObject({
       kind: 'from',
       cap: 'power-meter',
-      fieldPath: 'watts',
+      fieldPath: 'power',
     })
-    expect(power.fields.watts).toMatchObject({
+    expect(power.fields.power).toMatchObject({
       kind: 'from',
       cap: 'power-meter',
-      fieldPath: 'watts',
+      fieldPath: 'power',
     })
     expect(compiled.composition.helper).toEqual(appliance(kind))
     const report = validateComposition(compiled.composition, context(compiled.composition))
@@ -88,7 +88,7 @@ describe('appliance helper', () => {
   it('refuses a member that is not a power reading', () => {
     const compiled = compileHelper(
       appliance('washer', {
-        member: { ...PLUG, cap: 'temperature-sensor', fieldPath: 'celsius' },
+        member: { ...PLUG, cap: 'temperature-sensor', fieldPath: 'temperature' },
       }),
     )
     expect(compiled.ok).toBe(false)

@@ -113,7 +113,7 @@ export function rollupPoints(
   })
 }
 
-/** Energy used in each bucket of a `watts` gauge: its time-weighted integral, in kWh. */
+/** Energy used in each bucket of a `power` gauge: its time-weighted integral, in kWh. */
 export function integratedEnergyPoints(
   rows: readonly RollupRow[],
 ): readonly DeviceHistoryQueryPoint[] {

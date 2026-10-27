@@ -48,7 +48,7 @@ function read(
 }
 
 const batteryAddFields = {
-  percentage: fromRead(BATTERY_NUMBER.source, BATTERY_NUMBER.cap, BATTERY_NUMBER.fieldPath),
+  level: fromRead(BATTERY_NUMBER.source, BATTERY_NUMBER.cap, BATTERY_NUMBER.fieldPath),
   charging: literal('"unknown"'),
   sleeping: literal('false'),
   lastUpdated: literal('now'),
@@ -77,7 +77,7 @@ const runningClocks = {
 }
 
 const switchRead = fromRead(SWITCH_REF, 'switch', 'on')
-const powerRead = fromRead(SWITCH_REF, 'power-meter', 'watts')
+const powerRead = fromRead(SWITCH_REF, 'power-meter', 'power')
 
 function runningFeature(
   running: CompositionFieldSource,
@@ -98,7 +98,7 @@ const cases: readonly CustomizeStoredCase[] = [
       {
         kind: 'scalar',
         cap: 'battery',
-        targetId: 'percentage',
+        targetId: 'level',
         source: read(BATTERY_NUMBER.source, BATTERY_NUMBER.cap, BATTERY_NUMBER.fieldPath),
         transform: { kind: 'identity' },
       },
@@ -116,7 +116,7 @@ const cases: readonly CustomizeStoredCase[] = [
       {
         kind: 'scalar',
         cap: 'battery',
-        targetId: 'percentage',
+        targetId: 'level',
         source: read(BATTERY_NUMBER.source, BATTERY_NUMBER.cap, BATTERY_NUMBER.fieldPath),
         transform: { kind: 'identity' },
       },
@@ -128,7 +128,7 @@ const cases: readonly CustomizeStoredCase[] = [
     stored: composition(FEEDER, {
       kind: 'fields',
       cap: 'battery',
-      fields: { percentage: batteryAddFields.percentage },
+      fields: { level: batteryAddFields.level },
     }),
   },
   {
@@ -138,7 +138,7 @@ const cases: readonly CustomizeStoredCase[] = [
       {
         kind: 'scalar',
         cap: 'battery',
-        targetId: 'percentage',
+        targetId: 'level',
         source: read(DESICCANT_STRING.source, DESICCANT_STRING.cap, DESICCANT_STRING.fieldPath),
         transform: { kind: 'identity' },
       },
@@ -150,7 +150,7 @@ const cases: readonly CustomizeStoredCase[] = [
     stored: composition(FEEDER, {
       kind: 'fields',
       cap: 'battery',
-      fields: { ...batteryAddFields, percentage: batteryStringPercentage },
+      fields: { ...batteryAddFields, level: batteryStringPercentage },
     }),
   },
   {
@@ -208,7 +208,7 @@ const cases: readonly CustomizeStoredCase[] = [
         kind: 'scalar',
         cap: 'running-state',
         targetId: 'running',
-        source: read(SWITCH_REF, 'power-meter', 'watts'),
+        source: read(SWITCH_REF, 'power-meter', 'power'),
         transform: {
           kind: 'threshold',
           comparison: 'gte',

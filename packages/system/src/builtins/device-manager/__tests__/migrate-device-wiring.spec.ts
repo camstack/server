@@ -94,8 +94,8 @@ describe('the blast radius is the two migrated devices', () => {
     const h = await setup({ reloadableProviders: ['provider-hikvision', 'provider-reolink'] })
     const sourceId = await registerCamera(h, 'provider-hikvision', 'cam-old')
     const targetId = await registerCamera(h, 'provider-reolink', 'cam-new')
-    const OLD = { percentage: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
-    const NEW = { percentage: 90, charging: 'dc', sleeping: false, lastUpdated: 2 }
+    const OLD = { level: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
+    const NEW = { level: 90, charging: 'dc', sleeping: false, lastUpdated: 2 }
     await h.settings.writeDeviceRuntimeState(sourceId, { battery: OLD })
     await h.settings.writeDeviceRuntimeState(targetId, { battery: NEW })
     // The boot seed: both mirrors hold their own hardware's slice.
@@ -222,13 +222,13 @@ describe('a retry cannot re-run a swap', () => {
 
 describe('a device under customization is not migratable (D663)', () => {
   const CLAIMED_ROW = {
-    battery: { percentage: 10, charging: 'none', sleeping: false, lastUpdated: 1 },
+    battery: { level: 10, charging: 'none', sleeping: false, lastUpdated: 1 },
     $owned: {
       battery: {
         owner: 'blk-1',
         mode: 'replace',
-        fields: ['percentage'],
-        values: { percentage: 90 },
+        fields: ['level'],
+        values: { level: 90 },
       },
     },
   }
@@ -241,7 +241,7 @@ describe('a device under customization is not migratable (D663)', () => {
 
     await expect(h.provider.migrateDevice({ sourceId, targetId })).rejects.toThrow(
       new RegExp(
-        `migration ${sourceId} → ${targetId} refused: device ${targetId} has fields claimed by a customization \\(battery \\[percentage\\]: blk-1\\)`,
+        `migration ${sourceId} → ${targetId} refused: device ${targetId} has fields claimed by a customization \\(battery \\[level\\]: blk-1\\)`,
       ),
     )
 
@@ -257,7 +257,7 @@ describe('a device under customization is not migratable (D663)', () => {
       meta: {
         sourceId,
         targetId,
-        claims: [{ cap: 'battery', owner: 'blk-1', fields: ['percentage'] }],
+        claims: [{ cap: 'battery', owner: 'blk-1', fields: ['level'] }],
       },
     })
   })
@@ -280,8 +280,8 @@ describe('a claim racing the migration never moves with the swap (D663 final rev
     const h = await setup({ reloadableProviders: ['provider-hikvision', 'provider-reolink'] })
     const sourceId = await registerCamera(h, 'provider-hikvision', 'cam-old')
     const targetId = await registerCamera(h, 'provider-reolink', 'cam-new')
-    const OLD = { percentage: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
-    const NEW = { percentage: 90, charging: 'dc', sleeping: false, lastUpdated: 2 }
+    const OLD = { level: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
+    const NEW = { level: 90, charging: 'dc', sleeping: false, lastUpdated: 2 }
     await h.settings.writeDeviceRuntimeState(sourceId, { battery: OLD })
     await h.settings.writeDeviceRuntimeState(targetId, { battery: NEW })
     await h.provider.loadRuntimeState({ deviceId: sourceId })
@@ -307,8 +307,8 @@ describe('a claim racing the migration never moves with the swap (D663 final rev
       capName: 'battery',
       owner: 'blk-1',
       mode: 'replace',
-      fields: ['percentage'],
-      values: { percentage: 55 },
+      fields: ['level'],
+      values: { level: 55 },
     })
     await reached
     h.priorOff.set(targetId, ['notifications'])
@@ -322,10 +322,10 @@ describe('a claim racing the migration never moves with the swap (D663 final rev
     expect((await h.provider.loadMeta({ deviceId: sourceId }))?.stableId).toBe('cam-old')
     expect((await h.provider.loadMeta({ deviceId: targetId }))?.stableId).toBe('cam-new')
     expect(await h.settings.readDeviceRuntimeState(sourceId)).toMatchObject({
-      $owned: { battery: { owner: 'blk-1', fields: ['percentage'] } },
+      $owned: { battery: { owner: 'blk-1', fields: ['level'] } },
     })
     expect(await h.settings.readDeviceRuntimeState(targetId)).toEqual({ battery: NEW })
-    expect(await h.capSlice(sourceId, 'battery')).toEqual({ ...OLD, percentage: 55 })
+    expect(await h.capSlice(sourceId, 'battery')).toEqual({ ...OLD, level: 55 })
 
     // Refused before any row moved: both cameras back exactly as they were.
     const ups = h.switchCalls.filter((c) => c.enabled)
@@ -347,9 +347,9 @@ describe('the swap never races the mirror writer (D663 re-review N-6)', () => {
     const h = await setup({ reloadableProviders: ['provider-hikvision', 'provider-reolink'] })
     const sourceId = await registerCamera(h, 'provider-hikvision', 'cam-old')
     const targetId = await registerCamera(h, 'provider-reolink', 'cam-new')
-    const OLD = { percentage: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
-    const OLD_LATEST = { percentage: 11, charging: 'none', sleeping: false, lastUpdated: 3 }
-    const NEW = { percentage: 90, charging: 'dc', sleeping: false, lastUpdated: 2 }
+    const OLD = { level: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
+    const OLD_LATEST = { level: 11, charging: 'none', sleeping: false, lastUpdated: 3 }
+    const NEW = { level: 90, charging: 'dc', sleeping: false, lastUpdated: 2 }
     await h.settings.writeDeviceRuntimeState(sourceId, { battery: OLD })
     await h.settings.writeDeviceRuntimeState(targetId, { battery: NEW })
     await h.provider.loadRuntimeState({ deviceId: sourceId })
@@ -394,7 +394,7 @@ describe('the swap never races the mirror writer (D663 re-review N-6)', () => {
     expect(await h.capSlice(sourceId, 'battery')).toEqual(NEW)
 
     // And the writer is let go: the new box's next report reaches its row.
-    const NEW_LATEST = { ...NEW, percentage: 89, lastUpdated: 4 }
+    const NEW_LATEST = { ...NEW, level: 89, lastUpdated: 4 }
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
       await h.setCapSlice(sourceId, 'battery', NEW_LATEST)
@@ -409,14 +409,14 @@ describe('the swap never races the mirror writer (D663 re-review N-6)', () => {
     const h = await setup({ reloadableProviders: ['provider-hikvision', 'provider-reolink'] })
     const sourceId = await registerCamera(h, 'provider-hikvision', 'cam-old')
     const targetId = await registerCamera(h, 'provider-reolink', 'cam-new')
-    const OLD = { percentage: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
+    const OLD = { level: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
     await h.settings.writeDeviceRuntimeState(sourceId, { battery: OLD })
     await h.provider.loadRuntimeState({ deviceId: sourceId })
     await h.provider.loadRuntimeState({ deviceId: targetId })
 
     // A change still in its debounce window when the migration starts; the
     // drain's write of it fails.
-    await h.setCapSlice(sourceId, 'battery', { ...OLD, percentage: 11, lastUpdated: 3 })
+    await h.setCapSlice(sourceId, 'battery', { ...OLD, level: 11, lastUpdated: 3 })
     h.settings.writeDeviceRuntimeState.mockImplementationOnce(async () => {
       throw new Error('sqlite busy')
     })
@@ -458,7 +458,7 @@ describe('the swap never races the mirror writer (D663 re-review N-6)', () => {
     const h = await setup({ reloadableProviders: ['provider-hikvision', 'provider-reolink'] })
     const sourceId = await registerCamera(h, 'provider-hikvision', 'cam-old')
     const targetId = await registerCamera(h, 'provider-reolink', 'cam-new')
-    const OLD = { percentage: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
+    const OLD = { level: 10, charging: 'none', sleeping: false, lastUpdated: 1 }
     await h.settings.writeDeviceRuntimeState(sourceId, { battery: OLD })
     await h.provider.loadRuntimeState({ deviceId: sourceId })
     await h.provider.loadRuntimeState({ deviceId: targetId })
@@ -481,7 +481,7 @@ describe('the swap never races the mirror writer (D663 re-review N-6)', () => {
     // M-1: the hold is released on this throw path too — a later report persists.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
-      const LATER = { ...OLD, percentage: 55, lastUpdated: 9 }
+      const LATER = { ...OLD, level: 55, lastUpdated: 9 }
       await h.setCapSlice(sourceId, 'battery', LATER)
       await vi.advanceTimersByTimeAsync(1_100)
       expect(await h.settings.readDeviceRuntimeState(sourceId)).toMatchObject({ battery: LATER })

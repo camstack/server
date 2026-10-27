@@ -33,7 +33,7 @@
  *   await dev?.snapshot?.getSnapshot({...})    // method dispatch via cap-router
  *
  *   sm.query({ addonId: 'reolink', online: true })
- *   sm.whereState('battery', s => s.percentage < 20)
+ *   sm.whereState('battery', s => s.level < 20)
  *   sm.listenCap('motion', (id, slice) => …)
  *   await sm.waitForState(8, 'battery', s => !s.sleeping, 30_000)
  *

@@ -119,7 +119,7 @@ describe('durable runtime-state slices survive boot hydration', () => {
  * value forever: the slice was never mirrored and nothing said so (D391).
  */
 describe('a refused hub write is surfaced and re-sent (S6, D391)', () => {
-  const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+  const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
 
   it('a hub write the writer REJECTS is surfaced through onWriteFailed and the SAME value is re-sent on the next write', async () => {
     const calls: Record<string, unknown>[] = []

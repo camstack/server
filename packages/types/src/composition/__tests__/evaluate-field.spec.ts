@@ -47,14 +47,14 @@ const fresh = (value: number | boolean | null): SourceReading => ({ state: 'fres
 
 describe('temperature = average of three sensors', () => {
   const temps = [
-    [key(T1, 'temperature-sensor', 'celsius'), fresh(21.0)],
-    [key(T2, 'temperature-sensor', 'celsius'), fresh(21.5)],
-    [key(T3, 'temperature-sensor', 'celsius'), fresh(21.4)],
+    [key(T1, 'temperature-sensor', 'temperature'), fresh(21.0)],
+    [key(T2, 'temperature-sensor', 'temperature'), fresh(21.5)],
+    [key(T3, 'temperature-sensor', 'temperature'), fresh(21.4)],
   ] as const
 
   it('is fresh when every source is', () => {
     const outcome = evaluateCompositionField({
-      source: fieldOf('temperature-sensor', 'celsius'),
+      source: fieldOf('temperature-sensor', 'temperature'),
       read: reader(temps),
       now: NOW,
     })
@@ -68,7 +68,7 @@ describe('temperature = average of three sensors', () => {
       reason: 'the source device is offline',
     }
     const outcome = evaluateCompositionField({
-      source: fieldOf('temperature-sensor', 'celsius'),
+      source: fieldOf('temperature-sensor', 'temperature'),
       read: reader([temps[0], [temps[1][0], stale], temps[2]]),
       now: NOW,
     })
@@ -84,7 +84,7 @@ describe('temperature = average of three sensors', () => {
       fatal: true,
     }
     const outcome = evaluateCompositionField({
-      source: fieldOf('temperature-sensor', 'celsius'),
+      source: fieldOf('temperature-sensor', 'temperature'),
       read: reader([temps[0], [temps[1][0], gone], temps[2]]),
       now: NOW,
     })
@@ -99,7 +99,7 @@ describe('temperature = average of three sensors', () => {
 
   it('is unavailable, NOT fatal, when the expression fails on a value', () => {
     const outcome = evaluateCompositionField({
-      source: fieldOf('temperature-sensor', 'celsius'),
+      source: fieldOf('temperature-sensor', 'temperature'),
       read: reader([temps[0], [temps[1][0], fresh(null)], temps[2]]),
       now: NOW,
     })
@@ -148,8 +148,8 @@ describe('occupancy = any motion within five minutes', () => {
 describe('from and code', () => {
   it('from copies the reading', () => {
     const outcome = evaluateCompositionField({
-      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' },
-      read: reader([[key(T1, 'temperature-sensor', 'celsius'), fresh(20)]]),
+      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' },
+      read: reader([[key(T1, 'temperature-sensor', 'temperature'), fresh(20)]]),
       now: NOW,
     })
     expect(outcome).toEqual({ state: 'fresh', value: 20, reason: null, deadline: null })
@@ -177,8 +177,8 @@ describe('from and code', () => {
       reason: 'the source device is offline',
     }
     const outcome = evaluateCompositionField({
-      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' },
-      read: reader([[key(T1, 'temperature-sensor', 'celsius'), stale]]),
+      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' },
+      read: reader([[key(T1, 'temperature-sensor', 'temperature'), stale]]),
       now: NOW,
     })
     expect(outcome).toEqual({
@@ -196,8 +196,8 @@ describe('from and code', () => {
       fatal: false,
     }
     const outcome = evaluateCompositionField({
-      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' },
-      read: reader([[key(T1, 'temperature-sensor', 'celsius'), notGone]]),
+      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' },
+      read: reader([[key(T1, 'temperature-sensor', 'temperature'), notGone]]),
       now: NOW,
     })
     expect(outcome).toEqual({
@@ -225,12 +225,22 @@ describe('a fatal unavailable binding always wins, regardless of order', () => {
     kind: 'expression' as const,
     expr: 'avg(a, b)',
     bindings: {
-      a: { kind: 'from' as const, source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' },
-      b: { kind: 'from' as const, source: T2!, cap: 'temperature-sensor', fieldPath: 'celsius' },
+      a: {
+        kind: 'from' as const,
+        source: T1!,
+        cap: 'temperature-sensor',
+        fieldPath: 'temperature',
+      },
+      b: {
+        kind: 'from' as const,
+        source: T2!,
+        cap: 'temperature-sensor',
+        fieldPath: 'temperature',
+      },
     },
   }
-  const aKey = key(T1, 'temperature-sensor', 'celsius')
-  const bKey = key(T2, 'temperature-sensor', 'celsius')
+  const aKey = key(T1, 'temperature-sensor', 'temperature')
+  const bKey = key(T2, 'temperature-sensor', 'temperature')
 
   it('non-fatal binding `a` first, fatal binding `b` second: `b` wins, fatal:true', () => {
     const outcome = evaluateCompositionField({
@@ -278,7 +288,7 @@ describe('accumulator source loss', () => {
         kind: 'from',
         source: T1!,
         cap: 'temperature-sensor',
-        fieldPath: 'celsius',
+        fieldPath: 'temperature',
       },
     },
   } as const
@@ -293,7 +303,7 @@ describe('accumulator source loss', () => {
     const run = (value: number, currentOutput: number) =>
       evaluateCompositionField({
         source,
-        read: reader([[key(T1, 'temperature-sensor', 'celsius'), fresh(value)]]),
+        read: reader([[key(T1, 'temperature-sensor', 'temperature'), fresh(value)]]),
         now: NOW,
         stateful: {
           currentOutput,
@@ -311,7 +321,7 @@ describe('accumulator source loss', () => {
   it('holds the last accumulator value as stale when its source is unavailable', () => {
     const outcome = evaluateCompositionField({
       source,
-      read: reader([[key(T1, 'temperature-sensor', 'celsius'), unavailable]]),
+      read: reader([[key(T1, 'temperature-sensor', 'temperature'), unavailable]]),
       now: NOW,
       stateful: {
         currentOutput: 3,
@@ -331,7 +341,7 @@ describe('accumulator source loss', () => {
   it('stays unavailable when no accumulator output has ever existed', () => {
     const outcome = evaluateCompositionField({
       source,
-      read: reader([[key(T1, 'temperature-sensor', 'celsius'), unavailable]]),
+      read: reader([[key(T1, 'temperature-sensor', 'temperature'), unavailable]]),
       now: NOW,
       stateful: {
         currentOutput: undefined,
@@ -349,10 +359,10 @@ describe('count starts on the first ANSWERED read (D670 amendment)', () => {
     kind: 'expression',
     expr: 'count(value)',
     bindings: {
-      value: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' },
+      value: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' },
     },
   } as const
-  const at = key(T1, 'temperature-sensor', 'celsius')
+  const at = key(T1, 'temperature-sensor', 'temperature')
   const notYet: SourceReading = {
     state: 'unavailable',
     reason: 'the source has not reported yet',
@@ -418,8 +428,13 @@ describe('stateful call scoping', () => {
 
 describe('confirmed: only an ANSWER may release a field (D663, D49)', () => {
   const T = ROOM_EXAMPLE_TEMPERATURE_SOURCES[0]!
-  const read = key(T, 'temperature-sensor', 'celsius')
-  const from = { kind: 'from', source: T, cap: 'temperature-sensor', fieldPath: 'celsius' } as const
+  const read = key(T, 'temperature-sensor', 'temperature')
+  const from = {
+    kind: 'from',
+    source: T,
+    cap: 'temperature-sensor',
+    fieldPath: 'temperature',
+  } as const
 
   it('a reading without `confirmed` is NOT confirmed; `confirmed: true` passes through', () => {
     const unanswered: SourceReading = { state: 'unavailable', reason: 'read failed', fatal: false }
@@ -438,8 +453,8 @@ describe('confirmed: only an ANSWER may release a field (D663, D49)', () => {
       kind: 'expression',
       expr: 'a + b',
       bindings: {
-        a: { kind: 'from', source: A!, cap: 'temperature-sensor', fieldPath: 'celsius' },
-        b: { kind: 'from', source: B!, cap: 'temperature-sensor', fieldPath: 'celsius' },
+        a: { kind: 'from', source: A!, cap: 'temperature-sensor', fieldPath: 'temperature' },
+        b: { kind: 'from', source: B!, cap: 'temperature-sensor', fieldPath: 'temperature' },
       },
     } as const
     const unanswered: SourceReading = { state: 'unavailable', reason: 'read failed', fatal: false }
@@ -449,8 +464,8 @@ describe('confirmed: only an ANSWER may release a field (D663, D49)', () => {
       fatal: false,
       confirmed: true,
     }
-    const ka = key(A, 'temperature-sensor', 'celsius')
-    const kb = key(B, 'temperature-sensor', 'celsius')
+    const ka = key(A, 'temperature-sensor', 'temperature')
+    const kb = key(B, 'temperature-sensor', 'temperature')
     for (const pair of [
       [
         [ka, unanswered],
@@ -470,13 +485,13 @@ describe('confirmed: only an ANSWER may release a field (D663, D49)', () => {
 
 describe('D393: an unavailable outcome is never a stand-in value', () => {
   it('carries value null whether the source is gone, the expression failed, the field is code, or a `from` source is gone', () => {
-    const t1 = key(T1, 'temperature-sensor', 'celsius')
-    const t2 = key(T2, 'temperature-sensor', 'celsius')
-    const t3 = key(T3, 'temperature-sensor', 'celsius')
+    const t1 = key(T1, 'temperature-sensor', 'temperature')
+    const t2 = key(T2, 'temperature-sensor', 'temperature')
+    const t3 = key(T3, 'temperature-sensor', 'temperature')
     const gone: SourceReading = { state: 'unavailable', reason: 'device not found', fatal: true }
 
     const bySourceGone = evaluateCompositionField({
-      source: fieldOf('temperature-sensor', 'celsius'),
+      source: fieldOf('temperature-sensor', 'temperature'),
       read: reader([
         [t1, fresh(21.0)],
         [t2, gone],
@@ -485,7 +500,7 @@ describe('D393: an unavailable outcome is never a stand-in value', () => {
       now: NOW,
     })
     const byExpressionFailure = evaluateCompositionField({
-      source: fieldOf('temperature-sensor', 'celsius'),
+      source: fieldOf('temperature-sensor', 'temperature'),
       read: reader([
         [t1, fresh(21.0)],
         [t2, fresh(null)],
@@ -499,7 +514,7 @@ describe('D393: an unavailable outcome is never a stand-in value', () => {
       now: NOW,
     })
     const byFromGone = evaluateCompositionField({
-      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'celsius' },
+      source: { kind: 'from', source: T1!, cap: 'temperature-sensor', fieldPath: 'temperature' },
       read: reader([[t1, gone]]),
       now: NOW,
     })

@@ -14,8 +14,8 @@
  * bucket has no row, and the held value is otherwise invisible.
  *
  * {@link DEVICE_HISTORY_ENERGY_KEY} is computed here at read time, never stored:
- * the device's `kwhTotal` meter when it has one (per-bucket growth), else the
- * time-weighted integral of its `watts` (`tw_sum`, already in every rollup).
+ * the device's `energy` meter when it has one (per-bucket growth), else the
+ * time-weighted integral of its `power` (`tw_sum`, already in every rollup).
  * One place makes that choice, so two charts of one device cannot disagree, and
  * it covers every hour of history recorded before the key existed.
  */
@@ -66,8 +66,8 @@ const BUCKET_MS: Readonly<Record<RollupTier, number>> = {
 const MAX_SCOPES = 50
 
 /** The power-meter series the energy key is derived from, meter first. */
-export const ENERGY_METER_KEY: string = capSeriesKey('power-meter', 'kwhTotal')
-export const ENERGY_POWER_KEY: string = capSeriesKey('power-meter', 'watts')
+export const ENERGY_METER_KEY: string = capSeriesKey('power-meter', 'energy')
+export const ENERGY_POWER_KEY: string = capSeriesKey('power-meter', 'power')
 
 /**
  * Series whose quantity is chosen per device (D944). Weather is not here:

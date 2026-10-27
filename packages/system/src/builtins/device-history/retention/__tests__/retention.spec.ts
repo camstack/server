@@ -12,7 +12,7 @@ afterEach(async () => {
 })
 
 const SUBJECT = { kind: 'device', deviceId: 1 } as const
-const KEY = 'cap:battery.percentage'
+const KEY = 'cap:battery.level'
 
 function row(seriesId: number, bucketStart: number): RollupRow {
   return {
@@ -210,7 +210,7 @@ describe('purging the series of a departed device (D49)', () => {
     h.devices.set(99, DeviceType.Sensor)
     await h.runtime.directory.ensure(99)
     h.devices.delete(99)
-    h.runtime.capture.handleState(99, 'battery', { percentage: 5 }, now)
+    h.runtime.capture.handleState(99, 'battery', { level: 5 }, now)
     expect(h.runtime.capture.lastRecorded(KEY, 'd:99')).toBeDefined()
     await h.runtime.departures.observe(new Set([1]), now)
     await h.runtime.departures.observe(new Set([1]), now + 8 * DAYS)

@@ -261,8 +261,8 @@ describe('HA actuator caps — Phase C3', () => {
           album: 'Album',
           imageUrl: 'https://cdn/cover.jpg',
         },
-        positionMs: 12000,
-        durationMs: 240000,
+        position: 12000,
+        duration: 240000,
         shuffle: true,
         repeat: 'all' as const,
         lastChangedAt: 1,
@@ -278,8 +278,8 @@ describe('HA actuator caps — Phase C3', () => {
         source: '',
         availableSources: [],
         currentMedia: null,
-        positionMs: null,
-        durationMs: null,
+        position: null,
+        duration: null,
         shuffle: null,
         repeat: null,
         lastChangedAt: 0,
@@ -287,9 +287,9 @@ describe('HA actuator caps — Phase C3', () => {
       expect(MediaPlayerStatusSchema.parse(sample)).toEqual(sample)
     })
 
-    it('seek rejects negative positionMs', () => {
+    it('seek rejects negative position', () => {
       expect(() =>
-        mediaPlayerCapability.methods.seek.input.parse({ deviceId: 1, positionMs: -1 }),
+        mediaPlayerCapability.methods.seek.input.parse({ deviceId: 1, position: -1 }),
       ).toThrow()
     })
 
@@ -398,7 +398,6 @@ describe('HA actuator caps — Phase C3', () => {
         state: 'home',
         location: 'Living Room',
         gps: { latitude: 41.9, longitude: 12.5, accuracyMeters: 8 },
-        batteryPercent: 85,
         lastChangedAt: 1,
       }
       expect(PresenceStatusSchema.parse(sample)).toEqual(sample)
@@ -409,7 +408,6 @@ describe('HA actuator caps — Phase C3', () => {
         state: 'not_home',
         location: null,
         gps: null,
-        batteryPercent: null,
         lastChangedAt: 0,
       }
       expect(PresenceStatusSchema.parse(sample)).toEqual(sample)
@@ -421,7 +419,6 @@ describe('HA actuator caps — Phase C3', () => {
           state: 'home',
           location: null,
           gps: { latitude: 95, longitude: 0, accuracyMeters: 1 },
-          batteryPercent: null,
           lastChangedAt: 0,
         }),
       ).toThrow()

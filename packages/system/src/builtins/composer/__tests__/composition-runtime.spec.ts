@@ -46,9 +46,9 @@ let emitFailure: string | null
 beforeEach(() => {
   now = 1_000_000
   readings = new Map<string, SourceReading>([
-    [k(T1, 'temperature-sensor', 'celsius'), fresh(21.0)],
-    [k(T2, 'temperature-sensor', 'celsius'), fresh(21.5)],
-    [k(T3, 'temperature-sensor', 'celsius'), fresh(21.4)],
+    [k(T1, 'temperature-sensor', 'temperature'), fresh(21.0)],
+    [k(T2, 'temperature-sensor', 'temperature'), fresh(21.5)],
+    [k(T3, 'temperature-sensor', 'temperature'), fresh(21.4)],
     [k(T1, 'temperature-sensor', 'lastFetchedAt'), fresh(990_000)],
     [k(T2, 'temperature-sensor', 'lastFetchedAt'), fresh(995_000)],
     [k(T3, 'temperature-sensor', 'lastFetchedAt'), fresh(980_000)],
@@ -113,7 +113,7 @@ function statefulDoorbellPlan(withExplode = false) {
                       kind: 'from',
                       source: T1,
                       cap: 'temperature-sensor',
-                      fieldPath: 'celsius',
+                      fieldPath: 'temperature',
                     },
                   }
                 : {}),
@@ -144,7 +144,11 @@ describe('start', () => {
   it('seeds both caps and becomes available', () => {
     runtime.start()
     expect(target.writes).toEqual([
-      { op: 'seed', cap: 'temperature-sensor', values: { celsius: 21.3, lastFetchedAt: 995_000 } },
+      {
+        op: 'seed',
+        cap: 'temperature-sensor',
+        values: { temperature: 21.3, lastFetchedAt: 995_000 },
+      },
       { op: 'seed', cap: 'binary', values: { on: true, lastChangedAt: 1_000_000 } },
     ])
     expect(target.availability).toEqual([true])
@@ -237,7 +241,7 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
                         kind: 'from',
                         source: T1,
                         cap: 'temperature-sensor',
-                        fieldPath: 'celsius',
+                        fieldPath: 'temperature',
                       },
                     }
                   : {}),
@@ -377,7 +381,7 @@ describe('an own-field read is answered by the runtime, not the hub (D670 amendm
     now = 1_790_587_991_000
     readings.set(k(M1, 'motion', 'detected'), fresh(false))
     readings.set(k(M1, 'motion', 'lastDetectedAt'), fresh(null))
-    const probeKey = k(T1, 'temperature-sensor', 'celsius')
+    const probeKey = k(T1, 'temperature-sensor', 'temperature')
     let probeReads = 0
     runtime = selfRuntime({
       withProbe: true,
@@ -807,12 +811,12 @@ describe('D670 — state-derived events', () => {
     now = timestamp
     readings.set(k(M1, 'motion', 'detected'), fresh(true))
     readings.set(k(M1, 'motion', 'lastDetectedAt'), fresh(timestamp))
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(null))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(null))
     runtime = makeStatefulDoorbellRuntime({ lastPressedAt: null, pressCountSinceStart: 0 }, true)
 
     runtime.start()
     expect(emitted).toEqual([])
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(1))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(1))
     runtime.onSourcesChanged(new Set([compositionSliceKey(T1!, 'temperature-sensor')]))
 
     expect(runtime.state().fields.find((field) => field.path === 'lastPressedAt')).toMatchObject({
@@ -922,12 +926,12 @@ describe('D670 — state-derived events', () => {
 describe('recomputes only what a change affects', () => {
   it('a temperature change patches temperature and leaves binary alone', () => {
     runtime.start()
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(24.0))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(24.0))
     runtime.onSourcesChanged(new Set([compositionSliceKey(T1!, 'temperature-sensor')]))
     expect(target.writes.at(-1)).toEqual({
       op: 'patch',
       cap: 'temperature-sensor',
-      values: { celsius: 22.3 },
+      values: { temperature: 22.3 },
     })
     expect(target.writes.filter((w) => w.cap === 'binary')).toHaveLength(1)
   })
@@ -959,7 +963,7 @@ describe('the occupancy window closes on its deadline — no source event, no po
 describe('stale keeps the last value (D49)', () => {
   it('writes nothing, stays available, logs once with the device tag', () => {
     runtime.start()
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), {
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), {
       state: 'stale',
       value: 21.5,
       reason: 'the source device is offline',
@@ -971,7 +975,7 @@ describe('stale keeps the last value (D49)', () => {
     const staleLines = log.lines.filter((l) => l.message.includes('fresh → stale'))
     expect(staleLines).toHaveLength(1)
     expect(staleLines[0]?.extras?.tags).toEqual({ deviceId: 1901 })
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')).toMatchObject({
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'stale',
       value: 21.3,
     })
@@ -979,9 +983,9 @@ describe('stale keeps the last value (D49)', () => {
 })
 
 describe('unavailable is per field, never global (D393)', () => {
-  it('a GONE source: celsius unavailable, device offline, block failure names it, occupancy keeps flowing', () => {
+  it('a GONE source: temperature unavailable, device offline, block failure names it, occupancy keeps flowing', () => {
     runtime.start()
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), {
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), {
       state: 'unavailable',
       reason:
         'source `provider-homeassistant/sensor.sofa_temperature` (device 12) was removed — two reads agreed',
@@ -990,7 +994,7 @@ describe('unavailable is per field, never global (D393)', () => {
     runtime.onSourcesChanged(new Set([compositionSliceKey(T2!, 'temperature-sensor')]))
     expect(target.availability).toEqual([true, false])
     expect(runtime.state().failure).toContain('sensor.sofa_temperature')
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')).toMatchObject({
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'unavailable',
       value: null,
     })
@@ -1004,14 +1008,14 @@ describe('unavailable is per field, never global (D393)', () => {
 
   it('an expression failure is unavailable but NOT a block failure', () => {
     runtime.start()
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), fresh(null))
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), fresh(null))
     runtime.onSourcesChanged(new Set([compositionSliceKey(T2!, 'temperature-sensor')]))
     expect(runtime.state().failure).toBeNull()
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')?.state).toBe('unavailable')
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')?.state).toBe('unavailable')
   })
 
   it('a write the cap schema refuses is named and makes the fields unavailable', () => {
-    target.refuse = 'celsius: expected number'
+    target.refuse = 'temperature: expected number'
     runtime.start()
     expect(
       log.lines.some(
@@ -1023,7 +1027,7 @@ describe('unavailable is per field, never global (D393)', () => {
   it('a refused write never masks a gone source in the same pass — the fatal outcome wins', () => {
     runtime.start()
     target.refuse = 'lastFetchedAt: expected number'
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), {
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), {
       state: 'unavailable',
       reason:
         'source `provider-homeassistant/sensor.sofa_temperature` (device 12) was removed — two reads agreed',
@@ -1038,7 +1042,7 @@ describe('unavailable is per field, never global (D393)', () => {
     )
     expect(log.lines.some((l) => l.message.includes('refused a write'))).toBe(true)
     expect(runtime.state().failure).toContain('sensor.sofa_temperature')
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')).toMatchObject({
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'unavailable',
       value: null,
     })
@@ -1071,10 +1075,10 @@ function constantPlan(): readonly CompositionFieldPlan[] {
   )
 }
 
-/** The room, with `temperature-sensor.celsius` nullable: unavailable is written `null`. */
+/** The room, with `temperature-sensor.temperature` nullable: unavailable is written `null`. */
 function nullableCelsiusPlan(): readonly CompositionFieldPlan[] {
   return roomPlan().map((f) =>
-    f.path === 'celsius' ? { ...f, nullable: true, unavailable: 'null' } : f,
+    f.path === 'temperature' ? { ...f, nullable: true, unavailable: 'null' } : f,
   )
 }
 
@@ -1135,10 +1139,14 @@ describe('a refused write keeps its cap write-pending and is retried WHOLE', () 
     target.refuse = 'transient'
     runtime.start()
     target.refuse = null
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(24.0))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(24.0))
     runtime.onSourcesChanged(new Set([temperature()]))
     expect(target.writes).toEqual([
-      { op: 'seed', cap: 'temperature-sensor', values: { celsius: 22.3, lastFetchedAt: STAMP } },
+      {
+        op: 'seed',
+        cap: 'temperature-sensor',
+        values: { temperature: 22.3, lastFetchedAt: STAMP },
+      },
     ])
   })
 
@@ -1148,7 +1156,11 @@ describe('a refused write keeps its cap write-pending and is retried WHOLE', () 
     target.refuse = null
     runtime.onSourcesChanged(new Set([temperature()]))
     expect(target.writes).toEqual([
-      { op: 'seed', cap: 'temperature-sensor', values: { celsius: 21.3, lastFetchedAt: 995_000 } },
+      {
+        op: 'seed',
+        cap: 'temperature-sensor',
+        values: { temperature: 21.3, lastFetchedAt: 995_000 },
+      },
     ])
     expect(runtime.state().fields.find((f) => f.path === 'on')).toMatchObject({
       state: 'unavailable',
@@ -1188,17 +1200,21 @@ describe('a target that throws', () => {
     expect(target.availability).toEqual([false])
 
     target.throwing = null
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(24.0))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(24.0))
     runtime.onSourcesChanged(new Set([temperature()]))
     expect(target.writes).toEqual([
-      { op: 'seed', cap: 'temperature-sensor', values: { celsius: 22.3, lastFetchedAt: 995_000 } },
+      {
+        op: 'seed',
+        cap: 'temperature-sensor',
+        values: { temperature: 22.3, lastFetchedAt: 995_000 },
+      },
     ])
   })
 
   it('a thrown PATCH: the next evaluation re-sends every current value of the cap', () => {
     runtime.start()
     target.throwing = 'disk on fire'
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(25.0))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(25.0))
     expect(() => runtime.onSourcesChanged(new Set([temperature()]))).not.toThrow()
     expect(target.availability).toEqual([true, false])
     target.throwing = null
@@ -1206,7 +1222,7 @@ describe('a target that throws', () => {
     expect(target.writes.at(-1)).toEqual({
       op: 'patch',
       cap: 'temperature-sensor',
-      values: { celsius: 22.6, lastFetchedAt: 995_000 },
+      values: { temperature: 22.6, lastFetchedAt: 995_000 },
     })
     expect(target.availability).toEqual([true, false, true])
   })
@@ -1240,7 +1256,7 @@ describe('stop is terminal', () => {
   it('a source event or a start after stop writes nothing and arms nothing', () => {
     runtime.start()
     runtime.stop()
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(24.0))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(24.0))
     runtime.onSourcesChanged(new Set([temperature()]))
     runtime.start()
     runtime.disable('late')
@@ -1253,13 +1269,13 @@ describe('stop is terminal', () => {
 describe('edges', () => {
   it('the failure is sticky: the source coming back does not bring the device back', () => {
     runtime.start()
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), {
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), {
       state: 'unavailable',
       reason: 'sensor.sofa_temperature was removed',
       fatal: true,
     })
     runtime.onSourcesChanged(new Set([compositionSliceKey(T2!, 'temperature-sensor')]))
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), fresh(21.5))
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), fresh(21.5))
     runtime.onSourcesChanged(new Set([compositionSliceKey(T2!, 'temperature-sensor')]))
     expect(target.availability).toEqual([true, false])
     expect(runtime.state().failure).toContain('sensor.sofa_temperature')
@@ -1267,14 +1283,14 @@ describe('edges', () => {
 
   it('disable keeps a gone source as the field reason', () => {
     runtime.start()
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), {
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), {
       state: 'unavailable',
       reason: 'sensor.sofa_temperature was removed',
       fatal: true,
     })
     runtime.onSourcesChanged(new Set([compositionSliceKey(T2!, 'temperature-sensor')]))
     runtime.disable('the block is disabled')
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')?.reason).toContain(
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')?.reason).toContain(
       'sensor.sofa_temperature',
     )
   })
@@ -1282,16 +1298,16 @@ describe('edges', () => {
   it('a nullable field that goes unavailable is written null; disable writes it null too', () => {
     runtime = runtimeWith(nullableCelsiusPlan())
     runtime.start()
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), fresh(null))
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), fresh(null))
     runtime.onSourcesChanged(new Set([compositionSliceKey(T2!, 'temperature-sensor')]))
     expect(target.writes.at(-1)).toEqual({
       op: 'patch',
       cap: 'temperature-sensor',
-      values: { celsius: null },
+      values: { temperature: null },
     })
     expect(target.availability).toEqual([true])
 
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), fresh(21.5))
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), fresh(21.5))
     const second = new FakeTarget(1902)
     target = second
     runtime = runtimeWith(nullableCelsiusPlan())
@@ -1300,7 +1316,7 @@ describe('edges', () => {
     expect(second.writes.at(-1)).toEqual({
       op: 'patch',
       cap: 'temperature-sensor',
-      values: { celsius: null },
+      values: { temperature: null },
     })
   })
 
@@ -1338,7 +1354,7 @@ describe('fix round 2', () => {
     })
     runtime.start()
     broken = true
-    readings.set(k(T2, 'temperature-sensor', 'celsius'), {
+    readings.set(k(T2, 'temperature-sensor', 'temperature'), {
       state: 'stale',
       value: 21.5,
       reason: 'offline',
@@ -1354,7 +1370,7 @@ describe('a target that reports an enqueued write did not land (D663, S5)', () =
   it('a thrown RPC makes the cap write-pending by name; the next pass re-writes the WHOLE cap', () => {
     runtime.start()
     target.failAsync('temperature-sensor', { kind: 'threw', error: 'hub down' })
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')).toMatchObject({
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')).toMatchObject({
       state: 'unavailable',
       value: null,
       reason: expect.stringContaining('hub down'),
@@ -1364,14 +1380,14 @@ describe('a target that reports an enqueued write did not land (D663, S5)', () =
     )
     expect(runtime.state().fields.find((f) => f.path === 'on')?.state).toBe('fresh')
     expect(target.availability).toEqual([true, false])
-    readings.set(k(T1, 'temperature-sensor', 'celsius'), fresh(24.0))
+    readings.set(k(T1, 'temperature-sensor', 'temperature'), fresh(24.0))
     runtime.onSourcesChanged(new Set([temperature()]))
     expect(target.writes.at(-1)).toEqual({
       op: 'patch',
       cap: 'temperature-sensor',
-      values: { celsius: 22.3, lastFetchedAt: 995_000 },
+      values: { temperature: 22.3, lastFetchedAt: 995_000 },
     })
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')?.state).toBe('fresh')
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')?.state).toBe('fresh')
     expect(target.availability).toEqual([true, false, true])
   })
 
@@ -1682,7 +1698,7 @@ function fakeApi(): OwnedFieldsApi {
 /** The room's claimed field sets, as Task 11 feeds them from the plan. */
 const ROOM_FIELDS: Readonly<Record<string, readonly string[]>> = {
   binary: ['on', 'lastChangedAt'],
-  'temperature-sensor': ['celsius', 'lastFetchedAt'],
+  'temperature-sensor': ['temperature', 'lastFetchedAt'],
 }
 
 /** The chain has no timers: two macrotask turns drain it. */
@@ -1774,7 +1790,7 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
       reason: expect.stringContaining('owned-by-other'),
     })
     expect(runtime.state().failure).toContain('binary')
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')?.state).toBe('fresh')
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')?.state).toBe('fresh')
     const errors = log.lines.filter(
       (l) => l.level === 'error' && l.message.includes('refused for good'),
     )
@@ -1814,7 +1830,7 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
     runtime.start()
     await settle()
     for (const source of [T1, T2, T3]) {
-      readings.set(k(source, 'temperature-sensor', 'celsius'), UNREACHABLE)
+      readings.set(k(source, 'temperature-sensor', 'temperature'), UNREACHABLE)
       readings.set(k(source, 'temperature-sensor', 'lastFetchedAt'), UNREACHABLE)
     }
     const allTemperature = new Set(
@@ -1823,12 +1839,12 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
     runtime.onSourcesChanged(allTemperature)
     await settle()
     expect(vi.mocked(api.releaseClaim)).toHaveBeenCalledTimes(1)
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')?.reason).toContain('threw')
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')?.reason).toContain('threw')
     // The next pass re-sends the withhold; it lands; nothing remains to write.
     runtime.onSourcesChanged(allTemperature)
     await settle()
     expect(vi.mocked(api.releaseClaim)).toHaveBeenCalledTimes(2)
-    expect(runtime.state().fields.find((f) => f.path === 'celsius')?.reason).toContain(
+    expect(runtime.state().fields.find((f) => f.path === 'temperature')?.reason).toContain(
       'unreachable',
     )
     expect(
@@ -1836,7 +1852,7 @@ describe('over the REAL claim-backed target (D663 fix round 1)', () => {
         .state()
         .released.map((r) => r.path)
         .sort(),
-    ).toEqual(['celsius', 'lastFetchedAt'])
+    ).toEqual(['lastFetchedAt', 'temperature'])
   })
 
   it('M-1: a flapping source costs one RPC per transition, no amplification, and the transition line counts the flaps', async () => {

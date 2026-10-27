@@ -109,7 +109,7 @@ const CAM_CHARGING: Composition = CompositionSchema.parse({
   ],
 })
 
-const CAM_NATIVE = { percentage: 80, charging: 'none', sleeping: false, lastUpdated: T0 }
+const CAM_NATIVE = { level: 80, charging: 'none', sleeping: false, lastUpdated: T0 }
 
 let w: World
 let armed: MockInstance<NodeDeadlineTimer['arm']>
@@ -205,7 +205,7 @@ describe('1 — the added caps are grafted beside the HA natives; a replace graf
 })
 
 describe('2 — the added slices, as the status aggregate shows them', () => {
-  it('the desiccant item, keyed, with remaining days; battery percentage null while battery_status is unavailable — never 0 (D393)', async () => {
+  it('the desiccant item, keyed, with remaining days; battery level null while battery_status is unavailable — never 0 (D393)', async () => {
     const agg = await w.dm.provider.getDeviceStatusAggregate({
       deviceId: id(FEEDER),
       caps: ['battery', 'consumables'],
@@ -224,7 +224,7 @@ describe('2 — the added slices, as the status aggregate shows them', () => {
       ],
       lastChangedAt: T0,
     })
-    expect(agg['battery']).toMatchObject({ percentage: null, charging: 'unknown', binary: true })
+    expect(agg['battery']).toMatchObject({ level: null, charging: 'unknown', binary: true })
   })
 })
 
@@ -331,7 +331,7 @@ describe('7 — boot safety: a restart from the persisted rows only', () => {
     const persisted = await persistedAfterBoot()
     await restart(persisted)
 
-    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: null })
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ level: null })
     await converge() // core_blocks not loaded: nothing is claimed or released (D49)
     expect(w.blocks.isLoaded()).toBe(false)
     expect(releases()).toEqual([])
@@ -341,7 +341,7 @@ describe('7 — boot safety: a restart from the persisted rows only', () => {
     expect(w.blocks.isLoaded()).toBe(true)
     expect(await state(FEEDER_BLOCK)).toMatchObject({ status: 'running' })
     expect(releases()).toEqual([])
-    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: null })
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ level: null })
   })
 
   it('a persisted claim whose source cannot be read on the first applies is NOT released (Task 9)', async () => {
@@ -388,7 +388,7 @@ describe('8 — a gone source', () => {
     ])
     await w.ha.push(id(BATTERY_STATUS), 'enum-sensor', { value: 'low', lastFetchedAt: T0 + 2 })
     await settle()
-    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: 15 })
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ level: 15 })
   })
 })
 
@@ -428,19 +428,17 @@ describe('10 — a source unavailable on an added cap (S1b, D49)', () => {
     ])
   })
 
-  it('contrast (b): an ADDED cap has no native to hand back to — battery_status gone writes percentage null, releases nothing', async () => {
+  it('contrast (b): an ADDED cap has no native to hand back to — battery_status gone writes level null, releases nothing', async () => {
     await w.ha.push(id(BATTERY_STATUS), 'enum-sensor', { value: 'low', lastFetchedAt: T0 + 1 })
     await settle()
-    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: 15 })
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ level: 15 })
     const mark = w.hubCalls.length
     w.ha.unregister(id(BATTERY_STATUS), 'enum-sensor')
     await settle()
     await converge()
     expect(releases(mark)).toEqual([])
-    expect(await slice(FEEDER, 'battery')).toMatchObject({ percentage: null })
-    expect(await claimsOn(FEEDER)).toContain(
-      'battery:percentage,binary,charging,sleeping,lastUpdated',
-    )
+    expect(await slice(FEEDER, 'battery')).toMatchObject({ level: null })
+    expect(await claimsOn(FEEDER)).toContain('battery:level,binary,charging,sleeping,lastUpdated')
   })
 })
 

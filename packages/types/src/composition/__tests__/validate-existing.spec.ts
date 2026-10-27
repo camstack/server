@@ -187,7 +187,7 @@ describe('existing targets (D663, D944)', () => {
         {
           kind: 'fields',
           cap: 'battery',
-          fields: { percentage: { kind: 'expression', expr: 'null', bindings: {} } },
+          fields: { level: { kind: 'expression', expr: 'null', bindings: {} } },
         },
       ],
     })
@@ -202,7 +202,7 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'temperature-sensor',
           fields: {
-            celsius: { kind: 'expression', expr: '21', bindings: {} },
+            temperature: { kind: 'expression', expr: '21', bindings: {} },
             lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
           },
         },
@@ -244,7 +244,7 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: { kind: 'expression', expr: 'null', bindings: {} },
+            level: { kind: 'expression', expr: 'null', bindings: {} },
           },
         },
       ],
@@ -278,7 +278,7 @@ describe('existing targets (D663, D944)', () => {
             ...feature,
             fields: {
               ...feature.fields,
-              percentage: { kind: 'expression', expr: 'null', bindings: {} },
+              level: { kind: 'expression', expr: 'null', bindings: {} },
               charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
               lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
             },
@@ -356,7 +356,7 @@ describe('existing targets (D663, D944)', () => {
 
   it('ADDED derived fields map unavailable to null when nullable, else to the enum’s unknown; the SAME fields REPLACED are release (S1 / S1b)', () => {
     const derived = {
-      percentage: {
+      level: {
         kind: 'expression',
         expr: 'on ? 100 : null',
         bindings: { on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' } },
@@ -386,7 +386,7 @@ describe('existing targets (D663, D944)', () => {
     )
     expect(added.problems).toEqual([])
     expect(added.fields.map((f) => [f.path, f.unavailable])).toEqual([
-      ['percentage', 'null'],
+      ['level', 'null'],
       ['charging', 'unknown'],
       ['sleeping', 'offline'],
       ['lastUpdated', 'offline'],
@@ -409,7 +409,7 @@ describe('existing targets (D663, D944)', () => {
         {
           kind: 'fields',
           cap: 'battery',
-          fields: { percentage: { kind: 'expression', expr: 'null', bindings: {} } },
+          fields: { level: { kind: 'expression', expr: 'null', bindings: {} } },
         },
       ],
     })
@@ -433,7 +433,7 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: { kind: 'expression', expr: 'null', bindings: {} },
+            level: { kind: 'expression', expr: 'null', bindings: {} },
             charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
             sleeping: { kind: 'expression', expr: 'false', bindings: {} },
             lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
@@ -469,7 +469,7 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: { kind: 'expression', expr: 'null', bindings: {} },
+            level: { kind: 'expression', expr: 'null', bindings: {} },
             charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
             sleeping: { kind: 'expression', expr: 'false', bindings: {} },
             lastUpdated: { kind: 'expression', expr: 'now', bindings: {} },
@@ -495,7 +495,7 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: { kind: 'expression', expr: 'null', bindings: {} },
+            level: { kind: 'expression', expr: 'null', bindings: {} },
           },
         },
       ],
@@ -513,11 +513,11 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: {
+            level: {
               kind: 'from',
               source: FOOD,
               cap: 'humidity-sensor',
-              fieldPath: 'percent',
+              fieldPath: 'humidity',
             },
           },
         },
@@ -555,7 +555,7 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'battery',
           fields: {
-            percentage: {
+            level: {
               kind: 'expression',
               expr: 't > 0 ? 50 : null',
               bindings: {
@@ -571,7 +571,7 @@ describe('existing targets (D663, D944)', () => {
     })
     const v = validateComposition(c, ctx(found({})))
     expect(v.problems).toEqual([])
-    expect(v.fields.find((f) => f.path === 'percentage')?.unavailable).toBe('null')
+    expect(v.fields.find((f) => f.path === 'level')?.unavailable).toBe('null')
   })
 
   it('a base device cap stays not-composable on an existing target, although it is native there (rule 4)', () => {
