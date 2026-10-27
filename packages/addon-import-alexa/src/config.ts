@@ -90,10 +90,57 @@ export const alexaProxyLoginSchema = z.object({
 })
 export type AlexaProxyLogin = z.infer<typeof alexaProxyLoginSchema>
 
+/** Amazon account used to speak on Echo devices. The session blob is the cookie jar. */
+export const alexaSpeakSettingsSchema = z.object({
+  email: z.string().default(''),
+  password: z.string().default('').describe('Amazon password').meta({ secret: true }),
+  region: z.enum(['NA', 'EU', 'FE']).default('EU'),
+  session: z.string().default('').describe('Alexa session blob').meta({ secret: true }),
+  targets: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        enabled: z.boolean(),
+        echoId: z.string(),
+        mode: z.enum(['speak', 'announce']),
+        volume: z.number(),
+        respectDnd: z.boolean(),
+      }),
+    )
+    .default([]),
+})
+export type AlexaSpeakSettings = z.infer<typeof alexaSpeakSettingsSchema>
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** Resolved settings. A keychain marker (an object) is an empty secret, not a password. */
+export function readSpeakSettings(config: { speak?: unknown }): AlexaSpeakSettings {
+  const raw = isRecord(config.speak) ? config.speak : {}
+  const region = raw['region']
+  const targets = raw['targets']
+  return alexaSpeakSettingsSchema.parse({
+    email: typeof raw['email'] === 'string' ? raw['email'] : '',
+    password: typeof raw['password'] === 'string' ? raw['password'] : '',
+    session: typeof raw['session'] === 'string' ? raw['session'] : '',
+    ...(region === 'NA' || region === 'EU' || region === 'FE' ? { region } : {}),
+    ...(Array.isArray(targets) ? { targets } : {}),
+  })
+}
+
 /** Top-level addon config — broker entries + the proxy-login settings. */
 export const alexaAddonConfigSchema = z.object({
   brokers: z.array(AlexaBrokerEntrySchema).default([]),
   proxyLogin: alexaProxyLoginSchema.default({ proxyHost: '', proxyPort: 3456 }),
+  speak: alexaSpeakSettingsSchema.default({
+    email: '',
+    password: '',
+    region: 'EU',
+    session: '',
+    targets: [],
+  }),
 })
 export type AlexaAddonConfig = z.infer<typeof alexaAddonConfigSchema>
 

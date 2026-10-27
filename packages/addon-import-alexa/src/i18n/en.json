@@ -1,0 +1,47 @@
+{
+  "page": {
+    "title": "Speak on Echo",
+    "intro": "CamStack reads the notification text aloud on the Echo devices you pick. Sign in with the Amazon account those devices use. Amazon may ask for a one-time code."
+  },
+  "signIn": {
+    "email": "Amazon email",
+    "password": "Amazon password",
+    "region": "Region",
+    "regionNa": "North America",
+    "regionEu": "Europe",
+    "regionFe": "Far East",
+    "submit": "Sign in"
+  },
+  "otp": {
+    "title": "Enter the code Amazon sent",
+    "help": "Open the authenticator app or the text Amazon sent, then type the code. It is used once.",
+    "code": "One-time code",
+    "submit": "Continue"
+  },
+  "captcha": {
+    "title": "Amazon asked for a captcha",
+    "help": "This page cannot show Amazon's picture puzzle. Wait a few minutes, then sign in again."
+  },
+  "devices": {
+    "title": "Echo devices",
+    "help": "Tick the devices or groups that should speak. A test uses the phrase below and does not change your rules.",
+    "empty": "No Echo devices yet. After you sign in, they show up here.",
+    "mode": "How it speaks",
+    "modeSpeak": "Speak (quiet hours apply)",
+    "modeAnnounce": "Announce (chime, then speech)",
+    "volume": "Volume",
+    "phrase": "Test phrase",
+    "phraseDefault": "This is a CamStack test.",
+    "send": "Send a test",
+    "pick": "Speak on {{name}}",
+    "dnd": "Do not disturb",
+    "group": "Group"
+  },
+  "session": {
+    "age": "Signed in {{seconds}}s ago"
+  },
+  "actions": {
+    "differentAccount": "Use a different account",
+    "working": "Working…"
+  }
+}

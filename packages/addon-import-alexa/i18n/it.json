@@ -11,5 +11,10 @@
   "connection.s_alexa-account.amazonDomain.label": "Dominio Amazon (regione)",
   "connection.s_alexa-account.cookie.label": "Blocco cookie (dal proxy di accesso)",
   "connection.s_alexa-account.refreshToken.label": "Refresh token (alternativa al cookie)",
-  "connection.s_alexa-account.pollIntervalMs.label": "Intervallo di interrogazione dello stato (ms)"
+  "connection.s_alexa-account.pollIntervalMs.label": "Intervallo di interrogazione dello stato (ms)",
+  "globalSettings.s_alexa-speak.title": "Parla sugli Echo",
+  "globalSettings.s_alexa-speak.description": "Accedi dalla pagina Parla sugli Echo, scegli i dispositivi e usali come destinazione di una notifica. Il testo è il modello della regola, letto ad alta voce.",
+  "globalSettings.s_alexa-speak.speak_email.label": "Email Amazon",
+  "globalSettings.s_alexa-speak.speak_password.label": "Password Amazon",
+  "globalSettings.s_alexa-speak.speak_region.label": "Regione"
 }

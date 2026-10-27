@@ -125,7 +125,7 @@ Singleton or collection providers, addressed without a device.
 | Capability | Methods | status | runtimeState | History | internal | Declared by |
 | --- | --- | --- | --- | --- | --- | --- |
 | `addon-pages` | 1 | — | — | — | — | `addon-pages-aggregator` |
-| `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `model-studio` `osd-manager` `training` |
+| `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `import-alexa` `model-studio` `osd-manager` `training` |
 | `addon-routes` | 2 | — | — | — | ✓ | `auth-oidc` `export-alexa` `export-google` `google-services` `import-alexa` `notifiers` `provider-homeassistant` `homeassistant-export` |
 | `addon-settings` | 5 | — | — | — | — | — |
 | `addon-widgets` | 1 | — | — | — | — | `addon-widgets-aggregator` |
@@ -179,7 +179,7 @@ Singleton or collection providers, addressed without a device.
 | `network-quality` | 3 | — | — | — | — | — |
 | `node-certificates` | 8 | — | — | — | ✓ | — |
 | `nodes` | 14 | — | — | — | — | — |
-| `notification-output` | 10 | — | — | — | — | `notifiers` `provider-homeassistant` |
+| `notification-output` | 10 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
 | `notification-rules` | 32 | — | — | — | — | `pipeline-analytics` |
 | `oauth-integration` | 1 | — | — | — | ✓ | `export-alexa` `export-google` `homeassistant-export` |
 | `oidc-connections` | 5 | — | — | — | — | `auth-oidc` |

@@ -38,7 +38,7 @@
         "category": "providers",
         "name": "Alexa Import",
         "version": "0.1.0",
-        "description": "Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). Maps Alexa capability interfaces onto typed CamStack device caps.",
+        "description": "Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). The same account can speak a notification aloud on Echo devices.",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#00caff",
@@ -57,20 +57,42 @@
           },
           {
             "name": "addon-routes"
+          },
+          {
+            "name": "notification-output"
+          },
+          {
+            "name": "addon-pages-source"
           }
-        ]
+        ],
+        "pages": [
+          {
+            "id": "speak",
+            "label": "Speak on Echo",
+            "icon": "megaphone",
+            "path": "/addon/import-alexa",
+            "remoteName": "addon_import_alexa_page",
+            "bundle": "remoteEntry.js",
+            "section": "administration"
+          }
+        ],
+        "python": {
+          "requirements": "./python/requirements.txt"
+        }
       }
     ]
   },
   "files": [
     "dist",
+    "python",
     "i18n",
     "assets",
     "README.md",
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build -c vite.page.config.ts",
+    "build:page": "vite build -c vite.page.config.ts",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit -p tsconfig.spec.json",
     "test": "vitest run",

@@ -1,4 +1,5 @@
 import {
+  addonPagesSourceCapability,
   addonRoutesCapability,
   BaseDeviceProvider,
   brokerCapability,
@@ -8,13 +9,16 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  type AddonInitResult,
+  type AddonPageDeclaration,
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
+  type IAddonPageProvider,
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  notificationOutputCapability,
   type SystemEvent,
 } from '@camstack/types'
 import {
@@ -38,11 +42,26 @@ import { AlexaDevice } from './devices/alexa-device.js'
 import { alexaBrokersEntryKind } from './broker-record-kinds.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import type { AlexaBrokerEntry } from './config.js'
+import { alexaSpeakActions } from './speak/actions.js'
+import { AlexaSpeakController } from './speak/controller.js'
+
+export { alexaSpeakActions as customActions } from './speak/actions.js'
+
+const SPEAK_PAGE: AddonPageDeclaration = {
+  id: 'speak',
+  label: 'Speak on Echo',
+  icon: 'megaphone',
+  path: '/addon/import-alexa',
+  remoteName: 'addon_import_alexa_page',
+  bundle: 'remoteEntry.js',
+  section: 'administration',
+}
 
 /** Default config — a fresh install starts with no accounts. */
 const DEFAULTS: AlexaAddonConfig = {
   brokers: [],
   proxyLogin: { proxyHost: '', proxyPort: 3456 },
+  speak: { email: '', password: '', region: 'EU', session: '', targets: [] },
 }
 
 /** Device types an imported Alexa appliance can materialise as. */
@@ -87,12 +106,15 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private proxyLogin: AlexaProxyLoginManager | null = null
   private brokerStore: AlexaBrokerStore | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
+  private speak: AlexaSpeakController | null = null
+
+  protected override readonly secretStatePaths = ['speak.password', 'speak.session']
 
   constructor() {
     super({ ...DEFAULTS })
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult<typeof alexaSpeakActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
     const records = this.ctx.records
@@ -156,15 +178,55 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       commitCookie: (input) => this.commitCapturedCookie(input),
     })
 
-    return [
-      ...regs,
-      { capability: brokerCapability, provider: this.buildBrokerProvider() },
-      { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-      {
-        capability: addonRoutesCapability,
-        provider: buildAddonRouteProvider('import-alexa', loginRoutes),
+    const speak = new AlexaSpeakController({
+      logger: this.ctx.logger.child('speak'),
+      readConfig: () => this.config,
+      writeSpeak: async (next) => {
+        await this.updateGlobalSettings({ speak: next })
       },
-    ]
+      emitAlert: async (alert) => {
+        const emit = this.ctx.api.alerts?.emit
+        if (emit === undefined) {
+          this.ctx.logger.warn('alexa speak: OTP alert skipped — alerts capability missing')
+          return
+        }
+        await emit.mutate(alert)
+      },
+      resolveAlert: async (alertId) => {
+        const dismiss = this.ctx.api.alerts?.dismiss
+        if (dismiss === undefined) return
+        await dismiss.mutate({ alertId })
+      },
+      ensurePython: () => this.ctx.deps.ensurePython(),
+    })
+    this.speak = speak
+    // Not awaited: initialize() is on the capability-graph critical path.
+    void speak.start().catch((err: unknown) => {
+      this.ctx.logger.warn('alexa speak: worker did not start', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    })
+
+    const pages: IAddonPageProvider = {
+      id: this.addonId,
+      listPages: () => [SPEAK_PAGE],
+    }
+
+    return {
+      providers: [
+        ...regs,
+        { capability: brokerCapability, provider: this.buildBrokerProvider() },
+        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
+        {
+          capability: addonRoutesCapability,
+          provider: buildAddonRouteProvider('import-alexa', loginRoutes),
+        },
+        { capability: notificationOutputCapability, provider: speak.provider },
+        { capability: addonPagesSourceCapability, provider: pages },
+      ],
+      customActions: alexaSpeakActions,
+      actionHandlers: speak.handlers(),
+    }
   }
 
   private async loadPersistedBrokers(): Promise<readonly AlexaBrokerEntry[]> {
@@ -233,6 +295,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   }
 
   protected override async onShutdown(): Promise<void> {
+    this.speak?.stop()
+    this.speak = null
     alexaCommands.clear()
     try {
       await this.proxyLogin?.dispose()
@@ -568,6 +632,43 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
               min: 1,
               max: 65535,
               default: 3456,
+            },
+          ],
+        },
+        {
+          id: 'alexa-speak',
+          title: 'Speak on Echo',
+          titleKey: 'import-alexa:globalSettings.s_alexa-speak.title',
+          description:
+            'Sign in on the Speak on Echo page, pick the devices, and use them as a notification target. ' +
+            'The text is the rule template, read aloud.',
+          descriptionKey: 'import-alexa:globalSettings.s_alexa-speak.description',
+          columns: 1,
+          fields: [
+            {
+              type: 'text' as const,
+              key: 'speak.email',
+              label: 'Amazon email',
+              labelKey: 'import-alexa:globalSettings.s_alexa-speak.speak_email.label',
+              inputType: 'email',
+            },
+            {
+              type: 'password' as const,
+              key: 'speak.password',
+              label: 'Amazon password',
+              labelKey: 'import-alexa:globalSettings.s_alexa-speak.speak_password.label',
+            },
+            {
+              type: 'select' as const,
+              key: 'speak.region',
+              label: 'Region',
+              labelKey: 'import-alexa:globalSettings.s_alexa-speak.speak_region.label',
+              default: 'EU',
+              options: [
+                { value: 'NA', label: 'North America' },
+                { value: 'EU', label: 'Europe' },
+                { value: 'FE', label: 'Far East' },
+              ],
             },
           ],
         },

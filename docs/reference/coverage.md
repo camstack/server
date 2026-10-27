@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**213 units · 7139 source files · 200 units claimed by at least one document (7077 files).**
+**213 units · 7160 source files · 201 units claimed by at least one document (7122 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -48,6 +48,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-ai` | 49 | `ai` | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 |
 | `packages/addon-pipeline/src/session-decode` | 49 | `decode-and-data-planes` | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +13 more, 4 ADRs | 2026-08-29 |
 | `packages/mcp-dev` | 47 | — | `decisions/adr-0836-a-cluster-mutation-from-the-developer-mcp-exists-only-behind-allow-mutations-and-a-dry-run-whose-one-shot-token-is-bound-to-the-exact-arguments.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +1 more | — |
+| `packages/addon-import-alexa` | 45 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-DNNN-echo-speech-uses-a-long-lived-alexapy-worker.md` | — |
 | `packages/addon-export-hap/src/mappers` | 42 | `ecosystem-exports` | `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +4 more, 9 ADRs | 2026-09-29 |
 | `packages/addon-provider-bosch/src/home-connect` | 36 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md` | 2026-10-26 |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
@@ -65,7 +66,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-reolink/src/clips` | 26 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-20-clip-export.md` _(covers)_, +19 more | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +10 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
-| `packages/addon-import-alexa` | 24 | `ecosystem-exports` | — | — |
 | `packages/addon-notifiers` | 24 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md`, 1 ADR | 2026-10-07 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 24 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-08-05-home-assistant-native-export.md` _(covers)_, +5 more, 9 ADRs | 2026-10-26 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |

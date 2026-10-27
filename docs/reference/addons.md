@@ -52,7 +52,7 @@ this column exists to stop.
 | `google-services` | `@camstack/addon-google-services` | messaging | own runner | `hub-only` | — | — | `addon-routes` `broker` `calendar-source` `smtp-provider` |
 | `homeassistant-export` | `@camstack/addon-provider-homeassistant` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `oauth-integration` |
 | `hub-forwarder` | `@camstack/system` | system | hub-main | `agent-only` | — | — | `log-destination` |
-| `import-alexa` | `@camstack/addon-import-alexa` | providers | own runner | `any-node` | — | multiple | `addon-routes` `broker` `device-adoption` `device-provider` |
+| `import-alexa` | `@camstack/addon-import-alexa` | providers | own runner | `any-node` | — | multiple | `addon-pages-source` `addon-routes` `broker` `device-adoption` `device-provider` `notification-output` |
 | `keychain` | `@camstack/system` | system | hub-main | `any-node` | — | — | `keychain` `keychain-admin` |
 | `liveness-monitor` | `@camstack/system` | system | hub-main | `any-node` | — | — | — |
 | `local-auth` | `@camstack/system` | system | hub-main | `any-node` | — | — | `auth-provider` `device-credentials` `user-management` |

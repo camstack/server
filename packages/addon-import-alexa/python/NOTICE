@@ -1,0 +1,4 @@
+Echo speech is driven by alexapy (Apache License 2.0).
+The library is installed from python/requirements.txt; it is not copied into this tree.
+Upstream: https://gitlab.com/keatontaylor/alexapy
+Copyright of alexapy remains with its authors.

@@ -1,0 +1,47 @@
+{
+  "page": {
+    "title": "Parla sugli Echo",
+    "intro": "CamStack legge ad alta voce il testo della notifica sugli Echo che scegli. Accedi con l'account Amazon di quei dispositivi. Amazon può chiedere un codice usa e getta."
+  },
+  "signIn": {
+    "email": "Email Amazon",
+    "password": "Password Amazon",
+    "region": "Regione",
+    "regionNa": "Nord America",
+    "regionEu": "Europa",
+    "regionFe": "Estremo Oriente",
+    "submit": "Accedi"
+  },
+  "otp": {
+    "title": "Inserisci il codice che Amazon ha inviato",
+    "help": "Apri l'app di autenticazione o il messaggio di Amazon e scrivi il codice. Si usa una volta sola.",
+    "code": "Codice usa e getta",
+    "submit": "Continua"
+  },
+  "captcha": {
+    "title": "Amazon ha chiesto un captcha",
+    "help": "Questa pagina non può mostrare il puzzle di Amazon. Aspetta qualche minuto e accedi di nuovo."
+  },
+  "devices": {
+    "title": "Dispositivi Echo",
+    "help": "Seleziona i dispositivi o i gruppi che devono parlare. La prova usa la frase qui sotto e non cambia le regole.",
+    "empty": "Nessun Echo per ora. Dopo l'accesso compaiono qui.",
+    "mode": "Come parla",
+    "modeSpeak": "Parla (rispetta le ore di silenzio)",
+    "modeAnnounce": "Annuncio (suono, poi voce)",
+    "volume": "Volume",
+    "phrase": "Frase di prova",
+    "phraseDefault": "Questa è una prova di CamStack.",
+    "send": "Invia una prova",
+    "pick": "Parla su {{name}}",
+    "dnd": "Non disturbare",
+    "group": "Gruppo"
+  },
+  "session": {
+    "age": "Accesso effettuato {{seconds}} secondi fa"
+  },
+  "actions": {
+    "differentAccount": "Usa un altro account",
+    "working": "Operazione in corso…"
+  }
+}
