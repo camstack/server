@@ -174,6 +174,8 @@ export function LockHeroCard({
   // Cap-gate: if the cap is not registered on this device, render nothing.
   if (cap === undefined) return null
   if (display === undefined) return null
+  // A slice with no lock state (a helper lock group has none) has nothing to draw.
+  if (!(display.state in LOCK_STATE_GLYPH)) return null
 
   const locked = isLockedState(display.state)
   const jammed = isJammedState(display.state)

@@ -51,6 +51,14 @@ describe('LockHeroCard', () => {
     expect(container.firstChild).toBeNull()
   })
 
+  // A helper lock GROUP registers the cap with no state of its own (D944): a slice
+  // that carries no lock state is "nothing to show", never a crash.
+  it('returns null when the slice has no lock state', () => {
+    mockResult = { cap: baseCap, slice: {}, available: true }
+    const { container } = render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    expect(container.firstChild).toBeNull()
+  })
+
   // ── (a) padlock glyph reflecting state ─────────────────────────────────────
 
   it('mounts without error when cap and slice are both present', () => {
