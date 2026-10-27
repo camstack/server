@@ -538,6 +538,18 @@ runner (a group of one) for every declarative composition. Existing devices are 
 - **Rolling back below D659 erases compositions**: an older build strips
   `source` and rewrites the row. Export them first.
 
+### Power and energy belong to the electrical device (D951)
+
+[D951](../decisions/adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md).
+`power-meter` is declared on sensors AND on the loads that draw metered power
+(switch, light, fan, climate, water heater, media player, appliances, vacuum,
+...). The Home Assistant import folds a plug's power / energy / voltage /
+current sensors into its first control (`meterEntities`), keeping the sensor
+children as Diagnostic (`foldedInto`). Customize offers "Power and energy": a
+scalar target per reading, sharing one stored feature (`scalar-merge.ts`). Every
+Customize source selector suggests the host's container siblings that fit
+(`siblingSuggestions`), with no extension named.
+
 ### Helpers: a group is a template, not an expression
 
 [D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md).
