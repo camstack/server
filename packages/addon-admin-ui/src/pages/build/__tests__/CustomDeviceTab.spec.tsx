@@ -15,7 +15,7 @@ import {
   type CoreBlock,
   DeviceType,
 } from '@camstack/types'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -28,6 +28,7 @@ interface QueryState<T> {
 
 let compositionsQuery: QueryState<CompositionListRead>
 let devicesQuery: QueryState<readonly DeviceRow[]>
+const deleteMutate = vi.fn()
 
 interface DeviceRow {
   readonly id: number
@@ -76,6 +77,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useCoreBlocksListCompositions: () => compositionsQuery,
+    useCoreBlocksDelete: () => ({
+      mutate: deleteMutate,
+      isPending: false,
+      error: null,
+    }),
     useCoreBlocksCreateComposition: () => ({
       mutateAsync: vi.fn(),
       isPending: false,
@@ -325,6 +331,41 @@ describe('CustomDeviceTab', () => {
       views: [COMPOSED, CUSTOMIZATION],
     })
     devicesQuery = answered(FLEET)
+  })
+
+  it('delete asks first, calls the mutation once, and the row is gone after the refetch', () => {
+    const refetchList = vi.fn(() => {
+      compositionsQuery = {
+        ...compositionsQuery,
+        data: { state: 'loaded', views: [CUSTOMIZATION] },
+      }
+      return Promise.resolve(undefined)
+    })
+    compositionsQuery = { ...compositionsQuery, refetch: refetchList }
+    deleteMutate.mockReset()
+    deleteMutate.mockImplementation((_input: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+    )
+    renderTab()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    // Asking is not deleting.
+    expect(deleteMutate).not.toHaveBeenCalled()
+    expect(screen.getByText('Delete this composed device?')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(deleteMutate).toHaveBeenCalledTimes(1)
+    expect(deleteMutate.mock.calls[0]?.[0]).toEqual({ blockId: 'porch' })
+    expect(refetchList).toHaveBeenCalled()
+    expect(screen.queryByText('Porch (composto)')).toBeNull()
+    expect(screen.getByText('No composed devices.')).toBeTruthy()
+  })
+
+  it('cancelling the delete confirmation calls nothing', () => {
+    deleteMutate.mockReset()
+    renderTab()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(deleteMutate).not.toHaveBeenCalled()
+    expect(screen.getByText('Porch (composto)')).toBeTruthy()
   })
 
   it('lists a composed device with Edit, and a customization links to its device page (D676)', () => {

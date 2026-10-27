@@ -5664,7 +5664,8 @@
       "deviceMissing": "device missing",
       "notReported": "{{name}} — device not reported yet",
       "deviceListUnreadable": "the device list could not be read ({{error}})",
-      "deviceListPending": "the device list has not answered yet"
+      "deviceListPending": "the device list has not answered yet",
+      "deleteThisComposedDevice": "Delete this composed device?"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Could not list devices:",

@@ -5725,7 +5725,8 @@
       "deviceMissing": "dispositivo mancante",
       "notReported": "{{name}} — dispositivo non ancora segnalato",
       "deviceListUnreadable": "impossibile leggere l'elenco dei dispositivi ({{error}})",
-      "deviceListPending": "l'elenco dei dispositivi non ha ancora risposto"
+      "deviceListPending": "l'elenco dei dispositivi non ha ancora risposto",
+      "deleteThisComposedDevice": "Eliminare questo dispositivo composto?"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Impossibile elencare i dispositivi:",

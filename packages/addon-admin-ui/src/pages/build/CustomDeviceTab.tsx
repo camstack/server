@@ -15,11 +15,13 @@ import {
   ErrorBox,
   ItemFormDialog,
   TABLE_SCROLL_MAX_H,
+  useCoreBlocksDelete,
   useCoreBlocksListCompositions,
   useDeviceLabelById,
   useItemFormUrl,
 } from '@camstack/ui-library'
-import { Boxes } from 'lucide-react'
+import type { TFunction } from 'i18next'
+import { Boxes, Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -95,6 +97,8 @@ export function CustomDeviceTab({
   const createMode = editingId === null ? createModeOf(params.get('new'), createRequested) : null
   const isNew = createMode !== null
   const [createTitle, setCreateTitle] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const remove = useCoreBlocksDelete()
 
   const closeDialog = (): void => {
     formUrl.close()
@@ -113,6 +117,20 @@ export function CustomDeviceTab({
   const read = compositions.data
   const body = compositionBody(read, compositions.error, () => void compositions.refetch(), fleet, {
     onEditComposed: (blockId) => formUrl.openEdit(blockId),
+    confirmingDelete: confirmDelete,
+    deleting: remove.isPending,
+    onAskDelete: setConfirmDelete,
+    onCancelDelete: () => setConfirmDelete(null),
+    onConfirmDelete: (blockId) =>
+      remove.mutate(
+        { blockId },
+        {
+          onSuccess: () => {
+            setConfirmDelete(null)
+            void compositions.refetch()
+          },
+        },
+      ),
   })
 
   return (
@@ -137,6 +155,7 @@ export function CustomDeviceTab({
           <CompositionBlockEditor blockId={editingId} />
         ) : null}
       </ItemFormDialog>
+      {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
     </>
   )
 }
@@ -165,6 +184,11 @@ function notLoadedNote(reason: string): ReactNode {
 
 interface CompositionBodyHandlers {
   readonly onEditComposed: (blockId: string) => void
+  readonly confirmingDelete: string | null
+  readonly deleting: boolean
+  readonly onAskDelete: (blockId: string) => void
+  readonly onCancelDelete: () => void
+  readonly onConfirmDelete: (blockId: string) => void
 }
 
 function compositionBody(
@@ -197,12 +221,7 @@ function compositionBody(
   const refreshError = error != null ? errorMessage(error) : null
   const lists = buildCompositionRows(read.views, fleet)
   return (
-    <CompositionLists
-      lists={lists}
-      fleet={fleet}
-      refreshError={refreshError}
-      onEditComposed={handlers.onEditComposed}
-    />
+    <CompositionLists lists={lists} fleet={fleet} refreshError={refreshError} handlers={handlers} />
   )
 }
 
@@ -210,10 +229,10 @@ interface CompositionListsProps {
   readonly lists: CompositionRowLists
   readonly fleet: FleetLookup
   readonly refreshError: string | null
-  readonly onEditComposed: (blockId: string) => void
+  readonly handlers: CompositionBodyHandlers
 }
 
-function CompositionLists({ lists, fleet, refreshError, onEditComposed }: CompositionListsProps) {
+function CompositionLists({ lists, fleet, refreshError, handlers }: CompositionListsProps) {
   const { t } = useTranslation()
   return (
     <div className="space-y-4">
@@ -245,7 +264,7 @@ function CompositionLists({ lists, fleet, refreshError, onEditComposed }: Compos
         nameHeader="Name"
         emptyMessage={t('build.customDeviceTab.noComposedDevices', 'No composed devices.')}
         kind="composed"
-        onEditComposed={onEditComposed}
+        handlers={handlers}
       />
       <CompositionSection
         title={t('build.customDeviceTab.customizations', 'Customizations')}
@@ -257,7 +276,7 @@ function CompositionLists({ lists, fleet, refreshError, onEditComposed }: Compos
         nameHeader="Device"
         emptyMessage={t('build.customDeviceTab.noCustomizations', 'No customizations.')}
         kind="customization"
-        onEditComposed={onEditComposed}
+        handlers={handlers}
       />
     </div>
   )
@@ -270,7 +289,7 @@ interface CompositionSectionProps {
   readonly nameHeader: string
   readonly emptyMessage: string
   readonly kind: 'composed' | 'customization'
-  readonly onEditComposed: (blockId: string) => void
+  readonly handlers: CompositionBodyHandlers
 }
 
 function CompositionSection({
@@ -280,26 +299,24 @@ function CompositionSection({
   nameHeader,
   emptyMessage,
   kind,
-  onEditComposed,
+  handlers,
 }: CompositionSectionProps) {
+  const { t } = useTranslation()
   return (
     <section className="space-y-2" aria-label={title}>
       <div>
         <h3 className="font-medium">{title}</h3>
         <p className="text-xs text-foreground-subtle">{hint}</p>
       </div>
-      <Card variant="flat" className="p-0">
-        <DataTable<CompositionRow>
-          columns={columnsFor(nameHeader, kind, onEditComposed)}
-          rows={rows}
-          rowKey={(row) => row.blockId}
-          minWidthPx={760}
-          bordered={false}
-          maxBodyHeight={TABLE_SCROLL_MAX_H}
-          emptyMessage={emptyMessage}
-          onRowClick={kind === 'composed' ? (row) => onEditComposed(row.blockId) : undefined}
-        />
-      </Card>
+      <DataTable<CompositionRow>
+        columns={columnsFor(nameHeader, kind, handlers, t)}
+        rows={rows}
+        rowKey={(row) => row.blockId}
+        pageSize={25}
+        maxBodyHeight={TABLE_SCROLL_MAX_H}
+        emptyMessage={emptyMessage}
+        onRowClick={kind === 'composed' ? (row) => handlers.onEditComposed(row.blockId) : undefined}
+      />
     </section>
   )
 }
@@ -307,7 +324,8 @@ function CompositionSection({
 function columnsFor(
   nameHeader: string,
   kind: 'composed' | 'customization',
-  onEditComposed: (blockId: string) => void,
+  handlers: CompositionBodyHandlers,
+  t: TFunction,
 ): DataColumn<CompositionRow>[] {
   const cols: DataColumn<CompositionRow>[] = [
     {
@@ -357,21 +375,64 @@ function columnsFor(
       align: 'right',
       notSortableReason: 'Row actions',
       nowrap: true,
-      render: (row) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEditComposed(row.blockId)
-            }}
-          >
-            {i18n.t('common.edit', 'Edit')}
-          </Button>
-        </div>
-      ),
+      render: (row) => {
+        if (handlers.confirmingDelete === row.blockId) {
+          return (
+            <div className="flex justify-end gap-1">
+              <span className="text-xs text-foreground-subtle">
+                {t(
+                  'build.customDeviceTab.deleteThisComposedDevice',
+                  'Delete this composed device?',
+                )}
+              </span>
+              <Button
+                variant="danger"
+                disabled={handlers.deleting}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handlers.onConfirmDelete(row.blockId)
+                }}
+              >
+                {t('common.delete', 'Delete')}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handlers.onCancelDelete()
+                }}
+              >
+                {t('common.cancel', 'Cancel')}
+              </Button>
+            </div>
+          )
+        }
+        return (
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              title={t('common.edit', 'Edit')}
+              onClick={(e) => {
+                e.stopPropagation()
+                handlers.onEditComposed(row.blockId)
+              }}
+            >
+              {t('common.edit', 'Edit')}
+            </Button>
+            <Button
+              variant="ghost"
+              title={t('common.delete', 'Delete')}
+              aria-label={t('common.delete', 'Delete')}
+              onClick={(e) => {
+                e.stopPropagation()
+                handlers.onAskDelete(row.blockId)
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      },
     })
   }
   return cols
