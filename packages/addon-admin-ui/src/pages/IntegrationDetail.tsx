@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   LogStream,
+  OptionSelect,
   Switch,
   useAddonSettingsGetGlobalSettings,
   useAddonSettingsGetIntegrationSettings,
@@ -42,7 +43,7 @@ import {
 } from 'lucide-react'
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceDialog } from '../components/integrations/AddDeviceDialog'
 import { AddMatterDeviceDialog } from '../components/integrations/AddMatterDeviceDialog'
 import { AdoptDevicesModal } from '../components/integrations/AdoptDevicesModal'
@@ -52,11 +53,51 @@ import { ScanNetworkModal } from '../components/integrations/ScanNetworkModal'
 import { NodeAddonsSettingsPanel } from '../components/settings/NodeAddonsSettingsPanel'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useAddonIconUrl } from '../contexts/addon-icons-context'
+import {
+  INSTANCES_PARAM,
+  integrationDetailUrl,
+  parseInstanceIds,
+  resolveDetailRoute,
+  resolveSelectedInstanceIds,
+} from '../lib/integration-instance-selection'
 import { hasIntegrationSettings } from '../lib/settings-forwarding'
 
-export function IntegrationDetailPage() {
+/**
+ * `/integrations/:addonId` — the devices of one providing addon, across the
+ * integration instances picked in `?instances=`. A path segment that is an
+ * INTEGRATION id (an older per-instance link) redirects here with that
+ * instance selected.
+ */
+export function IntegrationDetailPage(): ReactElement {
+  const { addonId: param = '' } = useParams<{ addonId: string }>()
+  const { search } = useLocation()
+  const { data: integrations } = useIntegrationsList(undefined)
+  const route = resolveDetailRoute(param, integrations)
+  if (route.kind === 'pending') return <DetailSkeleton />
+  if (route.kind === 'redirect') {
+    const rest = new URLSearchParams(search)
+    rest.delete(INSTANCES_PARAM)
+    const tail = rest.toString()
+    return <Navigate replace to={tail.length > 0 ? `${route.to}&${tail}` : route.to} />
+  }
+  return <AddonIntegrationsView addonId={route.addonId} />
+}
+
+function DetailSkeleton(): ReactElement {
+  return (
+    <div className="p-4">
+      <div className="h-16 rounded-lg bg-surface animate-pulse mb-4" />
+      <div className="h-40 rounded-lg bg-surface animate-pulse" />
+    </div>
+  )
+}
+
+interface AddonIntegrationsViewProps {
+  readonly addonId: string
+}
+
+function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactElement {
   const { t } = useTranslation()
-  const { integrationId } = useParams<{ integrationId: string }>()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -74,8 +115,44 @@ export function IntegrationDetailPage() {
   const [showConfig, setShowConfig] = useState(false)
   const [showLogs, setShowLogs] = useState(false)
 
+  // The addon's instances, and which of them the page shows (`?instances=`;
+  // none named → the first). Per-instance actions (settings, enable/disable,
+  // delete, add device) target ONE instance — `integrationId` — which is the
+  // sole selected instance or the one picked in the "Manage" selector.
+  const { data: integrations } = useIntegrationsList(undefined)
+  const instances = useMemo(
+    () => (integrations ?? []).filter((i) => i.addonId === addonId),
+    [integrations, addonId],
+  )
+  const selectedIds = useMemo(
+    () =>
+      resolveSelectedInstanceIds(parseInstanceIds(searchParams.get(INSTANCES_PARAM)), instances),
+    [searchParams, instances],
+  )
+  const [actingPick, setActingPick] = useState<string | null>(null)
+  const integrationId =
+    actingPick !== null && selectedIds.includes(actingPick) ? actingPick : (selectedIds[0] ?? '')
+  const onSelectionChange = useCallback(
+    (next: readonly string[]) => {
+      if (next.length === 0) return
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev)
+          params.set(INSTANCES_PARAM, next.join(','))
+          return params
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
+  const instanceOptions = useMemo(
+    () => instances.map((i) => ({ value: i.id, label: i.name })),
+    [instances],
+  )
+
   const { data: integration, isLoading } = useIntegrationsGet(
-    { id: integrationId ?? '' },
+    { id: integrationId },
     { enabled: !!integrationId },
   )
 
@@ -243,7 +320,7 @@ export function IntegrationDetailPage() {
 
   const integrationKey = [
     ['integrations', 'get'],
-    { input: { id: integrationId ?? '' }, type: 'query' },
+    { input: { id: integrationId }, type: 'query' },
   ] as const
   const toggleMutation = useIntegrationsUpdate({
     onMutate: async (vars) => {
@@ -273,7 +350,7 @@ export function IntegrationDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['integrations']] })
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-      navigate('/integrations')
+      navigate(instances.length > 1 ? integrationDetailUrl(addonId) : '/integrations')
     },
   })
 
@@ -336,8 +413,14 @@ export function IntegrationDetailPage() {
   // composed device is served by `composer` but was created by "Blocks"
   // (D659), and must be listed on the Blocks page. Same query key as
   // Devices / Integrations / GlobalSearch, so a warm client pays nothing.
-  const { data: integrations } = useIntegrationsList(undefined)
   const integrationOf = useMemo(() => deviceIntegrationResolver(integrations), [integrations])
+  const integrationNameOf = useCallback(
+    (device: DeviceItemDevice): string | null => {
+      const resolved = integrationOf(device)
+      return resolved.kind === 'resolved' ? resolved.integration.name : null
+    },
+    [integrationOf],
+  )
 
   const onDeviceNavigate = useCallback(
     (deviceId: number) => navigate(`/devices/${String(deviceId)}`),
@@ -351,13 +434,11 @@ export function IntegrationDetailPage() {
   // integration's devices so the parent-type lookup stays scoped to the
   // same set (Container parents are also in the integration's device list).
   const integrationDevices = useMemo<readonly DeviceItemDevice[]>(() => {
-    const id = integration?.id
-    if (!id) return []
     return deviceList.filter((d) => {
       const resolved = integrationOf(d)
-      return resolved.kind === 'resolved' && resolved.integration.id === id
+      return resolved.kind === 'resolved' && selectedIds.includes(resolved.integration.id)
     })
-  }, [deviceList, integration?.id, integrationOf])
+  }, [deviceList, selectedIds, integrationOf])
 
   // `null` while the integrations list has not answered: membership is not
   // known yet, and "0 devices" would claim an absence nobody observed (D315).
@@ -367,14 +448,10 @@ export function IntegrationDetailPage() {
   )
   const topLevelCountLabel = topLevelCount ?? '…'
 
-  if (isLoading) {
-    return (
-      <div className="p-4">
-        <div className="h-16 rounded-lg bg-surface animate-pulse mb-4" />
-        <div className="h-40 rounded-lg bg-surface animate-pulse" />
-      </div>
-    )
-  }
+  if (isLoading || integrations === undefined) return <DetailSkeleton />
+
+  const addonTitle =
+    (availableTypes ?? []).find((a) => a.addonId === addonId)?.name ?? integration?.name ?? addonId
 
   if (!integration) {
     return (
@@ -390,7 +467,7 @@ export function IntegrationDetailPage() {
             {t('integrations.integrationNotFoundHint', {
               defaultValue:
                 'The integration "{{id}}" does not exist. It may have been deleted, or the URL may be wrong.',
-              id: integrationId ?? '',
+              id: addonId,
             })}
           </p>
         </div>
@@ -415,7 +492,7 @@ export function IntegrationDetailPage() {
             label: t('integrationDetail.integrations', 'Integrations'),
             onClick: () => navigate('/integrations'),
           },
-          { label: integration.name },
+          { label: addonTitle },
         ]}
       />
 
@@ -427,7 +504,7 @@ export function IntegrationDetailPage() {
         <div className="flex items-center gap-3 min-w-0">
           <IntegrationHeaderIcon addonId={integration.addonId} />
           <div className="min-w-0">
-            <h1 className="text-lg font-semibold text-foreground truncate">{integration.name}</h1>
+            <h1 className="text-lg font-semibold text-foreground truncate">{addonTitle}</h1>
             <p className="text-[11px] text-foreground-subtle mt-0.5 truncate">
               {integration.addonId} · {topLevelCountLabel} {t('integrations.devices')}
             </p>
@@ -568,6 +645,33 @@ export function IntegrationDetailPage() {
         </div>
       </div>
 
+      {instances.length > 1 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <OptionSelect
+            mode="multi"
+            label={t('integrationDetail.instances', 'Integrations')}
+            options={instanceOptions}
+            value={selectedIds}
+            onChange={onSelectionChange}
+            placeholder={t('integrationDetail.instancesPlaceholder', 'Select integrations')}
+          />
+          {selectedIds.length > 1 && (
+            <OptionSelect
+              mode="single"
+              singleDisplay="field"
+              label={t('integrationDetail.manage', 'Manage')}
+              description={t(
+                'integrationDetail.manageHint',
+                'Settings, enable/disable, delete and add device apply to this integration.',
+              )}
+              options={instanceOptions.filter((o) => selectedIds.includes(o.value))}
+              value={integrationId}
+              onChange={setActingPick}
+            />
+          )}
+        </div>
+      )}
+
       {/* INTEGRATION-LEVEL SETTINGS — the sections this addon declared as its
           integration's configuration. Rendered inline rather than behind the
           Config button because "easy accessibility" was the whole request: the
@@ -600,7 +704,8 @@ export function IntegrationDetailPage() {
         devices={deviceList}
         trpc={system.trpcClient}
         integrationOf={integrationOf}
-        forceIntegrationId={integration.id}
+        forceIntegrationIds={selectedIds}
+        resolveIntegrationName={integrationNameOf}
         urlScope="root"
         lsKey={`integration-detail:${integration.addonId}`}
         resolveIntegrationIcon={deviceIntegrationIcon}

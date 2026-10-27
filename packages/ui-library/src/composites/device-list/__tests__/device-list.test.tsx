@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { DeviceList, deviceIntegrationResolver } from '../index'
+import { DeviceList, deviceIntegrationResolver, type DeviceIntegrationLink } from '../index'
 import { ConfirmDialogProvider } from '../../confirm-dialog'
 import { allDeviceTypeFilterOptions } from '../../device-meta'
 import type { DeviceItemDevice } from '../../device-item/helpers'
@@ -295,7 +295,7 @@ describe('<DeviceList> context-configured columns (device mode)', () => {
     const headers = [...container.querySelectorAll('thead th')].map((th) => th.textContent?.trim())
     expect(headers).not.toContain('Type')
     // integration-detail keeps Hardware (wide-screen-only) but drops Type/icon.
-    expect(headers).toEqual(['Name', 'Hardware', 'Features', 'Preview'])
+    expect(headers).toEqual(['Name', 'Integration', 'Hardware', 'Features', 'Preview'])
     expect(screen.queryByTestId('integ-icon')).toBeNull()
   })
 
@@ -309,9 +309,51 @@ describe('<DeviceList> context-configured columns (device mode)', () => {
         />,
       ),
     )
-    // Name + Hardware + Features + merged previewActions = 4 cells per row (no Type td).
+    // Name + Integration + Hardware + Features + merged previewActions = 5 cells per row (no Type td).
     const cells = container.querySelectorAll('tbody tr:first-child td')
-    expect(cells.length).toBe(4)
+    expect(cells.length).toBe(5)
+  })
+
+  it('context="integration-detail" shows the integration name from resolveIntegrationName', () => {
+    const { container } = render(
+      withQuery(
+        <DeviceList
+          devices={[dev(1)]}
+          trpc={mockTrpc}
+          context="integration-detail"
+          resolveIntegrationName={() => 'Casa'}
+        />,
+      ),
+    )
+    const cells = [...container.querySelectorAll('tbody tr:first-child td')].map((td) =>
+      td.textContent?.trim(),
+    )
+    expect(cells).toContain('Casa')
+  })
+
+  it('forceIntegrationIds filters to several integrations', () => {
+    const resolver = (d: DeviceIntegrationLink) => ({
+      kind: 'resolved' as const,
+      integration: { id: d.integrationId ?? '', addonId: d.addonId ?? '' },
+    })
+    render(
+      withQuery(
+        <DeviceList
+          devices={[
+            dev(1, { name: 'Alpha', integrationId: 'i1' }),
+            dev(2, { name: 'Beta', integrationId: 'i2' }),
+            dev(3, { name: 'Gamma', integrationId: 'i3' }),
+          ]}
+          trpc={mockTrpc}
+          context="integration-detail"
+          integrationOf={resolver}
+          forceIntegrationIds={['i1', 'i3']}
+        />,
+      ),
+    )
+    expect(screen.queryByText('Alpha')).not.toBeNull()
+    expect(screen.queryByText('Beta')).toBeNull()
+    expect(screen.queryByText('Gamma')).not.toBeNull()
   })
 })
 

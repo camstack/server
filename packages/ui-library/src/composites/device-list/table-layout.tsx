@@ -39,6 +39,8 @@ interface DeviceRowsProps {
   /** The badge beside a row's name — already bound to the row's resolved
    *  integration by the device-mode wrapper. */
   readonly resolveIntegrationIcon: ((device: DeviceItemDevice) => ReactNode | null) | null
+  /** Text of the Integration column cell — the integration's name for the row. */
+  readonly resolveIntegrationName: ((device: DeviceItemDevice) => string | null) | null
   readonly resolveParent: ((parentId: number) => DeviceItemParent | null) | null
   readonly onNavigate: ((deviceId: number) => void) | null
   readonly renderRowAction: ((device: DeviceItemDevice) => ReactNode) | null
@@ -95,6 +97,7 @@ export function TableLayout({
   visibleColumns,
   trpc,
   resolveIntegrationIcon,
+  resolveIntegrationName,
   resolveParent,
   onNavigate,
   renderRowAction,
@@ -110,6 +113,7 @@ export function TableLayout({
   const showType = visibleColumns.includes('type')
   const showFeatures = visibleColumns.includes('features')
   const showManufacturer = visibleColumns.includes('manufacturer')
+  const showIntegration = visibleColumns.includes('integration')
   // The integration/provider badge in the name cell — gated by the `icon`
   // column. Off ⇒ pass `null` so the row renders only the lead device glyph.
   const showIcon = visibleColumns.includes('icon')
@@ -175,6 +179,16 @@ export function TableLayout({
                 onSort={onSort}
               />
             </th>
+            {showIntegration && (
+              <th
+                className={cn(
+                  COLUMN_BREAKPOINT_CLASS.integration,
+                  'text-left px-2 py-2 text-[9.5px] font-medium uppercase tracking-wider text-foreground-subtle w-32',
+                )}
+              >
+                {t('uiLibrary.deviceTable.integration', 'Integration')}
+              </th>
+            )}
             {showType && (
               <th
                 aria-sort={ariaSortFor(sort, 'type')}
@@ -243,8 +257,10 @@ export function TableLayout({
                 onToggleExpand={() => onToggleExpand(d.id)}
                 trpc={trpc}
                 integrationIcon={showIcon ? (resolveIntegrationIcon?.(d) ?? null) : null}
+                integrationLabel={resolveIntegrationName?.(d) ?? null}
                 showType={showType}
                 showManufacturer={showManufacturer}
+                showIntegration={showIntegration}
                 showFeatures={showFeatures}
                 parentRowParent={parentRowParent}
                 indentLevel={topLevelIndentLevel(d, parentType)}
@@ -276,10 +292,13 @@ interface TableRowGroupProps {
   readonly onToggleExpand: () => void
   readonly trpc: UseDeviceProxyTrpc
   readonly integrationIcon: ReactNode | null
+  /** Text of the Integration cell for this row (null renders an empty cell). */
+  readonly integrationLabel: string | null
   /** Render the Type cell for this row (context-gated). */
   readonly showType: boolean
   /** Render the Hardware (manufacturer/model) cell for this row (context-gated). */
   readonly showManufacturer: boolean
+  readonly showIntegration: boolean
   /** Render the Features cell for this row (context-gated). */
   readonly showFeatures: boolean
   readonly parentRowParent: DeviceItemParent | null
@@ -301,8 +320,10 @@ function TableRowGroup({
   onToggleExpand,
   trpc,
   integrationIcon,
+  integrationLabel,
   showType,
   showManufacturer,
+  showIntegration,
   showFeatures,
   parentRowParent,
   indentLevel,
@@ -356,7 +377,11 @@ function TableRowGroup({
   // always present; type/manufacturer/features are context-gated (must stay in
   // lock-step with the header cells in TableLayout).
   const sectionColSpan =
-    2 + (showType ? 1 : 0) + (showManufacturer ? 1 : 0) + (showFeatures ? 1 : 0)
+    2 +
+    (showIntegration ? 1 : 0) +
+    (showType ? 1 : 0) +
+    (showManufacturer ? 1 : 0) +
+    (showFeatures ? 1 : 0)
 
   // Hoisted so the JSX reads it without a non-null assertion.
   const disabledSection = grouped.disabledSection
@@ -368,6 +393,7 @@ function TableRowGroup({
         device={parent}
         view="table"
         integrationIcon={integrationIcon}
+        integrationLabel={integrationLabel}
         parent={parentRowParent}
         children={accessories}
         onNavigate={onNavigate ?? undefined}
@@ -386,6 +412,7 @@ function TableRowGroup({
         rowClickSelects={rowClickSelects}
         showTypeCell={showType}
         showManufacturerCell={showManufacturer}
+        showIntegrationCell={showIntegration}
         showFeaturesCell={showFeatures}
       />
       {/* Ungrouped accessory sub-rows render exactly as before. They
@@ -400,6 +427,7 @@ function TableRowGroup({
             parentName={parent.name}
             showType={showType}
             showManufacturer={showManufacturer}
+            showIntegration={showIntegration}
             showFeatures={showFeatures}
             onNavigate={onNavigate}
           />
@@ -422,6 +450,7 @@ function TableRowGroup({
               parentName={parent.name}
               showType={showType}
               showManufacturer={showManufacturer}
+              showIntegration={showIntegration}
               showFeatures={showFeatures}
               onNavigate={onNavigate}
             />
@@ -443,6 +472,7 @@ function TableRowGroup({
           parentName={parent.name}
           showType={showType}
           showManufacturer={showManufacturer}
+          showIntegration={showIntegration}
           showFeatures={showFeatures}
           onNavigate={onNavigate}
           muted
@@ -460,6 +490,7 @@ interface AccessorySubRowProps {
   readonly parentName: string
   readonly showType: boolean
   readonly showManufacturer: boolean
+  readonly showIntegration: boolean
   readonly showFeatures: boolean
   readonly onNavigate: ((id: number) => void) | null
   /** Render the row visually de-emphasized (the synthetic Disabled section). */
@@ -476,6 +507,7 @@ function AccessorySubRow({
   parentName,
   showType,
   showManufacturer,
+  showIntegration,
   showFeatures,
   onNavigate,
   muted,
@@ -496,6 +528,7 @@ function AccessorySubRow({
       onNavigate={onNavigate ?? undefined}
       showTypeCell={showType}
       showManufacturerCell={showManufacturer}
+      showIntegrationCell={showIntegration}
       showFeaturesCell={showFeatures}
       className={muted === true ? 'opacity-60' : undefined}
     />
@@ -514,6 +547,7 @@ interface SectionRowsProps {
   readonly parentName: string
   readonly showType: boolean
   readonly showManufacturer: boolean
+  readonly showIntegration: boolean
   readonly showFeatures: boolean
   readonly onNavigate: ((id: number) => void) | null
   /** Render the section's rows de-emphasized (the synthetic Disabled section). */
@@ -535,6 +569,7 @@ function SectionRows({
   parentName,
   showType,
   showManufacturer,
+  showIntegration,
   showFeatures,
   onNavigate,
   muted,
@@ -577,6 +612,7 @@ function SectionRows({
             parentName={parentName}
             showType={showType}
             showManufacturer={showManufacturer}
+            showIntegration={showIntegration}
             showFeatures={showFeatures}
             onNavigate={onNavigate}
             muted={muted}

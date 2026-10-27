@@ -392,7 +392,7 @@ export function App() {
                             <Route path="/cameras" element={<Navigate to="/devices" replace />} />
                             <Route path="/integrations" element={<IntegrationsPage />} />
                             <Route
-                              path="/integrations/:integrationId"
+                              path="/integrations/:addonId"
                               element={<IntegrationDetailPage />}
                             />
                             <Route

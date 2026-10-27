@@ -12,9 +12,10 @@ describe('columnsForContext', () => {
     expect(cols).toEqual(['name', 'icon', 'type', 'manufacturer', 'features', 'previewActions'])
   })
 
-  it('integration-detail hides icon + type but keeps manufacturer', () => {
+  it('integration-detail adds the integration column, hides icon + type', () => {
     expect(columnsForContext('integration-detail')).toEqual([
       'name',
+      'integration',
       'manufacturer',
       'features',
       'previewActions',

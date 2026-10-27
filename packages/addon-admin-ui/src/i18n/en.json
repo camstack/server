@@ -1723,6 +1723,11 @@
         "done": "Added"
       },
       "broker": "Matter fabric"
+    },
+    "addonCard": {
+      "summary": "{{integrations}} · {{devices}}",
+      "integrationCount_one": "{{count}} integration",
+      "integrationCount_other": "{{count}} integrations"
     }
   },
   "ai": {
@@ -6085,7 +6090,11 @@
     "disabled": "Disabled",
     "restart": "Restart",
     "restart2": "Restart \"{{name}}\"?",
-    "restartingTheAddonWillBriefly": "Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically."
+    "restartingTheAddonWillBriefly": "Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.",
+    "instances": "Integrations",
+    "instancesPlaceholder": "Select integrations",
+    "manage": "Manage",
+    "manageHint": "Settings, enable/disable, delete and add device apply to this integration."
   },
   "library": {
     "peopleVehiclesCapturedEventsAnd": "People, vehicles, captured events and scenes — what detection has recognised.",
@@ -6926,7 +6935,8 @@
       "type": "Type",
       "hardware": "Hardware",
       "features": "Features",
-      "preview": "Preview"
+      "preview": "Preview",
+      "integration": "Integration"
     },
     "loginForm": {
       "logo": "Logo",

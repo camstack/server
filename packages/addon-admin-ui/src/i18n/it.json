@@ -1723,6 +1723,11 @@
         "done": "Aggiunto"
       },
       "broker": "Fabric Matter"
+    },
+    "addonCard": {
+      "summary": "{{integrations}} · {{devices}}",
+      "integrationCount_one": "{{count}} integrazione",
+      "integrationCount_other": "{{count}} integrazioni"
     }
   },
   "serverManagement": {
@@ -6146,7 +6151,11 @@
     "disabled": "Disabilitata",
     "restart": "Riavvia",
     "restart2": "Riavviare \"{{name}}\"?",
-    "restartingTheAddonWillBriefly": "Riavviare l'addon disconnetterà brevemente tutti i dispositivi che ne dipendono ({{topLevelCountLabel}} attivi). Gli stream si riconnetteranno automaticamente."
+    "restartingTheAddonWillBriefly": "Riavviare l'addon disconnetterà brevemente tutti i dispositivi che ne dipendono ({{topLevelCountLabel}} attivi). Gli stream si riconnetteranno automaticamente.",
+    "instances": "Integrazioni",
+    "instancesPlaceholder": "Seleziona integrazioni",
+    "manage": "Gestisci",
+    "manageHint": "Impostazioni, abilita/disabilita, elimina e aggiungi dispositivo si applicano a questa integrazione."
   },
   "library": {
     "peopleVehiclesCapturedEventsAnd": "Persone, veicoli, eventi acquisiti e scene — ciò che la detection ha riconosciuto.",
@@ -6948,7 +6957,8 @@
       "type": "Tipo",
       "hardware": "Hardware",
       "features": "Funzioni",
-      "preview": "Anteprima"
+      "preview": "Anteprima",
+      "integration": "Integrazione"
     },
     "loginForm": {
       "logo": "Logo",

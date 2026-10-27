@@ -32,6 +32,7 @@ import {
   DeviceList,
   ErrorBox,
   useDeviceManagerListAll,
+  useIntegrationsGetAvailableTypes,
   useIntegrationsList,
   useSystem,
   ViewSwitch,
@@ -42,6 +43,11 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminPage } from '../components/AdminPage'
+import {
+  groupIntegrationsByAddon,
+  type IntegrationAddonGroup,
+} from '../lib/integration-addon-groups'
+import { integrationDetailUrl } from '../lib/integration-instance-selection'
 import { IntegrationGrid } from '../components/integrations/integration-grid'
 import {
   useIntegrationsView,
@@ -232,6 +238,13 @@ export function IntegrationsPage(): ReactNode {
     [integrationList, deviceCountByIntegration],
   )
 
+  // Friendly provider name per addon (the manifest `name`), for the grid card title.
+  const { data: availableTypes } = useIntegrationsGetAvailableTypes()
+  const addonNames = useMemo(
+    () => new Map((availableTypes ?? []).map((a) => [a.addonId, a.name] as const)),
+    [availableTypes],
+  )
+
   const expandedAddonId = searchParams.get(EXPAND_PARAM)
 
   // URL-driven expand toggle. Use `history.replaceState` +
@@ -252,9 +265,19 @@ export function IntegrationsPage(): ReactNode {
     window.dispatchEvent(new PopStateEvent('popstate'))
   }, [])
 
+  const addonGroups = useMemo(
+    () => groupIntegrationsByAddon(tableRows, addonNames),
+    [tableRows, addonNames],
+  )
+  const onGroupOpen = useCallback(
+    (group: IntegrationAddonGroup) => navigate(integrationDetailUrl(group.addonId)),
+    [navigate],
+  )
+
   // Whole-row click → integration detail (replaces the per-row Settings button).
   const onRowClick = useCallback(
-    (integration: Integration) => navigate(`/integrations/${integration.id}`),
+    (integration: Integration) =>
+      navigate(integrationDetailUrl(integration.addonId, [integration.id])),
     [navigate],
   )
 
@@ -308,7 +331,7 @@ export function IntegrationsPage(): ReactNode {
     [],
   )
 
-  const getKey = useCallback((integration: Integration): string => integration.addonId, [])
+  const getKey = useCallback((integration: Integration): string => integration.id, [])
 
   const handleRefresh = useCallback(() => {
     void refetchIntegrations()
@@ -415,11 +438,8 @@ export function IntegrationsPage(): ReactNode {
 
       {!listFailed && !awaiting && hasIntegrations && view === 'grid' && (
         <IntegrationGrid
-          rows={tableRows}
-          isExpanded={isExpanded}
-          onToggleExpand={setExpand}
-          onOpen={onRowClick}
-          renderExpanded={renderExpanded}
+          groups={addonGroups}
+          onOpen={onGroupOpen}
           searchPlaceholder={t('integrations.search', { defaultValue: 'Search integrations…' })}
           emptyLabel={t('integrations.empty', { defaultValue: 'No integrations found.' })}
         />

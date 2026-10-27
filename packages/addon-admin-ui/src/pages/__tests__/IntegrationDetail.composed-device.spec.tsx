@@ -121,7 +121,7 @@ function renderPage(): ReactElement {
       <ConfirmDialogProvider>
         <MemoryRouter initialEntries={['/integrations/int_0024']}>
           <Routes>
-            <Route path="/integrations/:integrationId" element={<IntegrationDetailPage />} />
+            <Route path="/integrations/:addonId" element={<IntegrationDetailPage />} />
           </Routes>
         </MemoryRouter>
       </ConfirmDialogProvider>
@@ -136,7 +136,7 @@ describe('IntegrationDetailPage — a composed device is listed under Blocks', (
     listState.answered = true
   })
 
-  it('lists the composer-served device created by Blocks, and nothing of Reolink', () => {
+  it('an old per-instance link redirects to the addon page and lists the composer-served device created by Blocks, and nothing of Reolink', () => {
     render(renderPage())
     expect(screen.getByText('Porch (composto)')).toBeTruthy()
     expect(screen.queryByText('Front Door')).toBeNull()
@@ -146,8 +146,8 @@ describe('IntegrationDetailPage — a composed device is listed under Blocks', (
   it('while integrations.list is unanswered it claims neither a count nor an empty list', () => {
     listState.answered = false
     render(renderPage())
-    expect(screen.getByText(/core-blocks · …/)).toBeTruthy()
-    expect(screen.getByText('Loading integrations…')).toBeTruthy()
+    // The page waits for the list: no title, no count, no empty-list claim.
+    expect(screen.queryByText(/core-blocks/)).toBeNull()
     expect(screen.queryByText(/no devices match/i)).toBeNull()
   })
 })

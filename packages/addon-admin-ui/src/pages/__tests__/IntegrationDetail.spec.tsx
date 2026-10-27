@@ -132,7 +132,7 @@ function renderPage(): ReactElement {
       <ConfirmDialogProvider>
         <MemoryRouter initialEntries={['/integrations/int_reolink']}>
           <Routes>
-            <Route path="/integrations/:integrationId" element={<IntegrationDetailPage />} />
+            <Route path="/integrations/:addonId" element={<IntegrationDetailPage />} />
           </Routes>
         </MemoryRouter>
       </ConfirmDialogProvider>

@@ -36,6 +36,7 @@
 export const DEVICE_COLUMNS = [
   'name',
   'icon',
+  'integration',
   'type',
   'manufacturer',
   'features',
@@ -60,7 +61,7 @@ export type TableContext = 'devices' | 'integration-detail'
  */
 const CONTEXT_COLUMNS = {
   devices: ['name', 'icon', 'type', 'manufacturer', 'features', 'previewActions'],
-  'integration-detail': ['name', 'manufacturer', 'features', 'previewActions'],
+  'integration-detail': ['name', 'integration', 'manufacturer', 'features', 'previewActions'],
 } satisfies Record<TableContext, readonly DeviceColumnId[]>
 
 export function columnsForContext(ctx: TableContext): readonly DeviceColumnId[] {
@@ -78,6 +79,7 @@ export const COLUMN_PRIORITY: Record<DeviceColumnId, number> = {
   name: 0,
   previewActions: 1,
   icon: 2,
+  integration: 2,
   features: 3,
   type: 4,
   // Highest number → drops FIRST as width shrinks. The hardware column is
@@ -105,6 +107,7 @@ export const COLUMN_BREAKPOINT_CLASS: Record<DeviceColumnId, string> = {
   name: '',
   previewActions: '',
   icon: '',
+  integration: '',
   features: 'hidden md:table-cell',
   type: 'hidden lg:table-cell',
   // Wide-screen-only: visible from `xl` up. Drops earliest (highest priority

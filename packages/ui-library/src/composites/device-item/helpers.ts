@@ -246,6 +246,11 @@ export interface DeviceItemProps {
    *  matching `<th>` so header + cell stay in lock-step. No effect on `'card'`. */
   readonly showManufacturerCell?: boolean
   readonly showFeaturesCell?: boolean
+  /** Render the Integration `<td>` (the integration's name). Default `false`: only
+   *  the integration-detail table context opts in. */
+  readonly showIntegrationCell?: boolean
+  /** Text of the Integration cell; `null`/absent renders an empty cell. */
+  readonly integrationLabel?: string | null
 }
 
 // ── Variant defaults ────────────────────────────────────────────────

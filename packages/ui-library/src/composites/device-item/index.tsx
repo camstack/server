@@ -167,6 +167,8 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
         showTypeCell={props.showTypeCell ?? true}
         showManufacturerCell={props.showManufacturerCell ?? true}
         showFeaturesCell={props.showFeaturesCell ?? true}
+        showIntegrationCell={props.showIntegrationCell ?? false}
+        integrationLabel={props.integrationLabel ?? null}
       />
     )
   }
@@ -445,6 +447,8 @@ interface DeviceItemTableRowProps {
   readonly showManufacturerCell: boolean
   /** Render the Features cell (context-gated, defaults true at the orchestrator). */
   readonly showFeaturesCell: boolean
+  readonly showIntegrationCell: boolean
+  readonly integrationLabel: string | null
 }
 
 const INDENT_CLASS: Readonly<Record<0 | 1 | 2, string>> = {
@@ -483,6 +487,8 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
     showTypeCell,
     showManufacturerCell,
     showFeaturesCell,
+    showIntegrationCell,
+    integrationLabel,
   } = props
 
   // Container rows render AS their primary child (the effective type badge +
@@ -626,6 +632,17 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           matching <th> in device-list TableLayout uses, so header + cell fold in
           lock-step. Drop order follows priority: Type (below lg) folds first,
           then Features (below md). */}
+      {showIntegrationCell && (
+        <td
+          className={cn(
+            COLUMN_BREAKPOINT_CLASS.integration,
+            'px-2 py-1.5 align-middle text-[11px] text-foreground-muted max-w-[10rem] truncate',
+          )}
+        >
+          {integrationLabel}
+        </td>
+      )}
+
       {showTypeCell && (
         <td
           className={cn(

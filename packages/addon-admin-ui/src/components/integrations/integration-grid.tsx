@@ -1,44 +1,40 @@
 /**
  * Card grid for `/integrations`. The table stays the default; this is the
- * other layout. Each card carries the same facts as a table row (icon, name,
- * provider, status, device count). Integrations have no node of their own —
- * the list is a hub record — so the card does not invent one.
- *
- * The summary is one open control. Expand stays a separate action above it
- * and does not navigate.
+ * other layout. One card per providing ADDON (its friendly name as the title)
+ * that has at least one integration instance: the card says how many
+ * integrations the addon has and how many devices they hold together, and the
+ * whole card opens the addon's integration page.
  */
-import { type MouseEvent, type ReactElement, type ReactNode, useMemo, useState } from 'react'
+import { type ReactElement, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight, Search } from 'lucide-react'
-import { Button, cn, IconButton, Input, StatusBadge } from '@camstack/ui-library'
+import { Search } from 'lucide-react'
+import { Button, Input, StatusBadge } from '@camstack/ui-library'
+import type { IntegrationAddonGroup } from '../../lib/integration-addon-groups'
 import { ProviderIcon } from '../shared/ProviderIcon'
-import type { Integration } from './integration-columns'
 
 export interface IntegrationGridProps {
-  readonly rows: readonly Integration[]
-  readonly isExpanded: (integration: Integration) => boolean
-  readonly onToggleExpand: (addonId: string) => void
-  readonly onOpen: (integration: Integration) => void
-  readonly renderExpanded: (integration: Integration) => ReactNode
+  readonly groups: readonly IntegrationAddonGroup[]
+  readonly onOpen: (group: IntegrationAddonGroup) => void
   readonly searchPlaceholder: string
   readonly emptyLabel: string
 }
 
 export function IntegrationGrid({
-  rows,
-  isExpanded,
-  onToggleExpand,
+  groups,
   onOpen,
-  renderExpanded,
   searchPlaceholder,
   emptyLabel,
 }: IntegrationGridProps): ReactElement {
   const [query, setQuery] = useState('')
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (q.length === 0) return rows
-    return rows.filter((row) => `${row.name} ${row.addonId}`.toLowerCase().includes(q))
-  }, [query, rows])
+    if (q.length === 0) return groups
+    return groups.filter((group) =>
+      `${group.name} ${group.addonId} ${group.instances.map((i) => i.name).join(' ')}`
+        .toLowerCase()
+        .includes(q),
+    )
+  }, [query, groups])
 
   return (
     <div className="space-y-3">
@@ -60,15 +56,8 @@ export function IntegrationGrid({
         <p className="py-8 text-center text-xs text-foreground-subtle">{emptyLabel}</p>
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
-          {filtered.map((integration) => (
-            <IntegrationCard
-              key={integration.id}
-              integration={integration}
-              expanded={isExpanded(integration)}
-              onToggleExpand={onToggleExpand}
-              onOpen={onOpen}
-              renderExpanded={renderExpanded}
-            />
+          {filtered.map((group) => (
+            <AddonCard key={group.addonId} group={group} onOpen={onOpen} />
           ))}
         </div>
       )}
@@ -76,134 +65,47 @@ export function IntegrationGrid({
   )
 }
 
-interface IntegrationCardProps {
-  readonly integration: Integration
-  readonly expanded: boolean
-  readonly onToggleExpand: (addonId: string) => void
-  readonly onOpen: (integration: Integration) => void
-  readonly renderExpanded: (integration: Integration) => ReactNode
+interface AddonCardProps {
+  readonly group: IntegrationAddonGroup
+  readonly onOpen: (group: IntegrationAddonGroup) => void
 }
 
-function IntegrationCard({
-  integration,
-  expanded,
-  onToggleExpand,
-  onOpen,
-  renderExpanded,
-}: IntegrationCardProps): ReactElement {
-  return (
-    <article
-      data-testid={`integration-card-${integration.id}`}
-      className={cn(
-        'flex min-w-0 flex-col gap-2 overflow-x-clip rounded-lg border border-border bg-surface p-3',
-        expanded && 'sm:col-span-2 lg:col-span-3',
-      )}
-    >
-      <IntegrationCardSummary
-        integration={integration}
-        expanded={expanded}
-        onToggleExpand={onToggleExpand}
-        onOpen={onOpen}
-      />
-      {expanded ? <div className="min-w-0">{renderExpanded(integration)}</div> : null}
-    </article>
-  )
-}
-
-interface IntegrationCardSummaryProps {
-  readonly integration: Integration
-  readonly expanded: boolean
-  readonly onToggleExpand: (addonId: string) => void
-  readonly onOpen: (integration: Integration) => void
-}
-
-function IntegrationCardSummary({
-  integration,
-  expanded,
-  onToggleExpand,
-  onOpen,
-}: IntegrationCardSummaryProps): ReactElement {
+function AddonCard({ group, onOpen }: AddonCardProps): ReactElement {
   const { t } = useTranslation()
-  const expandLabel = expanded
-    ? t('integrations.integrationColumns.collapse', 'Collapse')
-    : t('integrations.integrationColumns.expand', 'Expand')
   const openLabel = t('integrations.openNamed', {
-    name: integration.name,
+    name: group.name,
     defaultValue: 'Open {{name}}',
   })
   return (
-    <div className="relative flex min-w-0 items-stretch gap-3">
+    <article
+      data-testid={`integration-card-${group.addonId}`}
+      className="relative flex min-w-0 items-stretch gap-3 overflow-x-clip rounded-lg border border-border bg-surface p-3"
+    >
       <Button
         type="button"
         variant="ghost"
         aria-label={openLabel}
-        onClick={() => onOpen(integration)}
+        onClick={() => onOpen(group)}
         className="absolute inset-0 z-0 h-auto w-auto rounded-lg p-0 focus-visible:ring-2 focus-visible:ring-primary"
       />
-      <IntegrationIdentity integration={integration} />
-      <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col items-start gap-1.5">
-        <StatusBadge status={integration.status} className="shrink-0" />
-        <p className="text-[11px] text-foreground-muted">
-          {t('integrations.integrationColumns.deviceCount', { count: integration.deviceCount })}
-        </p>
-        <div className="pointer-events-auto mt-auto self-end">
-          <IconButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            icon={expanded ? ChevronDown : ChevronRight}
-            aria-label={expandLabel}
-            aria-expanded={expanded}
-            onClick={(event) => onExpandClick(event, integration.addonId, onToggleExpand)}
-          />
-        </div>
+      <div className="pointer-events-none relative z-10 flex w-20 shrink-0 items-center justify-center">
+        <ProviderIcon type={group.addonId} size="xl" />
       </div>
-    </div>
+      <div className="pointer-events-none relative z-10 grid min-w-0 flex-1 grid-rows-[1fr_auto_1fr] gap-1">
+        <p className="min-w-0 self-start truncate text-sm font-semibold text-foreground">
+          {group.name}
+        </p>
+        <p className="text-xs text-foreground-muted">
+          {t('integrations.addonCard.summary', {
+            integrations: t('integrations.addonCard.integrationCount', {
+              count: group.instanceCount,
+            }),
+            devices: t('integrations.integrationColumns.deviceCount', { count: group.deviceCount }),
+            defaultValue: '{{integrations}} · {{devices}}',
+          })}
+        </p>
+        <StatusBadge status={group.status} className="shrink-0 self-end justify-self-start" />
+      </div>
+    </article>
   )
-}
-
-interface IntegrationIdentityProps {
-  readonly integration: Integration
-}
-
-function IntegrationIdentity({ integration }: IntegrationIdentityProps): ReactElement {
-  return (
-    <div className="pointer-events-none relative z-10 flex w-28 shrink-0 flex-col items-center gap-1 lg:w-24">
-      <ProviderIcon type={integration.addonId} size="xl" />
-      <p className="w-full text-center text-xs font-semibold text-foreground">{integration.name}</p>
-      <ProviderId addonId={integration.addonId} />
-    </div>
-  )
-}
-
-interface ProviderIdProps {
-  readonly addonId: string
-}
-
-/** Break after a hyphen so a long addon id stays readable in the icon column. */
-function ProviderId({ addonId }: ProviderIdProps): ReactElement {
-  const parts = addonId.split('-')
-  return (
-    <p className="w-full text-center text-[10px] leading-tight text-foreground-subtle">
-      {parts.map((part, index) => (
-        <span key={`${part}-${String(index)}`}>
-          {index > 0 ? (
-            <>
-              -<wbr />
-            </>
-          ) : null}
-          {part}
-        </span>
-      ))}
-    </p>
-  )
-}
-
-function onExpandClick(
-  event: MouseEvent<HTMLButtonElement>,
-  addonId: string,
-  onToggleExpand: (addonId: string) => void,
-): void {
-  event.stopPropagation()
-  onToggleExpand(addonId)
 }
