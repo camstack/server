@@ -1,5 +1,5 @@
 /**
- * Two columns from `sm` (640px) up. Below that, one step: the device list,
+ * Two columns from the `sm` breakpoint up. Below that, one step: the device list,
  * or the values with a way back. Members add a picked count and Done on the
  * list; Done opens the values step inside the same dialog.
  */
