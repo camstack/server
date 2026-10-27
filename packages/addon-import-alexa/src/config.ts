@@ -164,6 +164,45 @@ export function settingsToAlexaConnection(settings: unknown): AlexaConnection {
   return alexaConnectionSchema.parse(toRecord(settings))
 }
 
+/**
+ * Allowlist of real Amazon regional domains that alexa-remote2 is known to
+ * support. An enum (not a free-form string) keeps the value from ever naming an
+ * arbitrary host: alexa-remote2 uses it as a raw domain suffix.
+ */
+export const AMAZON_DOMAINS = [
+  'amazon.com',
+  'amazon.it',
+  'amazon.de',
+  'amazon.co.uk',
+  'amazon.fr',
+  'amazon.es',
+  'amazon.ca',
+  'amazon.com.au',
+  'amazon.co.jp',
+  'amazon.in',
+  'amazon.com.br',
+  'amazon.com.mx',
+] as const
+
+export type AmazonDomain = (typeof AMAZON_DOMAINS)[number]
+
+/** The country each domain serves; the first match for a country prefills the form. */
+const AMAZON_DOMAIN_BY_COUNTRY: Readonly<Record<string, AmazonDomain>> = {
+  US: 'amazon.com',
+  IT: 'amazon.it',
+  DE: 'amazon.de',
+  AT: 'amazon.de',
+  GB: 'amazon.co.uk',
+  FR: 'amazon.fr',
+  ES: 'amazon.es',
+  CA: 'amazon.ca',
+  AU: 'amazon.com.au',
+  JP: 'amazon.co.jp',
+  IN: 'amazon.in',
+  BR: 'amazon.com.br',
+  MX: 'amazon.com.mx',
+}
+
 /** Hand-written connection form for the broker/integration creation UI. */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
@@ -173,31 +212,34 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         title: 'Amazon Alexa account',
         titleKey: 'import-alexa:connection.s_alexa-account.title',
         description:
-          'Link an Amazon account via the unofficial Alexa client. Supply a captured cookie OR a refresh token. NOTE: this is an unofficial integration — Amazon can change or break it without notice, and it may violate Amazon ToS. State is polled, not pushed.',
+          'Sign in with your Amazon account to link it. This is an unofficial integration: Amazon can change or break it without notice, and it may violate Amazon ToS. State is polled, not pushed.',
         descriptionKey: 'import-alexa:connection.s_alexa-account.description',
         columns: 1,
         fields: [
           {
-            type: 'text',
+            type: 'select',
             key: 'amazonDomain',
             label: 'Amazon domain (region)',
             labelKey: 'import-alexa:connection.s_alexa-account.amazonDomain.label',
-            placeholder: 'amazon.com',
+            options: AMAZON_DOMAINS.map((value) => ({ value, label: value })),
             default: 'amazon.com',
+            defaultByCountry: AMAZON_DOMAIN_BY_COUNTRY,
           },
           {
             type: 'password',
             key: 'cookie',
-            label: 'Cookie blob (from proxy login)',
+            label: 'Cookie blob (filled by the sign-in)',
             labelKey: 'import-alexa:connection.s_alexa-account.cookie.label',
             showToggle: true,
+            filledBySignIn: true,
           },
           {
             type: 'password',
             key: 'refreshToken',
-            label: 'Refresh token (alternative to cookie)',
+            label: 'Refresh token (alternative to the sign-in)',
             labelKey: 'import-alexa:connection.s_alexa-account.refreshToken.label',
             showToggle: true,
+            filledBySignIn: true,
           },
           {
             type: 'number',

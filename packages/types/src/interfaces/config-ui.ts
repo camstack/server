@@ -279,6 +279,18 @@ export interface ConfigFieldBase {
   readonly placeholder?: string
   /** Default value used when the current value is undefined */
   readonly default?: unknown
+  /**
+   * A default that depends on the operator's country (ISO 3166 alpha-2, read
+   * from the browser locale, e.g. `it-IT` is `IT`). Wins over `default` when
+   * the country is listed; a form that creates a record uses it to prefill
+   * what the operator would otherwise have to look up.
+   */
+  readonly defaultByCountry?: Readonly<Record<string, unknown>>
+  /**
+   * The value is written by an interactive sign-in the kind offers, never typed
+   * first. A form that has such a sign-in tucks the field under "Advanced".
+   */
+  readonly filledBySignIn?: boolean
   readonly span?: 1 | 2 | 3 | 4
   readonly showWhen?: ConfigCondition
   /**

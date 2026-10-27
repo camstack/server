@@ -47,7 +47,16 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
     },
 
     listProviders: async () => [
-      { addonId: ownerAddonId, kinds: [{ kind: ALEXA_KIND, label: 'Alexa Import' }] },
+      {
+        addonId: ownerAddonId,
+        kinds: [
+          {
+            kind: ALEXA_KIND,
+            label: 'Alexa Import',
+            signIn: { basePath: '/addon/import-alexa/login' },
+          },
+        ],
+      },
     ],
 
     add: async ({ kind, name, settings }) => {

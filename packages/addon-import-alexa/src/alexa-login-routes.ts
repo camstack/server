@@ -8,10 +8,11 @@ import type {
 } from '@camstack/types'
 import type { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { capturedToCookieString } from './alexa-proxy-login-manager.js'
+import { AMAZON_DOMAINS } from './config.js'
 
 /**
  * `addon-routes` control plane that drives the INTERACTIVE Amazon login from the
- * onboarding wizard. All routes are `admin` — they start a proxy server and
+ * broker dialog (the kind's `signIn` contract). All routes are `admin` — they start a proxy server and
  * mutate broker credentials, so they require an admin session/scoped token (the
  * hub enforces this BEFORE the handler runs; see `main.ts` `/addon/:addonId/*`).
  *
@@ -27,27 +28,7 @@ import { capturedToCookieString } from './alexa-proxy-login-manager.js'
  * or existing broker → proceed to device discovery/adoption.
  */
 
-/**
- * Allowlist of real Amazon regional domains that alexa-remote2 is known to
- * support. Using an enum (rather than a free-form string) prevents admin-only
- * SSRF by ensuring the value can never be set to an arbitrary host — alexa-remote2
- * uses it as a raw domain suffix (`alexa.${domain}`, `api.${domain}`, …).
- */
-const AMAZON_DOMAINS = [
-  'amazon.com',
-  'amazon.it',
-  'amazon.de',
-  'amazon.co.uk',
-  'amazon.fr',
-  'amazon.es',
-  'amazon.ca',
-  'amazon.com.au',
-  'amazon.co.jp',
-  'amazon.in',
-  'amazon.com.br',
-  'amazon.com.mx',
-] as const
-
+/** The broker dialog posts the whole form; only the region matters here (other keys are ignored). */
 const StartBodySchema = z.object({
   amazonDomain: z.enum(AMAZON_DOMAINS).default('amazon.com'),
 })

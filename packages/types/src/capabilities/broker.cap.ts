@@ -117,6 +117,21 @@ const BrokerProviderInfoSchema = z.object({
       interactiveConnectPath: z.string().min(1).optional(),
       /** Relative hub path to disconnect the linked account (same popup pattern). */
       interactiveDisconnectPath: z.string().min(1).optional(),
+      /**
+       * The kind signs in through a server-held interactive session instead of
+       * (or before) typed credentials. `basePath` is a hub-relative route set
+       * served by the owning addon (`/addon/<id>/...`) speaking the sign-in
+       * contract: `POST {basePath}/start` (body: the form's settings) answers
+       * `{ sessionId, loginUrl }`; `GET {basePath}/status?sessionId=` answers
+       * `{ phase: 'starting' | 'awaiting-login' | 'captured' | 'error' |
+       * 'cancelled', loginUrl, error }`; `POST {basePath}/commit`
+       * (`{ sessionId, name, brokerId? }`) stores the credentials on a new or
+       * existing broker and answers `{ brokerId }`; `POST {basePath}/cancel`
+       * (`{ sessionId }`) drops the session. The dialog that edits a broker
+       * offers it as the default path; the fields the session fills are
+       * marked `filledBySignIn` in the kind's settings schema.
+       */
+      signIn: z.object({ basePath: z.string().min(1) }).optional(),
     }),
   ),
 })

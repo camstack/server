@@ -597,7 +597,7 @@ Enum: `"alexa" \| "homekit" \| "webrtc-browser" \| "webrtc-mobile" \| "webrtc-wh
 ### `BrokerProviderInfoSchema`
 
 - `addonId`: `string`
-- `kinds`: `({ kind: string; label: string; interactiveConnectPath?: string; interactiveDisconnectPath?: string })[]`
+- `kinds`: `({ kind: string; label: string; interactiveConnectPath?: string; interactiveDisconnectPath?: string; signIn?: { basePath: string } })[]`
 
 ### `BrokerPublishInputSchema`
 
