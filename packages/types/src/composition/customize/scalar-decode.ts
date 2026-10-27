@@ -19,6 +19,7 @@ import {
 } from './scalar-compile.js'
 import { parseDwell, parseLinear, singleFrom } from './scalar-expr.js'
 import { sameStored } from './normalize.js'
+import { ownedSlice } from './scalar-merge.js'
 import type { CustomizeStored } from './stored.js'
 
 const catalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
@@ -207,7 +208,7 @@ function reproduces(
   }
   const compiled = compileScalarOverride(input)
   if (!compiled.ok) return false
-  return sameFeature(compiled.value, stored)
+  return sameFeature(compiled.value, ownedSlice(stored, decoded.draft.cap, decoded.draft.targetId))
 }
 
 function sameFeature(

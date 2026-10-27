@@ -1275,6 +1275,12 @@ export {
   type ScalarDecodeInput,
 } from './composition/customize/scalar-decode.js'
 export {
+  mergeScalarTarget,
+  ownedSlice,
+  removeScalarTarget,
+  scalarTargetCount,
+} from './composition/customize/scalar-merge.js'
+export {
   projectScalarAssignment,
   type ScalarAssignmentProjection,
   type ScalarRead,

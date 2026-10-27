@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -43,12 +44,75 @@ export const PowerMeterStatusSchema = z.object({
 
 export type PowerMeterStatus = z.infer<typeof PowerMeterStatusSchema>
 
+/**
+ * Loads that draw metered mains power (D951). The reading is a feature of the
+ * device itself — a plug, a lamp, a fan, an air conditioner, a boiler, a
+ * vacuum dock — not a separate sensor beside it. A `Sensor` stays: a clamp
+ * meter or a standalone energy monitor IS the device. Cover, lock, valve,
+ * camera and the like are left out: their draw is not what anyone meters.
+ */
+const POWER_METER_DEVICE_TYPES = [
+  DeviceType.Sensor,
+  DeviceType.Switch,
+  DeviceType.Light,
+  DeviceType.Fan,
+  DeviceType.Climate,
+  DeviceType.Thermostat,
+  DeviceType.Humidifier,
+  DeviceType.WaterHeater,
+  DeviceType.MediaPlayer,
+  DeviceType.Washer,
+  DeviceType.Dryer,
+  DeviceType.Dishwasher,
+  DeviceType.Vacuum,
+  DeviceType.LawnMower,
+  DeviceType.PetFeeder,
+] as const
+
+/** Everything but a bare `Sensor`: a sensor that takes its reading from another sensor adds nothing. */
+const POWER_METER_CUSTOMIZE_DEVICE_TYPES = POWER_METER_DEVICE_TYPES.filter(
+  (type) => type !== DeviceType.Sensor,
+)
+
+/** One scalar target per reading; each is sourced from a device of its own (D951). */
+function powerTarget(id: string, unit: string) {
+  return {
+    id,
+    cardinality: 'scalar',
+    vocabulary: { cap: 'power-meter', stateField: id },
+    deviceTypes: POWER_METER_CUSTOMIZE_DEVICE_TYPES,
+    apply: 'add',
+    path: id,
+    sources: [
+      {
+        kind: 'numeric',
+        requiredUnit: unit,
+        transforms: [{ kind: 'identity' }],
+      },
+    ],
+    companions: [{ kind: 'clock', path: 'lastFetchedAt', when: 'always' }],
+    sourceReport: { status: 'assignment-status' },
+    advancedExpression: true,
+  } as const
+}
+
+/** "Power and energy" extension: watts, energy, voltage and current from other devices (D951). */
+const powerMeterCustomize = {
+  version: 1,
+  targets: [
+    powerTarget('watts', 'W'),
+    powerTarget('kwhTotal', 'kWh'),
+    powerTarget('volts', 'V'),
+    powerTarget('amps', 'A'),
+  ],
+} as const satisfies CapabilityCustomizeSpec
+
 export const powerMeterCapability = {
   name: 'power-meter',
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Sensor, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher],
+  deviceTypes: POWER_METER_DEVICE_TYPES,
   methods: {},
   status: {
     schema: PowerMeterStatusSchema,
@@ -79,6 +143,7 @@ export const powerMeterCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  customize: powerMeterCustomize,
 } as const satisfies CapabilityDefinition
 
 export type IPowerMeterProvider = InferProvider<typeof powerMeterCapability>

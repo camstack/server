@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 5 caps. Field keys are `runtimeState` paths. No Zod.
+ * 6 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -299,6 +299,155 @@ export const CAP_CUSTOMIZE_CATALOG = {
           'in-addition',
           'confirm',
           'replace',
+        ],
+      },
+    ],
+  },
+  'power-meter': {
+    version: 1,
+    targets: [
+      {
+        id: 'watts',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
+        apply: 'add',
+        vocabularyCap: 'power-meter',
+        vocabularyStateField: 'watts',
+        sources: [
+          {
+            kind: 'numeric',
+            requiredUnit: 'W',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: true,
+        path: 'watts',
+        valueKind: 'number',
+        nullable: false,
+        companions: [
+          {
+            kind: 'clock',
+            path: 'lastFetchedAt',
+            when: 'always',
+          },
+        ],
+      },
+      {
+        id: 'kwhTotal',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
+        apply: 'add',
+        vocabularyCap: 'power-meter',
+        vocabularyStateField: 'kwhTotal',
+        sources: [
+          {
+            kind: 'numeric',
+            requiredUnit: 'kWh',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: true,
+        path: 'kwhTotal',
+        valueKind: 'number',
+        nullable: false,
+        companions: [
+          {
+            kind: 'clock',
+            path: 'lastFetchedAt',
+            when: 'always',
+          },
+        ],
+      },
+      {
+        id: 'volts',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
+        apply: 'add',
+        vocabularyCap: 'power-meter',
+        vocabularyStateField: 'volts',
+        sources: [
+          {
+            kind: 'numeric',
+            requiredUnit: 'V',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: true,
+        path: 'volts',
+        valueKind: 'number',
+        nullable: false,
+        companions: [
+          {
+            kind: 'clock',
+            path: 'lastFetchedAt',
+            when: 'always',
+          },
+        ],
+      },
+      {
+        id: 'amps',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
+        apply: 'add',
+        vocabularyCap: 'power-meter',
+        vocabularyStateField: 'amps',
+        sources: [
+          {
+            kind: 'numeric',
+            requiredUnit: 'A',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: true,
+        path: 'amps',
+        valueKind: 'number',
+        nullable: false,
+        companions: [
+          {
+            kind: 'clock',
+            path: 'lastFetchedAt',
+            when: 'always',
+          },
         ],
       },
     ],

@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7197 source files · 1197 file(s) in no subsystem.**
+**31 subsystems · 7198 source files · 1197 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -46,7 +46,7 @@ commits. A generated page may not.
 | Update, release, OTA and agent delivery | 57 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +30 more, 10 ADRs | 2026-10-25 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 294 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +46 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 51 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +16 more | 2026-10-21 | ⚠️ |
-| Automations, blocks and declared devices | 124 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +22 more, 1 ADR | 2026-10-26 | ⚠️ |
+| Automations, blocks and declared devices | 125 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +22 more, 1 ADR | 2026-10-26 | ⚠️ |
 | Alerts, liveness and system health | 53 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, `architecture/load-ledger.md` _(covers)_, +41 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 35 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-10-04-logs-history-beyond-the-ring.md` _(covers)_, +8 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 49 | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 | ⚠️ |
@@ -270,7 +270,7 @@ The operator-authored logic layer — expression blocks, recipes and the devices
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/core-blocks/**`, `packages/system/src/builtins/composer/**`, `packages/types/src/expression/**`, `packages/types/src/automation/**`, `packages/types/src/composition/**`
-- **Files**: 124 (124 claimed by some document)
+- **Files**: 125 (125 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Alerts, liveness and system health
