@@ -11,6 +11,8 @@ import {
   type DeviceInfo,
   decodeScalarOverride,
   projectScalarAssignment,
+  scalarTargetCount,
+  targetFeature,
   type ScalarRead,
   type ScalarSourcePresence,
 } from '@camstack/types'
@@ -21,7 +23,7 @@ import {
   useDeviceLabel,
   type DeviceNameFields,
 } from '@camstack/ui-library'
-import { Activity, BatteryMedium, type LucideIcon } from 'lucide-react'
+import { Activity, BatteryMedium, type LucideIcon, Zap } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -36,7 +38,7 @@ import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { candidateFields } from '../source-selector/source-selector-parent-detail'
 import { CustomizeCard } from '../CustomizeCard'
 import { currentComposition } from '../customization-read'
-import { featureOf, withFeature, withoutFeature } from '../customization-save'
+import { featureOf, withoutScalarTarget, withScalarTarget } from '../customization-save'
 import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
 import { ScalarOverrideDialog, type ScalarDialogSeed } from './ScalarOverrideDialog'
@@ -54,6 +56,7 @@ const PLACEHOLDER_DEVICE: DeviceNameFields = {
 const ICONS: Readonly<Record<string, LucideIcon>> = {
   battery: BatteryMedium,
   'running-state': Activity,
+  'power-meter': Zap,
 }
 
 export interface ScalarCardTarget {
@@ -88,10 +91,17 @@ export function ScalarOverrideCard({
   const confirmRemove = useConfirmRemove()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const title = t(`customize.scalar.caps.${cap}`)
+  // A cap with several scalar targets (Power and energy) is one extension with
+  // a card per reading: they share one stored feature, each owns its slice (D951).
+  const shared = scalarTargetCount(cap) > 1
   const path = target.path ?? target.id
+  const capTitle = t(`customize.scalar.caps.${cap}`)
+  const title = shared
+    ? `${capTitle} · ${vocabularyFieldLabel(cap, path, i18n.language)}`
+    : capTitle
+  const cardKey = shared ? `${cap}.${target.id}` : cap
   const current = currentComposition(handle.state)
-  const storedFeature = featureOf(current, cap)
+  const storedFeature = targetFeature(featureOf(current, cap), cap, target.id)
   const stored = storedRead(handle, storedFeature)
   const decoded =
     stored.kind === 'known' && stored.value !== null
@@ -139,7 +149,7 @@ export function ScalarOverrideCard({
   }
   const remove = async (): Promise<void> => {
     if (current === null) return
-    const next = withoutFeature(current, cap)
+    const next = withoutScalarTarget(current, cap, target.id)
     const named =
       sourceName ?? (decoded === null ? hostLabel : compositionSourceKey(decoded.draft.source))
     if (await confirmRemove(t('customize.scalar.removeWhat', { name: named }), next === null)) {
@@ -169,10 +179,10 @@ export function ScalarOverrideCard({
   return (
     <>
       <CustomizeCard
-        id={cap}
+        id={cardKey}
         icon={ICONS[cap]}
         title={title}
-        testId={`scalar-card-${cap}`}
+        testId={`scalar-card-${cardKey}`}
         actions={<Badge>{badgeText}</Badge>}
       >
         <CardBody
@@ -180,6 +190,7 @@ export function ScalarOverrideCard({
           answered={answered}
           deviceId={device.id}
           cap={cap}
+          cardKey={cardKey}
           path={path}
           recognized={recognized}
           stored={stored}
@@ -221,7 +232,7 @@ export function ScalarOverrideCard({
           onClose={() => setOpen(false)}
           onSave={(feature) => {
             setOpen(false)
-            void save(withFeature(current, handle.target, feature))
+            void save(withScalarTarget(current, handle.target, feature, cap, target.id))
           }}
         />
       )}
@@ -234,6 +245,7 @@ interface CardBodyProps {
   readonly answered: boolean
   readonly deviceId: number
   readonly cap: string
+  readonly cardKey: string
   readonly path: string
   readonly recognized: boolean
   readonly stored: ScalarRead<CompositionFieldsFeature | null>
@@ -326,7 +338,7 @@ function CardBody(props: CardBodyProps): ReactNode {
           <Button
             variant="outline"
             size="sm"
-            data-testid={`scalar-change-${props.cap}`}
+            data-testid={`scalar-change-${props.cardKey}`}
             onClick={props.onOpen}
             disabled={props.saving}
           >
@@ -342,7 +354,7 @@ function CardBody(props: CardBodyProps): ReactNode {
           <Button
             variant="outline"
             size="sm"
-            data-testid={`scalar-add-${props.cap}`}
+            data-testid={`scalar-add-${props.cardKey}`}
             disabled={props.saving || props.mode === null}
             onClick={props.onOpen}
           >
@@ -393,7 +405,7 @@ export function ScalarCustomizeList({
         if (!card.target.deviceTypes.includes(device.type)) return null
         return (
           <ScalarOverrideCard
-            key={card.cap}
+            key={`${card.cap}.${card.target.id}`}
             device={device}
             handle={handle}
             availability={assignmentAvailability(offerFromCatalog(card.cap, card.target), facts)}

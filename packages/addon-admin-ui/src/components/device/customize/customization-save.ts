@@ -6,12 +6,14 @@
  * KNOWN to be absent — a blind create would be refused `duplicate-target`
  * at best and hide the operator's existing block at worst (D315).
  */
-import type {
-  Composition,
-  CompositionBlockInput,
-  CompositionFieldSource,
-  CompositionFieldsFeature,
-  CompositionSourceRef,
+import {
+  type Composition,
+  type CompositionBlockInput,
+  type CompositionFieldSource,
+  type CompositionFieldsFeature,
+  type CompositionSourceRef,
+  mergeScalarTarget,
+  removeScalarTarget,
 } from '@camstack/types'
 import type { CustomizationState } from './customization-read'
 import i18n from '../../../i18n/index'
@@ -56,6 +58,39 @@ export function withFeature(
     target: current?.target ?? { kind: 'existing', device: target },
     features:
       index === -1 ? [...features, feature] : features.map((f, i) => (i === index ? feature : f)),
+  }
+}
+
+/**
+ * The composition with one scalar target's feature added. Targets of one cap
+ * share one stored feature (D951), so the target's own paths are merged into it
+ * and the others are kept; a cap with a single target is replaced whole.
+ */
+export function withScalarTarget(
+  current: Composition | null,
+  target: CompositionSourceRef,
+  feature: CompositionFieldsFeature,
+  cap: string,
+  targetId: string,
+): Composition {
+  return withFeature(
+    current,
+    target,
+    mergeScalarTarget(featureOf(current, cap), feature, cap, targetId),
+  )
+}
+
+/** The composition without one scalar target; the feature goes when no target is left, the block when nothing is. */
+export function withoutScalarTarget(
+  current: Composition,
+  cap: string,
+  targetId: string,
+): Composition | null {
+  const remaining = removeScalarTarget(featureOf(current, cap), cap, targetId)
+  if (remaining === null) return withoutFeature(current, cap)
+  return {
+    target: current.target,
+    features: current.features.map((f) => (f.cap === cap ? remaining : f)),
   }
 }
 

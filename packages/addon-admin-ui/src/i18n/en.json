@@ -2480,7 +2480,8 @@
     "scalar": {
       "caps": {
         "battery": "Battery",
-        "running-state": "Running"
+        "running-state": "Running",
+        "power-meter": "Power and energy"
       },
       "add": "+ Add",
       "change": "Change",

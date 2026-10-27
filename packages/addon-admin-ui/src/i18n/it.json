@@ -2541,7 +2541,8 @@
     "scalar": {
       "caps": {
         "battery": "Batteria",
-        "running-state": "In esecuzione"
+        "running-state": "In esecuzione",
+        "power-meter": "Potenza ed energia"
       },
       "add": "+ Aggiungi",
       "change": "Cambia",

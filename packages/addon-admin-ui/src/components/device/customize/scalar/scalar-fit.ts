@@ -4,6 +4,7 @@
  */
 import {
   CAP_CUSTOMIZE_CATALOG,
+  runtimeFieldUnit,
   SOURCE_CAP_ACTIVE_FIELD,
   type CustomizeCatalogTarget,
   type CustomizeCatalogTransform,
@@ -60,11 +61,25 @@ export function scalarFieldOffers(
   snapshot: DeviceSnapshot | null,
 ): readonly ScalarFieldOffer[] {
   return catalog.caps.flatMap((cap) => {
-    const unit = capUnit(snapshot, cap.cap)
+    const slice = capUnit(snapshot, cap.cap)
     return cap.fields
       .filter((field) => field.item !== true)
-      .map((field) => ({ cap: cap.cap, path: field.path, kind: field.kind, unit }))
+      .map((field) => ({
+        cap: cap.cap,
+        path: field.path,
+        kind: field.kind,
+        unit: fieldUnit(slice, cap.cap, field.path),
+      }))
   })
+}
+
+/**
+ * The unit of one field: the slice's own `unit` when it publishes one (a sensor
+ * reports what it measures), else the unit its quantity is stored in. A meter
+ * slice carries several quantities and no single unit (D951).
+ */
+export function fieldUnit(sliceUnit: string | null, cap: string, path: string): string | null {
+  return sliceUnit ?? runtimeFieldUnit(cap, path) ?? null
 }
 
 function capUnit(snapshot: DeviceSnapshot | null, cap: string): string | null {

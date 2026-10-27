@@ -18,11 +18,12 @@ import {
 import { ChevronDown } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { SuggestedDevices } from '../assignments/SuggestedDevices'
 import { useCapIndex } from '../assignments/use-cap-index'
 import { keyedFieldFit } from '../keyed/keyed-fit'
 import type { Known } from '../known'
 import { ScalarTransformControls } from '../scalar/ScalarTransformControls'
-import { type ScalarFieldFit, scalarFieldFit } from '../scalar/scalar-fit'
+import { fieldUnit, type ScalarFieldFit, scalarFieldFit } from '../scalar/scalar-fit'
 import {
   defaultScalarTransform,
   type ScalarTransformDraft,
@@ -54,6 +55,7 @@ import {
   type SourceWireableField,
 } from './source-selector-model'
 import { compatiblePickerItems } from './source-selector-parent-detail'
+import { siblingSuggestions } from './source-selector-siblings'
 import {
   reconcileSingleStep,
   type SourceSelectorStep,
@@ -191,7 +193,10 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
   const [step, setStep] = useState<SourceSelectorStep>('devices')
   const [seenDevice, setSeenDevice] = useState(false)
-  const reconciled = reconcileSingleStep(props.device !== null, { seenDevice, step })
+  const reconciled = reconcileSingleStep(props.device !== null, {
+    seenDevice,
+    step,
+  })
   if (reconciled !== null) {
     setSeenDevice(reconciled.seenDevice)
     setStep(reconciled.step)
@@ -218,10 +223,19 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       props.hostId,
     )
   }, [capIndex, fleet, props.destination, props.hostId])
+  const siblings = useMemo(
+    () =>
+      capIndex.kind === 'known'
+        ? siblingSuggestions(compatible, toCandidates(fleet, capIndex.value), props.hostId)
+        : null,
+    [capIndex, compatible, fleet, props.hostId],
+  )
   const listState = listStateOf(devices.status, capIndex)
   const deviceId = props.device?.id ?? 0
   const wireable = useDeviceManagerGetWireableFields({ deviceId })
-  const snapshot = useDeviceStateGetSnapshot({ deviceId: props.device === null ? 0 : deviceId })
+  const snapshot = useDeviceStateGetSnapshot({
+    deviceId: props.device === null ? 0 : deviceId,
+  })
   const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
   const eventShape = props.kind === 'event' ? props.shape : null
   const fields = wireableFieldsForDestination(
@@ -275,7 +289,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const deviceColumn = (
     <div className="flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]">
       <h3 className="text-[11px] font-medium text-foreground-muted">
-        {t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
+        {t('customize.sourceSelector.pickDevice', {
+          title: props.destination.title,
+        })}
       </h3>
       {devices.status === 'error' ? (
         <ErrorBox
@@ -283,17 +299,32 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
           message={devices.error?.message ?? ''}
         />
       ) : (
-        <DevicePicker
-          devices={compatibleDeviceItems}
-          listState={listState}
-          value={props.device === null ? [] : [props.device.id]}
-          selection="single"
-          groupBy="location"
-          onChange={pickDevice}
-          noun="device"
-          showAll
-          testId={devicePickerTestId}
-        />
+        <>
+          {siblings !== null && (
+            <SuggestedDevices
+              location={siblings.container}
+              devices={siblings.devices.map((row) => ({
+                id: row.id,
+                name: row.name,
+                container: null,
+                detail: null,
+              }))}
+              action="use"
+              onPick={(id) => pickDevice([id])}
+            />
+          )}
+          <DevicePicker
+            devices={compatibleDeviceItems}
+            listState={listState}
+            value={props.device === null ? [] : [props.device.id]}
+            selection="single"
+            groupBy="location"
+            onChange={pickDevice}
+            noun="device"
+            showAll
+            testId={devicePickerTestId}
+          />
+        </>
       )}
       {incompatible.length > 0 && (
         <div data-testid="source-incompatible-devices">
@@ -306,7 +337,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
             <ChevronDown
               className={`size-3 transition-transform ${incompatibleOpen ? 'rotate-180' : ''}`}
             />
-            {t('customize.sourceSelector.notCompatibleDevices', { count: incompatible.length })}
+            {t('customize.sourceSelector.notCompatibleDevices', {
+              count: incompatible.length,
+            })}
           </Button>
           {incompatibleOpen && (
             <ul className="mt-1 flex flex-col gap-0.5 pl-4 text-[11px] text-foreground-subtle">
@@ -441,7 +474,10 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
                             checked={selected}
                             data-testid={`source-value-${row.cap}.${row.path}`}
                             onChange={() => {
-                              props.onFieldChange({ cap: row.cap, path: row.path })
+                              props.onFieldChange({
+                                cap: row.cap,
+                                path: row.path,
+                              })
                               if (props.kind === 'formula') return
                               const nextFit = fieldFitForRow(
                                 props,
@@ -521,7 +557,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       ? null
       : {
           label: <DeviceName device={props.device} form="compact" />,
-          ariaLabel: t('customize.sourceSelector.backToDevice', { name: props.device.name }),
+          ariaLabel: t('customize.sourceSelector.backToDevice', {
+            name: props.device.name,
+          }),
         }
   return (
     <SourceSelectorColumns
@@ -573,7 +611,7 @@ function fieldFitForRow(
         cap: entry.cap,
         path: f.path,
         kind: f.kind,
-        unit: readUnit(snapshot, entry.cap),
+        unit: fieldUnit(readUnit(snapshot, entry.cap), entry.cap, f.path),
       })),
   )
   const offer = scalarOffers.find(

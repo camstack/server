@@ -5,7 +5,16 @@
  * a path wins.
  */
 import { PORCH_COMPOSITION } from '../../../../packages/types/src/composition/cards/__fixtures__/stored-compositions.ts'
+import cameraArea from './camera'
 import { defineFixtures } from './_define'
+
+const cameraHandler = (path: string): ((i: unknown) => unknown) | undefined => {
+  const h = cameraArea.handlers[path]
+  return typeof h === 'function' ? (i: unknown) => (h as (x: unknown) => unknown)(i) : undefined
+}
+
+/** The metered-plug pages the Power and energy shots open (410 to 414). */
+const PLUG_IDS: readonly number[] = [410, 411, 412, 413, 414]
 
 const device = (id: number, name: string, location: string, type: string, isCamera = false) => ({
   id,
@@ -41,6 +50,11 @@ const FLEET = [
   device(304, 'Garage lamp', 'Garage', 'light'),
   device(305, 'Porch power meter', 'Front of house', 'sensor'),
   device(306, 'Porch plug', 'Front of house', 'switch'),
+  device(410, 'Desk plug', 'Office', 'container'),
+  { ...device(411, 'Desk plug switch', 'Office', 'switch'), parentDeviceId: 410 },
+  { ...device(412, 'Desk plug power', 'Office', 'sensor'), parentDeviceId: 410 },
+  { ...device(413, 'Desk plug energy', 'Office', 'sensor'), parentDeviceId: 410 },
+  device(414, 'Office desk lamp', 'Office', 'light'),
   {
     id: 101,
     stableId: 'cam-101',
@@ -262,6 +276,45 @@ const FRONT_DOOR_CUSTOMIZATION = {
   },
 }
 
+/** Device 411 (`dev-411`), a switch of the Desk plug: its power is read from the plug's own power sensor. */
+const DESK_SWITCH = { addonId: 'provider-homeassistant', stableId: 'dev-411' }
+const DESK_POWER = { addonId: 'provider-homeassistant', stableId: 'dev-412' }
+
+const DESK_CUSTOMIZATION = {
+  state: 'loaded',
+  view: {
+    block: {
+      id: 'blk-desk-plug',
+      name: 'customize:desk-plug',
+      code: '',
+      enabled: true,
+      placement: 'hub',
+      createdAt: 1,
+      updatedAt: 1_700_000_000_000,
+      createdBy: 'admin',
+      status: 'running',
+      lastChangedAt: 1,
+      source: {
+        kind: 'composition',
+        composition: {
+          target: { kind: 'existing', device: DESK_SWITCH },
+          features: [
+            {
+              kind: 'fields',
+              cap: 'power-meter',
+              fields: {
+                watts: { kind: 'from', source: DESK_POWER, cap: 'power-meter', fieldPath: 'watts' },
+                lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+              },
+            },
+          ],
+        },
+      },
+    },
+    state: { kind: 'answered', state: null },
+  },
+}
+
 const PORCH_BLOCK = {
   id: 'blk-porch',
   name: 'Porch (composto)',
@@ -343,12 +396,29 @@ export default defineFixtures({
             },
           ]
         : [],
+    'deviceManager.getDevice': (i: { deviceId: number }) =>
+      PLUG_IDS.includes(i.deviceId)
+        ? (FLEET.find((d) => d.id === i.deviceId) ?? null)
+        : (cameraHandler('deviceManager.getDevice')?.(i) ?? null),
+    'deviceManager.getDeviceAggregate': (i: { deviceId: number }) =>
+      PLUG_IDS.includes(i.deviceId)
+        ? {
+            settings: { tabs: [], sections: [] },
+            live: { sections: [] },
+            tabs: undefined,
+            deviceId: i.deviceId,
+          }
+        : (cameraHandler('deviceManager.getDeviceAggregate')?.(i) ?? null),
+    'deviceManager.getChildren': [],
+    'alerts.list': [],
     'deviceManager.listAll': FLEET,
     'deviceManager.listSiteZones': [],
     'coreBlocks.getCustomization': (input: { stableId?: string }) =>
       input.stableId === FRONT_DOOR.stableId
         ? FRONT_DOOR_CUSTOMIZATION
-        : { state: 'loaded', view: null },
+        : input.stableId === DESK_SWITCH.stableId
+          ? DESK_CUSTOMIZATION
+          : { state: 'loaded', view: null },
     'coreBlocks.listComposableCaps': {
       caps: [
         { cap: 'motion' },
@@ -356,6 +426,7 @@ export default defineFixtures({
         { cap: 'doorbell' },
         { cap: 'running-state' },
         { cap: 'consumables' },
+        { cap: 'power-meter' },
       ],
     },
     'deviceManager.getBindings': (input: { deviceId?: number }) => {
@@ -401,6 +472,16 @@ export default defineFixtures({
           ],
         }
       }
+      if (i.deviceId === 412 || i.deviceId === 413) {
+        return {
+          caps: [
+            {
+              cap: 'power-meter',
+              fields: [{ path: i.deviceId === 412 ? 'watts' : 'kwhTotal', kind: 'number' }],
+            },
+          ],
+        }
+      }
       if (i.deviceId === 306) {
         return {
           caps: [
@@ -432,6 +513,10 @@ export default defineFixtures({
         }
       }
       if (i.deviceId === 306) return { switch: { on: true, lastChangedAt: 1_700_000_000_000 } }
+      if (i.deviceId === 412)
+        return { 'power-meter': { watts: 41.7, lastFetchedAt: 1_700_000_000_000 } }
+      if (i.deviceId === 413)
+        return { 'power-meter': { kwhTotal: 18.2, lastFetchedAt: 1_700_000_000_000 } }
       if (i.deviceId === 801) {
         return { battery: { percentage: 82 }, 'numeric-sensor': { value: 82, unit: '%' } }
       }
@@ -466,7 +551,8 @@ export default defineFixtures({
       const cap = i.capNames[0]
       if (cap === 'motion') return [301, 302]
       if (cap === 'binary') return [301, 302]
-      if (cap === 'switch') return [306]
+      if (cap === 'switch') return [306, 411]
+      if (cap === 'power-meter') return [305, 412, 413]
       if (cap === 'battery' || cap === 'numeric-sensor') return [801]
       if (cap === 'consumables') return [801]
       return []
