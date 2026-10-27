@@ -31,6 +31,7 @@ import { fanControlCapability } from '../capabilities/fan-control.cap.js'
 import { featureProbeCapability } from '../capabilities/feature-probe.cap.js'
 import { floodCapability } from '../capabilities/flood.cap.js'
 import { gasCapability } from '../capabilities/gas.cap.js'
+import { groupActiveCapability } from '../capabilities/group-active.cap.js'
 import { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
 import { groupStatusCapability } from '../capabilities/group-status.cap.js'
 import { heatingValveCapability } from '../capabilities/heating-valve.cap.js'
@@ -119,6 +120,7 @@ export interface DeviceLocalState {
   featureProbe: InferRuntimeState<typeof featureProbeCapability>
   flood: InferRuntimeState<typeof floodCapability>
   gas: InferRuntimeState<typeof gasCapability>
+  groupActive: InferRuntimeState<typeof groupActiveCapability>
   groupCommands: InferRuntimeState<typeof groupCommandsCapability>
   groupStatus: InferRuntimeState<typeof groupStatusCapability>
   heatingValve: InferRuntimeState<typeof heatingValveCapability>
@@ -203,6 +205,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   featureProbe: featureProbeCapability,
   flood: floodCapability,
   gas: gasCapability,
+  groupActive: groupActiveCapability,
   groupCommands: groupCommandsCapability,
   groupStatus: groupStatusCapability,
   heatingValve: heatingValveCapability,
@@ -294,6 +297,7 @@ export interface CapNameToRuntimeStateMap {
   'feature-probe': InferRuntimeState<typeof featureProbeCapability>
   'flood': InferRuntimeState<typeof floodCapability>
   'gas': InferRuntimeState<typeof gasCapability>
+  'group-active': InferRuntimeState<typeof groupActiveCapability>
   'group-commands': InferRuntimeState<typeof groupCommandsCapability>
   'group-status': InferRuntimeState<typeof groupStatusCapability>
   'heating-valve': InferRuntimeState<typeof heatingValveCapability>

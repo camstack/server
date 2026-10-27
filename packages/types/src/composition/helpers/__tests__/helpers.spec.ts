@@ -8,7 +8,13 @@ import { batteryCapability } from '../../../capabilities/battery.cap.js'
 import { binaryCapability } from '../../../capabilities/binary.cap.js'
 import { contactCapability } from '../../../capabilities/contact.cap.js'
 import { floodCapability } from '../../../capabilities/flood.cap.js'
+import { climateControlCapability } from '../../../capabilities/climate-control.cap.js'
+import { coverCapability } from '../../../capabilities/cover.cap.js'
+import { groupActiveCapability } from '../../../capabilities/group-active.cap.js'
 import { groupStatusCapability } from '../../../capabilities/group-status.cap.js'
+import { lockControlCapability } from '../../../capabilities/lock-control.cap.js'
+import { mediaPlayerCapability } from '../../../capabilities/media-player.cap.js'
+import { valveCapability } from '../../../capabilities/valve.cap.js'
 import { humiditySensorCapability } from '../../../capabilities/humidity-sensor.cap.js'
 import { motionCapability } from '../../../capabilities/motion.cap.js'
 import { numericSensorCapability } from '../../../capabilities/numeric-sensor.cap.js'
@@ -66,7 +72,13 @@ const lookupCap = buildCapabilityLookup([
   smokeCapability,
   binaryCapability,
   groupStatusCapability,
+  groupActiveCapability,
   switchCapability,
+  coverCapability,
+  valveCapability,
+  lockControlCapability,
+  mediaPlayerCapability,
+  climateControlCapability,
 ])
 
 function ref(n: number): CompositionSourceRef {

@@ -57,6 +57,13 @@ export const lockControlCapability = {
       z.object({
         deviceId: z.number().int().nonnegative(),
         code: z.string().min(1).optional(),
+        /**
+         * Honoured by a helper lock GROUP only (D944): unlocking several doors
+         * with one call is refused unless the caller says it was confirmed. A
+         * single lock ignores it. The refusal lives in the callee, so no
+         * automation or API caller reaches the doors by skipping a dialog.
+         */
+        confirm: z.boolean().optional(),
       }),
       z.void(),
       { kind: 'mutation', auth: 'protected' },

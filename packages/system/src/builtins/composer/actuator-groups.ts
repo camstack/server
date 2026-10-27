@@ -2,23 +2,31 @@
  * Live actuator helpers (D944). State is the aggregate the composer already
  * runs. Commands are fanned out here: every member that binds the cap,
  * including one that is offline, and a failure on one does not cancel the rest.
- * A light's brightness and colour are registered only while every member binds
- * them, and recomputed when a member's bindings change.
+ * What a group offers is its type's method table intersected over the members
+ * (a light's colour, a cover's tilt, a fan's speed): recomputed when a member's
+ * bindings change, and a call for a method outside it is refused by name.
+ * Unlocking a group is refused unless the call carries `confirm: true`.
  */
 import {
   type CompositionSourceRef,
   type DeviceFeature,
   type FanOutCall,
   type FanOutMember,
+  type ActuatorMethodRow,
+  type ActuatorTemplateId,
   type GroupCommandResult,
   type HelperMember,
   type HelperSpec,
   type IScopedLogger,
+  ACTUATOR_METHODS,
+  ACTUATOR_TEMPLATE_IDS,
   fanOutTargets,
   groupTemplate,
+  methodRefusal,
   runFanOut,
+  sharedActuatorFeatures,
+  sharedActuatorMethods,
   sharedColorModes,
-  sharedLightCaps,
 } from '@camstack/types'
 import { type ActuatorDispatchInput, setActuatorDispatcher } from './actuator-dispatch.js'
 
@@ -62,11 +70,12 @@ export interface ActuatorGroupsDeps {
 
 interface RememberedGroup {
   readonly blockId: string
-  readonly templateId: 'switch' | 'light'
+  readonly templateId: ActuatorTemplateId
   readonly groupDeviceId: number
   readonly members: readonly HelperMember[]
   readonly fanOut: readonly FanOutMember[]
   readonly shared: readonly string[]
+  readonly methods: readonly ActuatorMethodRow[]
 }
 
 interface ViewedMembers {
@@ -126,27 +135,28 @@ export class ActuatorGroups {
     if (spec === undefined || spec.kind !== 'group') return null
     const template = groupTemplate(spec.templateId)
     if (template === null || template.family !== 'actuator') return null
-    if (template.id !== 'switch' && template.id !== 'light') return null
+    const templateId = actuatorTemplateId(template.id)
+    if (templateId === null) return null
     const device = this.deps.deviceOf(block.id)
     if (device === null) return null
     const viewed = await this.viewMembers(spec.members, device.id)
-    const shared = sharedOf(template.id, viewed)
+    const methods = methodsOf(templateId, viewed)
+    const shared = capsOf(methods)
     const previous = this.groups.get(block.id)?.shared
-    if (template.id === 'light' && previous !== undefined) {
-      this.logCapChange(device.id, previous, shared, viewed)
-    }
+    if (previous !== undefined) this.logCapChange(templateId, device.id, previous, shared, viewed)
     const modes =
-      template.id === 'light' && shared.includes('color')
+      templateId === 'light' && shared.includes('color')
         ? sharedColorModes(viewed.featureLists)
-        : []
+        : sharedActuatorFeatures(templateId, viewed.featureLists)
     device.syncShared(shared, modes)
     return {
       blockId: block.id,
-      templateId: template.id,
+      templateId,
       groupDeviceId: device.id,
       members: spec.members.map(copyMember),
       fanOut: viewed.fanOut,
       shared,
+      methods,
     }
   }
 
@@ -192,32 +202,42 @@ export class ActuatorGroups {
   }
 
   private logCapChange(
+    templateId: ActuatorTemplateId,
     groupDeviceId: number,
     previous: readonly string[],
     shared: readonly string[],
     viewed: ViewedMembers,
   ): void {
-    for (const cap of ['brightness', 'color']) {
+    const primary = ACTUATOR_METHODS[templateId][0]?.cap
+    const optional = [
+      ...new Set(
+        ACTUATOR_METHODS[templateId].map((row) => row.cap).filter((cap) => cap !== primary),
+      ),
+    ]
+    for (const cap of optional) {
       const had = previous.includes(cap)
       const has = shared.includes(cap)
       if (had === has) continue
       if (has) {
-        this.deps.logger.info('light group gained a shared capability', {
+        this.deps.logger.info(`${templateId} group gained a shared capability`, {
           tags: { deviceId: groupDeviceId },
           meta: { cap },
         })
         continue
       }
-      this.deps.logger.warn('light group dropped a capability a member does not bind', {
+      this.deps.logger.warn(`${templateId} group dropped a capability a member does not bind`, {
         tags: { deviceId: groupDeviceId },
         meta: { cap },
       })
       for (const member of viewed.fanOut) {
         if (member.caps.includes(cap)) continue
-        this.deps.logger.warn('light group dropped a capability this member does not bind', {
-          tags: { deviceId: member.deviceId },
-          meta: { groupDeviceId, cap },
-        })
+        this.deps.logger.warn(
+          `${templateId} group dropped a capability this member does not bind`,
+          {
+            tags: { deviceId: member.deviceId },
+            meta: { groupDeviceId, cap },
+          },
+        )
       }
     }
   }
@@ -240,7 +260,23 @@ export class ActuatorGroups {
       })
       throw new Error(`group does not share ${input.cap}`)
     }
-    const calls = fanOutTargets(group.fanOut, input.cap, input.method, input.args)
+    const row = group.methods.find((item) => item.cap === input.cap && item.method === input.method)
+    if (row === undefined) {
+      this.deps.logger.warn('actuator command dropped — the group does not share that method', {
+        tags: { deviceId: input.groupDeviceId },
+        meta: { cap: input.cap, method: input.method },
+      })
+      throw new Error(`group does not share ${input.cap}.${input.method}`)
+    }
+    const refusal = methodRefusal(row, input.args)
+    if (refusal !== null) {
+      this.deps.logger.warn(`${input.cap}.${input.method} was refused — nothing was sent`, {
+        tags: { deviceId: input.groupDeviceId },
+        meta: { cap: input.cap, method: input.method, reason: refusal },
+      })
+      throw new Error(refusal)
+    }
+    const calls = fanOutTargets(group.fanOut, input.cap, input.method, memberArgs(input.args))
     const results = await runFanOut(calls, (call) => this.deps.invoke(call))
     const failed = results.flatMap((result) => (result.ok ? [] : [result]))
     for (const result of failed) {
@@ -278,11 +314,35 @@ export class ActuatorGroups {
   }
 }
 
-function sharedOf(templateId: 'switch' | 'light', viewed: ViewedMembers): readonly string[] {
-  if (templateId === 'switch') return ['switch']
-  if (viewed.capLists === null) return ['switch']
-  const shared = sharedLightCaps(viewed.capLists)
-  return shared.includes('switch') ? shared : ['switch', ...shared]
+function actuatorTemplateId(id: string): ActuatorTemplateId | null {
+  return ACTUATOR_TEMPLATE_IDS.find((item) => item === id) ?? null
+}
+
+/**
+ * Members that could not all be read leave only the type's own, ungated
+ * methods on: a surface nobody confirmed is never offered.
+ */
+function methodsOf(
+  templateId: ActuatorTemplateId,
+  viewed: ViewedMembers,
+): readonly ActuatorMethodRow[] {
+  const rows = ACTUATOR_METHODS[templateId]
+  const primary = rows[0]?.cap
+  const own = rows.filter((row) => row.cap === primary && row.requires === null)
+  if (viewed.capLists === null || viewed.capLists.length === 0) return own
+  return sharedActuatorMethods(
+    templateId,
+    viewed.capLists.map((caps, index) => ({ caps, features: viewed.featureLists[index] ?? [] })),
+  )
+}
+
+function capsOf(methods: readonly ActuatorMethodRow[]): readonly string[] {
+  return [...new Set(methods.map((row) => row.cap))]
+}
+
+/** The confirmation is the group's to check; a member's own method does not know it. */
+function memberArgs(args: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
+  return Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'confirm'))
 }
 
 function copyMember(member: HelperMember): HelperMember {

@@ -61,12 +61,12 @@ function deviceTypeProblems(
   if (template === null) return []
   return spec.members.flatMap((member, index) => {
     const deviceType = facts.get(compositionSourceKey(member.source))?.deviceType
-    if (deviceType === undefined || deviceType === template.memberDeviceType) return []
+    if (deviceType === undefined || template.memberDeviceTypes.includes(deviceType)) return []
     return [
       problem(
         'member-constraint',
         `helper.members[${index}]`,
-        `a ${template.id} group takes ${template.memberDeviceType} devices; this member is a ${deviceType}`,
+        `a ${template.id} group takes ${template.memberDeviceTypes.join(' or ')} devices; this member is a ${deviceType}`,
       ),
     ]
   })

@@ -2213,6 +2213,12 @@ export {
   type IGroupCommandsProvider,
 } from './group-commands.cap.js'
 export {
+  type GroupActive,
+  GroupActiveSchema,
+  groupActiveCapability,
+  type IGroupActiveProvider,
+} from './group-active.cap.js'
+export {
   type GroupStatus,
   GroupStatusSchema,
   groupStatusCapability,
@@ -3181,6 +3187,7 @@ import type { featureProbeCapability } from './feature-probe.cap.js'
 import type { filesystemBrowseCapability } from './filesystem-browse.cap.js'
 import type { floodCapability } from './flood.cap.js'
 import type { gasCapability } from './gas.cap.js'
+import type { groupActiveCapability } from './group-active.cap.js'
 import type { groupCommandsCapability } from './group-commands.cap.js'
 import type { groupStatusCapability } from './group-status.cap.js'
 import type { heatingValveCapability } from './heating-valve.cap.js'
@@ -3408,6 +3415,7 @@ type AnyCapability =
   | typeof smokeCapability
   | typeof carbonMonoxideCapability
   | typeof gasCapability
+  | typeof groupActiveCapability
   | typeof groupCommandsCapability
   | typeof groupStatusCapability
   | typeof tamperCapability

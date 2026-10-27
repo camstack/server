@@ -2333,6 +2333,13 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'sensor would give it no unit.',
   },
   {
+    cap: 'group-active',
+    reason:
+      'Whether a helper actuator group counts as active (D944): a cover is open, ' +
+      'a lock is locked, a player is playing. Session-only, no history, and the ' +
+      'group is not exported as the type it commands; the members are.',
+  },
+  {
     cap: 'group-commands',
     reason:
       'The last fan-out a helper group attempted (D944), one row per member. ' +

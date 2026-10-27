@@ -1,4 +1,16 @@
 export {
+  ACTUATOR_METHODS,
+  ACTUATOR_TEMPLATE_IDS,
+  type ActuatorMemberSurface,
+  type ActuatorMethodRow,
+  type ActuatorTemplateId,
+  actuatorMethodRow,
+  methodRefusal,
+  sharedActuatorFeatures,
+  sharedActuatorMethods,
+  UNLOCK_CONFIRMATION,
+} from './actuator-methods.js'
+export {
   FAN_OUT_CONCURRENCY,
   LIGHT_SHARED_CAPS,
   type FanOutCall,

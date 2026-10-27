@@ -250,6 +250,72 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
             setColor: async (deviceId, color) => {
               await api.color.setColor.mutate({ deviceId, color })
             },
+            fanSetPercentage: async (deviceId, percentage) => {
+              await api.fanControl.setPercentage.mutate({ deviceId, percentage })
+            },
+            fanSetPreset: async (deviceId, preset) => {
+              await api.fanControl.setPreset.mutate({ deviceId, preset })
+            },
+            fanSetDirection: async (deviceId, direction) => {
+              await api.fanControl.setDirection.mutate({ deviceId, direction })
+            },
+            fanSetOscillating: async (deviceId, oscillating) => {
+              await api.fanControl.setOscillating.mutate({ deviceId, oscillating })
+            },
+            coverOpen: async (deviceId) => {
+              await api.cover.open.mutate({ deviceId })
+            },
+            coverClose: async (deviceId) => {
+              await api.cover.close.mutate({ deviceId })
+            },
+            coverStop: async (deviceId) => {
+              await api.cover.stop.mutate({ deviceId })
+            },
+            coverSetPosition: async (deviceId, position) => {
+              await api.cover.setPosition.mutate({ deviceId, position })
+            },
+            coverSetTiltPosition: async (deviceId, tiltPosition) => {
+              await api.cover.setTiltPosition.mutate({ deviceId, tiltPosition })
+            },
+            valveOpen: async (deviceId) => {
+              await api.valve.open.mutate({ deviceId })
+            },
+            valveClose: async (deviceId) => {
+              await api.valve.close.mutate({ deviceId })
+            },
+            valveSetPosition: async (deviceId, position) => {
+              await api.valve.setPosition.mutate({ deviceId, position })
+            },
+            lockLock: async (deviceId, code) => {
+              await api.lockControl.lock.mutate({
+                deviceId,
+                ...(code === undefined ? {} : { code }),
+              })
+            },
+            lockUnlock: async (deviceId, code) => {
+              await api.lockControl.unlock.mutate({
+                deviceId,
+                ...(code === undefined ? {} : { code }),
+              })
+            },
+            mediaPlay: async (deviceId) => {
+              await api.mediaPlayer.play.mutate({ deviceId })
+            },
+            mediaPause: async (deviceId) => {
+              await api.mediaPlayer.pause.mutate({ deviceId })
+            },
+            mediaSetVolume: async (deviceId, volumeLevel) => {
+              await api.mediaPlayer.setVolume.mutate({ deviceId, volumeLevel })
+            },
+            climateSetMode: async (deviceId, mode) => {
+              await api.climateControl.setMode.mutate({ deviceId, mode })
+            },
+            climateSetTarget: async (deviceId, target) => {
+              await api.climateControl.setTarget.mutate({ deviceId, target })
+            },
+            climateSetFanMode: async (deviceId, fanMode) => {
+              await api.climateControl.setFanMode.mutate({ deviceId, fanMode })
+            },
           },
           call,
         ),

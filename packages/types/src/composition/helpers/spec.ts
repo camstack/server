@@ -35,6 +35,12 @@ export const GROUP_TEMPLATE_IDS = [
   'binary',
   'switch',
   'light',
+  'fan',
+  'cover',
+  'valve',
+  'lock',
+  'media-player',
+  'climate',
 ] as const
 export type GroupTemplateId = (typeof GROUP_TEMPLATE_IDS)[number]
 

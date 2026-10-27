@@ -25,23 +25,47 @@ import {
   BaseDevice,
   brightnessCapability,
   type CapabilityDefinition,
+  climateControlCapability,
   colorCapability,
+  coverCapability,
   type DeviceConstructor,
   type DeviceContext,
   type DeviceFeature,
   DeviceType,
   errMsg,
+  fanControlCapability,
   groupCommandsCapability,
   GroupCommandResultSchema,
   type GroupCommandResult,
   type IDevice,
+  lockControlCapability,
+  mediaPlayerCapability,
   motionCapability,
   type ReadingQuantity,
   switchCapability,
+  valveCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import type { ComposedWriteTarget, WriteOutcome } from './composition-runtime.js'
 import type { SlicePatch } from './slice-assembler.js'
+
+/** Device types a helper actuator group can be: they keep the last fan-out per member. */
+const GROUP_COMMAND_TYPES: ReadonlySet<DeviceType> = new Set([
+  DeviceType.Switch,
+  DeviceType.Light,
+  DeviceType.Fan,
+  DeviceType.Cover,
+  DeviceType.Valve,
+  DeviceType.Lock,
+  DeviceType.MediaPlayer,
+  DeviceType.Thermostat,
+  DeviceType.Climate,
+])
+
+/** A call's arguments without the keys the caller left undefined. */
+function present(args: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
+  return Object.fromEntries(Object.entries(args).filter(([, value]) => value !== undefined))
+}
 
 const COMPOSED_DEVICE_CONFIG_SCHEMA: z.ZodObject<Record<string, never>> = z.object({})
 
@@ -106,9 +130,7 @@ export class ComposedDevice
       }
       ctx.registerNativeCap(cap, {})
     }
-    if (type === DeviceType.Switch || type === DeviceType.Light) {
-      ctx.registerNativeCap(groupCommandsCapability, {})
-    }
+    if (GROUP_COMMAND_TYPES.has(type)) ctx.registerNativeCap(groupCommandsCapability, {})
     // NOT presumed reachable: available only once the runtime has seeded every cap.
     this.markOnline(false)
   }
@@ -132,8 +154,99 @@ export class ComposedDevice
         },
       })
     })
+    this.syncTypedCaps(caps)
     this.sharedFeatures = [...modes]
     void this.refreshFeatures()
+  }
+
+  /**
+   * The type's own cap (a cover's `cover`, a lock's `lock-control`) is
+   * registered only for a helper group, so a free composition of the same type
+   * keeps serving nothing it did not before. Every method fans out; the group
+   * refuses the ones its members do not all share.
+   */
+  private syncTypedCaps(caps: readonly string[]): void {
+    const call = (cap: string, method: string, args: Readonly<Record<string, unknown>>) =>
+      this.dispatch(cap, method, present(args))
+    this.ensureExtra(fanControlCapability.name, caps.includes(fanControlCapability.name), () => {
+      this.ctx.registerNativeCap(fanControlCapability, {
+        setPercentage: (input) =>
+          call('fan-control', 'setPercentage', { percentage: input.percentage }),
+        setPreset: (input) => call('fan-control', 'setPreset', { preset: input.preset }),
+        setDirection: (input) =>
+          call('fan-control', 'setDirection', { direction: input.direction }),
+        setOscillating: (input) =>
+          call('fan-control', 'setOscillating', { oscillating: input.oscillating }),
+      })
+    })
+    this.ensureExtra(coverCapability.name, caps.includes(coverCapability.name), () => {
+      this.ctx.registerNativeCap(coverCapability, {
+        open: () => call('cover', 'open', {}),
+        close: () => call('cover', 'close', {}),
+        stop: () => call('cover', 'stop', {}),
+        setPosition: (input) => call('cover', 'setPosition', { position: input.position }),
+        setTiltPosition: (input) =>
+          call('cover', 'setTiltPosition', { tiltPosition: input.tiltPosition }),
+      })
+    })
+    this.ensureExtra(valveCapability.name, caps.includes(valveCapability.name), () => {
+      this.ctx.registerNativeCap(valveCapability, {
+        open: () => call('valve', 'open', {}),
+        close: () => call('valve', 'close', {}),
+        stop: () => call('valve', 'stop', {}),
+        setPosition: (input) => call('valve', 'setPosition', { position: input.position }),
+      })
+    })
+    this.ensureExtra(lockControlCapability.name, caps.includes(lockControlCapability.name), () => {
+      this.ctx.registerNativeCap(lockControlCapability, {
+        lock: (input) => call('lock-control', 'lock', { code: input.code }),
+        unlock: (input) =>
+          call('lock-control', 'unlock', { code: input.code, confirm: input.confirm }),
+        open: () => call('lock-control', 'open', {}),
+      })
+    })
+    this.ensureExtra(mediaPlayerCapability.name, caps.includes(mediaPlayerCapability.name), () => {
+      this.ctx.registerNativeCap(mediaPlayerCapability, {
+        play: () => call('media-player', 'play', {}),
+        pause: () => call('media-player', 'pause', {}),
+        setVolume: (input) => call('media-player', 'setVolume', { volumeLevel: input.volumeLevel }),
+        // Not in the group's method table: the group refuses them by name.
+        stop: () => call('media-player', 'stop', {}),
+        next: () => call('media-player', 'next', {}),
+        previous: () => call('media-player', 'previous', {}),
+        seek: (input) => call('media-player', 'seek', { positionMs: input.positionMs }),
+        setMute: (input) => call('media-player', 'setMute', { muted: input.muted }),
+        setShuffle: (input) => call('media-player', 'setShuffle', { shuffle: input.shuffle }),
+        setRepeat: (input) => call('media-player', 'setRepeat', { repeat: input.repeat }),
+        selectSource: (input) => call('media-player', 'selectSource', { source: input.source }),
+        playMedia: (input) =>
+          call('media-player', 'playMedia', { mediaId: input.mediaId, mediaType: input.mediaType }),
+      })
+    })
+    this.ensureExtra(
+      climateControlCapability.name,
+      caps.includes(climateControlCapability.name),
+      () => {
+        this.ctx.registerNativeCap(climateControlCapability, {
+          setMode: (input) => call('climate-control', 'setMode', { mode: input.mode }),
+          setTarget: (input) => call('climate-control', 'setTarget', { target: input.target }),
+          setFanMode: (input) => call('climate-control', 'setFanMode', { fanMode: input.fanMode }),
+          // Not in the group's method table: the group refuses them by name.
+          setPreset: (input) => call('climate-control', 'setPreset', { preset: input.preset }),
+          setTargetRange: (input) =>
+            call('climate-control', 'setTargetRange', {
+              targetLow: input.targetLow,
+              targetHigh: input.targetHigh,
+            }),
+          setTargetHumidity: (input) =>
+            call('climate-control', 'setTargetHumidity', { targetHumidity: input.targetHumidity }),
+          setSwingVertical: (input) =>
+            call('climate-control', 'setSwingVertical', { on: input.on }),
+          setSwingHorizontal: (input) =>
+            call('climate-control', 'setSwingHorizontal', { on: input.on }),
+        })
+      },
+    )
   }
 
   /** Keep each member's latest attempt. A later command replaces that member only. */

@@ -56,6 +56,7 @@ const EXEMPT_MEASUREMENT_CAPS: ReadonlySet<string> = new Set([
   'battery',
   // Helper member counts and the last fan-out (D944). The event is the output cap's.
   'group-status',
+  'group-active',
   'group-commands',
   'network-link',
   'binary',

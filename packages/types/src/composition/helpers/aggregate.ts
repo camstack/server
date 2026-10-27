@@ -24,6 +24,8 @@ export type AggregatePublish = 'value' | 'included' | 'excluded' | 'total'
 export type AggregateEmpty = 'null' | 'omit' | 'offline'
 
 export interface EvaluateAggregateInput {
+  /** Enum states that count as active, for a reducer over states instead of booleans. */
+  readonly activeWhen?: readonly string[]
   readonly reducer: AggregateReducer
   readonly members: readonly AggregateReadResult[]
   readonly publish: AggregatePublish
@@ -52,9 +54,15 @@ function isBinaryReducer(reducer: AggregateReducer): boolean {
 function includedValue(
   reducer: AggregateReducer,
   member: AggregateReadResult,
+  activeWhen: readonly string[] | undefined,
 ): number | boolean | null {
   if (member.state !== 'fresh') return null
-  if (isBinaryReducer(reducer)) return typeof member.value === 'boolean' ? member.value : null
+  if (isBinaryReducer(reducer)) {
+    if (activeWhen !== undefined) {
+      return typeof member.value === 'string' ? activeWhen.includes(member.value) : null
+    }
+    return typeof member.value === 'boolean' ? member.value : null
+  }
   return typeof member.value === 'number' && Number.isFinite(member.value) ? member.value : null
 }
 
@@ -106,7 +114,7 @@ function emptyOutcome(empty: AggregateEmpty, counts: AggregateCounts): Aggregate
 /** Pure. `members` is not mutated. An empty included set is null or unavailable, never 0 or false. */
 export function evaluateAggregate(input: EvaluateAggregateInput): AggregateOutcome {
   const included = input.members.flatMap((member) => {
-    const value = includedValue(input.reducer, member)
+    const value = includedValue(input.reducer, member, input.activeWhen)
     return value === null ? [] : [value]
   })
   const counts = countsOf(included.length, input.members.length)

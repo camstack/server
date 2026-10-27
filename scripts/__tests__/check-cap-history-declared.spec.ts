@@ -232,10 +232,10 @@ describe('keyed items (D917)', () => {
 
 describe('the real caps', () => {
   // Loads every *.cap.ts cold; under a loaded full run it has taken longer
-  // than the 10 s default. `meter` is the cap that moved this count to 75.
-  it('every cap passes, and there are 75 runtimeState caps', { timeout: 60_000 }, async () => {
+  // than the 10 s default. `group-active` is the cap that moved this count to 76.
+  it('every cap passes, and there are 76 runtimeState caps', { timeout: 60_000 }, async () => {
     const caps = await loadHistoryCaps()
-    expect(caps.filter((c) => c.runtimeState !== undefined)).toHaveLength(75)
+    expect(caps.filter((c) => c.runtimeState !== undefined)).toHaveLength(76)
     expect(caps.flatMap((c) => judgeCapHistory(c))).toEqual([])
   })
 })

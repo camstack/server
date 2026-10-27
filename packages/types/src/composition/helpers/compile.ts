@@ -89,6 +89,7 @@ function aggregateSource(
     reads: [...reads],
     publish,
     empty: template.empty,
+    ...(template.activeWhen === undefined ? {} : { activeWhen: [...template.activeWhen] }),
   }
 }
 

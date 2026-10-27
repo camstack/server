@@ -39,7 +39,17 @@ export const groupCommandsCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Switch, DeviceType.Light],
+  deviceTypes: [
+    DeviceType.Switch,
+    DeviceType.Light,
+    DeviceType.Fan,
+    DeviceType.Cover,
+    DeviceType.Valve,
+    DeviceType.Lock,
+    DeviceType.MediaPlayer,
+    DeviceType.Thermostat,
+    DeviceType.Climate,
+  ],
   methods: {},
   status: {
     schema: GroupCommandsSchema,

@@ -12,7 +12,7 @@ import { MAX_HELPER_MEMBERS } from './spec.js'
 export interface SourcePickAccept {
   readonly cap: string
   readonly fieldPath: string
-  readonly valueKind: 'number' | 'boolean'
+  readonly valueKind: 'number' | 'boolean' | 'state'
 }
 
 export interface SourcePickHistory {
@@ -46,15 +46,19 @@ export interface SourcePick {
 /** What the member step asks the selector for this template. */
 export function sourcePickForTemplate(template: GroupTemplate): SourcePickRequest {
   const valueKind: SourcePickAccept['valueKind'] =
-    template.family === 'numeric' ? 'number' : 'boolean'
+    template.family === 'numeric'
+      ? 'number'
+      : template.activeWhen === undefined
+        ? 'boolean'
+        : 'state'
   return {
     purpose: 'member',
     multiple: true,
     max: MAX_HELPER_MEMBERS,
-    deviceTypes: [template.memberDeviceType],
+    deviceTypes: [...template.memberDeviceTypes],
     accept: template.accept.map((field) => ({ ...field, valueKind })),
     history: { required: false, minRetentionMs: null },
-    mustBindCaps: template.family === 'actuator' ? [template.outputCap] : [],
+    mustBindCaps: template.family === 'actuator' ? template.accept.map((field) => field.cap) : [],
     exclude: [],
   }
 }

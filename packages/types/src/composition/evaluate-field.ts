@@ -260,6 +260,7 @@ function aggregateRead(reading: SourceReading): AggregateReadResult {
 function aggregateField(source: CompositionAggregateSource, read: SourceReader): FieldOutcome {
   const outcome = evaluateAggregate({
     reducer: source.reducer,
+    ...(source.activeWhen === undefined ? {} : { activeWhen: source.activeWhen }),
     members: source.reads.map((item) => aggregateRead(read(item))),
     publish: source.publish,
     empty: source.empty,

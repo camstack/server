@@ -22,7 +22,7 @@ export const switchCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Switch, DeviceType.Siren, DeviceType.Light],
+  deviceTypes: [DeviceType.Switch, DeviceType.Siren, DeviceType.Light, DeviceType.Fan],
   methods: {
     setState: method(z.object({ deviceId: z.number(), on: z.boolean() }), z.void(), {
       kind: 'mutation',

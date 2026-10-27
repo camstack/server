@@ -103,6 +103,12 @@ export const CompositionAggregateSourceSchema = z.object({
   kind: z.literal('aggregate'),
   reducer: z.enum(['mean', 'median', 'min', 'max', 'sum', 'any', 'all']),
   reads: z.array(CompositionFieldReadSchema).min(1).max(MAX_HELPER_MEMBERS),
+  /**
+   * Set when the reads are an enum state, not a yes/no: the listed states
+   * count as active (a cover is `open`). A state outside the list is inactive;
+   * a read that is not a state at all is left out. Only `any` / `all` use it.
+   */
+  activeWhen: z.array(z.string().min(1)).min(1).optional(),
   /** `value` is the reading; the others are the member counts. */
   publish: z.enum(['value', 'included', 'excluded', 'total']),
   /** What a `value` publish does when nobody is included. Counts ignore this. */

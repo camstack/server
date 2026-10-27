@@ -30,8 +30,14 @@ export interface GroupTemplate {
   readonly summary: string
   readonly deviceType: DeviceType
   readonly role: DeviceRole | undefined
-  /** Members are this one device type. */
+  /** Members are this one device type — or, for a climate group, one of a few. */
   readonly memberDeviceType: DeviceType
+  readonly memberDeviceTypes: readonly DeviceType[]
+  /**
+   * Enum states of the member field that count as active. Set when the member
+   * field is a state rather than a yes/no (a cover is `open`, a lock `locked`).
+   */
+  readonly activeWhen: readonly string[] | undefined
   readonly outputCap: string
   readonly outputField: string
   /**
@@ -73,6 +79,8 @@ function numeric(input: {
     family: 'numeric',
     deviceType: DeviceType.Sensor,
     memberDeviceType: DeviceType.Sensor,
+    memberDeviceTypes: [DeviceType.Sensor],
+    activeWhen: undefined,
     commandCaps: [],
     baseUnit: baseUnitOf(input.quantity),
     aggregates: NUMERIC_AGGREGATES,
@@ -95,6 +103,8 @@ function binary(input: {
     family: 'binary',
     deviceType: DeviceType.Sensor,
     memberDeviceType: DeviceType.Sensor,
+    memberDeviceTypes: [DeviceType.Sensor],
+    activeWhen: undefined,
     commandCaps: [],
     quantity: 'none',
     baseUnit: undefined,
@@ -280,6 +290,8 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
       'On when at least one switch is on, or when all of them are. Offline and unknown members are left out of that decision, never read as off, and still receive the command.',
     deviceType: DeviceType.Switch,
     outputCap: 'switch',
+    outputField: 'on',
+    member: { cap: 'switch', fieldPath: 'on' },
     commandCaps: ['switch'],
   }),
   actuator({
@@ -288,7 +300,75 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
       'On when at least one light is on, or when all of them are. Brightness and colour are offered only when every member has them. A command is not sent to a member that lacks it.',
     deviceType: DeviceType.Light,
     outputCap: 'switch',
+    outputField: 'on',
+    member: { cap: 'switch', fieldPath: 'on' },
     commandCaps: ['switch', 'brightness', 'color'],
+  }),
+  actuator({
+    id: 'fan',
+    summary:
+      'On when at least one fan is on, or when all of them are. Speed, preset, direction and oscillation are offered only when every fan has them. A command is not sent to a fan that lacks it.',
+    deviceType: DeviceType.Fan,
+    outputCap: 'switch',
+    outputField: 'on',
+    member: { cap: 'switch', fieldPath: 'on' },
+    commandCaps: ['switch', 'fan-control'],
+  }),
+  actuator({
+    id: 'cover',
+    summary:
+      'Open when at least one cover is open or part-open, or only when all of them are. Position and tilt are offered only when every cover has them. A cover that reports nothing is left out, never read as closed.',
+    deviceType: DeviceType.Cover,
+    outputCap: 'group-active',
+    outputField: 'active',
+    member: { cap: 'cover', fieldPath: 'state' },
+    activeWhen: ['open', 'opening', 'stopped'],
+    commandCaps: ['cover'],
+  }),
+  actuator({
+    id: 'valve',
+    summary:
+      'Open when at least one valve is open or part-open, or only when all of them are. Position is offered only when every valve has it. A valve that reports nothing is left out, never read as closed.',
+    deviceType: DeviceType.Valve,
+    outputCap: 'group-active',
+    outputField: 'active',
+    member: { cap: 'valve', fieldPath: 'state' },
+    activeWhen: ['open', 'opening', 'stopped'],
+    commandCaps: ['valve'],
+  }),
+  actuator({
+    id: 'lock',
+    summary:
+      'Locked when at least one lock is locked, or only when all of them are. A jammed or moving lock is not locked. Locking is one tap; unlocking the group needs a confirmation every time, and nothing is sent without it.',
+    deviceType: DeviceType.Lock,
+    outputCap: 'group-active',
+    outputField: 'active',
+    member: { cap: 'lock-control', fieldPath: 'state' },
+    activeWhen: ['locked'],
+    commandCaps: ['lock-control'],
+  }),
+  actuator({
+    id: 'media-player',
+    summary:
+      'Playing when at least one player is playing, or only when all of them are. Volume is offered only when every player has it. A player that reports nothing is left out, never read as stopped.',
+    deviceType: DeviceType.MediaPlayer,
+    outputCap: 'group-active',
+    outputField: 'active',
+    member: { cap: 'media-player', fieldPath: 'state' },
+    activeWhen: ['playing', 'buffering'],
+    commandCaps: ['media-player'],
+  }),
+  actuator({
+    id: 'climate',
+    summary:
+      'Running when at least one thermostat or air conditioner is not off, or only when all of them are. Target temperature and fan are offered only when every device has them. A device that reports nothing is left out, never read as off.',
+    deviceType: DeviceType.Thermostat,
+    memberDeviceTypes: [DeviceType.Thermostat, DeviceType.Climate],
+    outputCap: 'group-active',
+    outputField: 'active',
+    member: { cap: 'climate-control', fieldPath: 'mode' },
+    activeWhen: ['heat', 'cool', 'auto', 'heat_cool', 'fan_only', 'dry'],
+    commandCaps: ['climate-control'],
   }),
 ]
 
@@ -296,21 +376,31 @@ function actuator(input: {
   readonly id: GroupTemplateId
   readonly summary: string
   readonly deviceType: DeviceType
+  readonly memberDeviceTypes?: readonly DeviceType[]
   readonly outputCap: string
+  readonly outputField: string
+  readonly member: HelperAccept
+  readonly activeWhen?: readonly string[]
   readonly commandCaps: readonly string[]
 }): GroupTemplate {
   return {
-    ...input,
+    id: input.id,
+    summary: input.summary,
+    deviceType: input.deviceType,
+    outputCap: input.outputCap,
+    outputField: input.outputField,
+    commandCaps: input.commandCaps,
     family: 'actuator',
     role: undefined,
     memberDeviceType: input.deviceType,
-    outputField: 'on',
+    memberDeviceTypes: input.memberDeviceTypes ?? [input.deviceType],
+    activeWhen: input.activeWhen,
     quantity: 'none',
     baseUnit: undefined,
     aggregates: BINARY_AGGREGATES,
     defaultAggregate: 'any',
     empty: 'offline',
-    accept: [{ cap: 'switch', fieldPath: 'on' }],
+    accept: [input.member],
     companions: [CHANGED],
   }
 }
