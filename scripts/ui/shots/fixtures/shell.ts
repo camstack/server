@@ -107,6 +107,15 @@ export default defineFixtures({
       },
     ],
     'capabilities.listCapabilities': CAPABILITIES,
+    // The sidebar asks for the capability behind each gated page (D315); the
+    // shell answers "present", and `addon-absent` overrides it with "none".
+    'capabilities.getCapability': (i: { name: string }) => ({
+      name: i.name,
+      mode: 'singleton',
+      providers: [i.name],
+      activeProvider: i.name,
+      disabledProviders: [],
+    }),
     'deviceManager.getRoleDisplayDefaults': {},
     'deviceManager.listAll': [],
     'integrations.list': [],
