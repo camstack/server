@@ -930,6 +930,7 @@ that rots.
 | D949 | [Echo speech signs in as an import broker, never with a login of its own](adr-0949-echo-speech-signs-in-as-an-import-broker.md) | 💭 proposed (supersedes D947) | 2026-10-27 |
 | D950 | [A broker is created, edited and signed in through one dialog, and a kind declares its own sign-in](adr-0950-a-broker-is-created-edited-and-signed-in-through-one-dialog-a-kind-declares-its-sign-in.md) | ✅ accepted | 2026-10-27 |
 | D951 | [Power and energy are a feature of the electrical device, not a sensor beside it](adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md) | ✅ accepted | 2026-10-27 |
+| D952 | [ESPHome is spoken from Node through esphome-client, one broker per board, with no Python worker](adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md) | ✅ accepted | 2026-10-27 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
