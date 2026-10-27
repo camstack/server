@@ -27,6 +27,7 @@ import { AdminUiTextProvider } from './i18n/AdminUiTextProvider'
 import { useBootGate } from './hooks/useBootGate'
 import { useSocketWatchdog } from './hooks/useSocketWatchdog'
 import { AddonPageLoader } from './layouts/AddonPageLoader'
+import { PageRequiresCapability } from './components/PageRequiresCapability'
 import { AppLayout } from './layouts/AppLayout'
 import { ProtectedRoute } from './layouts/ProtectedRoute'
 import { onSessionRotated, reconnectWithFreshSession, recoverSession } from './lib/admin-session'
@@ -394,7 +395,14 @@ export function App() {
                               path="/integrations/:integrationId"
                               element={<IntegrationDetailPage />}
                             />
-                            <Route path="/system/pipeline" element={<PipelinePage />} />
+                            <Route
+                              path="/system/pipeline"
+                              element={
+                                <PageRequiresCapability path="/system/pipeline">
+                                  <PipelinePage />
+                                </PageRequiresCapability>
+                              }
+                            />
                             {/* Pre-`/system` bookmarks and mistyped paths. */}
                             <Route
                               path="/pipeline"

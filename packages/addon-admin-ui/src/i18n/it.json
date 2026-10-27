@@ -16,7 +16,8 @@
     "locations": "Posizioni",
     "recordings": "Registrazioni",
     "viewer": "Viewer",
-    "history": "Cronologia"
+    "history": "Cronologia",
+    "notInstalled": "{{page}} — non installato"
   },
   "system": {
     "title": "Amministrazione",
@@ -10315,5 +10316,12 @@
     "unlockTitle": "Aprire tutte le serrature di questo gruppo?",
     "unlockBody": "A ogni serratura del gruppo verrà ordinato di aprire. Una serratura non raggiungibile viene segnalata e le altre si aprono comunque.",
     "unlockConfirm": "Apri tutte"
+  },
+  "pageRequires": {
+    "unknownTitle": "Impossibile verificare se questa pagina è disponibile",
+    "unknown": "L'hub non ha risposto al controllo. Ricarica la pagina per riprovare.",
+    "absentTitle": "{{page}} non è installato",
+    "absentDescription": "L'addon che fornisce questa pagina non è installato. Installalo da Sistema → Addon.",
+    "openAddons": "Apri Addon"
   }
 }

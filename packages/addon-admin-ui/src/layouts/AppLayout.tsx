@@ -46,6 +46,7 @@ import type { AddonPageInfo } from './AddonPageLoader'
 import { flattenPages } from './AddonPageLoader'
 import { KeepAliveOutlet } from './KeepAliveOutlet'
 import { ShellContentBoundary } from './AddonPageFrame'
+import { NavItemCapabilityGate } from '../components/PageRequiresCapability'
 
 const THEME_ICONS = { dark: Moon, light: Sun, system: Monitor } as const
 
@@ -271,14 +272,16 @@ export function AppLayout() {
   //   2. Never on mobile (the mobile drawer always shows full labels)
   const compact = sidebarCollapsed && !isMobile
 
-  const navButtonCls = (active: boolean, size: 'lg' | 'md' = 'md'): string => {
+  const navButtonCls = (active: boolean, size: 'lg' | 'md' = 'md', unavailable = false): string => {
     const padding = compact ? 'justify-center px-0 py-2' : 'px-2.5 py-1.5'
     const text = size === 'lg' ? 'text-[13px] font-medium' : 'text-[12px]'
     const activeCls = active
       ? size === 'lg'
         ? 'bg-primary/12 text-primary shadow-sm shadow-primary/5'
         : 'bg-primary/12 text-primary'
-      : 'text-foreground-subtle hover:bg-surface-hover hover:text-foreground'
+      : unavailable
+        ? 'text-foreground-disabled hover:bg-surface-hover'
+        : 'text-foreground-subtle hover:bg-surface-hover hover:text-foreground'
     // i18n-ignore: CSS class list
     return `flex w-full items-center gap-2.5 rounded-md ${padding} ${text} transition-all ${activeCls}`
   }
@@ -319,6 +322,16 @@ export function AppLayout() {
 
   /** One sidebar entry. The Addons entry carries the pending-updates badge. */
   const renderNavItem = (item: NavItem) => {
+    if (item.requiresCapability === undefined) return renderNavButton(item, false)
+    return (
+      <NavItemCapabilityGate key={item.path} capability={item.requiresCapability}>
+        {(absent) => renderNavButton(item, absent)}
+      </NavItemCapabilityGate>
+    )
+  }
+
+  /** `unavailable`: the providing addon is absent (answered) — greyed, still opens the explanation. */
+  const renderNavButton = (item: NavItem, unavailable: boolean) => {
     const Icon = item.icon
     const active = isActive(item.path)
     const isAddons = item.path === '/system/addons'
@@ -331,8 +344,15 @@ export function AppLayout() {
           navigate(item.path)
           setDrawerOpen(false)
         }}
-        className={navButtonCls(active)}
-        title={compact ? item.label : undefined}
+        className={navButtonCls(active, 'md', unavailable)}
+        aria-disabled={unavailable || undefined}
+        title={
+          unavailable
+            ? t('nav.notInstalled', '{{page}} — not installed', { page: item.label })
+            : compact
+              ? item.label
+              : undefined
+        }
       >
         <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-primary' : ''}`} />
         {!compact && (

@@ -190,6 +190,18 @@ page-package stylesheet that declares `@theme`, `@utility` or
 `@custom-variant`, since the host build never reads it.
 
 
+## A page whose addon is absent is disabled, not blank
+
+A built-in page that needs an addon declares its capability once, in
+`PAGE_REQUIRED_CAPABILITY` (`lib/nav-items.ts`). The sidebar greys the entry
+(`NavItemCapabilityGate`) and the route shows a not-installed state with a link
+to System → Addons (`PageRequiresCapability`). Both read
+`useCapabilityPresence` and treat only `absent` as absent: `pending` is a
+skeleton, `unknown` is a failed-check message. A content area never shows an
+endless skeleton either: the addon-page loader turns a pages list or a remote
+that does not settle within `ADDON_PAGE_LOAD_TIMEOUT_MS` into an in-frame
+message, and `ShellContentBoundary` keeps a throwing route inside `<main>`.
+
 ## Field-learned UI facts
 
 **A page that stacks N heavy details shows ONE, and puts the selection in the

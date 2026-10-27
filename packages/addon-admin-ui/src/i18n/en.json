@@ -16,7 +16,8 @@
     "locations": "Locations",
     "recordings": "Recordings",
     "viewer": "Viewer",
-    "history": "History"
+    "history": "History",
+    "notInstalled": "{{page}} — not installed"
   },
   "system": {
     "title": "Administration",
@@ -10293,5 +10294,12 @@
     "unlockTitle": "Unlock every lock in this group?",
     "unlockBody": "Every lock in the group will be told to unlock. A lock that cannot be reached is reported and the rest still unlock.",
     "unlockConfirm": "Unlock all"
+  },
+  "pageRequires": {
+    "unknownTitle": "Could not check whether this page is available",
+    "unknown": "The hub did not answer the capability check. Reload the page to try again.",
+    "absentTitle": "{{page}} is not installed",
+    "absentDescription": "The addon that provides this page is not installed. Install it from System → Addons.",
+    "openAddons": "Open Addons"
   }
 }

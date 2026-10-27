@@ -58,6 +58,8 @@ export interface NavItem {
   readonly adminOnly?: boolean
   /** Extra tokens for global search (old labels after a nav rename, aliases). */
   readonly keywords?: readonly string[]
+  /** Capability the page needs a provider for (from `PAGE_REQUIRED_CAPABILITY`). */
+  readonly requiresCapability?: string
 }
 
 export type NavSectionKey = 'top' | 'detection' | 'cluster' | 'administration'
@@ -69,8 +71,25 @@ export interface NavSection {
   readonly items: readonly NavItem[]
 }
 
+/**
+ * The capability whose provider a built-in page needs, by path. The ONE place a
+ * page declares what addon it depends on: the sidebar greys the entry and the
+ * route shows a not-installed state from this, decided only on an answered
+ * registry query. A page absent from the map has no addon dependency.
+ */
+export const PAGE_REQUIRED_CAPABILITY: Readonly<Record<string, string>> = {
+  '/system/pipeline': 'pipeline-orchestrator',
+  '/system/history': 'device-history',
+  '/system/ai': 'llm',
+}
+
 function visibleTo(items: readonly NavItem[], isAdmin: boolean): readonly NavItem[] {
-  return items.filter((item) => !item.adminOnly || isAdmin)
+  return items
+    .filter((item) => !item.adminOnly || isAdmin)
+    .map((item) => {
+      const requiresCapability = PAGE_REQUIRED_CAPABILITY[item.path]
+      return requiresCapability === undefined ? item : { ...item, requiresCapability }
+    })
 }
 
 export interface BuildNavSectionsParams {
