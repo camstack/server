@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-homeassistant",
-  "version": "1.2.630",
+  "version": "1.2.631",
   "description": "Home Assistant device provider addon for CamStack",
   "keywords": [
     "camstack",
