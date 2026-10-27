@@ -6,26 +6,32 @@ covers:
 
 # addon-import-alexa — package notes
 
-Two Amazon clients live in this addon. They do not share a connection.
+One Amazon account is one broker. Device import (alexa-remote2) and Speak on
+Echo (`alexapy` 1.29.20, long-lived Python workers) both live on it; the
+operator signs in once, on the broker (Integrations, Alexa).
 
 | | Device import | Speak on Echo |
 | --- | --- | --- |
-| Library | alexa-remote2 (cookie or refresh token) | `alexapy` 1.29.20, a long-lived Python worker |
 | What it does | Import smart-home appliances and poll their state | Read a notification aloud on Echo devices and groups |
-| Secret | `cookie` / `refreshToken` on a broker | `speak.password` and `speak.session` in the keychain |
-| Page | External systems → Brokers, plus the login proxy | Administration → Speak on Echo (`/addon/import-alexa`) |
+| Secret | `cookie` / `refreshToken` on the broker | the broker's refresh token (read, never copied) plus a derived cookie jar per broker (`speak-sessions` record, secret field) |
+| Where it is set up | Integrations, Alexa, plus the login proxy | nowhere: Notifications, Targets, kind Alexa. The Speak on Echo page only shows each account's state and sends a test |
 
-The official Alexa skill (`addon-export-alexa`) is a third thing. It publishes
-CamStack devices to Amazon. It cannot carry arbitrary notification text, and
-it must not be given this cookie jar. See [D947](../decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md).
+The official Alexa skill (`addon-export-alexa`) is a separate thing. It
+publishes CamStack devices to Amazon and cannot carry arbitrary text. See
+[D949](../decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md).
 
 ## The worker
 
-`python/alexa_worker.py` is spawned once per addon instance. Requests are one
-JSON object per stdin line (`login_start`, `login_otp`, `devices`, `speak`,
-`announce`, `session_status`) and one JSON object per stdout line. Logs go to
-stderr. The password and the cookie jar are owner-only files (mode 0600); the
-JSON names the paths and never contains the secret.
+`python/alexa_worker.py` is spawned once per broker. Requests are one JSON
+object per stdin line (`login_broker`, `devices`, `speak`, `announce`,
+`session_status`) and one JSON object per stdout line. Logs go to stderr. The
+refresh token and the cookie jar are owner-only files (mode 0600); the JSON
+names the paths and never contains the secret.
+
+`login_broker` exchanges the broker's refresh token for cookies under the app
+name that token was registered with, then lets `alexapy` log in with them.
+Both libraries make the same `/ap/exchangetoken/cookies` call; the exchange
+against Amazon itself was not exercised in this repo.
 
 A crash restarts the process at most five times inside 60 seconds, then the
 worker stays down and sends fail so the notification outbox retries. It is
@@ -46,16 +52,24 @@ retries.
 Each delivery is recorded on the provider (`spoken`, `announced`, `collapsed`,
 `rate_limited`, `dnd`, `offline`, `failed`, `empty`).
 
-## Sign-in
+## Targets
 
-Speak on Echo asks for the Amazon email, password and region (North America,
-Europe, Far East). Amazon may answer with a one-time code or a captcha. A
-code raises one operator alert (`import-alexa.speak-otp-required`, category
-`addon.error`) until the sign-in succeeds. A captcha cannot be solved on this
-page: wait and sign in again.
+The Alexa kind (`alexa-echo`, brand mark served at
+`/addon/import-alexa/icons/alexa-echo`) builds its form from the accounts'
+own Echo lists on every request: an account select (only when more than one
+account is linked) and an Echo select labelled name, room, family. Saving
+pins the account on the target. Targets page, Find devices, asks every kind
+that declares `supportsDiscovery` and proposes the devices no saved target
+covers.
 
-A test phrase speaks on the ticked devices and saves them as notification
-targets (mode speak or announce, volume, respect Do Not Disturb).
+A sign-in the broker has not made is the state `broker-not-signed-in`, shown
+on the Speak page and as a failed probe. The old standalone login (password,
+one-time code) is gone; at first start it migrates once: with exactly one
+broker its jar and targets move onto it, otherwise targets stay unassigned and
+the page says `no-broker` or `choose-broker`.
+
+A test phrase on the Speak page speaks on the ticked devices and saves them as
+notification targets.
 
 ## Latency
 
@@ -67,6 +81,5 @@ interval plus Amazon's own playback, which this process does not observe.
 ## Placement
 
 The provider stays in this addon because the account is the unofficial one.
-`instanceMode` stays `multiple` so existing broker instances are unchanged.
-Each instance has its own Echo sign-in. Signing the same account into two
-instances can speak the same sentence twice.
+`instanceMode` stays `multiple`; each broker has its own worker, so two
+brokers for the same Amazon account would speak the same sentence twice.

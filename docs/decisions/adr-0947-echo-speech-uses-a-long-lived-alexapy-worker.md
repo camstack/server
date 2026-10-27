@@ -1,7 +1,8 @@
 ---
 id: D947
 title: Echo speech uses one long-lived alexapy worker
-status: proposed
+status: superseded
+superseded-by: D949
 date: 2026-10-27
 supersedes:
 applies-to:
