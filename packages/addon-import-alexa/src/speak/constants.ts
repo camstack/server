@@ -18,7 +18,8 @@ export const DEVICE_REFRESH_MS = 5 * 60_000
 export const WORKER_CRASH_WINDOW_MS = 60_000
 export const WORKER_MAX_CRASHES = 5
 
-export const OTP_ALERT_ID = 'import-alexa.speak-otp-required'
+/** Where the addon serves the Alexa mark; `listTargetKinds` stamps it as `iconUrl`. */
+export const ALEXA_SPEAK_ICON_URL = `/addon/${ALEXA_SPEAK_ADDON_ID}/icons/${ALEXA_SPEAK_KIND}`
 
 export const ALEXA_REGIONS = ['NA', 'EU', 'FE'] as const
 export type AlexaRegion = (typeof ALEXA_REGIONS)[number]

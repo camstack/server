@@ -1,5 +1,5 @@
 /**
- * One Python process for the life of the addon. Requests are one JSON line
+ * One Python process per broker, for the life of the addon. Requests are one JSON line
  * on stdin; responses are one JSON line on stdout, matched by id.
  * A crash restarts the process until the same bound CrashSupervisor uses,
  * then requests fail instead of looping.
@@ -39,7 +39,7 @@ export interface AlexaWorkerDeps {
   readonly schedule?: (fn: () => void, delayMs: number) => void
   readonly maxCrashes?: number
   readonly windowMs?: number
-  /** Inherited by the child. The password is never added here. */
+  /** Inherited by the child. A secret is never added here. */
   readonly env?: NodeJS.ProcessEnv
 }
 

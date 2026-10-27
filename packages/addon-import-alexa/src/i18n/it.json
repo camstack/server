@@ -1,34 +1,31 @@
 {
   "page": {
     "title": "Parla sugli Echo",
-    "intro": "CamStack legge ad alta voce il testo della notifica sugli Echo che scegli. Accedi con l'account Amazon di quei dispositivi. Amazon può chiedere un codice usa e getta."
+    "intro": "CamStack legge ad alta voce il testo della notifica sui tuoi Echo, usando gli account Amazon che hai già collegato in Integrazioni, Alexa. Qui non c'è nessun accesso da fare. Aggiungi le destinazioni da Notifiche, Destinazioni."
   },
-  "signIn": {
-    "email": "Email Amazon",
-    "password": "Password Amazon",
-    "region": "Regione",
-    "regionNa": "Nord America",
-    "regionEu": "Europa",
-    "regionFe": "Estremo Oriente",
-    "submit": "Accedi"
+  "accounts": {
+    "label": "Account Amazon",
+    "none": "Nessun account Amazon collegato. Collegane uno in Integrazioni, Alexa, e i suoi Echo compariranno qui."
   },
-  "otp": {
-    "title": "Inserisci il codice che Amazon ha inviato",
-    "help": "Apri l'app di autenticazione o il messaggio di Amazon e scrivi il codice. Si usa una volta sola.",
-    "code": "Codice usa e getta",
-    "submit": "Continua"
+  "state": {
+    "ready": "Pronto",
+    "starting": "Avvio",
+    "notSignedIn": "In attesa dell'accesso",
+    "failed": "Accesso non riuscito",
+    "notSignedInHelp": "Questo account non ha ancora fatto l'accesso nella sua voce di Integrazioni. Fallo lì e la voce parte poco dopo, senza altri passaggi qui."
   },
-  "captcha": {
-    "title": "Amazon ha chiesto un captcha",
-    "help": "Questa pagina non può mostrare il puzzle di Amazon. Aspetta qualche minuto e accedi di nuovo."
+  "notice": {
+    "noBroker": "Alcune destinazioni Echo arrivano dal vecchio accesso di Parla sugli Echo, che non esiste più. Collega il tuo account Amazon in Integrazioni, Alexa, poi apri ogni destinazione e scegli l'account.",
+    "chooseBroker": "Alcune destinazioni Echo non indicano ancora un account Amazon e ce ne sono diversi collegati. Apri ogni destinazione e scegli l'account con cui deve parlare.",
+    "waiting": "Destinazioni in attesa di un account: {{count}}"
   },
   "devices": {
     "title": "Dispositivi Echo",
-    "help": "Seleziona i dispositivi o i gruppi che devono parlare. La prova usa la frase qui sotto e non cambia le regole.",
-    "empty": "Nessun Echo per ora. Dopo l'accesso compaiono qui.",
+    "help": "Spunta i dispositivi o i gruppi da provare. La prova usa la frase qui sotto e non cambia le tue regole.",
+    "empty": "Nessun Echo per ora. Quando l'account ha fatto l'accesso nella sua voce di Integrazioni, compaiono qui.",
     "mode": "Come parla",
-    "modeSpeak": "Parla (rispetta le ore di silenzio)",
-    "modeAnnounce": "Annuncio (suono, poi voce)",
+    "modeSpeak": "Parla (valgono le ore di silenzio)",
+    "modeAnnounce": "Annuncia (suono, poi voce)",
     "volume": "Volume",
     "phrase": "Frase di prova",
     "phraseDefault": "Questa è una prova di CamStack.",
@@ -38,10 +35,9 @@
     "group": "Gruppo"
   },
   "session": {
-    "age": "Accesso effettuato {{seconds}} secondi fa"
+    "age": "Accesso eseguito {{seconds}}s fa"
   },
   "actions": {
-    "differentAccount": "Usa un altro account",
-    "working": "Operazione in corso…"
+    "working": "In corso…"
   }
 }

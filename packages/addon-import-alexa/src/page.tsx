@@ -3,67 +3,54 @@ import './index.css'
 import { useEffect, useState } from 'react'
 import { useAddonsCustom, type AddonPageProps } from '@camstack/ui-library'
 import { AlexaSpeakSetupView, type SpeakSetupViewProps } from './speak-setup-view.js'
-import { shotStep, SAMPLE_ECHOES } from './speak/setup-sample.js'
-import type { AlexaRegion, SpeakMode } from './speak/constants.js'
-import type { SetupPhase } from './speak/setup-flow.js'
-import { reduceSetup } from './speak/setup-flow.js'
-import { LoginResultSchema, SpeakStatusSchema } from './speak/actions.js'
-import type { EchoDevice } from './speak/worker-protocol.js'
+import { sampleStatus, shotStep, type ShotStep } from './speak/setup-sample.js'
+import type { SpeakMode } from './speak/constants.js'
+import { SpeakStatusSchema, type SpeakStatus } from './speak/actions.js'
 import { useT } from './i18n/index.js'
 
 const ADDON_ID = 'import-alexa'
 
 function noop(): void {}
 
-function shotProps(phase: SetupPhase, phrase: string): SpeakSetupViewProps {
-  const devices: readonly EchoDevice[] = phase === 'devices' ? SAMPLE_ECHOES : []
+function viewProps(
+  status: SpeakStatus,
+  phrase: string,
+  overrides: Partial<SpeakSetupViewProps> = {},
+): SpeakSetupViewProps {
   return {
-    phase,
-    email: phase === 'sign-in' ? '' : 'ada@example.com',
-    password: '',
-    region: 'EU',
-    otp: '',
-    devices,
-    selected: new Set(phase === 'devices' ? ['echo-kitchen', 'group-downstairs'] : []),
+    brokers: status.brokers,
+    brokerId: status.brokers[0]?.id ?? '',
+    notice: status.notice,
+    unassignedTargets: status.unassignedTargets,
+    selected: new Set(['echo-kitchen', 'group-downstairs']),
     mode: 'speak',
     volume: 40,
     phrase,
     busy: false,
     error: null,
-    sessionAgeSec: phase === 'devices' ? 90 : null,
-    onEmail: noop,
-    onPassword: noop,
-    onRegion: noop,
-    onOtp: noop,
+    onBroker: noop,
     onToggle: noop,
     onMode: noop,
     onVolume: noop,
     onPhrase: noop,
-    onSignIn: noop,
-    onOtpSubmit: noop,
     onSendTest: noop,
-    onReset: noop,
+    ...overrides,
   }
 }
 
-function ShotPage({ phase }: { readonly phase: SetupPhase }) {
+function ShotPage({ step }: { readonly step: ShotStep }) {
   const { t } = useT()
-  return <AlexaSpeakSetupView {...shotProps(phase, t('devices.phraseDefault'))} />
+  return <AlexaSpeakSetupView {...viewProps(sampleStatus(step), t('devices.phraseDefault'))} />
 }
 
 interface LiveState {
-  readonly phase: SetupPhase
-  readonly email: string
-  readonly password: string
-  readonly region: AlexaRegion
-  readonly otp: string
-  readonly devices: readonly EchoDevice[]
+  readonly status: SpeakStatus
+  readonly brokerId: string
   readonly selected: ReadonlySet<string>
   readonly mode: SpeakMode
   readonly volume: number
   readonly phrase: string
   readonly error: string | null
-  readonly sessionAgeSec: number | null
 }
 
 function clampVolume(value: number, fallback: number): number {
@@ -75,18 +62,13 @@ function LivePage() {
   const { t } = useT()
   const custom = useAddonsCustom()
   const [state, setState] = useState<LiveState>({
-    phase: 'sign-in',
-    email: '',
-    password: '',
-    region: 'EU',
-    otp: '',
-    devices: [],
+    status: { brokers: [], unassignedTargets: 0, notice: '' },
+    brokerId: '',
     selected: new Set<string>(),
     mode: 'speak',
     volume: 40,
     phrase: t('devices.phraseDefault'),
     error: null,
-    sessionAgeSec: null,
   })
 
   async function call(action: string, input: unknown): Promise<unknown> {
@@ -104,106 +86,59 @@ function LivePage() {
     if (!parsed.success) return
     setState((current) => ({
       ...current,
-      phase: parsed.data.phase,
-      email: parsed.data.email,
-      region: parsed.data.region,
-      devices: parsed.data.devices,
-      sessionAgeSec: parsed.data.session.loggedIn ? parsed.data.session.ageSec : null,
+      status: parsed.data,
+      brokerId: parsed.data.brokers.some((row) => row.id === current.brokerId)
+        ? current.brokerId
+        : (parsed.data.brokers[0]?.id ?? ''),
       error: null,
     }))
   }
 
   useEffect(() => {
     void loadStatus()
-    // The first paint asks once. Later steps refresh themselves.
+    // The first paint asks once. A test send refreshes itself.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
     <AlexaSpeakSetupView
-      phase={state.phase}
-      email={state.email}
-      password={state.password}
-      region={state.region}
-      otp={state.otp}
-      devices={state.devices}
-      selected={state.selected}
-      mode={state.mode}
-      volume={state.volume}
-      phrase={state.phrase}
-      busy={custom.isPending}
-      error={state.error}
-      sessionAgeSec={state.sessionAgeSec}
-      onEmail={(email) => setState((current) => ({ ...current, email }))}
-      onPassword={(password) => setState((current) => ({ ...current, password }))}
-      onRegion={(region) => setState((current) => ({ ...current, region }))}
-      onOtp={(otp) => setState((current) => ({ ...current, otp }))}
-      onToggle={(id) =>
-        setState((current) => {
-          const selected = new Set(current.selected)
-          if (selected.has(id)) selected.delete(id)
-          else selected.add(id)
-          return { ...current, selected }
-        })
-      }
-      onMode={(mode) => setState((current) => ({ ...current, mode }))}
-      onVolume={(volume) =>
-        setState((current) => ({ ...current, volume: clampVolume(volume, current.volume) }))
-      }
-      onPhrase={(phrase) => setState((current) => ({ ...current, phrase }))}
-      onSignIn={() => {
-        void call('loginStart', {
-          email: state.email,
-          password: state.password,
-          region: state.region,
-        }).then((raw) => {
-          const parsed = LoginResultSchema.safeParse(raw)
-          if (!parsed.success) return
-          setState((current) => ({
-            ...current,
-            phase: reduceSetup(current.phase, { type: 'login', status: parsed.data.status }),
-            error: parsed.data.error ?? null,
-            password: '',
-          }))
-          if (parsed.data.status === 'ok') void loadStatus()
-        })
-      }}
-      onOtpSubmit={() => {
-        void call('loginOtp', { code: state.otp }).then((raw) => {
-          const parsed = LoginResultSchema.safeParse(raw)
-          if (!parsed.success) return
-          setState((current) => ({
-            ...current,
-            phase: reduceSetup(current.phase, { type: 'otp', status: parsed.data.status }),
-            error: parsed.data.error ?? null,
-          }))
-          if (parsed.data.status === 'ok') void loadStatus()
-        })
-      }}
-      onSendTest={() => {
-        void call('sendTest', {
-          echoIds: [...state.selected],
-          mode: state.mode,
-          volume: state.volume,
-          text: state.phrase,
-        })
-      }}
-      onReset={() =>
-        setState((current) => ({
-          ...current,
-          phase: 'sign-in',
-          otp: '',
-          password: '',
-          error: null,
-        }))
-      }
+      {...viewProps(state.status, state.phrase, {
+        brokerId: state.brokerId,
+        selected: state.selected,
+        mode: state.mode,
+        volume: state.volume,
+        busy: custom.isPending,
+        error: state.error,
+        onBroker: (brokerId) =>
+          setState((current) => ({ ...current, brokerId, selected: new Set<string>() })),
+        onToggle: (id) =>
+          setState((current) => {
+            const selected = new Set(current.selected)
+            if (selected.has(id)) selected.delete(id)
+            else selected.add(id)
+            return { ...current, selected }
+          }),
+        onMode: (mode) => setState((current) => ({ ...current, mode })),
+        onVolume: (volume) =>
+          setState((current) => ({ ...current, volume: clampVolume(volume, current.volume) })),
+        onPhrase: (phrase) => setState((current) => ({ ...current, phrase })),
+        onSendTest: () => {
+          void call('sendTest', {
+            brokerId: state.brokerId,
+            echoIds: [...state.selected],
+            mode: state.mode,
+            volume: state.volume,
+            text: state.phrase,
+          }).then(() => loadStatus())
+        },
+      })}
     />
   )
 }
 
 export default function AlexaSpeakPage(_props: AddonPageProps) {
   const shot = shotStep()
-  if (shot !== null) return <ShotPage phase={shot} />
+  if (shot !== null) return <ShotPage step={shot} />
   return <LivePage />
 }
 

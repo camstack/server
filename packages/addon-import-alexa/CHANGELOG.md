@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Echo speech signs in as the import broker (its refresh token) instead of a
+  separate Amazon login; one worker and one cookie jar per broker. The Speak
+  on Echo page no longer signs in. An old standalone login migrates onto the
+  single broker, or is dropped with a named state when there are none or several.
+- The Alexa target form picks the Echo from the account's device list.
+- The Alexa kind serves the Alexa brand mark as its icon.
+
 ### Added
 
 - Package README and changelog, included in the published files list.

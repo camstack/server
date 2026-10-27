@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Button,
   Checkbox,
@@ -6,156 +5,124 @@ import {
   ErrorBox,
   Input,
   Label,
-  PasswordInput,
   SECTION_BODY,
   STACK_GAP,
   SectionCard,
   Select,
   StatusBadge,
+  type StatusBadgeStatus,
 } from '@camstack/ui-library'
 import { Megaphone } from 'lucide-react'
-import type { AlexaRegion, SpeakMode } from './speak/constants.js'
-import type { SetupPhase } from './speak/setup-flow.js'
-import type { EchoDevice } from './speak/worker-protocol.js'
+import type { SpeakStatus } from './speak/actions.js'
+import type { SpeakMode } from './speak/constants.js'
 import { useT } from './i18n/index.js'
 
+export type SpeakBrokerStatus = SpeakStatus['brokers'][number]
+
 export interface SpeakSetupViewProps {
-  readonly phase: SetupPhase
-  readonly email: string
-  readonly password: string
-  readonly region: AlexaRegion
-  readonly otp: string
-  readonly devices: readonly EchoDevice[]
+  readonly brokers: readonly SpeakBrokerStatus[]
+  readonly brokerId: string
+  readonly notice: SpeakStatus['notice']
+  readonly unassignedTargets: number
   readonly selected: ReadonlySet<string>
   readonly mode: SpeakMode
   readonly volume: number
   readonly phrase: string
   readonly busy: boolean
   readonly error: string | null
-  readonly sessionAgeSec: number | null
-  readonly onEmail: (value: string) => void
-  readonly onPassword: (value: string) => void
-  readonly onRegion: (value: AlexaRegion) => void
-  readonly onOtp: (value: string) => void
+  readonly onBroker: (id: string) => void
   readonly onToggle: (id: string) => void
   readonly onMode: (value: SpeakMode) => void
   readonly onVolume: (value: number) => void
   readonly onPhrase: (value: string) => void
-  readonly onSignIn: () => void
-  readonly onOtpSubmit: () => void
   readonly onSendTest: () => void
-  readonly onReset: () => void
-}
-
-function regionOf(value: string): AlexaRegion {
-  if (value === 'NA' || value === 'FE') return value
-  return 'EU'
 }
 
 function modeOf(value: string): SpeakMode {
   return value === 'announce' ? 'announce' : 'speak'
 }
 
+function badgeOf(state: SpeakBrokerStatus['state']): StatusBadgeStatus {
+  if (state === 'ready') return 'online'
+  if (state === 'failed') return 'error'
+  return 'idle'
+}
+
 export function AlexaSpeakSetupView(props: SpeakSetupViewProps) {
   const { t } = useT()
-  const [passwordShown, setPasswordShown] = useState(false)
+  const broker = props.brokers.find((row) => row.id === props.brokerId) ?? props.brokers[0]
+  const stateLabel: Record<SpeakBrokerStatus['state'], string> = {
+    ready: t('state.ready'),
+    starting: t('state.starting'),
+    'broker-not-signed-in': t('state.notSignedIn'),
+    failed: t('state.failed'),
+  }
   return (
     <div className={`mx-auto flex max-w-3xl flex-col ${STACK_GAP} p-2 sm:p-4`}>
       <SectionCard headingId="alexa-speak-intro" title={t('page.title')} icon={Megaphone}>
         <p className={`${SECTION_BODY} text-sm text-foreground-muted`}>{t('page.intro')}</p>
       </SectionCard>
       {props.error !== null && props.error.length > 0 ? <ErrorBox message={props.error} /> : null}
-      {props.phase === 'sign-in' ? (
-        <SectionCard headingId="alexa-speak-signin" title={t('signIn.submit')}>
-          <form
-            className={`${SECTION_BODY} flex flex-col gap-3`}
-            onSubmit={(event) => {
-              event.preventDefault()
-              props.onSignIn()
-            }}
-          >
-            <Label htmlFor="alexa-email">{t('signIn.email')}</Label>
-            <Input
-              id="alexa-email"
-              type="email"
-              autoComplete="username"
-              value={props.email}
-              onChange={(event) => props.onEmail(event.target.value)}
-            />
-            <Label htmlFor="alexa-password">{t('signIn.password')}</Label>
-            <PasswordInput
-              id="alexa-password"
-              autoComplete="current-password"
-              value={props.password}
-              shown={passwordShown}
-              onToggleShown={() => setPasswordShown((shown) => !shown)}
-              onValueChange={props.onPassword}
-            />
-            <Label htmlFor="alexa-region">{t('signIn.region')}</Label>
-            <Select
-              id="alexa-region"
-              value={props.region}
-              options={[
-                { value: 'NA', label: t('signIn.regionNa') },
-                { value: 'EU', label: t('signIn.regionEu') },
-                { value: 'FE', label: t('signIn.regionFe') },
-              ]}
-              onChange={(event) => props.onRegion(regionOf(event.target.value))}
-            />
-            <Button type="submit" disabled={props.busy}>
-              {props.busy ? t('actions.working') : t('signIn.submit')}
-            </Button>
-          </form>
-        </SectionCard>
+      {props.notice !== '' ? (
+        <ErrorBox
+          variant="warning"
+          message={
+            <>
+              <span className="block">
+                {props.notice === 'no-broker' ? t('notice.noBroker') : t('notice.chooseBroker')}
+              </span>
+              <span className="mt-1 block text-xs">
+                {t('notice.waiting', { count: props.unassignedTargets })}
+              </span>
+            </>
+          }
+        />
       ) : null}
-      {props.phase === 'otp' ? (
-        <SectionCard headingId="alexa-speak-otp" title={t('otp.title')}>
-          <form
-            className={`${SECTION_BODY} flex flex-col gap-3`}
-            onSubmit={(event) => {
-              event.preventDefault()
-              props.onOtpSubmit()
-            }}
-          >
-            <p className="text-sm text-foreground-muted">{t('otp.help')}</p>
-            <Label htmlFor="alexa-otp">{t('otp.code')}</Label>
-            <Input
-              id="alexa-otp"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={props.otp}
-              onChange={(event) => props.onOtp(event.target.value)}
-            />
-            <Button type="submit" disabled={props.busy}>
-              {props.busy ? t('actions.working') : t('otp.submit')}
-            </Button>
-          </form>
-        </SectionCard>
-      ) : null}
-      {props.phase === 'captcha' ? (
-        <SectionCard headingId="alexa-speak-captcha" title={t('captcha.title')}>
-          <div className={`${SECTION_BODY} flex flex-col gap-3`}>
-            <p className="text-sm text-foreground-muted">{t('captcha.help')}</p>
-            <Button type="button" variant="secondary" onClick={props.onReset}>
-              {t('actions.differentAccount')}
-            </Button>
+      {broker === undefined ? (
+        <SectionCard headingId="alexa-speak-accounts" title={t('accounts.label')}>
+          <div className={SECTION_BODY}>
+            <EmptyState title={t('accounts.none')} />
           </div>
         </SectionCard>
-      ) : null}
-      {props.phase === 'devices' ? (
+      ) : (
         <SectionCard headingId="alexa-speak-devices" title={t('devices.title')}>
           <div className={`${SECTION_BODY} flex flex-col gap-3`}>
-            <p className="text-sm text-foreground-muted">{t('devices.help')}</p>
-            {props.sessionAgeSec !== null ? (
-              <p className="text-xs text-foreground-subtle">
-                {t('session.age', { seconds: props.sessionAgeSec })}
-              </p>
+            {props.brokers.length > 1 ? (
+              <>
+                <Label htmlFor="alexa-broker">{t('accounts.label')}</Label>
+                <Select
+                  id="alexa-broker"
+                  value={broker.id}
+                  options={props.brokers.map((row) => ({ value: row.id, label: row.name }))}
+                  onChange={(event) => props.onBroker(event.target.value)}
+                />
+              </>
             ) : null}
-            {props.devices.length === 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-foreground">{broker.name}</span>
+              <StatusBadge
+                status={badgeOf(broker.state)}
+                label={stateLabel[broker.state]}
+                size="sm"
+              />
+              {broker.state === 'ready' && broker.session.loggedIn ? (
+                <span className="text-xs text-foreground-subtle">
+                  {t('session.age', { seconds: broker.session.ageSec })}
+                </span>
+              ) : null}
+            </div>
+            {broker.state === 'broker-not-signed-in' ? (
+              <p className="text-sm text-foreground-muted">{t('state.notSignedInHelp')}</p>
+            ) : null}
+            {broker.state === 'failed' && broker.error !== undefined ? (
+              <ErrorBox message={broker.error} />
+            ) : null}
+            <p className="text-sm text-foreground-muted">{t('devices.help')}</p>
+            {broker.devices.length === 0 ? (
               <EmptyState title={t('devices.empty')} />
             ) : (
               <ul className="divide-y divide-border rounded-md border border-border">
-                {props.devices.map((device) => (
+                {broker.devices.map((device) => (
                   <li key={device.id} className="flex items-center gap-3 px-3 py-2">
                     <Checkbox
                       checked={props.selected.has(device.id)}
@@ -165,7 +132,9 @@ export function AlexaSpeakSetupView(props: SpeakSetupViewProps) {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm text-foreground">{device.name}</p>
                       <p className="truncate text-xs text-foreground-subtle">
-                        {device.kind === 'group' ? t('devices.group') : device.family}
+                        {[device.room, device.kind === 'group' ? t('devices.group') : device.family]
+                          .filter((part): part is string => part !== undefined && part.length > 0)
+                          .join(' · ')}
                       </p>
                     </div>
                     <StatusBadge status={device.online ? 'online' : 'offline'} size="sm" />
@@ -204,18 +173,15 @@ export function AlexaSpeakSetupView(props: SpeakSetupViewProps) {
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                disabled={props.busy || props.selected.size === 0}
+                disabled={props.busy || props.selected.size === 0 || broker.state !== 'ready'}
                 onClick={props.onSendTest}
               >
                 {props.busy ? t('actions.working') : t('devices.send')}
               </Button>
-              <Button type="button" variant="secondary" onClick={props.onReset}>
-                {t('actions.differentAccount')}
-              </Button>
             </div>
           </div>
         </SectionCard>
-      ) : null}
+      )}
     </div>
   )
 }

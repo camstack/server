@@ -41,7 +41,7 @@ import { mapCommandToAlexaAction } from './alexa-command-map.js'
  * keeps running).
  */
 
-const SESSION_FILE = 'alexa-session.json'
+export const SESSION_FILE = 'alexa-session.json'
 
 const BACKOFF_BASE_MS = 1_000
 const BACKOFF_MAX_MS = 30_000

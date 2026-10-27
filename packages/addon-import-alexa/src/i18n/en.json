@@ -1,31 +1,28 @@
 {
   "page": {
     "title": "Speak on Echo",
-    "intro": "CamStack reads the notification text aloud on the Echo devices you pick. Sign in with the Amazon account those devices use. Amazon may ask for a one-time code."
+    "intro": "CamStack reads the notification text aloud on your Echo devices, through the Amazon accounts you already link under Integrations, Alexa. There is nothing to sign in to here. Add the targets from Notifications, Targets."
   },
-  "signIn": {
-    "email": "Amazon email",
-    "password": "Amazon password",
-    "region": "Region",
-    "regionNa": "North America",
-    "regionEu": "Europe",
-    "regionFe": "Far East",
-    "submit": "Sign in"
+  "accounts": {
+    "label": "Amazon account",
+    "none": "No Amazon account is linked yet. Link one under Integrations, Alexa, and its Echo devices show up here."
   },
-  "otp": {
-    "title": "Enter the code Amazon sent",
-    "help": "Open the authenticator app or the text Amazon sent, then type the code. It is used once.",
-    "code": "One-time code",
-    "submit": "Continue"
+  "state": {
+    "ready": "Ready",
+    "starting": "Starting",
+    "notSignedIn": "Waiting for sign-in",
+    "failed": "Could not sign in",
+    "notSignedInHelp": "This account has not signed in on its Integrations entry yet. Sign it in there, and speech starts a moment later without any step here."
   },
-  "captcha": {
-    "title": "Amazon asked for a captcha",
-    "help": "This page cannot show Amazon's picture puzzle. Wait a few minutes, then sign in again."
+  "notice": {
+    "noBroker": "Some Echo targets came from the old Speak on Echo sign-in, which no longer exists. Link your Amazon account under Integrations, Alexa, then open each target and pick the account.",
+    "chooseBroker": "Some Echo targets do not name an Amazon account yet, and several accounts are linked. Open each target and pick the account it speaks through.",
+    "waiting": "Targets waiting for an account: {{count}}"
   },
   "devices": {
     "title": "Echo devices",
-    "help": "Tick the devices or groups that should speak. A test uses the phrase below and does not change your rules.",
-    "empty": "No Echo devices yet. After you sign in, they show up here.",
+    "help": "Tick the devices or groups to try. A test uses the phrase below and does not change your rules.",
+    "empty": "No Echo devices yet. Once the account is signed in on its Integrations entry, they show up here.",
     "mode": "How it speaks",
     "modeSpeak": "Speak (quiet hours apply)",
     "modeAnnounce": "Announce (chime, then speech)",
@@ -41,7 +38,6 @@
     "age": "Signed in {{seconds}}s ago"
   },
   "actions": {
-    "differentAccount": "Use a different account",
     "working": "Working…"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Hand a password or a saved Amazon session to the Python worker as an
+ * Hand a refresh token or a saved Amazon session to the Python worker as an
  * owner-only file. The path travels on stdin. The bytes never travel on
  * argv or in the environment, and they are removed when the call settles.
  */
@@ -12,12 +12,13 @@ const REDACTED = '‹redacted›'
 
 export interface SpeakSecretPaths {
   readonly dir: string
-  readonly passwordPath: string
+  readonly refreshTokenPath: string
   readonly sessionPath: string
 }
 
 export interface SpeakSecretInput {
-  readonly password: string
+  /** The broker's refresh token. Empty when the broker has none. */
+  readonly refreshToken: string
   /** Base64 of the cookie blob alexapy last wrote. Empty when there is none. */
   readonly sessionB64: string
 }
@@ -39,7 +40,7 @@ async function readSessionB64(sessionPath: string): Promise<string> {
 }
 
 /**
- * Create a 0700 directory, write the password and the session 0600, run
+ * Create a 0700 directory, write the refresh token and the session 0600, run
  * `body`, then delete the directory whether `body` succeeded or threw.
  * Returns the session file as base64 so the caller can store it in the keychain.
  */
@@ -50,12 +51,12 @@ export async function withSpeakSecretFiles(
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'camstack-alexa-'))
   const paths: SpeakSecretPaths = {
     dir,
-    passwordPath: path.join(dir, 'password'),
+    refreshTokenPath: path.join(dir, 'refresh-token'),
     sessionPath: path.join(dir, 'session'),
   }
   try {
     restrictDirToOwnerSync(dir)
-    writeOwnerOnlyFileSync(paths.passwordPath, input.password)
+    writeOwnerOnlyFileSync(paths.refreshTokenPath, input.refreshToken)
     writeOwnerOnlyFileSync(paths.sessionPath, decodeSession(input.sessionB64))
     await body(paths)
     return { sessionB64: await readSessionB64(paths.sessionPath) }

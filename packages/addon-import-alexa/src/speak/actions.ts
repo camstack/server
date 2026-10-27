@@ -1,38 +1,33 @@
 import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
-import { ALEXA_REGIONS, SPEECH_MAX_CHARS } from './constants.js'
-import { EchoDeviceSchema, LoginStatusSchema, SessionStatusSchema } from './worker-protocol.js'
+import { SPEECH_MAX_CHARS } from './constants.js'
+import { EchoDeviceSchema, SessionStatusSchema } from './worker-protocol.js'
 
-export const SpeakStatusSchema = z.object({
-  phase: z.enum(['sign-in', 'otp', 'captcha', 'devices']),
-  email: z.string(),
-  region: z.enum(ALEXA_REGIONS),
+export const BrokerEchoStateSchema = z.enum(['starting', 'ready', 'broker-not-signed-in', 'failed'])
+
+export const SpeakBrokerStatusSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  state: BrokerEchoStateSchema,
+  error: z.string().optional(),
   devices: z.array(EchoDeviceSchema),
   session: SessionStatusSchema,
 })
 
-export const LoginResultSchema = z.object({
-  status: LoginStatusSchema,
-  error: z.string().optional(),
+export const SpeakStatusSchema = z.object({
+  brokers: z.array(SpeakBrokerStatusSchema),
+  /** Targets that name no Amazon account yet (they cannot speak until one is chosen). */
+  unassignedTargets: z.number().int().nonnegative(),
+  /** What the old standalone login left behind, named; '' when nothing is pending. */
+  notice: z.enum(['', 'no-broker', 'choose-broker']),
 })
+export type SpeakStatus = z.infer<typeof SpeakStatusSchema>
 
 export const alexaSpeakActions = defineCustomActions({
   speakStatus: customAction(z.object({}), SpeakStatusSchema, { kind: 'mutation', auth: 'admin' }),
-  loginStart: customAction(
-    z.object({
-      email: z.string().min(1),
-      password: z.string().min(1).meta({ secret: true }),
-      region: z.enum(ALEXA_REGIONS),
-    }),
-    LoginResultSchema,
-    { kind: 'mutation', auth: 'admin' },
-  ),
-  loginOtp: customAction(z.object({ code: z.string().min(1).max(12) }), LoginResultSchema, {
-    kind: 'mutation',
-    auth: 'admin',
-  }),
   sendTest: customAction(
     z.object({
+      brokerId: z.string().min(1),
       echoIds: z.array(z.string().min(1)).min(1),
       mode: z.enum(['speak', 'announce']),
       volume: z.number().int().min(0).max(100),

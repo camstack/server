@@ -1,34 +1,47 @@
 """alexapy adapter. Imported only when the worker starts, so unit tests can mock the gateway.
 
-Never log the password, the cookie blob, or the session file contents.
+Never log the refresh token, the cookie blob, or the session file contents.
 """
 
 from __future__ import annotations
 
-import asyncio
 import time
 from pathlib import Path
 
 from alexa_sequences import EchoTarget
 
-REGION_URL = {
-    "NA": "https://alexa.amazon.com",
-    "EU": "https://alexa.amazon.co.uk",
-    "FE": "https://alexa.amazon.co.jp",
-}
+REGIONS = ("NA", "EU", "FE")
 
 
 def classify_login(status: dict) -> str:
-    if status.get("login_successful") is True:
-        return "ok"
-    failed = str(status.get("login_failed") or status.get("error_message") or "").lower()
-    if "captcha" in failed:
-        return "captcha"
-    if any(word in failed for word in ("otp", "2fa", "mfa", "verification code", "one-time")):
-        return "otp_needed"
-    if failed == "" and status.get("login_successful") is not True:
-        return "failed"
-    return "failed"
+    """The worker signs in with the broker's token, so a sign-in either works or it does not."""
+    return "ok" if status.get("login_successful") is True else "failed"
+
+
+def bare_domain(domain: str) -> str:
+    """alexapy wants the registrable Amazon domain: no scheme, no `www.` or `alexa.` host."""
+    text = domain.strip().lower()
+    for prefix in ("https://", "http://"):
+        if text.startswith(prefix):
+            text = text[len(prefix) :]
+    text = text.split("/", 1)[0]
+    for host in ("www.", "alexa."):
+        if text.startswith(host):
+            text = text[len(host) :]
+    return text or "amazon.com"
+
+
+def session_output(session_path: str):
+    """alexapy asks a callable where each of its files goes. Its primary cookie jar
+    is ours: the file the addon keeps (in the keychain) between runs."""
+    session = Path(session_path)
+
+    def output(name: str) -> str:
+        if name.startswith(".storage/") and name.endswith(".pickle"):
+            return str(session)
+        return str(session.parent / name.replace("/", "_"))
+
+    return output
 
 
 def normalize_device(raw: dict) -> dict | None:
@@ -40,7 +53,8 @@ def normalize_device(raw: dict) -> dict | None:
     online = bool(raw.get("online", True))
     dnd = bool(raw.get("dnd") or raw.get("dndEnabled"))
     kind = "group" if family.upper() == "WHA" else "device"
-    return {
+    room = str(raw.get("roomName") or raw.get("room") or "")
+    result = {
         "id": serial,
         "name": name,
         "family": family,
@@ -50,10 +64,13 @@ def normalize_device(raw: dict) -> dict | None:
         "deviceType": str(raw.get("deviceType") or raw.get("deviceTypeId") or ""),
         "customerId": str(raw.get("deviceOwnerCustomerId") or raw.get("customerId") or ""),
     }
+    if room != "":
+        result["room"] = room
+    return result
 
 
 class AlexaPyGateway:
-    """Holds one AlexaLogin for the life of the process."""
+    """Holds one AlexaLogin for the life of the process (one process per broker)."""
 
     def __init__(self) -> None:
         self._login = None
@@ -78,27 +95,39 @@ class AlexaPyGateway:
                 }
         return None
 
-    async def login_start(self, email: str, password: str, region: str, session_path: str) -> dict:
-        self._region = region if region in REGION_URL else "EU"
-        self._session_path = session_path
-        url = REGION_URL[self._region]
-        AlexaLogin, _AlexaAPI = _import_alexapy()
-        output = str(Path(session_path).parent)
-        self._login = AlexaLogin(url, email, password, output, False)
-        cookies = await _load_session(self._login, session_path)
-        await self._login.login(cookies=cookies)
-        await self._persist_session()
-        return self._status_result()
+    async def login_broker(
+        self,
+        label: str,
+        refresh_token: str,
+        device_app_name: str,
+        domain: str,
+        region: str,
+        session_path: str,
+    ) -> dict:
+        """Sign in as the account an import broker already signed in as.
 
-    async def login_otp(self, code: str, session_path: str = "") -> dict:
-        if session_path != "":
-            self._session_path = session_path
-        login = self._require_login()
-        submit = getattr(login, "submit_otp", None)
-        if callable(submit):
-            await submit(code)
-        else:
-            await login.login(data={"otpCode": code})
+        The broker's refresh token is exchanged for this session's cookies; with
+        no token, the jar stored from an earlier run is tried. `label` is not an
+        e-mail address, so alexapy takes it as a mobile account and does not
+        compare it with the account's address.
+        """
+        self._region = region if region in REGIONS else "EU"
+        self._session_path = session_path
+        AlexaLogin, _AlexaAPI = _import_alexapy()
+        oauth = {"refresh_token": refresh_token} if refresh_token != "" else {}
+        login = AlexaLogin(
+            bare_domain(domain), label, "", session_output(session_path), False, oauth=oauth
+        )
+        self._login = login
+        if refresh_token != "":
+            exchanged = await _exchange_refresh_token(login, device_app_name)
+            if not exchanged:
+                return {"status": "failed", "error": "Amazon did not accept the broker's token"}
+            await login.save_cookiefile()
+        cookies = await login.load_cookie()
+        if not cookies:
+            return {"status": "failed", "error": "no Amazon session to start from"}
+        await login.login(cookies=cookies)
         await self._persist_session()
         return self._status_result()
 
@@ -118,7 +147,11 @@ class AlexaPyGateway:
         self._devices = devices
         self._touch_success()
         public = [
-            {key: device[key] for key in ("id", "name", "family", "online", "kind", "dnd", "deviceType")}
+            {
+                key: device[key]
+                for key in ("id", "name", "family", "online", "kind", "dnd", "deviceType", "room")
+                if key in device
+            }
             for device in devices
         ]
         return {"devices": public}
@@ -159,8 +192,7 @@ class AlexaPyGateway:
             self._touch_success()
         result: dict = {"status": kind}
         if kind == "failed":
-            # The library's message can echo the account. Never include the password:
-            # the caller already scrubbed it before it reached us, and we do not attach it.
+            # Never attach the token: the library's message can echo the account, not our secret.
             failed = str(status.get("login_failed") or status.get("error_message") or "login failed")
             result["error"] = failed[:300]
         return result
@@ -172,12 +204,7 @@ class AlexaPyGateway:
         login = self._login
         if login is None or self._session_path == "":
             return
-        save = getattr(login, "save_cookie", None)
-        if not callable(save):
-            return
-        result = save(self._session_path)
-        if asyncio.iscoroutine(result):
-            await result
+        await login.save_cookiefile()
 
 
 def _import_alexapy():
@@ -186,14 +213,14 @@ def _import_alexapy():
     return AlexaLogin, AlexaAPI
 
 
-async def _load_session(login, session_path: str):
-    path = Path(session_path)
-    if not path.is_file() or path.stat().st_size == 0:
-        return None
-    load = getattr(login, "load_cookie", None)
-    if not callable(load):
-        return None
-    loaded = load(session_path)
-    if asyncio.iscoroutine(loaded):
-        return await loaded
-    return loaded
+async def _exchange_refresh_token(login, device_app_name: str) -> bool:
+    """Trade the broker's refresh token for cookies, under the name that token was registered with."""
+    import alexapy.alexalogin as module
+
+    previous = module.APP_NAME
+    if device_app_name != "":
+        module.APP_NAME = device_app_name
+    try:
+        return bool(await login.exchange_token_for_cookies())
+    finally:
+        module.APP_NAME = previous

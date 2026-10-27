@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { scrubSecrets, withSpeakSecretFiles } from '../speak/secret-file.js'
 import { recordWorkerCrash, startAlexaWorker, type WorkerChild } from '../speak/worker-client.js'
 
-const PASSWORD = 'super-secret-password-9f3a'
+const PASSWORD = 'refresh-token-secret-9f3a'
 
 function loggerCapture(): { logger: IScopedLogger; warnings: string[] } {
   const warnings: string[] = []
@@ -78,7 +78,7 @@ function fakePipe(): FakePipe {
 }
 
 describe('speak secrets and the worker', () => {
-  it('writes the password 0600 and does not put it on argv, env, stdin, or a log line', async () => {
+  it('writes the refresh token 0600 and does not put it on argv, env, stdin, or a log line', async () => {
     const pipe = fakePipe()
     const captured: { argv: string[]; env: NodeJS.ProcessEnv } = { argv: [], env: {} }
     const logs = loggerCapture()
@@ -94,19 +94,21 @@ describe('speak secrets and the worker', () => {
       },
     })
     worker.noteSecrets([PASSWORD])
-    await withSpeakSecretFiles({ password: PASSWORD, sessionB64: '' }, async (paths) => {
-      const mode = (await fs.stat(paths.passwordPath)).mode & 0o777
+    await withSpeakSecretFiles({ refreshToken: PASSWORD, sessionB64: '' }, async (paths) => {
+      const mode = (await fs.stat(paths.refreshTokenPath)).mode & 0o777
       expect(mode).toBe(0o600)
-      expect(await fs.readFile(paths.passwordPath, 'utf8')).toBe(PASSWORD)
+      expect(await fs.readFile(paths.refreshTokenPath, 'utf8')).toBe(PASSWORD)
       const pending = worker.request({
-        op: 'login_start',
-        email: 'a@example.com',
-        passwordPath: paths.passwordPath,
+        op: 'login_broker',
+        label: 'alexa_001',
+        refreshTokenPath: paths.refreshTokenPath,
+        deviceAppName: 'Registered',
+        domain: 'amazon.it',
         sessionPath: paths.sessionPath,
         region: 'EU',
       })
-      pipe.stderr(`traceback password=${PASSWORD}\n`)
-      pipe.reply({ id: '1', ok: true, result: { status: 'otp_needed' } })
+      pipe.stderr(`traceback token=${PASSWORD}\n`)
+      pipe.reply({ id: '1', ok: true, result: { status: 'ok' } })
       await pending
     })
     const argv = captured.argv.join(' ')
@@ -115,7 +117,7 @@ describe('speak secrets and the worker', () => {
     expect(argv).not.toContain(PASSWORD)
     expect(env).not.toContain(PASSWORD)
     expect(stdin).not.toContain(PASSWORD)
-    expect(stdin).toContain('passwordPath')
+    expect(stdin).toContain('refreshTokenPath')
     expect(logs.warnings.join('\n')).not.toContain(PASSWORD)
     expect(logs.warnings.join('\n')).toContain('‹redacted›')
     worker.stop()

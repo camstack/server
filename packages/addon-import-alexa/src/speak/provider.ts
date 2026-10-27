@@ -6,6 +6,8 @@
  * outbox does not speak the same sentence again later.
  */
 import {
+  type ConfigField,
+  type ConfigSelectField,
   type ConfigUISchema,
   type DiscoveredTarget,
   type INotificationOutputProvider,
@@ -18,6 +20,7 @@ import {
 } from '@camstack/types'
 import {
   ALEXA_SPEAK_ADDON_ID,
+  ALEXA_SPEAK_ICON_URL,
   ALEXA_SPEAK_KIND,
   type SpeakMode,
   SPEECH_MAX_CHARS,
@@ -44,16 +47,24 @@ export interface DeliveryRecord {
 }
 
 export interface SpeakCommand {
+  readonly brokerId: string
   readonly mode: SpeakMode
   readonly targets: readonly string[]
   readonly text: string
   readonly volume: number
 }
 
+/** One Amazon account (broker) as the provider sees it. */
+export interface SpeakBrokerView {
+  readonly id: string
+  readonly name: string
+  readonly ready: boolean
+  readonly devices: readonly EchoDevice[]
+}
+
 export interface AlexaSpeakPorts {
-  readonly devices: () => readonly EchoDevice[]
+  readonly brokers: () => readonly SpeakBrokerView[]
   readonly speak: (command: SpeakCommand) => Promise<readonly TargetDelivery[]>
-  readonly loggedIn: () => boolean
   readonly now: () => number
   readonly logger: IScopedLogger
   readonly loadTargets: () => readonly Target[]
@@ -99,7 +110,61 @@ function respectDnd(config: Record<string, unknown>): boolean {
   return config['respectDnd'] !== false
 }
 
-function configSchema(): ConfigUISchema {
+/** "Kitchen · Living room · ECHO" — the name first, then what tells two Echoes apart. */
+export function echoOptionLabel(device: EchoDevice): string {
+  const kind = device.kind === 'group' ? 'Group' : device.family
+  const parts = [device.name.length > 0 ? device.name : device.id]
+  if (device.room !== undefined && device.room.length > 0) parts.push(device.room)
+  if (kind.length > 0) parts.push(kind)
+  return parts.join(' · ')
+}
+
+function echoField(
+  devices: readonly EchoDevice[],
+  showWhen?: ConfigSelectField['showWhen'],
+): ConfigSelectField {
+  return {
+    type: 'select',
+    key: 'echoId',
+    label: 'Echo',
+    labelKey: 'import-alexa:echoTarget.s_echo.echoId.label',
+    description:
+      devices.length === 0
+        ? 'No Echo found yet. Sign the Amazon account in on Integrations, Alexa.'
+        : undefined,
+    descriptionKey:
+      devices.length === 0 ? 'import-alexa:echoTarget.s_echo.echoId.empty' : undefined,
+    options: devices.map((device) => ({ value: device.id, label: echoOptionLabel(device) })),
+    ...(showWhen === undefined ? {} : { showWhen }),
+  }
+}
+
+/**
+ * The two pickers are not `required`: a required select shows its first option
+ * while the form still holds no value, so a save would drop the choice. Left
+ * optional they open on "Select", and `upsertTarget` refuses an empty pick.
+ *
+ * The Echo picker is built from the accounts' own device lists on every call,
+ * so a new Echo shows up without a deploy. With one account there is no account
+ * field; with several, each account's Echoes appear when that account is chosen.
+ */
+function configSchema(brokers: readonly SpeakBrokerView[]): ConfigUISchema {
+  const first = brokers[0]
+  const accountFields: ConfigField[] =
+    brokers.length > 1
+      ? [
+          {
+            type: 'select',
+            key: 'brokerId',
+            label: 'Amazon account',
+            labelKey: 'import-alexa:echoTarget.s_echo.brokerId.label',
+            options: brokers.map((broker) => ({ value: broker.id, label: broker.name })),
+          },
+          ...brokers.map((broker) =>
+            echoField(broker.devices, { field: 'brokerId', equals: broker.id }),
+          ),
+        ]
+      : [echoField(first?.devices ?? [])]
   return {
     sections: [
       {
@@ -107,13 +172,7 @@ function configSchema(): ConfigUISchema {
         title: 'Echo',
         titleKey: 'import-alexa:echoTarget.s_echo.title',
         fields: [
-          {
-            type: 'text',
-            key: 'echoId',
-            label: 'Echo id',
-            labelKey: 'import-alexa:echoTarget.s_echo.echoId.label',
-            required: true,
-          },
+          ...accountFields,
           {
             type: 'select',
             key: 'mode',
@@ -147,15 +206,18 @@ function configSchema(): ConfigUISchema {
   }
 }
 
-function kindDescriptor(): TargetKind {
+/** The Alexa target kind as the Add target form sees it, for the accounts as they are now. */
+export function alexaTargetKind(brokers: readonly SpeakBrokerView[]): TargetKind {
   return {
     kind: ALEXA_SPEAK_KIND,
     label: 'Alexa',
     icon: 'megaphone',
+    iconUrl: ALEXA_SPEAK_ICON_URL,
+    iconMediaType: 'image/svg+xml',
     addonId: ALEXA_SPEAK_ADDON_ID,
     supportsDiscovery: true,
-    destinationKeys: ['echoId'],
-    configSchema: configSchema(),
+    destinationKeys: ['brokerId', 'echoId'],
+    configSchema: configSchema(brokers),
     caps: {
       attachments: { mediaTypes: [], mode: 'url', max: 0 },
       actions: 0,
@@ -170,11 +232,12 @@ function kindDescriptor(): TargetKind {
   }
 }
 
-function discoveredFrom(device: EchoDevice): DiscoveredTarget {
+function discoveredFrom(broker: SpeakBrokerView, device: EchoDevice): DiscoveredTarget {
   return {
     kind: ALEXA_SPEAK_KIND,
     suggestedName: device.name.length > 0 ? device.name : device.id,
     config: {
+      brokerId: broker.id,
       echoId: device.id,
       mode: 'speak',
       volume: 40,
@@ -195,8 +258,18 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
     deliveries = [...deliveries, row]
   }
 
-  function deviceFor(echoId: string): EchoDevice | undefined {
-    return ports.devices().find((device) => device.id === echoId)
+  /**
+   * The account a target speaks through: the one it names; else the only one
+   * there is; else the one whose Echoes include the target's Echo.
+   */
+  function brokerFor(config: Record<string, unknown>): SpeakBrokerView | undefined {
+    const all = ports.brokers()
+    const named = readString(config, 'brokerId')
+    if (named.length > 0) return all.find((broker) => broker.id === named)
+    if (all.length === 1) return all[0]
+    const echoId = readString(config, 'echoId')
+    const owners = all.filter((broker) => broker.devices.some((device) => device.id === echoId))
+    return owners.length === 1 ? owners[0] : undefined
   }
 
   function persist(next: readonly Target[]): void {
@@ -230,7 +303,17 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       })
       return { success: true, renderedAs: speech.renderedAs }
     }
-    const device = deviceFor(echoId)
+    const broker = brokerFor(target.config)
+    if (broker === undefined) {
+      const error = 'target has no Amazon account'
+      record({ targetId: target.id, outcome: 'failed', at: ports.now(), error })
+      logger.warn('alexa speak dropped: target names no Amazon account', {
+        ...tags,
+        meta: { targetId: target.id, echoId },
+      })
+      return { success: false, error, renderedAs: speech.renderedAs }
+    }
+    const device = broker.devices.find((row) => row.id === echoId)
     if (device !== undefined && respectDnd(target.config) && device.dnd) {
       record({ targetId: target.id, outcome: 'dnd', at: ports.now() })
       logger.info('alexa speak skipped: do not disturb', {
@@ -260,6 +343,7 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
     const mode = readMode(target.config)
     try {
       const outcomes = await ports.speak({
+        brokerId: broker.id,
         mode,
         targets: [echoId],
         text: speech.text,
@@ -292,7 +376,7 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return deliveries
     },
     async listTargetKinds() {
-      return [kindDescriptor()]
+      return [alexaTargetKind(ports.brokers())]
     },
     async listTargets() {
       return [...targets]
@@ -303,12 +387,31 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return found
     },
     async discoverTargets() {
-      return ports.devices().map(discoveredFrom)
+      // One proposal per Echo that no saved target already speaks on.
+      const taken = new Set(
+        targets.flatMap((row) => {
+          const owner = brokerFor(row.config)
+          return owner === undefined ? [] : [`${owner.id}/${readString(row.config, 'echoId')}`]
+        }),
+      )
+      return ports
+        .brokers()
+        .flatMap((broker) =>
+          broker.devices
+            .filter((device) => !taken.has(`${broker.id}/${device.id}`))
+            .map((device) => discoveredFrom(broker, device)),
+        )
     },
-    async probeTargetConfig() {
-      const result: ProbeTargetConfigResult = ports.loggedIn()
-        ? { ok: true, resolvedUrl: 'alexa://session' }
-        : { ok: false, resolvedUrl: 'alexa://session', error: 'not signed in' }
+    async probeTargetConfig(input) {
+      const broker = brokerFor(input.config)
+      const result: ProbeTargetConfigResult =
+        broker !== undefined && broker.ready
+          ? { ok: true, resolvedUrl: 'alexa://session' }
+          : {
+              ok: false,
+              resolvedUrl: 'alexa://session',
+              error: 'the Amazon account is not signed in on its broker',
+            }
       return result
     },
     async send(input) {
@@ -332,8 +435,22 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return deliver(found, sample)
     },
     async upsertTarget(input) {
+      const owner = brokerFor(input.target.config)
+      if (readString(input.target.config, 'echoId').length === 0) {
+        throw new Error('Pick the Echo that should speak')
+      }
+      if (owner === undefined) {
+        throw new Error('Pick the Amazon account this Echo belongs to')
+      }
+      // Pin the account the moment it is known, so a second account added later
+      // cannot silently change where an existing target speaks.
+      const pinned =
+        readString(input.target.config, 'brokerId').length === 0
+          ? { ...input.target.config, brokerId: owner.id }
+          : input.target.config
       const target: Target = {
         ...input.target,
+        config: pinned,
         addonId: ALEXA_SPEAK_ADDON_ID,
         kind: ALEXA_SPEAK_KIND,
       }

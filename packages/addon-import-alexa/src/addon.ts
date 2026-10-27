@@ -20,6 +20,7 @@ import {
   type IDeviceAdoptionProvider,
   notificationOutputCapability,
   type SystemEvent,
+  SECRET_CLEAR,
 } from '@camstack/types'
 import {
   alexaProxyLoginSchema,
@@ -39,11 +40,14 @@ import { alexaAccounts, alexaCommands } from './alexa-gateway.js'
 import type { AlexaAppliance, AlexaStateValue } from './alexa-client.js'
 import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
-import { alexaBrokersEntryKind } from './broker-record-kinds.js'
+import { alexaBrokersEntryKind, alexaSpeakSessionsEntryKind } from './broker-record-kinds.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import type { AlexaBrokerEntry } from './config.js'
 import { alexaSpeakActions } from './speak/actions.js'
+import { readBrokerSeed } from './speak/broker-seed.js'
 import { AlexaSpeakController } from './speak/controller.js'
+import { speakIconRoutes } from './speak/icon-routes.js'
+import { RecordsSpeakSessionStore } from './speak/session-store.js'
 
 export { alexaSpeakActions as customActions } from './speak/actions.js'
 
@@ -121,7 +125,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     if (records === undefined) {
       throw new Error('import-alexa: ctx.records is required (hub-only addon)')
     }
-    await records.declare({ brokers: alexaBrokersEntryKind })
+    await records.declare({
+      brokers: alexaBrokersEntryKind,
+      speakSessions: alexaSpeakSessionsEntryKind,
+    })
     this.brokerStore = AlexaBrokerStore.of(records)
     this.activeBrokers = await this.loadPersistedBrokers()
 
@@ -172,11 +179,14 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     await this.reconcileIntegrationsToBrokers()
     this.subscribeIntegrationLifecycle()
 
-    const loginRoutes = buildAlexaLoginRoutes({
-      logger: this.ctx.logger,
-      proxyLogin: this.proxyLogin,
-      commitCookie: (input) => this.commitCapturedCookie(input),
-    })
+    const loginRoutes = [
+      ...buildAlexaLoginRoutes({
+        logger: this.ctx.logger,
+        proxyLogin: this.proxyLogin,
+        commitCookie: (input) => this.commitCapturedCookie(input),
+      }),
+      ...speakIconRoutes(),
+    ]
 
     const speak = new AlexaSpeakController({
       logger: this.ctx.logger.child('speak'),
@@ -184,18 +194,23 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       writeSpeak: async (next) => {
         await this.updateGlobalSettings({ speak: next })
       },
-      emitAlert: async (alert) => {
-        const emit = this.ctx.api.alerts?.emit
-        if (emit === undefined) {
-          this.ctx.logger.warn('alexa speak: OTP alert skipped — alerts capability missing')
-          return
-        }
-        await emit.mutate(alert)
+      listBrokers: () =>
+        this.activeBrokers.map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          amazonDomain: entry.connection.amazonDomain,
+        })),
+      readSeed: async (brokerId) => {
+        const entry = this.activeBrokers.find((row) => row.id === brokerId)
+        return entry === undefined ? null : readBrokerSeed(this.ctx.dataDir, entry)
       },
-      resolveAlert: async (alertId) => {
-        const dismiss = this.ctx.api.alerts?.dismiss
-        if (dismiss === undefined) return
-        await dismiss.mutate({ alertId })
+      sessions: RecordsSpeakSessionStore.of(records),
+      clearLegacySecrets: async () => {
+        // Nested secrets clear in place; `clearSecrets` only reaches top-level keys,
+        // and clearing `speak` would take the targets with it.
+        await this.updateGlobalSettingsAsOperator({
+          speak: { ...this.config.speak, password: SECRET_CLEAR, session: SECRET_CLEAR },
+        })
       },
       ensurePython: () => this.ctx.deps.ensurePython(),
     })
@@ -243,9 +258,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     const store = this.brokerStore
     if (store !== null) {
       await store.replaceAll(entries)
-      return
+    } else {
+      await this.updateGlobalSettings({ brokers: [...entries] })
     }
-    await this.updateGlobalSettings({ brokers: [...entries] })
+    void this.speak?.brokersChanged()
   }
 
   protected override async onConfigChanged(): Promise<void> {
@@ -292,6 +308,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         })
       }
     }
+    void this.speak?.brokersChanged()
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -632,43 +649,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
               min: 1,
               max: 65535,
               default: 3456,
-            },
-          ],
-        },
-        {
-          id: 'alexa-speak',
-          title: 'Speak on Echo',
-          titleKey: 'import-alexa:globalSettings.s_alexa-speak.title',
-          description:
-            'Sign in on the Speak on Echo page, pick the devices, and use them as a notification target. ' +
-            'The text is the rule template, read aloud.',
-          descriptionKey: 'import-alexa:globalSettings.s_alexa-speak.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'text' as const,
-              key: 'speak.email',
-              label: 'Amazon email',
-              labelKey: 'import-alexa:globalSettings.s_alexa-speak.speak_email.label',
-              inputType: 'email',
-            },
-            {
-              type: 'password' as const,
-              key: 'speak.password',
-              label: 'Amazon password',
-              labelKey: 'import-alexa:globalSettings.s_alexa-speak.speak_password.label',
-            },
-            {
-              type: 'select' as const,
-              key: 'speak.region',
-              label: 'Region',
-              labelKey: 'import-alexa:globalSettings.s_alexa-speak.speak_region.label',
-              default: 'EU',
-              options: [
-                { value: 'NA', label: 'North America' },
-                { value: 'EU', label: 'Europe' },
-                { value: 'FE', label: 'Far East' },
-              ],
             },
           ],
         },

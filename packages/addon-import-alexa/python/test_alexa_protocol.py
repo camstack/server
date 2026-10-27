@@ -17,7 +17,7 @@ from alexa_sequences import build_announcement, build_speak_sequence
 
 class FakeGateway:
     def __init__(self) -> None:
-        self.password = ""
+        self.refresh_token = ""
         self.region = "EU"
         self.login_status = "ok"
         self.devices_payload = {
@@ -36,19 +36,25 @@ class FakeGateway:
         self.spoken: list[dict] = []
         self.announced: list[dict] = []
 
-    async def login_start(self, email: str, password: str, region: str, session_path: str) -> dict:
-        self.password = password
-        self.email = email
+    async def login_broker(
+        self,
+        label: str,
+        refresh_token: str,
+        device_app_name: str,
+        domain: str,
+        region: str,
+        session_path: str,
+    ) -> dict:
+        self.refresh_token = refresh_token
+        self.label = label
+        self.device_app_name = device_app_name
+        self.domain = domain
         self.region = region
         self.session_path = session_path
         result = {"status": self.login_status}
         if self.login_status == "failed":
             result["error"] = "login failed"
         return result
-
-    async def login_otp(self, code: str, session_path: str = "") -> dict:
-        self.code = code
-        return {"status": "ok"}
 
     async def devices(self) -> dict:
         return self.devices_payload
@@ -73,50 +79,53 @@ def run(session: Session, message: dict) -> dict:
 
 
 class ProtocolTests(unittest.TestCase):
-    def test_login_reads_password_from_file_not_from_json(self) -> None:
+    def test_login_reads_refresh_token_from_file_not_from_json(self) -> None:
         gateway = FakeGateway()
         session = Session(gateway)
         with tempfile.TemporaryDirectory() as directory:
-            password_path = Path(directory) / "password"
-            password_path.write_text("super-secret-password", encoding="utf-8")
+            token_path = Path(directory) / "refresh-token"
+            token_path.write_text("super-secret-token\n", encoding="utf-8")
             session_path = Path(directory) / "session"
             session_path.write_bytes(b"")
             body = {
                 "id": "1",
-                "op": "login_start",
-                "email": "a@example.com",
-                "passwordPath": str(password_path),
+                "op": "login_broker",
+                "label": "alexa_001",
+                "refreshTokenPath": str(token_path),
+                "deviceAppName": "Registered App",
+                "domain": "amazon.it",
                 "sessionPath": str(session_path),
                 "region": "EU",
             }
             encoded = json.dumps(body)
-            self.assertNotIn("super-secret-password", encoded)
+            self.assertNotIn("super-secret-token", encoded)
             result = run(session, body)
         self.assertTrue(result["ok"])
         self.assertEqual(result["result"]["status"], "ok")
-        self.assertEqual(gateway.password, "super-secret-password")
+        self.assertEqual(gateway.refresh_token, "super-secret-token")
+        self.assertEqual(gateway.label, "alexa_001")
+        self.assertEqual(gateway.device_app_name, "Registered App")
+        self.assertEqual(gateway.domain, "amazon.it")
 
-    def test_otp_then_devices(self) -> None:
+    def test_login_without_a_token_path_passes_an_empty_token(self) -> None:
         gateway = FakeGateway()
-        gateway.login_status = "otp_needed"
         session = Session(gateway)
-        with tempfile.TemporaryDirectory() as directory:
-            password_path = Path(directory) / "password"
-            password_path.write_text("pw", encoding="utf-8")
-            started = run(
-                session,
-                {
-                    "id": "1",
-                    "op": "login_start",
-                    "email": "a@example.com",
-                    "passwordPath": str(password_path),
-                    "sessionPath": str(Path(directory) / "session"),
-                    "region": "NA",
-                },
-            )
-        self.assertEqual(started["result"]["status"], "otp_needed")
-        otp = run(session, {"id": "2", "op": "login_otp", "code": "123456"})
-        self.assertEqual(otp["result"]["status"], "ok")
+        result = run(
+            session,
+            {"id": "1", "op": "login_broker", "label": "alexa_001", "refreshTokenPath": ""},
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(gateway.refresh_token, "")
+
+    def test_the_old_password_login_is_gone(self) -> None:
+        session = Session(FakeGateway())
+        for op in ("login_start", "login_otp"):
+            result = run(session, {"id": "1", "op": op})
+            self.assertFalse(result["ok"])
+            self.assertIn("unknown op", result["error"])
+
+    def test_devices_after_login(self) -> None:
+        session = Session(FakeGateway())
         devices = run(session, {"id": "3", "op": "devices"})
         self.assertEqual(devices["result"]["devices"][0]["id"], "echo-1")
         self.assertEqual(devices["result"]["devices"][0]["family"], "ECHO")

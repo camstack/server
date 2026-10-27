@@ -1,8 +1,8 @@
 """Line-delimited JSON session for the long-lived Echo worker.
 
 One request object per stdin line, one response object per stdout line,
-matched by ``id``. The password is read from a file the request names;
-it is never taken from the JSON body.
+matched by ``id``. The broker's refresh token is read from a file the request
+names; it is never taken from the JSON body.
 """
 
 from __future__ import annotations
@@ -18,11 +18,15 @@ REGION_LOCALE = {"NA": "en-US", "EU": "en-GB", "FE": "ja-JP"}
 class Gateway(Protocol):
     region: str
 
-    async def login_start(
-        self, email: str, password: str, region: str, session_path: str
+    async def login_broker(
+        self,
+        label: str,
+        refresh_token: str,
+        device_app_name: str,
+        domain: str,
+        region: str,
+        session_path: str,
     ) -> dict: ...
-
-    async def login_otp(self, code: str, session_path: str) -> dict: ...
 
     async def devices(self) -> dict: ...
 
@@ -35,8 +39,11 @@ class Gateway(Protocol):
     def target_for(self, serial: str) -> EchoTarget | None: ...
 
 
-def _read_password(path: str) -> str:
-    return Path(path).read_text(encoding="utf-8")
+def _read_secret(path: str) -> str:
+    """A secret handed over as an owner-only file. An empty path means there is none."""
+    if path == "":
+        return ""
+    return Path(path).read_text(encoding="utf-8").strip()
 
 
 class Session:
@@ -55,17 +62,15 @@ class Session:
         return {"id": request_id, "ok": True, "result": result}
 
     async def _dispatch(self, op: object, message: dict) -> dict:
-        if op == "login_start":
-            password = _read_password(str(message.get("passwordPath", "")))
-            return await self._gateway.login_start(
-                str(message.get("email", "")),
-                password,
+        if op == "login_broker":
+            refresh_token = _read_secret(str(message.get("refreshTokenPath", "")))
+            return await self._gateway.login_broker(
+                str(message.get("label", "")),
+                refresh_token,
+                str(message.get("deviceAppName", "")),
+                str(message.get("domain", "")),
                 str(message.get("region", "EU")),
                 str(message.get("sessionPath", "")),
-            )
-        if op == "login_otp":
-            return await self._gateway.login_otp(
-                str(message.get("code", "")), str(message.get("sessionPath", ""))
             )
         if op == "devices":
             return await self._gateway.devices()

@@ -90,18 +90,25 @@ export const alexaProxyLoginSchema = z.object({
 })
 export type AlexaProxyLogin = z.infer<typeof alexaProxyLoginSchema>
 
-/** Amazon account used to speak on Echo devices. The session blob is the cookie jar. */
+/**
+ * Echo speech settings. Speech signs in as an import broker, so the targets
+ * are what lives here. `email`, `password`, `region` and `session` are the OLD
+ * standalone login: they are read once to migrate it onto the single broker
+ * (see `speak/migration.ts`) and written back empty.
+ */
 export const alexaSpeakSettingsSchema = z.object({
   email: z.string().default(''),
-  password: z.string().default('').describe('Amazon password').meta({ secret: true }),
+  password: z.string().default('').describe('Legacy Amazon password').meta({ secret: true }),
   region: z.enum(['NA', 'EU', 'FE']).default('EU'),
-  session: z.string().default('').describe('Alexa session blob').meta({ secret: true }),
+  session: z.string().default('').describe('Legacy Alexa session blob').meta({ secret: true }),
   targets: z
     .array(
       z.object({
         id: z.string(),
         name: z.string(),
         enabled: z.boolean(),
+        /** The broker (Amazon account) the Echo belongs to; '' until one is chosen. */
+        brokerId: z.string().default(''),
         echoId: z.string(),
         mode: z.enum(['speak', 'announce']),
         volume: z.number(),

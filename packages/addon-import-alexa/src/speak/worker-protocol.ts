@@ -10,10 +10,12 @@ export const EchoDeviceSchema = z.object({
   kind: z.enum(['device', 'group']),
   dnd: z.boolean(),
   deviceType: z.string(),
+  /** The room the account files the device under, when Amazon names one. */
+  room: z.string().optional(),
 })
 export type EchoDevice = z.infer<typeof EchoDeviceSchema>
 
-export const LoginStatusSchema = z.enum(['ok', 'otp_needed', 'captcha', 'failed'])
+export const LoginStatusSchema = z.enum(['ok', 'failed'])
 export type LoginStatus = z.infer<typeof LoginStatusSchema>
 
 export const SessionStatusSchema = z.object({
@@ -47,13 +49,19 @@ export type WorkerLine = z.infer<typeof WorkerLineSchema>
 
 export type WorkerRequest =
   | {
-      readonly op: 'login_start'
-      readonly email: string
-      readonly passwordPath: string
+      /**
+       * Sign in as the broker's Amazon account. `refreshTokenPath` names an
+       * owner-only file with the broker's refresh token ('' when the broker has
+       * none, so only the stored `sessionPath` jar can be tried).
+       */
+      readonly op: 'login_broker'
+      readonly label: string
+      readonly refreshTokenPath: string
+      readonly deviceAppName: string
+      readonly domain: string
       readonly sessionPath: string
       readonly region: (typeof ALEXA_REGIONS)[number]
     }
-  | { readonly op: 'login_otp'; readonly code: string; readonly sessionPath: string }
   | { readonly op: 'devices' }
   | {
       readonly op: 'speak' | 'announce'
