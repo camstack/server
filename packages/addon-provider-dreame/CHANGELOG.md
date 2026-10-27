@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An alert when the Dreame sign-in is rejected; the clean-water tank is re-read every 3 minutes and on every state change
+
 ## [0.2.158] - 2026-10-27
 
 ### Changed

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An alert when the Dreo sign-in is rejected
+
 ## [0.2.149] - 2026-10-27
 
 ### Changed

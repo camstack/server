@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An alert when the PetKit session is lost, e.g. after a sign-in elsewhere
+
 ## [0.2.149] - 2026-10-27
 
 ### Changed

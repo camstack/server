@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The published package now includes its README and CHANGELOG.
+- Cloud integrations raise one alert when their session is lost and clear it when it is back
 
 ## [1.2.427] - 2026-10-27
 
