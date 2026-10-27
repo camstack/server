@@ -11,8 +11,8 @@ import {
   type FanOutCall,
   type FanOutMember,
   type GroupCommandResult,
-  type GroupHelperSpec,
   type HelperMember,
+  type HelperSpec,
   type IScopedLogger,
   fanOutTargets,
   groupTemplate,
@@ -45,7 +45,8 @@ export interface ActuatorGroupDevice {
 
 export interface ActuatorBlock {
   readonly id: string
-  readonly helper: GroupHelperSpec | undefined
+  /** Group helpers are remembered; an appliance helper is not a command group. */
+  readonly helper: HelperSpec | undefined
 }
 
 export interface ActuatorGroupsDeps {

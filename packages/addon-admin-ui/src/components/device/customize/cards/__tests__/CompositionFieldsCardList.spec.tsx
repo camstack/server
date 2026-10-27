@@ -70,6 +70,7 @@ vi.mock('@camstack/ui-library', () => ({
       {children}
     </section>
   ),
+  useDeviceLabel: (device: { readonly name: string }) => device.name,
 }))
 
 vi.mock('../../use-confirm-remove', () => ({

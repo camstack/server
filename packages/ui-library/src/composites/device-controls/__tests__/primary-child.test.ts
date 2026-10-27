@@ -88,6 +88,8 @@ describe('resolvePrimaryChild — edge cases', () => {
       'fan',
       'vacuum',
       'lawn-mower',
+      'washer',
+      'dryer',
       'dishwasher',
       'light',
       'switch',

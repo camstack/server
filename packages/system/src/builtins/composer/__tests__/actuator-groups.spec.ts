@@ -1,4 +1,10 @@
-import { DeviceFeature, type GroupCommandResult, type GroupHelperSpec } from '@camstack/types'
+import {
+  APPLIANCE_DEFAULTS,
+  DeviceFeature,
+  type ApplianceHelperSpec,
+  type GroupCommandResult,
+  type GroupHelperSpec,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { actuatorDispatcher } from '../actuator-dispatch.js'
 import {
@@ -9,6 +15,23 @@ import {
 import { recordingLogger } from './fixtures.js'
 
 const IDS: Readonly<Record<string, number>> = { a: 1, b: 2, c: 3 }
+
+function appliance(kind: ApplianceHelperSpec['appliance']): ApplianceHelperSpec {
+  const defaults = APPLIANCE_DEFAULTS[kind]
+  return {
+    kind: 'appliance',
+    templateId: 'appliance',
+    appliance: kind,
+    thresholdWatts: defaults.thresholdWatts,
+    startDwellMs: defaults.startDwellMs,
+    stopDwellMs: defaults.stopDwellMs,
+    member: {
+      source: { addonId: 'lights', stableId: 'a' },
+      cap: 'power-meter',
+      fieldPath: 'watts',
+    },
+  }
+}
 
 function spec(templateId: 'switch' | 'light', stableIds: readonly string[]): GroupHelperSpec {
   return {
@@ -124,6 +147,21 @@ describe('actuator groups', () => {
       }),
     ).rejects.toThrow(/does not share color/)
     expect(world.calls).toEqual([])
+    world.groups.shutdown()
+  })
+
+  it('does not treat an appliance helper as a command group', async () => {
+    const world = harness(() => ({ kind: 'ready', caps: ['switch'], features: [] }))
+    await world.groups.sync([{ id: 'washer', helper: appliance('washer') }])
+    expect(world.group.shared).toEqual([])
+    const run = actuatorDispatcher()
+    if (run === null) throw new Error('dispatcher was not attached')
+    await expect(
+      run({ groupDeviceId: 900, cap: 'switch', method: 'setState', args: { on: true } }),
+    ).rejects.toThrow(/not live/)
+    expect(world.calls).toEqual([])
+    const dropped = world.lines.find((line) => line.message.includes('not a live helper group'))
+    expect(dropped?.extras?.tags?.deviceId).toBe(900)
     world.groups.shutdown()
   })
 })
