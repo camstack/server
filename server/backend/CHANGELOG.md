@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The hub serves Actions: list, run, stop, run traces and camera links
+
 ## [1.2.661] - 2026-10-27
 
 ### Changed
