@@ -5,7 +5,7 @@
  * The viewer mirrors this file; `scripts/check-device-name-in-sync.ts` diffs the two.
  * Noun strings stay outside — this file only decides which noun to ask for.
  */
-import { resolveContainerPrimaryChild } from '@camstack/types'
+import { resolveContainerPrimaryChild } from '@camstack/types/client'
 
 /** Middle dot used between a container and its noun, and before a room. */
 export const DEVICE_NAME_JOIN: string = ' · '
