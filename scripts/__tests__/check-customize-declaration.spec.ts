@@ -273,8 +273,8 @@ describe('customize declaration guard', () => {
     // source. There is no Advanced list for it to land in.
     expect(units.battery).toMatchObject({ percentage: '%', volts: 'V' })
     expect(units['temperature-sensor']).toMatchObject({ celsius: '°C' })
-    expect(units['power-meter']?.watts).toBe('W')
-    expect(units['power-meter']?.volts).toBeUndefined()
+    expect(units['power-meter']).toMatchObject({ watts: 'W', volts: 'V', amps: 'A' })
+    expect(units['power-meter']?.va).toBeUndefined()
   })
 
   it('declares the customize caps, and the catalog matches the projection', async () => {
@@ -284,6 +284,7 @@ describe('customize declaration guard', () => {
       'consumables',
       'doorbell',
       'motion',
+      'power-meter',
       'running-state',
     ])
     expect(CAP_CUSTOMIZE_CATALOG['temperature-sensor']).toBeUndefined()
