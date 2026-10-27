@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addon names follow the shorter product names; a page that never loads or a route that throws stays a message inside the shell; a page whose addon is absent is greyed in the nav and reads as not installed.
 
+### Fixed
+
+- The pet feeder card no longer repeats the desiccant; the Save footer shows only after a change; device pages fill the phone screen
+
 ## [1.2.492] - 2026-10-27
 
 ### Added
