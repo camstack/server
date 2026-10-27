@@ -29,6 +29,7 @@ vi.mock('alexa-remote2', () => {
   return { default: FakeAlexaRemote }
 })
 
+import { VendorLoginProxy } from '@camstack/types'
 import { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
 
 const logger: IScopedLogger = {
@@ -39,11 +40,13 @@ const logger: IScopedLogger = {
   child: () => logger,
 } as unknown as IScopedLogger
 
+const loginProxy = new VendorLoginProxy({ addonId: 'import-alexa', prefix: 'login', logger })
+
 function mkManager(): AlexaProxyLoginManager {
   return new AlexaProxyLoginManager({
     logger,
-    getProxyConfig: () => ({ proxyHost: '192.168.1.9', proxyPort: 3456 }),
-    getAppConnectionAddresses: async () => [],
+    getProxyConfig: () => ({ proxyPort: 3456 }),
+    getLoginProxy: () => loginProxy,
   })
 }
 

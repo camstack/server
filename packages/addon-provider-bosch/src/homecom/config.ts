@@ -65,13 +65,8 @@ export const HOMECOM_SECRET_KEYS = ['username', 'token', 'refresh'] as const
 
 const HIDDEN_UNTIL_ADVANCED = { field: '__hidden__', equals: 'yes' } as const
 
-const HOMECOM_CODE_HELP = [
-  "Before you sign in, open the browser's developer tools, choose the Network tab, and turn on Preserve log.",
-  'Sign in with SingleKey. The page will say it has network problems. Ignore that: the browser tried to open the Bosch app and could not.',
-  'In the Network list, filter by code= and open the request whose address starts with com.bosch.tt.dashtt.pointt://app/login?code=',
-  'Copy that whole address, or only the code, and paste it in the box under the sign-in button.',
-  'On a phone the same redirect fails unless the Bosch app is installed. Use a desktop browser to copy the code.',
-].join('\n\n')
+const HOMECOM_CODE_HELP =
+  'If the page does not finish, copy the address it stops on (it starts with com.bosch.tt.dashtt.pointt://app/login?code=) or only the code, and paste it in the box under the sign-in button.'
 
 export function buildHomeComFormSchema(): ConfigUISchema {
   return {
@@ -81,7 +76,7 @@ export function buildHomeComFormSchema(): ConfigUISchema {
         title: 'HomeCom account',
         titleKey: 'provider-bosch:homecom.s_account.title',
         description:
-          'Sign in with your SingleKey ID. Copy the code as described below, then paste it here.',
+          'Sign in with your SingleKey ID. A new tab opens the sign-in page through this hub and finishes on its own.',
         descriptionKey: 'provider-bosch:homecom.s_account.description',
         columns: 1,
         fields: [
@@ -101,6 +96,7 @@ export function buildHomeComFormSchema(): ConfigUISchema {
             providerLabel: 'SingleKey ID',
             beginAction: 'beginSignIn',
             completeAction: 'finishSignIn',
+            claimAction: 'claimSignIn',
             signOutAction: 'signOut',
             accountKey: 'accountLabel',
             countKey: 'gatewayCount',

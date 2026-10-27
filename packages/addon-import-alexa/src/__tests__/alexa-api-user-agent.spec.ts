@@ -37,7 +37,7 @@ describe('alexa-remote2 init gets apiUserAgentPostfix', () => {
     const session = new AlexaProxyLoginSession({
       sessionId: 's1',
       amazonDomain: 'amazon.it',
-      proxyOwnIp: '127.0.0.1',
+      loginUrl: '/addon/import-alexa/login/s1/127.0.0.1:0/',
       proxyPort: 0,
       logger,
       onCookie: () => undefined,

@@ -1,19 +1,26 @@
 import { randomBytes } from 'node:crypto'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import {
+  errMsg,
+  type IScopedLogger,
+  type LoginProxyResponseView,
+  type LoginProxyVerdict,
+  type VendorLoginProxy,
+} from '@camstack/types'
 import {
   AlexaProxyLoginSession,
   type AlexaCapturedCookie,
   type AlexaProxyLoginStatus,
 } from './alexa-proxy-login.js'
-import { resolveProxyHost } from './alexa-proxy-host.js'
+import { ALEXA_PROXY_LOOPBACK_HOST } from './alexa-proxy-login.js'
 
 /**
  * Owns the live interactive proxy-login sessions for the addon. One session at a
- * time per addon process (alexa-remote2 binds a single fixed proxy port), keyed
+ * time per addon process (alexa-remote2 binds a single fixed loopback port), keyed
  * by a random `sessionId`. The onboarding wizard drives it through the addon's
  * `addon-routes` control plane:
  *
- *   POST /login/start   → {@link start}   (spins the proxy, returns the loginUrl)
+ *   POST /login/start   → {@link start}   (spins the loopback proxy, opens it on the hub
+ *                                           login proxy, returns the hub-relative loginUrl)
  *   GET  /login/status  → {@link status}  (poll until `phase === 'captured'`)
  *   POST /login/cancel  → {@link cancel}
  *
@@ -25,10 +32,41 @@ import { resolveProxyHost } from './alexa-proxy-host.js'
 
 export interface AlexaProxyLoginManagerDeps {
   readonly logger: IScopedLogger
-  /** Resolve the configured proxy host:port (blank host ⇒ the hub's LAN address from the palette). */
-  readonly getProxyConfig: () => { readonly proxyHost: string; readonly proxyPort: number }
-  /** `local-network.getAddresses().roles.appConnections.resolved` (D734). */
-  readonly getAppConnectionAddresses: () => Promise<readonly string[]>
+  /** The loopback port alexa-cookie2's listener binds. */
+  readonly getProxyConfig: () => { readonly proxyPort: number }
+  /** The hub login proxy (D955); null while the hub's data plane is not serving it. */
+  readonly getLoginProxy: () => VendorLoginProxy | null
+  /** How long the browser waits for the registration after Amazon's last page (default 60 s). */
+  readonly captureWaitMs?: number
+}
+
+/** The data-plane prefix the hub login proxy is served on. */
+export const ALEXA_LOGIN_PROXY_PREFIX = 'login'
+
+/** The addon id the result page names to return to. */
+const ADDON_ID = 'import-alexa'
+
+/** An attempt lives as long as a sign-in attempt does elsewhere (10 min). */
+const ATTEMPT_TTL_MS = 10 * 60 * 1000
+
+/** How long the browser waits on the Amazon page for alexa-cookie2 to finish registering. */
+const CAPTURE_WAIT_MS = 60_000
+
+/**
+ * Terminal condition: alexa-cookie2 turns Amazon's final redirect into a 302 to its own
+ * `/cookie-success` page once it holds the login cookie. Matching on the path of the raw
+ * `Location` keeps this independent of the page's HTML.
+ */
+export function cookieSuccessTerminal(view: LoginProxyResponseView): LoginProxyVerdict<true> {
+  if (view.location === null) return { kind: 'continue' }
+  try {
+    const target = new URL(view.location, `http://${ALEXA_PROXY_LOOPBACK_HOST}`)
+    return target.pathname === '/cookie-success'
+      ? { kind: 'done', payload: true }
+      : { kind: 'continue' }
+  } catch {
+    return { kind: 'continue' }
+  }
 }
 
 /** Result of {@link AlexaProxyLoginManager.start}. */
@@ -41,14 +79,17 @@ export interface AlexaProxyLoginStartResult {
 export class AlexaProxyLoginManager {
   readonly #logger: IScopedLogger
   readonly #getProxyConfig: AlexaProxyLoginManagerDeps['getProxyConfig']
-  readonly #getAppConnectionAddresses: AlexaProxyLoginManagerDeps['getAppConnectionAddresses']
+  readonly #getLoginProxy: AlexaProxyLoginManagerDeps['getLoginProxy']
+  readonly #captureWaitMs: number
   #session: AlexaProxyLoginSession | null = null
   #captured: Map<string, AlexaCapturedCookie> = new Map()
+  #attemptCloser: (() => void) | null = null
 
   constructor(deps: AlexaProxyLoginManagerDeps) {
     this.#logger = deps.logger
     this.#getProxyConfig = deps.getProxyConfig
-    this.#getAppConnectionAddresses = deps.getAppConnectionAddresses
+    this.#getLoginProxy = deps.getLoginProxy
+    this.#captureWaitMs = deps.captureWaitMs ?? CAPTURE_WAIT_MS
   }
 
   /**
@@ -58,19 +99,38 @@ export class AlexaProxyLoginManager {
   async start(amazonDomain: string): Promise<AlexaProxyLoginStartResult> {
     await this.cancelActive()
 
-    const { proxyHost, proxyPort } = this.#getProxyConfig()
-    const host = await resolveProxyHost({
-      override: proxyHost,
-      readAppConnections: this.#getAppConnectionAddresses,
-      logger: this.#logger,
-    })
+    const loginProxy = this.#getLoginProxy()
+    if (loginProxy === null) {
+      throw new Error('alexa proxy-login: the hub login proxy is not available on this hub')
+    }
+    const { proxyPort } = this.#getProxyConfig()
+    const upstreamHost = `${ALEXA_PROXY_LOOPBACK_HOST}:${proxyPort}`
 
     const sessionId = randomBytes(9).toString('base64url')
+    loginProxy.open<true>({
+      attemptId: sessionId,
+      expiresAtMs: Date.now() + ATTEMPT_TTL_MS,
+      upstreams: [{ host: upstreamHost, scheme: 'http' }],
+      terminal: cookieSuccessTerminal,
+      onDone: async () => {
+        const captured = await this.#session?.whenCaptured(this.#captureWaitMs)
+        return captured === true
+          ? { status: 'success', addonId: ADDON_ID }
+          : { status: 'error', addonId: ADDON_ID, reason: 'exchange_failed' }
+      },
+    })
+    const loginUrl = loginProxy.entryPath(sessionId, `http://${upstreamHost}/`)
+    if (loginUrl === null) {
+      loginProxy.close(sessionId)
+      throw new Error('alexa proxy-login: the hub login proxy refused the login address')
+    }
+    this.#attemptCloser = () => loginProxy.close(sessionId)
+
     const session = new AlexaProxyLoginSession({
       sessionId,
       amazonDomain,
-      proxyOwnIp: host,
       proxyPort,
+      loginUrl,
       logger: this.#logger,
       onCookie: (id, captured) => {
         this.#captured.set(id, captured)
@@ -82,13 +142,13 @@ export class AlexaProxyLoginManager {
       await session.start()
     } catch (err: unknown) {
       this.#session = null
+      this.#closeAttempt()
       await session.dispose()
       throw new Error(`alexa proxy-login: failed to start proxy — ${errMsg(err)}`, { cause: err })
     }
 
-    // The proxy binds asynchronously; `session.loginUrl` is deterministic
-    // (host:port known up front). The wizard should poll `/login/status` and
-    // only open the URL once `phase === 'awaiting-login'`.
+    // The proxy binds asynchronously; the entry path is deterministic. The wizard polls
+    // `/login/status` and opens the URL once `phase === 'awaiting-login'`.
     return { sessionId, loginUrl: session.loginUrl, amazonDomain }
   }
 
@@ -119,10 +179,17 @@ export class AlexaProxyLoginManager {
     this.#captured.delete(sessionId)
   }
 
+  #closeAttempt(): void {
+    const close = this.#attemptCloser
+    this.#attemptCloser = null
+    close?.()
+  }
+
   /** Cancel + dispose whatever session is currently active. */
   async cancelActive(): Promise<void> {
     const session = this.#session
     this.#session = null
+    this.#closeAttempt()
     if (session === null) return
     try {
       await session.cancel()

@@ -38,6 +38,28 @@ export const homeComActions = defineCustomActions({
     }),
     { kind: 'mutation', auth: 'admin' },
   ),
+  /**
+   * The form asks while the proxied login page is open: `pending` until the hub captured the
+   * app-scheme redirect and finished the exchange, then the same fields `finishSignIn` returns.
+   * Claimed once. A failed exchange answers with its operator-facing message as an error.
+   */
+  claimSignIn: customAction(
+    z.object({ attemptId: z.string().min(1) }),
+    z.object({
+      pending: z.boolean(),
+      token: z.string().optional().meta({ secret: true }),
+      refresh: z.string().optional().meta({ secret: true }),
+      username: z.string().optional().meta({ secret: true }),
+      accountLabel: z.string().optional(),
+      gatewayCount: z.number().optional(),
+      summary: z.string().optional(),
+      gatewayId: z.string().optional(),
+      brand: HomeComBrandSchema.optional(),
+      region: HomeComRegionSchema.optional(),
+      choices: z.array(gatewayChoice).optional(),
+    }),
+    { kind: 'mutation', auth: 'admin' },
+  ),
   signOut: customAction(
     z.object({}),
     z.object({ signedOut: z.literal(true), summary: z.string() }),

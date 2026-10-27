@@ -1604,8 +1604,7 @@
       "note": "Nota:",
       "waitingForAmazonLoginTo": "In attesa del completamento dell'accesso ad Amazon…",
       "cancelLogin": "Annulla accesso",
-      "startLogin": "Avvia accesso",
-      "proxyNote": "<b>Nota:</b> il proxy di accesso gira direttamente sull'hub. Se il link non si apre o la pagina non si carica, assicurati che host e porta del proxy dell'hub siano raggiungibili dal tuo browser. Puoi configurare <code>proxyHost</code> nelle impostazioni dell'addon Alexa e verificare che la porta del proxy sia pubblicata (mappatura porte Docker)."
+      "startLogin": "Avvia accesso"
     },
     "brokerStep": {
       "loginInteractively": "Accedi in modo interattivo",
@@ -5393,13 +5392,10 @@
       "openLink": "Apri il link per accedere al tuo account",
       "afterLogin": "Inserisci email, password ed eventuale codice monouso in quella pagina. Questa finestra prosegue da sola al termine.",
       "openLoginPage": "Apri la pagina di accesso",
-      "reachability": "Il link deve essere raggiungibile dal tuo browser. Su un hub in container, pubblica la porta del proxy di accesso.",
       "waitingForProxy": "In attesa che la pagina di accesso sia pronta…",
       "waitingForLogin": "In attesa del tuo accesso…",
       "cancel": "Annulla l'accesso",
-      "proxyError": "Il servizio di accesso ha restituito un errore",
-      "sameNetwork": "Aprilo da un dispositivo sulla stessa rete dell'hub",
-      "proxyHostWarning": "Questa pagina non e' sull'indirizzo HTTP dell'hub, quindi il browser potrebbe non raggiungere il link di accesso. Apri CamStack dall'indirizzo LAN dell'hub, oppure imposta l'host di accesso nelle impostazioni dell'addon."
+      "proxyError": "Il servizio di accesso ha restituito un errore"
     },
     "editor": {
       "createTitle": "Aggiungi broker",
@@ -6611,7 +6607,8 @@
       "signedIn": "Accesso effettuato come {{account}}",
       "signedInCount": "Accesso effettuato come {{account}} · {{detail}}",
       "working": "Operazione in corso…",
-      "yourAccount": "il tuo account"
+      "yourAccount": "il tuo account",
+      "pasteFallback": "Se la pagina non si conclude, incolla qui l indirizzo a cui si ferma."
     },
     "runningBadge": {
       "running": "In funzione",

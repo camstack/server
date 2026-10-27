@@ -4,13 +4,15 @@ import {
   SECRET_CLEAR,
   type ConfigAccountSignInField,
 } from '@camstack/types'
-import { useRef, useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { useUiText } from '../contexts/ui-text'
 import { Button } from '../primitives/button'
 import { Select } from '../primitives/select'
 
 const INPUT_CLASS =
   'w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none disabled:opacity-50 disabled:cursor-not-allowed'
+
+const CLAIM_POLL_MS = 2000
 
 const BARE_CODE = /^[A-Za-z0-9._~-]{8,}$/
 
@@ -74,6 +76,13 @@ function selectedChoice(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+/** A hub-relative path (the proxied login) opens on the hub's own origin. */
+function openableUrl(url: string): string {
+  return url.startsWith('/') && !url.startsWith('//')
+    ? new URL(url, window.location.origin).toString()
+    : url
+}
+
 function shouldComplete(text: string): boolean {
   const trimmed = text.trim()
   if (trimmed.length === 0) return false
@@ -131,6 +140,32 @@ export function AccountSignInField({
     setAuthorizeUrl(null)
   }
 
+  const claimAction = field.claimAction
+  useEffect(() => {
+    if (claimAction === undefined || attemptId === null || phase !== 'pasting' || !onAction) return
+    let stopped = false
+    const timer = setInterval(() => {
+      if (inFlight.current) return
+      void onAction(claimAction, field.key, { attemptId })
+        .then((result) => {
+          if (stopped || !isRecord(result) || result['pending'] === true) return
+          stopped = true
+          applyResult(result)
+        })
+        .catch((err: unknown) => {
+          if (stopped) return
+          stopped = true
+          setError(err instanceof Error ? err.message : String(err))
+        })
+    }, CLAIM_POLL_MS)
+    return () => {
+      stopped = true
+      clearInterval(timer)
+    }
+    // applyResult is rebuilt every render and only calls setters and onChangeMany.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claimAction, attemptId, phase, onAction, field.key])
+
   const begin = async (): Promise<void> => {
     if (!onAction || working) return
     setWorking(true)
@@ -156,7 +191,7 @@ export function AccountSignInField({
       setAttemptId(result['attemptId'])
       setAuthorizeUrl(result['authorizeUrl'])
       setPhase('pasting')
-      window.open(result['authorizeUrl'], '_blank', 'noopener,noreferrer')
+      window.open(openableUrl(result['authorizeUrl']), '_blank', 'noopener,noreferrer')
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -294,6 +329,14 @@ export function AccountSignInField({
             >
               {t('uiLibrary.accountSignIn.open', 'Open the sign-in page')}
             </a>
+          )}
+          {claimAction !== undefined && (
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                'uiLibrary.accountSignIn.pasteFallback',
+                'If the page does not finish, paste the address it stops on here.',
+              )}
+            </p>
           )}
           <textarea
             className={`${INPUT_CLASS} min-h-[60px] resize-y`}

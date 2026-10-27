@@ -28,7 +28,7 @@ describe('homeCom config', () => {
     expect(parsed?.gatewayId).toBeUndefined()
   })
 
-  it('explains how to copy the sign-in code before the login button', () => {
+  it('offers the paste fallback, without devtools instructions, before the login button', () => {
     const fields = buildHomeComFormSchema().sections[0]?.fields ?? []
     const helpAt = fields.findIndex((field) => field.key === '__homecom-code-help')
     const signInAt = fields.findIndex((field) => field.key === '__homecom-sign-in')
@@ -37,9 +37,9 @@ describe('homeCom config', () => {
     const help = fields[helpAt]
     expect(help?.type).toBe('info')
     if (help?.type !== 'info') return
-    expect(help.label).toContain('Preserve log')
+    expect(help.label).toMatch(/does not finish/i)
+    expect(help.label).not.toMatch(/Preserve log|developer tools|Network/i)
     expect(help.label).toContain('com.bosch.tt.dashtt.pointt://app/login?code=')
-    expect(help.label).toMatch(/phone/i)
     expect(help.labelKey).toBe('provider-bosch:homecom.s_account.__homecom-code-help.label')
   })
 })

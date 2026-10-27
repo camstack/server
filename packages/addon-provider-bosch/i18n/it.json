@@ -33,5 +33,18 @@
   "shc.s_connection.sslCertificate.label": "Certificato client (PEM)",
   "shc.s_connection.sslKey.label": "Chiave privata client (PEM)",
   "homecom.s_account.__homecom-code-help.label": "Prima di accedere, apri gli strumenti per sviluppatori del browser, scegli la scheda Rete (Network) e attiva \"Conserva registro\" (Preserve log).\n\nAccedi con SingleKey. La pagina dirà che ci sono problemi di rete. Ignoralo: il browser ha provato ad aprire l'app Bosch e non c'è riuscito.\n\nNell'elenco Rete filtra per code= e apri la richiesta il cui indirizzo inizia con com.bosch.tt.dashtt.pointt://app/login?code=\n\nCopia l'indirizzo intero, oppure solo il codice, e incollalo nella casella sotto il pulsante di accesso.\n\nSu un telefono lo stesso reindirizzamento fallisce se l'app Bosch non è installata. Per copiare il codice usa un browser da computer.",
-  "homecom.s_account.gatewayId.description": "Compilato dall'account. Scrivilo solo se devi sostituire la scelta."
+  "homecom.s_account.gatewayId.description": "Compilato dall'account. Scrivilo solo se devi sostituire la scelta.",
+  "homecom": {
+    "s_account": {
+      "description": "Accedi con il tuo SingleKey ID. Si apre una nuova scheda con la pagina di accesso tramite questo hub e si conclude da sola.",
+      "__homecom-code-help": {
+        "label": "Se la pagina non si conclude, copia l indirizzo su cui si ferma (inizia con com.bosch.tt.dashtt.pointt://app/login?code=) oppure solo il codice, e incollalo nel riquadro sotto il pulsante di accesso."
+      }
+    }
+  },
+  "home-connect": {
+    "s_gateway": {
+      "description": "Accedi con il tuo account Home Connect. Si apre una nuova scheda con la pagina di accesso tramite questo hub e si conclude da sola."
+    }
+  }
 }

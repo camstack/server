@@ -1,4 +1,5 @@
 import {
+  type AddonDataPlaneHandle,
   type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
@@ -13,15 +14,17 @@ import {
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
+  VendorLoginProxy,
 } from '@camstack/types'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'
+import { finishHomeComSignIn, homeComSignInAttempts } from './homecom-sign-in.js'
 import {
-  finishHomeComSignIn,
-  homeComSignInAttempts,
-  publishHomeComSignIn,
-} from './homecom-sign-in.js'
+  beginHomeComProxiedSignIn,
+  HOMECOM_PROXY_PREFIX,
+  homeComSignInClaims,
+} from './homecom-sign-in-proxy.js'
 import {
   buildHomeComGatewayPersister,
   buildHomeComTokenPersister,
@@ -43,6 +46,8 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: HomeComClientRegistry | null = null
+  private loginProxy: VendorLoginProxy | null = null
+  private loginPlane: AddonDataPlaneHandle | null = null
 
   constructor() {
     super({})
@@ -50,6 +55,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof homeComActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    await this.serveLoginProxy()
     const persistDeps = {
       getSettings: (id: string) => this.ctx.api.integrations.getSettings.query({ id }),
       setSettings: (input: {
@@ -88,9 +94,13 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       customActions: homeComActions,
       actionHandlers: {
         beginSignIn: async () => ({
-          ...publishHomeComSignIn(homeComSignInAttempts, Date.now()),
-          summary: 'Open the link in a browser and sign in.',
+          ...beginHomeComProxiedSignIn({ proxy: this.loginProxy, addonId: this.ctx.id }),
+          summary: 'Open the sign-in page and sign in.',
         }),
+        claimSignIn: async (input) => {
+          const claim = homeComSignInClaims.claim(input.attemptId, Date.now())
+          return claim.state === 'pending' ? { pending: true } : { pending: false, ...claim.result }
+        },
         finishSignIn: async (input) =>
           finishHomeComSignIn(
             { attemptId: input.attemptId, callback: input.callback, nowMs: Date.now() },
@@ -101,7 +111,32 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     }
   }
 
+  /** The hub's HTTPS face for the vendor's login pages (D955): admin session only. */
+  private async serveLoginProxy(): Promise<void> {
+    const proxy = new VendorLoginProxy({
+      addonId: this.ctx.id,
+      prefix: HOMECOM_PROXY_PREFIX,
+      logger: this.ctx.logger,
+    })
+    try {
+      this.loginPlane =
+        (await this.ctx.dataPlane?.serve({
+          prefix: HOMECOM_PROXY_PREFIX,
+          access: 'admin',
+          handler: proxy.handler,
+        })) ?? null
+      if (this.loginPlane !== null) this.loginProxy = proxy
+    } catch (err) {
+      this.ctx.logger.warn('HomeCom login proxy failed to serve — sign-in falls back to paste', {
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
   protected override async onShutdown(): Promise<void> {
+    await this.loginPlane?.dispose().catch(() => undefined)
+    this.loginPlane = null
+    this.loginProxy = null
     try {
       await this.clients?.shutdown()
     } catch (err) {

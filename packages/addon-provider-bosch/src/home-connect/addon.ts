@@ -1,4 +1,5 @@
 import {
+  type AddonDataPlaneHandle,
   type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
@@ -14,14 +15,17 @@ import {
   type IDeviceAdoptionProvider,
   type SavedDevice,
   type SystemEvent,
+  VendorLoginProxy,
 } from '@camstack/types'
 import { homeConnectActions } from './custom-actions.js'
 import { trackHomeConnectContainers } from './home-connect-container-tracker.js'
+import { finishHomeConnectSignIn, homeConnectSignInAttempts } from './home-connect-login.js'
+import { homeConnectFinishResult } from './home-connect-sign-in-result.js'
 import {
-  finishHomeConnectSignIn,
-  homeConnectSignInAttempts,
-  publishHomeConnectSignIn,
-} from './home-connect-login.js'
+  beginHomeConnectProxiedSignIn,
+  HOME_CONNECT_PROXY_PREFIX,
+  homeConnectSignInClaims,
+} from './home-connect-sign-in-proxy.js'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { buildHomeConnectAdoptionProvider } from './home-connect-adoption-provider.js'
@@ -32,7 +36,6 @@ import {
   buildHomeConnectFormSchema,
   connectionFromSettings,
   logHomeConnectSettingsGap,
-  splitApplianceSecrets,
   type HomeConnectConfig,
 } from './config.js'
 import { buildHomeConnectConnectionPersister } from './home-connect-connection-persist.js'
@@ -50,7 +53,6 @@ import {
   planLegacyApplianceSecretAdopt,
   type SecretAdoptPlan,
 } from './home-connect-secret-adopt.js'
-import { parseLoginDeviceDescription } from './home-connect-stored-appliance.js'
 
 export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'bosch-home-connect'
@@ -64,6 +66,8 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
 
   private clients: HomeConnectClientRegistry | null = null
   private reconciler: HomeConnectChildReconciler | null = null
+  private loginProxy: VendorLoginProxy | null = null
+  private loginPlane: AddonDataPlaneHandle | null = null
 
   constructor() {
     super({})
@@ -71,6 +75,7 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof homeConnectActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    await this.serveLoginProxy()
     this.clients = new HomeConnectClientRegistry(this.ctx.logger, {
       onConnectionUpdated: (integrationId, connection) => {
         void this.persistIntegrationAppliances(integrationId, connection)
@@ -96,42 +101,57 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       customActions: homeConnectActions,
       actionHandlers: {
         beginSignIn: async () => ({
-          ...publishHomeConnectSignIn(homeConnectSignInAttempts, Date.now()),
-          summary: 'Open the link in the browser and sign in.',
+          ...beginHomeConnectProxiedSignIn({
+            proxy: this.loginProxy,
+            addonId: this.ctx.id,
+          }),
+          summary: 'Open the sign-in page and sign in.',
         }),
-        finishSignIn: async (input) => {
-          const account = await finishHomeConnectSignIn(
-            { attemptId: input.attemptId, callback: input.callback, nowMs: Date.now() },
-            homeConnectSignInAttempts,
-          )
-          // The pairing keys go to the keychain through `applianceSecrets`; the rows carry none.
-          const { rows, secrets } = splitApplianceSecrets(
-            account.appliances.map((app) => ({
-              haId: app.haId,
-              name: app.name,
-              type: app.type,
-              host: app.connection.host,
-              psk: app.connection.psk,
-              mode: app.connection.mode,
-              ...(app.connection.iv64.length > 0 ? { iv64: app.connection.iv64 } : {}),
-              ...parseLoginDeviceDescription(app.connection.deviceDescription),
-            })),
-          )
-          return {
-            token: account.token,
-            ...(account.refresh.length > 0 ? { refresh: account.refresh } : {}),
-            accountLabel: account.accountId,
-            appliances: JSON.stringify(rows),
-            applianceSecrets: JSON.stringify(secrets),
-            summary: account.summary,
-          }
+        finishSignIn: async (input) =>
+          homeConnectFinishResult(
+            await finishHomeConnectSignIn(
+              { attemptId: input.attemptId, callback: input.callback, nowMs: Date.now() },
+              homeConnectSignInAttempts,
+            ),
+          ),
+        claimSignIn: async (input) => {
+          const claim = homeConnectSignInClaims.claim(input.attemptId, Date.now())
+          return claim.state === 'pending' ? { pending: true } : { pending: false, ...claim.result }
         },
         signOut: async () => ({ signedOut: true as const, summary: 'Signed out.' }),
       },
     }
   }
 
+  /** The hub's HTTPS face for the vendor's login pages (D955): admin session only. */
+  private async serveLoginProxy(): Promise<void> {
+    const proxy = new VendorLoginProxy({
+      addonId: this.ctx.id,
+      prefix: HOME_CONNECT_PROXY_PREFIX,
+      logger: this.ctx.logger,
+    })
+    try {
+      this.loginPlane =
+        (await this.ctx.dataPlane?.serve({
+          prefix: HOME_CONNECT_PROXY_PREFIX,
+          access: 'admin',
+          handler: proxy.handler,
+        })) ?? null
+      if (this.loginPlane !== null) this.loginProxy = proxy
+    } catch (err) {
+      this.ctx.logger.warn(
+        'Home Connect login proxy failed to serve — sign-in falls back to paste',
+        {
+          meta: { error: errMsg(err) },
+        },
+      )
+    }
+  }
+
   protected override async onShutdown(): Promise<void> {
+    await this.loginPlane?.dispose().catch(() => undefined)
+    this.loginPlane = null
+    this.loginProxy = null
     this.reconciler?.stop()
     this.reconciler = null
     try {

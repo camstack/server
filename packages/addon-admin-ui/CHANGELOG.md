@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The broker sign-in dialog opens the provider's login page on the hub's own address and no longer warns about LAN-only links.
+
 ## [1.2.496] - 2026-10-27
 
 ### Fixed

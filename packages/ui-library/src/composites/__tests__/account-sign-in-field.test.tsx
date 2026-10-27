@@ -137,4 +137,51 @@ describe('account-sign-in field', () => {
       expect(screen.getByText('This Bosch account has no HomeCom gateway.')).toBeTruthy(),
     )
   })
+
+  it('opens the hub-relative login on the hub origin and applies what the hub captured', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const onChangeMany = vi.fn()
+    let claims = 0
+    const onAction = vi.fn(async (action: string) => {
+      if (action === 'beginSignIn') {
+        return { attemptId: 'attempt-1', authorizeUrl: '/addon/bosch-homecom/login/attempt-1/h/x' }
+      }
+      if (action === 'claimSignIn') {
+        claims += 1
+        return claims < 2
+          ? { pending: true }
+          : { pending: false, token: 'access', accountLabel: 'me@example.com', gatewayCount: 1 }
+      }
+      return { signedOut: true }
+    })
+    render(
+      <FormField
+        field={{ ...FIELD, claimAction: 'claimSignIn' }}
+        values={{}}
+        onChange={vi.fn()}
+        onChangeMany={onChangeMany}
+        onAction={onAction}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with SingleKey ID' }))
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeTruthy())
+    expect(open).toHaveBeenCalledWith(
+      `${window.location.origin}/addon/bosch-homecom/login/attempt-1/h/x`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+    await waitFor(
+      () =>
+        expect(onChangeMany).toHaveBeenCalledWith({
+          token: 'access',
+          accountLabel: 'me@example.com',
+          gatewayCount: 1,
+        }),
+      { timeout: 8000 },
+    )
+    expect(onAction).toHaveBeenCalledWith('claimSignIn', '__homecom-sign-in', {
+      attemptId: 'attempt-1',
+    })
+    open.mockRestore()
+  }, 12000)
 })

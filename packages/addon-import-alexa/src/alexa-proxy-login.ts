@@ -3,28 +3,31 @@ import { errMsg, type IScopedLogger } from '@camstack/types'
 import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
 
 /**
- * INTERACTIVE Amazon login via `alexa-remote2`'s built-in proxy auth mode.
+ * INTERACTIVE Amazon login via `alexa-remote2`'s built-in proxy auth mode, behind the
+ * hub's vendor login proxy (D955).
  *
- * alexa-remote2 (through `alexa-cookie2`) spins a local Express reverse-proxy
- * to Amazon's real login page. The operator opens the proxy URL in a browser,
- * completes the full Amazon OAuth/2FA flow on Amazon's own page, and the proxy
- * captures the resulting cookie + the richer `cookieData` registration blob
- * (which embeds the refresh token, so the session can auto-refresh forever).
+ * alexa-remote2 (through `alexa-cookie2`) spins a local Express reverse-proxy to
+ * Amazon's real login page and captures the resulting cookie + the richer
+ * `cookieData` registration blob (it embeds the refresh token, so the session can
+ * auto-refresh forever). That listener is bound to LOOPBACK only
+ * (`proxyOwnIp` = `proxyListenBind` = 127.0.0.1): nothing outside this process's host can
+ * reach it. The operator's browser reaches it through the hub's data plane instead
+ * (`VendorLoginProxy`, `/addon/<id>/login/<attempt>/127.0.0.1:<port>/…`), which is
+ * HTTPS under the same origin as the admin page. alexa-cookie2 keeps doing the Amazon
+ * specific work (login cookies, device registration, the `/ax/claim` and CSRF steps)
+ * and the hub proxy only rewrites the loopback-origin URLs it emits into the mount.
  *
- * HARD CONSTRAINT (why this runs on a directly-reachable host:port, NOT behind
- * the hub's HTTPS `/addon/<id>/<prefix>/` data-plane): alexa-cookie2 rewrites
- * EVERY Amazon URL in the served HTML/redirects to an absolute, plain-HTTP
- * `http://<proxyOwnIp>:<proxyPort>/...`. The hub's data-plane reverse proxy
- * pipes responses verbatim (no body/Location rewriting) and strips the mount
- * prefix, so a nested proxy's root-relative absolute URLs would escape the
- * mount and break (plus mixed-content under the admin-ui's HTTPS origin).
- * `proxyOwnIp` MUST therefore equal the exact host:port the browser uses.
- * This mirrors how ioBroker / Home Assistant surface the same flow.
+ * Why not the second proxy replacing alexa-cookie2's: the capture needs the PKCE
+ * verifier, the device id, the initial cookies and the app registration alexa-cookie2
+ * already performs; re-implementing them would add JS-built-URL failure modes.
  *
  * The captured `cookieData` is handed to {@link AlexaProxyLoginSessionOptions.onCookie}
  * — the addon persists it on the broker entry, exactly where a pasted cookie
  * goes, so the rest of the addon (broker / poll / adoption) is unchanged.
  */
+
+/** The only address the alexa-cookie2 listener binds and advertises. */
+export const ALEXA_PROXY_LOOPBACK_HOST = '127.0.0.1'
 
 /** Lifecycle phase of a proxy-login session. */
 export type AlexaProxyLoginPhase =
@@ -59,10 +62,10 @@ export interface AlexaProxyLoginSessionOptions {
   readonly sessionId: string
   /** Amazon domain/region, e.g. `amazon.it` (this user) / `amazon.com`. */
   readonly amazonDomain: string
-  /** Host:port the browser uses to reach the proxy — the hub's LAN host. */
-  readonly proxyOwnIp: string
-  /** Port the local proxy listens on (must be directly reachable). */
+  /** Loopback port the local alexa-cookie2 proxy listens on. */
   readonly proxyPort: number
+  /** The hub-relative path the operator's browser opens (the hub login proxy's entry). */
+  readonly loginUrl: string
   readonly logger: IScopedLogger
   /** Called once with the captured material; the addon persists it. */
   readonly onCookie: (sessionId: string, captured: AlexaCapturedCookie) => void
@@ -82,15 +85,41 @@ export class AlexaProxyLoginSession {
   readonly #startedAt = Date.now()
   #capturedAt: number | null = null
   #captured = false
+  readonly #waiters = new Set<() => void>()
 
   constructor(opts: AlexaProxyLoginSessionOptions) {
     this.#opts = opts
     this.#logger = opts.logger
   }
 
-  /** `http://<proxyOwnIp>:<proxyPort>/` — what the operator opens. */
+  /** What the operator opens: the hub-relative entry of the login proxy. */
   get loginUrl(): string {
-    return `http://${this.#opts.proxyOwnIp}:${this.#opts.proxyPort}/`
+    return this.#opts.loginUrl
+  }
+
+  /** `host:port` of the loopback listener — the one upstream the hub proxy may reach. */
+  get upstreamHost(): string {
+    return `${ALEXA_PROXY_LOOPBACK_HOST}:${this.#opts.proxyPort}`
+  }
+
+  /**
+   * Resolves true once the cookie material is in hand, false after `timeoutMs`.
+   * The Amazon page ends on `/cookie-success` BEFORE alexa-cookie2 finished registering
+   * the app, so the hub waits here before it sends the browser to the result page.
+   */
+  whenCaptured(timeoutMs: number): Promise<boolean> {
+    if (this.#captured) return Promise.resolve(true)
+    return new Promise<boolean>((resolve) => {
+      const timer = setTimeout(() => {
+        this.#waiters.delete(settle)
+        resolve(false)
+      }, timeoutMs)
+      const settle = (): void => {
+        clearTimeout(timer)
+        resolve(true)
+      }
+      this.#waiters.add(settle)
+    })
   }
 
   getStatus(): AlexaProxyLoginStatus {
@@ -127,7 +156,8 @@ export class AlexaProxyLoginSession {
     remote.init(
       {
         proxyOnly: true,
-        proxyOwnIp: this.#opts.proxyOwnIp,
+        proxyOwnIp: ALEXA_PROXY_LOOPBACK_HOST,
+        proxyListenBind: ALEXA_PROXY_LOOPBACK_HOST,
         proxyPort: this.#opts.proxyPort,
         proxyLogLevel: 'warn',
         amazonPage,
@@ -187,6 +217,8 @@ export class AlexaProxyLoginSession {
     this.#captured = true
     this.#capturedAt = Date.now()
     this.#phase = 'captured'
+    for (const settle of this.#waiters) settle()
+    this.#waiters.clear()
     this.#logger.info('alexa proxy-login: cookie captured', {
       meta: { sessionId: this.#opts.sessionId },
     })
@@ -213,7 +245,7 @@ export class AlexaProxyLoginSession {
       if (this.#phase === 'starting') {
         this.#phase = 'awaiting-login'
         this.#logger.info('alexa proxy-login: proxy ready — awaiting Amazon login', {
-          meta: { sessionId: this.#opts.sessionId, loginUrl: this.loginUrl },
+          meta: { sessionId: this.#opts.sessionId },
         })
       }
       return

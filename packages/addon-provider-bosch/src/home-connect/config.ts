@@ -374,7 +374,7 @@ export function buildHomeConnectFormSchema(): ConfigUISchema {
         title: 'Home Connect',
         titleKey: 'provider-bosch:home-connect.s_gateway.title',
         description:
-          'Sign in with your Home Connect account. Paste the address the browser stops on (hcauth://auth/prod?code=…).',
+          'Sign in with your Home Connect account. A new tab opens the sign-in page through this hub and finishes on its own.',
         descriptionKey: 'provider-bosch:home-connect.s_gateway.description',
         columns: 1,
         fields: [
@@ -387,6 +387,7 @@ export function buildHomeConnectFormSchema(): ConfigUISchema {
             providerLabel: 'Home Connect',
             beginAction: 'beginSignIn',
             completeAction: 'finishSignIn',
+            claimAction: 'claimSignIn',
             signOutAction: 'signOut',
             accountKey: 'accountLabel',
             countFromKey: 'appliances',

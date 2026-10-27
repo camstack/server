@@ -68,25 +68,18 @@ export type AlexaBrokerEntry = z.infer<typeof AlexaBrokerEntrySchema>
 
 /**
  * Interactive proxy-login settings (addon-global, not per-broker). alexa-remote2
- * spins a local reverse-proxy to Amazon's login page on `proxyHost:proxyPort`;
- * the operator opens that URL and logs in. `proxyHost` MUST be the host:port the
- * operator's browser uses (alexa-cookie2 rewrites Amazon URLs to absolute
- * `http://<proxyHost>:<proxyPort>/...`), so it is a directly-reachable host —
- * the hub's LAN IP/hostname — NOT behind the hub's HTTPS data-plane mount.
- * Empty `proxyHost` ⇒ the first LAN address of the hub's `appConnections`
- * role (local-network palette) at login-start time.
+ * spins a local reverse-proxy to Amazon's login page on `127.0.0.1:proxyPort`; the
+ * operator never reaches it directly — the hub's login proxy (D955) opens it at
+ * `/addon/import-alexa/login/…` under the hub's own HTTPS origin. The port only has to
+ * be free on the hub's loopback.
  */
 export const alexaProxyLoginSchema = z.object({
-  proxyHost: z
-    .string()
-    .default('')
-    .describe('Host/IP the browser uses to reach the login proxy (blank = the hub LAN address)'),
   proxyPort: z
     .preprocess(
       (v) => (v === '' || v === null ? undefined : v),
       z.number().int().min(1).max(65535).default(3456),
     )
-    .describe('Port the local Amazon-login proxy listens on (must be reachable)'),
+    .describe('Loopback port the local Amazon-login proxy listens on (never exposed)'),
 })
 export type AlexaProxyLogin = z.infer<typeof alexaProxyLoginSchema>
 
@@ -140,7 +133,7 @@ export function readSpeakSettings(config: { speak?: unknown }): AlexaSpeakSettin
 /** Top-level addon config — broker entries + the proxy-login settings. */
 export const alexaAddonConfigSchema = z.object({
   brokers: z.array(AlexaBrokerEntrySchema).default([]),
-  proxyLogin: alexaProxyLoginSchema.default({ proxyHost: '', proxyPort: 3456 }),
+  proxyLogin: alexaProxyLoginSchema.default({ proxyPort: 3456 }),
   speak: alexaSpeakSettingsSchema.default({
     email: '',
     password: '',

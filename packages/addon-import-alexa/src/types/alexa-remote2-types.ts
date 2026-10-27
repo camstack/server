@@ -69,10 +69,10 @@ declare global {
    * ONLY when starting an interactive cookie capture (`proxyOnly:true` with NO
    * `cookie`): alexa-remote2 spins a local Express reverse-proxy to Amazon's
    * login page, captures the cookie/`cookieData`, and emits the `cookie` event.
-   * `proxyOwnIp` MUST equal the host:port the operator's browser uses to reach
-   * the proxy (alexa-cookie2 rewrites every Amazon URL to
-   * `http://<proxyOwnIp>:<proxyPort>/...`), so it is a directly-reachable host
-   * (the hub LAN IP), NOT behind the hub's HTTPS data-plane sub-path.
+   * `proxyOwnIp` is the address alexa-cookie2 advertises in every Amazon URL it
+   * rewrites (`http://<proxyOwnIp>:<proxyPort>/...`) and checks against the Host header;
+   * the binding sets it to loopback together with `proxyListenBind`, and the hub's
+   * login proxy is the only way a browser reaches it.
    */
   interface AlexaRemoteInitOptions {
     /** Required: unset, the bundled library reads a package.json that is not shipped. */
@@ -81,6 +81,7 @@ declare global {
     readonly amazonPage?: string
     readonly proxyOnly?: boolean
     readonly proxyOwnIp?: string
+    readonly proxyListenBind?: string
     readonly proxyPort?: number
     readonly proxyLogLevel?: string
     readonly logger?: (...args: unknown[]) => void

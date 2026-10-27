@@ -9,6 +9,7 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  type AddonDataPlaneHandle,
   type AddonInitResult,
   type AddonPageDeclaration,
   type ConfigUISchema,
@@ -21,6 +22,7 @@ import {
   notificationOutputCapability,
   type SystemEvent,
   SECRET_CLEAR,
+  VendorLoginProxy,
 } from '@camstack/types'
 import {
   alexaProxyLoginSchema,
@@ -28,7 +30,7 @@ import {
   type AlexaAddonConfig,
   type AlexaConnection,
 } from './config.js'
-import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
+import { ALEXA_LOGIN_PROXY_PREFIX, AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes } from './alexa-login-routes.js'
 import { AlexaBrokerRegistry } from './alexa-broker-registry.js'
 import { sameConnection } from './alexa-integration-manager.js'
@@ -64,7 +66,7 @@ const SPEAK_PAGE: AddonPageDeclaration = {
 /** Default config — a fresh install starts with no accounts. */
 const DEFAULTS: AlexaAddonConfig = {
   brokers: [],
-  proxyLogin: { proxyHost: '', proxyPort: 3456 },
+  proxyLogin: { proxyPort: 3456 },
   speak: { email: '', password: '', region: 'EU', session: '', targets: [] },
 }
 
@@ -108,6 +110,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
 
   private registry: AlexaBrokerRegistry | null = null
   private proxyLogin: AlexaProxyLoginManager | null = null
+  private loginPlane: AddonDataPlaneHandle | null = null
+  private loginProxy: VendorLoginProxy | null = null
   private brokerStore: AlexaBrokerStore | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
@@ -161,14 +165,14 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
 
     // Interactive Amazon login (alexa-remote2 proxy auth mode), driven by the
     // onboarding wizard through the addon-routes control plane below.
+    await this.serveLoginProxy()
     this.proxyLogin = new AlexaProxyLoginManager({
       logger: this.ctx.logger,
       getProxyConfig: () => {
         const cfg = alexaProxyLoginSchema.parse(this.config.proxyLogin ?? {})
-        return { proxyHost: cfg.proxyHost, proxyPort: cfg.proxyPort }
+        return { proxyPort: cfg.proxyPort }
       },
-      getAppConnectionAddresses: async () =>
-        (await this.ctx.api.localNetwork.getAddresses.query()).roles.appConnections.resolved,
+      getLoginProxy: () => this.loginProxy,
     })
 
     this.ctx.logger.info('Alexa: import addon initialised', {
@@ -310,6 +314,31 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     void this.speak?.brokersChanged()
   }
 
+  /** The hub's HTTPS face for the Amazon login (D955): admin session only. */
+  private async serveLoginProxy(): Promise<void> {
+    const proxy = new VendorLoginProxy({
+      addonId: this.ctx.id,
+      prefix: ALEXA_LOGIN_PROXY_PREFIX,
+      logger: this.ctx.logger,
+    })
+    try {
+      this.loginPlane =
+        (await this.ctx.dataPlane?.serve({
+          prefix: ALEXA_LOGIN_PROXY_PREFIX,
+          access: 'admin',
+          handler: proxy.handler,
+        })) ?? null
+      if (this.loginPlane !== null) this.loginProxy = proxy
+    } catch (err) {
+      this.ctx.logger.warn(
+        'Alexa: login proxy failed to serve — interactive sign-in is unavailable',
+        {
+          meta: { error: errMsg(err) },
+        },
+      )
+    }
+  }
+
   protected override async onShutdown(): Promise<void> {
     this.speak?.stop()
     this.speak = null
@@ -320,6 +349,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       this.ctx.logger.warn('Alexa: proxy-login dispose error', { meta: { error: errMsg(err) } })
     }
     this.proxyLogin = null
+    await this.loginPlane?.dispose().catch(() => undefined)
+    this.loginPlane = null
+    this.loginProxy = null
     try {
       await this.registry?.shutdown()
     } catch (err) {
@@ -623,26 +655,16 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           title: 'Interactive login (proxy)',
           titleKey: 'import-alexa:globalSettings.s_alexa-proxy-login.title',
           description:
-            'The "Login to Amazon" button in onboarding opens a local proxy that captures the ' +
-            'cookie after you complete the real Amazon login (incl. 2FA). Because Amazon URLs are ' +
-            'rewritten to this exact host:port, it must be a directly-reachable address — leave ' +
-            'the host blank to auto-detect the server IP, and make sure the port is reachable from ' +
-            'the browser you log in from.',
+            'The "Sign in" button in onboarding opens the real Amazon login page through this hub ' +
+            '(same address and HTTPS as this page) and captures the cookie after you complete ' +
+            'it (incl. 2FA). The port below is only used on the hub itself and is never exposed.',
           descriptionKey: 'import-alexa:globalSettings.s_alexa-proxy-login.description',
           columns: 2,
           fields: [
             {
-              type: 'text' as const,
-              key: 'proxyLogin.proxyHost',
-              label: 'Login proxy host/IP (blank = auto-detect)',
-              labelKey:
-                'import-alexa:globalSettings.s_alexa-proxy-login.proxyLogin_proxyHost.label',
-              placeholder: 'auto-detect',
-            },
-            {
               type: 'number' as const,
               key: 'proxyLogin.proxyPort',
-              label: 'Login proxy port',
+              label: 'Internal login port (loopback)',
               labelKey:
                 'import-alexa:globalSettings.s_alexa-proxy-login.proxyLogin_proxyPort.label',
               min: 1,

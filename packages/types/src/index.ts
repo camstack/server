@@ -2075,6 +2075,20 @@ export {
 } from './utils/json-safe.js'
 export { maskUrlCredentials } from './utils/mask-url.js'
 export {
+  VendorLoginProxy,
+  rewriteBody as rewriteLoginProxyBody,
+  rewriteLocation as rewriteLoginProxyLocation,
+  rewriteReferer as rewriteLoginProxyReferer,
+  rewriteSetCookie as rewriteLoginProxySetCookie,
+  type LoginProxyAttemptSpec,
+  type LoginProxyResponseView,
+  type LoginProxyRoute,
+  type LoginProxyScheme,
+  type LoginProxyUpstream,
+  type LoginProxyVerdict,
+  type VendorLoginProxyOptions,
+} from './vendor-login-proxy/index.js'
+export {
   OAUTH_LANDING_PATH,
   OAUTH_LANDING_REASONS,
   isOauthLandingReason,

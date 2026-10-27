@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The account sign-in form waits for the hub to finish the sign-in on its own and keeps the paste box as a fallback.
+
 ## [1.2.339] - 2026-10-27
 
 ### Added

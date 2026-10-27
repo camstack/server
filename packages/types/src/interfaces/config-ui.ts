@@ -1197,6 +1197,13 @@ export interface ConfigAccountSignInField extends ConfigFieldBase {
   readonly providerLabel: string
   readonly beginAction: string
   readonly completeAction: string
+  /**
+   * Set when the hub captures the vendor redirect itself (the login runs through the hub's
+   * login proxy): the form asks this action while the login tab is open. It answers
+   * `{ pending: true }` until the sign-in finished, then the fields `completeAction` returns.
+   * The paste box stays as the fallback when the page does not finish.
+   */
+  readonly claimAction?: string
   readonly signOutAction: string
   /** Non-secret settings key holding the account label. */
   readonly accountKey: string

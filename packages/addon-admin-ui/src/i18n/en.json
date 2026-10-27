@@ -1604,8 +1604,7 @@
       "note": "Note:",
       "waitingForAmazonLoginTo": "Waiting for Amazon login to complete…",
       "cancelLogin": "Cancel login",
-      "startLogin": "Start login",
-      "proxyNote": "<b>Note:</b> The login proxy runs directly on the hub. If the link does not open or the page does not load, make sure the hub's proxy host and port are reachable from your browser. You can configure <code>proxyHost</code> in the Alexa addon settings and ensure the proxy port is published (Docker port mapping)."
+      "startLogin": "Start login"
     },
     "brokerStep": {
       "loginInteractively": "Login interactively",
@@ -5332,13 +5331,10 @@
       "openLink": "Open the link to sign in to your account",
       "afterLogin": "Enter your email, password and any one-time code on that page. This dialog continues by itself when you are done.",
       "openLoginPage": "Open the sign-in page",
-      "reachability": "The link must be reachable from your browser. On a containerised hub, publish the sign-in proxy port.",
       "waitingForProxy": "Waiting for the sign-in page to be ready…",
       "waitingForLogin": "Waiting for you to sign in…",
       "cancel": "Cancel sign-in",
-      "proxyError": "The sign-in service returned an error",
-      "sameNetwork": "Open this from a device on the same network as the hub",
-      "proxyHostWarning": "This page is not on the hub's plain-HTTP address, so your browser may not reach the sign-in link. Open CamStack through the hub's LAN address, or set the sign-in host in the addon settings."
+      "proxyError": "The sign-in service returned an error"
     },
     "editor": {
       "createTitle": "Add broker",
@@ -6589,7 +6585,8 @@
       "signedIn": "Signed in as {{account}}",
       "signedInCount": "Signed in as {{account}} · {{detail}}",
       "working": "Working…",
-      "yourAccount": "your account"
+      "yourAccount": "your account",
+      "pasteFallback": "If the page does not finish, paste the address it stops on here."
     },
     "runningBadge": {
       "running": "Running",
