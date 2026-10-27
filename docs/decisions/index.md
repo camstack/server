@@ -4,7 +4,7 @@
 
 # Decisions
 
-911 architecture decision records. One file per decision, never
+912 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -926,6 +926,7 @@ that rots.
 | D945 | [An addon is published when its built output changes, not when a library it bundles changes](adr-0945-an-addon-is-published-when-its-built-output-changes.md) | ✅ accepted | 2026-10-26 |
 | D946 | [A device is named by one function, and the stored name is not that string](adr-0946-one-device-name.md) | ✅ accepted | 2026-10-26 |
 | D947 | [Echo speech uses one long-lived alexapy worker](adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md) | 💭 proposed | 2026-10-27 |
+| D948 | [A detection notification can ask 'was this right?': the button marks the track for retraining, records who was ASKED, and a channel with no buttons gets links that confirm before they claim](adr-0948-a-detection-verdict-button-marks-the-track-for-retraining-and-records-who-was-asked.md) | ✅ accepted | 2026-10-27 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

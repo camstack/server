@@ -184,6 +184,34 @@ export interface NcServerUpdateGrant extends NcActionGrantBase {
 }
 
 /**
+ * "This detection was right / wrong": mark ONE track for retraining (#243).
+ *
+ * The grant freezes WHICH track (the one the notification reported), the
+ * verdict, and — only on a "Wrong, it is a <class>" button — the class the
+ * operator named. `userId` is the person the notification was addressed to,
+ * frozen at MINT time: a tap identifies nobody (D47), so "who" is the owner of
+ * the delivery, exactly as it is for a snooze. The worst a forwarded
+ * notification buys is one more mark on a track its recipient was already
+ * shown, bounded by the retrain staging budget.
+ *
+ * `viaLink` is set on the fallback for a channel with NO buttons: the URL sits
+ * in the message body, where a link preview or a mail scanner will open it, so
+ * a GET renders a confirm page and only the confirming POST claims the token.
+ */
+export interface NcDetectionVerdictGrant extends NcActionGrantBase {
+  readonly kind: 'detection-verdict'
+  readonly verdict: 'correct' | 'wrong'
+  readonly trackId: string
+  readonly ruleId: string
+  readonly ruleName: string
+  /** Whose notification this was. Never the tapper's — see the docblock. */
+  readonly userId: string
+  /** The class the operator said it really was. Only with `wrong`. */
+  readonly suggestedClass?: string
+  readonly viaLink?: boolean
+}
+
+/**
  * What one button is allowed to do, fixed at mint time.
  *
  * A DISCRIMINATED UNION rather than an optional-field bag: the plane switches
@@ -198,6 +226,7 @@ export type NcActionGrant =
   | NcAlarmGrant
   | NcAddonUpdateGrant
   | NcServerUpdateGrant
+  | NcDetectionVerdictGrant
 
 /** Why a claim did not produce a grant. Each is a DIFFERENT thing to tell a
  *  human standing in front of the page, which is the point of separating them. */
@@ -271,6 +300,9 @@ const DEFAULT_ACTION_TTL_MS = 15 * 60_000
  */
 const SNOOZE_ACTION_TTL_MS = 60 * 60_000
 
+/** How long a Correct / Wrong button stays live: one day. */
+const VERDICT_ACTION_TTL_MS = 24 * 60 * 60_000
+
 /**
  * How long a DISARM button stays live: five minutes.
  *
@@ -290,6 +322,7 @@ export type NcActionTtlSubject =
   | { readonly kind: 'alarm'; readonly action: NcAlarmGrant['action'] }
   | { readonly kind: 'addon-update' }
   | { readonly kind: 'server-update' }
+  | { readonly kind: 'detection-verdict' }
 
 /**
  * The TTL a button of this kind gets.
@@ -328,6 +361,12 @@ export function actionTtlMs(subject: NcActionTtlSubject): number {
     // D305) sends them.
     case 'server-update':
       return DEFAULT_ACTION_TTL_MS
+    // A day. The blast radius is the smallest in this file (one more
+    // retraining mark on a track the recipient was shown, bounded by the
+    // staging budget), and the moment it is wanted is when the operator reads
+    // the notification, which is routinely hours after it arrived.
+    case 'detection-verdict':
+      return VERDICT_ACTION_TTL_MS
   }
 }
 
@@ -363,6 +402,19 @@ export class NcActionTokenRegistry {
     if (found.used) return { ok: false, reason: 'already-used' }
     if (found.grant.expiresAt <= this.now()) return { ok: false, reason: 'expired' }
     found.used = true
+    return { ok: true, grant: found.grant }
+  }
+
+  /**
+   * Read the grant without spending it. ONLY the confirm page of a link-only
+   * channel may call this: it exists so a link preview that opens the URL
+   * cannot spend the token, and it never runs anything.
+   */
+  peek(id: string): NcActionClaim {
+    const found = this.grants.get(id)
+    if (found === undefined) return { ok: false, reason: 'unknown' }
+    if (found.used) return { ok: false, reason: 'already-used' }
+    if (found.grant.expiresAt <= this.now()) return { ok: false, reason: 'expired' }
     return { ok: true, grant: found.grant }
   }
 

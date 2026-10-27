@@ -32,6 +32,7 @@ import {
 import { makeNcOwnerMediaReader } from '../nc-owner-media-reader.js'
 import { buildOccupancyDepartureDeps } from '../occupancy-departure-deps.js'
 import { FACE_SETTLE_HOLD_MS } from '../pipeline/tracker-v2/constants.js'
+import { retrainRefusalReason } from '../pipeline/track-flags.js'
 import { recognitionOutlook } from '../recognition-outlook.js'
 import { buildLinkedSnapshotReads } from '../runtime/linked-snapshot-reads.js'
 import { resolveMediaOwnerId } from '../track-alias-resolution.js'
@@ -417,6 +418,23 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           return { ok: false as const, error: errMsg(err) }
         }
       },
+      // The Correct / Wrong buttons' one door into the retrain lifecycle: the
+      // very mark the Library writes. The lifecycle's deliberate refusals come
+      // back as NAMED reasons (the tap page says why), anything else throws.
+      markTrackForRetrain: async ({ deviceId, trackId }) => {
+        try {
+          await this.ctx.api.pipelineAnalytics.setTrackFlags.mutate({
+            deviceId,
+            trackId,
+            flags: { markForTrain: true },
+          })
+          return { ok: true as const }
+        } catch (err: unknown) {
+          const reason = retrainRefusalReason(err)
+          if (reason === null) throw err
+          return { ok: false as const, reason }
+        }
+      },
       readDeviceStates: async (ids) => {
         const out = new Map<number, string>()
         for (const id of ids) {
@@ -559,11 +577,15 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
             .query({})
             .catch((): readonly TargetKind[] => [])
           const bodyMaxLenByKind = new Map(kinds.map((k) => [k.kind, k.caps.bodyMaxLen]))
+          // The button budget of each kind: 0 means the verdict choices travel
+          // as links in the body, not as buttons.
+          const maxActionsByKind = new Map(kinds.map((k) => [k.kind, k.caps.actions]))
           return targets.map((t) => {
             // Personal-target owner rides INSIDE the open config blob (the
             // nc.upsertMyTarget convention) — surfaced for rule→user fan-out.
             const owner = (t.config as Record<string, unknown>)['ownerUserId']
             const bodyMaxLen = bodyMaxLenByKind.get(t.kind)
+            const maxActions = maxActionsByKind.get(t.kind)
             return {
               id: t.id,
               addonId: t.addonId,
@@ -572,6 +594,7 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
               enabled: t.enabled,
               ...(typeof owner === 'string' && owner.length > 0 ? { ownerUserId: owner } : {}),
               ...(typeof bodyMaxLen === 'number' ? { bodyMaxLen } : {}),
+              ...(typeof maxActions === 'number' ? { maxActions } : {}),
             }
           })
         },

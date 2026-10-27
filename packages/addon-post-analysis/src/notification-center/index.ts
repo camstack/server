@@ -38,6 +38,7 @@ import {
   type NcAlarmGrant,
   type NcSequenceGrant,
   type NcServerUpdateGrant,
+  type NcDetectionVerdictGrant,
   type NcSnoozeGrant,
 } from './action-token.js'
 import { type NcAddonUpdateReport } from './addon-update-apply.js'
@@ -76,6 +77,7 @@ import { listNcDeviceData } from './device-data-removal.js'
 import { NcDeviceMuteStore } from './device-mute-store.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
 import { NcSequenceStore } from './sequence-store.js'
+import { NcDetectionVerdictLedger } from './detection-verdict-ledger.js'
 import { NcPruneLedger, type NcPruneRecord } from './device-prune-ledger.js'
 import { NcDeletedSubjectPruner } from './device-prune-runner.js'
 import { NcDeviceStateCache } from './device-state-cache.js'
@@ -224,6 +226,7 @@ import {
   runGrantedAction as runRunGrantedAction,
   applyGrantedAddonUpdate as runApplyGrantedAddonUpdate,
   applyGrantedServerUpdate as runApplyGrantedServerUpdate,
+  applyGrantedDetectionVerdict as runApplyGrantedDetectionVerdict,
   announceServerUpdate as runAnnounceServerUpdate,
   announceAddonUpdate as runAnnounceAddonUpdate,
   runGrantedSequence as runRunGrantedSequence,
@@ -571,6 +574,7 @@ export class NotificationCenter implements NcEventConsumer {
    * evaluating one.
    */
   private readonly pruneLedger: NcPruneLedger
+  private readonly verdicts: NcDetectionVerdictLedger
   /** D905: which rules cannot work, announced once per distinct reason. */
   private readonly ruleHealth = new NcRuleHealthMonitor()
   /** The prune itself — see `device-prune-runner.ts`. */
@@ -817,6 +821,11 @@ export class NotificationCenter implements NcEventConsumer {
       applyGrantedArmAnyway: (panel, grant) => self.applyGrantedArmAnyway(panel, grant),
       applyGrantedBypassInput: (panel, grant) => self.applyGrantedBypassInput(panel, grant),
       applyGrantedServerUpdate: (grant) => self.applyGrantedServerUpdate(grant),
+      applyGrantedDetectionVerdict: (grant) => self.applyGrantedDetectionVerdict(grant),
+      now: self.now,
+      get verdicts() {
+        return self.verdicts
+      },
       applyGrantedSnooze: (grant) => self.applyGrantedSnooze(grant),
       get deps() {
         return self.deps
@@ -879,6 +888,10 @@ export class NotificationCenter implements NcEventConsumer {
 
   private async applyGrantedAddonUpdate(grant: NcAddonUpdateGrant): Promise<void> {
     return runApplyGrantedAddonUpdate(this.grantedActionsHost(), grant)
+  }
+
+  private async applyGrantedDetectionVerdict(grant: NcDetectionVerdictGrant): Promise<void> {
+    return runApplyGrantedDetectionVerdict(this.grantedActionsHost(), grant)
   }
 
   private async applyGrantedServerUpdate(grant: NcServerUpdateGrant): Promise<void> {
@@ -1254,6 +1267,10 @@ export class NotificationCenter implements NcEventConsumer {
       this.logger.child('calendar-events'),
       deps.now,
     )
+    this.verdicts = new NcDetectionVerdictLedger({
+      ...durableStore,
+      logger: this.logger.child('detection-verdicts'),
+    })
     this.pruneLedger = new NcPruneLedger({
       ...durableStore,
       logger: this.logger.child('device-prune'),

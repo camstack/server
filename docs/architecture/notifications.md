@@ -3302,6 +3302,28 @@ min), bound to the (rule, input) pair the row froze in `alarmSource` — see
 because that id is not a stored rule. A node with no panel produces none, and
 says so at INFO.
 
+### "Was this right?" is a button too, and a link where there are no buttons
+
+A rule with **Ask me to confirm detections** (`askVerdict`, off by default,
+admin rule editor) puts **Correct** / **Wrong** on its detection notifications
+([D948](../decisions/adr-0948-a-detection-verdict-button-marks-the-track-for-retraining-and-records-who-was-asked.md)).
+A tap writes the Library's own retrain mark (`setTrackFlags({ markForTrain })`)
+through the `detection-verdict` grant (24 h) and records, per track, the verdict,
+the optional class named, WHO WAS ASKED (the token's frozen addressee, never the
+tapper) and when (`detection-verdicts` ledger). A retrain refusal (`trained`,
+`budget`, `unknown-track`) is shown by name and records nothing.
+
+Buttons by notifier kind, from the kind's own `caps.actions`:
+
+| notifier | buttons | what the operator sees |
+| --- | --- | --- |
+| ntfy (3) | Correct, Wrong | buttons |
+| Telegram (3) | Correct, Wrong | inline buttons |
+| Zentik (4), webhook (99) | Correct, Wrong, up to two "Wrong: it is X" | buttons |
+| email, Pushover, Gotify, WhatsApp, Discord (0) | none | the same two choices as links in the body; a GET shows a confirm page and only its POST claims the token, so a link preview cannot spend it |
+
+A destination nobody owns, or a row with no track, gets none and says why at INFO.
+
 ### "Update these" is a button, and it never says which version
 
 An `addon-update-available` notification carries one **Aggiorna N addon su

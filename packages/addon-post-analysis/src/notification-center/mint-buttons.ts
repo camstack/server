@@ -4,6 +4,7 @@
  */
 
 import type { NcAlarmButtonKind, NcAlarmBypassableInput } from './action-buttons.js'
+import { verdictButtonRefusal, verdictButtonSpecs } from './detection-verdict-buttons.js'
 import { buildActionButtons, buildAlarmButtons, buildSnoozeButtons } from './action-buttons.js'
 import type { NcActionGrant } from './action-token.js'
 import { NcActionTokenRegistry, actionTtlMs } from './action-token.js'
@@ -138,6 +139,75 @@ export async function mintButtons(
   // draft carries its own TTL: a disarm link must not live as long as a
   // snooze one just because they arrived on the same notification.
   const drafts: NcButtonDraft[] = []
+
+  // 0. "Was this detection right?" (#243). First, so that on a channel that
+  //    keeps only its first few buttons the question the operator opted into
+  //    is never the one dropped. Drafts are pushed in the order the buttons
+  //    are returned, so this block must stay ahead of the others.
+  const verdictRefusal = verdictButtonRefusal({
+    askVerdict: stored?.askVerdict === true,
+    ...(input.trackId !== undefined ? { trackId: input.trackId } : {}),
+    ...(input.ownerUserId !== undefined ? { ownerUserId: input.ownerUserId } : {}),
+  })
+  if (stored?.askVerdict === true && verdictRefusal !== null) {
+    // The one refusal an operator can meet after turning the option on, and
+    // would otherwise report as "the buttons are missing".
+    host.logger.info('detection notification carries no verdict buttons', {
+      tags: { deviceId: input.deviceId },
+      meta: { ruleId: input.ruleId, reason: verdictRefusal, targetId: input.targetId },
+    })
+  }
+  const verdictTrackId = input.trackId
+  const verdictOwner = input.ownerUserId
+  const verdictButtons: NotificationAction[] =
+    verdictRefusal !== null || verdictTrackId === undefined || verdictOwner === undefined
+      ? []
+      : verdictButtonSpecs({ className: input.className, maxActions: input.maxActions }).map(
+          (spec) => {
+            const id = randomUUID()
+            drafts.push({
+              id,
+              ttlMs: actionTtlMs({ kind: 'detection-verdict' }),
+              grant: (expiresAt) => ({
+                kind: 'detection-verdict',
+                id,
+                verdict: spec.verdict,
+                trackId: verdictTrackId,
+                ruleId: input.ruleId,
+                ruleName: input.ruleName,
+                userId: verdictOwner,
+                ...(spec.suggestedClass !== undefined
+                  ? { suggestedClass: spec.suggestedClass }
+                  : {}),
+                // A channel with no buttons shows these as links in the body,
+                // where a preview bot will open them: confirm before claiming.
+                ...(input.maxActions === 0 ? { viaLink: true } : {}),
+                deviceId: input.deviceId,
+                actionId: spec.actionId,
+                targetId: input.targetId,
+                expiresAt,
+              }),
+            })
+            return {
+              id: spec.actionId,
+              label:
+                spec.suggestedClass === undefined
+                  ? host.texts.text({
+                      key:
+                        spec.verdict === 'correct'
+                          ? 'button.verdict.correct'
+                          : 'button.verdict.wrong',
+                    })
+                  : host.texts.text({
+                      key: 'button.verdict.wrongAs',
+                      vars: { class: spec.suggestedClass },
+                    }),
+              url: id,
+              // A background call: the OS shows nothing, the notification stays.
+              mode: 'background',
+            }
+          },
+        )
 
   // 1. The rule's own sequences. Needs an actuator — a button that would
   //    always fail is worse than an absent one.
@@ -402,6 +472,7 @@ export async function mintButtons(
   }
 
   const out = [
+    ...verdictButtons,
     ...sequenceButtons,
     ...snoozeButtons,
     ...alarmButtons,

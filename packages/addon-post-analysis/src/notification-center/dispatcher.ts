@@ -25,6 +25,7 @@
  * transport/backend errors ⇒ transient (retried with backoff).
  */
 
+import { isVerdictAction, verdictLinkLines } from './detection-verdict-buttons.js'
 import {
   eventKindLabel,
   type IScopedLogger,
@@ -179,6 +180,8 @@ export interface NcTargetRef {
    * default — never to "no cap".
    */
   readonly bodyMaxLen?: number
+  /** The KIND's declared button budget (`TargetKindCaps.actions`). Absent = unknown. */
+  readonly maxActions?: number
 }
 
 /**
@@ -756,6 +759,14 @@ export interface NcMintButtonsInput {
   readonly ownerUserId?: string
   /** The subject's class, when it has one. */
   readonly className?: string
+  /** The track a detection notification reports (the verdict buttons' subject). */
+  readonly trackId?: string
+  /**
+   * How many buttons this target's KIND can carry (`TargetKindCaps.actions`).
+   * `0` = none: the verdict choices travel as links in the body instead.
+   * Absent = the kind catalog did not answer, which is UNKNOWN.
+   */
+  readonly maxActions?: number
   /**
    * The system event this notification reports, FROZEN — the row's own
    * `subject.systemEvent`, handed over whole and joined with nothing.
@@ -1881,6 +1892,10 @@ export class NcDispatcher {
         ...(entry.payload.subject.className !== undefined
           ? { className: entry.payload.subject.className }
           : {}),
+        ...(entry.payload.subject.trackId !== undefined
+          ? { trackId: entry.payload.subject.trackId }
+          : {}),
+        ...(target.maxActions !== undefined ? { maxActions: target.maxActions } : {}),
         ...(entry.payload.subject.systemEvent !== undefined
           ? { systemEvent: entry.payload.subject.systemEvent }
           : {}),
@@ -2032,9 +2047,17 @@ export class NcDispatcher {
     // one person tapping cannot leave another person's button already spent.
     // Best-effort — a mint that fails costs the buttons, never the
     // notification about the event.
-    const actions = await this.mintActions(entry, target)
+    const minted = await this.mintActions(entry, target)
+    // A kind with NO button budget cannot show the verdict choices as buttons
+    // (the degrade engine would drop them whole), so they travel as links in
+    // the body instead. Every other button on such a kind is dropped as before.
+    const linkOnly = target.maxActions === 0
+    const verdictLinks = linkOnly ? verdictLinkLines(minted) : ''
+    const actions = linkOnly ? minted.filter((a) => !isVerdictAction(a)) : minted
+    const withLinks = (text: string): string =>
+      verdictLinks === '' ? text : `${text}\n\n${verdictLinks}`
     const notification: NcNotificationInput = {
-      body,
+      body: withLinks(body),
       title,
       priority: clampPriority(
         paramNumber(entry.payload.params, 'priority') ?? entry.payload.priority,
@@ -2068,7 +2091,7 @@ export class NcDispatcher {
       // Immutable: a new notification, never a mutated one. The AI pass runs
       // after this returns and must not be able to edit a value the confirm
       // gate has already judged.
-      withAiText: (aiText) => ({ ...notification, body: renderBody(aiText) }),
+      withAiText: (aiText) => ({ ...notification, body: withLinks(renderBody(aiText)) }),
     }
   }
 

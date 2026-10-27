@@ -134,6 +134,29 @@ export class TrackAlreadyTrainedError extends Error {
   }
 }
 
+/** Why the retrain lifecycle refused a mark, in the words a caller can branch on. */
+export type RetrainRefusalReason = 'trained' | 'budget' | 'unknown-track'
+
+/**
+ * Classify a failed `setTrackFlags` as one of the lifecycle's DELIBERATE
+ * refusals, or `null` when it is a failure of the call itself.
+ *
+ * Needed because the caller that matters (a notification button) reaches the
+ * method over `ctx.api`, where the error class does not survive the hop and
+ * only the message does. The class check comes first; the message check is the
+ * transported form, and `track-flags.spec.ts` pins it against the real
+ * messages so a reworded refusal cannot silently turn into a generic failure.
+ */
+export function retrainRefusalReason(err: unknown): RetrainRefusalReason | null {
+  if (err instanceof TrackAlreadyTrainedError) return 'trained'
+  if (err instanceof StagingBudgetExceededError) return 'budget'
+  const message = err instanceof Error ? err.message : ''
+  if (message.includes('is already trained')) return 'trained'
+  if (message.includes('in retrain staging')) return 'budget'
+  if (message.includes('unknown track')) return 'unknown-track'
+  return null
+}
+
 /**
  * The `debugNote` half of the patch — `{}` when nothing should be written.
  *

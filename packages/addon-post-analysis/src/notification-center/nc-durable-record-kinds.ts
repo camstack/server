@@ -52,6 +52,9 @@ export const ncDurableRecordKinds = defineRecordKinds({
     none: 'one fixed key (watermark), overwritten in place, never deleted',
   }),
   snoozes: ledger('operator opens or closes a snooze window (write-through)'),
+  'detection-verdicts': ledger(
+    'operator taps Correct or Wrong on a detection notification; one row per track',
+  ),
   // The four below are NOT DurableLedger mirrors: their owners query them (QUERIED).
   'snooze-suppressed': {
     ...QUERIED,

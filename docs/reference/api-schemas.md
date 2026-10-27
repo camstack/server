@@ -3995,6 +3995,7 @@ Enum: `"template" \| "schedule" \| "targetUsers" \| "snoozeOptions" \| "snoozeAl
 - `actions?`: `NcRuleActionsSchema`
 - `confirm?`: `NcConfirmSchema`
 - `groupingSec?`: `number`
+- `askVerdict?`: `boolean`
 
 ### `NcRuleKindSchema`
 
@@ -4040,6 +4041,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `actions?`: `NcRuleActionsSchema`
 - `confirm?`: `NcConfirmSchema`
 - `groupingSec?`: `number`
+- `askVerdict?`: `boolean`
 - `disabledTargetIds?`: `string[]`
 
 ### `NcRuleSchema`
@@ -4062,6 +4064,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `actions?`: `NcRuleActionsSchema`
 - `confirm?`: `NcConfirmSchema`
 - `groupingSec?`: `number`
+- `askVerdict?`: `boolean`
 - `id`: `string`
 - `createdBy`: `string`
 - `createdAt`: `number`

@@ -42,6 +42,7 @@ export const NC_DEVICE_ROW_KINDS: readonly NcDeviceRowKind[] = [
   { key: 'nc-occupancy', kind: ncDurableRecordKinds.occupancy },
   { key: 'nc-track-groups', kind: ncDurableRecordKinds['track-groups'] },
   { key: 'nc-artifacts', kind: ncDurableRecordKinds.artifacts },
+  { key: 'nc-detection-verdicts', kind: ncDurableRecordKinds['detection-verdicts'] },
 ]
 
 export interface NcDeviceRemovalDeps extends DurableKindDeps {

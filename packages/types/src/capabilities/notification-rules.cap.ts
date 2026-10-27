@@ -1579,6 +1579,19 @@ export const NcRuleInputSchema = z.object({
    * path does not run Zod defaults.
    */
   groupingSec: z.number().int().min(NC_GROUPING_MIN_SEC).max(NC_GROUPING_MAX_SEC).optional(),
+  /**
+   * ASK ME TO CONFIRM DETECTIONS (#243): a DETECTION notification of this rule
+   * carries "Correct" / "Wrong" buttons (and, where the channel has room, a
+   * "Wrong, it is a <class>" choice). A tap marks the track for retraining, the
+   * same mark the Library writes, and records whose notification it was and
+   * when. A channel with no buttons gets the same two choices as links.
+   *
+   * `.optional()`, never `.default()` (a Zod default does not run on the addon
+   * cap path): absent and `false` both mean off, which is what every rule
+   * authored before this field meant. An editor turns it off by writing
+   * `false`, so it needs no `clear` key.
+   */
+  askVerdict: z.boolean().optional(),
 })
 export type NcRuleInput = z.infer<typeof NcRuleInputSchema>
 

@@ -9,6 +9,7 @@ import type {
   NcAlarmArmAnywayGrant,
   NcAlarmBypassInputGrant,
   NcAlarmGrant,
+  NcDetectionVerdictGrant,
   NcSequenceGrant,
   NcServerUpdateGrant,
   NcSnoozeGrant,
@@ -20,6 +21,7 @@ import type {
   NcAlarmArmAnywayRejection,
   NcAlarmInputBypassRefusal,
 } from './alarm/alarm-panel-device.js'
+import type { NcDetectionVerdictLedger } from './detection-verdict-ledger.js'
 import { NcDispatcher } from './dispatcher.js'
 import { NcRuleActionRunner, asForcedSequence } from './rule-actions.js'
 import type { NcRuleFireRef } from './rule-engine.js'
@@ -78,10 +80,12 @@ export interface GrantedActionsHost {
   applyGrantedArmAnyway(panel: NcAlarmPanelPort, grant: NcAlarmArmAnywayGrant): Promise<void>
   applyGrantedBypassInput(panel: NcAlarmPanelPort, grant: NcAlarmBypassInputGrant): Promise<void>
   applyGrantedServerUpdate(grant: NcServerUpdateGrant): Promise<void>
+  applyGrantedDetectionVerdict(grant: NcDetectionVerdictGrant): Promise<void>
   applyGrantedSnooze(grant: NcSnoozeGrant): Promise<void>
   readonly deps: NotificationCenterDeps
   readonly dispatcher: NcDispatcher
   readonly logger: IScopedLogger
+  readonly now: () => number
   readonly rules: NcRuleStore
   runGrantedSequence(grant: NcSequenceGrant): Promise<void>
   readonly sequenceActionsOf: (
@@ -90,6 +94,7 @@ export interface GrantedActionsHost {
   readonly sequences: NcSequenceStore
   readonly snoozes: NcSnoozeStore
   readonly texts: NcTextCatalog
+  readonly verdicts: NcDetectionVerdictLedger
 }
 
 /**
@@ -267,7 +272,53 @@ export async function runGrantedAction(
       return host.applyGrantedAddonUpdate(grant)
     case 'server-update':
       return host.applyGrantedServerUpdate(grant)
+    case 'detection-verdict':
+      return host.applyGrantedDetectionVerdict(grant)
   }
+}
+
+/** What a person is told when the retrain lifecycle refuses the mark. */
+export const VERDICT_REFUSAL_COPY: Readonly<
+  Record<'trained' | 'budget' | 'unknown-track', string>
+> = {
+  trained: 'This track was already used for training — nothing was changed',
+  budget: 'This camera already holds as many tracks for retraining as it may — nothing was changed',
+  'unknown-track': 'This track is no longer available — nothing was changed',
+}
+
+/**
+ * Mark the track one notification reported for retraining, and record who was
+ * asked and when.
+ *
+ * Order matters. The MARK goes first and is the authority: a refusal ("already
+ * trained", "budget full") means the operator's answer changed nothing, so no
+ * ledger row is written for an answer that was not applied. The token is
+ * already spent (D47) — the refusal is shown as the reason, not a retry.
+ */
+export async function applyGrantedDetectionVerdict(
+  host: GrantedActionsHost,
+  grant: NcDetectionVerdictGrant,
+): Promise<void> {
+  const mark = host.deps.markTrackForRetrain
+  if (mark === undefined) throw new Error('no retrain mark is wired on this node')
+  const outcome = await mark({ deviceId: grant.deviceId, trackId: grant.trackId })
+  if (!outcome.ok) {
+    host.logger.info('detection verdict changed nothing — the retrain flow refused the mark', {
+      tags: { deviceId: grant.deviceId },
+      meta: { trackId: grant.trackId, reason: outcome.reason, verdict: grant.verdict },
+    })
+    throw new NcActionRefusedError(VERDICT_REFUSAL_COPY[outcome.reason])
+  }
+  await host.verdicts.record({
+    trackId: grant.trackId,
+    deviceId: grant.deviceId,
+    verdict: grant.verdict,
+    ...(grant.suggestedClass !== undefined ? { suggestedClass: grant.suggestedClass } : {}),
+    userId: grant.userId,
+    ruleId: grant.ruleId,
+    ruleName: grant.ruleName,
+    at: host.now(),
+  })
 }
 /**
  * Apply the addon updates one notification was about.

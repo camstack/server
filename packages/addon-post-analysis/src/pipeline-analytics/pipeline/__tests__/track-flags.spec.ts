@@ -14,6 +14,7 @@ import {
   MAX_STAGING_TRACKS_PER_DEVICE,
   StagingBudgetExceededError,
   TrackAlreadyTrainedError,
+  retrainRefusalReason,
   type TrackFlagsStore,
 } from '../track-flags.js'
 
@@ -577,5 +578,19 @@ describe('rankKeyEvents carries the operator flags onto the feed row', () => {
     expect(out[0]).not.toHaveProperty('retrainStatus')
     expect(out[0]).not.toHaveProperty('debug')
     expect(out[0]).not.toHaveProperty('favourited')
+  })
+})
+
+describe('retrainRefusalReason', () => {
+  it('classifies the real refusals, also after the error class was lost over ctx.api', () => {
+    const trained = new TrackAlreadyTrainedError('t1')
+    const budget = new StagingBudgetExceededError(7, 500)
+    expect(retrainRefusalReason(trained)).toBe('trained')
+    expect(retrainRefusalReason(budget)).toBe('budget')
+    // Only the message crosses the hop.
+    expect(retrainRefusalReason(new Error(trained.message))).toBe('trained')
+    expect(retrainRefusalReason(new Error(budget.message))).toBe('budget')
+    expect(retrainRefusalReason(new Error('setTrackFlags: unknown track t9'))).toBe('unknown-track')
+    expect(retrainRefusalReason(new Error('socket hang up'))).toBeNull()
   })
 })

@@ -50,6 +50,11 @@ import type {
   Track,
 } from '@camstack/types'
 
+/** What the retrain lifecycle answered to a mark request. */
+export type NcMarkForRetrainOutcome =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly reason: 'trained' | 'budget' | 'unknown-track' }
+
 export interface NotificationCenterDeps {
   /**
    * `ctx.records` — every NC config and ledger kind lives on it, on every node.
@@ -333,6 +338,22 @@ export interface NotificationCenterDeps {
    * at apply time. Optional: a wiring without it mints no server-update button.
    */
   readonly applyServerUpdate?: (input: { readonly nodeId: string }) => Promise<NcAddonUpdateOutcome>
+  /**
+   * Mark ONE track for retraining — the SAME mark the Library writes
+   * (`pipelineAnalytics.setTrackFlags({ markForTrain: true })`), so a verdict
+   * button feeds the retrain flow exactly like marking in the Library does.
+   *
+   * Returns a NAMED refusal rather than throwing for the cases the retrain
+   * lifecycle refuses on purpose (`trained`: the frames are already in a
+   * dataset; `budget`: the camera's staging budget is full; `unknown-track`:
+   * the track aged out). A throw is a failure of the call itself.
+   *
+   * Optional: a wiring without it mints no Correct / Wrong button.
+   */
+  readonly markTrackForRetrain?: (input: {
+    readonly deviceId: number
+    readonly trackId: string
+  }) => Promise<NcMarkForRetrainOutcome>
   /**
    * The scheduled-timelapse producer's outside world (export engine, footage
    * availability, track history, artifact publishing).
