@@ -17,7 +17,7 @@ Two Amazon clients live in this addon. They do not share a connection.
 
 The official Alexa skill (`addon-export-alexa`) is a third thing. It publishes
 CamStack devices to Amazon. It cannot carry arbitrary notification text, and
-it must not be given this cookie jar. See [DNNN](../decisions/adr-DNNN-echo-speech-uses-a-long-lived-alexapy-worker.md).
+it must not be given this cookie jar. See [D947](../decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md).
 
 ## The worker
 

@@ -1,5 +1,5 @@
 ---
-id: DNNN
+id: D947
 title: Echo speech uses one long-lived alexapy worker
 status: proposed
 date: 2026-10-27
