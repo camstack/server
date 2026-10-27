@@ -4,6 +4,7 @@
  * and the catalog field; they do not opt into incompatible fields.
  */
 import type { DeviceType } from '../../device/device-type.js'
+import { HISTORY_CATALOG, historyFieldsFor } from '../../generated/history-catalog.js'
 import type { CompositionSourceRef } from '../source-ref.js'
 import type { GroupTemplate } from './catalog.js'
 import { MAX_HELPER_MEMBERS } from './spec.js'
@@ -56,4 +57,34 @@ export function sourcePickForTemplate(template: GroupTemplate): SourcePickReques
     mustBindCaps: template.family === 'actuator' ? [template.outputCap] : [],
     exclude: [],
   }
+}
+
+/** A statistic or integral reads one field that declares history. */
+export function sourcePickForHistory(kind: 'statistic' | 'integral'): SourcePickRequest {
+  return {
+    purpose: 'historised',
+    multiple: false,
+    max: 1,
+    deviceTypes: [],
+    accept: historyAccept(kind),
+    history: { required: true, minRetentionMs: null },
+    mustBindCaps: [],
+    exclude: [],
+  }
+}
+
+function historyAccept(kind: 'statistic' | 'integral'): readonly SourcePickAccept[] {
+  const fields: SourcePickAccept[] = []
+  for (const cap of Object.keys(HISTORY_CATALOG)) {
+    for (const [fieldPath, field] of Object.entries(historyFieldsFor(cap))) {
+      if (field.kind === 'enum') continue
+      if (kind === 'integral' && field.kind !== 'gauge') continue
+      fields.push({
+        cap,
+        fieldPath,
+        valueKind: field.kind === 'boolean' ? 'boolean' : 'number',
+      })
+    }
+  }
+  return fields
 }

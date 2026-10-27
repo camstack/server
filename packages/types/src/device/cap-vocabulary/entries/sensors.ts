@@ -20,6 +20,7 @@ type SensorCap =
   | 'group-commands'
   | 'group-status'
   | 'humidity-sensor'
+  | 'meter'
   | 'motion'
   | 'numeric-sensor'
   | 'power-meter'
@@ -419,6 +420,20 @@ export const SENSOR_CAP_VOCABULARY: CapVocabularySlice<SensorCap> = {
           'the `detected` state trigger phrases both edges, from the mirror that survives a dropped event (D49)',
       },
     },
+  },
+
+  meter: {
+    scope: 'device',
+    noun: t('Meter', 'Contatore'),
+    state: [
+      {
+        kind: 'numeric',
+        field: 'value',
+        quantity: t('the total', 'il totale'),
+        label: t('Total', 'Totale'),
+        icon: 'gauge',
+      },
+    ],
   },
 
   'numeric-sensor': {

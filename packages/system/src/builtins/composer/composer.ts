@@ -59,6 +59,10 @@ import {
   type CompositionFieldState,
   composedDeviceStableId,
   type DeviceDeclaration,
+  type DeviceHistoryQueryResult,
+  type HistoryRetention,
+  type IntegralHelperSpec,
+  type StatisticHelperSpec,
   errMsg,
   type FieldClaim,
   type IScopedLogger,
@@ -120,6 +124,7 @@ import {
   TargetDescriptions,
 } from './existing-target.js'
 import type { ClaimEvent } from './held-claims.js'
+import { type HistoryBlockView, HistoryHelpers, type HistoryQuery } from './history-helpers.js'
 import {
   resolvePulseSeeds,
   type PulseFieldSeed,
@@ -172,6 +177,14 @@ export interface ComposerDeps {
    * Absent (tests that predate the seed) leaves the boot slice as the initial.
    */
   readonly readPulseHistory?: ReadPulseHistory
+  /**
+   * A statistic or integral reads device history on a schedule (D944). Absent
+   * in tests that predate it: those helpers stay offline, nothing is queried.
+   */
+  readonly readHistory?: (input: HistoryQuery) => Promise<DeviceHistoryQueryResult>
+  readonly readHistoryRetention?: () => Promise<HistoryRetention>
+  /** IANA zone for calendar windows. The hub process zone when omitted. */
+  readonly timeZone?: string
   /** ONE `getBindings` per target description read (rule 1). */
   readonly describeTarget: DescribeTarget
   /** `GraftHost` (Task 10): a method-serving native for each ADDED cap. Absent, nothing is grafted. */
@@ -205,6 +218,8 @@ export class Composer {
   private readonly targets: TargetDescriptions
   private readonly grafts: ComposerGrafts
   private readonly actuators: ActuatorGroups | null
+  private readonly history: HistoryHelpers | null
+  private historySpecs: ReadonlyMap<string, StatisticHelperSpec | IntegralHelperSpec> = new Map()
   /** The rows the composer owns, read ONCE before its first withdrawal decision. */
   private readonly rowSeed: ConfirmedSeed<PersistedComposedRow>
   /**
@@ -239,6 +254,7 @@ export class Composer {
       return deps.describeTarget(deviceId)
     })
     this.actuators = this.attachActuators(deps)
+    this.history = this.attachHistory(deps)
     this.waits = new ApplyWaits(deps.logger)
     this.rowSeed = composedRowSeed({
       logger: deps.logger,
@@ -281,6 +297,7 @@ export class Composer {
 
   /** Runs on the tracker's one chain (R3): resolves once the change reached every runtime. */
   async onStateChanged(data: DeviceStateChangedData): Promise<void> {
+    this.history?.noteSample(data.deviceId)
     this.dispatch(await this.deps.tracker.onStateChanged(data.deviceId, data.capName, data.slice))
   }
 
@@ -307,6 +324,7 @@ export class Composer {
   shutdown(): void {
     for (const entry of this.live.values()) entry.runtime?.stop()
     this.actuators?.shutdown()
+    this.history?.stop()
   }
 
   private attachActuators(deps: ComposerDeps): ActuatorGroups | null {
@@ -329,6 +347,40 @@ export class Composer {
       },
       invoke,
     })
+  }
+
+  private attachHistory(deps: ComposerDeps): HistoryHelpers | null {
+    const read = deps.readHistory
+    const retention = deps.readHistoryRetention
+    if (read === undefined || retention === undefined) return null
+    return new HistoryHelpers({
+      now: deps.now,
+      timeZone: deps.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      logger: deps.logger.child('history'),
+      query: read,
+      retention,
+      sourceDeviceId: (ref) => {
+        const found = deps.tracker.resolution(ref)
+        return found.kind === 'found' ? found.deviceId : null
+      },
+      blocks: () => this.historyBlocks(),
+      publish: (blockId, writes) => {
+        this.live.get(blockId)?.runtime?.publishSeries(writes)
+      },
+      timer: deps.newTimer(),
+    })
+  }
+
+  private historyBlocks(): readonly HistoryBlockView[] {
+    const blocks: HistoryBlockView[] = []
+    for (const [blockId, helper] of this.historySpecs) {
+      const entry = this.live.get(blockId)
+      if (entry === undefined) continue
+      const deviceId = this.deviceIdOf(entry)
+      if (deviceId === null) continue
+      blocks.push({ blockId, deviceId, helper })
+    }
+    return blocks
   }
 
   /** Run `work` after every apply already queued, whether that settled or failed. */
@@ -382,8 +434,14 @@ export class Composer {
     const unreleasedClaims = await this.releaseConfirmed(releasing)
     await this.syncSources(rebuilt)
     await this.actuators?.sync(
-      input.blocks.map((block) => ({ id: block.id, helper: block.composition.helper })),
+      input.blocks.flatMap((block) => {
+        const helper = block.composition.helper
+        if (helper !== undefined && helper.kind !== 'group') return []
+        return [{ id: block.id, helper }]
+      }),
     )
+    this.historySpecs = historySpecsOf(input.blocks)
+    this.history?.start()
     await this.reconcileClaims()
     return {
       blocks: planned.map((p) => this.verdict(p.block.id)),
@@ -790,4 +848,16 @@ export class Composer {
         : null
     return verdictOf(blockId, entry, runtime !== null && this.unsynced.has(runtime), grafts)
   }
+}
+
+function historySpecsOf(
+  blocks: readonly ComposerBlock[],
+): ReadonlyMap<string, StatisticHelperSpec | IntegralHelperSpec> {
+  const specs = new Map<string, StatisticHelperSpec | IntegralHelperSpec>()
+  for (const block of blocks) {
+    const helper = block.composition.helper
+    if (helper === undefined || helper.kind === 'group' || helper.kind === 'appliance') continue
+    specs.set(block.id, helper)
+  }
+  return specs
 }

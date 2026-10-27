@@ -57,6 +57,7 @@ import type { intercomCapability } from '../capabilities/intercom.cap.js'
 import type { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
 import type { lockControlCapability } from '../capabilities/lock-control.cap.js'
 import type { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
+import type { meterCapability } from '../capabilities/meter.cap.js'
 import type { motionCapability } from '../capabilities/motion.cap.js'
 import type { motionDetectionCapability } from '../capabilities/motion-detection.cap.js'
 import type { motionTriggerCapability } from '../capabilities/motion-trigger.cap.js'
@@ -165,6 +166,7 @@ export interface DeviceProxyState {
   readonly lawnMowerControl: SliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>
   readonly lockControl: SliceHandle<InferRuntimeState<typeof lockControlCapability>>
   readonly mediaPlayer: SliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>
+  readonly meter: SliceHandle<InferRuntimeState<typeof meterCapability>>
   readonly motion: SliceHandle<InferRuntimeState<typeof motionCapability>>
   readonly motionTrigger: SliceHandle<InferRuntimeState<typeof motionTriggerCapability>>
   readonly motionZones: SliceHandle<InferRuntimeState<typeof motionZonesCapability>>
@@ -269,6 +271,7 @@ export interface DeviceProxy {
   readonly lawnMowerControl?: InferDeviceProxyCap<typeof lawnMowerControlCapability>
   readonly lockControl?: InferDeviceProxyCap<typeof lockControlCapability>
   readonly mediaPlayer?: InferDeviceProxyCap<typeof mediaPlayerCapability>
+  readonly meter?: InferDeviceProxyCap<typeof meterCapability>
   readonly motion?: InferDeviceProxyCap<typeof motionCapability>
   readonly motionDetection?: InferDeviceProxyCap<typeof motionDetectionCapability>
   readonly motionTrigger?: InferDeviceProxyCap<typeof motionTriggerCapability>
@@ -707,6 +710,10 @@ export function createDeviceProxy(
     selectSource: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'selectSource', 'mutation', input),
     playMedia: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'playMedia', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'getStatus', 'query', input),
+  }
+
+  const meterInterface = {
+    getStatus: (input?: unknown) => dispatch('meter', 'meter', 'getStatus', 'query', input),
   }
 
   const motionInterface = {
@@ -1324,6 +1331,7 @@ export function createDeviceProxy(
       lawnMowerControl: createSliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>(stateSource, binding.deviceId, 'lawn-mower-control'),
       lockControl: createSliceHandle<InferRuntimeState<typeof lockControlCapability>>(stateSource, binding.deviceId, 'lock-control'),
       mediaPlayer: createSliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>(stateSource, binding.deviceId, 'media-player'),
+      meter: createSliceHandle<InferRuntimeState<typeof meterCapability>>(stateSource, binding.deviceId, 'meter'),
       motion: createSliceHandle<InferRuntimeState<typeof motionCapability>>(stateSource, binding.deviceId, 'motion'),
       motionTrigger: createSliceHandle<InferRuntimeState<typeof motionTriggerCapability>>(stateSource, binding.deviceId, 'motion-trigger'),
       motionZones: createSliceHandle<InferRuntimeState<typeof motionZonesCapability>>(stateSource, binding.deviceId, 'motion-zones'),
@@ -1409,6 +1417,7 @@ export function createDeviceProxy(
     ...(bound('lawn-mower-control') ? { lawnMowerControl: lawnMowerControlInterface } : {}),
     ...(bound('lock-control') ? { lockControl: lockControlInterface } : {}),
     ...(bound('media-player') ? { mediaPlayer: mediaPlayerInterface } : {}),
+    ...(bound('meter') ? { meter: meterInterface } : {}),
     ...(bound('motion') ? { motion: motionInterface } : {}),
     ...(bound('motion-detection') ? { motionDetection: motionDetectionInterface } : {}),
     ...(bound('motion-trigger') ? { motionTrigger: motionTriggerInterface } : {}),

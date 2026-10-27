@@ -110,11 +110,29 @@ export const CompositionAggregateSourceSchema = z.object({
 })
 export type CompositionAggregateSource = z.infer<typeof CompositionAggregateSourceSchema>
 
+/**
+ * `series`: a statistics or integral field. The composer writes it from a
+ * history query. The live pass does not recompute it (D944).
+ */
+export const CompositionSeriesSourceSchema = z.object({
+  kind: z.literal('series'),
+  read: CompositionFieldReadSchema,
+  /** `value` is the statistic or the integral. The others are the gap counts. */
+  publish: z.enum(['value', 'included', 'excluded', 'total']),
+  /**
+   * What an unanswered `value` does. Counts ignore this. `offline` leaves the
+   * device unseeded until history answers, so a restart cannot publish 0.
+   */
+  empty: z.enum(['null', 'omit', 'offline']),
+})
+export type CompositionSeriesSource = z.infer<typeof CompositionSeriesSourceSchema>
+
 export const CompositionFieldSourceSchema = z.discriminatedUnion('kind', [
   CompositionFromSourceSchema,
   CompositionExpressionSourceSchema,
   CompositionCodeSourceSchema,
   CompositionAggregateSourceSchema,
+  CompositionSeriesSourceSchema,
 ])
 export type CompositionFieldSource = z.infer<typeof CompositionFieldSourceSchema>
 
@@ -277,6 +295,8 @@ export function fieldReads(source: CompositionFieldSource): readonly Composition
       )
     case 'aggregate':
       return source.reads
+    case 'series':
+      return [source.read]
     case 'code':
       return []
   }

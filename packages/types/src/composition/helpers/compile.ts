@@ -17,6 +17,8 @@ import { problem } from '../plan-result.js'
 import { reducerForActive } from './actuator.js'
 import { applianceDeviceType } from './appliance.js'
 import { type GroupTemplate, groupTemplate } from './catalog.js'
+import { integralDraft, statisticDraft } from './compile-history.js'
+import { DEFAULT_HISTORY_RETENTION, type HistoryRetention } from './history-window.js'
 import {
   type ApplianceHelperSpec,
   type GroupHelperSpec,
@@ -264,8 +266,29 @@ function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
 }
 
 /** Compile a helper template to a new-device composition. Refusals are named. */
-export function compileHelper(spec: HelperSpec): HelperCompileResult {
-  if (spec.kind === 'appliance') return compileAppliance(spec)
+export function compileHelper(
+  spec: HelperSpec,
+  retention: HistoryRetention = DEFAULT_HISTORY_RETENTION,
+): HelperCompileResult {
+  switch (spec.kind) {
+    case 'group':
+      return compileGroup(spec)
+    case 'appliance':
+      return compileAppliance(spec)
+    case 'statistic': {
+      const built = statisticDraft(spec, retention)
+      if (built.problems.length > 0) return { ok: false, problems: built.problems }
+      return parseDraft(built.draft)
+    }
+    case 'integral': {
+      const built = integralDraft(spec, retention)
+      if (built.problems.length > 0) return { ok: false, problems: built.problems }
+      return parseDraft(built.draft)
+    }
+  }
+}
+
+function compileGroup(spec: GroupHelperSpec): HelperCompileResult {
   const template = groupTemplate(spec.templateId)
   if (template === null) {
     return {
@@ -309,5 +332,6 @@ export function sameHelperBody(stored: Composition, compiled: Composition): bool
 
 export function templateDeviceType(spec: HelperSpec): DeviceType | null {
   if (spec.kind === 'appliance') return applianceDeviceType(spec.appliance)
+  if (spec.kind !== 'group') return null
   return groupTemplate(spec.templateId)?.memberDeviceType ?? null
 }

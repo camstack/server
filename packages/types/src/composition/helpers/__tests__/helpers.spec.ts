@@ -48,6 +48,7 @@ import {
   GROUP_TEMPLATE_IDS,
   type GroupHelperSpec,
   type GroupTemplateId,
+  helperMembers,
   type HelperMember,
 } from '../spec.js'
 
@@ -402,12 +403,7 @@ function context(
   deviceType: DeviceType = DeviceType.Sensor,
 ): ValidateCompositionContext {
   const sources = new Map<string, CompositionSourceDescription>()
-  const members =
-    composition.helper === undefined
-      ? []
-      : composition.helper.kind === 'group'
-        ? composition.helper.members
-        : [composition.helper.member]
+  const members = composition.helper === undefined ? [] : helperMembers(composition.helper)
   for (const [index, item] of members.entries()) {
     sources.set(compositionSourceKey(item.source), {
       kind: 'found',
@@ -425,12 +421,7 @@ function factMap(
   bySensor: Readonly<Record<number, HelperMemberFact>>,
 ): ReadonlyMap<string, HelperMemberFact> {
   const facts = new Map<string, HelperMemberFact>()
-  const members =
-    composition.helper === undefined
-      ? []
-      : composition.helper.kind === 'group'
-        ? composition.helper.members
-        : [composition.helper.member]
+  const members = composition.helper === undefined ? [] : helperMembers(composition.helper)
   for (const item of members) {
     const n = Number(item.source.stableId.replace('sensor-', ''))
     const fact = bySensor[n]

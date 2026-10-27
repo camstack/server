@@ -21,6 +21,7 @@ function quantityProblems(
   spec: GroupHelperSpec,
   facts: ReadonlyMap<string, HelperMemberFact>,
 ): readonly CompositionProblem[] {
+  if (spec.kind !== 'group') return []
   const template = groupTemplate(spec.templateId)
   if (template === null || template.family !== 'numeric') return []
   const known = spec.members.flatMap((member, index) => {
@@ -55,6 +56,7 @@ function deviceTypeProblems(
   spec: GroupHelperSpec,
   facts: ReadonlyMap<string, HelperMemberFact>,
 ): readonly CompositionProblem[] {
+  if (spec.kind !== 'group') return []
   const template = groupTemplate(spec.templateId)
   if (template === null) return []
   return spec.members.flatMap((member, index) => {
@@ -92,6 +94,7 @@ export function helperSaveProblems(
     ]
   }
   if (spec.kind === 'appliance') return applianceMemberProblems(spec.member, facts)
+  if (spec.kind !== 'group') return []
   return [...quantityProblems(spec, facts), ...deviceTypeProblems(spec, facts)]
 }
 

@@ -285,6 +285,14 @@ export function evaluateCompositionField(input: EvaluateCompositionFieldInput): 
       return expressionOutcome(source, input.read, input.now, input.stateful)
     case 'aggregate':
       return aggregateField(source, input.read)
+    case 'series':
+      return {
+        state: 'unavailable',
+        value: null,
+        reason: 'a series field is written from device history',
+        fatal: false,
+        confirmed: false,
+      }
     case 'code':
       return {
         state: 'unavailable',

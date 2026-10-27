@@ -4,7 +4,7 @@
 
 # Capabilities
 
-183 capability definitions in `packages/types/src/capabilities/`.
+184 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -17,7 +17,7 @@ has no `runtimeState`.
 installed addon declares it — either it is server-provided, or the cap is
 registered at runtime only (`registerNativeCap` from a `BaseDevice`).
 
-## Device-scoped (93)
+## Device-scoped (94)
 
 Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`.
 
@@ -72,6 +72,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `lawn-mower-control` | 4 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
 | `lock-control` | 4 | ✓ | ✓ | 1 series | — | — |
 | `media-player` | 13 | ✓ | ✓ | 2 series | — | — |
+| `meter` | 1 | ✓ | ✓ | 1 series | — | — |
 | `motion` | 2 | ✓ | ✓ | 1 series | — | `camera-grid` |
 | `motion-detection` | 6 | — | — | — | — | `motion-wasm` |
 | `motion-trigger` | 2 | ✓ | ✓ | none | — | — |

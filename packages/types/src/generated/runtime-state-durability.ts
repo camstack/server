@@ -17,7 +17,7 @@ export interface RuntimeStatePolicy {
 
 /**
  * Per-cap runtime-state policy, projected from every `*.cap.ts` that declares
- * `runtimeState`. 74 caps: 38 `restored`, 36 `session`.
+ * `runtimeState`. 75 caps: 39 `restored`, 36 `session`.
  *
  * A cap absent from this map has no runtime-state slice at all. A cap PRESENT
  * with `durability: 'session'` has one and has decided not to keep it.
@@ -62,6 +62,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'lawn-mower-control': { durability: 'session', volatileFields: [] },
   'lock-control': { durability: 'restored', volatileFields: ['lastChangedAt'] },
   'media-player': { durability: 'session', volatileFields: [] },
+  'meter': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
   'motion': { durability: 'session', volatileFields: [] },
   'motion-trigger': { durability: 'session', volatileFields: [] },
   'motion-zones': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
@@ -139,6 +140,7 @@ export const RESTORED_CAP_NAMES: readonly string[] = [
   'humidity-sensor',
   'image-settings',
   'lock-control',
+  'meter',
   'motion-zones',
   'native-object-detection',
   'network-link',

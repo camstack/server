@@ -28,7 +28,7 @@ import {
   sharedLightCaps,
 } from '../actuator.js'
 import { compileHelper } from '../compile.js'
-import { type GroupHelperSpec, type HelperMember } from '../spec.js'
+import { type GroupHelperSpec, helperMembers, type HelperMember } from '../spec.js'
 
 const lookupCap = buildCapabilityLookup([switchCapability, groupStatusCapability])
 
@@ -56,12 +56,7 @@ function actuator(
 
 function context(composition: Composition, deviceType: DeviceType): ValidateCompositionContext {
   const sources = new Map<string, CompositionSourceDescription>()
-  const members =
-    composition.helper === undefined
-      ? []
-      : composition.helper.kind === 'group'
-        ? composition.helper.members
-        : [composition.helper.member]
+  const members = composition.helper === undefined ? [] : helperMembers(composition.helper)
   for (const [index, item] of members.entries()) {
     sources.set(compositionSourceKey(item.source), {
       kind: 'found',

@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 548 methods carry a device reference, of which
+ * Coverage: 549 methods carry a device reference, of which
  * 174 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -260,6 +260,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'mediaPlayer.setShuffle': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.setVolume': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'meter.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'motion.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'motion.isDetected': [{ name: "deviceId", form: "single", optional: false }] as const,
   'motionDetection.analyze': [{ name: "deviceId", form: "single", optional: false }] as const,

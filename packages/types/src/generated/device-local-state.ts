@@ -42,6 +42,7 @@ import { intercomCapability } from '../capabilities/intercom.cap.js'
 import { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
 import { lockControlCapability } from '../capabilities/lock-control.cap.js'
 import { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
+import { meterCapability } from '../capabilities/meter.cap.js'
 import { motionCapability } from '../capabilities/motion.cap.js'
 import { motionTriggerCapability } from '../capabilities/motion-trigger.cap.js'
 import { motionZonesCapability } from '../capabilities/motion-zones.cap.js'
@@ -129,6 +130,7 @@ export interface DeviceLocalState {
   lawnMowerControl: InferRuntimeState<typeof lawnMowerControlCapability>
   lockControl: InferRuntimeState<typeof lockControlCapability>
   mediaPlayer: InferRuntimeState<typeof mediaPlayerCapability>
+  meter: InferRuntimeState<typeof meterCapability>
   motion: InferRuntimeState<typeof motionCapability>
   motionTrigger: InferRuntimeState<typeof motionTriggerCapability>
   motionZones: InferRuntimeState<typeof motionZonesCapability>
@@ -212,6 +214,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   lawnMowerControl: lawnMowerControlCapability,
   lockControl: lockControlCapability,
   mediaPlayer: mediaPlayerCapability,
+  meter: meterCapability,
   motion: motionCapability,
   motionTrigger: motionTriggerCapability,
   motionZones: motionZonesCapability,
@@ -302,6 +305,7 @@ export interface CapNameToRuntimeStateMap {
   'lawn-mower-control': InferRuntimeState<typeof lawnMowerControlCapability>
   'lock-control': InferRuntimeState<typeof lockControlCapability>
   'media-player': InferRuntimeState<typeof mediaPlayerCapability>
+  'meter': InferRuntimeState<typeof meterCapability>
   'motion': InferRuntimeState<typeof motionCapability>
   'motion-trigger': InferRuntimeState<typeof motionTriggerCapability>
   'motion-zones': InferRuntimeState<typeof motionZonesCapability>

@@ -1601,6 +1601,9 @@ export const useMeshNetworkListPeers: typeof trpc.meshNetwork.listPeers.useQuery
 /** Generated alias around `trpc.meshNetwork.testConnection.useMutation`. */
 export const useMeshNetworkTestConnection: typeof trpc.meshNetwork.testConnection.useMutation = trpc.meshNetwork.testConnection.useMutation
 
+/** Generated alias around `trpc.meter.getStatus.useQuery`. */
+export const useMeterGetStatus: typeof trpc.meter.getStatus.useQuery = trpc.meter.getStatus.useQuery
+
 /** Generated alias around `trpc.metricsProvider.collectSnapshot.useQuery`. */
 export const useMetricsProviderCollectSnapshot: typeof trpc.metricsProvider.collectSnapshot.useQuery = trpc.metricsProvider.collectSnapshot.useQuery
 

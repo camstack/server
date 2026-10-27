@@ -175,6 +175,7 @@ export function evaluateFields(
     for (const key of keys) {
       const record = next.get(key)
       if (record === undefined) continue
+      if (record.plan.source.kind === 'series') continue
       const candidateMemory = cloneStatefulExpressionMemory(record.expressionMemory)
       // D49 inverse: a field whose source did not answer must not treat the
       // first answered reading as a one-shot press. Disarm rose so it

@@ -2335,6 +2335,12 @@ export {
   MaskShapeSchema,
 } from './mask-shape.js'
 export {
+  type MeterStatus,
+  MeterStatusSchema,
+  meterCapability,
+  type IMeterProvider,
+} from './meter.cap.js'
+export {
   type IMediaPlayerProvider,
   type MediaInfo,
   type MediaPlayerRepeat,
@@ -3194,6 +3200,7 @@ import type { logChannelsCapability } from './log-channels.cap.js'
 import type { logDestinationCapability } from './log-destination.cap.js'
 import type { loginMethodCapability } from './login-method.cap.js'
 import type { mediaPlayerCapability } from './media-player.cap.js'
+import type { meterCapability } from './meter.cap.js'
 import type { meshNetworkCapability } from './mesh-network.cap.js'
 import type { metricsProviderCapability } from './metrics-provider.cap.js'
 import type { modelConvertCapability } from './model-convert.cap.js'
@@ -3383,6 +3390,7 @@ type AnyCapability =
   | typeof controlCapability
   | typeof notifierCapability
   | typeof mediaPlayerCapability
+  | typeof meterCapability
   | typeof alarmPanelCapability
   | typeof presenceCapability
   | typeof scriptRunnerCapability

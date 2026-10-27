@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 41 caps with series (75 series), 32 caps answered `'none'`.
+ * 42 caps with series (76 series), 32 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -99,6 +99,9 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'media-player': {
     'volumeLevel': { kind: 'gauge', unit: '%', deadband: 1 },
     'isMuted': { kind: 'boolean' },
+  },
+  'meter': {
+    'value': { kind: 'counter', deadband: 0.001, minIntervalMs: 60000 },
   },
   'motion': {
     'detected': { kind: 'boolean', excludeDeviceTypes: [DeviceType.Camera] },

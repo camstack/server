@@ -2325,6 +2325,14 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'never means the reading.',
   },
   {
+    cap: 'meter',
+    reason:
+      'The integral of a gauge that is not watts (D944). The total is base-unit ' +
+      'seconds between resets; energy from watts is power-meter.kwhTotal. The ' +
+      'source quantity is not on this device yet, so publishing the total as a ' +
+      'sensor would give it no unit.',
+  },
+  {
     cap: 'group-commands',
     reason:
       'The last fan-out a helper group attempted (D944), one row per member. ' +

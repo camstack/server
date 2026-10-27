@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1385 method paths across 183 capabilities.
+ * Coverage: 1386 method paths across 184 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -620,6 +620,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'meshNetwork.logout': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'meshNetwork.startLogin': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'meshNetwork.testConnection': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'meter.getStatus': { capName: "meter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'metricsProvider.collectSnapshot': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.getAddonStats': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.getCached': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1507,6 +1508,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "login-method",
   "media-player",
   "mesh-network",
+  "meter",
   "metrics-provider",
   "model-convert",
   "model-distributor",
@@ -1647,6 +1649,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "lawn-mower-control",
   "lock-control",
   "media-player",
+  "meter",
   "motion",
   "motion-detection",
   "motion-trigger",

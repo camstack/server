@@ -62,6 +62,8 @@ const EXEMPT_MEASUREMENT_CAPS: ReadonlySet<string> = new Set([
   'connectivity',
   'humidity-sensor',
   'numeric-sensor',
+  // Integral of a non-power reading (D944). The total is a measurement, not an event.
+  'meter',
   'power-meter',
   'pressure-sensor',
   'temperature-sensor',
@@ -120,7 +122,7 @@ console.error(
     '  (with a matching EVENT_TAXONOMY kind), OR add it to EXEMPT_MEASUREMENT_CAPS in\n' +
     '  scripts/check-event-kind-coverage.ts if it is a measurement / pure action.\n',
 )
-for (const name of missing.sort()) {
+for (const name of missing.toSorted()) {
   // eslint-disable-next-line no-console
   console.error(`    - ${name}`)
 }

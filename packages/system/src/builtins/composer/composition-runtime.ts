@@ -216,6 +216,45 @@ export class CompositionRuntime {
     this.guarded('start', true, () => this.pass([...this.records.keys()], 'start'))
   }
 
+  /**
+   * A history helper's answer (D944). The live pass does not recompute `series`
+   * fields. Clock fields on the same caps move to `now` with the write, so the
+   * cap can seed. A value that is still unanswered keeps the cap unseeded.
+   */
+  publishSeries(
+    writes: readonly {
+      readonly cap: string
+      readonly path: string
+      readonly value: number | null
+    }[],
+  ): void {
+    if (this.stopped || this.disabledReason !== null) return
+    this.guarded('history', false, () => {
+      const now = this.deps.now()
+      const caps = new Set(writes.map((write) => write.cap))
+      const touched = new Set<string>()
+      this.records = new Map(
+        [...this.records].map(([key, record]) => {
+          const clock = record.plan.role === 'clock' && caps.has(record.plan.cap)
+          const write = writes.find(
+            (item) => item.cap === record.plan.cap && item.path === record.plan.path,
+          )
+          if (!clock && write === undefined) return [key, record] as const
+          touched.add(key)
+          const outcome: FieldOutcome = {
+            state: 'fresh',
+            value: write === undefined ? now : write.value,
+            reason: null,
+            deadline: null,
+          }
+          return [key, { ...record, outcome }] as const
+        }),
+      )
+      this.writeCaps(touched, new Set())
+      this.updateAvailability()
+    })
+  }
+
   onSourcesChanged(sliceKeys: ReadonlySet<string>): void {
     if (this.disabledReason !== null) return
     this.guarded('source', true, () => {
@@ -536,11 +575,21 @@ export class CompositionRuntime {
     this.released = new Set([...[...this.released].filter((k) => !before.has(k)), ...now])
   }
 
+  /** A history field with no answer yet must not let its cap seed on the clock alone. */
+  private seriesUnanswered(record: FieldRecord): boolean {
+    return record.plan.source.kind === 'series' && record.outcome?.state !== 'fresh'
+  }
+
   private seedCap(cap: string): void {
     const records = this.recordsOf(cap)
     // A HELD field holds the seed too: a claim over it would send no value for it.
     const missing = records
-      .filter((r) => (r.plan.required || isHeld(r)) && writable(r) === undefined && !isReleased(r))
+      .filter(
+        (r) =>
+          (r.plan.required || isHeld(r) || this.seriesUnanswered(r)) &&
+          writable(r) === undefined &&
+          !isReleased(r),
+      )
       .map((r) => fieldPath(r.plan))
     if (missing.length > 0) return this.holdBackSeed(cap, missing)
     this.heldBack = new Set([...this.heldBack].filter((c) => c !== cap))

@@ -4,6 +4,13 @@
  */
 import { z } from 'zod'
 import { APPLIANCE_KINDS, APPLIANCE_TEMPLATE_ID } from './appliance.js'
+import { STATISTIC_STATS } from './history-math.js'
+import {
+  RESET_PERIODS,
+  type ResetPeriod,
+  type StatisticWindow,
+  StatisticWindowSchema,
+} from './history-window.js'
 import { CompositionSourceRefSchema } from '../source-ref.js'
 
 /** A group may name more members than an expression call (the 16-arg cap). */
@@ -58,10 +65,7 @@ export const HelperMemberSchema: z.ZodObject<{
 })
 export type HelperMember = z.infer<typeof HelperMemberSchema>
 
-/**
- * Phase 1a is groups only. Math, integral and statistics stay off this union
- * until the composer can run them — a control must not save a spec it cannot.
- */
+/** A group, a statistic, or an integral (D944). The composer runs all three. */
 export const GroupHelperSpecSchema: z.ZodObject<{
   kind: z.ZodLiteral<'group'>
   templateId: typeof GroupTemplateIdSchema
@@ -97,13 +101,65 @@ export const ApplianceHelperSpecSchema: z.ZodObject<{
 })
 export type ApplianceHelperSpec = z.infer<typeof ApplianceHelperSpecSchema>
 
-export const HelperSpecSchema: z.ZodDiscriminatedUnion<
-  [typeof GroupHelperSpecSchema, typeof ApplianceHelperSpecSchema],
-  'kind'
-> = z.discriminatedUnion('kind', [GroupHelperSpecSchema, ApplianceHelperSpecSchema])
-export type HelperSpec = z.infer<typeof HelperSpecSchema>
+export type StatisticStat = (typeof STATISTIC_STATS)[number]
 
-/** Every member a helper reads. An appliance has one. */
+export type StatisticHelperSpec = {
+  readonly kind: 'statistic'
+  readonly stat: StatisticStat
+  readonly window: StatisticWindow
+  readonly source: HelperMember
+}
+
+const statisticHelperObject = z.object({
+  kind: z.literal('statistic'),
+  stat: z.enum(STATISTIC_STATS),
+  window: StatisticWindowSchema,
+  source: HelperMemberSchema,
+})
+
+export const StatisticHelperSpecSchema: z.ZodType<StatisticHelperSpec> = statisticHelperObject
+
+export const INTEGRAL_OUTPUTS = ['energy', 'meter'] as const
+export type IntegralOutput = (typeof INTEGRAL_OUTPUTS)[number]
+
+export type IntegralHelperSpec = {
+  readonly kind: 'integral'
+  readonly reset: ResetPeriod
+  readonly output: IntegralOutput
+  readonly source: HelperMember
+}
+
+const integralHelperObject = z.object({
+  kind: z.literal('integral'),
+  reset: z.enum(RESET_PERIODS),
+  output: z.enum(INTEGRAL_OUTPUTS),
+  source: HelperMemberSchema,
+})
+
+export const IntegralHelperSpecSchema: z.ZodType<IntegralHelperSpec> = integralHelperObject
+
+export type HelperSpec =
+  | GroupHelperSpec
+  | ApplianceHelperSpec
+  | StatisticHelperSpec
+  | IntegralHelperSpec
+
+export const HelperSpecSchema: z.ZodType<HelperSpec> = z.discriminatedUnion('kind', [
+  GroupHelperSpecSchema,
+  ApplianceHelperSpecSchema,
+  statisticHelperObject,
+  integralHelperObject,
+])
+
+/** Every member a helper reads. A group has many; the others have one. */
 export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
-  return spec.kind === 'group' ? spec.members : [spec.member]
+  switch (spec.kind) {
+    case 'group':
+      return spec.members
+    case 'appliance':
+      return [spec.member]
+    case 'statistic':
+    case 'integral':
+      return [spec.source]
+  }
 }

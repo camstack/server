@@ -28,6 +28,7 @@ import {
   composedDeviceRef,
   compositionSourceKey,
   compositionSourceRefs,
+  helperMembers,
   coreBlockComposition,
   describeComposableCaps,
   errMsg,
@@ -147,8 +148,7 @@ function helperMemberDeviceIds(
   const helper = composition.helper
   if (helper === undefined) return []
   const ids: number[] = []
-  const members = helper.kind === 'group' ? helper.members : [helper.member]
-  for (const member of members) {
+  for (const member of helperMembers(helper)) {
     const found = sources.get(compositionSourceKey(member.source))
     if (found?.kind === 'found') ids.push(found.deviceId)
   }

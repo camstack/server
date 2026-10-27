@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 75 caps with 351 state leaves.
+ * Coverage: 1 advance-derived caps, 76 caps with 352 state leaves.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -119,6 +119,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "login-method",
   "media-player",
   "mesh-network",
+  "meter",
   "metrics-provider",
   "model-convert",
   "model-distributor",
@@ -251,6 +252,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "lawn-mower-control": [{"path":"activity","valueType":"enum","enumValues":["idle","mowing","paused","docked","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"progressPercent","valueType":"number"}, {"path":"currentCode","valueType":"number"}, {"path":"currentCodeLabel","valueType":"string"}, {"path":"severity","valueType":"enum","enumValues":["info","warning","error"]}],
   "lock-control": [{"path":"state","valueType":"enum","enumValues":["locked","unlocked","locking","unlocking","jammed"]}],
   "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"positionMs","valueType":"number"}, {"path":"durationMs","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}],
+  "meter": [{"path":"value","valueType":"number"}],
   "motion": [{"path":"detected","valueType":"boolean"}, {"path":"lastDetectedAt","valueType":"number"}, {"path":"autoClearAfterMs","valueType":"number"}],
   "motion-trigger": [{"path":"enabled","valueType":"boolean"}],
   "motion-zones": [{"path":"enabled","valueType":"boolean"}, {"path":"sensitivity","valueType":"number"}],

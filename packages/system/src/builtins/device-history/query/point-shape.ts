@@ -12,7 +12,11 @@
  *    and are `null`; `state` names the ordinal and a rollup's `states` gives the
  *    milliseconds spent in each state, by name.
  */
-import type { DeviceHistoryKind, DeviceHistoryQueryPoint } from '@camstack/types'
+import {
+  wattMillisecondsToKwh,
+  type DeviceHistoryKind,
+  type DeviceHistoryQueryPoint,
+} from '@camstack/types'
 import type { RawPoint, RollupRow } from '../rollup/rollup-math.js'
 
 export interface SeriesMeaning {
@@ -20,9 +24,6 @@ export interface SeriesMeaning {
   /** `enum`: the value of each ordinal; `null` otherwise. */
   readonly values: readonly string[] | null
 }
-
-/** kWh in one W·ms: 1 kWh = 1 000 W × 3 600 000 ms. */
-export const KWH_PER_WATT_MS: number = 1 / 3_600_000_000
 
 /** Growth from `prev` to `cur`; a drop is a reset counted from zero. `fallback` when `prev` is unknown. */
 export function counterDelta(
@@ -124,7 +125,7 @@ export function integratedEnergyPoints(
     min: row.min,
     max: row.max,
     last: null,
-    delta: row.twSum === null ? null : row.twSum * KWH_PER_WATT_MS,
+    delta: row.twSum === null ? null : wattMillisecondsToKwh(row.twSum),
     state: null,
     states: null,
   }))

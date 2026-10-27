@@ -328,6 +328,9 @@ happened.
 - A rollup's enum bucket is drawn in its dominant state, while the time-in-state
   totals add the bucket's `states` milliseconds, so "open 2h 14m" is exact at
   every resolution.
+- A statistic or integral helper (D944) reads one series through `query` on a
+  schedule. It uses the tier whose retention is strictly longer than the
+  window, and it does not fill a gap with zero.
 
 ## Traps
 

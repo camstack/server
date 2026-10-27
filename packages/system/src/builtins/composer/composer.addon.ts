@@ -20,8 +20,11 @@ import {
   composerCapability,
   type DeclaredDeviceRow,
   DeclaredDevices,
+  DAY_MS,
+  DEFAULT_HISTORY_RETENTION,
   errMsg,
   EventCategory,
+  type HistoryRetention,
   type IComposerProvider,
   type ProviderRegistration,
 } from '@camstack/types'
@@ -198,6 +201,20 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
           return { kind: 'unread', error: errMsg(err) }
         }
       },
+      readHistory: (input) =>
+        api.deviceHistory.query.query({
+          deviceId: input.deviceId,
+          key: input.key,
+          from: input.from,
+          to: input.to,
+          resolution: input.resolution,
+          maxPoints: input.maxPoints,
+        }),
+      readHistoryRetention: async () => {
+        const raw = await api.addonSettingsRaw.getGlobal.query({ addonId: 'device-history' })
+        return historyRetentionOf(raw)
+      },
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       describeTarget: readBoundCaps,
       grafts,
       now: () => Date.now(),
@@ -294,3 +311,24 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
 }
 
 export default ComposerAddon
+
+/** `dayDays` of 0 keeps the daily tier forever (device-history). A missing number is the default. */
+function historyRetentionOf(raw: Readonly<Record<string, unknown>>): HistoryRetention {
+  return {
+    rawMs: positiveDays(raw['rawDays'], DEFAULT_HISTORY_RETENTION.rawMs),
+    fiveMinuteMs: positiveDays(raw['fiveMinuteDays'], DEFAULT_HISTORY_RETENTION.fiveMinuteMs),
+    hourMs: positiveDays(raw['hourDays'], DEFAULT_HISTORY_RETENTION.hourMs),
+    dayMs: positiveDaysOrForever(raw['dayDays']),
+  }
+}
+
+function positiveDays(value: unknown, fallbackMs: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value * DAY_MS
+    : fallbackMs
+}
+
+function positiveDaysOrForever(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
+  return value * DAY_MS
+}

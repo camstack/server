@@ -11,6 +11,7 @@ import {
   type CompositionAggregateSource,
   type CompositionFieldRead,
   type CompositionFieldSource,
+  type CompositionSeriesSource,
   fieldReads,
 } from './composition.js'
 import type {
@@ -41,6 +42,12 @@ interface KindsRefused {
   readonly message: string
 }
 type KindsResult = KindsFound | KindsRefused
+
+function seriesKinds(source: CompositionSeriesSource): KindsResult {
+  if (source.publish !== 'value') return { ok: true, kinds: new Set(['number']) }
+  if (source.empty === 'null') return { ok: true, kinds: new Set(['number', 'null']) }
+  return { ok: true, kinds: new Set(['number']) }
+}
 
 function aggregateKinds(source: CompositionAggregateSource): KindsResult {
   if (source.publish !== 'value') return { ok: true, kinds: new Set(['number']) }
@@ -82,6 +89,7 @@ export function sourceKinds(
     return { ok: false, code: 'reserved-variant', message: 'code fields arrive in slice 4' }
   }
   if (source.kind === 'aggregate') return aggregateKinds(source)
+  if (source.kind === 'series') return seriesKinds(source)
   const bindingKinds = new Map<string, ExpressionKindSet>()
   for (const [name, binding] of Object.entries(source.bindings)) {
     if (binding.kind === 'literal') {

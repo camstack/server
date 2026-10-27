@@ -47,6 +47,8 @@ export const CompositionProblemCodeSchema = z.enum([
   'helper-mismatch',
   /** A member is the wrong device type or the wrong field for the template. */
   'member-constraint',
+  /** A statistics or integral range is longer than the history that is kept (D944). */
+  'retention',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 

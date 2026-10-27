@@ -580,9 +580,22 @@ binds that capability, including one that is offline. One member's failure
 is recorded on `group-commands` and does not cancel the others. A light
 exposes brightness and colour only while every member binds them; colour
 modes are the features they all share. The live set follows membership and
-`device.bindings-changed`. Statistics and integral are not this slice. Fan,
-cover, valve, lock, media player and climate are not this slice either:
-their commands are not an on/off fan-out.
+`device.bindings-changed`. Fan, cover, valve, lock, media player and climate
+are not this slice either: their commands are not an on/off fan-out.
+
+### Statistics and an integral (D944)
+
+A statistic reads one historised numeric field and publishes min, max, a
+time-weighted mean, the sum of a counter's deltas, the sample count, or the
+change, over a rolling window or a calendar period in the hub's timezone. An
+integral accumulates a gauge — watts become kWh, any other gauge becomes a
+meter in base-unit seconds — and resets daily, weekly, monthly, or never.
+Both are computed from device history and its rollups, never from an
+in-memory buffer, and the same query after a restart publishes the same
+number. A window longer than the reading's retention is refused at save. A
+gap is not filled with zero: the statistic writes null, and the integral
+holds its last total and counts the gap on `group-status.excluded`. The
+source has to declare history; the selector says so when it does not.
 
 ## Deleting a device: who cleans what (D864)
 
