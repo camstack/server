@@ -195,7 +195,10 @@ describe('ejectRecipeFromCode', () => {
 
     // A dangling `as const` is a syntax error, and the block would then fail the
     // server-side compile on the very save meant to hand it over intact.
-    expect(ejected).not.toContain('as const')
+    // The recipe's `as const` goes; the block's own (RUN_MODE) stays.
+    const asConstCount = (text: string): number => text.split('as const').length - 1
+    expect(asConstCount(ejected)).toBe(asConstCount(code) - 1)
+    expect(ejected).not.toMatch(/^\}\s*as const/m)
     expect(ejected).toContain('export default function block(ctx: AddonContext)')
     expect(ejected).toContain('EJECTED from the visual automation editor')
   })
