@@ -5397,7 +5397,9 @@
       "waitingForProxy": "In attesa che la pagina di accesso sia pronta…",
       "waitingForLogin": "In attesa del tuo accesso…",
       "cancel": "Annulla l'accesso",
-      "proxyError": "Il servizio di accesso ha restituito un errore"
+      "proxyError": "Il servizio di accesso ha restituito un errore",
+      "sameNetwork": "Aprilo da un dispositivo sulla stessa rete dell'hub",
+      "proxyHostWarning": "Questa pagina non e' sull'indirizzo HTTP dell'hub, quindi il browser potrebbe non raggiungere il link di accesso. Apri CamStack dall'indirizzo LAN dell'hub, oppure imposta l'host di accesso nelle impostazioni dell'addon."
     },
     "editor": {
       "createTitle": "Aggiungi broker",

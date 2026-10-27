@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
-import { capturedToCookieString, detectPrimaryIpv4 } from '../alexa-proxy-login-manager.js'
+import { capturedToCookieString } from '../alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes, type AlexaLoginRouteDeps } from '../alexa-login-routes.js'
 import { SECRET_LINE_RE } from '../alexa-proxy-login.js'
 import type { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
@@ -61,12 +61,6 @@ describe('capturedToCookieString', () => {
   it('passes a string cookieData through unchanged', () => {
     const out = capturedToCookieString({ cookieData: 'raw-cookie; csrf=1', cookie: 'raw-cookie' })
     expect(out).toBe('raw-cookie; csrf=1')
-  })
-})
-
-describe('detectPrimaryIpv4', () => {
-  it('returns a string (possibly empty on isolated hosts)', () => {
-    expect(typeof detectPrimaryIpv4()).toBe('string')
   })
 })
 

@@ -153,13 +153,15 @@ export class AlexaProxyLoginSession {
     this.#remote = null
     if (remote === null) return
     try {
-      // stop() also tears down any opened proxy server.
+      // stop() only clears timers and the push connection; the proxy server
+      // keeps its port until stopProxyServer() closes it.
       remote.stop()
     } catch (err: unknown) {
       this.#logger.warn('alexa proxy-login: dispose stop() failed', {
         meta: { sessionId: this.#opts.sessionId, error: errMsg(err) },
       })
     }
+    await stopProxy(remote, this.#logger, this.#opts.sessionId)
   }
 
   /** Mark cancelled + dispose. */
@@ -224,6 +226,24 @@ export class AlexaProxyLoginSession {
     })
     void this.dispose()
   }
+}
+
+/** Close the login proxy so its port is free for the next session (idempotent). */
+function stopProxy(remote: AlexaRemote, logger: IScopedLogger, sessionId: string): Promise<void> {
+  return new Promise<void>((resolve) => {
+    try {
+      if (typeof remote.stopProxyServer !== 'function') {
+        resolve()
+        return
+      }
+      remote.stopProxyServer(() => resolve())
+    } catch (err: unknown) {
+      logger.warn('alexa proxy-login: stopProxyServer failed', {
+        meta: { sessionId, error: errMsg(err) },
+      })
+      resolve()
+    }
+  })
 }
 
 /**

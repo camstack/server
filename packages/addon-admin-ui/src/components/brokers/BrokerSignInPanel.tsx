@@ -21,6 +21,20 @@ import {
 
 const POLL_INTERVAL_MS = 2000
 
+/**
+ * The sign-in proxy is plain HTTP on its own host:port. From an https admin
+ * page, or from a hub host other than the proxy's, the browser may not reach
+ * it (mixed content, a tunnel that does not forward the port).
+ */
+function proxyReachabilityWarning(loginUrl: string): boolean {
+  try {
+    if (window.location.protocol === 'https:') return true
+    return new URL(loginUrl).hostname !== window.location.hostname
+  } catch {
+    return false
+  }
+}
+
 type Flow =
   | { readonly kind: 'idle' }
   | { readonly kind: 'starting' }
@@ -189,6 +203,11 @@ export function BrokerSignInPanel({
         <>
           <p className="text-xs font-semibold text-foreground">{t('brokers.signIn.openLink')}</p>
           <p className="text-[11px] text-foreground-subtle">{t('brokers.signIn.afterLogin')}</p>
+          <p className="break-all font-mono text-[11px] text-foreground">{flow.loginUrl}</p>
+          <p className="text-[11px] text-foreground-subtle">{t('brokers.signIn.sameNetwork')}</p>
+          {proxyReachabilityWarning(flow.loginUrl) && (
+            <ErrorBox variant="warning" message={t('brokers.signIn.proxyHostWarning')} />
+          )}
           <Button
             variant="primary"
             size="sm"

@@ -1,4 +1,3 @@
-import { networkInterfaces } from 'node:os'
 import { randomBytes } from 'node:crypto'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import {
@@ -6,6 +5,7 @@ import {
   type AlexaCapturedCookie,
   type AlexaProxyLoginStatus,
 } from './alexa-proxy-login.js'
+import { resolveProxyHost } from './alexa-proxy-host.js'
 
 /**
  * Owns the live interactive proxy-login sessions for the addon. One session at a
@@ -25,8 +25,10 @@ import {
 
 export interface AlexaProxyLoginManagerDeps {
   readonly logger: IScopedLogger
-  /** Resolve the configured proxy host:port (blank host ⇒ auto-detect). */
+  /** Resolve the configured proxy host:port (blank host ⇒ the hub's LAN address from the palette). */
   readonly getProxyConfig: () => { readonly proxyHost: string; readonly proxyPort: number }
+  /** `local-network.getAddresses().roles.appConnections.resolved` (D734). */
+  readonly getAppConnectionAddresses: () => Promise<readonly string[]>
 }
 
 /** Result of {@link AlexaProxyLoginManager.start}. */
@@ -39,12 +41,14 @@ export interface AlexaProxyLoginStartResult {
 export class AlexaProxyLoginManager {
   readonly #logger: IScopedLogger
   readonly #getProxyConfig: AlexaProxyLoginManagerDeps['getProxyConfig']
+  readonly #getAppConnectionAddresses: AlexaProxyLoginManagerDeps['getAppConnectionAddresses']
   #session: AlexaProxyLoginSession | null = null
   #captured: Map<string, AlexaCapturedCookie> = new Map()
 
   constructor(deps: AlexaProxyLoginManagerDeps) {
     this.#logger = deps.logger
     this.#getProxyConfig = deps.getProxyConfig
+    this.#getAppConnectionAddresses = deps.getAppConnectionAddresses
   }
 
   /**
@@ -55,12 +59,11 @@ export class AlexaProxyLoginManager {
     await this.cancelActive()
 
     const { proxyHost, proxyPort } = this.#getProxyConfig()
-    const host = proxyHost.length > 0 ? proxyHost : detectPrimaryIpv4()
-    if (host.length === 0) {
-      throw new Error(
-        'alexa proxy-login: could not auto-detect a reachable host IP — set proxyHost in settings',
-      )
-    }
+    const host = await resolveProxyHost({
+      override: proxyHost,
+      readAppConnections: this.#getAppConnectionAddresses,
+      logger: this.#logger,
+    })
 
     const sessionId = randomBytes(9).toString('base64url')
     const session = new AlexaProxyLoginSession({
@@ -135,24 +138,6 @@ export class AlexaProxyLoginManager {
     await this.cancelActive()
     this.#captured.clear()
   }
-}
-
-/**
- * Best-effort primary non-loopback IPv4 of the host. Used when the operator
- * leaves `proxyHost` blank. Returns '' when none found (then the operator must
- * set it explicitly — common on multi-homed/containerised hosts).
- */
-export function detectPrimaryIpv4(): string {
-  const ifaces = networkInterfaces()
-  for (const addrs of Object.values(ifaces)) {
-    if (addrs === undefined) continue
-    for (const addr of addrs) {
-      if (addr.family === 'IPv4' && !addr.internal && addr.address.length > 0) {
-        return addr.address
-      }
-    }
-  }
-  return ''
 }
 
 /**

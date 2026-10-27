@@ -73,14 +73,14 @@ export type AlexaBrokerEntry = z.infer<typeof AlexaBrokerEntrySchema>
  * operator's browser uses (alexa-cookie2 rewrites Amazon URLs to absolute
  * `http://<proxyHost>:<proxyPort>/...`), so it is a directly-reachable host —
  * the hub's LAN IP/hostname — NOT behind the hub's HTTPS data-plane mount.
- * Empty `proxyHost` ⇒ auto-detect the host's primary non-loopback IPv4 at
- * login-start time.
+ * Empty `proxyHost` ⇒ the first LAN address of the hub's `appConnections`
+ * role (local-network palette) at login-start time.
  */
 export const alexaProxyLoginSchema = z.object({
   proxyHost: z
     .string()
     .default('')
-    .describe('Host/IP the browser uses to reach the login proxy (blank = auto-detect)'),
+    .describe('Host/IP the browser uses to reach the login proxy (blank = the hub LAN address)'),
   proxyPort: z
     .preprocess(
       (v) => (v === '' || v === null ? undefined : v),

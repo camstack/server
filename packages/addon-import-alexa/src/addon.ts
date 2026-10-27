@@ -167,6 +167,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         const cfg = alexaProxyLoginSchema.parse(this.config.proxyLogin ?? {})
         return { proxyHost: cfg.proxyHost, proxyPort: cfg.proxyPort }
       },
+      getAppConnectionAddresses: async () =>
+        (await this.ctx.api.localNetwork.getAddresses.query()).roles.appConnections.resolved,
     })
 
     this.ctx.logger.info('Alexa: import addon initialised', {

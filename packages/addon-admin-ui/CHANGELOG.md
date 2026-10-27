@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The broker sign-in panel shows the sign-in link, says to open it from the hub's network, and warns when this page cannot reach it
+
 ## [1.2.495] - 2026-10-27
 
 ### Fixed
