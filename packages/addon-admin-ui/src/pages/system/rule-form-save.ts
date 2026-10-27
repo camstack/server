@@ -35,6 +35,7 @@ import {
   isStateSummaryForm,
   type NcRuleFormState,
   systemEventDeliveryForSave,
+  verdictApplies,
 } from './rule-form-state'
 
 /** True when the descriptor applies to the rule's current trigger. */
@@ -376,6 +377,11 @@ export function buildRuleInput(
     // "no snooze buttons on this rule" and omitting it would hand the rule
     // back the hub's defaults on every save. Absent stays absent.
     ...(form.snoozeOptions !== undefined ? { snoozeOptions: [...form.snoozeOptions] } : {}),
+    // Written only while the rule reports a track, and as an explicit boolean
+    // either way: `false` is what switches a stored `true` off.
+    ...(form.askVerdict !== undefined && verdictApplies(form)
+      ? { askVerdict: form.askVerdict }
+      : {}),
     // Not authored here, carried verbatim: on an edit the merge would keep
     // them anyway, but a DUPLICATE is a create and would lose them.
     ...(preserve?.confirm !== undefined ? { confirm: preserve.confirm } : {}),

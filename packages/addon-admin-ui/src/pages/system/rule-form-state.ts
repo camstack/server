@@ -154,6 +154,12 @@ export interface NcRuleFormState {
    */
   readonly snoozeOptions: readonly number[] | undefined
   /**
+   * "Ask me to confirm detections" (#243). `undefined` = the operator has not
+   * touched it; an explicit `false` is sent so a rule that had it can be
+   * switched off (a patch merge would otherwise keep the stored `true`).
+   */
+  readonly askVerdict: boolean | undefined
+  /**
    * What the rule ACTUATES, and the buttons its notification carries.
    *
    * Authored as one block because a button references a sequence by name — two
@@ -398,6 +404,7 @@ export function emptyRuleForm(
     // Absent, not `[]`: a new rule has not said anything about its snooze
     // buttons, and the hub's defaults are the right answer for one.
     snoozeOptions: undefined,
+    askVerdict: undefined,
     actions: EMPTY_RULE_ACTIONS,
     cooldownSec: NC_DEFAULT_COOLDOWN_SEC,
     // The store's own defaults (`NcThrottleSchema`): per camera, one window
@@ -442,6 +449,7 @@ export function ruleToForm(rule: NcRule): NcRuleFormState {
     // "no snooze buttons", and reading it back as absent would silently
     // restore the defaults on the next save.
     snoozeOptions: rule.snoozeOptions,
+    askVerdict: rule.askVerdict,
     actions: actionsToForm(rule.actions),
     cooldownSec: rule.throttle.cooldownSec,
     cooldownScope: rule.throttle.scope,
@@ -665,6 +673,16 @@ export function applyDeliveryChoice(
  * holds one. The single place the save, the problems and the choice read, so the
  * three cannot disagree about which rules are grouped.
  */
+/**
+ * Can this rule ask for a verdict? Only a rule that reports a TRACK: an
+ * immediate or a track-end detection rule. A sensor or system rule has no
+ * track to mark, and a flag left on the form by a trigger the operator moved
+ * away from must not reach the hub.
+ */
+export function verdictApplies(form: Pick<NcRuleFormState, 'delivery'>): boolean {
+  return form.delivery === 'immediate' || form.delivery === 'track-end'
+}
+
 export function groupingIsSent(
   form: Pick<NcRuleFormState, 'delivery' | 'conditions' | 'groupingSec'>,
 ): boolean {

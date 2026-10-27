@@ -164,6 +164,7 @@ import {
   ruleTabsFor,
   ruleToForm,
   snoozeChoiceLabel,
+  verdictApplies,
   withLocalConditionDescriptors,
 } from './notification-rules.helpers'
 import { SystemFamilySelect } from './notification-system-event-field'
@@ -1484,6 +1485,31 @@ function RuleFormDialog({
               )}
             </p>
           </div>
+
+          {/* Ask for a verdict on a detection: only a rule that reports
+                  a track has one to ask about. */}
+          {verdictApplies(form) && (
+            <div>
+              <label className="flex items-center gap-2 text-[11px] font-medium text-foreground">
+                <Switch
+                  checked={form.askVerdict === true}
+                  onCheckedChange={(next) => patch({ askVerdict: next })}
+                  aria-label={t(
+                    'system.notificationRules.askVerdictAria',
+                    'ask me to confirm detections',
+                  )}
+                  data-testid="rule-ask-verdict"
+                />
+                {t('system.notificationRules.askVerdict', 'Ask me to confirm detections')}
+              </label>
+              <p className="text-[10px] text-foreground-subtle mt-1">
+                {t(
+                  'system.notificationRules.askVerdictHint',
+                  'The notification carries Correct and Wrong. A tap marks the detection for retraining, the same mark as in the Library, and records who was asked and when. Channels with no buttons (email, Pushover, Gotify, WhatsApp, Discord) get the same two choices as links.',
+                )}
+              </p>
+            </div>
+          )}
 
           {/* The durations THIS rule's notification offers as buttons. A rule
                   no window can silence (it concerns or arms the alarm, D133)

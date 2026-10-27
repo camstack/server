@@ -143,6 +143,28 @@ describe('the global-snooze grant round-trips', () => {
   })
 })
 
+describe('"Ask me to confirm detections" round-trips (#243)', () => {
+  const form = { ...emptyRuleForm('immediate'), name: 'x', targetIds: ['t1'] }
+
+  it('writes nothing until the operator touches it', () => {
+    expect(buildRuleInput(form).askVerdict).toBeUndefined()
+  })
+
+  it('writes an explicit true, and an explicit false to switch a stored true off', () => {
+    expect(buildRuleInput({ ...form, askVerdict: true }).askVerdict).toBe(true)
+    expect(buildRuleInput({ ...form, askVerdict: false }).askVerdict).toBe(false)
+  })
+
+  it('survives an edit', () => {
+    expect(buildRuleInput(ruleToForm(sampleRule({ askVerdict: true }))).askVerdict).toBe(true)
+  })
+
+  it('never reaches the hub from a rule that reports no track', () => {
+    const system = { ...emptyRuleForm('system-event'), name: 'x', targetIds: ['t1'] }
+    expect(buildRuleInput({ ...system, askVerdict: true }).askVerdict).toBeUndefined()
+  })
+})
+
 describe('the throttle survives a save', () => {
   it('carries `granularity` through an edit', () => {
     // It did NOT: `buildRuleInput` rebuilt the throttle from `cooldownSec` and
