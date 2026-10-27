@@ -26,6 +26,7 @@ import {
   EventCategory,
   type HistoryRetention,
   type IComposerProvider,
+  isReadingQuantity,
   type ProviderRegistration,
 } from '@camstack/types'
 import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
@@ -213,6 +214,11 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
       readHistoryRetention: async () => {
         const raw = await api.addonSettingsRaw.getGlobal.query({ addonId: 'device-history' })
         return historyRetentionOf(raw)
+      },
+      readSourceQuantity: async (deviceId) => {
+        const found = await api.deviceManager.getDevice.query({ deviceId })
+        const quantity = found?.sourceInfo?.quantity
+        return isReadingQuantity(quantity) ? quantity : null
       },
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       describeTarget: readBoundCaps,

@@ -209,6 +209,74 @@ describe('history helpers', () => {
     expect(arm.at).toBeGreaterThanOrEqual(afterPass)
     expect(arm.at - now).toBeGreaterThanOrEqual(60_000)
   })
+
+  it('does not arm a timer when no block reads history', () => {
+    const arm = new Arm()
+    const helpers = new HistoryHelpers({
+      now: () => Date.parse('2026-10-26T12:00:00Z'),
+      timeZone: ZONE,
+      logger: logger().sink,
+      query: async (input) => ({ resolution: input.resolution, truncated: false, series: [] }),
+      retention: async () => DEFAULT_HISTORY_RETENTION,
+      sourceDeviceId: () => 7,
+      blocks: () => [],
+      publish: () => undefined,
+      timer: arm,
+    })
+    helpers.start()
+    expect(arm.armed).toBe(false)
+  })
+
+  it('copies the source quantity onto a statistic and a meter, and not onto energy', async () => {
+    const now = Date.parse('2026-10-26T12:00:00Z')
+    const stamped: { readonly blockId: string; readonly quantity: string }[] = []
+    const ask = async (input: HistoryQuery) => ({
+      resolution: input.resolution,
+      truncated: false,
+      series: [
+        {
+          scope: '',
+          before: null,
+          derivedFrom: null,
+          points: [point(input.from + HOUR_MS, 1000)],
+        },
+      ],
+    })
+    const meter: IntegralHelperSpec = {
+      ...integral('daily'),
+      output: 'meter',
+      source: {
+        source: { addonId: 'demo', stableId: 'flow' },
+        cap: 'numeric-sensor',
+        fieldPath: 'value',
+      },
+    }
+    const helpers = new HistoryHelpers({
+      now: () => now,
+      timeZone: ZONE,
+      logger: logger().sink,
+      query: ask,
+      retention: async () => DEFAULT_HISTORY_RETENTION,
+      sourceDeviceId: () => 7,
+      sourceQuantity: async () => 'volume',
+      adoptQuantity: async (blockId, quantity) => {
+        stamped.push({ blockId, quantity })
+      },
+      blocks: () => [
+        { blockId: 'stat', deviceId: 40, helper: statistic({ kind: 'rolling', span: '1h' }) },
+        { blockId: 'kwh', deviceId: 41, helper: integral('daily') },
+        { blockId: 'total', deviceId: 42, helper: meter },
+      ],
+      publish: () => undefined,
+      timer: new Arm(),
+    })
+    helpers.start()
+    await flush()
+    expect(stamped).toEqual([
+      { blockId: 'stat', quantity: 'volume' },
+      { blockId: 'total', quantity: 'volume' },
+    ])
+  })
 })
 
 function flush(): Promise<void> {

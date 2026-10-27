@@ -75,7 +75,10 @@ export const ENERGY_POWER_KEY: string = capSeriesKey('power-meter', 'watts')
  * unit is that base. A past weather point stored in another unit cannot be
  * rescaled — the unit at sample time was not kept.
  */
-const DEVICE_QUANTITY_KEYS: ReadonlySet<string> = new Set([capSeriesKey('numeric-sensor', 'value')])
+const DEVICE_QUANTITY_KEYS: ReadonlySet<string> = new Set([
+  capSeriesKey('numeric-sensor', 'value'),
+  capSeriesKey('meter', 'value'),
+])
 
 export interface QueryInput {
   readonly key: string

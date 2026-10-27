@@ -62,6 +62,7 @@ import {
   type DeviceHistoryQueryResult,
   type HistoryRetention,
   type IntegralHelperSpec,
+  type ReadingQuantity,
   type StatisticHelperSpec,
   errMsg,
   type FieldClaim,
@@ -183,6 +184,8 @@ export interface ComposerDeps {
    */
   readonly readHistory?: (input: HistoryQuery) => Promise<DeviceHistoryQueryResult>
   readonly readHistoryRetention?: () => Promise<HistoryRetention>
+  /** `SourceInfo.quantity` of a source device, copied onto a statistic or a meter (D944). */
+  readonly readSourceQuantity?: (deviceId: number) => Promise<ReadingQuantity | null>
   /** IANA zone for calendar windows. The hub process zone when omitted. */
   readonly timeZone?: string
   /** ONE `getBindings` per target description read (rule 1). */
@@ -362,6 +365,14 @@ export class Composer {
       sourceDeviceId: (ref) => {
         const found = deps.tracker.resolution(ref)
         return found.kind === 'found' ? found.deviceId : null
+      },
+      sourceQuantity: deps.readSourceQuantity,
+      adoptQuantity: async (blockId, quantity) => {
+        const device = this.composed.get(composedDeviceStableId(blockId))
+        if (device?.adoptQuantity === undefined) {
+          throw new Error(`composed device for ${blockId} cannot store a quantity`)
+        }
+        await device.adoptQuantity(quantity)
       },
       blocks: () => this.historyBlocks(),
       publish: (blockId, writes) => {

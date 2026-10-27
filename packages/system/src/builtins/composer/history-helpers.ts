@@ -24,6 +24,7 @@ import {
   integrateReading,
   type IScopedLogger,
   MINUTE_MS,
+  type ReadingQuantity,
   nextLocalMidnight,
   openReset,
   openStatistic,
@@ -68,6 +69,14 @@ export interface HistoryHelperPorts {
   readonly query: (input: HistoryQuery) => Promise<DeviceHistoryQueryResult>
   readonly retention: () => Promise<HistoryRetention>
   readonly sourceDeviceId: (ref: CompositionSourceRef) => number | null
+  /**
+   * The source device's `SourceInfo.quantity`, when the output is a statistic
+   * or a meter (D944). Absent in tests that predate the copy: the number is
+   * still published, and the chart has no unit.
+   */
+  readonly sourceQuantity?: (deviceId: number) => Promise<ReadingQuantity | null>
+  /** Writes that quantity onto the composed device. Absent together with `sourceQuantity`. */
+  readonly adoptQuantity?: (blockId: string, quantity: ReadingQuantity) => Promise<void>
   readonly blocks: () => readonly HistoryBlockView[]
   readonly publish: (blockId: string, writes: readonly SeriesWrite[]) => void
   readonly timer: DeadlineTimer
@@ -84,6 +93,10 @@ export class HistoryHelpers {
 
   start(): void {
     this.stopped = false
+    if (this.ports.blocks().length === 0) {
+      this.ports.timer.disarm()
+      return
+    }
     void this.pass()
   }
 
@@ -174,6 +187,7 @@ export class HistoryHelpers {
       this.note(block, 'the source device is not resolved — the last total is kept')
       return
     }
+    await this.adoptSourceQuantity(block, deviceId)
     let result: DeviceHistoryQueryResult
     try {
       result = await this.ports.query({
@@ -219,6 +233,35 @@ export class HistoryHelpers {
     this.ports.publish(block.blockId, writesFor(helper, answer))
   }
 
+  private async adoptSourceQuantity(
+    block: HistoryBlockView,
+    sourceDeviceId: number,
+  ): Promise<void> {
+    if (!inheritsSourceQuantity(block.helper)) return
+    const read = this.ports.sourceQuantity
+    const adopt = this.ports.adoptQuantity
+    if (read === undefined || adopt === undefined) return
+    let quantity: ReadingQuantity | null
+    try {
+      quantity = await read(sourceDeviceId)
+    } catch (err: unknown) {
+      this.ports.logger.warn('the source quantity could not be read — the chart has no unit', {
+        tags: { deviceId: block.deviceId },
+        meta: { blockId: block.blockId, sourceDeviceId, error: errMsg(err) },
+      })
+      return
+    }
+    if (quantity === null) return
+    try {
+      await adopt(block.blockId, quantity)
+    } catch (err: unknown) {
+      this.ports.logger.warn('the composed device did not keep the source quantity', {
+        tags: { deviceId: block.deviceId },
+        meta: { blockId: block.blockId, error: errMsg(err) },
+      })
+    }
+  }
+
   private note(block: HistoryBlockView, reason: string): void {
     if (this.noted.get(block.blockId) === reason) return
     this.noted.set(block.blockId, reason)
@@ -229,13 +272,20 @@ export class HistoryHelpers {
   }
 
   private arm(): void {
-    if (this.stopped) return
+    if (this.stopped || this.ports.blocks().length === 0) {
+      this.ports.timer.disarm()
+      return
+    }
     const now = this.ports.now()
     let at = now + cadenceFloor(this.ports.blocks())
     const midnight = nextLocalMidnight(now, this.ports.timeZone)
     if (midnight !== null && midnight < at) at = midnight
     this.ports.timer.arm(Math.max(at, now), () => void this.pass())
   }
+}
+
+function inheritsSourceQuantity(helper: StatisticHelperSpec | IntegralHelperSpec): boolean {
+  return helper.kind === 'statistic' || helper.output === 'meter'
 }
 
 function cadenceFloor(blocks: readonly HistoryBlockView[]): number {

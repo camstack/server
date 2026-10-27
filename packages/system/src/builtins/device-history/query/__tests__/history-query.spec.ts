@@ -293,4 +293,12 @@ describe('listSeries', () => {
     const [info] = await h.runtime.query.listSeries(SUBJECT)
     expect(info?.unit).toBe('B')
   })
+
+  it('labels a meter series with the device quantity base', async () => {
+    h = await makeHarness({ devices: { 1: DeviceType.Sensor } })
+    h.quantities.set(1, 'information')
+    await h.runtime.registry.ensure('cap:meter.value', SUBJECT, '', T0)
+    const [info] = await h.runtime.query.listSeries(SUBJECT)
+    expect(info?.unit).toBe('B')
+  })
 })

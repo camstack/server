@@ -36,6 +36,7 @@ import {
   type GroupCommandResult,
   type IDevice,
   motionCapability,
+  type ReadingQuantity,
   switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -67,6 +68,8 @@ function sliceBoolean(slice: unknown, field: string): boolean {
 
 export interface ComposedDeviceHandle extends ComposedWriteTarget {
   readonly name: string
+  /** Copies a source reading's quantity onto this device (D944). Optional so test doubles stay small. */
+  adoptQuantity?(quantity: ReadingQuantity): Promise<void>
 }
 
 export class ComposedDevice
@@ -199,6 +202,12 @@ export class ComposedDevice
 
   setAvailable(available: boolean): void {
     this.markOnline(available)
+  }
+
+  /** The chart unit of a statistic or a meter is the source reading's quantity (D944). */
+  async adoptQuantity(quantity: ReadingQuantity): Promise<void> {
+    if (this.sourceInfo.quantity === quantity) return
+    await this.updateSourceInfo({ quantity })
   }
 }
 
