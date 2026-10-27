@@ -24,13 +24,8 @@
  * repo-wide.
  */
 
-import type {
-  AutomationAction,
-  AutomationCondition,
-  AutomationRecipe,
-  AutomationTrigger,
-} from './recipe.js'
-import { validateRecipeBounds } from './recipe.js'
+import type { AutomationAction, AutomationRecipe, AutomationTrigger } from './recipe.js'
+import { DEFAULT_TRACE_KEEP, validateRecipeBounds } from './recipe.js'
 
 export interface GenerateAutomationBlockInput {
   /** The block's name — the ONE name for the artefact (§2.1). */
@@ -42,30 +37,40 @@ export interface GenerateAutomationBlockInput {
  *  (D8: an event WAKES the evaluation, the reconcile guarantees it). */
 const RECONCILE_MS = 15_000
 
-function j(value: unknown): string {
-  return JSON.stringify(value)
+function slugOf(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug === '' ? 'automation' : slug
 }
 
-/** Emit the boolean tree as calls into the generated combinators. */
-function emitCondition(cond: AutomationCondition, indent: string): string {
-  switch (cond.kind) {
-    case 'all':
-      return `allOf([\n${cond.children
-        .map((c) => `${indent}  () => ${emitCondition(c, `${indent}  `)}`)
-        .join(',\n')}\n${indent}])`
-    case 'any':
-      return `anyOf([\n${cond.children
-        .map((c) => `${indent}  () => ${emitCondition(c, `${indent}  `)}`)
-        .join(',\n')}\n${indent}])`
-    case 'not':
-      return `notOf(() => ${emitCondition(cond.child, indent)})`
-    case 'condition':
-      return `leaf(${j(cond.deviceId)}, ${j(cond.cap)}, ${j(cond.fieldPath)}, ${j(
-        cond.operator,
-      )}, ${j(cond.value)})`
-    case 'expression':
-      return `exprLeaf(${j(cond.expr)}, ${j(cond.bindings)})`
+interface StepMeta {
+  readonly kind: string
+  readonly cap?: string
+  readonly method?: string
+  readonly deviceId?: number
+}
+
+/** What a step trace shows before the step runs. */
+function stepMetaOf(action: AutomationAction): StepMeta {
+  switch (action.kind) {
+    case 'wait':
+      return { kind: 'wait' }
+    case 'code':
+      return { kind: 'code' }
+    case 'cap':
+      return {
+        kind: 'cap',
+        cap: action.cap,
+        method: action.method,
+        ...(typeof action.deviceId === 'number' ? { deviceId: action.deviceId } : {}),
+      }
   }
+}
+
+function j(value: unknown): string {
+  return JSON.stringify(value)
 }
 
 function emitTrigger(trigger: AutomationTrigger, index: number): string {
@@ -152,7 +157,50 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
     }
     case 'manual':
       return `  // trigger ${index}: manual — fired by automation-control.trigger
-  // ("Run actions"), which runs the THEN half with an EMPTY vars bag.`
+  // ("Run actions"), which runs the THEN half with an EMPTY vars bag. A manual
+  // run bypasses only the cooldown wait, never the single/queued limits.`
+    case 'interval':
+      return `  // trigger ${index}: interval — every ${trigger.minutes} min, first run jittered so
+  // blocks restarted together do not all fire on the same second.
+  {
+    let interval: ReturnType<typeof setInterval> | undefined
+    const first = setTimeout(() => {
+      void run({ kind: 'interval', at: Date.now() })
+      interval = setInterval(() => { void run({ kind: 'interval', at: Date.now() }) }, ${j(
+        trigger.minutes * 60_000,
+      )})
+    }, Math.floor(Math.random() * Math.min(${j(trigger.minutes * 60_000)}, 30_000)) + 1)
+    disposers.push(() => {
+      clearTimeout(first)
+      if (interval !== undefined) clearInterval(interval)
+    })
+  }`
+    case 'detection':
+      return `  // trigger ${index}: detection — ONE fire per (device, track); a rejected event is
+  // traced with its reason and never fires.
+  {
+    const filter = new DetectionTriggerFilter(${j(trigger)})
+    disposers.push(
+      ctx.eventBus.subscribe(
+        { category: EventCategory.PipelineAnalyticsTrackLifecycle },
+        (event) => {
+          const decision = filter.evaluate(event.data, Date.now())
+          if (decision.kind === 'ignore') return
+          if (decision.kind === 'reject') {
+            ctx.logger.debug('detection trigger rejected an event', {
+              tags: { deviceId: decision.vars.deviceId },
+              reason: decision.reason,
+            })
+          }
+          void run(
+            { kind: 'detection', at: Date.now(), ...decision.vars },
+            decision.reason,
+            decision.kind === 'fire',
+          )
+        },
+      ),
+    )
+  }`
   }
 }
 
@@ -164,6 +212,7 @@ function emitAction(action: AutomationAction, index: number): string {
       if (Array.isArray(action.deviceId)) {
         return `      case ${index}: {
         for (const deviceId of ${j(action.deviceId)}) {
+          stepDeviceId = deviceId
           await actuate(deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
             action.args ?? {},
           )}, vars)
@@ -177,6 +226,7 @@ function emitAction(action: AutomationAction, index: number): string {
           : `resolveTarget(vars, ${j(action.deviceId.$var)})`
       return `      case ${index}: {
         const deviceId = ${target}
+        stepDeviceId = deviceId
         await actuate(deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
           action.args ?? {},
         )}, vars)
@@ -210,11 +260,30 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
     throw new Error(`cannot generate an automation from an invalid recipe: ${boundsError}`)
   }
   const { name, recipe } = input
-  const conditionExpr =
-    recipe.conditions === undefined ? 'true' : `await ${emitCondition(recipe.conditions, '    ')}`
+  const runMode = recipe.runMode ?? { mode: 'single' }
+  const stepMeta = recipe.actions.map(stepMetaOf)
+  const statePath = `automations/${slugOf(name)}.json`
 
-  return `import type { AddonContext } from '@camstack/types'
-import { evaluateExpressionSource, toExpressionValue } from '@camstack/types'
+  return `import type {
+  AddonContext,
+  AutomationConditionTraceNode,
+  AutomationRunTrace,
+  AutomationRunVerdict,
+  AutomationStateDoc,
+  AutomationStepTrace,
+} from '@camstack/types'
+import {
+  AUTOMATION_STATE_LOCATION,
+  AutomationStateDocSchema,
+  ConditionMirror,
+  DetectionTriggerFilter,
+  EventCategory,
+  RunGate,
+  appendTrace,
+  buildTriggerTrace,
+  collectMirrorSources,
+  evaluateConditionTree,
+} from '@camstack/types'
 
 /**
  * ${name}
@@ -228,6 +297,20 @@ import { evaluateExpressionSource, toExpressionValue } from '@camstack/types'
 const AUTOMATION_RECIPE = ${JSON.stringify(recipe, null, 2)} as const
 
 const RECONCILE_MS = ${RECONCILE_MS}
+
+/** How triggers that arrive while busy (or cooling down) are handled. */
+const RUN_MODE = ${j(runMode)} as const
+
+/** Run traces kept (a ring, persisted through ctx.storage). */
+const KEEP_TRACES = ${recipe.keepTraces ?? DEFAULT_TRACE_KEEP}
+
+const CONDITIONS = ${recipe.conditions === undefined ? 'undefined' : 'AUTOMATION_RECIPE.conditions'}
+
+/** Where this automation keeps its cooldown stamp and trace ring. */
+const STATE_PATH = ${j(statePath)}
+
+/** Static facts about each action step, for its trace. */
+const STEP_META: ReadonlyArray<{ kind: string; cap?: string; method?: string; deviceId?: number }> = ${j(stepMeta)}
 
 /** A cap is named \`alarm-panel\`; \`ctx.api\` is keyed by the ROUTER name,
  *  \`alarmPanel\`. Indexing ctx.api with the cap name yields undefined and every
@@ -279,11 +362,98 @@ function matchField(field: string, value: number): boolean {
 
 export default function block(ctx: AddonContext) {
   const disposers: Array<() => void> = []
-  const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+  const gate = new RunGate(RUN_MODE)
+  const mirror = new ConditionMirror(collectMirrorSources(CONDITIONS))
+  let state: AutomationStateDoc = { version: 1, lastRunStartedAt: null, traces: [] }
+  let persistChain: Promise<void> = Promise.resolve()
+  let stopped = false
+  let runCounter = 0
+  const runningTokens = new Set<RunToken>()
+  const queue: QueuedRun[] = []
+
+  interface RunToken {
+    aborted: boolean
+    wake?: () => void
+  }
+  interface QueuedRun {
+    readonly trigger: Record<string, unknown>
+    readonly reason: string
+    readonly queuedAt: number
+  }
+
+  /** Sleep that a restart can cut short. */
+  const abortableSleep = (ms: number, token: RunToken): Promise<void> =>
+    new Promise((resolve) => {
+      const timer = setTimeout(resolve, ms)
+      token.wake = () => {
+        clearTimeout(timer)
+        resolve()
+      }
+    })
+
+  // ── persistence: the cooldown stamp and the trace ring, via ctx.storage ──
+  async function loadState(): Promise<void> {
+    const storage = ctx.storage
+    if (storage === undefined) {
+      ctx.logger.warn('no ctx.storage — cooldown and traces will not survive a restart')
+      return
+    }
+    try {
+      const where = { location: AUTOMATION_STATE_LOCATION, relativePath: STATE_PATH }
+      if (!(await storage.exists(where))) return
+      const parsed = AutomationStateDocSchema.safeParse(JSON.parse((await storage.read(where)).toString('utf8')))
+      if (parsed.success) state = parsed.data
+      else ctx.logger.warn('stored automation state is invalid — starting empty', { error: parsed.error.message })
+    } catch (err: unknown) {
+      ctx.logger.warn('could not read the stored automation state — starting empty', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  function persist(): void {
+    const doc = state
+    persistChain = persistChain.then(async () => {
+      const storage = ctx.storage
+      if (storage === undefined) return
+      try {
+        await storage.write({
+          location: AUTOMATION_STATE_LOCATION,
+          relativePath: STATE_PATH,
+          data: Buffer.from(JSON.stringify(doc), 'utf8'),
+        })
+      } catch (err: unknown) {
+        ctx.logger.warn('could not persist the automation state', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    })
+  }
+
+  function record(trace: AutomationRunTrace): void {
+    state = { ...state, traces: appendTrace(state.traces, trace, KEEP_TRACES) }
+    persist()
+  }
+
+  // ── the condition mirror (D49): memory only at fire time ──
+  async function refreshMirror(): Promise<void> {
+    const report = await mirror.refresh({
+      fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
+      fetchStableIds: async () => {
+        const all = await ctx.api.deviceManager.listAll.query({})
+        return new Map(all.devices.flatMap((d: { stableId?: string; id: number }) =>
+          d.stableId === undefined ? [] : [[d.stableId, d.id] as [string, number]]))
+      },
+    })
+    if (report.kept > 0) {
+      ctx.logger.debug('condition mirror kept stale values for sources it could not read', report)
+    }
+  }
 
   /** Read one cap field off the state mirror. Returns undefined when the device,
    *  the cap or the field cannot be resolved — the caller decides what that
-   *  means, and it always logs. */
+   *  means, and it always logs. (Used by the device-state TRIGGER, which the
+   *  reconcile backs; conditions read the ConditionMirror instead.) */
   async function readField(
     deviceId: number,
     cap: string,
@@ -300,95 +470,6 @@ export default function block(ctx: AddonContext) {
     } catch {
       return undefined
     }
-  }
-
-  function compare(actual: unknown, operator: string, expected: unknown): boolean {
-    switch (operator) {
-      case 'eq': return actual === expected
-      case 'ne': return actual !== expected
-      case 'gt': return typeof actual === 'number' && typeof expected === 'number' && actual > expected
-      case 'gte': return typeof actual === 'number' && typeof expected === 'number' && actual >= expected
-      case 'lt': return typeof actual === 'number' && typeof expected === 'number' && actual < expected
-      case 'lte': return typeof actual === 'number' && typeof expected === 'number' && actual <= expected
-      case 'contains': return typeof actual === 'string' && typeof expected === 'string' && actual.includes(expected)
-      case 'in': return Array.isArray(expected) && expected.some((v) => v === actual)
-      default: return false
-    }
-  }
-
-  /** A leaf whose device or cap is currently unresolvable is FALSE and logs.
-   *  It never throws the pass away, and it never counts as true. */
-  async function leaf(
-    deviceId: number,
-    cap: string,
-    fieldPath: string,
-    operator: string,
-    expected: unknown,
-  ): Promise<boolean> {
-    const actual = await readField(deviceId, cap, fieldPath)
-    if (actual === undefined) {
-      ctx.logger.warn('condition leaf unresolvable — treated as false', {
-        tags: { deviceId },
-        cap,
-        fieldPath,
-      })
-      return false
-    }
-    return compare(actual, operator, expected)
-  }
-
-  /** The expression leaf goes through the bounded engine — parsed AST, no
-   *  member access, no loops, hard step/node limits. Never inline JS. */
-  async function exprLeaf(
-    expr: string,
-    bindings: Record<string, { kind?: string; cap?: string; fieldPath?: string; value?: unknown; sourceStableId?: string }>,
-  ): Promise<boolean> {
-    const values: Record<string, string | number | boolean | null> = {}
-    for (const [alias, binding] of Object.entries(bindings)) {
-      if (binding.kind === 'literal') {
-        values[alias] = toExpressionValue(binding.value) ?? null
-        continue
-      }
-      const deviceId = await stableIdToDeviceId(binding.sourceStableId)
-      if (deviceId === undefined) {
-        ctx.logger.warn('condition leaf unresolvable — treated as false', {
-          tags: { deviceId: -1 },
-          binding: alias,
-        })
-        return false
-      }
-      const raw = await readField(deviceId, binding.cap ?? '', binding.fieldPath ?? '')
-      values[alias] = toExpressionValue(raw) ?? null
-    }
-    const result = evaluateExpressionSource(expr, values, Date.now())
-    if (!result.ok) {
-      ctx.logger.warn('expression leaf failed — treated as false', { expr, error: result.error })
-      return false
-    }
-    return result.value === true
-  }
-
-  async function stableIdToDeviceId(stableId: string | undefined): Promise<number | undefined> {
-    if (stableId === undefined) return undefined
-    try {
-      const all = await ctx.api.deviceManager.listAll.query({})
-      const hit = all.devices.find((d: { stableId?: string; id: number }) => d.stableId === stableId)
-      return hit?.id
-    } catch {
-      return undefined
-    }
-  }
-
-  async function allOf(children: Array<() => Promise<boolean>>): Promise<boolean> {
-    for (const c of children) { if (!(await c())) return false }
-    return true
-  }
-  async function anyOf(children: Array<() => Promise<boolean>>): Promise<boolean> {
-    for (const c of children) { if (await c()) return true }
-    return false
-  }
-  async function notOf(child: () => Promise<boolean>): Promise<boolean> {
-    return !(await child())
   }
 
   /** A {$var} action target, resolved from the run's bag BEFORE dispatch — the
@@ -434,42 +515,227 @@ export default function block(ctx: AddonContext) {
     await mutate({ ...resolved, deviceId })
   }
 
-  async function evaluateConditions(): Promise<boolean> {
-    return ${conditionExpr}
-  }
-
   /** The THEN half. Stops at the first failure — continuing past a failed step
-   *  executes an intent the operator never expressed. */
-  async function runActions(vars: Record<string, unknown>): Promise<void> {
+   *  executes an intent the operator never expressed. Every step is traced; the
+   *  ones after a failure (or an abort) are marked not-run. */
+  async function runActions(
+    vars: Record<string, unknown>,
+    token: RunToken,
+  ): Promise<{ steps: AutomationStepTrace[]; failed: boolean }> {
+    const sleep = (ms: number): Promise<void> => abortableSleep(ms, token)
+    const steps: AutomationStepTrace[] = []
+    let failed = false
     for (let step = 0; step < ${recipe.actions.length}; step += 1) {
+      const meta = STEP_META[step]!
+      const path = 'actions.' + step
+      if (failed || token.aborted) {
+        steps.push({ ...meta, path, outcome: 'not-run', message: failed ? 'an earlier step failed' : 'aborted by a restart' })
+        continue
+      }
+      const startedAt = Date.now()
+      let stepDeviceId: number | undefined = meta.deviceId
       try {
         switch (step) {
 ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         }
+        steps.push({ ...meta, deviceId: stepDeviceId, path, startedAt, endedAt: Date.now(), outcome: 'ok' })
       } catch (err: unknown) {
+        failed = true
+        const message = err instanceof Error ? err.message : String(err)
         ctx.logger.warn('action failed — stopping the sequence', {
+          ...(stepDeviceId === undefined ? {} : { tags: { deviceId: stepDeviceId } }),
           step,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         })
+        steps.push({ ...meta, deviceId: stepDeviceId, path, startedAt, endedAt: Date.now(), outcome: 'error', message })
+      }
+    }
+    return { steps, failed }
+  }
+
+  function deviceTags(trigger: Record<string, unknown>): { tags?: { deviceId: number } } {
+    const deviceId = trigger['deviceId']
+    return typeof deviceId === 'number' ? { tags: { deviceId } } : {}
+  }
+
+  function newRunId(at: number): string {
+    runCounter += 1
+    return at.toString(36) + '-' + runCounter.toString(36)
+  }
+
+  /** A trigger that never became a run (rejected, or dropped by the run mode). */
+  function skipTrace(
+    trigger: Record<string, unknown>,
+    reason: string,
+    outcome: AutomationRunTrace['outcome'],
+    verdict: AutomationRunVerdict | undefined,
+    accepted: boolean,
+  ): AutomationRunTrace {
+    const now = Date.now()
+    return {
+      runId: newRunId(now),
+      startedAt: now,
+      endedAt: now,
+      trigger: buildTriggerTrace(trigger, accepted ? 'pass' : 'fail', reason),
+      conditions: [],
+      ...(verdict === undefined ? {} : { verdict }),
+      steps: [],
+      outcome,
+      repeat: 1,
+      lastAt: now,
+    }
+  }
+
+  /** One admitted run: conditions (memory only), the cooldown, the actions. */
+  async function execute(
+    trigger: Record<string, unknown>,
+    reason: string,
+    admission: AutomationRunVerdict,
+  ): Promise<void> {
+    const token: RunToken = { aborted: false }
+    runningTokens.add(token)
+    const startedAt = Date.now()
+    const runId = newRunId(startedAt)
+    let verdict = admission
+    let outcome: AutomationRunTrace['outcome'] = 'ran'
+    let nodes: AutomationConditionTraceNode[] = []
+    let steps: AutomationStepTrace[] = []
+    try {
+      const evaluation = evaluateConditionTree(CONDITIONS, mirror, Date.now())
+      nodes = [...evaluation.nodes]
+      for (const node of nodes) {
+        if (node.kind === 'condition' && node.observed === null && node.deviceId !== undefined) {
+          ctx.logger.warn('condition leaf value unknown — treated as false', {
+            tags: { deviceId: node.deviceId },
+            path: node.path,
+            cap: node.cap,
+            fieldPath: node.fieldPath,
+          })
+        }
+      }
+      if (!evaluation.pass) {
+        outcome = 'skipped-conditions'
+        ctx.logger.debug('automation did not run — conditions were false', { trigger, ...deviceTags(trigger) })
         return
+      }
+      const cooldown = gate.cooldown({
+        manual: trigger['kind'] === 'manual',
+        now: Date.now(),
+        lastRunStartedAt: state.lastRunStartedAt,
+      })
+      if (!cooldown.ok) {
+        outcome = 'skipped-cooldown'
+        verdict = { mode: RUN_MODE, decision: 'cooldown', reason: cooldown.reason }
+        ctx.logger.info('automation did not run — ' + cooldown.reason, deviceTags(trigger))
+        return
+      }
+      if (cooldown.bypassed) verdict = { mode: RUN_MODE, decision: 'bypass', reason: cooldown.reason }
+      // Stamped when the actions START, and persisted before they run, so a
+      // restart mid-run cannot fire again inside the window.
+      state = { ...state, lastRunStartedAt: startedAt }
+      persist()
+      ctx.logger.info('automation running', { trigger, ...deviceTags(trigger) })
+      const vars: Record<string, unknown> = { ...trigger }
+      const result = await runActions(vars, token)
+      steps = result.steps
+      outcome = token.aborted ? 'aborted' : result.failed ? 'failed' : 'ran'
+    } catch (err: unknown) {
+      outcome = 'failed'
+      ctx.logger.warn('automation run failed', { error: err instanceof Error ? err.message : String(err), ...deviceTags(trigger) })
+    } finally {
+      runningTokens.delete(token)
+      const endedAt = Date.now()
+      record({
+        runId,
+        startedAt,
+        endedAt,
+        trigger: buildTriggerTrace(trigger, 'pass', reason),
+        conditions: nodes,
+        verdict,
+        steps,
+        outcome,
+        repeat: 1,
+        lastAt: endedAt,
+      })
+      if (gate.release()) {
+        const next = queue.shift()
+        if (next !== undefined && !stopped) {
+          void execute(next.trigger, next.reason, {
+            mode: RUN_MODE,
+            decision: 'queued',
+            reason: 'queued, then ran after waiting ' + (Date.now() - next.queuedAt) + ' ms',
+          })
+        }
       }
     }
   }
 
-  async function run(trigger: Record<string, unknown>): Promise<void> {
-    const vars: Record<string, unknown> = { ...trigger }
-    const passed = await evaluateConditions()
-    if (!passed) {
-      ctx.logger.debug('automation did not run — conditions were false', { trigger })
+  /** Every trigger lands here. \`accepted\` = the trigger itself was satisfied
+   *  (a rejected detection event is only traced). */
+  async function run(
+    trigger: Record<string, unknown>,
+    reason = 'fired',
+    accepted = true,
+  ): Promise<void> {
+    await ready
+    if (stopped) return
+    if (!accepted) {
+      record(skipTrace(trigger, reason, 'skipped-trigger', undefined, false))
       return
     }
-    ctx.logger.info('automation running', { trigger })
-    await runActions(vars)
+    const admission = gate.admit()
+    const verdict: AutomationRunVerdict = { mode: RUN_MODE, decision: admission.decision, reason: admission.reason }
+    switch (admission.decision) {
+      case 'drop':
+        ctx.logger.info('automation trigger dropped — ' + admission.reason, deviceTags(trigger))
+        record(skipTrace(trigger, reason, 'skipped-overlap', verdict, true))
+        return
+      case 'queued':
+        ctx.logger.info('automation trigger queued — ' + admission.reason, deviceTags(trigger))
+        queue.push({ trigger, reason, queuedAt: Date.now() })
+        return
+      case 'restart':
+        ctx.logger.info('automation restarting — ' + admission.reason, deviceTags(trigger))
+        for (const running of runningTokens) {
+          running.aborted = true
+          running.wake?.()
+        }
+        break
+      case 'run':
+        break
+    }
+    await execute(trigger, reason, verdict)
+  }
+
+  const ready: Promise<void> = (async () => {
+    await loadState()
+    await refreshMirror()
+  })()
+
+  if (CONDITIONS !== undefined) {
+    disposers.push(
+      ctx.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+        const data = event.data
+        const deviceId = data['deviceId']
+        const capName = data['capName']
+        if (typeof deviceId === 'number' && typeof capName === 'string') {
+          mirror.apply(deviceId, capName, data['slice'])
+        }
+      }),
+    )
+    const mirrorReconcile = setInterval(() => { void refreshMirror() }, RECONCILE_MS)
+    disposers.push(() => clearInterval(mirrorReconcile))
   }
 
 ${recipe.triggers.map((t, i) => emitTrigger(t, i)).join('\n\n')}
 
   return () => {
+    stopped = true
+    queue.length = 0
+    for (const running of runningTokens) {
+      running.aborted = true
+      running.wake?.()
+    }
     for (const dispose of disposers) dispose()
   }
 }

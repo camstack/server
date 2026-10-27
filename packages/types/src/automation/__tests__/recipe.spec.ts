@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { AutomationCondition, AutomationRecipe } from '../recipe.js'
 import {
   AutomationRecipeSchema,
+  AutomationRunModeSchema,
+  AutomationTriggerSchema,
   conditionDepth,
   countConditionLeaves,
   MAX_CONDITION_DEPTH,
@@ -194,3 +196,67 @@ describe('the real automation — Notte: chiudi e arma', () => {
 })
 
 export { NIGHT_CLOSE_AND_ARM }
+
+describe('detection and interval triggers', () => {
+  it('accepts a detection trigger and refuses empty classes / devices and a score outside 0..1', () => {
+    const ok = {
+      kind: 'detection',
+      classes: ['animal'],
+      deviceIds: [7],
+      zones: ['yard'],
+      minScore: 0.6,
+    }
+    expect(AutomationTriggerSchema.safeParse(ok).success).toBe(true)
+    expect(AutomationTriggerSchema.safeParse({ ...ok, classes: [] }).success).toBe(false)
+    expect(AutomationTriggerSchema.safeParse({ ...ok, deviceIds: [] }).success).toBe(false)
+    expect(AutomationTriggerSchema.safeParse({ ...ok, minScore: 1.2 }).success).toBe(false)
+  })
+
+  it('bounds an interval to 1..1440 whole minutes', () => {
+    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 1 }).success).toBe(true)
+    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 1440 }).success).toBe(
+      true,
+    )
+    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 0 }).success).toBe(false)
+    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 1441 }).success).toBe(
+      false,
+    )
+  })
+})
+
+describe('run mode and trace retention', () => {
+  it('is a discriminated union with bounded members', () => {
+    for (const ok of [
+      { mode: 'single' },
+      { mode: 'restart' },
+      { mode: 'queued', max: 10 },
+      { mode: 'parallel', max: 1 },
+      { mode: 'cooldown', minutes: 1440 },
+    ]) {
+      expect(AutomationRunModeSchema.safeParse(ok).success).toBe(true)
+    }
+    for (const bad of [
+      { mode: 'queued', max: 0 },
+      { mode: 'parallel', max: 11 },
+      { mode: 'cooldown', minutes: 0 },
+      { mode: 'cooldown', minutes: 1441 },
+      { mode: 'queued' },
+      { mode: 'nope' },
+    ]) {
+      expect(AutomationRunModeSchema.safeParse(bad).success).toBe(false)
+    }
+  })
+
+  it('lives on the recipe, not on an action, and keepTraces is bounded', () => {
+    const base = { triggers: [{ kind: 'manual' }], actions: [{ kind: 'wait', seconds: 1 }] }
+    expect(
+      AutomationRecipeSchema.safeParse({
+        ...base,
+        runMode: { mode: 'cooldown', minutes: 30 },
+        keepTraces: 20,
+      }).success,
+    ).toBe(true)
+    expect(AutomationRecipeSchema.safeParse({ ...base, keepTraces: 101 }).success).toBe(false)
+    expect(AutomationRecipeSchema.safeParse({ ...base, keepTraces: 0 }).success).toBe(false)
+  })
+})

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**215 units · 7253 source files · 203 units claimed by at least one document (7215 files).**
+**215 units · 7257 source files · 203 units claimed by at least one document (7219 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -139,6 +139,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap` | 7 | `ecosystem-exports` | `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +4 more, 1 ADR | 2026-09-29 |
 | `packages/addon-model-studio/src/plugin-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-model-studio/src/plus-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0214-step-settings-are-model-scoped.md`, +1 more | — |
+| `packages/types/src/automation` | 7 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-09-automation-recipe-phase6-design.md` | — |
 | `packages/types/src/units` | 7 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `server/backend/src/boot` | 7 | `kernel`, `secrets` | `decisions/adr-0171-the-hub-core-api-is-on-the-mesh-before-the-first-addon-boots.md`, `decisions/adr-0726-a-nodes-certificate-is-set-only-in-the-admin-ui-and-what-the-ui-shows-is-what-the-listener-serves.md`, `decisions/adr-0729-the-hubs-address-comes-from-the-network-capability-never-from-an-environment-variable.md`, +3 more | — |
 | `packages/addon-model-studio/src/ui` | 6 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0746-installed-lists-files-per-model-and-format-and-in-use-means-resident-in-a-pool.md` | — |
@@ -169,7 +170,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/system/src/download` | 3 | `api-surface` | `decisions/adr-0744-every-mirror-artefact-carries-a-generated-revision-and-a-copy-is-proven-current-by-hashing-it.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +2 more | 2026-10-01 |
 | `packages/system/src/pipeline` | 3 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/system/src/storage` | 3 | `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
-| `packages/types/src/automation` | 3 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-09-automation-recipe-phase6-design.md` | — |
 | `packages/types/src/device-extension` | 3 | `device-model` | `architecture/device-model.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-10-26 |
 | `packages/types/src/enums` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0387-a-new-disk-is-noticed-planned-onto-and-said-out-loud.md` | — |
 | `packages/types/src/helpers` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |

@@ -86,21 +86,26 @@ describe('triggers', () => {
 })
 
 describe('conditions', () => {
-  it('short-circuits left-to-right through generated combinators', () => {
-    expect(GEN).toContain('async function allOf')
-    expect(GEN).toContain('async function anyOf')
-    // short-circuit: allOf returns early on the first false
-    expect(GEN).toMatch(/if \(!\(await c\(\)\)\) return false/)
+  it('reads memory only at fire time — a trigger never hangs on a fallible getCapSlice', () => {
+    const exec = GEN.slice(
+      GEN.indexOf('async function execute'),
+      GEN.indexOf('async function run('),
+    )
+    expect(exec).toContain('evaluateConditionTree(CONDITIONS, mirror')
+    expect(exec).not.toContain('getCapSlice')
+    expect(GEN).toContain('new ConditionMirror(collectMirrorSources(CONDITIONS))')
   })
 
-  it('makes an unresolvable leaf FALSE and logs it, never throws the pass away', () => {
-    expect(GEN).toContain('condition leaf unresolvable')
-    expect(GEN).toContain('tags: { deviceId }')
+  it('keeps the mirror fresh: filled at start, updated by state-changed events, reconciled', () => {
+    expect(GEN).toContain('EventCategory.DeviceStateChanged')
+    expect(GEN).toContain('mirror.apply(')
+    expect(GEN).toContain('setInterval(() => { void refreshMirror() }, RECONCILE_MS)')
+    expect(GEN).toContain('await refreshMirror()')
   })
 
-  it('evaluates the expression leaf through the bounded engine, not inline JS', () => {
-    expect(GEN).toContain('evaluateExpressionSource')
-    expect(GEN).toContain('outdoor < 5')
+  it('logs an unknown leaf with the device tag and treats it as false', () => {
+    expect(GEN).toContain('condition leaf value unknown')
+    expect(GEN).toContain('tags: { deviceId: node.deviceId }')
   })
 })
 

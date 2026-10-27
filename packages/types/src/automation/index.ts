@@ -11,6 +11,59 @@
 export type { GenerateAutomationBlockInput } from './codegen.js'
 export { generateAutomationBlock } from './codegen.js'
 export type {
+  ConditionEvaluation,
+  ConditionReader,
+  MirrorRefreshFetchers,
+  MirrorRefreshReport,
+  MirrorSource,
+} from './condition-eval.js'
+export {
+  collectMirrorSources,
+  ConditionMirror,
+  evaluateConditionTree,
+} from './condition-eval.js'
+export type {
+  DetectionDecision,
+  DetectionTrigger,
+  DetectionVars,
+  TrackLifecycleInput,
+} from './detection-trigger.js'
+export {
+  DetectionTriggerFilter,
+  detectionClassMatches,
+  FIRED_MAX,
+  FIRED_TTL_MS,
+} from './detection-trigger.js'
+export type { CooldownInput, CooldownVerdict, RunGateAdmission } from './run-gate.js'
+export { RunGate } from './run-gate.js'
+export type {
+  AutomationConditionTraceNode,
+  AutomationRunOutcome,
+  AutomationRunTrace,
+  AutomationRunVerdict,
+  AutomationStateDoc,
+  AutomationStepTrace,
+  AutomationTriggerTrace,
+  TraceNodeOutcome,
+  TraceValue,
+} from './trace.js'
+export {
+  AUTOMATION_STATE_LOCATION,
+  AutomationConditionTraceNodeSchema,
+  AutomationRunOutcomeSchema,
+  AutomationRunTraceSchema,
+  AutomationRunVerdictSchema,
+  AutomationStateDocSchema,
+  AutomationStepTraceSchema,
+  AutomationTriggerTraceSchema,
+  appendTrace,
+  buildTriggerTrace,
+  isSkippedTrace,
+  skipSignature,
+  TraceNodeOutcomeSchema,
+  TraceValueSchema,
+} from './trace.js'
+export type {
   AutomationAction,
   AutomationCondition,
   AutomationConditionAll,
@@ -20,6 +73,7 @@ export type {
   AutomationConditionNot,
   AutomationConditionOperator,
   AutomationRecipe,
+  AutomationRunMode,
   AutomationTrigger,
 } from './recipe.js'
 export {
@@ -27,9 +81,12 @@ export {
   AutomationConditionOperatorSchema,
   AutomationConditionSchema,
   AutomationRecipeSchema,
+  AutomationRunModeSchema,
   AutomationTriggerSchema,
   conditionDepth,
   countConditionLeaves,
+  DEFAULT_TRACE_KEEP,
+  MAX_TRACE_KEEP,
   MAX_CONDITION_DEPTH,
   MAX_CONDITION_LEAVES,
   validateRecipeBounds,

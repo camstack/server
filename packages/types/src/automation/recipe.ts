@@ -11,7 +11,7 @@
  *
  * Three vocabularies, each salvaged rather than invented:
  *
- *  - **Triggers** — the only genuinely new surface. Four members, none of which
+ *  - **Triggers** — the only genuinely new surface. Six members, none of which
  *    touches notification delivery. The NC keeps its four *pipeline* triggers;
  *    these are device/time triggers and the two sets do not overlap.
  *  - **Conditions** — `ALL`/`ANY`/`NOT` over two leaf kinds, bounded. The
@@ -181,6 +181,19 @@ export const AutomationTriggerSchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('schedule'), cron: z.string().min(1).max(120) }),
   z.object({ kind: z.literal('manual') }),
+  z.object({
+    kind: z.literal('detection'),
+    /** Class names. A macro class (`animal`, `vehicle`, `person`, `package`)
+     *  matches every raw class that maps to it; any other name matches
+     *  exactly. */
+    classes: z.array(z.string().min(1)).min(1),
+    deviceIds: z.array(z.number().int().nonnegative()).min(1),
+    /** The track must have visited at least one of these zones. */
+    zones: z.array(z.string().min(1)).min(1).optional(),
+    /** Best-so-far confidence the track must reach. */
+    minScore: z.number().min(0).max(1).optional(),
+  }),
+  z.object({ kind: z.literal('interval'), minutes: z.number().int().min(1).max(1440) }),
 ])
 export type AutomationTrigger = z.infer<typeof AutomationTriggerSchema>
 
@@ -231,10 +244,39 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
 ])
 export type AutomationAction = z.infer<typeof AutomationActionSchema>
 
+/**
+ * How a trigger that arrives while the automation is busy (or cooling down) is
+ * handled. One of the automation's execution modes, never a property of its
+ * actions. Absent means `single`.
+ *
+ *  - `single`   — drop the trigger while a run is in progress (traced + logged).
+ *  - `restart`  — abort the run in progress (at its next step boundary), start fresh.
+ *  - `queued`   — queue up to `max` triggers, drop the rest (traced).
+ *  - `parallel` — up to `max` runs at once, drop the rest (traced).
+ *  - `cooldown` — `single`, and no new run until `minutes` after the last run
+ *    STARTED; persisted across a restart. A manual trigger bypasses only this
+ *    wait, never the single/queued limits.
+ */
+export const AutomationRunModeSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('single') }),
+  z.object({ mode: z.literal('restart') }),
+  z.object({ mode: z.literal('queued'), max: z.number().int().min(1).max(10) }),
+  z.object({ mode: z.literal('parallel'), max: z.number().int().min(1).max(10) }),
+  z.object({ mode: z.literal('cooldown'), minutes: z.number().int().min(1).max(1440) }),
+])
+export type AutomationRunMode = z.infer<typeof AutomationRunModeSchema>
+
+/** Run traces kept per automation when the recipe does not say. */
+export const DEFAULT_TRACE_KEEP = 20
+export const MAX_TRACE_KEEP = 100
+
 export const AutomationRecipeSchema = z.object({
   triggers: z.array(AutomationTriggerSchema),
   conditions: AutomationConditionSchema.optional(),
   actions: z.array(AutomationActionSchema),
+  runMode: AutomationRunModeSchema.optional(),
+  /** How many run traces the automation keeps (default {@link DEFAULT_TRACE_KEEP}). */
+  keepTraces: z.number().int().min(1).max(MAX_TRACE_KEEP).optional(),
 })
 export type AutomationRecipe = z.infer<typeof AutomationRecipeSchema>
 
