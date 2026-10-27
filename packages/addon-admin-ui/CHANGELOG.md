@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The device page's save bar appears only after you change something, and the page background fills the whole screen on phones
+
 ## [1.2.494] - 2026-10-27
 
 ### Changed

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The addon skill documents the standard session-lost alert for cloud integrations
+
 ## [0.1.37] - 2026-10-27
 
 ### Added
