@@ -1,7 +1,7 @@
 /**
  * New or edit a group helper as its template (D944). Three steps: template,
  * reducer / name, members via the common source selector. Back keeps the
- * draft. A different template replaces it.
+ * draft and never returns to the type list: the type is fixed once chosen.
  */
 import {
   ACTIVE_CRITERIA,
@@ -228,11 +228,8 @@ export function HelperWizard({
       )}
       <RefusalList lines={refusals} />
       <div className="flex flex-wrap gap-2">
-        {step !== 'template' && (
-          <Button
-            variant="ghost"
-            onClick={() => setStep(step === 'members' ? 'parameters' : 'template')}
-          >
+        {step === 'members' && (
+          <Button variant="ghost" onClick={() => setStep('parameters')}>
             {t('helper.back')}
           </Button>
         )}

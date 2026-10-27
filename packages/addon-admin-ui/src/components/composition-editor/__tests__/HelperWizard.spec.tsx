@@ -75,15 +75,17 @@ describe('HelperWizard', () => {
     expect(screen.queryByLabelText('Room')).toBeNull()
   })
 
-  it('resets the name and the operation when another template is chosen', () => {
+  it('fixes the helper type once chosen: no Back to the type list from the first step', () => {
     renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
     pick('temperature')
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
+    expect(screen.queryByTestId('helper-template-picker')).toBeNull()
     fireEvent.change(screen.getByTestId('helper-name'), { target: { value: 'Front door' } })
-    fireEvent.change(screen.getByTestId('helper-reducer'), { target: { value: 'max' } })
+    fireEvent.click(screen.getByTestId('helper-to-members'))
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-    pick('humidity')
-    expect((screen.getByTestId('helper-name') as HTMLInputElement).value).toBe('')
-    expect((screen.getByTestId('helper-reducer') as HTMLSelectElement).value).toBe('mean')
+    expect(screen.queryByTestId('helper-template-picker')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
+    expect((screen.getByTestId('helper-name') as HTMLInputElement).value).toBe('Front door')
   })
 
   it('opens the device after save, and create-more returns to the type tiles with a link', async () => {
