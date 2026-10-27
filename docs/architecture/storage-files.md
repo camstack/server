@@ -162,8 +162,8 @@ persisted, found by reading the code that writes it:
 | `camstack.db` | `records`, every kind | compositions, customizations, helpers, recipes, notification rules (`cap`/`fieldPath`, `kind: 'fields'`) |
 | `history.db` | `device-history:metrics`, `series` | the key `cap:<cap>.<field>`; `raw` and the rollups follow the series id |
 
-A field is rewritten only when its cap matches the map, so `battery.volts` and
-`power-meter.volts` are different pairs. Free expression code and the `args` of
+A field is rewritten only when its cap matches the map, so `battery.voltage` and
+`power-meter.voltage` are different pairs. Free expression code and the `args` of
 a `cap` action are not rewritten; the dry run lists them as advisories. When a
 new-name entry already exists the new value wins, and a history series merges
 point by point (the existing point wins); both are counted.

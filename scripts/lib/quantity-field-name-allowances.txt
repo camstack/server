@@ -1,0 +1,4 @@
+# <cap>.<path> -- <reason it keeps a unit-looking name>. Do not add lines without a reason.
+zone-rules.motion.bboxInclusionPct -- a percentage-of-box threshold of a detection zone rule, configuration, not a device reading
+zone-rules.detection.bboxInclusionPct -- a percentage-of-box threshold of a detection zone rule, configuration, not a device reading
+zone-rules.package.bboxInclusionPct -- a percentage-of-box threshold of a detection zone rule, configuration, not a device reading

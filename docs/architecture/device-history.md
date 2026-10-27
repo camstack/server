@@ -237,6 +237,7 @@ makes the choice, so two charts of one device cannot disagree, and it covers
 history recorded before the key existed.
 `listSeries` reports the catalog `unit`. That symbol is the quantity's base
 (°C, hPa, m/s, B, s). A series does not take its unit from a sibling field.
+A history field is named after its quantity too, not its unit (D953): `cap:power-meter.power`, `cap:battery.level`.
 Weather fields each carry their own catalog unit. `cap:numeric-sensor.value`
 has none: the label is `historyUnitFor` of that device's `SourceInfo.quantity`.
 Points recorded before the base was fixed are not rescaled — the unit at

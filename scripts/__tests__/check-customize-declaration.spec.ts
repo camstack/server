@@ -271,9 +271,9 @@ describe('customize declaration guard', () => {
     const units = await loadRuntimeFieldUnits()
     // D944 §4: the stored base of a labelled reading is the convert-unit
     // source. There is no Advanced list for it to land in.
-    expect(units.battery).toMatchObject({ percentage: '%', volts: 'V' })
-    expect(units['temperature-sensor']).toMatchObject({ celsius: '°C' })
-    expect(units['power-meter']).toMatchObject({ watts: 'W', volts: 'V', amps: 'A' })
+    expect(units.battery).toMatchObject({ level: '%', voltage: 'V' })
+    expect(units['temperature-sensor']).toMatchObject({ temperature: '°C' })
+    expect(units['power-meter']).toMatchObject({ power: 'W', voltage: 'V', current: 'A' })
     expect(units['power-meter']?.va).toBeUndefined()
   })
 
