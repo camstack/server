@@ -68,6 +68,28 @@ describe('scaffoldAddon', () => {
     expect(validation.ok).toBe(true)
   })
 
+  it('emits a README with the generated block and a CHANGELOG with [Unreleased], both packed', () => {
+    const root = makeFakeWorkspace()
+    const result = scaffoldAddon({
+      workspaceRoot: root,
+      name: 'docs-check',
+      displayName: 'Docs Check',
+    })
+    const readme = fs.readFileSync(path.join(result.packageDir, 'README.md'), 'utf8')
+    expect(readme).toContain('# Docs Check')
+    expect(readme).toContain('<!-- readme:generated:start')
+    expect(readme).toContain('<!-- readme:generated:end -->')
+    const changelog = fs.readFileSync(path.join(result.packageDir, 'CHANGELOG.md'), 'utf8')
+    expect(changelog).toContain('## [Unreleased]')
+    expect(changelog).toMatch(/### Added\n\n- Initial release\./)
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(result.packageDir, 'package.json'), 'utf8'),
+    ) as {
+      files: string[]
+    }
+    expect(pkg.files).toEqual(['dist', 'README.md', 'CHANGELOG.md'])
+  })
+
   // D777: the capability toggle is an addon's ONE enable. A scaffolded
   // private `enabled` "master switch" is a second one that nothing reads.
   it('the addon source declares no `enabled` master switch', () => {

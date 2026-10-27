@@ -23,4 +23,20 @@ describe('addon generator template', () => {
     expect(text).not.toMatch(/\benabled\b/)
     expect(text).not.toMatch(/master switch/i)
   })
+
+  const FILES = path.join(__dirname, '..', 'generators', 'addon', 'files')
+
+  it('ships a README with the generated block and a CHANGELOG with [Unreleased]', () => {
+    const readme = fs.readFileSync(path.join(FILES, 'README.md.template'), 'utf8')
+    expect(readme).toContain('<!-- readme:generated:start')
+    expect(readme).toContain('<!-- readme:generated:end -->')
+    const changelog = fs.readFileSync(path.join(FILES, 'CHANGELOG.md.template'), 'utf8')
+    expect(changelog).toContain('## [Unreleased]')
+    expect(changelog).toMatch(/### Added\n\n- Initial release\./)
+  })
+
+  it('packs the README and CHANGELOG', () => {
+    const pkg = fs.readFileSync(path.join(FILES, 'package.json.template'), 'utf8')
+    expect(pkg).toMatch(/"files": \["dist", "README\.md", "CHANGELOG\.md"\]/)
+  })
 })

@@ -10,6 +10,8 @@ import type { AddonGeneratorSchema } from './schema.js'
  *   project.json    — nx targets: build, deploy (via @camstack/nx-plugin)
  *   vite.config.ts  — entries map (silent miss without this — runtime only)
  *   tsconfig.json   — composite, extends base
+ *   README.md       — generated-block markers; `npm run readme:generate` fills it
+ *   CHANGELOG.md    — `## [Unreleased]` with the initial-release line
  *   src/index.ts    — barrel
  *   src/<name>.addon.ts — BaseAddon skeleton ready to extend
  *

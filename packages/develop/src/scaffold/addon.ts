@@ -43,6 +43,8 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
 
   const files: { relative: string; content: string }[] = [
     { relative: 'package.json', content: renderTemplate(PACKAGE_JSON, vars) },
+    { relative: 'README.md', content: renderTemplate(README_MD, vars) },
+    { relative: 'CHANGELOG.md', content: CHANGELOG_MD },
     { relative: 'tsconfig.json', content: renderTemplate(TSCONFIG, vars) },
     { relative: 'vite.config.ts', content: renderTemplate(VITE_CONFIG, vars) },
     { relative: 'src/index.ts', content: renderTemplate(INDEX_TS, vars) },
@@ -146,7 +148,9 @@ const PACKAGE_JSON = `{
     ]
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build",
@@ -166,6 +170,28 @@ const PACKAGE_JSON = `{
     "vitest": "^3.0.0"
   }
 }
+`
+
+const README_MD = `# <%= displayName %>
+
+<%= description %>
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+<!-- readme:generated:end -->
+`
+
+const CHANGELOG_MD = `# Changelog
+
+All notable changes to this package are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Initial release.
 `
 
 const TSCONFIG = `{

@@ -1,0 +1,6 @@
+# <%= displayName %>
+
+<%= description %>
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+<!-- readme:generated:end -->

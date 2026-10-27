@@ -27,7 +27,7 @@
       }
     ]
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md", "CHANGELOG.md"],
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit",
