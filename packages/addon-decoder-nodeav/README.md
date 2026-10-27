@@ -8,7 +8,7 @@ Package `@camstack/addon-decoder-nodeav` on npm.
 
 ## What it provides
 
-- **Decoder (node-av)** (`decoder-nodeav`): The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap. Category: pipeline.
+- **Video Decoder** (`decoder-nodeav`): The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap. Category: pipeline.
   - Capabilities: `decoder`, `audio-codec`.
 
 ## Requirements

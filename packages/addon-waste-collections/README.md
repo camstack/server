@@ -8,13 +8,13 @@ Package `@camstack/addon-waste-collections` on npm.
 
 ## What it provides
 
-- **Waste Collections** (`waste-collections`): Fetches municipal waste collection schedules through the HACS waste_collection_schedule source catalog (full set) and exposes them as calendars. Category: messaging.
+- **Waste Collection** (`waste-collections`): Fetches municipal waste collection schedules through the HACS waste_collection_schedule source catalog (full set) and exposes them as calendars. Category: messaging.
   - Capabilities: `calendar-source`.
 
 ## Requirements
 
 - Placement: hub-only.
-- Python: Waste Collections installs `python/requirements.txt` into its own environment.
+- Python: Waste Collection installs `python/requirements.txt` into its own environment.
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation

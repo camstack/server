@@ -8,7 +8,7 @@ Package `@camstack/addon-static-turn` on npm.
 
 ## What it provides
 
-- **Static TURN (coturn / custom)** (`static-turn`): Category: networking.
+- **TURN Server** (`static-turn`): Category: networking.
   - Capabilities: `turn-provider`.
 
 ## Configuration

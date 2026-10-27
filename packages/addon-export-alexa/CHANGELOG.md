@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "Alexa Export".
+
 ## [1.2.171] - 2026-10-27
 
 ### Added

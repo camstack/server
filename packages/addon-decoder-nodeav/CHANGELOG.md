@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "Video Decoder" (was "Decoder (node-av)").
+
 ## [1.2.143] - 2026-10-27
 
 ### Added

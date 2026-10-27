@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "Google Home Export".
+
 ## [0.1.115] - 2026-10-27
 
 ### Added

@@ -10,7 +10,7 @@ Package `@camstack/addon-cloudflare` on npm.
 
 - **Cloudflare Tunnel** (`cloudflare-tunnel`): Category: networking.
   - Capabilities: `network-access`.
-- **Cloudflare TURN Relay** (`cloudflare-turn`): Category: networking.
+- **Cloudflare TURN** (`cloudflare-turn`): Category: networking.
   - Capabilities: `turn-provider`.
 
 ## Configuration

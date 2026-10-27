@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "ONVIF" (was "ONVIF Camera Provider").
+
 ## [1.2.149] - 2026-10-27
 
 ### Added

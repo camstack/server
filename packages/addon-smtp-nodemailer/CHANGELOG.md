@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "Email (SMTP)" (was "SMTP Email (Nodemailer)").
+
 ## [1.2.142] - 2026-10-27
 
 ### Added

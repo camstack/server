@@ -8,7 +8,7 @@ Package `@camstack/addon-provider-onvif` on npm.
 
 ## What it provides
 
-- **ONVIF Camera Provider** (`provider-onvif`): Discovery automatica di camere ONVIF sulla rete locale. Category: providers.
+- **ONVIF** (`provider-onvif`): Discovery automatica di camere ONVIF sulla rete locale. Category: providers.
   - Capabilities: `device-provider`.
 
 ## Configuration

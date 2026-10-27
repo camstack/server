@@ -8,9 +8,9 @@ Package `@camstack/addon-tailscale` on npm.
 
 ## What it provides
 
-- **Tailscale Client** (`tailscale-client`): Category: networking.
+- **Tailscale** (`tailscale-client`): Category: networking.
   - Capabilities: `mesh-network`, `network-access`.
-- **Tailscale Ingress (Serve/Funnel)** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first. Category: networking.
+- **Tailscale Funnel** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale addon to be installed and joined first. Category: networking.
   - Capabilities: `network-access`.
 
 ## Configuration
@@ -24,7 +24,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 - DNS & exit node: Accept tailnet DNS, Exit node (peer id)
 - Access: Shields up, Enable Tailscale SSH
 - Headless / Auth key: Pre-auth key
-- Tailscale Ingress: Mode, Source port, Target path (optional), Upstream scheme
+- Tailscale Funnel: Mode, Source port, Target path (optional), Upstream scheme
 
 ## Requirements
 

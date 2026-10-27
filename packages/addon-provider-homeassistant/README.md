@@ -8,7 +8,7 @@ Package `@camstack/addon-provider-homeassistant` on npm.
 
 ## What it provides
 
-- **Home Assistant Provider** (`provider-homeassistant`): Adopt Home Assistant devices into CamStack via WebSocket. Category: messaging.
+- **Home Assistant** (`provider-homeassistant`): Adopt Home Assistant devices into CamStack via WebSocket. Category: messaging.
   - Capabilities: `broker`, `device-adoption`, `vacuum-control`, `lawn-mower-control`, `running-state`, `valve`, `humidifier`, `water-heater`, `weather`, `image`, `update`, `notification-output`, `addon-routes`, `calendar-source`.
 - **Home Assistant Export** (`homeassistant-export`): Pushes CamStack entities to the CamStack Home Assistant custom component over HTTP. Chooses which devices reach which Home Assistant instance; Home Assistant never polls the hub for a value. Category: exports.
   - Capabilities: `device-export`, `addon-routes`, `oauth-integration`.

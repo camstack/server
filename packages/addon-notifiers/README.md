@@ -8,7 +8,7 @@ Package `@camstack/addon-notifiers` on npm.
 
 ## What it provides
 
-- **Notifiers** (`notifiers`): Push-notification delivery targets (ntfy, Pushover, Gotify, Telegram, Discord, generic webhook, Zentik). One canonical notification is degraded per target's declared capabilities. Category: messaging.
+- **Notifications** (`notifiers`): Push-notification delivery targets (ntfy, Pushover, Gotify, Telegram, Discord, generic webhook, Zentik). One canonical notification is degraded per target's declared capabilities. Category: messaging.
   - Capabilities: `notification-output`, `addon-routes`.
 
 ## Configuration

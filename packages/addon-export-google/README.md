@@ -8,7 +8,7 @@ Package `@camstack/addon-export-google` on npm.
 
 ## What it provides
 
-- **Google Home export** (`export-google`): Publishes switches, dimmable lights, locks and covers to Google Home / Google Assistant. The hub answers Google's smart-home fulfillment directly (SYNC / QUERY / EXECUTE / DISCONNECT) and account-links through the hub's own OAuth server — no cloud function and no Google credential. Cameras and proactive Report State are deliberately out of scope. Category: exports.
+- **Google Home Export** (`export-google`): Publishes switches, dimmable lights, locks and covers to Google Home / Google Assistant. The hub answers Google's smart-home fulfillment directly (SYNC / QUERY / EXECUTE / DISCONNECT) and account-links through the hub's own OAuth server — no cloud function and no Google credential. Cameras and proactive Report State are deliberately out of scope. Category: exports.
   - Capabilities: `device-export`, `addon-routes`, `oauth-integration`.
 
 ## Requirements

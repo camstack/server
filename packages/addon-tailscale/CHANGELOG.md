@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "Tailscale" and "Tailscale Funnel".
+
 ## [1.2.146] - 2026-10-27
 
 ### Added

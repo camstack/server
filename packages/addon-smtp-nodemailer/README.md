@@ -8,7 +8,7 @@ Package `@camstack/addon-smtp-nodemailer` on npm.
 
 ## What it provides
 
-- **SMTP Email (Nodemailer)** (`smtp-nodemailer`): Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts). Category: messaging.
+- **Email (SMTP)** (`smtp-nodemailer`): Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts). Category: messaging.
   - Capabilities: `smtp-provider`.
 
 ## Requirements

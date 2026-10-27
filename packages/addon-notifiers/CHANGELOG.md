@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shown as "Notifications"; the email hint names "Google" and "Email (SMTP)".
+
 ## [1.2.622] - 2026-10-27
 
 ### Added

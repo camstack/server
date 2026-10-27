@@ -12,7 +12,7 @@ Package `@camstack/addon-pipeline` on npm.
   - Capabilities: `pipeline-runner`, `load-contribution`, `failure-contribution`.
 - **Detection Pipeline** (`detection-pipeline`): Unified detection pipeline — object detection, face/plate recognition, classification, segmentation. Category: pipeline.
   - Capabilities: `pipeline-executor`, `detection-pipeline`, `load-contribution`.
-- **Motion Detection (WASM)** (`motion-wasm`): WASM-accelerated motion detection with blur, dilation, and connected component labeling. Category: pipeline.
+- **Motion Detection** (`motion-wasm`): WASM-accelerated motion detection with blur, dilation, and connected component labeling. Category: pipeline.
   - Capabilities: `motion-detection`.
 - **Audio Analyzer** (`audio-analyzer`): Audio level metering (dB/RMS) with optional classification. Category: pipeline.
   - Capabilities: `audio-analyzer`, `audio-analysis`.
@@ -33,7 +33,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 - Pipeline Runner: any-node (runner group `detection`).
 - Detection Pipeline: any-node (runner group `detection`).
-- Motion Detection (WASM): any-node (runner group `detection`).
+- Motion Detection: any-node (runner group `detection`).
 - Audio Analyzer: any-node.
 - Stream Broker: any-node.
 - Recorder: any-node.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The cloud trainer is shown as "Modal" (was "Modal (training cloud)").
+
 ## [0.1.93] - 2026-10-27
 
 ### Added

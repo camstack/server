@@ -8,7 +8,7 @@ Package `@camstack/addon-import-alexa` on npm.
 
 ## What it provides
 
-- **Alexa Import** (`import-alexa`): Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). The same account can speak a notification aloud on Echo devices. Category: providers.
+- **Alexa** (`import-alexa`): Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). The same account can speak a notification aloud on Echo devices. Category: providers.
   - Capabilities: `device-provider`, `broker`, `device-adoption`, `addon-routes`, `notification-output`, `addon-pages-source`.
 
 ## Configuration
@@ -27,7 +27,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 ## Requirements
 
 - Placement: default placement.
-- Python: Alexa Import installs `python/requirements.txt` into its own environment.
+- Python: Alexa installs `python/requirements.txt` into its own environment.
 - A CamStack hub. An agent is used only where the placement above allows it.
 
 ## Documentation
