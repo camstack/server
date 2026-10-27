@@ -16,8 +16,10 @@
  *    operator picked; a non-admin may `get` / `run` an action only through a
  *    camera that links it. The router's scope gate proves the caller may see
  *    that camera (it reads the top-level `deviceId`); this service proves the
- *    camera links the action. An admin, and a caller with no session identity
- *    (an automation block, in-process), are trusted.
+ *    camera links the action. An admin is trusted; so is an automation block, whose in-process call carries the
+ *    mesh principal (admin). The router refuses a call with NO identity before this
+ *    runs (cap-router-builder `injectCaller`), so `caller === undefined` only means
+ *    a direct in-process call to the provider object.
  *  - Every refusal is a typed `ActionError` (`[not-linked] …`) and a log line.
  */
 import { randomUUID } from 'node:crypto'
@@ -449,7 +451,10 @@ export class ActionsService implements IActionsProvider {
     const removed = await this.store.delete(input.actionId)
     if (!removed) throw new ActionError('not-found', `no action "${input.actionId}"`)
     await this.ledger.delete(actionOwner(input.actionId))
-    this.logger.info('internal action deleted', { meta: { actionId: input.actionId } })
+    const unlinked = await this.store.unlinkAction(input.actionId)
+    this.logger.info('internal action deleted', {
+      meta: { actionId: input.actionId, camerasUnlinked: unlinked },
+    })
   }
 
   /** Only an internal action is edited here; an addon one is edited where it was declared. */

@@ -1,5 +1,5 @@
 ---
-id: D953
+id: D954
 title: Actions are declared list entries, not devices — one `actions` surface over `action-source` providers, with run traces and cooldown in a hub ledger
 status: accepted
 date: 2026-10-27
@@ -50,8 +50,10 @@ the same code.
    `deviceRemoval: 'delete'`). A non-admin may `get` / `run` an action only
    through a camera that links it: the call names the camera (`deviceId`, a
    top-level field, so the viewer scope gate proves the caller may see it) and
-   the provider proves the link. An admin and a session-less in-process caller
-   (an automation block) may run anything. A refusal is a typed
+   the provider proves the link. An admin may run anything, and so may an automation block: its
+   in-process call arrives with the mesh principal, which is an admin identity
+   (`createMeshTrpcContext`). The router refuses a call with no identity
+   (`injectCaller`) before the provider runs. A refusal is a typed
    `[not-linked]` error and a log line.
 5. A run of an action that is already running is refused — traced as
    `skipped-overlap`, logged — never queued.
@@ -70,7 +72,9 @@ the same code.
 - If every `action-source` provider is down, `list` returns the internal actions
   only and logs it; the UI cannot tell "no addon actions" from "addon not
   answering" until a presence query exists for the cap.
-- A link to an action that no longer exists is not listed; it is not removed.
+- Deleting an internal action removes every camera link naming it. A link to an
+  action an addon stopped declaring is hidden from `listForCamera` and kept (the
+  addon may come back).
 
 ## Enforcement
 

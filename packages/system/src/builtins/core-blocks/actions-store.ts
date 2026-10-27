@@ -116,6 +116,29 @@ export class ActionsStore {
     return row === null ? [] : row.data.actionIds
   }
 
+  /** Drop `actionId` from every camera that links it; a camera left with none loses its row. */
+  async unlinkAction(actionId: string): Promise<number> {
+    let touched = 0
+    let cursor: string | undefined
+    do {
+      const page = await this.links.query({ ...(cursor === undefined ? {} : { cursor }) })
+      for (const row of page.records) {
+        if (!row.data.actionIds.includes(actionId)) continue
+        const rest = row.data.actionIds.filter((id) => id !== actionId)
+        if (rest.length === 0) await this.links.delete(row.id)
+        else
+          await this.links.put({
+            id: row.id,
+            ...(row.deviceId === null ? {} : { deviceId: row.deviceId }),
+            data: { actionIds: rest },
+          })
+        touched += 1
+      }
+      cursor = page.nextCursor ?? undefined
+    } while (cursor !== undefined)
+    return touched
+  }
+
   async setLinks(deviceId: number, actionIds: readonly string[]): Promise<readonly string[]> {
     const unique = [...new Set(actionIds)]
     if (unique.length === 0) {

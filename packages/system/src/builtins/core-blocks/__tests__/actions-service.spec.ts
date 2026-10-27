@@ -308,10 +308,23 @@ describe('actions — camera links and who may run what', () => {
     expect(await w.service.listForCamera({ deviceId: 999 })).toEqual([])
   })
 
-  it('a link to an action that no longer exists is not listed', async () => {
-    const { w, porch } = await linked()
+  it('deleting an action removes every camera link that names it, and keeps the others', async () => {
+    const { w, porch, garage } = await linked()
+    await w.service.setLinks({ deviceId: 617, actionIds: [porch.id, garage.id] })
     await w.service.delete({ actionId: porch.id })
+    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({ deviceId: 616, actionIds: [] })
+    expect(await w.service.getLinks({ deviceId: 617 })).toEqual({
+      deviceId: 617,
+      actionIds: [garage.id],
+    })
     expect(await w.service.listForCamera({ deviceId: 616 })).toEqual([])
+  })
+
+  it('an action an addon stopped declaring is hidden from the camera, its link kept', async () => {
+    const w = await world({ addonActions: [] })
+    await w.service.setLinks({ deviceId: 616, actionIds: ['ha:script.gone'] })
+    expect(await w.service.listForCamera({ deviceId: 616 })).toEqual([])
+    expect((await w.service.getLinks({ deviceId: 616 })).actionIds).toEqual(['ha:script.gone'])
   })
 
   it('a camera removed takes its links with it', async () => {
