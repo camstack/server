@@ -11,7 +11,12 @@ import { build } from 'esbuild'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateAutomationBlock } from '../codegen.js'
 import type { AutomationRecipe } from '../recipe.js'
-import { AutomationStateDocSchema, type AutomationRunTrace } from '../trace.js'
+import {
+  appendTrace,
+  type AutomationRunTrace,
+  type AutomationStateDoc,
+  EMPTY_AUTOMATION_STATE,
+} from '../trace.js'
 
 const HERE = path.dirname(new URL(import.meta.url).pathname)
 const SHIM = path.join(HERE, 'generated-block-shim.ts')
@@ -31,11 +36,18 @@ type Handler = (event: {
 interface Harness {
   readonly logs: LogLine[]
   readonly mutate: ReturnType<typeof vi.fn>
-  readonly files: Map<string, Buffer>
+  readonly ledger: Ledger
+  readonly reports: Array<Record<string, unknown>>
+  readonly actionRuns: Array<Record<string, unknown>>
   readonly sliceReads: { count: number }
   emit(category: string, data: Record<string, unknown>, deviceId?: number): void
   traces(): AutomationRunTrace[]
   stop(): void
+}
+
+/** The hub's `runs` row for this block: what survives a block restart. */
+interface Ledger {
+  doc: AutomationStateDoc
 }
 
 type BlockFn = (ctx: unknown) => () => void
@@ -63,13 +75,19 @@ async function load(recipe: AutomationRecipe, name = 'Test automation'): Promise
 interface Options {
   readonly slices?: Record<string, object>
   readonly failSliceReads?: boolean
-  readonly files?: Map<string, Buffer>
+  readonly ledger?: Ledger
+  /** The hub cannot answer the stamp read. */
+  readonly failStampRead?: boolean
+  /** What `actions.run` answers. */
+  readonly actionOutcome?: { outcome: string; message?: string }
 }
 
 function start(block: BlockFn, options: Options = {}): Harness {
   const logs: LogLine[] = []
   const handlers: Array<{ category: string; handler: Handler }> = []
-  const files = options.files ?? new Map<string, Buffer>()
+  const ledger: Ledger = options.ledger ?? { doc: EMPTY_AUTOMATION_STATE }
+  const reports: Array<Record<string, unknown>> = []
+  const actionRuns: Array<Record<string, unknown>> = []
   const sliceReads = { count: 0 }
   const mutate = vi.fn(async () => undefined)
   const log = (level: string) => (msg: string, meta?: Record<string, unknown>) => {
@@ -86,14 +104,41 @@ function start(block: BlockFn, options: Options = {}): Harness {
         }
       },
     },
-    storage: {
-      exists: async (w: { relativePath: string }) => files.has(w.relativePath),
-      read: async (w: { relativePath: string }) => files.get(w.relativePath) ?? Buffer.alloc(0),
-      write: async (w: { relativePath: string; data: Buffer }) => {
-        files.set(w.relativePath, w.data)
-      },
-    },
+    id: 'core-block-test-block',
     api: {
+      coreBlocks: {
+        getAutomationRunState: {
+          query: async () => {
+            if (options.failStampRead === true) throw new Error('hub busy')
+            return ledger.doc
+          },
+        },
+        reportAutomationRun: {
+          mutate: async (input: {
+            trace?: AutomationRunTrace
+            runStartedAt?: number
+            keepTraces?: number
+          }) => {
+            reports.push(input)
+            ledger.doc = {
+              ...ledger.doc,
+              lastRunStartedAt: input.runStartedAt ?? ledger.doc.lastRunStartedAt,
+              traces:
+                input.trace === undefined
+                  ? ledger.doc.traces
+                  : appendTrace(ledger.doc.traces, input.trace, input.keepTraces ?? 20),
+            }
+          },
+        },
+      },
+      actions: {
+        run: {
+          mutate: async (input: Record<string, unknown>) => {
+            actionRuns.push(input)
+            return { runId: 'r1', ...(options.actionOutcome ?? { outcome: 'ran' }) }
+          },
+        },
+      },
       deviceState: {
         getCapSlice: {
           query: async (q: { deviceId: number; capName: string }) => {
@@ -111,19 +156,16 @@ function start(block: BlockFn, options: Options = {}): Harness {
   return {
     logs,
     mutate,
-    files,
+    ledger,
+    reports,
+    actionRuns,
     sliceReads,
     emit: (category, data, deviceId) => {
       for (const h of [...handlers]) {
         if (h.category === category) h.handler({ category, deviceId, data })
       }
     },
-    traces: () => {
-      const raw = [...files.values()][0]
-      return raw === undefined
-        ? []
-        : AutomationStateDocSchema.parse(JSON.parse(raw.toString('utf8'))).traces
-    },
+    traces: () => ledger.doc.traces,
     stop,
   }
 }
@@ -164,6 +206,7 @@ describe('detection trigger', () => {
     await settle()
     expect(h.mutate).toHaveBeenCalledTimes(1)
     expect(h.mutate).toHaveBeenCalledWith({ deviceId: 7 })
+    await settle(5_000) // a skip waits to be coalesced before it is reported
     const [ran, rejected] = h.traces()
     expect(ran).toMatchObject({ outcome: 'ran', trigger: { kind: 'detection', outcome: 'pass' } })
     expect(ran?.trigger.vars).toMatchObject({
@@ -230,6 +273,7 @@ describe('run modes', () => {
     h.emit('motion.on-motion-changed', {})
     await settle()
     expect(h.mutate).toHaveBeenCalledTimes(1)
+    await settle(5_000) // a skip waits to be coalesced before it is reported
     expect(h.traces().map((t) => t.outcome)).toEqual(['ran', 'skipped-cooldown'])
     expect(h.traces()[1]?.verdict).toMatchObject({
       mode: { mode: 'cooldown' },
@@ -242,7 +286,7 @@ describe('run modes', () => {
     expect(h.mutate).toHaveBeenCalledTimes(2)
   })
 
-  it('cooldown survives a restart: a new block reads the stamp from ctx.storage', async () => {
+  it('cooldown survives a restart: a new block reads the stamp from the hub ledger', async () => {
     const recipe: AutomationRecipe = {
       triggers: [MOTION],
       actions: [SIREN],
@@ -255,11 +299,12 @@ describe('run modes', () => {
     await settle()
     expect(first.mutate).toHaveBeenCalledTimes(1)
     first.stop()
-    const second = start(block, { files: first.files })
+    const second = start(block, { ledger: first.ledger })
     await settle()
     second.emit('motion.on-motion-changed', {})
     await settle()
     expect(second.mutate).not.toHaveBeenCalled()
+    await settle(5_000) // a skip waits to be coalesced before it is reported
     expect(second.traces().map((t) => t.outcome)).toEqual(['ran', 'skipped-cooldown'])
   })
 
@@ -358,6 +403,7 @@ describe('conditions read the mirror, not the hub', () => {
     h.emit('motion.on-motion-changed', {})
     await settle()
     expect(h.mutate).not.toHaveBeenCalled()
+    await settle(5_000) // a skip waits to be coalesced before it is reported
     const t = h.traces()[0]
     expect(t).toMatchObject({ outcome: 'skipped-conditions' })
     expect(t?.conditions[0]).toMatchObject({
@@ -378,6 +424,7 @@ describe('conditions read the mirror, not the hub', () => {
     h.emit('motion.on-motion-changed', {})
     await settle()
     expect(h.mutate).not.toHaveBeenCalled()
+    await settle(5_000) // a skip waits to be coalesced before it is reported
     expect(h.traces()[0]?.conditions[0]).toMatchObject({
       outcome: 'fail',
       reason: 'bowl 0, expected ≥ 5 → fail',
@@ -409,6 +456,56 @@ describe('action steps', () => {
         outcome: 'error',
         message: 'no such device method: nope.on',
         deviceId: 616,
+      },
+      { path: 'actions.1', outcome: 'not-run' },
+    ])
+  })
+})
+
+describe('action step', () => {
+  const ACTION: AutomationRecipe['actions'] = [
+    {
+      kind: 'action',
+      actionId: 'internal:night',
+      variables: { zone: '{{vars.deviceId}}', level: 3 },
+    },
+    SIREN,
+  ]
+
+  it('runs the Action awaited, with substituted variables and the block as origin', async () => {
+    const block = await load({ triggers: [MOTION], actions: ACTION })
+    const h = start(block)
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(h.actionRuns).toEqual([
+      {
+        actionId: 'internal:night',
+        variables: { zone: '616', level: 3 },
+        wait: true,
+        origin: { blockId: 'test-block' },
+      },
+    ])
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    expect(h.traces()[0]).toMatchObject({ outcome: 'ran' })
+  })
+
+  it('an Action that did not run fails THIS step and leaves the next one not-run', async () => {
+    const block = await load({ triggers: [MOTION], actions: ACTION })
+    const h = start(block, {
+      actionOutcome: { outcome: 'skipped-overlap', message: 'the action is already running' },
+    })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]?.outcome).toBe('failed')
+    expect(h.traces()[0]?.steps).toMatchObject([
+      {
+        path: 'actions.0',
+        kind: 'action',
+        outcome: 'error',
+        message: 'action internal:night skipped-overlap: the action is already running',
       },
       { path: 'actions.1', outcome: 'not-run' },
     ])

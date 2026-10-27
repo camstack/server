@@ -48,8 +48,9 @@ export type {
   TraceValue,
 } from './trace.js'
 export {
-  AUTOMATION_STATE_LOCATION,
   AutomationConditionTraceNodeSchema,
+  EMPTY_AUTOMATION_STATE,
+  mergeSkipTraces,
   AutomationRunOutcomeSchema,
   AutomationRunTraceSchema,
   AutomationRunVerdictSchema,
@@ -64,6 +65,7 @@ export {
   TraceValueSchema,
 } from './trace.js'
 export type {
+  ActionStep,
   AutomationAction,
   AutomationCondition,
   AutomationConditionAll,
@@ -77,7 +79,10 @@ export type {
   AutomationTrigger,
 } from './recipe.js'
 export {
+  ActionStepSchema,
   AutomationActionSchema,
+  AutomationCapStepSchema,
+  AutomationWaitStepSchema,
   AutomationConditionOperatorSchema,
   AutomationConditionSchema,
   AutomationRecipeSchema,
@@ -91,3 +96,5 @@ export {
   MAX_CONDITION_LEAVES,
   validateRecipeBounds,
 } from './recipe.js'
+export * from './action.js'
+export * from './step-runner.js'

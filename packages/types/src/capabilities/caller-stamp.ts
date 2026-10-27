@@ -18,6 +18,9 @@ export const CALLER_STAMPED_CAPABILITIES: readonly string[] = [
   // `persistConfig` reads it as `operatorWrite` (a driver's write vs the operator's), and
   // `listAll` attributes the fleet read to it.
   'device-manager',
+  // `reportAutomationRun` / `getAutomationRunState` are refused unless the stamp is
+  // `core-block-<blockId>`: a block writes only its own row of the `runs` ledger.
+  'core-blocks',
 ]
 
 /** A copy of `input` without the caller stamp. Anything that is not a plain object passes through. */

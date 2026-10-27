@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Actions: declared list entries (action-source, actions caps), an action step for automations, and run traces kept in the hub ledger
 - Automations gain detection and interval triggers, per-automation run modes (single, restart, queued, parallel, cooldown), condition reads from an in-memory mirror, and a ring of run traces
 
 ## [1.2.429] - 2026-10-27

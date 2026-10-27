@@ -4,7 +4,7 @@
 
 # Decisions
 
-917 architecture decision records. One file per decision, never
+918 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -932,6 +932,7 @@ that rots.
 | D951 | [Power and energy are a feature of the electrical device, not a sensor beside it](adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md) | ✅ accepted | 2026-10-27 |
 | D952 | [ESPHome is spoken from Node through esphome-client, one broker per board, with no Python worker](adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md) | ✅ accepted | 2026-10-27 |
 | D953 | [A cloud session that ends raises ONE standard alert per integration, after a debounce, and clears itself](adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md) | ✅ accepted | 2026-10-27 |
+| D953 | [Actions are declared list entries, not devices — one `actions` surface over `action-source` providers, with run traces and cooldown in a hub ledger](adr-0953-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md) | ✅ accepted | 2026-10-27 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

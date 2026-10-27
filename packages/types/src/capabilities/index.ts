@@ -1915,6 +1915,16 @@ export {
   type IAudioMetricsProvider,
 } from './audio-metrics.cap.js'
 export {
+  actionSourceCapability,
+  type IActionSourceProvider,
+} from './action-source.cap.js'
+export {
+  type ActionLinks,
+  ActionLinksSchema,
+  actionsCapability,
+  type IActionsProvider,
+} from './actions.cap.js'
+export {
   type AutomationControlStatus,
   AutomationControlStatusSchema,
   automationControlCapability,
@@ -3125,6 +3135,8 @@ import type { audioAnalyzerCapability } from './audio-analyzer.cap.js'
 import type { audioCodecCapability } from './audio-codec.cap.js'
 import type { audioMetricsCapability } from './audio-metrics.cap.js'
 import type { authProviderCapability } from './auth-provider.cap.js'
+import type { actionSourceCapability } from './action-source.cap.js'
+import type { actionsCapability } from './actions.cap.js'
 import type { automationControlCapability } from './automation-control.cap.js'
 import type { backupCapability } from './backup.cap.js'
 import type { batteryCapability } from './battery.cap.js'
@@ -3401,6 +3413,8 @@ type AnyCapability =
   | typeof alarmPanelCapability
   | typeof presenceCapability
   | typeof scriptRunnerCapability
+  | typeof actionSourceCapability
+  | typeof actionsCapability
   | typeof automationControlCapability
   | typeof motionTriggerCapability
   | typeof zonesCapability

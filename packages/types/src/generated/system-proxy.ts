@@ -5,6 +5,8 @@
 import type { InferProvider } from '../capabilities/capability-definition.js'
 import { invokeTrpcLeaf, type TrpcDispatchKind } from '../helpers/trpc-leaf.js'
 import type { AddonApi } from './addon-api.js'
+import type { actionsCapability } from '../capabilities/actions.cap.js'
+import type { actionSourceCapability } from '../capabilities/action-source.cap.js'
 import type { addonPagesCapability } from '../capabilities/addon-pages.cap.js'
 import type { addonsCapability } from '../capabilities/addons.cap.js'
 import type { addonSettingsCapability } from '../capabilities/addon-settings.cap.js'
@@ -69,6 +71,8 @@ import type { userManagementCapability } from '../capabilities/user-management.c
  * `system.<cap>.<method>(input)` calls.
  */
 export interface SystemProxy {
+  readonly actions: Pick<InferProvider<typeof actionsCapability>, 'list' | 'stop' | 'getTraces' | 'create' | 'update' | 'delete' | 'setLinks'>
+  readonly actionSource: Pick<InferProvider<typeof actionSourceCapability>, 'listActions' | 'runAction' | 'stopAction'>
   readonly addonPages: Pick<InferProvider<typeof addonPagesCapability>, 'listPages'>
   readonly addons: Pick<InferProvider<typeof addonsCapability>, 'list' | 'getLogs' | 'listPackages' | 'installPackage' | 'installFromWorkspace' | 'isWorkspaceAvailable' | 'listWorkspacePackages' | 'uninstallPackage' | 'listInstallations' | 'reloadPackages' | 'searchAvailable' | 'listUpdates' | 'updatePackage' | 'rollbackPackage' | 'forceRefresh' | 'restartServer' | 'getLastRestart' | 'listFrameworkPackages' | 'listCapabilityProviders' | 'setCapabilityProviderEnabled' | 'getVersions' | 'getPackageDocs' | 'restartAddon' | 'retryLoad' | 'getAutoUpdateSettings' | 'setAutoUpdateSettings' | 'getAddonAutoUpdate' | 'setAddonAutoUpdate' | 'applyAutoUpdateToAll' | 'custom' | 'startJob' | 'getJob' | 'listJobs' | 'cancelJob' | 'onAddonLogs'>
   readonly addonSettings: Pick<InferProvider<typeof addonSettingsCapability>, 'getGlobalSettings' | 'updateGlobalSettings' | 'getIntegrationSettings'>
@@ -80,7 +84,7 @@ export interface SystemProxy {
   readonly broker: Pick<InferProvider<typeof brokerCapability>, 'list' | 'get' | 'listProviders' | 'add' | 'remove' | 'testConnection' | 'getSettings' | 'setSettings' | 'getBrokerConfig' | 'getSettingsSchema' | 'testSettings' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
   readonly connectionTest: Pick<InferProvider<typeof connectionTestCapability>, 'testSettings' | 'describeTest'>
-  readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition'>
+  readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
   readonly decoder: Pick<InferProvider<typeof decoderCapability>, 'getInfo' | 'reprobeHwaccel'>
   readonly deviceAdoption: Pick<InferProvider<typeof deviceAdoptionCapability>, 'listCandidateFilters' | 'listCandidates' | 'getCandidate' | 'refresh' | 'adopt' | 'release' | 'resync'>
   readonly deviceCredentials: Pick<InferProvider<typeof deviceCredentialsCapability>, 'listDeviceCredentials' | 'startEnrollment' | 'revokeDeviceCredential' | 'getDeviceCertificateSettings' | 'setDeviceCertificateSettings' | 'deleteDeviceCredential' | 'getDeviceCaStatus' | 'renameDeviceCredential'>
@@ -139,6 +143,22 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function dispatch(capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown): any {
     return invokeTrpcLeaf(api, capProp, method, kind, input, push)
+  }
+
+  const actionsInterface = {
+    list: (input?: unknown) => dispatch('actions', 'list', 'query', input),
+    stop: (input?: unknown) => dispatch('actions', 'stop', 'mutation', input),
+    getTraces: (input?: unknown) => dispatch('actions', 'getTraces', 'query', input),
+    create: (input?: unknown) => dispatch('actions', 'create', 'mutation', input),
+    update: (input?: unknown) => dispatch('actions', 'update', 'mutation', input),
+    delete: (input?: unknown) => dispatch('actions', 'delete', 'mutation', input),
+    setLinks: (input?: unknown) => dispatch('actions', 'setLinks', 'mutation', input),
+  }
+
+  const actionSourceInterface = {
+    listActions: (input?: unknown) => dispatch('actionSource', 'listActions', 'query', input),
+    runAction: (input?: unknown) => dispatch('actionSource', 'runAction', 'mutation', input),
+    stopAction: (input?: unknown) => dispatch('actionSource', 'stopAction', 'mutation', input),
   }
 
   const addonPagesInterface = {
@@ -300,6 +320,9 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getCustomization: (input?: unknown) => dispatch('coreBlocks', 'getCustomization', 'query', input),
     listComposableCaps: (input?: unknown) => dispatch('coreBlocks', 'listComposableCaps', 'query', input),
     validateComposition: (input?: unknown) => dispatch('coreBlocks', 'validateComposition', 'mutation', input),
+    reportAutomationRun: (input?: unknown) => dispatch('coreBlocks', 'reportAutomationRun', 'mutation', input),
+    getAutomationRunState: (input?: unknown) => dispatch('coreBlocks', 'getAutomationRunState', 'query', input),
+    getTraces: (input?: unknown) => dispatch('coreBlocks', 'getTraces', 'query', input),
   }
 
   const decoderInterface = {
@@ -981,6 +1004,8 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
   }
 
   return {
+    actions: actionsInterface,
+    actionSource: actionSourceInterface,
     addonPages: addonPagesInterface,
     addons: addonsInterface,
     addonSettings: addonSettingsInterface,

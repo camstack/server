@@ -605,6 +605,7 @@ export {
 // ── Automation recipes — the declarative shape a visual automation is
 // authored as, and the generator that compiles one to a core block ──
 export type {
+  ActionStep,
   AutomationAction,
   AutomationCondition,
   AutomationConditionAll,
@@ -637,8 +638,12 @@ export type {
   TrackLifecycleInput,
 } from './automation/index.js'
 export {
-  AUTOMATION_STATE_LOCATION,
+  ActionStepSchema,
   AutomationActionSchema,
+  AutomationCapStepSchema,
+  AutomationWaitStepSchema,
+  EMPTY_AUTOMATION_STATE,
+  mergeSkipTraces,
   AutomationConditionOperatorSchema,
   AutomationConditionSchema,
   AutomationConditionTraceNodeSchema,
@@ -672,6 +677,8 @@ export {
   TraceValueSchema,
   validateRecipeBounds,
 } from './automation/index.js'
+export * from './automation/action.js'
+export * from './automation/step-runner.js'
 // Per-call node pinning for ctx.api capability calls
 export * from './cap-call-context.js'
 // ── Capability definitions (Zod-schema-first) ──────────────────

@@ -475,6 +475,9 @@
         "capabilities": [
           {
             "name": "core-blocks"
+          },
+          {
+            "name": "actions"
           }
         ]
       },

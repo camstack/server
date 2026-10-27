@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { AutomationRecipeSchema } from '../automation/recipe.js'
+import { AutomationRecipeSchema, MAX_TRACE_KEEP } from '../automation/recipe.js'
+import { AutomationRunTraceSchema, AutomationStateDocSchema } from '../automation/trace.js'
 import { ComposableCapabilitiesSchema } from '../composition/composable-caps.js'
 import { type Composition, CompositionSchema } from '../composition/composition.js'
 import {
@@ -538,6 +539,34 @@ export const coreBlocksCapability = {
       z.object({ composition: CompositionSchema, blockId: z.string().optional() }),
       CompositionValidationSchema,
       { kind: 'mutation', auth: 'admin', access: 'view' },
+    ),
+    /**
+     * An automation block reports one run (or one coalesced skip) to the hub's
+     * `runs` ledger. Only the block itself may: the transport stamps
+     * `callerAddonId`, and anything but `core-block-<blockId>` is refused.
+     * `keepTraces` bounds the ring; `runStartedAt` moves the cooldown stamp.
+     */
+    reportAutomationRun: method(
+      z.object({
+        blockId: z.string().min(1),
+        trace: AutomationRunTraceSchema.optional(),
+        runStartedAt: z.number().optional(),
+        keepTraces: z.number().int().min(1).max(MAX_TRACE_KEEP).optional(),
+      }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /** The cooldown stamp and trace ring a block reads ONCE, at start. Owner-only. */
+    getAutomationRunState: method(
+      z.object({ blockId: z.string().min(1) }),
+      AutomationStateDocSchema,
+      { auth: 'admin' },
+    ),
+    /** An automation's run traces, newest last. The operator's read. */
+    getTraces: method(
+      z.object({ blockId: z.string().min(1) }),
+      z.object({ traces: z.array(AutomationRunTraceSchema), lastError: z.string().nullable() }),
+      { auth: 'admin' },
     ),
   },
 } as const satisfies CapabilityDefinition

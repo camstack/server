@@ -37,14 +37,6 @@ export interface GenerateAutomationBlockInput {
  *  (D8: an event WAKES the evaluation, the reconcile guarantees it). */
 const RECONCILE_MS = 15_000
 
-function slugOf(name: string): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return slug === '' ? 'automation' : slug
-}
-
 interface StepMeta {
   readonly kind: string
   readonly cap?: string
@@ -59,6 +51,8 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'wait' }
     case 'code':
       return { kind: 'code' }
+    case 'action':
+      return { kind: 'action' }
     case 'cap':
       return {
         kind: 'cap',
@@ -205,45 +199,53 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
 }
 
 function emitAction(action: AutomationAction, index: number): string {
+  const step = (body: string): string => `    {
+      meta: STEP_META[${index}]!,
+      run: async (scope) => {
+${body}
+      },
+    },`
   switch (action.kind) {
     case 'wait':
-      return `      case ${index}: await sleep(${j(action.seconds * 1000)}); break`
+      return step(`        await sleep(${j(action.seconds * 1000)})`)
     case 'cap': {
       if (Array.isArray(action.deviceId)) {
-        return `      case ${index}: {
-        for (const deviceId of ${j(action.deviceId)}) {
-          stepDeviceId = deviceId
+        return step(`        for (const deviceId of ${j(action.deviceId)}) {
+          scope.setDeviceId(deviceId)
           await actuate(deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
             action.args ?? {},
           )}, vars)
-        }
-        break
-      }`
+        }`)
       }
       const target =
         typeof action.deviceId === 'number'
           ? j(action.deviceId)
           : `resolveTarget(vars, ${j(action.deviceId.$var)})`
-      return `      case ${index}: {
-        const deviceId = ${target}
-        stepDeviceId = deviceId
+      return step(`        const deviceId = ${target}
+        scope.setDeviceId(deviceId)
         await actuate(deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
           action.args ?? {},
-        )}, vars)
-        break
-      }`
+        )}, vars)`)
     }
+    case 'action':
+      return step(`        // an Action run, awaited: the step takes THAT run's outcome
+        const result = await ctx.api.actions.run.mutate({
+          actionId: ${j(action.actionId)},
+          variables: substituteVariables(${j(action.variables ?? {})}, vars),
+          wait: true,
+          origin: { blockId: BLOCK_ID ?? undefined },
+        })
+        if (result.outcome !== 'ran') {
+          throw new Error('action ' + ${j(action.actionId)} + ' ' + result.outcome + (result.message === undefined ? '' : ': ' + result.message))
+        }`)
     case 'code':
-      return `      case ${index}: {
-        // inline code action — a fragment of THIS block, bundled by esbuild
+      return step(`        // inline code action — a fragment of THIS block, bundled by esbuild
         await (async () => {
 ${action.code
   .split('\n')
   .map((line) => `          ${line}`)
   .join('\n')}
-        })()
-        break
-      }`
+        })()`)
   }
 }
 
@@ -262,27 +264,29 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const { name, recipe } = input
   const runMode = recipe.runMode ?? { mode: 'single' }
   const stepMeta = recipe.actions.map(stepMetaOf)
-  const statePath = `automations/${slugOf(name)}.json`
 
   return `import type {
   AddonContext,
   AutomationConditionTraceNode,
   AutomationRunTrace,
   AutomationRunVerdict,
-  AutomationStateDoc,
   AutomationStepTrace,
+  RunnableStep,
 } from '@camstack/types'
 import {
-  AUTOMATION_STATE_LOCATION,
-  AutomationStateDocSchema,
   ConditionMirror,
   DetectionTriggerFilter,
   EventCategory,
   RunGate,
-  appendTrace,
   buildTriggerTrace,
   collectMirrorSources,
+  coreBlockIdFromAddonId,
   evaluateConditionTree,
+  isSkippedTrace,
+  mergeSkipTraces,
+  resolveDeviceTarget,
+  resolveStepArgs,
+  runSteps,
 } from '@camstack/types'
 
 /**
@@ -301,13 +305,13 @@ const RECONCILE_MS = ${RECONCILE_MS}
 /** How triggers that arrive while busy (or cooling down) are handled. */
 const RUN_MODE = ${j(runMode)} as const
 
-/** Run traces kept (a ring, persisted through ctx.storage). */
+/** Run traces kept (a ring, held in the hub's runs ledger). */
 const KEEP_TRACES = ${recipe.keepTraces ?? DEFAULT_TRACE_KEEP}
 
 const CONDITIONS = ${recipe.conditions === undefined ? 'undefined' : 'AUTOMATION_RECIPE.conditions'}
 
-/** Where this automation keeps its cooldown stamp and trace ring. */
-const STATE_PATH = ${j(statePath)}
+/** Skips that repeat are folded into one trace; it goes to the hub after this. */
+const SKIP_FLUSH_MS = 5_000
 
 /** Static facts about each action step, for its trace. */
 const STEP_META: ReadonlyArray<{ kind: string; cap?: string; method?: string; deviceId?: number }> = ${j(stepMeta)}
@@ -364,8 +368,14 @@ export default function block(ctx: AddonContext) {
   const disposers: Array<() => void> = []
   const gate = new RunGate(RUN_MODE)
   const mirror = new ConditionMirror(collectMirrorSources(CONDITIONS))
-  let state: AutomationStateDoc = { version: 1, lastRunStartedAt: null, traces: [] }
-  let persistChain: Promise<void> = Promise.resolve()
+  const BLOCK_ID = coreBlockIdFromAddonId(ctx.id)
+  /** The cooldown stamp: memory is the authority at fire time (D49); the hub ledger is read once at start. */
+  let lastRunStartedAt: number | null = null
+  /** True when the stamp could not be read at start — the first run is let through and says so. */
+  let stampUnknown = false
+  let sendChain: Promise<void> = Promise.resolve()
+  let pendingSkip: AutomationRunTrace | undefined
+  let skipTimer: ReturnType<typeof setTimeout> | undefined
   let stopped = false
   let runCounter = 0
   const runningTokens = new Set<RunToken>()
@@ -391,48 +401,68 @@ export default function block(ctx: AddonContext) {
       }
     })
 
-  // ── persistence: the cooldown stamp and the trace ring, via ctx.storage ──
+  // ── the hub's runs ledger: the stamp is read ONCE here, the ring is written through RPC ──
   async function loadState(): Promise<void> {
-    const storage = ctx.storage
-    if (storage === undefined) {
-      ctx.logger.warn('no ctx.storage — cooldown and traces will not survive a restart')
+    if (BLOCK_ID === null) {
+      ctx.logger.warn('this is not a core-block addon id — no run ledger, cooldown and traces will not survive a restart', { addonId: ctx.id })
       return
     }
     try {
-      const where = { location: AUTOMATION_STATE_LOCATION, relativePath: STATE_PATH }
-      if (!(await storage.exists(where))) return
-      const parsed = AutomationStateDocSchema.safeParse(JSON.parse((await storage.read(where)).toString('utf8')))
-      if (parsed.success) state = parsed.data
-      else ctx.logger.warn('stored automation state is invalid — starting empty', { error: parsed.error.message })
+      const doc = await ctx.api.coreBlocks.getAutomationRunState.query({ blockId: BLOCK_ID })
+      lastRunStartedAt = doc.lastRunStartedAt
     } catch (err: unknown) {
-      ctx.logger.warn('could not read the stored automation state — starting empty', {
+      stampUnknown = true
+      ctx.logger.warn('could not read the stored cooldown stamp — the first run is let through', {
+        blockId: BLOCK_ID,
         error: err instanceof Error ? err.message : String(err),
       })
     }
   }
 
-  function persist(): void {
-    const doc = state
-    persistChain = persistChain.then(async () => {
-      const storage = ctx.storage
-      if (storage === undefined) return
+  function send(payload: { trace?: AutomationRunTrace; runStartedAt?: number }): Promise<void> {
+    if (BLOCK_ID === null) return Promise.resolve()
+    const blockId = BLOCK_ID
+    sendChain = sendChain.then(async () => {
       try {
-        await storage.write({
-          location: AUTOMATION_STATE_LOCATION,
-          relativePath: STATE_PATH,
-          data: Buffer.from(JSON.stringify(doc), 'utf8'),
-        })
+        await ctx.api.coreBlocks.reportAutomationRun.mutate({ blockId, keepTraces: KEEP_TRACES, ...payload })
       } catch (err: unknown) {
-        ctx.logger.warn('could not persist the automation state', {
+        ctx.logger.warn('could not report the run to the hub ledger', {
+          blockId,
           error: err instanceof Error ? err.message : String(err),
         })
       }
     })
+    return sendChain
   }
 
+  function flushSkip(): void {
+    if (skipTimer !== undefined) {
+      clearTimeout(skipTimer)
+      skipTimer = undefined
+    }
+    if (pendingSkip === undefined) return
+    const trace = pendingSkip
+    pendingSkip = undefined
+    void send({ trace })
+  }
+
+  /** A skip identical to the one waiting is COUNTED on it; anything else flushes it first. */
   function record(trace: AutomationRunTrace): void {
-    state = { ...state, traces: appendTrace(state.traces, trace, KEEP_TRACES) }
-    persist()
+    if (isSkippedTrace(trace)) {
+      if (pendingSkip !== undefined) {
+        const merged = mergeSkipTraces(pendingSkip, trace)
+        if (merged !== null) {
+          pendingSkip = merged
+          return
+        }
+        flushSkip()
+      }
+      pendingSkip = trace
+      skipTimer = setTimeout(flushSkip, SKIP_FLUSH_MS)
+      return
+    }
+    flushSkip()
+    void send({ trace })
   }
 
   // ── the condition mirror (D49): memory only at fire time ──
@@ -475,22 +505,31 @@ export default function block(ctx: AddonContext) {
   /** A {$var} action target, resolved from the run's bag BEFORE dispatch — the
    *  action runner only ever sees a number. */
   function resolveTarget(vars: Record<string, unknown>, name: string): number {
-    const raw = vars[name]
-    if (typeof raw === 'number') return raw
-    throw new Error('action target var "' + name + '" is not a device id')
+    return resolveDeviceTarget(vars, name)
   }
 
-  /** Substitute {{vars.x}} slots. Substitution only — never evaluation. */
+  function warnMissingVar(name: string): void {
+    ctx.logger.warn('template referenced a var that was never set', { var: name })
+  }
+
+  /** Substitute {{vars.x}} slots and { $var } values. Substitution only — never evaluation. */
   function substitute(value: unknown, vars: Record<string, unknown>): unknown {
-    if (typeof value !== 'string') return value
-    return value.replace(/\\{\\{\\s*vars\\.([A-Za-z_][A-Za-z0-9_]*)\\s*\\}\\}/g, (_m, key: string) => {
-      const v = vars[key]
-      if (v === undefined) {
-        ctx.logger.warn('template referenced a var that was never set', { var: key })
-        return ''
+    return resolveStepArgs(value, vars, warnMissingVar)
+  }
+
+  /** The variables handed to an Action step, substituted and kept to primitives. */
+  function substituteVariables(
+    raw: Record<string, string | number | boolean>,
+    vars: Record<string, unknown>,
+  ): Record<string, string | number | boolean> {
+    const out: Record<string, string | number | boolean> = {}
+    for (const [key, value] of Object.entries(raw)) {
+      const resolved = substitute(value, vars)
+      if (typeof resolved === 'string' || typeof resolved === 'number' || typeof resolved === 'boolean') {
+        out[key] = resolved
       }
-      return String(v)
-    })
+    }
+    return out
   }
 
   async function actuate(
@@ -500,8 +539,9 @@ export default function block(ctx: AddonContext) {
     args: Record<string, unknown>,
     vars: Record<string, unknown>,
   ): Promise<void> {
-    const resolved: Record<string, unknown> = {}
-    for (const [k, v] of Object.entries(args)) resolved[k] = substitute(v, vars)
+    const substituted = substitute(args, vars)
+    const resolved: Record<string, unknown> =
+      substituted !== null && typeof substituted === 'object' ? { ...substituted } : {}
     // Forked-addon ctx.api namespaces are tRPC Proxies over a noop function
     // (typeof === 'function'), not plain objects — reject only null/undefined.
     const client: unknown = Reflect.get(ctx.api, capToRouterKey(cap))
@@ -515,42 +555,31 @@ export default function block(ctx: AddonContext) {
     await mutate({ ...resolved, deviceId })
   }
 
-  /** The THEN half. Stops at the first failure — continuing past a failed step
-   *  executes an intent the operator never expressed. Every step is traced; the
-   *  ones after a failure (or an abort) are marked not-run. */
+  /** The THEN half, through the ONE shared step runner: stops at the first
+   *  failure (continuing past a failed step executes an intent the operator
+   *  never expressed); every step is traced, the ones after a failure (or an
+   *  abort) are marked not-run. */
   async function runActions(
     vars: Record<string, unknown>,
     token: RunToken,
-  ): Promise<{ steps: AutomationStepTrace[]; failed: boolean }> {
+  ): Promise<{ steps: readonly AutomationStepTrace[]; failed: boolean }> {
     const sleep = (ms: number): Promise<void> => abortableSleep(ms, token)
-    const steps: AutomationStepTrace[] = []
-    let failed = false
-    for (let step = 0; step < ${recipe.actions.length}; step += 1) {
-      const meta = STEP_META[step]!
-      const path = 'actions.' + step
-      if (failed || token.aborted) {
-        steps.push({ ...meta, path, outcome: 'not-run', message: failed ? 'an earlier step failed' : 'aborted by a restart' })
-        continue
-      }
-      const startedAt = Date.now()
-      let stepDeviceId: number | undefined = meta.deviceId
-      try {
-        switch (step) {
+    const steps: RunnableStep[] = [
 ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
-        }
-        steps.push({ ...meta, deviceId: stepDeviceId, path, startedAt, endedAt: Date.now(), outcome: 'ok' })
-      } catch (err: unknown) {
-        failed = true
-        const message = err instanceof Error ? err.message : String(err)
+    ]
+    return runSteps(steps, {
+      pathPrefix: 'actions',
+      isAborted: () => token.aborted,
+      abortReason: 'aborted by a restart',
+      now: () => Date.now(),
+      onFailure: (failure) => {
         ctx.logger.warn('action failed — stopping the sequence', {
-          ...(stepDeviceId === undefined ? {} : { tags: { deviceId: stepDeviceId } }),
-          step,
-          error: message,
+          ...(failure.deviceId === undefined ? {} : { tags: { deviceId: failure.deviceId } }),
+          step: failure.index,
+          error: failure.message,
         })
-        steps.push({ ...meta, deviceId: stepDeviceId, path, startedAt, endedAt: Date.now(), outcome: 'error', message })
-      }
-    }
-    return { steps, failed }
+      },
+    })
   }
 
   function deviceTags(trigger: Record<string, unknown>): { tags?: { deviceId: number } } {
@@ -618,11 +647,14 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         ctx.logger.debug('automation did not run — conditions were false', { trigger, ...deviceTags(trigger) })
         return
       }
-      const cooldown = gate.cooldown({
-        manual: trigger['kind'] === 'manual',
-        now: Date.now(),
-        lastRunStartedAt: state.lastRunStartedAt,
-      })
+      const letThrough = stampUnknown && RUN_MODE.mode === 'cooldown'
+      const cooldown = letThrough
+        ? { ok: true, bypassed: true, reason: 'cooldown stamp unreadable at start — run let through' }
+        : gate.cooldown({
+            manual: trigger['kind'] === 'manual',
+            now: Date.now(),
+            lastRunStartedAt,
+          })
       if (!cooldown.ok) {
         outcome = 'skipped-cooldown'
         verdict = { mode: RUN_MODE, decision: 'cooldown', reason: cooldown.reason }
@@ -630,10 +662,11 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         return
       }
       if (cooldown.bypassed) verdict = { mode: RUN_MODE, decision: 'bypass', reason: cooldown.reason }
-      // Stamped when the actions START, and persisted before they run, so a
-      // restart mid-run cannot fire again inside the window.
-      state = { ...state, lastRunStartedAt: startedAt }
-      persist()
+      // Stamped when the actions START, and reported to the hub before they run,
+      // so a restart mid-run cannot fire again inside the window.
+      lastRunStartedAt = startedAt
+      stampUnknown = false
+      await send({ runStartedAt: startedAt })
       ctx.logger.info('automation running', { trigger, ...deviceTags(trigger) })
       const vars: Record<string, unknown> = { ...trigger }
       const result = await runActions(vars, token)
@@ -732,6 +765,7 @@ ${recipe.triggers.map((t, i) => emitTrigger(t, i)).join('\n\n')}
   return () => {
     stopped = true
     queue.length = 0
+    flushSkip()
     for (const running of runningTokens) {
       running.aborted = true
       running.wake?.()

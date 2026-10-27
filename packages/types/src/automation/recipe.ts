@@ -215,25 +215,50 @@ export type AutomationTrigger = z.infer<typeof AutomationTriggerSchema>
  * is called. The runner still receives a number and is untouched; the
  * resolution is the recipe's job, not the runner's.
  */
+export const AutomationWaitStepSchema = z.object({
+  kind: z.literal('wait'),
+  seconds: z.number().min(0).max(300),
+})
+
+export const AutomationCapStepSchema = z.object({
+  kind: z.literal('cap'),
+  /**
+   * One device, several same-family devices (locks / climate family / …),
+   * or `{ $var }` for the device that triggered the run. An array is
+   * fan-out at codegen — each id gets the same cap.method call.
+   */
+  deviceId: z.union([
+    z.number().int(),
+    z.array(z.number().int()).min(1),
+    z.object({ $var: z.string().min(1) }),
+  ]),
+  cap: z.string().min(1),
+  method: z.string().min(1),
+  /** Values may carry `{{vars.x}}` slots, or be exactly `{ $var: 'name' }`, which
+   *  SUBSTITUTE and do not evaluate (§3.2.3). Anything beyond substitution is
+   *  the expression leaf. */
+  args: z.record(z.string(), z.unknown()).optional(),
+})
+
+/**
+ * The steps an internal Action may contain: cap and wait, and nothing that can
+ * call back into an Action — so an Action can never reach itself (no cycles).
+ */
+export const ActionStepSchema = z.discriminatedUnion('kind', [
+  AutomationWaitStepSchema,
+  AutomationCapStepSchema,
+])
+export type ActionStep = z.infer<typeof ActionStepSchema>
+
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('wait'), seconds: z.number().min(0).max(300) }),
+  AutomationWaitStepSchema,
+  AutomationCapStepSchema,
   z.object({
-    kind: z.literal('cap'),
-    /**
-     * One device, several same-family devices (locks / climate family / …),
-     * or `{ $var }` for the device that triggered the run. An array is
-     * fan-out at codegen — each id gets the same cap.method call.
-     */
-    deviceId: z.union([
-      z.number().int(),
-      z.array(z.number().int()).min(1),
-      z.object({ $var: z.string().min(1) }),
-    ]),
-    cap: z.string().min(1),
-    method: z.string().min(1),
-    /** Values may carry `{{vars.x}}` slots, which SUBSTITUTE and do not
-     *  evaluate (§3.2.3). Anything beyond substitution is the expression leaf. */
-    args: z.record(z.string(), z.unknown()).optional(),
+    kind: z.literal('action'),
+    /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */
+    actionId: z.string().min(1),
+    /** Values for the action's declared variables; the others take their default. */
+    variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   }),
   z.object({
     kind: z.literal('code'),

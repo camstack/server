@@ -24,6 +24,8 @@ export const CAP_ADVANCE_FIELDS: Readonly<Record<string, string>> = Object.freez
 /** Every capability name, so addon code can check a name without the schema graph. */
 export const CAP_NAMES: readonly string[] = Object.freeze([
   "accessories",
+  "action-source",
+  "actions",
   "addon-pages",
   "addon-pages-source",
   "addon-routes",

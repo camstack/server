@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1387 method paths across 185 capabilities.
+ * Coverage: 1404 method paths across 187 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -24,6 +24,20 @@ export interface MethodAccessRecord {
 export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = Object.freeze({
   'accessories.getStatus': { capName: "accessories", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'accessories.setChildHidden': { capName: "accessories", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'actions.create': { capName: "actions", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'actions.delete': { capName: "actions", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'actions.get': { capName: "actions", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'actions.getLinks': { capName: "actions", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'actions.getTraces': { capName: "actions", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'actions.list': { capName: "actions", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'actions.listForCamera': { capName: "actions", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'actions.run': { capName: "actions", capScope: "system", addonId: null, access: "create", role: "viewer" } as const,
+  'actions.setLinks': { capName: "actions", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'actions.stop': { capName: "actions", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'actions.update': { capName: "actions", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'actionSource.listActions': { capName: "action-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'actionSource.runAction': { capName: "action-source", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'actionSource.stopAction': { capName: "action-source", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addonPages.listPages': { capName: "addon-pages", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonPagesSource.listPages': { capName: "addon-pages-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonRoutes.getRoutes': { capName: "addon-routes", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -207,14 +221,17 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'coreBlocks.createComposition': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.delete': { capName: "core-blocks", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'coreBlocks.get': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'coreBlocks.getAutomationRunState': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getBlockSettings': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getComposition': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getCustomization': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'coreBlocks.getTraces': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.getTypeDefs': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.list': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.listComposableCaps': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.listCompositions': { capName: "core-blocks", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'coreBlocks.migrateRawSecrets': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'coreBlocks.reportAutomationRun': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.restart': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.setEnabled': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.update': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1414,6 +1431,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
 /** Set of all known cap names — handy for the scope picker. */
 export const KNOWN_CAP_NAMES: readonly string[] = [
   "accessories",
+  "action-source",
+  "actions",
   "addon-pages",
   "addon-pages-source",
   "addon-routes",
@@ -1701,6 +1720,8 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
 
 /** Every cap declared as `scope: 'system'` — drives the `category:system` matcher. */
 export const SYSTEM_CAP_NAMES: readonly string[] = [
+  "action-source",
+  "actions",
   "addon-pages",
   "addon-pages-source",
   "addon-routes",

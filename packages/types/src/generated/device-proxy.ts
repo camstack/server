@@ -103,6 +103,7 @@ import type { webrtcSessionCapability } from '../capabilities/webrtc-session.cap
 import type { zoneAnalyticsCapability } from '../capabilities/zone-analytics.cap.js'
 import type { zoneRulesCapability } from '../capabilities/zone-rules.cap.js'
 import type { zonesCapability } from '../capabilities/zones.cap.js'
+import type { actionsCapability } from '../capabilities/actions.cap.js'
 import type { addonSettingsCapability } from '../capabilities/addon-settings.cap.js'
 import type { audioAnalyzerCapability } from '../capabilities/audio-analyzer.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
@@ -319,6 +320,7 @@ export interface DeviceProxy {
   readonly zoneAnalytics?: InferDeviceProxyCap<typeof zoneAnalyticsCapability>
   readonly zoneRules?: InferDeviceProxyCap<typeof zoneRulesCapability>
   readonly zones?: InferDeviceProxyCap<typeof zonesCapability>
+  readonly actions: Pick<InferDeviceProxyCap<typeof actionsCapability>, 'get' | 'run' | 'listForCamera' | 'getLinks'>
   readonly addonSettings: Pick<InferDeviceProxyCap<typeof addonSettingsCapability>, 'getDeviceSettings' | 'updateDeviceSettings'>
   readonly audioAnalyzer: Pick<InferDeviceProxyCap<typeof audioAnalyzerCapability>, 'detachDevice'>
   readonly deviceAdoption: Pick<InferDeviceProxyCap<typeof deviceAdoptionCapability>, 'getStatus'>
@@ -1110,6 +1112,13 @@ export function createDeviceProxy(
     updateZone: (input?: unknown) => dispatch('zones', 'zones', 'updateZone', 'mutation', input),
   }
 
+  const actionsInterface = {
+    get: (input?: unknown) => dispatchSystem('actions', 'get', 'query', input),
+    run: (input?: unknown) => dispatchSystem('actions', 'run', 'mutation', input),
+    listForCamera: (input?: unknown) => dispatchSystem('actions', 'listForCamera', 'query', input),
+    getLinks: (input?: unknown) => dispatchSystem('actions', 'getLinks', 'query', input),
+  }
+
   const addonSettingsInterface = {
     getDeviceSettings: (input?: unknown) => dispatchSystem('addonSettings', 'getDeviceSettings', 'query', input),
     updateDeviceSettings: (input?: unknown) => dispatchSystem('addonSettings', 'updateDeviceSettings', 'mutation', input),
@@ -1471,6 +1480,7 @@ export function createDeviceProxy(
     ...(bound('zone-analytics') ? { zoneAnalytics: zoneAnalyticsInterface } : {}),
     ...(bound('zone-rules') ? { zoneRules: zoneRulesInterface } : {}),
     ...(bound('zones') ? { zones: zonesInterface } : {}),
+    actions: actionsInterface,
     addonSettings: addonSettingsInterface,
     audioAnalyzer: audioAnalyzerInterface,
     deviceAdoption: deviceAdoptionInterface,

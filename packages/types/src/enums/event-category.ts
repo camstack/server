@@ -818,6 +818,13 @@ export enum EventCategory {
    */
   AccessoriesChanged = 'accessories.onAccessoriesChanged',
 
+  // Actions
+  /**
+   * An action run started or ended. Emitted by the `actions` surface.
+   * Payload: `ActionRunChanged` (`{ actionId, runId, isRunning, outcome?, lastRunAt, lastError }`).
+   */
+  ActionsRunChanged = 'actions.onRunChanged',
+
   // Model conversion (P3)
   /**
    * Progress update from a running model conversion job.

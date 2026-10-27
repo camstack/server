@@ -11,9 +11,6 @@ export {
 } from '../condition-eval.js'
 export { DetectionTriggerFilter } from '../detection-trigger.js'
 export { RunGate } from '../run-gate.js'
-export {
-  AUTOMATION_STATE_LOCATION,
-  AutomationStateDocSchema,
-  appendTrace,
-  buildTriggerTrace,
-} from '../trace.js'
+export { coreBlockIdFromAddonId } from '../../capabilities/core-blocks.cap.js'
+export { resolveDeviceTarget, resolveStepArgs, runSteps } from '../step-runner.js'
+export { buildTriggerTrace, isSkippedTrace, mergeSkipTraces } from '../trace.js'

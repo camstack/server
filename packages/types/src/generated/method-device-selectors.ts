@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 550 methods carry a device reference, of which
- * 174 are on SYSTEM-scope caps.
+ * Coverage: 555 methods carry a device reference, of which
+ * 179 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -32,6 +32,11 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   Object.freeze({
   'accessories.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'accessories.setChildHidden': [{ name: "childDeviceId", form: "single", optional: false }, { name: "deviceId", form: "single", optional: false }] as const,
+  'actions.get': [{ name: "deviceId", form: "single", optional: true }] as const,
+  'actions.getLinks': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'actions.listForCamera': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'actions.run': [{ name: "deviceId", form: "single", optional: true }] as const,
+  'actions.setLinks': [{ name: "deviceId", form: "single", optional: false }] as const,
   'addonSettings.getDeviceSettings': [{ name: "deviceId", form: "single", optional: false }] as const,
   'addonSettings.updateDeviceSettings': [{ name: "deviceId", form: "single", optional: false }] as const,
   'airQualitySensor.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -585,6 +590,11 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
 /** Cap-method paths that carry a device reference AND live on a system-scope
  *  cap — the set the v3 device check newly reaches. */
 export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
+  "actions.get",
+  "actions.getLinks",
+  "actions.listForCamera",
+  "actions.run",
+  "actions.setLinks",
   "addonSettings.getDeviceSettings",
   "addonSettings.updateDeviceSettings",
   "audioAnalyzer.attachDevice",

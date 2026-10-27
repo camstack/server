@@ -5,7 +5,8 @@
  * A trace is data, not a log: it covers the WHOLE tree — the trigger stage,
  * every condition node (containers and leaves, including the ones a
  * short-circuit never reached), the run-mode verdict and every action step —
- * each addressed by a stable path (`conditions.0.1`, `actions.2`). Skipped
+ * each addressed by a stable path (`conditions.0.1`, `actions.2`, or `steps.N`
+ * for an Action run). Skipped
  * evaluations are traced too, and identical consecutive skips collapse into a
  * repeat count so a trigger that fails every 5 minutes cannot flush real runs.
  *
@@ -105,7 +106,10 @@ export const AutomationRunTraceSchema = z.object({
 })
 export type AutomationRunTrace = z.infer<typeof AutomationRunTraceSchema>
 
-/** What an automation persists through `ctx.storage`: the cooldown stamp and the ring. */
+/**
+ * What the hub's `runs` ledger holds for one owner (`automation:<blockId>` or
+ * `action:<actionId>`): the cooldown stamp and the trace ring.
+ */
 export const AutomationStateDocSchema = z.object({
   version: z.literal(1),
   lastRunStartedAt: z.number().nullable(),
@@ -113,8 +117,12 @@ export const AutomationStateDocSchema = z.object({
 })
 export type AutomationStateDoc = z.infer<typeof AutomationStateDocSchema>
 
-/** Where the block keeps its state document. */
-export const AUTOMATION_STATE_LOCATION = 'automation-state'
+/** The state of an owner that never reported. */
+export const EMPTY_AUTOMATION_STATE: AutomationStateDoc = {
+  version: 1,
+  lastRunStartedAt: null,
+  traces: [],
+}
 
 export function isSkippedTrace(trace: AutomationRunTrace): boolean {
   return trace.outcome.startsWith('skipped-')
@@ -140,6 +148,27 @@ export function skipSignature(trace: AutomationRunTrace): string {
 }
 
 /**
+ * `next` folded into `prev` when both are skips of the same signature (the
+ * repeat count and the latest time move on), else null. Used by the block
+ * BEFORE it sends, so a trigger that fails every few seconds costs one RPC per
+ * flush, not one per skip; the ledger applies the same rule through
+ * {@link appendTrace}.
+ */
+export function mergeSkipTraces(
+  prev: AutomationRunTrace,
+  next: AutomationRunTrace,
+): AutomationRunTrace | null {
+  if (!isSkippedTrace(prev) || !isSkippedTrace(next)) return null
+  if (skipSignature(prev) !== skipSignature(next)) return null
+  return {
+    ...prev,
+    repeat: prev.repeat + next.repeat,
+    lastAt: next.lastAt,
+    endedAt: next.endedAt,
+  }
+}
+
+/**
  * Append a trace to a ring of at most `keep` entries, without mutating it.
  *
  *  - A skip identical to the previous trace is counted on that trace
@@ -154,17 +183,8 @@ export function appendTrace(
   keep: number,
 ): AutomationRunTrace[] {
   const last = ring[ring.length - 1]
-  if (
-    last !== undefined &&
-    isSkippedTrace(trace) &&
-    isSkippedTrace(last) &&
-    skipSignature(last) === skipSignature(trace)
-  ) {
-    return [
-      ...ring.slice(0, -1),
-      { ...last, repeat: last.repeat + trace.repeat, lastAt: trace.lastAt, endedAt: trace.endedAt },
-    ]
-  }
+  const merged = last === undefined ? null : mergeSkipTraces(last, trace)
+  if (merged !== null) return [...ring.slice(0, -1), merged]
   const next = [...ring, trace]
   while (next.length > keep) {
     const skipAt = next.findIndex((t, i) => i < next.length - 1 && isSkippedTrace(t))

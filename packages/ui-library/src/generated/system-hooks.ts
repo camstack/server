@@ -26,6 +26,48 @@ export const useAccessoriesSetChildHidden: typeof trpc.accessories.setChildHidde
 /** Generated alias around `trpc.accessories.getStatus.useQuery`. */
 export const useAccessoriesGetStatus: typeof trpc.accessories.getStatus.useQuery = trpc.accessories.getStatus.useQuery
 
+/** Generated alias around `trpc.actions.list.useQuery`. */
+export const useActionsList: typeof trpc.actions.list.useQuery = trpc.actions.list.useQuery
+
+/** Generated alias around `trpc.actions.get.useQuery`. */
+export const useActionsGet: typeof trpc.actions.get.useQuery = trpc.actions.get.useQuery
+
+/** Generated alias around `trpc.actions.run.useMutation`. */
+export const useActionsRun: typeof trpc.actions.run.useMutation = trpc.actions.run.useMutation
+
+/** Generated alias around `trpc.actions.stop.useMutation`. */
+export const useActionsStop: typeof trpc.actions.stop.useMutation = trpc.actions.stop.useMutation
+
+/** Generated alias around `trpc.actions.getTraces.useQuery`. */
+export const useActionsGetTraces: typeof trpc.actions.getTraces.useQuery = trpc.actions.getTraces.useQuery
+
+/** Generated alias around `trpc.actions.create.useMutation`. */
+export const useActionsCreate: typeof trpc.actions.create.useMutation = trpc.actions.create.useMutation
+
+/** Generated alias around `trpc.actions.update.useMutation`. */
+export const useActionsUpdate: typeof trpc.actions.update.useMutation = trpc.actions.update.useMutation
+
+/** Generated alias around `trpc.actions.delete.useMutation`. */
+export const useActionsDelete: typeof trpc.actions.delete.useMutation = trpc.actions.delete.useMutation
+
+/** Generated alias around `trpc.actions.listForCamera.useQuery`. */
+export const useActionsListForCamera: typeof trpc.actions.listForCamera.useQuery = trpc.actions.listForCamera.useQuery
+
+/** Generated alias around `trpc.actions.getLinks.useQuery`. */
+export const useActionsGetLinks: typeof trpc.actions.getLinks.useQuery = trpc.actions.getLinks.useQuery
+
+/** Generated alias around `trpc.actions.setLinks.useMutation`. */
+export const useActionsSetLinks: typeof trpc.actions.setLinks.useMutation = trpc.actions.setLinks.useMutation
+
+/** Generated alias around `trpc.actionSource.listActions.useQuery`. */
+export const useActionSourceListActions: typeof trpc.actionSource.listActions.useQuery = trpc.actionSource.listActions.useQuery
+
+/** Generated alias around `trpc.actionSource.runAction.useMutation`. */
+export const useActionSourceRunAction: typeof trpc.actionSource.runAction.useMutation = trpc.actionSource.runAction.useMutation
+
+/** Generated alias around `trpc.actionSource.stopAction.useMutation`. */
+export const useActionSourceStopAction: typeof trpc.actionSource.stopAction.useMutation = trpc.actionSource.stopAction.useMutation
+
 /** Generated alias around `trpc.addonPages.listPages.useQuery`. */
 export const useAddonPagesListPages: typeof trpc.addonPages.listPages.useQuery = trpc.addonPages.listPages.useQuery
 
@@ -574,6 +616,15 @@ export const useCoreBlocksListComposableCaps: typeof trpc.coreBlocks.listComposa
 
 /** Generated alias around `trpc.coreBlocks.validateComposition.useMutation`. */
 export const useCoreBlocksValidateComposition: typeof trpc.coreBlocks.validateComposition.useMutation = trpc.coreBlocks.validateComposition.useMutation
+
+/** Generated alias around `trpc.coreBlocks.reportAutomationRun.useMutation`. */
+export const useCoreBlocksReportAutomationRun: typeof trpc.coreBlocks.reportAutomationRun.useMutation = trpc.coreBlocks.reportAutomationRun.useMutation
+
+/** Generated alias around `trpc.coreBlocks.getAutomationRunState.useQuery`. */
+export const useCoreBlocksGetAutomationRunState: typeof trpc.coreBlocks.getAutomationRunState.useQuery = trpc.coreBlocks.getAutomationRunState.useQuery
+
+/** Generated alias around `trpc.coreBlocks.getTraces.useQuery`. */
+export const useCoreBlocksGetTraces: typeof trpc.coreBlocks.getTraces.useQuery = trpc.coreBlocks.getTraces.useQuery
 
 /** Generated alias around `trpc.cover.open.useMutation`. */
 export const useCoverOpen: typeof trpc.cover.open.useMutation = trpc.cover.open.useMutation

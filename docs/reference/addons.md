@@ -39,7 +39,7 @@ this column exists to stop.
 | `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `turn-provider` |
 | `composer` | `@camstack/system` | system | own runner (`isolate`) | `hub-only` | `composer` | — | `composer` |
 | `console-logging` | `@camstack/system` | system | hub-main | `any-node` | — | — | `log-destination` |
-| `core-blocks` | `@camstack/system` | system | hub-main | `any-node` | — | — | `core-blocks` |
+| `core-blocks` | `@camstack/system` | system | hub-main | `any-node` | — | — | `actions` `core-blocks` |
 | `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
 | `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
 | `device-history` | `@camstack/system` | system | own runner (`isolate`) | `hub-only` | — | — | `device-history` `device-removal-hook` |

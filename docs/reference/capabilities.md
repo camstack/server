@@ -4,7 +4,7 @@
 
 # Capabilities
 
-185 capability definitions in `packages/types/src/capabilities/`.
+187 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -119,12 +119,14 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (90)
+## System-scoped (92)
 
 Singleton or collection providers, addressed without a device.
 
 | Capability | Methods | status | runtimeState | History | internal | Declared by |
 | --- | --- | --- | --- | --- | --- | --- |
+| `action-source` | 3 | — | — | — | — | — |
+| `actions` | 11 | — | — | — | — | `core-blocks` |
 | `addon-pages` | 1 | — | — | — | — | `addon-pages-aggregator` |
 | `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `import-alexa` `model-studio` `osd-manager` `training` |
 | `addon-routes` | 2 | — | — | — | ✓ | `auth-oidc` `export-alexa` `export-google` `google-services` `import-alexa` `notifiers` `provider-homeassistant` `homeassistant-export` |
@@ -143,7 +145,7 @@ Singleton or collection providers, addressed without a device.
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
 | `connection-test` | 2 | — | — | — | — | `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-petkit` `provider-rtsp` `provider-tuya` `provider-wyze` |
-| `core-blocks` | 19 | — | — | — | — | `core-blocks` |
+| `core-blocks` | 22 | — | — | — | — | `core-blocks` |
 | `custom-model-registry` | 2 | — | — | — | ✓ | `model-studio` |
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |

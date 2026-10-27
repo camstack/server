@@ -28,6 +28,7 @@ import {
   type CoreBlockInput,
   coreBlockComposition,
   coreBlocksCapability,
+  actionsCapability,
   hydrateSchema,
   type IClusterBroker,
   type ICoreBlocksProvider,
@@ -40,6 +41,8 @@ import {
   type BlockRunnerSnapshot,
   BlockSupervisor,
 } from './block-supervisor.js'
+import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
+import { actionOwner, automationOwner } from './runs-ledger.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
 import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integration.js'
@@ -80,6 +83,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private transpiler: BlockTranspiler | null = null
   private typeDefs: readonly BlockTypeLib[] | null = null
   private supervisor: BlockSupervisor | null = null
+  /** The actions surface and the runs ledger — built with the store, gone with it. */
+  private actions: ActionsRuntime | null = null
   /** The shared integration, or null when this node does not own it. */
   private blocksIntegrationId: string | null = null
 
@@ -108,6 +113,13 @@ export class CoreBlocksAddon extends BaseAddon {
         }),
     })
     await this.store.load()
+    this.actions = buildActionsRuntime({
+      records,
+      api: () => this.ctx.api,
+      eventBus: this.ctx.eventBus,
+      logger: this.ctx.logger,
+    })
+    void this.sweepRunsLedger()
 
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
     // failure to load it must degrade the compile gate rather than the node.
@@ -139,13 +151,17 @@ export class CoreBlocksAddon extends BaseAddon {
         integrationId: this.blocksIntegrationId,
       },
     })
-    return [{ capability: coreBlocksCapability, provider: this.buildProvider() }]
+    return [
+      { capability: coreBlocksCapability, provider: this.buildProvider() },
+      { capability: actionsCapability, provider: this.requireActions().service },
+    ]
   }
 
   protected async onShutdown(): Promise<void> {
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null
+    this.actions = null
     this.prefs = null
     this.transpiler = null
     this.typeDefs = null
@@ -268,6 +284,34 @@ export class CoreBlocksAddon extends BaseAddon {
     void this.supervisor?.converge()
   }
 
+  private requireActions(): ActionsRuntime {
+    if (this.actions === null) throw new Error('core-blocks: not initialized')
+    return this.actions
+  }
+
+  /**
+   * Remove the ledger rows whose block is gone. Armed, not awaited: it is
+   * housekeeping and a failure leaves orphans, which the next boot retries —
+   * the failure is on the record, never a boot failure.
+   */
+  private async sweepRunsLedger(): Promise<void> {
+    const actions = this.actions
+    const store = this.store
+    if (actions === null || store === null) return
+    try {
+      await actions.ledger.sweep(async () => {
+        const live = new Set<string>()
+        for (const block of store.list()) live.add(automationOwner(block.id))
+        for (const entry of await actions.service.listInternal()) live.add(actionOwner(entry.id))
+        return live
+      })
+    } catch (err: unknown) {
+      this.ctx.logger.warn('runs ledger sweep failed — orphan rows stay until the next start', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
+  }
+
   private requireStore(): CoreBlockStore {
     if (this.store === null) throw new Error('core-blocks: not initialized')
     return this.store
@@ -380,6 +424,7 @@ export class CoreBlocksAddon extends BaseAddon {
         const composition = existing !== null && coreBlockComposition(existing) !== null
         await this.requireStore().delete(blockId)
         await this.requirePrefs().delete(blockId)
+        await this.requireActions().ledger.delete(automationOwner(blockId))
         // A composition's claims must be gone before this returns: the next
         // create for the same device would otherwise be refused for good.
         // A code block's runner is stopped by the converge, which forks nothing
@@ -494,6 +539,8 @@ export class CoreBlocksAddon extends BaseAddon {
         this.typeDefs ??= await loadBlockTypeDefs(this.ctx.logger)
         return { libs: this.typeDefs.map((l) => ({ filePath: l.filePath, content: l.content })) }
       },
+
+      ...this.requireActions().runsApi,
 
       ...this.buildCompositionApi(),
     }

@@ -22,6 +22,10 @@ const INTERNAL = 'internal plumbing between addons — never operator-facing'
 
 /** Every system-scoped cap, with why it is not a device's vocabulary. */
 export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
+  'action-source': system(INTERNAL),
+  actions: system(
+    'declared actions — run from the Actions page and from the cameras that link them',
+  ),
   'addon-pages': system(UI_PLUMBING),
   'addon-pages-source': system(UI_PLUMBING),
   'addon-routes': system(UI_PLUMBING),
