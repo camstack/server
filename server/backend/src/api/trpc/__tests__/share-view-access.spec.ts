@@ -319,6 +319,13 @@ describe('checkShareViewAccess — events-view', () => {
     })
   })
 
+  it('lets the embed read the display palette (events and grid links)', () => {
+    expect(checkShareViewAccess(EVENTS_SCOPE, 'displayPalette.getPalette')).toEqual({ ok: true })
+    const grid: ShareViewGrant = { kind: 'grid-view', deviceIds: [5] }
+    expect(checkShareViewAccess(grid, 'displayPalette.getPalette')).toEqual({ ok: true })
+    expect(checkShareViewAccess(EVENTS_SCOPE, 'displayPalette.setPalette', {}).ok).toBe(false)
+  })
+
   describe('single-track reads (getTrack / listTrackMedia)', () => {
     const METHODS = ['pipelineAnalytics.getTrack', 'pipelineAnalytics.listTrackMedia']
 

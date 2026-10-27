@@ -65,6 +65,8 @@ const GRID_VIEW_OPEN_METHODS: ReadonlySet<string> = new Set([
   'deviceManager.listAll',
   'turnProvider.getTurnServers',
   'live.onEvent',
+  // Display data only: preset id + hex swatches, no device or secret.
+  'displayPalette.getPalette',
 ])
 
 /**
@@ -117,7 +119,12 @@ function extractDeviceId(input: unknown): number | null {
  * wall — and every mutating analytics method (`deleteTracks`, `setTrackFlags`,
  * the retrain surface, the export planes).
  */
-const EVENTS_VIEW_OPEN_METHODS: ReadonlySet<string> = new Set(['auth.me', 'deviceManager.listAll'])
+const EVENTS_VIEW_OPEN_METHODS: ReadonlySet<string> = new Set([
+  'auth.me',
+  'deviceManager.listAll',
+  // Display data only: preset id + hex swatches, no device or secret.
+  'displayPalette.getPalette',
+])
 
 /**
  * Methods whose input carries a `deviceIds` ARRAY. The rule is INTERSECTION,
