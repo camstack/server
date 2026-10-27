@@ -163,10 +163,31 @@ persisted, found by reading the code that writes it:
 | `history.db` | `device-history:metrics`, `series` | the key `cap:<cap>.<field>`; `raw` and the rollups follow the series id |
 
 A field is rewritten only when its cap matches the map, so `battery.voltage` and
-`power-meter.voltage` are different pairs. Free expression code and the `args` of
-a `cap` action are not rewritten; the dry run lists them as advisories. When a
-new-name entry already exists the new value wins, and a history series merges
-point by point (the existing point wins); both are counted.
+`power-meter.voltage` are different pairs. Beyond the `(cap, field)` references
+above, the same rule (always the `(cap, method)`, `(cap, event)` or `(cap, field)`
+context, never a bare key) also covers:
+
+- a Customize `{ cap, targetId }`, whose target id IS the field;
+- the argument keys of a stored call `{ cap, method, args }` for
+  `brightness.setBrightness`, `fan-control.setPercentage`, `media-player.seek`
+  and `color.setColor`, and the payload keys of a stored event
+  `brightness.onBrightnessChanged`, `color.onColorChanged` and
+  `battery.onStatusChanged` (the status nested under `status`);
+- a `<cap>.<field>` or `cap:<cap>.<field>` text, as a value or as an object key
+  (prose with whitespace is left alone);
+- the provider configs keyed by field names: Home Assistant `meterEntities`,
+  MQTT discovery `meter` and ESPHome `slots` / `slotUnits`, each only next to the
+  sibling keys that identify its shape;
+- `presence.batteryPercent`, which moved to `battery.level`: the stored runtime
+  value is removed (the battery owner repopulates it), its history series moves to
+  `cap:battery.level` when that device has no battery-level series and is dropped
+  when it has one (counted as `moved` / `dropped`); references inside
+  compositions and rules are only counted.
+
+The `args` of a `cap` action on any other method, and free expression code, are
+not rewritten; the dry run lists them as advisories. When a new-name entry already
+exists the new value wins, and a history series merges point by point (the
+existing point wins); both are counted.
 
 Runbook:
 

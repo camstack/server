@@ -81,6 +81,18 @@ const RUNTIME_STATE_101 = {
 }
 /** Both names already present: the NEW key wins and the old one is dropped. */
 const RUNTIME_STATE_102 = { 'power-meter': { watts: 1, power: 99 } }
+/** presence.batteryPercent moved to the battery cap: the owner repopulates it, the stale key goes. */
+const RUNTIME_STATE_103 = {
+  presence: { batteryPercent: 55, present: true },
+  $owned: {
+    presence: {
+      owner: 'x',
+      mode: 'merge',
+      fields: ['batteryPercent', 'present'],
+      values: { batteryPercent: 55 },
+    },
+  },
+}
 
 const COMPOSITION = {
   source: { kind: 'composition' },
@@ -120,7 +132,14 @@ const AUTOMATION = {
   conditions: {
     kind: 'all',
     children: [
-      { kind: 'condition', deviceId: 7, cap: 'battery', fieldPath: 'percentage', operator: 'lt', value: 20 },
+      {
+        kind: 'condition',
+        deviceId: 7,
+        cap: 'battery',
+        fieldPath: 'percentage',
+        operator: 'lt',
+        value: 20,
+      },
       { kind: 'stationary-present', deviceId: 7, className: 'package' },
       {
         kind: 'not',
@@ -128,8 +147,18 @@ const AUTOMATION = {
           kind: 'expression',
           expr: 'a > 3 && b < 5',
           bindings: {
-            a: { kind: 'field', sourceKey: 'self', cap: 'temperature-sensor', fieldPath: 'celsius' },
-            b: { kind: 'global', sourceStableId: 'x', cap: 'media-player', fieldPath: 'durationMs' },
+            a: {
+              kind: 'field',
+              sourceKey: 'self',
+              cap: 'temperature-sensor',
+              fieldPath: 'celsius',
+            },
+            b: {
+              kind: 'global',
+              sourceStableId: 'x',
+              cap: 'media-player',
+              fieldPath: 'durationMs',
+            },
           },
         },
       },
@@ -164,6 +193,87 @@ const OSD = {
   ],
 }
 
+/** Customize targets: the target id IS the field. Only power-meter's is renamed. */
+const CUSTOMIZE = {
+  draft: { kind: 'scalar', cap: 'power-meter', targetId: 'watts' },
+  decoy: { kind: 'scalar', cap: 'weather', targetId: 'watts' },
+}
+
+/** Stored calls: argument keys follow the rename in the context of (cap, method) ONLY. */
+const AUTOMATION_ACTIONS = {
+  actions: [
+    {
+      kind: 'cap',
+      deviceId: 1,
+      cap: 'brightness',
+      method: 'setBrightness',
+      args: { percentage: 77 },
+    },
+    {
+      kind: 'cap',
+      deviceId: 1,
+      cap: 'fan-control',
+      method: 'setPercentage',
+      args: { percentage: 66 },
+    },
+    { kind: 'cap', deviceId: 1, cap: 'media-player', method: 'seek', args: { positionMs: 4321 } },
+    {
+      kind: 'cap',
+      deviceId: 1,
+      cap: 'color',
+      method: 'setColor',
+      args: { mode: 'mired', mireds: 333 },
+    },
+    // same key, same cap, another method -> left alone (counted as an advisory)
+    { kind: 'cap', deviceId: 1, cap: 'brightness', method: 'toggle', args: { percentage: 5 } },
+    // same method name on another cap -> left alone
+    { kind: 'cap', deviceId: 1, cap: 'light-x', method: 'setBrightness', args: { percentage: 9 } },
+  ],
+  note: { percentage: 12 },
+}
+
+/** Event payloads: addressed by (cap, event); a battery status event nests the cap's fields. */
+const EVENT_PAYLOADS = {
+  brightness: {
+    cap: 'brightness',
+    event: 'onBrightnessChanged',
+    payload: { deviceId: 1, percentage: 41 },
+  },
+  color: { eventName: 'color.onColorChanged', data: { mireds: 250 } },
+  battery: {
+    cap: 'battery',
+    event: 'onStatusChanged',
+    payload: { deviceId: 1, status: { percentage: 88, volts: 3.3, charging: false } },
+  },
+  decoy: { cap: 'battery', event: 'onOther', payload: { percentage: 1 } },
+}
+
+/** `<cap>.<field>` as text: values and keys; prose and other caps stay. */
+const QUALIFIED = {
+  field: 'power-meter.watts',
+  history: 'cap:battery.percentage',
+  byKey: { 'temperature-sensor.celsius': 1 },
+  prose: 'the power-meter.watts reading is high',
+  other: 'weather.temperature',
+}
+
+/** Adopted-device configs keyed by the old field names; the decoys lack the sibling keys that identify the shape. */
+const PROVIDER_CONFIGS = {
+  'ha:1': {
+    meterEntities: { watts: 'sensor.p', kwhTotal: 'sensor.e', volts: 'sensor.v' },
+    children: [{ meterEntities: { amps: 'sensor.a' } }],
+  },
+  'mqtt:1': { brokerId: 'b', entityKey: 'k', meter: { watts: 'topic/w', volts: 'topic/v' } },
+  'mqtt:decoy': { meter: { watts: 'keep' } },
+  'esp:1': {
+    kind: 'power-meter',
+    brokerId: 'b',
+    slots: { watts: 'e1' },
+    slotUnits: { watts: 'W' },
+  },
+  'esp:decoy': { kind: 'battery', brokerId: 'b', slots: { watts: 'e1' } },
+}
+
 async function writeSettingsFile(): Promise<void> {
   const backend = new SqliteSettingsBackend(settingsDb)
   await backend.initialize()
@@ -188,6 +298,21 @@ async function writeSettingsFile(): Promise<void> {
     key: 'exporter:101:binding',
     value: { cap: 'humidity-sensor', fieldPath: 'percent' },
   })
+  await backend.set({
+    collection: 'device-runtime-state',
+    key: '103',
+    value: RUNTIME_STATE_103,
+  })
+  await backend.set({ collection: 'addon-device-settings', key: 'customize:101', value: CUSTOMIZE })
+  await backend.set({
+    collection: 'addon-device-settings',
+    key: 'events:101',
+    value: EVENT_PAYLOADS,
+  })
+  await backend.set({ collection: 'system-settings', key: 'qualified', value: QUALIFIED })
+  for (const [key, value] of Object.entries(PROVIDER_CONFIGS)) {
+    await backend.set({ collection: 'addon-device-settings', key, value })
+  }
   await backend.set({
     collection: 'system-settings',
     key: 'misc',
@@ -227,6 +352,11 @@ async function writeSettingsFile(): Promise<void> {
     record: { id: 'custom-1', data: CUSTOMIZATION },
   })
   await engine.put({
+    owner: 'core-blocks',
+    kind: 'blocks',
+    record: { id: 'actions-1', data: AUTOMATION_ACTIONS },
+  })
+  await engine.put({
     owner: 'pipeline-analytics',
     kind: 'rules',
     record: { id: 'rule-1', data: RULE },
@@ -247,6 +377,14 @@ const SERIES: readonly SeedSeries[] = [
   { key: 'cap:battery.volts', subject: 'device:2', points: [7] },
   { key: 'cap:power-meter.volts', subject: 'device:2', points: [9] },
   { key: 'cap:weather.temperature', subject: 'device:1', points: [1] },
+  // presence.batteryPercent: moved when the device has no battery level yet ...
+  { key: 'cap:presence.batteryPercent', subject: 'device:3', points: [61, 62] },
+  // ... dropped when it has one ...
+  { key: 'cap:presence.batteryPercent', subject: 'device:4', points: [71] },
+  { key: 'cap:battery.level', subject: 'device:4', points: [72] },
+  // ... and dropped when the level only exists through the battery.percentage rename.
+  { key: 'cap:presence.batteryPercent', subject: 'device:5', points: [81] },
+  { key: 'cap:battery.percentage', subject: 'device:5', points: [82] },
 ]
 
 async function writeHistoryFile(): Promise<void> {
@@ -457,7 +595,14 @@ describe('quantity-field migration', () => {
       conditions: {
         kind: 'all',
         children: [
-          { kind: 'condition', deviceId: 7, cap: 'battery', fieldPath: 'level', operator: 'lt', value: 20 },
+          {
+            kind: 'condition',
+            deviceId: 7,
+            cap: 'battery',
+            fieldPath: 'level',
+            operator: 'lt',
+            value: 20,
+          },
           { kind: 'stationary-present', deviceId: 7, className: 'package' },
           {
             kind: 'not',
@@ -465,8 +610,18 @@ describe('quantity-field migration', () => {
               kind: 'expression',
               expr: 'a > 3 && b < 5',
               bindings: {
-                a: { kind: 'field', sourceKey: 'self', cap: 'temperature-sensor', fieldPath: 'temperature' },
-                b: { kind: 'global', sourceStableId: 'x', cap: 'media-player', fieldPath: 'duration' },
+                a: {
+                  kind: 'field',
+                  sourceKey: 'self',
+                  cap: 'temperature-sensor',
+                  fieldPath: 'temperature',
+                },
+                b: {
+                  kind: 'global',
+                  sourceStableId: 'x',
+                  cap: 'media-player',
+                  fieldPath: 'duration',
+                },
               },
             },
           },
@@ -504,19 +659,21 @@ describe('quantity-field migration', () => {
 
   it('renames history series, merges onto an existing new key, keeps unrelated keys', () => {
     expect(run().exitCode).toBe(EXIT_OK)
-    expect(seriesKeys()).toEqual([
-      'cap:battery.level|device:2',
-      'cap:battery.voltage|device:2',
-      'cap:power-meter.power|device:1',
-      'cap:power-meter.voltage|device:2',
-      'cap:weather.temperature|device:1',
-    ])
+    expect(seriesKeys()).toEqual(
+      expect.arrayContaining([
+        'cap:battery.level|device:2',
+        'cap:battery.voltage|device:2',
+        'cap:power-meter.power|device:1',
+        'cap:power-meter.voltage|device:2',
+        'cap:weather.temperature|device:1',
+      ]),
+    )
     // watts [10,20,30] merged into power [20,40]: the existing point at 20 wins, nothing is lost.
     expect(pointTs('cap:power-meter.power', 'device:1')).toEqual([10, 20, 30, 40])
     const rollups = withDb(historyDb, (db) =>
       db.prepare<[], { n: number }>('SELECT count(*) AS n FROM "device-history:rollup-1h"').get(),
     )
-    expect(rollups?.n).toBe(8)
+    expect(rollups?.n).toBe(12)
     const metrics = withDb(historyDb, (db) =>
       db
         .prepare<[], { key: string }>('SELECT key FROM "device-history:metrics" ORDER BY key')
@@ -536,6 +693,141 @@ describe('quantity-field migration', () => {
     expect(renamedHistoryKey('cap:power-meter.watts')).toBe('cap:power-meter.power')
     expect(renamedHistoryKey('cap:battery.volts')).toBe('cap:battery.voltage')
     expect(renamedHistoryKey('cap:weather.temperature')).toBeNull()
+  })
+
+  it('renames a Customize target id by its cap, and only that cap', () => {
+    run()
+    expect(kvRow('addon-device-settings', 'customize:101')).toEqual({
+      draft: { kind: 'scalar', cap: 'power-meter', targetId: 'power' },
+      decoy: { kind: 'scalar', cap: 'weather', targetId: 'watts' },
+    })
+  })
+
+  it('renames stored call arguments in the context of (cap, method) only', () => {
+    run()
+    expect(recordRow('blocks', 'actions-1')).toEqual({
+      actions: [
+        {
+          kind: 'cap',
+          deviceId: 1,
+          cap: 'brightness',
+          method: 'setBrightness',
+          args: { level: 77 },
+        },
+        {
+          kind: 'cap',
+          deviceId: 1,
+          cap: 'fan-control',
+          method: 'setPercentage',
+          args: { speed: 66 },
+        },
+        { kind: 'cap', deviceId: 1, cap: 'media-player', method: 'seek', args: { position: 4321 } },
+        {
+          kind: 'cap',
+          deviceId: 1,
+          cap: 'color',
+          method: 'setColor',
+          args: { mode: 'mired', colorTemperature: 333 },
+        },
+        { kind: 'cap', deviceId: 1, cap: 'brightness', method: 'toggle', args: { percentage: 5 } },
+        {
+          kind: 'cap',
+          deviceId: 1,
+          cap: 'light-x',
+          method: 'setBrightness',
+          args: { percentage: 9 },
+        },
+      ],
+      note: { percentage: 12 },
+    })
+  })
+
+  it('renames event payload keys by (cap, event), the battery status one level down', () => {
+    run()
+    expect(kvRow('addon-device-settings', 'events:101')).toEqual({
+      brightness: {
+        cap: 'brightness',
+        event: 'onBrightnessChanged',
+        payload: { deviceId: 1, level: 41 },
+      },
+      color: { eventName: 'color.onColorChanged', data: { colorTemperature: 250 } },
+      battery: {
+        cap: 'battery',
+        event: 'onStatusChanged',
+        payload: { deviceId: 1, status: { level: 88, voltage: 3.3, charging: false } },
+      },
+      decoy: { cap: 'battery', event: 'onOther', payload: { percentage: 1 } },
+    })
+  })
+
+  it('renames a <cap>.<field> text, as a value and as a key, and nothing that is only prose', () => {
+    run()
+    expect(kvRow('system-settings', 'qualified')).toEqual({
+      field: 'power-meter.power',
+      history: 'cap:battery.level',
+      byKey: { 'temperature-sensor.temperature': 1 },
+      prose: 'the power-meter.watts reading is high',
+      other: 'weather.temperature',
+    })
+  })
+
+  it('renames provider configs keyed by field names, only where the sibling keys identify the shape', () => {
+    run()
+    expect(kvRow('addon-device-settings', 'ha:1')).toEqual({
+      meterEntities: { power: 'sensor.p', energy: 'sensor.e', voltage: 'sensor.v' },
+      children: [{ meterEntities: { current: 'sensor.a' } }],
+    })
+    expect(kvRow('addon-device-settings', 'mqtt:1')).toEqual({
+      brokerId: 'b',
+      entityKey: 'k',
+      meter: { power: 'topic/w', voltage: 'topic/v' },
+    })
+    expect(kvRow('addon-device-settings', 'mqtt:decoy')).toEqual(PROVIDER_CONFIGS['mqtt:decoy'])
+    expect(kvRow('addon-device-settings', 'esp:1')).toEqual({
+      kind: 'power-meter',
+      brokerId: 'b',
+      slots: { power: 'e1' },
+      slotUnits: { power: 'W' },
+    })
+    expect(kvRow('addon-device-settings', 'esp:decoy')).toEqual(PROVIDER_CONFIGS['esp:decoy'])
+  })
+
+  it('drops the stale presence.batteryPercent from runtime state and counts it', () => {
+    run()
+    expect(kvRow('device-runtime-state', '103')).toEqual({
+      presence: { present: true },
+      $owned: {
+        presence: { owner: 'x', mode: 'merge', fields: ['present'], values: {} },
+      },
+    })
+    expect(lines.join('\n')).toMatch(/presence\.batteryPercent/)
+  })
+
+  it('moves presence.batteryPercent history to battery.level, or drops it when the device has one', () => {
+    expect(run().exitCode).toBe(EXIT_OK)
+    expect(seriesKeys()).toEqual([
+      'cap:battery.level|device:2',
+      'cap:battery.level|device:3',
+      'cap:battery.level|device:4',
+      'cap:battery.level|device:5',
+      'cap:battery.voltage|device:2',
+      'cap:power-meter.power|device:1',
+      'cap:power-meter.voltage|device:2',
+      'cap:weather.temperature|device:1',
+    ])
+    expect(pointTs('cap:battery.level', 'device:3')).toEqual([61, 62])
+    // the device already had a level: its own points stay, the stale ones are gone
+    expect(pointTs('cap:battery.level', 'device:4')).toEqual([72])
+    expect(pointTs('cap:battery.level', 'device:5')).toEqual([82])
+    const stale = withDb(historyDb, (db) =>
+      db
+        .prepare<[], { n: number }>(
+          'SELECT count(*) AS n FROM "device-history:metrics" WHERE key = \'cap:presence.batteryPercent\'',
+        )
+        .get(),
+    )
+    expect(stale?.n).toBe(0)
+    expect(lines.join('\n')).toMatch(/moved/i)
   })
 
   it('backs up every file it touches before writing, and the backup is the old content', () => {

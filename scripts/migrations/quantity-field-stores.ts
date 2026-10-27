@@ -26,6 +26,7 @@ import {
   HISTORY_KEY_PREFIX,
   isNewFieldName,
   parseHistoryKey,
+  relocatedHistoryKey,
   renamedHistoryKey,
   splitFieldPath,
   trackedFieldTokens,
@@ -50,6 +51,9 @@ export interface StorePlan {
   readonly seen: Tally
   readonly merged: Tally
   readonly advisories: Tally
+  readonly rewrites: Tally
+  readonly dropped: Tally
+  readonly moved: Tally
 }
 
 export interface FilePlan {
@@ -90,6 +94,9 @@ function toPlans(table: ReadonlyMap<string, Accumulator>): StorePlan[] {
       seen: acc.sink.seen,
       merged: acc.sink.merged,
       advisories: acc.sink.advisories,
+      rewrites: acc.sink.rewrites,
+      dropped: acc.sink.dropped,
+      moved: acc.sink.moved,
     }))
 }
 
@@ -104,7 +111,7 @@ function hasTable(db: Db, name: string): boolean {
 
 const TOKENS: readonly string[] = trackedFieldTokens()
 
-/** A stored text can only hold a tracked reference when it names a tracked field. */
+/** A stored text can only hold a tracked reference when it names a tracked name. */
 function mentionsTrackedField(text: string): boolean {
   return TOKENS.some((token) => text.includes(token))
 }
@@ -275,7 +282,12 @@ function trackedKeyRef(key: string): string | null {
   const parts = parseHistoryKey(key)
   if (parts === null) return null
   const { field } = splitFieldPath(parts.path)
-  if (renamedHistoryKey(key) === null && !isNewFieldName(parts.cap, field)) return null
+  if (
+    renamedHistoryKey(key) === null &&
+    !isNewFieldName(parts.cap, field) &&
+    relocatedHistoryKey(key) === null
+  )
+    return null
   return refKey(parts.cap, field)
 }
 
@@ -311,7 +323,44 @@ function countConflicts(
 interface SeriesMove {
   readonly source: SeriesRow
   readonly newKey: string
+  /** The series the points merge into; null for a plain re-key or a drop. */
   readonly targetId: number | null
+  /** The series is deleted with its points (a re-homed field the device already has). */
+  readonly drop: boolean
+}
+
+function identityOf(key: string, row: SeriesRow): string {
+  return `${key}\u0000${row.subject}\u0000${row.scope}`
+}
+
+/** The identities that exist once every rename is applied, re-homed series excluded. */
+function finalIdentities(rows: readonly SeriesRow[]): ReadonlySet<string> {
+  return new Set(
+    rows
+      .filter((row) => relocatedHistoryKey(row.key) === null)
+      .map((row) => identityOf(renamedHistoryKey(row.key) ?? row.key, row)),
+  )
+}
+
+interface SeriesCounters {
+  readonly series: Accumulator
+  readonly points: readonly Accumulator[]
+}
+
+/** Tally `rows` of a re-homed series: points per store, the series itself once. */
+function countRelocation(
+  db: Db,
+  row: SeriesRow,
+  counters: SeriesCounters,
+  tally: (sink: RewriteSink) => Tally,
+  ref: string,
+): void {
+  bump(tally(counters.series.sink), ref)
+  POINT_TABLES.forEach((t, index) => {
+    const acc = counters.points[index]
+    if (acc === undefined) return
+    bump(tally(acc.sink), ref, countRows(db, t.table, 'series_id', row.id))
+  })
 }
 
 function planSeries(db: Db, accs: Map<string, Accumulator>): readonly SeriesMove[] {
@@ -320,11 +369,11 @@ function planSeries(db: Db, accs: Map<string, Accumulator>): readonly SeriesMove
       `SELECT id, key, subject, scope, first_ts, last_ts FROM "${SERIES}" WHERE key LIKE '${HISTORY_KEY_PREFIX}%'`,
     )
     .all()
-  const byIdentity = new Map(
-    rows.map((row) => [`${row.key}\u0000${row.subject}\u0000${row.scope}`, row]),
-  )
+  const byIdentity = new Map(rows.map((row) => [identityOf(row.key, row), row]))
+  const existing = finalIdentities(rows)
   const seriesAcc = accumulate(accs, SERIES)
   const pointAccs = POINT_TABLES.map((t) => accumulate(accs, t.table))
+  const counters: SeriesCounters = { series: seriesAcc, points: pointAccs }
   const moves: SeriesMove[] = []
   seriesAcc.rowsScanned = rows.length
   for (const row of rows) {
@@ -334,12 +383,25 @@ function planSeries(db: Db, accs: Map<string, Accumulator>): readonly SeriesMove
     POINT_TABLES.forEach((t, index) => {
       const acc = pointAccs[index]
       if (acc === undefined) return
-      const keyColumn = 'series_id'
-      bump(acc.sink.seen, ref, countRows(db, t.table, keyColumn, row.id))
+      bump(acc.sink.seen, ref, countRows(db, t.table, 'series_id', row.id))
     })
+    const home = relocatedHistoryKey(row.key)
+    if (home !== null) {
+      const homeRef = renamedKeyRef(home)
+      if (homeRef === null) continue
+      seriesAcc.rowsToChange += 1
+      if (existing.has(identityOf(home, row))) {
+        countRelocation(db, row, counters, (sink) => sink.dropped, ref)
+        moves.push({ source: row, newKey: home, targetId: null, drop: true })
+      } else {
+        countRelocation(db, row, counters, (sink) => sink.moved, homeRef)
+        moves.push({ source: row, newKey: home, targetId: null, drop: false })
+      }
+      continue
+    }
     const newKey = renamedHistoryKey(row.key)
     if (newKey === null) continue
-    const target = byIdentity.get(`${newKey}\u0000${row.subject}\u0000${row.scope}`)
+    const target = byIdentity.get(identityOf(newKey, row))
     const newRef = renamedKeyRef(newKey)
     if (newRef === null) continue
     seriesAcc.rowsToChange += 1
@@ -351,11 +413,11 @@ function planSeries(db: Db, accs: Map<string, Accumulator>): readonly SeriesMove
         bump(acc.sink.merged, newRef, countConflicts(db, t.table, t.orderBy, row.id, target.id))
       })
     }
-    moves.push({ source: row, newKey, targetId: target?.id ?? null })
+    moves.push({ source: row, newKey, targetId: target?.id ?? null, drop: false })
   }
   for (const acc of pointAccs) {
     acc.rowsScanned = rows.length
-    acc.rowsToChange = moves.filter((m) => m.targetId !== null).length
+    acc.rowsToChange = moves.filter((m) => m.targetId !== null || m.drop).length
   }
   return moves
 }
@@ -375,6 +437,13 @@ function applySeriesMoves(db: Db, moves: readonly SeriesMove[]): void {
   )
   const dropSeries = db.prepare<[number]>(`DELETE FROM "${SERIES}" WHERE id = ?`)
   for (const move of moves) {
+    if (move.drop) {
+      for (const t of POINT_TABLES) {
+        db.prepare<[number]>(`DELETE FROM "${t.table}" WHERE series_id = ?`).run(move.source.id)
+      }
+      dropSeries.run(move.source.id)
+      continue
+    }
     if (move.targetId === null) {
       rekey.run(move.newKey, move.source.id)
       continue
@@ -400,6 +469,11 @@ function planMetrics(db: Db, accs: Map<string, Accumulator>): readonly (() => vo
     .all()
   acc.rowsScanned = rows.length
   const keys = new Set(rows.map((row) => row.key))
+  const finalKeys = new Set(
+    rows
+      .filter((row) => relocatedHistoryKey(row.key) === null)
+      .map((row) => renamedHistoryKey(row.key) ?? row.key),
+  )
   const rekey = db.prepare<[string, string]>(`UPDATE "${METRICS}" SET key = ? WHERE key = ?`)
   const drop = db.prepare<[string]>(`DELETE FROM "${METRICS}" WHERE key = ?`)
   const writes: (() => void)[] = []
@@ -407,6 +481,19 @@ function planMetrics(db: Db, accs: Map<string, Accumulator>): readonly (() => vo
     const ref = trackedKeyRef(row.key)
     if (ref === null) continue
     bump(acc.sink.seen, ref)
+    const home = relocatedHistoryKey(row.key)
+    if (home !== null) {
+      const homeRef = renamedKeyRef(home)
+      acc.rowsToChange += 1
+      if (finalKeys.has(home)) {
+        bump(acc.sink.dropped, ref)
+        writes.push(() => void drop.run(row.key))
+      } else {
+        if (homeRef !== null) bump(acc.sink.moved, homeRef)
+        writes.push(() => void rekey.run(home, row.key))
+      }
+      continue
+    }
     const newKey = renamedHistoryKey(row.key)
     if (newKey === null) continue
     const newRef = renamedKeyRef(newKey)

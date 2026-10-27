@@ -17,7 +17,7 @@ import {
   systemProcessProbe,
   companionsOf,
 } from './hub-liveness.ts'
-import { isNewFieldName, renamedField } from './quantity-field-renames.ts'
+import { isNewFieldName, relocatedField, renamedField } from './quantity-field-renames.ts'
 import {
   type Db,
   type FilePlan,
@@ -96,13 +96,22 @@ function describeRef(ref: string): string {
   const to = renamedField(cap, field)
   if (to !== null) return `-> ${to}`
   if (isNewFieldName(cap, field)) return '(new name)'
-  return '(dropped by the code; left as is)'
+  const home = relocatedField(cap, field)
+  return home === null
+    ? '(dropped by the code; left as is)'
+    : `(re-homed on ${home.cap}.${home.field}: stored values are removed or moved, references are left)`
+}
+
+function printTally(title: string, tally: Tally, out: (line: string) => void): void {
+  for (const key of [...tally.keys()].toSorted()) {
+    out(`    ${pad(`${title} ${key}`, 62)} ${String(tally.get(key) ?? 0)}`)
+  }
 }
 
 function printStore(store: StorePlan, out: (line: string) => void): void {
   const refs = [...store.seen.keys()].toSorted()
   const advisories = [...store.advisories.keys()].toSorted()
-  if (refs.length === 0 && advisories.length === 0) return
+  if (refs.length === 0 && advisories.length === 0 && store.rewrites.size === 0) return
   out(
     `  ${store.store}  (${String(store.rowsScanned)} rows scanned, ${String(store.rowsToChange)} to change)`,
   )
@@ -113,6 +122,9 @@ function printStore(store: StorePlan, out: (line: string) => void): void {
       `    ${pad(ref, 42)} ${pad(String(store.seen.get(ref) ?? 0), 8)} ${describeRef(ref)}${mergedText}`,
     )
   }
+  printTally('renamed in context:', store.rewrites, out)
+  printTally('removed (re-homed field):', store.dropped, out)
+  printTally('moved in from a re-homed field:', store.moved, out)
   for (const key of advisories) {
     out(`    ADVISORY ${key}: ${String(store.advisories.get(key) ?? 0)} (rewrite by hand)`)
   }
@@ -143,9 +155,13 @@ export function verifyStore(before: StorePlan, after: StorePlan | undefined): re
     const { cap, field } = refParts(ref)
     const to = renamedField(cap, field)
     if (to === null) {
-      if (!isNewFieldName(cap, field) && countOf(afterSeen, ref) !== count) {
+      const home = relocatedField(cap, field)
+      const gone =
+        countOf(before.dropped, ref) +
+        (home === null ? 0 : countOf(before.moved, `${home.cap}.${home.field}`))
+      if (!isNewFieldName(cap, field) && countOf(afterSeen, ref) !== count - gone) {
         problems.push(
-          `${before.store} ${ref}: untouched count changed ${String(count)} -> ${String(countOf(afterSeen, ref))}`,
+          `${before.store} ${ref}: expected ${String(count - gone)} left, found ${String(countOf(afterSeen, ref))}`,
         )
       }
       continue
@@ -156,12 +172,19 @@ export function verifyStore(before: StorePlan, after: StorePlan | undefined): re
       )
     }
     const newRef = `${cap}.${to}`
-    const expected = countOf(before.seen, newRef) + count - countOf(before.merged, newRef)
+    const expected =
+      countOf(before.seen, newRef) +
+      count -
+      countOf(before.merged, newRef) +
+      countOf(before.moved, newRef)
     if (countOf(afterSeen, newRef) !== expected) {
       problems.push(
         `${before.store} ${newRef}: expected ${String(expected)}, found ${String(countOf(afterSeen, newRef))}`,
       )
     }
+  }
+  for (const [what, count] of after?.rewrites ?? new Map<string, number>()) {
+    problems.push(`${before.store} ${what}: ${String(count)} old-name keys remain`)
   }
   return problems
 }
