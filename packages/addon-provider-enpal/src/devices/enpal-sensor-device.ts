@@ -13,10 +13,11 @@ import {
   powerMeterCapability,
   type PowerMeterStatus,
 } from '@camstack/types'
-import { enpalSensorSchema } from '../config.js'
+import { z } from 'zod'
+import { ENPAL_SYSTEM } from '../config.js'
 import { computeSlices, findSpec, type EnpalSpec, type SpecSlices } from '../enpal-catalog.js'
 import { LifetimeCounterGuard } from '../enpal-counter-guard.js'
-import { enpalBoxes } from '../enpal-resolver.js'
+import { enpalConnections } from '../enpal-resolver.js'
 
 const POWER_CAP = powerMeterCapability.name
 const BATTERY_CAP = batteryCapability.name
@@ -33,9 +34,20 @@ const BATTERY_COLD: BatteryStatus = {
 const VALUE_COLD: NumericSensorStatus = { value: null, lastFetchedAt: 0 }
 
 /**
- * One Enpal data group (PV, battery, grid import, ...) as a {@link DeviceType.Sensor}
- * child of the box. The catalog entry in `specId` says which caps it registers and which
- * box keys feed them; the slices are recomputed from the box snapshot on every poll tick.
+ * Persisted config of an Enpal Sensor. `specId` selects the entry of the catalog;
+ * `integrationId` selects the integration whose box feeds it.
+ */
+export const enpalSensorSchema = z.object({
+  specId: z.string().min(1).describe('Device catalog entry id'),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  system: z.literal(ENPAL_SYSTEM).optional(),
+})
+
+/**
+ * One Enpal data point group (production, state of charge, grid import, ...) as a
+ * {@link DeviceType.Sensor} child of an equipment Container. The catalog entry in `specId`
+ * says which caps it registers and which box keys feed them; the slices are recomputed from
+ * the integration's snapshot on every poll tick.
  *
  * An unreachable box marks the device offline and leaves the slices alone: a failed read is
  * a gap, never a zero (D393). A lifetime counter passes through {@link LifetimeCounterGuard}
@@ -45,7 +57,7 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
   readonly features: readonly DeviceFeature[] = []
 
   private readonly spec: EnpalSpec
-  private readonly boxId: string
+  private readonly integrationId: string
   private readonly energyGuard = new LifetimeCounterGuard()
   private readonly meterGuard = new LifetimeCounterGuard()
   private snapshotUnsub: (() => void) | null = null
@@ -56,11 +68,11 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
     const spec = findSpec(cfg.specId)
     if (spec === undefined) throw new Error(`Enpal: unknown device kind "${cfg.specId}"`)
     this.spec = spec
-    this.boxId = cfg.boxId
-    this.online = enpalBoxes.getSnapshot(this.boxId) !== null
+    this.integrationId = cfg.integrationId
+    this.online = enpalConnections.getSnapshot(this.integrationId) !== null
     void this.updateSourceInfo({
-      id: `${this.boxId}:${spec.id}`,
-      system: 'enpal',
+      id: `${this.integrationId}:${spec.id}`,
+      system: ENPAL_SYSTEM,
       ...(spec.kind === 'meter' || spec.kind === 'numeric' ? { quantity: spec.quantity } : {}),
     })
   }
@@ -68,7 +80,7 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCaps()
-    this.snapshotUnsub = enpalBoxes.onSnapshot(this.boxId, () => {
+    this.snapshotUnsub = enpalConnections.onSnapshot(this.integrationId, () => {
       try {
         this.recompute()
       } catch (err) {
@@ -88,13 +100,14 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
   }
 
   private recompute(): void {
-    const snapshot = enpalBoxes.getSnapshot(this.boxId)
+    const snapshot = enpalConnections.getSnapshot(this.integrationId)
     if (snapshot === null) {
       if (this.online) this.markOnline(false)
       return
     }
     if (!this.online) this.markOnline(true)
-    const invert = enpalBoxes.getManager(this.boxId)?.connection.invertBatteryPower ?? false
+    const invert =
+      enpalConnections.getManager(this.integrationId)?.connection.invertBatteryPower ?? false
     const slices = computeSlices(
       this.spec,
       snapshot,

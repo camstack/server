@@ -81,7 +81,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'pv',
-    name: 'PV production',
+    name: 'Production',
     role: DeviceRole.PowerSensor,
     watts: point(
       'power',
@@ -106,7 +106,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'meter',
     id: 'battery-charged',
-    name: 'Battery energy charged',
+    name: 'Energy charged',
     role: DeviceRole.EnergySensor,
     quantity: 'energy',
     value: point('energy', 'Energy.Battery.Charge.Lifetime'),
@@ -114,7 +114,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'meter',
     id: 'battery-discharged',
-    name: 'Battery energy discharged',
+    name: 'Energy discharged',
     role: DeviceRole.EnergySensor,
     quantity: 'energy',
     value: point('energy', 'Energy.Battery.Discharge.Lifetime'),
@@ -122,7 +122,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'grid-import',
-    name: 'Grid import',
+    name: 'Import',
     role: DeviceRole.PowerSensor,
     watts: point(
       'power',
@@ -136,7 +136,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'grid-export',
-    name: 'Grid export',
+    name: 'Export',
     role: DeviceRole.PowerSensor,
     watts: point(
       'power',
@@ -149,7 +149,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'house',
-    name: 'House consumption',
+    name: 'Consumption',
     role: DeviceRole.PowerSensor,
     watts: point('power', 'Power.Consumption.Total', 'Power.Consumption.AC'),
     kwh: point('energy', 'Energy.Consumption.Total.Lifetime'),
@@ -157,7 +157,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'heatpump',
-    name: 'Heat pump',
+    name: 'Consumption',
     role: DeviceRole.PowerSensor,
     watts: point('power', 'Heatpump.Power.Consumption.Total'),
     kwh: point('energy', 'Heatpump.Energy.Consumption.Total.Lifetime'),
@@ -165,7 +165,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'numeric',
     id: 'heatpump-hot-water',
-    name: 'Heat pump hot water',
+    name: 'Hot water temperature',
     role: DeviceRole.TemperatureSensor,
     quantity: 'temperature',
     value: point('temperature', 'Heatpump.DomesticHotWater.Temperature'),
@@ -173,7 +173,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'numeric',
     id: 'heatpump-outside',
-    name: 'Heat pump outside temperature',
+    name: 'Outside temperature',
     role: DeviceRole.TemperatureSensor,
     quantity: 'temperature',
     value: point('temperature', 'Heatpump.Outside.Temperature'),
@@ -189,7 +189,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'numeric',
     id: 'battery-temperature',
-    name: 'Battery temperature',
+    name: 'Temperature',
     role: DeviceRole.TemperatureSensor,
     quantity: 'temperature',
     value: point('temperature', 'Temperature.Battery'),
@@ -197,7 +197,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'numeric',
     id: 'battery-health',
-    name: 'Battery health',
+    name: 'Health',
     role: DeviceRole.NumericSensor,
     quantity: 'percentage',
     value: point('percentage', 'Battery.SOH'),

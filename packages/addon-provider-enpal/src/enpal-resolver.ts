@@ -2,49 +2,49 @@ import type { EnpalIntegrationManager } from './enpal-integration-manager.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
 /**
- * Per-box registry that the adopted devices use to reach the live
- * {@link EnpalIntegrationManager}. Keyed on the box Hub device's `stableId`; the box
- * publishes a new manager here whenever its connection changes, and children read through
- * the resolver so they follow it.
+ * Per-integration registry that the adopted devices use to reach the live
+ * {@link EnpalIntegrationManager}. Keyed on the integration id; the client registry publishes
+ * a new manager here whenever the connection changes, and the sensors read through the
+ * resolver so they follow it.
  */
-export class EnpalBoxResolver {
+export class EnpalConnectionResolver {
   readonly #managers = new Map<string, EnpalIntegrationManager>()
   readonly #subs = new Map<string, Set<() => void>>()
 
-  set(boxId: string, manager: EnpalIntegrationManager | null): void {
+  set(integrationId: string, manager: EnpalIntegrationManager | null): void {
     if (manager === null) {
-      this.#managers.delete(boxId)
+      this.#managers.delete(integrationId)
       return
     }
-    this.#managers.set(boxId, manager)
+    this.#managers.set(integrationId, manager)
   }
 
-  getManager(boxId: string): EnpalIntegrationManager | null {
-    return this.#managers.get(boxId) ?? null
+  getManager(integrationId: string): EnpalIntegrationManager | null {
+    return this.#managers.get(integrationId) ?? null
   }
 
   /** The latest snapshot, or null when the box is unreachable (never stale readings). */
-  getSnapshot(boxId: string): EnpalSnapshot | null {
-    return this.#managers.get(boxId)?.getSnapshot() ?? null
+  getSnapshot(integrationId: string): EnpalSnapshot | null {
+    return this.#managers.get(integrationId)?.getSnapshot() ?? null
   }
 
   /** Subscribe to poll ticks (successful or not). Returns an unsubscribe function. */
-  onSnapshot(boxId: string, cb: () => void): () => void {
-    let set = this.#subs.get(boxId)
+  onSnapshot(integrationId: string, cb: () => void): () => void {
+    let set = this.#subs.get(integrationId)
     if (set === undefined) {
       set = new Set()
-      this.#subs.set(boxId, set)
+      this.#subs.set(integrationId, set)
     }
     set.add(cb)
     return () => {
-      const current = this.#subs.get(boxId)
+      const current = this.#subs.get(integrationId)
       current?.delete(cb)
-      if (current !== undefined && current.size === 0) this.#subs.delete(boxId)
+      if (current !== undefined && current.size === 0) this.#subs.delete(integrationId)
     }
   }
 
-  emitSnapshot(boxId: string): void {
-    const set = this.#subs.get(boxId)
+  emitSnapshot(integrationId: string): void {
+    const set = this.#subs.get(integrationId)
     if (set === undefined) return
     for (const cb of set) {
       try {
@@ -61,4 +61,4 @@ export class EnpalBoxResolver {
   }
 }
 
-export const enpalBoxes = new EnpalBoxResolver()
+export const enpalConnections = new EnpalConnectionResolver()

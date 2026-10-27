@@ -1,14 +1,14 @@
 export { EnpalProviderAddon } from './addon.js'
 export {
   buildConnectionFormSchema,
-  enpalBoxSchema,
+  connectionFromSettings,
   enpalConnectionSchema,
-  enpalSensorSchema,
+  ENPAL_SYSTEM,
   readConnection,
+  sameConnection,
   settingsToConnection,
-  slugifyHost,
 } from './config.js'
-export type { EnpalBoxConfig, EnpalConnection, EnpalSensorConfig } from './config.js'
+export type { EnpalConnection } from './config.js'
 export {
   ENPAL_SPECS,
   availableSpecs,
@@ -19,9 +19,24 @@ export {
 export type { EnpalSpec, SpecSlices } from './enpal-catalog.js'
 export { LifetimeCounterGuard } from './enpal-counter-guard.js'
 export { EnpalError, readEnpalSnapshot } from './enpal-client.js'
-export { buildCandidates, parseSpecNativeId, specNativeId } from './enpal-discovery.js'
+export { buildEnpalAdoptionProvider } from './enpal-adoption-provider.js'
+export { EnpalClientRegistry } from './enpal-client-registry.js'
+export { buildEnpalCandidates } from './enpal-discovery.js'
+export {
+  ENPAL_EQUIPMENT,
+  accessoryChildSpecs,
+  enpalEquipmentSchema,
+  findEquipment,
+} from './enpal-equipment.js'
+export type {
+  EnpalEquipment,
+  EnpalEquipmentConfig,
+} from './enpal-equipment.js'
 export { EnpalIntegrationManager } from './enpal-integration-manager.js'
-export { EnpalBoxResolver, enpalBoxes } from './enpal-resolver.js'
+export { EnpalConnectionResolver, enpalConnections } from './enpal-resolver.js'
 export type { EnpalSnapshot } from './enpal-snapshot.js'
-export { EnpalBoxDevice } from './devices/enpal-box-device.js'
-export { EnpalSensorDevice } from './devices/enpal-sensor-device.js'
+export { EnpalEquipmentDevice } from './devices/enpal-equipment-device.js'
+export {
+  EnpalSensorDevice,
+  enpalSensorSchema,
+} from './devices/enpal-sensor-device.js'

@@ -2,9 +2,9 @@ import { z } from 'zod'
 import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
 
 /**
- * Operator-supplied connection for ONE Enpal box. The addon runs in `standalone`
- * mode (the VeSync / Ecowitt / Velux pattern): the CONNECTION lives on the box
- * DEVICE config, there is no broker registry.
+ * Operator-supplied connection of ONE Enpal integration (`mode: account`, broker-less): the
+ * settings of the integration itself, not of a device. Every equipment the box reports is
+ * adopted as a Container from it.
  *
  * Two sources behind `source`:
  *   - `influx`: the box's InfluxDB 2.x (port 8086, org `enpal`, bucket `solar`).
@@ -35,6 +35,9 @@ const blankToUndefined = (v: unknown): unknown => (v === '' || v === null ? unde
 
 /** Names that are interpolated into a Flux string: no quote, no space, no operator. */
 const FLUX_NAME = /^[A-Za-z0-9_.-]+$/
+
+/** The device-registry `system` tag every Enpal device carries. */
+export const ENPAL_SYSTEM = 'enpal'
 
 export const ENPAL_SOURCES = ['auto', 'influx', 'page'] as const
 export type EnpalSource = (typeof ENPAL_SOURCES)[number]
@@ -105,40 +108,23 @@ export function readConnection(settings: unknown): EnpalConnectionRead {
   }
 }
 
-/** Persisted config for the Enpal box {@link import('@camstack/types').DeviceType.Hub} device. */
-export const enpalBoxSchema = z.object({
-  connection: enpalConnectionSchema,
-  /** Provenance marker used to scope offline / cascade helpers. */
-  system: z.literal('enpal-box').optional(),
-})
-
-export type EnpalBoxConfig = z.infer<typeof enpalBoxSchema>
-
-/**
- * Persisted config every adopted Enpal device carries. `specId` selects the entry of the
- * device catalog (PV, battery, grid import, ...); `boxId` selects the parent box (its Hub
- * `stableId`) in the in-process resolver.
- */
-export const enpalSensorSchema = z.object({
-  specId: z.string().min(1).describe('Device catalog entry id'),
-  boxId: z.string().min(1).describe('Parent box stableId'),
-  system: z.literal('enpal').optional(),
-})
-
-export type EnpalSensorConfig = z.infer<typeof enpalSensorSchema>
-
-/** Slugify a host into a readable, stable row-key fragment. */
-export function slugifyHost(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+/** Parse an integration's settings into a connection, or null while its host is missing. */
+export function connectionFromSettings(settings: unknown): EnpalConnectionRead | null {
+  const raw = toRecord(settings)
+  const parsed = enpalConnectionSchema.safeParse(raw)
+  if (!parsed.success) return null
+  return {
+    connection: parsed.data,
+    tokenLocked: isSecretMarkerLike(raw['token']),
+  }
 }
 
-/**
- * Hand-written connection form for the box device-creation UI. The connection lives on the box
- * DEVICE config; a `name` field lets the operator name it at creation time.
- */
+/** True when two connections would poll the box the same way. */
+export function sameConnection(a: EnpalConnection, b: EnpalConnection): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/** The integration's settings form (`globalSettingsSchema`); the integration carries the name. */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
@@ -148,14 +134,6 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         titleKey: 'provider-enpal:connection.s_identity.title',
         columns: 1,
         fields: [
-          {
-            type: 'text',
-            key: 'name',
-            label: 'Name',
-            labelKey: 'provider-enpal:connection.s_identity.name.label',
-            required: true,
-            placeholder: 'Enpal',
-          },
           {
             type: 'text',
             key: 'host',

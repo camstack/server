@@ -9,7 +9,6 @@ import type { z } from 'zod'
 import { amcrestCameraSchema } from '../../packages/addon-provider-amcrest/src/schema.ts'
 import { dreameChildSchema } from '../../packages/addon-provider-dreame/src/devices/dreame-child-device.ts'
 import { ecowittGatewaySchema } from '../../packages/addon-provider-ecowitt/src/config.ts'
-import { enpalBoxSchema } from '../../packages/addon-provider-enpal/src/config.ts'
 import { hikvisionCameraSchema } from '../../packages/addon-provider-hikvision/src/schema.ts'
 import { rademacherHubSchema } from '../../packages/addon-provider-rademacher/src/config.ts'
 import {
@@ -25,7 +24,6 @@ import { vesyncAccountSchema } from '../../packages/addon-provider-vesync/src/co
 const cases: ReadonlyArray<readonly [string, z.ZodType, readonly string[]]> = [
   ['unifi controller', unifiControllerSchema, ['connection.apiKey', 'connection.password']],
   ['vesync account', vesyncAccountSchema, ['connection.password']],
-  ['enpal box', enpalBoxSchema, ['connection.token']],
   ['velux gateway', veluxGatewaySchema, ['connection.password']],
   ['rademacher hub', rademacherHubSchema, ['connection.password']],
   ['ecowitt gateway (union transport)', ecowittGatewaySchema, ['connection.password']],

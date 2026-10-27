@@ -1,6 +1,5 @@
 {
   "connection.s_identity.title": "Box",
-  "connection.s_identity.name.label": "Name",
   "connection.s_identity.host.label": "Box host / IP",
   "connection.s_source.title": "Data source",
   "connection.s_source.description": "InfluxDB needs the access token Enpal support issues (ask in the Enpal app chat). Without it the box device page is used.",

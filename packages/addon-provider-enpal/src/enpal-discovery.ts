@@ -1,41 +1,54 @@
 import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
-import { capsOfSpec, type EnpalSpec } from './enpal-catalog.js'
+import { availableSpecs, capsOfSpec } from './enpal-catalog.js'
+import { ENPAL_EQUIPMENT, childNativeId } from './enpal-equipment.js'
+import type { EnpalSnapshot } from './enpal-snapshot.js'
 
-/** The `childNativeId` of a catalog entry on a box: namespaced so two boxes never collide. */
-export function specNativeId(boxId: string, specId: string): string {
-  return `${boxId}:${specId}`
+export interface BuildEnpalCandidatesInput {
+  /** The latest poll of the integration, or null while its box is unreachable. */
+  readonly snapshot: EnpalSnapshot | null
+  /** Adopted container device id per equipment id. */
+  readonly adopted: ReadonlyMap<string, number>
 }
 
-/** The catalog entry id of a {@link specNativeId} value, or null. */
-export function parseSpecNativeId(boxId: string, childNativeId: string): string | null {
-  const prefix = `${boxId}:`
-  if (!childNativeId.startsWith(prefix)) return null
-  const id = childNativeId.slice(prefix.length)
-  return id.length > 0 ? id : null
-}
+const METADATA = { manufacturer: 'Enpal', integration: 'enpal' } as const
 
-export interface BuildCandidatesInput {
-  readonly boxId: string
-  readonly boxName: string
-  readonly specs: readonly EnpalSpec[]
-  /** Adopted device id PER spec id, or null when not adopted. */
-  readonly adoptedDeviceIdBySpec: Readonly<Record<string, number | null>>
-  readonly online: boolean
-}
-
-/** One Sensor candidate per data group the box reported. Pure. */
-export function buildCandidates(input: BuildCandidatesInput): readonly DiscoveredChildDevice[] {
-  return input.specs.map((spec) => {
-    const adoptedDeviceId = input.adoptedDeviceIdBySpec[spec.id] ?? null
-    return {
-      childNativeId: specNativeId(input.boxId, spec.id),
-      name: `${input.boxName} ${spec.name}`,
-      type: DeviceType.Sensor,
-      status: input.online ? 'online' : 'offline',
-      metadata: { manufacturer: 'Enpal', integration: 'enpal' },
-      alreadyAdopted: adoptedDeviceId !== null,
-      adoptedDeviceId,
-      capabilities: capsOfSpec(spec),
-    } satisfies DiscoveredChildDevice
-  })
+/**
+ * One Container candidate per equipment the box reported at least one value for, with the
+ * Sensor children it reported. Pure.
+ */
+export function buildEnpalCandidates(
+  input: BuildEnpalCandidatesInput,
+): readonly DiscoveredChildDevice[] {
+  const { snapshot } = input
+  if (snapshot === null) return []
+  const reported = new Map(availableSpecs(snapshot).map((spec) => [spec.id, spec]))
+  const out: DiscoveredChildDevice[] = []
+  for (const equipment of ENPAL_EQUIPMENT) {
+    const specs = equipment.specIds.flatMap((id) => reported.get(id) ?? [])
+    if (specs.length === 0) continue
+    const adoptedId = input.adopted.get(equipment.id) ?? null
+    out.push({
+      childNativeId: equipment.id,
+      name: equipment.name,
+      type: DeviceType.Container,
+      status: 'online',
+      metadata: METADATA,
+      alreadyAdopted: adoptedId !== null,
+      adoptedDeviceId: adoptedId,
+      capabilities: [],
+      children: specs.map(
+        (spec): DiscoveredChildDevice => ({
+          childNativeId: childNativeId(equipment.id, spec.id),
+          name: spec.name,
+          type: DeviceType.Sensor,
+          status: 'online',
+          metadata: METADATA,
+          alreadyAdopted: false,
+          adoptedDeviceId: null,
+          capabilities: capsOfSpec(spec),
+        }),
+      ),
+    })
+  }
+  return out
 }

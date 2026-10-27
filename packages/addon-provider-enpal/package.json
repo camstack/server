@@ -39,18 +39,21 @@
         "category": "providers",
         "name": "Enpal",
         "version": "0.1.0",
-        "description": "Adopt an Enpal solar box over the local network (InfluxDB, device page as fallback): PV production, battery charge and power, grid import and export, house consumption and heat pump",
+        "description": "Add an Enpal solar box as an integration (InfluxDB, device page as fallback) and adopt its equipment: photovoltaic, battery, grid, house and heat pump",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#f5a623",
         "instanceMode": "multiple",
-        "mode": "standalone",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
           }
         ]
       }
