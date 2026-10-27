@@ -1,18 +1,34 @@
-# @camstack/addon-provider-velux
+# Velux Provider
 
-Velux KLF-200 device-provider addon for CamStack — local-gateway window + shutter covers (positional, no tilt)
+Velux KLF-200 device-provider addon for CamStack — local-gateway window + shutter covers (positional, no tilt).
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Velux** (`provider-velux`): Adopt a Velux KLF-200 gateway over the local network and its windows / roller shutters (positional cover)
-  - Node placement: `hub-only`.
+Package `@camstack/addon-provider-velux` on npm.
+
+## What it provides
+
+- **Velux** (`provider-velux`): Adopt a Velux KLF-200 gateway over the local network and its windows / roller shutters (positional cover). Category: providers.
   - Capabilities: `device-provider`.
 
-## Settings
+## Configuration
 
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
+Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
+
+**Connection**
+
+- Gateway: Name
+- Connection: Gateway host / IP, Password, Poll interval (ms)
 
 ## Requirements
 
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+## Documentation
+
+- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

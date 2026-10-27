@@ -1,19 +1,21 @@
-# @camstack/addon-decoder-nodeav
+# Decoder (node-av)
 
-Standalone in-process node-av decoder addon for CamStack
+Standalone in-process node-av decoder addon for CamStack.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Video Decoder** (`decoder-nodeav`): The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap.
-  - Node placement: `any-node`.
+Package `@camstack/addon-decoder-nodeav` on npm.
+
+## What it provides
+
+- **Decoder (node-av)** (`decoder-nodeav`): The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap. Category: pipeline.
   - Capabilities: `decoder`, `audio-codec`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: any-node.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

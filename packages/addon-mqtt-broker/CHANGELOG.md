@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.146] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- MQTT Broker: MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap.
+- Provides the addon MQTT Broker.

@@ -16,7 +16,9 @@
     "dist",
     "scripts/closure-postinstall.mjs",
     ".env.example",
-    "THIRD_PARTY_MODELS.md"
+    "THIRD_PARTY_MODELS.md",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     "./package.json": "./package.json",

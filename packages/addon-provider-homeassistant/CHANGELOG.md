@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.632] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Home Assistant: Home Assistant device provider addon for CamStack.
+- Provides the addons Home Assistant Provider, Home Assistant Export.

@@ -1,18 +1,34 @@
-# @camstack/addon-provider-vesync
+# VeSync Provider
 
-VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors)
+VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors).
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **VeSync** (`provider-vesync`): Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors)
-  - Node placement: `hub-only`.
+Package `@camstack/addon-provider-vesync` on npm.
+
+## What it provides
+
+- **VeSync** (`provider-vesync`): Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors). Category: providers.
   - Capabilities: `device-provider`.
 
-## Settings
+## Configuration
 
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
+Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
+
+**Connection**
+
+- Account: Name
+- Credentials: Email, Password, Region, Poll interval (ms)
 
 ## Requirements
 
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+## Documentation
+
+- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

@@ -35,3 +35,50 @@ The probe runs once per camera lifetime (after the first successful `publishToBr
 ## References
 
 - ISAPI Service v2 & v3 specs (Hikvision ISAPI doc package — vendor download).
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+
+Package `@camstack/addon-provider-hikvision` on npm.
+
+## What it provides
+
+- **Hikvision** (`provider-hikvision`): Hikvision ISAPI camera/NVR provider — discovers RTSP streams, captures snapshots, parses the alarm event stream. Category: providers.
+  - Capabilities: `device-provider`, `stream-params`, `recording-onboard`, `motion-zones`, `privacy-mask`, `day-night`, `image-settings`, `failure-contribution`, `videoclips`.
+
+## Configuration
+
+Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
+
+**Adding a device**
+
+- Camera: Name
+- Credentials: Username, Password
+- Connection: Camera IP, Port, Use HTTPS
+
+**Per-device settings**
+
+- Supplemental Light: Mode (on), Default brightness, Mode, Brightness regulator, IR brightness, White-light brightness
+- Siren / Alarm Output: Alarm input port, Auto-release after (ms)
+- Connection: Camera IP, Port, Use HTTPS, RTSP transport, Username, Password
+- On-camera motion (VMD): Motion detection, Sensitivity
+- Image: Brightness, Contrast, Saturation, Sharpness, WDR, WDR level, Day/Night
+- Time / NTP: Timezone, Time sync, NTP server, NTP port, Sync interval (min), Manual date & time, Sync time
+- Two-way audio: Mode
+- Two-way audio channel: Audio codec, Input source, Speaker volume, Noise reduction
+- and 4 more sections
+
+## Requirements
+
+- Placement: hub-only.
+- Runtime dependencies installed with the addon: `onvif`, `werift`.
+- A CamStack hub. An agent is used only where the placement above allows it.
+
+## Documentation
+
+- [docs/addons/addon-provider-hikvision.md](https://github.com/camstack/server/blob/main/docs/addons/addon-provider-hikvision.md)
+- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+- [packages/addon-provider-hikvision/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-provider-hikvision/AGENTS.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

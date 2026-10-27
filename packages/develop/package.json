@@ -37,7 +37,9 @@
   },
   "files": [
     "dist",
-    "skills"
+    "skills",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

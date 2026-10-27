@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.161] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Amcrest Provider: Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config).
+- Provides the addon Amcrest.

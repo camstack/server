@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.32] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Google Services: Google Services — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider.
+- Provides the addon Google Services.

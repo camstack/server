@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.630] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Pipeline: Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle.
+- Provides the addons Pipeline Runner, Detection Pipeline, Motion Detection (WASM), Audio Analyzer, Stream Broker, Recorder.

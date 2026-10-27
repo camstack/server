@@ -1,19 +1,21 @@
-# @camstack/addon-smtp-nodemailer
+# SMTP Email (Nodemailer)
 
 SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Email (SMTP)** (`smtp-nodemailer`): Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts).
-  - Node placement: `hub-only`.
+Package `@camstack/addon-smtp-nodemailer` on npm.
+
+## What it provides
+
+- **SMTP Email (Nodemailer)** (`smtp-nodemailer`): Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts). Category: messaging.
   - Capabilities: `smtp-provider`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

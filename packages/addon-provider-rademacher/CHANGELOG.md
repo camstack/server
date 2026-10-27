@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.147] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Rademacher Provider: Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap).
+- Provides the addon Rademacher.

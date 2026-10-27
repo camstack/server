@@ -1,22 +1,28 @@
-# @camstack/addon-training
+# Cloud Training
 
-Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account
+Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Training** (`training`): Fine-tune the root detector on your own annotated frames in a GPU cloud you choose, compare it with the model you run, and register it in Model Studio only when you say so
-  - Node placement: `hub-only`.
+Package `@camstack/addon-training` on npm.
+
+## What it provides
+
+- **Training** (`training`): Fine-tune the root detector on your own annotated frames in a GPU cloud you choose, compare it with the model you run, and register it in Model Studio only when you say so. Category: system.
   - Capabilities: `training`, `addon-pages-source`.
-- **Modal** (`training-modal`): Runs CamStack training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token
-  - Node placement: `hub-only`.
+- **Modal (training cloud)** (`training-modal`): Runs CamStack training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token. Category: system.
   - Capabilities: `training-provider`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+## Documentation
+
+- [docs/architecture/cloud-training.md](https://github.com/camstack/server/blob/main/docs/architecture/cloud-training.md)
+- [packages/addon-training/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-training/AGENTS.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

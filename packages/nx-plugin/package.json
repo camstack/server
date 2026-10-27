@@ -34,7 +34,9 @@
     "dist",
     "executors.json",
     "generators.json",
-    "src/generators/**/files"
+    "src/generators/**/files",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.171] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Alexa Smart Home export: Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint.
+- Provides the addon Alexa Smart Home export.

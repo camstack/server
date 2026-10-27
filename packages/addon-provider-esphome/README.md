@@ -51,3 +51,25 @@ In the board's ESPHome YAML under `api: encryption: key:`. In the ESPHome dashbo
 
 - Peer packages already on the node: `@camstack/types`, `zod`.
 - A CamStack hub. This addon does not run on an agent.
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+
+Package `@camstack/addon-provider-esphome` on npm.
+
+## What it provides
+
+- **ESPHome** (`provider-esphome`): Connect to an ESPHome board over its native API and adopt its switches, lights, covers, buttons, sensors, numbers and selects. Category: providers.
+  - Capabilities: `device-provider`, `broker`, `device-adoption`.
+
+## Requirements
+
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
+
+## Documentation
+
+- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

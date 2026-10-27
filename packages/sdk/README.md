@@ -89,3 +89,15 @@ token. Passkeys have an equivalent pair of methods.
 ## License
 
 MIT
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+
+Package `@camstack/sdk` on npm.
+
+## Documentation
+
+- [docs/architecture/authentication.md](https://github.com/camstack/server/blob/main/docs/architecture/authentication.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

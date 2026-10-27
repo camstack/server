@@ -1,22 +1,36 @@
-# @camstack/addon-tailscale
+# Tailscale
 
-Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle.
+Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle. Tailnet client + Serve/Funnel ingress.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Tailscale** (`tailscale-client`).
-  - Node placement: `hub-only`, runner group `net-access`.
+Package `@camstack/addon-tailscale` on npm.
+
+## What it provides
+
+- **Tailscale Client** (`tailscale-client`): Category: networking.
   - Capabilities: `mesh-network`, `network-access`.
-- **Tailscale Funnel** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first.
-  - Node placement: `hub-only`, runner group `net-access`.
+- **Tailscale Ingress (Serve/Funnel)** (`tailscale-ingress`): Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first. Category: networking.
   - Capabilities: `network-access`.
 
-## Settings
+## Configuration
 
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
+Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
+
+**Addon settings**
+
+- Identity: Prerequisites, Tailscale daemon, Device Hostname
+- Subnet routing: Accept routes from peers, Advertise subnet routes, Advertise ACL tags
+- DNS & exit node: Accept tailnet DNS, Exit node (peer id)
+- Access: Shields up, Enable Tailscale SSH
+- Headless / Auth key: Pre-auth key
+- Tailscale Ingress: Mode, Source port, Target path (optional), Upstream scheme
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only (runner group `net-access`).
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

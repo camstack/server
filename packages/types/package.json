@@ -67,7 +67,9 @@
     "description": "Shared cap definitions, schemas, and runtime contracts. Required at server boot; updating restarts the hub."
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build && vite build -c vite.client.config.ts && ../../scripts/tsc7 -p tsconfig.json --emitDeclarationOnly",

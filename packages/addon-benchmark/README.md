@@ -1,19 +1,26 @@
-# @camstack/addon-benchmark
+# Benchmark
 
-Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound
+Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Benchmark** (`benchmark`): Node benchmark, image and audio inspection
-  - Node placement: `hub-only`, runner group `ml`.
+Package `@camstack/addon-benchmark` on npm.
+
+## What it provides
+
+- **Benchmark** (`benchmark`): Node benchmark, image and audio inspection. Category: system.
   - Capabilities: `addon-pages-source`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`, `react`, `react-dom`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only (runner group `ml`).
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+## Documentation
+
+- [docs/architecture/benchmark.md](https://github.com/camstack/server/blob/main/docs/architecture/benchmark.md)
+- [packages/addon-benchmark/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-benchmark/AGENTS.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

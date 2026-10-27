@@ -27,7 +27,9 @@
     "description": "Backend client + tRPC helpers used by CLI and admin UI."
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build && npx tsx ../../scripts/emit-isolated-dts.ts --root . --src src --out dist",

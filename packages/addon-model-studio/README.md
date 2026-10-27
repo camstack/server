@@ -1,19 +1,27 @@
-# @camstack/addon-model-studio
+# Model Studio
 
-Custom detection model registry, conversion & distribution for CamStack
+Custom detection model registry, conversion & distribution for CamStack.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Model Studio** (`model-studio`): Register, manipulate and distribute custom detection models
-  - Node placement: `any-node`, runner group `ml`.
+Package `@camstack/addon-model-studio` on npm.
+
+## What it provides
+
+- **Model Studio** (`model-studio`): Register, manipulate and distribute custom detection models. Category: system.
   - Capabilities: `custom-model-registry`, `model-convert`, `addon-pages-source`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`, `react`, `react-dom`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: any-node (runner group `ml`).
+- Python: Model Studio installs `python/requirements.txt` into its own environment.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+## Documentation
+
+- [docs/architecture/cloud-training.md](https://github.com/camstack/server/blob/main/docs/architecture/cloud-training.md)
+- [packages/addon-model-studio/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-model-studio/AGENTS.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

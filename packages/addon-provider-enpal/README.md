@@ -37,3 +37,35 @@ Firmware 8.51 and later render the device rows of the device page only through a
 ## Requirements
 
 - A CamStack hub on the same network as the box.
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+
+Package `@camstack/addon-provider-enpal` on npm.
+
+## What it provides
+
+- **Enpal** (`provider-enpal`): Add an Enpal solar box as an integration (InfluxDB, device page as fallback) and adopt its equipment: photovoltaic, battery, grid, house and heat pump. Category: providers.
+  - Capabilities: `device-provider`, `device-adoption`.
+
+## Configuration
+
+Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
+
+**Connection**
+
+- Box: Box host / IP
+- Data source: Source, InfluxDB access token, InfluxDB organisation, InfluxDB bucket, InfluxDB port, Device page port
+- Polling: Poll interval (ms), Invert battery power sign
+
+## Requirements
+
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
+
+## Documentation
+
+- [docs/architecture/device-model.md](https://github.com/camstack/server/blob/main/docs/architecture/device-model.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

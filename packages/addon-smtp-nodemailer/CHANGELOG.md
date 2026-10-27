@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.142] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- SMTP Email (Nodemailer): SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.
+- Provides the addon SMTP Email (Nodemailer).

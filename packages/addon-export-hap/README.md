@@ -1,19 +1,21 @@
-# @camstack/addon-export-hap
+# HomeKit Export
 
 HomeKit (HAP) exporter for CamStack devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **HomeKit Export** (`export-hap`): Publishes exposed CamStack devices to iOS Home over HomeKit (HAP) — cameras, doorbells, switches, lights, locks and sensors, each as its own accessory sharing one setup code.
-  - Node placement: `hub-only`.
+Package `@camstack/addon-export-hap` on npm.
+
+## What it provides
+
+- **HomeKit Export** (`export-hap`): Publishes exposed CamStack devices to iOS Home over HomeKit (HAP) — cameras, doorbells, switches, lights, locks and sensors, each as its own accessory sharing one setup code. Category: exports.
   - Capabilities: `device-export`, `videoclips`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

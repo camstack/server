@@ -40,7 +40,9 @@
   "files": [
     "dist",
     "src/tailwind",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "vite build && npx tsx ../../scripts/emit-isolated-dts.ts --root . --src src --out dist",

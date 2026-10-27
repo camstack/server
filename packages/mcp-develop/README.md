@@ -50,3 +50,15 @@ the hub's refusal is shown as-is. Tokens never appear in output.
            "CAMSTACK_HUB_TOKEN_FILE": "/home/me/.camstack/review.token",
            "CAMSTACK_HUB_CA_FILE": "/home/me/.camstack/hub-ca.pem" } } } }
 ```
+
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
+
+Package `@camstack/mcp-develop` on npm.
+
+## Requirements
+
+- Node.js >=24.
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.643] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Post-Analysis: Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output.
+- Provides the addons Embedding Encoder, Pipeline Analytics.

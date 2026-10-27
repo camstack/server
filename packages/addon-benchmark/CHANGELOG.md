@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.279] - 2026-10-27
+
 ### Added
 
-- Package README and changelog, included in the published files list.
+- Benchmark: Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound.
+- Provides the addon Benchmark.

@@ -1,19 +1,25 @@
-# @camstack/addon-agent-ui
+# Agent UI
 
-Agent UI — lightweight status dashboard served by every agent node
+Agent UI — lightweight status dashboard served by every agent node.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **Agent UI** (`agent-ui`): Lightweight status dashboard for agent nodes
-  - Node placement: `agent-only`.
+Package `@camstack/addon-agent-ui` on npm.
+
+## What it provides
+
+- **Agent UI** (`agent-ui`): Lightweight status dashboard for agent nodes. Category: system.
   - Capabilities: `admin-ui`.
-
-## Settings
-
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: agent-only.
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+## Documentation
+
+- [packages/addon-agent-ui/AGENTS.md](https://github.com/camstack/server/blob/main/packages/addon-agent-ui/AGENTS.md)
+
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->

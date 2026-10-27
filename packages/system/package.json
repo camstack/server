@@ -526,7 +526,9 @@
   },
   "files": [
     "dist",
-    "assets"
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "copy:hook": "node -e \"const fs=require('fs'),p=require('path');const dst=p.join('dist');fs.mkdirSync(dst,{recursive:true});fs.copyFileSync(p.join('src','kernel','moleculer','framework-resolver-hook.mjs'),p.join(dst,'framework-resolver-hook.mjs'));console.log('copied framework-resolver-hook.mjs ->',dst)\"",

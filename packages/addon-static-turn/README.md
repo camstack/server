@@ -1,19 +1,29 @@
-# @camstack/addon-static-turn
+# Static / coturn TURN
 
-Static / self-hosted (coturn) TURN provider for CamStack
+Static / self-hosted (coturn) TURN provider for CamStack.
 
-## What it does
+<!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-- **TURN Server** (`static-turn`).
-  - Node placement: `hub-only`, runner group `net-access`.
+Package `@camstack/addon-static-turn` on npm.
+
+## What it provides
+
+- **Static TURN (coturn / custom)** (`static-turn`): Category: networking.
   - Capabilities: `turn-provider`.
 
-## Settings
+## Configuration
 
-Settings this addon exposes are edited from System → Addons → this addon → Settings when they apply to the whole cluster, and from the device page when they belong to one device. A password field is stored in the keychain.
+Edit these from System, Addons, this addon, Settings (a device's own settings are on its device page). A password field is stored in the keychain.
+
+**Addon settings**
+
+- TURN / STUN server: How to fill, TURN / STUN URLs, Username, Credential / password
 
 ## Requirements
 
-- Peer packages already on the node: `@camstack/types`.
-- A CamStack hub. An agent is used only when the placement above allows it.
+- Placement: hub-only (runner group `net-access`).
+- A CamStack hub. An agent is used only where the placement above allows it.
 
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
+
+<!-- readme:generated:end -->
