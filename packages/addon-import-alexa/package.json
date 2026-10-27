@@ -100,7 +100,7 @@
   },
   "devDependencies": {
     "@camstack/types": "*",
-    "alexa-remote2": "^8.0.4",
+    "alexa-remote2": "^8.1.1",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0",

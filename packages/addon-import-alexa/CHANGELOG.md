@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Amazon sign-in for the Alexa broker can be retried after a cancelled attempt, and the sign-in link now uses the hub's LAN address from the Network page instead of the first network interface
+- Alexa sign-in follows Amazon's current login pages (library update)
 
 ## [0.2.156] - 2026-10-27
 
