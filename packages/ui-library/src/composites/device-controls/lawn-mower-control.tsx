@@ -529,7 +529,7 @@ export function LawnMowerHeroCard({ trpc, deviceId }: DeviceControlProps): React
           </div>
 
           {/* Mowing progress (only while a task is in progress) */}
-          {slice?.progressPercent != null && <ProgressBar percent={slice.progressPercent} />}
+          {slice?.progress != null && <ProgressBar percent={slice.progress} />}
 
           {/* Current device/event code */}
           {slice?.currentCode != null && (

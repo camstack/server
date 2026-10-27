@@ -31,7 +31,7 @@ const H = 3_600_000
 
 describe('groupDeviceSeries — scope grouping', () => {
   const series = [
-    info('cap:power-meter.watts', { unit: 'W' }),
+    info('cap:power-meter.power', { unit: 'W' }),
     info('cap:climate-control.currentHumidity', { unit: '%' }),
     info('cap:climate-control.currentTemp', { unit: '°C' }),
     info('cap:climate-control.target', { unit: '°C' }),

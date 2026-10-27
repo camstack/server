@@ -34,10 +34,10 @@ describe('osd source whitelist', () => {
   })
 
   it('keeps sensor primary leaves and drops unit/precision metadata', () => {
-    expect(osdStateLeavesOf(cap('temperature-sensor')).map((l) => l.path)).toEqual(['celsius'])
-    expect(osdStateLeavesOf(cap('humidity-sensor')).map((l) => l.path)).toEqual(['percent'])
+    expect(osdStateLeavesOf(cap('temperature-sensor')).map((l) => l.path)).toEqual(['temperature'])
+    expect(osdStateLeavesOf(cap('humidity-sensor')).map((l) => l.path)).toEqual(['humidity'])
     expect(osdStateLeavesOf(cap('numeric-sensor')).map((l) => l.path)).toEqual(['value'])
-    expect(osdStateLeavesOf(cap('battery')).map((l) => l.path)).toEqual(['percentage'])
+    expect(osdStateLeavesOf(cap('battery')).map((l) => l.path)).toEqual(['level'])
   })
 
   it('auto-selects when a device has a single OSD field', () => {
@@ -48,7 +48,7 @@ describe('osd source whitelist', () => {
     )
     const decision = resolveAdaptiveFields(options, 9)
     expect(decision.mode).toBe('auto')
-    expect(decision.auto?.valuePath).toBe('celsius')
+    expect(decision.auto?.valuePath).toBe('temperature')
   })
 })
 
@@ -89,7 +89,7 @@ describe('container → child path', () => {
       ]),
     )
     expect(options.filter((o) => o.deviceId === 1)).toEqual([])
-    expect(options.filter((o) => o.deviceId === 2).map((o) => o.valuePath)).toEqual(['celsius'])
+    expect(options.filter((o) => o.deviceId === 2).map((o) => o.valuePath)).toEqual(['temperature'])
   })
 })
 

@@ -33,11 +33,10 @@ export function preferredField(fields: readonly OsdSourceOption[]): OsdSourceOpt
   const valueLeaf = fields.find((f) => f.valuePath === 'value' || f.valuePath.endsWith('.value'))
   if (valueLeaf !== undefined) return valueLeaf
   const primaryPaths = [
-    'celsius',
-    'percent',
-    'currentTemp',
     'temperature',
-    'percentage',
+    'humidity',
+    'currentTemp',
+    'level',
     'on',
     'entryOpen',
     'state',

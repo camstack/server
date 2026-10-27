@@ -52,7 +52,6 @@ interface PresenceSliceValue {
   readonly state: string
   readonly location: string | null
   readonly gps: unknown | null
-  readonly batteryPercent: number | null
   readonly lastChangedAt: number
 }
 

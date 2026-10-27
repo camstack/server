@@ -63,8 +63,8 @@ describe('composition templates', () => {
     expect(draft.target).toMatchObject({ kind: 'new', type: 'sensor', role: 'temperature-sensor' })
     expect(draft.features.map((f) => f.cap).toSorted()).toEqual(['binary', 'temperature-sensor'])
     const temp = draft.features.find((f) => f.cap === 'temperature-sensor')
-    const celsius = temp?.fields.celsius
-    expect(celsius?.kind === 'expression' ? celsius.expr : '').toMatch(/avg\(/)
+    const temperature = temp?.fields.temperature
+    expect(temperature?.kind === 'expression' ? temperature.expr : '').toMatch(/avg\(/)
     const binary = draft.features.find((f) => f.cap === 'binary')
     const on = binary?.fields.on
     expect(on?.kind === 'expression' ? on.expr : '').toMatch(/any\(/)
@@ -104,10 +104,10 @@ describe('composition templates', () => {
 })
 
 describe('formulaTemplatesFor', () => {
-  it('offers the room presence formula on binary.on and the average on temperature celsius', () => {
+  it('offers the room presence formula on binary.on and the average on temperature temperature', () => {
     const presence = formulaTemplatesFor('binary', 'on').find((template) => template.id === 'room')
     expect(presence?.source.kind === 'expression' ? presence.source.expr : '').toMatch(/any\(/)
-    const average = formulaTemplatesFor('temperature-sensor', 'celsius').find(
+    const average = formulaTemplatesFor('temperature-sensor', 'temperature').find(
       (template) => template.id === 'room',
     )
     expect(average?.source.kind === 'expression' ? average.source.expr : '').toMatch(/avg\(/)

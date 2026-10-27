@@ -13,6 +13,6 @@ describe('buildSkeletonComposition', () => {
       role: DeviceRole.TemperatureSensor,
     })
     expect(skeletonFillStatus(composition)).toBe('incomplete')
-    expect(unfilledRequiredFields('temperature-sensor', new Set())).toContain('celsius')
+    expect(unfilledRequiredFields('temperature-sensor', new Set())).toContain('temperature')
   })
 })

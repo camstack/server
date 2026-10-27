@@ -16,7 +16,7 @@ export function FanPanel({
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
     {
-      setPercentage: (i: { percentage: number }) => Promise<void>
+      setPercentage: (i: { speed: number }) => Promise<void>
       setPreset: (i: { preset: string }) => Promise<void>
     },
     FanControlStatus
@@ -26,7 +26,7 @@ export function FanPanel({
     cap: (d) =>
       d.fanControl as
         | {
-            setPercentage: (i: { percentage: number }) => Promise<void>
+            setPercentage: (i: { speed: number }) => Promise<void>
             setPreset: (i: { preset: string }) => Promise<void>
           }
         | undefined,
@@ -56,16 +56,16 @@ export function FanPanel({
             min={0}
             max={100}
             step={step}
-            value={display.percentage ?? 0}
+            value={display.speed ?? 0}
             disabled={busy}
             onChange={(e) => {
               const raw = Number(e.target.value)
               const pct = Math.min(100, Math.max(0, Math.round(raw / step) * step))
-              applyOptimistic({ percentage: pct })
-              if (!busy) void cap?.setPercentage({ percentage: pct })
+              applyOptimistic({ speed: pct })
+              if (!busy) void cap?.setPercentage({ speed: pct })
             }}
           />
-          <span className="tabular-nums w-8 text-right">{display.percentage ?? '—'}%</span>
+          <span className="tabular-nums w-8 text-right">{display.speed ?? '—'}%</span>
         </div>
       )}
       {showPreset && display.availablePresets.length > 0 && (

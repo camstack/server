@@ -151,8 +151,8 @@ describe('sourceOptionsFor', () => {
       ]),
     )
     expect(options.map((o) => `${o.capName}.${o.valuePath}`).toSorted()).toEqual([
-      'battery.percentage',
-      'temperature-sensor.celsius',
+      'battery.level',
+      'temperature-sensor.temperature',
     ])
   })
 

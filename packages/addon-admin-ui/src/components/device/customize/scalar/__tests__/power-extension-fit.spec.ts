@@ -13,16 +13,16 @@ function offer(path: string, unit: string | null): ScalarFieldOffer {
 
 describe('a power-meter field fits the target of its own quantity', () => {
   it.each([
-    ['watts', 'watts', 'W'],
-    ['kwhTotal', 'kwhTotal', 'kWh'],
-    ['volts', 'volts', 'V'],
-    ['amps', 'amps', 'A'],
+    ['power', 'power', 'W'],
+    ['energy', 'energy', 'kWh'],
+    ['voltage', 'voltage', 'V'],
+    ['current', 'current', 'A'],
   ])('target %s reads field %s in %s', (targetId, path, unit) => {
     expect(scalarFieldFit('power-meter', targetId, offer(path, unit)).ok).toBe(true)
   })
 
   it('refuses energy for the power target, by unit', () => {
-    const verdict = scalarFieldFit('power-meter', 'watts', offer('kwhTotal', 'kWh'))
+    const verdict = scalarFieldFit('power-meter', 'power', offer('energy', 'kWh'))
     expect(verdict).toEqual({ ok: false, reason: 'unit' })
   })
 
@@ -33,9 +33,9 @@ describe('a power-meter field fits the target of its own quantity', () => {
           {
             cap: 'power-meter',
             fields: [
-              { path: 'watts', kind: 'number' },
-              { path: 'volts', kind: 'number' },
-              { path: 'amps', kind: 'number' },
+              { path: 'power', kind: 'number' },
+              { path: 'voltage', kind: 'number' },
+              { path: 'current', kind: 'number' },
             ],
           },
         ],
@@ -43,9 +43,9 @@ describe('a power-meter field fits the target of its own quantity', () => {
       null,
     )
     expect(offers.map((row) => [row.path, row.unit])).toEqual([
-      ['watts', 'W'],
-      ['volts', 'V'],
-      ['amps', 'A'],
+      ['power', 'W'],
+      ['voltage', 'V'],
+      ['current', 'A'],
     ])
   })
 })

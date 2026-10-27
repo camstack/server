@@ -14,7 +14,7 @@ import { TapToggle } from './tap-toggle'
 
 type SwitchCap = { setState: (i: { on: boolean }) => Promise<void> }
 type FanControlCap = {
-  setPercentage: (i: { percentage: number }) => Promise<void>
+  setPercentage: (i: { speed: number }) => Promise<void>
   setPreset: (i: { preset: string }) => Promise<void>
   setOscillating: (i: { oscillating: boolean }) => Promise<void>
 }
@@ -73,7 +73,7 @@ export function FanHeroCard({
   const on = swOpt.display.on === true
   const swBusy = !sw.available
 
-  const percentage = fanOpt.display?.percentage ?? 0
+  const percentage = fanOpt.display?.speed ?? 0
   const fanBusy = !fan.available
   const fraction = on ? percentage / 100 : 0
   const arcColor = on ? ARC_COLOR_ON : ARC_COLOR_OFF
@@ -111,8 +111,8 @@ export function FanHeroCard({
     const step =
       slice.percentageStep !== undefined && slice.percentageStep > 0 ? slice.percentageStep : 1
     const pct = Math.min(100, Math.max(0, Math.round((f * 100) / step) * step))
-    fanOpt.applyOptimistic({ percentage: pct })
-    void fan.cap?.setPercentage({ percentage: pct })
+    fanOpt.applyOptimistic({ speed: pct })
+    void fan.cap?.setPercentage({ speed: pct })
   }
 
   const handlePreset = (preset: string): void => {

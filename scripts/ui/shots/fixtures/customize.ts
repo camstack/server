@@ -254,7 +254,7 @@ const FRONT_DOOR_CUSTOMIZATION = {
               kind: 'fields',
               cap: 'battery',
               fields: {
-                percentage: {
+                level: {
                   kind: 'from',
                   source: {
                     addonId: 'provider-homeassistant',
@@ -304,7 +304,7 @@ const DESK_CUSTOMIZATION = {
               kind: 'fields',
               cap: 'power-meter',
               fields: {
-                watts: { kind: 'from', source: DESK_POWER, cap: 'power-meter', fieldPath: 'watts' },
+                power: { kind: 'from', source: DESK_POWER, cap: 'power-meter', fieldPath: 'power' },
                 lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
               },
             },
@@ -446,7 +446,7 @@ export default defineFixtures({
       if (i.deviceId === 305) {
         return {
           caps: [
-            { cap: 'power-meter', fields: [{ path: 'watts', kind: 'number' }] },
+            { cap: 'power-meter', fields: [{ path: 'power', kind: 'number' }] },
             { cap: 'numeric-sensor', fields: [{ path: 'voltage', kind: 'number' }] },
           ],
         }
@@ -478,7 +478,7 @@ export default defineFixtures({
           caps: [
             {
               cap: 'power-meter',
-              fields: [{ path: i.deviceId === 412 ? 'watts' : 'kwhTotal', kind: 'number' }],
+              fields: [{ path: i.deviceId === 412 ? 'power' : 'energy', kind: 'number' }],
             },
           ],
         }
@@ -499,7 +499,7 @@ export default defineFixtures({
       if (i.deviceId === 801) {
         return {
           caps: [
-            { cap: 'battery', fields: [{ path: 'percentage', kind: 'number' }] },
+            { cap: 'battery', fields: [{ path: 'level', kind: 'number' }] },
             { cap: 'numeric-sensor', fields: [{ path: 'value', kind: 'number' }] },
           ],
         }
@@ -509,17 +509,17 @@ export default defineFixtures({
     'deviceState.getSnapshot': (i: { deviceId: number }) => {
       if (i.deviceId === 305) {
         return {
-          'power-meter': { watts: 8.4, unit: 'W' },
+          'power-meter': { power: 8.4, unit: 'W' },
           'numeric-sensor': { voltage: 231, unit: 'V' },
         }
       }
       if (i.deviceId === 306) return { switch: { on: true, lastChangedAt: 1_700_000_000_000 } }
       if (i.deviceId === 412)
-        return { 'power-meter': { watts: 41.7, lastFetchedAt: 1_700_000_000_000 } }
+        return { 'power-meter': { power: 41.7, lastFetchedAt: 1_700_000_000_000 } }
       if (i.deviceId === 413)
-        return { 'power-meter': { kwhTotal: 18.2, lastFetchedAt: 1_700_000_000_000 } }
+        return { 'power-meter': { energy: 18.2, lastFetchedAt: 1_700_000_000_000 } }
       if (i.deviceId === 801) {
-        return { battery: { percentage: 82 }, 'numeric-sensor': { value: 82, unit: '%' } }
+        return { battery: { level: 82 }, 'numeric-sensor': { value: 82, unit: '%' } }
       }
       if (i.deviceId === 301) {
         return {
@@ -532,10 +532,10 @@ export default defineFixtures({
     },
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) => {
       if (i.deviceId === 801 && i.capName === 'temperature-sensor') {
-        return { celsius: 21.4, unit: '°C', lastFetchedAt: 1_700_000_000_000 }
+        return { temperature: 21.4, unit: '°C', lastFetchedAt: 1_700_000_000_000 }
       }
       if (i.deviceId === 801 && i.capName === 'humidity-sensor') {
-        return { percent: 48, unit: '%', lastFetchedAt: 1_700_000_000_000 }
+        return { humidity: 48, unit: '%', lastFetchedAt: 1_700_000_000_000 }
       }
       if (i.deviceId === 301 && i.capName === 'motion') {
         return { detected: false, lastDetectedAt: 1_700_000_000_000 }

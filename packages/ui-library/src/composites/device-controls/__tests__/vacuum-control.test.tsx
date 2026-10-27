@@ -11,7 +11,7 @@ function makeSlice(overrides: Partial<VacuumControlStatus> = {}): VacuumControlS
     batteryLevel: 77,
     fanSpeed: 'standard',
     availableFanSpeeds: ['standard', 'turbo'],
-    progressPercent: null,
+    progress: null,
     errorCode: null,
     errorLabel: null,
     lastChangedAt: 0,

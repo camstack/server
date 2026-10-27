@@ -55,7 +55,7 @@ describe('SensorInlineControl', () => {
   })
 
   it('renders temperature value + unit (°C) via SensorValueAtom when row + slice land', () => {
-    mockSlice = { celsius: 21, lastFetchedAt: 0 }
+    mockSlice = { temperature: 21, lastFetchedAt: 0 }
     mockDeviceData = makeDevice({
       role: 'temperature-sensor',
       sourceInfo: { id: 'sensor.temp', system: 'ha', unit: '°C' },
@@ -74,7 +74,7 @@ describe('SensorInlineControl', () => {
   })
 
   it('renders presence Home label via SensorValueAtom', () => {
-    mockSlice = { state: 'home', location: null, gps: null, batteryPercent: null, lastChangedAt: 0 }
+    mockSlice = { state: 'home', location: null, gps: null, lastChangedAt: 0 }
     mockDeviceData = makeDevice({ role: 'presence', type: 'presence' })
     render(<SensorInlineControl trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('Home')).toBeTruthy()

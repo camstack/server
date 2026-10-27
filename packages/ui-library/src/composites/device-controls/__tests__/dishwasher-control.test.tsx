@@ -18,9 +18,9 @@ function makeSlice(overrides: Partial<DishwasherStatus> = {}): DishwasherStatus 
     program: null,
     selectedProgram: 'Dishcare.Dishwasher.Program.Eco50',
     availablePrograms: ['Dishcare.Dishwasher.Program.Eco50', 'Dishcare.Dishwasher.Program.Auto2'],
-    remainingSeconds: null,
-    delayedStartSeconds: null,
-    progressPercent: null,
+    remaining: null,
+    delayedStart: null,
+    progress: null,
     doorOpen: false,
     doorLocked: false,
     remoteStartAllowed: true,
@@ -184,7 +184,7 @@ describe('DishwasherHeroCard — the whole operation state', () => {
   it('renders the remaining time from seconds', () => {
     mockResult = {
       ...mockResult,
-      slice: makeSlice({ operationState: 'Run', remainingSeconds: 5400 }),
+      slice: makeSlice({ operationState: 'Run', remaining: 5400 }),
     }
     hero()
     expect(screen.getByText('1 h 30 min left')).toBeTruthy()
@@ -260,7 +260,7 @@ describe('DishwasherInlineControl', () => {
   it('shows the remaining time in whole units', () => {
     mockResult = {
       ...mockResult,
-      slice: makeSlice({ operationState: 'Run', remainingSeconds: 2520 }),
+      slice: makeSlice({ operationState: 'Run', remaining: 2520 }),
     }
     render(<DishwasherInlineControl trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('42 min')).toBeTruthy()

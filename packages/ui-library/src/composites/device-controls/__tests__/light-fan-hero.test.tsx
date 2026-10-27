@@ -104,12 +104,12 @@ function lightSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, C
     switch: { cap: switchCap, slice: { on: true, lastChangedAt: 0 }, available: true },
     brightness: {
       cap: brightnessCap,
-      slice: { percentage: 80, lastChangedAt: 0 },
+      slice: { level: 80, lastChangedAt: 0 },
       available: true,
     },
     color: {
       cap: colorCap,
-      slice: { mode: 'mired', mireds: 325, lastChangedAt: 0 },
+      slice: { mode: 'mired', colorTemperature: 325, lastChangedAt: 0 },
       available: true,
     },
     fanControl: { cap: undefined, slice: undefined, available: false },
@@ -125,7 +125,7 @@ function fanSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, Cap
     fanControl: {
       cap: fanCap,
       slice: {
-        percentage: 60,
+        speed: 60,
         preset: '',
         availablePresets: [],
         direction: null,
@@ -205,7 +205,7 @@ describe('LightHeroCard', () => {
     slots = lightSlots({
       color: {
         cap: colorCap,
-        slice: { mode: 'mired', mireds: 425, lastChangedAt: 0 },
+        slice: { mode: 'mired', colorTemperature: 425, lastChangedAt: 0 },
         available: true,
       },
     })
@@ -276,7 +276,7 @@ describe('FanHeroCard', () => {
       fanControl: {
         cap: fanCap,
         slice: {
-          percentage: null,
+          speed: null,
           preset: '',
           availablePresets: [],
           direction: null,
@@ -311,7 +311,7 @@ describe('FanHeroCard', () => {
       fanControl: {
         cap: fanCap,
         slice: {
-          percentage: 60,
+          speed: 60,
           preset: 'auto',
           availablePresets: ['auto', 'turbo'],
           direction: null,
@@ -339,7 +339,7 @@ describe('FanHeroCard', () => {
       fanControl: {
         cap: fanCap,
         slice: {
-          percentage: 60,
+          speed: 60,
           preset: 'auto',
           availablePresets: ['auto', 'turbo'],
           direction: null,
@@ -372,7 +372,7 @@ describe('FanHeroCard', () => {
       fanControl: {
         cap: fanCap,
         slice: {
-          percentage: 60,
+          speed: 60,
           percentageStep: 25,
           preset: '',
           availablePresets: [],
@@ -411,6 +411,6 @@ describe('FanHeroCard', () => {
     fireEvent.pointerMove(knob, { pointerId: 1, clientX: 75, clientY: 0 })
 
     // fraction 0.5 → round((0.5*100)/25)*25 = round(2)*25 = 50
-    expect(fanCap.setPercentage).toHaveBeenCalledWith({ percentage: 50 })
+    expect(fanCap.setPercentage).toHaveBeenCalledWith({ speed: 50 })
   })
 })

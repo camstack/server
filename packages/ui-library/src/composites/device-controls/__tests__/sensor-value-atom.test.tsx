@@ -54,7 +54,7 @@ beforeEach(() => {
 describe('SensorValueAtom', () => {
   describe('numeric sensor — temperature (canonical unit from ROLE_DESCRIPTOR)', () => {
     it('renders value + canonical unit °C (no sourceInfo needed)', () => {
-      mockSlice = { celsius: 21.5, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 21.5, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'temperature-sensor',
@@ -76,7 +76,7 @@ describe('SensorValueAtom', () => {
     })
 
     it('converts to °F with precision 0 from a per-device display override', () => {
-      mockSlice = { celsius: 20, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 20, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'temperature-sensor',
@@ -90,7 +90,7 @@ describe('SensorValueAtom', () => {
     })
 
     it('ignores a cross-dimension override (keeps source unit + identity value)', () => {
-      mockSlice = { celsius: 20, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 20, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'temperature-sensor',
@@ -132,7 +132,6 @@ describe('SensorValueAtom', () => {
         state: 'home',
         location: null,
         gps: null,
-        batteryPercent: null,
         lastChangedAt: 0,
       }
       const device: DeviceItemDevice = {
@@ -149,7 +148,6 @@ describe('SensorValueAtom', () => {
         state: 'not_home',
         location: null,
         gps: null,
-        batteryPercent: null,
         lastChangedAt: 0,
       }
       const device: DeviceItemDevice = {
@@ -186,7 +184,7 @@ describe('SensorValueAtom', () => {
 
   describe('power sensor — power-meter cap (canonical unit W from ROLE_DESCRIPTOR)', () => {
     it('renders watts value and canonical unit W (no sourceInfo needed)', () => {
-      mockSlice = { watts: 1200, lastFetchedAt: 1700000000000 }
+      mockSlice = { power: 1200, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'power-sensor',
@@ -201,9 +199,9 @@ describe('SensorValueAtom', () => {
       // A numericSensor slice has { value: 1200 } — watts would be absent,
       // so if the descriptor wrongly pointed to numericSensor the render would
       // see undefined and return null. With the correct fix pointing to
-      // powerMeter, { watts: undefined } also renders null — but the key test
+      // powerMeter, { power: undefined } also renders null — but the key test
       // is that when the correct powerMeter slice is present it DOES render.
-      mockSlice = { watts: undefined, lastFetchedAt: 0 }
+      mockSlice = { power: undefined, lastFetchedAt: 0 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'power-sensor',
@@ -217,7 +215,7 @@ describe('SensorValueAtom', () => {
     it('renders precision-formatted value when slice carries precision field', () => {
       // temperature-sensor slice now carries precision populated by the HA provider.
       // SensorValueAtom reads slice['precision'] and passes it to formatNumeric.
-      mockSlice = { celsius: 24.567, precision: 1, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 24.567, precision: 1, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'temperature-sensor',
@@ -231,7 +229,7 @@ describe('SensorValueAtom', () => {
 
     it('renders auto-formatted value when precision is absent from the slice', () => {
       // No precision → auto-formatting: non-integer uses toFixed(1).
-      mockSlice = { celsius: 21.5, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 21.5, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'temperature-sensor',
@@ -430,7 +428,7 @@ describe('SensorValueAtom', () => {
   describe('power-meter sub-roles — voltage / current (distinct fields + canonical units)', () => {
     it('voltage-sensor renders volts field + canonical unit V', () => {
       // HaPowerMeterDevice writes the voltage metric to the `volts` field.
-      mockSlice = { volts: 231, lastFetchedAt: 1700000000000 }
+      mockSlice = { voltage: 231, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = { ...baseDevice, role: 'voltage-sensor' }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
@@ -439,7 +437,7 @@ describe('SensorValueAtom', () => {
     })
 
     it('current-sensor renders amps field + canonical unit A', () => {
-      mockSlice = { amps: 2.5, lastFetchedAt: 1700000000000 }
+      mockSlice = { current: 2.5, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = { ...baseDevice, role: 'current-sensor' }
       const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
       const badge = container.firstChild as HTMLElement
@@ -490,7 +488,7 @@ describe('SensorValueAtom', () => {
 
   describe('an operator override converts from the base unit', () => {
     it('temperature-sensor renders °F when the display override says so', () => {
-      mockSlice = { celsius: 0, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 0, lastFetchedAt: 1700000000000 }
       const device: DeviceItemDevice = {
         ...baseDevice,
         role: 'temperature-sensor',

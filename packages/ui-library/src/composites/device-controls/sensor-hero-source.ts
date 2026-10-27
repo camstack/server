@@ -77,14 +77,14 @@ function capSlice(caps: unknown, capName: string | undefined): unknown {
 }
 
 /**
- * A battery group writes `battery.percentage`. The role's usual cap is
+ * A battery group writes `battery.level`. The role's usual cap is
  * `numeric-sensor.value`. Hand the renderer a slice whose `value` is that
  * percentage so one numeric path draws both.
  */
 function batteryPercentageSlice(caps: unknown): unknown {
   const battery = capSlice(caps, 'battery')
-  if (!isRecord(battery) || typeof battery['percentage'] !== 'number') return undefined
-  return { ...battery, value: battery['percentage'] }
+  if (!isRecord(battery) || typeof battery['level'] !== 'number') return undefined
+  return { ...battery, value: battery['level'] }
 }
 
 function snapshotSlice(input: SensorHeroSourceInput): unknown {

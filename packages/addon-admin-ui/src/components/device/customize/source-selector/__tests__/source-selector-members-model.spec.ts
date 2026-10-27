@@ -64,13 +64,15 @@ describe('directAcceptFields', () => {
   it('offers only the catalog field, not a conversion or another cap', () => {
     const fields = directAcceptFields(
       [
-        { cap: 'temperature-sensor', fieldPath: 'celsius', kind: 'number' },
+        { cap: 'temperature-sensor', fieldPath: 'temperature', kind: 'number' },
         { cap: 'temperature-sensor', fieldPath: 'lastFetchedAt', kind: 'number' },
-        { cap: 'humidity-sensor', fieldPath: 'percent', kind: 'number' },
+        { cap: 'humidity-sensor', fieldPath: 'humidity', kind: 'number' },
       ],
       requestFor('temperature'),
     )
-    expect(fields).toEqual([{ cap: 'temperature-sensor', fieldPath: 'celsius', kind: 'number' }])
+    expect(fields).toEqual([
+      { cap: 'temperature-sensor', fieldPath: 'temperature', kind: 'number' },
+    ])
   })
 })
 
@@ -92,7 +94,7 @@ describe('applyMemberSelection', () => {
       {
         source: { addonId: 'provider-homeassistant', stableId: 'sensor.1' },
         cap: 'temperature-sensor',
-        fieldPath: 'celsius',
+        fieldPath: 'temperature',
       },
     ])
   })

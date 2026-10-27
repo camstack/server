@@ -807,11 +807,11 @@ function statisticSpec(draft: StatisticFormDraft): StatisticHelperSpec | null {
 
 function integralSpec(draft: IntegralFormDraft): IntegralHelperSpec | null {
   if (draft.source === null) return null
-  const watts = draft.source.cap === 'power-meter' && draft.source.fieldPath === 'watts'
+  const power = draft.source.cap === 'power-meter' && draft.source.fieldPath === 'power'
   return {
     kind: 'integral',
     reset: draft.reset,
-    output: watts ? 'energy' : 'meter',
+    output: power ? 'energy' : 'meter',
     source: copyMember(draft.source),
   }
 }

@@ -167,7 +167,7 @@ function fieldRow(handle: CustomizationHandle, unit: string): ReactNode {
       self={SELF}
       selfName={DEVICE.name}
       cap={unit === '%' ? 'humidity-sensor' : 'temperature-sensor'}
-      fieldPath={unit === '%' ? 'percent' : 'celsius'}
+      fieldPath={unit === '%' ? 'humidity' : 'temperature'}
       label={unit === '%' ? 'Humidity' : 'Temperature'}
       unit={unit}
       handle={handle}
@@ -180,8 +180,8 @@ describe('numeric override row', () => {
   it('offers from a device, formula, and convert unit, and the row has no text input', () => {
     const { container } = render(fieldRow(handleOf(null), '°C'))
     expect(container.querySelector('input')).toBeNull()
-    fireEvent.click(screen.getByTestId('override-add-temperature-sensor-celsius'))
-    const row = screen.getByTestId('override-row-temperature-sensor-celsius')
+    fireEvent.click(screen.getByTestId('override-add-temperature-sensor-temperature'))
+    const row = screen.getByTestId('override-row-temperature-sensor-temperature')
     expect(within(row).getByRole('menuitem', { name: 'From a device' })).toBeTruthy()
     expect(within(row).getByRole('menuitem', { name: 'Formula' })).toBeTruthy()
     expect(within(row).getByRole('menuitem', { name: 'Convert unit' })).toBeTruthy()
@@ -198,8 +198,8 @@ describe('numeric override row', () => {
     )
     const handle = { ...handleOf(null), save }
     render(fieldRow(handle, '°C'))
-    const temperature = screen.getByTestId('override-row-temperature-sensor-celsius')
-    fireEvent.click(within(temperature).getByTestId('override-add-temperature-sensor-celsius'))
+    const temperature = screen.getByTestId('override-row-temperature-sensor-temperature')
+    fireEvent.click(within(temperature).getByTestId('override-add-temperature-sensor-temperature'))
     fireEvent.click(within(temperature).getByRole('menuitem', { name: 'Convert unit' }))
     fireEvent.change(screen.getByRole('combobox', { name: 'Target unit' }), {
       target: { value: '°F' },
@@ -213,7 +213,7 @@ describe('numeric override row', () => {
           kind: 'fields',
           cap: 'temperature-sensor',
           fields: {
-            celsius: {
+            temperature: {
               kind: 'expression',
               expr: 'convert(v, "°C", "°F")',
               bindings: {
@@ -221,7 +221,7 @@ describe('numeric override row', () => {
                   kind: 'from',
                   source: SELF,
                   cap: 'temperature-sensor',
-                  fieldPath: 'celsius',
+                  fieldPath: 'temperature',
                 },
               },
             },
@@ -240,8 +240,8 @@ describe('numeric override row', () => {
     )
     const handle = { ...handleOf(null), save }
     render(fieldRow(handle, '°C'))
-    const temperature = screen.getByTestId('override-row-temperature-sensor-celsius')
-    fireEvent.click(within(temperature).getByTestId('override-add-temperature-sensor-celsius'))
+    const temperature = screen.getByTestId('override-row-temperature-sensor-temperature')
+    fireEvent.click(within(temperature).getByTestId('override-add-temperature-sensor-temperature'))
     fireEvent.click(within(temperature).getByRole('menuitem', { name: 'Formula' }))
     fireEvent.click(screen.getByTestId('formula-self-native'))
     const expr = screen.getByRole('textbox')
@@ -255,7 +255,7 @@ describe('numeric override row', () => {
           kind: 'fields',
           cap: 'temperature-sensor',
           fields: {
-            celsius: {
+            temperature: {
               kind: 'expression',
               expr: 'v * 2',
               bindings: {
@@ -263,7 +263,7 @@ describe('numeric override row', () => {
                   kind: 'from',
                   source: SELF,
                   cap: 'temperature-sensor',
-                  fieldPath: 'celsius',
+                  fieldPath: 'temperature',
                 },
               },
             },
@@ -275,8 +275,8 @@ describe('numeric override row', () => {
 
   it('hides convert unit when the field unit has no other unit', () => {
     render(fieldRow(handleOf(null), '%'))
-    const humidity = screen.getByTestId('override-row-humidity-sensor-percent')
-    fireEvent.click(within(humidity).getByTestId('override-add-humidity-sensor-percent'))
+    const humidity = screen.getByTestId('override-row-humidity-sensor-humidity')
+    fireEvent.click(within(humidity).getByTestId('override-add-humidity-sensor-humidity'))
     expect(within(humidity).getByRole('menuitem', { name: 'From a device' })).toBeTruthy()
     expect(within(humidity).getByRole('menuitem', { name: 'Formula' })).toBeTruthy()
     expect(within(humidity).queryByRole('menuitem', { name: 'Convert unit' })).toBeNull()

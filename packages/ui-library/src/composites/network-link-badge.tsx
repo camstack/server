@@ -16,7 +16,7 @@ import { type JSX } from 'react'
 
 export interface NetworkLinkStatusLike {
   readonly type: 'wifi' | 'ethernet' | 'cellular' | 'unknown'
-  readonly signalPercent: number | null
+  readonly signal: number | null
   readonly ssid?: string
 }
 
@@ -59,8 +59,8 @@ export function NetworkLinkBadge({ status, className }: NetworkLinkBadgeProps): 
     )
   }
 
-  const Icon = status.type === 'cellular' ? RadioTower : pickWifiIcon(status.signalPercent)
-  const signal = status.signalPercent === null ? null : Math.round(status.signalPercent)
+  const Icon = status.type === 'cellular' ? RadioTower : pickWifiIcon(status.signal)
+  const signal = status.signal === null ? null : Math.round(status.signal)
   const networkText = status.ssid
     ? t('uiLibrary.networkLinkBadge.typeSsid', 'Network: {{type}} ({{ssid}})', {
         type: status.type,
@@ -75,7 +75,7 @@ export function NetworkLinkBadge({ status, className }: NetworkLinkBadgeProps): 
     <span
       className={cn(
         'inline-flex items-center gap-1 text-[10px] font-medium',
-        signalColor(status.signalPercent),
+        signalColor(status.signal),
         className,
       )}
       title={title}

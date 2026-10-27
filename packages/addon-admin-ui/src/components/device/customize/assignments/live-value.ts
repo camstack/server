@@ -40,7 +40,7 @@ function isSlice(value: unknown): value is Readonly<Record<string, unknown>> {
 function fieldOf(slice: Readonly<Record<string, unknown>>, path: string): LiveValue {
   const value = readPath(slice, path)
   if (value === undefined) return { kind: 'absent' }
-  if (path === 'percentage' && slice.binary === true) return { kind: 'value', value, binary: true }
+  if (path === 'level' && slice.binary === true) return { kind: 'value', value, binary: true }
   return { kind: 'value', value }
 }
 
@@ -75,7 +75,7 @@ export interface LiveValueDisplay {
 type LiveNumber = Extract<LiveValue, { kind: 'value' }>
 
 function numberDisplay(raw: number, value: LiveNumber, target: LiveValueTarget): LiveValueDisplay {
-  if (value.binary === true && target.cap === 'battery' && target.path === 'percentage') {
+  if (value.binary === true && target.cap === 'battery' && target.path === 'level') {
     const low = binaryBatteryIsLow(raw)
     return {
       text: i18n.t(low ? BATTERY_BADGE_LOW_KEY : BATTERY_BADGE_NORMAL_KEY),
@@ -83,7 +83,7 @@ function numberDisplay(raw: number, value: LiveNumber, target: LiveValueTarget):
     }
   }
   return {
-    text: target.path === 'percentage' ? `${Math.round(raw)} %` : String(raw),
+    text: target.path === 'level' ? `${Math.round(raw)} %` : String(raw),
     tone: 'normal',
   }
 }

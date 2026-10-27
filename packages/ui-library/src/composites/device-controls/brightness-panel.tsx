@@ -14,13 +14,13 @@ export function BrightnessPanel({
 }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
-    { setBrightness: (i: { percentage: number }) => Promise<void> },
+    { setBrightness: (i: { level: number }) => Promise<void> },
     BrightnessStatus
   >({
     trpc,
     deviceId,
     cap: (d) =>
-      d.brightness as { setBrightness: (i: { percentage: number }) => Promise<void> } | undefined,
+      d.brightness as { setBrightness: (i: { level: number }) => Promise<void> } | undefined,
     slice: (d) => d.state.brightness,
   })
   const { display, applyOptimistic } = useOptimisticSlice<BrightnessStatus>(slice, {
@@ -43,15 +43,15 @@ export function BrightnessPanel({
         min={0}
         max={100}
         step={1}
-        value={display.percentage}
+        value={display.level}
         disabled={busy}
         onChange={(e) => {
           const pct = Number(e.target.value)
-          applyOptimistic({ percentage: pct })
-          if (!busy) void cap?.setBrightness({ percentage: pct })
+          applyOptimistic({ level: pct })
+          if (!busy) void cap?.setBrightness({ level: pct })
         }}
       />
-      <span className="tabular-nums w-8 text-right">{display.percentage}%</span>
+      <span className="tabular-nums w-8 text-right">{display.level}%</span>
     </label>
   )
 }

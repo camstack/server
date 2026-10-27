@@ -69,7 +69,7 @@ describe('SensorHeroCard', () => {
 
   describe('numeric sensor — temperature (canonical unit °C from ROLE_DESCRIPTOR)', () => {
     it('renders value and canonical unit °C (no sourceInfo needed)', () => {
-      mockSlice = { celsius: 21, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 21, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({ role: 'temperature-sensor' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.getByText('21')).toBeTruthy()
@@ -77,7 +77,7 @@ describe('SensorHeroCard', () => {
     })
 
     it('renders decimal value formatted to 1dp when not integer', () => {
-      mockSlice = { celsius: 21.5, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 21.5, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({ role: 'temperature-sensor' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.getByText('21.5')).toBeTruthy()
@@ -85,7 +85,7 @@ describe('SensorHeroCard', () => {
     })
 
     it('renders sensor name label', () => {
-      mockSlice = { celsius: 21, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 21, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({
         name: 'Living Room Temp',
         role: 'temperature-sensor',
@@ -105,7 +105,7 @@ describe('SensorHeroCard', () => {
       mockSlice = undefined
       mockSnapshot = {
         status: 'success',
-        data: { 'temperature-sensor': { celsius: 21.4 } },
+        data: { 'temperature-sensor': { temperature: 21.4 } },
       }
       mockDeviceData = makeDevice({
         id: 910,
@@ -184,7 +184,6 @@ describe('SensorHeroCard', () => {
         state: 'home',
         location: null,
         gps: null,
-        batteryPercent: null,
         lastChangedAt: 0,
       }
       mockDeviceData = makeDevice({ role: 'presence', type: 'presence' })
@@ -197,7 +196,6 @@ describe('SensorHeroCard', () => {
         state: 'not_home',
         location: null,
         gps: null,
-        batteryPercent: null,
         lastChangedAt: 0,
       }
       mockDeviceData = makeDevice({ role: 'presence', type: 'presence' })
@@ -235,7 +233,7 @@ describe('SensorHeroCard', () => {
     })
 
     it('does NOT render a battery bar for a non-battery numeric sensor', () => {
-      mockSlice = { celsius: 21, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 21, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({ role: 'temperature-sensor' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.queryByTestId('battery-bar')).toBeNull()
@@ -317,7 +315,7 @@ describe('SensorHeroCard', () => {
 
   describe('per-device display override', () => {
     it('converts a °C temperature slice to °F with precision 0 from display override', () => {
-      mockSlice = { celsius: 20, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 20, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({
         role: 'temperature-sensor',
         display: { unit: '°F', precision: 0 },
@@ -330,7 +328,7 @@ describe('SensorHeroCard', () => {
     })
 
     it('applies a per-role display default under no device override', () => {
-      mockSlice = { celsius: 0, lastFetchedAt: 1700000000000 }
+      mockSlice = { temperature: 0, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({ role: 'temperature-sensor' })
       mockRoleDefaults = { defaults: { 'temperature-sensor': { unit: '°F' } } }
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
@@ -341,7 +339,7 @@ describe('SensorHeroCard', () => {
 
   describe('numeric sensor — humidity (canonical unit % from ROLE_DESCRIPTOR)', () => {
     it('renders percent value and canonical % unit (no sourceInfo needed)', () => {
-      mockSlice = { percent: 65, lastFetchedAt: 1700000000000 }
+      mockSlice = { humidity: 65, lastFetchedAt: 1700000000000 }
       mockDeviceData = makeDevice({ role: 'humidity-sensor' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.getByText('65')).toBeTruthy()

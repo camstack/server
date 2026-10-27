@@ -482,16 +482,16 @@ export function VacuumHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNod
           </div>
 
           {/* Cleaning progress (only while a task is in progress) */}
-          {slice?.progressPercent != null && (
+          {slice?.progress != null && (
             <div className="flex items-center gap-2">
               <div className="h-1.5 flex-1 rounded bg-surface-hover overflow-hidden">
                 <div
                   className="h-full bg-primary transition-[width] duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, slice.progressPercent))}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, slice.progress))}%` }}
                 />
               </div>
               <span className="tabular-nums text-xs text-foreground-subtle">
-                {Math.round(slice.progressPercent)}%
+                {Math.round(slice.progress)}%
               </span>
             </div>
           )}

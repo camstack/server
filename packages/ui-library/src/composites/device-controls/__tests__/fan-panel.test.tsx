@@ -12,7 +12,7 @@ beforeEach(() => {
   mockResult = {
     cap: { setPercentage, setPreset },
     slice: {
-      percentage: 50,
+      speed: 50,
       preset: '',
       availablePresets: ['auto', 'turbo'],
       direction: null,
@@ -30,7 +30,7 @@ describe('FanPanel', () => {
     const slider = screen.getByLabelText('Fan speed') as HTMLInputElement
     expect(slider.value).toBe('50')
     fireEvent.change(slider, { target: { value: '80' } })
-    expect(setPercentage).toHaveBeenCalledWith({ percentage: 80 })
+    expect(setPercentage).toHaveBeenCalledWith({ speed: 80 })
   })
   it('shows preset picker only with fan-preset feature', () => {
     render(<FanPanel trpc={trpc} deviceId={1} features={['fan-preset']} layout="full" />)
@@ -62,7 +62,7 @@ describe('FanPanel', () => {
     mockResult = {
       cap: { setPercentage, setPreset },
       slice: {
-        percentage: 50,
+        speed: 50,
         preset: '',
         availablePresets: ['auto', 'turbo'],
         direction: null,
@@ -80,7 +80,7 @@ describe('FanPanel', () => {
     mockResult = {
       cap: { setPercentage, setPreset },
       slice: {
-        percentage: 50,
+        speed: 50,
         preset: '',
         availablePresets: [],
         direction: null,
@@ -94,7 +94,7 @@ describe('FanPanel', () => {
     const slider = screen.getByLabelText('Fan speed') as HTMLInputElement
     fireEvent.change(slider, { target: { value: '60' } })
     // Math.round(60 / 25) * 25 = Math.round(2.4) * 25 = 2 * 25 = 50
-    expect(setPercentage).toHaveBeenCalledWith({ percentage: 50 })
+    expect(setPercentage).toHaveBeenCalledWith({ speed: 50 })
   })
   it('falls back to step=1 when percentageStep is absent', () => {
     render(<FanPanel trpc={trpc} deviceId={1} features={['fan-speed']} layout="full" />)

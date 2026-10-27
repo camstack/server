@@ -330,7 +330,7 @@ const SLICES: Readonly<Record<string, unknown>> = {
     phase: null,
     lastFetchedAt: null,
   },
-  '512/battery': { percentage: 82, lastFetchedAt: NOW },
+  '512/battery': { level: 82, lastFetchedAt: NOW },
 }
 
 const WIREABLE: Readonly<Record<number, unknown>> = {
@@ -360,7 +360,7 @@ const WIREABLE: Readonly<Record<number, unknown>> = {
     caps: [{ cap: 'numeric-sensor', fields: [{ path: 'value', kind: 'number' }] }],
   },
   512: {
-    caps: [{ cap: 'battery', fields: [{ path: 'percentage', kind: 'number' }] }],
+    caps: [{ cap: 'battery', fields: [{ path: 'level', kind: 'number' }] }],
   },
 }
 
@@ -475,7 +475,7 @@ export default defineFixtures({
         : { state: 'loaded', view: null },
     'deviceState.getSnapshot': (input: { deviceId: number }) => {
       if (input.deviceId === 510) return { 'numeric-sensor': { value: 40 } }
-      if (input.deviceId === 512) return { battery: { percentage: 82 } }
+      if (input.deviceId === 512) return { battery: { level: 82 } }
       return null
     },
     'deviceManager.listDeviceIdsByCaps': (input: { capNames: readonly string[] }) => {

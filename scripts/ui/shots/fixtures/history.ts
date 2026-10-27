@@ -99,7 +99,7 @@ const PANELS_ROW = {
         name: 'Kitchen power',
         window: '7d',
         selection: [
-          { subject: { kind: 'device', deviceId: 202 }, key: 'cap:power-meter.watts', scope: '' },
+          { subject: { kind: 'device', deviceId: 202 }, key: 'cap:power-meter.power', scope: '' },
           { subject: { kind: 'device', deviceId: 202 }, key: 'cap:dishwasher.state', scope: '' },
         ],
       },

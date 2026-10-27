@@ -70,7 +70,7 @@ function readingOf(
     helper.kind === 'statistic' || helper.kind === 'derivative'
       ? { cap: 'numeric-sensor', field: 'value' }
       : helper.output === 'energy'
-        ? { cap: 'power-meter', field: 'kwhTotal' }
+        ? { cap: 'power-meter', field: 'energy' }
         : { cap: 'meter', field: 'value' }
   const value = snapshot.caps[output.cap]?.[output.field]
   return typeof value === 'number' && Number.isFinite(value)

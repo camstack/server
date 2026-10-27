@@ -15,9 +15,9 @@ import { TapToggle } from './tap-toggle'
 // narrowing (mirrors brightness-panel.tsx / lock-hero-card.tsx).
 
 type SwitchCap = { setState: (i: { on: boolean }) => Promise<void> }
-type BrightnessCap = { setBrightness: (i: { percentage: number }) => Promise<void> }
+type BrightnessCap = { setBrightness: (i: { level: number }) => Promise<void> }
 type ColorCap = {
-  setColor: (i: { color: { mode: 'mired'; mireds: number } }) => Promise<void>
+  setColor: (i: { color: { mode: 'mired'; colorTemperature: number } }) => Promise<void>
 }
 
 // ── Colour-temperature mapping ────────────────────────────────────────────────
@@ -100,14 +100,14 @@ export function LightHeroCard({
   const on = swOpt.display.on === true
   const swBusy = !sw.available
 
-  const percentage = brightOpt.display?.percentage ?? 0
+  const percentage = brightOpt.display?.level ?? 0
   const brightBusy = !bright.available
   const fraction = on ? percentage / 100 : 0
   const arcColor = on ? ARC_COLOR_ON : ARC_COLOR_OFF
 
   const supportsCt =
     (features?.includes(DeviceFeature.LightColorMired) ?? false) && color.cap !== undefined
-  const ctMireds = colorOpt.display?.mireds
+  const ctMireds = colorOpt.display?.colorTemperature
   const ctBusy = !color.available
 
   const handleToggle = (): void => {
@@ -148,8 +148,8 @@ export function LightHeroCard({
               disabled={brightBusy || !on}
               onChange={(e) => {
                 const pct = Number(e.target.value)
-                brightOpt.applyOptimistic({ percentage: pct })
-                if (!brightBusy) void bright.cap?.setBrightness({ percentage: pct })
+                brightOpt.applyOptimistic({ level: pct })
+                if (!brightBusy) void bright.cap?.setBrightness({ level: pct })
               }}
             />
             <span className="tabular-nums w-9 text-right">{percentage}%</span>
@@ -184,8 +184,9 @@ export function LightHeroCard({
               disabled={ctBusy || !on}
               onChange={(e) => {
                 const mireds = Number(e.target.value)
-                colorOpt.applyOptimistic({ mode: 'mired', mireds })
-                if (!ctBusy) void color.cap?.setColor({ color: { mode: 'mired', mireds } })
+                colorOpt.applyOptimistic({ mode: 'mired', colorTemperature: mireds })
+                if (!ctBusy)
+                  void color.cap?.setColor({ color: { mode: 'mired', colorTemperature: mireds } })
               }}
             />
             <div className="pointer-events-none mt-1">

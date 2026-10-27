@@ -19,7 +19,7 @@ type MediaPlayerCap = {
   pause: (i: Record<string, never>) => Promise<void>
   next: (i: Record<string, never>) => Promise<void>
   previous: (i: Record<string, never>) => Promise<void>
-  seek: (i: { positionMs: number }) => Promise<void>
+  seek: (i: { position: number }) => Promise<void>
   setVolume: (i: { volumeLevel: number }) => Promise<void>
   setMute: (i: { muted: boolean }) => Promise<void>
 }
@@ -148,8 +148,8 @@ export function MediaPlayerHeroCard({
 
   const supportsSeek =
     (features?.includes(DeviceFeature.MediaPlayerSeek) ?? false) &&
-    display.durationMs !== null &&
-    display.durationMs > 0
+    display.duration !== null &&
+    display.duration > 0
   const supportsNext = features?.includes(DeviceFeature.MediaPlayerNext) ?? false
   const supportsPrevious = features?.includes(DeviceFeature.MediaPlayerPrevious) ?? false
   const supportsVolume =
@@ -167,7 +167,7 @@ export function MediaPlayerHeroCard({
   }
 
   const subtitle = display.currentMedia?.artist ?? display.currentMedia?.album ?? null
-  const seekFraction = progressFraction(display.positionMs, display.durationMs)
+  const seekFraction = progressFraction(display.position, display.duration)
   const volumeLevel = display.volumeLevel ?? 0
 
   return (
@@ -184,16 +184,16 @@ export function MediaPlayerHeroCard({
               aria-label={t('uiLibrary.mediaPlayerHero.seek', 'Seek')}
               type="range"
               min={0}
-              max={display.durationMs ?? 0}
+              max={display.duration ?? 0}
               step={1000}
               className="absolute inset-0 h-4 w-full cursor-pointer opacity-0"
-              value={display.positionMs ?? 0}
+              value={display.position ?? 0}
               disabled={busy}
               onChange={(e) => {
                 if (busy) return
                 const positionMs = Number(e.target.value)
-                applyOptimistic({ positionMs })
-                void cap.seek({ positionMs })
+                applyOptimistic({ position: positionMs })
+                void cap.seek({ position: positionMs })
               }}
             />
             <div className="pointer-events-none">
@@ -201,8 +201,8 @@ export function MediaPlayerHeroCard({
             </div>
           </label>
           <div className="flex justify-between text-[11px] tabular-nums text-foreground-subtle">
-            <span>{formatClock(display.positionMs)}</span>
-            <span>{formatClock(display.durationMs)}</span>
+            <span>{formatClock(display.position)}</span>
+            <span>{formatClock(display.duration)}</span>
           </div>
         </div>
       )}

@@ -78,7 +78,7 @@ export function derivedBinaryTemplateDraft(): EditorDraft {
                 kind: 'from',
                 source: TEMPLATE_PLACEHOLDER_SOURCE,
                 cap: 'temperature-sensor',
-                fieldPath: 'celsius',
+                fieldPath: 'temperature',
               },
             },
           },

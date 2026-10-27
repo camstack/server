@@ -50,7 +50,6 @@ interface PresenceSliceValue {
   readonly state: string
   readonly location: string | null
   readonly gps: unknown | null
-  readonly batteryPercent: number | null
   readonly lastChangedAt: number
 }
 
@@ -165,25 +164,25 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
   // ── Numeric sensors ──────────────────────────────────────────────────
   'temperature-sensor': {
     kind: 'numeric',
-    field: 'celsius',
+    field: 'temperature',
     quantity: 'temperature',
     getSliceHandle: (s) => s.temperatureSensor,
   },
   'humidity-sensor': {
     kind: 'numeric',
-    field: 'percent',
+    field: 'humidity',
     quantity: 'humidity',
     getSliceHandle: (s) => s.humiditySensor,
   },
   'ambient-light-sensor': {
     kind: 'numeric',
-    field: 'lux',
+    field: 'illuminance',
     quantity: 'illuminance',
     getSliceHandle: (s) => s.ambientLightSensor,
   },
   'pressure-sensor': {
     kind: 'numeric',
-    field: 'hpa',
+    field: 'pressure',
     quantity: 'pressure',
     getSliceHandle: (s) => s.pressureSensor,
   },
@@ -230,25 +229,25 @@ export const ROLE_DESCRIPTOR: Record<string, SensorDescriptor> = {
   },
   'power-sensor': {
     kind: 'numeric',
-    field: 'watts',
+    field: 'power',
     quantity: 'power',
     getSliceHandle: (s) => s.powerMeter,
   },
   'energy-sensor': {
     kind: 'numeric',
-    field: 'kwhTotal',
+    field: 'energy',
     quantity: 'energy',
     getSliceHandle: (s) => s.powerMeter,
   },
   'voltage-sensor': {
     kind: 'numeric',
-    field: 'volts',
+    field: 'voltage',
     quantity: 'voltage',
     getSliceHandle: (s) => s.powerMeter,
   },
   'current-sensor': {
     kind: 'numeric',
-    field: 'amps',
+    field: 'current',
     quantity: 'current',
     getSliceHandle: (s) => s.powerMeter,
   },

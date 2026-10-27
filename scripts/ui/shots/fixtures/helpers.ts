@@ -11,12 +11,12 @@ import { defineFixtures } from './_define'
 const porch = {
   source: { addonId: 'provider-homeassistant', stableId: 'sensor.porch' },
   cap: 'temperature-sensor',
-  fieldPath: 'celsius',
+  fieldPath: 'temperature',
 }
 const garden = {
   source: { addonId: 'provider-homeassistant', stableId: 'sensor.garden' },
   cap: 'temperature-sensor',
-  fieldPath: 'celsius',
+  fieldPath: 'temperature',
 }
 
 const compiled = compileHelper({
@@ -222,7 +222,7 @@ export default defineFixtures({
       }
       if (input.deviceId === 911 || input.deviceId === 912) {
         return {
-          caps: [{ cap: 'temperature-sensor', fields: [{ path: 'celsius', kind: 'number' }] }],
+          caps: [{ cap: 'temperature-sensor', fields: [{ path: 'temperature', kind: 'number' }] }],
         }
       }
       if (input.deviceId === 921 || input.deviceId === 922) {
@@ -243,15 +243,15 @@ export default defineFixtures({
     'deviceState.getSnapshot': (input: { deviceId?: number }) => {
       if (input.deviceId === 910) {
         return {
-          'temperature-sensor': { celsius: 21.4 },
+          'temperature-sensor': { temperature: 21.4 },
           'group-status': { included: 1, excluded: 1, total: 2 },
         }
       }
-      if (input.deviceId === 911) return { 'temperature-sensor': { celsius: 21.4 } }
+      if (input.deviceId === 911) return { 'temperature-sensor': { temperature: 21.4 } }
       if (input.deviceId === 920) {
         return {
           switch: { on: true, lastChangedAt: 1 },
-          brightness: { percentage: 80, lastChangedAt: 1 },
+          brightness: { level: 80, lastChangedAt: 1 },
           'group-status': { included: 1, excluded: 1, total: 2 },
           'group-commands': {
             results: [
@@ -294,15 +294,17 @@ export default defineFixtures({
       return {}
     },
     'deviceState.getCapSlice': (input: { deviceId?: number; capName?: string }) => {
-      if (input.deviceId === 910 && input.capName === 'temperature-sensor') return { celsius: 21.4 }
+      if (input.deviceId === 910 && input.capName === 'temperature-sensor')
+        return { temperature: 21.4 }
       if (input.deviceId === 910 && input.capName === 'group-status') {
         return { included: 1, excluded: 1, total: 2 }
       }
-      if (input.deviceId === 911 && input.capName === 'temperature-sensor') return { celsius: 21.4 }
+      if (input.deviceId === 911 && input.capName === 'temperature-sensor')
+        return { temperature: 21.4 }
       if (input.deviceId === 920 && input.capName === 'switch')
         return { on: true, lastChangedAt: 1 }
       if (input.deviceId === 920 && input.capName === 'brightness') {
-        return { percentage: 80, lastChangedAt: 1 }
+        return { level: 80, lastChangedAt: 1 }
       }
       return {}
     },

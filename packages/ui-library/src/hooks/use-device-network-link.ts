@@ -11,8 +11,8 @@ import { useDeviceState, type UseDeviceProxyTrpc } from './use-device-proxy'
 export interface NetworkLinkStatus {
   readonly type: 'wifi' | 'ethernet' | 'cellular' | 'unknown'
   /** `null` = not known or not applicable (a wired link has no signal). */
-  readonly signalPercent: number | null
-  readonly rssiDbm?: number
+  readonly signal: number | null
+  readonly rssi?: number
   readonly ssid?: string
   readonly lastUpdated: number
 }

@@ -225,7 +225,7 @@ function contextLines(scope: ReplScope): string[] {
         "  await device.ptz.move({ direction: 'left', steps: 1 })",
         "  await device.ptz.goToPreset({ presetId: 'home' })",
         '  await device.switch.setState({ on: true })',
-        '  await device.brightness.setBrightness({ percentage: 60 })',
+        '  await device.brightness.setBrightness({ level: 60 })',
         '  await device.reboot.reboot({})',
         '',
         'Subscribe to slice changes:',

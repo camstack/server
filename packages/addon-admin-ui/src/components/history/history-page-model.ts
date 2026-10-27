@@ -133,7 +133,7 @@ export const BUILT_IN_PANELS: readonly BuiltInPanelId[] = [
 ]
 
 const TEMPERATURE_KEYS: ReadonlySet<string> = new Set([
-  'cap:temperature-sensor.celsius',
+  'cap:temperature-sensor.temperature',
   'cap:climate-control.currentTemp',
 ])
 

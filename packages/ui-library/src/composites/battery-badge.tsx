@@ -33,7 +33,7 @@ import {
 export interface BatteryStatusLike {
   /** `null` means no reading has landed yet (cold seed) — NOT a flat 0 %
    *  (D315). Render "Unknown", never a red critical badge. */
-  readonly percentage: number | null
+  readonly level: number | null
   readonly charging: 'dc' | 'solar' | 'none' | 'unknown'
   readonly sleeping: boolean
   /** True for a binary LOW_BAT source with no real % — render "Normal"/"Low"
@@ -76,7 +76,7 @@ export function BatteryBadge({
 }: BatteryBadgeProps): JSX.Element | null {
   const t = useUiText()
   if (!status) return null
-  const { percentage, charging, sleeping, binary } = status
+  const { level: percentage, charging, sleeping, binary } = status
 
   // No reading has landed yet (cold seed) — neutral "Unknown", never a
   // fabricated 0 % with the red critical icon (D315). A device nobody has

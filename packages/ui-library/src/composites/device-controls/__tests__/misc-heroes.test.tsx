@@ -103,8 +103,8 @@ function mediaSlice(over?: Record<string, unknown>): Record<string, unknown> {
     source: '',
     availableSources: [],
     currentMedia: { type: 'music', title: 'Test Track', artist: 'Tester' },
-    positionMs: 30_000,
-    durationMs: 120_000,
+    position: 30_000,
+    duration: 120_000,
     shuffle: null,
     repeat: null,
     lastChangedAt: 0,
@@ -242,17 +242,17 @@ describe('MediaPlayerHeroCard', () => {
     expect(screen.queryByTestId('media-seek')).toBeNull()
   })
 
-  it('does not render the seek track when durationMs is null (feature present)', () => {
+  it('does not render the seek track when duration is null (feature present)', () => {
     slots = mediaSlots({
-      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ durationMs: null }), available: true },
+      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ duration: null }), available: true },
     })
     render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
     expect(screen.queryByTestId('media-seek')).toBeNull()
   })
 
-  it('does not render the seek track when durationMs is zero (degenerate)', () => {
+  it('does not render the seek track when duration is zero (degenerate)', () => {
     slots = mediaSlots({
-      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ durationMs: 0 }), available: true },
+      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ duration: 0 }), available: true },
     })
     render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
     expect(screen.queryByTestId('media-seek')).toBeNull()

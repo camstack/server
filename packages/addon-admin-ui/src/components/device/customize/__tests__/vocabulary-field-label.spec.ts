@@ -6,7 +6,7 @@ describe('vocabularyFieldLabel', () => {
     expect(vocabularyCapTitle('temperature-sensor', 'en')).toBe('Temperature')
     expect(vocabularyCapTitle('temperature-sensor', 'it')).toBe('Temperatura')
     expect(vocabularyCapTitle('binary', 'en')).toBe('Binary sensor')
-    expect(vocabularyFieldLabel('temperature-sensor', 'celsius', 'en')).toBe('Temperature (°C)')
+    expect(vocabularyFieldLabel('temperature-sensor', 'temperature', 'en')).toBe('Temperature (°C)')
     expect(vocabularyFieldLabel('binary', 'on', 'en')).toBe('On')
     expect(vocabularyFieldLabel('binary', 'on', 'it')).toBe('Acceso')
     expect(vocabularyFieldLabel('binary', 'lastChangedAt', 'en')).toBe('Last change')

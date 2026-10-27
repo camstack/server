@@ -35,7 +35,7 @@ const HOST = row(2, {
 })
 const WATTS: SourceDestination = {
   cap: 'power-meter',
-  targetId: 'watts',
+  targetId: 'power',
   title: 'Watts',
 }
 

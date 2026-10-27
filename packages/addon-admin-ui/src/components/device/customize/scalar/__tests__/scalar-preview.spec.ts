@@ -10,7 +10,7 @@ const POWER: ScalarFormSource = {
   addonId: SWITCH_REF.addonId,
   stableId: SWITCH_REF.stableId,
   cap: 'power-meter',
-  fieldPath: 'watts',
+  fieldPath: 'power',
   valueKind: 'number',
   sourceUnit: 'W',
   changedAtField: null,
@@ -67,7 +67,7 @@ describe('previewScalarOverride', () => {
   it('an identity number previews the source value through the compiler', () => {
     const preview = previewScalarOverride({
       cap: 'battery',
-      targetId: 'percentage',
+      targetId: 'level',
       device: DISHWASHER,
       apply: 'add',
       source: { ...POWER, cap: 'numeric-sensor', fieldPath: 'value', sourceUnit: null },

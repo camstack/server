@@ -35,7 +35,7 @@ const catalog = buildCatalog(
     },
     {
       device: { id: 2, name: 'Sensor', location: 'Attic' },
-      series: [info('cap:temperature-sensor.celsius', { unit: '°C' })],
+      series: [info('cap:temperature-sensor.temperature', { unit: '°C' })],
     },
     {
       device: { id: 3, name: 'Dishwasher', location: 'Kitchen' },

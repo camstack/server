@@ -253,10 +253,10 @@ function DishwasherPanel({
             {featureLabel(display.program)}
           </span>
         )}
-        {display.remainingSeconds != null && (
+        {display.remaining != null && (
           <span className="inline-flex items-center gap-0.5 text-xs text-foreground-subtle tabular-nums shrink-0">
             <Timer className="h-3 w-3" />
-            {formatDuration(display.remainingSeconds, t)}
+            {formatDuration(display.remaining, t)}
           </span>
         )}
         <DishwasherIconButton
@@ -288,7 +288,7 @@ function DishwasherPanel({
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4">
       <div className="flex items-start gap-4">
-        <DishwasherGraphic running={running} progressPercent={display.progressPercent} />
+        <DishwasherGraphic running={running} progressPercent={display.progress} />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn('text-3xl font-semibold', meta.tone)}>{meta.label}</span>
@@ -303,31 +303,31 @@ function DishwasherPanel({
               {featureLabel(display.program)}
             </span>
           )}
-          {display.remainingSeconds != null && (
+          {display.remaining != null && (
             <span className="inline-flex items-center gap-1 text-sm text-foreground-subtle tabular-nums">
               <Timer className="h-3.5 w-3.5" />
               {t('uiLibrary.dishwasher.remaining', '{{time}} left', {
-                time: formatDuration(display.remainingSeconds, t),
+                time: formatDuration(display.remaining, t),
               })}
             </span>
           )}
-          {display.delayedStartSeconds != null && display.delayedStartSeconds > 0 && (
+          {display.delayedStart != null && display.delayedStart > 0 && (
             <span className="text-xs text-foreground-subtle tabular-nums">
               {t('uiLibrary.dishwasher.startsIn', 'Starts in {{time}}', {
-                time: formatDuration(display.delayedStartSeconds, t),
+                time: formatDuration(display.delayedStart, t),
               })}
             </span>
           )}
-          {display.progressPercent != null && (
+          {display.progress != null && (
             <div className="flex items-center gap-2">
               <div className="h-1.5 flex-1 rounded bg-surface-hover overflow-hidden">
                 <div
                   className="h-full bg-primary transition-[width] duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, display.progressPercent))}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, display.progress))}%` }}
                 />
               </div>
               <span className="tabular-nums text-xs text-foreground-subtle">
-                {Math.round(display.progressPercent)}%
+                {Math.round(display.progress)}%
               </span>
             </div>
           )}

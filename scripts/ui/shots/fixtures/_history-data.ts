@@ -148,7 +148,7 @@ export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
       at: (t) => 46 + 6 * Math.sin(DAY_PHASE(t) + 0.6),
     }),
     spec({
-      key: 'cap:battery.percentage',
+      key: 'cap:battery.level',
       scope: '',
       kind: 'gauge',
       unit: '%',
@@ -188,7 +188,7 @@ export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
       },
     }),
     spec({
-      key: 'cap:power-meter.watts',
+      key: 'cap:power-meter.power',
       scope: '',
       kind: 'gauge',
       unit: 'W',
@@ -197,7 +197,7 @@ export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
         dishwasherOrdinal(t) === 1 ? 1180 + 620 * Math.max(0, wave(t, 25 * MINUTE)) : 1.4,
     }),
     spec({
-      key: 'cap:power-meter.kwhTotal',
+      key: 'cap:power-meter.energy',
       scope: '',
       kind: 'counter',
       unit: 'kWh',
@@ -395,7 +395,7 @@ export function queryResult(
       const prev = s.at(start - bucketMs)
       return {
         scope: s.scope,
-        derivedFrom: s.key === 'derived:energy.kwh' ? 'cap:power-meter.kwhTotal' : null,
+        derivedFrom: s.key === 'derived:energy.kwh' ? 'cap:power-meter.energy' : null,
         before:
           prev === null
             ? null

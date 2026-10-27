@@ -9,7 +9,7 @@ beforeEach(() => {
   setBrightness.mockReset()
   mockResult = {
     cap: { setBrightness },
-    slice: { percentage: 40, lastChangedAt: 0 },
+    slice: { level: 40, lastChangedAt: 0 },
     available: true,
   }
 })
@@ -19,7 +19,7 @@ describe('BrightnessPanel', () => {
     const slider = screen.getByLabelText('Brightness') as HTMLInputElement
     expect(slider.value).toBe('40')
     fireEvent.change(slider, { target: { value: '75' } })
-    expect(setBrightness).toHaveBeenCalledWith({ percentage: 75 })
+    expect(setBrightness).toHaveBeenCalledWith({ level: 75 })
   })
   it('renders nothing when unbound', () => {
     mockResult = { cap: { setBrightness }, slice: undefined, available: false }

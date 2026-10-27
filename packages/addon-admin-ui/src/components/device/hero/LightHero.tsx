@@ -37,10 +37,10 @@ export function LightHero({ deviceId, deviceName }: HeroProps) {
   // Local slider value — mirrors the slice but allows uncommitted drag.
   // Synced from the slice whenever the firmware-reported level changes
   // so an external change (HomeKit, scene trigger) shows up immediately.
-  const [sliderValue, setSliderValue] = useState<number>(brightnessSlice?.percentage ?? 0)
+  const [sliderValue, setSliderValue] = useState<number>(brightnessSlice?.level ?? 0)
   useEffect(() => {
-    if (brightnessSlice?.percentage !== undefined) setSliderValue(brightnessSlice.percentage)
-  }, [brightnessSlice?.percentage])
+    if (brightnessSlice?.level !== undefined) setSliderValue(brightnessSlice.level)
+  }, [brightnessSlice?.level])
 
   const handleToggle = async () => {
     // Wait for the slice to land before allowing a write — the cap
@@ -64,7 +64,7 @@ export function LightHero({ deviceId, deviceName }: HeroProps) {
     if (busy || !hasBrightness || !dev?.brightness) return
     setBusy(true)
     try {
-      await dev.brightness.setBrightness({ percentage: sliderValue })
+      await dev.brightness.setBrightness({ level: sliderValue })
     } finally {
       setBusy(false)
     }

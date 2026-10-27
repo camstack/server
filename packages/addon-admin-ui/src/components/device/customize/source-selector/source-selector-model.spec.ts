@@ -10,7 +10,7 @@ import {
 
 const batteryDest: SourceDestination = {
   cap: 'battery',
-  targetId: 'percentage',
+  targetId: 'level',
   title: 'Battery',
 }
 
@@ -48,7 +48,7 @@ describe('judgeSourceCompatibility', () => {
   it('battery percentage + number with identity+linear → direct', () => {
     const field: SourceWireableField = {
       cap: 'battery',
-      path: 'percentage',
+      path: 'level',
       kind: 'number',
       unit: '%',
       currentText: '82',
@@ -73,7 +73,7 @@ describe('judgeSourceCompatibility', () => {
   it('running + number unit W → conversion threshold', () => {
     const field: SourceWireableField = {
       cap: 'power-meter',
-      path: 'watts',
+      path: 'power',
       kind: 'number',
       unit: 'W',
       currentText: '12',
@@ -87,7 +87,7 @@ describe('judgeSourceCompatibility', () => {
   it('running + number unit % → incompatible unit', () => {
     const field: SourceWireableField = {
       cap: 'humidity-sensor',
-      path: 'percent',
+      path: 'humidity',
       kind: 'number',
       unit: '%',
       currentText: '50',
@@ -196,14 +196,14 @@ describe('groupSourceValues', () => {
     const fields: readonly SourceWireableField[] = [
       {
         cap: 'battery',
-        path: 'percentage',
+        path: 'level',
         kind: 'number',
         unit: '%',
         currentText: '82',
       },
       {
         cap: 'power-meter',
-        path: 'watts',
+        path: 'power',
         kind: 'number',
         unit: 'W',
         currentText: '10',

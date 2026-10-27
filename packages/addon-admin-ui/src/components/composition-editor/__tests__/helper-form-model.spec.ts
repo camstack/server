@@ -41,13 +41,13 @@ import {
 const porch: HelperMember = {
   source: { addonId: 'provider-homeassistant', stableId: 'sensor.porch' },
   cap: 'temperature-sensor',
-  fieldPath: 'celsius',
+  fieldPath: 'temperature',
 }
 
 const garden: HelperMember = {
   source: { addonId: 'provider-homeassistant', stableId: 'sensor.garden' },
   cap: 'temperature-sensor',
-  fieldPath: 'celsius',
+  fieldPath: 'temperature',
 }
 
 function temperature(members: readonly HelperMember[]): GroupHelperSpec {
@@ -224,13 +224,13 @@ describe('group status on the device page', () => {
     const template = draftForTemplate('temperature')
     expect(template).not.toBeNull()
     const reading = outputReading(
-      { kind: 'answered', caps: { 'temperature-sensor': { celsius: null } } },
+      { kind: 'answered', caps: { 'temperature-sensor': { temperature: null } } },
       requireTemplate('temperature'),
     )
     expect(reading).toEqual({ kind: 'empty' })
     expect(
       outputReading(
-        { kind: 'answered', caps: { 'temperature-sensor': { celsius: 21.4 } } },
+        { kind: 'answered', caps: { 'temperature-sensor': { temperature: 21.4 } } },
         requireTemplate('temperature'),
       ),
     ).toEqual({ kind: 'number', value: 21.4, unit: '°C' })
@@ -298,7 +298,7 @@ describe('an appliance from a smart plug', () => {
   const plug: HelperMember = {
     source: { addonId: 'provider-homeassistant', stableId: 'sensor.plug_power' },
     cap: 'power-meter',
-    fieldPath: 'watts',
+    fieldPath: 'power',
   }
 
   it('compiles one power reading with the washer defaults and reopens the saved numbers', () => {
