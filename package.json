@@ -37,6 +37,8 @@
     "ui:shots": "tsx scripts/ui/shots/cli.ts",
     "docs:subsystems": "tsx scripts/check-subsystem-map.ts",
     "docs:public-stale": "tsx scripts/check-public-docs-staleness.ts",
+    "changelog:add": "tsx scripts/changelog-add.ts",
+    "readme:generate": "tsx scripts/readme-generate.ts",
     "test:scripts": "vitest run scripts/__tests__ --exclude '**/check-public-docs-staleness.spec.ts' --exclude '**/skill-pointers.spec.ts'",
     "test:heavy": "tsx scripts/run-heavy-specs.ts",
     "test:scripts:slow": "CAMSTACK_REAL_TREE_SPECS=1 vitest run scripts/__tests__",

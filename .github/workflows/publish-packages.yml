@@ -246,6 +246,17 @@ jobs:
             echo "  (force_packages override: $FORCE)"
           fi
 
+      # ── Changelog gate ────────────────────────────────────────────
+      # A package whose own files changed since the last publish tag must have
+      # at least one line under [Unreleased] in its CHANGELOG.md. The failure
+      # lists the packages and the exact `npm run changelog:add` command.
+      # Same diff base as the detection above. Packages that are only
+      # republished (force_packages, closure, bundler candidates) have no own
+      # change and are exempt: the release step writes their line.
+      - name: Gate - changed packages have a changelog entry
+        if: steps.detect.outputs.packages != '' && steps.base.outputs.found == 'true'
+        run: npx tsx scripts/check-changelog-unreleased.ts --base "${{ steps.base.outputs.tag }}" --only "${{ steps.detect.outputs.packages }}"
+
       # ── Bump versions ─────────────────────────────────────────────
       - name: Bump package versions
         if: steps.detect.outputs.packages != '' && github.event.inputs.dry_run != 'true'
@@ -351,6 +362,15 @@ jobs:
           PUBLISH_EFFECTIVE: ${{ env.PUBLISH_PACKAGES_OVERRIDE }}
           PUBLISH_REVERT_DROPPED: ${{ github.event.inputs.dry_run != 'true' }}
         run: node scripts/ci/publish-output.mjs --from-env
+
+      # ── Release the changelogs ────────────────────────────────────
+      # After the bump (and after a dropped bundler's bump was reverted), move
+      # each published package's [Unreleased] entries under its new version.
+      # A package with no entries gets "Rebuilt against updated dependencies."
+      # It runs before `npm publish` so the tarball carries the released file.
+      - name: Move changelog entries under the new versions
+        if: steps.output.outputs.packages != '' && github.event.inputs.dry_run != 'true'
+        run: npx tsx scripts/release-changelog.ts "${{ steps.output.outputs.packages }}"
 
       # ── Pin root-package dependency closures ──────────────────────
       # The workspace declares @camstack/* deps as "*" (always link local);
@@ -566,6 +586,7 @@ jobs:
           # on the drift guard.
           npx tsx scripts/docs-generate.ts
           git add packages/*/package.json server/*/package.json package-lock.json \
+            packages/*/CHANGELOG.md server/*/CHANGELOG.md \
             docs/reference docs/decisions/index.md
           # `--no-verify`: this commit is MACHINE-generated and contains nothing but
           # version numbers and the lockfile. Pre-commit hooks police human edits;
