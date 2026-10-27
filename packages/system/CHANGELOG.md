@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.500] - 2026-10-27
+
 ### Fixed
 
 - Creating, editing and running an Action no longer fails with an internal error
