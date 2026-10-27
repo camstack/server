@@ -40,6 +40,7 @@ export const BUILTIN_SIGNATURES: Readonly<Record<string, string>> = {
   count: 'count(x)',
   dwell: 'dwell(active, onForMs, offForMs)',
   latchedAt: 'latchedAt(value)',
+  schmitt: 'schmitt(x, high, low, onForMs?, offForMs?)',
 }
 
 export const MAX_SUGGESTIONS = 8

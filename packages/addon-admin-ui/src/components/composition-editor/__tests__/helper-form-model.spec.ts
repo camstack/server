@@ -13,8 +13,15 @@ import { describe, expect, it } from 'vitest'
 import {
   canSaveDraft,
   commandResultsFromSnapshot,
+  compileDraft,
+  draftForPick,
   draftForTemplate,
   draftFromHelper,
+  draftMembers,
+  fieldStateOf,
+  mathTileIds,
+  sharedMethodsView,
+  withDraftMembers,
   type HelperFormDraft,
   groupStatusFromSnapshot,
   helperTemplateGroups,
@@ -67,7 +74,19 @@ describe('helper template groups', () => {
         id: 'binary',
         templateIds: ['motion', 'contact', 'leak', 'smoke', 'occupancy', 'binary'],
       },
-      { id: 'actuators', templateIds: ['switch', 'light'] },
+      {
+        id: 'actuators',
+        templateIds: [
+          'switch',
+          'light',
+          'fan',
+          'cover',
+          'valve',
+          'lock',
+          'media-player',
+          'climate',
+        ],
+      },
       { id: 'appliances', templateIds: ['appliance'] },
     ])
   })
@@ -331,5 +350,167 @@ describe('the helper dialog title', () => {
     expect(it_.dryer).toBe('Nuova asciugatrice')
     expect(en.dishwasher).toBe('New dishwasher')
     expect(it_.dishwasher).toBe('Nuova lavastoviglie')
+  })
+})
+
+const reading = (n: number): HelperMember => ({
+  source: { addonId: 'provider-demo', stableId: `sensor.${n}` },
+  cap: 'numeric-sensor',
+  fieldPath: 'value',
+})
+
+describe('math drafts', () => {
+  it('offers six math tiles', () => {
+    expect(mathTileIds()).toEqual([
+      'threshold',
+      'sum',
+      'difference',
+      'ratio',
+      'expression',
+      'derivative',
+    ])
+  })
+
+  it('a threshold needs one reading and a low edge that is not above the high edge', () => {
+    const draft = draftForPick({ kind: 'threshold' })
+    if (draft?.kind !== 'threshold') throw new Error('expected a threshold draft')
+    expect(canSaveDraft(draft)).toBe(false)
+    const picked = withDraftMembers({ ...draft, high: 25, low: 20 }, [reading(1)])
+    expect(canSaveDraft(picked)).toBe(true)
+    expect(canSaveDraft({ ...picked, low: 30 } as typeof picked)).toBe(false)
+    const spec = specFromDraft(picked)
+    expect(spec).toMatchObject({ kind: 'threshold', high: 25, low: 20, onForMs: 0, offForMs: 0 })
+    expect(compileDraft(picked).ok).toBe(true)
+    expect(draftMembers(picked)).toEqual([reading(1)])
+  })
+
+  it('a difference and a ratio take exactly two readings, a sum two or more', () => {
+    const difference = draftForPick({ kind: 'arithmetic', op: 'difference' })
+    const sum = draftForPick({ kind: 'arithmetic', op: 'sum' })
+    if (difference?.kind !== 'arithmetic' || sum?.kind !== 'arithmetic') throw new Error('draft')
+    expect(canSaveDraft(withDraftMembers(difference, [reading(1)]))).toBe(false)
+    expect(canSaveDraft(withDraftMembers(difference, [reading(1), reading(2)]))).toBe(true)
+    expect(canSaveDraft(withDraftMembers(difference, [reading(1), reading(2), reading(3)]))).toBe(
+      false,
+    )
+    expect(canSaveDraft(withDraftMembers(sum, [reading(1)]))).toBe(false)
+    expect(canSaveDraft(withDraftMembers(sum, [reading(1), reading(2), reading(3)]))).toBe(true)
+  })
+
+  it('an expression names its inputs a, b, c and keeps a name when the list changes', () => {
+    const draft = draftForPick({ kind: 'expression' })
+    if (draft?.kind !== 'expression') throw new Error('expected an expression draft')
+    const two = withDraftMembers({ ...draft, expr: 'a - b' }, [reading(1), reading(2)])
+    if (two.kind !== 'expression') throw new Error('kind')
+    expect(two.inputs.map((input) => input.name)).toEqual(['a', 'b'])
+    const renamed: typeof two = {
+      ...two,
+      inputs: [{ name: 'inlet', member: reading(1) }, ...two.inputs.slice(1)],
+    }
+    const three = withDraftMembers(renamed, [reading(1), reading(2), reading(3)])
+    if (three.kind !== 'expression') throw new Error('kind')
+    expect(three.inputs.map((input) => input.name)).toEqual(['inlet', 'b', 'c'])
+    const dropped = withDraftMembers(three, [reading(3), reading(1)])
+    if (dropped.kind !== 'expression') throw new Error('kind')
+    expect(dropped.inputs.map((input) => [input.name, input.member.source.stableId])).toEqual([
+      ['c', 'sensor.3'],
+      ['inlet', 'sensor.1'],
+    ])
+    expect(canSaveDraft({ ...two, expr: '   ' })).toBe(false)
+    expect(canSaveDraft(two)).toBe(true)
+    expect(compileDraft(two).ok).toBe(true)
+  })
+
+  it('a derivative reads one reading over a rolling window per hour by default', () => {
+    const draft = draftForPick({ kind: 'derivative' })
+    if (draft?.kind !== 'derivative') throw new Error('expected a derivative draft')
+    expect(draft.per).toBe('hour')
+    expect(draft.window).toEqual({ kind: 'rolling', span: '1h' })
+    expect(canSaveDraft(draft)).toBe(false)
+    const picked = withDraftMembers(draft, [reading(1)])
+    expect(canSaveDraft(picked)).toBe(true)
+    expect(specFromDraft(picked)).toMatchObject({ kind: 'derivative', per: 'hour' })
+  })
+
+  it('opens a stored math helper back as the same draft', () => {
+    const specs = [
+      {
+        kind: 'threshold',
+        source: reading(1),
+        high: 3,
+        low: 2,
+        onForMs: 1000,
+        offForMs: 2000,
+      },
+      { kind: 'arithmetic', op: 'ratio', inputs: [reading(1), reading(2)] },
+      {
+        kind: 'expression',
+        expr: 'a + b',
+        inputs: [
+          { name: 'a', member: reading(1) },
+          { name: 'b', member: reading(2) },
+        ],
+        output: 'number',
+      },
+      {
+        kind: 'derivative',
+        window: { kind: 'rolling', span: '24h' },
+        per: 'minute',
+        source: reading(1),
+      },
+    ] as const
+    for (const spec of specs) {
+      const draft = draftFromHelper(spec, 'Name', '')
+      expect(draft, spec.kind).not.toBeNull()
+      if (draft === null) continue
+      expect(specFromDraft(draft), spec.kind).toEqual(spec)
+    }
+  })
+
+  it('has a whole phrase for every math tile in both locales', async () => {
+    const en = (await import('../../../i18n/en.json')).default.helper.newTitle as Record<
+      string,
+      string
+    >
+    const it_ = (await import('../../../i18n/it.json')).default.helper.newTitle as Record<
+      string,
+      string
+    >
+    for (const id of mathTileIds()) {
+      expect(en[id], id).toBeTruthy()
+      expect(it_[id], id).toBeTruthy()
+    }
+  })
+})
+
+describe('actuator groups of every type', () => {
+  it('a new type starts with the at-least-one criterion', () => {
+    for (const id of ['fan', 'cover', 'valve', 'lock', 'media-player', 'climate'] as const) {
+      expect(draftForTemplate(id)?.active, id).toBe('at-least-one')
+    }
+  })
+
+  it('shares only what every member can take, and stays pending until all answered', () => {
+    expect(
+      sharedMethodsView('cover', [
+        { kind: 'ready', caps: ['cover'], features: ['cover-positionable', 'cover-tilt'] },
+        { kind: 'pending' },
+      ]),
+    ).toEqual({ kind: 'pending' })
+    const view = sharedMethodsView('cover', [
+      { kind: 'ready', caps: ['cover'], features: ['cover-positionable', 'cover-tilt'] },
+      { kind: 'ready', caps: ['cover'], features: ['cover-positionable'] },
+    ])
+    expect(view).toMatchObject({ kind: 'ready' })
+    if (view.kind !== 'ready') return
+    expect(view.methods).toEqual(['cover.open', 'cover.close', 'cover.stop', 'cover.setPosition'])
+    expect(sharedMethodsView('cover', [{ kind: 'error' }])).toEqual({ kind: 'unavailable' })
+  })
+
+  it('reads a state string as a value on a member of a state group', () => {
+    const caps = { cover: { state: 'open' } }
+    expect(fieldStateOf('success', caps, 'cover', 'state')).toBe('empty')
+    expect(fieldStateOf('success', caps, 'cover', 'state', true)).toBe('value')
+    expect(fieldStateOf('success', { cover: {} }, 'cover', 'state', true)).toBe('missing')
   })
 })

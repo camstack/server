@@ -8,6 +8,7 @@ import {
   coreBlockComposition,
   groupTemplate,
   type HelperMember,
+  isHistoryHelper,
 } from '@camstack/types'
 import {
   ErrorBox,
@@ -27,6 +28,7 @@ import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HelperActuatorExtras } from './HelperActuatorExtras'
 import { HistoryHelperStatus } from './HelperHistoryStatus'
+import { HelperMathStatus } from './HelperMathStatus'
 import {
   fieldStateOf,
   groupStatusFromSnapshot,
@@ -92,7 +94,15 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
   const composition = coreBlockComposition(read.data.view.block)
   if (composition === null || !isHelperComposition(composition)) return null
   const helper = composition.helper
-  if (helper.kind === 'statistic' || helper.kind === 'integral') {
+  if (helper.kind === 'threshold' || helper.kind === 'arithmetic' || helper.kind === 'expression') {
+    return (
+      <HelperMathStatus
+        helper={helper}
+        snapshot={snapshotReadOf(snapshot.status, snapshot.data, snapshot.error?.message)}
+      />
+    )
+  }
+  if (isHistoryHelper(helper)) {
     return (
       <HistoryHelperStatus
         helper={helper}
@@ -122,8 +132,8 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
         : `${reading.value} ${reading.unit}`
       : reading.kind === 'boolean'
         ? reading.value
-          ? t('helper.on')
-          : t('helper.off')
+          ? t(stateKey(template.id, 'on'))
+          : t(stateKey(template.id, 'off'))
         : reading.kind === 'empty'
           ? t('helper.noReading')
           : null
@@ -148,6 +158,7 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
               ) ?? null
             }
             fleetKind={fleetKind}
+            isState={template.activeWhen !== undefined}
             onLive={report}
           />
         ))}
@@ -202,6 +213,7 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
           </div>
         )}
         <HelperActuatorExtras
+          deviceId={deviceId}
           template={template}
           members={helper.members}
           fleet={rows.map((row) => ({
@@ -231,11 +243,14 @@ function MemberProbe({
   member,
   row,
   fleetKind,
+  isState,
   onLive,
 }: {
   readonly member: HelperMember
   readonly row: FleetRow | null
   readonly fleetKind: 'pending' | 'error' | 'answered'
+  /** The member field is an enum state (a cover is `open`), not a number or a yes/no. */
+  readonly isState: boolean
   readonly onLive: (key: string, live: MemberLive) => void
 }): ReactNode {
   const online = row?.online === true
@@ -248,6 +263,7 @@ function MemberProbe({
     snapshot.status === 'success' ? snapshotCaps(snapshot.data) : undefined,
     member.cap,
     member.fieldPath,
+    isState,
   )
   const presence = memberPresence({
     fleet: fleetKind,
@@ -262,6 +278,12 @@ function MemberProbe({
     onLive(key, { name, presence })
   }, [key, name, onLive, presence])
   return null
+}
+
+/** A cover reads open / closed, a lock locked / unlocked; the rest keep on / off. */
+function stateKey(templateId: string, state: 'on' | 'off'): string {
+  const typed = ['cover', 'valve', 'lock', 'media-player', 'climate'].includes(templateId)
+  return typed ? `helper.state.${templateId}.${state}` : `helper.${state}`
 }
 
 function memberKey(member: HelperMember): string {

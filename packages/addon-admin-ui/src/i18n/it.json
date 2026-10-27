@@ -2715,7 +2715,8 @@
       "rose": "istante dell'ultima salita di un livello (ha memoria)",
       "count": "quante volte x è avanzato (ha memoria)",
       "dwell": "resta acceso o spento solo dopo averlo tenuto per i millisecondi indicati (ha memoria)",
-      "latchedAt": "istante dell'ultimo cambio del valore (ha memoria)"
+      "latchedAt": "istante dell'ultimo cambio del valore (ha memoria)",
+      "schmitt": "si accende al limite alto e si spegne al limite basso, e resta com'è nel mezzo; ritardi opzionali prima di ogni cambio (ha memoria)"
     },
     "pageTitle": "Dispositivo composto",
     "loading": "Caricamento della composizione…",
@@ -9920,7 +9921,8 @@
       "binary": "Sensori binari",
       "actuators": "Attuatori",
       "appliances": "Elettrodomestici",
-      "history": "Storico"
+      "history": "Storico",
+      "math": "Calcoli"
     },
     "template": {
       "temperature": "Temperatura",
@@ -9958,7 +9960,25 @@
       "appliance": "Elettrodomestico da una presa intelligente",
       "applianceSummary": "Una lettura di potenza. In funzione finché la potenza resta sopra una soglia, abbastanza a lungo da non scambiare una pausa di lavaggio per la fine del ciclo.",
       "statistic": "Statistiche",
-      "integral": "Energia dalla potenza"
+      "integral": "Energia dalla potenza",
+      "threshold": "Soglia",
+      "sum": "Somma",
+      "difference": "Differenza",
+      "ratio": "Rapporto",
+      "expression": "Espressione",
+      "derivative": "Variazione nel tempo",
+      "fan": "Ventilatore",
+      "cover": "Tapparella",
+      "valve": "Valvola",
+      "lock": "Serratura",
+      "media-player": "Lettore multimediale",
+      "climate": "Clima",
+      "fanSummary": "Come un gruppo di interruttori. Velocità, preset, direzione e oscillazione compaiono solo se ogni ventilatore le ha.",
+      "coverSummary": "Aperta se almeno una tapparella è aperta, oppure solo se lo sono tutte. Posizione e inclinazione compaiono solo se ogni tapparella le ha.",
+      "valveSummary": "Aperta se almeno una valvola è aperta, oppure solo se lo sono tutte. La posizione compare solo se ogni valvola la ha.",
+      "lockSummary": "Chiusa se almeno una serratura è chiusa, oppure solo se lo sono tutte. Aprire il gruppo chiede sempre una conferma.",
+      "media-playerSummary": "In riproduzione se almeno un lettore riproduce, oppure solo se lo fanno tutti. Il volume compare solo se ogni lettore lo ha.",
+      "climateSummary": "Attivo se almeno un dispositivo non è spento, oppure solo se lo sono tutti. Temperatura obiettivo e ventola compaiono solo se ogni dispositivo le ha."
     },
     "aggregate": {
       "mean": "Media",
@@ -9981,7 +10001,25 @@
       "appliance": "Dagli un nome e scegli l'elettrodomestico.",
       "applianceMembers": "Scegli la lettura di potenza della presa.",
       "historyParameters": "Scegli l'intervallo e dagli un nome.",
-      "historySource": "Scegli la lettura."
+      "historySource": "Scegli la lettura.",
+      "math": {
+        "threshold": {
+          "parameters": "Imposta i due limiti, i ritardi opzionali e un nome.",
+          "members": "Scegli la lettura da osservare."
+        },
+        "arithmetic": {
+          "parameters": "Dagli un nome.",
+          "members": "Scegli le letture. Devono misurare la stessa grandezza."
+        },
+        "expression": {
+          "parameters": "Scegli cosa pubblica e dagli un nome.",
+          "members": "Scegli le letture, dai loro un nome, poi scrivi la formula."
+        },
+        "derivative": {
+          "parameters": "Scegli la finestra e l'unità di tempo e dagli un nome.",
+          "members": "Scegli la lettura, che deve avere uno storico."
+        }
+      }
     },
     "reducer": "Combina con",
     "name": "Nome",
@@ -10022,7 +10060,13 @@
     "cap": {
       "switch": "Interruttore",
       "brightness": "Luminosità",
-      "color": "Colore"
+      "color": "Colore",
+      "fan-control": "Controlli del ventilatore",
+      "cover": "Controlli della tapparella",
+      "valve": "Controlli della valvola",
+      "lock-control": "Controlli della serratura",
+      "media-player": "Controlli del lettore",
+      "climate-control": "Controlli del clima"
     },
     "mode": {
       "light-color-rgb": "Colore",
@@ -10058,7 +10102,19 @@
       "dryer": "Nuova asciugatrice",
       "dishwasher": "Nuova lavastoviglie",
       "statistic": "Nuove statistiche",
-      "integral": "Nuovo contatore di energia"
+      "integral": "Nuovo contatore di energia",
+      "threshold": "Nuova soglia",
+      "sum": "Nuova somma",
+      "difference": "Nuova differenza",
+      "ratio": "Nuovo rapporto",
+      "expression": "Nuova espressione",
+      "derivative": "Nuova variazione nel tempo",
+      "fan": "Nuovo gruppo di ventilatori",
+      "cover": "Nuovo gruppo di tapparelle",
+      "valve": "Nuovo gruppo di valvole",
+      "lock": "Nuovo gruppo di serrature",
+      "media-player": "Nuovo gruppo di lettori multimediali",
+      "climate": "Nuovo gruppo di clima"
     },
     "appliance": {
       "washer": "Lavatrice",
@@ -10072,7 +10128,15 @@
     "detail": {
       "statistic": "Minimo, massimo, media pesata nel tempo, somma, conteggio o variazione su un intervallo, letti dallo storico. La somma è per un contatore; la somma di un valore istantaneo è l'integrale.",
       "integral": "La potenza diventa energia. Una portata diventa un volume. Ogni altra lettura istantanea diventa un contatore in unità per secondo, che cresce fino all'azzeramento.",
-      "history": "La sorgente deve registrare lo storico. Un buco viene escluso e non è mai contato come zero. L'intervallo non può essere più lungo di quanto lo storico viene conservato."
+      "history": "La sorgente deve registrare lo storico. Un buco viene escluso e non è mai contato come zero. L'intervallo non può essere più lungo di quanto lo storico viene conservato.",
+      "threshold": "Si accende quando una lettura raggiunge il limite alto e si spegne quando scende al limite basso, e resta com'è nel mezzo per non lampeggiare. Ritardi opzionali attendono prima di ogni cambio.",
+      "sum": "Somma letture della stessa grandezza. Un ingresso offline o sconosciuto viene escluso e contato, mai letto come zero.",
+      "difference": "La prima lettura meno la seconda, della stessa grandezza. Se una delle due è sconosciuta lo è anche il risultato.",
+      "ratio": "La prima lettura divisa per la seconda, come numero puro. Una seconda lettura nulla o sconosciuta dà sconosciuto, mai infinito.",
+      "expression": "La tua formula su letture con nome, per quello che le altre schede non coprono.",
+      "expressionStale": "A differenza dei gruppi, un'espressione continua a usare l'ultimo valore di un ingresso quando va offline.",
+      "derivative": "Quanto velocemente una lettura sale o scende su una finestra, al secondo, al minuto o all'ora.",
+      "lockConfirm": "Aprire il gruppo chiede sempre una conferma e senza non viene inviato nulla."
     },
     "stat": "Statistica",
     "statName": {
@@ -10114,6 +10178,100 @@
     "customMinutes": "Minuti",
     "noHistory": "Questa lettura non ha uno storico, quindi non può essere la sorgente.",
     "output": "Lettura",
-    "gaps": "{{count}} intervalli esclusi"
+    "gaps": "{{count}} intervalli esclusi",
+    "hint": {
+      "threshold": "Una sola lettura.",
+      "sum": "Due o più letture della stessa grandezza.",
+      "difference": "Esattamente due letture. La prima è quella da cui si sottrae.",
+      "ratio": "Esattamente due letture. La prima è divisa per la seconda."
+    },
+    "highEdge": "Accendi da questo valore in su",
+    "lowEdge": "Spegni da questo valore in giù",
+    "onDelay": "Attesa prima di accendere (secondi)",
+    "offDelay": "Attesa prima di spegnere (secondi)",
+    "edgesReversed": "Il valore di spegnimento è sopra quello di accensione.",
+    "per": "Variazione per",
+    "perName": {
+      "second": "Secondo",
+      "minute": "Minuto",
+      "hour": "Ora"
+    },
+    "exprOutput": "Pubblica",
+    "exprOutputName": {
+      "number": "Un numero",
+      "boolean": "Un sì o no"
+    },
+    "inputName": "Nome dell'ingresso",
+    "expr": "Formula",
+    "method": {
+      "switch": {
+        "setState": "Acceso o spento"
+      },
+      "brightness": {
+        "setBrightness": "Luminosità"
+      },
+      "color": {
+        "setColor": "Colore"
+      },
+      "fan-control": {
+        "setPercentage": "Velocità",
+        "setPreset": "Preset",
+        "setDirection": "Direzione",
+        "setOscillating": "Oscillazione"
+      },
+      "cover": {
+        "open": "Apri",
+        "close": "Chiudi",
+        "stop": "Ferma",
+        "setPosition": "Posizione",
+        "setTiltPosition": "Inclinazione"
+      },
+      "valve": {
+        "open": "Apri",
+        "close": "Chiudi",
+        "setPosition": "Posizione"
+      },
+      "lock-control": {
+        "lock": "Chiudi",
+        "unlock": "Apri"
+      },
+      "media-player": {
+        "play": "Riproduci",
+        "pause": "Pausa",
+        "setVolume": "Volume"
+      },
+      "climate-control": {
+        "setMode": "Modalità",
+        "setTarget": "Temperatura obiettivo",
+        "setFanMode": "Ventola"
+      }
+    },
+    "state": {
+      "cover": {
+        "on": "Aperta",
+        "off": "Chiusa"
+      },
+      "valve": {
+        "on": "Aperta",
+        "off": "Chiusa"
+      },
+      "lock": {
+        "on": "Chiusa",
+        "off": "Aperta"
+      },
+      "media-player": {
+        "on": "In riproduzione",
+        "off": "Non in riproduzione"
+      },
+      "climate": {
+        "on": "Attivo",
+        "off": "Spento"
+      }
+    },
+    "lockAll": "Chiudi tutte",
+    "unlockAll": "Apri tutte",
+    "unlockTitle": "Aprire tutte le serrature di questo gruppo?",
+    "unlockBody": "A ogni serratura del gruppo verrà ordinato di aprire. Una serratura non raggiungibile viene segnalata e le altre si aprono comunque.",
+    "unlockConfirm": "Apri tutte"
   }
 }

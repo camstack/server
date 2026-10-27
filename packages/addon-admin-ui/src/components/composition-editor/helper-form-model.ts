@@ -4,14 +4,22 @@
  * A composition with no `helper` stays a free expression.
  */
 import {
+  ACTUATOR_TEMPLATE_IDS,
   type ActiveCriterion,
   type AggregateReducer,
   APPLIANCE_DEFAULTS,
   APPLIANCE_TEMPLATE_ID,
   type ApplianceKind,
+  type ArithmeticHelperSpec,
+  type ArithmeticOp,
   type Composition,
   type CompositionProblem,
   compileHelper,
+  type DerivativeHelperSpec,
+  type DerivativeUnit,
+  type ExpressionHelperSpec,
+  type ExpressionInput,
+  type ExpressionOutput,
   GroupCommandsSchema,
   type GroupHelperSpec,
   type GroupTemplate,
@@ -24,11 +32,16 @@ import {
   MAX_HELPER_MEMBERS,
   type ResetPeriod,
   reducerForActive,
+  type RollingWindow,
+  type ThresholdHelperSpec,
+  sharedActuatorFeatures,
+  sharedActuatorMethods,
   sharedColorModes,
   sharedLightCaps,
   type SourcePickRequest,
   sourcePickForAppliance,
   sourcePickForHistory,
+  sourcePickForMath,
   sourcePickForTemplate,
   type StatisticHelperSpec,
   type StatisticStat,
@@ -77,13 +90,85 @@ export interface IntegralFormDraft {
   readonly source: HelperMember | null
 }
 
-export type HelperDraft = HelperFormDraft | StatisticFormDraft | IntegralFormDraft
+export interface ThresholdFormDraft {
+  readonly kind: 'threshold'
+  readonly high: number
+  readonly low: number
+  readonly onForMs: number
+  readonly offForMs: number
+  readonly name: string
+  readonly room: string
+  readonly source: HelperMember | null
+}
+
+export interface ArithmeticFormDraft {
+  readonly kind: 'arithmetic'
+  readonly op: ArithmeticOp
+  readonly name: string
+  readonly room: string
+  readonly inputs: readonly HelperMember[]
+}
+
+export interface ExpressionFormDraft {
+  readonly kind: 'expression'
+  readonly expr: string
+  readonly output: ExpressionOutput
+  readonly name: string
+  readonly room: string
+  readonly inputs: readonly ExpressionInput[]
+}
+
+export interface DerivativeFormDraft {
+  readonly kind: 'derivative'
+  readonly window: RollingWindow
+  readonly per: DerivativeUnit
+  readonly name: string
+  readonly room: string
+  readonly source: HelperMember | null
+}
+
+export type MathFormDraft =
+  | ThresholdFormDraft
+  | ArithmeticFormDraft
+  | ExpressionFormDraft
+  | DerivativeFormDraft
+
+export type HelperDraft = HelperFormDraft | StatisticFormDraft | IntegralFormDraft | MathFormDraft
 
 export type HelperTemplatePick =
   | { readonly kind: 'group'; readonly templateId: GroupTemplateId }
   | { readonly kind: 'appliance' }
   | { readonly kind: 'statistic' }
   | { readonly kind: 'integral' }
+  | { readonly kind: 'threshold' }
+  | { readonly kind: 'arithmetic'; readonly op: ArithmeticOp }
+  | { readonly kind: 'expression' }
+  | { readonly kind: 'derivative' }
+
+/** The math tiles, in the order the picker shows them. A sum is one tile per operation. */
+export type MathTileId = 'threshold' | ArithmeticOp | 'expression' | 'derivative'
+
+const MATH_TILES: readonly MathTileId[] = [
+  'threshold',
+  'sum',
+  'difference',
+  'ratio',
+  'expression',
+  'derivative',
+]
+
+export function mathTileIds(): readonly MathTileId[] {
+  return MATH_TILES
+}
+
+export function isMathTileId(value: string): value is MathTileId {
+  return MATH_TILES.some((id) => id === value)
+}
+
+export function pickForMathTile(id: MathTileId): HelperTemplatePick {
+  if (id === 'sum' || id === 'difference' || id === 'ratio') return { kind: 'arithmetic', op: id }
+  return { kind: id }
+}
 
 export interface RefusalLine {
   readonly path: string
@@ -119,6 +204,16 @@ export type SharedCapsView =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unavailable' }
   | { readonly kind: 'ready'; readonly caps: readonly string[]; readonly modes: readonly string[] }
+
+/** What a group offers, as `cap.method`, once every member's bindings have answered. */
+export type SharedMethodsView =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'unavailable' }
+  | {
+      readonly kind: 'ready'
+      readonly methods: readonly string[]
+      readonly modes: readonly string[]
+    }
 
 export interface CommandResultRow {
   readonly deviceId: number
@@ -179,7 +274,7 @@ const BINARY: readonly GroupTemplateId[] = [
   'binary',
 ]
 
-const ACTUATORS: readonly GroupTemplateId[] = ['switch', 'light']
+const ACTUATORS: readonly GroupTemplateId[] = ACTUATOR_TEMPLATE_IDS
 
 const APPLIANCES: readonly HelperPickerId[] = [APPLIANCE_TEMPLATE_ID]
 
@@ -246,6 +341,34 @@ export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
       source: null,
     }
   }
+  if (pick.kind === 'threshold') {
+    return {
+      kind: 'threshold',
+      high: 0,
+      low: 0,
+      onForMs: 0,
+      offForMs: 0,
+      name: '',
+      room: '',
+      source: null,
+    }
+  }
+  if (pick.kind === 'arithmetic') {
+    return { kind: 'arithmetic', op: pick.op, name: '', room: '', inputs: [] }
+  }
+  if (pick.kind === 'expression') {
+    return { kind: 'expression', expr: '', output: 'number', name: '', room: '', inputs: [] }
+  }
+  if (pick.kind === 'derivative') {
+    return {
+      kind: 'derivative',
+      window: { kind: 'rolling', span: '1h' },
+      per: 'hour',
+      name: '',
+      room: '',
+      source: null,
+    }
+  }
   return {
     kind: 'integral',
     reset: 'daily',
@@ -283,6 +406,41 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
   }
   if (spec.kind === 'integral') {
     return { kind: 'integral', reset: spec.reset, name, room, source: copyMember(spec.source) }
+  }
+  if (spec.kind === 'threshold') {
+    return {
+      kind: 'threshold',
+      high: spec.high,
+      low: spec.low,
+      onForMs: spec.onForMs,
+      offForMs: spec.offForMs,
+      name,
+      room,
+      source: copyMember(spec.source),
+    }
+  }
+  if (spec.kind === 'arithmetic') {
+    return { kind: 'arithmetic', op: spec.op, name, room, inputs: spec.inputs.map(copyMember) }
+  }
+  if (spec.kind === 'expression') {
+    return {
+      kind: 'expression',
+      expr: spec.expr,
+      output: spec.output,
+      name,
+      room,
+      inputs: spec.inputs.map((input) => ({ name: input.name, member: copyMember(input.member) })),
+    }
+  }
+  if (spec.kind === 'derivative') {
+    return {
+      kind: 'derivative',
+      window: copyRolling(spec.window),
+      per: spec.per,
+      name,
+      room,
+      source: copyMember(spec.source),
+    }
   }
   const template = groupTemplate(spec.templateId)
   if (template === null || !template.aggregates.includes(spec.aggregate)) return null
@@ -362,6 +520,10 @@ export type HelperSaveResult =
 export function memberRequest(draft: HelperDraft): SourcePickRequest | null {
   if (draft.kind === 'statistic' || draft.kind === 'integral')
     return sourcePickForHistory(draft.kind)
+  if (draft.kind === 'threshold') return sourcePickForMath('threshold')
+  if (draft.kind === 'arithmetic') return sourcePickForMath(draft.op)
+  if (draft.kind === 'expression') return sourcePickForMath('expression')
+  if (draft.kind === 'derivative') return sourcePickForMath('derivative')
   if (draft.templateId === APPLIANCE_TEMPLATE_ID) return sourcePickForAppliance()
   const template = groupTemplate(draft.templateId)
   if (template === null) return null
@@ -371,6 +533,10 @@ export function memberRequest(draft: HelperDraft): SourcePickRequest | null {
 export function specFromDraft(draft: HelperDraft): HelperSpec | null {
   if (draft.kind === 'statistic') return statisticSpec(draft)
   if (draft.kind === 'integral') return integralSpec(draft)
+  if (draft.kind === 'threshold') return thresholdSpec(draft)
+  if (draft.kind === 'arithmetic') return arithmeticSpec(draft)
+  if (draft.kind === 'expression') return expressionSpec(draft)
+  if (draft.kind === 'derivative') return derivativeSpec(draft)
   if (draft.templateId === APPLIANCE_TEMPLATE_ID) return applianceSpec(draft)
   return groupSpec(draft)
 }
@@ -414,15 +580,30 @@ const MISSING_HISTORY: CompositionProblem = {
   message: 'pick one reading that declares history',
 }
 
+const MISSING_READING: CompositionProblem = {
+  code: 'member-constraint',
+  path: 'helper.source',
+  message: 'pick one reading', // i18n-ignore: refusal line in the engine's own vocabulary
+}
+
+const MISSING_INPUTS: CompositionProblem = {
+  code: 'member-constraint',
+  path: 'helper.inputs',
+  message: 'pick the readings this helper combines', // i18n-ignore: refusal line in the engine's own vocabulary
+}
+
+function missingFor(draft: HelperDraft): CompositionProblem {
+  if (draft.kind === 'group') {
+    return draft.templateId === APPLIANCE_TEMPLATE_ID ? MISSING_MEMBER : MISSING_INPUTS
+  }
+  if (draft.kind === 'threshold') return MISSING_READING
+  if (draft.kind === 'arithmetic' || draft.kind === 'expression') return MISSING_INPUTS
+  return MISSING_HISTORY
+}
+
 export function compileDraft(draft: HelperDraft): HelperCompileResult {
   const spec = specFromDraft(draft)
-  if (spec === null) {
-    const missing =
-      draft.kind === 'group' && draft.templateId === APPLIANCE_TEMPLATE_ID
-        ? MISSING_MEMBER
-        : MISSING_HISTORY
-    return { ok: false, problems: [missing] }
-  }
+  if (spec === null) return { ok: false, problems: [missingFor(draft)] }
   return compileHelper(spec)
 }
 
@@ -443,7 +624,14 @@ export async function writeHelper(
 }
 
 export function canSaveDraft(draft: HelperDraft): boolean {
-  if (draft.kind === 'statistic' || draft.kind === 'integral') return draft.source !== null
+  if (draft.kind === 'statistic' || draft.kind === 'integral' || draft.kind === 'derivative') {
+    return draft.source !== null
+  }
+  if (draft.kind === 'threshold') return draft.source !== null && draft.low <= draft.high
+  if (draft.kind === 'arithmetic') {
+    return draft.op === 'sum' ? draft.inputs.length >= 2 : draft.inputs.length === 2
+  }
+  if (draft.kind === 'expression') return draft.inputs.length >= 1 && draft.expr.trim() !== ''
   if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft.members.length === 1
   return draft.members.length >= 1 && draft.members.length <= MAX_HELPER_MEMBERS
 }
@@ -501,6 +689,36 @@ export function sharedCapsView(reads: readonly MemberCapRead[]): SharedCapsView 
   return { kind: 'ready', caps: [...caps], modes: [...modes] }
 }
 
+/** What a cover, lock, fan, player or climate group offers: the type's table over the members. */
+export function sharedMethodsView(
+  templateId: GroupTemplateId,
+  reads: readonly MemberCapRead[],
+): SharedMethodsView {
+  if (reads.length === 0 || reads.some((read) => read.kind === 'pending')) {
+    return { kind: 'pending' }
+  }
+  if (reads.some((read) => read.kind === 'error')) return { kind: 'unavailable' }
+  if (!isActuatorId(templateId)) return { kind: 'unavailable' }
+  const ready = reads.flatMap((read) => (read.kind === 'ready' ? [read] : []))
+  const rows = sharedActuatorMethods(templateId, ready)
+  const modes =
+    templateId === 'light' && rows.some((row) => row.cap === 'color')
+      ? sharedColorModes(ready.map((read) => read.features))
+      : sharedActuatorFeatures(
+          templateId,
+          ready.map((read) => read.features),
+        )
+  return {
+    kind: 'ready',
+    methods: rows.map((row) => `${row.cap}.${row.method}`),
+    modes: [...modes],
+  }
+}
+
+function isActuatorId(id: string): id is (typeof ACTUATOR_TEMPLATE_IDS)[number] {
+  return ACTUATOR_TEMPLATE_IDS.some((item) => item === id)
+}
+
 export function commandResultsFromSnapshot(read: SnapshotRead): CommandResultsView {
   if (read.kind === 'pending') return { kind: 'pending' }
   if (read.kind === 'error') return { kind: 'unavailable', message: read.message }
@@ -527,6 +745,7 @@ export function fieldStateOf(
   caps: Readonly<Record<string, Readonly<Record<string, unknown>> | undefined>> | undefined,
   cap: string,
   fieldPath: string,
+  isState = false,
 ): MemberFieldState {
   if (status === 'pending') return 'pending'
   if (status === 'error') return 'error'
@@ -535,6 +754,7 @@ export function fieldStateOf(
   const value = slice[fieldPath]
   if (typeof value === 'number' && Number.isFinite(value)) return 'value'
   if (typeof value === 'boolean') return 'value'
+  if (isState && typeof value === 'string' && value !== '') return 'value'
   if (value === undefined) return 'missing'
   return 'empty'
 }
@@ -594,6 +814,110 @@ function integralSpec(draft: IntegralFormDraft): IntegralHelperSpec | null {
     output: watts ? 'energy' : 'meter',
     source: copyMember(draft.source),
   }
+}
+
+function thresholdSpec(draft: ThresholdFormDraft): ThresholdHelperSpec | null {
+  if (draft.source === null) return null
+  return {
+    kind: 'threshold',
+    source: copyMember(draft.source),
+    high: draft.high,
+    low: draft.low,
+    onForMs: draft.onForMs,
+    offForMs: draft.offForMs,
+  }
+}
+
+function arithmeticSpec(draft: ArithmeticFormDraft): ArithmeticHelperSpec | null {
+  if (draft.inputs.length === 0) return null
+  return { kind: 'arithmetic', op: draft.op, inputs: draft.inputs.map(copyMember) }
+}
+
+function expressionSpec(draft: ExpressionFormDraft): ExpressionHelperSpec | null {
+  if (draft.inputs.length === 0) return null
+  return {
+    kind: 'expression',
+    expr: draft.expr.trim(),
+    output: draft.output,
+    inputs: draft.inputs.map((input) => ({
+      name: input.name,
+      member: copyMember(input.member),
+    })),
+  }
+}
+
+function derivativeSpec(draft: DerivativeFormDraft): DerivativeHelperSpec | null {
+  if (draft.source === null) return null
+  return {
+    kind: 'derivative',
+    window: copyRolling(draft.window),
+    per: draft.per,
+    source: copyMember(draft.source),
+  }
+}
+
+function copyRolling(window: RollingWindow): RollingWindow {
+  if (window.customMinutes === undefined) return { kind: 'rolling', span: window.span }
+  return { kind: 'rolling', span: window.span, customMinutes: window.customMinutes }
+}
+
+const INPUT_NAMES = 'abcdefghijklmnopqrstuvwxyz'
+
+function memberKeyOf(member: HelperMember): string {
+  return `${member.source.addonId}/${member.source.stableId}/${member.cap}.${member.fieldPath}`
+}
+
+/** A free default name for the next input: a, b, c ... then a1, b1. */
+function nextInputName(taken: ReadonlySet<string>): string {
+  for (let round = 0; round < MAX_HELPER_MEMBERS; round++) {
+    for (const letter of INPUT_NAMES) {
+      const candidate = round === 0 ? letter : `${letter}${round}`
+      if (!taken.has(candidate)) return candidate
+    }
+  }
+  return `input${taken.size + 1}`
+}
+
+/** Every member a draft reads, in the order the selector shows them. */
+export function draftMembers(draft: HelperDraft): readonly HelperMember[] {
+  if (draft.kind === 'group') return draft.members
+  if (draft.kind === 'arithmetic') return draft.inputs
+  if (draft.kind === 'expression') return draft.inputs.map((input) => input.member)
+  return draft.source === null ? [] : [draft.source]
+}
+
+/**
+ * Put the selector's answer back on the draft. An expression keeps the name a
+ * member already had and gives a new member the next free letter, so editing
+ * the list never renames an input the expression uses.
+ */
+export function withDraftMembers(
+  draft: HelperDraft,
+  members: readonly HelperMember[],
+): HelperDraft {
+  if (draft.kind === 'group') return { ...draft, members }
+  if (draft.kind === 'arithmetic') return { ...draft, inputs: members }
+  if (draft.kind === 'expression') {
+    const kept = new Map(draft.inputs.map((input) => [memberKeyOf(input.member), input.name]))
+    const taken = new Set<string>()
+    const inputs: ExpressionInput[] = []
+    // A new input is named for its place in the list (a, b, c); only if that is taken, the next free one.
+    const reserved = new Set(kept.values())
+    for (const [index, member] of members.entries()) {
+      const known = kept.get(memberKeyOf(member))
+      const positional = INPUT_NAMES[index] ?? ''
+      const name =
+        known !== undefined && !taken.has(known)
+          ? known
+          : positional !== '' && !taken.has(positional) && !reserved.has(positional)
+            ? positional
+            : nextInputName(new Set([...taken, ...reserved]))
+      taken.add(name)
+      inputs.push({ name, member })
+    }
+    return { ...draft, inputs }
+  }
+  return { ...draft, source: members[0] ?? null }
 }
 
 function copyWindow(window: StatisticWindow): StatisticWindow {

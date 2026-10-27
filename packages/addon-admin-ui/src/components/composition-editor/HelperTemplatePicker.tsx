@@ -12,13 +12,17 @@ import {
 } from '@camstack/types'
 import { deviceRoleMeta, deviceTypeMeta, GroupedTilePicker } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
-import { BarChart3, Zap } from 'lucide-react'
+import { BarChart3, Divide, Gauge, Minus, Plus, Sigma, TrendingUp, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   helperTemplateGroups,
   type HelperPickerId,
   type HelperTemplatePick,
+  isMathTileId,
+  type MathTileId,
+  mathTileIds,
+  pickForMathTile,
 } from './helper-form-model'
 
 export interface HelperTemplatePickerProps {
@@ -40,11 +44,20 @@ export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): Rea
             onPick({ kind: 'appliance' })
             return
           }
+          if (isMathTileId(key)) {
+            onPick(pickForMathTile(key))
+            return
+          }
           if (!isGroupTemplateId(key)) return
           onPick({ kind: 'group', templateId: key })
         }}
         groups={[
           ...pickerGroups(t),
+          {
+            id: 'math',
+            label: t('helper.group.math'),
+            tiles: mathTileIds().map((id) => mathTile(id, t)),
+          },
           {
             id: 'history',
             label: t('helper.group.history'),
@@ -77,6 +90,43 @@ function historyTile(
     detailLabel: t('helper.detailsOf', { name: label }),
     detail: <HistoryDetail id={id} />,
   }
+}
+
+const MATH_ICONS: Readonly<Record<MathTileId, typeof Gauge>> = {
+  threshold: Gauge,
+  sum: Plus,
+  difference: Minus,
+  ratio: Divide,
+  expression: Sigma,
+  derivative: TrendingUp,
+}
+
+function mathTile(id: MathTileId, t: TFunction): PickerTile {
+  const label = t(`helper.template.${id}`)
+  const Icon = MATH_ICONS[id]
+  return {
+    key: id,
+    label,
+    testId: `helper-template-${id}`,
+    icon: <Icon className="h-5 w-5 text-foreground-muted" aria-hidden />,
+    detailLabel: t('helper.detailsOf', { name: label }),
+    detail: <MathDetail id={id} />,
+  }
+}
+
+function MathDetail({ id }: { readonly id: MathTileId }): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <div className="max-w-xs space-y-1 text-xs">
+      <p className="text-foreground-muted">{t(`helper.detail.${id}`)}</p>
+      {id === 'derivative' && (
+        <p className="text-foreground-subtle">{t('helper.detail.history')}</p>
+      )}
+      {id === 'expression' && (
+        <p className="text-foreground-subtle">{t('helper.detail.expressionStale')}</p>
+      )}
+    </div>
+  )
 }
 
 function HistoryDetail({ id }: { readonly id: 'statistic' | 'integral' }): ReactNode {
@@ -187,6 +237,9 @@ function TemplateDetail({ templateId }: { readonly templateId: GroupTemplateId }
             {shared.map((cap) => t(`helper.cap.${cap}`)).join(', ')}
           </p>
         </>
+      )}
+      {template.id === 'lock' && (
+        <p className="text-foreground-subtle">{t('helper.detail.lockConfirm')}</p>
       )}
       <p className="text-foreground-subtle">{t('helper.offlineCounted')}</p>
     </div>

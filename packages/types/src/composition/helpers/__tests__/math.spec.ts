@@ -25,6 +25,7 @@ import {
   validateComposition,
 } from '../../validate-composition.js'
 import { compileHelper } from '../compile.js'
+import { derivativeUnitLabel } from '../compile-history.js'
 import { evaluateDerivative, type SeriesPoint, type SeriesRead } from '../history-math.js'
 import { DAY_MS, DEFAULT_HISTORY_RETENTION } from '../history-window.js'
 import { helperSaveProblems, type HelperMemberFact } from '../save.js'
@@ -359,6 +360,13 @@ describe('derivative', () => {
     expect(compiled.ok).toBe(false)
     if (compiled.ok) return
     expect(compiled.problems.map((item) => item.code)).toContain('retention')
+  })
+
+  it('names the unit as the source unit per time, or none when the source has none', () => {
+    expect(derivativeUnitLabel(derivative())).toBe('°C/h')
+    expect(derivativeUnitLabel(derivative({ per: 'minute' }))).toBe('°C/min')
+    expect(derivativeUnitLabel(derivative({ per: 'second' }))).toBe('°C/s')
+    expect(derivativeUnitLabel(derivative({ source: reading(1) }))).toBeNull()
   })
 
   it('refuses a state or a source with no history declaration', () => {

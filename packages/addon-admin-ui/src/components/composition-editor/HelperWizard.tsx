@@ -8,6 +8,8 @@ import {
   APPLIANCE_KINDS,
   APPLIANCE_TEMPLATE_ID,
   CALENDAR_PERIODS,
+  DERIVATIVE_UNITS,
+  EXPRESSION_OUTPUTS,
   groupTemplate,
   RESET_PERIODS,
   ROLLING_SPANS,
@@ -20,10 +22,14 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { SourceSelector } from '../device/customize/source-selector/SourceSelector'
 import { devicePath } from '../../lib/customization-routes'
+import { ExpressionInput } from './ExpressionInput'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
 import {
   canSaveDraft,
+  type DerivativeFormDraft,
   draftForPick,
+  draftMembers,
+  type ExpressionFormDraft,
   type HelperDraft,
   type HelperFormDraft,
   type HelperSaveIntent,
@@ -33,9 +39,11 @@ import {
   memberRequest,
   type RefusalLine,
   type StatisticFormDraft,
+  type ThresholdFormDraft,
   withActive,
   withAggregate,
   withAppliance,
+  withDraftMembers,
   withName,
   withTemplate,
 } from './helper-form-model'
@@ -113,14 +121,7 @@ export function HelperWizard({
     draft !== null && draft.kind === 'group' && draft.templateId !== APPLIANCE_TEMPLATE_ID
       ? groupTemplate(draft.templateId)
       : null
-  const members =
-    draft === null
-      ? []
-      : draft.kind === 'group'
-        ? draft.members
-        : draft.source === null
-          ? []
-          : [draft.source]
+  const members = draft === null ? [] : draftMembers(draft)
 
   return (
     <div className="flex flex-col gap-3" data-testid="helper-wizard">
@@ -198,19 +199,27 @@ export function HelperWizard({
       {step === 'parameters' && draft?.kind === 'integral' && (
         <IntegralParameters draft={draft} onChange={setDraft} />
       )}
+      {step === 'parameters' && draft?.kind === 'threshold' && (
+        <ThresholdParameters draft={draft} onChange={setDraft} />
+      )}
+      {step === 'parameters' && draft?.kind === 'derivative' && (
+        <DerivativeParameters draft={draft} onChange={setDraft} />
+      )}
+      {step === 'parameters' && draft?.kind === 'arithmetic' && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" data-testid="helper-math-parameters">
+          <NameField name={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
+        </div>
+      )}
+      {step === 'parameters' && draft?.kind === 'expression' && (
+        <ExpressionParameters draft={draft} onChange={setDraft} />
+      )}
       {step === 'members' && draft !== null && request !== null && (
         <SourceSelector
           kind="members"
           request={request}
           enabled
           members={members}
-          onMembersChange={(next) =>
-            setDraft(
-              draft.kind === 'group'
-                ? { ...draft, members: next }
-                : { ...draft, source: next[0] ?? null },
-            )
-          }
+          onMembersChange={(next) => setDraft(withDraftMembers(draft, next))}
           onRefuse={(reason) =>
             setRefusals(
               reason === null
@@ -225,6 +234,14 @@ export function HelperWizard({
             )
           }
         />
+      )}
+      {step === 'members' && draft?.kind === 'expression' && (
+        <ExpressionEditor draft={draft} onChange={setDraft} />
+      )}
+      {step === 'members' && (draft?.kind === 'arithmetic' || draft?.kind === 'threshold') && (
+        <p className="text-[11px] text-foreground-muted" data-testid="helper-math-hint">
+          {t(mathMembersHint(draft))}
+        </p>
       )}
       <RefusalList lines={refusals} />
       <div className="flex flex-wrap gap-2">
@@ -531,6 +548,262 @@ function IntegralParameters({
   )
 }
 
+const MS_PER_SECOND = 1000
+
+function ThresholdParameters({
+  draft,
+  onChange,
+}: {
+  readonly draft: ThresholdFormDraft
+  readonly onChange: (draft: ThresholdFormDraft) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  const reversed = draft.low > draft.high
+  return (
+    <div
+      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+      data-testid="helper-threshold-parameters"
+    >
+      <SignedField
+        label={t('helper.highEdge')}
+        testId="helper-high"
+        value={draft.high}
+        onValue={(high) => onChange({ ...draft, high })}
+      />
+      <SignedField
+        label={t('helper.lowEdge')}
+        testId="helper-low"
+        value={draft.low}
+        onValue={(low) => onChange({ ...draft, low })}
+      />
+      <NumberField
+        label={t('helper.onDelay')}
+        testId="helper-on-delay"
+        value={String(draft.onForMs / MS_PER_SECOND)}
+        onValue={(text) => {
+          const ms = msFromSeconds(text)
+          if (ms !== null) onChange({ ...draft, onForMs: ms })
+        }}
+      />
+      <NumberField
+        label={t('helper.offDelay')}
+        testId="helper-off-delay"
+        value={String(draft.offForMs / MS_PER_SECOND)}
+        onValue={(text) => {
+          const ms = msFromSeconds(text)
+          if (ms !== null) onChange({ ...draft, offForMs: ms })
+        }}
+      />
+      <NameField name={draft.name} onChange={(name) => onChange({ ...draft, name })} />
+      {reversed && (
+        <p role="alert" className="text-xs text-danger sm:col-span-2" data-testid="helper-edges">
+          {t('helper.edgesReversed')}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function msFromSeconds(text: string): number | null {
+  const value = Number(text)
+  if (!Number.isFinite(value) || value < 0) return null
+  return Math.round(value * MS_PER_SECOND)
+}
+
+function SignedField({
+  label,
+  testId,
+  value,
+  onValue,
+}: {
+  readonly label: string
+  readonly testId: string
+  readonly value: number
+  readonly onValue: (value: number) => void
+}): ReactNode {
+  return (
+    <label className="flex flex-col gap-1 text-[11px]">
+      {label}
+      <Input
+        type="number"
+        step="any"
+        aria-label={label}
+        data-testid={testId}
+        value={String(value)}
+        onChange={(event) => {
+          const parsed = Number(event.target.value)
+          if (event.target.value !== '' && Number.isFinite(parsed)) onValue(parsed)
+        }}
+      />
+    </label>
+  )
+}
+
+function DerivativeParameters({
+  draft,
+  onChange,
+}: {
+  readonly draft: DerivativeFormDraft
+  readonly onChange: (draft: DerivativeFormDraft) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <div
+      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+      data-testid="helper-derivative-parameters"
+    >
+      <Field label={t('helper.span')}>
+        <Select
+          aria-label={t('helper.span')}
+          data-testid="helper-span"
+          value={draft.window.span}
+          onChange={(event) => {
+            const span = ROLLING_SPANS.find((item) => item === event.target.value)
+            if (span === undefined) return
+            onChange({
+              ...draft,
+              window:
+                span === 'custom'
+                  ? { kind: 'rolling', span, customMinutes: draft.window.customMinutes ?? 60 }
+                  : { kind: 'rolling', span },
+            })
+          }}
+          options={ROLLING_SPANS.map((item) => ({
+            value: item,
+            label: t(`helper.spanName.${item}`),
+          }))}
+        />
+      </Field>
+      {draft.window.span === 'custom' && (
+        <Field label={t('helper.customMinutes')}>
+          <Input
+            aria-label={t('helper.customMinutes')}
+            data-testid="helper-custom-minutes"
+            inputMode="numeric"
+            value={
+              draft.window.customMinutes === undefined ? '' : String(draft.window.customMinutes)
+            }
+            onChange={(event) => {
+              const parsed = Number.parseInt(event.target.value, 10)
+              onChange({
+                ...draft,
+                window: {
+                  kind: 'rolling',
+                  span: 'custom',
+                  ...(Number.isFinite(parsed) ? { customMinutes: parsed } : {}),
+                },
+              })
+            }}
+          />
+        </Field>
+      )}
+      <Field label={t('helper.per')}>
+        <Select
+          aria-label={t('helper.per')}
+          data-testid="helper-per"
+          value={draft.per}
+          onChange={(event) => {
+            const per = DERIVATIVE_UNITS.find((item) => item === event.target.value)
+            if (per !== undefined) onChange({ ...draft, per })
+          }}
+          options={DERIVATIVE_UNITS.map((item) => ({
+            value: item,
+            label: t(`helper.perName.${item}`),
+          }))}
+        />
+      </Field>
+      <NameField name={draft.name} onChange={(name) => onChange({ ...draft, name })} />
+    </div>
+  )
+}
+
+function ExpressionParameters({
+  draft,
+  onChange,
+}: {
+  readonly draft: ExpressionFormDraft
+  readonly onChange: (draft: ExpressionFormDraft) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <div
+      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+      data-testid="helper-expression-parameters"
+    >
+      <Field label={t('helper.exprOutput')}>
+        <Select
+          aria-label={t('helper.exprOutput')}
+          data-testid="helper-expr-output"
+          value={draft.output}
+          onChange={(event) => {
+            const output = EXPRESSION_OUTPUTS.find((item) => item === event.target.value)
+            if (output !== undefined) onChange({ ...draft, output })
+          }}
+          options={EXPRESSION_OUTPUTS.map((item) => ({
+            value: item,
+            label: t(`helper.exprOutputName.${item}`),
+          }))}
+        />
+      </Field>
+      <NameField name={draft.name} onChange={(name) => onChange({ ...draft, name })} />
+      <p
+        className="text-[11px] text-foreground-muted sm:col-span-2"
+        data-testid="helper-stale-note"
+      >
+        {t('helper.detail.expressionStale')}
+      </p>
+    </div>
+  )
+}
+
+/** The picked readings as named inputs, and the expression that uses them. */
+function ExpressionEditor({
+  draft,
+  onChange,
+}: {
+  readonly draft: ExpressionFormDraft
+  readonly onChange: (draft: ExpressionFormDraft) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  if (draft.inputs.length === 0) return null
+  return (
+    <div className="flex flex-col gap-2" data-testid="helper-expression-editor">
+      <ul className="flex flex-col gap-1">
+        {draft.inputs.map((input, index) => (
+          <li
+            key={`${input.member.source.addonId}/${input.member.source.stableId}/${input.member.cap}.${input.member.fieldPath}`}
+            className="flex items-center gap-2 text-[11px]"
+          >
+            <Input
+              className="w-24 font-mono"
+              aria-label={t('helper.inputName')}
+              data-testid={`helper-input-name-${index}`}
+              value={input.name}
+              onChange={(event) =>
+                onChange({
+                  ...draft,
+                  inputs: draft.inputs.map((item, at) =>
+                    at === index ? { ...item, name: event.target.value } : item,
+                  ),
+                })
+              }
+            />
+            <span className="truncate text-foreground-muted">
+              {input.member.source.stableId} · {input.member.cap}.{input.member.fieldPath}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <ExpressionInput
+        label={t('helper.expr')}
+        value={draft.expr}
+        bindings={draft.inputs.map((input) => input.name)}
+        onChange={(expr) => onChange({ ...draft, expr })}
+      />
+    </div>
+  )
+}
+
 function NameField({
   name,
   onChange,
@@ -551,7 +824,21 @@ function NameField({
   )
 }
 
+function mathMembersHint(draft: HelperDraft): string {
+  if (draft.kind === 'arithmetic') return `helper.hint.${draft.op}`
+  return 'helper.hint.threshold'
+}
+
 function stepCopy(step: WizardStep, draft: HelperDraft | null): string {
+  if (
+    draft?.kind === 'threshold' ||
+    draft?.kind === 'arithmetic' ||
+    draft?.kind === 'expression' ||
+    draft?.kind === 'derivative'
+  ) {
+    if (step === 'parameters') return `helper.step.math.${draft.kind}.parameters`
+    if (step === 'members') return `helper.step.math.${draft.kind}.members`
+  }
   if (draft?.kind === 'statistic' || draft?.kind === 'integral') {
     if (step === 'parameters') return 'helper.step.historyParameters'
     if (step === 'members') return 'helper.step.historySource'

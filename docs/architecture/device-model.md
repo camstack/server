@@ -580,8 +580,43 @@ binds that capability, including one that is offline. One member's failure
 is recorded on `group-commands` and does not cancel the others. A light
 exposes brightness and colour only while every member binds them; colour
 modes are the features they all share. The live set follows membership and
-`device.bindings-changed`. Fan, cover, valve, lock, media player and climate
-are not this slice either: their commands are not an on/off fan-out.
+`device.bindings-changed`.
+
+Fan, cover, valve, lock, media player and climate groups use the same
+fan-out with one method table per type (`actuator-methods.ts`). A row is shared
+only when every member binds its cap and advertises the device feature it
+needs, so a cover offers tilt only if every cover has it, and a call for a
+method outside the shared set is refused by name without reaching a member.
+A fan reports `switch.on`. The other five report `group-active.active`: their
+own state is an enum, so the aggregate source carries `activeWhen` (a cover or
+valve is active while `open`, `opening` or `stopped`, a lock only when
+`locked`, a player while `playing` or `buffering`, a climate device unless
+`off`). A state outside the list is inactive; a read that is not a state is
+left out. **Unlocking a lock group is refused unless the call says
+`confirm: true`** (`lock-control.unlock`, honoured by a group only), nothing is
+sent or recorded without it, and the device page asks first. Locking needs no
+confirmation. The per-member outcome of every fan-out is on `group-commands`.
+
+### Math (D944)
+
+Five templates build a number or a yes/no from readings. A **threshold** turns
+a reading into `binary.on` through the `schmitt` expression builtin: on at or
+above the high edge, off at or below the low one, the last answer in between,
+optional delays before each change, seeded from the restored output so a
+restart does not flip it. A new threshold is off until it crosses the high
+edge. A **sum** is the group reducer, so an unreporting input is left out and
+counted, never read as 0. A **difference** is `a - b` and a **ratio** is
+`a / b`, unknown when the divisor is 0 or unknown. All three need one
+quantity: mixed quantities are refused at save naming both, and the result is
+a `numeric-sensor` carrying that quantity (a ratio is dimensionless). An
+**expression** is the expression engine over named inputs, validated at save;
+unlike a group it keeps using an input's last value when that input goes
+offline, and the template says so. A **derivative** is the rate of change of a
+historised reading over a rolling window, per second, minute or hour, computed
+from history like a statistic: the slope is taken between the first and last
+measured sample, so a hole in the window neither counts as zero nor stretches
+the elapsed time, and a window longer than the retention is refused. Its unit
+is the source unit per time; the device carries no quantity of its own.
 
 ### Statistics and an integral (D944)
 

@@ -2,7 +2,7 @@
  * A statistic or integral on its device page: the reading history wrote,
  * and how many intervals were left out because history had a gap (D944).
  */
-import type { IntegralHelperSpec, StatisticHelperSpec } from '@camstack/types'
+import { derivativeUnitLabel, type HistoryHelperSpec } from '@camstack/types'
 import { ErrorBox, SECTION_BODY, SectionCard, StatCard } from '@camstack/ui-library'
 import { BarChart3 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { groupStatusFromSnapshot, type SnapshotRead } from '../composition-editor/helper-form-model'
 
 export interface HistoryHelperStatusProps {
-  readonly helper: StatisticHelperSpec | IntegralHelperSpec
+  readonly helper: HistoryHelperSpec
   readonly snapshot: SnapshotRead
 }
 
@@ -21,9 +21,7 @@ export function HistoryHelperStatus({ helper, snapshot }: HistoryHelperStatusPro
   return (
     <SectionCard
       headingId="helper-history-status"
-      title={t(
-        helper.kind === 'statistic' ? 'helper.template.statistic' : 'helper.template.integral',
-      )}
+      title={t(`helper.template.${helper.kind}`)}
       icon={BarChart3}
       testId="helper-history-status"
     >
@@ -34,7 +32,7 @@ export function HistoryHelperStatus({ helper, snapshot }: HistoryHelperStatusPro
           </p>
         )}
         {value.kind === 'number' && (
-          <StatCard value={String(value.value)} label={t('helper.output')} />
+          <StatCard value={valueText(helper, value.value)} label={t('helper.output')} />
         )}
         {value.kind === 'empty' && (
           <p className="text-xs text-foreground-subtle">{t('helper.noReading')}</p>
@@ -52,9 +50,16 @@ export function HistoryHelperStatus({ helper, snapshot }: HistoryHelperStatusPro
   )
 }
 
+/** A rate carries the source unit per time; the others show the bare number. */
+function valueText(helper: HistoryHelperSpec, value: number): string {
+  if (helper.kind !== 'derivative') return String(value)
+  const unit = derivativeUnitLabel(helper)
+  return unit === null ? String(value) : `${value} ${unit}`
+}
+
 function readingOf(
   snapshot: SnapshotRead,
-  helper: StatisticHelperSpec | IntegralHelperSpec,
+  helper: HistoryHelperSpec,
 ):
   | { readonly kind: 'pending' }
   | { readonly kind: 'empty' }
@@ -62,7 +67,7 @@ function readingOf(
   if (snapshot.kind === 'pending') return { kind: 'pending' }
   if (snapshot.kind !== 'answered') return { kind: 'empty' }
   const output =
-    helper.kind === 'statistic'
+    helper.kind === 'statistic' || helper.kind === 'derivative'
       ? { cap: 'numeric-sensor', field: 'value' }
       : helper.output === 'energy'
         ? { cap: 'power-meter', field: 'kwhTotal' }

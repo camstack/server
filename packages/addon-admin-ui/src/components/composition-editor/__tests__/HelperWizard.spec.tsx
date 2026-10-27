@@ -111,4 +111,53 @@ describe('HelperWizard', () => {
     const link = await screen.findByRole('link', { name: 'Front door' })
     expect(link.getAttribute('href')).toBe('/devices/4701')
   })
+
+  it('offers the six math tiles in a Math section, each with a whole title', () => {
+    renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
+    for (const id of ['threshold', 'sum', 'difference', 'ratio', 'expression', 'derivative']) {
+      expect(screen.getByTestId(`helper-template-${id}`), id).toBeTruthy()
+    }
+    expect(screen.getByText('Math')).toBeTruthy()
+  })
+
+  it('a threshold asks for its two edges and warns when they are reversed', () => {
+    renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
+    pick('threshold')
+    expect(screen.getByTestId('helper-threshold-parameters')).toBeTruthy()
+    fireEvent.change(screen.getByTestId('helper-high'), { target: { value: '20' } })
+    fireEvent.change(screen.getByTestId('helper-low'), { target: { value: '25' } })
+    expect(screen.getByTestId('helper-edges').textContent).toContain('above the turn-on value')
+    fireEvent.change(screen.getByTestId('helper-low'), { target: { value: '18' } })
+    expect(screen.queryByTestId('helper-edges')).toBeNull()
+  })
+
+  it('an expression names the picked reading and keeps the formula across Back', () => {
+    renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
+    pick('expression')
+    fireEvent.change(screen.getByTestId('helper-name'), { target: { value: 'Delta' } })
+    fireEvent.click(screen.getByTestId('helper-to-members'))
+    expect(screen.queryByTestId('helper-expression-editor')).toBeNull()
+    fireEvent.click(screen.getByTestId('source-selector'))
+    expect((screen.getByTestId('helper-input-name-0') as HTMLInputElement).value).toBe('a')
+    fireEvent.change(screen.getByTestId('helper-input-name-0'), { target: { value: 'inlet' } })
+    expect((screen.getByTestId('helper-input-name-0') as HTMLInputElement).value).toBe('inlet')
+  })
+
+  it('a difference needs two readings before it can be saved', () => {
+    renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
+    pick('difference')
+    fireEvent.change(screen.getByTestId('helper-name'), { target: { value: 'Gap' } })
+    fireEvent.click(screen.getByTestId('helper-to-members'))
+    fireEvent.click(screen.getByTestId('source-selector'))
+    expect((screen.getByTestId('helper-save-open') as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByTestId('helper-math-hint').textContent).toContain('Exactly two readings')
+  })
+
+  it('a derivative picks a window and a unit of time', () => {
+    renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
+    pick('derivative')
+    expect((screen.getByTestId('helper-per') as HTMLSelectElement).value).toBe('hour')
+    fireEvent.change(screen.getByTestId('helper-per'), { target: { value: 'minute' } })
+    expect((screen.getByTestId('helper-per') as HTMLSelectElement).value).toBe('minute')
+  })
 })

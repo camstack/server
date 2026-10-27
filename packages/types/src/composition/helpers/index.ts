@@ -65,6 +65,7 @@ export {
 export {
   declaredSeriesKind,
   derivativeDraft,
+  derivativeUnitLabel,
   integralDraft,
   statisticDraft,
 } from './compile-history.js'

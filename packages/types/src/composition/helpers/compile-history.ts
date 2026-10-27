@@ -44,6 +44,22 @@ function counts(member: HelperMember): Record<string, CompositionSeriesSource> {
   }
 }
 
+const PER_SYMBOL: Readonly<Record<DerivativeHelperSpec['per'], string>> = {
+  second: 's',
+  minute: 'min',
+  hour: 'h',
+}
+
+/**
+ * The unit of a rate: the source series' unit per second, minute or hour
+ * (`°C/h`). A source with no unit of its own (a generic number) has none to
+ * borrow, so the label is null and the chart shows the bare number.
+ */
+export function derivativeUnitLabel(spec: DerivativeHelperSpec): string | null {
+  const unit = historyFieldsFor(spec.source.cap)[spec.source.fieldPath]?.unit
+  return unit === undefined ? null : `${unit}/${PER_SYMBOL[spec.per]}`
+}
+
 export function declaredSeriesKind(member: HelperMember): SeriesKind | 'enum' | null {
   const field = historyFieldsFor(member.cap)[member.fieldPath]
   if (field === undefined) return null

@@ -236,6 +236,10 @@ function titleForDraft(draft: HelperDraft | null, t: TFunction): string {
   if (draft === null) return t('helper.newHelper')
   if (draft.kind === 'statistic') return t('helper.newTitle.statistic')
   if (draft.kind === 'integral') return t('helper.newTitle.integral')
+  if (draft.kind === 'arithmetic') return t(`helper.newTitle.${draft.op}`)
+  if (draft.kind === 'threshold' || draft.kind === 'expression' || draft.kind === 'derivative') {
+    return t(`helper.newTitle.${draft.kind}`)
+  }
   if (draft.templateId === 'appliance' && draft.appliance !== null) {
     return t(`helper.newTitle.${draft.appliance}`)
   }

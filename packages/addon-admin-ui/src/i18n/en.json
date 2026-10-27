@@ -2654,7 +2654,8 @@
       "rose": "time of the last rise of a level (has memory)",
       "count": "how many times x advanced (has memory)",
       "dwell": "stays on or off only after it has held for the given milliseconds (has memory)",
-      "latchedAt": "time the value last changed (has memory)"
+      "latchedAt": "time the value last changed (has memory)",
+      "schmitt": "turns on at the high edge and off at the low edge, and holds in between; optional delays before each change (has memory)"
     },
     "pageTitle": "Composed device",
     "loading": "Loading the composition…",
@@ -9898,7 +9899,8 @@
       "binary": "Binary sensors",
       "actuators": "Actuators",
       "appliances": "Appliances",
-      "history": "History"
+      "history": "History",
+      "math": "Math"
     },
     "template": {
       "temperature": "Temperature",
@@ -9936,7 +9938,25 @@
       "appliance": "Appliance from a smart plug",
       "applianceSummary": "One power reading. Running while power stays above a threshold, long enough that a wash pause is not the end of the cycle.",
       "statistic": "Statistics",
-      "integral": "Energy from power"
+      "integral": "Energy from power",
+      "threshold": "Threshold",
+      "sum": "Sum",
+      "difference": "Difference",
+      "ratio": "Ratio",
+      "expression": "Expression",
+      "derivative": "Rate of change",
+      "fan": "Fan",
+      "cover": "Cover",
+      "valve": "Valve",
+      "lock": "Lock",
+      "media-player": "Media player",
+      "climate": "Climate",
+      "fanSummary": "Same as a switch group. Speed, preset, direction and oscillation appear only when every fan has them.",
+      "coverSummary": "Open when at least one cover is open, or only when all are. Position and tilt appear only when every cover has them.",
+      "valveSummary": "Open when at least one valve is open, or only when all are. Position appears only when every valve has it.",
+      "lockSummary": "Locked when at least one lock is locked, or only when all are. Unlocking the group always asks for a confirmation.",
+      "media-playerSummary": "Playing when at least one player is playing, or only when all are. Volume appears only when every player has it.",
+      "climateSummary": "Running when at least one device is not off, or only when all are. Target temperature and fan appear only when every device has them."
     },
     "aggregate": {
       "mean": "Mean",
@@ -9959,7 +9979,25 @@
       "appliance": "Name it and choose the appliance.",
       "applianceMembers": "Choose the plug's power reading.",
       "historyParameters": "Choose the range and name it.",
-      "historySource": "Choose the reading."
+      "historySource": "Choose the reading.",
+      "math": {
+        "threshold": {
+          "parameters": "Set the two edges, the optional delays and a name.",
+          "members": "Pick the one reading to watch."
+        },
+        "arithmetic": {
+          "parameters": "Give it a name.",
+          "members": "Pick the readings. They must measure the same quantity."
+        },
+        "expression": {
+          "parameters": "Choose what it publishes and name it.",
+          "members": "Pick the readings, name them, then write the formula."
+        },
+        "derivative": {
+          "parameters": "Choose the window and the unit of time, and name it.",
+          "members": "Pick the one reading, which must keep a history."
+        }
+      }
     },
     "reducer": "Combine by",
     "name": "Name",
@@ -10000,7 +10038,13 @@
     "cap": {
       "switch": "Switch",
       "brightness": "Brightness",
-      "color": "Colour"
+      "color": "Colour",
+      "fan-control": "Fan controls",
+      "cover": "Cover controls",
+      "valve": "Valve controls",
+      "lock-control": "Lock controls",
+      "media-player": "Player controls",
+      "climate-control": "Climate controls"
     },
     "mode": {
       "light-color-rgb": "Colour",
@@ -10036,7 +10080,19 @@
       "dryer": "New dryer",
       "dishwasher": "New dishwasher",
       "statistic": "New statistics",
-      "integral": "New energy meter"
+      "integral": "New energy meter",
+      "threshold": "New threshold",
+      "sum": "New sum",
+      "difference": "New difference",
+      "ratio": "New ratio",
+      "expression": "New expression",
+      "derivative": "New rate of change",
+      "fan": "New fan group",
+      "cover": "New cover group",
+      "valve": "New valve group",
+      "lock": "New lock group",
+      "media-player": "New media player group",
+      "climate": "New climate group"
     },
     "appliance": {
       "washer": "Washing machine",
@@ -10050,7 +10106,15 @@
     "detail": {
       "statistic": "Minimum, maximum, time-weighted mean, sum, count or change over a range, read from history. Sum is for a counter; a gauge's sum is the integral.",
       "integral": "Power becomes energy. A flow becomes volume. Any other instantaneous reading becomes a meter in unit-seconds, growing until the reset.",
-      "history": "The source must record history. A gap is left out and is never counted as zero. The range cannot be longer than that history is kept."
+      "history": "The source must record history. A gap is left out and is never counted as zero. The range cannot be longer than that history is kept.",
+      "threshold": "Turns on when a reading reaches the high edge and off when it falls to the low edge, and holds in between so it does not flicker. Optional delays wait before each change.",
+      "sum": "Adds readings of the same quantity. An input that is offline or unknown is left out and counted, never read as zero.",
+      "difference": "The first reading minus the second, both of the same quantity. If either is unknown the result is unknown.",
+      "ratio": "The first reading over the second, as a plain number. A zero or unknown second reading gives unknown, never infinity.",
+      "expression": "Your own formula over named readings, for anything the other tiles do not cover.",
+      "expressionStale": "Unlike the groups, an expression keeps using an input's last value when that input goes offline.",
+      "derivative": "How fast a reading rises or falls over a window, per second, minute or hour.",
+      "lockConfirm": "Unlocking the group always asks for a confirmation, and nothing is sent without it."
     },
     "stat": "Statistic",
     "statName": {
@@ -10092,6 +10156,100 @@
     "customMinutes": "Minutes",
     "noHistory": "This reading has no history, so it cannot be the source.",
     "output": "Reading",
-    "gaps": "{{count}} intervals were left out"
+    "gaps": "{{count}} intervals were left out",
+    "hint": {
+      "threshold": "Exactly one reading.",
+      "sum": "Two or more readings of one quantity.",
+      "difference": "Exactly two readings. The first is the one subtracted from.",
+      "ratio": "Exactly two readings. The first is divided by the second."
+    },
+    "highEdge": "Turn on at or above",
+    "lowEdge": "Turn off at or below",
+    "onDelay": "Wait before turning on (seconds)",
+    "offDelay": "Wait before turning off (seconds)",
+    "edgesReversed": "The turn-off value is above the turn-on value.",
+    "per": "Rate per",
+    "perName": {
+      "second": "Second",
+      "minute": "Minute",
+      "hour": "Hour"
+    },
+    "exprOutput": "It publishes",
+    "exprOutputName": {
+      "number": "A number",
+      "boolean": "A yes or no"
+    },
+    "inputName": "Input name",
+    "expr": "Formula",
+    "method": {
+      "switch": {
+        "setState": "On or off"
+      },
+      "brightness": {
+        "setBrightness": "Brightness"
+      },
+      "color": {
+        "setColor": "Colour"
+      },
+      "fan-control": {
+        "setPercentage": "Speed",
+        "setPreset": "Preset",
+        "setDirection": "Direction",
+        "setOscillating": "Oscillation"
+      },
+      "cover": {
+        "open": "Open",
+        "close": "Close",
+        "stop": "Stop",
+        "setPosition": "Position",
+        "setTiltPosition": "Tilt"
+      },
+      "valve": {
+        "open": "Open",
+        "close": "Close",
+        "setPosition": "Position"
+      },
+      "lock-control": {
+        "lock": "Lock",
+        "unlock": "Unlock"
+      },
+      "media-player": {
+        "play": "Play",
+        "pause": "Pause",
+        "setVolume": "Volume"
+      },
+      "climate-control": {
+        "setMode": "Mode",
+        "setTarget": "Target temperature",
+        "setFanMode": "Fan"
+      }
+    },
+    "state": {
+      "cover": {
+        "on": "Open",
+        "off": "Closed"
+      },
+      "valve": {
+        "on": "Open",
+        "off": "Closed"
+      },
+      "lock": {
+        "on": "Locked",
+        "off": "Unlocked"
+      },
+      "media-player": {
+        "on": "Playing",
+        "off": "Not playing"
+      },
+      "climate": {
+        "on": "Running",
+        "off": "Off"
+      }
+    },
+    "lockAll": "Lock all",
+    "unlockAll": "Unlock all",
+    "unlockTitle": "Unlock every lock in this group?",
+    "unlockBody": "Every lock in the group will be told to unlock. A lock that cannot be reached is reported and the rest still unlock.",
+    "unlockConfirm": "Unlock all"
   }
 }
