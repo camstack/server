@@ -2599,7 +2599,15 @@ camera's extra still, a mosaic tile — goes through `notificationImage`
 2. the stage renders it by mode:
    - `scene-boxes` — the subject outlined thick in the accent colour, every other
      track visible on that camera at that instant outlined thin, each captioned
-     "class NN%". Boxes are the tracks' normalised trail boxes AT the source
+     with the class vocabulary in the hub's notification language
+     (`eventKindLabel` — "Persona 91%", "Cane 87%"). An identity or a plate is
+     drawn as written. A class the vocabulary does not know stays the wire id.
+     The hub has one language for every recipient of a row, so the picture is
+     rendered once and reused; the language is part of the memo key. A stored
+     tile that already has a box burnt in (`annotated-source`) ships as stored:
+     those words were drawn at capture, before a language existed for the send.
+     A summary mosaic's tile caption uses the same vocabulary. Boxes are the
+     tracks' normalised trail boxes AT the source
      frame's timestamp (`getSubjectTrail`, and `getTracksAt` for the others —
      `tracks-at-instant.ts`), never the track envelope;
    - `crop` — the subject's box at that instant, padded, cut out of the frame;

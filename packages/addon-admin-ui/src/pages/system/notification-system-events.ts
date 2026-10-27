@@ -13,14 +13,15 @@
  * that never removes the last kind nor adds another family's. The per-kind
  * `systemEventFilterVisibility` stays: the scope guard compares it to the engine.
  *
- * VOCABULARY IS SHARED, DELIBERATELY. The kinds, their labels and the
- * filter-visibility rule are the same on the admin UI and in the viewer
- * (`camstack/src/components/notifications/rule-editor.ts` +
- * `locales/{en,it}.json` → `v2.nc.rules.editor.systemKinds`). Two surfaces that
- * name the same event differently is how an operator concludes they are two
- * different features. The kind list itself is guarded against
- * `NcSystemEventKindSchema` in the spec, so a ninth kind added server-side
- * fails a test here instead of silently rendering seven of eight.
+ * VOCABULARY IS SHARED, DELIBERATELY. The kinds and the filter-visibility
+ * rule are the same on the admin UI and in the viewer. The words are the
+ * viewer's (`locales/{en,it}.json` → `v2.nc.rules.editor.systemKinds`), copied
+ * into this package's catalog (`notificationRules.systemEventKinds`) so the
+ * admin speaks the language the operator picked. Two surfaces that name the
+ * same event differently is how an operator concludes they are two different
+ * features. The kind list itself is guarded against `NcSystemEventKindSchema`
+ * in the spec, so a kind added server-side fails a test here instead of
+ * silently rendering one fewer.
  */
 
 import type {
@@ -54,7 +55,7 @@ export interface NcSystemEventKindOption {
  * a few short questions ("are my devices up?", "is a battery flat?") rather
  * than one list of strings. Which groups exist, in which family and in which
  * order is `NC_SYSTEM_EVENT_KIND_GROUP_SPECS` (shared with the viewer); the
- * English labels and hints are this editor's.
+ * labels and hints are this package's catalog, the same words as the viewer.
  */
 export interface NcSystemEventKindGroup {
   readonly id: string
@@ -71,154 +72,46 @@ export type NcAuthorableSystemEventKind = Exclude<
   (typeof NC_LEGACY_SYSTEM_EVENT_KINDS)[number]
 >
 
+const KIND_LABEL_PREFIX = 'notificationRules.systemEventKinds.'
+const GROUP_LABEL_PREFIX = 'notificationRules.systemEventGroups.'
+const GROUP_HINT_PREFIX = 'notificationRules.systemEventHints.'
+
+function isAuthorableKind(kind: NcSystemEventKind): kind is NcAuthorableSystemEventKind {
+  return !NC_LEGACY_SYSTEM_EVENT_KINDS.some((legacy) => legacy === kind)
+}
+
 /**
- * Every authorable kind's English label, in ONE table. Total over the
- * authorable kinds: a kind added to the cap without a label fails tsc here.
- * Word for word the viewer's (`v2.nc.rules.editor.systemKinds`).
+ * The viewer's name for this kind, in the admin UI language. A kind this
+ * build does not know stays the raw id — never a missing-key path.
  */
-const NC_SYSTEM_EVENT_KIND_LABELS: Readonly<Record<NcAuthorableSystemEventKind, string>> = {
-  'device-offline': 'Device offline',
-  'device-online': 'Device online',
-  'device-disabled': 'Device switched off',
-  'device-enabled': 'Device switched on',
-  'stream-offline': 'Stream offline',
-  'stream-online': 'Stream online',
-  'device-battery-low': 'Battery low',
-  'device-battery-normal': 'Battery back to normal',
-  'device-consumable-low': 'Consumable low',
-  'device-consumable-normal': 'Consumable back to normal',
-  'detection-blind': 'Camera detecting nothing',
-  'motion-noisy': 'Camera motion constant, no subject',
-  'motion-calm': 'Camera motion calm again',
-  'package-llm-silent': 'Package confirm not answering',
-  'package-llm-answered': 'Package confirm answering again',
-  'recording-stalled': 'Recording stalled',
-  'recording-healthy': 'Recording healthy again',
-  'recording-degraded': 'Recording degraded (restart storm)',
-  'device-attention-required': 'Device needs attention',
-  'device-attention-resolved': 'Device attention resolved',
-  'storage-location-low': 'Storage location low',
-  'storage-location-critical': 'Storage location critical',
-  'storage-location-ok': 'Storage location ok again',
-  'node-offline': 'Node offline',
-  'node-online': 'Node online',
-  'node-restarting': 'Node restarting',
-  'node-updating': 'Node updating (restart imminent)',
-  'node-inference-unavailable': 'Node has no usable inference device',
-  'addon-crash-loop': 'Addon stopped after repeated crashes',
-  'addon-update-available': 'Addon update available',
-  'addon-updated': 'Addons updated',
-  'server-update-available': 'Server update available',
-  'server-updated': 'Server updated',
-  'wrapper-update-available': 'Container / app update available',
-  'export-completed': 'Export completed',
-  'backup-completed': 'Backup completed',
-  'alert-critical': 'Critical alert raised',
-  'alert-error': 'Error alert raised',
-  'alert-critical-resolved': 'Critical alert resolved',
-  'rule-broken': 'Notification rule broken',
-  'rule-repaired': 'Notification rule repaired',
-  'alarm-arm-refused': 'Alarm arm refused (something is open)',
-  'alarm-check-failed': 'Alarm check failed (armed anyway)',
-  'alarm-arming': 'Alarm arming (exit delay)',
-  'alarm-armed': 'Alarm armed',
-  'alarm-pending': 'Alarm entry delay started',
-  'alarm-triggered': 'Alarm triggered',
-  'alarm-rearmed': 'Alarm re-armed after siren',
-  'alarm-sensor-bypass': 'Alarm sensor bypass',
-  'alarm-disarmed': 'Alarm disarmed',
+export function systemEventKindLabel(kind: string): string {
+  const key = `${KIND_LABEL_PREFIX}${kind}`
+  if (!i18n.exists(key)) return kind
+  return i18n.t(key)
 }
 
-/** Read by NAME so a legacy kind simply has no label — no cast. */
-const LABEL_BY_KIND: ReadonlyMap<string, string> = new Map(
-  Object.entries(NC_SYSTEM_EVENT_KIND_LABELS),
-)
-
-function labelOfAuthorable(kind: NcSystemEventKind): string | undefined {
-  return LABEL_BY_KIND.get(kind)
-}
-
-/** Each group's one-line hint, keyed by the shared group id. */
-const NC_SYSTEM_EVENT_GROUP_HINTS: Readonly<Record<string, string>> = {
-  // Liveness covers EVERY device type — a camera, a plug, a sensor; the "which
-  // ones" question is the device-type filter, not the kind. The switch is a
-  // DIFFERENT question from liveness (D62): mixing the two is how an operator
-  // reads "switched off" as "broken", so the hint says which is which.
-  'device-state':
-    'A device the hub can no longer reach, or that came back. Switched off / on is a device an operator turned off or back on — not a fault, a choice.',
-  streams: 'A stream that stopped or came back.',
-  // Its OWN group: a flat battery is a sustained state rather than a moment,
-  // it says itself again on an interval, and its threshold + reminder +
-  // recovery switch are cluster settings rather than fields of the rule.
-  battery:
-    'A battery below the cluster threshold, and (optionally) its return to normal. Devices with a binary low-battery indicator are judged by the indicator, not by the percentage.',
-  // Beside battery, not inside it: a filter or a brush is a different physical
-  // thing to replace, and a device may report one as a percentage and the
-  // other as a plain "replace me". Its threshold is THIS rule's (D642).
-  consumables:
-    'A consumable — filter, brush, bag, supply or waste tank — at or below this rule’s threshold, or that the device reports as due for replacement, and (optionally) its return to normal after a change. A device that only says "replace" is judged by that, not by a percentage.',
-  // Not liveness: the camera is decoding and the offline rules stay quiet —
-  // which is exactly why this failure went unnoticed for 1h43.
-  'detection-blind':
-    'A camera that MOVED — at least 10 minutes of motion over 3 sessions — was analysed, and whose detector produced nothing at all, not even a candidate under the confidence floor.',
-  // Not blind: the motion source fires on nothing (D907).
-  'motion-noise':
-    'A camera whose motion fires constantly with no subject for an hour — a quarter of the time in motion, or 40 sessions — and (optionally) its return to calm. The detector is fine; tune the motion zones or sensitivity.',
-  // Its own group: the package confirm is a vision model on some node, not
-  // the camera — silent here means no package is announced at all (D931).
-  'package-llm':
-    'A camera whose package confirm stopped answering — three checks in a row with no answer from the vision model, so possible packages are not announced — and its return when the model answers again.',
-  recording:
-    'A camera whose recording is on but no footage is landing (stall), a writer that burned its restart budget (degraded), and (optionally) the return to healthy writing.',
-  'device-attention':
-    'A device whose own addon raised a critical alert because it needs the operator (a missing or rejected PIN), and the return to normal.',
-  // The node half of the old "Up but producing nothing" group sits with the
-  // nodes: an online node whose accelerators all went away.
-  nodes:
-    'An agent or worker node joining or leaving the cluster, or an online node whose inference devices all went away.',
-  // Two groups since D708: a crash and an update are acted on by different
-  // people at different moments, and a summary sends each group on its own.
-  addons: 'An addon the hub has stopped restarting after repeated crashes.',
-  'addon-updates': 'A newer version of an addon, or an addon update that just finished.',
-  updates:
-    'A newer version of the server itself, or of the container / app the node runs inside, is available — or a server update just finished.',
-  'backups-exports':
-    'A scheduled or manual backup of the hub finished, or a footage export finished rendering.',
-  // The alert centre sends nothing of its own: these rules are the only way a
-  // critical (or error) alert reaches a phone.
-  alerts:
-    'A critical or error alert opening — a runner that failed or was refused, a recording location out of space, an expired sign-in — and (optionally) a critical alert resolving. One notification per alert episode.',
-  storage:
-    'A storage location running low or critical on free space — or whose capacity probe failed — and (optionally) its return to ok.',
-  // D905: a rule that silently stopped working is the one failure no other
-  // rule can report — it is the rule.
-  'rule-health':
-    'A notification rule that cannot work — it no longer loads, or still names a device or destination that was deleted — and (optionally) its repair.',
-  // The panel is a device and its lifecycle an installation fact. In
-  // LIFECYCLE order (`NC_ALARM_SYSTEM_EVENT_KINDS`): `alarm-arm-refused` first
-  // because it happens INSTEAD of the rest, `alarm-check-failed` next (D49 —
-  // unknown never blocks, but the operator must hear it while there is time).
-  alarm:
-    'The alarm panel refusing to arm, arming, armed, counting down to a siren, going off, re-arming, excluding an open sensor, or being disarmed.',
-}
-
-export const NC_SYSTEM_EVENT_KIND_GROUPS: readonly NcSystemEventKindGroup[] =
-  NC_SYSTEM_EVENT_KIND_GROUP_SPECS.map((spec) => ({
+/**
+ * Groups rebuilt on each read. The catalog is the language the operator
+ * picked; a table frozen at import would keep English after they switch.
+ */
+export function systemEventKindGroups(): readonly NcSystemEventKindGroup[] {
+  return NC_SYSTEM_EVENT_KIND_GROUP_SPECS.map((spec) => ({
     id: spec.id,
     family: spec.family,
-    label: spec.label,
-    hint: NC_SYSTEM_EVENT_GROUP_HINTS[spec.id] ?? '',
-    kinds: spec.kinds.flatMap((kind) => {
-      const label = labelOfAuthorable(kind)
-      return label === undefined ? [] : [{ value: kind, label }]
-    }),
+    label: i18n.t(`${GROUP_LABEL_PREFIX}${spec.id}`, spec.label),
+    hint: i18n.t(`${GROUP_HINT_PREFIX}${spec.id}`),
+    kinds: spec.kinds.filter(isAuthorableKind).map((kind) => ({
+      value: kind,
+      label: systemEventKindLabel(kind),
+    })),
   }))
+}
 
 /** The groups ONE family's editor offers (D637). */
 export function systemEventKindGroupsFor(
   family: NcSystemEventFamily,
 ): readonly NcSystemEventKindGroup[] {
-  return NC_SYSTEM_EVENT_KIND_GROUPS.filter((g) => g.family === family)
+  return systemEventKindGroups().filter((group) => group.family === family)
 }
 
 /**
@@ -233,12 +126,8 @@ export function seedSystemEventForFamily(family: NcSystemEventFamily): NcSystemE
 }
 
 /** Every kind in authoring order (flattened from the groups — one source). */
-export const NC_SYSTEM_EVENT_KIND_OPTIONS: readonly NcSystemEventKindOption[] =
-  NC_SYSTEM_EVENT_KIND_GROUPS.flatMap((group) => group.kinds)
-
-/** Human label for a kind; falls back to the raw value for an unknown one. */
-export function systemEventKindLabel(kind: string): string {
-  return NC_SYSTEM_EVENT_KIND_OPTIONS.find((o) => o.value === kind)?.label ?? kind
+export function systemEventKindOptions(): readonly NcSystemEventKindOption[] {
+  return systemEventKindGroups().flatMap((group) => group.kinds)
 }
 
 /**
@@ -247,7 +136,7 @@ export function systemEventKindLabel(kind: string): string {
  * rather than written into the rule.
  */
 export function parseSystemEventKind(value: string): NcSystemEventKind | undefined {
-  return NC_SYSTEM_EVENT_KIND_OPTIONS.find((o) => o.value === value)?.value
+  return systemEventKindOptions().find((o) => o.value === value)?.value
 }
 
 /** Which optional narrowing filters are meaningful for the selected kinds. */
@@ -414,9 +303,9 @@ export function toggleSystemEventOption(
     if (next.length === 0) return value
     return withKinds(value, next, family)
   }
-  const next = NC_SYSTEM_EVENT_KIND_OPTIONS.filter(
-    (o) => option.kinds.includes(o.value) || current.includes(o.value),
-  ).map((o) => o.value)
+  const next = systemEventKindOptions()
+    .filter((o) => option.kinds.includes(o.value) || current.includes(o.value))
+    .map((o) => o.value)
   return withKinds(value, next, family)
 }
 
@@ -442,9 +331,9 @@ export function toggleSystemEventKind(
   if (current.length === 1 && current[0] === kind) return value
   const next = current.includes(kind)
     ? current.filter((k) => k !== kind)
-    : NC_SYSTEM_EVENT_KIND_OPTIONS.filter((o) => o.value === kind || current.includes(o.value)).map(
-        (o) => o.value,
-      )
+    : systemEventKindOptions()
+        .filter((o) => o.value === kind || current.includes(o.value))
+        .map((o) => o.value)
   return withKinds(value, next, family)
 }
 

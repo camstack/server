@@ -136,7 +136,9 @@ describe('SystemEventField — one family', () => {
     expect(screen.queryByRole('checkbox', { name: 'Stream offline' })).toBeNull()
     expect(screen.queryByRole('checkbox', { name: 'Stream online' })).toBeNull()
     // A one-edge kind stays single.
-    expect(screen.getByRole('checkbox', { name: 'Camera detecting nothing' })).toBeTruthy()
+    expect(
+      screen.getByRole('checkbox', { name: 'Motion for 10+ minutes, detector found nothing' }),
+    ).toBeTruthy()
   })
 
   it('D906: ticking a class on an instant rule writes BOTH edges', () => {

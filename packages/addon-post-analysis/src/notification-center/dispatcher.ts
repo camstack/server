@@ -2383,6 +2383,7 @@ export class NcDispatcher {
         },
         camera: cameraId,
         withSubject: false,
+        locale: this.texts.language,
       })
       if (image === null) continue
       out.push({
@@ -3328,6 +3329,7 @@ export class NcDispatcher {
             },
             camera: primaryImageCamera(entry.payload),
             withSubject: true,
+            locale: this.texts.language,
           })
           if (image === null) return null
           return { mediaType: 'image', bytes: image.bytes, mime: 'image/jpeg', name: image.name }

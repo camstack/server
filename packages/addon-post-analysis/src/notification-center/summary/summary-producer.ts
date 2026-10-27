@@ -42,7 +42,7 @@ import { NcTextCatalog } from '../text-catalog.js'
 import { countDetections, type DetectionCounts } from '../timelapse/detection-counts.js'
 import { type ClosedWindow, findLastClosedWindow } from '../timelapse/window-bounds.js'
 import type { NcZoneOwnerLookup } from '../zone-ownership.js'
-import { mosaicTextPlan, renderMosaic } from './mosaic-renderer.js'
+import { mosaicTextPlan, renderMosaic, summaryTileCaption } from './mosaic-renderer.js'
 import { renderSubjectView } from './summary-ai-subject-view.js'
 import type { NcSummaryAiInput, NcSummaryAiOutcome, SummaryAiFrame } from './summary-ai.js'
 import type { NcSummaryCollector } from './summary-collector.js'
@@ -944,7 +944,12 @@ export class NcSummaryProducer {
             jpeg,
             ...(plan.tileLabels
               ? {
-                  label: `${names.get(candidate.deviceId) ?? candidate.deviceId} · ${clockOf(candidate.firstSeen)} · ${candidate.className}`,
+                  label: summaryTileCaption(
+                    names.get(candidate.deviceId) ?? String(candidate.deviceId),
+                    clockOf(candidate.firstSeen),
+                    candidate.className,
+                    this.texts.language,
+                  ),
                 }
               : {}),
             deviceId: candidate.deviceId,

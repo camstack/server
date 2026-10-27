@@ -35,11 +35,18 @@
  *                     catalog uses for a count-less lookup.
  *   NON-EMPTY         no blank value. A key that renders empty is a
  *                     notification with nothing in it.
+ *   NOT A COPY        an Italian value that still contains a word of four
+ *                     letters or more must differ from the English one.
+ *                     Placeholders and punctuation may match.
+ *   KEYS USED         every dotted `key: '…'` literal under notification-center
+ *                     exists in the English catalog.
+ *   PICTURE WORDS     box captions and mosaic tile captions go through the
+ *                     class vocabulary (`eventKindLabel`), never a raw class id.
  *
  * Usage: npx tsx scripts/check-nc-text-catalog.ts
  */
 
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { NC_TEMPLATE_VARS } from '../packages/types/src/notification/template-vars.js'
 
@@ -270,6 +277,84 @@ for (const key of referenceKeys) {
       `${REFERENCE}.json: "${key}" names {{${name}}}, which no template variable declares (packages/types/src/notification/template-vars.ts)`,
     )
   }
+}
+
+// ── Italian must not reprint an English sentence ───────────────────────
+//
+// Parity of KEYS does not catch a translation that was never written: the
+// catalog falls through to English only when the key is MISSING, so a key
+// present in both files with the same English words delivers English to an
+// Italian household and looks intentional. A value that is only placeholders
+// and punctuation may match; one that still contains a word of four letters
+// or more must differ.
+function proseTokens(text: string): readonly string[] {
+  return text
+    .replace(/\{\{[^}]*\}\}/g, ' ')
+    .replace(/[^A-Za-zÀ-ÿ]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length >= 4)
+}
+
+for (const [key, value] of Object.entries(reference)) {
+  if (typeof value !== 'string') continue
+  const italian = bundles.get('it')?.[key]
+  if (typeof italian !== 'string' || italian !== value) continue
+  const tokens = proseTokens(value)
+  if (tokens.length === 0) continue
+  fail(
+    `it.json: "${key}" repeats the English text and still contains ${tokens.join(', ')} — translate it`,
+  )
+}
+
+// ── Every dotted catalog key the notification code names exists ────────
+const NC_SRC = join(process.cwd(), 'packages/addon-post-analysis/src/notification-center')
+const KEY_LITERAL = /key:\s*'([^']+)'/g
+
+function walkSources(dir: string): void {
+  for (const name of readdirSync(dir)) {
+    if (name === '__tests__' || name === 'texts') continue
+    const path = join(dir, name)
+    const stat = statSync(path)
+    if (stat.isDirectory()) {
+      walkSources(path)
+      continue
+    }
+    if (!name.endsWith('.ts')) continue
+    const source = readFileSync(path, 'utf8')
+    for (const match of source.matchAll(KEY_LITERAL)) {
+      const key = match[1]
+      if (key === undefined || !key.includes('.')) continue
+      if (!(key in reference)) {
+        fail(`${path}: names catalog key "${key}", which en.json does not have`)
+      }
+    }
+  }
+}
+
+walkSources(NC_SRC)
+
+// ── Captions drawn on a picture come from the class vocabulary ────────
+const imageSource = readFileSync(join(NC_SRC, 'notification-image.ts'), 'utf8')
+if (!imageSource.includes('eventKindLabel')) {
+  fail('notification-image.ts draws a box caption without eventKindLabel')
+}
+const captionCalls = imageSource.match(/imageLabelText\(/g) ?? []
+if (captionCalls.length !== 2) {
+  fail(
+    `notification-image.ts calls imageLabelText ${captionCalls.length} times — the only call site is imageBoxCaption`,
+  )
+}
+const producerSource = readFileSync(join(NC_SRC, 'summary/summary-producer.ts'), 'utf8')
+if (producerSource.includes('${candidate.className}')) {
+  fail('summary-producer.ts draws the wire class id on a mosaic tile')
+}
+if (!producerSource.includes('summaryTileCaption')) {
+  fail('summary-producer.ts does not caption mosaic tiles through summaryTileCaption')
+}
+const mosaicSource = readFileSync(join(NC_SRC, 'summary/mosaic-renderer.ts'), 'utf8')
+if (!mosaicSource.includes('eventKindLabel')) {
+  fail('mosaic-renderer.ts captions a tile without eventKindLabel')
 }
 
 if (problems.length > 0) {

@@ -10,6 +10,7 @@ import type { IScopedLogger } from '@camstack/types'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import {
+  imageBoxCaption,
   imageLabelText,
   NC_IMAGE_OTHER_COLOR,
   NC_IMAGE_SUBJECT_COLOR,
@@ -91,6 +92,25 @@ describe('the caption', () => {
     expect(imageLabelText('dog', 0.87)).toBe('dog 87%')
     expect(imageLabelText('person', 0.9149)).toBe('person 91%')
     expect(imageLabelText('car', undefined)).toBe('car')
+  })
+
+  it('draws the class vocabulary in the hub language, and keeps a name', () => {
+    expect(imageBoxCaption({ className: 'person', confidence: 0.91 }, 'it')).toBe('Persona 91%')
+    expect(imageBoxCaption({ className: 'package', confidence: 0.5 }, 'it')).toBe('Pacco 50%')
+    expect(imageBoxCaption({ className: 'animal', label: 'dog', confidence: 0.87 }, 'it')).toBe(
+      'Cane 87%',
+    )
+    expect(imageBoxCaption({ className: 'car' }, 'en')).toBe('Car')
+    expect(
+      imageBoxCaption(
+        { className: 'person', label: 'Mario', labelKind: 'identity', confidence: 0.91 },
+        'it',
+      ),
+    ).toBe('Mario 91%')
+    expect(
+      imageBoxCaption({ className: 'vehicle', label: 'AB123CD', labelKind: 'plate' }, 'it'),
+    ).toBe('AB123CD')
+    expect(imageBoxCaption({ className: 'forklift', confidence: 0.4 }, 'it')).toBe('forklift 40%')
   })
 })
 
@@ -541,12 +561,53 @@ describe('NcNotificationImageStage', () => {
     expect(trailAsked).toEqual([101])
     expect(requests[0]?.subject).toEqual({
       ...SUBJECT,
-      label: 'person 91%',
+      label: 'Person 91%',
       className: 'person',
     })
     expect(requests[0]?.others).toEqual([
-      { ...OTHER, label: 'dog 87%', confidence: 0.87, className: 'animal' },
+      { ...OTHER, label: 'Dog 87%', confidence: 0.87, className: 'animal' },
     ])
+  })
+
+  it('passes Italian class labels to the drawing function, and does not reuse an English picture', async () => {
+    const requests: NcImageRenderRequest[] = []
+    const stage = new NcNotificationImageStage({
+      logger: recordingLogger().logger,
+      now: () => T0,
+      getSubjectTrail: async () => [{ timestamp: SOURCE_TS, bbox: SUBJECT }],
+      getTracksAt: async () => [
+        {
+          trackId: 'trk-9',
+          className: 'animal',
+          label: 'dog',
+          confidence: 0.87,
+          bbox: OTHER,
+        },
+      ],
+      render: async (req): Promise<NcRenderedImage> => {
+        requests.push(req)
+        return { bytes: req.bytes, name: 'scene-boxes.jpg', rendered: 'scene-boxes' }
+      },
+    })
+    const row = {
+      entry: entry({ mediaImage: 'scene-boxes' }),
+      source: {
+        bytes: await solidJpeg(0, 0, 0),
+        kind: 'keyFrame' as const,
+        timestamp: SOURCE_TS,
+        annotated: false,
+      },
+      camera: 101 as const,
+      withSubject: true,
+    }
+    await stage.notificationImage({ ...row, locale: 'it' })
+    await stage.notificationImage({ ...row, locale: 'it' })
+    expect(requests).toHaveLength(1)
+    expect(requests[0]?.subject?.label).toBe('Persona 91%')
+    expect(requests[0]?.others[0]?.label).toBe('Cane 87%')
+    await stage.notificationImage({ ...row, locale: 'en' })
+    expect(requests).toHaveLength(2)
+    expect(requests[1]?.subject?.label).toBe('Person 91%')
   })
 
   it('scene-boxes with nothing visible at that instant ships CLEAN and names the reason once, per camera', async () => {

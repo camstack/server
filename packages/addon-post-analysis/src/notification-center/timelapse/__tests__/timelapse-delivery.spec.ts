@@ -349,7 +349,7 @@ describe('the derived body, per language', () => {
   it('the title is the camera, in both languages', () => {
     const titleOf = (texts: NcTextCatalog): string =>
       buildTimelapseOutboxInputs(makeInput({ texts }))[0]?.payload.template?.title ?? ''
-    expect(titleOf(new NcTextCatalog({ language: 'it' }))).toBe('Timelapse — Camera retro')
+    expect(titleOf(new NcTextCatalog({ language: 'it' }))).toBe('Sequenza — Camera retro')
     expect(titleOf(new NcTextCatalog())).toBe('Timelapse — Camera retro')
   })
 

@@ -18,8 +18,9 @@
  *
  *  - `scene-boxes` — the whole scene; the subject outlined THICK in the accent
  *    colour, every OTHER track visible at that instant outlined THIN, each
- *    captioned with class and confidence ("dog 87%") on a dark plate that
- *    reads on any background. Boxes are the tracks' normalised trail boxes AT
+ *    captioned with the class vocabulary in the hub language ("Cane 87%") on a
+ *    dark plate that reads on any background. Boxes are the tracks' trail
+ *    boxes AT
  *    the source frame's timestamp — never the track envelope — scaled to the
  *    JPEG.
  *  - `crop`  — the subject cut out of the clean frame around its box at that
@@ -40,24 +41,28 @@
  * ## Once per record
  *
  * N targets and every outbox retry resolve the same row; the render is
- * memoised per record + subject + mode + zone flag + camera for
- * {@link NC_IMAGE_MEMO_TTL_MS}, so a 4K decode happens once, not once per
- * phone. It runs in the process that hosts the Notification Center (the
- * pipeline-analytics runner), which already carries `sharp`.
+ * memoised per record + subject + mode + zone flag + camera + hub language
+ * for {@link NC_IMAGE_MEMO_TTL_MS}, so a 4K decode happens once, not once per
+ * phone. The hub has one notification language, so every recipient of a row
+ * shares that picture. It runs in the process that hosts the Notification
+ * Center (the pipeline-analytics runner), which already carries `sharp`.
  */
 import {
   buildSubjectPath,
+  bundledCamstack,
+  eventKindLabel,
+  type EventKindLabelLocale,
   type IScopedLogger,
   isDrawableSubjectPath,
+  isEventKindLabelKey,
   type MediaFileKind,
   type NcMediaImage,
+  paintHex,
   projectSubjectPath,
   type SubjectPathPoint,
   type SubjectPathRect,
   subjectPathSampleFromBox,
   subjectPathSvgPoints,
-  bundledCamstack,
-  paintHex,
 } from '@camstack/types'
 import type { NcOutboxEntry, NcOutboxPayload } from './outbox.js'
 import { isLinkedStillId } from './linked-stills.js'
@@ -196,11 +201,48 @@ const JPEG_QUALITY = 85
 
 // ── Pure helpers ─────────────────────────────────────────────────────
 
-/** The caption of a box: class (or label) and confidence — "dog 87%". Language-free. */
+/** The caption of a box: a name and confidence — "Cane 87%". The name is already chosen. */
 export function imageLabelText(name: string, confidence: number | undefined): string {
   if (confidence === undefined || !Number.isFinite(confidence)) return name
   const pct = Math.round(Math.min(1, Math.max(0, confidence)) * 100)
   return `${name} ${String(pct)}%`
+}
+
+/** What a box is captioned with, before confidence is appended. */
+export interface NcImageCaption {
+  readonly className: string
+  /** Identity, plate, or a finer class id, when the track has one. */
+  readonly label?: string
+  /** A recognised person or a read plate is printed as written. */
+  readonly labelKind?: 'identity' | 'plate'
+  readonly confidence?: number
+}
+
+/**
+ * The name drawn on a box, in the hub language.
+ *
+ * A class id — the coarse class, or a finer one riding `label` — is
+ * {@link eventKindLabel}. An identity or a plate stays the word the
+ * recogniser produced. A class the vocabulary does not know stays the wire
+ * id, which is what `eventKindLabel` already returns.
+ */
+function imageBoxName(input: NcImageCaption, locale: EventKindLabelLocale): string {
+  if (input.labelKind === 'identity' || input.labelKind === 'plate') {
+    const written = input.label?.trim()
+    if (written !== undefined && written.length > 0) return written
+  }
+  const label = input.label?.trim()
+  if (label !== undefined && label.length > 0) {
+    const key = label.toLowerCase()
+    if (isEventKindLabelKey(key)) return eventKindLabel(key, locale)
+    if (key !== input.className.trim().toLowerCase()) return label
+  }
+  return eventKindLabel(input.className, locale)
+}
+
+/** Class vocabulary in `locale`, plus confidence — the string the overlay draws. */
+export function imageBoxCaption(input: NcImageCaption, locale: EventKindLabelLocale): string {
+  return imageLabelText(imageBoxName(input, locale), input.confidence)
 }
 
 /** Stroke widths for an output of this size: the subject's is the thick one. */
@@ -606,6 +648,12 @@ export interface NcImageStageInput {
   readonly camera: number | 'composite'
   /** False for a linked camera's extra still: no subject of its own on that camera. */
   readonly withSubject: boolean
+  /**
+   * The hub's notification language. Every target of a row shares it — there
+   * is no per-recipient locale — and it is part of the memo key so a language
+   * change does not reuse a picture captioned in the previous one.
+   */
+  readonly locale?: EventKindLabelLocale
 }
 
 interface MemoEntry {
@@ -628,8 +676,8 @@ export class NcNotificationImageStage {
 
   /**
    * The picture for this row from this source, rendered once per record +
-   * subject + mode + zone flag + camera and reused for every target and retry.
-   * Null when the row ships no still.
+   * subject + mode + zone flag + camera + language and reused for every
+   * target and retry. Null when the row ships no still.
    */
   async notificationImage(input: NcImageStageInput): Promise<NcRenderedImage | null> {
     const payload = input.entry.payload
@@ -637,6 +685,7 @@ export class NcNotificationImageStage {
     if (mode === 'none') return null
     const zoneIds = input.withSubject ? payloadZoneOverlayIds(payload) : []
     const withPath = input.withSubject && payloadShowsSubjectPath(payload)
+    const locale = input.locale ?? 'en'
     const key = [
       input.entry.recordId,
       payload.subject.trackId ?? '',
@@ -644,6 +693,7 @@ export class NcNotificationImageStage {
       zoneIds.length > 0 ? 'z' : '-',
       withPath ? 'p' : '-',
       String(input.camera),
+      locale,
     ].join('|')
     const now = this.deps.now()
     const hit = this.memo.get(key)
@@ -701,13 +751,23 @@ export class NcNotificationImageStage {
       : []
     const subjectBox = trailAt(trail, source.timestamp, NC_IMAGE_BOX_MATCH_MAX_MS)?.bbox ?? null
     const path = withPath ? this.subjectPath(input, trail) : []
+    const locale = input.locale ?? 'en'
     const subject =
       subjectBox !== null
         ? {
             ...subjectBox,
-            label: imageLabelText(
-              payload.subject.label ?? payload.subject.className,
-              payload.subject.confidence,
+            label: imageBoxCaption(
+              {
+                className: payload.subject.className,
+                ...(payload.subject.label !== undefined ? { label: payload.subject.label } : {}),
+                ...(payload.subject.labelKind !== undefined
+                  ? { labelKind: payload.subject.labelKind }
+                  : {}),
+                ...(payload.subject.confidence !== undefined
+                  ? { confidence: payload.subject.confidence }
+                  : {}),
+              },
+              locale,
             ),
             className: payload.subject.className,
           }
@@ -741,7 +801,14 @@ export class NcNotificationImageStage {
       mode === 'scene-boxes'
         ? othersDrawn.map((t) => ({
             ...t.bbox,
-            label: imageLabelText(t.label ?? t.className, t.confidence),
+            label: imageBoxCaption(
+              {
+                className: t.className,
+                ...(t.label !== undefined ? { label: t.label } : {}),
+                ...(t.confidence !== undefined ? { confidence: t.confidence } : {}),
+              },
+              locale,
+            ),
             className: t.className,
             ...(t.confidence !== undefined ? { confidence: t.confidence } : {}),
           }))

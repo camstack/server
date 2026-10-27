@@ -46,7 +46,7 @@
  * viewer will read.
  */
 
-import type { IScopedLogger } from '@camstack/types'
+import { eventKindLabel, type EventKindLabelLocale, type IScopedLogger } from '@camstack/types'
 import sharp from 'sharp'
 
 /** Widest mosaic produced. 1920 keeps a 3×3 grid at 640 px a tile — readable
@@ -330,6 +330,19 @@ export function fitLine(text: string, usablePx: number, basePx: number, minPx: n
   if (fits(flat, fontPx)) return { text: flat, fontPx }
   const budget = Math.max(1, Math.floor(usablePx / (fontPx * GLYPH_ADVANCE)))
   return { text: `${flat.slice(0, Math.max(1, budget - 1)).trimEnd()}…`, fontPx }
+}
+
+/**
+ * The words drawn on a summary tile: camera, clock, and the class vocabulary
+ * in the hub language. A class the vocabulary does not know stays the wire id.
+ */
+export function summaryTileCaption(
+  camera: string,
+  clock: string,
+  className: string,
+  locale: EventKindLabelLocale,
+): string {
+  return `${camera} · ${clock} · ${eventKindLabel(className, locale)}`
 }
 
 /** The label strip drawn across the bottom of one tile. */

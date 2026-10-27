@@ -15,10 +15,9 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 
+import i18n from '../../../i18n'
 import {
   batteryKindsNarrowedByType,
-  NC_SYSTEM_EVENT_KIND_GROUPS,
-  NC_SYSTEM_EVENT_KIND_OPTIONS,
   parseSystemEventKind,
   patchSystemEventFilters,
   pruneSystemEventForSave,
@@ -27,8 +26,10 @@ import {
   summariseSystemEventScope,
   systemEventFilterVisibility,
   systemEventFilterVisibilityFor,
+  systemEventKindGroups,
   systemEventKindGroupsFor,
   systemEventKindLabel,
+  systemEventKindOptions,
   toggleSystemEventKind,
 } from '../notification-system-events'
 
@@ -64,10 +65,10 @@ describe('D637 — the field authors ONE family', () => {
   })
 
   it('builds its groups from the shared specs, each with a hint', () => {
-    expect(NC_SYSTEM_EVENT_KIND_GROUPS.map((g) => [g.id, g.family])).toEqual(
+    expect(systemEventKindGroups().map((g) => [g.id, g.family])).toEqual(
       NC_SYSTEM_EVENT_KIND_GROUP_SPECS.map((g) => [g.id, g.family]),
     )
-    for (const group of NC_SYSTEM_EVENT_KIND_GROUPS) {
+    for (const group of systemEventKindGroups()) {
       expect(group.hint.length, group.id).toBeGreaterThan(0)
     }
   })
@@ -141,39 +142,56 @@ describe('the kind vocabulary', () => {
     // The schema also carries the legacy camera-worded tail, kept only so a
     // durable row and an unmigrated rule still parse. Offering one would let
     // an operator author a rule that can never fire.
-    expect(NC_SYSTEM_EVENT_KIND_OPTIONS.map((o) => o.value).toSorted()).toEqual(
-      [...NC_AUTHORABLE_SYSTEM_EVENT_KINDS].toSorted(),
-    )
+    expect(
+      systemEventKindOptions()
+        .map((o) => o.value)
+        .toSorted(),
+    ).toEqual([...NC_AUTHORABLE_SYSTEM_EVENT_KINDS].toSorted())
   })
 
   it('offers every alarm transition, in the lifecycle order the hub lists them', () => {
     // The four once held back (pending, rearmed, sensor-bypass, check-failed)
     // have a producer since the alarm revamp (D630).
-    const alarm = NC_SYSTEM_EVENT_KIND_GROUPS.find((g) => g.id === 'alarm')
+    const alarm = systemEventKindGroups().find((g) => g.id === 'alarm')
     expect(alarm?.kinds.map((k) => k.value)).toEqual([...NC_ALARM_SYSTEM_EVENT_KINDS])
   })
 
   it('reaches every offered kind through a group, each exactly once', () => {
-    const grouped = NC_SYSTEM_EVENT_KIND_GROUPS.flatMap((g) => g.kinds.map((k) => k.value))
+    const grouped = systemEventKindGroups().flatMap((g) => g.kinds.map((k) => k.value))
     expect(grouped.toSorted()).toEqual([...NC_AUTHORABLE_SYSTEM_EVENT_KINDS].toSorted())
     expect(new Set(grouped).size).toBe(grouped.length)
   })
 
-  it('labels match the viewer word for word (one feature, one name)', () => {
+  it('labels match the viewer word for word, in both languages', async () => {
+    await i18n.changeLanguage('en')
     expect(systemEventKindLabel('alarm-triggered')).toBe('Alarm triggered')
     expect(systemEventKindLabel('wrapper-update-available')).toBe(
-      'Container / app update available',
+      'Container image update available',
     )
     expect(systemEventKindLabel('device-offline')).toBe('Device offline')
     expect(systemEventKindLabel('stream-online')).toBe('Stream online')
     expect(systemEventKindLabel('node-offline')).toBe('Node offline')
     expect(systemEventKindLabel('addon-update-available')).toBe('Addon update available')
-    expect(systemEventKindLabel('server-update-available')).toBe('Server update available')
-    expect(systemEventKindLabel('addon-updated')).toBe('Addons updated')
-    expect(systemEventKindLabel('server-updated')).toBe('Server updated')
-    expect(systemEventKindLabel('node-restarting')).toBe('Node restarting')
-    expect(systemEventKindLabel('node-updating')).toBe('Node updating (restart imminent)')
-    expect(systemEventKindLabel('export-completed')).toBe('Export completed')
+    expect(systemEventKindLabel('detection-blind')).toBe(
+      'Motion for 10+ minutes, detector found nothing',
+    )
+    await i18n.changeLanguage('it')
+    expect(systemEventKindLabel('device-offline')).toBe('Dispositivo offline')
+    expect(systemEventKindLabel('wrapper-update-available')).toBe(
+      'Aggiornamento immagine container disponibile',
+    )
+    expect(systemEventKindLabel('package-llm-silent')).toBe('Conferma pacchi senza risposta')
+    expect(systemEventKindGroups().find((g) => g.id === 'alarm')?.label).toBe('Allarme')
+    for (const kind of NC_AUTHORABLE_SYSTEM_EVENT_KINDS) {
+      const italian = systemEventKindLabel(kind)
+      expect(italian, kind).not.toBe(kind)
+      expect(italian, kind).not.toContain('systemEventKinds')
+    }
+    await i18n.changeLanguage('en')
+    for (const kind of NC_AUTHORABLE_SYSTEM_EVENT_KINDS) {
+      const english = systemEventKindLabel(kind)
+      expect(english, kind).not.toBe(kind)
+    }
   })
 
   it('falls back to the raw value for a kind this build does not know', () => {
