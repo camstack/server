@@ -67,6 +67,17 @@ it is operator-only (D704).
 | `exact_version` | `""` | pin every selected package to one version (restart a line) |
 | `dry_run` | `false` | build, print the final set and each output decision, do not bump or publish |
 
+**Changelog gate.** Before the bump the job runs
+`scripts/check-changelog-unreleased.ts` against the last `publish-*` tag: a
+package whose own files changed (specs, README and CHANGELOG themselves do not
+count) needs at least one line under `## [Unreleased]`, or the run fails with the
+package list and the `npm run changelog:add -- <package> "<line>"` command to
+run. After the bump, `scripts/release-changelog.ts` moves each published
+package's entries under `## [<new version>] - <date>`; a package published with
+no entries (`force_packages`, closure, bundle candidate) gets "Rebuilt against
+updated dependencies." The bump commit carries the CHANGELOGs. Write the lines
+before dispatching, push, then dispatch.
+
 ```bash
 gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected -f include_dependents=false
 gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected -f dry_run=true

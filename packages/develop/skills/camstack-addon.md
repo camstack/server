@@ -179,6 +179,22 @@ rest (sessions entry, an ADR for a rejected alternative, a package
 `docs/addons/addon-provider-reolink.md`) follows the `camstack-docs`
 ladder. `npm run docs:check` fails on a dead path.
 
+**README and CHANGELOG.** Every published package carries both, and both are
+in `files`. The README's derived block (what it provides, settings, placement,
+requirements, docs) is written by `npm run readme:generate` from the manifest;
+write the paragraph at the top by hand and run the command again after a
+manifest change. A change to the package adds one line to the CHANGELOG:
+
+```bash
+npm run changelog:add -- <package> "<what changed for the operator>" --type fixed
+```
+
+One line, English, from the operator's side ("Cameras reconnect after a hub
+restart", not "refactor reconnect loop"). `--type` is `added`, `changed`,
+`fixed` or `removed`. The line lands under `## [Unreleased]`; the publish moves
+it under the new version. A publish of a changed package with no entry fails
+(`scripts/check-changelog-unreleased.ts`) and prints this command.
+
 ## 7. Ship it — and prove the new code is the code running
 
 An addon runs from its DEPLOYED copy under `<dataDir>/addons/@camstack/<name>/`

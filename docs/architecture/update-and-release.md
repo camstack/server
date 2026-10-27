@@ -15,7 +15,7 @@ applies-to:
   - server/backend/src/core/agent/agent-delivery-ledger.ts
 covers:
   - server/backend/src/core/updates/**
-last-verified: 2026-10-25
+last-verified: 2026-10-27
 ---
 
 # Update and release
@@ -1209,6 +1209,15 @@ static job keeps an 8 GB heap (`NODE_OPTIONS=--max-old-space-size=8192`).
 reachable as `npm run publish`) is a local escape hatch, not the route.
 
 - **Affected detection** compares against the last `publish-*` tag.
+- **A changed package says so in its CHANGELOG.** `scripts/check-changelog-unreleased.ts`
+  runs before the bump, with the same base tag, and fails the run when a package
+  whose own files changed (not its specs, README or CHANGELOG) has nothing under
+  `## [Unreleased]`; the message lists the packages and the exact
+  `npm run changelog:add -- <package> "<line>"`. After the bump and the output
+  comparison, `scripts/release-changelog.ts` moves each published package's
+  entries under `## [<version>] - <date>` (an empty block becomes "Rebuilt against
+  updated dependencies.") before `npm publish`, and the bump commit carries the
+  files. The same guard runs in the on-demand Checks workflow.
 - **`affected` (default)** publishes only packages whose own files changed — a
   change to `types` / `ui-library` republishes just that library, not its
   ~40 dependents.

@@ -197,6 +197,7 @@ hand-rolled `camstack.evt.*` topic.
   `camstack-test-fixer`, `camstack-docs-writer` …) — never `general-purpose`,
   which starts without these rules. Routing: `camstack-workflow`, "Who does
   the work".
+- **A change to a published package adds a changelog line** with `npm run changelog:add -- <package> "<what changed for the operator, one line, English>"`; a publish without it is refused (`check-changelog-unreleased`).
 - All documentation, comments and commit messages are written in English.
   `scripts/check-docs-english.ts` enforces it for `docs/**`. Working notes
   (superpowers, archive) live in the sibling planning repo.
