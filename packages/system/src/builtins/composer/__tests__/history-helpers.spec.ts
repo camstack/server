@@ -6,6 +6,7 @@ import {
   type IScopedLogger,
   type StatisticHelperSpec,
   type IntegralHelperSpec,
+  type DerivativeHelperSpec,
 } from '@camstack/types'
 import type { DeadlineTimer } from '../composition-runtime.js'
 import {
@@ -276,6 +277,76 @@ describe('history helpers', () => {
       { blockId: 'stat', quantity: 'volume' },
       { blockId: 'total', quantity: 'volume' },
     ])
+  })
+})
+
+describe('derivative helper', () => {
+  const derivative: DerivativeHelperSpec = {
+    kind: 'derivative',
+    window: { kind: 'rolling', span: '1h' },
+    per: 'hour',
+    source: {
+      source: { addonId: 'demo', stableId: 'meter' },
+      cap: 'numeric-sensor',
+      fieldPath: 'value',
+    },
+  }
+
+  function run(points: readonly ReturnType<typeof point>[], before: number | null) {
+    const now = Date.parse('2026-10-26T12:00:00Z')
+    const published: SeriesWrite[][] = []
+    const stamped: string[] = []
+    const helpers = new HistoryHelpers({
+      now: () => now,
+      timeZone: ZONE,
+      logger: logger().sink,
+      query: async (input) => ({
+        resolution: input.resolution,
+        truncated: false,
+        series: [
+          {
+            scope: '',
+            before: before === null ? null : { t: input.from - 1, value: before, state: null },
+            derivedFrom: null,
+            points: points.map((item) => ({ ...item, t: input.from + item.t })),
+          },
+        ],
+      }),
+      retention: async () => DEFAULT_HISTORY_RETENTION,
+      sourceDeviceId: () => 7,
+      sourceQuantity: async () => 'temperature',
+      adoptQuantity: async (blockId) => {
+        stamped.push(blockId)
+      },
+      blocks: () => [{ blockId: 'rate', deviceId: 40, helper: derivative }],
+      publish: (_id, writes) => {
+        published.push([...writes])
+      },
+      timer: new Arm(),
+    })
+    helpers.start()
+    return { published, stamped, settle: flush }
+  }
+
+  it('publishes the rate per hour on a numeric sensor, across a hole in the middle', async () => {
+    const { published, settle } = run([point(0, 10), point(HOUR_MS - 1, 70)], null)
+    await settle()
+    const value = published[0]?.find((write) => write.cap === 'numeric-sensor')
+    expect(value?.path).toBe('value')
+    expect(value?.value).toBeCloseTo(60, 2)
+  })
+
+  it('writes null, not 0, when history holds a single reading', async () => {
+    const { published, settle } = run([point(30 * 60_000, 10)], null)
+    await settle()
+    const value = published[0]?.find((write) => write.cap === 'numeric-sensor')
+    expect(value?.value).toBeNull()
+  })
+
+  it('does not stamp the source quantity: a rate of a temperature is not a temperature', async () => {
+    const { stamped, settle } = run([point(0, 10), point(HOUR_MS - 1, 70)], null)
+    await settle()
+    expect(stamped).toEqual([])
   })
 })
 

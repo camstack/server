@@ -248,6 +248,13 @@ export const HelperSpecSchema: z.ZodType<HelperSpec> = z.discriminatedUnion('kin
   derivativeHelperObject,
 ])
 
+/** The kinds the composer runs from device history, on a schedule. */
+export type HistoryHelperSpec = StatisticHelperSpec | IntegralHelperSpec | DerivativeHelperSpec
+
+export function isHistoryHelper(spec: HelperSpec): spec is HistoryHelperSpec {
+  return spec.kind === 'statistic' || spec.kind === 'integral' || spec.kind === 'derivative'
+}
+
 /** Every member a helper reads. A group has many; the others have one. */
 export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
   switch (spec.kind) {

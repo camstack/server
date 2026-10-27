@@ -13,6 +13,7 @@ import {
   type DeviceHistoryQueryPoint,
   type DeviceHistoryQueryResult,
   errMsg,
+  evaluateDerivative,
   evaluateStatistic,
   HISTORY_FAST_MS,
   HISTORY_SLOW_MS,
@@ -20,7 +21,7 @@ import {
   type HistoryTier,
   type HistoryValue,
   HOUR_MS,
-  type IntegralHelperSpec,
+  type HistoryHelperSpec,
   integrateReading,
   type IScopedLogger,
   MINUTE_MS,
@@ -32,7 +33,6 @@ import {
   planStatisticTier,
   type SeriesPoint,
   type SeriesRead,
-  type StatisticHelperSpec,
   statisticCadenceMs,
   type CompositionSourceRef,
 } from '@camstack/types'
@@ -59,7 +59,7 @@ export interface SeriesWrite {
 export interface HistoryBlockView {
   readonly blockId: string
   readonly deviceId: number
-  readonly helper: StatisticHelperSpec | IntegralHelperSpec
+  readonly helper: HistoryHelperSpec
 }
 
 export interface HistoryHelperPorts {
@@ -111,7 +111,7 @@ export class HistoryHelpers {
     const now = this.ports.now()
     let due: number | null = null
     for (const block of this.ports.blocks()) {
-      if (block.helper.kind !== 'statistic' || block.helper.window.kind !== 'rolling') continue
+      if (block.helper.kind === 'integral' || block.helper.window.kind !== 'rolling') continue
       if (this.ports.sourceDeviceId(block.helper.source.source) !== deviceId) continue
       const next = Math.max(
         now,
@@ -167,17 +167,17 @@ export class HistoryHelpers {
       return
     }
     const tierPlan =
-      helper.kind === 'statistic'
-        ? planStatisticTier(helper.window, retention)
-        : planResetTier(helper.reset, retention)
+      helper.kind === 'integral'
+        ? planResetTier(helper.reset, retention)
+        : planStatisticTier(helper.window, retention)
     if (!tierPlan.ok) {
       this.note(block, tierPlan.reason)
       return
     }
     const range =
-      helper.kind === 'statistic'
-        ? openStatistic(helper.window, this.ports.now(), this.ports.timeZone)
-        : openReset(helper.reset, this.ports.now(), this.ports.timeZone)
+      helper.kind === 'integral'
+        ? openReset(helper.reset, this.ports.now(), this.ports.timeZone)
+        : openStatistic(helper.window, this.ports.now(), this.ports.timeZone)
     if (range === null) {
       this.note(block, `the hub timezone \`${this.ports.timeZone}\` is not a calendar`)
       return
@@ -220,10 +220,7 @@ export class HistoryHelpers {
       series.points,
       this.ports.timeZone,
     )
-    const answer =
-      helper.kind === 'statistic'
-        ? evaluateStatistic(helper.stat, read)
-        : integrateReading(read, helper.output === 'energy' ? 'energy-kwh' : 'per-second')
+    const answer = answerOf(helper, read)
     if (answer.write === 'hold') {
       this.note(block, answer.reason ?? 'the history answer was held')
       return
@@ -284,30 +281,45 @@ export class HistoryHelpers {
   }
 }
 
-function inheritsSourceQuantity(helper: StatisticHelperSpec | IntegralHelperSpec): boolean {
-  return helper.kind === 'statistic' || helper.output === 'meter'
+function answerOf(helper: HistoryHelperSpec, read: SeriesRead): HistoryValue {
+  switch (helper.kind) {
+    case 'statistic':
+      return evaluateStatistic(helper.stat, read)
+    case 'derivative':
+      return evaluateDerivative(read, PER_MS[helper.per])
+    case 'integral':
+      return integrateReading(read, helper.output === 'energy' ? 'energy-kwh' : 'per-second')
+  }
+}
+
+const PER_MS: Readonly<Record<'second' | 'minute' | 'hour', number>> = {
+  second: 1000,
+  minute: MINUTE_MS,
+  hour: HOUR_MS,
+}
+
+/** A rate of a temperature is not a temperature: only a statistic and a meter keep the unit. */
+function inheritsSourceQuantity(helper: HistoryHelperSpec): boolean {
+  return helper.kind === 'statistic' || (helper.kind === 'integral' && helper.output === 'meter')
 }
 
 function cadenceFloor(blocks: readonly HistoryBlockView[]): number {
   let ms = HISTORY_SLOW_MS
   for (const block of blocks) {
     const cadence =
-      block.helper.kind === 'statistic'
-        ? statisticCadenceMs(block.helper.window)
-        : block.helper.reset === 'daily'
+      block.helper.kind === 'integral'
+        ? block.helper.reset === 'daily'
           ? HISTORY_FAST_MS
           : HISTORY_SLOW_MS
+        : statisticCadenceMs(block.helper.window)
     if (cadence < ms) ms = cadence
   }
   return ms
 }
 
-function writesFor(
-  helper: StatisticHelperSpec | IntegralHelperSpec,
-  answer: HistoryValue,
-): readonly SeriesWrite[] {
+function writesFor(helper: HistoryHelperSpec, answer: HistoryValue): readonly SeriesWrite[] {
   const output =
-    helper.kind === 'statistic'
+    helper.kind !== 'integral'
       ? { cap: 'numeric-sensor', path: 'value' }
       : helper.output === 'energy'
         ? { cap: 'power-meter', path: 'kwhTotal' }

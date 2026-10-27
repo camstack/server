@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**213 units · 7165 source files · 201 units claimed by at least one document (7127 files).**
+**213 units · 7166 source files · 201 units claimed by at least one document (7128 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -22,7 +22,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-admin-ui/src/components` | 528 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +71 more, 4 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 470 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +165 more, 27 ADRs | 2026-10-14 |
 | `scripts` | 423 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +131 more, 14 ADRs | 2026-10-26 |
-| `packages/system/src/builtins` | 388 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +162 more, 21 ADRs | 2026-10-26 |
+| `packages/system/src/builtins` | 389 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +162 more, 21 ADRs | 2026-10-26 |
 | `packages/ui-library/src/composites` | 346 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +52 more, 3 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/notification-center` | 210 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +80 more, 27 ADRs | 2026-10-07 |
 | `packages/types/src/capabilities` | 210 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md`, +185 more, 41 ADRs | 2026-10-26 |

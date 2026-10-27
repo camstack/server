@@ -61,9 +61,9 @@ import {
   type DeviceDeclaration,
   type DeviceHistoryQueryResult,
   type HistoryRetention,
-  type IntegralHelperSpec,
   type ReadingQuantity,
-  type StatisticHelperSpec,
+  type HistoryHelperSpec,
+  isHistoryHelper,
   errMsg,
   type FieldClaim,
   type IScopedLogger,
@@ -72,6 +72,7 @@ import {
 } from '@camstack/types'
 import type { DeviceStateChangedData } from '../shared/device-state-changed.js'
 import { ClaimGate, type ClaimKey } from './claim-gate.js'
+import { adoptMathQuantities } from './math-quantity.js'
 import {
   ActuatorGroups,
   type ActuatorMemberLookup,
@@ -222,7 +223,7 @@ export class Composer {
   private readonly grafts: ComposerGrafts
   private readonly actuators: ActuatorGroups | null
   private readonly history: HistoryHelpers | null
-  private historySpecs: ReadonlyMap<string, StatisticHelperSpec | IntegralHelperSpec> = new Map()
+  private historySpecs: ReadonlyMap<string, HistoryHelperSpec> = new Map()
   /** The rows the composer owns, read ONCE before its first withdrawal decision. */
   private readonly rowSeed: ConfirmedSeed<PersistedComposedRow>
   /**
@@ -367,19 +368,21 @@ export class Composer {
         return found.kind === 'found' ? found.deviceId : null
       },
       sourceQuantity: deps.readSourceQuantity,
-      adoptQuantity: async (blockId, quantity) => {
-        const device = this.composed.get(composedDeviceStableId(blockId))
-        if (device?.adoptQuantity === undefined) {
-          throw new Error(`composed device for ${blockId} cannot store a quantity`)
-        }
-        await device.adoptQuantity(quantity)
-      },
+      adoptQuantity: (blockId, quantity) => this.adoptQuantityOf(blockId, quantity),
       blocks: () => this.historyBlocks(),
       publish: (blockId, writes) => {
         this.live.get(blockId)?.runtime?.publishSeries(writes)
       },
       timer: deps.newTimer(),
     })
+  }
+
+  private async adoptQuantityOf(blockId: string, quantity: ReadingQuantity): Promise<void> {
+    const device = this.composed.get(composedDeviceStableId(blockId))
+    if (device?.adoptQuantity === undefined) {
+      throw new Error(`composed device for ${blockId} cannot store a quantity`)
+    }
+    await device.adoptQuantity(quantity)
   }
 
   private historyBlocks(): readonly HistoryBlockView[] {
@@ -450,6 +453,24 @@ export class Composer {
         if (helper !== undefined && helper.kind !== 'group') return []
         return [{ id: block.id, helper }]
       }),
+    )
+    await adoptMathQuantities(
+      input.blocks.map((block) => ({ id: block.id, helper: block.composition.helper })),
+      {
+        logger: this.deps.logger.child('math'),
+        sourceDeviceId: (ref) => {
+          const found = this.deps.tracker.resolution(ref)
+          return found.kind === 'found' ? found.deviceId : null
+        },
+        deviceIdOf: (blockId) => {
+          const entry = this.live.get(blockId)
+          return entry === undefined ? null : this.deviceIdOf(entry)
+        },
+        ...(this.deps.readSourceQuantity === undefined
+          ? {}
+          : { sourceQuantity: this.deps.readSourceQuantity }),
+        adopt: (blockId, quantity) => this.adoptQuantityOf(blockId, quantity),
+      },
     )
     this.historySpecs = historySpecsOf(input.blocks)
     this.history?.start()
@@ -861,13 +882,11 @@ export class Composer {
   }
 }
 
-function historySpecsOf(
-  blocks: readonly ComposerBlock[],
-): ReadonlyMap<string, StatisticHelperSpec | IntegralHelperSpec> {
-  const specs = new Map<string, StatisticHelperSpec | IntegralHelperSpec>()
+function historySpecsOf(blocks: readonly ComposerBlock[]): ReadonlyMap<string, HistoryHelperSpec> {
+  const specs = new Map<string, HistoryHelperSpec>()
   for (const block of blocks) {
     const helper = block.composition.helper
-    if (helper === undefined || helper.kind === 'group' || helper.kind === 'appliance') continue
+    if (helper === undefined || !isHistoryHelper(helper)) continue
     specs.set(block.id, helper)
   }
   return specs
