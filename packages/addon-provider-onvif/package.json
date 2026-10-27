@@ -36,7 +36,7 @@
       {
         "id": "provider-onvif",
         "category": "providers",
-        "name": "ONVIF Camera Provider",
+        "name": "ONVIF",
         "version": "0.1.0",
         "description": "Discovery automatica di camere ONVIF sulla rete locale",
         "entry": "./dist/addon.js",

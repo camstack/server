@@ -45,7 +45,7 @@
       {
         "id": "tailscale-client",
         "category": "networking",
-        "name": "Tailscale Client",
+        "name": "Tailscale",
         "version": "1.0.0",
         "entry": "./dist/client/tailscale.addon.js",
         "execution": {
@@ -66,7 +66,7 @@
       {
         "id": "tailscale-ingress",
         "category": "networking",
-        "name": "Tailscale Ingress (Serve/Funnel)",
+        "name": "Tailscale Funnel",
         "version": "1.0.0",
         "description": "Exposes the CamStack hub on the tailnet (Serve) or the public internet (Funnel). Requires the Tailscale Client addon to be installed and joined first.",
         "entry": "./dist/ingress/tailscale-ingress.addon.js",

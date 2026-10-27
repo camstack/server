@@ -35,7 +35,7 @@
       {
         "id": "smtp-nodemailer",
         "category": "messaging",
-        "name": "SMTP Email (Nodemailer)",
+        "name": "Email (SMTP)",
         "description": "Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts).",
         "entry": "./dist/smtp.addon.js",
         "execution": {

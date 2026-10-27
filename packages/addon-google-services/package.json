@@ -36,7 +36,7 @@
       {
         "id": "google-services",
         "category": "messaging",
-        "name": "Google Services",
+        "name": "Google",
         "description": "Google brokers (OAuth2 accounts): Calendar as calendar-source, Gmail send as smtp-provider.",
         "entry": "./dist/google-services.addon.js",
         "execution": {

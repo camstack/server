@@ -131,7 +131,7 @@
       {
         "id": "motion-wasm",
         "category": "pipeline",
-        "name": "Motion Detection (WASM)",
+        "name": "Motion Detection",
         "version": "0.1.0",
         "description": "WASM-accelerated motion detection with blur, dilation, and connected component labeling",
         "entry": "./dist/motion-wasm/index.js",

@@ -68,7 +68,7 @@
       {
         "id": "training-modal",
         "category": "system",
-        "name": "Modal (training cloud)",
+        "name": "Modal",
         "description": "Runs CamStack training jobs on your Modal account (modal.com, $30 of free credit a month on the Starter plan). Inert until you enter a Modal token",
         "version": "1.0.0",
         "entry": "./dist/providers/modal/training-modal.addon.js",

@@ -36,7 +36,7 @@
       {
         "id": "static-turn",
         "category": "networking",
-        "name": "Static TURN (coturn / custom)",
+        "name": "TURN Server",
         "version": "1.0.0",
         "entry": "./dist/static-turn.addon.js",
         "execution": {

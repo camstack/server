@@ -64,7 +64,7 @@
       {
         "id": "cloudflare-turn",
         "category": "networking",
-        "name": "Cloudflare TURN Relay",
+        "name": "Cloudflare TURN",
         "version": "1.0.0",
         "entry": "./dist/turn/cloudflare-turn.addon.js",
         "execution": {

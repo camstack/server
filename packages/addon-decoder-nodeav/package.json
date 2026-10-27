@@ -36,7 +36,7 @@
       {
         "id": "decoder-nodeav",
         "category": "pipeline",
-        "name": "Decoder (node-av)",
+        "name": "Video Decoder",
         "version": "0.1.0",
         "description": "The node's decoder-hwaccel probe (decoder cap: getInfo / reprobeHwaccel) and the node-av audio codec (encode/decode + resample) for the audio-codec cap.",
         "entry": "./dist/index.js",

@@ -36,7 +36,7 @@
       {
         "id": "import-alexa",
         "category": "providers",
-        "name": "Alexa Import",
+        "name": "Alexa",
         "version": "0.1.0",
         "description": "Import smart-home devices from an Amazon Alexa account (unofficial cookie/token client; poll-based state sync). The same account can speak a notification aloud on Echo devices.",
         "entry": "./dist/addon.js",

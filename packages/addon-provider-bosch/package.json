@@ -37,7 +37,7 @@
       {
         "id": "bosch-shc",
         "category": "providers",
-        "name": "Bosch SHC",
+        "name": "Bosch Smart Home",
         "version": "0.1.0",
         "description": "Adopt Bosch Smart Home Controller (SHC) devices via account onboarding — scaffold",
         "entry": "./dist/shc/addon.js",

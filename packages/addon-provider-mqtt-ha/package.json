@@ -36,7 +36,7 @@
       {
         "id": "provider-mqtt-ha",
         "category": "providers",
-        "name": "MQTT HA Discovery Import",
+        "name": "MQTT Discovery",
         "version": "0.1.0",
         "description": "Import devices from Home Assistant MQTT discovery (homeassistant/+/+/config) via a configured MQTT broker",
         "entry": "./dist/addon.js",

@@ -34,7 +34,7 @@
       {
         "id": "export-alexa",
         "category": "exports",
-        "name": "Alexa Smart Home export",
+        "name": "Alexa Export",
         "description": "Hub-side OAuth provider + Smart Home directive handler. Pairs with a user-owned AWS Lambda that forwards Alexa directives to this addon. Skeleton: AcceptGrant + Discovery implemented; CameraStream / RTC / Doorbell push in next dispatch.",
         "entry": "./dist/index.js",
         "execution": {

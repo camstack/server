@@ -39,7 +39,7 @@
       {
         "id": "provider-homeassistant",
         "category": "messaging",
-        "name": "Home Assistant Provider",
+        "name": "Home Assistant",
         "version": "0.1.0",
         "description": "Adopt Home Assistant devices into CamStack via WebSocket",
         "entry": "./dist/addon.js",
