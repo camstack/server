@@ -7,6 +7,7 @@ import {
   type EnumSensorDateTimeFormat,
 } from '@camstack/types'
 import type { HaDiscoveredDevice, HaEntityCategory } from './ha-discovery-types.js'
+import { foldMeterEntities, type MeterEntities } from './ha-meter-fold.js'
 
 /**
  * One entry in an {@link HaContainerDevice}'s persisted `entities[]` config —
@@ -29,6 +30,12 @@ export interface HaContainerEntityConfig {
   /** HA `entity_category` — `config` / `diagnostic` / absent (= a normal
    *  control). Drives the accordion section the child renders in. */
   entityCategory?: HaEntityCategory
+  /** Power / energy / voltage / current sensors of the same HA device whose
+   *  readings this entity carries as its own `power-meter` (D951). */
+  meterEntities?: MeterEntities
+  /** The entity this meter sensor is folded into. The sensor stays a child
+   *  (D865) but is sectioned as Diagnostic. */
+  foldedInto?: string
 }
 
 /** Mapping-derived change to push onto a single live accessory child via the
@@ -74,6 +81,15 @@ const containerEntitySchema = z.object({
   name: z.string().optional(),
   dateTimeFormat: EnumSensorDateTimeFormatSchema.optional(),
   entityCategory: z.enum(['config', 'diagnostic']).optional(),
+  meterEntities: z
+    .object({
+      watts: z.string().optional(),
+      kwhTotal: z.string().optional(),
+      volts: z.string().optional(),
+      amps: z.string().optional(),
+    })
+    .optional(),
+  foldedInto: z.string().optional(),
 })
 
 export function parseContainerEntities(raw: unknown): HaContainerEntityConfig[] {
@@ -88,6 +104,10 @@ export function parseContainerEntities(raw: unknown): HaContainerEntityConfig[] 
  * skipped (the adoption path skips them too).
  */
 export function buildContainerEntities(haDevice: HaDiscoveredDevice): HaContainerEntityConfig[] {
+  return foldMeterEntities(mapContainerEntities(haDevice))
+}
+
+function mapContainerEntities(haDevice: HaDiscoveredDevice): HaContainerEntityConfig[] {
   const out: HaContainerEntityConfig[] = []
   for (const ent of haDevice.entities) {
     if (ent.mappedTo === null) continue
@@ -124,6 +144,7 @@ function derivedKey(e: HaContainerEntityConfig): string {
     options: e.options ?? null,
     features: e.features ?? null,
     dateTimeFormat: e.dateTimeFormat ?? null,
+    meterEntities: e.meterEntities ?? null,
   })
 }
 
@@ -137,6 +158,7 @@ function fullKey(e: HaContainerEntityConfig): string {
     entityId: e.entityId,
     name: e.name ?? null,
     entityCategory: e.entityCategory ?? null,
+    foldedInto: e.foldedInto ?? null,
     derived: derivedKey(e),
   })
 }
@@ -149,6 +171,7 @@ function childConfigPatch(e: HaContainerEntityConfig): Record<string, unknown> {
     ...(e.options !== undefined ? { options: e.options } : {}),
     ...(e.features !== undefined ? { features: e.features } : {}),
     ...(e.dateTimeFormat !== undefined ? { dateTimeFormat: e.dateTimeFormat } : {}),
+    ...(e.meterEntities !== undefined ? { meterEntities: e.meterEntities } : {}),
     ...(e.role !== undefined ? { role: e.role } : {}),
   }
 }
@@ -211,7 +234,7 @@ const SECTION_RANK: Readonly<Record<string, number>> = {
  *  normal control). */
 function sectionForEntity(e: HaContainerEntityConfig): string {
   if (e.entityCategory === 'config') return SECTION_CONFIGURATION
-  if (e.entityCategory === 'diagnostic') return SECTION_DIAGNOSTIC
+  if (e.entityCategory === 'diagnostic' || e.foldedInto !== undefined) return SECTION_DIAGNOSTIC
   return SECTION_CONTROLS
 }
 

@@ -42,6 +42,17 @@ const haEntitySchema = z.object({
   /** HA `entity_category` — `config` / `diagnostic` / absent (a normal
    *  control). Drives the accordion section the child renders in. */
   entityCategory: z.enum(['config', 'diagnostic']).optional(),
+  /** Sibling meter sensors this entity reads as its own power-meter (D951). */
+  meterEntities: z
+    .object({
+      watts: z.string().optional(),
+      kwhTotal: z.string().optional(),
+      volts: z.string().optional(),
+      amps: z.string().optional(),
+    })
+    .optional(),
+  /** Set on a meter sensor folded into another entity: sectioned as Diagnostic. */
+  foldedInto: z.string().optional(),
 })
 
 const haContainerSchema = z.object({
@@ -440,6 +451,7 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
         ...(e.options !== undefined ? { options: e.options } : {}),
         ...(e.features !== undefined ? { features: e.features } : {}),
         ...(e.dateTimeFormat !== undefined ? { dateTimeFormat: e.dateTimeFormat } : {}),
+        ...(e.meterEntities !== undefined ? { meterEntities: e.meterEntities } : {}),
         ...(e.role !== undefined ? { role: e.role } : {}),
       }
 

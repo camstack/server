@@ -46,6 +46,15 @@ export const haSourceSchemaFields = {
   integrationId: z.string().optional(),
   options: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
+  /** Sibling meter sensors whose readings this entity carries as `power-meter` (D951). */
+  meterEntities: z
+    .object({
+      watts: z.string().optional(),
+      kwhTotal: z.string().optional(),
+      volts: z.string().optional(),
+      amps: z.string().optional(),
+    })
+    .optional(),
 }
 
 /** Project a persisted config blob into a typed source, or null when the

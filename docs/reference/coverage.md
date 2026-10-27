@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**214 units · 7198 source files · 202 units claimed by at least one document (7160 files).**
+**214 units · 7200 source files · 202 units claimed by at least one document (7162 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -52,10 +52,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap/src/mappers` | 42 | `ecosystem-exports` | `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +4 more, 9 ADRs | 2026-09-29 |
 | `packages/addon-provider-bosch/src/home-connect` | 36 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md` | 2026-10-26 |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
+| `packages/addon-provider-homeassistant` | 35 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_, +2 more | 2026-10-26 |
 | `packages/addon-provider-amcrest` | 34 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +8 more | 2026-10-26 |
 | `packages/desktop` | 34 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +5 more | 2026-10-13 |
 | `server/backend/src/agent` | 34 | `update-and-release` | `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, `architecture/transport.md`, `decisions/adr-0840-an-agent-updates-an-addon-by-asking-the-hub-to-bring-it-to-the-hubs-version.md`, +13 more, 3 ADRs | 2026-10-16 |
-| `packages/addon-provider-homeassistant` | 33 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_, +2 more | 2026-10-26 |
 | `packages/addon-provider-homematic` | 33 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
 | `packages/ui-library/src/hooks` | 32 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +5 more | 2026-10-26 |
 | `packages/addon-osd-manager` | 31 | `device-surfaces` | `architecture/osd-manager.md`, `design/2026-08-30-fleet-multiplier-round-trip-audit.md` _(covers)_, 1 ADR | 2026-10-04 |

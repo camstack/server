@@ -13,6 +13,7 @@ import { haSourceSchemaFields } from './ha-device-source.js'
 import { attachAccessoriesCap, type AccessoriesCapHandle } from './ha-accessories-cap.js'
 import { HaEntityStateSchema, type HaEntityState } from './ha-types.js'
 import type { HaStatePushContext } from './ha-change-stamp.js'
+import { HaMeterCarrier } from './ha-meter-carrier.js'
 
 /**
  * Persisted config shared by every per-domain HA child device class.
@@ -93,6 +94,10 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
    *  that hosts entity-children. Null for plain child devices. */
   private accessories: AccessoriesCapHandle | null = null
 
+  /** The power-meter this device carries for its sibling meter sensors (D951);
+   *  null for a device that is not metered through other entities. */
+  private readonly meterCarrier: HaMeterCarrier | null
+
   constructor(ctx: DeviceContext, options: { role?: DeviceRole } = {}) {
     const persisted = (ctx.persistedConfig ?? {}) as HaChildDeviceConfig
     const brokerId = persisted.brokerId
@@ -120,6 +125,16 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
         ? (ctx.logger.withTags({ integrationId: ctx.deviceMeta.integrationId }) ?? ctx.logger)
         : ctx.logger
     this.online = true
+    this.meterCarrier =
+      persisted.meterEntities !== undefined
+        ? new HaMeterCarrier(
+            this.ctx,
+            this.runtimeState,
+            this.deviceLogger,
+            this.id,
+            persisted.meterEntities,
+          )
+        : null
     this.attachEventBusListener()
     const childIds = Array.isArray(persisted.childDeviceIds) ? persisted.childDeviceIds : []
     if (childIds.length > 0) {
@@ -321,7 +336,7 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
     try {
       const result = await this.ctx.api.broker.subscribe.mutate({
         brokerId: this.brokerId,
-        filter: { entityIds: [this.entityId] },
+        filter: { entityIds: [this.entityId, ...(this.meterCarrier?.entityIds() ?? [])] },
       })
       this.brokerSubscriptionId = result.subscriptionId
       return true
@@ -345,10 +360,16 @@ export abstract class HaBaseChildDevice extends BaseDevice<typeof haChildDeviceS
         | undefined
       if (!data) return
       if (data.brokerId !== this.brokerId) return
+      const state = data.payload as HaEntityState | undefined
+      // A meter sensor this device carries feeds its power-meter and nothing
+      // else: it neither moves the device's liveness nor its own state.
+      if (data.key !== undefined && this.meterCarrier?.carries(data.key) === true) {
+        if (state) this.meterCarrier.push(data.key, state)
+        return
+      }
       if (data.key !== this.entityId) return
       // The payload is the HaEntityState snapshot (the integration
       // manager pre-folds it via processEvent before emitting).
-      const state = data.payload as HaEntityState | undefined
       if (!state) return
       // Inbound update (HA → camstack): a value change is operational churn,
       // so it logs at DEBUG (lifecycle events below stay INFO). Reports the
