@@ -1,0 +1,37 @@
+# Fixture: annotated Flux CSV as an InfluxDB 2.x box answers
+#   from(bucket: "solar") |> range(start: -2h) |> last()
+# Field names, measurements and unit tags follow the Home Assistant component
+# https://github.com/derolli1976/enpal (custom_components/enpal_webparser:
+# const.py SENSOR_KEY_GROUPS, api/influx_client.py, tests/fixtures/influx_last_values.csv).
+# Every value below is invented (neutral); a few rows are deliberate traps:
+# a duplicate series in two measurements, a firmware-alias key, the non-numeric
+# measureId row, and a kWh charge level next to the capacity.
+#group,false,false,true,true,false,false,true,true,true
+#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,double,string,string,string
+#default,_result,,,,,,,,
+,result,table,_start,_stop,_time,_value,_field,_measurement,unit
+,,0,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:50Z,4200,Power.DC.Total,inverter,W
+,,1,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:50Z,4200,Power.Production.Total,system,W
+,,2,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:48Z,12345.678,Energy.Production.Total.Lifetime,inverter,kWh
+,,3,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:49Z,62.5,Energy.Battery.Charge.Level,battery,Percent
+,,4,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:49Z,10000,Energy.Battery.Capacity,battery,Wh
+,,5,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:49Z,-1500,Power.Battery.Charge.Discharge,battery,W
+,,6,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:49Z,-1500,Power.Battery.Charge.Discharge.Inverter,inverter,W
+,,7,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:49Z,51.2,Voltage.Battery,battery,V
+,,8,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:49Z,-29.3,Current.Battery,battery,A
+,,9,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:40Z,23.456789012345,Temperature.Battery,battery,Celcius
+,,10,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:40Z,98,Battery.SOH,battery,Percent
+,,11,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:32Z,7001.25,Energy.Battery.Charge.Lifetime,inverter,kWh
+,,12,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:32Z,7001.25,Energy.Battery.Charge.Lifetime,battery,kWh
+,,13,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:32Z,6500.5,Energy.Battery.Discharge.Lifetime,inverter,kWh
+,,14,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:33Z,-350,Power.Grid.Export,inverter,W
+,,15,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:33Z,3100.5,Energy.Grid.Import.Lifetime,inverter,kWh
+,,16,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:33Z,5400250,Energy.Grid.Export.Lifetime,inverter,Wh
+,,17,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:55Z,1.85,Power.Consumption.Total,system,kW
+,,18,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:55Z,9800.75,Energy.Consumption.Total.Lifetime,system,kWh
+,,19,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:55Z,640,Heatpump.Power.Consumption.Total,heatpump,W
+,,20,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:55Z,1031,Heatpump.Energy.Consumption.Total.Lifetime,heatpump,kWh
+,,21,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:55Z,51,Heatpump.DomesticHotWater.Temperature,heatpump,Celcius
+,,22,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:55Z,10,Heatpump.Outside.Temperature,heatpump,Celcius
+,,23,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:44Z,41.5,Temperature.Housing.Inside,inverter,Celcius
+,,24,2026-01-01T10:00:00Z,2026-01-01T12:00:00Z,2026-01-01T11:59:50Z,00000000-0000-0000-0000-000000000000,measureId,system,W

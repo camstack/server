@@ -4,7 +4,7 @@
 
 # Packages
 
-61 workspace packages. Roles are derived: `camstack.system: true` →
+62 workspace packages. Roles are derived: `camstack.system: true` →
 framework; a `camstack.addons[]` entry → addon; `server/*` → the root app;
 everything else → tooling.
 
@@ -28,7 +28,7 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | `@camstack/types` | `packages/types` | 1.2.425 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
 | `@camstack/ui-library` | `packages/ui-library` | 1.2.335 | `@camstack/server` closure | — |
 
-## Addons (48)
+## Addons (49)
 
 Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/addons/`. Updated with `camstack deploy` (or the Addons page) — NOT by a root-package update. The ones marked _image-seeded_ are also dependencies of the root package: the image copies them into the addons dir on first boot, after which the addons-dir copy is what loads and the closure copy is inert.
 
@@ -59,6 +59,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.157 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
 | `@camstack/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.2.148 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket) |
 | `@camstack/addon-provider-ecowitt` | `packages/addon-provider-ecowitt` | 0.2.148 | addons dir | Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client |
+| `@camstack/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.0 | addons dir | Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback) |
 | `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.143 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.176 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
 | `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.631 | addons dir | Home Assistant device provider addon for CamStack |

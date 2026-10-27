@@ -1,0 +1,80 @@
+{
+  "name": "@camstack/addon-provider-enpal",
+  "version": "0.1.0",
+  "description": "Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback)",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "enpal",
+    "solar",
+    "battery",
+    "influxdb",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/addon-provider-enpal"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "Enpal Provider",
+    "addons": [
+      {
+        "id": "provider-enpal",
+        "category": "providers",
+        "name": "Enpal",
+        "version": "0.1.0",
+        "description": "Adopt an Enpal solar box over the local network (InfluxDB, device page as fallback): PV production, battery charge and power, grid import and export, house consumption and heat pump",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#f5a623",
+        "instanceMode": "multiple",
+        "mode": "standalone",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

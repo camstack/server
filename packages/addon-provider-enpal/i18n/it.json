@@ -1,0 +1,19 @@
+{
+  "connection.s_identity.title": "Box",
+  "connection.s_identity.name.label": "Nome",
+  "connection.s_identity.host.label": "Host / IP del box",
+  "connection.s_source.title": "Origine dei dati",
+  "connection.s_source.description": "InfluxDB richiede il token di accesso rilasciato dal supporto Enpal (chiedilo nella chat dell'app Enpal). Senza token si usa la pagina del dispositivo.",
+  "connection.s_source.source.label": "Origine",
+  "connection.s_source.source.o_auto.label": "Automatica (InfluxDB, poi pagina del dispositivo)",
+  "connection.s_source.source.o_influx.label": "Solo InfluxDB",
+  "connection.s_source.source.o_page.label": "Solo pagina del dispositivo",
+  "connection.s_source.token.label": "Token di accesso InfluxDB",
+  "connection.s_source.org.label": "Organizzazione InfluxDB",
+  "connection.s_source.bucket.label": "Bucket InfluxDB",
+  "connection.s_source.influxPort.label": "Porta InfluxDB",
+  "connection.s_source.pagePort.label": "Porta pagina dispositivo",
+  "connection.s_polling.title": "Polling",
+  "connection.s_polling.pollIntervalMs.label": "Intervallo di polling (ms)",
+  "connection.s_polling.invertBatteryPower.label": "Inverti il segno della potenza batteria"
+}

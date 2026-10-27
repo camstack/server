@@ -153,7 +153,7 @@ Singleton or collection providers, addressed without a device.
 | `device-export` | 8 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
 | `device-manager` | 92 | — | — | — | — | `device-manager` |
-| `device-provider` | 14 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
+| `device-provider` | 14 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
 | `display-palette` | 3 | — | — | — | — | `pipeline-orchestrator` |
