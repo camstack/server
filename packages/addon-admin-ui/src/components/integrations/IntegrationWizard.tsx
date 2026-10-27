@@ -16,6 +16,7 @@ import { Loader2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useOverdueDeadline } from '../../hooks/useOverdueDeadline'
 import { BrokerStep } from './BrokerStep'
@@ -230,7 +231,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
       })
       onClose()
       resetState()
-      navigate(`/integrations/${result.id}?add=1`)
+      navigate(`${integrationDetailUrl(addonId, result.id)}&add=1`)
     } catch {
       // Error is handled by mutation state (surfaced above the picker).
     }
@@ -306,10 +307,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     const targetId = overrideProviderId ?? createdProviderId ?? selectedAddonId
     onClose()
     resetState()
-    if (targetId) {
-      navigate(
-        options?.openAdd === true ? `/integrations/${targetId}?add=1` : `/integrations/${targetId}`,
-      )
+    if (targetId && selectedAddonId) {
+      const url = integrationDetailUrl(selectedAddonId, targetId)
+      navigate(options?.openAdd === true ? `${url}&add=1` : url)
     }
   }
 

@@ -130,7 +130,7 @@ function renderPage(): ReactElement {
           `useConfirm` export does NOT work: the caller lives inside the
           ui-library bundle and resolves it internally. */}
       <ConfirmDialogProvider>
-        <MemoryRouter initialEntries={['/integrations/int_reolink']}>
+        <MemoryRouter initialEntries={['/integrations/provider-reolink?instance=int_reolink']}>
           <Routes>
             <Route path="/integrations/:addonId" element={<IntegrationDetailPage />} />
           </Routes>

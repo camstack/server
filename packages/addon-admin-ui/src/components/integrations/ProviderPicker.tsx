@@ -3,6 +3,7 @@ import { Loader2, Search, Settings } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { shouldAutofocusSearch } from './search-autofocus'
 
 interface ProviderPickerProps {
@@ -95,7 +96,7 @@ export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: Pro
                 if (isUniqueExisting) {
                   const existingId = provider.existingInstances[0]!.id
                   onClose()
-                  navigate(`/integrations/${existingId}`)
+                  navigate(integrationDetailUrl(provider.addonId, existingId))
                 } else {
                   onSelect(
                     provider.addonId,

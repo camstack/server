@@ -54,6 +54,7 @@ vi.mock('@camstack/ui-library', async () => {
   return {
     ...actual,
     useIntegrationsList: () => queries.integrations,
+    useIntegrationsGetAvailableTypes: () => ({ data: [], isLoading: false, isError: false }),
     useDeviceManagerListAll: () => queries.devices,
     useSystem: () => ({ trpcClient: {} }),
   }
@@ -104,20 +105,20 @@ describe('Integrations page views', () => {
   it('stays a table until the operator chooses the grid, and remembers that choice', () => {
     render(renderPage())
     expect(screen.getByRole('table')).toBeTruthy()
-    expect(screen.queryByTestId('integration-card-int_reolink')).toBeNull()
+    expect(screen.queryByTestId('integration-card-provider-reolink')).toBeNull()
     fireEvent.click(screen.getByRole('radio', { name: 'Grid' }))
     expect(localStorage.getItem(INTEGRATIONS_VIEW_STORAGE_KEY)).toBe('grid')
-    expect(screen.getByTestId('integration-card-int_reolink')).toBeTruthy()
+    expect(screen.getByTestId('integration-card-provider-reolink')).toBeTruthy()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
   it('opens the remembered grid and reaches the integration from the card', () => {
     localStorage.setItem(INTEGRATIONS_VIEW_STORAGE_KEY, 'grid')
     render(renderPage())
-    const card = screen.getByTestId('integration-card-int_reolink')
+    const card = screen.getByTestId('integration-card-provider-reolink')
     expect(card).toBeTruthy()
     fireEvent.click(within(card).getByRole('button', { name: 'Open Reolink' }))
-    expect(screen.getByTestId('where').textContent).toBe('/integrations/int_reolink')
+    expect(screen.getByTestId('where').textContent).toBe('/integrations/provider-reolink')
   })
 
   it('shows the same error, pending and empty states in the grid as in the table', () => {
@@ -127,7 +128,7 @@ describe('Integrations page views', () => {
     const failed = render(renderPage())
     expect(screen.getByText('Integrations could not be loaded.')).toBeTruthy()
     expect(screen.queryByText('No integrations configured.')).toBeNull()
-    expect(screen.queryByTestId('integration-card-int_reolink')).toBeNull()
+    expect(screen.queryByTestId('integration-card-provider-reolink')).toBeNull()
     failed.unmount()
 
     queries.integrations.isError = false
@@ -143,6 +144,6 @@ describe('Integrations page views', () => {
     queries.devices.data = []
     render(renderPage())
     expect(screen.getByText('No integrations configured.')).toBeTruthy()
-    expect(screen.queryByTestId('integration-card-int_reolink')).toBeNull()
+    expect(screen.queryByTestId('integration-card-provider-reolink')).toBeNull()
   })
 })

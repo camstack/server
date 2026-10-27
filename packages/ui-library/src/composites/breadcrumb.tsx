@@ -23,7 +23,7 @@ export interface BreadcrumbProps {
  * ```tsx
  * <Breadcrumb items={[
  *   { label: 'Integrations', onClick: () => navigate('/integrations') },
- *   { label: 'RTSP Cameras', onClick: () => navigate('/integrations/int_0001') },
+ *   { label: 'RTSP Cameras', onClick: () => navigate('/integrations/provider-rtsp?instance=int_0001') },
  *   { label: 'Front Door' },
  * ]} />
  * ```

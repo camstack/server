@@ -1,7 +1,6 @@
 /**
  * IntegrationDetail keyed by ADDON — several instances of one addon share a
- * page; `?instances=` picks which of them the table lists, the first when none
- * is named, and the table carries an Integration column.
+ * page; `?instance=` picks the one it shows, the first when none is named.
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -143,27 +142,24 @@ describe('IntegrationDetailPage — keyed by addon', () => {
     localStorage.clear()
   })
 
-  it('selects the first instance when the URL names none, and shows its name in an Integration column', () => {
+  it('shows the first instance when the URL names none, with one instance picker and no Integration column', () => {
     render(renderAt('/integrations/provider-wyze'))
     expect(screen.getByRole('heading', { name: 'Wyze' })).toBeTruthy()
     expect(screen.getByText('Cam One')).toBeTruthy()
     expect(screen.queryByText('Cam Two')).toBeNull()
     expect(screen.queryByText('Hub Three')).toBeNull()
-    expect(screen.getAllByText('Integration').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Casa').length).toBeGreaterThan(0)
+    expect(screen.getAllByTestId('integration-instance-picker')).toHaveLength(1)
+    expect(screen.queryByText('provider-wyze')).toBeNull()
   })
 
-  it('lists the devices of every instance named in ?instances=', () => {
-    render(renderAt('/integrations/provider-wyze?instances=int_a,int_b'))
-    expect(screen.getByText('Cam One')).toBeTruthy()
-    expect(screen.getByText('Cam Two')).toBeTruthy()
-    expect(screen.queryByText('Hub Three')).toBeNull()
-    expect(screen.getAllByText('Garage').length).toBeGreaterThan(0)
-  })
-
-  it('an old per-instance link lands on its addon with that instance selected', () => {
-    render(renderAt('/integrations/int_b'))
+  it('shows only the devices of the instance named in ?instance=', () => {
+    render(renderAt('/integrations/provider-wyze?instance=int_b'))
     expect(screen.getByText('Cam Two')).toBeTruthy()
     expect(screen.queryByText('Cam One')).toBeNull()
+  })
+
+  it('has no redirect: an integration id in the path is just an unknown addon', () => {
+    render(renderAt('/integrations/int_b'))
+    expect(screen.queryByText('Cam Two')).toBeNull()
   })
 })

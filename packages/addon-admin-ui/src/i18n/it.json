@@ -6152,10 +6152,7 @@
     "restart": "Riavvia",
     "restart2": "Riavviare \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Riavviare l'addon disconnetterà brevemente tutti i dispositivi che ne dipendono ({{topLevelCountLabel}} attivi). Gli stream si riconnetteranno automaticamente.",
-    "instances": "Integrazioni",
-    "instancesPlaceholder": "Seleziona integrazioni",
-    "manage": "Gestisci",
-    "manageHint": "Impostazioni, abilita/disabilita, elimina e aggiungi dispositivo si applicano a questa integrazione."
+    "instances": "Integrazione"
   },
   "library": {
     "peopleVehiclesCapturedEventsAnd": "Persone, veicoli, eventi acquisiti e scene — ciò che la detection ha riconosciuto.",
@@ -6957,8 +6954,7 @@
       "type": "Tipo",
       "hardware": "Hardware",
       "features": "Funzioni",
-      "preview": "Anteprima",
-      "integration": "Integrazione"
+      "preview": "Anteprima"
     },
     "loginForm": {
       "logo": "Logo",

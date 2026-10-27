@@ -277,7 +277,7 @@ export function IntegrationsPage(): ReactNode {
   // Whole-row click → integration detail (replaces the per-row Settings button).
   const onRowClick = useCallback(
     (integration: Integration) =>
-      navigate(integrationDetailUrl(integration.addonId, [integration.id])),
+      navigate(integrationDetailUrl(integration.addonId, integration.id)),
     [navigate],
   )
 

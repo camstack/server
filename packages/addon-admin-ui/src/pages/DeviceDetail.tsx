@@ -63,6 +63,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { integrationDetailUrl } from '../lib/integration-instance-selection'
 import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
 import { CameraFunctionSwitches } from '../components/device/CameraFunctionSwitches'
 import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
@@ -568,7 +569,9 @@ export function DeviceDetailPage() {
   const deleteMutation = useDeviceManagerRemove({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-      navigate(integration?.id ? `/integrations/${integration.id}` : '/integrations')
+      navigate(
+        integration?.id ? integrationDetailUrl(integration.addonId, integration.id) : '/integrations',
+      )
     },
   })
 
@@ -908,7 +911,7 @@ export function DeviceDetailPage() {
               integration !== null
                 ? {
                     label: integrationBreadcrumbLabel,
-                    onClick: () => navigate(`/integrations/${integration.id}`),
+                    onClick: () => navigate(integrationDetailUrl(integration.addonId, integration.id)),
                   }
                 : { label: integrationBreadcrumbLabel },
               { label: name },

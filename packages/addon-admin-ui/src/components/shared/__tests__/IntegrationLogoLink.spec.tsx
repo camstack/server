@@ -7,7 +7,7 @@
  */
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { IntegrationLogoLink } from '../IntegrationLogoLink'
 
@@ -18,18 +18,23 @@ function renderAt(ui: React.ReactElement) {
     <MemoryRouter initialEntries={['/devices/101']}>
       <Routes>
         <Route path="/devices/101" element={ui} />
-        <Route path="/integrations/:integrationId" element={<div>Landed on integration</div>} />
+        <Route path="/integrations/:addonId" element={<LandedOn />} />
         <Route path="/integrations" element={<div>Landed on the list</div>} />
       </Routes>
     </MemoryRouter>,
   )
 }
 
+function LandedOn() {
+  const [params] = useSearchParams()
+  return <div>{`Landed on integration ${params.get('instance') ?? ''}`}</div>
+}
+
 describe('IntegrationLogoLink', () => {
   it('navigates to the integration that owns the device', () => {
     renderAt(<IntegrationLogoLink provider="hikvision" integrationId="int-7" name="Casa" />)
     fireEvent.click(screen.getByRole('button', { name: /Casa/ }))
-    expect(screen.getByText('Landed on integration')).toBeInTheDocument()
+    expect(screen.getByText('Landed on integration int-7')).toBeInTheDocument()
   })
 
   it('falls back to the integrations list while the integration is not yet known', () => {

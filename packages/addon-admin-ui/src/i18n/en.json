@@ -6091,10 +6091,7 @@
     "restart": "Restart",
     "restart2": "Restart \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.",
-    "instances": "Integrations",
-    "instancesPlaceholder": "Select integrations",
-    "manage": "Manage",
-    "manageHint": "Settings, enable/disable, delete and add device apply to this integration."
+    "instances": "Integration"
   },
   "library": {
     "peopleVehiclesCapturedEventsAnd": "People, vehicles, captured events and scenes — what detection has recognised.",
@@ -6935,8 +6932,7 @@
       "type": "Type",
       "hardware": "Hardware",
       "features": "Features",
-      "preview": "Preview",
-      "integration": "Integration"
+      "preview": "Preview"
     },
     "loginForm": {
       "logo": "Logo",

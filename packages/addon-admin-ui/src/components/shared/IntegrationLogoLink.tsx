@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { ProviderIcon } from './ProviderIcon'
 
 /**
@@ -14,7 +15,7 @@ interface IntegrationLogoLinkProps {
 
 export function IntegrationLogoLink({ provider, integrationId, name }: IntegrationLogoLinkProps) {
   const navigate = useNavigate()
-  const target = integrationId !== null ? `/integrations/${integrationId}` : '/integrations'
+  const target = integrationId !== null ? integrationDetailUrl(provider, integrationId) : '/integrations'
   const label = name !== null ? `Open integration ${name}` : 'Open integrations'
   return (
     <button

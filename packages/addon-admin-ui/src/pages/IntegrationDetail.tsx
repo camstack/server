@@ -43,7 +43,7 @@ import {
 } from 'lucide-react'
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceDialog } from '../components/integrations/AddDeviceDialog'
 import { AddMatterDeviceDialog } from '../components/integrations/AddMatterDeviceDialog'
 import { AdoptDevicesModal } from '../components/integrations/AdoptDevicesModal'
@@ -54,33 +54,19 @@ import { NodeAddonsSettingsPanel } from '../components/settings/NodeAddonsSettin
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useAddonIconUrl } from '../contexts/addon-icons-context'
 import {
-  INSTANCES_PARAM,
+  INSTANCE_PARAM,
   integrationDetailUrl,
-  parseInstanceIds,
-  resolveDetailRoute,
-  resolveSelectedInstanceIds,
+  resolveSelectedInstanceId,
 } from '../lib/integration-instance-selection'
 import { hasIntegrationSettings } from '../lib/settings-forwarding'
 
 /**
- * `/integrations/:addonId` — the devices of one providing addon, across the
- * integration instances picked in `?instances=`. A path segment that is an
- * INTEGRATION id (an older per-instance link) redirects here with that
- * instance selected.
+ * `/integrations/:addonId` — one providing addon's integration page. The
+ * instance it shows is `?instance=<integrationId>` (none → the first).
  */
 export function IntegrationDetailPage(): ReactElement {
-  const { addonId: param = '' } = useParams<{ addonId: string }>()
-  const { search } = useLocation()
-  const { data: integrations } = useIntegrationsList(undefined)
-  const route = resolveDetailRoute(param, integrations)
-  if (route.kind === 'pending') return <DetailSkeleton />
-  if (route.kind === 'redirect') {
-    const rest = new URLSearchParams(search)
-    rest.delete(INSTANCES_PARAM)
-    const tail = rest.toString()
-    return <Navigate replace to={tail.length > 0 ? `${route.to}&${tail}` : route.to} />
-  }
-  return <AddonIntegrationsView addonId={route.addonId} />
+  const { addonId = '' } = useParams<{ addonId: string }>()
+  return <AddonIntegrationsView addonId={addonId} />
 }
 
 function DetailSkeleton(): ReactElement {
@@ -115,30 +101,21 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const [showConfig, setShowConfig] = useState(false)
   const [showLogs, setShowLogs] = useState(false)
 
-  // The addon's instances, and which of them the page shows (`?instances=`;
-  // none named → the first). Per-instance actions (settings, enable/disable,
-  // delete, add device) target ONE instance — `integrationId` — which is the
-  // sole selected instance or the one picked in the "Manage" selector.
+  // The addon's instances, and which one the page shows (`?instance=`; none
+  // named → the first). Every action on the page — settings, enable/disable,
+  // delete, add device, logs, restart — applies to that one instance.
   const { data: integrations } = useIntegrationsList(undefined)
   const instances = useMemo(
     () => (integrations ?? []).filter((i) => i.addonId === addonId),
     [integrations, addonId],
   )
-  const selectedIds = useMemo(
-    () =>
-      resolveSelectedInstanceIds(parseInstanceIds(searchParams.get(INSTANCES_PARAM)), instances),
-    [searchParams, instances],
-  )
-  const [actingPick, setActingPick] = useState<string | null>(null)
-  const integrationId =
-    actingPick !== null && selectedIds.includes(actingPick) ? actingPick : (selectedIds[0] ?? '')
-  const onSelectionChange = useCallback(
-    (next: readonly string[]) => {
-      if (next.length === 0) return
+  const integrationId = resolveSelectedInstanceId(searchParams.get(INSTANCE_PARAM), instances) ?? ''
+  const onInstanceChange = useCallback(
+    (next: string) => {
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev)
-          params.set(INSTANCES_PARAM, next.join(','))
+          params.set(INSTANCE_PARAM, next)
           return params
         },
         { replace: true },
@@ -414,14 +391,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   // (D659), and must be listed on the Blocks page. Same query key as
   // Devices / Integrations / GlobalSearch, so a warm client pays nothing.
   const integrationOf = useMemo(() => deviceIntegrationResolver(integrations), [integrations])
-  const integrationNameOf = useCallback(
-    (device: DeviceItemDevice): string | null => {
-      const resolved = integrationOf(device)
-      return resolved.kind === 'resolved' ? resolved.integration.name : null
-    },
-    [integrationOf],
-  )
-
   const onDeviceNavigate = useCallback(
     (deviceId: number) => navigate(`/devices/${String(deviceId)}`),
     [navigate],
@@ -436,9 +405,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const integrationDevices = useMemo<readonly DeviceItemDevice[]>(() => {
     return deviceList.filter((d) => {
       const resolved = integrationOf(d)
-      return resolved.kind === 'resolved' && selectedIds.includes(resolved.integration.id)
+      return resolved.kind === 'resolved' && resolved.integration.id === integrationId
     })
-  }, [deviceList, selectedIds, integrationOf])
+  }, [deviceList, integrationId, integrationOf])
 
   // `null` while the integrations list has not answered: membership is not
   // known yet, and "0 devices" would claim an absence nobody observed (D315).
@@ -506,7 +475,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           <div className="min-w-0">
             <h1 className="text-lg font-semibold text-foreground truncate">{addonTitle}</h1>
             <p className="text-[11px] text-foreground-subtle mt-0.5 truncate">
-              {integration.addonId} · {topLevelCountLabel} {t('integrations.devices')}
+              {topLevelCountLabel} {t('integrations.devices')}
             </p>
           </div>
         </div>
@@ -646,29 +615,17 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       </div>
 
       {instances.length > 1 && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="max-w-sm">
           <OptionSelect
-            mode="multi"
-            label={t('integrationDetail.instances', 'Integrations')}
+            mode="single"
+            singleDisplay="field"
+            label={t('integrationDetail.instances', 'Integration')}
             options={instanceOptions}
-            value={selectedIds}
-            onChange={onSelectionChange}
-            placeholder={t('integrationDetail.instancesPlaceholder', 'Select integrations')}
+            value={integrationId}
+            onChange={onInstanceChange}
+            testId="integration-instance-picker"
+            optionTestIdPrefix="integration-instance"
           />
-          {selectedIds.length > 1 && (
-            <OptionSelect
-              mode="single"
-              singleDisplay="field"
-              label={t('integrationDetail.manage', 'Manage')}
-              description={t(
-                'integrationDetail.manageHint',
-                'Settings, enable/disable, delete and add device apply to this integration.',
-              )}
-              options={instanceOptions.filter((o) => selectedIds.includes(o.value))}
-              value={integrationId}
-              onChange={setActingPick}
-            />
-          )}
         </div>
       )}
 
@@ -704,8 +661,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
         devices={deviceList}
         trpc={system.trpcClient}
         integrationOf={integrationOf}
-        forceIntegrationIds={selectedIds}
-        resolveIntegrationName={integrationNameOf}
+        forceIntegrationId={integrationId}
         urlScope="root"
         lsKey={`integration-detail:${integration.addonId}`}
         resolveIntegrationIcon={deviceIntegrationIcon}

@@ -16,6 +16,7 @@ import {
   deviceTypeMeta,
 } from '@camstack/ui-library'
 import type { AddonPageInfo } from '../layouts/AddonPageLoader'
+import { integrationDetailUrl } from './integration-instance-selection'
 import type { SearchItem } from './global-search'
 import { type NavSection, resolveAddonPageIcon } from './nav-items'
 import i18n from '../i18n/index'
@@ -149,7 +150,7 @@ export function buildIntegrationSearchItems(
       ? integration.addonId
       : i18n.t('helpers.searchItems.disabled', { addonId: integration.addonId }),
     keywords: [integration.addonId, integration.processState],
-    path: `/integrations/${integration.id}`,
+    path: integrationDetailUrl(integration.addonId, integration.id),
   }))
 }
 

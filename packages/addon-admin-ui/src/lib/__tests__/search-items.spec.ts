@@ -197,7 +197,7 @@ describe('buildIntegrationSearchItems', () => {
       key: 'integration:int-1',
       domain: 'integration',
       label: 'provider-onvif',
-      path: '/integrations/int-1',
+      path: '/integrations/provider-onvif?instance=int-1',
     })
   })
 

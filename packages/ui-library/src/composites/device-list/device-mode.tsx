@@ -83,12 +83,6 @@ export interface DeviceListDeviceProps {
   readonly integrationOf?: DeviceIntegrationResolver
   /** Pre-applied integration filter (an integration id) — hides the chip group. */
   readonly forceIntegrationId?: string
-  /** Pre-applied integration filter over several integration ids — hides the chip
-   *  group like `forceIntegrationId`. Wins over the chips; ignored when
-   *  `forceIntegrationId` is set. */
-  readonly forceIntegrationIds?: readonly string[]
-  /** Text for the Integration column (only rendered in contexts that enable it). */
-  readonly resolveIntegrationName?: (device: DeviceItemDevice) => string | null
   /** The badge beside a row's name, given the row and its resolved integration. */
   readonly resolveIntegrationIcon?: DeviceListIntegrationIconResolver
   readonly resolveParent?: (parentId: number) => DeviceItemParent | null
@@ -167,8 +161,6 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
     context = 'devices',
     filters,
     forceIntegrationId,
-    forceIntegrationIds,
-    resolveIntegrationName,
     integrationOf,
     resolveIntegrationIcon,
     resolveParent,
@@ -278,13 +270,8 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
   // collapses to a single-element set; otherwise the multi-select drives
   // the filter. Empty set = no integration filter.
   const effectiveAddons = useMemo<readonly string[]>(
-    () =>
-      forceIntegrationId !== undefined
-        ? [forceIntegrationId]
-        : forceIntegrationIds !== undefined
-          ? forceIntegrationIds
-          : url.state.addons,
-    [forceIntegrationId, forceIntegrationIds, url.state.addons],
+    () => (forceIntegrationId !== undefined ? [forceIntegrationId] : url.state.addons),
+    [forceIntegrationId, url.state.addons],
   )
   const integrationOfRow = useCallback<DeviceIntegrationResolver>(
     (device) => (integrationOf !== undefined ? integrationOf(device) : { kind: 'unknown' }),
@@ -403,7 +390,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
             url.clearFilters()
           }}
           onAddonsChange={url.setAddons}
-          hideAddons={forceIntegrationId !== undefined || forceIntegrationIds !== undefined}
+          hideAddons={forceIntegrationId !== undefined}
         />
         <div className="flex items-center gap-2">
           {batchActions !== undefined &&
@@ -483,7 +470,6 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
             devices={filtered}
             trpc={trpc}
             resolveIntegrationIcon={rowIntegrationIcon}
-            resolveIntegrationName={resolveIntegrationName ?? null}
             resolveParent={resolveParent ?? null}
             onNavigate={onNavigate ?? null}
             renderRowAction={renderRowAction ?? null}
@@ -543,39 +529,36 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
        * parent table) — the surrounding context already names the
        * integration, so the "filtered by X" line is redundant. Pagination
        * is the only useful overall affordance there, and it lives above. */}
-      {forceIntegrationId === undefined &&
-        forceIntegrationIds === undefined &&
-        isFiltered &&
-        totalItems > 0 && (
-          <p className="text-[11px] text-foreground-subtle">
-            {effectiveAddons.length > 0 ? (
-              <UiTrans
-                uiKey="uiLibrary.deviceModeList.showingFiltered"
-                fallback={{
-                  one: 'Showing {{shown}} of {{count}} device · filtered by <0>{{names}}</0>',
-                  other: 'Showing {{shown}} of {{count}} devices · filtered by <0>{{names}}</0>',
-                }}
-                components={[<strong key="names" className="text-primary" />]}
-                values={{
-                  shown: totalItems,
-                  count: countableDevices(devices).length,
-                  names: effectiveAddons
-                    .map((id) => filters?.integrations?.find((a) => a.id === id)?.name ?? id)
-                    .join(', '),
-                }}
-              />
-            ) : (
-              t(
-                'uiLibrary.deviceModeList.showing',
-                {
-                  one: 'Showing {{shown}} of {{count}} device',
-                  other: 'Showing {{shown}} of {{count}} devices',
-                },
-                { shown: totalItems, count: countableDevices(devices).length },
-              )
-            )}
-          </p>
-        )}
+      {forceIntegrationId === undefined && isFiltered && totalItems > 0 && (
+        <p className="text-[11px] text-foreground-subtle">
+          {effectiveAddons.length > 0 ? (
+            <UiTrans
+              uiKey="uiLibrary.deviceModeList.showingFiltered"
+              fallback={{
+                one: 'Showing {{shown}} of {{count}} device · filtered by <0>{{names}}</0>',
+                other: 'Showing {{shown}} of {{count}} devices · filtered by <0>{{names}}</0>',
+              }}
+              components={[<strong key="names" className="text-primary" />]}
+              values={{
+                shown: totalItems,
+                count: countableDevices(devices).length,
+                names: effectiveAddons
+                  .map((id) => filters?.integrations?.find((a) => a.id === id)?.name ?? id)
+                  .join(', '),
+              }}
+            />
+          ) : (
+            t(
+              'uiLibrary.deviceModeList.showing',
+              {
+                one: 'Showing {{shown}} of {{count}} device',
+                other: 'Showing {{shown}} of {{count}} devices',
+              },
+              { shown: totalItems, count: countableDevices(devices).length },
+            )
+          )}
+        </p>
+      )}
     </div>
   )
 }
