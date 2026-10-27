@@ -143,6 +143,10 @@ export class AnalyticsQueryFacade {
     const active = store?.getActiveByTrack(input.trackId)
     const track = active ?? (await store?.getPersistedByTrackId(input.trackId)) ?? null
     if (track === null) return null
+    // The lookup is by trackId alone; the device the caller NAMED is what the
+    // share-view gate authorised. A track of another device answers as absent,
+    // never as itself — otherwise a link scoped to camera A reads camera B.
+    if (track.deviceId !== input.deviceId) return null
     const [named] = await this.withZoneNames([track])
     return named ?? track
   }

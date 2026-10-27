@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A shared events link can open a track's detail page
+
 ## [1.2.664] - 2026-10-27
 
 ### Changed

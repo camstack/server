@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A track read now answers only for the camera it was asked under
+
 ## [1.2.644] - 2026-10-27
 
 ### Changed

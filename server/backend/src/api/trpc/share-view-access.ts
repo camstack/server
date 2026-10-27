@@ -110,6 +110,7 @@ function extractDeviceId(input: unknown): number | null {
  *   • `pipelineAnalytics.listRecentTracks`     — the feed itself
  *   • `pipelineAnalytics.listEventKindsBatch`  — the class→macro taxonomy
  *   • `pipelineAnalytics.searchObjectEvents`   — CLIP text search
+ *   • `pipelineAnalytics.getTrack` / `listTrackMedia` — the track detail page
  *
  * Intentionally NOT here: everything the grid link gets (WebRTC signalling,
  * snapshots, TURN, camera metrics) — a shared events page is not a camera
@@ -150,6 +151,22 @@ const EVENTS_VIEW_OPTIONAL_DEVICE_METHODS: ReadonlySet<string> = new Set([
   'pipelineAnalytics.searchObjectEvents',
 ])
 
+/**
+ * Methods that read ONE track (or its media manifest) and REQUIRE a single
+ * numeric `input.deviceId` that is inside the scope. Used by the embed's track
+ * detail page (`?mode=track`).
+ *
+ * Unlike {@link EVENTS_VIEW_OPTIONAL_DEVICE_METHODS} an absent id is DENIED
+ * (fail closed): the answer is one row, not a list the response filter could
+ * cut. The provider must return null when the stored track belongs to another
+ * device than `input.deviceId` — the gate vouches for the id the caller named,
+ * the provider vouches that it is the track's own.
+ */
+const EVENTS_VIEW_REQUIRED_DEVICE_METHODS: ReadonlySet<string> = new Set([
+  'pipelineAnalytics.getTrack',
+  'pipelineAnalytics.listTrackMedia',
+])
+
 /** Pull a `deviceIds` array off a raw tRPC input. Null when absent/malformed. */
 function extractDeviceIds(input: unknown): readonly number[] | null {
   if (input === null || typeof input !== 'object') return null
@@ -185,6 +202,16 @@ function checkEventsViewAccess(
     const deviceId = extractDeviceId(input)
     // Absent = every camera; the RESPONSE filter is what scopes it.
     if (deviceId === null) return { ok: true }
+    if (!scope.deviceIds.includes(deviceId)) {
+      return { ok: false, reason: `Device ${deviceId} is outside this share link's scope` }
+    }
+    return { ok: true }
+  }
+  if (EVENTS_VIEW_REQUIRED_DEVICE_METHODS.has(path)) {
+    const deviceId = extractDeviceId(input)
+    if (deviceId === null) {
+      return { ok: false, reason: `'${path}' requires a numeric deviceId for share-view access` }
+    }
     if (!scope.deviceIds.includes(deviceId)) {
       return { ok: false, reason: `Device ${deviceId} is outside this share link's scope` }
     }

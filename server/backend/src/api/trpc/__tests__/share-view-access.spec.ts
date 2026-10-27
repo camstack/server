@@ -319,6 +319,36 @@ describe('checkShareViewAccess — events-view', () => {
     })
   })
 
+  describe('single-track reads (getTrack / listTrackMedia)', () => {
+    const METHODS = ['pipelineAnalytics.getTrack', 'pipelineAnalytics.listTrackMedia']
+
+    it.each(METHODS)('allows %s for an in-scope deviceId', (path) => {
+      expect(checkShareViewAccess(EVENTS_SCOPE, path, { deviceId: 5, trackId: 't1' })).toEqual({
+        ok: true,
+      })
+    })
+
+    it.each(METHODS)('denies %s for an out-of-scope deviceId', (path) => {
+      const r = checkShareViewAccess(EVENTS_SCOPE, path, { deviceId: 9, trackId: 't1' })
+      expect(r.ok).toBe(false)
+    })
+
+    it.each(METHODS)('denies %s when deviceId is missing or not numeric', (path) => {
+      expect(checkShareViewAccess(EVENTS_SCOPE, path, { trackId: 't1' }).ok).toBe(false)
+      expect(checkShareViewAccess(EVENTS_SCOPE, path, { deviceId: '5', trackId: 't1' }).ok).toBe(
+        false,
+      )
+      expect(checkShareViewAccess(EVENTS_SCOPE, path, undefined).ok).toBe(false)
+    })
+
+    it('does not open the grid-view token to them', () => {
+      const grid: ShareViewGrant = { kind: 'grid-view', deviceIds: [5] }
+      expect(
+        checkShareViewAccess(grid, 'pipelineAnalytics.getTrack', { deviceId: 5, trackId: 't1' }).ok,
+      ).toBe(false)
+    })
+  })
+
   it('does NOT grant the grid surface — an events link is not a camera wall', () => {
     for (const path of [
       'snapshot.getSnapshot',
