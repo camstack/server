@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.431] - 2026-10-27
+
 ### Changed
 
 - Addons can now offer a vendor sign-in that opens the vendor's login page through the hub and finishes on the CamStack result page.

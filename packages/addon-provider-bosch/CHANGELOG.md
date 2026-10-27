@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.30] - 2026-10-27
+
 ### Changed
 
 - Home Connect and HomeCom now sign in through a page served by the hub; no more copying the redirect address out of the browser's developer tools.

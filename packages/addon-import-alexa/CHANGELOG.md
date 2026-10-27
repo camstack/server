@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.159] - 2026-10-27
+
 ### Added
 
 - The Amazon sign-in now opens through the hub over HTTPS; the login proxy host setting and the published port are no longer needed.
