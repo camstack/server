@@ -27,7 +27,7 @@ import { customizePath, devicePath } from '../../lib/customization-routes'
 import { buildSkeletonComposition } from './build-skeleton'
 import { HelperWizard } from './HelperWizard'
 import {
-  type HelperFormDraft,
+  type HelperDraft,
   type HelperSaveIntent,
   type HelperSaveResult,
   type RefusalLine,
@@ -62,17 +62,14 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const create = useCoreBlocksCreateComposition()
   const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
-  const [draft, setDraft] = useState<HelperFormDraft | null>(null)
+  const [draft, setDraft] = useState<HelperDraft | null>(null)
   const title = titleForDraft(draft, t)
 
   useEffect(() => {
     onTitle(title)
   }, [onTitle, title])
 
-  const save = async (
-    next: HelperFormDraft,
-    intent: HelperSaveIntent,
-  ): Promise<HelperSaveResult> => {
+  const save = async (next: HelperDraft, intent: HelperSaveIntent): Promise<HelperSaveResult> => {
     let deviceId: number | null = null
     const lines = await writeHelper(next, async (composition, name) => {
       const { block } = await create.mutateAsync({
@@ -235,8 +232,10 @@ async function saveBlank(input: BlankSave): Promise<void> {
   }
 }
 
-function titleForDraft(draft: HelperFormDraft | null, t: TFunction): string {
+function titleForDraft(draft: HelperDraft | null, t: TFunction): string {
   if (draft === null) return t('helper.newHelper')
+  if (draft.kind === 'statistic') return t('helper.newTitle.statistic')
+  if (draft.kind === 'integral') return t('helper.newTitle.integral')
   if (draft.templateId === 'appliance' && draft.appliance !== null) {
     return t(`helper.newTitle.${draft.appliance}`)
   }

@@ -3,7 +3,12 @@
  * `SourcePickRequest`: one device type, the catalog fields, direct matches
  * only. Incompatible values stay out — a group does not opt into them.
  */
-import type { DeviceType, HelperMember, SourcePickRequest } from '@camstack/types'
+import {
+  historyFieldsFor,
+  type DeviceType,
+  type HelperMember,
+  type SourcePickRequest,
+} from '@camstack/types'
 
 export interface MemberDevice {
   readonly id: number
@@ -54,19 +59,21 @@ export function partitionMemberDevices(
   return { compatible, incompatible }
 }
 
-/** Fields that match the request exactly. Conversion and other caps are dropped. */
+/** Fields that match the request exactly. A historised ask drops a field with no history declaration. */
 export function directAcceptFields(
   fields: readonly MemberField[],
   request: SourcePickRequest,
 ): readonly MemberField[] {
-  return fields.filter((field) =>
-    request.accept.some(
-      (accept) =>
-        accept.cap === field.cap &&
-        accept.fieldPath === field.fieldPath &&
-        accept.valueKind === field.kind,
-    ),
-  )
+  return fields.filter((field) => acceptedField(request, field) && recorded(request, field))
+}
+
+/** Accepted fields the historised ask cannot use, so the selector can say why. */
+export function unhistorisedFields(
+  fields: readonly MemberField[],
+  request: SourcePickRequest,
+): readonly MemberField[] {
+  if (!request.history.required) return []
+  return fields.filter((field) => acceptedField(request, field) && !hasHistory(field))
 }
 
 export function selectedIdsForMembers(
@@ -135,6 +142,23 @@ function fieldForDevice(
   const only = input.request.accept.length === 1 ? input.request.accept[0] : undefined
   if (only === undefined) return null
   return { cap: only.cap, fieldPath: only.fieldPath }
+}
+
+function acceptedField(request: SourcePickRequest, field: MemberField): boolean {
+  return request.accept.some(
+    (accept) =>
+      accept.cap === field.cap &&
+      accept.fieldPath === field.fieldPath &&
+      accept.valueKind === field.kind,
+  )
+}
+
+function recorded(request: SourcePickRequest, field: MemberField): boolean {
+  return !request.history.required || hasHistory(field)
+}
+
+function hasHistory(field: MemberField): boolean {
+  return historyFieldsFor(field.cap)[field.fieldPath] !== undefined
 }
 
 function accepted(

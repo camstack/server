@@ -29,6 +29,7 @@ import {
   acceptCaps,
   applyMemberSelection,
   directAcceptFields,
+  unhistorisedFields,
   type MemberDevice,
   type MemberField,
   partitionMemberDevices,
@@ -127,6 +128,7 @@ export function SourceSelectorMembers({
   )
   const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
   const direct = directAcceptFields(catalogFields(catalog), request)
+  const withoutHistory = unhistorisedFields(catalogFields(catalog), request)
   const pickerItems = useMemo(
     () => compatiblePickerItems(partitioned.compatible.map(toCandidate)),
     [partitioned.compatible],
@@ -260,6 +262,11 @@ export function SourceSelectorMembers({
                 )
               })}
             </ul>
+          )}
+          {withoutHistory.length > 0 && (
+            <p className="text-[11px] text-foreground-muted" data-testid="helper-no-history">
+              {t('helper.noHistory')}
+            </p>
           )}
         </>
       )}

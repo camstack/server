@@ -26,6 +26,7 @@ import { Boxes } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HelperActuatorExtras } from './HelperActuatorExtras'
+import { HistoryHelperStatus } from './HelperHistoryStatus'
 import {
   fieldStateOf,
   groupStatusFromSnapshot,
@@ -91,6 +92,14 @@ export function HelperGroupStatus({ deviceId, stableId }: HelperGroupStatusProps
   const composition = coreBlockComposition(read.data.view.block)
   if (composition === null || !isHelperComposition(composition)) return null
   const helper = composition.helper
+  if (helper.kind === 'statistic' || helper.kind === 'integral') {
+    return (
+      <HistoryHelperStatus
+        helper={helper}
+        snapshot={snapshotReadOf(snapshot.status, snapshot.data, snapshot.error?.message)}
+      />
+    )
+  }
   if (helper.kind !== 'group') return null
   const template = groupTemplate(helper.templateId)
   if (template === null) return null

@@ -9797,7 +9797,8 @@
       "readings": "Readings",
       "binary": "Binary sensors",
       "actuators": "Actuators",
-      "appliances": "Appliances"
+      "appliances": "Appliances",
+      "history": "History"
     },
     "template": {
       "temperature": "Temperature",
@@ -9833,7 +9834,9 @@
       "light": "Light group",
       "lightSummary": "Same as a switch group. Brightness and colour appear only when every light has them.",
       "appliance": "Appliance from a smart plug",
-      "applianceSummary": "One power reading. Running while power stays above a threshold, long enough that a wash pause is not the end of the cycle."
+      "applianceSummary": "One power reading. Running while power stays above a threshold, long enough that a wash pause is not the end of the cycle.",
+      "statistic": "Statistics",
+      "integral": "Energy from power"
     },
     "aggregate": {
       "mean": "Mean",
@@ -9854,7 +9857,9 @@
       "parameters": "Name it and choose how members combine.",
       "members": "Choose the members.",
       "appliance": "Name it and choose the appliance.",
-      "applianceMembers": "Choose the plug's power reading."
+      "applianceMembers": "Choose the plug's power reading.",
+      "historyParameters": "Choose the range and name it.",
+      "historySource": "Choose the reading."
     },
     "reducer": "Combine by",
     "name": "Name",
@@ -9929,7 +9934,9 @@
       "light": "New light group",
       "washer": "New washing machine",
       "dryer": "New dryer",
-      "dishwasher": "New dishwasher"
+      "dishwasher": "New dishwasher",
+      "statistic": "New statistics",
+      "integral": "New energy meter"
     },
     "appliance": {
       "washer": "Washing machine",
@@ -9939,6 +9946,52 @@
     "applianceType": "Appliance",
     "threshold": "Threshold (W)",
     "startDwell": "Starts after (min)",
-    "stopDwell": "Stops after (min)"
+    "stopDwell": "Stops after (min)",
+    "detail": {
+      "statistic": "Minimum, maximum, time-weighted mean, sum, count or change over a range, read from history. Sum is for a counter; a gauge's sum is the integral.",
+      "integral": "Power becomes energy. A flow becomes volume. Any other instantaneous reading becomes a meter in unit-seconds, growing until the reset.",
+      "history": "The source must record history. A gap is left out and is never counted as zero. The range cannot be longer than that history is kept."
+    },
+    "stat": "Statistic",
+    "statName": {
+      "min": "Minimum",
+      "max": "Maximum",
+      "mean": "Mean",
+      "sum": "Sum",
+      "count": "Count",
+      "change": "Change"
+    },
+    "range": "Range",
+    "rangeKind": {
+      "rolling": "Rolling",
+      "calendar": "Calendar"
+    },
+    "span": "Length",
+    "spanName": {
+      "1h": "1 hour",
+      "24h": "24 hours",
+      "2d": "2 days",
+      "7d": "7 days",
+      "30d": "30 days",
+      "custom": "Custom"
+    },
+    "period": "Period",
+    "periodName": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "this-week": "This week",
+      "this-month": "This month"
+    },
+    "reset": "Reset",
+    "resetName": {
+      "never": "Never",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "customMinutes": "Minutes",
+    "noHistory": "This reading has no history, so it cannot be the source.",
+    "output": "Reading",
+    "gaps": "{{count}} intervals were left out"
   }
 }

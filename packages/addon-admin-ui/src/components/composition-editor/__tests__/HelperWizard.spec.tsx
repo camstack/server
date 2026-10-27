@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
-import type { HelperFormDraft, HelperSaveResult } from '../helper-form-model'
+import type { HelperDraft, HelperSaveResult } from '../helper-form-model'
 import { HelperWizard } from '../HelperWizard'
 
 vi.mock('../../device/customize/source-selector/SourceSelector', () => ({
@@ -41,7 +41,7 @@ vi.mock('../../device/customize/source-selector/SourceSelector', () => ({
 }))
 
 function renderWizard(
-  onSave: (draft: HelperFormDraft, intent: 'open' | 'again') => Promise<HelperSaveResult>,
+  onSave: (draft: HelperDraft, intent: 'open' | 'again') => Promise<HelperSaveResult>,
 ): void {
   const ui: ReactNode = (
     <MemoryRouter>
@@ -88,7 +88,7 @@ describe('HelperWizard', () => {
 
   it('opens the device after save, and create-more returns to the type tiles with a link', async () => {
     const onSave = vi.fn(
-      async (_draft: HelperFormDraft, intent: 'open' | 'again'): Promise<HelperSaveResult> => ({
+      async (_draft: HelperDraft, intent: 'open' | 'again'): Promise<HelperSaveResult> => ({
         kind: 'saved',
         deviceId: intent === 'open' ? 4700 : 4701,
       }),

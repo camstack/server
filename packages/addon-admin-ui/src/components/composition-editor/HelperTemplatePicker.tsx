@@ -12,12 +12,17 @@ import {
 } from '@camstack/types'
 import { deviceRoleMeta, deviceTypeMeta, GroupedTilePicker } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
+import { BarChart3, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { helperTemplateGroups, type HelperPickerId } from './helper-form-model'
+import {
+  helperTemplateGroups,
+  type HelperPickerId,
+  type HelperTemplatePick,
+} from './helper-form-model'
 
 export interface HelperTemplatePickerProps {
-  readonly onPick: (templateId: HelperPickerId) => void
+  readonly onPick: (pick: HelperTemplatePick) => void
 }
 
 export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): ReactNode {
@@ -27,21 +32,65 @@ export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): Rea
       <GroupedTilePicker
         emptyMessage={t('helper.noTemplates')}
         onPick={(key) => {
-          if (!isPickerId(key)) return
-          onPick(key)
+          if (key === 'statistic' || key === 'integral') {
+            onPick({ kind: key })
+            return
+          }
+          if (key === APPLIANCE_TEMPLATE_ID) {
+            onPick({ kind: 'appliance' })
+            return
+          }
+          if (!isGroupTemplateId(key)) return
+          onPick({ kind: 'group', templateId: key })
         }}
-        groups={pickerGroups(t)}
+        groups={[
+          ...pickerGroups(t),
+          {
+            id: 'history',
+            label: t('helper.group.history'),
+            tiles: [historyTile('statistic', BarChart3, t), historyTile('integral', Zap, t)],
+          },
+        ]}
       />
+    </div>
+  )
+}
+
+function historyTile(
+  id: 'statistic' | 'integral',
+  Icon: typeof BarChart3,
+  t: (key: string, options?: { readonly name: string }) => string,
+): {
+  readonly key: string
+  readonly label: string
+  readonly testId: string
+  readonly icon: ReactNode
+  readonly detailLabel: string
+  readonly detail: ReactNode
+} {
+  const label = t(`helper.template.${id}`)
+  return {
+    key: id,
+    label,
+    testId: `helper-template-${id}`,
+    icon: <Icon className="h-5 w-5 text-foreground-muted" aria-hidden />,
+    detailLabel: t('helper.detailsOf', { name: label }),
+    detail: <HistoryDetail id={id} />,
+  }
+}
+
+function HistoryDetail({ id }: { readonly id: 'statistic' | 'integral' }): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <div className="max-w-xs space-y-1 text-xs">
+      <p className="text-foreground-muted">{t(`helper.detail.${id}`)}</p>
+      <p className="text-foreground-subtle">{t('helper.detail.history')}</p>
     </div>
   )
 }
 
 function isGroupTemplateId(value: string): value is GroupTemplateId {
   return GROUP_TEMPLATE_IDS.some((id) => id === value)
-}
-
-function isPickerId(value: string): value is HelperPickerId {
-  return value === APPLIANCE_TEMPLATE_ID || isGroupTemplateId(value)
 }
 
 interface PickerTile {

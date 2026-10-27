@@ -69,6 +69,8 @@ export function describeFieldSource(
       return source.expr
     case 'aggregate':
       return `${source.reducer} (${source.reads.length})`
+    case 'series':
+      return `${source.read.cap}.${source.read.fieldPath}`
     case 'code':
       return 'code'
   }

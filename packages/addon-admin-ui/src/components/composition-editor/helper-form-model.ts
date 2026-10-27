@@ -20,13 +20,19 @@ import {
   type HelperCompileResult,
   type HelperMember,
   type HelperSpec,
+  type IntegralHelperSpec,
   MAX_HELPER_MEMBERS,
+  type ResetPeriod,
   reducerForActive,
   sharedColorModes,
   sharedLightCaps,
   type SourcePickRequest,
   sourcePickForAppliance,
+  sourcePickForHistory,
   sourcePickForTemplate,
+  type StatisticHelperSpec,
+  type StatisticStat,
+  type StatisticWindow,
 } from '@camstack/types'
 
 export type HelperPickerId = GroupTemplateId | typeof APPLIANCE_TEMPLATE_ID
@@ -39,6 +45,7 @@ export interface HelperTemplateGroup {
 }
 
 export interface HelperFormDraft {
+  readonly kind: 'group'
   readonly templateId: HelperPickerId
   readonly aggregate: AggregateReducer
   /** Set on an actuator template. Readings leave it null. */
@@ -52,6 +59,31 @@ export interface HelperFormDraft {
   readonly room: string
   readonly members: readonly HelperMember[]
 }
+
+export interface StatisticFormDraft {
+  readonly kind: 'statistic'
+  readonly stat: StatisticStat
+  readonly window: StatisticWindow
+  readonly name: string
+  readonly room: string
+  readonly source: HelperMember | null
+}
+
+export interface IntegralFormDraft {
+  readonly kind: 'integral'
+  readonly reset: ResetPeriod
+  readonly name: string
+  readonly room: string
+  readonly source: HelperMember | null
+}
+
+export type HelperDraft = HelperFormDraft | StatisticFormDraft | IntegralFormDraft
+
+export type HelperTemplatePick =
+  | { readonly kind: 'group'; readonly templateId: GroupTemplateId }
+  | { readonly kind: 'appliance' }
+  | { readonly kind: 'statistic' }
+  | { readonly kind: 'integral' }
 
 export interface RefusalLine {
   readonly path: string
@@ -174,6 +206,7 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
   if (templateId === APPLIANCE_TEMPLATE_ID) {
     const defaults = APPLIANCE_DEFAULTS.washer
     return {
+      kind: 'group',
       templateId,
       aggregate: 'any',
       active: null,
@@ -189,6 +222,7 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
   const template = groupTemplate(templateId)
   if (template === null) return null
   return {
+    kind: 'group',
     templateId,
     aggregate: template.defaultAggregate,
     active: template.family === 'actuator' ? 'at-least-one' : null,
@@ -199,13 +233,32 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
   }
 }
 
-export function draftFromHelper(
-  spec: HelperSpec,
-  name: string,
-  room: string,
-): HelperFormDraft | null {
+export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
+  if (pick.kind === 'group') return draftForTemplate(pick.templateId)
+  if (pick.kind === 'appliance') return draftForTemplate(APPLIANCE_TEMPLATE_ID)
+  if (pick.kind === 'statistic') {
+    return {
+      kind: 'statistic',
+      stat: 'mean',
+      window: { kind: 'rolling', span: '24h' },
+      name: '',
+      room: '',
+      source: null,
+    }
+  }
+  return {
+    kind: 'integral',
+    reset: 'daily',
+    name: '',
+    room: '',
+    source: null,
+  }
+}
+
+export function draftFromHelper(spec: HelperSpec, name: string, room: string): HelperDraft | null {
   if (spec.kind === 'appliance') {
     return {
+      kind: 'group',
       templateId: APPLIANCE_TEMPLATE_ID,
       aggregate: 'any',
       active: null,
@@ -218,11 +271,25 @@ export function draftFromHelper(
       members: [copyMember(spec.member)],
     }
   }
+  if (spec.kind === 'statistic') {
+    return {
+      kind: 'statistic',
+      stat: spec.stat,
+      window: spec.window,
+      name,
+      room,
+      source: copyMember(spec.source),
+    }
+  }
+  if (spec.kind === 'integral') {
+    return { kind: 'integral', reset: spec.reset, name, room, source: copyMember(spec.source) }
+  }
   const template = groupTemplate(spec.templateId)
   if (template === null || !template.aggregates.includes(spec.aggregate)) return null
   if (template.family === 'actuator' && spec.active === undefined) return null
   if (template.family !== 'actuator' && spec.active !== undefined) return null
   return {
+    kind: 'group',
     templateId: spec.templateId,
     aggregate: spec.aggregate,
     active: spec.active ?? null,
@@ -256,7 +323,7 @@ export function withActive(draft: HelperFormDraft, active: ActiveCriterion): Hel
   return { ...draft, active, aggregate: reducerForActive(active) }
 }
 
-export function withName(draft: HelperFormDraft, name: string): HelperFormDraft {
+export function withName(draft: HelperDraft, name: string): HelperDraft {
   return { ...draft, name }
 }
 
@@ -292,14 +359,18 @@ export type HelperSaveResult =
   | { readonly kind: 'saved'; readonly deviceId: number }
   | { readonly kind: 'refused'; readonly lines: readonly RefusalLine[] }
 
-export function memberRequest(draft: HelperFormDraft): SourcePickRequest | null {
+export function memberRequest(draft: HelperDraft): SourcePickRequest | null {
+  if (draft.kind === 'statistic' || draft.kind === 'integral')
+    return sourcePickForHistory(draft.kind)
   if (draft.templateId === APPLIANCE_TEMPLATE_ID) return sourcePickForAppliance()
   const template = groupTemplate(draft.templateId)
   if (template === null) return null
   return sourcePickForTemplate(template)
 }
 
-export function specFromDraft(draft: HelperFormDraft): HelperSpec | null {
+export function specFromDraft(draft: HelperDraft): HelperSpec | null {
+  if (draft.kind === 'statistic') return statisticSpec(draft)
+  if (draft.kind === 'integral') return integralSpec(draft)
   if (draft.templateId === APPLIANCE_TEMPLATE_ID) return applianceSpec(draft)
   return groupSpec(draft)
 }
@@ -337,15 +408,27 @@ const MISSING_MEMBER: CompositionProblem = {
   message: 'an appliance helper needs one power reading',
 }
 
-export function compileDraft(draft: HelperFormDraft): HelperCompileResult {
+const MISSING_HISTORY: CompositionProblem = {
+  code: 'member-constraint',
+  path: 'helper.source',
+  message: 'pick one reading that declares history',
+}
+
+export function compileDraft(draft: HelperDraft): HelperCompileResult {
   const spec = specFromDraft(draft)
-  if (spec === null) return { ok: false, problems: [MISSING_MEMBER] }
+  if (spec === null) {
+    const missing =
+      draft.kind === 'group' && draft.templateId === APPLIANCE_TEMPLATE_ID
+        ? MISSING_MEMBER
+        : MISSING_HISTORY
+    return { ok: false, problems: [missing] }
+  }
   return compileHelper(spec)
 }
 
 /** Compile, then write. A thrown server refusal comes back as its named lines. */
 export async function writeHelper(
-  draft: HelperFormDraft,
+  draft: HelperDraft,
   write: (composition: Composition, name: string) => Promise<void>,
 ): Promise<readonly RefusalLine[]> {
   const compiled = compileDraft(draft)
@@ -359,7 +442,8 @@ export async function writeHelper(
   }
 }
 
-export function canSaveDraft(draft: HelperFormDraft): boolean {
+export function canSaveDraft(draft: HelperDraft): boolean {
+  if (draft.kind === 'statistic' || draft.kind === 'integral') return draft.source !== null
   if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft.members.length === 1
   return draft.members.length >= 1 && draft.members.length <= MAX_HELPER_MEMBERS
 }
@@ -489,6 +573,33 @@ export function snapshotCaps(
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function statisticSpec(draft: StatisticFormDraft): StatisticHelperSpec | null {
+  if (draft.source === null) return null
+  return {
+    kind: 'statistic',
+    stat: draft.stat,
+    window: copyWindow(draft.window),
+    source: copyMember(draft.source),
+  }
+}
+
+function integralSpec(draft: IntegralFormDraft): IntegralHelperSpec | null {
+  if (draft.source === null) return null
+  const watts = draft.source.cap === 'power-meter' && draft.source.fieldPath === 'watts'
+  return {
+    kind: 'integral',
+    reset: draft.reset,
+    output: watts ? 'energy' : 'meter',
+    source: copyMember(draft.source),
+  }
+}
+
+function copyWindow(window: StatisticWindow): StatisticWindow {
+  if (window.kind === 'calendar') return { kind: 'calendar', period: window.period }
+  if (window.customMinutes === undefined) return { kind: 'rolling', span: window.span }
+  return { kind: 'rolling', span: window.span, customMinutes: window.customMinutes }
 }
 
 function copyMember(member: HelperMember): HelperMember {

@@ -216,6 +216,7 @@ export default defineFixtures({
       }
       return {}
     },
+    'coreBlocks.list': { blocks: [] },
     'coreBlocks.getComposition': (input: { blockId?: string }) => {
       if (input.blockId === 'blk-veranda') {
         return {
@@ -249,6 +250,8 @@ export default defineFixtures({
     'coreBlocks.getCustomization': { state: 'loaded', view: null },
     'coreBlocks.listComposableCaps': { caps: [{ cap: 'temperature-sensor' }] },
     'deviceManager.listSiteZones': [],
+    'deviceManager.listPersistedByAddon': [],
+    'auth.listLoginMethods': [],
     'deviceExtension.listSlots': [],
     'addonSettings.getDeviceSettings': { sections: [] },
   },

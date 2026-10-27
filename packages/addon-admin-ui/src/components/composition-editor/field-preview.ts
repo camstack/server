@@ -36,6 +36,7 @@ export function previewField(
 ): FieldPreview {
   if (source.kind === 'code')
     return { kind: 'unavailable', reason: i18n.t('helpers.fieldPreview.codeFields') }
+  if (source.kind === 'series') return { kind: 'runtime-only' }
   if (
     source.kind === 'expression' &&
     (expressionContainsBuiltinCall(source.expr, 'rose') ||

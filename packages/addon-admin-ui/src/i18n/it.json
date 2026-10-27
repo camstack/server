@@ -9819,7 +9819,8 @@
       "readings": "Letture",
       "binary": "Sensori binari",
       "actuators": "Attuatori",
-      "appliances": "Elettrodomestici"
+      "appliances": "Elettrodomestici",
+      "history": "Storico"
     },
     "template": {
       "temperature": "Temperatura",
@@ -9855,7 +9856,9 @@
       "light": "Gruppo di luci",
       "lightSummary": "Come un gruppo di interruttori. Luminosità e colore compaiono solo se ogni luce li ha.",
       "appliance": "Elettrodomestico da una presa intelligente",
-      "applianceSummary": "Una lettura di potenza. In funzione finché la potenza resta sopra una soglia, abbastanza a lungo da non scambiare una pausa di lavaggio per la fine del ciclo."
+      "applianceSummary": "Una lettura di potenza. In funzione finché la potenza resta sopra una soglia, abbastanza a lungo da non scambiare una pausa di lavaggio per la fine del ciclo.",
+      "statistic": "Statistiche",
+      "integral": "Energia dalla potenza"
     },
     "aggregate": {
       "mean": "Media",
@@ -9876,7 +9879,9 @@
       "parameters": "Dagli un nome e scegli come combinare i membri.",
       "members": "Scegli i membri.",
       "appliance": "Dagli un nome e scegli l'elettrodomestico.",
-      "applianceMembers": "Scegli la lettura di potenza della presa."
+      "applianceMembers": "Scegli la lettura di potenza della presa.",
+      "historyParameters": "Scegli l'intervallo e dagli un nome.",
+      "historySource": "Scegli la lettura."
     },
     "reducer": "Combina con",
     "name": "Nome",
@@ -9951,7 +9956,9 @@
       "light": "Nuovo gruppo di luci",
       "washer": "Nuova lavatrice",
       "dryer": "Nuova asciugatrice",
-      "dishwasher": "Nuova lavastoviglie"
+      "dishwasher": "Nuova lavastoviglie",
+      "statistic": "Nuove statistiche",
+      "integral": "Nuovo contatore di energia"
     },
     "appliance": {
       "washer": "Lavatrice",
@@ -9961,6 +9968,52 @@
     "applianceType": "Elettrodomestico",
     "threshold": "Soglia (W)",
     "startDwell": "Parte dopo (min)",
-    "stopDwell": "Si ferma dopo (min)"
+    "stopDwell": "Si ferma dopo (min)",
+    "detail": {
+      "statistic": "Minimo, massimo, media pesata nel tempo, somma, conteggio o variazione su un intervallo, letti dallo storico. La somma è per un contatore; la somma di un valore istantaneo è l'integrale.",
+      "integral": "La potenza diventa energia. Una portata diventa un volume. Ogni altra lettura istantanea diventa un contatore in unità per secondo, che cresce fino all'azzeramento.",
+      "history": "La sorgente deve registrare lo storico. Un buco viene escluso e non è mai contato come zero. L'intervallo non può essere più lungo di quanto lo storico viene conservato."
+    },
+    "stat": "Statistica",
+    "statName": {
+      "min": "Minimo",
+      "max": "Massimo",
+      "mean": "Media",
+      "sum": "Somma",
+      "count": "Conteggio",
+      "change": "Variazione"
+    },
+    "range": "Intervallo",
+    "rangeKind": {
+      "rolling": "Scorrevole",
+      "calendar": "Calendario"
+    },
+    "span": "Durata",
+    "spanName": {
+      "1h": "1 ora",
+      "24h": "24 ore",
+      "2d": "2 giorni",
+      "7d": "7 giorni",
+      "30d": "30 giorni",
+      "custom": "Personalizzata"
+    },
+    "period": "Periodo",
+    "periodName": {
+      "today": "Oggi",
+      "yesterday": "Ieri",
+      "this-week": "Questa settimana",
+      "this-month": "Questo mese"
+    },
+    "reset": "Azzeramento",
+    "resetName": {
+      "never": "Mai",
+      "daily": "Ogni giorno",
+      "weekly": "Ogni settimana",
+      "monthly": "Ogni mese"
+    },
+    "customMinutes": "Minuti",
+    "noHistory": "Questa lettura non ha uno storico, quindi non può essere la sorgente.",
+    "output": "Lettura",
+    "gaps": "{{count}} intervalli esclusi"
   }
 }

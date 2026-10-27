@@ -83,7 +83,8 @@ describe('helper template groups', () => {
     if (stored?.kind !== 'group') return
     expect(stored.active).toBe('all')
     const back = draftFromHelper(stored, 'Porch', '')
-    expect(back?.active).toBe('all')
+    if (back?.kind !== 'group') throw new Error('expected the switch group')
+    expect(back.active).toBe('all')
     expect(draftForTemplate('temperature')?.active).toBeNull()
     const temperature = specFromDraft(draftForTemplate('temperature') ?? draft)
     expect(temperature?.kind).toBe('group')
@@ -162,11 +163,11 @@ describe('editing a stored helper', () => {
   it('reopens the spec as the template, not as an expression', () => {
     const spec = temperature([porch, garden])
     const draft = draftFromHelper(spec, 'Front door', 'Porch')
-    expect(draft?.templateId).toBe('temperature')
-    expect(draft?.aggregate).toBe('mean')
-    expect(draft?.members).toEqual([porch, garden])
-    const roundTrip = specFromDraft(draft ?? specAsDraft(spec))
-    expect(roundTrip?.kind).toBe('group')
+    if (draft?.kind !== 'group') throw new Error('expected the temperature group')
+    expect(draft.templateId).toBe('temperature')
+    expect(draft.aggregate).toBe('mean')
+    expect(draft.members).toEqual([porch, garden])
+    const roundTrip = specFromDraft(draft)
     if (roundTrip?.kind !== 'group') return
     expect(roundTrip.members[0]?.source).not.toBe(spec.members[0]?.source)
     const compiled = compileHelper(spec)
@@ -253,6 +254,7 @@ describe('group status on the device page', () => {
 
 function specAsDraft(spec: GroupHelperSpec) {
   return {
+    kind: 'group',
     templateId: spec.templateId,
     aggregate: spec.aggregate,
     active: spec.active ?? null,

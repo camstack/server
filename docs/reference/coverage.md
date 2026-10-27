@@ -14,12 +14,12 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**213 units · 7138 source files · 200 units claimed by at least one document (7076 files).**
+**213 units · 7139 source files · 200 units claimed by at least one document (7077 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1029 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-0880-core-block-passwords-and-waste-source-credentials-are-keychain-backed-and-a-read-only-scan-finds-what-no-code-writes.md`, +1 more | 2026-10-18 |
-| `packages/addon-admin-ui/src/components` | 525 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +71 more, 4 ADRs | 2026-10-26 |
+| `packages/addon-admin-ui/src/components` | 526 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +71 more, 4 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 470 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +165 more, 27 ADRs | 2026-10-14 |
 | `scripts` | 423 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +131 more, 14 ADRs | 2026-10-26 |
 | `packages/system/src/builtins` | 388 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +162 more, 21 ADRs | 2026-10-26 |

@@ -7,7 +7,12 @@ import {
   ACTIVE_CRITERIA,
   APPLIANCE_KINDS,
   APPLIANCE_TEMPLATE_ID,
+  CALENDAR_PERIODS,
   groupTemplate,
+  RESET_PERIODS,
+  ROLLING_SPANS,
+  type RollingSpan,
+  STATISTIC_STATS,
 } from '@camstack/types'
 import { Button, Input, Select } from '@camstack/ui-library'
 import { type ReactNode, useEffect, useState } from 'react'
@@ -18,13 +23,16 @@ import { devicePath } from '../../lib/customization-routes'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
 import {
   canSaveDraft,
-  draftForTemplate,
+  draftForPick,
+  type HelperDraft,
   type HelperFormDraft,
-  type HelperPickerId,
   type HelperSaveIntent,
   type HelperSaveResult,
+  type HelperTemplatePick,
+  type IntegralFormDraft,
   memberRequest,
   type RefusalLine,
+  type StatisticFormDraft,
   withActive,
   withAggregate,
   withAppliance,
@@ -35,12 +43,12 @@ import {
 type WizardStep = 'template' | 'parameters' | 'members'
 
 export interface HelperWizardProps {
-  readonly initial: HelperFormDraft | null
+  readonly initial: HelperDraft | null
   readonly start: WizardStep
   readonly purpose: 'create' | 'edit'
   readonly saving: boolean
-  readonly onSave: (draft: HelperFormDraft, intent: HelperSaveIntent) => Promise<HelperSaveResult>
-  readonly onDraftChange?: (draft: HelperFormDraft | null) => void
+  readonly onSave: (draft: HelperDraft, intent: HelperSaveIntent) => Promise<HelperSaveResult>
+  readonly onDraftChange?: (draft: HelperDraft | null) => void
 }
 
 interface CreatedDevice {
@@ -58,7 +66,7 @@ export function HelperWizard({
 }: HelperWizardProps): ReactNode {
   const { t } = useTranslation()
   const [step, setStep] = useState<WizardStep>(initial === null ? 'template' : start)
-  const [draft, setDraft] = useState<HelperFormDraft | null>(initial)
+  const [draft, setDraft] = useState<HelperDraft | null>(initial)
   const [refusals, setRefusals] = useState<readonly RefusalLine[]>([])
   const [created, setCreated] = useState<CreatedDevice | null>(null)
 
@@ -66,10 +74,17 @@ export function HelperWizard({
     onDraftChange?.(draft)
   }, [draft, onDraftChange])
 
-  const pickTemplate = (templateId: HelperPickerId): void => {
-    setDraft((current) =>
-      current === null ? draftForTemplate(templateId) : withTemplate(current, templateId),
-    )
+  const pick = (chosen: HelperTemplatePick): void => {
+    setDraft((current) => {
+      if (
+        chosen.kind === 'group' &&
+        current?.kind === 'group' &&
+        current.templateId !== APPLIANCE_TEMPLATE_ID
+      ) {
+        return withTemplate(current, chosen.templateId)
+      }
+      return draftForPick(chosen)
+    })
     setRefusals([])
     setCreated(null)
     setStep('parameters')
@@ -95,15 +110,17 @@ export function HelperWizard({
 
   const request = draft === null ? null : memberRequest(draft)
   const template =
-    draft === null || draft.templateId === APPLIANCE_TEMPLATE_ID
-      ? null
-      : groupTemplate(draft.templateId)
-  const stepKey =
-    draft?.templateId === APPLIANCE_TEMPLATE_ID && step === 'parameters'
-      ? 'helper.step.appliance'
-      : draft?.templateId === APPLIANCE_TEMPLATE_ID && step === 'members'
-        ? 'helper.step.applianceMembers'
-        : `helper.step.${step}`
+    draft !== null && draft.kind === 'group' && draft.templateId !== APPLIANCE_TEMPLATE_ID
+      ? groupTemplate(draft.templateId)
+      : null
+  const members =
+    draft === null
+      ? []
+      : draft.kind === 'group'
+        ? draft.members
+        : draft.source === null
+          ? []
+          : [draft.source]
 
   return (
     <div className="flex flex-col gap-3" data-testid="helper-wizard">
@@ -120,12 +137,14 @@ export function HelperWizard({
           />
         </p>
       )}
-      <p className="text-[11px] text-foreground-muted">{t(stepKey)}</p>
-      {step === 'template' && <HelperTemplatePicker onPick={pickTemplate} />}
-      {step === 'parameters' && draft !== null && draft.templateId === APPLIANCE_TEMPLATE_ID && (
-        <ApplianceParameters draft={draft} onDraft={(next) => setDraft(next)} />
-      )}
-      {step === 'parameters' && draft !== null && template !== null && (
+      <p className="text-[11px] text-foreground-muted">{t(stepCopy(step, draft))}</p>
+      {step === 'template' && <HelperTemplatePicker onPick={pick} />}
+      {step === 'parameters' &&
+        draft?.kind === 'group' &&
+        draft.templateId === APPLIANCE_TEMPLATE_ID && (
+          <ApplianceParameters draft={draft} onDraft={(next) => setDraft(next)} />
+        )}
+      {step === 'parameters' && draft?.kind === 'group' && template !== null && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {template.family === 'actuator' && draft.active !== null ? (
             <label className="flex flex-col gap-1 text-[11px]">
@@ -173,13 +192,25 @@ export function HelperWizard({
           </label>
         </div>
       )}
+      {step === 'parameters' && draft?.kind === 'statistic' && (
+        <StatisticParameters draft={draft} onChange={setDraft} />
+      )}
+      {step === 'parameters' && draft?.kind === 'integral' && (
+        <IntegralParameters draft={draft} onChange={setDraft} />
+      )}
       {step === 'members' && draft !== null && request !== null && (
         <SourceSelector
           kind="members"
           request={request}
           enabled
-          members={draft.members}
-          onMembersChange={(members) => setDraft({ ...draft, members })}
+          members={members}
+          onMembersChange={(next) =>
+            setDraft(
+              draft.kind === 'group'
+                ? { ...draft, members: next }
+                : { ...draft, source: next[0] ?? null },
+            )
+          }
           onRefuse={(reason) =>
             setRefusals(
               reason === null
@@ -284,7 +315,7 @@ function ApplianceParameters({ draft, onDraft }: ApplianceParametersProps): Reac
           aria-label={t('helper.name')}
           data-testid="helper-name"
           value={draft.name}
-          onChange={(event) => onDraft(withName(draft, event.target.value))}
+          onChange={(event) => onDraft({ ...draft, name: event.target.value })}
         />
       </label>
       <NumberField
@@ -354,6 +385,198 @@ function NumberField({ label, testId, value, onValue }: NumberFieldProps): React
         value={value}
         onChange={(event) => onValue(event.target.value)}
       />
+    </label>
+  )
+}
+
+function StatisticParameters({
+  draft,
+  onChange,
+}: {
+  readonly draft: StatisticFormDraft
+  readonly onChange: (draft: StatisticFormDraft) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  const rolling = draft.window.kind === 'rolling'
+  return (
+    <div
+      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+      data-testid="helper-statistic-parameters"
+    >
+      <Field label={t('helper.stat')}>
+        <Select
+          aria-label={t('helper.stat')}
+          data-testid="helper-stat"
+          value={draft.stat}
+          onChange={(event) => {
+            const stat = STATISTIC_STATS.find((item) => item === event.target.value)
+            if (stat !== undefined) onChange({ ...draft, stat })
+          }}
+          options={STATISTIC_STATS.map((item) => ({
+            value: item,
+            label: t(`helper.statName.${item}`),
+          }))}
+        />
+      </Field>
+      <Field label={t('helper.range')}>
+        <Select
+          aria-label={t('helper.range')}
+          data-testid="helper-range-kind"
+          value={draft.window.kind}
+          onChange={(event) => {
+            if (event.target.value === 'calendar')
+              onChange({ ...draft, window: { kind: 'calendar', period: 'today' } })
+            if (event.target.value === 'rolling')
+              onChange({ ...draft, window: { kind: 'rolling', span: '24h' } })
+          }}
+          options={[
+            { value: 'rolling', label: t('helper.rangeKind.rolling') },
+            { value: 'calendar', label: t('helper.rangeKind.calendar') },
+          ]}
+        />
+      </Field>
+      {rolling ? (
+        <Field label={t('helper.span')}>
+          <Select
+            aria-label={t('helper.span')}
+            data-testid="helper-span"
+            value={draft.window.span}
+            onChange={(event) => {
+              const span = ROLLING_SPANS.find((item) => item === event.target.value)
+              if (span !== undefined) onChange({ ...draft, window: rollingWindow(span, draft) })
+            }}
+            options={ROLLING_SPANS.map((item) => ({
+              value: item,
+              label: t(`helper.spanName.${item}`),
+            }))}
+          />
+        </Field>
+      ) : (
+        <Field label={t('helper.period')}>
+          <Select
+            aria-label={t('helper.period')}
+            data-testid="helper-period"
+            value={draft.window.period}
+            onChange={(event) => {
+              const period = CALENDAR_PERIODS.find((item) => item === event.target.value)
+              if (period !== undefined) onChange({ ...draft, window: { kind: 'calendar', period } })
+            }}
+            options={CALENDAR_PERIODS.map((item) => ({
+              value: item,
+              label: t(`helper.periodName.${item}`),
+            }))}
+          />
+        </Field>
+      )}
+      {draft.window.kind === 'rolling' && draft.window.span === 'custom' && (
+        <Field label={t('helper.customMinutes')}>
+          <Input
+            aria-label={t('helper.customMinutes')}
+            data-testid="helper-custom-minutes"
+            inputMode="numeric"
+            value={
+              draft.window.customMinutes === undefined ? '' : String(draft.window.customMinutes)
+            }
+            onChange={(event) => {
+              const parsed = Number.parseInt(event.target.value, 10)
+              onChange({
+                ...draft,
+                window: {
+                  kind: 'rolling',
+                  span: 'custom',
+                  ...(Number.isFinite(parsed) ? { customMinutes: parsed } : {}),
+                },
+              })
+            }}
+          />
+        </Field>
+      )}
+      <NameField name={draft.name} onChange={(name) => onChange({ ...draft, name })} />
+    </div>
+  )
+}
+
+function rollingWindow(span: RollingSpan, draft: StatisticFormDraft): StatisticFormDraft['window'] {
+  if (span !== 'custom') return { kind: 'rolling', span }
+  const minutes = draft.window.kind === 'rolling' ? draft.window.customMinutes : undefined
+  return minutes === undefined
+    ? { kind: 'rolling', span }
+    : { kind: 'rolling', span, customMinutes: minutes }
+}
+
+function IntegralParameters({
+  draft,
+  onChange,
+}: {
+  readonly draft: IntegralFormDraft
+  readonly onChange: (draft: IntegralFormDraft) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" data-testid="helper-integral-parameters">
+      <Field label={t('helper.reset')}>
+        <Select
+          aria-label={t('helper.reset')}
+          data-testid="helper-reset"
+          value={draft.reset}
+          onChange={(event) => {
+            const reset = RESET_PERIODS.find((item) => item === event.target.value)
+            if (reset !== undefined) onChange({ ...draft, reset })
+          }}
+          options={RESET_PERIODS.map((item) => ({
+            value: item,
+            label: t(`helper.resetName.${item}`),
+          }))}
+        />
+      </Field>
+      <NameField name={draft.name} onChange={(name) => onChange({ ...draft, name })} />
+    </div>
+  )
+}
+
+function NameField({
+  name,
+  onChange,
+}: {
+  readonly name: string
+  readonly onChange: (name: string) => void
+}): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <Field label={t('helper.name')}>
+      <Input
+        aria-label={t('helper.name')}
+        data-testid="helper-name"
+        value={name}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </Field>
+  )
+}
+
+function stepCopy(step: WizardStep, draft: HelperDraft | null): string {
+  if (draft?.kind === 'statistic' || draft?.kind === 'integral') {
+    if (step === 'parameters') return 'helper.step.historyParameters'
+    if (step === 'members') return 'helper.step.historySource'
+  }
+  if (draft?.kind === 'group' && draft.templateId === APPLIANCE_TEMPLATE_ID) {
+    if (step === 'parameters') return 'helper.step.appliance'
+    if (step === 'members') return 'helper.step.applianceMembers'
+  }
+  return `helper.step.${step}`
+}
+
+function Field({
+  label,
+  children,
+}: {
+  readonly label: string
+  readonly children: ReactNode
+}): ReactNode {
+  return (
+    <label className="flex flex-col gap-1 text-[11px]">
+      {label}
+      {children}
     </label>
   )
 }
