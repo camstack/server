@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.338] - 2026-10-27
+
 ### Fixed
 
 - The pet feeder panel shows the bowl amount and hides Mark refilled where the model cannot do it

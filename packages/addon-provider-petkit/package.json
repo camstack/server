@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-petkit",
-  "version": "0.2.149",
+  "version": "0.2.150",
   "description": "PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client",
   "keywords": [
     "camstack",

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/develop",
-  "version": "0.1.37",
+  "version": "0.1.38",
   "description": "CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server.",
   "keywords": [
     "camstack",
