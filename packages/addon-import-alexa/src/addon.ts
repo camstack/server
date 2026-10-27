@@ -40,7 +40,7 @@ import { alexaAccounts, alexaCommands } from './alexa-gateway.js'
 import type { AlexaAppliance, AlexaStateValue } from './alexa-client.js'
 import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
-import { alexaBrokersEntryKind, alexaSpeakSessionsEntryKind } from './broker-record-kinds.js'
+import { alexaRecordKinds } from './broker-record-kinds.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import type { AlexaBrokerEntry } from './config.js'
 import { alexaSpeakActions } from './speak/actions.js'
@@ -125,10 +125,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     if (records === undefined) {
       throw new Error('import-alexa: ctx.records is required (hub-only addon)')
     }
-    await records.declare({
-      brokers: alexaBrokersEntryKind,
-      speakSessions: alexaSpeakSessionsEntryKind,
-    })
+    await records.declare(alexaRecordKinds)
     this.brokerStore = AlexaBrokerStore.of(records)
     this.activeBrokers = await this.loadPersistedBrokers()
 

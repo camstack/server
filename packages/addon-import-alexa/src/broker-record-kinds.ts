@@ -31,3 +31,9 @@ export const alexaSpeakSessionsEntryKind = defineEntryKind('speak-sessions', {
   schema: AlexaSpeakSessionBodySchema,
   writeTrigger: 'an Echo worker signs in as an Alexa account broker',
 })
+
+/** Every kind this addon declares, keyed by its name: `records.declare` refuses any other key. */
+export const alexaRecordKinds = {
+  brokers: alexaBrokersEntryKind,
+  'speak-sessions': alexaSpeakSessionsEntryKind,
+} as const
