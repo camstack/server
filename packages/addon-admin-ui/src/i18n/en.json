@@ -1721,7 +1721,8 @@
         "pase": "Opening a secure session",
         "commissioning": "Adding it to CamStack",
         "done": "Added"
-      }
+      },
+      "broker": "Matter fabric"
     }
   },
   "ai": {
@@ -5292,7 +5293,8 @@
       "testing": "Testing…",
       "testConnection": "Test connection",
       "loadingSchema": "Loading schema…",
-      "noSchema": "No settings schema available for kind <code>{{kind}}</code>. Its broker addon may not be installed or running."
+      "noSchema": "No settings schema available for kind <code>{{kind}}</code>. Its broker addon may not be installed or running.",
+      "advanced": "Advanced"
     },
     "brokerManager": {
       "addBroker": "Add broker",
@@ -5322,6 +5324,34 @@
     },
     "brokerRecordEntriesPanel": {
       "loadKindsFailed": "Could not load entry kinds"
+    },
+    "signIn": {
+      "intro": "Sign in to the account; the technical settings below are filled for you.",
+      "start": "Sign in",
+      "starting": "Starting the sign-in…",
+      "saving": "Saving the account…",
+      "openLink": "Open the link to sign in to your account",
+      "afterLogin": "Enter your email, password and any one-time code on that page. This dialog continues by itself when you are done.",
+      "openLoginPage": "Open the sign-in page",
+      "reachability": "The link must be reachable from your browser. On a containerised hub, publish the sign-in proxy port.",
+      "waitingForProxy": "Waiting for the sign-in page to be ready…",
+      "waitingForLogin": "Waiting for you to sign in…",
+      "cancel": "Cancel sign-in",
+      "proxyError": "The sign-in service returned an error"
+    },
+    "editor": {
+      "createTitle": "Add broker",
+      "createSubtitle": "Register a connection that integrations and automations can use.",
+      "loadingKinds": "Loading broker types…",
+      "noProvider": "No broker provider is available.",
+      "create": "Create broker",
+      "creating": "Creating…"
+    },
+    "picker": {
+      "loading": "Loading brokers…",
+      "loadFailed": "Failed to load brokers: {{message}}",
+      "none": "No broker yet. Create one to continue.",
+      "createNew": "Create new…"
     }
   },
   "integrationHub": {

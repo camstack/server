@@ -1,47 +1,39 @@
 /**
- * BrokerStep — the integration wizard's "existing-or-new broker" gate for
- * `device-adoption` addons (Approach A). The operator either picks an
- * already-registered broker of the required `kind`, or creates a fresh one
- * on-the-fly via `broker.add`; either path resolves to a single `brokerId`
- * the wizard stores as the integration's only setting.
- *
- * Partial-mock of `@camstack/ui-library`: only the broker hooks are stubbed
- * so the real `BrokerForm` / `FormBuilder` keep their implementations.
+ * BrokerStep — the integration wizard's broker gate. It is a `BrokerPicker`
+ * plus a confirm button: pick a broker of the required kind, or "Create new…"
+ * (the shared dialog, stacked over the wizard) and come back with it selected.
+ * Either way the step resolves to one `brokerId`. The create / sign-in
+ * behaviour itself is pinned in `brokers/__tests__/broker-editor-flow.spec.tsx`.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mockAdd = vi.fn()
-const mockReset = vi.fn()
 
 vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  const brokers = [
+    {
+      id: 'ha_001',
+      addonId: 'provider-homeassistant',
+      name: 'Home',
+      kind: 'home-assistant',
+      status: 'connected',
+    },
+    {
+      id: 'mqtt_001',
+      addonId: 'mqtt-broker',
+      name: 'Mosquitto',
+      kind: 'mqtt',
+      status: 'connected',
+    },
+  ]
   return {
     ...actual,
-    useBrokerList: () => ({
-      data: [
-        {
-          id: 'ha_001',
-          addonId: 'provider-homeassistant',
-          name: 'Home',
-          kind: 'home-assistant',
-          status: 'connected',
-          info: {},
-          lastCheckedAt: null,
-          error: null,
-        },
-        {
-          id: 'mqtt_001',
-          addonId: 'mqtt-broker',
-          name: 'Mosquitto',
-          kind: 'mqtt',
-          status: 'connected',
-          info: {},
-          lastCheckedAt: null,
-          error: null,
-        },
-      ],
+    useBrokerList: (input: { kind?: string }) => ({
+      data: brokers.filter((b) => input.kind === undefined || b.kind === input.kind),
       isLoading: false,
     }),
     useBrokerListProviders: () => ({
@@ -53,14 +45,14 @@ vi.mock('@camstack/ui-library', async () => {
         { addonId: 'mqtt-broker', kinds: [{ kind: 'mqtt', label: 'MQTT' }] },
       ],
     }),
-    useBrokerAdd: () => ({
-      mutateAsync: mockAdd,
+    useBrokerAdd: (opts?: { onSuccess?: (created: { id: string }) => void }) => ({
+      mutate: (input: unknown) => {
+        mockAdd(input)
+        opts?.onSuccess?.({ id: 'ha_777' })
+      },
       isPending: false,
       isError: false,
-      reset: mockReset,
     }),
-    // BrokerForm (embedded in the create-new path) reads these — provide a
-    // minimal one-field schema and a no-op Test mutation so it renders.
     useBrokerGetSettingsSchema: () => ({
       data: {
         sections: [
@@ -80,6 +72,7 @@ vi.mock('@camstack/ui-library', async () => {
         ],
       },
       isLoading: false,
+      isError: false,
     }),
     useBrokerTestSettings: () => ({ mutateAsync: vi.fn(), isPending: false }),
   }
@@ -87,58 +80,49 @@ vi.mock('@camstack/ui-library', async () => {
 
 import { BrokerStep } from '../BrokerStep'
 
-// Minimal fetch stub so AlexaLoginStep (rendered for kind='alexa') doesn't
-// throw on absent global fetch.
-beforeEach(() => {
-  vi.stubGlobal(
-    'fetch',
-    vi
-      .fn()
-      .mockResolvedValue(
-        new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
-      ),
+function renderStep(onResolved: (id: string) => void) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={client}>
+      <BrokerStep kind="home-assistant" onResolved={onResolved} onBack={() => {}} />
+    </QueryClientProvider>,
   )
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
-})
+}
 
 describe('BrokerStep', () => {
   it('lists existing brokers of the required kind and emits the chosen brokerId', () => {
     const onResolved = vi.fn()
-    render(<BrokerStep kind="home-assistant" onResolved={onResolved} onBack={() => {}} />)
-
-    // Only HA brokers of the required kind are offered (mqtt is filtered out).
+    renderStep(onResolved)
     expect(screen.getByText('Home')).toBeTruthy()
     expect(screen.queryByText('Mosquitto')).toBeNull()
+    expect(
+      (
+        screen.getByRole('button', {
+          name: /use this broker/i,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true)
 
     fireEvent.click(screen.getByText('Home'))
     fireEvent.click(screen.getByRole('button', { name: /use this broker/i }))
     expect(onResolved).toHaveBeenCalledWith('ha_001')
   })
 
-  it('creates a new broker via broker.add and resolves the returned id', async () => {
+  it('creates a broker in the stacked dialog, comes back with it selected, then resolves it', async () => {
     mockAdd.mockReset()
-    mockAdd.mockResolvedValue({ id: 'ha_777' })
     const onResolved = vi.fn()
-    render(<BrokerStep kind="home-assistant" onResolved={onResolved} onBack={() => {}} />)
+    renderStep(onResolved)
 
-    // Switch to the create-new path; the name input + BrokerForm render.
     fireEvent.click(screen.getByRole('button', { name: /create new/i }))
-    const nameInput = screen.getByPlaceholderText('My Home Assistant')
-    fireEvent.change(nameInput, { target: { value: 'My HA' } })
-
-    // Fill the BrokerForm's one schema-driven field.
-    const baseUrl = screen.getByPlaceholderText('http://homeassistant:8123')
-    fireEvent.change(baseUrl, { target: { value: 'http://ha:8123' } })
-
-    // Submit the BrokerForm (its primary action carries the "Create broker" label).
+    fireEvent.change(await screen.findByPlaceholderText('http://homeassistant:8123'), {
+      target: { value: 'http://ha:8123' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('My Home Assistant'), {
+      target: { value: 'My HA' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /create broker/i }))
-
-    // `handleCreate` awaits `add.mutateAsync` then `onResolved` — flush.
-    await Promise.resolve()
-    await Promise.resolve()
 
     expect(mockAdd).toHaveBeenCalledWith({
       kind: 'home-assistant',
@@ -146,20 +130,9 @@ describe('BrokerStep', () => {
       settings: { baseUrl: 'http://ha:8123' },
       addonId: 'provider-homeassistant',
     })
+    // Back on the step with the new broker chosen; the operator confirms.
+    expect(onResolved).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: /use this broker/i }))
     expect(onResolved).toHaveBeenCalledWith('ha_777')
-  })
-
-  it('renders AlexaLoginStep by default for kind="alexa" (not the broker list)', () => {
-    render(<BrokerStep kind="alexa" onResolved={vi.fn()} onBack={() => {}} />)
-
-    // The mode-toggle shows the "Login interactively" tab (alexa-specific).
-    expect(screen.getByRole('button', { name: /login interactively/i })).toBeTruthy()
-
-    // The default mode is alexa-login, so AlexaLoginStep is rendered.
-    // Its idle state shows "Start login".
-    expect(screen.getByRole('button', { name: /start login/i })).toBeTruthy()
-
-    // The broker list (which would show "Use this broker") is NOT rendered yet.
-    expect(screen.queryByRole('button', { name: /use this broker/i })).toBeNull()
   })
 })

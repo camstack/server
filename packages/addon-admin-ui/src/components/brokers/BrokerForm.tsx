@@ -35,6 +35,13 @@ import { hydrateSchema } from '@camstack/types'
 import type { ConfigField, ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
 import { substituteBrokerIdPlaceholders } from './broker-form-placeholders.js'
+import {
+  arrangeBrokerSchema,
+  countryDefaults,
+  countryOfLocale,
+  hasBase,
+} from './broker-schema-arrange'
+import { BrokerSignInPanel } from './BrokerSignInPanel'
 import { Trans, useTranslation } from 'react-i18next'
 
 export { substituteBrokerIdPlaceholders } from './broker-form-placeholders.js'
@@ -60,6 +67,19 @@ export interface BrokerFormProps {
   readonly submitLabel?: string
   /** When true, disable the Save button (e.g. a parent mutation is in flight). */
   readonly disabled?: boolean
+  /**
+   * The kind's interactive sign-in (`signIn.basePath` from `listProviders`).
+   * When present the sign-in is the primary action: the fields it fills move
+   * under "Advanced" and Save becomes the secondary, manual path.
+   */
+  readonly signIn?: {
+    readonly basePath: string
+    /** Name for the broker the sign-in creates. */
+    readonly name: string
+    /** Re-link this broker rather than create one. */
+    readonly brokerId?: string
+    readonly onSignedIn: (brokerId: string) => void
+  }
 }
 
 interface TestState {
@@ -109,6 +129,7 @@ export function BrokerForm({
   onCancel,
   submitLabel,
   disabled,
+  signIn,
 }: BrokerFormProps) {
   const { t } = useTranslation()
   const [values, setValues] = useState<Record<string, unknown>>(initialValues ?? {})
@@ -135,14 +156,25 @@ export function BrokerForm({
         brokerId !== undefined ? substituteBrokerIdPlaceholders(base, brokerId) : base
       // Merge `optionsFrom` catalogs (e.g. Google `_calendarCatalog`) into
       // multiselect options — same hydrate path as getGlobalSettings.
-      return hydrateSchema(withPlaceholders, values)
+      return arrangeBrokerSchema(hydrateSchema(withPlaceholders, values), {
+        hasSignIn: signIn !== undefined,
+        advancedTitle: t('brokers.brokerForm.advanced'),
+      })
     }
     return undefined
-  }, [schemaQuery.data, brokerId, values])
+  }, [schemaQuery.data, brokerId, values, signIn !== undefined, t])
 
   useEffect(() => {
     if (initialValues !== undefined) setValues(initialValues)
   }, [initialValues])
+
+  // A new record starts with what the schema can derive for the operator's country.
+  const country = countryOfLocale(typeof navigator === 'undefined' ? undefined : navigator.language)
+  useEffect(() => {
+    if (initialValues !== undefined) return
+    const derived = countryDefaults(schema, country, values)
+    if (Object.keys(derived).length > 0) setValues((prev) => ({ ...derived, ...prev }))
+  }, [schema, country, initialValues, values])
 
   const testMutation = useBrokerTestSettings()
 
@@ -157,7 +189,10 @@ export function BrokerForm({
       })
       setTestResult(result.ok ? { ok: true } : { ok: false, error: result.error })
     } catch (err) {
-      setTestResult({ ok: false, error: err instanceof Error ? err.message : String(err) })
+      setTestResult({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      })
     }
   }
 
@@ -168,8 +203,31 @@ export function BrokerForm({
     onSubmit(rest)
   }
 
+  // The sign-in starts from what the operator can see: no credential, no value the sign-in itself fills.
+  const signInSettings = (): Record<string, unknown> => {
+    const filled = new Set<string>()
+    for (const section of schema?.sections ?? []) {
+      for (const field of section.fields) {
+        if (hasBase(field) && field.filledBySignIn === true) filled.add(field.key)
+      }
+    }
+    const visible = pruneHiddenValues(schema, values)
+    return Object.fromEntries(Object.entries(visible).filter(([key]) => !filled.has(key)))
+  }
+
   return (
     <div className="space-y-3">
+      {signIn !== undefined && (
+        <BrokerSignInPanel
+          basePath={signIn.basePath}
+          name={signIn.name}
+          {...(signIn.brokerId !== undefined ? { brokerId: signIn.brokerId } : {})}
+          getSettings={signInSettings}
+          disabled={disabled === true}
+          onSignedIn={signIn.onSignedIn}
+        />
+      )}
+
       {schemaQuery.isLoading && (
         <div className="flex items-center gap-2 text-xs text-foreground-subtle">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t('brokers.brokerForm.loadingSchema')}
@@ -188,7 +246,7 @@ export function BrokerForm({
       )}
 
       {!schema && !schemaQuery.isLoading && !schemaQuery.isError && (
-        <div className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">
+        <div className="rounded border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning">
           <Trans
             i18nKey="brokers.brokerForm.noSchema"
             values={{ kind }}
@@ -230,7 +288,12 @@ export function BrokerForm({
               ? t('brokers.brokerForm.testing', 'Testing…')
               : t('brokers.brokerForm.testConnection', 'Test connection')}
           </Button>
-          <Button variant="primary" size="sm" onClick={handleSubmit} disabled={!schema || disabled}>
+          <Button
+            variant={signIn !== undefined ? 'outline' : 'primary'}
+            size="sm"
+            onClick={handleSubmit}
+            disabled={!schema || disabled}
+          >
             {submitLabel ?? t('common.save', 'Save')}
           </Button>
         </div>

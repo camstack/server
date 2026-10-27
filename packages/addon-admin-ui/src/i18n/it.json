@@ -1721,7 +1721,8 @@
         "pase": "Apertura di una sessione sicura",
         "commissioning": "Aggiunta a CamStack",
         "done": "Aggiunto"
-      }
+      },
+      "broker": "Fabric Matter"
     }
   },
   "serverManagement": {
@@ -5353,7 +5354,8 @@
       "testing": "Test in corso…",
       "testConnection": "Test connessione",
       "loadingSchema": "Caricamento dello schema…",
-      "noSchema": "Nessuno schema delle impostazioni disponibile per il tipo <code>{{kind}}</code>. Il suo addon broker potrebbe non essere installato o non essere in esecuzione."
+      "noSchema": "Nessuno schema delle impostazioni disponibile per il tipo <code>{{kind}}</code>. Il suo addon broker potrebbe non essere installato o non essere in esecuzione.",
+      "advanced": "Avanzate"
     },
     "brokerManager": {
       "addBroker": "Aggiungi broker",
@@ -5383,6 +5385,34 @@
     },
     "brokerRecordEntriesPanel": {
       "loadKindsFailed": "Impossibile caricare i tipi di voce"
+    },
+    "signIn": {
+      "intro": "Accedi all'account: le impostazioni tecniche qui sotto vengono compilate per te.",
+      "start": "Accedi",
+      "starting": "Avvio dell'accesso…",
+      "saving": "Salvataggio dell'account…",
+      "openLink": "Apri il link per accedere al tuo account",
+      "afterLogin": "Inserisci email, password ed eventuale codice monouso in quella pagina. Questa finestra prosegue da sola al termine.",
+      "openLoginPage": "Apri la pagina di accesso",
+      "reachability": "Il link deve essere raggiungibile dal tuo browser. Su un hub in container, pubblica la porta del proxy di accesso.",
+      "waitingForProxy": "In attesa che la pagina di accesso sia pronta…",
+      "waitingForLogin": "In attesa del tuo accesso…",
+      "cancel": "Annulla l'accesso",
+      "proxyError": "Il servizio di accesso ha restituito un errore"
+    },
+    "editor": {
+      "createTitle": "Aggiungi broker",
+      "createSubtitle": "Registra una connessione che integrazioni e automazioni possono usare.",
+      "loadingKinds": "Caricamento dei tipi di broker…",
+      "noProvider": "Nessun provider di broker disponibile.",
+      "create": "Crea broker",
+      "creating": "Creazione…"
+    },
+    "picker": {
+      "loading": "Caricamento dei broker…",
+      "loadFailed": "Impossibile caricare i broker: {{message}}",
+      "none": "Nessun broker ancora. Creane uno per continuare.",
+      "createNew": "Crea nuovo…"
     }
   },
   "integrationHub": {

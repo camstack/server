@@ -21,6 +21,10 @@ import {
   useBrokerPublish,
 } from '@camstack/ui-library'
 import { Loader2 } from 'lucide-react'
+import { BrokerPicker } from '../brokers/BrokerPicker'
+
+/** The broker kind this dialog commissions into (this dialog IS the Matter flow). */
+const MATTER_BROKER_KIND = 'matter'
 
 const PHASES = ['discovering', 'pase', 'commissioning', 'done'] as const
 
@@ -84,11 +88,18 @@ export function AddMatterDeviceDialog({
   onCommissioned,
 }: AddMatterDeviceDialogProps): ReactElement {
   const { t } = useTranslation()
-  const brokers = useBrokerList({ kind: 'matter' })
-  const brokerId = brokers.data?.[0]?.id ?? null
+  const brokers = useBrokerList({ kind: MATTER_BROKER_KIND })
+  // One fabric is used as is; none or several are chosen (or created) in a BrokerPicker.
+  const [pickedBrokerId, setPickedBrokerId] = useState<string | null>(null)
+  const brokerCount = brokers.data?.length ?? 0
+  const brokerId = pickedBrokerId ?? brokers.data?.[0]?.id ?? null
   const publish = useBrokerPublish()
   const [code, setCode] = useState('')
-  const [view, setView] = useState<CommissionView>({ phase: 'idle', failure: null, message: null })
+  const [view, setView] = useState<CommissionView>({
+    phase: 'idle',
+    failure: null,
+    message: null,
+  })
   const busy =
     view.phase === 'discovering' || view.phase === 'pase' || view.phase === 'commissioning'
   const progress = useBrokerGetState(
@@ -142,7 +153,9 @@ export function AddMatterDeviceDialog({
       <DialogContent width="md" placement="sheet-on-mobile" scroll="body">
         <DialogHeader>
           <DialogTitle>
-            {t('integrations.addMatter.title', { defaultValue: 'Add Matter device' })}
+            {t('integrations.addMatter.title', {
+              defaultValue: 'Add Matter device',
+            })}
           </DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-4">
@@ -152,16 +165,26 @@ export function AddMatterDeviceDialog({
                 'In Home Assistant, open the device and choose Share device. Paste the numeric code or the MT: code here. The device stays in Home Assistant.',
             })}
           </p>
-          {noBroker ? (
-            <ErrorBox
-              message={t('integrations.addMatter.noBroker', {
-                defaultValue: 'Create the Matter fabric from this integration’s settings first.',
-              })}
-            />
-          ) : (
+          {(noBroker || brokerCount > 1) && !busy && view.phase !== 'done' && (
+            <div className="space-y-1.5">
+              <Label>
+                {t('integrations.addMatter.broker', {
+                  defaultValue: 'Matter fabric',
+                })}
+              </Label>
+              <BrokerPicker
+                kind={MATTER_BROKER_KIND}
+                value={brokerId}
+                onChange={setPickedBrokerId}
+              />
+            </div>
+          )}
+          {!noBroker && (
             <div className="space-y-1.5">
               <Label htmlFor="matter-pairing-code">
-                {t('integrations.addMatter.code', { defaultValue: 'Pairing code' })}
+                {t('integrations.addMatter.code', {
+                  defaultValue: 'Pairing code',
+                })}
               </Label>
               <Input
                 id="matter-pairing-code"
@@ -214,7 +237,9 @@ export function AddMatterDeviceDialog({
           </Button>
           {view.phase === 'done' ? (
             <Button size="sm" onClick={onCommissioned}>
-              {t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })}
+              {t('integrations.adoptDevices', {
+                defaultValue: 'Adopt devices',
+              })}
             </Button>
           ) : (
             <Button
@@ -223,8 +248,12 @@ export function AddMatterDeviceDialog({
               onClick={submit}
             >
               {busy
-                ? t('integrations.addMatter.working', { defaultValue: 'Adding…' })
-                : t('integrations.addMatter.submit', { defaultValue: 'Add device' })}
+                ? t('integrations.addMatter.working', {
+                    defaultValue: 'Adding…',
+                  })
+                : t('integrations.addMatter.submit', {
+                    defaultValue: 'Add device',
+                  })}
             </Button>
           )}
         </DialogFooter>

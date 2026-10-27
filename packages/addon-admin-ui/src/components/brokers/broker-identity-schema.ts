@@ -9,7 +9,7 @@
  * "required when" rule, and restoring with a blank id would quietly create a
  * NEW broker — the outcome the operator ticked the box to avoid.
  */
-import type { ConfigUISchema } from '../../types/config-ui'
+import type { ConfigField, ConfigUISchema } from '../../types/config-ui'
 import i18n from '../../i18n/index'
 
 export const IDENTITY_KIND = 'kind'
@@ -23,44 +23,52 @@ export interface BrokerKindOption {
   readonly label: string
 }
 
-export function buildBrokerIdentitySchema(kinds: readonly BrokerKindOption[]): ConfigUISchema {
+export function buildBrokerIdentitySchema(
+  kinds: readonly BrokerKindOption[],
+  options: { readonly allowRestore: boolean } = { allowRestore: true },
+): ConfigUISchema {
+  const fields: ConfigField[] = []
+  // A provider that serves one kind has nothing to choose between: no control.
+  if (kinds.length > 1) {
+    fields.push({
+      type: 'select',
+      key: IDENTITY_KIND,
+      label: i18n.t('helpers.brokerIdentitySchema.kind'),
+      options: kinds.map((k) => ({ value: k.key, label: k.label })),
+    })
+  }
+  fields.push({
+    type: 'text',
+    key: IDENTITY_NAME,
+    label: i18n.t('helpers.brokerIdentitySchema.name'),
+    placeholder: i18n.t('helpers.brokerIdentitySchema.namePlaceholder'),
+    required: true,
+  })
+  if (options.allowRestore) {
+    fields.push(
+      {
+        type: 'boolean',
+        key: IDENTITY_RESTORE,
+        label: i18n.t('helpers.brokerIdentitySchema.restore'),
+        description: i18n.t('helpers.brokerIdentitySchema.restoreHint'),
+      },
+      {
+        type: 'text',
+        key: IDENTITY_RESTORE_ID,
+        label: i18n.t('helpers.brokerIdentitySchema.originalId'),
+        placeholder: 'ha_004',
+        required: true,
+        showWhen: { field: IDENTITY_RESTORE, equals: true },
+      },
+    )
+  }
   return {
     sections: [
       {
         id: 'broker-identity',
         title: i18n.t('helpers.brokerIdentitySchema.title'),
         columns: 1,
-        fields: [
-          {
-            type: 'select',
-            key: IDENTITY_KIND,
-            label: i18n.t('helpers.brokerIdentitySchema.kind'),
-            options: kinds.map((k) => ({ value: k.key, label: k.label })),
-            // A provider that serves one kind has nothing to choose between.
-            disabled: kinds.length <= 1,
-          },
-          {
-            type: 'text',
-            key: IDENTITY_NAME,
-            label: i18n.t('helpers.brokerIdentitySchema.name'),
-            placeholder: i18n.t('helpers.brokerIdentitySchema.namePlaceholder'),
-            required: true,
-          },
-          {
-            type: 'boolean',
-            key: IDENTITY_RESTORE,
-            label: i18n.t('helpers.brokerIdentitySchema.restore'),
-            description: i18n.t('helpers.brokerIdentitySchema.restoreHint'),
-          },
-          {
-            type: 'text',
-            key: IDENTITY_RESTORE_ID,
-            label: i18n.t('helpers.brokerIdentitySchema.originalId'),
-            placeholder: 'ha_004',
-            required: true,
-            showWhen: { field: IDENTITY_RESTORE, equals: true },
-          },
-        ],
+        fields,
       },
     ],
   }

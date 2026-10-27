@@ -1,119 +1,35 @@
 /**
  * `BrokerManager` — generic, kind-agnostic admin surface for the unified
- * `broker` cap. One table lists EVERY registered broker across kinds
- * (`home-assistant`, `mqtt`, future Zigbee2MQTT, …); operators add, edit,
- * test, and delete connections. The `<BrokerForm>` it mounts is purely
- * schema-driven, so this component never branches on a specific kind —
- * kind VALUES are data (the `BROKER_KINDS` catalog + whatever kinds the
- * registry already reports), never `if (kind === 'home-assistant')`
- * control flow.
+ * `broker` cap. One table lists the registered brokers (all kinds, or one
+ * provider's with `addonId`); operators add, edit, test and delete them.
  *
- * Kind sourcing:
- *   `broker.listProviders()` enumerates, per registered provider, which
- *   broker kind(s) it can create (`[{ addonId, kinds: [{kind,label}] }]`).
- *   The Add picker draws from that LIVE data so each pickable kind
- *   carries its owning `addonId` — the create flow then routes
- *   `getSettingsSchema` / `testSettings` / `add` to that exact provider
- *   via the `{ addonId }` selector. A tiny static fallback catalog labels
- *   any kind that shows up in `list()` but not in `listProviders()` (so
- *   an installed-but-unadvertised kind still round-trips on edit).
+ * Add and Edit are `BrokerEditorDialog` — the same dialog the integration
+ * wizard opens for "Create new…" — so there is one create / edit / sign-in
+ * path. This file holds the table and per-row actions only; kind values are
+ * data from `listProviders` (see `broker-kinds.ts`), never control flow.
  *
- * Ownership routing (the fix):
- *   `BrokerInfo.addonId` names the provider that OWNS each broker. Every
- *   id-keyed call (get / getSettings / setSettings / testConnection /
- *   remove) threads it as the `{ addonId }` selector so the call hits the
- *   owning provider instead of defaulting to the first-registered one.
+ * Ownership routing: `BrokerInfo.addonId` names the provider that OWNS each
+ * broker; every id-keyed call threads it as the `{ addonId }` selector.
  *
- * Scoped to one provider (`addonId` prop):
- *   Connectivity shows one broker ADDON at a time (Home Assistant, Homematic,
- *   MQTT, …), so the manager can be narrowed to the connections that addon
- *   owns and to the kinds it serves. Unscoped, it lists every broker.
- *
- * Form builder throughout:
- *   The Add dialog's own fields (kind, name, restore-under-original-id) are a
- *   `ConfigUISchema` (`broker-identity-schema.ts`) drawn by the same
- *   `FormBuilder` as the kind's connection settings, not hand-rolled inputs.
- *
- * Delete guard:
- *   `BrokerInfo` exposes no `integrationId` / `inUse` flag today, so the
- *   manager cannot know whether an integration FKs a broker — delete is
- *   unconditional. (If the cap later surfaces an in-use flag, gate the
- *   button on it here.)
+ * Delete guard: `BrokerInfo` exposes no in-use flag, so delete is
+ * unconditional (gate the button on it here if the cap later surfaces one).
  */
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, LogIn, LogOut, Plus, Pencil, Trash2, Wifi } from 'lucide-react'
 import {
   Badge,
   Button,
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  ErrorBox,
   useBrokerList,
-  useBrokerListProviders,
-  useBrokerGetSettings,
-  useBrokerAdd,
-  useBrokerSetSettings,
   useBrokerTestConnection,
   useBrokerRemove,
   useConfirm,
 } from '@camstack/ui-library'
-import type { UnifiedBrokerInfo, UnifiedBrokerStatus, BrokerProviderInfo } from '@camstack/types'
-import { FormBuilder } from '../form-builder/FormBuilder'
-import { BrokerForm } from './BrokerForm'
-import {
-  IDENTITY_KIND,
-  IDENTITY_NAME,
-  IDENTITY_RESTORE,
-  IDENTITY_RESTORE_ID,
-  buildBrokerIdentitySchema,
-  readBrokerIdentity,
-} from './broker-identity-schema'
+import type { UnifiedBrokerInfo, UnifiedBrokerStatus } from '@camstack/types'
+import { BrokerEditorDialog } from './BrokerEditorDialog'
+import { asBrokerList, useBrokerKinds } from './broker-kinds'
 import { startBrokerInteractiveConnect } from '../../lib/broker-oauth-popup'
 import { useTranslation } from 'react-i18next'
-
-// ── Kind catalog ─────────────────────────────────────────────────────
-// Each pickable entry is a `(addonId, kind, label)` triple. `addonId`
-// is the provider that serves the kind — threaded as the system-
-// collection selector so create routes to the owning provider. A static
-// fallback supplies a human label for kinds that appear on existing
-// brokers but aren't advertised by `listProviders` (addonId unknown).
-//
-// Connect/disconnect paths come ONLY from `listProviders` (cap data) —
-// never from a kind/addonId branch in this file.
-interface KindOption {
-  readonly addonId?: string
-  readonly kind: string
-  readonly label: string
-  readonly interactiveConnectPath?: string
-  readonly interactiveDisconnectPath?: string
-}
-
-const STATIC_KIND_LABELS: Readonly<Record<string, string>> = {
-  'home-assistant': 'Home Assistant',
-  mqtt: 'MQTT',
-}
-
-function labelForKind(kind: string): string {
-  return STATIC_KIND_LABELS[kind] ?? kind
-}
-
-// ── listProviders narrowing ──────────────────────────────────────────
-// `useBrokerListProviders` is wire-typed by codegen; narrow defensively.
-export function asProviderList(data: unknown): readonly BrokerProviderInfo[] {
-  if (!Array.isArray(data)) return []
-  return data.filter(
-    (p): p is BrokerProviderInfo =>
-      p !== null &&
-      typeof p === 'object' &&
-      typeof (p as { addonId?: unknown }).addonId === 'string' &&
-      Array.isArray((p as { kinds?: unknown }).kinds),
-  )
-}
 
 // ── Per-broker status pill ───────────────────────────────────────────
 const STATUS_VARIANT: Record<UnifiedBrokerStatus, 'success' | 'warning' | 'default' | 'danger'> = {
@@ -134,253 +50,12 @@ export function BrokerStatusPill({ status }: { readonly status: UnifiedBrokerSta
   )
 }
 
-// ── List narrowing ───────────────────────────────────────────────────
-// `useBrokerList` is wire-typed by codegen; narrow the array defensively
-// rather than trusting the inferred shape blindly.
-export function asBrokerList(data: unknown): readonly UnifiedBrokerInfo[] {
-  if (!Array.isArray(data)) return []
-  return data.filter(
-    (b): b is UnifiedBrokerInfo =>
-      b !== null && typeof b === 'object' && typeof (b as { id?: unknown }).id === 'string',
-  )
-}
-
-// ── Dialog shell ─────────────────────────────────────────────────────
-function BrokerDialog({
-  title,
-  subtitle,
-  onClose,
-  children,
-}: {
-  readonly title: string
-  readonly subtitle?: string
-  readonly onClose: () => void
-  readonly children: ReactNode
-}) {
-  return (
-    <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent width="md" placement="sheet-on-mobile" scroll="body">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {subtitle && <DialogDescription>{subtitle}</DialogDescription>}
-        </DialogHeader>
-        <DialogBody className="space-y-3 pr-1">{children}</DialogBody>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ── Add dialog (identity form → kind's schema form) ──────────────────
-function AddBrokerDialog({
-  kinds,
-  onClose,
-  onDone,
-}: {
-  readonly kinds: readonly KindOption[]
-  readonly onClose: () => void
-  readonly onDone: () => void
-}) {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const identitySchema = useMemo(
-    () => buildBrokerIdentitySchema(kinds.map((k) => ({ key: optionKeyOf(k), label: k.label }))),
-    [kinds],
-  )
-  const [identity, setIdentity] = useState<Record<string, unknown>>(() => ({
-    [IDENTITY_KIND]: optionKeyOf(kinds[0]),
-    [IDENTITY_NAME]: '',
-    [IDENTITY_RESTORE]: false,
-    [IDENTITY_RESTORE_ID]: '',
-  }))
-  const [problem, setProblem] = useState<string | null>(null)
-  const selected = kinds.find((k) => optionKeyOf(k) === identity[IDENTITY_KIND]) ?? kinds[0]
-  const kind = selected?.kind ?? ''
-  const addonId = selected?.addonId
-
-  const connectPath = selected?.interactiveConnectPath
-
-  const add = useBrokerAdd({
-    onSuccess: (created) => {
-      void queryClient.invalidateQueries({ queryKey: [['broker', 'list']] })
-      const id =
-        created !== null &&
-        typeof created === 'object' &&
-        typeof (created as { id?: unknown }).id === 'string'
-          ? (created as { id: string }).id
-          : null
-      if (id !== null && connectPath !== undefined && connectPath.length > 0) {
-        startBrokerInteractiveConnect(connectPath, id, () => {
-          void queryClient.invalidateQueries({ queryKey: [['broker', 'list']] })
-        })
-      }
-      onDone()
-    },
-  })
-
-  const handleSubmit = (settings: Record<string, unknown>): void => {
-    const read = readBrokerIdentity(identity)
-    if (!read.ok) {
-      setProblem(read.problem)
-      return
-    }
-    setProblem(null)
-    const { name, restoreId } = read.identity
-    add.mutate({
-      kind,
-      name,
-      settings,
-      ...(restoreId !== null ? { id: restoreId } : {}),
-      ...(addonId !== undefined ? { addonId } : {}),
-    })
-  }
-
-  return (
-    <BrokerDialog
-      title={t('brokers.brokerManager.addBroker', 'Add broker')}
-      subtitle={t(
-        'brokers.brokerManager.registerAMessageBrokerFor',
-        'Register a message broker for exporters and automations.',
-      )}
-      onClose={add.isPending ? () => {} : onClose}
-    >
-      <FormBuilder schema={identitySchema} values={identity} onChange={setIdentity} />
-      {problem !== null && <ErrorBox message={problem} />}
-      {add.isError && (
-        <ErrorBox message={add.error instanceof Error ? add.error.message : String(add.error)} />
-      )}
-      {kind && (
-        <BrokerForm
-          key={optionKeyOf(selected)}
-          kind={kind}
-          {...(addonId !== undefined ? { addonId } : {})}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-          submitLabel={
-            add.isPending
-              ? t('brokers.brokerManager.adding', 'Adding…')
-              : t('brokers.brokerManager.addBroker', 'Add broker')
-          }
-          disabled={add.isPending}
-        />
-      )}
-    </BrokerDialog>
-  )
-}
-
-/**
- * A kind option's key, `addonId::kind`: a kind offered by two providers stays
- * two options, and the key resolves back to the option (carrying `addonId`)
- * that routes the create. Keying the settings form by it also resets the form
- * when the kind changes, so one kind's values never leak into another's.
- */
-function optionKeyOf(k: KindOption | undefined): string {
-  return k === undefined ? '' : `${k.addonId ?? ''}::${k.kind}`
-}
-
-// ── Edit dialog (load settings → schema form) ────────────────────────
-function EditBrokerDialog({
-  broker,
-  onClose,
-  onDone,
-}: {
-  readonly broker: UnifiedBrokerInfo
-  readonly onClose: () => void
-  readonly onDone: () => void
-}) {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  // Route id-keyed reads/writes to the owning provider via the addonId
-  // selector — without it, getSettings/setSettings hit the first
-  // registered broker provider and miss a broker it doesn't own.
-  const settingsQuery = useBrokerGetSettings({ id: broker.id, addonId: broker.addonId })
-  const setSettings = useBrokerSetSettings({
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [['broker', 'list']] })
-      void queryClient.invalidateQueries({
-        queryKey: [
-          ['broker', 'getSettings'],
-          { input: { id: broker.id, addonId: broker.addonId } },
-        ],
-      })
-      onDone()
-    },
-  })
-
-  const initialValues = useMemo<Record<string, unknown>>(() => {
-    const raw = settingsQuery.data
-    return raw && typeof raw === 'object' ? { ...(raw as Record<string, unknown>) } : {}
-  }, [settingsQuery.data])
-
-  const handleSubmit = (settings: Record<string, unknown>): void => {
-    setSettings.mutate({ id: broker.id, settings, addonId: broker.addonId })
-  }
-
-  return (
-    <BrokerDialog
-      title={t('brokers.brokerManager.edit', 'Edit {{name}}', { name: broker.name })}
-      subtitle={`${labelForKind(broker.kind)} · ${broker.id}`}
-      onClose={setSettings.isPending ? () => {} : onClose}
-    >
-      {settingsQuery.isLoading ? (
-        <div className="flex items-center gap-2 text-xs text-foreground-subtle">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />{' '}
-          {t('brokers.brokerManager.loadingSettings')}
-        </div>
-      ) : settingsQuery.isError ? (
-        // Do NOT render a save-capable form with empty values here — a Save
-        // would overwrite the broker's real credentials with `{}`. Show the
-        // error instead and offer only a way to dismiss the dialog.
-        <div className="space-y-3">
-          <ErrorBox
-            message={t('brokers.brokerManager.loadSettingsFailed', {
-              message:
-                settingsQuery.error instanceof Error
-                  ? settingsQuery.error.message
-                  : t('common.unknownError'),
-            })}
-          />
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={onClose}>
-              {t('common.close', 'Close')}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {setSettings.isError && (
-            <ErrorBox
-              message={
-                setSettings.error instanceof Error
-                  ? setSettings.error.message
-                  : String(setSettings.error)
-              }
-            />
-          )}
-          <BrokerForm
-            kind={broker.kind}
-            addonId={broker.addonId}
-            brokerId={broker.id}
-            initialValues={initialValues}
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-            submitLabel={
-              setSettings.isPending
-                ? t('brokers.brokerManager.saving', 'Saving…')
-                : t('common.save', 'Save')
-            }
-            disabled={setSettings.isPending}
-          />
-        </div>
-      )}
-    </BrokerDialog>
-  )
-}
-
 // ── Row ──────────────────────────────────────────────────────────────
 function BrokerRow({
   broker,
   interactiveConnectPath,
   interactiveDisconnectPath,
+  kindLabel,
   onEdit,
 }: {
   readonly broker: UnifiedBrokerInfo
@@ -388,18 +63,25 @@ function BrokerRow({
   readonly interactiveConnectPath?: string
   /** From `listProviders` — undefined = no Sign-out. */
   readonly interactiveDisconnectPath?: string
+  readonly kindLabel: string
   readonly onEdit: (broker: UnifiedBrokerInfo) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
-  const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null)
+  const [testResult, setTestResult] = useState<{
+    ok: boolean
+    error?: string
+  } | null>(null)
 
   const test = useBrokerTestConnection({
     onSuccess: (result) =>
       setTestResult(result.ok ? { ok: true } : { ok: false, error: result.error }),
     onError: (err) =>
-      setTestResult({ ok: false, error: err instanceof Error ? err.message : String(err) }),
+      setTestResult({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      }),
   })
   const remove = useBrokerRemove({
     onSuccess: () => {
@@ -434,7 +116,7 @@ function BrokerRow({
   return (
     <tr className="border-b border-border last:border-0">
       <td className="px-3 py-2 text-xs text-foreground font-medium">{broker.name}</td>
-      <td className="px-3 py-2 text-xs text-foreground-subtle">{labelForKind(broker.kind)}</td>
+      <td className="px-3 py-2 text-xs text-foreground-subtle">{kindLabel}</td>
       <td className="px-3 py-2">
         <BrokerStatusPill status={broker.status} />
         {testResult && (
@@ -451,7 +133,9 @@ function BrokerRow({
               size="sm"
               onClick={() => {
                 startBrokerInteractiveConnect(interactiveConnectPath, broker.id, () => {
-                  void queryClient.invalidateQueries({ queryKey: [['broker', 'list']] })
+                  void queryClient.invalidateQueries({
+                    queryKey: [['broker', 'list']],
+                  })
                 })
               }}
               title={t(
@@ -468,7 +152,9 @@ function BrokerRow({
               size="sm"
               onClick={() => {
                 startBrokerInteractiveConnect(interactiveDisconnectPath, broker.id, () => {
-                  void queryClient.invalidateQueries({ queryKey: [['broker', 'list']] })
+                  void queryClient.invalidateQueries({
+                    queryKey: [['broker', 'list']],
+                  })
                 })
               }}
               title={t(
@@ -536,7 +222,6 @@ export interface BrokerManagerProps {
 export function BrokerManager({ addonId }: BrokerManagerProps = {}) {
   const { t } = useTranslation()
   const listQuery = useBrokerList({})
-  const providersQuery = useBrokerListProviders()
   const brokers = useMemo(
     () =>
       asBrokerList(listQuery.data).filter((b) => addonId === undefined || b.addonId === addonId),
@@ -545,39 +230,9 @@ export function BrokerManager({ addonId }: BrokerManagerProps = {}) {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<UnifiedBrokerInfo | null>(null)
 
-  // Build the Add picker from LIVE `listProviders()` data — each entry
-  // carries its owning `addonId` so create routes to that provider. Keyed
-  // by `addonId::kind` so the same kind from two providers stays
-  // distinct. A kind present on an existing broker but NOT advertised by
-  // any provider still gets a fallback entry (no addonId) so edit works.
-  const kinds = useMemo<readonly KindOption[]>(() => {
-    const seen = new Map<string, KindOption>()
-    for (const provider of asProviderList(providersQuery.data)) {
-      if (addonId !== undefined && provider.addonId !== addonId) continue
-      for (const k of provider.kinds) {
-        const connect =
-          typeof k.interactiveConnectPath === 'string' && k.interactiveConnectPath.length > 0
-            ? k.interactiveConnectPath
-            : undefined
-        const disconnect =
-          typeof k.interactiveDisconnectPath === 'string' && k.interactiveDisconnectPath.length > 0
-            ? k.interactiveDisconnectPath
-            : undefined
-        seen.set(`${provider.addonId}::${k.kind}`, {
-          addonId: provider.addonId,
-          kind: k.kind,
-          label: k.label,
-          ...(connect !== undefined ? { interactiveConnectPath: connect } : {}),
-          ...(disconnect !== undefined ? { interactiveDisconnectPath: disconnect } : {}),
-        })
-      }
-    }
-    for (const b of brokers) {
-      const hasKind = [...seen.values()].some((k) => k.kind === b.kind)
-      if (!hasKind) seen.set(`::${b.kind}`, { kind: b.kind, label: labelForKind(b.kind) })
-    }
-    return [...seen.values()]
-  }, [brokers, providersQuery.data, addonId])
+  // The creatable kinds come from LIVE `listProviders()` data (see `broker-kinds.ts`).
+  const { options: kinds } = useBrokerKinds(addonId !== undefined ? { addonId } : {})
+  const labelByKind = useMemo(() => new Map(kinds.map((k) => [k.kind, k.label])), [kinds])
 
   /** kind → connect/disconnect paths from listProviders (first match). */
   const pathsByKind = useMemo(() => {
@@ -674,6 +329,7 @@ export function BrokerManager({ addonId }: BrokerManagerProps = {}) {
                   {...(paths?.disconnect !== undefined
                     ? { interactiveDisconnectPath: paths.disconnect }
                     : {})}
+                  kindLabel={labelByKind.get(b.kind) ?? b.kind}
                   onEdit={setEditing}
                 />
               )
@@ -683,17 +339,17 @@ export function BrokerManager({ addonId }: BrokerManagerProps = {}) {
       </div>
 
       {adding && (
-        <AddBrokerDialog
-          kinds={kinds}
+        <BrokerEditorDialog
+          {...(addonId !== undefined ? { addonId } : {})}
           onClose={() => setAdding(false)}
-          onDone={() => setAdding(false)}
+          onSaved={() => setAdding(false)}
         />
       )}
       {editing && (
-        <EditBrokerDialog
+        <BrokerEditorDialog
           broker={editing}
           onClose={() => setEditing(null)}
-          onDone={() => setEditing(null)}
+          onSaved={() => setEditing(null)}
         />
       )}
     </div>

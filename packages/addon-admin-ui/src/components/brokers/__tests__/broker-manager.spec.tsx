@@ -16,7 +16,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 function renderWithClient(ui: ReactElement) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
 }
 
@@ -41,7 +43,11 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    useBrokerList: () => ({ data: [HA_BROKER], isLoading: false, isError: false }),
+    useBrokerList: () => ({
+      data: [HA_BROKER],
+      isLoading: false,
+      isError: false,
+    }),
     useBrokerListProviders: () => ({
       data: [
         { addonId: 'mqtt-broker', kinds: [{ kind: 'mqtt', label: 'MQTT' }] },
@@ -51,9 +57,17 @@ vi.mock('@camstack/ui-library', async () => {
         },
       ],
     }),
-    useBrokerGetSettings: () => ({ data: {}, isLoading: false, isError: false }),
+    useBrokerGetSettings: () => ({
+      data: {},
+      isLoading: false,
+      isError: false,
+    }),
     useBrokerAdd: () => ({ mutate: mockAdd, isPending: false, isError: false }),
-    useBrokerSetSettings: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
+    useBrokerSetSettings: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    }),
     useBrokerTestConnection: () => ({ mutate: mockTest, isPending: false }),
     useBrokerRemove: () => ({ mutate: mockRemove, isPending: false }),
     useConfirm: () => mockConfirm,
@@ -66,7 +80,14 @@ vi.mock('@camstack/ui-library', async () => {
             id: 'conn',
             title: 'Conn',
             columns: 1,
-            fields: [{ type: 'text', key: 'host', label: 'Host', placeholder: 'broker host' }],
+            fields: [
+              {
+                type: 'text',
+                key: 'host',
+                label: 'Host',
+                placeholder: 'broker host',
+              },
+            ],
           },
         ],
       },
@@ -96,14 +117,20 @@ describe('BrokerManager — addonId ownership routing', () => {
     renderWithClient(<BrokerManager />)
     fireEvent.click(screen.getByRole('button', { name: /test/i }))
     expect(mockTest).toHaveBeenCalledTimes(1)
-    expect(mockTest).toHaveBeenCalledWith({ id: 'ha_1', addonId: 'provider-homeassistant' })
+    expect(mockTest).toHaveBeenCalledWith({
+      id: 'ha_1',
+      addonId: 'provider-homeassistant',
+    })
   })
 
   it('Delete passes the owning addonId selector', async () => {
     renderWithClient(<BrokerManager />)
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
     await waitFor(() => expect(mockRemove).toHaveBeenCalledTimes(1))
-    expect(mockRemove).toHaveBeenCalledWith({ id: 'ha_1', addonId: 'provider-homeassistant' })
+    expect(mockRemove).toHaveBeenCalledWith({
+      id: 'ha_1',
+      addonId: 'provider-homeassistant',
+    })
   })
 
   it('Add flow threads the selected provider addonId + kind into the add call', async () => {
@@ -127,11 +154,7 @@ describe('BrokerManager — addonId ownership routing', () => {
       target: { value: 'mqtt.local' },
     })
 
-    // Two buttons read "Add broker": the manager's launcher and the
-    // BrokerForm's submit. The form's submit is the last one (inside the
-    // dialog) — drive that to actually fire the add mutation.
-    const addButtons = screen.getAllByRole('button', { name: /add broker/i })
-    fireEvent.click(addButtons[addButtons.length - 1])
+    fireEvent.click(screen.getByRole('button', { name: /create broker/i }))
 
     await waitFor(() => expect(mockAdd).toHaveBeenCalledTimes(1))
     expect(mockAdd).toHaveBeenCalledWith(
@@ -150,8 +173,11 @@ describe('BrokerManager — addonId ownership routing', () => {
     fireEvent.change(await screen.findByPlaceholderText('broker host'), {
       target: { value: 'mqtt.local' },
     })
-    const addButtons = screen.getAllByRole('button', { name: /add broker/i })
-    fireEvent.click(addButtons[addButtons.length - 1])
+    // The name is prefilled from the kind; a cleared name is still refused.
+    fireEvent.change(screen.getByPlaceholderText('My Home Assistant'), {
+      target: { value: '' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /create broker/i }))
     expect(await screen.findByText('Enter a name before saving.')).toBeTruthy()
     expect(mockAdd).not.toHaveBeenCalled()
   })
@@ -164,14 +190,23 @@ describe('BrokerManager — scoped to one provider', () => {
     expect(screen.getByText(/No brokers registered yet/)).toBeTruthy()
   })
 
-  it('offers only the kinds the provider serves', async () => {
+  it('offers only the kinds the provider serves, with no kind control when there is one', async () => {
     renderWithClient(<BrokerManager addonId="provider-homeassistant" />)
     expect(screen.getByText('Casa')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /add broker/i }))
-    const kindSelect = (await screen.findByRole('combobox')) as HTMLSelectElement
-    // The form builder's select carries an empty "choose…" option of its own.
-    expect([...kindSelect.options].map((o) => o.value).filter((v) => v !== '')).toEqual([
-      'provider-homeassistant::home-assistant',
-    ])
+    // A single kind has nothing to choose: no combobox, the name is prefilled from the kind.
+    expect(await screen.findByPlaceholderText('broker host')).toBeTruthy()
+    expect(screen.queryByRole('combobox')).toBeNull()
+    expect((screen.getByPlaceholderText('My Home Assistant') as HTMLInputElement).value).toBe(
+      'Home Assistant',
+    )
+    fireEvent.click(screen.getByRole('button', { name: /create broker/i }))
+    await waitFor(() => expect(mockAdd).toHaveBeenCalledTimes(1))
+    expect(mockAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'home-assistant',
+        addonId: 'provider-homeassistant',
+      }),
+    )
   })
 })

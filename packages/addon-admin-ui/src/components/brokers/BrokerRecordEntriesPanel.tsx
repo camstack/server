@@ -23,7 +23,8 @@ import {
   type DataColumn,
 } from '@camstack/ui-library'
 import { startBrokerInteractiveConnect } from '../../lib/broker-oauth-popup'
-import { asBrokerList, asProviderList, BrokerStatusPill } from './BrokerManager'
+import { BrokerStatusPill } from './BrokerManager'
+import { asBrokerList, asProviderList } from './broker-kinds'
 
 export interface BrokerRecordEntriesPanelProps {
   readonly addonId: string

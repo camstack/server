@@ -29,21 +29,29 @@ describe('buildBrokerIdentitySchema', () => {
     expect(kind && 'options' in kind ? kind.options.map((o) => o.value) : []).toEqual(
       KINDS.map((k) => k.key),
     )
-    expect(byKey.get(IDENTITY_NAME)).toMatchObject({ type: 'text', required: true })
+    expect(byKey.get(IDENTITY_NAME)).toMatchObject({
+      type: 'text',
+      required: true,
+    })
     expect(byKey.get(IDENTITY_RESTORE)?.type).toBe('boolean')
     expect(byKey.get(IDENTITY_RESTORE_ID)).toMatchObject({
       showWhen: { field: IDENTITY_RESTORE, equals: true },
     })
   })
 
-  it('locks the kind when the provider serves only one', () => {
+  it('draws no kind control when the provider serves only one', () => {
     const [section] = buildBrokerIdentitySchema(KINDS.slice(0, 1)).sections
-    expect(section?.fields[0]).toMatchObject({ key: IDENTITY_KIND, disabled: true })
+    const keys = (section?.fields ?? []).map((f) => ('key' in f ? f.key : ''))
+    expect(keys).not.toContain(IDENTITY_KIND)
+    expect(keys).toContain(IDENTITY_NAME)
   })
 })
 
 describe('readBrokerIdentity', () => {
-  const base = { [IDENTITY_KIND]: 'mqtt-broker::mqtt', [IDENTITY_NAME]: ' Casa ' }
+  const base = {
+    [IDENTITY_KIND]: 'mqtt-broker::mqtt',
+    [IDENTITY_NAME]: ' Casa ',
+  }
 
   it('reads a new broker, trimmed', () => {
     expect(readBrokerIdentity(base)).toEqual({
@@ -62,15 +70,26 @@ describe('readBrokerIdentity', () => {
 
   it('carries the restore id when restoring', () => {
     expect(
-      readBrokerIdentity({ ...base, [IDENTITY_RESTORE]: true, [IDENTITY_RESTORE_ID]: 'ha_004' }),
+      readBrokerIdentity({
+        ...base,
+        [IDENTITY_RESTORE]: true,
+        [IDENTITY_RESTORE_ID]: 'ha_004',
+      }),
     ).toEqual({
       ok: true,
-      identity: { kindKey: 'mqtt-broker::mqtt', name: 'Casa', restoreId: 'ha_004' },
+      identity: {
+        kindKey: 'mqtt-broker::mqtt',
+        name: 'Casa',
+        restoreId: 'ha_004',
+      },
     })
   })
 
   it('ignores a stale restore id once restore is off', () => {
-    const read = readBrokerIdentity({ ...base, [IDENTITY_RESTORE_ID]: 'ha_004' })
+    const read = readBrokerIdentity({
+      ...base,
+      [IDENTITY_RESTORE_ID]: 'ha_004',
+    })
     expect(read.ok && read.identity.restoreId).toBeNull()
   })
 })
