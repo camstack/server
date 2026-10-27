@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-enpal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback)",
   "keywords": [
     "camstack",
