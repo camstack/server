@@ -73,8 +73,10 @@ describe('requestStackDump', () => {
             `sys.path.insert(0, ${JSON.stringify(PYTHON_DIR)})`,
             'import pool_platform',
             'pool_platform.register_stack_dump_signal()',
-            'print("ready", flush=True)',
+            // "ready" is printed from INSIDE the function: printed before the
+            // call, the signal could land while the frame is still <module>.
             'def stuck_in_native_call():',
+            '    print("ready", flush=True)',
             '    time.sleep(30)',
             'stuck_in_native_call()',
           ].join('\n'),
