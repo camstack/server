@@ -325,8 +325,12 @@ function QuickDetailSaveFooter({
     })()
   }
 
+  // Nothing to save, discard or report: the footer has no job. The modal keeps
+  // its row for "Open full detail".
+  if (!state.dirty && !state.saving && state.error === null && !showOpenFull) return null
+
   return (
-    <div className="sticky bottom-0 z-10 mt-3 flex flex-col gap-2 border-t border-border bg-background px-1 pt-3">
+    <div className="sticky bottom-0 z-10 mt-auto flex flex-col gap-2 border-t border-border bg-background px-1 pt-3">
       {state.error !== null && <p className="text-xs text-danger">{state.error}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {showOpenFull ? (

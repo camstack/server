@@ -2,21 +2,22 @@
  * Pet-feeder controls for a `DeviceType.PetFeeder` device.
  *
  * Reads the `pet-feeder` cap status slice (foodLevel / food1 / food2 /
- * lowFood / batteryPower / desiccantLeftDays / feeding / status / error /
+ * lowFood / batteryPower / feeding / status / error /
  * errorCode / isDualHopper + the four persisted settings) and renders:
  *   - PetFeederInlineControl (device-list row): a compact food-level +
  *     battery readout with a one-tap Feed button (default portion).
  *   - PetFeederHeroCard (device-detail hero): the food-bowl fill gauge
- *     signature, battery + desiccant readouts, a manual-feed portion
+ *     signature, battery readout, a manual-feed portion
  *     stepper honouring the 4-200 g hardware range (per-hopper on
- *     dual-hopper models), a maintenance action row (Call pet / Reset
- *     desiccant / Mark refilled) and the child-lock / indicator-light /
- *     feed-sound / volume settings.
+ *     dual-hopper models), a maintenance action row (Call pet /
+ *     Mark refilled) and the child-lock / indicator-light /
+ *     feed-sound / volume settings. The desiccant is a consumable: the
+ *     page's Consumables section draws it, never this card (D915).
  *
  * Mirrors the AC card's `useDeviceCapability` + inferred-cap pattern so
  * the row and hero never diverge. Actions are gated on `available`.
  */
-import { useUiText, type UiTextFn } from '../../contexts/ui-text'
+import { useUiText } from '../../contexts/ui-text'
 import { useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
@@ -28,13 +29,11 @@ import {
   Lightbulb,
   Lock,
   PawPrint,
-  RefreshCw,
   UtensilsCrossed,
   Volume2,
   WifiOff,
-  Wind,
 } from 'lucide-react'
-import { formatReading, type PetFeederStatus } from '@camstack/types'
+import type { PetFeederStatus } from '@camstack/types'
 import { PET_FEEDER_MANUAL_FEED_MAX, PET_FEEDER_MANUAL_FEED_MIN } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
@@ -49,14 +48,6 @@ const VOLUME_MAX = 9
 /** Amber kibble accent for the bowl fill; destructive red when low. */
 const KIBBLE = '#f59e0b'
 const KIBBLE_LOW = '#ef4444'
-
-function desiccantLabel(t: UiTextFn, seconds: number): string {
-  const rendered = formatReading({ value: seconds, quantity: 'duration' })
-  return t('uiLibrary.petFeeder.desiccant', '{{text}}{{unit}} desiccant', {
-    text: rendered.text,
-    unit: rendered.unit,
-  })
-}
 
 function clampPortion(grams: number): number {
   return Math.min(PET_FEEDER_MANUAL_FEED_MAX, Math.max(PET_FEEDER_MANUAL_FEED_MIN, grams))
@@ -170,7 +161,7 @@ export function PetFeederPanel({
     <div className="relative flex flex-col items-stretch gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4">
       <style>{KEYFRAMES}</style>
 
-      {/* ── Hero: food-bowl fill gauge + battery / desiccant / feeding ─────── */}
+      {/* ── Hero: food-bowl fill gauge + battery / feeding ─────── */}
       <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-surface-subtle/40 p-3">
         <BowlGauge grams={display.foodLevel} low={display.lowFood} eating={display.feeding} />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -190,12 +181,6 @@ export function PetFeederPanel({
               <Readout
                 icon={<BatteryMedium className="h-3.5 w-3.5" />}
                 label={`${display.batteryPower}%`}
-              />
-            )}
-            {display.desiccantLeftDays !== null && (
-              <Readout
-                icon={<Wind className="h-3.5 w-3.5" />}
-                label={desiccantLabel(t, display.desiccantLeftDays)}
               />
             )}
             {onBatteries && (
@@ -277,18 +262,12 @@ export function PetFeederPanel({
       )}
 
       {/* ── Maintenance actions ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <ActionButton
           icon={<PawPrint className="h-4 w-4" />}
           label={t('uiLibrary.petFeeder.callPet', 'Call pet')}
           busy={busy}
           onClick={() => void cap.callPet({})}
-        />
-        <ActionButton
-          icon={<RefreshCw className="h-4 w-4" />}
-          label={t('uiLibrary.petFeeder.resetDesiccant', 'Reset desiccant')}
-          busy={busy}
-          onClick={() => void cap.resetDesiccant({})}
         />
         <ActionButton
           icon={<UtensilsCrossed className="h-4 w-4" />}

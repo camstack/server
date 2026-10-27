@@ -1325,7 +1325,9 @@ export function DeviceDetailPage() {
                   <div
                     className={
                       isMobile
-                        ? 'flex flex-col'
+                        ? // Grows to the bottom of <main>, so a short tab fills the
+                          // viewport and its Save footer rests on the last row.
+                          'flex flex-1 flex-col'
                         : 'flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden'
                     }
                   >
@@ -1361,7 +1363,7 @@ export function DeviceDetailPage() {
                     <div
                       className={
                         isMobile
-                          ? 'p-3 flex flex-col gap-3'
+                          ? 'p-3 flex flex-1 flex-col gap-3'
                           : 'flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3'
                       }
                     >

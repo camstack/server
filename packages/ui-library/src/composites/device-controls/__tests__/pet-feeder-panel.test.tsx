@@ -106,14 +106,18 @@ describe('PetFeederInlineControl', () => {
 })
 
 describe('PetFeederHeroCard', () => {
-  it('renders the bowl readout, desiccant, maintenance actions and settings', () => {
+  it('renders the bowl readout, maintenance actions and settings', () => {
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('g in bowl')).toBeTruthy()
-    expect(screen.getByText('12d desiccant')).toBeTruthy()
     expect(screen.getByText('Call pet')).toBeTruthy()
-    expect(screen.getByText('Reset desiccant')).toBeTruthy()
     expect(screen.getByLabelText('Child lock')).toBeTruthy()
     expect(screen.getByLabelText('Feed sound')).toBeTruthy()
+  })
+
+  it('draws no desiccant: that is a consumable, shown by the page Consumables section', () => {
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.queryByText('12d desiccant')).toBeNull()
+    expect(screen.queryByText('Reset desiccant')).toBeNull()
   })
 
   it('shows a single Manual feed control on single-hopper models', () => {
