@@ -35,7 +35,7 @@ import {
 } from '@camstack/ui-library'
 import type { DataColumn } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Bell, Copy, Loader2, Plus, Send, Trash2 } from 'lucide-react'
+import { Bell, Copy, Loader2, Plus, Search, Send, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AdminPage } from '../../components/AdminPage'
 import { NotificationTestPanel } from './NotificationTestPanel'
@@ -60,7 +60,10 @@ import {
   withRequiredSecrets,
   withStoredSecretPlaceholders,
 } from './notification-targets.helpers'
+import { discoverableKinds } from './notification-target-discovery'
 import { TARGET_KIND_PARAM, TARGET_NEW } from './notification-targets-url'
+import { TargetDiscoveryDialog } from './TargetDiscoveryDialog'
+import { KindIcon, type TargetKindWithIcon } from './target-kind-icon'
 import { TargetSecretNotice } from './target-secret-notice'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
@@ -74,16 +77,6 @@ interface NotificationTargetUser {
   readonly id: string
   readonly username: string
 }
-
-/**
- * A kind descriptor augmented with the official brand-icon URL each provider
- * stamps. `iconUrl` is a structural pass-through field the cap builder forwards
- * verbatim but the `TargetKindSchema` (in `@camstack/types`) does not declare,
- * so the generated tRPC output type omits it — we re-attach it at the query
- * seam (documented type boundary, same shape as the `configSchema` tighten).
- * Absent/empty for kinds without a shipped icon (e.g. `homeassistant`).
- */
-type TargetKindWithIcon = TargetKind & { readonly iconUrl?: string }
 
 type EditorState =
   | { readonly mode: 'closed' }
@@ -100,13 +93,6 @@ type EditorState =
       readonly cloneFrom: Target | null
     }
 
-/**
- * Render a kind's official brand icon when the provider shipped one, falling
- * back to the emoji glyph (`kind.icon`) otherwise. The icon route is
- * same-origin and admin-gated but served WITHOUT a bearer requirement (unlike
- * event-media), so a bare `<img>` renders it directly — no authed-media helper.
- * The SVGs carry varying viewBoxes (24–500), so the caller sizes via CSS.
- */
 // ── Targets table ───────────────────────────────────────────────────
 
 /**
@@ -245,29 +231,6 @@ function targetColumns(deps: TargetColumnsDeps): readonly DataColumn<Target>[] {
   ]
 }
 
-function KindIcon({
-  kind,
-  imgClassName,
-  fallbackClassName,
-}: {
-  readonly kind: TargetKindWithIcon | undefined
-  readonly imgClassName: string
-  readonly fallbackClassName: string
-}) {
-  if (kind?.iconUrl) {
-    return (
-      <img
-        src={kind.iconUrl}
-        alt={kind.label}
-        className={imgClassName}
-        loading="lazy"
-        draggable={false}
-      />
-    )
-  }
-  return <span className={fallbackClassName}>{kind?.icon ?? '🔔'}</span>
-}
-
 export interface NotificationTargetsPageProps {
   /** Page-header Add — open the kind picker once, then clear. */
   readonly createRequested?: boolean
@@ -293,6 +256,7 @@ export function NotificationTargetsPage({
   const [kindParam, setKindParam] = useUrlQueryParam(TARGET_KIND_PARAM)
   const [editor, setEditor] = useState<EditorState>({ mode: 'closed' })
   const [testTarget, setTestTarget] = useState<Target | null>(null)
+  const [discoverOpen, setDiscoverOpen] = useState(false)
   const restoredTargetRef = useRef<string | null>(null)
 
   const targetsQuery = useQuery({
@@ -317,6 +281,7 @@ export function NotificationTargetsPage({
   })
 
   const kinds = useMemo(() => kindsQuery.data ?? [], [kindsQuery.data])
+  const discoverable = useMemo(() => discoverableKinds(kinds), [kinds])
   const kindByKey = useMemo(() => {
     const m = new Map<string, TargetKindWithIcon>()
     for (const k of kinds) m.set(k.kind, k)
@@ -442,12 +407,20 @@ export function NotificationTargetsPage({
         "Deliver notifications to ntfy, Pushover, Telegram, Home Assistant and more. Each target's kind declares its capabilities; the test panel shows exactly what a message degrades to.",
       )}
     >
-      {!headerOwnsCreate ? (
-        <div className="mb-3 flex justify-end">
-          <Button size="sm" type="button" onClick={openPickKind}>
-            <Plus className="h-3.5 w-3.5" />
-            {t('system.notificationTargets.addTarget', 'Add target')}
-          </Button>
+      {!headerOwnsCreate || discoverable.length > 0 ? (
+        <div className="mb-3 flex justify-end gap-2">
+          {discoverable.length > 0 ? (
+            <Button size="sm" variant="outline" type="button" onClick={() => setDiscoverOpen(true)}>
+              <Search className="h-3.5 w-3.5" />
+              {t('system.notificationTargets.findDevices', 'Find devices')}
+            </Button>
+          ) : null}
+          {!headerOwnsCreate ? (
+            <Button size="sm" type="button" onClick={openPickKind}>
+              <Plus className="h-3.5 w-3.5" />
+              {t('system.notificationTargets.addTarget', 'Add target')}
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {targetsQuery.isLoading && <NcListLoading />}
@@ -513,6 +486,18 @@ export function NotificationTargetsPage({
           onCancel={closeEditor}
           onSaved={() => {
             closeEditor()
+            void targetsQuery.refetch()
+          }}
+        />
+      )}
+
+      {discoverOpen && (
+        <TargetDiscoveryDialog
+          kinds={discoverable}
+          targets={targetsQuery.data ?? []}
+          onClose={() => setDiscoverOpen(false)}
+          onAdded={() => {
+            setDiscoverOpen(false)
             void targetsQuery.refetch()
           }}
         />

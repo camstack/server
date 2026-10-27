@@ -2519,6 +2519,13 @@ filter uses) instead of this narrower, caps-scoped read.
 
 ## Notifier credentials — who can reach them ([D634](../decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md), 2026-09-25; hydrate 2026-10-04)
 
+The Targets page offers **Find devices** whenever a kind declares
+`supportsDiscovery`: it calls `discoverTargets` for each such kind and
+proposes the candidates that no saved target of that kind covers, compared
+on the kind's `destinationKeys`. A kind may also build its form options live
+in `listTargetKinds` (the Alexa kind lists the account's Echoes in a select);
+`iconUrl` on the descriptor is the brand mark the picker and the list show.
+
 A target's `config` holds its secrets (bot tokens, API keys, ntfy passwords,
 webhook header values, the webhook `url` itself). The rules that keep them
 where they were typed:

@@ -786,7 +786,15 @@
       "storedSecretsLoadIntoThe": "Stored secrets load into the masked fields (eye to reveal). Clear a field to leave the stored value unchanged on save; type a new value to replace it.",
       "testConnection": "Test connection",
       "connected": "Connected — {{value1}}",
-      "connectionFailed": "Connection failed"
+      "connectionFailed": "Connection failed",
+      "findDevices": "Find devices",
+      "discoverTitle": "Devices found",
+      "discoverHelp": "These devices are available on your connected accounts and have no target yet. Tick the ones to add.",
+      "discoverSearching": "Looking for devices…",
+      "discoverNone": "Every device that was found already has a target.",
+      "discoverFailed": "Could not look for {{kind}}: {{message}}",
+      "discoverAdd": "Add selected ({{count}})",
+      "discoverPick": "Add {{name}}"
     },
     "notificationTestPanel": {
       "level": "Level",

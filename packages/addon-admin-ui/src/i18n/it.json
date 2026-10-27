@@ -786,7 +786,15 @@
       "storedSecretsLoadIntoThe": "I segreti memorizzati vengono caricati nei campi mascherati (occhio per mostrarli). Svuota un campo per lasciare invariato il valore memorizzato al salvataggio; digita un nuovo valore per sostituirlo.",
       "testConnection": "Test connessione",
       "connected": "Connesso — {{value1}}",
-      "connectionFailed": "Connessione fallita"
+      "connectionFailed": "Connessione fallita",
+      "findDevices": "Trova dispositivi",
+      "discoverTitle": "Dispositivi trovati",
+      "discoverHelp": "Questi dispositivi sono disponibili sugli account collegati e non hanno ancora una destinazione. Spunta quelli da aggiungere.",
+      "discoverSearching": "Ricerca dei dispositivi in corso…",
+      "discoverNone": "Ogni dispositivo trovato ha già una destinazione.",
+      "discoverFailed": "Impossibile cercare {{kind}}: {{message}}",
+      "discoverAdd": "Aggiungi selezionati ({{count}})",
+      "discoverPick": "Aggiungi {{name}}"
     },
     "notificationTestPanel": {
       "level": "Livello",
