@@ -21,6 +21,8 @@ import {
 } from './mqtt-ha-broker-session.js'
 import { mqttHaStateGateway } from './mqtt-ha-state-gateway.js'
 import { MqttHaDevice } from './devices/mqtt-ha-device.js'
+import { MqttHaContainerDevice } from './devices/mqtt-ha-container-device.js'
+import type { MqttHaDevicePlan } from './mqtt-ha-domain-mapping.js'
 
 type MqttHaProviderConfig = Record<string, never>
 
@@ -37,6 +39,7 @@ const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [
   DeviceType.Sensor,
   DeviceType.Thermostat,
   DeviceType.EventEmitter,
+  DeviceType.Container,
 ]
 
 /**
@@ -48,7 +51,12 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
   protected readonly addonId = 'provider-mqtt-ha'
   protected readonly providerName = 'MQTT HA Discovery Import'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> =
-    Object.fromEntries(MQTT_HA_DEVICE_TYPES.map((t) => [t, MqttHaDevice]))
+    Object.fromEntries(
+      MQTT_HA_DEVICE_TYPES.map((t) => [
+        t,
+        t === DeviceType.Container ? MqttHaContainerDevice : MqttHaDevice,
+      ]),
+    )
 
   private readonly discoveryStore = new MqttHaDiscoveryStore()
   private sessionManager: MqttHaBrokerSessionManager | null = null
@@ -207,6 +215,55 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 
+  /**
+   * Create one plain device from a plan. A gang child (or a lone entity) has no
+   * `deviceKey`, so its stable id is the entity form a lone entity always had.
+   */
+  private async adoptPlan(input: {
+    readonly brokerId: string
+    readonly integrationId: string
+    readonly name: string
+    readonly plan: MqttHaDevicePlan
+    readonly deviceKey: string | null
+    readonly parentDeviceId: number | null
+  }): Promise<{ readonly deviceId: number }> {
+    const { plan } = input
+    const devices = this.ctx.kernel.devices
+    if (!devices) throw new Error('mqtt-ha adopt: kernel.devices unavailable')
+    const first = plan.members[0]
+    if (first === undefined) throw new Error(`mqtt-ha adopt: ${input.name} has no members`)
+    const config = {
+      brokerId: input.brokerId,
+      entityKey: first.entityKey,
+      ...(input.deviceKey !== null ? { deviceKey: input.deviceKey } : {}),
+      entities: [...plan.members],
+      bindings: plan.bindings,
+      meter: plan.meter,
+      capabilities: [...plan.capabilities],
+      system: 'mqtt-ha',
+      integrationId: input.integrationId,
+      name: input.name,
+    }
+    const stableId = this.generateStableId(plan.deviceType, config)
+    const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
+    if (existing) return { deviceId: existing.id }
+    const created = await devices.create(stableId, MqttHaDevice, config, input.parentDeviceId, {
+      type: plan.deviceType,
+      name: input.name,
+      integrationId: input.integrationId,
+    })
+    this.ctx.logger.info('mqtt-ha: device adopted', {
+      tags: { deviceId: created.id },
+      meta: {
+        stableId,
+        type: plan.deviceType,
+        capabilities: plan.capabilities.join(','),
+        skippedEntities: plan.skipped.join(','),
+      },
+    })
+    return { deviceId: created.id }
+  }
+
   private buildAdoptionProvider(): IDeviceAdoptionProvider {
     return buildMqttHaAdoptionProvider({
       store: this.discoveryStore,
@@ -239,44 +296,47 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
         return out
       },
       adoptDevice: async ({ brokerId, adoptable, integrationId, name }) => {
-        const { device: physical, plan } = adoptable
-        const first = plan.members[0]
-        if (first === undefined)
-          throw new Error(`mqtt-ha adopt: ${physical.nativeId} has no members`)
-        const config = {
+        const devices = this.ctx.kernel.devices
+        if (!devices) throw new Error('mqtt-ha adopt: kernel.devices unavailable')
+        const { device: physical } = adoptable
+        if (adoptable.kind === 'single') {
+          return this.adoptPlan({
+            brokerId,
+            integrationId,
+            name,
+            plan: adoptable.plan,
+            deviceKey: physical.kind === 'device' ? physical.nativeId : null,
+            parentDeviceId: null,
+          })
+        }
+        const containerConfig = {
           brokerId,
-          entityKey: first.entityKey,
-          ...(physical.kind === 'device' ? { deviceKey: physical.nativeId } : {}),
-          entities: [...plan.members],
-          bindings: plan.bindings,
-          meter: plan.meter,
-          capabilities: [...plan.capabilities],
+          entityKey: adoptable.container.gangs[0]?.nativeId ?? physical.nativeId,
+          deviceKey: physical.nativeId,
           system: 'mqtt-ha',
           integrationId,
           name,
         }
-        const stableId = this.generateStableId(plan.deviceType, config)
-        const devices = this.ctx.kernel.devices
-        if (!devices) throw new Error('mqtt-ha adopt: kernel.devices unavailable')
-
+        const stableId = this.generateStableId(DeviceType.Container, containerConfig)
         const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
-        if (existing) return { deviceId: existing.id }
-
-        const created = await devices.create(stableId, MqttHaDevice, config, null, {
-          type: plan.deviceType,
-          name,
-          integrationId,
-        })
-        this.ctx.logger.info('mqtt-ha: device adopted', {
-          tags: { deviceId: created.id },
-          meta: {
-            stableId,
-            type: plan.deviceType,
-            capabilities: plan.capabilities.join(','),
-            skippedEntities: plan.skipped.join(','),
-          },
-        })
-        return { deviceId: created.id }
+        const container =
+          existing ??
+          (await devices.create(stableId, MqttHaContainerDevice, containerConfig, null, {
+            type: DeviceType.Container,
+            name,
+            integrationId,
+          }))
+        for (const gang of adoptable.container.gangs) {
+          await this.adoptPlan({
+            brokerId,
+            integrationId,
+            name: gang.name,
+            plan: gang.plan,
+            deviceKey: null,
+            parentDeviceId: container.id,
+          })
+        }
+        return { deviceId: container.id }
       },
       removeDevice: async (id) => {
         await this.ctx.kernel.devices?.remove(id)

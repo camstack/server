@@ -30,21 +30,25 @@ export interface MqttHaAdoptionProviderDeps {
 }
 
 /**
- * A device adopted as a group carries `deviceKey`; a lone entity (or one gang)
- * carries only `entityKey`, which is its candidate id.
+ * The device already adopted for this candidate. A group adopted by this flow
+ * carries `deviceKey`. A device adopted before devices were grouped (or a lone
+ * entity) carries only `entityKey`; it keeps its stableId and deviceId, and the
+ * candidate that now contains that entity reports it as adopted instead of
+ * offering a duplicate.
  */
 async function adoptedDeviceIdFor(
   brokerId: string,
-  nativeId: string,
+  adoptable: MqttHaAdoptable,
   listAdopted: MqttHaAdoptionProviderDeps['listAdoptedMqttHa'],
 ): Promise<number | null> {
+  const { nativeId, entities } = adoptable.device
+  const memberKeys = new Set(entities.map((e) => e.entityKey))
   for (const d of await listAdopted()) {
-    if (
-      d.config['system'] === 'mqtt-ha' &&
-      d.config['brokerId'] === brokerId &&
-      (d.config['deviceKey'] === nativeId ||
-        (d.config['deviceKey'] === undefined && d.config['entityKey'] === nativeId))
-    ) {
+    if (d.config['system'] !== 'mqtt-ha' || d.config['brokerId'] !== brokerId) continue
+    const deviceKey = d.config['deviceKey']
+    const entityKey = d.config['entityKey']
+    if (deviceKey === nativeId) return d.id
+    if (deviceKey === undefined && typeof entityKey === 'string' && memberKeys.has(entityKey)) {
       return d.id
     }
   }
@@ -66,11 +70,7 @@ export function buildMqttHaAdoptionProvider(
   async function candidatesForBroker(brokerId: string) {
     const out = []
     for (const adoptable of adoptableMqttHaDevices(store.listForBroker(brokerId))) {
-      const adoptedDeviceId = await adoptedDeviceIdFor(
-        brokerId,
-        adoptable.device.nativeId,
-        listAdoptedMqttHa,
-      )
+      const adoptedDeviceId = await adoptedDeviceIdFor(brokerId, adoptable, listAdoptedMqttHa)
       out.push(buildMqttHaDeviceCandidate({ adoptable, adoptedDeviceId }))
     }
     return out
@@ -106,7 +106,7 @@ export function buildMqttHaAdoptionProvider(
         (a) => a.device.nativeId === childNativeId,
       )
       if (adoptable === undefined) return null
-      const adoptedDeviceId = await adoptedDeviceIdFor(brokerId, childNativeId, listAdoptedMqttHa)
+      const adoptedDeviceId = await adoptedDeviceIdFor(brokerId, adoptable, listAdoptedMqttHa)
       return buildMqttHaDeviceCandidate({ adoptable, adoptedDeviceId })
     },
 

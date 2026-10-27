@@ -3,7 +3,7 @@
 IMPORT addon: subscribes to Home Assistant MQTT discovery on a broker from the
 `mqtt-broker` cap (`mqttBroker.getBrokerConfig`), surfaces candidates via
 `device-adoption`. One candidate = one physical device (all entities sharing a
-discovery `device` block; a multi-actuator box is split per gang). Mapping is by
+discovery `device` block; a multi-actuator box is ONE Container with a child per gang, `mqtt-ha-container-plan.ts`). Mapping is by
 component + `device_class` + unit, never by model (`mqtt-ha-domain-mapping.ts`);
 power / energy / voltage / current fold into `power-meter` (D951); battery is the
 `battery` cap. State is decoded per entity with its `value_template`
