@@ -8,13 +8,14 @@ import {
   type PetFeederStatus,
   petFeederCapability,
 } from '@camstack/types'
+import { petkitFeederDeviceSchema } from '../config.js'
 import {
   coldStartFeederStatus,
   type FeederReading,
   mapFeederToStatus,
 } from '../petkit-feeder-mapping.js'
 import { petkitConnections } from '../petkit-gateway.js'
-import { petkitFeederDeviceSchema } from '../config.js'
+import { petkitSession } from '../petkit-session.js'
 
 const PET_FEEDER_CAP = 'pet-feeder'
 /** How long a slice stays "fresh" before a read triggers a re-poll. */
@@ -170,11 +171,16 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     try {
       await handle.refresh()
     } catch (err: unknown) {
+      // A session the cloud ended (kicked, expired) is an integration-level fact:
+      // report it once per integration, never per feeder.
+      petkitSession.failure(this.integrationId, err)
       this.ctx.logger.warn('petkit feeder: refresh failed', {
+        tags: { deviceId: this.id },
         meta: { petkitDeviceId: this.petkitDeviceId, error: errMsg(err) },
       })
       return
     }
+    void petkitSession.ok(this.integrationId)
     const reading = extractFeederReading(handle)
     this.runtimeState.setCapState(PET_FEEDER_CAP, mapFeederToStatus(reading, Date.now()))
     this.markOnline(reading.online)

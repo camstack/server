@@ -29,6 +29,25 @@ export type {
   AddonRouteReplyEnvelope,
 } from './addon/build-addon-route-provider.js'
 export { buildAddonRouteProvider } from './addon/build-addon-route-provider.js'
+export type {
+  BuildSessionLostAlertInput,
+  IntegrationSessionBinding,
+  IntegrationSessionReporterOptions,
+  IntegrationSessionSink,
+  SessionAlertAction,
+  SessionHealthAlertsPort,
+  SessionHealthTrackerOptions,
+  SessionLossReason,
+  SessionLostInfo,
+} from './addon/session-health.js'
+export {
+  buildSessionLostAlert,
+  DEFAULT_SESSION_LOST_DEBOUNCE_MS,
+  IntegrationSessionReporter,
+  SESSION_LOST_ALERT_CATEGORY,
+  SessionHealthTracker,
+  sessionLostAlertId,
+} from './addon/session-health.js'
 export type { DurableState, DurableStateDeps } from './addon/durable-state.js'
 export { createDurableState } from './addon/durable-state.js'
 // Re-export `IAuthProvider` from the cap definition — single source of

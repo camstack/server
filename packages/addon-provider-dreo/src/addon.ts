@@ -23,6 +23,7 @@ import { dreoConnections } from './dreo-gateway.js'
 import { cascadeRemoveDevicesForIntegration } from './dreo-integration-device-cascade.js'
 import { defaultFacade } from './dreo-integration-manager.js'
 import { type OfflineTarget, setIntegrationDevicesOnline } from './dreo-integration-offline.js'
+import { dreoSession } from './dreo-session.js'
 
 /**
  * Dreo device-provider addon — `mode: account` (multi-account, broker-less).
@@ -65,6 +66,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
+    dreoSession.bind({ logger: this.ctx.logger, getAlerts: () => this.ctx.api.alerts })
     this.clients = new DreoClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
       this.ctx.logger.info('Dreo: integration connected', { meta: { integrationId } })
@@ -98,6 +100,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       this.ctx.logger.warn('Dreo: provider shutdown error', { meta: { error: errMsg(err) } })
     }
     this.clients = null
+    dreoSession.unbind()
     await super.onShutdown()
   }
 
@@ -156,6 +159,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       const vanished = reg.list().filter((id) => !surviving.has(id))
       await reg.retain(surviving)
       for (const integrationId of vanished) {
+        await dreoSession.forget(integrationId)
         await this.cascadeRemoveDevicesForIntegration(integrationId)
       }
     } catch (err) {

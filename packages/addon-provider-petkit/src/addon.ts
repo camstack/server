@@ -26,6 +26,7 @@ import { buildPetkitAdoptionProvider } from './petkit-adoption-provider.js'
 import { PetkitClientRegistry } from './petkit-client-registry.js'
 import { buildPetkitConnectionTestProvider } from './petkit-connection-test.js'
 import { petkitConnections } from './petkit-gateway.js'
+import { petkitSession } from './petkit-session.js'
 
 /**
  * PetKit device-provider addon — `mode: account` (multi-account, broker-less).
@@ -58,6 +59,10 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
+    petkitSession.bind({
+      logger: this.ctx.logger,
+      getAlerts: () => this.ctx.api.alerts,
+    })
     this.clients = new PetkitClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
       this.ctx.logger.info('PetKit: integration connected', { meta: { integrationId } })
@@ -101,6 +106,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       this.ctx.logger.warn('PetKit: provider shutdown error', { meta: { error: errMsg(err) } })
     }
     this.clients = null
+    petkitSession.unbind()
     await super.onShutdown()
   }
 
@@ -148,6 +154,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       const vanished = reg.list().filter((id) => !surviving.has(id))
       await reg.retain(surviving)
       for (const integrationId of vanished) {
+        await petkitSession.forget(integrationId)
         await this.cascadeRemoveDevicesForIntegration(integrationId)
       }
     } catch (err) {

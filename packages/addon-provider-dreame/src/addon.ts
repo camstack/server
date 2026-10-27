@@ -1,4 +1,3 @@
-import { userError } from '@camstack/types'
 import { Nodreame } from '@apocaliss92/nodedreame'
 import {
   BaseDeviceProvider,
@@ -15,6 +14,7 @@ import {
   type IDeviceAdoptionProvider,
   type ProviderRegistration,
   type SystemEvent,
+  userError,
 } from '@camstack/types'
 import { buildConnectionFormSchema, connectionFromSettings, toNodreameOptions } from './config.js'
 import { DreameContainerDevice } from './devices/dreame-container-device.js'
@@ -25,6 +25,7 @@ import { dreameFacades } from './dreame-gateway.js'
 import { cascadeRemoveDevicesForIntegration } from './dreame-integration-device-cascade.js'
 import { type OfflineTarget, setIntegrationDevicesOnline } from './dreame-integration-offline.js'
 import { serveMapImage, setMapBaseUrl } from './dreame-map-store.js'
+import { dreameSession } from './dreame-session.js'
 
 /**
  * Dreame device-provider addon — `mode: account` (multi-account, broker-less).
@@ -66,6 +67,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
+    dreameSession.bind({ logger: this.ctx.logger, getAlerts: () => this.ctx.api.alerts })
     this.clients = new DreameClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
       this.ctx.logger.info('Dreame: integration connected', { meta: { integrationId } })
@@ -120,6 +122,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       this.ctx.logger.warn('Dreame: provider shutdown error', { meta: { error: errMsg(err) } })
     }
     this.clients = null
+    dreameSession.unbind()
     await super.onShutdown()
   }
 
@@ -210,6 +213,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       const vanished = reg.list().filter((id) => !surviving.has(id))
       await reg.retain(surviving)
       for (const integrationId of vanished) {
+        await dreameSession.forget(integrationId)
         await this.cascadeRemoveDevicesForIntegration(integrationId)
       }
     } catch (err) {

@@ -4,9 +4,10 @@ import {
   type DreoDeviceInfo,
   Nodedreo,
 } from '@apocaliss92/nodedreo'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IntegrationSessionSink, type IScopedLogger } from '@camstack/types'
 import { type DreoConfig, toDreoConstructorArgs } from './config.js'
 import type { DreoConnectionSurface } from './dreo-gateway.js'
+import { dreoSession } from './dreo-session.js'
 
 /** Status of a single Dreo account connection. */
 export type DreoBrokerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -53,6 +54,8 @@ export interface DreoIntegrationManagerOptions {
   readonly surfaceSink: DreoSurfaceSink
   /** Factory seam for testing. When omitted, builds a real {@link Nodedreo}. */
   readonly makeFacade?: DreoFacadeFactory
+  /** Session-health sink (the standard cloud-connection-lost alert). Defaults to the addon's. */
+  readonly session?: IntegrationSessionSink
 }
 
 /**
@@ -87,6 +90,7 @@ export class DreoIntegrationManager {
   readonly #surfaceSink: DreoSurfaceSink
   readonly #makeFacade: DreoFacadeFactory
 
+  readonly #session: IntegrationSessionSink
   #facade: DreoFacadeLike | null = null
   #status: DreoBrokerStatus = 'disconnected'
   #deviceCount = 0
@@ -102,6 +106,7 @@ export class DreoIntegrationManager {
     this.#onDisconnected = options.onDisconnected
     this.#surfaceSink = options.surfaceSink
     this.#makeFacade = options.makeFacade ?? defaultFacade
+    this.#session = options.session ?? dreoSession
   }
 
   /** The live facade, or null when stopped. */
@@ -145,6 +150,7 @@ export class DreoIntegrationManager {
     }
     this.#status = 'connecting'
     this.#error = null
+    this.#session.register(this.#id, this.#name)
 
     const facade = this.#makeFacade(this.#connection)
     this.#facade = facade
@@ -175,6 +181,7 @@ export class DreoIntegrationManager {
       this.#status = 'connected'
       this.#error = null
       this.#lastCheckedAt = Date.now()
+      void this.#session.ok(this.#id)
       this.#onConnected(this.#id)
       this.#logger.info('DreoIntegrationManager: connected', {
         tags: { brokerId: this.#id },
@@ -188,6 +195,7 @@ export class DreoIntegrationManager {
           : errMsg(err)
       this.#lastCheckedAt = Date.now()
       this.#surfaceSink.set(this.#id, null)
+      this.#session.failure(this.#id, err)
       this.#onDisconnected(this.#id)
       this.#logger.warn('DreoIntegrationManager: connect failed', {
         tags: { brokerId: this.#id },

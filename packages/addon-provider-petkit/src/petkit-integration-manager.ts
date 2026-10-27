@@ -9,6 +9,7 @@ import {
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { type PetkitConfig, toNodepetkitOptions, toPetkitCredentials } from './config.js'
 import type { PetkitConnectionSurface, PetkitSurfaceSink } from './petkit-gateway.js'
+import { type PetkitSessionSink, petkitSession } from './petkit-session.js'
 
 /** Status of a single PetKit account connection. */
 export type PetkitConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -49,6 +50,8 @@ export interface PetkitIntegrationManagerOptions {
   readonly surfaceSink: PetkitSurfaceSink
   /** Factory seam for testing. When omitted, builds a real {@link Nodepetkit}. */
   readonly makeFacade?: PetkitFacadeFactory
+  /** Session-health sink (the standard cloud-connection-lost alert). Defaults to the addon's. */
+  readonly session?: PetkitSessionSink
 }
 
 function defaultFacade(config: PetkitConfig): PetkitFacadeLike {
@@ -80,6 +83,7 @@ export class PetkitIntegrationManager {
   readonly #onDisconnected: (integrationId: string) => void
   readonly #surfaceSink: PetkitSurfaceSink
   readonly #makeFacade: PetkitFacadeFactory
+  readonly #session: PetkitSessionSink
 
   #started = false
   #status: PetkitConnectionStatus = 'disconnected'
@@ -96,6 +100,7 @@ export class PetkitIntegrationManager {
     this.#onDisconnected = options.onDisconnected
     this.#surfaceSink = options.surfaceSink
     this.#makeFacade = options.makeFacade ?? defaultFacade
+    this.#session = options.session ?? petkitSession
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -134,6 +139,7 @@ export class PetkitIntegrationManager {
     this.#started = true
     this.#status = 'connecting'
     this.#error = null
+    this.#session.register(this.#id, this.#name)
 
     const facade = this.#makeFacade(this.#connection)
     try {
@@ -161,6 +167,7 @@ export class PetkitIntegrationManager {
       this.#status = 'connected'
       this.#error = null
       this.#lastCheckedAt = Date.now()
+      void this.#session.ok(this.#id)
       this.#onConnected(this.#id)
       this.#logger.info('PetkitIntegrationManager: connected', {
         tags: { integrationId: this.#id },
@@ -175,6 +182,7 @@ export class PetkitIntegrationManager {
           : errMsg(err)
       this.#lastCheckedAt = Date.now()
       this.#surfaceSink.set(this.#id, null)
+      this.#session.failure(this.#id, err)
       this.#onDisconnected(this.#id)
       this.#logger.warn('PetkitIntegrationManager: connect failed', {
         tags: { integrationId: this.#id },

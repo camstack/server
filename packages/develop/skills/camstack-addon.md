@@ -97,6 +97,14 @@ Rules that bite:
 - **Secrets** — any password, token or key field, `secretStatePaths`, a
   credential for a spawned child: the `camstack-secrets` skill. Never read a
   credential from the environment.
+- **An addon that keeps a cloud session reports it, it does not alert by hand.**
+  Create an `IntegrationSessionReporter` (`@camstack/types`) with a `classify(err)`
+  that returns a `SessionLossReason` only when the cloud ended OUR session
+  (kicked, token refused, sign-in rejected) and `null` for network and per-device
+  errors; `bind()` it in `onInitialize`, call `failure(id, err)` / `ok(id)` from
+  the manager and the devices, `forget(id)` for a vanished integration and
+  `unbind()` on shutdown. One debounced alert per integration, resolved by the
+  next `ok` (D953).
 
 ## 3. Wire it — the four places, one of which is silent
 

@@ -1,6 +1,11 @@
 import { EventEmitter } from 'node:events'
-import type { MiotProp, PropertyResult, StateChangedEvent } from '@apocaliss92/nodedreame'
-import type { IScopedLogger } from '@camstack/types'
+import {
+  DreameAuthError,
+  type MiotProp,
+  type PropertyResult,
+  type StateChangedEvent,
+} from '@apocaliss92/nodedreame'
+import type { IntegrationSessionSink, IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { type DreameConfig, settingsToDreameConfig } from '../config.js'
 import { dreameFacades } from '../dreame-gateway.js'
@@ -86,6 +91,7 @@ function makeManager(
   config: DreameConfig,
   facade: DreameFacadeLike,
   id = 'b1',
+  session?: IntegrationSessionSink,
 ): DreameIntegrationManager {
   return new DreameIntegrationManager({
     id,
@@ -95,6 +101,7 @@ function makeManager(
     onConnected: () => undefined,
     onDisconnected: () => undefined,
     makeFacade: () => facade,
+    ...(session !== undefined ? { session } : {}),
   })
 }
 
@@ -192,5 +199,37 @@ describe('sameConnection', () => {
     const a = settingsToDreameConfig({ username: 'u', password: 'p' })
     const b = settingsToDreameConfig({ username: 'u', password: 'p' })
     expect(sameConnection(a, b)).toBe(true)
+  })
+})
+
+describe('DreameIntegrationManager session reporting', () => {
+  function recorder() {
+    const calls: string[] = []
+    const session: IntegrationSessionSink = {
+      register: (id, name) => void calls.push(`register:${id}:${name}`),
+      failure: (id, err) =>
+        void calls.push(`failure:${id}:${err instanceof Error ? err.name : '?'}`),
+      ok: async (id) => void calls.push(`ok:${id}`),
+    }
+    return { calls, session }
+  }
+  const config = settingsToDreameConfig({ username: 'u', password: 'p' })
+
+  it('reports a rejected sign-in', async () => {
+    const { calls, session } = recorder()
+    const facade: DreameFacadeLike = {
+      ...fakeFacade([]),
+      login: () => Promise.reject(new DreameAuthError('bad credentials')),
+    }
+    const mgr = makeManager(config, facade, 'b1', session)
+    await expect(mgr.start()).rejects.toThrow()
+    expect(calls).toEqual(['register:b1:Account 1', 'failure:b1:DreameAuthError'])
+  })
+
+  it('reports a good sign-in as a restored session', async () => {
+    const { calls, session } = recorder()
+    const mgr = makeManager(config, fakeFacade([]), 'b1', session)
+    await mgr.start()
+    expect(calls).toEqual(['register:b1:Account 1', 'ok:b1'])
   })
 })

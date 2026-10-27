@@ -1,9 +1,10 @@
 import type { MiotProp, PropertyResult, StateChangedEvent } from '@apocaliss92/nodedreame'
 import { DreameAuthError, Nodreame } from '@apocaliss92/nodedreame'
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IntegrationSessionSink, type IScopedLogger } from '@camstack/types'
 import { type DreameConfig, toNodreameOptions } from './config.js'
 import { catalogProps } from './dreame-entity-catalog.js'
 import { dreameFacades } from './dreame-gateway.js'
+import { dreameSession } from './dreame-session.js'
 
 /**
  * The slice of a `@apocaliss92/nodedreame` device the manager actually drives:
@@ -56,6 +57,8 @@ export interface DreameIntegrationManagerOptions {
   readonly onDisconnected: (brokerId: string) => void
   /** Factory seam for testing. When omitted, builds a real {@link Nodreame}. */
   readonly makeFacade?: DreameFacadeFactory
+  /** Session-health sink (the standard cloud-connection-lost alert). Defaults to the addon's. */
+  readonly session?: IntegrationSessionSink
 }
 
 /**
@@ -76,6 +79,7 @@ export class DreameIntegrationManager {
   readonly #onConnected: (brokerId: string) => void
   readonly #onDisconnected: (brokerId: string) => void
   readonly #makeFacade: DreameFacadeFactory
+  readonly #session: IntegrationSessionSink
 
   #facade: DreameFacadeLike | null = null
   #status: DreameBrokerStatus = 'disconnected'
@@ -90,6 +94,7 @@ export class DreameIntegrationManager {
     this.#logger = options.logger
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
+    this.#session = options.session ?? dreameSession
     this.#makeFacade =
       options.makeFacade ??
       ((config: DreameConfig): DreameFacadeLike => new Nodreame(toNodreameOptions(config)))
@@ -135,6 +140,7 @@ export class DreameIntegrationManager {
     }
     this.#status = 'connecting'
     this.#error = null
+    this.#session.register(this.#id, this.#name)
 
     const facade = this.#makeFacade(this.#connection)
     this.#facade = facade
@@ -144,6 +150,8 @@ export class DreameIntegrationManager {
       // An offline/reconnecting robot re-emits the SAME error continuously, so
       // dedupe: WARN only when the message CHANGES (the transition), and drop
       // identical repeats to debug — otherwise one line floods the log.
+      // A refused token mid-session is a lost session, however quiet the library keeps it.
+      this.#session.failure(this.#id, err)
       const message = errMsg(err)
       const changed = message !== this.#error
       this.#error = message
@@ -165,6 +173,8 @@ export class DreameIntegrationManager {
     // emitter tripped Node's default MaxListeners cap (a robot container
     // spawns dozens of children).
     facade.on('stateChanged', (push: StateChangedEvent) => {
+      // A push means the cloud session is alive (idempotent, cheap).
+      void this.#session.ok(this.#id)
       dreameFacades.emitStateChanged(this.#id, push.deviceId)
     })
 
@@ -183,6 +193,7 @@ export class DreameIntegrationManager {
       this.#status = 'connected'
       this.#error = null
       this.#lastCheckedAt = Date.now()
+      void this.#session.ok(this.#id)
       this.#onConnected(this.#id)
       this.#logger.info('DreameIntegrationManager: connected', {
         tags: { brokerId: this.#id },
@@ -195,6 +206,7 @@ export class DreameIntegrationManager {
           ? 'authentication failed — check credentials / region'
           : errMsg(err)
       this.#lastCheckedAt = Date.now()
+      this.#session.failure(this.#id, err)
       this.#onDisconnected(this.#id)
       this.#logger.warn('DreameIntegrationManager: connect failed', {
         tags: { brokerId: this.#id },

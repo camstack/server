@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7248 source files · 1197 file(s) in no subsystem.**
+**31 subsystems · 7252 source files · 1197 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -23,11 +23,11 @@ commits. A generated page may not.
 
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
-| Kernel, addon lifecycle and boot | 101 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +75 more, 13 ADRs | 2026-10-27 | ✅ |
+| Kernel, addon lifecycle and boot | 102 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +76 more, 13 ADRs | 2026-10-27 | ✅ |
 | Transport and cross-node routing | 101 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +52 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 310 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md`, +217 more, 51 ADRs | 2026-10-26 | ✅ |
 | Device model and the provider contract | 108 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +54 more, 6 ADRs | 2026-10-26 | ✅ |
-| Device providers (per vendor) | 647 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +75 more, 14 ADRs | 2026-10-26 | ✅ |
+| Device providers (per vendor) | 650 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +76 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 142 | `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, `architecture/inference-devices.md`, +61 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 199 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +100 more, 27 ADRs | 2026-10-26 | ✅ |
@@ -63,7 +63,7 @@ Owns processes: loads addon manifests, forks runners, supervises crashes and dec
 
 - **Owner doc**: `docs/architecture/addon-lifecycle.md`
 - **Code**: `packages/system/src/kernel/*.ts`, `packages/system/src/kernel/lifecycle/**`, `packages/system/src/kernel/deps/**`, `packages/system/src/kernel/utils/**`, `packages/system/src/addon/**`, `packages/system/src/addon-routes/**`, `packages/system/src/lifecycle/**`, `packages/system/src/process/**`, `packages/system/src/feature/**`, `packages/system/src/*.ts`, `packages/types/src/addon/**`, `packages/types/src/lifecycle/**`, `packages/types/src/readiness/**`, `server/backend/src/boot/**`, `packages/node-root/**`
-- **Files**: 101 (98 claimed by some document)
+- **Files**: 102 (99 claimed by some document)
 - **Uncovered**: `server/backend/src/boot` (3)
 
 ### ✅ Transport and cross-node routing
@@ -99,7 +99,7 @@ Twenty vendor integrations that turn a camera, a plug or a robot vacuum into dev
 
 - **Owner doc**: `docs/architecture/device-model.md`
 - **Code**: `packages/addon-provider-*/**`
-- **Files**: 647 (647 claimed by some document)
+- **Files**: 650 (650 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Decode and the data planes
