@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-tuya",
-  "version": "0.2.146",
+  "version": "0.2.147",
   "description": "Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities",
   "keywords": [
     "camstack",

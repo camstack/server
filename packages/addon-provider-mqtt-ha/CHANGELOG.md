@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.29] - 2026-10-27
+
 ### Added
 
 - zigbee2mqtt devices import as ONE device each: every entity of a discovery
@@ -16,5 +18,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   energy, voltage and current fold into the load's `power-meter`. JSON state
   topics are read through each entity's `value_template`.
 - Light, thermostat and event-emitter device types.
-
-- Package README and changelog, included in the published files list.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.631] - 2026-10-27
+
 ### Changed
 
 - Motion detection is shown as "Motion Detection" (was "Motion Detection (WASM)").

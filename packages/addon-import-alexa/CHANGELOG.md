@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.155] - 2026-10-27
+
 ### Changed
 
 - Echo speech signs in as the import broker (its refresh token) instead of a
@@ -15,7 +17,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   single broker, or is dropped with a named state when there are none or several.
 - The Alexa target form picks the Echo from the account's device list.
 - The Alexa kind serves the Alexa brand mark as its icon.
-
-### Added
-
-- Package README and changelog, included in the published files list.

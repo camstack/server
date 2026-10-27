@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-waste-collections",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source.",
   "keywords": [
     "camstack",
