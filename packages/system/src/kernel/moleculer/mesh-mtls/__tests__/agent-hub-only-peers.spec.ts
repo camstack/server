@@ -8,7 +8,7 @@ import { connect as netConnect, createServer as createNetServer } from 'node:net
 import type { Socket as NetSocket } from 'node:net'
 import * as tls from 'node:tls'
 import { ServiceBroker } from 'moleculer'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateMeshCa, issueMeshLeafForNode, type MeshCaSigner } from '../mesh-ca.js'
 import { MeshCrl } from '../mesh-crl.js'
 import {
@@ -76,17 +76,22 @@ async function tlsKeptOpen(ca: MeshCaSigner, cn: string, port: number): Promise<
   })
 }
 
-const brokers: ServiceBroker[] = []
-afterEach(async () => {
-  for (const b of brokers.splice(0)) await b.stop()
-})
+/**
+ * Broker start is ~0.5 s of real time and stop ~0.1 s (measured), constant per
+ * start. The tests below only read the agent, so ONE agent is started in
+ * `beforeAll` under its own budget instead of inside each 5 s per-test budget.
+ */
+const AGENT_BOOT_BUDGET_MS = 30_000
 
-async function startAgent(): Promise<{
+interface StartedAgent {
   readonly tx: TlsTcpTransporter
+  readonly broker: ServiceBroker
   readonly clearPort: number
   readonly tlsPort: number
   readonly ca: MeshCaSigner
-}> {
+}
+
+async function startAgent(): Promise<StartedAgent> {
   const ca = await generateMeshCa()
   const leaf = await issueMeshLeafForNode(ca, 'agent-a')
   const clearPort = await freePort()
@@ -97,7 +102,11 @@ async function startAgent(): Promise<{
     hubOnlyPeers: true,
     udpDiscovery: false,
     crl: new MeshCrl(),
-    meshTls: { caCertPem: ca.certPem, certPem: leaf.certPem, keyPem: leaf.keyPem },
+    meshTls: {
+      caCertPem: ca.certPem,
+      certPem: leaf.certPem,
+      keyPem: leaf.keyPem,
+    },
   })
   const broker = new ServiceBroker({
     nodeID: 'agent-a',
@@ -106,19 +115,26 @@ async function startAgent(): Promise<{
     logger: false,
     metrics: { enabled: false },
   })
-  brokers.push(broker)
   await broker.start()
-  return { tx, clearPort, tlsPort, ca }
+  return { tx, broker, clearPort, tlsPort, ca }
 }
 
 describe('keepOnlyGossipNodes', () => {
   it('drops every node but the kept ones, from online and offline', () => {
     const out = keepOnlyGossipNodes(
-      { sender: 'hub', online: { hub: [1], 'agent-b': [2] }, offline: { 'agent-c': 3 } },
+      {
+        sender: 'hub',
+        online: { hub: [1], 'agent-b': [2] },
+        offline: { 'agent-c': 3 },
+      },
       new Set(['hub', 'agent-a']),
     )
     expect(out.removed).toEqual(['agent-b', 'agent-c'])
-    expect(out.payload).toEqual({ sender: 'hub', online: { hub: [1] }, offline: {} })
+    expect(out.payload).toEqual({
+      sender: 'hub',
+      online: { hub: [1] },
+      offline: {},
+    })
   })
 
   it('returns the very payload when there is nothing to drop', () => {
@@ -131,7 +147,13 @@ describe('keepOnlyGossipNodes', () => {
 
 describe('helloMeshTlsPort', () => {
   it('reads a valid port from a HELLO payload, else null (an older node)', () => {
-    expect(helloMeshTlsPort({ sender: 'a', port: 1, [MESH_TLS_PORT_HELLO_FIELD]: 7443 })).toBe(7443)
+    expect(
+      helloMeshTlsPort({
+        sender: 'a',
+        port: 1,
+        [MESH_TLS_PORT_HELLO_FIELD]: 7443,
+      }),
+    ).toBe(7443)
     expect(helloMeshTlsPort({ sender: 'a', [MESH_TLS_PORT_HELLO_FIELD]: '7443' })).toBeNull()
     expect(helloMeshTlsPort({ sender: 'a', port: 1 })).toBeNull()
     expect(helloMeshTlsPort(null)).toBeNull()
@@ -139,8 +161,15 @@ describe('helloMeshTlsPort', () => {
 })
 
 describe('enrolled agent — the hub is its only peer (D848)', () => {
+  let agent: StartedAgent
+  beforeAll(async () => {
+    agent = await startAgent()
+  }, AGENT_BOOT_BUDGET_MS)
+  afterAll(async () => {
+    await agent.broker.stop()
+  }, AGENT_BOOT_BUDGET_MS)
+
   it('serves no clear TCP, and cannot be switched back', async () => {
-    const agent = await startAgent()
     expect(agent.tx.isClearTransportEnabled()).toBe(false)
     expect(await accepts(agent.clearPort)).toBe(false)
     await agent.tx.enableClearTransport()
@@ -148,14 +177,14 @@ describe('enrolled agent — the hub is its only peer (D848)', () => {
   })
 
   it("accepts the hub's certificate on TLS and refuses another agent's", async () => {
-    const agent = await startAgent()
     expect(await tlsKeptOpen(agent.ca, 'hub', agent.tlsPort)).toBe(true)
     expect(await tlsKeptOpen(agent.ca, 'agent-b', agent.tlsPort)).toBe(false)
   })
 
   it('dials nobody but the hub', async () => {
-    const agent = await startAgent()
-    const writer = agent.tx.writer as { connect: (nodeID: string) => Promise<NetSocket> }
+    const writer = agent.tx.writer as {
+      connect: (nodeID: string) => Promise<NetSocket>
+    }
     await expect(writer.connect('agent-b')).rejects.toThrow(/dials only "hub"/)
   })
 })

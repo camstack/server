@@ -65,7 +65,15 @@ async function listenOnFreePort(server: tls.Server | NetServer): Promise<number>
   return addr.port
 }
 
-describe('hub writer TLS dial after deferred enableMeshTls (A→B)', () => {
+/**
+ * Each test boots a real broker (~0.5 s, constant, measured) plus a mesh CA mint
+ * and a handshake; the 5 s default is too tight on a loaded verify:push runner.
+ */
+const BROKER_TEST_BUDGET_MS = 20_000
+
+describe('hub writer TLS dial after deferred enableMeshTls (A→B)', {
+  timeout: BROKER_TEST_BUDGET_MS,
+}, () => {
   it('dials a tlsPeer on tlsPort, not node.port; clear peers keep clear connect', async () => {
     const ca = await generateMeshCa()
     const hubLeaf = await issueMeshLeafForNode(ca, 'hub')

@@ -55,7 +55,11 @@ async function startHub(): Promise<Hub> {
     hubTlsOnly: true,
     udpDiscovery: false,
     crl,
-    meshTls: { caCertPem: ca.certPem, certPem: leaf.certPem, keyPem: leaf.keyPem },
+    meshTls: {
+      caCertPem: ca.certPem,
+      certPem: leaf.certPem,
+      keyPem: leaf.keyPem,
+    },
   })
   const broker = new ServiceBroker({
     nodeID: 'hub',
@@ -93,7 +97,15 @@ async function dial(
   })
 }
 
-describe('verifiedPeer — certificate identity of a mesh peer', () => {
+/**
+ * Each test boots a real broker (~0.5 s, constant, measured) plus a mesh CA mint
+ * and a handshake; the 5 s default is too tight on a loaded verify:push runner.
+ */
+const BROKER_TEST_BUDGET_MS = 20_000
+
+describe('verifiedPeer — certificate identity of a mesh peer', {
+  timeout: BROKER_TEST_BUDGET_MS,
+}, () => {
   it('a leaf issued by the mesh CA for the node id is a verified peer', async () => {
     const hub = await startHub()
     const leaf = await issueMeshLeafForNode(hub.ca, 'agent-a')
