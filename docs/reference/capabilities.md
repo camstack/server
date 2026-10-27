@@ -138,7 +138,7 @@ Singleton or collection providers, addressed without a device.
 | `audio-codec` | 11 | — | — | — | — | `decoder-nodeav` |
 | `auth-provider` | 4 | — | — | — | ✓ | `auth-oidc` `local-auth` |
 | `backup` | 20 | — | — | — | — | `backup-orchestrator` |
-| `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-homeassistant` `provider-homematic` |
+| `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-esphome` `provider-homeassistant` `provider-homematic` |
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
@@ -148,12 +148,12 @@ Singleton or collection providers, addressed without a device.
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |
 | `decoder` | 2 | — | — | — | — | `decoder-nodeav` |
-| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-tuya` `provider-wyze` |
+| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-tuya` `provider-wyze` |
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 8 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
 | `device-manager` | 92 | — | — | — | — | `device-manager` |
-| `device-provider` | 14 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
+| `device-provider` | 14 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
 | `display-palette` | 3 | — | — | — | — | `pipeline-orchestrator` |

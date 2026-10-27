@@ -1,0 +1,31 @@
+{
+  "connection": {
+    "s_connection": {
+      "title": "Board",
+      "host": {
+        "label": "Host / IP"
+      },
+      "port": {
+        "label": "API port"
+      }
+    },
+    "s_security": {
+      "title": "API security",
+      "noisePsk": {
+        "label": "Encryption key"
+      },
+      "password": {
+        "label": "Legacy API password"
+      },
+      "description": "The encryption key is the one in the board YAML under api: encryption: key:. Leave both empty for an unencrypted board."
+    }
+  },
+  "globalSettings": {
+    "s_esp-broker": {
+      "title": "ESPHome board",
+      "brokerHelp": {
+        "label": "Boards are managed separately"
+      }
+    }
+  }
+}

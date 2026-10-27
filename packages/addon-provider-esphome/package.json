@@ -1,0 +1,92 @@
+{
+  "name": "@camstack/addon-provider-esphome",
+  "version": "0.1.0",
+  "description": "ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client",
+  "keywords": [
+    "camstack",
+    "addon",
+    "camstack-addon",
+    "esphome",
+    "esp32",
+    "esp8266",
+    "provider"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/camstack/server.git",
+    "directory": "packages/addon-provider-esphome"
+  },
+  "homepage": "https://camstack-docs.zentik.app",
+  "bugs": {
+    "url": "https://github.com/camstack/server/issues"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "camstack": {
+    "displayName": "ESPHome Provider",
+    "addons": [
+      {
+        "id": "provider-esphome",
+        "category": "providers",
+        "name": "ESPHome",
+        "version": "0.1.0",
+        "description": "Connect to an ESPHome board over its native API and adopt its switches, lights, covers, buttons, sensors, numbers and selects",
+        "entry": "./dist/addon.js",
+        "icon": "assets/icon.svg",
+        "color": "#000000",
+        "instanceMode": "multiple",
+        "brokerKind": "esphome",
+        "execution": {
+          "placement": "hub-only"
+        },
+        "capabilities": [
+          {
+            "name": "device-provider"
+          },
+          {
+            "name": "broker"
+          },
+          {
+            "name": "device-adoption"
+          }
+        ]
+      }
+    ]
+  },
+  "files": [
+    "dist",
+    "i18n",
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run",
+    "publish:npm": "npm publish --access public"
+  },
+  "dependencies": {
+    "esphome-client": "2.0.0"
+  },
+  "peerDependencies": {
+    "@camstack/types": "*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@camstack/types": "*",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.11",
+    "vitest": "^2.0.0",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "connection": {
+    "s_connection": {
+      "title": "Scheda",
+      "host": {
+        "label": "Host / IP"
+      },
+      "port": {
+        "label": "Porta API"
+      }
+    },
+    "s_security": {
+      "title": "Sicurezza API",
+      "noisePsk": {
+        "label": "Chiave di cifratura"
+      },
+      "password": {
+        "label": "Password API (legacy)"
+      },
+      "description": "La chiave di cifratura e quella nello YAML della scheda sotto api: encryption: key:. Lascia entrambi i campi vuoti per una scheda non cifrata."
+    }
+  },
+  "globalSettings": {
+    "s_esp-broker": {
+      "title": "Scheda ESPHome",
+      "brokerHelp": {
+        "label": "Le schede sono gestite separatamente"
+      }
+    }
+  }
+}

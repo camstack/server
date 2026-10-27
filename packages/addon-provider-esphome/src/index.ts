@@ -1,0 +1,7 @@
+export { ESPHomeProviderAddon } from './addon.js'
+export { EspContainerDevice, espContainerSchema } from './devices/esp-container-device.js'
+export type { EspContainerConfig } from './devices/esp-container-device.js'
+export { espConnectionSchema, buildConnectionFormSchema } from './config.js'
+export type { EspConnection } from './config.js'
+export { planBoard } from './esphome-entity-spec.js'
+export type { ChildKind, ChildPlan } from './esphome-entity-spec.js'
