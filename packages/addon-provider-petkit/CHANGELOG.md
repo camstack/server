@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An alert when the PetKit session is lost, e.g. after a sign-in elsewhere
 
+### Fixed
+
+- The feeder reports the food tank and the bowl separately, shows when the pet is eating, lists the tank and the desiccant under Consumables, and offers Mark refilled only on models that support it
+
 ## [0.2.149] - 2026-10-27
 
 ### Changed

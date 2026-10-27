@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- pet-feeder reports bowlFood, eating and supportsMarkRefilled
+
 ## [1.2.428] - 2026-10-27
 
 ### Added
