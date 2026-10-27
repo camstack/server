@@ -75,6 +75,8 @@ declare global {
    * (the hub LAN IP), NOT behind the hub's HTTPS data-plane sub-path.
    */
   interface AlexaRemoteInitOptions {
+    /** Required: unset, the bundled library reads a package.json that is not shipped. */
+    readonly apiUserAgentPostfix: string
     readonly cookie?: string | object
     readonly amazonPage?: string
     readonly proxyOnly?: boolean

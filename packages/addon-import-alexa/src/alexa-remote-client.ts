@@ -16,6 +16,7 @@ import {
   decodeSmarthomeStates,
 } from './alexa-remote-decode.js'
 import { mapCommandToAlexaAction } from './alexa-command-map.js'
+import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
 
 /**
  * Real {@link AlexaClient} backed by `alexa-remote2` (Apollon77's unofficial
@@ -289,14 +290,24 @@ export class AlexaRemoteClient implements AlexaClient {
     // blob (carries the cookie + refresh material; the lib unpacks it).
     const persisted = await this.#loadSession()
     if (persisted !== null) {
-      return { cookie: persisted.cookieData, proxyOnly: false, amazonPage }
+      return {
+        cookie: persisted.cookieData,
+        proxyOnly: false,
+        amazonPage,
+        apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
+      }
     }
 
     // Operator-supplied cookie. This may be a raw cookie string OR a JSON
     // cookieData blob captured by alexa-remote2's standalone proxy login; we
     // parse JSON when it looks like an object so the lib gets the richer form.
     if (creds.cookie !== undefined && creds.cookie.length > 0) {
-      return { cookie: parseCookieMaterial(creds.cookie), proxyOnly: false, amazonPage }
+      return {
+        cookie: parseCookieMaterial(creds.cookie),
+        proxyOnly: false,
+        amazonPage,
+        apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
+      }
     }
 
     // A bare refresh token alone cannot bootstrap alexa-remote2's `init` — the

@@ -1,5 +1,6 @@
 import AlexaRemote from 'alexa-remote2'
 import { errMsg, type IScopedLogger } from '@camstack/types'
+import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
 
 /**
  * INTERACTIVE Amazon login via `alexa-remote2`'s built-in proxy auth mode.
@@ -130,6 +131,7 @@ export class AlexaProxyLoginSession {
         proxyPort: this.#opts.proxyPort,
         proxyLogLevel: 'warn',
         amazonPage,
+        apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
         logger: (...args: unknown[]) => {
           const line = args.map(String).join(' ')
           // alexa-cookie2 logs raw cookie/CSRF values (e.g. "Result: csrf=…,
