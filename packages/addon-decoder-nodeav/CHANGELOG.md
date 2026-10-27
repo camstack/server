@@ -11,5 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Decoder (node-av): Standalone in-process node-av decoder addon for CamStack.
-- Provides the addon Decoder (node-av).
+- Video Decoder: Standalone in-process node-av decoder addon for CamStack.
+- Provides the addon Video Decoder.

@@ -11,5 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Static / coturn TURN: Static / self-hosted (coturn) TURN provider for CamStack.
-- Provides the addon Static TURN (coturn / custom).
+- TURN Server: Static / self-hosted (coturn) TURN provider for CamStack.
+- Provides the addon TURN Server.

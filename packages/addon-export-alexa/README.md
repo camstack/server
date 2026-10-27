@@ -1,4 +1,4 @@
-# Alexa Smart Home export
+# Alexa Export
 
 Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint.
 

@@ -1,4 +1,4 @@
-# MQTT HA Discovery Import
+# MQTT Discovery
 
 Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config.
 

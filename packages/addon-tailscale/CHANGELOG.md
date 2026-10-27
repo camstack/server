@@ -12,4 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Tailscale: Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle.
-- Provides the addons Tailscale Client, Tailscale Ingress (Serve/Funnel).
+- Provides the addons Tailscale, Tailscale Funnel.

@@ -1,4 +1,4 @@
-# Waste Collections
+# Waste Collection
 
 Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source.
 

@@ -12,4 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Bosch: Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold).
-- Provides the addons Bosch SHC, Bosch Home Connect, Bosch HomeCom.
+- Provides the addons Bosch Smart Home, Bosch Home Connect, Bosch HomeCom.

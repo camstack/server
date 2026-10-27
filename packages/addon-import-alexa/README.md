@@ -1,4 +1,4 @@
-# Alexa Import
+# Alexa
 
 Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter).
 

@@ -1,4 +1,4 @@
-# SMTP Email (Nodemailer)
+# Email (SMTP)
 
 SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.
 

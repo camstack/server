@@ -1,4 +1,4 @@
-# Decoder (node-av)
+# Video Decoder
 
 Standalone in-process node-av decoder addon for CamStack.
 

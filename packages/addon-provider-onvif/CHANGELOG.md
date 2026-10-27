@@ -11,5 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- ONVIF Provider: ONVIF camera device provider addon for CamStack.
-- Provides the addon ONVIF Camera Provider.
+- ONVIF: ONVIF camera device provider addon for CamStack.
+- Provides the addon ONVIF.

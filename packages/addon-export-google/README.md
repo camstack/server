@@ -1,6 +1,6 @@
-# Google Home export
+# Google Home Export
 
-Google Home export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT) for the non-camera fleet, served over the hub's own OAuth account link. No Google credential is stored, sent or required.
+Google Home Export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT) for the non-camera fleet, served over the hub's own OAuth account link. No Google credential is stored, sent or required.
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 

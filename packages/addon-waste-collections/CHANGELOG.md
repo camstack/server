@@ -11,5 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Waste Collections: Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source.
-- Provides the addon Waste Collections.
+- Waste Collection: Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source.
+- Provides the addon Waste Collection.

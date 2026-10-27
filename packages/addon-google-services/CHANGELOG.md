@@ -11,5 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Google Services: Google Services — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider.
-- Provides the addon Google Services.
+- Google: Google Services — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider.
+- Provides the addon Google.

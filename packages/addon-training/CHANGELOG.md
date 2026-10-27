@@ -12,4 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Cloud Training: Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account.
-- Provides the addons Training, Modal (training cloud).
+- Provides the addons Training, Modal.
