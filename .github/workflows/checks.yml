@@ -167,6 +167,8 @@ jobs:
             scripts/check-no-dynamic-eval.ts \
             scripts/check-addon-entries.ts \
             scripts/check-addon-readme-changelog.ts \
+            scripts/check-changelog-unreleased.ts \
+            scripts/check-readmes-current.ts \
             scripts/check-storage-access-declarations.ts \
             scripts/check-pkg-allowlist.ts \
             scripts/check-store-census-not-on-a-timer.ts \

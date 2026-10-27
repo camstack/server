@@ -4,12 +4,12 @@
 
 # Guards
 
-196 repository guards: 191 in `scripts/`,
+198 repository guards: 193 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (187)
+## Enforced by CI checks (189)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -25,7 +25,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-addon-install-links.ts` | Addon install-link guard (D860) — **every "install an addon for X" offer must name a capability a published addon package actually declares.** ## The failure this catches An "Add destination" button on the Logging page linked to the addo… |
 | `scripts/check-addon-page-css.ts` | Addon-page CSS guard — every addon page's Tailwind classes ship in the admin-ui stylesheet (D747). |
 | `scripts/check-addon-pin-refusal.ts` | Pinned-`addonId` refusal guard — an unresolvable collection pin must never degrade into another provider's answer. |
-| `scripts/check-addon-readme-changelog.ts` | Every published addon package ships a README and a CHANGELOG, and both are in `files` so `npm pack` includes them. |
+| `scripts/check-addon-readme-changelog.ts` | Every package that reaches npm (addons and framework packages alike) ships a README and a CHANGELOG, and both are in `files` so `npm pack` includes them. The CHANGELOG keeps a `## [Unreleased]` section for `npm run changelog:add` to writ… |
 | `scripts/check-addon-root-is-the-only-load-path.ts` | Addon load-path guard — an addon is loaded ONLY from `<dataDir>/addons`. |
 | `scripts/check-addon-types-entry.ts` | Addon `types` entry guard — a self-contained addon build does not emit `.d.ts`, so a `package.json` `types` field points at a file that never exists and breaks tooling that trusts the declaration. |
 | `scripts/check-admin-i18n.ts` | Guard: no user-visible literal in the admin UI (or in the ui-library the admin renders) bypasses i18n. |
@@ -41,6 +41,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-catalog-licence.ts` | Catalog-licence guard — a model CamStack can download declares, in the catalog, what it is and on what terms (D661). |
 | `scripts/check-catalog-per-device-isolation.ts` | NO PER-DEVICE FAILURE MAY ABORT A FLEET-WIDE CATALOG BUILD. |
 | `scripts/check-cgroup-path-single-owner.ts` | A cgroup path is RESOLVED, never written down. |
+| `scripts/check-changelog-unreleased.ts` | A published package whose own files changed since the last `publish-*` tag must have at least one entry under `## [Unreleased]` in its CHANGELOG.md. |
 | `scripts/check-ci-baselines.ts` | Pinned-debt guard — lets CI enforce a check the repository does not yet pass. |
 | `scripts/check-claimed-get-status.ts` | GUARD: every entry that resolves a cap call by name asks the claim authority first (D663, ruling S3). |
 | `scripts/check-clip-crop-single-owner.ts` | Crop-derivation guard — the rectangle fed to an enrichment step is derived in exactly ONE place, and only the runner cuts it. |
@@ -145,6 +146,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-prune-settings-consumed.ts` | Prune-window guard — **every configurable prune window is declared, rendered and READ.** ## The failure this catches This repo has shipped four knobs that decided nothing: D62's per-family retention windows, `zoneMembershipMinOverlap`, `… |
 | `scripts/check-public-docs-private-data.ts` | Public-working-docs guard — design notes carry no private data. |
 | `scripts/check-pull-demuxer-open.ts` | Pull-dial guard — the session-decode worker opens its demuxer through ONE seam, and that seam is the one that skips the redundant stream-info probe. |
+| `scripts/check-readmes-current.ts` | The derived block of every package README matches what the manifest, the settings labels and the docs frontmatter say today. A stale block lists a capability the package no longer provides or a doc that moved. |
 | `scripts/check-recorded-still-off-delivery-path.ts` | R3 guard — a GOP re-decode may never sit on a delivery's critical path. |
 | `scripts/check-recorder-index-residency.ts` | Residency guard — the RAM index answers about what is RESIDENT; the ledger is the archive's authority (D295). |
 | `scripts/check-recording-trigger-fed.ts` | Trigger-fed guard (Traccia 0, D62) — every key of `RecordingTriggersSchema` must have an `onTrigger(...)` call site that actually feeds it, or be DECLARED as an exception in `UNFED_TRIGGER_KEYS` with a reason. |
