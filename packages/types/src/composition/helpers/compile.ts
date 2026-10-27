@@ -17,7 +17,8 @@ import { problem } from '../plan-result.js'
 import { reducerForActive } from './actuator.js'
 import { applianceDeviceType } from './appliance.js'
 import { type GroupTemplate, groupTemplate } from './catalog.js'
-import { integralDraft, statisticDraft } from './compile-history.js'
+import { derivativeDraft, integralDraft, statisticDraft } from './compile-history.js'
+import { arithmeticDraft, expressionDraft, thresholdDraft } from './compile-math.js'
 import { DEFAULT_HISTORY_RETENTION, type HistoryRetention } from './history-window.js'
 import {
   type ApplianceHelperSpec,
@@ -285,7 +286,26 @@ export function compileHelper(
       if (built.problems.length > 0) return { ok: false, problems: built.problems }
       return parseDraft(built.draft)
     }
+    case 'derivative': {
+      const built = derivativeDraft(spec, retention)
+      if (built.problems.length > 0) return { ok: false, problems: built.problems }
+      return parseDraft(built.draft)
+    }
+    case 'threshold':
+      return compileMath(thresholdDraft(spec))
+    case 'arithmetic':
+      return compileMath(arithmeticDraft(spec))
+    case 'expression':
+      return compileMath(expressionDraft(spec))
   }
+}
+
+function compileMath(built: {
+  readonly draft: unknown
+  readonly problems: readonly CompositionProblem[]
+}): HelperCompileResult {
+  if (built.problems.length > 0) return { ok: false, problems: built.problems }
+  return parseDraft(built.draft)
 }
 
 function compileGroup(spec: GroupHelperSpec): HelperCompileResult {

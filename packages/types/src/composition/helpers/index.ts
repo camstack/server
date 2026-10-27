@@ -50,7 +50,13 @@ export {
   sameHelperBody,
   templateDeviceType,
 } from './compile.js'
-export { declaredSeriesKind, integralDraft, statisticDraft } from './compile-history.js'
+export {
+  declaredSeriesKind,
+  derivativeDraft,
+  integralDraft,
+  statisticDraft,
+} from './compile-history.js'
+export { arithmeticDraft, expressionDraft, thresholdDraft } from './compile-math.js'
 export { KWH_PER_WATT_MS, wattMillisecondsToKwh } from './energy.js'
 export {
   type HistoryValue,
@@ -61,6 +67,7 @@ export {
   type SeriesRead,
   STATISTIC_STATS,
   SERIES_KINDS,
+  evaluateDerivative,
   evaluateStatistic,
   integrateReading,
 } from './history-math.js'
@@ -108,7 +115,9 @@ export {
   type SourcePickAccept,
   type SourcePickHistory,
   type SourcePickRequest,
+  type MathSourceKind,
   sourcePickForHistory,
+  sourcePickForMath,
   sourcePickForTemplate,
 } from './source-pick.js'
 export {
@@ -119,6 +128,13 @@ export {
   BINARY_AGGREGATES,
   GROUP_TEMPLATE_IDS,
   ApplianceHelperSpecSchema,
+  ARITHMETIC_OPS,
+  ArithmeticHelperSpecSchema,
+  DERIVATIVE_UNITS,
+  DerivativeHelperSpecSchema,
+  EXPRESSION_OUTPUTS,
+  ExpressionHelperSpecSchema,
+  ThresholdHelperSpecSchema,
   GroupHelperSpecSchema,
   GroupTemplateIdSchema,
   HelperMemberSchema,
@@ -133,6 +149,14 @@ export {
   type AggregateReducer,
   type BinaryAggregate,
   type ApplianceHelperSpec,
+  type ArithmeticHelperSpec,
+  type ArithmeticOp,
+  type DerivativeHelperSpec,
+  type DerivativeUnit,
+  type ExpressionHelperSpec,
+  type ExpressionInput,
+  type ExpressionOutput,
+  type ThresholdHelperSpec,
   type GroupHelperSpec,
   type GroupTemplateId,
   type HelperMember,

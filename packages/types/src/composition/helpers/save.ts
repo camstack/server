@@ -9,7 +9,7 @@ import type { CompositionProblem } from '../composition-report.js'
 import { problem } from '../plan-result.js'
 import { groupTemplate } from './catalog.js'
 import { compileHelper, sameHelperBody } from './compile.js'
-import type { GroupHelperSpec } from './spec.js'
+import type { ArithmeticHelperSpec, GroupHelperSpec } from './spec.js'
 
 /** What a save learned about one member device. Absent keys were not read. */
 export interface HelperMemberFact {
@@ -94,6 +94,7 @@ export function helperSaveProblems(
     ]
   }
   if (spec.kind === 'appliance') return applianceMemberProblems(spec.member, facts)
+  if (spec.kind === 'arithmetic') return arithmeticQuantityProblems(spec, facts)
   if (spec.kind !== 'group') return []
   return [...quantityProblems(spec, facts), ...deviceTypeProblems(spec, facts)]
 }
@@ -128,4 +129,29 @@ function applianceMemberProblems(
     )
   }
   return problems
+}
+
+/**
+ * A sum, a difference and a ratio combine readings of ONE quantity. The ratio
+ * of two powers is a plain number, but a power over an energy is not a ratio of
+ * anything, so it is refused too. Inputs that did not report a quantity are not
+ * guessed at.
+ */
+function arithmeticQuantityProblems(
+  spec: ArithmeticHelperSpec,
+  facts: ReadonlyMap<string, HelperMemberFact>,
+): readonly CompositionProblem[] {
+  const known = spec.inputs.flatMap((input) => {
+    const quantity = facts.get(compositionSourceKey(input.source))?.quantity
+    return quantity === undefined ? [] : [quantity]
+  })
+  const distinct = [...new Set(known)]
+  if (distinct.length <= 1) return []
+  return [
+    problem(
+      'mixed-quantity',
+      'helper.inputs',
+      `a ${spec.op} needs readings of one quantity; these inputs report ${distinct.join(' and ')}`,
+    ),
+  ]
 }

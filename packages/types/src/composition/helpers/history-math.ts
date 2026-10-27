@@ -245,3 +245,86 @@ export function integrateReading(read: SeriesRead, scale: IntegralScale): Histor
   const value = scale === 'energy-kwh' ? wattMillisecondsToKwh(unitMs) : unitMs / 1000
   return numberValue(value, covered.included, covered.gaps, GAP_REASON)
 }
+
+interface Sample {
+  readonly at: number
+  readonly value: number
+}
+
+function samplesOf(read: SeriesRead): readonly Sample[] {
+  const out: Sample[] = []
+  if (read.before !== null && finite(read.before.value)) {
+    out.push({ at: read.from, value: read.before.value })
+  }
+  for (const point of read.points) {
+    if (point.t < read.from || point.t > read.to) continue
+    const value = pointValue(point)
+    if (value === null) continue
+    const at = read.tier === 'raw' || !finite(point.twMs) ? point.t : point.t + point.twMs
+    out.push({ at: Math.min(at, read.to), value })
+  }
+  return out.toSorted((a, b) => a.at - b.at)
+}
+
+/** A sample-less tail or head longer than this share of the window is counted as a gap. */
+const UNCOVERED_LIMIT = 0.1
+
+const DERIVATIVE_GAP_REASON =
+  'history stops short of the window — the rate is over the part that was measured'
+
+function derivativeValue(
+  change: number,
+  spanMs: number,
+  perMs: number,
+  included: number,
+  windowMs: number,
+): HistoryValue {
+  const value = change / (spanMs / perMs)
+  const gaps = windowMs - spanMs > windowMs * UNCOVERED_LIMIT ? 1 : 0
+  return numberValue(value, included, gaps, DERIVATIVE_GAP_REASON)
+}
+
+/**
+ * Rate of change over a window, per `perMs`. The slope is taken between the
+ * first and the last measured sample, so a hole inside the window neither
+ * counts as zero nor stretches the elapsed time. A gauge that reported
+ * nothing after the value held at the start is flat (rate 0); fewer than two
+ * samples and no held value is a known gap (D393).
+ */
+export function evaluateDerivative(read: SeriesRead, perMs: number): HistoryValue {
+  if (read.truncated) return hold('the history query was truncated — the last rate is kept')
+  if (read.to <= read.from) return gapValue('the range is empty', 0)
+  const windowMs = read.to - read.from
+  const samples = samplesOf(read)
+  const first = samples[0]
+  const last = samples[samples.length - 1]
+  if (first === undefined || last === undefined) {
+    return gapValue('history has no reading in this window', 0)
+  }
+  if (read.kind === 'counter') {
+    const heldAtStart = read.before !== null && finite(read.before.value)
+    const startsAt = heldAtStart ? read.from : first.at
+    const deltas = read.points.flatMap((point) =>
+      point.t >= read.from &&
+      point.t <= read.to &&
+      finite(point.delta) &&
+      (heldAtStart || point.t > first.at)
+        ? [point.delta]
+        : [],
+    )
+    const spanMs = last.at - startsAt
+    if (deltas.length === 0 || spanMs <= 0) {
+      return gapValue('the counter has no growth in this window', samples.length)
+    }
+    const growth = deltas.reduce((sum, delta) => sum + delta, 0)
+    return derivativeValue(growth, spanMs, perMs, samples.length, windowMs)
+  }
+  if (samples.length === 1 && first.at === read.from && read.before !== null) {
+    return numberValue(0, 1, 0, null)
+  }
+  const spanMs = last.at - first.at
+  if (samples.length < 2 || spanMs <= 0) {
+    return gapValue('the rate needs two readings in the window', samples.length)
+  }
+  return derivativeValue(last.value - first.value, spanMs, perMs, samples.length, windowMs)
+}

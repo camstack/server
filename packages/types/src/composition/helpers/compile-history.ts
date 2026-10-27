@@ -14,7 +14,12 @@ import {
   planResetTier,
   planStatisticTier,
 } from './history-window.js'
-import type { HelperMember, IntegralHelperSpec, StatisticHelperSpec } from './spec.js'
+import type {
+  DerivativeHelperSpec,
+  HelperMember,
+  IntegralHelperSpec,
+  StatisticHelperSpec,
+} from './spec.js'
 
 const NOW: CompositionFieldSource = { kind: 'expression', expr: 'now', bindings: {} }
 
@@ -61,7 +66,7 @@ function draft(input: {
   readonly cap: string
   readonly field: string
   readonly empty: CompositionSeriesSource['empty']
-  readonly spec: StatisticHelperSpec | IntegralHelperSpec
+  readonly spec: StatisticHelperSpec | IntegralHelperSpec | DerivativeHelperSpec
   readonly member: HelperMember
 }): unknown {
   return {
@@ -99,6 +104,41 @@ export function statisticDraft(
   if (spec.stat === 'sum' && kind !== 'counter') {
     problems.push(
       problem('kind-mismatch', 'helper.stat', 'a gauge has no sum — that is the integral template'),
+    )
+  }
+  const tier = planStatisticTier(spec.window, retention)
+  if (!tier.ok) problems.push(problem('retention', 'helper.window', tier.reason))
+  return {
+    problems,
+    draft: draft({
+      role: DeviceRole.NumericSensor,
+      cap: 'numeric-sensor',
+      field: 'value',
+      empty: 'null',
+      spec,
+      member: spec.source,
+    }),
+  }
+}
+
+/**
+ * A derivative reads a gauge or a counter and publishes its rate per second,
+ * minute or hour. The output is a plain number: a rate of a temperature is not
+ * a temperature, so the chart carries no inherited unit.
+ */
+export function derivativeDraft(
+  spec: DerivativeHelperSpec,
+  retention: HistoryRetention = DEFAULT_HISTORY_RETENTION,
+): { readonly draft: unknown; readonly problems: readonly CompositionProblem[] } {
+  const problems = [...historyProblems(spec.source)]
+  const kind = declaredSeriesKind(spec.source)
+  if (kind === 'enum' || kind === 'boolean') {
+    problems.push(
+      problem(
+        'kind-mismatch',
+        'helper.source',
+        'a derivative reads a number that moves, not a yes/no or a state',
+      ),
     )
   }
   const tier = planStatisticTier(spec.window, retention)

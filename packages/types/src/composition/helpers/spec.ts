@@ -8,6 +8,8 @@ import { STATISTIC_STATS } from './history-math.js'
 import {
   RESET_PERIODS,
   type ResetPeriod,
+  type RollingWindow,
+  RollingWindowSchema,
   type StatisticWindow,
   StatisticWindowSchema,
 } from './history-window.js'
@@ -138,17 +140,112 @@ const integralHelperObject = z.object({
 
 export const IntegralHelperSpecSchema: z.ZodType<IntegralHelperSpec> = integralHelperObject
 
+/** Math (D944 phase 3). A reading in, a reading or a yes/no out. */
+export type ThresholdHelperSpec = {
+  readonly kind: 'threshold'
+  readonly source: HelperMember
+  /** The output turns on once the reading is at or above this. */
+  readonly high: number
+  /** The output turns off once the reading is at or below this. `low <= high`. */
+  readonly low: number
+  readonly onForMs: number
+  readonly offForMs: number
+}
+
+const thresholdHelperObject = z.object({
+  kind: z.literal('threshold'),
+  source: HelperMemberSchema,
+  high: z.number(),
+  low: z.number(),
+  onForMs: z.number().int().nonnegative(),
+  offForMs: z.number().int().nonnegative(),
+})
+
+export const ThresholdHelperSpecSchema: z.ZodType<ThresholdHelperSpec> = thresholdHelperObject
+
+export const ARITHMETIC_OPS = ['sum', 'difference', 'ratio'] as const
+export type ArithmeticOp = (typeof ARITHMETIC_OPS)[number]
+
+export type ArithmeticHelperSpec = {
+  readonly kind: 'arithmetic'
+  readonly op: ArithmeticOp
+  /** Sum: two or more. Difference and ratio: exactly two, first minus / over second. */
+  readonly inputs: readonly HelperMember[]
+}
+
+const arithmeticHelperObject = z.object({
+  kind: z.literal('arithmetic'),
+  op: z.enum(ARITHMETIC_OPS),
+  inputs: z.array(HelperMemberSchema).min(2).max(MAX_HELPER_MEMBERS),
+})
+
+export const ArithmeticHelperSpecSchema: z.ZodType<ArithmeticHelperSpec> = arithmeticHelperObject
+
+export const EXPRESSION_OUTPUTS = ['number', 'boolean'] as const
+export type ExpressionOutput = (typeof EXPRESSION_OUTPUTS)[number]
+
+export interface ExpressionInput {
+  readonly name: string
+  readonly member: HelperMember
+}
+
+export type ExpressionHelperSpec = {
+  readonly kind: 'expression'
+  readonly expr: string
+  readonly inputs: readonly ExpressionInput[]
+  readonly output: ExpressionOutput
+}
+
+const expressionHelperObject = z.object({
+  kind: z.literal('expression'),
+  expr: z.string().min(1),
+  inputs: z
+    .array(z.object({ name: z.string().min(1), member: HelperMemberSchema }))
+    .min(1)
+    .max(MAX_HELPER_MEMBERS),
+  output: z.enum(EXPRESSION_OUTPUTS),
+})
+
+export const ExpressionHelperSpecSchema: z.ZodType<ExpressionHelperSpec> = expressionHelperObject
+
+export const DERIVATIVE_UNITS = ['second', 'minute', 'hour'] as const
+export type DerivativeUnit = (typeof DERIVATIVE_UNITS)[number]
+
+export type DerivativeHelperSpec = {
+  readonly kind: 'derivative'
+  readonly window: RollingWindow
+  readonly per: DerivativeUnit
+  readonly source: HelperMember
+}
+
+const derivativeHelperObject = z.object({
+  kind: z.literal('derivative'),
+  window: RollingWindowSchema,
+  per: z.enum(DERIVATIVE_UNITS),
+  source: HelperMemberSchema,
+})
+
+export const DerivativeHelperSpecSchema: z.ZodType<DerivativeHelperSpec> = derivativeHelperObject
+
 export type HelperSpec =
   | GroupHelperSpec
   | ApplianceHelperSpec
   | StatisticHelperSpec
   | IntegralHelperSpec
+  | ThresholdHelperSpec
+  | ArithmeticHelperSpec
+  | ExpressionHelperSpec
+  | DerivativeHelperSpec
 
 export const HelperSpecSchema: z.ZodType<HelperSpec> = z.discriminatedUnion('kind', [
   GroupHelperSpecSchema,
   ApplianceHelperSpecSchema,
   statisticHelperObject,
   integralHelperObject,
+  thresholdHelperObject,
+  arithmeticHelperObject,
+  expressionHelperObject,
+  derivativeHelperObject,
 ])
 
 /** Every member a helper reads. A group has many; the others have one. */
@@ -160,6 +257,12 @@ export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
       return [spec.member]
     case 'statistic':
     case 'integral':
+    case 'threshold':
+    case 'derivative':
       return [spec.source]
+    case 'arithmetic':
+      return spec.inputs
+    case 'expression':
+      return spec.inputs.map((input) => input.member)
   }
 }

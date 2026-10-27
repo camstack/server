@@ -88,3 +88,38 @@ function historyAccept(kind: 'statistic' | 'integral'): readonly SourcePickAccep
   }
   return fields
 }
+
+export type MathSourceKind =
+  | 'threshold'
+  | 'sum'
+  | 'difference'
+  | 'ratio'
+  | 'expression'
+  | 'derivative'
+
+/**
+ * What the input step asks the selector for a math helper. A threshold reads
+ * one number, a difference or a ratio two, a sum and an expression several.
+ * A derivative reads one historised number.
+ */
+export function sourcePickForMath(kind: MathSourceKind): SourcePickRequest {
+  if (kind === 'derivative') {
+    return { ...sourcePickForHistory('statistic'), accept: numericAccept() }
+  }
+  const multiple = kind === 'sum' || kind === 'expression'
+  const max = kind === 'difference' || kind === 'ratio' ? 2 : multiple ? MAX_HELPER_MEMBERS : 1
+  return {
+    purpose: 'reading',
+    multiple: multiple || max > 1,
+    max,
+    deviceTypes: [],
+    accept: numericAccept(),
+    history: { required: false, minRetentionMs: null },
+    mustBindCaps: [],
+    exclude: [],
+  }
+}
+
+function numericAccept(): readonly SourcePickAccept[] {
+  return historyAccept('statistic').filter((field) => field.valueKind === 'number')
+}
