@@ -373,7 +373,7 @@ function stateApi(): Record<string, unknown> {
     privacyMask: { getStatus: ok({ enabled: false }) },
     ptzAutotrack: { getStatus: ok({ enabled: false }) },
     switch: { getStatus: ok({ on: true }) },
-    brightness: { getStatus: ok({ percentage: 40 }) },
+    brightness: { getStatus: ok({ level: 40 }) },
     deviceState: {
       getCapSlice: {
         query: async ({ capName }: { capName: string }) =>
@@ -388,10 +388,10 @@ function stateApi(): Record<string, unknown> {
               batteryPercent: null,
               lastChangedAt: 1,
             },
-            'temperature-sensor': { celsius: 21.34, lastFetchedAt: 1 },
-            'humidity-sensor': { percent: 48, lastFetchedAt: 1 },
+            'temperature-sensor': { temperature: 21.34, lastFetchedAt: 1 },
+            'humidity-sensor': { humidity: 48, lastFetchedAt: 1 },
             switch: { on: true, lastChangedAt: 1 },
-            brightness: { percentage: 40, lastChangedAt: 1 },
+            brightness: { level: 40, lastChangedAt: 1 },
           })[capName] ?? null,
       },
     },

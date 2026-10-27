@@ -64,7 +64,7 @@ const CLIMATE_COLD_START: ClimateControlStatus = {
 }
 
 const FAN_COLD_START: FanControlStatus = {
-  percentage: null,
+  speed: null,
   preset: '',
   availablePresets: [],
   direction: null,
@@ -303,7 +303,7 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
     const fanProvider: InferNativeProvider<typeof fanControlCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
-      setPercentage: async ({ percentage }) => {
+      setPercentage: async ({ speed: percentage }) => {
         await this.requireAc().setFanSpeed(percentageToFanSpeed(percentage))
       },
       setPreset: async ({ preset }) => {
@@ -360,7 +360,7 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
     this.runtimeState.setCapState(CLIMATE_CAP, this.applyClimateFilters(climateSlice))
 
     const fanSlice: FanControlStatus = {
-      percentage: fanSpeedToPercentage(ac.fanSpeed),
+      speed: fanSpeedToPercentage(ac.fanSpeed),
       percentageStep: GREE_FAN_PERCENTAGE_STEP,
       preset: '',
       availablePresets: [],

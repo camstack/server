@@ -86,7 +86,7 @@ describe('handleQuery', () => {
     devices: { 101: LAMP, 616: LOCK },
     statuses: {
       [statusKey('switch', 101)]: { on: true, lastChangedAt: 1 },
-      [statusKey('brightness', 101)]: { percentage: 80, lastChangedAt: 1 },
+      [statusKey('brightness', 101)]: { level: 80, lastChangedAt: 1 },
       [statusKey('lockControl', 616)]: { state: 'locked', lastChangedAt: 1 },
     },
   })

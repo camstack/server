@@ -69,7 +69,7 @@ export function batterySliceOf(
   if (typeof deviceId !== 'number') return null
   if (typeof slice !== 'object' || slice === null || Array.isArray(slice)) return null
   const raw = slice as Record<string, unknown>
-  const percentage = raw['percentage']
+  const percentage = raw['level']
   const lastUpdated = raw['lastUpdated']
   if (typeof percentage !== 'number' || typeof lastUpdated !== 'number') return null
   return {

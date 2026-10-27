@@ -661,14 +661,17 @@ export class HomematicDevice extends BaseDevice<typeof homematicDeviceSchema> {
   private decodeSensorPush(parameter: string, value: unknown, now: number): void {
     if (typeof value !== 'number') return
     if (this.capChannels.has('temperature-sensor') && parameter === 'ACTUAL_TEMPERATURE') {
-      this.runtimeState.setCapState('temperature-sensor', { celsius: value, lastFetchedAt: now })
+      this.runtimeState.setCapState('temperature-sensor', {
+        temperature: value,
+        lastFetchedAt: now,
+      })
     }
     if (this.capChannels.has('humidity-sensor') && parameter === 'HUMIDITY') {
-      this.runtimeState.setCapState('humidity-sensor', { percent: value, lastFetchedAt: now })
+      this.runtimeState.setCapState('humidity-sensor', { humidity: value, lastFetchedAt: now })
     }
     if (this.capChannels.has('ambient-light-sensor') && parameter === 'ILLUMINATION') {
       this.runtimeState.setCapState('ambient-light-sensor', {
-        lux: Math.max(0, value),
+        illuminance: Math.max(0, value),
         lastFetchedAt: now,
       })
     }
@@ -683,24 +686,28 @@ export class HomematicDevice extends BaseDevice<typeof homematicDeviceSchema> {
     }
     switch (parameter) {
       case 'POWER':
-        this.runtimeState.setCapState('power-meter', { ...prev, watts: value, lastFetchedAt: now })
+        this.runtimeState.setCapState('power-meter', { ...prev, power: value, lastFetchedAt: now })
         return
       case 'ENERGY_COUNTER':
         // HmIP ENERGY_COUNTER is in Wh — normalise to kWh.
         this.runtimeState.setCapState('power-meter', {
           ...prev,
-          kwhTotal: value / 1000,
+          energy: value / 1000,
           lastFetchedAt: now,
         })
         return
       case 'VOLTAGE':
-        this.runtimeState.setCapState('power-meter', { ...prev, volts: value, lastFetchedAt: now })
+        this.runtimeState.setCapState('power-meter', {
+          ...prev,
+          voltage: value,
+          lastFetchedAt: now,
+        })
         return
       case 'CURRENT':
         // HmIP CURRENT is in mA — normalise to A.
         this.runtimeState.setCapState('power-meter', {
           ...prev,
-          amps: value / 1000,
+          current: value / 1000,
           lastFetchedAt: now,
         })
         return

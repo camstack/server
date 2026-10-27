@@ -194,7 +194,7 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
         })
       }
       if (brightness !== undefined) {
-        this.setCapSlice(brightnessCapability, { percentage: brightness, lastChangedAt: ts })
+        this.setCapSlice(brightnessCapability, { level: brightness, lastChangedAt: ts })
       }
       this.hasFetchedFromFirmware = true
     } catch (err) {
@@ -334,7 +334,7 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
     return this.getCapSlice(switchCapability) ?? { on: false, lastChangedAt: 0 }
   }
   private brightnessView(): BrightnessStatus {
-    return this.getCapSlice(brightnessCapability) ?? { percentage: 100, lastChangedAt: 0 }
+    return this.getCapSlice(brightnessCapability) ?? { level: 100, lastChangedAt: 0 }
   }
 
   private registerSwitchCap(): void {
@@ -367,7 +367,7 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
   private registerBrightnessCap(): void {
     const provider: InferNativeProvider<typeof brightnessCapability> = {
       getStatus: async (): Promise<BrightnessStatus> => this.brightnessView(),
-      setBrightness: async ({ deviceId, percentage }) => {
+      setBrightness: async ({ deviceId, level: percentage }) => {
         if (deviceId !== this.id) return
         const value = Math.max(0, Math.min(100, percentage))
         // Lib accepts brightness only when the LED is on; otherwise we
@@ -381,12 +381,12 @@ export class FloodlightAccessory extends BaseDevice<typeof floodlightAccessorySc
           // brightness — exactly the bug the setState comment guards.
           await api.setWhiteLedState(this.channel, undefined, value)
         }
-        this.setCapSlice(brightnessCapability, { percentage: value, lastChangedAt: Date.now() })
+        this.setCapSlice(brightnessCapability, { level: value, lastChangedAt: Date.now() })
         this.lastSetAtMs = Date.now()
       },
     }
     this.ctx.registerNativeCap(brightnessCapability, provider)
-    this.setCapSlice(brightnessCapability, { percentage: 100, lastChangedAt: 0 })
+    this.setCapSlice(brightnessCapability, { level: 100, lastChangedAt: 0 })
   }
 
   private registerMotionTriggerCap(): void {

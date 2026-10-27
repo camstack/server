@@ -74,13 +74,13 @@ describe('cameraBatterySlice — the robot as a battery camera', () => {
     })
     expect(heard.lastContactAt).toBe(4)
     expect(never).not.toHaveProperty('lastContactAt')
-    expect(never.percentage).toBeNull()
+    expect(never.level).toBeNull()
   })
 
   it('clamps an out-of-range level instead of failing the schema', () => {
     expect(
       cameraBatterySlice({ level: 140, charging: null, streamOpen: false, now: 1, contactAt: 1 })
-        .percentage,
+        .level,
     ).toBe(100)
   })
 })

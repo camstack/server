@@ -18,7 +18,7 @@ const AQ_CAP = 'air-quality-sensor'
 
 const SWITCH_COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
 const FAN_COLD_START: FanControlStatus = {
-  percentage: null,
+  speed: null,
   preset: '',
   availablePresets: [],
   direction: null,
@@ -76,7 +76,7 @@ export class DreoPurifierDevice extends DreoChildDevice {
     const fanProvider: InferNativeProvider<typeof fanControlCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
-      setPercentage: async ({ percentage }) => {
+      setPercentage: async ({ speed: percentage }) => {
         const purifier = this.requirePurifier()
         const level = percentageToLevel(percentage)
         if (level <= 0) {
@@ -119,7 +119,7 @@ export class DreoPurifierDevice extends DreoChildDevice {
 
     const level = purifier.windlevel
     this.runtimeState.setCapState(FAN_CAP, {
-      percentage: level === undefined ? null : levelToPercentage(level),
+      speed: level === undefined ? null : levelToPercentage(level),
       percentageStep: percentageStep(),
       preset: '',
       availablePresets: [],

@@ -18,15 +18,15 @@ export const temperatureAdapter: GenericAdapter = {
     category: 'TEMPERATURE_SENSOR',
   }),
   properties: (_cap, slice) => {
-    const p = TemperatureSensorStatusSchema.pick({ celsius: true }).safeParse(slice)
+    const p = TemperatureSensorStatusSchema.pick({ temperature: true }).safeParse(slice)
     // A refused sample is null (D944 §4, D393). Alexa has no null temperature;
     // publishing 0 would be a freezing reading nobody took.
-    if (!p.success || p.data.celsius === null) return []
+    if (!p.success || p.data.temperature === null) return []
     return [
       {
         namespace: 'Alexa.TemperatureSensor',
         name: 'temperature',
-        value: { value: Math.round(p.data.celsius * 10) / 10, scale: 'CELSIUS' },
+        value: { value: Math.round(p.data.temperature * 10) / 10, scale: 'CELSIUS' },
       },
     ]
   },

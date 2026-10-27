@@ -19,9 +19,9 @@ import {
  * keep that class a thin actuator-wiring layer.
  */
 
-const COLD_TEMPERATURE: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
-const COLD_HUMIDITY: HumiditySensorStatus = { percent: 0, lastFetchedAt: 0 }
-const COLD_AMBIENT_LIGHT: AmbientLightSensorStatus = { lux: 0, lastFetchedAt: 0 }
+const COLD_TEMPERATURE: TemperatureSensorStatus = { temperature: 0, lastFetchedAt: 0 }
+const COLD_HUMIDITY: HumiditySensorStatus = { humidity: 0, lastFetchedAt: 0 }
+const COLD_AMBIENT_LIGHT: AmbientLightSensorStatus = { illuminance: 0, lastFetchedAt: 0 }
 const COLD_POWER: PowerMeterStatus = { lastFetchedAt: 0 }
 
 export function registerTemperatureCap(

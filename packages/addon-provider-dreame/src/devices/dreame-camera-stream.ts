@@ -51,7 +51,7 @@ export function cameraBatterySlice(facts: CameraBatteryFacts): BatteryStatus {
         ? 'dc'
         : 'none'
   return {
-    percentage: clampLevel(facts.level),
+    level: clampLevel(facts.level),
     charging,
     sleeping: !facts.streamOpen,
     lastUpdated: facts.now,

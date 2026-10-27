@@ -20,8 +20,8 @@ const COLD_START: MediaPlayerStatus = {
   source: '',
   availableSources: [],
   currentMedia: null,
-  positionMs: null,
-  durationMs: null,
+  position: null,
+  duration: null,
   shuffle: null,
   repeat: null,
   lastChangedAt: 0,
@@ -54,8 +54,8 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
       source: readStringAttr(attrs, 'source') ?? '',
       availableSources: readStringArray(attrs, 'source_list'),
       currentMedia: buildCurrentMedia(attrs),
-      positionMs: readDurationMs(attrs, 'media_position'),
-      durationMs: readDurationMs(attrs, 'media_duration'),
+      position: readDurationMs(attrs, 'media_position'),
+      duration: readDurationMs(attrs, 'media_duration'),
       shuffle: readBooleanAttr(attrs, 'shuffle'),
       repeat: readRepeat(attrs['repeat']),
       lastChangedAt,
@@ -97,7 +97,7 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
       previous: async () => {
         await this.callHaService('media_player', 'media_previous_track')
       },
-      seek: async ({ positionMs }) => {
+      seek: async ({ position: positionMs }) => {
         await this.callHaService('media_player', 'media_seek', { seek_position: positionMs / 1000 })
       },
       setVolume: async ({ volumeLevel }) => {

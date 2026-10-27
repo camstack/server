@@ -23,7 +23,7 @@ import type { EspState } from '../esphome-link.js'
 import { EspChildDevice, stampOnChange, type EspStateOrigin } from './esp-child-device.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
-const COLD_BRIGHTNESS: BrightnessStatus = { percentage: 0, lastChangedAt: 0 }
+const COLD_BRIGHTNESS: BrightnessStatus = { level: 0, lastChangedAt: 0 }
 const COLD_COVER: CoverStatus = {
   state: 'closed',
   position: null,
@@ -96,7 +96,7 @@ export class EspActuatorDevice extends EspChildDevice {
     const provider: InferNativeProvider<typeof brightnessCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<BrightnessStatus>('brightness') ?? COLD_BRIGHTNESS,
-      setBrightness: async ({ percentage }) => {
+      setBrightness: async ({ level: percentage }) => {
         this.send({
           type: 'light',
           id: this.entityId,
@@ -214,8 +214,8 @@ export class EspActuatorDevice extends EspChildDevice {
     if (!decodeLightOn(state)) return
     const percentage = decodeBrightnessPercent(state)
     this.runtimeState.setCapState('brightness', {
-      percentage,
-      lastChangedAt: stampOnChange(prev.lastChangedAt, prev.percentage !== percentage, now),
+      level: percentage,
+      lastChangedAt: stampOnChange(prev.lastChangedAt, prev.level !== percentage, now),
     })
   }
 

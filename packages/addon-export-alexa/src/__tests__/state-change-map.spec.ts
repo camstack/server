@@ -64,7 +64,7 @@ describe('stateReportsFor', () => {
       properties: [{ name: 'powerState', value: 'ON' }],
     })
     const br = stateReportsFor(
-      { deviceId: 11, capName: 'brightness', slice: { percentage: 41.6 } },
+      { deviceId: 11, capName: 'brightness', slice: { level: 41.6 } },
       EXPORTED,
     )
     expect(br?.kind === 'reports' ? br.reports[0]?.properties[0]?.value : null).toBe(42)

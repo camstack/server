@@ -20,11 +20,11 @@ export type ChildKind =
 
 /** Which board sensor feeds each `power-meter` field. */
 export interface PowerSlots {
-  readonly watts?: string
-  readonly kwhTotal?: string
-  readonly volts?: string
-  readonly amps?: string
-  readonly va?: string
+  readonly power?: string
+  readonly energy?: string
+  readonly voltage?: string
+  readonly current?: string
+  readonly apparentPower?: string
   readonly powerFactor?: string
 }
 
@@ -42,11 +42,11 @@ export interface ChildPlan {
 }
 
 const POWER_CLASS_TO_SLOT: Readonly<Record<string, keyof PowerSlots>> = {
-  power: 'watts',
-  energy: 'kwhTotal',
-  voltage: 'volts',
-  current: 'amps',
-  apparent_power: 'va',
+  power: 'power',
+  energy: 'energy',
+  voltage: 'voltage',
+  current: 'current',
+  apparent_power: 'apparentPower',
   power_factor: 'powerFactor',
 }
 

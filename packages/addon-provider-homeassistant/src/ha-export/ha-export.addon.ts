@@ -567,12 +567,12 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     if (capName === 'network-link') {
       const type = readString(slice, 'type')
       if (type === null) return
-      const signalPercent = readNumber(slice, 'signalPercent')
+      const signalPercent = readNumber(slice, 'signal')
       this.push(deviceId, projectNetworkLinkSlice(deviceKey, { type, signalPercent }))
       return
     }
     if (capName === 'battery') {
-      const percentage = readNumber(slice, 'percentage')
+      const percentage = readNumber(slice, 'level')
       const charging = readString(slice, 'charging')
       const sleeping = slice['sleeping']
       if (percentage === null || charging === null || typeof sleeping !== 'boolean') return
@@ -1649,7 +1649,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         values.push(
           ...projectNetworkLinkSlice(key, {
             type,
-            signalPercent: readNumber(link, 'signalPercent'),
+            signalPercent: readNumber(link, 'signal'),
           }),
         )
       }
@@ -1657,7 +1657,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
     const battery = snapshot['battery']
     if (battery !== undefined) {
-      const percentage = readNumber(battery, 'percentage')
+      const percentage = readNumber(battery, 'level')
       const charging = readString(battery, 'charging')
       const sleeping = battery['sleeping']
       if (percentage !== null && charging !== null && typeof sleeping === 'boolean') {

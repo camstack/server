@@ -93,7 +93,7 @@ function legacyEntity(config: MqttHaDeviceConfig): MqttHaEntity | null {
 function meterEntities(config: MqttHaDeviceConfig): MqttHaMeterEntities {
   const out: MqttHaMeterEntities = {}
   for (const [field, entityKey] of Object.entries(config.meter)) {
-    if (field === 'watts' || field === 'kwhTotal' || field === 'volts' || field === 'amps') {
+    if (field === 'power' || field === 'energy' || field === 'voltage' || field === 'current') {
       out[field] = entityKey
     }
   }

@@ -14,7 +14,7 @@ import type { HaContainerEntityConfig } from './ha-container-reconcile.js'
  */
 
 /** The `power-meter` status field a reading lands in. */
-export const METER_FIELDS = ['watts', 'kwhTotal', 'volts', 'amps'] as const
+export const METER_FIELDS = ['power', 'energy', 'voltage', 'current'] as const
 export type MeterField = (typeof METER_FIELDS)[number]
 
 /** Reading field → the sibling sensor entity it is read from. */
@@ -26,10 +26,10 @@ interface MeterKind {
 }
 
 const METER_BY_DEVICE_CLASS: Readonly<Record<string, MeterKind>> = {
-  power: { field: 'watts', quantity: 'power' },
-  energy: { field: 'kwhTotal', quantity: 'energy' },
-  voltage: { field: 'volts', quantity: 'voltage' },
-  current: { field: 'amps', quantity: 'current' },
+  power: { field: 'power', quantity: 'power' },
+  energy: { field: 'energy', quantity: 'energy' },
+  voltage: { field: 'voltage', quantity: 'voltage' },
+  current: { field: 'current', quantity: 'current' },
 }
 
 /** The meter field and quantity an HA `device_class` feeds; undefined for any other class. */

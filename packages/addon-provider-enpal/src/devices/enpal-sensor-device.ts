@@ -26,7 +26,7 @@ const NUMERIC_CAP = numericSensorCapability.name
 
 const POWER_COLD: PowerMeterStatus = { lastFetchedAt: 0 }
 const BATTERY_COLD: BatteryStatus = {
-  percentage: null,
+  level: null,
   charging: 'unknown',
   sleeping: false,
   lastUpdated: 0,
@@ -125,12 +125,12 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
 
   private publish(slices: SpecSlices): void {
     if (slices.powerMeter !== undefined) {
-      const kwh = slices.powerMeter.kwhTotal
+      const kwh = slices.powerMeter.energy
       this.runtimeState.setCapState(
         POWER_CAP,
         kwh === undefined
           ? slices.powerMeter
-          : { ...slices.powerMeter, kwhTotal: this.energyGuard.accept(kwh) },
+          : { ...slices.powerMeter, energy: this.energyGuard.accept(kwh) },
       )
     }
     if (slices.battery !== undefined) this.runtimeState.setCapState(BATTERY_CAP, slices.battery)

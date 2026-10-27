@@ -1138,7 +1138,7 @@ export async function applyCapCommand(
       if (device.brightness === undefined) {
         return { ok: false, reason: 'no-provider', capName: 'brightness' }
       }
-      await device.brightness.setBrightness({ percentage: command.percentage })
+      await device.brightness.setBrightness({ level: command.percentage })
       return { ok: true }
     }
     case 'cap-alarm': {
@@ -1277,7 +1277,7 @@ export async function applyCapCommand(
       )
     case 'fan-percentage':
       return call(device.fanControl, 'fan-control', (fan) =>
-        fan.setPercentage({ percentage: command.percentage }),
+        fan.setPercentage({ speed: command.percentage }),
       )
     case 'fan-preset':
       return call(device.fanControl, 'fan-control', (fan) =>
@@ -1397,7 +1397,7 @@ export async function applyCapCommand(
       )
     case 'color-mireds':
       return call(device.color, 'color', (color) =>
-        color.setColor({ color: { mode: 'mired', mireds: command.mireds } }),
+        color.setColor({ color: { mode: 'mired', colorTemperature: command.mireds } }),
       )
     case 'script-verb':
       return call(device.scriptRunner, 'script-runner', (script) =>

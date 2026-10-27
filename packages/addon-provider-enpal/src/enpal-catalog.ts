@@ -32,7 +32,7 @@ interface SpecBase {
 /** Instantaneous power plus an optional lifetime energy counter (`power-meter`). */
 export interface PowerMeterSpec extends SpecBase {
   readonly kind: 'power-meter'
-  readonly watts: Point
+  readonly power: Point
   readonly kwh?: Point
 }
 
@@ -41,9 +41,9 @@ export interface BatterySpec extends SpecBase {
   readonly kind: 'battery'
   readonly level: Point
   readonly capacity: Point
-  readonly watts: Point
-  readonly volts: Point
-  readonly amps: Point
+  readonly power: Point
+  readonly voltage: Point
+  readonly current: Point
 }
 
 /** A monotonic lifetime counter that no `power-meter` already carries (`meter`). */
@@ -74,7 +74,7 @@ const point = (
  * What an Enpal box can show, by the dotted keys its InfluxDB and device page use (the
  * names follow the Home Assistant component's key table). A device is offered only when the
  * box reported at least one of its points, so a box without a heat pump has no heat-pump
- * devices. Lifetime energy rides `power-meter.kwhTotal` where a power reading sits beside it
+ * devices. Lifetime energy rides `power-meter.energy` where a power reading sits beside it
  * and the `meter` cap where it does not (D944).
  */
 export const ENPAL_SPECS: readonly EnpalSpec[] = [
@@ -83,7 +83,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'pv',
     name: 'Production',
     role: DeviceRole.PowerSensor,
-    watts: point(
+    power: point(
       'power',
       'Power.DC.Total',
       'Power.DC.Total.Calculated',
@@ -99,9 +99,9 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     role: DeviceRole.BatterySensor,
     level: point('percentage', 'Energy.Battery.Charge.Level'),
     capacity: point('energy', 'Energy.Battery.Capacity'),
-    watts: point('power', 'Power.Battery.Charge.Discharge'),
-    volts: point('voltage', 'Voltage.Battery'),
-    amps: point('current', 'Current.Battery'),
+    power: point('power', 'Power.Battery.Charge.Discharge'),
+    voltage: point('voltage', 'Voltage.Battery'),
+    current: point('current', 'Current.Battery'),
   },
   {
     kind: 'meter',
@@ -124,7 +124,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'grid-import',
     name: 'Import',
     role: DeviceRole.PowerSensor,
-    watts: point(
+    power: point(
       'power',
       'Grid.Import.Power.Total.Calculated',
       { key: 'Power.Grid.Export', part: 'negative' },
@@ -138,7 +138,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'grid-export',
     name: 'Export',
     role: DeviceRole.PowerSensor,
-    watts: point(
+    power: point(
       'power',
       { key: 'Power.Grid.Export', part: 'positive' },
       { key: 'Power.Grid.Export.Calculated', part: 'positive' },
@@ -151,7 +151,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'house',
     name: 'Consumption',
     role: DeviceRole.PowerSensor,
-    watts: point('power', 'Power.Consumption.Total', 'Power.Consumption.AC'),
+    power: point('power', 'Power.Consumption.Total', 'Power.Consumption.AC'),
     kwh: point('energy', 'Energy.Consumption.Total.Lifetime'),
   },
   {
@@ -159,7 +159,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'heatpump',
     name: 'Consumption',
     role: DeviceRole.PowerSensor,
-    watts: point('power', 'Heatpump.Power.Consumption.Total'),
+    power: point('power', 'Heatpump.Power.Consumption.Total'),
     kwh: point('energy', 'Heatpump.Energy.Consumption.Total.Lifetime'),
   },
   {
@@ -225,9 +225,9 @@ export function capsOfSpec(spec: EnpalSpec): readonly string[] {
 function pointsOf(spec: EnpalSpec): readonly Point[] {
   switch (spec.kind) {
     case 'power-meter':
-      return spec.kwh !== undefined ? [spec.watts, spec.kwh] : [spec.watts]
+      return spec.kwh !== undefined ? [spec.power, spec.kwh] : [spec.power]
     case 'battery':
-      return [spec.level, spec.watts, spec.volts, spec.amps]
+      return [spec.level, spec.power, spec.voltage, spec.current]
     case 'meter':
     case 'numeric':
       return [spec.value]
@@ -328,36 +328,36 @@ export function computeSlices(
 ): SpecSlices {
   switch (spec.kind) {
     case 'power-meter': {
-      const watts = resolve(spec.watts, snapshot)
+      const power = resolve(spec.power, snapshot)
       const kwh =
         spec.kwh !== undefined ? resolve(spec.kwh, snapshot) : ({ state: 'absent' } as const)
-      const w = numberOf(watts)
+      const w = numberOf(power)
       const e = numberOf(kwh)
       return {
         ...(w !== undefined || e !== undefined
           ? {
               powerMeter: {
-                ...(w !== undefined ? { watts: w } : {}),
-                ...(e !== undefined ? { kwhTotal: e } : {}),
+                ...(w !== undefined ? { power: w } : {}),
+                ...(e !== undefined ? { energy: e } : {}),
                 lastFetchedAt: now,
               },
             }
           : {}),
-        refusals: [...refusalOf(watts), ...refusalOf(kwh)],
+        refusals: [...refusalOf(power), ...refusalOf(kwh)],
       }
     }
     case 'battery': {
       const soc = stateOfCharge(spec, snapshot)
-      const watts = resolve(spec.watts, snapshot)
-      const volts = resolve(spec.volts, snapshot)
-      const amps = resolve(spec.amps, snapshot)
+      const power = resolve(spec.power, snapshot)
+      const voltage = resolve(spec.voltage, snapshot)
+      const current = resolve(spec.current, snapshot)
       const sign = options.invertBatteryPower ? -1 : 1
-      const w = numberOf(watts)
-      const v = numberOf(volts)
-      const a = numberOf(amps)
+      const w = numberOf(power)
+      const v = numberOf(voltage)
+      const a = numberOf(current)
       return {
         battery: {
-          percentage: nullableOf(soc),
+          level: nullableOf(soc),
           charging: 'unknown',
           sleeping: false,
           lastUpdated: now,
@@ -365,14 +365,19 @@ export function computeSlices(
         ...(w !== undefined || v !== undefined || a !== undefined
           ? {
               powerMeter: {
-                ...(w !== undefined ? { watts: w * sign || 0 } : {}),
-                ...(v !== undefined ? { volts: v } : {}),
-                ...(a !== undefined ? { amps: a * sign || 0 } : {}),
+                ...(w !== undefined ? { power: w * sign || 0 } : {}),
+                ...(v !== undefined ? { voltage: v } : {}),
+                ...(a !== undefined ? { current: a * sign || 0 } : {}),
                 lastFetchedAt: now,
               },
             }
           : {}),
-        refusals: [...refusalOf(soc), ...refusalOf(watts), ...refusalOf(volts), ...refusalOf(amps)],
+        refusals: [
+          ...refusalOf(soc),
+          ...refusalOf(power),
+          ...refusalOf(voltage),
+          ...refusalOf(current),
+        ],
       }
     }
     case 'meter': {

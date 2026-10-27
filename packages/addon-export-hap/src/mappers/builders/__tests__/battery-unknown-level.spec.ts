@@ -1,7 +1,7 @@
 /**
  * A battery level that is NOT YET KNOWN publishes nothing to HomeKit.
  *
- * `BatteryStatus.percentage` used to be non-nullable, so a provider with no
+ * `BatteryStatus.level` used to be non-nullable, so a provider with no
  * reading yet could only seed `0`. Every battery camera behind a Reolink NVR
  * therefore announced a flat battery on each hub start and corrected itself a
  * moment later — long enough for HomeKit to raise StatusLowBattery and for the
@@ -18,7 +18,7 @@ const readOf = (updates: readonly { characteristic: unknown; value: unknown }[],
 describe('batteryCharacteristicUpdates — an unknown level', () => {
   it('publishes no BatteryLevel at all', () => {
     const updates = batteryCharacteristicUpdates({
-      percentage: null,
+      level: null,
       charging: 'none',
       sleeping: false,
       lastUpdated: 1,
@@ -28,7 +28,7 @@ describe('batteryCharacteristicUpdates — an unknown level', () => {
 
   it('never raises the LOW warning on a level it does not have', () => {
     const updates = batteryCharacteristicUpdates({
-      percentage: null,
+      level: null,
       charging: 'none',
       sleeping: false,
       lastUpdated: 1,
@@ -38,7 +38,7 @@ describe('batteryCharacteristicUpdates — an unknown level', () => {
 
   it('still reports the charging state, which IS known', () => {
     const updates = batteryCharacteristicUpdates({
-      percentage: null,
+      level: null,
       charging: 'solar',
       sleeping: false,
       lastUpdated: 1,
@@ -50,7 +50,7 @@ describe('batteryCharacteristicUpdates — an unknown level', () => {
 
   it('publishes a real level normally', () => {
     const updates = batteryCharacteristicUpdates({
-      percentage: 42,
+      level: 42,
       charging: 'none',
       sleeping: false,
       lastUpdated: 1,
@@ -63,7 +63,7 @@ describe('batteryCharacteristicUpdates — an unknown level', () => {
 
   it('writes no ChargingState for an UNKNOWN power source — it is not a claim either way', () => {
     const updates = batteryCharacteristicUpdates({
-      percentage: 64,
+      level: 64,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 1,

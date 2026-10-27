@@ -112,7 +112,7 @@ describe('OnOff', () => {
 describe('Brightness', () => {
   it('rounds the cap percentage to Google’s integer scale', () => {
     const row = traitsForCaps(['brightness'])[0]
-    expect(row?.projectState({ percentage: 42.6, lastChangedAt: 1 })).toEqual({ brightness: 43 })
+    expect(row?.projectState({ level: 42.6, lastChangedAt: 1 })).toEqual({ brightness: 43 })
   })
 
   it('routes BrightnessAbsolute to brightness.setBrightness', () => {

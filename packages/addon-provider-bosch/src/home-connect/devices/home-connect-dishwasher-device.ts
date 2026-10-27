@@ -277,7 +277,7 @@ export class HomeConnectDishwasherDevice extends BaseDevice<typeof homeConnectDi
       slice.program,
       previous,
       fetchedAt,
-      slice.remainingSeconds,
+      slice.remaining,
     )
     this.runtimeState.setCapState(RUNNING_CAP, next)
   }

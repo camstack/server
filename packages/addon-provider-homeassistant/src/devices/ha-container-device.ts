@@ -45,10 +45,10 @@ const haEntitySchema = z.object({
   /** Sibling meter sensors this entity reads as its own power-meter (D951). */
   meterEntities: z
     .object({
-      watts: z.string().optional(),
-      kwhTotal: z.string().optional(),
-      volts: z.string().optional(),
-      amps: z.string().optional(),
+      power: z.string().optional(),
+      energy: z.string().optional(),
+      voltage: z.string().optional(),
+      current: z.string().optional(),
     })
     .optional(),
   /** Set on a meter sensor folded into another entity: sectioned as Diagnostic. */
@@ -137,7 +137,7 @@ export function deriveBatteryStatus(
   if (isBinaryBattery(battery)) {
     if (state.state !== 'on' && state.state !== 'off') return null
     return {
-      percentage: state.state === 'on' ? BINARY_BATTERY_LOW_PCT : BINARY_BATTERY_NORMAL_PCT,
+      level: state.state === 'on' ? BINARY_BATTERY_LOW_PCT : BINARY_BATTERY_NORMAL_PCT,
       charging: 'none',
       sleeping: false,
       lastUpdated: now,
@@ -147,7 +147,7 @@ export function deriveBatteryStatus(
   const raw = Number(state.state)
   if (!Number.isFinite(raw)) return null
   return {
-    percentage: Math.min(100, Math.max(0, raw)),
+    level: Math.min(100, Math.max(0, raw)),
     charging: 'none',
     sleeping: false,
     lastUpdated: now,
@@ -236,7 +236,7 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
       // Cold seed: no reading has ever been taken. UNKNOWN, never 0 % (D393,
       // D315) — a dead cell and "we haven't asked yet" must never look alike.
       const COLD: BatteryStatus = {
-        percentage: null,
+        level: null,
         charging: 'unknown',
         sleeping: false,
         lastUpdated: 0,

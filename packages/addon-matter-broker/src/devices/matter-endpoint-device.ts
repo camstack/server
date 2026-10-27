@@ -274,14 +274,17 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   }
 
   private registerBrightness(): void {
-    const COLD = { percentage: 0, lastChangedAt: 0 }
+    const COLD = { level: 0, lastChangedAt: 0 }
     const provider: InferNativeProvider<typeof brightnessCapability> = {
       getStatus: async () => this.runtimeState.getCapState<typeof COLD>('brightness') ?? COLD,
-      setBrightness: async ({ percentage }) => {
+      setBrightness: async ({ level: percentage }) => {
         // Matter LevelControl level is 0..254; scale the 0..100 percentage.
         const level = Math.round((Math.max(0, Math.min(100, percentage)) / 100) * 254)
         await this.invoke(MatterClusterId.LevelControl, 'moveToLevel', { level })
-        this.runtimeState.setCapState('brightness', { percentage, lastChangedAt: Date.now() })
+        this.runtimeState.setCapState('brightness', {
+          level: percentage,
+          lastChangedAt: Date.now(),
+        })
       },
     }
     this.ctx.registerNativeCap(brightnessCapability, provider)
@@ -509,7 +512,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   }
 
   private registerTemperatureSensor(): void {
-    const COLD = { celsius: 0, lastFetchedAt: 0 }
+    const COLD = { temperature: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof temperatureSensorCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<typeof COLD>('temperature-sensor') ?? COLD,
@@ -519,7 +522,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   }
 
   private registerHumiditySensor(): void {
-    const COLD = { percent: 0, lastFetchedAt: 0 }
+    const COLD = { humidity: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof humiditySensorCapability> = {
       getStatus: async () => this.runtimeState.getCapState<typeof COLD>('humidity-sensor') ?? COLD,
     }
@@ -528,7 +531,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   }
 
   private registerPressureSensor(): void {
-    const COLD = { hpa: 0, lastFetchedAt: 0 }
+    const COLD = { pressure: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof pressureSensorCapability> = {
       getStatus: async () => this.runtimeState.getCapState<typeof COLD>('pressure-sensor') ?? COLD,
     }
@@ -537,7 +540,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   }
 
   private registerAmbientLightSensor(): void {
-    const COLD = { lux: 0, lastFetchedAt: 0 }
+    const COLD = { illuminance: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof ambientLightSensorCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<typeof COLD>('ambient-light-sensor') ?? COLD,
@@ -548,7 +551,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
 
   private registerBattery(): void {
     const COLD: BatteryStatus = {
-      percentage: 0,
+      level: 0,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,

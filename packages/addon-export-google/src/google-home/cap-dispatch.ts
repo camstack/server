@@ -25,7 +25,7 @@ export async function dispatchCapCall(api: AddonApi, call: CapCall): Promise<voi
     case 'brightness.setBrightness':
       await api.brightness.setBrightness.mutate({
         deviceId: call.deviceId,
-        percentage: call.percentage,
+        level: call.percentage,
       })
       return
     case 'lockControl.lock':

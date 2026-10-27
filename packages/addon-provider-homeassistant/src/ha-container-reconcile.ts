@@ -83,10 +83,10 @@ const containerEntitySchema = z.object({
   entityCategory: z.enum(['config', 'diagnostic']).optional(),
   meterEntities: z
     .object({
-      watts: z.string().optional(),
-      kwhTotal: z.string().optional(),
-      volts: z.string().optional(),
-      amps: z.string().optional(),
+      power: z.string().optional(),
+      energy: z.string().optional(),
+      voltage: z.string().optional(),
+      current: z.string().optional(),
     })
     .optional(),
   foldedInto: z.string().optional(),

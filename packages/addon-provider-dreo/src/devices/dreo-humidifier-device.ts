@@ -14,7 +14,7 @@ const SWITCH_CAP = 'switch'
 const HUMIDITY_CAP = 'humidity-sensor'
 
 const SWITCH_COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
-const HUMIDITY_COLD_START: HumiditySensorStatus = { percent: 0, lastFetchedAt: 0 }
+const HUMIDITY_COLD_START: HumiditySensorStatus = { humidity: 0, lastFetchedAt: 0 }
 
 /**
  * Dreo humidifier device. Registers `switch` (power) + `humidity-sensor` (the
@@ -84,7 +84,7 @@ export class DreoHumidifierDevice extends DreoChildDevice {
     const percent = clampPercent(humidifier.rh)
     if (percent !== null) {
       this.runtimeState.setCapState(HUMIDITY_CAP, {
-        percent,
+        humidity: percent,
         lastFetchedAt: now,
       })
     }

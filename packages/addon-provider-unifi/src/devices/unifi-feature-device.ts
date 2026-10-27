@@ -30,7 +30,6 @@ const COLD_PRESENCE: PresenceStatus = {
   state: 'not_home',
   location: null,
   gps: null,
-  batteryPercent: null,
   lastChangedAt: 0,
 }
 
@@ -198,7 +197,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     switch (capForMetric(this.metric)) {
       case 'temperature-sensor':
         this.runtimeState.setCapState('temperature-sensor', {
-          celsius: infra.cpuTempC ?? 0,
+          temperature: infra.cpuTempC ?? 0,
           lastFetchedAt: now,
         })
         return
@@ -240,7 +239,6 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
       state: client.connected ? 'home' : 'not_home',
       location: client.ip,
       gps: null,
-      batteryPercent: null,
       lastChangedAt: Date.now(),
     }
     this.runtimeState.setCapState('presence', status)
@@ -296,7 +294,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     if (this.metric === undefined) return
     switch (capForMetric(this.metric)) {
       case 'temperature-sensor': {
-        const COLD = { celsius: 0, lastFetchedAt: 0 }
+        const COLD = { temperature: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof temperatureSensorCapability> = {
           getStatus: async () =>
             this.runtimeState.getCapState<typeof COLD>('temperature-sensor') ?? COLD,

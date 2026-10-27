@@ -19,9 +19,9 @@ const TEMP_CAP = 'temperature-sensor'
 const BATTERY_CAP = 'battery'
 const VALVE_CAP = 'heating-valve'
 
-const TEMP_COLD: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
+const TEMP_COLD: TemperatureSensorStatus = { temperature: 0, lastFetchedAt: 0 }
 const BATTERY_COLD: BatteryStatus = {
-  percentage: null,
+  level: null,
   charging: 'unknown',
   sleeping: false,
   lastUpdated: 0,
@@ -71,11 +71,11 @@ export class ShcTrvDevice extends ShcBaseDevice {
       const temperature = temp.temperature
       if (typeof temperature === 'number' && Number.isFinite(temperature)) {
         const prev = this.runtimeState.getCapState<TemperatureSensorStatus>(TEMP_CAP)
-        this.runtimeState.setCapState(TEMP_CAP, { celsius: temperature, lastFetchedAt: now })
-        if (prev !== undefined && prev.celsius !== temperature && prev.lastFetchedAt !== 0) {
+        this.runtimeState.setCapState(TEMP_CAP, { temperature: temperature, lastFetchedAt: now })
+        if (prev !== undefined && prev.temperature !== temperature && prev.lastFetchedAt !== 0) {
           this.deviceLog('info', 'SHC temperature updated from controller', {
             celsius: temperature,
-            previous: prev.celsius,
+            previous: prev.temperature,
           })
         }
       }
@@ -114,7 +114,7 @@ export class ShcTrvDevice extends ShcBaseDevice {
         'BatteryLevel',
       )
       this.runtimeState.setCapState(BATTERY_CAP, {
-        percentage: batt.batteryLevel ?? null,
+        level: batt.batteryLevel ?? null,
         charging: 'unknown',
         sleeping: false,
         lastUpdated: now,

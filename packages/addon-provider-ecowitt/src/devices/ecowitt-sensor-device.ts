@@ -62,7 +62,7 @@ const SUPPORTED_CAPS: ReadonlySet<EcowittSensorCap> = new Set([
  *   - `'%'` (binary/bar batteries, already decoded to a percent) → the typed
  *     `battery` cap (which models a 0..100 percentage).
  *   - `'V'` (raw voltage, e.g. WS90/WH90/WS85 capacitor + soil/leaf push) →
- *     `battery.volts`. A voltage has no honest percentage, so `percentage`
+ *     `battery.voltage`. A voltage has no honest percentage, so `level`
  *     stays null. The field lives on `battery`, so a numeric primary sensor
  *     and a voltage battery do not share a slice.
  */
@@ -77,7 +77,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   /**
    * Which battery cap (if any) was registered for this sensor:
    *   - `'percent'` → the typed `battery` cap (percentage),
-   *   - `'voltage'` → `battery.volts` (percentage stays null),
+   *   - `'voltage'` → `battery.voltage` (level stays null),
    *   - `'none'`    → no battery cap.
    */
   private batteryMode: 'percent' | 'voltage' | 'none' = 'none'
@@ -164,7 +164,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
       typeof sensor.battery === 'number'
     ) {
       const next: BatteryStatus = {
-        percentage: Math.max(0, Math.min(100, sensor.battery)),
+        level: Math.max(0, Math.min(100, sensor.battery)),
         charging: 'none',
         sleeping: false,
         lastUpdated: lastFetchedAt,
@@ -179,8 +179,8 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
       Number.isFinite(sensor.battery)
     ) {
       const next: BatteryStatus = {
-        percentage: null,
-        volts: sensor.battery,
+        level: null,
+        voltage: sensor.battery,
         charging: 'none',
         sleeping: false,
         lastUpdated: lastFetchedAt,
@@ -192,7 +192,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   private registerSensorCap(): void {
     switch (this.capName) {
       case 'temperature-sensor': {
-        const COLD = { celsius: 0, lastFetchedAt: 0 }
+        const COLD = { temperature: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof temperatureSensorCapability> = {
           getStatus: async () => this.readSlice(COLD),
         }
@@ -201,7 +201,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
         return
       }
       case 'humidity-sensor': {
-        const COLD = { percent: 0, lastFetchedAt: 0 }
+        const COLD = { humidity: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof humiditySensorCapability> = {
           getStatus: async () => this.readSlice(COLD),
         }
@@ -210,7 +210,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
         return
       }
       case 'pressure-sensor': {
-        const COLD = { hpa: 0, lastFetchedAt: 0 }
+        const COLD = { pressure: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof pressureSensorCapability> = {
           getStatus: async () => this.readSlice(COLD),
         }
@@ -219,7 +219,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
         return
       }
       case 'ambient-light-sensor': {
-        const COLD = { lux: 0, lastFetchedAt: 0 }
+        const COLD = { illuminance: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof ambientLightSensorCapability> = {
           getStatus: async () => this.readSlice(COLD),
         }
@@ -240,8 +240,8 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   }
 
   /**
-   * Register the `battery` cap. Percent batteries fill `percentage`. Voltage
-   * batteries fill `volts` and leave `percentage` null.
+   * Register the `battery` cap. Percent batteries fill `level`. Voltage
+   * batteries fill `voltage` and leave `level` null.
    */
   private maybeRegisterBatteryCap(): void {
     const sensor = this.resolveSensor()
@@ -257,7 +257,7 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
   /** Register the typed `battery` (percentage) cap for a `%`-unit battery. */
   private registerPercentBatteryCap(): void {
     const COLD: BatteryStatus = {
-      percentage: 0,
+      level: 0,
       charging: 'none',
       sleeping: false,
       lastUpdated: 0,
@@ -272,11 +272,11 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     this.batteryMode = 'percent'
   }
 
-  /** Voltage batteries share the `battery` cap. `percentage` stays unknown. */
+  /** Voltage batteries share the `battery` cap. `level` stays unknown. */
   private registerVoltageBatteryCap(): void {
     const COLD: BatteryStatus = {
-      percentage: null,
-      volts: null,
+      level: null,
+      voltage: null,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,

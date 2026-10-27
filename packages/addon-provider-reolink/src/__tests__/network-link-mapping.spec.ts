@@ -24,7 +24,7 @@ describe('linkTypeOf', () => {
   it('a bare signal number without an SSID is NOT a wifi link (the PoE camera that answered -10)', () => {
     expect(
       mapNetworkReadout({ activeLink: undefined, wifiSignal: -10, ssid: undefined }, 1),
-    ).toEqual({ type: 'unknown', signalPercent: null, lastUpdated: 1 })
+    ).toEqual({ type: 'unknown', signal: null, lastUpdated: 1 })
   })
 
   it('only a wireless label is worth a signal read', () => {
@@ -58,7 +58,7 @@ describe('mapNetworkReadout', () => {
   it('a wifi link carries its normalised signal and its network name', () => {
     expect(mapNetworkReadout({ activeLink: 'Wifi', wifiSignal: 4, ssid: 'casa' }, 1000)).toEqual({
       type: 'wifi',
-      signalPercent: 100,
+      signal: 100,
       ssid: 'casa',
       lastUpdated: 1000,
     })
@@ -67,7 +67,7 @@ describe('mapNetworkReadout', () => {
   it('a wired link has no signal and no network name, whatever the firmware left behind', () => {
     expect(mapNetworkReadout({ activeLink: 'LAN', wifiSignal: 4, ssid: 'casa' }, 1000)).toEqual({
       type: 'ethernet',
-      signalPercent: null,
+      signal: null,
       lastUpdated: 1000,
     })
   })
@@ -75,8 +75,8 @@ describe('mapNetworkReadout', () => {
   it('keeps the raw dBm next to the percent', () => {
     expect(mapNetworkReadout({ activeLink: 'Wifi', wifiSignal: -60, ssid: 'casa' }, 1000)).toEqual({
       type: 'wifi',
-      signalPercent: 80,
-      rssiDbm: -60,
+      signal: 80,
+      rssi: -60,
       ssid: 'casa',
       lastUpdated: 1000,
     })

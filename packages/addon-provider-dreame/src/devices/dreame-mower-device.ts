@@ -53,7 +53,7 @@ const SHADOW_POLL_MS = 120_000
 const COLD_START: LawnMowerControlStatus = {
   activity: 'idle',
   batteryLevel: null,
-  progressPercent: null,
+  progress: null,
   currentCode: null,
   currentCodeLabel: null,
   severity: 'info',
@@ -203,11 +203,11 @@ export class DreameMowerDevice extends DreameChildDevice {
     // the Dreamehome app / HA: preserve the LAST known progress instead of
     // blanking it when the live value is momentarily null.
     const livePct = clampPercent(mower.mowingProgressPct)
-    const prevPct = this.runtimeState.getCapState<LawnMowerControlStatus>(CAP_NAME)?.progressPercent
+    const prevPct = this.runtimeState.getCapState<LawnMowerControlStatus>(CAP_NAME)?.progress
     const slice: LawnMowerControlStatus = {
       activity: mapMowerStatusToActivity(status),
       batteryLevel: clampBatteryLevel(mower.battery),
-      progressPercent: livePct ?? prevPct ?? null,
+      progress: livePct ?? prevPct ?? null,
       currentCode: code,
       currentCodeLabel: code !== null ? (MowerFault[code] ?? null) : null,
       severity: mower.faultSeverity,

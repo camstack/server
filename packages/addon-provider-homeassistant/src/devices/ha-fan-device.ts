@@ -10,7 +10,7 @@ import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
 const FAN_COLD_START: FanControlStatus = {
-  percentage: null,
+  speed: null,
   preset: '',
   availablePresets: [],
   direction: null,
@@ -44,7 +44,7 @@ export class HaFanDevice extends HaBaseChildDevice {
 
     const attrs = state.attributes
     const slice: FanControlStatus = {
-      percentage: readNumberAttr(attrs, 'percentage'),
+      speed: readNumberAttr(attrs, 'percentage'),
       percentageStep: readNumberAttr(attrs, 'percentage_step') ?? undefined,
       preset: readStringAttr(attrs, 'preset_mode') ?? '',
       availablePresets: readStringArray(attrs, 'preset_modes'),
@@ -74,7 +74,7 @@ export class HaFanDevice extends HaBaseChildDevice {
       getStatus: async () => {
         return this.runtimeState.getCapState<FanControlStatus>('fan-control') ?? FAN_COLD_START
       },
-      setPercentage: async ({ percentage }) => {
+      setPercentage: async ({ speed: percentage }) => {
         await this.callHaService('fan', 'set_percentage', { percentage })
       },
       setPreset: async ({ preset }) => {

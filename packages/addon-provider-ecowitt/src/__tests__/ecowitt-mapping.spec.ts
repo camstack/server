@@ -41,10 +41,10 @@ describe('capForQuantity', () => {
 
 describe('valueFieldForCap', () => {
   it('returns the canonical value field per cap', () => {
-    expect(valueFieldForCap('temperature-sensor')).toBe('celsius')
-    expect(valueFieldForCap('humidity-sensor')).toBe('percent')
-    expect(valueFieldForCap('pressure-sensor')).toBe('hpa')
-    expect(valueFieldForCap('ambient-light-sensor')).toBe('lux')
+    expect(valueFieldForCap('temperature-sensor')).toBe('temperature')
+    expect(valueFieldForCap('humidity-sensor')).toBe('humidity')
+    expect(valueFieldForCap('pressure-sensor')).toBe('pressure')
+    expect(valueFieldForCap('ambient-light-sensor')).toBe('illuminance')
     expect(valueFieldForCap('numeric-sensor')).toBe('value')
   })
 })

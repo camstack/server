@@ -171,7 +171,7 @@ describe('HomeConnectSensorDevice — the other caps', () => {
     connect(clientWith({ [binding.key]: 12_500 }, compact))
     const { t } = await sensor(binding)
     expect(t.runtimeState().getCapState<PowerMeterStatus>('power-meter')).toMatchObject({
-      kwhTotal: 12.5,
+      energy: 12.5,
     })
   })
 })

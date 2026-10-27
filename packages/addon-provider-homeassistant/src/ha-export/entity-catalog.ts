@@ -1041,7 +1041,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
    */
   brightness: {
     platform: 'number',
-    field: 'percentage',
+    field: 'level',
     unit: '%',
     writable: true,
     range: PERCENT_RANGE,
@@ -1121,25 +1121,25 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
   // ── Measurements ──────────────────────────────────────────────────────
   'temperature-sensor': {
     platform: 'sensor',
-    field: 'celsius',
+    field: 'temperature',
     deviceClass: 'temperature',
     unit: '°C',
   },
   'humidity-sensor': {
     platform: 'sensor',
-    field: 'percent',
+    field: 'humidity',
     deviceClass: 'humidity',
     unit: '%',
   },
   'pressure-sensor': {
     platform: 'sensor',
-    field: 'hpa',
+    field: 'pressure',
     deviceClass: 'pressure',
     unit: 'hPa',
   },
   'ambient-light-sensor': {
     platform: 'sensor',
-    field: 'lux',
+    field: 'illuminance',
     deviceClass: 'illuminance',
     unit: 'lx',
   },
@@ -1147,13 +1147,13 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
   'enum-sensor': { platform: 'sensor', field: 'value' },
   battery: {
     platform: 'sensor',
-    field: 'percentage',
+    field: 'level',
     deviceClass: 'battery',
     unit: '%',
   },
   'power-meter': {
     platform: 'sensor',
-    field: 'watts',
+    field: 'power',
     deviceClass: 'power',
     unit: 'W',
   },
@@ -1337,7 +1337,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
   /** A fan has no `on` field — `percentage` IS its state, and 0 is off. */
   'fan-control': {
     platform: 'number',
-    field: 'percentage',
+    field: 'speed',
     unit: '%',
     icon: 'mdi:fan',
     writable: true,
@@ -1508,7 +1508,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
       },
       progress: {
         platform: 'sensor',
-        field: 'progressPercent',
+        field: 'progress',
         label: 'Progress',
         unit: '%',
         enabledByDefault: false,
@@ -1568,14 +1568,14 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
       },
       'remaining-time': {
         platform: 'sensor',
-        field: 'remainingSeconds',
+        field: 'remaining',
         label: 'Remaining time',
         deviceClass: 'duration',
         unit: 's',
       },
       'delayed-start': {
         platform: 'sensor',
-        field: 'delayedStartSeconds',
+        field: 'delayedStart',
         label: 'Delayed start',
         deviceClass: 'duration',
         unit: 's',
@@ -1583,7 +1583,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
       },
       progress: {
         platform: 'sensor',
-        field: 'progressPercent',
+        field: 'progress',
         label: 'Progress',
         unit: '%',
         enabledByDefault: false,
@@ -1700,7 +1700,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
       },
       progress: {
         platform: 'sensor',
-        field: 'progressPercent',
+        field: 'progress',
         label: 'Progress',
         unit: '%',
         enabledByDefault: false,
@@ -1790,13 +1790,13 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
     extras: {
       /**
        * The one writable surface `setColor` has that is a single number: its
-       * input is a discriminated union and `{ mode: 'mired', mireds }` is the
+       * input is a discriminated union and `{ mode: 'mired', colorTemperature }` is the
        * only arm with exactly one scalar in it. `mode` itself stays read-only
        * — writing it alone would be a call with no colour in it.
        */
       mireds: {
         platform: 'number',
-        field: 'mireds',
+        field: 'colorTemperature',
         label: 'Colour temperature',
         unit: 'mired',
         writable: true,
@@ -2328,7 +2328,7 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
     cap: 'meter',
     reason:
       'The integral of a gauge that is not watts (D944). The total is base-unit ' +
-      'seconds between resets; energy from watts is power-meter.kwhTotal. The ' +
+      'seconds between resets; energy from watts is power-meter.energy. The ' +
       'source quantity is not on this device yet, so publishing the total as a ' +
       'sensor would give it no unit.',
   },

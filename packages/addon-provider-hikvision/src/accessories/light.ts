@@ -106,7 +106,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
   private brightnessView(): BrightnessStatus {
     return (
       this.getCapSlice(brightnessCapability) ?? {
-        percentage: this.config.get('defaultBrightness') ?? 100,
+        level: this.config.get('defaultBrightness') ?? 100,
         lastChangedAt: 0,
       }
     )
@@ -128,9 +128,9 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
       if (typeof state.brightness === 'number') {
         const previousBrightness = this.brightnessView()
         const brightChangedAt =
-          previousBrightness.percentage === state.brightness ? previousBrightness.lastChangedAt : ts
+          previousBrightness.level === state.brightness ? previousBrightness.lastChangedAt : ts
         this.setCapSlice(brightnessCapability, {
-          percentage: state.brightness,
+          level: state.brightness,
           lastChangedAt: brightChangedAt,
         })
       }
@@ -153,7 +153,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     )
     const ts = Date.now()
     this.setCapSlice(switchCapability, { on, lastChangedAt: ts })
-    if (on) this.setCapSlice(brightnessCapability, { percentage: brightness, lastChangedAt: ts })
+    if (on) this.setCapSlice(brightnessCapability, { level: brightness, lastChangedAt: ts })
   }
 
   private startPolling(): void {
@@ -178,7 +178,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
       getStatus: async (): Promise<SwitchStatus> => this.switchView(),
       setState: async ({ deviceId, on }) => {
         if (deviceId !== this.id) return
-        const brightness = this.brightnessView().percentage
+        const brightness = this.brightnessView().level
         await this.applyOn(on, brightness)
       },
     }
@@ -190,7 +190,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     const provider: InferNativeProvider<typeof brightnessCapability> = {
       // Slice-driven; same anti-pattern fix as switch.
       getStatus: async (): Promise<BrightnessStatus> => this.brightnessView(),
-      setBrightness: async ({ deviceId, percentage }) => {
+      setBrightness: async ({ deviceId, level: percentage }) => {
         if (deviceId !== this.id) return
         const value = Math.max(0, Math.min(100, percentage))
         // Lib accepts brightness only when the LED is on; otherwise
@@ -199,13 +199,13 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
         if (this.switchView().on) {
           await this.applyOn(true, value)
         } else {
-          this.setCapSlice(brightnessCapability, { percentage: value, lastChangedAt: Date.now() })
+          this.setCapSlice(brightnessCapability, { level: value, lastChangedAt: Date.now() })
         }
       },
     }
     this.ctx.registerNativeCap(brightnessCapability, provider)
     this.setCapSlice(brightnessCapability, {
-      percentage: this.config.get('defaultBrightness') ?? 100,
+      level: this.config.get('defaultBrightness') ?? 100,
       lastChangedAt: 0,
     })
   }
@@ -270,7 +270,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     // the cached slice so the next read returns the new value.
     if (typed.defaultBrightness !== undefined && !this.switchView().on) {
       this.setCapSlice(brightnessCapability, {
-        percentage: typed.defaultBrightness,
+        level: typed.defaultBrightness,
         lastChangedAt: Date.now(),
       })
     }
@@ -278,7 +278,7 @@ export class HikvisionLightAccessory extends BaseDevice<typeof lightAccessorySch
     // mode + cached brightness so the camera switches the active
     // illumination mode immediately.
     if (typed.mode !== undefined && this.switchView().on) {
-      await this.applyOn(true, this.brightnessView().percentage).catch((err: unknown) => {
+      await this.applyOn(true, this.brightnessView().level).catch((err: unknown) => {
         this.ctx.logger.warn('hikvision light: live mode switch failed', {
           meta: { error: err instanceof Error ? err.message : String(err) },
         })

@@ -14,7 +14,7 @@ import type { HaEntityState } from '../ha-types.js'
 const COLD_START: LawnMowerControlStatus = {
   activity: 'idle',
   batteryLevel: null,
-  progressPercent: null,
+  progress: null,
   currentCode: null,
   currentCodeLabel: null,
   severity: 'info',
@@ -47,7 +47,7 @@ export class HaLawnMowerDevice extends HaBaseChildDevice {
       this.runtimeState.setCapState('lawn-mower-control', {
         activity,
         batteryLevel,
-        progressPercent: readNumericAttr(state.attributes, 'mowing_progress'),
+        progress: readNumericAttr(state.attributes, 'mowing_progress'),
         currentCode: null,
         currentCodeLabel: null,
         severity: activity === 'error' ? 'error' : 'info',

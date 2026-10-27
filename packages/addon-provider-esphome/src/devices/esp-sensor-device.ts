@@ -27,16 +27,16 @@ import { EspChildDevice, stampOnChange, type EspStateOrigin } from './esp-child-
 
 type PowerField = keyof Pick<
   PowerMeterStatus,
-  'watts' | 'kwhTotal' | 'volts' | 'amps' | 'va' | 'powerFactor'
+  'power' | 'energy' | 'voltage' | 'current' | 'apparentPower' | 'powerFactor'
 >
 
 /** The quantity each power-meter field is stored in (a power factor is a plain ratio). */
 const POWER_FIELD_QUANTITY: Readonly<Record<string, ReadingQuantity | null>> = {
-  watts: 'power',
-  kwhTotal: 'energy',
-  volts: 'voltage',
-  amps: 'current',
-  va: 'apparent-power',
+  power: 'power',
+  energy: 'energy',
+  voltage: 'voltage',
+  current: 'current',
+  apparentPower: 'apparent-power',
   powerFactor: null,
 }
 

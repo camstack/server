@@ -19,6 +19,6 @@ export type AnalyticsHistoryBucketSeriesName = keyof typeof ANALYTICS_HISTORY_BU
 
 /** Map the public cap enum to the device-history key (read path). */
 export function historyKeyForLtsSeries(series: AnalyticsLtsSeries): string {
-  if (series === 'battery') return 'cap:battery.percentage'
+  if (series === 'battery') return 'cap:battery.level'
   return ANALYTICS_HISTORY_BUCKET_SERIES[series]
 }

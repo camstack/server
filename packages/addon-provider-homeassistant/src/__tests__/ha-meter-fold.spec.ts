@@ -73,9 +73,9 @@ describe('a metered switch is one device with a power-meter', () => {
     const primary = out.find((e) => e.entityId === 'switch.desk_plug')
     expect(primary?.capabilities).toEqual(['switch', 'power-meter'])
     expect(primary?.meterEntities).toEqual({
-      watts: 'sensor.desk_plug_power',
-      kwhTotal: 'sensor.desk_plug_energy',
-      volts: 'sensor.desk_plug_voltage',
+      power: 'sensor.desk_plug_power',
+      energy: 'sensor.desk_plug_energy',
+      voltage: 'sensor.desk_plug_voltage',
     })
   })
 

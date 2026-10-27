@@ -13,7 +13,7 @@ const SWITCH_CAP = 'switch'
 const TEMP_CAP = 'temperature-sensor'
 
 const SWITCH_COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
-const TEMP_COLD_START: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
+const TEMP_COLD_START: TemperatureSensorStatus = { temperature: 0, lastFetchedAt: 0 }
 
 /**
  * Dreo heater device. Registers `switch` (power) + `temperature-sensor` (the
@@ -84,7 +84,7 @@ export class DreoHeaterDevice extends DreoChildDevice {
     const temperature = heater.temperature
     if (temperature !== undefined) {
       this.runtimeState.setCapState(TEMP_CAP, {
-        celsius: temperature,
+        temperature: temperature,
         lastFetchedAt: now,
       })
     }

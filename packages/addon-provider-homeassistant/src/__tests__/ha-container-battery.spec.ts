@@ -191,7 +191,7 @@ describe('deriveBatteryStatus', () => {
       st('73'),
       1000,
     )
-    expect(s).toEqual({ percentage: 73, charging: 'none', sleeping: false, lastUpdated: 1000 })
+    expect(s).toEqual({ level: 73, charging: 'none', sleeping: false, lastUpdated: 1000 })
   })
 
   it('clamps an out-of-range firmware value instead of failing the status', () => {
@@ -200,11 +200,11 @@ describe('deriveBatteryStatus', () => {
     // status down.
     expect(
       deriveBatteryStatus([NUMERIC_BATTERY_ENTITY], 'sensor.front_door_battery', st('137'), 0)
-        ?.percentage,
+        ?.level,
     ).toBe(100)
     expect(
       deriveBatteryStatus([NUMERIC_BATTERY_ENTITY], 'sensor.front_door_battery', st('-4'), 0)
-        ?.percentage,
+        ?.level,
     ).toBe(0)
   })
 
@@ -216,24 +216,22 @@ describe('deriveBatteryStatus', () => {
       0,
     )
     expect(low?.binary).toBe(true)
-    expect(low?.percentage).toBeLessThan(20)
-    expect(low?.percentage).toBeGreaterThan(0)
+    expect(low?.level).toBeLessThan(20)
+    expect(low?.level).toBeGreaterThan(0)
     const normal = deriveBatteryStatus(
       [BINARY_BATTERY_ENTITY],
       'binary_sensor.lock_battery',
       st('off'),
       0,
     )
-    expect(normal?.percentage).toBe(100)
+    expect(normal?.level).toBe(100)
     expect(normal?.binary).toBe(true)
   })
 
   it('prefers a numeric battery sensor over a binary LOW_BAT when both exist', () => {
     const entities = [BINARY_BATTERY_ENTITY, NUMERIC_BATTERY_ENTITY]
     expect(deriveBatteryStatus(entities, 'binary_sensor.lock_battery', st('on'), 0)).toBeNull()
-    expect(
-      deriveBatteryStatus(entities, 'sensor.front_door_battery', st('50'), 0)?.percentage,
-    ).toBe(50)
+    expect(deriveBatteryStatus(entities, 'sensor.front_door_battery', st('50'), 0)?.level).toBe(50)
   })
 
   it('an unparseable state yields nothing rather than a fabricated 0 %', () => {
@@ -261,14 +259,14 @@ describe('HaContainerDevice battery (native, derived in-provider)', () => {
   it('derives the slice from the availability push stream it already subscribes', async () => {
     const h = await makeContainer(BATTERY_CONFIG)
     h.push('sensor.front_door_battery', '61')
-    expect(h.batterySlice()).toMatchObject({ percentage: 61, charging: 'none' })
+    expect(h.batterySlice()).toMatchObject({ level: 61, charging: 'none' })
   })
 
   it('ignores a push from any entity that is not the battery source', async () => {
     const h = await makeContainer(BATTERY_CONFIG)
     h.push('sensor.front_door_battery', '61')
     h.push('sensor.something_else', '5')
-    expect(h.batterySlice()).toMatchObject({ percentage: 61 })
+    expect(h.batterySlice()).toMatchObject({ level: 61 })
   })
 
   it('advertises BatteryOperated when a battery entity is present', async () => {
@@ -334,14 +332,14 @@ describe('HaContainerDevice battery (native, derived in-provider)', () => {
   it('before any reading, the battery is UNKNOWN (null / unknown), never 0 % on battery (D393, D315)', async () => {
     const h = await makeContainer(BATTERY_CONFIG)
     expect(h.batterySlice()).toEqual({
-      percentage: null,
+      level: null,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,
     })
     const status = await h.providerOf('battery').getStatus({ deviceId: 100 })
     expect(status).toEqual({
-      percentage: null,
+      level: null,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,
@@ -350,7 +348,7 @@ describe('HaContainerDevice battery (native, derived in-provider)', () => {
 
   it('a RESTORED battery slice survives the boot — the cold seed is written only when no slice exists (D49)', async () => {
     const restored = {
-      percentage: 40,
+      level: 40,
       charging: 'none',
       sleeping: false,
       lastUpdated: 1_700_000_000_000,
@@ -359,11 +357,11 @@ describe('HaContainerDevice battery (native, derived in-provider)', () => {
     expect(h.batterySlice()).toEqual(restored)
   })
 
-  it('replaces a persisted LEGACY cold seed ({percentage: 0, lastUpdated: 0}) with the new unknown seed (D663)', async () => {
-    const legacy = { percentage: 0, charging: 'none', sleeping: false, lastUpdated: 0 }
+  it('replaces a persisted LEGACY cold seed ({level: 0, lastUpdated: 0}) with the new unknown seed (D663)', async () => {
+    const legacy = { level: 0, charging: 'none', sleeping: false, lastUpdated: 0 }
     const h = await makeContainer(BATTERY_CONFIG, { battery: legacy })
     expect(h.batterySlice()).toEqual({
-      percentage: null,
+      level: null,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,
@@ -372,7 +370,7 @@ describe('HaContainerDevice battery (native, derived in-provider)', () => {
 
   it('keeps a REAL stored 0 % reading (a genuine lastUpdated) — lastUpdated is the only signature of "never observed"', async () => {
     const real = {
-      percentage: 0,
+      level: 0,
       charging: 'none',
       sleeping: false,
       lastUpdated: 1_700_000_000_000,

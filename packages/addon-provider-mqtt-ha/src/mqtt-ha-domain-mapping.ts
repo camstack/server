@@ -34,15 +34,15 @@ export type MqttHaCap =
 export type MqttHaBinaryCap = 'contact' | 'motion' | 'flood' | 'vibration' | 'tamper'
 
 /** The `power-meter` status field a reading lands in. */
-export type MqttHaMeterField = 'watts' | 'kwhTotal' | 'volts' | 'amps'
+export type MqttHaMeterField = 'power' | 'energy' | 'voltage' | 'current'
 
 export type MqttHaMeterEntities = Partial<Record<MqttHaMeterField, string>>
 
 const METER_FIELD_BY_CLASS: Readonly<Record<string, MqttHaMeterField>> = {
-  power: 'watts',
-  energy: 'kwhTotal',
-  voltage: 'volts',
-  current: 'amps',
+  power: 'power',
+  energy: 'energy',
+  voltage: 'voltage',
+  current: 'current',
 }
 
 const BINARY_CAP_BY_CLASS: Readonly<Record<string, MqttHaBinaryCap>> = {

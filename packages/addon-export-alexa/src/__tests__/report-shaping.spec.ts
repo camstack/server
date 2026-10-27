@@ -30,7 +30,7 @@ function setup() {
 const temp = (celsius: number) => ({
   deviceId: 5,
   capName: 'temperature-sensor',
-  slice: { celsius, lastChangedAt: 1 },
+  slice: { temperature: celsius, lastChangedAt: 1 },
 })
 const cover = (position: number) => ({
   deviceId: 9,
@@ -81,7 +81,7 @@ describe('numeric sensor shaping', () => {
     const humidity = (percent: number) => ({
       deviceId: 5,
       capName: 'humidity-sensor',
-      slice: { percent, lastChangedAt: 1 },
+      slice: { humidity: percent, lastChangedAt: 1 },
     })
     await reporter.onChange(humidity(50))
     await vi.advanceTimersByTimeAsync(61_000)
@@ -141,14 +141,14 @@ describe('state reconcile', () => {
   it('the first pass records a baseline and pushes nothing; the next pushes only the difference', async () => {
     const { reporter, posted } = setup()
     const slices: Record<string, unknown> = {
-      '5|temperature-sensor': { celsius: 20, lastChangedAt: 1 },
+      '5|temperature-sensor': { temperature: 20, lastChangedAt: 1 },
     }
     const reconciler = reconcilerFor(reporter, slices)
     expect((await reconciler.runOnce()).pushed).toBe(0)
     expect(posted).toHaveLength(0)
 
     expect((await reconciler.runOnce()).pushed).toBe(0)
-    slices['5|temperature-sensor'] = { celsius: 24, lastChangedAt: 2 }
+    slices['5|temperature-sensor'] = { temperature: 24, lastChangedAt: 2 }
     const third = await reconciler.runOnce()
     expect(third.pushed).toBe(1)
     expect(valuesOf(posted)).toEqual([{ value: 24, scale: 'CELSIUS' }])
@@ -193,7 +193,7 @@ describe('state reconcile', () => {
     expect(summary.failedReads).toBeGreaterThan(0)
     // The value the failed read could not contradict still stands.
     const healthy = reconcilerFor(reporter, {
-      '5|temperature-sensor': { celsius: 20, lastChangedAt: 3 },
+      '5|temperature-sensor': { temperature: 20, lastChangedAt: 3 },
     })
     expect((await healthy.runOnce()).pushed).toBe(0)
     expect(posted).toHaveLength(1)
@@ -203,7 +203,7 @@ describe('state reconcile', () => {
     const { reporter, posted } = setup()
     await reporter.onChange(temp(20))
     const reconciler = reconcilerFor(reporter, {
-      '5|temperature-sensor': { celsius: 20.3, lastChangedAt: 2 },
+      '5|temperature-sensor': { temperature: 20.3, lastChangedAt: 2 },
     })
     expect((await reconciler.runOnce()).pushed).toBe(0)
     expect(posted).toHaveLength(1)

@@ -16,7 +16,7 @@ const COLD_START: VacuumControlStatus = {
   batteryLevel: null,
   fanSpeed: null,
   availableFanSpeeds: [],
-  progressPercent: null,
+  progress: null,
   errorCode: null,
   errorLabel: null,
   lastChangedAt: 0,
@@ -56,7 +56,7 @@ export class HaVacuumDevice extends HaBaseChildDevice {
       fanSpeed,
       availableFanSpeeds,
       // HA's vacuum domain exposes no tank telemetry — these stay null.
-      progressPercent: null,
+      progress: null,
       errorCode: null,
       // HA surfaces an error string in the `error` attribute when faulted.
       errorLabel: lifecycleState === 'error' ? readStringAttr(state.attributes, 'error') : null,

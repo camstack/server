@@ -1,4 +1,6 @@
 import {
+  type BatteryStatus,
+  batteryCapability,
   presenceCapability,
   type DeviceContext,
   type InferNativeProvider,
@@ -7,11 +9,18 @@ import {
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
 
+/** No reading yet: unknown, never 0 % (D393). */
+const COLD_BATTERY: BatteryStatus = {
+  level: null,
+  charging: 'unknown',
+  sleeping: false,
+  lastUpdated: 0,
+}
+
 const COLD_START: PresenceStatus = {
   state: 'unknown',
   location: null,
   gps: null,
-  batteryPercent: null,
   lastChangedAt: 0,
 }
 
@@ -22,14 +31,18 @@ const COLD_START: PresenceStatus = {
  *
  * HA attributes consumed:
  *   - `latitude` / `longitude` / `gps_accuracy` → gps envelope
- *   - `battery_level` → batteryPercent
+ *   - `battery_level` → the `battery` cap (a presence provider never reports
+ *     battery on the presence status)
  *   - `friendly_name` and the state value drive the `location` label
  */
 export class HaPresenceDevice extends HaBaseChildDevice {
   constructor(ctx: DeviceContext) {
     super(ctx)
     this.registerPresenceCap()
+    this.registerBatteryCap()
     this.runtimeState.setCapState('presence', COLD_START)
+    const existing = this.runtimeState.getCapState<BatteryStatus>('battery')
+    if (existing === undefined) this.runtimeState.setCapState('battery', COLD_BATTERY)
   }
 
   protected override handleStatePush(state: HaEntityState): void {
@@ -47,10 +60,27 @@ export class HaPresenceDevice extends HaBaseChildDevice {
         lat !== null && lon !== null
           ? { latitude: lat, longitude: lon, accuracyMeters: acc ?? 0 }
           : null,
-      batteryPercent: battery,
       lastChangedAt,
     }
     this.runtimeState.setCapState('presence', slice)
+    if (battery !== null) {
+      this.runtimeState.setCapState('battery', {
+        level: Math.min(100, Math.max(0, battery)),
+        charging: 'unknown',
+        sleeping: false,
+        lastUpdated: lastChangedAt,
+      })
+    }
+  }
+
+  private registerBatteryCap(): void {
+    const provider: InferNativeProvider<typeof batteryCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<BatteryStatus>('battery') ?? COLD_BATTERY,
+      // An HA entity is read-only upstream — there is no wake path.
+      wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
+    }
+    this.ctx.registerNativeCap(batteryCapability, provider)
   }
 
   private registerPresenceCap(): void {

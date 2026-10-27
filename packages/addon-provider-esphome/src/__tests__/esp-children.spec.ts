@@ -72,8 +72,8 @@ describe('EspSensorDevice', () => {
     link.push({ type: 'sensor', id: 'sensor-power', state: 230 })
     link.push({ type: 'sensor', id: 'sensor-voltage', state: 229.5 })
     const status = dev.runtimeState.getCapState<PowerMeterStatus>('power-meter')
-    expect(status?.watts).toBe(230)
-    expect(status?.volts).toBe(229.5)
+    expect(status?.power).toBe(230)
+    expect(status?.voltage).toBe(229.5)
   })
 })
 

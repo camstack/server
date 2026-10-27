@@ -35,7 +35,7 @@ export type HmDiagnosticConfig = z.infer<typeof hmDiagnosticSchema>
 /** Cold-start slices keyed by cap. */
 const COLD_NUMERIC: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
 const COLD_BINARY: BinaryStatus = { on: false, lastChangedAt: 0 }
-const COLD_TEMP: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
+const COLD_TEMP: TemperatureSensorStatus = { temperature: 0, lastFetchedAt: 0 }
 
 /**
  * One Homematic MAINTENANCE-derived diagnostic accessory child — operating
@@ -114,7 +114,10 @@ export class HmDiagnosticDevice extends HmChildDevice<typeof hmDiagnosticSchema>
     const stored = this.toBase(value)
     if (stored === null) return
     if (this.capName === 'temperature-sensor') {
-      this.runtimeState.setCapState('temperature-sensor', { celsius: stored, lastFetchedAt: now })
+      this.runtimeState.setCapState('temperature-sensor', {
+        temperature: stored,
+        lastFetchedAt: now,
+      })
       return
     }
     this.runtimeState.setCapState('numeric-sensor', { value: stored, lastFetchedAt: now })

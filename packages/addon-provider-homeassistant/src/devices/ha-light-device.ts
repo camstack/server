@@ -45,7 +45,7 @@ export class HaLightDevice extends HaBaseChildDevice {
       this.runtimeState.setCapState('switch', { on: false, lastChangedAt: 0 })
     }
     if (this.capSet.has('brightness')) {
-      this.runtimeState.setCapState('brightness', { percentage: 0, lastChangedAt: 0 })
+      this.runtimeState.setCapState('brightness', { level: 0, lastChangedAt: 0 })
     }
     if (this.capSet.has('color')) {
       this.runtimeState.setCapState('color', { mode: 'rgb', lastChangedAt: 0 })
@@ -66,7 +66,7 @@ export class HaLightDevice extends HaBaseChildDevice {
       const haBrightness = readNumberAttr(state.attributes, 'brightness')
       if (haBrightness !== null) {
         const percentage = Math.max(0, Math.min(100, Math.round((haBrightness / 255) * 100)))
-        this.runtimeState.setCapState('brightness', { percentage, lastChangedAt })
+        this.runtimeState.setCapState('brightness', { level: percentage, lastChangedAt })
       }
     }
 
@@ -101,12 +101,12 @@ export class HaLightDevice extends HaBaseChildDevice {
       getStatus: async () => {
         return (
           this.runtimeState.getCapState<BrightnessStatus>('brightness') ?? {
-            percentage: 0,
+            level: 0,
             lastChangedAt: 0,
           }
         )
       },
-      setBrightness: async ({ percentage }) => {
+      setBrightness: async ({ level: percentage }) => {
         // HA `light.turn_on` with `brightness_pct: 0..100`. Setting
         // brightness implicitly turns the light on.
         await this.callHaService('light', 'turn_on', { brightness_pct: percentage })
@@ -173,7 +173,7 @@ function decodeColorSlice(
   if (colorMode === 'color_temp') {
     const mireds = readNumberAttr(attrs, 'color_temp')
     if (mireds !== null) {
-      return { mode: 'mired', mireds, lastChangedAt }
+      return { mode: 'mired', colorTemperature: mireds, lastChangedAt }
     }
     return null
   }
@@ -184,7 +184,7 @@ function colorInputToHaServiceData(
   color:
     | { mode: 'rgb'; rgb: { r: number; g: number; b: number } }
     | { mode: 'hsv'; hsv: { h: number; s: number; v: number } }
-    | { mode: 'mired'; mireds: number },
+    | { mode: 'mired'; colorTemperature: number },
 ): Record<string, unknown> {
   switch (color.mode) {
     case 'rgb':
@@ -195,6 +195,6 @@ function colorInputToHaServiceData(
         brightness_pct: color.hsv.v,
       }
     case 'mired':
-      return { color_temp: color.mireds }
+      return { color_temp: color.colorTemperature }
   }
 }

@@ -99,7 +99,7 @@ describe('mapping by component + device_class', () => {
     const { plan } = planOf(plugMessages())
     expect(plan.deviceType).toBe(DeviceType.Switch)
     expect(plan.capabilities).toEqual(['switch', 'power-meter'])
-    expect(Object.keys(plan.meter).sort()).toEqual(['amps', 'kwhTotal', 'volts', 'watts'])
+    expect(Object.keys(plan.meter).sort()).toEqual(['current', 'energy', 'power', 'voltage'])
     // switch + four meter entities are the members; link quality is not a device.
     expect(plan.members).toHaveLength(5)
   })
@@ -209,9 +209,9 @@ describe('a device with several actuators is one Container with a child per gang
     const [g1, g2] = container.gangs
     expect(g1!.plan.deviceType).toBe(DeviceType.Switch)
     expect(g1!.plan.capabilities).toEqual(['switch', 'power-meter', 'battery'])
-    expect(g1!.plan.meter.watts).toContain('power_l1')
+    expect(g1!.plan.meter.power).toContain('power_l1')
     expect(g2!.plan.capabilities).toEqual(['switch', 'power-meter'])
-    expect(g2!.plan.meter.watts).toContain('power_l2')
+    expect(g2!.plan.meter.power).toContain('power_l2')
   })
 
   it('puts a device-wide meter on the first gang when the payload names no endpoint', () => {
@@ -219,7 +219,7 @@ describe('a device with several actuators is one Container with a child per gang
       parseAll([gang('l1', 'L1'), gang('l2', 'L2'), sensorOf('power', 'power', 'W')]),
     )[0]!
     const [g1, g2] = planMqttHaContainer(group)!.gangs
-    expect(g1!.plan.meter.watts).toContain('power')
+    expect(g1!.plan.meter.power).toContain('power')
     expect(g2!.plan.capabilities).toEqual(['switch'])
   })
 

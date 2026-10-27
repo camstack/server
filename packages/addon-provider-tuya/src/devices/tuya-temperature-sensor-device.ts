@@ -44,7 +44,7 @@ export class TuyaTemperatureSensorDevice extends TuyaChildDevice {
   }
 
   #slice(celsius: number): TemperatureSensorStatus {
-    return { celsius, lastFetchedAt: Date.now() }
+    return { temperature: celsius, lastFetchedAt: Date.now() }
   }
 
   protected override registerControlCap(): void {
@@ -61,7 +61,7 @@ export class TuyaTemperatureSensorDevice extends TuyaChildDevice {
     const celsius = this.#read()
     if (celsius === null) return
     const current = this.runtimeState.getCapState<TemperatureSensorStatus>(CAP_NAME)
-    if (current?.celsius === celsius) return
+    if (current?.temperature === celsius) return
     this.runtimeState.setCapState(CAP_NAME, this.#slice(celsius))
   }
 }

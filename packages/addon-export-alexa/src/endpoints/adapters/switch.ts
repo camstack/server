@@ -51,13 +51,13 @@ export const switchAdapter: GenericAdapter = {
   },
   properties: (capName, slice): readonly GenericProperty[] => {
     if (capName === 'brightness') {
-      const p = BrightnessStatusSchema.pick({ percentage: true }).safeParse(slice)
+      const p = BrightnessStatusSchema.pick({ level: true }).safeParse(slice)
       return p.success
         ? [
             {
               namespace: 'Alexa.BrightnessController',
               name: 'brightness',
-              value: Math.max(0, Math.min(100, Math.round(p.data.percentage))),
+              value: Math.max(0, Math.min(100, Math.round(p.data.level))),
             },
           ]
         : []

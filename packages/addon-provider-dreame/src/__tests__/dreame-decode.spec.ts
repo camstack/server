@@ -475,7 +475,7 @@ describe('nextVacuumControlSlice — write on change only', () => {
     batteryLevel: 100,
     fanSpeed: 'standard',
     availableFanSpeeds: ['quiet', 'standard'],
-    progressPercent: null,
+    progress: null,
     errorCode: null,
     errorLabel: null,
     lastChangedAt: 100,

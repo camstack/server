@@ -140,12 +140,12 @@ export function decodeMatterAttribute(input: {
     case MatterClusterId.OccupancySensing:
       return decodeOccupancy(attributeId, value)
     case MatterClusterId.TemperatureMeasurement:
-      return decodeScaledMeasurement(attributeId, value, 'temperature-sensor', 'celsius', 0.01)
+      return decodeScaledMeasurement(attributeId, value, 'temperature-sensor', 'temperature', 0.01)
     case MatterClusterId.RelativeHumidityMeasurement:
-      return decodeScaledMeasurement(attributeId, value, 'humidity-sensor', 'percent', 0.01)
+      return decodeScaledMeasurement(attributeId, value, 'humidity-sensor', 'humidity', 0.01)
     case MatterClusterId.PressureMeasurement:
       // PressureMeasurement.MeasuredValue is in kPa×10; 1 kPa = 10 hPa → ×1.
-      return decodeScaledMeasurement(attributeId, value, 'pressure-sensor', 'hpa', 1)
+      return decodeScaledMeasurement(attributeId, value, 'pressure-sensor', 'pressure', 1)
     case MatterClusterId.IlluminanceMeasurement:
       return decodeIlluminance(attributeId, value)
     case MatterClusterId.PowerSource:
@@ -233,7 +233,7 @@ function decodeLevel(attributeId: number, value: unknown): DecodedAttribute | nu
   if (level === null) return null
   // Matter LevelControl.CurrentLevel is 0..254 → CamStack percentage 0..100.
   const percentage = Math.round((Math.max(0, Math.min(254, level)) / 254) * 100)
-  return { cap: 'brightness', patch: { percentage, lastChangedAt: Date.now() } }
+  return { cap: 'brightness', patch: { level: percentage, lastChangedAt: Date.now() } }
 }
 
 function decodeContact(attributeId: number, value: unknown): DecodedAttribute | null {
@@ -279,7 +279,7 @@ function decodeIlluminance(attributeId: number, value: unknown): DecodedAttribut
   if (raw === null || raw <= 0) return null
   // IlluminanceMeasurement.MeasuredValue = 10000 × log10(lux) + 1 ⇒ invert.
   const lux = Math.round(10 ** ((raw - 1) / 10000))
-  return { cap: 'ambient-light-sensor', patch: { lux, lastFetchedAt: Date.now() } }
+  return { cap: 'ambient-light-sensor', patch: { illuminance: lux, lastFetchedAt: Date.now() } }
 }
 
 function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | null {
@@ -288,7 +288,7 @@ function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | 
     if (half === null) return null
     // PowerSource.BatPercentRemaining is in half-percent (0..200) → 0..100.
     const percentage = Math.max(0, Math.min(100, Math.round(half / 2)))
-    return { cap: 'battery', patch: { percentage, lastUpdated: Date.now() } }
+    return { cap: 'battery', patch: { level: percentage, lastUpdated: Date.now() } }
   }
   if (attributeId === MatterAttributeId.BatChargeState) {
     const state = asNumber(value)
@@ -334,19 +334,19 @@ function decodeElectricalPower(attributeId: number, value: unknown): DecodedAttr
       const mw = asNumber(value)
       return mw === null
         ? null
-        : { cap: 'power-meter', patch: { watts: mw / 1000, lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { power: mw / 1000, lastFetchedAt: Date.now() } }
     }
     case MatterAttributeId.Voltage: {
       const mv = asNumber(value)
       return mv === null
         ? null
-        : { cap: 'power-meter', patch: { volts: mv / 1000, lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { voltage: mv / 1000, lastFetchedAt: Date.now() } }
     }
     case MatterAttributeId.ActiveCurrent: {
       const ma = asNumber(value)
       return ma === null
         ? null
-        : { cap: 'power-meter', patch: { amps: ma / 1000, lastFetchedAt: Date.now() } }
+        : { cap: 'power-meter', patch: { current: ma / 1000, lastFetchedAt: Date.now() } }
     }
     default:
       return null
@@ -358,5 +358,5 @@ function decodeElectricalEnergy(attributeId: number, value: unknown): DecodedAtt
   const mwh = asEnergyMilliWattHours(value)
   if (mwh === null) return null
   // mWh → kWh (÷ 1e6).
-  return { cap: 'power-meter', patch: { kwhTotal: mwh / 1_000_000, lastFetchedAt: Date.now() } }
+  return { cap: 'power-meter', patch: { energy: mwh / 1_000_000, lastFetchedAt: Date.now() } }
 }

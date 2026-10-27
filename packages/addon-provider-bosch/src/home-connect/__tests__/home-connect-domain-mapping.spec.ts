@@ -40,7 +40,7 @@ describe('dishwasherStatusFromFeatures — unknown is not off', () => {
     expect(s.extraDry).toBeNull()
     expect(s.childLock).toBeNull()
     expect(s.hygienePlus).toBeNull()
-    expect(s.remainingSeconds).toBeNull()
+    expect(s.remaining).toBeNull()
     expect(s.errorCode).toBeNull()
   })
 
@@ -113,19 +113,19 @@ describe('dishwasherStatusFromFeatures — operation state', () => {
 describe('dishwasherStatusFromFeatures — time is seconds, always', () => {
   it('reads RemainingProgramTime and StartInRelative as seconds with no minute heuristic', () => {
     // 300 used to be read as "300 minutes" (<= 600), 1800 as 30 minutes.
-    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 300 }).remainingSeconds).toBe(300)
-    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 5400 }).remainingSeconds).toBe(5400)
-    expect(status({ 'BSH.Common.Option.StartInRelative': 1800 }).delayedStartSeconds).toBe(1800)
-    expect(status({ 'BSH.Common.Option.StartInRelative': 7200 }).delayedStartSeconds).toBe(7200)
+    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 300 }).remaining).toBe(300)
+    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 5400 }).remaining).toBe(5400)
+    expect(status({ 'BSH.Common.Option.StartInRelative': 1800 }).delayedStart).toBe(1800)
+    expect(status({ 'BSH.Common.Option.StartInRelative': 7200 }).delayedStart).toBe(7200)
   })
 
   it('does not scale a fractional value by 60', () => {
-    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 12.4 }).remainingSeconds).toBe(12)
+    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 12.4 }).remaining).toBe(12)
   })
 
   it('a negative or non-numeric duration is unknown', () => {
-    expect(status({ 'BSH.Common.Option.RemainingProgramTime': -5 }).remainingSeconds).toBeNull()
-    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 'soon' }).remainingSeconds).toBeNull()
+    expect(status({ 'BSH.Common.Option.RemainingProgramTime': -5 }).remaining).toBeNull()
+    expect(status({ 'BSH.Common.Option.RemainingProgramTime': 'soon' }).remaining).toBeNull()
   })
 })
 
@@ -189,8 +189,8 @@ describe('dishwasherStatusFromFeatures — flags that used to be conflated', () 
   })
 
   it('progress outside 0..100 is unknown rather than clamped', () => {
-    expect(status({ 'BSH.Common.Option.ProgramProgress': 40 }).progressPercent).toBe(40)
-    expect(status({ 'BSH.Common.Option.ProgramProgress': 140 }).progressPercent).toBeNull()
+    expect(status({ 'BSH.Common.Option.ProgramProgress': 40 }).progress).toBe(40)
+    expect(status({ 'BSH.Common.Option.ProgramProgress': 140 }).progress).toBeNull()
   })
 })
 

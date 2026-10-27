@@ -49,10 +49,10 @@ export const haSourceSchemaFields = {
   /** Sibling meter sensors whose readings this entity carries as `power-meter` (D951). */
   meterEntities: z
     .object({
-      watts: z.string().optional(),
-      kwhTotal: z.string().optional(),
-      volts: z.string().optional(),
-      amps: z.string().optional(),
+      power: z.string().optional(),
+      energy: z.string().optional(),
+      voltage: z.string().optional(),
+      current: z.string().optional(),
     })
     .optional(),
 }

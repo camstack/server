@@ -8,7 +8,7 @@
  * autotrack endpoint — both reject INVALID_DIRECTIVE here.
  *
  * Routing:
- *   - `${parent}__${child}` → `brightness.setBrightness({deviceId: child, percentage})`
+ *   - `${parent}__${child}` → `brightness.setBrightness({deviceId: child, level: percentage})`
  *
  * Auth: same scope-token verification path as the other controllers.
  * The response carries the `Alexa.BrightnessController.brightness`
@@ -94,7 +94,7 @@ export async function handleSetBrightness(
   try {
     await api.brightness.setBrightness.mutate({
       deviceId: targetDeviceId,
-      percentage,
+      level: percentage,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)

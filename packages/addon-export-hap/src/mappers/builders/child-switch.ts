@@ -41,7 +41,7 @@ interface SwitchStatus {
 }
 
 interface BrightnessStatus {
-  readonly percentage?: number
+  readonly level?: number
 }
 
 export async function buildChildSwitch(
@@ -94,8 +94,8 @@ export async function buildChildSwitch(
   if (useLightbulb) {
     try {
       const status = (await proxy.brightness?.getStatus({})) as BrightnessStatus | null
-      if (status && typeof status.percentage === 'number') {
-        service.updateCharacteristic(Characteristic.Brightness, status.percentage)
+      if (status && typeof status.level === 'number') {
+        service.updateCharacteristic(Characteristic.Brightness, status.level)
       }
     } catch (err) {
       log.debug('export-hap: child brightness.getStatus failed (non-fatal)', {
@@ -124,7 +124,7 @@ export async function buildChildSwitch(
       const percentage = typeof value === 'number' ? value : Number(value)
       if (!Number.isFinite(percentage)) return
       try {
-        await proxy.brightness?.setBrightness({ percentage })
+        await proxy.brightness?.setBrightness({ level: percentage })
       } catch (err) {
         log.warn('export-hap: child brightness.setBrightness failed', {
           meta: { percentage, error: errMsg(err) },
@@ -146,8 +146,8 @@ export async function buildChildSwitch(
   }
   if (useLightbulb && proxy.state.brightness) {
     const unsubBrightness = proxy.state.brightness.subscribe((value) => {
-      if (value && typeof value.percentage === 'number') {
-        service.updateCharacteristic(Characteristic.Brightness, value.percentage)
+      if (value && typeof value.level === 'number') {
+        service.updateCharacteristic(Characteristic.Brightness, value.level)
       }
     })
     unsubscribes.push(unsubBrightness)

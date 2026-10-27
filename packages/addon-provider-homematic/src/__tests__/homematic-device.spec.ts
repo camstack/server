@@ -968,8 +968,8 @@ describe('HomematicDevice sensor push decoding', () => {
       ts: Date.now(),
     } as unknown as ValueChangedEvent)
 
-    const slice = getRuntimeState().getCapState<{ celsius: number }>('temperature-sensor')
-    expect(slice?.celsius).toBe(19.8)
+    const slice = getRuntimeState().getCapState<{ temperature: number }>('temperature-sensor')
+    expect(slice?.temperature).toBe(19.8)
   })
 })
 

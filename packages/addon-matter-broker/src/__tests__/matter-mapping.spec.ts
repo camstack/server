@@ -157,21 +157,21 @@ describe('decodeMatterAttribute', () => {
     expect(decoded?.patch['on']).toBe(true)
   })
 
-  it('scales LevelControl.CurrentLevel (0..254) → brightness percentage (0..100)', () => {
+  it('scales LevelControl.CurrentLevel (0..254) → brightness level (0..100)', () => {
     const full = decodeMatterAttribute({
       clusterId: MatterClusterId.LevelControl,
       attributeId: MatterAttributeId.CurrentLevel,
       value: 254,
     })
     expect(full?.cap).toBe('brightness')
-    expect(full?.patch['percentage']).toBe(100)
+    expect(full?.patch['level']).toBe(100)
 
     const half = decodeMatterAttribute({
       clusterId: MatterClusterId.LevelControl,
       attributeId: MatterAttributeId.CurrentLevel,
       value: 127,
     })
-    expect(half?.patch['percentage']).toBe(50)
+    expect(half?.patch['level']).toBe(50)
   })
 
   it('decodes BooleanState.StateValue (closed=true) → contact.entryOpen (inverse)', () => {
@@ -204,34 +204,34 @@ describe('decodeMatterAttribute', () => {
     expect(Object.hasOwn(clear?.patch ?? {}, 'lastDetectedAt')).toBe(false)
   })
 
-  it('scales TemperatureMeasurement.MeasuredValue (0.01 °C) → celsius', () => {
+  it('scales TemperatureMeasurement.MeasuredValue (0.01 °C) → temperature', () => {
     const decoded = decodeMatterAttribute({
       clusterId: MatterClusterId.TemperatureMeasurement,
       attributeId: MatterAttributeId.MeasuredValue,
       value: 2350,
     })
     expect(decoded?.cap).toBe('temperature-sensor')
-    expect(decoded?.patch['celsius']).toBeCloseTo(23.5)
+    expect(decoded?.patch['temperature']).toBeCloseTo(23.5)
   })
 
-  it('scales RelativeHumidityMeasurement (0.01 %) → percent', () => {
+  it('scales RelativeHumidityMeasurement (0.01 %) → humidity', () => {
     const decoded = decodeMatterAttribute({
       clusterId: MatterClusterId.RelativeHumidityMeasurement,
       attributeId: MatterAttributeId.MeasuredValue,
       value: 5500,
     })
     expect(decoded?.cap).toBe('humidity-sensor')
-    expect(decoded?.patch['percent']).toBeCloseTo(55)
+    expect(decoded?.patch['humidity']).toBeCloseTo(55)
   })
 
-  it('decodes PowerSource.BatPercentRemaining (half-percent) → battery percentage', () => {
+  it('decodes PowerSource.BatPercentRemaining (half-percent) → battery level', () => {
     const decoded = decodeMatterAttribute({
       clusterId: MatterClusterId.PowerSource,
       attributeId: MatterAttributeId.BatPercentRemaining,
       value: 150,
     })
     expect(decoded?.cap).toBe('battery')
-    expect(decoded?.patch['percentage']).toBe(75)
+    expect(decoded?.patch['level']).toBe(75)
   })
 
   it('decodes Thermostat.LocalTemperature → climate-control.currentTemp', () => {
@@ -259,37 +259,37 @@ describe('decodeMatterAttribute', () => {
     expect(off?.patch['mode']).toBe('off')
   })
 
-  it('scales ElectricalPowerMeasurement.ActivePower (mW) → power-meter.watts', () => {
+  it('scales ElectricalPowerMeasurement.ActivePower (mW) → power-meter.power', () => {
     const decoded = decodeMatterAttribute({
       clusterId: MatterClusterId.ElectricalPowerMeasurement,
       attributeId: MatterAttributeId.ActivePower,
       value: 1_500_000,
     })
     expect(decoded?.cap).toBe('power-meter')
-    expect(decoded?.patch['watts']).toBeCloseTo(1500)
+    expect(decoded?.patch['power']).toBeCloseTo(1500)
     // D944 §4: base unit W is the watts declaration. mW → W stays the conversion above.
     expect(decoded?.patch['unit']).toBeUndefined()
     const watts = enumerateSchemaFields(powerMeterCapability.runtimeState).find(
-      (field) => field.path === 'watts',
+      (field) => field.path === 'power',
     )
     expect(watts?.quantity).toBe('power')
     expect(baseUnitOf('power')).toBe('W')
   })
 
-  it('decodes ElectricalEnergyMeasurement (mWh, possibly wrapped) → kwhTotal', () => {
+  it('decodes ElectricalEnergyMeasurement (mWh, possibly wrapped) → energy', () => {
     const plain = decodeMatterAttribute({
       clusterId: MatterClusterId.ElectricalEnergyMeasurement,
       attributeId: MatterAttributeId.CumulativeEnergyImported,
       value: 2_000_000,
     })
-    expect(plain?.patch['kwhTotal']).toBeCloseTo(2)
+    expect(plain?.patch['energy']).toBeCloseTo(2)
 
     const wrapped = decodeMatterAttribute({
       clusterId: MatterClusterId.ElectricalEnergyMeasurement,
       attributeId: MatterAttributeId.CumulativeEnergyImported,
       value: { energy: 500_000 },
     })
-    expect(wrapped?.patch['kwhTotal']).toBeCloseTo(0.5)
+    expect(wrapped?.patch['energy']).toBeCloseTo(0.5)
   })
 
   it('returns null for unrecognised clusters / attributes / bad values', () => {

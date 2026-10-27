@@ -157,8 +157,8 @@ describe('MqttHaDevice on a zigbee2mqtt plug', () => {
       JSON.stringify({ state: 'ON', power: 42.5, energy: 3.2, voltage: 231, current: 0.19 }),
     )
     const meter = h.state().getCapState('power-meter')
-    expect(meter).toMatchObject({ watts: 42.5, volts: 231, amps: 0.19 })
-    expect(meter?.['kwhTotal']).toBeCloseTo(3.2)
+    expect(meter).toMatchObject({ power: 42.5, voltage: 231, current: 0.19 })
+    expect(meter?.['energy']).toBeCloseTo(3.2)
     expect(h.state().getCapState('switch')).toMatchObject({ on: true })
   })
 
@@ -188,7 +188,7 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
       JSON.stringify({ contact: false, battery: 87 }),
     )
     expect(h.state().getCapState('contact')).toMatchObject({ entryOpen: true })
-    expect(h.state().getCapState('battery')).toMatchObject({ percentage: 87 })
+    expect(h.state().getCapState('battery')).toMatchObject({ level: 87 })
   })
 
   it('fires an event only for a live message', async () => {

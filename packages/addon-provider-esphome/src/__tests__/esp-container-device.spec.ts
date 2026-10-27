@@ -50,8 +50,8 @@ describe('EspContainerDevice', () => {
     expect(meter?.config).toMatchObject({
       brokerId: BROKER,
       kind: 'power-meter',
-      slots: { watts: 'sensor-power', volts: 'sensor-voltage' },
-      slotUnits: { watts: 'W', volts: 'V' },
+      slots: { power: 'sensor-power', voltage: 'sensor-voltage' },
+      slotUnits: { power: 'W', voltage: 'V' },
     })
     const relay = specs.find((s) => s.stableIdSuffix === 'switch-relay')
     expect(relay?.meta).toMatchObject({

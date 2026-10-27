@@ -24,7 +24,7 @@ const FAN_CAP = fanControlCapability.name
 
 const SWITCH_COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
 const FAN_COLD_START: FanControlStatus = {
-  percentage: null,
+  speed: null,
   preset: '',
   availablePresets: [],
   direction: null,
@@ -217,7 +217,7 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
     const provider: InferNativeProvider<typeof fanControlCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
-      setPercentage: async ({ percentage }) => {
+      setPercentage: async ({ speed: percentage }) => {
         const client = this.resolveClient()
         if (percentage <= 0) {
           await client.setPower(this.purifierNativeId, false)
@@ -246,7 +246,7 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
 /** Map a purifier snapshot onto the `fan-control` cap status (speed + preset). */
 function fanSlice(purifier: VeSyncPurifierSnapshot, now: number): FanControlStatus {
   return {
-    percentage: purifier.speedPercent,
+    speed: purifier.speedPercent,
     ...(purifier.percentageStep !== undefined ? { percentageStep: purifier.percentageStep } : {}),
     preset: purifier.preset,
     availablePresets: [...purifier.availablePresets],

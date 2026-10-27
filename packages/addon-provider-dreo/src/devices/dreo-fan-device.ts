@@ -15,7 +15,7 @@ const FAN_CAP = 'fan-control'
 
 const SWITCH_COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
 const FAN_COLD_START: FanControlStatus = {
-  percentage: null,
+  speed: null,
   preset: '',
   availablePresets: [],
   direction: null,
@@ -75,7 +75,7 @@ export class DreoFanDevice extends DreoChildDevice {
     const fanProvider: InferNativeProvider<typeof fanControlCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
-      setPercentage: async ({ percentage }) => {
+      setPercentage: async ({ speed: percentage }) => {
         const fan = this.requireFan()
         const level = percentageToLevel(percentage)
         // 0% → power off; otherwise ensure power on then set the wind level.
@@ -110,7 +110,7 @@ export class DreoFanDevice extends DreoChildDevice {
     this.runtimeState.setCapState(SWITCH_CAP, switchSlice)
 
     const fanSlice: FanControlStatus = {
-      percentage: levelToPercentage(fan.speed),
+      speed: levelToPercentage(fan.speed),
       percentageStep: percentageStep(),
       preset: '',
       availablePresets: [],

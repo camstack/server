@@ -56,7 +56,7 @@ export type UnraidEntityConfig = z.infer<typeof unraidEntitySchema>
 const EVENT_TYPE_NOTIFICATION_CREATED = 'notification_created'
 
 const COLD_NUMERIC: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
-const COLD_TEMPERATURE: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
+const COLD_TEMPERATURE: TemperatureSensorStatus = { temperature: 0, lastFetchedAt: 0 }
 const COLD_ENUM: EnumSensorStatus = { value: '', lastFetchedAt: 0 }
 const COLD_BINARY: BinaryStatus = { on: false, lastChangedAt: 0 }
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
@@ -183,7 +183,10 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
       }
       case 'temperature': {
         if (descriptor.celsius === undefined) return
-        const slice: TemperatureSensorStatus = { celsius: descriptor.celsius, lastFetchedAt: now }
+        const slice: TemperatureSensorStatus = {
+          temperature: descriptor.celsius,
+          lastFetchedAt: now,
+        }
         this.runtimeState.setCapState(temperatureSensorCapability.name, slice)
         return
       }

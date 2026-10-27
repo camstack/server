@@ -5,16 +5,16 @@ describe('networkLinkFromBars', () => {
   it('bars 1..4 are a wifi link at 25..100 %', () => {
     expect(networkLinkFromBars(4, 10)).toEqual({
       type: 'wifi',
-      signalPercent: 100,
+      signal: 100,
       lastUpdated: 10,
     })
-    expect(networkLinkFromBars(1, 10)).toEqual({ type: 'wifi', signalPercent: 25, lastUpdated: 10 })
+    expect(networkLinkFromBars(1, 10)).toEqual({ type: 'wifi', signal: 25, lastUpdated: 10 })
   })
 
   it('0 (unreached) is wifi with an unknown strength, never 0 %', () => {
     expect(networkLinkFromBars(0, 10)).toEqual({
       type: 'wifi',
-      signalPercent: null,
+      signal: null,
       lastUpdated: 10,
     })
   })
@@ -74,7 +74,7 @@ describe('DreameNetworkLinkMonitor — one reader for every device of the robot'
     await m.refresh('activate')
     expect(store.getCapState(NETWORK_LINK_CAP_NAME)).toEqual({
       type: 'wifi',
-      signalPercent: 75,
+      signal: 75,
       lastUpdated: 99,
     })
   })
@@ -99,7 +99,7 @@ describe('DreameNetworkLinkMonitor — one reader for every device of the robot'
     await m.refresh('periodic')
     expect(store.getCapState(NETWORK_LINK_CAP_NAME)).toEqual({
       type: 'wifi',
-      signalPercent: 50,
+      signal: 50,
       lastUpdated: 1,
     })
     expect(logger.lines.filter((l) => l.startsWith('warn:'))).toHaveLength(1)

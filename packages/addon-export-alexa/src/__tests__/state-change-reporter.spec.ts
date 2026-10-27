@@ -196,7 +196,7 @@ describe('StateChangeReporter + gateway', () => {
   it('nothing for an endpoint Alexa does not know with that interface (D76)', async () => {
     const h = setup()
     // `brightness` on a siren that never declared BrightnessController.
-    await h.emit({ deviceId: 11, capName: 'brightness', slice: { percentage: 40 } })
+    await h.emit({ deviceId: 11, capName: 'brightness', slice: { level: 40 } })
     expect(sent()).toEqual([])
   })
 })

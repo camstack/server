@@ -192,7 +192,7 @@ describe('the generic accessory', () => {
     const proxy = makeProxy(['switch', 'brightness'], DeviceType.Light, {
       switch: { getStatus: async () => ({ on: true }), setState: async () => undefined },
       brightness: {
-        getStatus: async () => ({ percentage: 42 }),
+        getStatus: async () => ({ level: 42 }),
         setBrightness: async () => undefined,
       },
     })
@@ -266,8 +266,8 @@ describe('the generic accessory', () => {
 
   it('publishes one service per sensor capability, each separately labelled', async () => {
     const proxy = makeProxy(['temperature-sensor', 'humidity-sensor'], DeviceType.Sensor, {
-      temperatureSensor: { getStatus: async () => ({ celsius: 21.5, lastFetchedAt: 1 }) },
-      humiditySensor: { getStatus: async () => ({ percent: 55, lastFetchedAt: 1 }) },
+      temperatureSensor: { getStatus: async () => ({ temperature: 21.5, lastFetchedAt: 1 }) },
+      humiditySensor: { getStatus: async () => ({ humidity: 55, lastFetchedAt: 1 }) },
     })
     const mapper = await build(proxy, 'Sensore salotto')
 
@@ -304,7 +304,7 @@ describe('the generic accessory', () => {
     const proxy = makeProxy(['switch', 'battery'], DeviceType.Switch, {
       switch: { getStatus: async () => ({ on: false }), setState: async () => undefined },
       battery: {
-        getStatus: async () => ({ percentage: 88, charging: 'none', lastUpdated: 1 }),
+        getStatus: async () => ({ level: 88, charging: 'none', lastUpdated: 1 }),
       },
     })
     const mapper = await build(proxy)

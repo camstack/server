@@ -171,17 +171,20 @@ export class AlexaDevice extends BaseDevice<typeof alexaDeviceSchema> {
   }
 
   private registerBrightness(): void {
-    const COLD = { percentage: 0, lastChangedAt: 0 }
+    const COLD = { level: 0, lastChangedAt: 0 }
     const provider: InferNativeProvider<typeof brightnessCapability> = {
       getStatus: async () => {
         const cached = this.runtimeState.getCapState<typeof COLD>('brightness') ?? COLD
         const live = decodePercentage(this.liveState('Alexa.BrightnessController', 'brightness'))
-        return live === null ? cached : { ...cached, percentage: live }
+        return live === null ? cached : { ...cached, level: live }
       },
-      setBrightness: async ({ percentage }) => {
+      setBrightness: async ({ level: percentage }) => {
         const brightness = Math.round(Math.max(0, Math.min(100, percentage)))
         await this.command('Alexa.BrightnessController', 'SetBrightness', { brightness })
-        this.runtimeState.setCapState('brightness', { percentage, lastChangedAt: Date.now() })
+        this.runtimeState.setCapState('brightness', {
+          level: percentage,
+          lastChangedAt: Date.now(),
+        })
       },
     }
     this.ctx.registerNativeCap(brightnessCapability, provider)
@@ -341,14 +344,14 @@ export class AlexaDevice extends BaseDevice<typeof alexaDeviceSchema> {
   }
 
   private registerTemperatureSensor(): void {
-    const COLD = { celsius: 0, lastFetchedAt: 0 }
+    const COLD = { temperature: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof temperatureSensorCapability> = {
       getStatus: async () => {
         const cached = this.runtimeState.getCapState<typeof COLD>('temperature-sensor') ?? COLD
         const live = decodeTemperatureCelsius(
           this.liveState('Alexa.TemperatureSensor', 'temperature'),
         )
-        return live === null ? cached : { ...cached, celsius: live }
+        return live === null ? cached : { ...cached, temperature: live }
       },
     }
     this.ctx.registerNativeCap(temperatureSensorCapability, provider)
@@ -356,12 +359,12 @@ export class AlexaDevice extends BaseDevice<typeof alexaDeviceSchema> {
   }
 
   private registerHumiditySensor(): void {
-    const COLD = { percent: 0, lastFetchedAt: 0 }
+    const COLD = { humidity: 0, lastFetchedAt: 0 }
     const provider: InferNativeProvider<typeof humiditySensorCapability> = {
       getStatus: async () => {
         const cached = this.runtimeState.getCapState<typeof COLD>('humidity-sensor') ?? COLD
         const live = decodeHumidityPercent(this.liveState('Alexa.HumiditySensor', 'humidity'))
-        return live === null ? cached : { ...cached, percent: live }
+        return live === null ? cached : { ...cached, humidity: live }
       },
     }
     this.ctx.registerNativeCap(humiditySensorCapability, provider)

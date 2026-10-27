@@ -11,17 +11,17 @@ const readOf = (cap: string, status: unknown) => SENSOR_SPECS[cap]?.read(status)
 
 describe('a null sensor reading', () => {
   it('publishes no CurrentTemperature', () => {
-    expect(readOf('temperature-sensor', { celsius: null })).toEqual([])
+    expect(readOf('temperature-sensor', { temperature: null })).toEqual([])
   })
 
   it('publishes the Celsius reading when it landed', () => {
-    expect(readOf('temperature-sensor', { celsius: 21.5 })).toEqual([
+    expect(readOf('temperature-sensor', { temperature: 21.5 })).toEqual([
       { characteristic: Characteristic.CurrentTemperature, value: 21.5 },
     ])
   })
 
   it('publishes no humidity and no lux', () => {
-    expect(readOf('humidity-sensor', { percent: null })).toEqual([])
-    expect(readOf('ambient-light-sensor', { lux: null })).toEqual([])
+    expect(readOf('humidity-sensor', { humidity: null })).toEqual([])
+    expect(readOf('ambient-light-sensor', { illuminance: null })).toEqual([])
   })
 })

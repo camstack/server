@@ -65,14 +65,14 @@ export function mapNetworkReadout(readout: NetworkReadout, now: number): Network
   const type = linkTypeOf(readout)
   const raw = readout.wifiSignal
   const wireless = type === 'wifi' || type === 'cellular'
-  const signalPercent = wireless ? signalPercentOf(raw) : null
+  const signal = wireless ? signalPercentOf(raw) : null
   const rssiDbm = wireless && raw !== undefined && Number.isFinite(raw) && raw < 0 ? raw : undefined
   const ssid =
     wireless && readout.ssid !== undefined && readout.ssid !== '' ? readout.ssid : undefined
   return {
     type,
-    signalPercent,
-    ...(rssiDbm !== undefined ? { rssiDbm } : {}),
+    signal,
+    ...(rssiDbm !== undefined ? { rssi: rssiDbm } : {}),
     ...(ssid !== undefined ? { ssid } : {}),
     lastUpdated: now,
   }

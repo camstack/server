@@ -329,6 +329,6 @@ function unregisteredDeviceId(data: Readonly<Record<string, unknown>>): number |
  */
 function batteryPercentage(slice: unknown): number | null {
   if (typeof slice !== 'object' || slice === null) return null
-  const raw = (slice as Record<string, unknown>)['percentage']
+  const raw = (slice as Record<string, unknown>)['level']
   return typeof raw === 'number' && Number.isFinite(raw) ? raw : null
 }

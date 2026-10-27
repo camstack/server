@@ -514,7 +514,7 @@ describe('HaNumericSensorDevice handleStatePush — typed temperature', () => {
     })
 
     const slice = device.runtimeState.getCapState<TemperatureSensorStatus>('temperature-sensor')
-    expect(slice?.celsius).toBeCloseTo(24.567)
+    expect(slice?.temperature).toBeCloseTo(24.567)
     expect(slice).not.toHaveProperty('precision')
   })
 
@@ -605,7 +605,7 @@ describe('HaNumericSensorDevice handleStatePush — typed temperature', () => {
     })
 
     const slice = device.runtimeState.getCapState<TemperatureSensorStatus>('temperature-sensor')
-    expect(slice?.celsius).toBeCloseTo(22.0)
+    expect(slice?.temperature).toBeCloseTo(22.0)
     expect(slice).not.toHaveProperty('precision')
   })
 })

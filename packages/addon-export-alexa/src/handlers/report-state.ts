@@ -371,7 +371,7 @@ async function collectChildProperties(
   const brightness = await api.brightness.getStatus
     .query({ deviceId: childDeviceId })
     .catch(() => null)
-  const level = numberField(brightness, 'percentage')
+  const level = numberField(brightness, 'level')
   if (level !== null) {
     properties.push({
       namespace: 'Alexa.BrightnessController',

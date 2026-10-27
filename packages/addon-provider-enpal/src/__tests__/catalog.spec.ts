@@ -65,14 +65,14 @@ describe('availableSpecs', () => {
 describe('unit conversion to base units', () => {
   it('converts kW to W and Wh to kWh at the edge', () => {
     const house = computeSlices(spec('house'), snapshot, OPTIONS, NOW)
-    expect(house.powerMeter?.watts).toBeCloseTo(1850, 6) // 1.85 kW
+    expect(house.powerMeter?.power).toBeCloseTo(1850, 6) // 1.85 kW
     const exported = computeSlices(spec('grid-export'), snapshot, OPTIONS, NOW)
-    expect(exported.powerMeter?.kwhTotal).toBeCloseTo(5400.25, 6) // 5400250 Wh
+    expect(exported.powerMeter?.energy).toBeCloseTo(5400.25, 6) // 5400250 Wh
   })
 
   it('passes W and kWh through unchanged', () => {
     const pv = computeSlices(spec('pv'), snapshot, OPTIONS, NOW)
-    expect(pv.powerMeter).toMatchObject({ watts: 4200, kwhTotal: 12345.678, lastFetchedAt: NOW })
+    expect(pv.powerMeter).toMatchObject({ power: 4200, energy: 12345.678, lastFetchedAt: NOW })
   })
 
   it('derives the state of charge from a kWh level and the capacity', () => {
@@ -80,59 +80,56 @@ describe('unit conversion to base units', () => {
       ['Energy.Battery.Charge.Level', 5, 'kWh'],
       ['Energy.Battery.Capacity', 10_000, 'Wh'],
     ])
-    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.percentage).toBeCloseTo(
-      50,
-      6,
-    )
+    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.level).toBeCloseTo(50, 6)
   })
 
   it('reads the state of charge directly when the box reports a percentage', () => {
-    expect(computeSlices(spec('battery'), snapshot, OPTIONS, NOW).battery?.percentage).toBe(62.5)
+    expect(computeSlices(spec('battery'), snapshot, OPTIONS, NOW).battery?.level).toBe(62.5)
   })
 
   it('refuses a unit of another dimension: null, not a wrong number', () => {
     const snap = snapshotOf([['Power.DC.Total', 5, 'V']])
     const pv = computeSlices(spec('pv'), snap, OPTIONS, NOW)
-    expect(pv.powerMeter?.watts).toBeUndefined()
+    expect(pv.powerMeter?.power).toBeUndefined()
     expect(pv.refusals.join(' ')).toContain('Power.DC.Total')
   })
 })
 
 describe('battery', () => {
-  it('publishes signed watts, volts and amps next to the percentage', () => {
+  it('publishes signed power, voltage and current next to the percentage', () => {
     const slices = computeSlices(spec('battery'), snapshot, OPTIONS, NOW)
-    expect(slices.powerMeter).toMatchObject({ watts: -1500, volts: 51.2, amps: -29.3 })
+    expect(slices.powerMeter).toMatchObject({ power: -1500, voltage: 51.2, current: -29.3 })
     expect(slices.battery?.charging).toBe('unknown')
   })
 
   it('flips the sign when the operator inverts the convention', () => {
     const slices = computeSlices(spec('battery'), snapshot, { invertBatteryPower: true }, NOW)
-    expect(slices.powerMeter?.watts).toBe(1500)
-    expect(slices.powerMeter?.amps).toBe(29.3)
+    expect(slices.powerMeter?.power).toBe(1500)
+    expect(slices.powerMeter?.current).toBe(29.3)
   })
 
   it('reports an unknown charge level as null, never 0 %', () => {
     const snap = snapshotOf([['Power.Battery.Charge.Discharge', 100, 'W']])
-    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.percentage).toBeNull()
+    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.level).toBeNull()
   })
 
   it('clamps a charge level outside 0..100', () => {
     const snap = snapshotOf([['Energy.Battery.Charge.Level', 101.2, '%']])
-    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.percentage).toBe(100)
+    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.level).toBe(100)
   })
 })
 
 describe('grid import and export from the signed grid power', () => {
   it('negative export power is import', () => {
     // fixture: Power.Grid.Export = -350 W
-    expect(computeSlices(spec('grid-import'), snapshot, OPTIONS, NOW).powerMeter?.watts).toBe(350)
-    expect(computeSlices(spec('grid-export'), snapshot, OPTIONS, NOW).powerMeter?.watts).toBe(0)
+    expect(computeSlices(spec('grid-import'), snapshot, OPTIONS, NOW).powerMeter?.power).toBe(350)
+    expect(computeSlices(spec('grid-export'), snapshot, OPTIONS, NOW).powerMeter?.power).toBe(0)
   })
 
   it('positive export power is export', () => {
     const snap = snapshotOf([['Power.Grid.Export', 800, 'W']])
-    expect(computeSlices(spec('grid-export'), snap, OPTIONS, NOW).powerMeter?.watts).toBe(800)
-    expect(computeSlices(spec('grid-import'), snap, OPTIONS, NOW).powerMeter?.watts).toBe(0)
+    expect(computeSlices(spec('grid-export'), snap, OPTIONS, NOW).powerMeter?.power).toBe(800)
+    expect(computeSlices(spec('grid-import'), snap, OPTIONS, NOW).powerMeter?.power).toBe(0)
   })
 })
 

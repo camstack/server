@@ -32,10 +32,10 @@ type SupportedCapName = (typeof SUPPORTED_CAP_NAMES)[number]
 
 /** Map a supported cap to its canonical "value" field. */
 const VALUE_FIELD: Record<SupportedCapName, string> = {
-  'temperature-sensor': 'celsius',
-  'humidity-sensor': 'percent',
-  'ambient-light-sensor': 'lux',
-  'pressure-sensor': 'hpa',
+  'temperature-sensor': 'temperature',
+  'humidity-sensor': 'humidity',
+  'ambient-light-sensor': 'illuminance',
+  'pressure-sensor': 'pressure',
   'numeric-sensor': 'value',
 }
 
@@ -189,7 +189,7 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
   private registerCap(name: SupportedCapName): void {
     switch (name) {
       case 'temperature-sensor': {
-        const COLD_START: TemperatureSensorStatus = { celsius: 0, lastFetchedAt: 0 }
+        const COLD_START: TemperatureSensorStatus = { temperature: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof temperatureSensorCapability> = {
           getStatus: async () => this.readSlice<TemperatureSensorStatus>(COLD_START),
         }
@@ -197,7 +197,7 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
         return
       }
       case 'humidity-sensor': {
-        const COLD_START: HumiditySensorStatus = { percent: 0, lastFetchedAt: 0 }
+        const COLD_START: HumiditySensorStatus = { humidity: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof humiditySensorCapability> = {
           getStatus: async () => this.readSlice<HumiditySensorStatus>(COLD_START),
         }
@@ -205,7 +205,7 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
         return
       }
       case 'ambient-light-sensor': {
-        const COLD_START: AmbientLightSensorStatus = { lux: 0, lastFetchedAt: 0 }
+        const COLD_START: AmbientLightSensorStatus = { illuminance: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof ambientLightSensorCapability> = {
           getStatus: async () => this.readSlice<AmbientLightSensorStatus>(COLD_START),
         }
@@ -213,7 +213,7 @@ export class HaNumericSensorDevice extends HaBaseChildDevice {
         return
       }
       case 'pressure-sensor': {
-        const COLD_START: PressureSensorStatus = { hpa: 0, lastFetchedAt: 0 }
+        const COLD_START: PressureSensorStatus = { pressure: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof pressureSensorCapability> = {
           getStatus: async () => this.readSlice<PressureSensorStatus>(COLD_START),
         }

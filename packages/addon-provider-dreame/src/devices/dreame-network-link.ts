@@ -24,7 +24,7 @@ export function networkLinkFromBars(bars: number | null, now: number): NetworkLi
     type: 'wifi',
     // 0 = "unreached" on the map: the robot is on wifi but the strength here
     // is not known — never drawn as 0 %.
-    signalPercent: bars === 0 ? null : signalPercentFromBars(bars, DREAME_WIFI_SIGNAL_BARS),
+    signal: bars === 0 ? null : signalPercentFromBars(bars, DREAME_WIFI_SIGNAL_BARS),
     lastUpdated: now,
   }
 }

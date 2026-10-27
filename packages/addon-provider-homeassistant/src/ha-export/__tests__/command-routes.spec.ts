@@ -578,7 +578,7 @@ describe('resolveCommand — the derived half', () => {
       cap: 'fan-control',
       value: '75',
       method: 'fanControl.setPercentage',
-      input: { percentage: 75 },
+      input: { speed: 75 },
     },
     {
       cap: 'fan-control',
@@ -773,7 +773,7 @@ describe('resolveCommand — the derived half', () => {
       suffix: 'mireds',
       value: '370',
       method: 'color.setColor',
-      input: { color: { mode: 'mired', mireds: 370 } },
+      input: { color: { mode: 'mired', colorTemperature: 370 } },
     },
     {
       cap: 'script-runner',
@@ -1443,7 +1443,7 @@ describe('applyCapCommand', () => {
       recordingDevice(calls),
       commandFor({ deviceId: 810, type: 'light', boundCaps: ['brightness'] }, 'brightness', '42'),
     )
-    expect(calls).toEqual([{ method: 'brightness.setBrightness', input: { percentage: 42 } }])
+    expect(calls).toEqual([{ method: 'brightness.setBrightness', input: { level: 42 } }])
 
     const armCalls: RecordedCall[] = []
     await applyCapCommand(

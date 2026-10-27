@@ -68,17 +68,17 @@ describe('generic state', () => {
     })
     expect(genericPropertyFor('lock-control', { state: 'unlocking' })?.value).toBe('UNLOCKED')
     expect(genericPropertyFor('lock-control', { state: 'jammed' })?.value).toBe('JAMMED')
-    expect(genericPropertyFor('temperature-sensor', { celsius: 21.34 })?.value).toEqual({
+    expect(genericPropertyFor('temperature-sensor', { temperature: 21.34 })?.value).toEqual({
       value: 21.3,
       scale: 'CELSIUS',
     })
-    expect(genericPropertyFor('humidity-sensor', { percent: 48 })?.value).toEqual({ value: 48 })
+    expect(genericPropertyFor('humidity-sensor', { humidity: 48 })?.value).toEqual({ value: 48 })
     expect(genericPropertyFor('presence', { state: 'not_home' })?.value).toBe('NOT_DETECTED')
   })
 
   it('a null reading publishes nothing — never 0 (D393)', () => {
-    expect(genericPropertyFor('temperature-sensor', { celsius: null })).toBeNull()
-    expect(genericPropertyFor('humidity-sensor', { percent: null })).toBeNull()
+    expect(genericPropertyFor('temperature-sensor', { temperature: null })).toBeNull()
+    expect(genericPropertyFor('humidity-sensor', { humidity: null })).toBeNull()
   })
 
   it('a lock change on an exported lock becomes a LockController report', () => {

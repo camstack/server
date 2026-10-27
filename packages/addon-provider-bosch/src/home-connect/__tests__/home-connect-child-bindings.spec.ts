@@ -186,7 +186,7 @@ describe('energy and water — one key per child, units from the description', (
     })
     expect(totalSlice).toEqual({
       cap: 'power-meter',
-      status: { kwhTotal: 12.5, lastFetchedAt: 1 },
+      status: { energy: 12.5, lastFetchedAt: 1 },
     })
     expect(cycleSlice).toEqual({
       cap: 'numeric-sensor',
@@ -210,7 +210,7 @@ describe('energy and water — one key per child, units from the description', (
     if (!binding) throw new Error('no binding')
     expect(
       childSliceFromValue({ binding, entity: kwh.entityByName(binding.key), raw: 12.5, nowMs: 1 }),
-    ).toEqual({ cap: 'power-meter', status: { kwhTotal: 12.5, lastFetchedAt: 1 } })
+    ).toEqual({ cap: 'power-meter', status: { energy: 12.5, lastFetchedAt: 1 } })
   })
 
   it('a counter whose unit is not declared is not a kWh meter — it is published raw and unitless', () => {

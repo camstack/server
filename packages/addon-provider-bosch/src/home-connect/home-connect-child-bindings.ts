@@ -292,7 +292,7 @@ export function childSliceFromValue(input: {
         ? null
         : {
             cap: 'power-meter',
-            status: { kwhTotal: kwh, lastFetchedAt: nowMs },
+            status: { energy: kwh, lastFetchedAt: nowMs },
           }
     }
     case 'numeric-sensor': {

@@ -110,7 +110,7 @@ function indexByDrivingDevice(
 
 const EnabledSchema = z.object({ enabled: z.boolean() })
 const OnSchema = z.object({ on: z.boolean() })
-const PercentageSchema = z.object({ percentage: z.number() })
+const PercentageSchema = z.object({ level: z.number() })
 const OnlineSchema = z.object({ online: z.boolean() })
 
 function power(on: boolean): ReportedProperty {
@@ -203,7 +203,7 @@ export function stateReportsFor(
     case 'brightness': {
       const parsed = PercentageSchema.safeParse(change.slice)
       if (!parsed.success) break
-      const value = Math.max(0, Math.min(100, Math.round(parsed.data.percentage)))
+      const value = Math.max(0, Math.min(100, Math.round(parsed.data.level)))
       for (const e of of('child')) {
         reports.push({
           ...e,

@@ -105,7 +105,7 @@ const BASE = {
   entityId: 'switch.desk_plug',
   capabilities: ['switch', 'power-meter'],
 }
-const METERS = { watts: 'sensor.desk_power', kwhTotal: 'sensor.desk_energy' }
+const METERS = { power: 'sensor.desk_power', energy: 'sensor.desk_energy' }
 
 describe('a switch that carries its sibling meter sensors', () => {
   it('registers power-meter next to the switch', () => {
@@ -134,14 +134,14 @@ describe('a switch that carries its sibling meter sensors', () => {
     const { push, status } = build({ ...BASE, meterEntities: METERS })
     push('sensor.desk_power', '1.5', { device_class: 'power', unit_of_measurement: 'kW' })
     push('sensor.desk_energy', '12.5', { device_class: 'energy', unit_of_measurement: 'kWh' })
-    expect(status()?.watts).toBeCloseTo(1500)
-    expect(status()?.kwhTotal).toBe(12.5)
+    expect(status()?.power).toBeCloseTo(1500)
+    expect(status()?.energy).toBe(12.5)
   })
 
   it('ignores an unavailable meter and keeps the last reading', () => {
     const { push, status } = build({ ...BASE, meterEntities: METERS })
     push('sensor.desk_power', '40', { device_class: 'power', unit_of_measurement: 'W' })
     push('sensor.desk_power', 'unavailable', {})
-    expect(status()?.watts).toBe(40)
+    expect(status()?.power).toBe(40)
   })
 })

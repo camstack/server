@@ -32,13 +32,13 @@ const LOW_BATTERY_THRESHOLD_PCT = 20
  * now means absent: the level and the low-battery flag still land, and
  * `ChargingState` is simply not written.
  */
-const BatteryReadSchema = BatteryStatusSchema.pick({ percentage: true }).extend({
+const BatteryReadSchema = BatteryStatusSchema.pick({ level: true }).extend({
   charging: BatteryStatusSchema.shape.charging.optional(),
 })
 
 /**
  * Mapping:
- *  - `BatteryStatus.percentage` (0..100) → `Characteristic.BatteryLevel`
+ *  - `BatteryStatus.level` (0..100) → `Characteristic.BatteryLevel`
  *  - `BatteryStatus.charging`:
  *      `'none'` → `ChargingState.NOT_CHARGING`
  *      `'dc' | 'solar'` → `ChargingState.CHARGING`
@@ -50,7 +50,7 @@ export const batteryCharacteristicUpdates = reader(BatteryReadSchema, (status) =
   // A NOT-YET-KNOWN level publishes nothing at all. Coercing it to 0 would
   // hand HomeKit a flat battery and a LOW warning for every camera on every
   // hub restart — which is the bug that made `percentage` nullable.
-  if (status.percentage === null) {
+  if (status.level === null) {
     return status.charging === undefined || status.charging === 'unknown'
       ? []
       : [
@@ -63,7 +63,7 @@ export const batteryCharacteristicUpdates = reader(BatteryReadSchema, (status) =
           },
         ]
   }
-  const pct = Math.max(0, Math.min(100, Math.round(status.percentage)))
+  const pct = Math.max(0, Math.min(100, Math.round(status.level)))
   return [
     { characteristic: Characteristic.BatteryLevel, value: pct },
     ...(status.charging === undefined || status.charging === 'unknown'

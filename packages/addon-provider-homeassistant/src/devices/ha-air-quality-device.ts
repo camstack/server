@@ -95,9 +95,9 @@ function applyDeviceClass(
 ): AirQualitySensorStatus | null {
   switch (deviceClass) {
     case 'co2':
-      return { ...prev, co2Ppm: value, lastFetchedAt }
+      return { ...prev, co2: value, lastFetchedAt }
     case 'volatile_organic_compounds':
-      return { ...prev, vocPpb: value, lastFetchedAt }
+      return { ...prev, voc: value, lastFetchedAt }
     case 'pm25':
     case 'pm2_5':
       return { ...prev, pm25: value, lastFetchedAt }

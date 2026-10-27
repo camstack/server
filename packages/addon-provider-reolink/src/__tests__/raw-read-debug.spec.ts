@@ -527,7 +527,7 @@ describe('battery — one slice, two firmware reads, chosen by how the camera is
       makeDeps({
         getApi: () => Promise.resolve(api),
         batteryState: {
-          percentage: 100,
+          level: 100,
           charging: 'none',
           sleeping: true,
           lastUpdated: NOW - 30_000,
@@ -537,7 +537,7 @@ describe('battery — one slice, two firmware reads, chosen by how the camera is
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('unreachable')
     expect(result.believed.source).toEqual({ kind: 'capRuntimeState', capName: 'battery' })
-    expect(result.believed.snapshot).toMatchObject({ percentage: 100, charging: 'none' })
+    expect(result.believed.snapshot).toMatchObject({ level: 100, charging: 'none' })
     expect(result.believed.age).toEqual({
       state: 'known',
       fetchedAt: NOW - 30_000,
@@ -563,7 +563,7 @@ describe('battery — one slice, two firmware reads, chosen by how the camera is
       'battery',
       makeDeps({
         getApi: () => Promise.resolve(api),
-        batteryState: { percentage: null, charging: 'none', sleeping: false, lastUpdated: 0 },
+        batteryState: { level: null, charging: 'none', sleeping: false, lastUpdated: 0 },
       }),
     )
     expect(result.ok).toBe(true)

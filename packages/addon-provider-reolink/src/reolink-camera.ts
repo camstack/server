@@ -2712,12 +2712,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * tracker is more reliable.
    */
   private mapBatteryInfo(info: import('@apocaliss92/nodelink-js').BatteryInfo): BatteryStatus {
-    const percentage =
+    const level =
       typeof info.batteryPercent === 'number'
         ? Math.max(0, Math.min(100, Math.round(info.batteryPercent)))
         : // A push with no numeric level says nothing about the level. Keep the
           // last real reading; when there is none the answer is `null`, never 0.
-          (this.state.battery.percentage ?? null)
+          (this.state.battery.level ?? null)
     // A push that says nothing about power keeps the previous belief — the
     // same rule `percentage` applies to a push with no numeric level.
     const charging = reportsPowerSource(info)
@@ -2725,7 +2725,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       : (this.state.battery.charging ?? 'unknown')
     const sleeping = info.sleeping === true || this.sleeping
     return {
-      percentage,
+      level,
       charging,
       sleeping,
       lastUpdated: Date.now(),
@@ -2951,7 +2951,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // NOT YET KNOWN, not empty. Seeding 0 made every battery camera behind
         // an NVR announce a flat battery on each start and correct itself a
         // moment later — long enough to fire the low-battery alert.
-        percentage: null,
+        level: null,
         charging: 'none',
         sleeping: false,
         lastUpdated: Date.now(),
@@ -3258,7 +3258,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     })
     this.setCapSlice(batteryCapability, {
       ...this.state.battery,
-      percentage: mapped.percentage,
+      level: mapped.level,
       charging: mapped.charging,
       lastUpdated: Date.now(),
     })

@@ -197,10 +197,10 @@ export const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
     // The cap's field is `celsius`, which is also HomeKit's unit. A refused
     // sample is null (D944 §4, D393); HomeKit has no null, and 0 °C would be
     // a freezing reading nobody took, so the characteristic is left alone.
-    read: reader(TemperatureSensorStatusSchema.pick({ celsius: true }), (status) =>
-      status.celsius === null
+    read: reader(TemperatureSensorStatusSchema.pick({ temperature: true }), (status) =>
+      status.temperature === null
         ? []
-        : [{ characteristic: Characteristic.CurrentTemperature, value: status.celsius }],
+        : [{ characteristic: Characteristic.CurrentTemperature, value: status.temperature }],
     ),
   },
   'humidity-sensor': {
@@ -209,10 +209,10 @@ export const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
       accessory.addService(Service.HumiditySensor, name, subtype),
     getStatus: (proxy) => proxy.humiditySensor?.getStatus({}),
     subscribe: (proxy, onValue) => proxy.state.humiditySensor?.subscribe(onValue) ?? null,
-    read: reader(HumiditySensorStatusSchema.pick({ percent: true }), (status) =>
-      status.percent === null
+    read: reader(HumiditySensorStatusSchema.pick({ humidity: true }), (status) =>
+      status.humidity === null
         ? []
-        : [{ characteristic: Characteristic.CurrentRelativeHumidity, value: status.percent }],
+        : [{ characteristic: Characteristic.CurrentRelativeHumidity, value: status.humidity }],
     ),
   },
   'ambient-light-sensor': {
@@ -221,13 +221,13 @@ export const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
       accessory.addService(Service.LightSensor, name, subtype),
     getStatus: (proxy) => proxy.ambientLightSensor?.getStatus({}),
     subscribe: (proxy, onValue) => proxy.state.ambientLightSensor?.subscribe(onValue) ?? null,
-    read: reader(AmbientLightSensorStatusSchema.pick({ lux: true }), (status) =>
-      status.lux === null
+    read: reader(AmbientLightSensorStatusSchema.pick({ illuminance: true }), (status) =>
+      status.illuminance === null
         ? []
         : [
             {
               characteristic: Characteristic.CurrentAmbientLightLevel,
-              value: Math.max(MIN_LUX, status.lux),
+              value: Math.max(MIN_LUX, status.illuminance),
             },
           ],
     ),

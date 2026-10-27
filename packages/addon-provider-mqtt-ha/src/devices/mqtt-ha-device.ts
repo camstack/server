@@ -53,13 +53,13 @@ import {
 export { mqttHaDeviceSchema, type MqttHaDeviceConfig } from './mqtt-ha-device-config.js'
 
 const METER_QUANTITY: Readonly<Record<MqttHaMeterField, ReadingQuantity>> = {
-  watts: 'power',
-  kwhTotal: 'energy',
-  volts: 'voltage',
-  amps: 'current',
+  power: 'power',
+  energy: 'energy',
+  voltage: 'voltage',
+  current: 'current',
 }
 
-const METER_FIELDS: readonly MqttHaMeterField[] = ['watts', 'kwhTotal', 'volts', 'amps']
+const METER_FIELDS: readonly MqttHaMeterField[] = ['power', 'energy', 'voltage', 'current']
 
 function unsupported(what: string): Error {
   return new Error(`mqtt-ha: ${what} is not supported by this device`)
@@ -193,8 +193,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
             : decodeLight(entity, payload)?.brightnessPct
         if (pct === null || pct === undefined) return
         const percentage = clamp(pct, 0, 100)
-        if (this.getCapSlice(brightnessCapability)?.percentage === percentage) return
-        this.setCapSlice(brightnessCapability, { percentage, lastChangedAt: now })
+        if (this.getCapSlice(brightnessCapability)?.level === percentage) return
+        this.setCapSlice(brightnessCapability, { level: percentage, lastChangedAt: now })
         return
       }
       case 'color': {
@@ -204,8 +204,12 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
           entity === null || payload === undefined ? null : decodeLight(entity, payload)?.mireds
         if (mireds === null || mireds === undefined) return
         const rounded = Math.round(mireds)
-        if (this.getCapSlice(colorCapability)?.mireds === rounded) return
-        this.setCapSlice(colorCapability, { mode: 'mired', mireds: rounded, lastChangedAt: now })
+        if (this.getCapSlice(colorCapability)?.colorTemperature === rounded) return
+        this.setCapSlice(colorCapability, {
+          mode: 'mired',
+          colorTemperature: rounded,
+          lastChangedAt: now,
+        })
         return
       }
       case 'power-meter':
@@ -216,9 +220,9 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         const value = entity === null ? null : this.numberOf(entity, 'percentage')
         if (value === null) return
         const percentage = clamp(value, 0, 100)
-        if (this.getCapSlice(batteryCapability)?.percentage === percentage) return
+        if (this.getCapSlice(batteryCapability)?.level === percentage) return
         this.setCapSlice(batteryCapability, {
-          percentage,
+          level: percentage,
           charging: 'unknown',
           sleeping: false,
           lastUpdated: now,
@@ -236,7 +240,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         const entity = this.bound(cap)
         const celsius = entity === null ? null : this.numberOf(entity, 'temperature')
         if (celsius === null) return
-        this.setCapSlice(temperatureSensorCapability, { celsius, lastFetchedAt: now })
+        this.setCapSlice(temperatureSensorCapability, { temperature: celsius, lastFetchedAt: now })
         return
       }
       case 'humidity-sensor': {
@@ -244,7 +248,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         const percent = entity === null ? null : this.numberOf(entity, 'humidity')
         if (percent === null) return
         this.setCapSlice(humiditySensorCapability, {
-          percent: clamp(percent, 0, 100),
+          humidity: clamp(percent, 0, 100),
           lastFetchedAt: now,
         })
         return
@@ -254,7 +258,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         const lux = entity === null ? null : this.numberOf(entity, 'illuminance')
         if (lux === null) return
         this.setCapSlice(ambientLightSensorCapability, {
-          lux: Math.max(0, lux),
+          illuminance: Math.max(0, lux),
           lastFetchedAt: now,
         })
         return
@@ -473,27 +477,33 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
           temperatureSensorCapability,
           {
             getStatus: async () =>
-              this.getCapSlice(temperatureSensorCapability) ?? { celsius: null, lastFetchedAt: 0 },
+              this.getCapSlice(temperatureSensorCapability) ?? {
+                temperature: null,
+                lastFetchedAt: 0,
+              },
           },
-          { celsius: null, lastFetchedAt: 0 },
+          { temperature: null, lastFetchedAt: 0 },
         )
       case 'humidity-sensor':
         return this.registerStatusOnly(
           humiditySensorCapability,
           {
             getStatus: async () =>
-              this.getCapSlice(humiditySensorCapability) ?? { percent: null, lastFetchedAt: 0 },
+              this.getCapSlice(humiditySensorCapability) ?? { humidity: null, lastFetchedAt: 0 },
           },
-          { percent: null, lastFetchedAt: 0 },
+          { humidity: null, lastFetchedAt: 0 },
         )
       case 'ambient-light-sensor':
         return this.registerStatusOnly(
           ambientLightSensorCapability,
           {
             getStatus: async () =>
-              this.getCapSlice(ambientLightSensorCapability) ?? { lux: null, lastFetchedAt: 0 },
+              this.getCapSlice(ambientLightSensorCapability) ?? {
+                illuminance: null,
+                lastFetchedAt: 0,
+              },
           },
-          { lux: null, lastFetchedAt: 0 },
+          { illuminance: null, lastFetchedAt: 0 },
         )
       case 'numeric-sensor':
         return this.registerStatusOnly(
@@ -542,12 +552,12 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private registerBrightness(): void {
-    const COLD = { percentage: 0, lastChangedAt: 0 }
+    const COLD = { level: 0, lastChangedAt: 0 }
     const provider: InferNativeProvider<typeof brightnessCapability> = {
       getStatus: async () => this.getCapSlice(brightnessCapability) ?? COLD,
-      setBrightness: async ({ percentage }) => {
+      setBrightness: async ({ level: percentage }) => {
         await this.lightCommand({ brightnessPct: percentage })
-        this.setCapSlice(brightnessCapability, { percentage, lastChangedAt: Date.now() })
+        this.setCapSlice(brightnessCapability, { level: percentage, lastChangedAt: Date.now() })
       },
     }
     this.registerStatusOnly(brightnessCapability, provider, COLD)
@@ -558,7 +568,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     const provider: InferNativeProvider<typeof colorCapability> = {
       getStatus: async () => this.getCapSlice(colorCapability) ?? COLD,
       setColor: async ({ color }) => {
-        if (color.mode === 'mired') await this.lightCommand({ mireds: color.mireds })
+        if (color.mode === 'mired') await this.lightCommand({ mireds: color.colorTemperature })
         else if (color.mode === 'rgb') await this.lightCommand({ rgb: color.rgb })
         else await this.lightCommand({ hsv: { h: color.hsv.h, s: color.hsv.s } })
       },
@@ -643,7 +653,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
 }
 
 const COLD_BATTERY = {
-  percentage: null,
+  level: null,
   charging: 'unknown' as const,
   sleeping: false,
   lastUpdated: 0,

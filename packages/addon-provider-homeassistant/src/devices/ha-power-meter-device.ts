@@ -106,13 +106,13 @@ function applyDeviceClass(
 ): PowerMeterStatus | null {
   switch (deviceClass) {
     case 'power':
-      return { ...prev, watts: value, lastFetchedAt }
+      return { ...prev, power: value, lastFetchedAt }
     case 'energy':
-      return { ...prev, kwhTotal: value, lastFetchedAt }
+      return { ...prev, energy: value, lastFetchedAt }
     case 'voltage':
-      return { ...prev, volts: value, lastFetchedAt }
+      return { ...prev, voltage: value, lastFetchedAt }
     case 'current':
-      return { ...prev, amps: value, lastFetchedAt }
+      return { ...prev, current: value, lastFetchedAt }
     default:
       return null
   }

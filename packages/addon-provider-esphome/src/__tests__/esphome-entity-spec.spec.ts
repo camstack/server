@@ -91,10 +91,10 @@ describe('board entities to child plans', () => {
     expect(kinds(plans)).toEqual(['power-meter:power-meter', 'numeric-sensor:sensor-temp'])
     const meter = plans.find((p) => p.kind === 'power-meter')
     expect(meter?.slots).toEqual({
-      watts: 'sensor-power',
-      kwhTotal: 'sensor-energy',
-      volts: 'sensor-voltage',
-      amps: 'sensor-current',
+      power: 'sensor-power',
+      energy: 'sensor-energy',
+      voltage: 'sensor-voltage',
+      current: 'sensor-current',
     })
   })
 

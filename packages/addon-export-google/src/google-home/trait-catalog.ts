@@ -201,7 +201,7 @@ const brightnessTrait: TraitDescriptor = {
   projectState: (rawStatus) => {
     const parsed = BrightnessStatusSchema.safeParse(rawStatus)
     // Google's `brightness` is an integer 0..100; the cap allows fractions.
-    return parsed.success ? { brightness: Math.round(parsed.data.percentage) } : null
+    return parsed.success ? { brightness: Math.round(parsed.data.level) } : null
   },
   commands: ['action.devices.commands.BrightnessAbsolute'],
   resolveCommand: ({ deviceId, command, params }) => {
