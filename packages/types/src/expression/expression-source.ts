@@ -14,6 +14,7 @@ import {
   evaluateCount,
   evaluateDwell,
   evaluateLatchedAt,
+  evaluateSchmitt,
   evaluateRose,
   EXPRESSION_BUILTIN_NAMES,
   type ExpressionEvalHooks,
@@ -64,7 +65,18 @@ export interface LatchedAtCallState {
   at: number | null
 }
 
-export type StatefulCallState = RoseCallState | CountCallState | DwellCallState | LatchedAtCallState
+export interface SchmittCallState {
+  readonly kind: 'schmitt'
+  latched: boolean | null
+  pendingSince: number | null
+}
+
+export type StatefulCallState =
+  | RoseCallState
+  | CountCallState
+  | DwellCallState
+  | LatchedAtCallState
+  | SchmittCallState
 
 export interface StatefulExpressionMemory {
   readonly calls: Map<string, StatefulCallState>
@@ -131,7 +143,12 @@ export function evaluateStatefulExpressionCall(
       const call: DwellCallState =
         existing?.kind === 'dwell'
           ? existing
-          : { kind: 'dwell', pendingSince: null, latched: null, seenSince: null }
+          : {
+              kind: 'dwell',
+              pendingSince: null,
+              latched: null,
+              seenSince: null,
+            }
       memory.calls.set(invocation.path, call)
       return evaluateDwell(
         invocation.args[0],
@@ -141,6 +158,15 @@ export function evaluateStatefulExpressionCall(
         env.nowMs,
         hooks,
       )
+    }
+    case 'schmitt': {
+      const call: SchmittCallState =
+        existing?.kind === 'schmitt'
+          ? existing
+          : { kind: 'schmitt', latched: null, pendingSince: null }
+      memory.calls.set(invocation.path, call)
+      const seed = typeof env.currentOutput === 'boolean' ? env.currentOutput : null
+      return evaluateSchmitt(invocation.args, call, env.nowMs, seed, hooks)
     }
     case 'latchedAt': {
       const call: LatchedAtCallState =
@@ -231,11 +257,17 @@ export function evaluateExpressionSource(
 ): EvaluateExpressionSourceResult {
   const compiled = compileExpressionSafe(expr)
   if (!compiled.ok) return { ok: false, error: compiled.error }
-  const scope = createExpressionScope({ ...bindingValues, [EXPRESSION_INJECTED_NOW]: now })
+  const scope = createExpressionScope({
+    ...bindingValues,
+    [EXPRESSION_INJECTED_NOW]: now,
+  })
   // The clock a windowed builtin reads is the SAME `now` the scope carries.
   const hooks: ExpressionEvalHooks = { ...opts?.hooks, now }
   try {
-    return { ok: true, value: evaluateAst(compiled.parsed.ast, scope, { ...opts, hooks }) }
+    return {
+      ok: true,
+      value: evaluateAst(compiled.parsed.ast, scope, { ...opts, hooks }),
+    }
   } catch (err: unknown) {
     return {
       ok: false,

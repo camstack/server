@@ -55,6 +55,7 @@ export const BUILTIN_RESULT_KINDS: Readonly<Record<string, BuiltinKindRule>> = O
   count: NUMBER,
   dwell: { kind: 'fixed', result: ['boolean', 'null'] },
   latchedAt: { kind: 'fixed', result: ['number', 'null'] },
+  schmitt: { kind: 'fixed', result: ['boolean', 'null'] },
 })
 
 export interface InferExpressionKindsInput {
@@ -189,7 +190,10 @@ export function inferExpressionKinds(input: InferExpressionKindsInput): InferExp
   const compiled = compileExpressionSafe(input.expr)
   if (!compiled.ok) return { ok: false, error: compiled.error }
   try {
-    return { ok: true, kinds: kindsOf(compiled.parsed.ast, input.bindingKinds) }
+    return {
+      ok: true,
+      kinds: kindsOf(compiled.parsed.ast, input.bindingKinds),
+    }
   } catch (err: unknown) {
     if (err instanceof KindInferenceError) return { ok: false, error: err.message }
     throw err

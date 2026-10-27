@@ -26,6 +26,7 @@ import type {
   DwellCallState,
   LatchedAtCallState,
   RoseCallState,
+  SchmittCallState,
   StatefulExpressionMemory,
 } from './expression-source.js'
 import { ExpressionEvalError } from './errors.js'
@@ -56,10 +57,16 @@ export interface ExpressionBuiltin {
   readonly apply: (args: readonly ExpressionValue[], hooks: ExpressionEvalHooks) => ExpressionValue
 }
 
-export type StatefulExpressionBuiltin = 'rose' | 'count' | 'dwell' | 'latchedAt'
+export type StatefulExpressionBuiltin = 'rose' | 'count' | 'dwell' | 'latchedAt' | 'schmitt'
 
 export function isStatefulBuiltin(name: string): name is StatefulExpressionBuiltin {
-  return name === 'rose' || name === 'count' || name === 'dwell' || name === 'latchedAt'
+  return (
+    name === 'rose' ||
+    name === 'count' ||
+    name === 'dwell' ||
+    name === 'latchedAt' ||
+    name === 'schmitt'
+  )
 }
 
 // ── argument / result helpers ───────────────────────────────────────────────
@@ -234,6 +241,48 @@ export function evaluateDwell(
   const delay = active ? onForMs : offForMs
   if (nowMs - call.pendingSince >= delay) {
     call.latched = active
+    call.pendingSince = null
+    return call.latched
+  }
+  hooks?.noteDeadline?.(call.pendingSince + delay)
+  return call.latched
+}
+
+/**
+ * `schmitt(x, high, low[, onForMs, offForMs])`: true once `x >= high`, false
+ * once `x <= low`, and the last answer in between. A transition waits its delay
+ * and is dropped if `x` returns to the held side first. The first answer needs
+ * a crossing, or the restored output as `seed`: a reading inside the band with
+ * nothing to hold is unknown, never off (D393). A null reading throws, so the
+ * field is unavailable and the latch is kept.
+ */
+export function evaluateSchmitt(
+  args: readonly unknown[],
+  call: SchmittCallState,
+  nowMs: number,
+  seed: boolean | null,
+  hooks?: ExpressionEvalHooks,
+): boolean | null {
+  const x = asFiniteNumber(args[0], 'schmitt', 0)
+  const high = asFiniteNumber(args[1], 'schmitt', 1)
+  const low = asFiniteNumber(args[2], 'schmitt', 2)
+  const onForMs = args.length > 3 ? asNonNegativeMs(args[3], 'schmitt', 3) : 0
+  const offForMs = args.length > 4 ? asNonNegativeMs(args[4], 'schmitt', 4) : 0
+  if (low > high) throw new ExpressionEvalError('schmitt: the low edge is above the high edge')
+  if (call.latched === null && seed !== null) call.latched = seed
+  const wants = x >= high ? true : x <= low ? false : call.latched
+  if (call.latched === null) {
+    if (wants !== null) call.latched = wants
+    return call.latched
+  }
+  if (wants === null || wants === call.latched) {
+    call.pendingSince = null
+    return call.latched
+  }
+  if (call.pendingSince === null) call.pendingSince = nowMs
+  const delay = wants ? onForMs : offForMs
+  if (nowMs - call.pendingSince >= delay) {
+    call.latched = wants
     call.pendingSince = null
     return call.latched
   }
@@ -485,6 +534,13 @@ const table: Record<string, ExpressionBuiltin> = {
     maxArgs: 1,
     apply: () => {
       throw new ExpressionEvalError('latchedAt: stateful evaluation context is required')
+    },
+  },
+  schmitt: {
+    minArgs: 3,
+    maxArgs: 5,
+    apply: () => {
+      throw new ExpressionEvalError('schmitt: stateful evaluation context is required')
     },
   },
 }
