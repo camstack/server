@@ -15,6 +15,7 @@ import {
   commandResultsFromSnapshot,
   draftForTemplate,
   draftFromHelper,
+  type HelperFormDraft,
   groupStatusFromSnapshot,
   helperTemplateGroups,
   isHelperComposition,
@@ -252,7 +253,7 @@ describe('group status on the device page', () => {
   })
 })
 
-function specAsDraft(spec: GroupHelperSpec) {
+function specAsDraft(spec: GroupHelperSpec): HelperFormDraft {
   return {
     kind: 'group',
     templateId: spec.templateId,
@@ -303,8 +304,9 @@ describe('an appliance from a smart plug', () => {
     expect(dryer.appliance).toBe('dryer')
     expect(dryer.stopDwellMs).toBe(600_000)
     const reopened = draftFromHelper({ ...spec, thresholdWatts: 8 }, 'Laundry', '')
-    expect(reopened?.thresholdWatts).toBe(8)
-    expect(reopened?.members).toEqual([plug])
+    if (reopened?.kind !== 'group') throw new Error('expected the appliance draft')
+    expect(reopened.thresholdWatts).toBe(8)
+    expect(reopened.members).toEqual([plug])
   })
 })
 
