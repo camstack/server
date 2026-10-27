@@ -5616,7 +5616,10 @@
     "addonPageLoader": {
       "addonPageNotFound": "Addon page not found",
       "loading": "Loading page",
-      "failedTitle": "This page could not be shown"
+      "failedTitle": "This page could not be shown",
+      "listFailed": "The page list could not be loaded.",
+      "listStalled": "The hub did not send the page list. Try again in a moment.",
+      "remoteStalled": "The page did not load. Its addon may be starting or unreachable."
     },
     "protectedRoute": {
       "loading": "Loading..."

@@ -5677,7 +5677,10 @@
     "addonPageLoader": {
       "addonPageNotFound": "Pagina addon non trovata",
       "loading": "Caricamento pagina",
-      "failedTitle": "Impossibile mostrare questa pagina"
+      "failedTitle": "Impossibile mostrare questa pagina",
+      "listFailed": "Impossibile caricare l'elenco delle pagine.",
+      "listStalled": "L'hub non ha inviato l'elenco delle pagine. Riprova tra poco.",
+      "remoteStalled": "La pagina non si è caricata. Il suo addon potrebbe essere in avvio o non raggiungibile."
     },
     "protectedRoute": {
       "loading": "Caricamento..."

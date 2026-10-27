@@ -84,6 +84,15 @@ class AddonPageCrashBoundary extends Component<CrashBoundaryProps, CrashBoundary
   }
 }
 
+/**
+ * A throw anywhere in the content area — the page route itself, the loader's
+ * own code — stays inside <main>. The React root has no other error boundary,
+ * so without this one such a throw unmounted the sidebar too.
+ */
+export function ShellContentBoundary({ resetKey, children }: CrashBoundaryProps) {
+  return <AddonPageCrashBoundary resetKey={resetKey}>{children}</AddonPageCrashBoundary>
+}
+
 export interface AddonPageBoundaryProps {
   /** The remote's name: a different page starts with no crash recorded. */
   readonly pageKey: string

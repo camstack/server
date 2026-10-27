@@ -97,6 +97,26 @@ export function flattenPages(raw: readonly ServerAddonPageInfo[]): readonly Addo
   return out
 }
 
+/**
+ * How long a page may stay on its loading skeleton — the pages list pending, or
+ * the remote's entry not answering — before it becomes a message in the frame.
+ */
+export const ADDON_PAGE_LOAD_TIMEOUT_MS = 20_000
+
+/** `true` once `pending` has held for `ms`; resets when it clears. */
+function useDeadlinePassed(pending: boolean, ms: number): boolean {
+  const [passed, setPassed] = useState(false)
+  useEffect(() => {
+    if (!pending) {
+      setPassed(false)
+      return undefined
+    }
+    const timer = setTimeout(() => setPassed(true), ms)
+    return () => clearTimeout(timer)
+  }, [pending, ms])
+  return passed
+}
+
 /** Process-global cache for resolved page components, keyed by `remoteName`. */
 const pageComponentCache = new Map<string, ComponentType<AddonPageRenderProps>>()
 const pageInflight = new Map<string, Promise<ComponentType<AddonPageRenderProps>>>()
@@ -156,7 +176,11 @@ export function AddonPageLoader() {
   const navigate = useNavigate()
   const system = useSystem()
 
-  const { data: rawPages } = useAddonPagesListPages(undefined)
+  const {
+    data: rawPages,
+    isError: pagesFailed,
+    error: pagesError,
+  } = useAddonPagesListPages(undefined)
   const pages = useMemo<readonly AddonPageInfo[] | undefined>(
     () => (rawPages ? flattenPages(rawPages as readonly ServerAddonPageInfo[]) : undefined),
     [rawPages],
@@ -202,7 +226,35 @@ export function AddonPageLoader() {
     }
   }, [remoteName, bundleUrl])
 
-  if (!pages) return <AddonPageLoading />
+  const listStalled = useDeadlinePassed(!pages && !pagesFailed, ADDON_PAGE_LOAD_TIMEOUT_MS)
+  const remoteStalled = useDeadlinePassed(
+    page !== undefined && !PageComponent && !error,
+    ADDON_PAGE_LOAD_TIMEOUT_MS,
+  )
+
+  if (!pages) {
+    if (pagesFailed) {
+      return (
+        <AddonPageError
+          message={
+            pagesError?.message ??
+            t('layouts.addonPageLoader.listFailed', 'The page list could not be loaded.')
+          }
+        />
+      )
+    }
+    if (listStalled) {
+      return (
+        <AddonPageError
+          message={t(
+            'layouts.addonPageLoader.listStalled',
+            'The hub did not send the page list. Try again in a moment.',
+          )}
+        />
+      )
+    }
+    return <AddonPageLoading />
+  }
 
   if (!page) {
     return (
@@ -214,7 +266,19 @@ export function AddonPageLoader() {
 
   if (error) return <AddonPageError message={error} />
 
-  if (!PageComponent) return <AddonPageLoading />
+  if (!PageComponent) {
+    if (remoteStalled) {
+      return (
+        <AddonPageError
+          message={t(
+            'layouts.addonPageLoader.remoteStalled',
+            'The page did not load. Its addon may be starting or unreachable.',
+          )}
+        />
+      )
+    }
+    return <AddonPageLoading />
+  }
 
   return (
     <AddonPageBoundary pageKey={page.remoteName}>

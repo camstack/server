@@ -45,6 +45,7 @@ import { buildNavSections, type NavItem, resolveAddonPageIcon } from '../lib/nav
 import type { AddonPageInfo } from './AddonPageLoader'
 import { flattenPages } from './AddonPageLoader'
 import { KeepAliveOutlet } from './KeepAliveOutlet'
+import { ShellContentBoundary } from './AddonPageFrame'
 
 const THEME_ICONS = { dark: Moon, light: Sun, system: Monitor } as const
 
@@ -633,11 +634,13 @@ export function AppLayout() {
               The outer boundary stays for the chrome-less routes (login,
               showroom, the embed player); this one owns everything that has a
               sidebar. */}
-            <Suspense fallback={<PageContentFallback />}>
-              {/* Keep visited `/addon/*` mounted (hidden) so local draft state
-                survives tab switches; see KeepAliveOutlet. */}
-              <KeepAliveOutlet />
-            </Suspense>
+            <ShellContentBoundary resetKey={location.pathname}>
+              <Suspense fallback={<PageContentFallback />}>
+                {/* Keep visited `/addon/*` mounted (hidden) so local draft state
+                  survives tab switches; see KeepAliveOutlet. */}
+                <KeepAliveOutlet />
+              </Suspense>
+            </ShellContentBoundary>
           </main>
         </DisplayPaletteGate>
       </div>
