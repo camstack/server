@@ -2619,7 +2619,11 @@
       "withConversion": "with {{name}}",
       "backToDevices": "Back to devices",
       "noDevice": "Pick a device on the left.",
-      "noStateField": "This device has no on/off reading this extension can use."
+      "noStateField": "This device has no on/off reading this extension can use.",
+      "backToDevice": "Back to {{name}}",
+      "done": "Done",
+      "pickedCount_one": "{{count}} selected",
+      "pickedCount_other": "{{count}} selected"
     }
   },
   "compositionEditor": {

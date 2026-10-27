@@ -7,6 +7,7 @@ import type { HelperMember, SourcePickRequest } from '@camstack/types'
 import {
   Button,
   type DeviceListState,
+  DeviceName,
   DevicePicker,
   ErrorBox,
   useDeviceManagerGetWireableFields,
@@ -25,6 +26,7 @@ import {
   type WireableCatalog,
 } from '../source-picker-model'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { SourceSelectorColumns } from './source-selector-columns'
 import {
   acceptCaps,
   applyMemberSelection,
@@ -37,6 +39,7 @@ import {
 } from './source-selector-members-model'
 import type { SourceCandidateDevice } from './source-selector-model'
 import { compatiblePickerItems } from './source-selector-parent-detail'
+import { type SourceSelectorStep, stepAfterBack, stepAfterDone } from './source-selector-steps'
 
 export interface MemberRefuse {
   readonly code: 'max'
@@ -101,6 +104,7 @@ export function SourceSelectorMembers({
 }: SourceSelectorMembersProps): ReactNode {
   const { t, i18n } = useTranslation()
   const [focusId, setFocusId] = useState<number | null>(null)
+  const [step, setStep] = useState<SourceSelectorStep>('devices')
   const [incompatibleOpen, setIncompatibleOpen] = useState(false)
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const fleet = useMemo(
@@ -272,14 +276,37 @@ export function SourceSelectorMembers({
       )}
     </div>
   )
+  const openValues = (): void => {
+    const next = stepAfterDone(selected.length)
+    if (next === null) return
+    const focusStillSelected = focusId !== null && selected.includes(focusId)
+    if (!focusStillSelected) {
+      const first = selected[0]
+      if (first !== undefined) setFocusId(first)
+    }
+    setStep(next)
+  }
+  const back =
+    focus === null
+      ? null
+      : {
+          label: <DeviceName device={focus} form="compact" />,
+          ariaLabel: t('customize.sourceSelector.backToDevice', { name: focus.name }),
+        }
   return (
-    <div
-      data-testid="source-selector"
-      className="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4"
-    >
-      {deviceColumn}
-      {valueColumn}
-    </div>
+    <SourceSelectorColumns
+      step={step}
+      devices={deviceColumn}
+      values={valueColumn}
+      back={back}
+      onBack={() => setStep(stepAfterBack())}
+      done={{
+        countLabel: t('customize.sourceSelector.pickedCount', { count: selected.length }),
+        label: t('customize.sourceSelector.done'),
+        disabled: selected.length === 0,
+      }}
+      onDone={openValues}
+    />
   )
 }
 

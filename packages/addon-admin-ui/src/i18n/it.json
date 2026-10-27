@@ -2680,7 +2680,11 @@
       "withConversion": "con {{name}}",
       "backToDevices": "Torna ai dispositivi",
       "noDevice": "Scegli un dispositivo a sinistra.",
-      "noStateField": "Questo dispositivo non ha una lettura acceso/spento che questa estensione possa usare."
+      "noStateField": "Questo dispositivo non ha una lettura acceso/spento che questa estensione possa usare.",
+      "backToDevice": "Torna a {{name}}",
+      "done": "Fatto",
+      "pickedCount_one": "{{count}} selezionato",
+      "pickedCount_other": "{{count}} selezionati"
     }
   },
   "compositionEditor": {

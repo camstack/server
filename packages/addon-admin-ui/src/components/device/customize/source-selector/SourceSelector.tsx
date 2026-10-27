@@ -35,6 +35,7 @@ type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>
 import { ModeLine } from '../event/event-mode-line'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
 import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
+import { SourceSelectorColumns } from './source-selector-columns'
 import {
   type EventPickedRow,
   removeEventPick,
@@ -53,6 +54,12 @@ import {
   type SourceWireableField,
 } from './source-selector-model'
 import { compatiblePickerItems } from './source-selector-parent-detail'
+import {
+  reconcileSingleStep,
+  type SourceSelectorStep,
+  stepAfterBack,
+  stepAfterDevicePick,
+} from './source-selector-steps'
 
 export type { EventPickedRow }
 
@@ -182,7 +189,13 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
 
 function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const [mobileStep, setMobileStep] = useState<'device' | 'value'>('device')
+  const [step, setStep] = useState<SourceSelectorStep>('devices')
+  const [seenDevice, setSeenDevice] = useState(false)
+  const reconciled = reconcileSingleStep(props.device !== null, { seenDevice, step })
+  if (reconciled !== null) {
+    setSeenDevice(reconciled.seenDevice)
+    setStep(reconciled.step)
+  }
   const [incompatibleOpen, setIncompatibleOpen] = useState(false)
   const [incompatibleValuesOpen, setIncompatibleValuesOpen] = useState(false)
   const devices = useDeviceManagerListAll({ projection: 'slim' })
@@ -232,15 +245,18 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     if (id === undefined) {
       props.onDeviceChange(null)
       if (props.kind !== 'event') props.onFieldChange(null)
+      setStep(stepAfterBack())
       return
     }
     // The picker reports the current row again when the list re-renders.
     // Clearing the field then drops a radio the operator just chose.
-    if (props.device?.id === id) return
-    const next = fleet.find((row) => row.id === id) ?? null
-    props.onDeviceChange(next)
-    if (props.kind !== 'event') props.onFieldChange(null)
-    setMobileStep('value')
+    // Tapping the current row still opens the values, so Back can return.
+    if (props.device?.id !== id) {
+      const next = fleet.find((row) => row.id === id) ?? null
+      props.onDeviceChange(next)
+      if (props.kind !== 'event') props.onFieldChange(null)
+    }
+    setStep(stepAfterDevicePick('single'))
   }
   const declared = props.kind === 'event' ? (fields[0] ?? null) : null
   const eventBinding = props.kind === 'event' ? props : null
@@ -500,26 +516,23 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       {eventParams}
     </div>
   )
+  const back =
+    props.device === null
+      ? null
+      : {
+          label: <DeviceName device={props.device} form="compact" />,
+          ariaLabel: t('customize.sourceSelector.backToDevice', { name: props.device.name }),
+        }
   return (
-    <div
-      data-testid="source-selector"
-      className="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4"
-    >
-      <div className={mobileStep === 'value' ? 'hidden sm:block' : undefined}>{deviceColumn}</div>
-      <div className={mobileStep === 'device' ? 'hidden sm:block' : undefined}>
-        {mobileStep === 'value' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-2 sm:hidden"
-            onClick={() => setMobileStep('device')}
-          >
-            {t('customize.sourceSelector.backToDevices')}
-          </Button>
-        )}
-        {valueColumn}
-      </div>
-    </div>
+    <SourceSelectorColumns
+      step={step}
+      devices={deviceColumn}
+      values={valueColumn}
+      back={back}
+      onBack={() => setStep(stepAfterBack())}
+      done={null}
+      onDone={() => undefined}
+    />
   )
 }
 
