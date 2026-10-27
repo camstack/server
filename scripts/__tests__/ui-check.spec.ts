@@ -111,6 +111,20 @@ describe('elements', () => {
     expect(f?.message).toContain('useConfirm')
   })
 
+  it('flags an inline two-step delete confirm and points at useConfirm', () => {
+    for (const decl of [
+      'const [confirmDelete, setConfirmDelete] = useState<string | null>(null)',
+      'const [confirming, setConfirming] = useState<string | null>(null)',
+      'const [pendingDelete, setPendingDelete] = useState(false)',
+    ]) {
+      const [f] = checkUiSource(ADMIN, `${decl}\n`)
+      expect(f?.rule).toBe('inline-confirm-state')
+      expect(f?.message).toContain('useConfirm')
+    }
+    expect(rules(ADMIN, 'const [confirmPassword, setConfirmPassword] = useState("")\n')).toEqual([])
+    expect(rules(ADMIN, 'const [confirmOpen, setConfirmOpen] = useState(false)\n')).toEqual([])
+  })
+
   it('does not apply element rules to the primitives that ARE those elements, or to a .ts file', () => {
     expect(rules('packages/ui-library/src/primitives/button.tsx', '<button />\n')).toEqual([])
     expect(rules('packages/addon-admin-ui/src/lib/x.ts', "const s = '<button>'\n")).toEqual([])

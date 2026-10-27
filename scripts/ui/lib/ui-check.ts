@@ -26,6 +26,7 @@ export type UiRule =
   | 'raw-select'
   | 'raw-dialog'
   | 'native-dialog-call'
+  | 'inline-confirm-state'
   | 'raw-password-input'
   | 'shadows-library'
 
@@ -158,6 +159,15 @@ export function isModalScrim(line: string): boolean {
   )
 }
 
+/**
+ * An inline two-step destructive confirm: a state hook named for the pending
+ * delete (`confirmDelete`, `confirmingRemove`, `pendingDelete`, `confirming`)
+ * that swaps the row's buttons for "Delete?/Cancel" in place. The product's
+ * answer is a modal that names the item.
+ */
+const INLINE_CONFIRM_STATE =
+  /\bconst\s+\[\s*(?:confirm(?:ing)?(?:Delete|Remove|Deletion)\w*|confirming|pending(?:Delete|Remove|Deletion)\w*)\s*,\s*set\w+\s*\]\s*=\s*useState\b/g
+
 const NATIVE_DIALOG_CALL = /\bwindow\.(confirm|alert|prompt)\(/g
 
 const STYLE_TOKEN_KEYS =
@@ -240,6 +250,16 @@ export function checkUiSource(
       }
       if (isModalScrim(text))
         push(lineNo, 'raw-dialog', 'fixed inset-0 … scrim', RAW_DIALOG_MESSAGE)
+    }
+    if (isTsx) {
+      for (const m of text.matchAll(INLINE_CONFIRM_STATE)) {
+        push(
+          lineNo,
+          'inline-confirm-state',
+          m[0],
+          "inline destructive confirm → `useConfirm` from @camstack/ui-library: `await confirm({ title, message: <names the item>, confirmLabel, variant: 'danger' })` (modal, danger variant)",
+        )
+      }
     }
     for (const m of text.matchAll(NATIVE_DIALOG_CALL)) {
       push(

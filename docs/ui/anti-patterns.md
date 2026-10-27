@@ -51,6 +51,16 @@ no sheet on mobile.
 → `Dialog` + `DialogContent` (`placement="sheet-on-mobile"`,
 `scroll="body"` when tall); the close is the dialog's own.
 
+**An inline two-step delete.** A `confirmDelete` / `confirming` /
+`pendingDelete` state that swaps the row's buttons for "Delete this X? /
+Delete / Cancel" in place (the Custom devices, Scripts and Automations rows,
+the batch toolbar and the scene reference gallery did this). It shifts the
+layout, is easy to click through, and does not name what is destroyed on a
+phone. `ui:check` flags the state hook as `inline-confirm-state`.
+→ `useConfirm` (`@camstack/ui-library`): `await confirm({ title, message:
+<names the item>, confirmLabel, variant: 'danger' })`; example
+`useConfirmRemove` in `components/device/customize/`.
+
 **Palette colours for status.** A palette hue does not follow the theme —
 the `dark:` pair is the tell — and it says nothing about meaning. Global
 chrome (AlertBell / ToastContainer / CopyUrlChips) was paid in P2; page-local
