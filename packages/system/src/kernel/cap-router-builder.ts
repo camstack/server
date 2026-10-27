@@ -314,7 +314,8 @@ function invokeCapMethod(
   services: CapRouterServices,
 ): unknown {
   const fn = provider[method.name]
-  if (typeof fn === 'function') return fn(payload)
+  // `call(provider, …)`: a class-instance provider reads `this` (D954 actions).
+  if (typeof fn === 'function') return fn.call(provider, payload)
   if (isCollection && method.isArrayOutput) return []
   const raise =
     services.methodNotFound ??

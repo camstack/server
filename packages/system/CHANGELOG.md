@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Core blocks serve Actions: camera-linked permissions, run traces and automation cooldown now live in the hub runs ledger
 
+### Fixed
+
+- Creating, editing and running an Action no longer fails with an internal error
+
 ## [1.2.498] - 2026-10-27
 
 ### Changed
