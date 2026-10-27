@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.653 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.654 | the update itself | — |
 
 ## Framework (5)
 
@@ -24,8 +24,8 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | --- | --- | --- | --- | --- |
 | `@camstack/develop` | `packages/develop` | 0.1.36 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.153 | `@camstack/server` closure | — |
-| `@camstack/system` | `packages/system` | 1.2.493 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
-| `@camstack/types` | `packages/types` | 1.2.425 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
+| `@camstack/system` | `packages/system` | 1.2.494 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
+| `@camstack/types` | `packages/types` | 1.2.426 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
 | `@camstack/ui-library` | `packages/ui-library` | 1.2.335 | `@camstack/server` closure | — |
 
 ## Addons (50)
@@ -34,7 +34,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.489 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.490 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
 | `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.278 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.170 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.169 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
@@ -59,11 +59,11 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.157 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
 | `@camstack/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.2.148 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket) |
 | `@camstack/addon-provider-ecowitt` | `packages/addon-provider-ecowitt` | 0.2.148 | addons dir | Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client |
-| `@camstack/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.1 | addons dir | Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback) |
-| `@camstack/addon-provider-esphome` | `packages/addon-provider-esphome` | 0.1.0 | addons dir | ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client |
+| `@camstack/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.2 | addons dir | Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback) |
+| `@camstack/addon-provider-esphome` | `packages/addon-provider-esphome` | 0.1.1 | addons dir | ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client |
 | `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.143 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.176 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
-| `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.631 | addons dir | Home Assistant device provider addon for CamStack |
+| `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.632 | addons dir | Home Assistant device provider addon for CamStack |
 | `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.159 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
 | `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.27 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.149 | addons dir | ONVIF camera device provider addon for CamStack |
