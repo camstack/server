@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.499] - 2026-10-27
+
 ### Added
 
 - Core blocks serve Actions: camera-linked permissions, run traces and automation cooldown now live in the hub runs ledger
