@@ -49,6 +49,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
     useCoreBlocksCreateComposition: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useCoreBlocksUpdateComposition: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useCoreBlocksDelete: () => ({ mutate: vi.fn(), isPending: false, error: null }),
     useCoreBlocksGetComposition: () => ({
       status: 'success' as const,
       data: { state: 'loaded' as const, view: editorView },
@@ -204,9 +205,9 @@ describe('Build New composition', () => {
     fireEvent.click(screen.getByTestId('build-new-helper'))
     fireEvent.click(await screen.findByTestId('helper-template-temperature'))
     expect(await screen.findByRole('heading', { name: 'New temperature sensor' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-    fireEvent.click(screen.getByTestId('helper-template-light'))
-    expect(await screen.findByRole('heading', { name: 'New light group' })).toBeTruthy()
+    // The type is fixed once chosen: no way back to the tiles.
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
+    expect(screen.queryByTestId('helper-template-light')).toBeNull()
   })
 
   it('opens the helper type tiles from /build/compositions/new', async () => {
