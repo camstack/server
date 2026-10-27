@@ -99,13 +99,23 @@ export function parseCloudflaredVersion(output: string): readonly [number, numbe
   return [Number(m[1]), Number(m[2]), Number(m[3])]
 }
 
-/** True when the parsed version is ≥ {@link MIN_TOKEN_FILE_VERSION}. */
-export function supportsTokenFile(version: readonly [number, number, number] | null): boolean {
+export type CloudflaredVersion = readonly [number, number, number]
+
+/** True when `version` parsed OK and is ≥ `minimum` (component-wise, major first). */
+export function versionAtLeast(
+  version: CloudflaredVersion | null,
+  minimum: CloudflaredVersion,
+): boolean {
   if (!version) return false
   for (let i = 0; i < 3; i++) {
     const a = version[i] ?? 0
-    const b = MIN_TOKEN_FILE_VERSION[i] ?? 0
+    const b = minimum[i] ?? 0
     if (a !== b) return a > b
   }
   return true
+}
+
+/** True when the parsed version is ≥ {@link MIN_TOKEN_FILE_VERSION}. */
+export function supportsTokenFile(version: CloudflaredVersion | null): boolean {
+  return versionAtLeast(version, MIN_TOKEN_FILE_VERSION)
 }

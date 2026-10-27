@@ -4,17 +4,20 @@
  * `cloudflared` is NOT an npm package and is needed ONLY by this (optional)
  * addon, so it is no longer baked into the base hub image. Instead the addon
  * obtains it the first time a tunnel starts:
- *   1. if `cloudflared` is already on PATH (dev box with brew/apt, or a legacy
- *      image that still ships it) AND is ≥ 2025.4.0 (`--token-file`) → use
- *      that, no download;
- *   2. else if a cached copy exists in the addon's bin dir → use it;
- *   3. else download the right release asset for this OS/arch into the bin dir.
+ *   1. if `cloudflared` is on PATH (dev box with brew/apt, or a legacy image
+ *      that still ships it) AND is ≥ {@link MIN_CLOUDFLARED_VERSION} → use it;
+ *   2. else if a cached copy in the addon's bin dir is ≥ the minimum → use it;
+ *   3. else download the pinned release asset for this OS/arch, verify its
+ *      SHA-256 and that it runs and meets the minimum, then atomically move it
+ *      into place. A cached copy below the minimum is replaced; a PATH copy
+ *      below the minimum is skipped.
  *
  * Keeping the binary in the addon's own data dir means an optional feature
  * carries its own dependency — the base image stays lean and its build no
  * longer depends on reaching github.com.
  */
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
 import * as os from 'node:os'
@@ -22,12 +25,49 @@ import * as path from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { IScopedLogger } from '@camstack/types'
-import { parseCloudflaredVersion, supportsTokenFile } from './cloudflared-invocation'
+import {
+  parseCloudflaredVersion,
+  versionAtLeast,
+  type CloudflaredVersion,
+} from './cloudflared-invocation'
 
 /** Default cloudflared release pinned for reproducible downloads. */
-export const DEFAULT_CLOUDFLARED_VERSION = '2025.4.2'
+export const DEFAULT_CLOUDFLARED_VERSION = '2026.10.5'
+
+/**
+ * Oldest cloudflared this addon will run. 2026.10.5 carries the fix for
+ * corrupted certificates; older builds (the hub ran 2025.4.2) are never used —
+ * a cached one is re-downloaded over, a PATH one is skipped. Raise it together
+ * with {@link DEFAULT_CLOUDFLARED_VERSION} (and add that version's checksums).
+ */
+export const MIN_CLOUDFLARED_VERSION: CloudflaredVersion = [2026, 10, 5]
+
+/** Expected SHA-256 (hex) per release version, per asset file name. */
+export type ChecksumTable = Readonly<Record<string, Readonly<Record<string, string>>>>
+
+/**
+ * SHA-256 of the pinned release's assets, shipped as constants (not fetched
+ * from the release notes: the notes list the darwin `.tgz` with a hash that
+ * does not match the downloadable archive, and a fetch adds a second network
+ * dependency on the provisioning path). Taken from the GitHub release asset
+ * digests and checked against downloaded bytes. A version not listed here is
+ * refused.
+ */
+export const CLOUDFLARED_SHA256: ChecksumTable = {
+  '2026.10.5': {
+    'cloudflared-linux-amd64': 'e1bc0cf084fd9e590554fe769a86b1db46701c3f847a43d902f7b974a4e16298',
+    'cloudflared-linux-arm64': '72e0d05a67e09da87cf495e409a28c3cc5994dd23fc66a982eebea6a55923b7d',
+    'cloudflared-linux-arm': 'a018911e1bbfd739937f3011f589e9e73245baeee14742f8b3413472bb007adc',
+    'cloudflared-darwin-amd64.tgz':
+      '6699392fed92367808c248c2d90bed66e49bbf66e1b4ee3e4141230f3f7391b3',
+    'cloudflared-windows-amd64.exe':
+      'db4e4c413612a0916f3e1679d3caaf376f94911952d163028fb726fb2e0516a9',
+  },
+}
 
 const RELEASE_BASE = 'https://github.com/cloudflare/cloudflared/releases/download'
+
+const PROVISION_TAGS = { topic: 'tunnel', phase: 'provision' } as const
 
 export interface CloudflaredAsset {
   /** Release asset file name (e.g. `cloudflared-linux-amd64`). */
@@ -49,7 +89,10 @@ export function cloudflaredAsset(platform: NodeJS.Platform, arch: string): Cloud
       return { fileName: `cloudflared-linux-${a}`, isArchive: false }
     case 'darwin':
       // macOS ships only a .tgz (and only amd64; arm64 runs it via Rosetta).
-      return { fileName: `cloudflared-darwin-${a === 'arm64' ? 'amd64' : a}.tgz`, isArchive: true }
+      return {
+        fileName: `cloudflared-darwin-${a === 'arm64' ? 'amd64' : a}.tgz`,
+        isArchive: true,
+      }
     case 'win32':
       return { fileName: `cloudflared-windows-${a}.exe`, isArchive: false }
     default:
@@ -72,7 +115,9 @@ function probeVersion(bin: string): Promise<string | null> {
       }
     }
     try {
-      const child = spawn(bin, ['--version'], { stdio: ['ignore', 'pipe', 'pipe'] })
+      const child = spawn(bin, ['--version'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
       child.stdout?.on('data', (c: Buffer) => (out += c.toString('utf8')))
       child.stderr?.on('data', (c: Buffer) => (out += c.toString('utf8')))
       child.on('error', () => finish(null))
@@ -87,110 +132,166 @@ function probeVersion(bin: string): Promise<string | null> {
   })
 }
 
-/**
- * True when `bin` runs AND is new enough for `tunnel run --token-file`
- * (≥ 2025.4.0). An older binary is treated as absent: the token is never
- * passed on argv or in the environment as a fallback (D783).
- */
-async function usable(bin: string): Promise<boolean> {
-  const out = await probeVersion(bin)
-  return out !== null && supportsTokenFile(parseCloudflaredVersion(out))
-}
-
-/** True when `<bin> --version` exits 0 (binary present + executable). */
-async function runsOk(bin: string): Promise<boolean> {
-  return (await probeVersion(bin)) !== null
-}
-
 async function downloadTo(url: string, dest: string): Promise<void> {
   const res = await fetch(url, { redirect: 'follow' })
   if (!res.ok || !res.body)
     throw new Error(`cloudflared download failed: HTTP ${res.status} for ${url}`)
-  const tmp = `${dest}.partial`
-  await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(tmp))
-  await fsp.rename(tmp, dest)
+  await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(dest))
 }
 
-/** Extract the `cloudflared` entry from a downloaded .tgz into `destBin`. */
-async function extractArchive(
-  archivePath: string,
-  destBin: string,
-  logger: IScopedLogger,
-): Promise<void> {
-  const dir = path.dirname(destBin)
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn('tar', ['-xzf', archivePath, '-C', dir], { stdio: 'inherit' })
+/** Extract the `cloudflared` entry of a .tgz into `intoDir` (a scratch dir). */
+function extractArchive(archivePath: string, intoDir: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn('tar', ['-xzf', archivePath, '-C', intoDir], {
+      stdio: 'inherit',
+    })
     child.on('error', reject)
     child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`tar exited ${code}`))))
   })
-  // The archive expands to a `cloudflared` file in `dir`; nothing else to move.
-  if (!fs.existsSync(destBin)) {
-    logger.warn('cloudflared archive did not yield expected binary name', {
-      meta: { destBin },
-      tags: { topic: 'tunnel', phase: 'extract' },
-    })
-  }
-  await fsp.rm(archivePath, { force: true })
+}
+
+async function sha256Of(file: string): Promise<string> {
+  const hash = createHash('sha256')
+  await pipeline(fs.createReadStream(file), hash)
+  return hash.digest('hex')
+}
+
+/** The side effects of provisioning, replaceable in tests. */
+export interface EnsureCloudflaredDeps {
+  /** `<bin> --version` output, or null when the binary does not run. */
+  readonly probeVersion: (bin: string) => Promise<string | null>
+  /** Download `url` into the file `dest`. */
+  readonly download: (url: string, dest: string) => Promise<void>
+  /** Extract the `cloudflared` entry of `.tgz` into the directory `intoDir`. */
+  readonly extract: (archive: string, intoDir: string) => Promise<void>
+}
+
+const DEFAULT_DEPS: EnsureCloudflaredDeps = {
+  probeVersion,
+  download: downloadTo,
+  extract: extractArchive,
 }
 
 export interface EnsureCloudflaredOptions {
   /** Directory to cache the downloaded binary in (e.g. `<dataDir>/bin`). */
   readonly binDir: string
   readonly logger: IScopedLogger
-  /** Release version to download when not already present. */
+  /** Release version to download when no acceptable copy is present. */
   readonly version?: string
+  /** Expected SHA-256 table; defaults to {@link CLOUDFLARED_SHA256}. */
+  readonly checksums?: ChecksumTable
+  readonly deps?: EnsureCloudflaredDeps
 }
 
+const formatVersion = (v: CloudflaredVersion | null): string => (v ? v.join('.') : 'unknown')
+const REQUIRED = MIN_CLOUDFLARED_VERSION.join('.')
+
 /**
- * Return a path/command for a runnable `cloudflared`, downloading + caching it
- * on first use. Prefers an existing PATH install; otherwise caches under
- * `binDir`. Throws (with an actionable message) if it cannot be provisioned.
+ * Return a path/command for a runnable `cloudflared` ≥ the minimum, downloading
+ * + verifying the pinned release when neither PATH nor the cache has one.
+ * Throws (with an actionable message) if it cannot be provisioned; a failed
+ * attempt never touches a working cached binary.
  */
 export async function ensureCloudflared(opts: EnsureCloudflaredOptions): Promise<string> {
-  if (await usable('cloudflared')) return 'cloudflared'
-  if (await runsOk('cloudflared')) {
-    opts.logger.warn(
-      'cloudflared on PATH predates --token-file (< 2025.4.0) — using a pinned copy',
-      {
-        tags: { topic: 'tunnel', phase: 'provision' },
-      },
-    )
+  const deps = opts.deps ?? DEFAULT_DEPS
+  const probe = async (
+    bin: string,
+  ): Promise<{ runs: boolean; version: CloudflaredVersion | null }> => {
+    const out = await deps.probeVersion(bin)
+    return {
+      runs: out !== null,
+      version: out === null ? null : parseCloudflaredVersion(out),
+    }
+  }
+
+  const onPath = await probe('cloudflared')
+  if (versionAtLeast(onPath.version, MIN_CLOUDFLARED_VERSION)) return 'cloudflared'
+  if (onPath.runs) {
+    opts.logger.warn('cloudflared on PATH is below the minimum — skipping it for the pinned copy', {
+      meta: { found: formatVersion(onPath.version), required: REQUIRED },
+      tags: PROVISION_TAGS,
+    })
   }
 
   const cached = path.join(
     opts.binDir,
     os.platform() === 'win32' ? 'cloudflared.exe' : 'cloudflared',
   )
-  // A cached copy older than the token-file floor is re-downloaded over.
-  if (fs.existsSync(cached) && (await usable(cached))) return cached
+  const haveCached = fs.existsSync(cached)
+  if (haveCached) {
+    const c = await probe(cached)
+    if (versionAtLeast(c.version, MIN_CLOUDFLARED_VERSION)) return cached
+    opts.logger.warn('cached cloudflared is below the minimum — replacing it', {
+      meta: {
+        found: c.runs ? formatVersion(c.version) : 'not runnable',
+        required: REQUIRED,
+      },
+      tags: PROVISION_TAGS,
+    })
+  }
 
   const version = opts.version ?? DEFAULT_CLOUDFLARED_VERSION
   const asset = cloudflaredAsset(os.platform(), os.arch())
+  const expected = (opts.checksums ?? CLOUDFLARED_SHA256)[version]?.[asset.fileName]
+  if (expected === undefined) {
+    throw new Error(`cloudflared ${version}: no known checksum for ${asset.fileName} — refusing`)
+  }
   const url = `${RELEASE_BASE}/${version}/${asset.fileName}`
   await fsp.mkdir(opts.binDir, { recursive: true })
 
-  opts.logger.info('Provisioning cloudflared (not on PATH) — downloading', {
-    meta: { version, asset: asset.fileName, dest: cached },
-    tags: { topic: 'tunnel', phase: 'provision' },
+  opts.logger.info('Provisioning cloudflared — downloading', {
+    meta: { version, asset: asset.fileName, dest: cached, required: REQUIRED },
+    tags: PROVISION_TAGS,
   })
 
-  if (asset.isArchive) {
-    const archive = path.join(opts.binDir, asset.fileName)
-    await downloadTo(url, archive)
-    await extractArchive(archive, cached, opts.logger)
-  } else {
-    await downloadTo(url, cached)
+  // Everything lands in a scratch dir inside binDir (same filesystem, so the
+  // final rename is atomic); the working cached binary is only replaced after
+  // the candidate is verified.
+  const scratch = await fsp.mkdtemp(path.join(opts.binDir, '.provision-'))
+  try {
+    const downloaded = path.join(scratch, asset.fileName)
+    await deps.download(url, downloaded)
+    const actual = await sha256Of(downloaded)
+    if (actual !== expected) {
+      throw new Error(
+        `cloudflared ${version} checksum mismatch for ${asset.fileName} (expected ${expected}, got ${actual}) — refusing`,
+      )
+    }
+    let candidate = downloaded
+    if (asset.isArchive) {
+      const unpacked = path.join(scratch, 'unpacked')
+      await fsp.mkdir(unpacked)
+      await deps.extract(downloaded, unpacked)
+      candidate = path.join(unpacked, 'cloudflared')
+    }
+    await fsp.chmod(candidate, 0o755)
+    const c = await probe(candidate)
+    if (!versionAtLeast(c.version, MIN_CLOUDFLARED_VERSION)) {
+      throw new Error(
+        `cloudflared ${version} downloaded but is ${c.runs ? formatVersion(c.version) : 'not runnable'}, below the minimum ${REQUIRED} — refusing`,
+      )
+    }
+    await fsp.rename(candidate, cached)
+    opts.logger.info('cloudflared ready', {
+      meta: {
+        path: cached,
+        version,
+        found: formatVersion(c.version),
+        replaced: haveCached,
+      },
+      tags: { topic: 'tunnel', phase: 'provision-done' },
+    })
+    return cached
+  } catch (err) {
+    opts.logger.error('cloudflared provisioning refused — keeping the existing binary', {
+      meta: {
+        version,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      tags: PROVISION_TAGS,
+    })
+    throw err
+  } finally {
+    await fsp.rm(scratch, { recursive: true, force: true })
   }
-  await fsp.chmod(cached, 0o755)
-
-  if (!(await usable(cached))) {
-    throw new Error(
-      `cloudflared ${version} downloaded to ${cached} but is not runnable or predates --token-file`,
-    )
-  }
-  opts.logger.info('cloudflared ready', {
-    meta: { path: cached, version },
-    tags: { topic: 'tunnel', phase: 'provision-done' },
-  })
-  return cached
 }
