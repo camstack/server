@@ -48,7 +48,6 @@ import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-contr
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
 import type { IntegrationGroup } from '../../components/integration-hub/types'
 import { BrokerManager } from '../../components/brokers/BrokerManager'
-import { BrokerRecordEntriesPanel } from '../../components/brokers/BrokerRecordEntriesPanel'
 import {
   type ConnectivitySectionId,
   INTEGRATION_HUB_OWNED_PARAMS,
@@ -182,7 +181,10 @@ function buildGroup(
     id: descriptor.sectionId,
     label: t(descriptor.labelKey),
     entries,
-    install: { capability: kindCaps[0] ?? descriptor.kind, label: t(descriptor.installLabelKey) },
+    install: {
+      capability: kindCaps[0] ?? descriptor.kind,
+      label: t(descriptor.installLabelKey),
+    },
   }
 }
 
@@ -218,9 +220,14 @@ function ConnectivityKindHub({
 
 export function IntegrationsPage(): ReactElement {
   const { t } = useTranslation()
-  const addonsQuery = useAddonsList(undefined, { refetchInterval: POLL_INTERVAL_MS })
+  const addonsQuery = useAddonsList(undefined, {
+    refetchInterval: POLL_INTERVAL_MS,
+  })
   const [searchParams, setSearchParams] = useSearchParams()
-  const chrome = navChromeForPath('/system/integrations', { t, isAdmin: true }) ?? {
+  const chrome = navChromeForPath('/system/integrations', {
+    t,
+    isAdmin: true,
+  }) ?? {
     icon: Plug,
     title: t('admin.system.integrations.connectivity', 'Connectivity'),
   }
@@ -310,12 +317,7 @@ function panelsFor(
         id: 'connections',
         title: i18n.t('admin.system.integrations.connections', 'Connections'),
         icon: Radio,
-        content: (
-          <BrokerRecordEntriesPanel
-            addonId={addonId}
-            fallback={<BrokerManager addonId={addonId} />}
-          />
-        ),
+        content: <BrokerManager addonId={addonId} />,
       },
     ]
   }

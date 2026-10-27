@@ -5383,9 +5383,6 @@
       "signOut": "Esci",
       "loadingBrokers": "Caricamento broker…"
     },
-    "brokerRecordEntriesPanel": {
-      "loadKindsFailed": "Impossibile caricare i tipi di voce"
-    },
     "signIn": {
       "intro": "Accedi all'account: le impostazioni tecniche qui sotto vengono compilate per te.",
       "start": "Accedi",

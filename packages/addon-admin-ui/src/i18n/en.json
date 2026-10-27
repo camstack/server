@@ -5322,9 +5322,6 @@
       "signOut": "Sign out",
       "loadingBrokers": "Loading brokers…"
     },
-    "brokerRecordEntriesPanel": {
-      "loadKindsFailed": "Could not load entry kinds"
-    },
     "signIn": {
       "intro": "Sign in to the account; the technical settings below are filled for you.",
       "start": "Sign in",

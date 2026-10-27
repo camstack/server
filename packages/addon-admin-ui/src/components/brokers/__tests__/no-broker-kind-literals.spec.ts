@@ -3,7 +3,7 @@
  * DATA (the provider's descriptor and schema); none may carry a kind literal or
  * branch on one. This pins it: a new `if (kind === 'x')` in any of them fails here.
  */
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -47,5 +47,37 @@ describe('shared broker components name no broker kind', () => {
         new RegExp(`['"\`]${kind}['"\`]`),
       )
     }
+  })
+})
+
+describe('there is one broker list and one broker dialog', () => {
+  const sources = readdirSync(brokers)
+    .filter((f) => f.endsWith('.tsx'))
+    .map((f) => ({
+      f,
+      code: codeOnly(readFileSync(join(brokers, f), 'utf8')),
+    }))
+
+  it('no broker component builds its own add/edit form over the generic record entries', () => {
+    for (const { f, code } of sources) {
+      expect(code, `${f} uses RecordEntriesPanel`).not.toMatch(/RecordEntriesPanel/)
+      expect(code, `${f} writes a broker through record entries`).not.toMatch(
+        /useRecordEntriesPutEntry/,
+      )
+    }
+  })
+
+  it('only BrokerManager lists brokers for a provider (Connectivity)', () => {
+    const listers = sources.filter(({ code }) => /<DataTable|<table/.test(code)).map(({ f }) => f)
+    expect(listers).toEqual(['BrokerManager.tsx'])
+  })
+
+  it('Connectivity mounts BrokerManager for a broker integration', () => {
+    const page = readFileSync(
+      join(here, '..', '..', '..', 'pages', 'system', 'Integrations.tsx'),
+      'utf8',
+    )
+    expect(page).toMatch(/<BrokerManager addonId=\{addonId\} \/>/)
+    expect(page).not.toMatch(/RecordEntriesPanel/)
   })
 })
