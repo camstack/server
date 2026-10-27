@@ -12,7 +12,7 @@ import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
  * auto-refresh forever). That listener is bound to LOOPBACK only
  * (`proxyOwnIp` = `proxyListenBind` = 127.0.0.1): nothing outside this process's host can
  * reach it. The operator's browser reaches it through the hub's data plane instead
- * (`VendorLoginProxy`, `/addon/<id>/login/<attempt>/127.0.0.1:<port>/…`), which is
+ * (`VendorLoginProxy`, `/addon/<id>/vendor-login/<attempt>/127.0.0.1:<port>/…`), which is
  * HTTPS under the same origin as the admin page. alexa-cookie2 keeps doing the Amazon
  * specific work (login cookies, device registration, the `/ax/claim` and CSRF steps)
  * and the hub proxy only rewrites the loopback-origin URLs it emits into the mount.

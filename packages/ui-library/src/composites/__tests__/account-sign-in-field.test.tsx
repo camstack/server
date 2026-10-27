@@ -144,7 +144,10 @@ describe('account-sign-in field', () => {
     let claims = 0
     const onAction = vi.fn(async (action: string) => {
       if (action === 'beginSignIn') {
-        return { attemptId: 'attempt-1', authorizeUrl: '/addon/bosch-homecom/login/attempt-1/h/x' }
+        return {
+          attemptId: 'attempt-1',
+          authorizeUrl: '/addon/bosch-homecom/vendor-login/attempt-1/h/x',
+        }
       }
       if (action === 'claimSignIn') {
         claims += 1
@@ -166,7 +169,7 @@ describe('account-sign-in field', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in with SingleKey ID' }))
     await waitFor(() => expect(screen.getByRole('textbox')).toBeTruthy())
     expect(open).toHaveBeenCalledWith(
-      `${window.location.origin}/addon/bosch-homecom/login/attempt-1/h/x`,
+      `${window.location.origin}/addon/bosch-homecom/vendor-login/attempt-1/h/x`,
       '_blank',
       'noopener,noreferrer',
     )

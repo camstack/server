@@ -95,7 +95,6 @@ describe('the hub login proxy, end to end, for a vendor with an app-scheme redir
     vendorPort = await listen(vendor)
     proxy = new VendorLoginProxy({
       addonId: 'bosch-home-connect',
-      prefix: 'login',
       logger: logger(),
     })
     front = createServer((req, res) => void proxy.handler(req, res))
@@ -112,7 +111,7 @@ describe('the hub login proxy, end to end, for a vendor with an app-scheme redir
     const pages: string[] = []
     let next: string | null = entry
     for (let hop = 0; hop < 8 && next !== null; hop += 1) {
-      const path: string = next.replace('/addon/bosch-home-connect/login', '')
+      const path: string = next.replace('/addon/bosch-home-connect/vendor-login', '')
       const res = await fetch(`http://127.0.0.1:${frontPort}${path}`, { redirect: 'manual' })
       pages.push(path)
       const location: string | null = res.headers.get('location')
@@ -189,7 +188,7 @@ describe('the hub login proxy, end to end, for a vendor with an app-scheme redir
     const { entry } = start()
     await browse(entry)
     const again = await fetch(
-      `http://127.0.0.1:${frontPort}${entry.replace('/addon/bosch-home-connect/login', '')}`,
+      `http://127.0.0.1:${frontPort}${entry.replace('/addon/bosch-home-connect/vendor-login', '')}`,
       { redirect: 'manual' },
     )
     expect(again.headers.get('location')).toContain('reason=invalid_state')

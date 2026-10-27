@@ -22,6 +22,7 @@ import {
   notificationOutputCapability,
   type SystemEvent,
   SECRET_CLEAR,
+  VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
 } from '@camstack/types'
 import {
@@ -30,7 +31,7 @@ import {
   type AlexaAddonConfig,
   type AlexaConnection,
 } from './config.js'
-import { ALEXA_LOGIN_PROXY_PREFIX, AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
+import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes } from './alexa-login-routes.js'
 import { AlexaBrokerRegistry } from './alexa-broker-registry.js'
 import { sameConnection } from './alexa-integration-manager.js'
@@ -318,13 +319,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private async serveLoginProxy(): Promise<void> {
     const proxy = new VendorLoginProxy({
       addonId: this.ctx.id,
-      prefix: ALEXA_LOGIN_PROXY_PREFIX,
       logger: this.ctx.logger,
     })
     try {
       this.loginPlane =
         (await this.ctx.dataPlane?.serve({
-          prefix: ALEXA_LOGIN_PROXY_PREFIX,
+          prefix: VENDOR_LOGIN_PROXY_PREFIX,
           access: 'admin',
           handler: proxy.handler,
         })) ?? null

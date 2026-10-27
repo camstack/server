@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Amazon sign-in button opens the login again; the sign-in page now lives under a path no addon route shares
+
 ## [0.2.159] - 2026-10-27
 
 ### Added

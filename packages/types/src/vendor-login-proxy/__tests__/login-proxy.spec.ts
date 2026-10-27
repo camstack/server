@@ -76,7 +76,6 @@ describe('VendorLoginProxy against a fake vendor', () => {
     vendorPort = await listen(vendor)
     proxy = new VendorLoginProxy({
       addonId: 'demo',
-      prefix: 'login',
       logger: quietLogger(),
       now: () => now,
     })
@@ -113,11 +112,11 @@ describe('VendorLoginProxy against a fake vendor', () => {
     expect(res.headers.get('content-security-policy')).toBeNull()
     expect(res.headers.get('x-frame-options')).toBeNull()
     expect(res.headers.get('strict-transport-security')).toBeNull()
-    expect(res.headers.get('set-cookie')).toContain(`Path=/addon/demo/login/${ATTEMPT}/`)
+    expect(res.headers.get('set-cookie')).toContain(`Path=/addon/demo/vendor-login/${ATTEMPT}/`)
     expect(res.headers.get('set-cookie')).not.toContain('Domain')
     expect(res.headers.get('set-cookie')).toContain('Secure')
     const html = await res.text()
-    const base = `/addon/demo/login/${ATTEMPT}/127.0.0.1:${vendorPort}`
+    const base = `/addon/demo/vendor-login/${ATTEMPT}/127.0.0.1:${vendorPort}`
     expect(html).toContain(`id="rel" href="${base}/step2"`)
     expect(html).toContain(`id="abs" href="${base}/step2"`)
     expect(html).toContain(`return_to=http://127.0.0.1:${vendorPort}/back`)
@@ -128,7 +127,7 @@ describe('VendorLoginProxy against a fake vendor', () => {
       cookie: 'camstack_session=HUBSECRET; sid=abc',
       authorization: 'Bearer HUBTOKEN',
       origin: 'https://hub.lan',
-      referer: `https://hub.lan/addon/demo/login/${ATTEMPT}/127.0.0.1:${vendorPort}/prev`,
+      referer: `https://hub.lan/addon/demo/vendor-login/${ATTEMPT}/127.0.0.1:${vendorPort}/prev`,
     })
     const headers = seen[0]?.headers
     expect(headers?.cookie).toBe('sid=abc')
@@ -141,11 +140,11 @@ describe('VendorLoginProxy against a fake vendor', () => {
     const step = await get(`/${ATTEMPT}/127.0.0.1:${vendorPort}/step2`)
     expect(step.status).toBe(302)
     const next = step.headers.get('location')
-    expect(next).toBe(`/addon/demo/login/${ATTEMPT}/127.0.0.1:${vendorPort}/final`)
+    expect(next).toBe(`/addon/demo/vendor-login/${ATTEMPT}/127.0.0.1:${vendorPort}/final`)
     expect(onDone).not.toHaveBeenCalled()
 
-    // The hub strips `/addon/demo/login` before the data-plane handler sees the URL.
-    const done = await get((next ?? '').replace('/addon/demo/login', ''))
+    // The hub strips `/addon/demo/vendor-login` before the data-plane handler sees the URL.
+    const done = await get((next ?? '').replace('/addon/demo/vendor-login', ''))
     expect(done.status).toBe(302)
     const landing = done.headers.get('location') ?? ''
     expect(landing.startsWith('/sso-complete#')).toBe(true)
@@ -192,7 +191,7 @@ describe('VendorLoginProxy against a fake vendor', () => {
 
   it('never logs the captured URL or a cookie', async () => {
     const logger = quietLogger()
-    const quiet = new VendorLoginProxy({ addonId: 'demo', prefix: 'login', logger, now: () => now })
+    const quiet = new VendorLoginProxy({ addonId: 'demo', logger, now: () => now })
     quiet.open({
       attemptId: 'QUIET-ATTEMPT-1',
       expiresAtMs: 5_000,

@@ -2087,6 +2087,7 @@ export {
   type LoginProxyUpstream,
   type LoginProxyVerdict,
   type VendorLoginProxyOptions,
+  VENDOR_LOGIN_PROXY_PREFIX,
 } from './vendor-login-proxy/index.js'
 export {
   OAUTH_LANDING_PATH,

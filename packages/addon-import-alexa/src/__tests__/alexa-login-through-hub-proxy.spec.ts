@@ -109,7 +109,7 @@ describe('the Amazon login through the hub login proxy', () => {
     seen.hostMismatches = 0
     behaviour.registers = true
     upstreamPort = await freePort()
-    proxy = new VendorLoginProxy({ addonId: 'import-alexa', prefix: 'login', logger })
+    proxy = new VendorLoginProxy({ addonId: 'import-alexa', logger })
     front = createServer((req, res) => void proxy.handler(req, res))
     await new Promise<void>((resolve) => front.listen(0, '127.0.0.1', resolve))
     frontPort = (front.address() as AddressInfo).port
@@ -127,15 +127,15 @@ describe('the Amazon login through the hub login proxy', () => {
 
   /** Strip the hub mount the way the data plane does. */
   const viaFront = (hubPath: string): string =>
-    `http://127.0.0.1:${frontPort}${hubPath.replace('/addon/import-alexa/login', '')}`
+    `http://127.0.0.1:${frontPort}${hubPath.replace('/addon/import-alexa/vendor-login', '')}`
 
   it('binds alexa-cookie2 to loopback only and hands the browser a hub-relative entry', async () => {
     const started = await manager.start('amazon.it')
     expect(seen.init?.proxyOwnIp).toBe('127.0.0.1')
     expect(seen.init?.proxyListenBind).toBe('127.0.0.1')
-    expect(started.loginUrl.startsWith(`/addon/import-alexa/login/${started.sessionId}/`)).toBe(
-      true,
-    )
+    expect(
+      started.loginUrl.startsWith(`/addon/import-alexa/vendor-login/${started.sessionId}/`),
+    ).toBe(true)
     expect(started.loginUrl).not.toContain('http')
     await vi.waitFor(() => expect(manager.status(started.sessionId)?.phase).toBe('awaiting-login'))
   })
@@ -147,7 +147,7 @@ describe('the Amazon login through the hub login proxy', () => {
     expect(first.status).toBe(200)
     const html = await first.text()
     const link = /href="([^"]+)"/.exec(html)?.[1] ?? ''
-    expect(link.startsWith(`/addon/import-alexa/login/${started.sessionId}/`)).toBe(true)
+    expect(link.startsWith(`/addon/import-alexa/vendor-login/${started.sessionId}/`)).toBe(true)
     expect(link).not.toContain('http')
 
     const last = await fetch(viaFront(link), { redirect: 'manual' })

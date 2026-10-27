@@ -14,3 +14,4 @@ export {
   type LoginProxyScheme,
   type LoginProxyUpstream,
 } from './url-rewrite.js'
+export { VENDOR_LOGIN_PROXY_PREFIX } from './prefix.js'

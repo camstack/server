@@ -14,17 +14,14 @@ import {
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
+  VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
 } from '@camstack/types'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'
 import { finishHomeComSignIn, homeComSignInAttempts } from './homecom-sign-in.js'
-import {
-  beginHomeComProxiedSignIn,
-  HOMECOM_PROXY_PREFIX,
-  homeComSignInClaims,
-} from './homecom-sign-in-proxy.js'
+import { beginHomeComProxiedSignIn, homeComSignInClaims } from './homecom-sign-in-proxy.js'
 import {
   buildHomeComGatewayPersister,
   buildHomeComTokenPersister,
@@ -115,13 +112,12 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
   private async serveLoginProxy(): Promise<void> {
     const proxy = new VendorLoginProxy({
       addonId: this.ctx.id,
-      prefix: HOMECOM_PROXY_PREFIX,
       logger: this.ctx.logger,
     })
     try {
       this.loginPlane =
         (await this.ctx.dataPlane?.serve({
-          prefix: HOMECOM_PROXY_PREFIX,
+          prefix: VENDOR_LOGIN_PROXY_PREFIX,
           access: 'admin',
           handler: proxy.handler,
         })) ?? null

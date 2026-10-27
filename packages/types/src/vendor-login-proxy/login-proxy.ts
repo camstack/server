@@ -2,7 +2,7 @@
  * Vendor login proxy (D955) — sign in to a vendor whose login has no third-party
  * OAuth callback by opening the vendor's own login page THROUGH the hub.
  *
- * Mounted as an addon data plane (`/addon/<addonId>/<prefix>/…`), so the hub
+ * Mounted as an addon data plane (`/addon/<addonId>/vendor-login/…`), so the hub
  * authenticates the browser (admin session) and pipes; this module produces the
  * bytes. A request is `/<attemptId>/<vendorHost>/<path>`:
  *
@@ -24,6 +24,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { DataPlaneHandler } from '../interfaces/addon-data-plane.js'
 import type { IScopedLogger } from '../interfaces/logging.js'
+import { VENDOR_LOGIN_PROXY_PREFIX } from './prefix.js'
 import { oauthLandingUrl, type OauthLandingOutcome } from '../utils/oauth-landing.js'
 import {
   filterForwardedCookies,
@@ -71,8 +72,6 @@ export interface LoginProxyAttemptSpec<T> {
 
 export interface VendorLoginProxyOptions {
   readonly addonId: string
-  /** The data-plane prefix this proxy is served under, e.g. `login`. */
-  readonly prefix: string
   readonly logger: IScopedLogger
   readonly now?: () => number
   /** Injectable for tests; defaults to the platform `fetch`. */
@@ -179,7 +178,6 @@ function sendPlain(res: ServerResponse, status: number, text: string): void {
 
 export class VendorLoginProxy {
   readonly #addonId: string
-  readonly #prefix: string
   readonly #logger: IScopedLogger
   readonly #now: () => number
   readonly #fetch: typeof fetch
@@ -187,13 +185,12 @@ export class VendorLoginProxy {
 
   constructor(options: VendorLoginProxyOptions) {
     this.#addonId = options.addonId
-    this.#prefix = options.prefix
     this.#logger = options.logger
     this.#now = options.now ?? (() => Date.now())
     this.#fetch = options.fetchFn ?? globalThis.fetch.bind(globalThis)
   }
 
-  /** The `DataPlaneHandler` to pass to `ctx.dataPlane.serve({ prefix, access: 'admin', … })`. */
+  /** The `DataPlaneHandler` to pass to `ctx.dataPlane.serve({ prefix: VENDOR_LOGIN_PROXY_PREFIX, access: 'admin', … })`. */
   readonly handler: DataPlaneHandler = (req, res) => this.#handle(req, res)
 
   /** Register an attempt. A one-shot capability: refused hosts are rejected up front. */
@@ -234,12 +231,12 @@ export class VendorLoginProxy {
     if (findUpstream({ basePath: '', upstreams: attempt.upstreams }, url.host) === undefined) {
       return null
     }
-    return `/addon/${this.#addonId}/${this.#prefix}/${attemptId}/${url.host}${url.pathname}${url.search}`
+    return `/addon/${this.#addonId}/${VENDOR_LOGIN_PROXY_PREFIX}/${attemptId}/${url.host}${url.pathname}${url.search}`
   }
 
   #routeFor(attemptId: string, attempt: OpenAttempt, forwardedPrefix: string): LoginProxyRoute {
     return {
-      basePath: `${forwardedPrefix}/addon/${this.#addonId}/${this.#prefix}/${attemptId}`,
+      basePath: `${forwardedPrefix}/addon/${this.#addonId}/${VENDOR_LOGIN_PROXY_PREFIX}/${attemptId}`,
       upstreams: attempt.upstreams,
     }
   }

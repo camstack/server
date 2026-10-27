@@ -40,9 +40,6 @@ export interface AlexaProxyLoginManagerDeps {
   readonly captureWaitMs?: number
 }
 
-/** The data-plane prefix the hub login proxy is served on. */
-export const ALEXA_LOGIN_PROXY_PREFIX = 'login'
-
 /** The addon id the result page names to return to. */
 const ADDON_ID = 'import-alexa'
 

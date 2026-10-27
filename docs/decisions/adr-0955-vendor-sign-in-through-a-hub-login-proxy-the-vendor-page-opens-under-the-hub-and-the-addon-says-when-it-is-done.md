@@ -28,11 +28,18 @@ content) and which needed a published port on a containerised hub.
 The hub is the HTTPS face of the vendor's login. A reusable `VendorLoginProxy` lives in
 the bare `@camstack/types` entry (bundled into each addon, no `node:` imports beyond the
 types of `http`; subpaths are host-resolved, D15) and is mounted by the addon on a data
-plane (`ctx.dataPlane.serve({ prefix: 'login', access: 'admin' })`). The browser opens
-`/addon/<addonId>/login/<attemptId>/<vendorHost>/<path>`: the hub authenticates the
+plane (`ctx.dataPlane.serve({ prefix: VENDOR_LOGIN_PROXY_PREFIX, access: 'admin' })`). The browser opens
+`/addon/<addonId>/vendor-login/<attemptId>/<vendorHost>/<path>`: the hub authenticates the
 admin session, the proxy fetches the vendor page and rewrites its absolute URLs,
 `Location` and `Set-Cookie` into the mount.
 
+- **The mount prefix is `vendor-login`, never `login`.** The hub matches an addon's
+  data-plane prefixes BEFORE its HTTP routes, and the Alexa addon serves
+  `/addon/import-alexa/login/start|status|commit|cancel`. Mounted on `login`, the proxy
+  swallowed `POST /login/start` (an attempt named "start") and answered HTML, so the
+  admin UI's `res.json()` failed ("The string did not match the expected pattern").
+  `VENDOR_LOGIN_PROXY_PREFIX` is one constant in `@camstack/types`; `VendorLoginProxy`
+  takes no prefix option, and a spec asserts no route the addon serves starts with it.
 - The **terminal condition is the addon's**: a function over each upstream response that
   answers `continue` or `done(payload)`. Bosch: a `Location` (or a script/meta
   navigation) starting with the app scheme. Alexa: alexa-cookie2's redirect to

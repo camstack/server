@@ -70,7 +70,7 @@ export type AlexaBrokerEntry = z.infer<typeof AlexaBrokerEntrySchema>
  * Interactive proxy-login settings (addon-global, not per-broker). alexa-remote2
  * spins a local reverse-proxy to Amazon's login page on `127.0.0.1:proxyPort`; the
  * operator never reaches it directly — the hub's login proxy (D955) opens it at
- * `/addon/import-alexa/login/…` under the hub's own HTTPS origin. The port only has to
+ * `/addon/import-alexa/vendor-login/…` under the hub's own HTTPS origin. The port only has to
  * be free on the hub's loopback.
  */
 export const alexaProxyLoginSchema = z.object({

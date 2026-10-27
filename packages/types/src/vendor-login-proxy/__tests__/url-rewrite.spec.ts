@@ -15,19 +15,19 @@ import {
 const AUTH: LoginProxyUpstream = { host: 'auth.vendor.test', scheme: 'https' }
 const API: LoginProxyUpstream = { host: 'api.vendor.test', scheme: 'https' }
 const route: LoginProxyRoute = {
-  basePath: '/addon/demo/login/ATTEMPT12',
+  basePath: '/addon/demo/vendor-login/ATTEMPT12',
   upstreams: [AUTH, API],
 }
 
 describe('rewriteLocation', () => {
   it('maps an absolute vendor URL to the proxy path, keeping query and hash', () => {
     expect(rewriteLocation('https://api.vendor.test/x?a=1#f', AUTH, route)).toBe(
-      '/addon/demo/login/ATTEMPT12/api.vendor.test/x?a=1#f',
+      '/addon/demo/vendor-login/ATTEMPT12/api.vendor.test/x?a=1#f',
     )
   })
   it('resolves a relative Location against the current upstream host', () => {
     expect(rewriteLocation('/next?s=1', AUTH, route)).toBe(
-      '/addon/demo/login/ATTEMPT12/auth.vendor.test/next?s=1',
+      '/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/next?s=1',
     )
   })
   it('leaves a host outside the allow-list and an app scheme untouched', () => {
@@ -46,9 +46,9 @@ describe('rewriteBody', () => {
       '<a href="https://auth.vendor.test/a">x</a><script>var u="//api.vendor.test/b";' +
       'var j="https:\\/\\/api.vendor.test\\/c";</script>'
     const out = rewriteBody(body, 'html', AUTH, route)
-    expect(out).toContain('href="/addon/demo/login/ATTEMPT12/auth.vendor.test/a"')
-    expect(out).toContain('"/addon/demo/login/ATTEMPT12/api.vendor.test/b"')
-    expect(out).toContain('"\\/addon\\/demo\\/login\\/ATTEMPT12\\/api.vendor.test\\/c"')
+    expect(out).toContain('href="/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/a"')
+    expect(out).toContain('"/addon/demo/vendor-login/ATTEMPT12/api.vendor.test/b"')
+    expect(out).toContain('"\\/addon\\/demo\\/vendor-login\\/ATTEMPT12\\/api.vendor.test\\/c"')
   })
   it('leaves a vendor URL that is a query parameter value alone (plain and encoded)', () => {
     const body =
@@ -57,7 +57,7 @@ describe('rewriteBody', () => {
     const out = rewriteBody(body, 'other', AUTH, route)
     expect(out).toContain('return_to=https://auth.vendor.test/maplanding&x=1')
     expect(out).toContain('return_to=https%3A%2F%2Fauth.vendor.test%2Fmaplanding')
-    expect(out).not.toContain('/addon/demo/login/ATTEMPT12')
+    expect(out).not.toContain('/addon/demo/vendor-login/ATTEMPT12')
   })
   it('pulls root-relative references in HTML under the current host, not the hub root', () => {
     const out = rewriteBody(
@@ -66,8 +66,8 @@ describe('rewriteBody', () => {
       AUTH,
       route,
     )
-    expect(out).toContain('action="/addon/demo/login/ATTEMPT12/auth.vendor.test/ax/claim"')
-    expect(out).toContain('src="/addon/demo/login/ATTEMPT12/auth.vendor.test/p.png"')
+    expect(out).toContain('action="/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/ax/claim"')
+    expect(out).toContain('src="/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/p.png"')
     expect(out).toContain('href="//cdn.other/x"')
   })
   it('does not rewrite root-relative references in non-HTML bodies', () => {
@@ -78,14 +78,17 @@ describe('rewriteBody', () => {
 describe('rewriteSetCookie', () => {
   it('drops Domain, scopes Path to the attempt and keeps Secure and HttpOnly', () => {
     const out = rewriteSetCookie('sid=abc; Domain=.vendor.test; Path=/; Secure; HttpOnly', route)
-    expect(out).toBe('sid=abc; Secure; HttpOnly; Path=/addon/demo/login/ATTEMPT12/')
+    expect(out).toBe('sid=abc; Secure; HttpOnly; Path=/addon/demo/vendor-login/ATTEMPT12/')
   })
 })
 
 describe('request side', () => {
   it('turns a proxy Referer back into the vendor URL and drops one that is not ours', () => {
     expect(
-      rewriteReferer('https://hub.lan/addon/demo/login/ATTEMPT12/auth.vendor.test/p?q=1', route),
+      rewriteReferer(
+        'https://hub.lan/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/p?q=1',
+        route,
+      ),
     ).toBe('https://auth.vendor.test/p?q=1')
     expect(rewriteReferer('https://hub.lan/admin/page', route)).toBeNull()
   })

@@ -40,7 +40,7 @@ const logger: IScopedLogger = {
   child: () => logger,
 } as unknown as IScopedLogger
 
-const loginProxy = new VendorLoginProxy({ addonId: 'import-alexa', prefix: 'login', logger })
+const loginProxy = new VendorLoginProxy({ addonId: 'import-alexa', logger })
 
 function mkManager(): AlexaProxyLoginManager {
   return new AlexaProxyLoginManager({

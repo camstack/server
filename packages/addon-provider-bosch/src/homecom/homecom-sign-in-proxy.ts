@@ -13,8 +13,6 @@ import type { FetchFn } from './homecom-api-client.js'
 /** SingleKey ID serves the whole HomeCom login. (Not verified against the live pages: no vendor credentials.) */
 export const HOMECOM_LOGIN_HOSTS: readonly string[] = ['singlekey-id.com']
 
-export const HOMECOM_PROXY_PREFIX = 'login'
-
 export const HOMECOM_APP_SCHEME = HOMECOM_REDIRECT_URI.slice(
   0,
   HOMECOM_REDIRECT_URI.indexOf('://') + 3,

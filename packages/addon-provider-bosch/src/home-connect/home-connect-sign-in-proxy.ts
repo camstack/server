@@ -23,8 +23,6 @@ export const HOME_CONNECT_LOGIN_HOSTS: readonly string[] = [
   'singlekey-id.com',
 ]
 
-export const HOME_CONNECT_PROXY_PREFIX = 'login'
-
 export const HOME_CONNECT_APP_SCHEME = HOME_CONNECT_REDIRECT_URI.slice(
   0,
   HOME_CONNECT_REDIRECT_URI.indexOf('://') + 3,

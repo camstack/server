@@ -58,6 +58,15 @@ function headers(): Record<string, string> {
   }
 }
 
+/** The JSON body of a response, or a readable error naming the step and the HTTP status when it is not JSON. */
+async function readJson(res: Response, step: string): Promise<unknown> {
+  try {
+    return await res.json()
+  } catch {
+    throw new Error(`${step} failed: HTTP ${res.status}`)
+  }
+}
+
 function failure(json: unknown): Error {
   const message =
     isRecord(json) && typeof json['error'] === 'string' ? json['error'] : 'Unknown error'
@@ -74,7 +83,7 @@ async function post<T>(
     headers: headers(),
     body: JSON.stringify(body),
   })
-  const json: unknown = await res.json()
+  const json: unknown = await readJson(res, `Sign-in ${url.split('/').pop() ?? 'request'}`)
   if (!res.ok) throw failure(json)
   if (!guard(json)) throw new Error('Unexpected response from server')
   return json
@@ -96,7 +105,7 @@ export async function getBrokerSignInStatus(
   const res = await fetch(hubPath(`${basePath}/status?${params.toString()}`), {
     headers: { Authorization: headers()['Authorization'] ?? '' },
   })
-  const json: unknown = await res.json()
+  const json: unknown = await readJson(res, 'Sign-in status')
   if (!res.ok) throw failure(json)
   if (!isStatus(json)) throw new Error('Unexpected status response from server')
   return json
