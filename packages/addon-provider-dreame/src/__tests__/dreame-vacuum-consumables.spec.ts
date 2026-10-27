@@ -13,8 +13,11 @@ import {
   CONSUMABLES_REFRESH_MS,
   DreameVacuumConsumables,
   RESET_FOLLOW_UP_MS,
+  TANK_REREAD_MS,
+  TANK_TRANSITION_MIN_GAP_MS,
   type VacuumConsumablesHandle,
 } from '../devices/dreame-vacuum-consumables.js'
+import { VACUUM_TANK_PROPS } from '../dreame-vacuum-decode.js'
 import { allLogCalls, fakeLogger } from './fixtures/fake-logger.js'
 
 /** A vacuum whose consumable table a reset rewrites the way the robot does. */
@@ -29,6 +32,11 @@ class FakeVacuum implements VacuumConsumablesHandle {
   refreshFails = false
   readonly refreshConsumables = vi.fn(async (): Promise<void> => {
     if (this.refreshFails) throw new Error('shadow unavailable')
+  })
+  tankLiveFails = false
+  readonly refreshProperties = vi.fn(async (_props: MiotProp[]): Promise<PropertyResult[]> => {
+    if (this.tankLiveFails) throw new Error('robot asleep')
+    return []
   })
   readonly refreshCachedProperties = vi.fn(
     async (_props: MiotProp[]): Promise<PropertyResult[]> => [],
@@ -354,6 +362,65 @@ describe('DreameVacuumConsumables', () => {
       await vi.advanceTimersByTimeAsync(0)
       expect(keys(store)).toEqual(['main-brush', 'sensor', 'dust-bag', 'dustBin'])
       consumables.stop()
+    })
+  })
+
+  describe('tank-status re-read', () => {
+    it('re-reads only the tank props, live, every few minutes — not a full poll', async () => {
+      const { vacuum, consumables } = setup()
+      consumables.start()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshProperties).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(TANK_REREAD_MS)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1)
+      const props = vacuum.refreshProperties.mock.calls[0]?.[0] ?? []
+      expect(props).toHaveLength(Object.keys(VACUUM_TANK_PROPS).length)
+      expect(props).toContainEqual({ siid: 27, piid: 1 })
+      // the consumables shadow read is still the hourly one
+      expect(vacuum.refreshConsumables).toHaveBeenCalledTimes(1)
+      consumables.stop()
+    })
+
+    it('falls back to the cloud shadow when the robot does not answer, and says so', async () => {
+      const { vacuum, logger, consumables } = setup()
+      vacuum.tankLiveFails = true
+      consumables.start()
+      await vi.advanceTimersByTimeAsync(TANK_REREAD_MS)
+      expect(vacuum.refreshCachedProperties).toHaveBeenCalledTimes(2) // activate + tank fallback
+      expect(JSON.stringify(allLogCalls(logger))).toContain('tank-status live read failed')
+      consumables.stop()
+    })
+
+    it('re-reads at once on a state transition, but not on the first push or inside the gap', async () => {
+      const { vacuum, consumables } = setup()
+      consumables.start()
+      await vi.advanceTimersByTimeAsync(0)
+      consumables.onPush('cleaning', [])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshProperties).not.toHaveBeenCalled()
+
+      consumables.onPush('docked', [])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1)
+
+      consumables.onPush('drying', [])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1)
+
+      await vi.advanceTimersByTimeAsync(TANK_TRANSITION_MIN_GAP_MS)
+      consumables.onPush('docked', [])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(2)
+      consumables.stop()
+    })
+
+    it('stops re-reading when the device is gone', async () => {
+      const { vacuum, consumables } = setup()
+      consumables.start()
+      consumables.stop()
+      await vi.advanceTimersByTimeAsync(TANK_REREAD_MS * 3)
+      expect(vacuum.refreshProperties).not.toHaveBeenCalled()
     })
   })
 })
