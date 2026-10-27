@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-admin-ui",
-  "version": "1.2.491",
+  "version": "1.2.492",
   "private": false,
   "type": "module",
   "description": "Admin UI — Vite frontend build and server-side addon",
