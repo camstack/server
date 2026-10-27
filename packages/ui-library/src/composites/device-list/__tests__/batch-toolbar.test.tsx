@@ -1,11 +1,17 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { ConfirmDialogProvider } from '../../confirm-dialog.js'
 import { DeviceBatchToolbar } from '../batch-toolbar.js'
+
+function renderBar(ui: ReactNode) {
+  return render(<ConfirmDialogProvider>{ui}</ConfirmDialogProvider>)
+}
 
 describe('DeviceBatchToolbar', () => {
   it('renders nothing when no devices are selected', () => {
-    const { container } = render(
+    const { container } = renderBar(
       <DeviceBatchToolbar
         selectedIds={new Set()}
         onClear={vi.fn()}
@@ -19,7 +25,7 @@ describe('DeviceBatchToolbar', () => {
   it('disables every selected device then clears the selection', () => {
     const disable = vi.fn()
     const onClear = vi.fn()
-    render(
+    renderBar(
       <DeviceBatchToolbar
         selectedIds={new Set([1, 2])}
         onClear={onClear}
@@ -36,7 +42,7 @@ describe('DeviceBatchToolbar', () => {
   })
   it('enables every selected device', () => {
     const enable = vi.fn()
-    render(
+    renderBar(
       <DeviceBatchToolbar
         selectedIds={new Set([3])}
         onClear={vi.fn()}
@@ -49,7 +55,7 @@ describe('DeviceBatchToolbar', () => {
     expect(enable).toHaveBeenCalledWith({ deviceId: 3 })
   })
   it('shows count of selected devices', () => {
-    render(
+    renderBar(
       <DeviceBatchToolbar
         selectedIds={new Set([1, 2, 3])}
         onClear={vi.fn()}
@@ -62,7 +68,7 @@ describe('DeviceBatchToolbar', () => {
   })
   it('clears selection when Clear is clicked', () => {
     const onClear = vi.fn()
-    render(
+    renderBar(
       <DeviceBatchToolbar
         selectedIds={new Set([1])}
         onClear={onClear}
@@ -74,10 +80,32 @@ describe('DeviceBatchToolbar', () => {
     fireEvent.click(screen.getByRole('button', { name: /clear/i }))
     expect(onClear).toHaveBeenCalled()
   })
-  it('requires two clicks to delete (inline confirm)', () => {
+  it('asks in a modal before deleting, naming the count', async () => {
     const remove = vi.fn()
     const onClear = vi.fn()
-    render(
+    renderBar(
+      <DeviceBatchToolbar
+        selectedIds={new Set([5, 6])}
+        onClear={onClear}
+        remove={remove}
+        disable={vi.fn()}
+        enable={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    expect(remove).not.toHaveBeenCalled()
+    const modal = await screen.findByRole('dialog')
+    expect(within(modal).getByText(/2 selected devices will be deleted/)).toBeDefined()
+    fireEvent.click(within(modal).getByRole('button', { name: /^delete$/i }))
+    await waitFor(() => expect(remove).toHaveBeenCalledTimes(2))
+    expect(remove).toHaveBeenCalledWith({ deviceId: 5 })
+    expect(remove).toHaveBeenCalledWith({ deviceId: 6 })
+    expect(onClear).toHaveBeenCalled()
+  })
+  it('cancelling the delete modal removes nothing and keeps the selection', async () => {
+    const remove = vi.fn()
+    const onClear = vi.fn()
+    renderBar(
       <DeviceBatchToolbar
         selectedIds={new Set([5])}
         onClear={onClear}
@@ -86,12 +114,11 @@ describe('DeviceBatchToolbar', () => {
         enable={vi.fn()}
       />,
     )
-    // First click — should show confirm label, not execute yet
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    const modal = await screen.findByRole('dialog')
+    fireEvent.click(within(modal).getByRole('button', { name: /cancel/i }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(remove).not.toHaveBeenCalled()
-    // Second click on confirm button
-    fireEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
-    expect(remove).toHaveBeenCalledWith({ deviceId: 5 })
-    expect(onClear).toHaveBeenCalled()
+    expect(onClear).not.toHaveBeenCalled()
   })
 })

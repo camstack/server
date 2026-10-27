@@ -5702,7 +5702,8 @@
       "notReported": "{{name}} — device not reported yet",
       "deviceListUnreadable": "the device list could not be read ({{error}})",
       "deviceListPending": "the device list has not answered yet",
-      "deleteThisComposedDevice": "Delete this composed device?"
+      "deleteThisComposedDevice": "Delete this composed device?",
+      "deleteMessage": "{{name}} will be deleted. This cannot be undone."
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Could not list devices:",
@@ -5737,7 +5738,8 @@
       "loadingScripts": "Loading scripts…",
       "noScriptsYet": "No scripts yet.",
       "edit": "Edit {{name}}",
-      "newScript": "New script"
+      "newScript": "New script",
+      "deleteMessage": "{{name}} and its source will be deleted. This cannot be undone."
     }
   },
   "automation": {
@@ -5778,7 +5780,8 @@
       "logs": "Logs",
       "noAutomationsYet": "No automations yet.",
       "anAutomationIsATrigger": "An automation is a trigger, a set of conditions and a list of actions. It compiles to an ordinary block and runs in its own supervised process — there is no separate engine, so anything that goes wrong shows up here with a reason.",
-      "newAutomation": "New automation"
+      "newAutomation": "New automation",
+      "deleteMessage": "{{name}} will be deleted. This cannot be undone."
     },
     "conditionRow": {
       "comparison": "Comparison",
@@ -6930,11 +6933,11 @@
     "batchToolbar": {
       "disable": "Disable",
       "enable": "Enable",
-      "confirmDelete": "Confirm delete {{count}}?",
-      "cancel": "Cancel",
       "delete": "Delete",
       "clear": "Clear",
-      "selectedCount": "{{count}} selected"
+      "selectedCount": "{{count}} selected",
+      "deleteTitle": "Delete {{count}} devices?",
+      "deleteMessage": "{{count}} selected devices will be deleted. This cannot be undone."
     },
     "modelPicker": {
       "unresolved": "Current pin (<0>{{value}}</0>) is not offered for this device. The runtime tries it as a custom model and refuses it if it cannot serve it. Pick a replacement and Save.",
@@ -6959,11 +6962,11 @@
     "sceneReferenceGallery": {
       "empty": "No photographs captured yet. Press “Capture daylight” to take the one this scene will judge everything against.",
       "deleteLabel": "Delete the {{variant}} photograph from {{date}}",
-      "confirm": "Confirm",
       "delete": "Delete",
       "lastWarning": "This is the only photograph this scene has. Delete it and the scene no longer knows what normal looks like — it stops judging until you capture again.",
       "missingPicture": "The picture for this reference is no longer stored. The reference itself is intact and still being scored against.",
-      "noPicture": "no picture"
+      "noPicture": "no picture",
+      "deleteTitle": "Delete the only photograph?"
     },
     "pipelineMatrix": {
       "slotDetector": "detector",

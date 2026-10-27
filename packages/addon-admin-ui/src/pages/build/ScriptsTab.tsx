@@ -40,6 +40,7 @@ import {
   ItemFormDialog,
   LogStream,
   TABLE_SCROLL_MAX_H,
+  useConfirm,
   useItemFormUrl,
   useSystem,
   type DataColumn,
@@ -110,7 +111,7 @@ export function ScriptsTab({
   } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
   /** Local draft after create before the list poll catches up (null = new). */
   const [savedBlock, setSavedBlock] = useState<CoreBlock | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const confirm = useConfirm()
   /** Which row has its logs open. One at a time: two live subscriptions in a
    *  list is a lot of socket for a pane nobody is reading. */
   const [logsFor, setLogsFor] = useState<string | null>(null)
@@ -187,10 +188,7 @@ export function ScriptsTab({
   })
   const remove = useMutation({
     mutationFn: (blockId: string) => system.trpcClient.coreBlocks.delete.mutate({ blockId }),
-    onSuccess: () => {
-      setConfirmDelete(null)
-      refresh()
-    },
+    onSuccess: refresh,
   })
   const setEnabled = useMutation({
     mutationFn: (input: { blockId: string; enabled: boolean }) =>
@@ -301,21 +299,6 @@ export function ScriptsTab({
         render: (block) => {
           const busy = setEnabled.isPending || remove.isPending
           const restarting = restart.isPending && restart.variables === block.id
-          if (confirmDelete === block.id) {
-            return (
-              <div className="flex justify-end gap-1">
-                <span className="text-xs text-foreground-subtle">
-                  {t('build.scriptsTab.deleteThisScript', 'Delete this script?')}
-                </span>
-                <Button variant="danger" onClick={() => remove.mutate(block.id)} disabled={busy}>
-                  {t('common.delete', 'Delete')}
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
-                  {t('common.cancel', 'Cancel')}
-                </Button>
-              </div>
-            )
-          }
           return (
             <div className="flex justify-end gap-1">
               <Button
@@ -378,7 +361,20 @@ export function ScriptsTab({
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setConfirmDelete(block.id)
+                  void confirm({
+                    title: t('build.scriptsTab.deleteThisScript', 'Delete this script?'),
+                    message: t(
+                      'build.scriptsTab.deleteMessage',
+                      '{{name}} and its source will be deleted. This cannot be undone.',
+                      {
+                        name: block.name,
+                      },
+                    ),
+                    confirmLabel: t('common.delete', 'Delete'),
+                    variant: 'danger',
+                  }).then((accepted) => {
+                    if (accepted) remove.mutate(block.id)
+                  })
                 }}
                 title={t('common.delete', 'Delete')}
               >
@@ -390,7 +386,7 @@ export function ScriptsTab({
       },
     ],
     [
-      confirmDelete,
+      confirm,
       logsFor,
       onBlockIdChange,
       openEdit,
@@ -451,7 +447,9 @@ export function ScriptsTab({
         }}
         title={
           editing !== null
-            ? t('build.scriptsTab.edit', 'Edit {{name}}', { name: editing.name })
+            ? t('build.scriptsTab.edit', 'Edit {{name}}', {
+                name: editing.name,
+              })
             : t('build.scriptsTab.newScript', 'New script')
         }
         icon={Code2}

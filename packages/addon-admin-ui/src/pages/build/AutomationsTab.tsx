@@ -11,6 +11,7 @@ import {
   ErrorBox,
   ItemFormDialog,
   TABLE_SCROLL_MAX_H,
+  useConfirm,
   useItemFormUrl,
   useSystem,
   type DataColumn,
@@ -69,7 +70,7 @@ export function AutomationsTab({
     close: closeForm,
   } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
   const [savedBlock, setSavedBlock] = useState<CoreBlock | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const confirm = useConfirm()
   const [logsFor, setLogsFor] = useState<string | null>(null)
   const openedFor = useRef<string | null>(null)
 
@@ -127,10 +128,7 @@ export function AutomationsTab({
   })
   const remove = useMutation({
     mutationFn: (blockId: string) => system.trpcClient.coreBlocks.delete.mutate({ blockId }),
-    onSuccess: () => {
-      setConfirmDelete(null)
-      refresh()
-    },
+    onSuccess: refresh,
   })
   const setEnabled = useMutation({
     mutationFn: (input: { blockId: string; enabled: boolean }) =>
@@ -196,7 +194,6 @@ export function AutomationsTab({
               <AutomationRow
                 block={block}
                 busy={setEnabled.isPending || remove.isPending}
-                confirming={confirmDelete === block.id}
                 logsOpen={logsFor === block.id}
                 unreadable={recipe.ok ? null : recipe.reason}
                 onEdit={() => {
@@ -206,9 +203,25 @@ export function AutomationsTab({
                 }}
                 onToggle={(enabled) => setEnabled.mutate({ blockId: block.id, enabled })}
                 onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
-                onAskDelete={() => setConfirmDelete(block.id)}
-                onCancelDelete={() => setConfirmDelete(null)}
-                onConfirmDelete={() => remove.mutate(block.id)}
+                onDelete={() => {
+                  void confirm({
+                    title: t(
+                      'automation.automationList.deleteThisAutomation',
+                      'Delete this automation?',
+                    ),
+                    message: t(
+                      'automation.automationList.deleteMessage',
+                      '{{name}} will be deleted. This cannot be undone.',
+                      {
+                        name: block.name,
+                      },
+                    ),
+                    confirmLabel: t('common.delete', 'Delete'),
+                    variant: 'danger',
+                  }).then((accepted) => {
+                    if (accepted) remove.mutate(block.id)
+                  })
+                }}
               />
             </ul>
           )
@@ -216,7 +229,7 @@ export function AutomationsTab({
         sortValue: (block) => block.name,
       },
     ],
-    [confirmDelete, logsFor, onBlockIdChange, openEdit, remove, setEnabled, t],
+    [confirm, logsFor, onBlockIdChange, openEdit, remove, setEnabled, t],
   )
 
   return (
@@ -276,7 +289,9 @@ export function AutomationsTab({
         }}
         title={
           editing !== null
-            ? t('build.automationsTab.edit', 'Edit {{name}}', { name: editing.name })
+            ? t('build.automationsTab.edit', 'Edit {{name}}', {
+                name: editing.name,
+              })
             : t('build.automationsTab.newAutomation', 'New automation')
         }
         icon={Workflow}

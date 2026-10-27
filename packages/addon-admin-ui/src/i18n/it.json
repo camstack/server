@@ -5763,7 +5763,8 @@
       "notReported": "{{name}} — dispositivo non ancora segnalato",
       "deviceListUnreadable": "impossibile leggere l'elenco dei dispositivi ({{error}})",
       "deviceListPending": "l'elenco dei dispositivi non ha ancora risposto",
-      "deleteThisComposedDevice": "Eliminare questo dispositivo composto?"
+      "deleteThisComposedDevice": "Eliminare questo dispositivo composto?",
+      "deleteMessage": "{{name}} verrà eliminato. L'operazione non può essere annullata."
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Impossibile elencare i dispositivi:",
@@ -5798,7 +5799,8 @@
       "loadingScripts": "Caricamento script…",
       "noScriptsYet": "Nessuno script.",
       "edit": "Modifica {{name}}",
-      "newScript": "Nuovo script"
+      "newScript": "Nuovo script",
+      "deleteMessage": "{{name}} e il suo sorgente verranno eliminati. L'operazione non può essere annullata."
     }
   },
   "automation": {
@@ -5839,7 +5841,8 @@
       "logs": "Log",
       "noAutomationsYet": "Nessuna automazione.",
       "anAutomationIsATrigger": "Un'automazione è un trigger, un insieme di condizioni e un elenco di azioni. Viene compilata in un normale blocco ed eseguita nel proprio processo supervisionato — non esiste un motore separato, quindi qualsiasi problema compare qui con un motivo.",
-      "newAutomation": "Nuova automazione"
+      "newAutomation": "Nuova automazione",
+      "deleteMessage": "{{name}} verrà eliminata. L'operazione non può essere annullata."
     },
     "conditionRow": {
       "comparison": "Confronto",
@@ -6952,11 +6955,11 @@
     "batchToolbar": {
       "disable": "Disabilita",
       "enable": "Abilita",
-      "confirmDelete": "Confermi l'eliminazione di {{count}}?",
-      "cancel": "Annulla",
       "delete": "Elimina",
       "clear": "Cancella",
-      "selectedCount": "{{count}} selezionati"
+      "selectedCount": "{{count}} selezionati",
+      "deleteTitle": "Eliminare {{count}} dispositivi?",
+      "deleteMessage": "{{count}} dispositivi selezionati verranno eliminati. L'operazione non può essere annullata."
     },
     "modelPicker": {
       "unresolved": "Il modello fissato (<0>{{value}}</0>) non è offerto per questo dispositivo. Il runtime lo prova come modello personalizzato e lo rifiuta se non può servirlo. Scegli un sostituto e salva.",
@@ -6981,11 +6984,11 @@
     "sceneReferenceGallery": {
       "empty": "Nessuna fotografia acquisita. Premi “Acquisisci luce diurna” per scattare quella con cui la scena giudicherà tutto il resto.",
       "deleteLabel": "Elimina la fotografia {{variant}} del {{date}}",
-      "confirm": "Conferma",
       "delete": "Elimina",
       "lastWarning": "È l'unica fotografia di questa scena. Se la elimini, la scena non sa più com'è la normalità e smette di giudicare finché non ne acquisisci un'altra.",
       "missingPicture": "L'immagine di questo riferimento non è più memorizzata. Il riferimento in sé è intatto e viene ancora usato per il confronto.",
-      "noPicture": "nessuna immagine"
+      "noPicture": "nessuna immagine",
+      "deleteTitle": "Eliminare l'unica fotografia?"
     },
     "pipelineMatrix": {
       "slotDetector": "rilevatore",

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DeviceList, deviceIntegrationResolver } from '../index'
+import { ConfirmDialogProvider } from '../../confirm-dialog'
 import { allDeviceTypeFilterOptions } from '../../device-meta'
 import type { DeviceItemDevice } from '../../device-item/helpers'
 import type { UseDeviceProxyTrpc } from '../../../hooks/use-device-proxy'
@@ -55,7 +56,11 @@ const dev = (id: number, overrides: Partial<DeviceItemDevice> = {}): DeviceItemD
 
 function withQuery(node: React.ReactNode): React.ReactNode {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
-  return <QueryClientProvider client={qc}>{node}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={qc}>
+      <ConfirmDialogProvider>{node}</ConfirmDialogProvider>
+    </QueryClientProvider>
+  )
 }
 
 describe('<DeviceList>', () => {

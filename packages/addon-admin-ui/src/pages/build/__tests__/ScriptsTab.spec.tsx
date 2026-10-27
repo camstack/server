@@ -14,8 +14,9 @@
  */
 
 import { DeviceType, type CoreBlock } from '@camstack/types'
+import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -65,7 +66,9 @@ interface LogStreamProps {
   readonly addonId?: string
 }
 
-vi.mock('@camstack/ui-library', () => ({
+vi.mock('@camstack/ui-library', async (importOriginal) => ({
+  // Real ConfirmDialogProvider + useConfirm: the delete test drives the modal.
+  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useUiText: () => (_key: string, fallback: string | { other: string }) =>
     typeof fallback === 'string' ? fallback : fallback.other,
   useSystem: () => ({
@@ -209,7 +212,9 @@ function renderTab() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <ScriptsTab />
+      <ConfirmDialogProvider>
+        <ScriptsTab />
+      </ConfirmDialogProvider>
     </QueryClientProvider>,
   )
 }
@@ -289,10 +294,23 @@ describe('Scripts tab', () => {
     await waitFor(() => expect(screen.getByTitle('Delete')).toBeTruthy())
     fireEvent.click(screen.getByTitle('Delete'))
     expect(mockDelete).not.toHaveBeenCalled()
-    expect(screen.getByText('Delete this script?')).toBeTruthy()
+    const modal = await screen.findByRole('dialog')
+    expect(within(modal).getByText('Delete this script?')).toBeTruthy()
+    expect(within(modal).getByText(/will be deleted/).textContent).toContain('Block')
 
-    fireEvent.click(screen.getByText('Delete'))
+    fireEvent.click(within(modal).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith({ blockId: 'b1' }))
+  })
+
+  it('cancelling the delete modal deletes nothing', async () => {
+    mockBlocks = [block()]
+    renderTab()
+    await waitFor(() => expect(screen.getByTitle('Delete')).toBeTruthy())
+    fireEvent.click(screen.getByTitle('Delete'))
+    const modal = await screen.findByRole('dialog')
+    fireEvent.click(within(modal).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(mockDelete).not.toHaveBeenCalled()
   })
 
   it("surfaces the server's compile refusal instead of closing the editor", async () => {
@@ -307,7 +325,9 @@ describe('Scripts tab', () => {
           })
         }
       >
-        <ScriptsTab createRequested />
+        <ConfirmDialogProvider>
+          <ScriptsTab createRequested />
+        </ConfirmDialogProvider>
       </QueryClientProvider>,
     )
     await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy())
@@ -372,7 +392,9 @@ describe('Scripts tab', () => {
           })
         }
       >
-        <ScriptsTab createRequested />
+        <ConfirmDialogProvider>
+          <ScriptsTab createRequested />
+        </ConfirmDialogProvider>
       </QueryClientProvider>,
     )
     await waitFor(() => expect(screen.getByTestId('editor')).toBeTruthy())

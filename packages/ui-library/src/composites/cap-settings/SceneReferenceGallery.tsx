@@ -38,6 +38,7 @@
  */
 
 import { useUiText } from '../../contexts/ui-text'
+import { useConfirm } from '../confirm-dialog'
 import type { SceneMonitor, SceneReference } from '@camstack/types'
 import { ImageOff, Trash2 } from 'lucide-react'
 import { useState, type JSX } from 'react'
@@ -124,8 +125,7 @@ export function SceneReferenceGallery({
   const t = useUiText()
   const groups = groupReferences(monitor)
   const total = totalReferences(monitor)
-  // The tile awaiting an explicit confirmation, as `stateId:index`.
-  const [confirming, setConfirming] = useState<string | null>(null)
+  const confirm = useConfirm()
 
   if (groups.length === 0) {
     return (
@@ -155,7 +155,6 @@ export function SceneReferenceGallery({
               // notion of normal and unable to judge at all, so it is confirmed
               // rather than done on a single click.
               const isLastOverall = total === 1
-              const pending = confirming === key
               return (
                 <li
                   key={key}
@@ -178,27 +177,29 @@ export function SceneReferenceGallery({
                       },
                     )}
                     onClick={() => {
-                      if (isLastOverall && !pending) {
-                        setConfirming(key)
-                        return
-                      }
-                      setConfirming(null)
-                      onDelete({ stateId: tile.stateId, index: tile.index })
+                      void (async () => {
+                        if (isLastOverall) {
+                          const accepted = await confirm({
+                            title: t(
+                              'uiLibrary.sceneReferenceGallery.deleteTitle',
+                              'Delete the only photograph?',
+                            ),
+                            message: t(
+                              'uiLibrary.sceneReferenceGallery.lastWarning',
+                              'This is the only photograph this scene has. Delete it and the scene no longer knows what normal looks like — it stops judging until you capture again.',
+                            ),
+                            confirmLabel: t('uiLibrary.sceneReferenceGallery.delete', 'Delete'),
+                            variant: 'danger',
+                          })
+                          if (!accepted) return
+                        }
+                        onDelete({ stateId: tile.stateId, index: tile.index })
+                      })()
                     }}
                   >
                     <Trash2 className="mr-1 inline h-3 w-3" />
-                    {pending
-                      ? t('uiLibrary.sceneReferenceGallery.confirm', 'Confirm')
-                      : t('uiLibrary.sceneReferenceGallery.delete', 'Delete')}
+                    {t('uiLibrary.sceneReferenceGallery.delete', 'Delete')}
                   </button>
-                  {pending && (
-                    <p className="text-[10px] leading-snug text-warning">
-                      {t(
-                        'uiLibrary.sceneReferenceGallery.lastWarning',
-                        'This is the only photograph this scene has. Delete it and the scene no longer knows what normal looks like — it stops judging until you capture again.',
-                      )}
-                    </p>
-                  )}
                 </li>
               )
             })}

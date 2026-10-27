@@ -35,7 +35,6 @@ import { Trans, useTranslation } from 'react-i18next'
 export interface AutomationRowProps {
   readonly block: CoreBlock
   readonly busy: boolean
-  readonly confirming: boolean
   readonly logsOpen: boolean
   /** Set when the block's embedded recipe could not be read — the row is still
    *  shown, because hiding a stored automation is how one goes missing. */
@@ -43,23 +42,18 @@ export interface AutomationRowProps {
   readonly onEdit: () => void
   readonly onToggle: (enabled: boolean) => void
   readonly onToggleLogs: () => void
-  readonly onAskDelete: () => void
-  readonly onCancelDelete: () => void
-  readonly onConfirmDelete: () => void
+  readonly onDelete: () => void
 }
 
 export function AutomationRow({
   block,
   busy,
-  confirming,
   logsOpen,
   unreadable,
   onEdit,
   onToggle,
   onToggleLogs,
-  onAskDelete,
-  onCancelDelete,
-  onConfirmDelete,
+  onDelete,
 }: AutomationRowProps) {
   const uiText = useUiText()
   const { t } = useTranslation()
@@ -90,103 +84,76 @@ export function AutomationRow({
           )}
         </div>
 
-        {confirming ? (
-          <div className="flex justify-end gap-1">
-            <span className="text-xs text-foreground-subtle">
-              {t('automation.automationList.deleteThisAutomation', 'Delete this automation?')}
-            </span>
-            <Button
-              variant="danger"
-              onClick={(e) => {
-                e.stopPropagation()
-                onConfirmDelete()
-              }}
-              disabled={busy}
-            >
-              {t('common.delete', 'Delete')}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation()
-                onCancelDelete()
-              }}
-            >
-              {t('common.cancel', 'Cancel')}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation()
-                onEdit()
-              }}
-              disabled={unreadable !== null}
-              title={
-                unreadable === null
-                  ? t('common.edit', 'Edit')
-                  : t(
-                      'automation.automationList.thisBlockCannotBeOpened',
-                      'This block cannot be opened visually',
-                    )
-              }
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
+            disabled={unreadable !== null}
+            title={
+              unreadable === null
+                ? t('common.edit', 'Edit')
+                : t(
+                    'automation.automationList.thisBlockCannotBeOpened',
+                    'This block cannot be opened visually',
+                  )
+            }
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
 
-            <Tooltip>
-              <TooltipTrigger>
-                <Button
-                  variant="ghost"
-                  disabled
-                  title={t('automation.automationList.runActions', 'Run actions')}
-                >
-                  <Play className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {t(
-                  'automation.automationList.runningAnAutomationByHand',
-                  'Running an automation by hand needs the automation-control authority, which is not wired up yet. There is deliberately no second way to execute one.',
-                )}
-              </TooltipContent>
-            </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                disabled
+                title={t('automation.automationList.runActions', 'Run actions')}
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t(
+                'automation.automationList.runningAnAutomationByHand',
+                'Running an automation by hand needs the automation-control authority, which is not wired up yet. There is deliberately no second way to execute one.',
+              )}
+            </TooltipContent>
+          </Tooltip>
 
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleLogs()
-              }}
-              title={t('automation.automationList.logs', 'Logs')}
-            >
-              <ScrollText className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggle(!block.enabled)
-              }}
-              disabled={busy}
-              title={block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-            >
-              {block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation()
-                onAskDelete()
-              }}
-              title={t('common.delete', 'Delete')}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleLogs()
+            }}
+            title={t('automation.automationList.logs', 'Logs')}
+          >
+            <ScrollText className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle(!block.enabled)
+            }}
+            disabled={busy}
+            title={block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
+          >
+            {block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            title={t('common.delete', 'Delete')}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {logsOpen && (

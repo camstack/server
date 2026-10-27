@@ -4,6 +4,7 @@
  * middle-click / pasteable link cannot reopen a stale editor on the wrong
  * section.
  */
+import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -48,7 +49,9 @@ function renderBuild(initialEntry: string): void {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[initialEntry]}>
-        <BuildPage />
+        <ConfirmDialogProvider>
+          <BuildPage />
+        </ConfirmDialogProvider>
         <LocationProbe />
       </MemoryRouter>
     </QueryClientProvider>,

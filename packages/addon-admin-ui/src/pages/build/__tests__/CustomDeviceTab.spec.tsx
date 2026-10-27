@@ -15,7 +15,8 @@ import {
   type CoreBlock,
   DeviceType,
 } from '@camstack/types'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -318,9 +319,11 @@ const CUSTOMIZATION_UNREPORTED: CompositionView = {
 
 function renderTab() {
   return render(
-    <MemoryRouter>
-      <CustomDeviceTab />
-    </MemoryRouter>,
+    <ConfirmDialogProvider>
+      <MemoryRouter>
+        <CustomDeviceTab />
+      </MemoryRouter>
+    </ConfirmDialogProvider>,
   )
 }
 
@@ -333,7 +336,7 @@ describe('CustomDeviceTab', () => {
     devicesQuery = answered(FLEET)
   })
 
-  it('delete asks first, calls the mutation once, and the row is gone after the refetch', () => {
+  it('delete asks in a modal naming the device, calls the mutation once and re-reads the list', async () => {
     const refetchList = vi.fn(() => {
       compositionsQuery = {
         ...compositionsQuery,
@@ -350,20 +353,23 @@ describe('CustomDeviceTab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
     // Asking is not deleting.
     expect(deleteMutate).not.toHaveBeenCalled()
-    expect(screen.getByText('Delete this composed device?')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
-    expect(deleteMutate).toHaveBeenCalledTimes(1)
+    const modal = await screen.findByRole('dialog')
+    expect(within(modal).getByText('Delete this composed device?')).toBeTruthy()
+    expect(within(modal).getByText(/will be deleted/).textContent).toContain('Porch (composto)')
+    fireEvent.click(within(modal).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(deleteMutate).toHaveBeenCalledTimes(1))
     expect(deleteMutate.mock.calls[0]?.[0]).toEqual({ blockId: 'porch' })
+    // The list is re-read after the delete; the query re-render is react-query's.
     expect(refetchList).toHaveBeenCalled()
-    expect(screen.queryByText('Porch (composto)')).toBeNull()
-    expect(screen.getByText('No composed devices.')).toBeTruthy()
   })
 
-  it('cancelling the delete confirmation calls nothing', () => {
+  it('cancelling the delete modal calls nothing', async () => {
     deleteMutate.mockReset()
     renderTab()
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    const modal = await screen.findByRole('dialog')
+    fireEvent.click(within(modal).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(deleteMutate).not.toHaveBeenCalled()
     expect(screen.getByText('Porch (composto)')).toBeTruthy()
   })
@@ -415,9 +421,11 @@ describe('CustomDeviceTab', () => {
   it('opens the create dialog when createRequested is set, without rewriting the URL', async () => {
     const consumed = vi.fn()
     render(
-      <MemoryRouter>
-        <CustomDeviceTab createRequested onCreateConsumed={consumed} />
-      </MemoryRouter>,
+      <ConfirmDialogProvider>
+        <MemoryRouter>
+          <CustomDeviceTab createRequested onCreateConsumed={consumed} />
+        </MemoryRouter>
+      </ConfirmDialogProvider>,
     )
     expect(await screen.findByTestId('composed-device-editor')).toBeTruthy()
     expect(screen.getByTestId('composition-create-form')).toBeTruthy()

@@ -15,6 +15,7 @@ import {
   ErrorBox,
   ItemFormDialog,
   TABLE_SCROLL_MAX_H,
+  useConfirm,
   useCoreBlocksDelete,
   useCoreBlocksListCompositions,
   useDeviceLabelById,
@@ -97,7 +98,7 @@ export function CustomDeviceTab({
   const createMode = editingId === null ? createModeOf(params.get('new'), createRequested) : null
   const isNew = createMode !== null
   const [createTitle, setCreateTitle] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const confirm = useConfirm()
   const remove = useCoreBlocksDelete()
 
   const closeDialog = (): void => {
@@ -117,20 +118,24 @@ export function CustomDeviceTab({
   const read = compositions.data
   const body = compositionBody(read, compositions.error, () => void compositions.refetch(), fleet, {
     onEditComposed: (blockId) => formUrl.openEdit(blockId),
-    confirmingDelete: confirmDelete,
     deleting: remove.isPending,
-    onAskDelete: setConfirmDelete,
-    onCancelDelete: () => setConfirmDelete(null),
-    onConfirmDelete: (blockId) =>
-      remove.mutate(
-        { blockId },
-        {
-          onSuccess: () => {
-            setConfirmDelete(null)
-            void compositions.refetch()
+    onDelete: (row) => {
+      void confirm({
+        title: t('build.customDeviceTab.deleteThisComposedDevice', 'Delete this composed device?'),
+        message: t(
+          'build.customDeviceTab.deleteMessage',
+          '{{name}} will be deleted. This cannot be undone.',
+          {
+            name: row.name,
           },
-        },
-      ),
+        ),
+        confirmLabel: t('common.delete', 'Delete'),
+        variant: 'danger',
+      }).then((accepted) => {
+        if (!accepted) return
+        remove.mutate({ blockId: row.blockId }, { onSuccess: () => void compositions.refetch() })
+      })
+    },
   })
 
   return (
@@ -184,11 +189,8 @@ function notLoadedNote(reason: string): ReactNode {
 
 interface CompositionBodyHandlers {
   readonly onEditComposed: (blockId: string) => void
-  readonly confirmingDelete: string | null
   readonly deleting: boolean
-  readonly onAskDelete: (blockId: string) => void
-  readonly onCancelDelete: () => void
-  readonly onConfirmDelete: (blockId: string) => void
+  readonly onDelete: (row: CompositionRow) => void
 }
 
 function compositionBody(
@@ -376,37 +378,6 @@ function columnsFor(
       notSortableReason: 'Row actions',
       nowrap: true,
       render: (row) => {
-        if (handlers.confirmingDelete === row.blockId) {
-          return (
-            <div className="flex justify-end gap-1">
-              <span className="text-xs text-foreground-subtle">
-                {t(
-                  'build.customDeviceTab.deleteThisComposedDevice',
-                  'Delete this composed device?',
-                )}
-              </span>
-              <Button
-                variant="danger"
-                disabled={handlers.deleting}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handlers.onConfirmDelete(row.blockId)
-                }}
-              >
-                {t('common.delete', 'Delete')}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handlers.onCancelDelete()
-                }}
-              >
-                {t('common.cancel', 'Cancel')}
-              </Button>
-            </div>
-          )
-        }
         return (
           <div className="flex justify-end gap-1">
             <Button
@@ -422,10 +393,11 @@ function columnsFor(
             <Button
               variant="ghost"
               title={t('common.delete', 'Delete')}
+              disabled={handlers.deleting}
               aria-label={t('common.delete', 'Delete')}
               onClick={(e) => {
                 e.stopPropagation()
-                handlers.onAskDelete(row.blockId)
+                handlers.onDelete(row)
               }}
             >
               <Trash2 className="h-4 w-4" />
