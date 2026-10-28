@@ -2,7 +2,7 @@
 /**
  * Add Integration picker: search + 2-column grid (NotificationTargets KindPicker).
  */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -67,9 +67,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
 
 import { ProviderPicker } from '../ProviderPicker'
 
+const original = providers.list.slice()
+
 describe('ProviderPicker', () => {
   beforeEach(() => {
-    providers.list = providers.list.slice()
+    providers.list = original.slice()
     setPointer(false)
   })
 
@@ -104,6 +106,24 @@ describe('ProviderPicker', () => {
     expect(screen.getByTestId('provider-pick-provider-reolink')).toBeTruthy()
     expect(screen.queryByTestId('provider-pick-provider-tuya')).toBeNull()
     expect(screen.queryByTestId('integrations-section-system')).toBeNull()
+  })
+
+  it('orders the cards of a block by friendly name, ignoring case and accents', () => {
+    const base = providers.list[0]!
+    providers.list = [
+      { ...base, addonId: 'p-z', name: 'zeta' },
+      { ...base, addonId: 'p-e', name: 'Élan' },
+      { ...base, addonId: 'p-a', name: 'Alpha' },
+    ]
+    render(
+      <MemoryRouter>
+        <ProviderPicker onSelect={vi.fn()} onClose={vi.fn()} />
+      </MemoryRouter>,
+    )
+    const ids = within(screen.getByTestId('integrations-section-providers'))
+      .getAllByTestId(/^provider-card-/)
+      .map((el) => el.getAttribute('data-testid'))
+    expect(ids).toEqual(['provider-card-p-a', 'provider-card-p-e', 'provider-card-p-z'])
   })
 
   it('selects a provider when its card is clicked', () => {

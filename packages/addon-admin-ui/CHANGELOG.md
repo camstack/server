@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrations page places an integration in System or Providers from the addon's declared integrationSection, falling back to the framework-package rule
 - The notification rule editor shows delivery options (such as Echo mode and volume) when a selected target supports them.
 - The New Integration dialog shows the integrations like the Integrations page: bigger icons, up to three columns, Providers and System
+- Integrations are listed alphabetically by name, on the page and in the New Integration dialog
 
 ## [1.2.504] - 2026-10-28
 

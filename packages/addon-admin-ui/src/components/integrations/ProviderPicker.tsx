@@ -4,7 +4,11 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { integrationDetailUrl } from '../../lib/integration-instance-selection'
-import { splitIntegrationSections, systemAddonIdsOf } from '../../lib/integration-sections'
+import {
+  sortByFriendlyName,
+  splitIntegrationSections,
+  systemAddonIdsOf,
+} from '../../lib/integration-sections'
 import { IntegrationCard, IntegrationCardGrid } from './integration-card'
 import { IntegrationSection } from './integration-section'
 import { shouldAutofocusSearch } from './search-autofocus'
@@ -27,7 +31,7 @@ interface ProviderPickerProps {
 }
 
 export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: ProviderPickerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
@@ -50,10 +54,13 @@ export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: Pro
   }, [providerTypes, query])
 
   const { data: installedAddons } = useAddonsList(undefined)
-  const sections = useMemo(
-    () => splitIntegrationSections(filtered, systemAddonIdsOf(installedAddons)),
-    [filtered, installedAddons],
-  )
+  const sections = useMemo(() => {
+    const split = splitIntegrationSections(filtered, systemAddonIdsOf(installedAddons))
+    return {
+      providers: sortByFriendlyName(split.providers, i18n.language),
+      system: sortByFriendlyName(split.system, i18n.language),
+    }
+  }, [filtered, installedAddons, i18n.language])
 
   if (isLoading) {
     return (

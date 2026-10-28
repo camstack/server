@@ -106,4 +106,21 @@ describe('IntegrationGrid', () => {
     expect(screen.queryByTestId('integrations-section-providers')).toBeNull()
     expect(screen.getByTestId('integrations-section-system')).toBeTruthy()
   })
+
+  it('orders the cards of each block by friendly name, ignoring case', () => {
+    const lower: IntegrationAddonGroup = { ...shc, addonId: 'a-lower', name: 'abode' }
+    const sysB: IntegrationAddonGroup = { ...blocks, addonId: 'sys-b', name: 'zones' }
+    const sysA: IntegrationAddonGroup = { ...blocks, addonId: 'sys-a', name: 'Blocks' }
+    renderGrid([wyze, lower, shc], [sysB, sysA])
+    const ids = (kind: string) =>
+      within(screen.getByTestId(`integrations-section-${kind}`))
+        .getAllByTestId(/^integration-card-/)
+        .map((el) => el.getAttribute('data-testid'))
+    expect(ids('providers')).toEqual([
+      'integration-card-a-lower',
+      'integration-card-bosch-shc',
+      'integration-card-provider-wyze',
+    ])
+    expect(ids('system')).toEqual(['integration-card-sys-a', 'integration-card-sys-b'])
+  })
 })

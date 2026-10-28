@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
 import { Input, StatusBadge } from '@camstack/ui-library'
 import type { IntegrationAddonGroup } from '../../lib/integration-addon-groups'
+import { sortByFriendlyName } from '../../lib/integration-sections'
 import { IntegrationCard, IntegrationCardGrid } from './integration-card'
 import { IntegrationSection } from './integration-section'
 
@@ -86,10 +87,11 @@ interface CardGridProps {
 }
 
 function CardGrid({ groups, onOpen }: CardGridProps): ReactElement {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const ordered = useMemo(() => sortByFriendlyName(groups, i18n.language), [groups, i18n.language])
   return (
     <IntegrationCardGrid>
-      {groups.map((group) => (
+      {ordered.map((group) => (
         <IntegrationCard
           key={group.addonId}
           testId={`integration-card-${group.addonId}`}

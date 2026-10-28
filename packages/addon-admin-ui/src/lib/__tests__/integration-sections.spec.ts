@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { splitIntegrationSections, systemAddonIdsOf } from '../integration-sections'
+import {
+  sortByFriendlyName,
+  splitIntegrationSections,
+  systemAddonIdsOf,
+} from '../integration-sections'
 
 const addon = (id: string, packageName: string) => ({ manifest: { id, packageName } })
 
@@ -56,5 +60,21 @@ describe('splitIntegrationSections', () => {
     expect(splitIntegrationSections(rows, new Set()).system).toEqual([])
     const onlySystem = splitIntegrationSections([rows[1]], new Set(['core-blocks']))
     expect(onlySystem.providers).toEqual([])
+  })
+})
+
+describe('sortByFriendlyName', () => {
+  const named = (name: string) => ({ name })
+
+  it('orders case- and accent-insensitively without mutating the input', () => {
+    const input = [named('zigbee'), named('Élan'), named('alpha'), named('Beta')]
+    const sorted = sortByFriendlyName(input, 'en')
+    expect(sorted.map((i) => i.name)).toEqual(['alpha', 'Beta', 'Élan', 'zigbee'])
+    expect(input.map((i) => i.name)).toEqual(['zigbee', 'Élan', 'alpha', 'Beta'])
+  })
+
+  it('treats an accent as a tie, so the original order is kept', () => {
+    const sorted = sortByFriendlyName([named('Eb'), named('éa'), named('Ea')], 'en')
+    expect(sorted.map((i) => i.name)).toEqual(['éa', 'Ea', 'Eb'])
   })
 })
