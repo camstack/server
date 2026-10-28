@@ -9,7 +9,16 @@ import {
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { type PetkitConfig, toNodepetkitOptions, toPetkitCredentials } from './config.js'
 import type { PetkitConnectionSurface, PetkitSurfaceSink } from './petkit-gateway.js'
-import { type PetkitSessionSink, petkitSession } from './petkit-session.js'
+import {
+  classifyPetkitSessionError,
+  type PetkitSessionSink,
+  petkitSession,
+} from './petkit-session.js'
+import { ReloginGate } from './petkit-relogin-gate.js'
+
+/** Shown as the integration error once re-login stops: another app keeps taking the session. */
+export const KICKED_REPEATEDLY_MESSAGE =
+  'another app signed in with this account — use a dedicated family account'
 
 /** Status of a single PetKit account connection. */
 export type PetkitConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -52,6 +61,10 @@ export interface PetkitIntegrationManagerOptions {
   readonly makeFacade?: PetkitFacadeFactory
   /** Session-health sink (the standard cloud-connection-lost alert). Defaults to the addon's. */
   readonly session?: PetkitSessionSink
+  /** Clock seam for testing the re-login gate. */
+  readonly now?: () => number
+  /** Re-login policy override for testing. */
+  readonly gate?: ReloginGate
 }
 
 function defaultFacade(config: PetkitConfig): PetkitFacadeLike {
@@ -84,6 +97,10 @@ export class PetkitIntegrationManager {
   readonly #surfaceSink: PetkitSurfaceSink
   readonly #makeFacade: PetkitFacadeFactory
   readonly #session: PetkitSessionSink
+  readonly #now: () => number
+  readonly #gate: ReloginGate
+  #recovering: Promise<void> | null = null
+  #reloginBlocked = false
 
   #started = false
   #status: PetkitConnectionStatus = 'disconnected'
@@ -101,6 +118,8 @@ export class PetkitIntegrationManager {
     this.#surfaceSink = options.surfaceSink
     this.#makeFacade = options.makeFacade ?? defaultFacade
     this.#session = options.session ?? petkitSession
+    this.#now = options.now ?? Date.now
+    this.#gate = options.gate ?? new ReloginGate()
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -137,9 +156,17 @@ export class PetkitIntegrationManager {
       return
     }
     this.#started = true
+    this.#gate.reset()
+    this.#reloginBlocked = false
+    this.#session.register(this.#id, this.#name)
+    this.#surfaceSink.setRecovery?.(this.#id, (err: unknown) => void this.recoverSession(err))
+    await this.#establish()
+  }
+
+  /** Login, discover, publish. Rethrows after recording the failure. */
+  async #establish(reconnect = false): Promise<void> {
     this.#status = 'connecting'
     this.#error = null
-    this.#session.register(this.#id, this.#name)
 
     const facade = this.#makeFacade(this.#connection)
     try {
@@ -174,16 +201,18 @@ export class PetkitIntegrationManager {
         meta: { region: this.#connection.region, feeders: handles.size },
       })
     } catch (err: unknown) {
-      this.#started = false
+      // A failed RE-login keeps the old surface and stays armed: the feeders keep
+      // polling it, and each failed poll lets the gate decide on the next attempt.
+      if (!reconnect) this.#started = false
       this.#status = 'error'
       this.#error =
         err instanceof PetkitAuthError
           ? 'authentication failed — check credentials / region'
           : errMsg(err)
       this.#lastCheckedAt = Date.now()
-      this.#surfaceSink.set(this.#id, null)
+      if (!reconnect) this.#surfaceSink.set(this.#id, null)
       this.#session.failure(this.#id, err)
-      this.#onDisconnected(this.#id)
+      if (!reconnect) this.#onDisconnected(this.#id)
       this.#logger.warn('PetkitIntegrationManager: connect failed', {
         tags: { integrationId: this.#id },
         meta: { error: this.#error },
@@ -192,9 +221,74 @@ export class PetkitIntegrationManager {
     }
   }
 
+  /**
+   * A call on this account failed. When PetKit says the session is over, sign in
+   * again — but through {@link ReloginGate}: a re-login signs the OTHER holder of
+   * the account out (phone app, Home Assistant), so an unbounded one would
+   * ping-pong with it. Every re-login and every refusal is logged with its reason;
+   * after repeated kicks the integration reports that another app owns the account.
+   */
+  async recoverSession(err: unknown): Promise<void> {
+    const reason = classifyPetkitSessionError(err)
+    const tags = { integrationId: this.#id }
+    if (reason === null) return
+    if (!this.#started) return
+    if (reason === 'auth-rejected') {
+      this.#logger.warn('PetkitIntegrationManager: re-login refused — credentials were rejected', {
+        tags,
+        meta: { reason },
+      })
+      return
+    }
+    const decision = this.#gate.request(this.#now())
+    if (decision.kind === 'wait') {
+      this.#logger.warn(
+        'PetkitIntegrationManager: re-login refused — too soon after the last one',
+        {
+          tags,
+          meta: {
+            reason,
+            retryInMs: Math.max(0, decision.retryAt - this.#now()),
+          },
+        },
+      )
+      return
+    }
+    if (decision.kind === 'blocked') {
+      if (!this.#reloginBlocked) {
+        this.#reloginBlocked = true
+        this.#status = 'error'
+        this.#error = KICKED_REPEATEDLY_MESSAGE
+        this.#lastCheckedAt = this.#now()
+        this.#logger.error(
+          'PetkitIntegrationManager: re-login stopped — the session keeps being taken by another app',
+          { tags, meta: { reason, relogins: decision.attempts } },
+        )
+      }
+      return
+    }
+    if (this.#recovering !== null) return this.#recovering
+    this.#logger.warn('PetkitIntegrationManager: session lost, attempting re-login', {
+      tags,
+      meta: { reason },
+    })
+    this.#recovering = this.#establish(true)
+      .catch((e: unknown) => {
+        this.#logger.warn('PetkitIntegrationManager: re-login failed', {
+          tags,
+          meta: { reason, error: errMsg(e) },
+        })
+      })
+      .finally(() => {
+        this.#recovering = null
+      })
+    return this.#recovering
+  }
+
   /** Drop the published surface, mark disconnected. (No sockets to close.) */
   async stop(): Promise<void> {
     this.#started = false
+    this.#surfaceSink.setRecovery?.(this.#id, null)
     this.#status = 'disconnected'
     this.#surfaceSink.set(this.#id, null)
     this.#onDisconnected(this.#id)

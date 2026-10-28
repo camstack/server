@@ -122,6 +122,10 @@ export const petkitFeederDeviceSchema = z.object({
 
 export type PetkitFeederDeviceConfig = z.infer<typeof petkitFeederDeviceSchema>
 
+/** Operator guidance on the one-session-per-account rule (shown under the account section). */
+export const ACCOUNT_SESSION_GUIDANCE =
+  'PetKit allows only one active session per account: signing in here signs the same account out of the PetKit phone app and Home Assistant. In the PetKit app, add a family member (share your devices with a second account) and use that account here, so your main account stays on your phone.'
+
 /**
  * Hand-written account form for the integration creation UI — the wizard's
  * `account` config step renders this via `getGlobalSettings`. The submitted
@@ -136,6 +140,8 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         id: 'credentials',
         title: 'PetKit account',
         titleKey: 'provider-petkit:connection.s_credentials.title',
+        description: ACCOUNT_SESSION_GUIDANCE,
+        descriptionKey: 'provider-petkit:connection.s_credentials.description',
         columns: 1,
         fields: [
           {
@@ -168,7 +174,10 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             label: 'Region',
             labelKey: 'provider-petkit:connection.s_region.region.label',
             default: 'de',
-            options: PETKIT_REGIONS.map((r) => ({ value: r, label: r.toUpperCase() })),
+            options: PETKIT_REGIONS.map((r) => ({
+              value: r,
+              label: r.toUpperCase(),
+            })),
           },
         ],
       },

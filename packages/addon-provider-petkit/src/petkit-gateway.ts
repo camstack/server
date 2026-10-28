@@ -15,6 +15,8 @@ export interface PetkitConnectionSurface {
 /** Sink the integration manager publishes its live surface to (the resolver). */
 export interface PetkitSurfaceSink {
   set(integrationId: string, surface: PetkitConnectionSurface | null): void
+  /** Register (or clear, with `null`) the integration's session-loss recovery entry. */
+  setRecovery?(integrationId: string, recover: ((err: unknown) => void) | null): void
 }
 
 /**
@@ -56,6 +58,19 @@ export class PetkitFacadeResolver {
         }
       }
     }
+  }
+
+  readonly #recovery: Map<string, (err: unknown) => void> = new Map()
+
+  /** The manager's session-loss recovery entry; `null` clears it. */
+  setRecovery(integrationId: string, recover: ((err: unknown) => void) | null): void {
+    if (recover === null) this.#recovery.delete(integrationId)
+    else this.#recovery.set(integrationId, recover)
+  }
+
+  /** A device saw a failed call: let the account's manager decide on a re-login. */
+  reportFailure(integrationId: string, err: unknown): void {
+    this.#recovery.get(integrationId)?.(err)
   }
 
   /** Subscribe to surface (re)publish for an integration. Returns unsubscribe. */
@@ -101,6 +116,7 @@ export class PetkitFacadeResolver {
   clear(): void {
     this.#surfaces.clear()
     this.#subs.clear()
+    this.#recovery.clear()
   }
 }
 

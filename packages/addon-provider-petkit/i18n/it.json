@@ -1,5 +1,6 @@
 {
   "connection.s_credentials.title": "Account PetKit",
+  "connection.s_credentials.description": "PetKit consente una sola sessione attiva per account: accedere qui disconnette lo stesso account dall'app PetKit e da Home Assistant. Nell'app PetKit aggiungi un familiare (condividi i dispositivi con un secondo account) e usa quell'account qui, cosi' l'account principale resta sul telefono.",
   "connection.s_credentials.email.label": "Email",
   "connection.s_credentials.password.label": "Password",
   "connection.s_region.title": "Regione",

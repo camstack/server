@@ -186,6 +186,7 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
       // A session the cloud ended (kicked, expired) is an integration-level fact:
       // report it once per integration, never per feeder.
       petkitSession.failure(this.integrationId, err)
+      petkitConnections.reportFailure(this.integrationId, err)
       this.ctx.logger.warn('petkit feeder: refresh failed', {
         tags: { deviceId: this.id },
         meta: { petkitDeviceId: this.petkitDeviceId, error: errMsg(err) },

@@ -1,5 +1,6 @@
 {
   "connection.s_credentials.title": "PetKit account",
+  "connection.s_credentials.description": "PetKit allows only one active session per account: signing in here signs the same account out of the PetKit phone app and Home Assistant. In the PetKit app, add a family member (share your devices with a second account) and use that account here, so your main account stays on your phone.",
   "connection.s_credentials.email.label": "Email",
   "connection.s_credentials.password.label": "Password",
   "connection.s_region.title": "Region",

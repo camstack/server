@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**216 units · 7288 source files · 204 units claimed by at least one document (7250 files).**
+**216 units · 7289 source files · 204 units claimed by at least one document (7251 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -99,9 +99,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-terminal` | 16 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `design/2026-07-26-terminal-session-design.md`, `decisions/adr-0321-a-polled-fleet-read-joins-the-shared-slim-key-and-a-config-bearing-read-can-never-be-slim.md`, 2 ADRs | 2026-10-03 |
 | `packages/addon-training/src/orchestrator` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md`, `decisions/adr-0824-a-training-job-selects-frames-live-and-addresses-a-provider-by-entry-id.md`, +2 more | 2026-10-14 |
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +4 more | — |
+| `packages/addon-provider-petkit` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/types/src/catalogs` | 14 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, `decisions/adr-0715-a-root-detector-that-declares-a-step-fills-it-and-tier-1-has-one-writer-per-effect.md`, +7 more, 1 ADR | — |
 | `packages/addon-google-services` | 13 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
-| `packages/addon-provider-petkit` | 13 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-cloudflare` | 12 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, `decisions/adr-0860-an-install-this-addon-offer-is-answered-from-the-published-manifests-and-a-temporary-tunnel-address-is-never-an-automatic-hub-address.md` | — |
 | `packages/addon-model-studio` | 12 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, +1 more | — |
 | `packages/addon-model-studio/src/tabs` | 12 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0746-installed-lists-files-per-model-and-format-and-in-use-means-resident-in-a-pool.md` | — |

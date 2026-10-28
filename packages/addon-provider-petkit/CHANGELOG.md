@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- PetKit now re-logs in at most once per 5 minutes after the cloud ends the session, stops after repeated kicks and tells you to use a dedicated family account; the account form explains the one-session-per-account rule
+
 ## [0.2.150] - 2026-10-27
 
 ### Added
