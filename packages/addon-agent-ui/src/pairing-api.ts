@@ -5,8 +5,11 @@
  *
  * `pairing/status` answers two shapes: from the network a pending pairing is
  * who asks and until when; from this machine (genuine loopback) it also carries
- * the pairing id, the one-time PIN and the agent's own code. The UI never shows
- * or prefills that code: the operator types what the HUB shows.
+ * the pairing id and the one-time PIN, and - only after the operator confirmed
+ * here - the agent's own code. The network view never carries it. The code is
+ * never shown or prefilled BEFORE the local confirmation (the operator types what
+ * the HUB shows); after it, the agent shows its own code to be typed on the hub.
+ * A PIN-authenticated `confirm` answers with that code too.
  */
 import { authHeaders, fetchJson } from './api-client'
 import { translate } from './i18n'
@@ -37,6 +40,8 @@ export interface PendingPairing {
   readonly pin?: string
   /** Loopback view only: whether the operator already confirmed here. */
   readonly localConfirmed?: boolean
+  /** Loopback view only, and only once confirmed here: the code to type on the hub. */
+  readonly code?: string | null
 }
 
 export interface PairingStatusView {
@@ -54,6 +59,8 @@ export interface PairingFailureBody {
 
 export interface PairingOk {
   readonly ok: true
+  /** A successful `confirm` only: this agent's own code, to be typed on the hub. */
+  readonly code?: string
 }
 
 export type PairingOutcome = PairingOk | PairingFailureBody
@@ -129,4 +136,9 @@ export function formatCountdown(expiresAt: number, now: number): string {
 /** Groups of four, as the hub prints a fingerprint. */
 export function groupFingerprint(fingerprint: string): string {
   return fingerprint.replace(/(.{4})/g, '$1 ').trim()
+}
+
+/** A pairing code in two groups of three, as the hub prints it. */
+export function groupCode(code: string): string {
+  return code.replace(/(\d{3})(?=\d)/g, '$1 ')
 }

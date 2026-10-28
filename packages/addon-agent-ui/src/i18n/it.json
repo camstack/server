@@ -133,13 +133,15 @@
     "lockedTitle": "La conferma è bloccata",
     "lockedMessage": "Troppi PIN errati. Riprova tra {{wait}} oppure reimposta il blocco dell'associazione qui sotto.",
     "confirmedHere": "Confermato su questo agente",
-    "confirmedHint": "Ora conferma lo stesso codice sull'hub. L'agente si associa non appena l'hub conferma.",
+    "confirmedHint": "Ora digita questo codice sull'hub. L'agente si associa non appena l'hub lo accetta.",
     "codeLabel": "Codice mostrato sull'hub",
     "pinLabel": "PIN locale",
     "pinPlaceholder": "PIN dalla macchina dell'agente",
     "noPinNeeded": "Sei sull'agente stesso, quindi non serve il PIN.",
     "confirm": "Conferma",
-    "reject": "Rifiuta"
+    "reject": "Rifiuta",
+    "agentCodeLabel": "Codice su questo agente - digitalo sull'hub",
+    "noCodeReturned": "L'agente ha confermato ma non ha restituito il suo codice. Rifiuta questa richiesta e avvia di nuovo l'associazione dall'hub."
   },
   "reset": {
     "codeHelp": "Il codice di reimpostazione viene stampato nella console dell'agente all'avvio (docker logs per un container) e salvato in pairing-reset.txt nella cartella dati dell'agente. Viene rinnovato a ogni utilizzo.",

@@ -352,7 +352,9 @@ export class AgentPairing {
         },
         expiresAt: s.expiresAt,
         pin: s.pin,
-        code: s.code,
+        // The agent's own code is shown only AFTER its operator confirmed here (D857): before that
+        // it could be copied into this agent's own field, and the hub-side check would be degenerate.
+        code: s.localConfirmed ? s.code : null,
         localConfirmed: s.localConfirmed,
       })),
     }
@@ -522,7 +524,7 @@ export class AgentPairing {
    * it. A wrong code counts against the pairing (the third cancels it); a wrong PIN counts against
    * the agent (five lock confirming for five minutes).
    */
-  confirm(body: unknown, ctx: PairingRequestContext): PairingResult<object> {
+  confirm(body: unknown, ctx: PairingRequestContext): PairingResult<{ readonly code: string }> {
     const found = this.localTarget(body, ctx)
     if ('ok' in found) return found
     const session = found
@@ -539,7 +541,9 @@ export class AgentPairing {
       return fail(403, 'code-mismatch', 'that is not the code this agent computed')
     }
     session.localConfirmed = true
-    return { ok: true }
+    // The answer to a confirm that proved the operator is here (hub code + PIN unless loopback):
+    // the code to type ON THE HUB. Status from the network never carries it.
+    return { ok: true, code: session.code }
   }
 
   reject(body: unknown, ctx: PairingRequestContext): PairingResult<object> {

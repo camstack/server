@@ -282,3 +282,17 @@ pending/paired, three wrong codes), `agent-pairing-routes.spec.ts` (real HTTP),
 `agent-ui-unlock.spec.ts` (ES256). Each gate was disarmed once and the named
 spec went red. There is no guard script: nothing mechanical stops a new secret
 from being introduced, review only.
+
+## Amendment 2026-10-28 - the agent shows its own code, only after it confirmed
+
+Observed live: the agent page asked for "the code shown on the hub", accepted it, and never displayed the
+agent's OWN computed code, so the operator could only re-type the hub's code on the hub - a degenerate check
+that does not protect against a man in the middle faking "agent confirmed" on the poll. The rule is now:
+
+- The hub asks for the code computed BY THE AGENT, so the agent shows it - but only **after** the local
+  confirmation (hub code, plus the PIN away from the machine). Before that it is hidden, so it cannot be copied
+  into the agent's own field.
+- Loopback `status` carries `code` as `null` until `localConfirmed`, then the code. The network `status`
+  never carries it (unchanged).
+- A successful `confirm` (which required the PIN, or loopback) answers `{ ok: true, code }`; the page shows
+  that code ("type this code on the hub"). Counters and constant-time compares are unchanged.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The agent page now shows the agent's own pairing code after you confirm there, so you can type it on the hub
+
 ## [1.2.287] - 2026-10-28
 
 ### Changed

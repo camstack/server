@@ -319,7 +319,27 @@ describe('the agent confirms only for someone at its own machine (C1)', () => {
       caFingerprintCompact(r.ca.certPem),
     )
     // The local view carries them.
-    expect(r.agent.localView().pending[0]).toMatchObject({ pin: local.pin, code: local.code })
+    expect(r.agent.localView().pending[0]).toMatchObject({ pin: local.pin })
+  })
+
+  it("the agent's own code stays hidden until its operator confirmed, then loopback shows it and the confirm answers with it", async () => {
+    const r = await rig()
+    const started = await r.hub.begin(ENDPOINT)
+    const local = theLocal(r)
+    expect(local.code).toBe(started.code)
+    expect(r.agent.localView().pending[0]?.code).toBeNull()
+    const confirmed = r.agent.confirm({ code: started.code }, LOCAL)
+    expect(confirmed).toMatchObject({ ok: true, code: started.code })
+    expect(r.agent.localView().pending[0]?.code).toBe(started.code)
+  })
+
+  it('the network view never carries the code, even after the local confirmation; the PIN-authenticated confirm does', async () => {
+    const r = await rig()
+    const started = await r.hub.begin(ENDPOINT)
+    const local = theLocal(r)
+    const confirmed = r.agent.confirm({ code: started.code, pin: local.pin }, REMOTE)
+    expect(confirmed).toMatchObject({ ok: true, code: started.code })
+    expect(JSON.stringify(r.agent.publicView())).not.toContain(started.code)
   })
 
   it('a remote confirm without the PIN is refused, with a wrong PIN is refused, with the PIN works', async () => {

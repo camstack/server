@@ -203,7 +203,8 @@ describe('a pairing request away from the agent', () => {
     expect(code.value).toBe('')
   })
 
-  it('after a confirmation waits for the hub instead of asking again', async () => {
+  it('after a confirmation shows the code the network confirm returned, to type on the hub', async () => {
+    answers['/api/agent/pairing/confirm'] = { status: 200, body: { ok: true, code: '851937' } }
     mount()
     fireEvent.change(await screen.findByLabelText(/Code shown on the hub/), {
       target: { value: '123456' },
@@ -213,7 +214,15 @@ describe('a pairing request away from the agent', () => {
     })
     fireEvent.click(screen.getByText('Confirm'))
     expect(await screen.findByText('Confirmed on this agent')).toBeTruthy()
+    expect(screen.getByTestId('agent-pairing-own-code').textContent).toBe('851 937')
     expect(screen.queryByLabelText(/Code shown on the hub/)).toBeNull()
+  })
+
+  it('shows no own code before the local confirmation', async () => {
+    mount()
+    await screen.findByLabelText(/Code shown on the hub/)
+    expect(screen.queryByTestId('agent-pairing-own-code')).toBeNull()
+    expect(screen.queryByText(/Code on this agent/)).toBeNull()
   })
 
   it('rejects with the PIN', async () => {
@@ -292,18 +301,30 @@ describe('a pairing request on the agent itself', () => {
     expect(confirmCall()?.body).toEqual({ pin: '12345678', code: '654321' })
   })
 
-  it('reflects a confirmation already made here', async () => {
+  it('shows no own code while the loopback status has not confirmed yet', async () => {
+    pairingView = {
+      state: 'pending',
+      pending: [{ ...(LOCAL_PENDING.pending[0] as object), code: null } as never],
+    }
+    mount()
+    await screen.findByLabelText(/Code shown on the hub/)
+    expect(screen.queryByTestId('agent-pairing-own-code')).toBeNull()
+  })
+
+  it('reflects a confirmation already made here and shows the agent code from the status', async () => {
     pairingView = {
       state: 'pending',
       pending: [
         {
           ...(LOCAL_PENDING.pending[0] as object),
           localConfirmed: true,
+          code: '851937',
         } as never,
       ],
     }
     mount()
     expect(await screen.findByText('Confirmed on this agent')).toBeTruthy()
+    expect(screen.getByTestId('agent-pairing-own-code').textContent).toBe('851 937')
   })
 })
 

@@ -133,13 +133,15 @@
     "lockedTitle": "Confirming is locked",
     "lockedMessage": "Too many wrong PINs. Try again in {{wait}}, or reset the pairing lockout below.",
     "confirmedHere": "Confirmed on this agent",
-    "confirmedHint": "Now confirm the same code on the hub. This agent pairs as soon as the hub confirms.",
+    "confirmedHint": "Now type this code on the hub. This agent pairs as soon as the hub accepts it.",
     "codeLabel": "Code shown on the hub",
     "pinLabel": "Local PIN",
     "pinPlaceholder": "PIN from the agent machine",
     "noPinNeeded": "You are on the agent itself, so no PIN is needed.",
     "confirm": "Confirm",
-    "reject": "Reject"
+    "reject": "Reject",
+    "agentCodeLabel": "Code on this agent - type it on the hub",
+    "noCodeReturned": "The agent confirmed but did not return its code. Reject this request and start the pairing again from the hub."
   },
   "reset": {
     "codeHelp": "The reset code is printed in the agent console at boot (docker logs for a container) and kept in pairing-reset.txt in the agent data directory. It is renewed each time it is used.",

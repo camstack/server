@@ -2,8 +2,10 @@
  * The pairing request screen (D857): a hub asked to pair with this agent and
  * the operator confirms it HERE, as well as on the hub.
  *
- * Both screens must show the same six digits, so the operator types the code
- * the HUB displays; this page never shows or prefills a code. Away from the
+ * The operator types the code the HUB displays; this page never shows or
+ * prefills a code before that. Once confirmed here it shows ITS OWN code, which
+ * the operator types on the hub (the hub-side check is what stops a man in the
+ * middle faking this page's "confirmed"). Away from the
  * agent's machine the one-time PIN printed on that machine is required too
  * (it proves the person at this page is at the agent). On the agent's own
  * machine (the status view then carries the PIN) the field is hidden.
@@ -22,6 +24,7 @@ import {
   describeFailure,
   formatCountdown,
   formatWait,
+  groupCode,
   groupFingerprint,
   isLoopbackView,
   sendPairing,
@@ -72,7 +75,7 @@ export function PairingRequests({ pending, onChanged }: PairingRequestsProps) {
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [lockedUntil, setLockedUntil] = useState<number | null>(null)
-  const [confirmed, setConfirmed] = useState<readonly string[]>([])
+  const [confirmedCodes, setConfirmedCodes] = useState<Readonly<Record<string, string>>>({})
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -86,7 +89,12 @@ export function PairingRequests({ pending, onChanged }: PairingRequestsProps) {
 
   if (selected === undefined) return null
   const selectedId = keyOf(selected)
-  const confirmedHere = selected.localConfirmed === true || confirmed.includes(selectedId)
+  // This agent's own code, known only after the local confirmation: from the confirm answer, or
+  // (loopback) from the status once confirmed. Never before.
+  const agentCode =
+    confirmedCodes[selectedId] ??
+    (selected.localConfirmed === true ? (selected.code ?? null) : null)
+  const confirmedHere = agentCode !== null
 
   const select = (key: string): void => {
     if (key === selectedId) return
@@ -117,13 +125,14 @@ export function PairingRequests({ pending, onChanged }: PairingRequestsProps) {
     })
     setBusy(false)
     setCode('')
-    if (outcome.ok) {
-      setConfirmed((prev) => [...prev, selectedId])
+    if (outcome.ok && outcome.code !== undefined) {
+      const confirmedCode = outcome.code
+      setConfirmedCodes((prev) => ({ ...prev, [selectedId]: confirmedCode }))
       setPin('')
       await onChanged()
       return
     }
-    noteFailure(outcome)
+    noteFailure(outcome.ok ? { ok: false, message: t('requests.noCodeReturned') } : outcome)
     await onChanged()
   }
 
@@ -193,6 +202,15 @@ export function PairingRequests({ pending, onChanged }: PairingRequestsProps) {
           <Badge variant="success" icon={<Check className="h-3 w-3" />}>
             {t('requests.confirmedHere')}
           </Badge>
+          <div className="space-y-1">
+            <div className="text-[11px] text-foreground-subtle">{t('requests.agentCodeLabel')}</div>
+            <div
+              className="text-2xl font-mono tracking-widest text-foreground"
+              data-testid="agent-pairing-own-code"
+            >
+              {groupCode(agentCode)}
+            </div>
+          </div>
           <p className="text-[11px] text-foreground-subtle">{t('requests.confirmedHint')}</p>
         </div>
       ) : (
