@@ -62,29 +62,28 @@ export interface AgentMdnsAdvertiserOptions {
  */
 export class AgentMdnsAdvertiser {
   private current: { readonly key: string; readonly handle: HubMdnsHandle } | null = null
-  private running = false
+  private stopped = false
   private chain: Promise<void> = Promise.resolve()
 
   constructor(private readonly options: AgentMdnsAdvertiserOptions) {}
 
-  start(inputs: AgentMdnsInputs): Promise<void> {
-    this.running = true
-    return this.sync(inputs)
-  }
-
-  /** Announce `inputs` if they differ from what is announced. Serialised. */
+  /**
+   * Announce `inputs` if they differ from what is announced. Serialised. The first
+   * call advertises: there is no separate start, because a caller that only ever
+   * syncs (the agent boot) must not be silently ignored.
+   */
   sync(inputs: AgentMdnsInputs): Promise<void> {
     this.chain = this.chain.then(() => this.syncOnce(inputs))
     return this.chain
   }
 
   async stop(): Promise<void> {
-    this.running = false
+    this.stopped = true
     await (this.chain = this.chain.then(() => this.withdraw()))
   }
 
   private async syncOnce(inputs: AgentMdnsInputs): Promise<void> {
-    if (!this.running) return
+    if (this.stopped) return
     const next = buildAgentAnnouncement(inputs)
     const key = announcementKey(next)
     if (this.current?.key === key) return
