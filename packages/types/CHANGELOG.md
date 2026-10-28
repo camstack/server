@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.432] - 2026-10-28
+
 ### Changed
 
 - The vendor login proxy is served on one shared vendor-login prefix that cannot shadow an addon's own routes

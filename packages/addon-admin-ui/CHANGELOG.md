@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.498] - 2026-10-28
+
 ### Changed
 
 - A sign-in step that gets a non-JSON answer now names the step and HTTP status instead of a browser parse error

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.31] - 2026-10-28
+
 ### Changed
 
 - The Home Connect and HomeCom sign-in pages open under the shared vendor-login path

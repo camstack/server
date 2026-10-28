@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.341] - 2026-10-28
+
 ### Changed
 
 - Account sign-in fields follow the vendor-login path of the hub login proxy
