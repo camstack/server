@@ -22,7 +22,8 @@
  * selector ends up meaning different things in two places.
  */
 import { useUiText, UiTrans, defaultUiText, type UiTextFn } from '../contexts/ui-text'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import { Link2, Search } from 'lucide-react'
 import { DeviceType, type DeviceSelector } from '@camstack/types'
 
@@ -105,6 +106,8 @@ export function DeviceSelectorPicker({
   const t = useUiText()
   const { data: rawDevices } = useDeviceManagerListAll({})
   const [search, setSearch] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchRef)
 
   const devices = useMemo<readonly SelectorDevice[]>(() => {
     const all = (rawDevices ?? []).map(
@@ -282,6 +285,7 @@ export function DeviceSelectorPicker({
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-foreground-subtle" />
             <input
+              ref={searchRef}
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

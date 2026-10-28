@@ -348,6 +348,7 @@ export function NotificationTextsPage() {
           <div className="relative min-w-[12rem] flex-1">
             <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground-muted" />
             <Input
+              searchHotkey
               value={search}
               placeholder={t(
                 'system.notificationTexts.searchAKeyOrA',

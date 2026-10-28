@@ -1,5 +1,14 @@
-import { Fragment, useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
 import { Search, type LucideIcon } from 'lucide-react'
+import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { useUiText } from '../../contexts/ui-text'
 import { type MultiSelectOption } from './multi-select'
 import { ResponsiveTypeFilter } from './type-filter'
@@ -144,6 +153,8 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
   )
 
   const [searchInput, setSearchInput] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchRef)
   const debouncedSearch = useDebouncedString(searchInput, 300)
   const [typeFilters, setTypeFilters] = useState<readonly string[]>(() => [...initialTypeFilters])
   const [page, setPage] = useState(1)
@@ -214,6 +225,7 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-foreground-subtle pointer-events-none" />
             <input
+              ref={searchRef}
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}

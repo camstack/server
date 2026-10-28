@@ -20,7 +20,12 @@
  * component only owns UI state (query, active index, panel open/closed)
  * and keyboard wiring.
  */
-import { useDeviceManagerListAll, useIntegrationsList } from '@camstack/ui-library'
+import {
+  FALLBACK_SCOPE,
+  useDeviceManagerListAll,
+  useIntegrationsList,
+  useSearchFieldHotkey,
+} from '@camstack/ui-library'
 import { Search, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -134,19 +139,10 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
     [navigate, closePanel, onNavigated],
   )
 
-  // Global Ctrl/Cmd+K — focuses the search box from anywhere in the app.
-  // Checked against every other keydown handler in admin-ui first: only
-  // ReplTerminal claims a ctrl combo (Ctrl+L), nothing claims Ctrl/Cmd+K.
-  useEffect(() => {
-    function onGlobalKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setPanelOpen(true)
-      }
-    }
-    window.addEventListener('keydown', onGlobalKeyDown)
-    return () => window.removeEventListener('keydown', onGlobalKeyDown)
-  }, [])
+  // Cmd/Ctrl+K and Cmd/Ctrl+F reach this box only when the page has no search
+  // field of its own: it registers as the fallback, so a field on the page (or
+  // in an open dialog) wins and the browser's find is not stolen twice.
+  useSearchFieldHotkey(inputRef, { scope: FALLBACK_SCOPE })
 
   // Click-outside closes an open panel (compact float, or a full-width
   // dropdown left open after a blur-less mouse click elsewhere).

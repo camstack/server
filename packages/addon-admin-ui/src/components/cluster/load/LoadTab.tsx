@@ -37,12 +37,12 @@
  * 14:32 is the same fact twice, in two formats, inviting the reader to look
  * for a difference that does not exist.
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Search, X } from 'lucide-react'
 import { formatBytes } from '../../../lib/format-size'
 import { SingleLineChart, StackedCpuChart } from './LoadChart'
-import { gapThresholdMs } from '@camstack/ui-library'
+import { gapThresholdMs, useSearchFieldHotkey } from '@camstack/ui-library'
 import { ROOT_BUCKET_KEY, UNATTRIBUTED_BUCKET_KEY, type LoadSeries } from './load-series'
 import {
   DEFAULT_LOAD_SORT,
@@ -77,6 +77,8 @@ const MEMORY_AXIS_FLOOR_BYTES = 256 * 1024 * 1024
 const FALLBACK_SAMPLE_INTERVAL_MS = 10_000
 
 export function LoadTab({ nodeId, isHub }: LoadTabProps) {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const { t } = useTranslation()
   const { series, sampleCount, threadSplitAvailable, loadingRetained, bucketMs, cadenceMs } =
     useNodeLoadSeries(nodeId)
@@ -151,6 +153,7 @@ export function LoadTab({ nodeId, isHub }: LoadTabProps) {
             <label className="relative flex-1 min-w-[160px]">
               <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-foreground-subtle" />
               <input
+                ref={searchFieldRef}
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

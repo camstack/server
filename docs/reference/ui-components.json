@@ -3466,6 +3466,13 @@
       ]
     },
     {
+      "name": "detectPlatform",
+      "kind": "function",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/combo.ts",
+      "summary": "Keys a combo may name. Extend this union to support a new key."
+    },
+    {
       "name": "DEVICE_COLUMNS",
       "kind": "constant",
       "area": "composites",
@@ -5068,6 +5075,13 @@
       ]
     },
     {
+      "name": "FALLBACK_SCOPE",
+      "kind": "constant",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/hotkey-provider.tsx",
+      "summary": "Asked last, after the page: a global handler that yields to whatever the page registers."
+    },
+    {
       "name": "FanHeroCard",
       "kind": "component",
       "area": "composites",
@@ -5895,6 +5909,60 @@
       "summary": "Host widgets — ui-library React components embeddable as a `type:'widget'` ConfigField. `WidgetSlot` resolves these BEFORE the Module-Federation `WidgetRegistry`. ids are namespaced `host/<name>`."
     },
     {
+      "name": "HotkeyProvider",
+      "kind": "component",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/hotkey-provider.tsx",
+      "summary": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "platform",
+          "type": "HotkeyPlatform",
+          "optional": true,
+          "doc": "Override platform detection (tests)."
+        }
+      ]
+    },
+    {
+      "name": "HotkeyScope",
+      "kind": "component",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/hotkey-provider.tsx",
+      "summary": "Bindings made below this component belong to `id`; while enabled it is the topmost scope.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Default true. Turn off while the surface is closed."
+        },
+        {
+          "name": "modal",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Shadows every scope under it, the page included. Default false."
+        }
+      ]
+    },
+    {
       "name": "HoverZoomImage",
       "kind": "component",
       "area": "composites",
@@ -6416,6 +6484,12 @@
           "type": "ReactNode",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "searchHotkey",
+          "type": "boolean",
+          "optional": true,
+          "doc": "⌘F / Ctrl+F and ⌘K / Ctrl+K focus this field instead of the browser's find. On by default for `type=\"search\"`; pass it for a search field of"
         }
       ]
     },
@@ -7019,6 +7093,13 @@
       "area": "root",
       "file": "packages/ui-library/src/index.ts",
       "summary": "Lazy-wrapped `MaskShapeCanvas` — code-split off the main bundle. Render inside `<Suspense>` at all call sites."
+    },
+    {
+      "name": "matchesCombo",
+      "kind": "function",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/combo.ts",
+      "summary": "Keys a combo may name. Extend this union to support a new key."
     },
     {
       "name": "MEDIA_GRID",
@@ -7876,6 +7957,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-model.ts",
       "summary": "`cap:<capName>.<fieldPath>` → its parts; `null` for any other key."
+    },
+    {
+      "name": "parseCombo",
+      "kind": "function",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/combo.ts",
+      "summary": "Keys a combo may name. Extend this union to support a new key."
     },
     {
       "name": "parseConsumableLevel",
@@ -12377,6 +12465,13 @@
       "summary": "Read `items` over `window` (and the previous period when `compare`)."
     },
     {
+      "name": "useHotkey",
+      "kind": "hook",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/hotkey-provider.tsx",
+      "summary": "Bind a combo for the life of the component. Without a `HotkeyProvider` above it does nothing, so the browser keeps its own shortcut."
+    },
+    {
       "name": "useIconGlyphsVersion",
       "kind": "hook",
       "area": "composites",
@@ -12536,6 +12631,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/scrub-controller.ts",
       "summary": "Owns the shared scrub position and bridges it to a playback control sink."
+    },
+    {
+      "name": "useSearchFieldHotkey",
+      "kind": "hook",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/use-search-field-hotkey.ts",
+      "summary": "Register a search field: ⌘F / Ctrl+F and ⌘K / Ctrl+K focus and select it. A field that is hidden or disabled declines, so the browser's find still runs. The library's search inputs call this themselves."
     },
     {
       "name": "useStationaryOverlay",

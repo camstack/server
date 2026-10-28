@@ -20,6 +20,7 @@
  */
 
 import { Button, Checkbox } from '../../primitives/index.js'
+import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { Popover, PopoverContent, PopoverTrigger } from '../../primitives/popover.js'
 import { Search } from 'lucide-react'
 import { useEffect, useRef, useState, type JSX } from 'react'
@@ -244,6 +245,8 @@ export function DeviceFilterBar({
   searchLabel,
   disabled = false,
 }: DeviceFilterBarProps): JSX.Element {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const t = useUiText()
   const [text, setText] = useState(filters.query)
   // The latest filters, for the debounce timer: it fires after other facets may have changed.
@@ -269,6 +272,7 @@ export function DeviceFilterBar({
       <div className={INPUT_SHELL}>
         <Search className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" />
         <input
+          ref={searchFieldRef}
           type="text"
           value={text}
           placeholder={searchPlaceholder}

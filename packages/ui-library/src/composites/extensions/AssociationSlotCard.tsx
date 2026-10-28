@@ -18,7 +18,8 @@
  *   and any stored opt-in no longer linked, so each can be removed — saved
  *   with the picks, whole.
  */
-import { useState, type JSX } from 'react'
+import { useState, type JSX, useRef } from 'react'
+import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { Plus, X } from 'lucide-react'
 import { EXTENSION_SLOTS, type ExtensionSlotSource, type ExtensionSlotState } from '@camstack/types'
 import {
@@ -253,6 +254,8 @@ export function AssociationSlotCard({
   onSaved,
   readOnly = false,
 }: AssociationSlotCardProps): JSX.Element | null {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const t = useUiText()
   const descriptor = EXTENSION_SLOTS[row.slot].descriptor
   const saved = row.value.deviceIds
@@ -411,6 +414,7 @@ export function AssociationSlotCard({
           )}
 
           <input
+            ref={searchFieldRef}
             type="search"
             aria-label={t('uiLibrary.associationSlotCard.searchDevices', 'Search devices')}
             value={search}

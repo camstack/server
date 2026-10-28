@@ -9,7 +9,8 @@
  * the caller's i18n does.
  */
 import { Search, X } from 'lucide-react'
-import type { JSX } from 'react'
+import { useRef, type JSX } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import { MultiSelectDropdown } from './device-list/multi-select'
 import {
   isDataTableFilterActive,
@@ -76,6 +77,8 @@ export function DataTableFilterBar({
   groups = [],
   onToggleGroupFacet,
 }: DataTableFilterBarProps): JSX.Element {
+  const searchRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchRef)
   const active = isDataTableFilterActive(state)
   // One chip is a filter with one answer: the row set itself. Draw the group
   // only when it can narrow anything.
@@ -85,6 +88,7 @@ export function DataTableFilterBar({
       <label className="relative min-w-[12rem] flex-1">
         <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground-subtle" />
         <input
+          ref={searchRef}
           type="search"
           value={state.search}
           onChange={(e) => onSearch(e.target.value)}

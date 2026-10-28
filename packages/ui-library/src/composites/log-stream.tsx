@@ -9,6 +9,7 @@
  * Used inline (tabs, cards) and as a floating panel via FloatingLogStream.
  */
 import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, type JSX } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import {
   X,
   Loader2,
@@ -170,6 +171,8 @@ export function LogStream({
   onClose,
   className,
 }: LogStreamProps): JSX.Element {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const t = useUiText()
   const sourceSelectOn = showSourceSelect ?? showFilters
   // ── Local filter state (for unlocked scope levels) ────────────────
@@ -609,6 +612,7 @@ export function LogStream({
           {/* Free-text search — substring match across message, scope, tags, meta. */}
           <div className="relative">
             <input
+              ref={searchFieldRef}
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}

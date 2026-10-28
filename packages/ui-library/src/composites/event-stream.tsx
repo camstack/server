@@ -15,6 +15,7 @@
  * input refreshes when the active category set changes.
  */
 import { useEffect, useRef, useState, useMemo, useCallback, type JSX } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import {
   X,
   Loader2,
@@ -608,6 +609,8 @@ export function EventStream({
   onClose,
   className,
 }: EventStreamProps): JSX.Element | null {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const t = useUiText()
   // Defaults: explicit prop wins, then the legacy alias, then "all".
   const defaultsArray = useMemo<readonly string[]>(
@@ -1000,6 +1003,7 @@ export function EventStream({
 
           <div className="relative">
             <input
+              ref={searchFieldRef}
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}

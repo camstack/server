@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrations are listed alphabetically by name, on the page and in the New Integration dialog
 - Build-your-self picks devices with the common device selector everywhere, and the helper member picker lists only compatible devices
 - A temperature or humidity group can include thermostats and climate devices, read from their current temperature/humidity
+- ⌘F / Ctrl+F jumps to the page's search field instead of the browser's find
 
 ## [1.2.504] - 2026-10-28
 

@@ -36,6 +36,7 @@ import {
   TEXT_HINT,
   useConfirm,
   useIsMobile,
+  useSearchFieldHotkey,
 } from '@camstack/ui-library'
 import { useStepUrlSelection } from '../../../hooks/useStepUrlSelection'
 import { filterStepTree, flattenStepTree, type InspectorAccelerator } from './step-inspector-model'
@@ -121,6 +122,7 @@ export function StepMatrixFrame({
   const matrixRef = useRef<DeviceStepMatrixHandle | null>(null)
   const anchorRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
+  useSearchFieldHotkey(searchRef)
   const headingEl = useRef<HTMLHeadingElement | null>(null)
 
   const hits = useMemo(() => searchSteps(searchRows, query), [searchRows, query])

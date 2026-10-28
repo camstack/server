@@ -1,5 +1,6 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 import { ReactFlow, Background, Controls, type Node, type Edge } from '@xyflow/react'
+import { useSearchFieldHotkey } from '@camstack/ui-library'
 import type { ClusterGraph } from './build-cluster-graph'
 import type { NodeBoxData } from './NodeBox'
 import { NodeBox } from './NodeBox'
@@ -62,6 +63,8 @@ function matchesFilter(filter: string, nodeData: NodeBoxData): boolean {
 }
 
 export function ClusterGraphView({ graph, onOpenNodeDetail }: ClusterGraphViewProps) {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const { t } = useTranslation()
   const [filter, setFilter] = useState('')
   // I1: expandAllValue=true means expand; expandAllNonce increments on each click.
@@ -137,6 +140,7 @@ export function ClusterGraphView({ graph, onOpenNodeDetail }: ClusterGraphViewPr
       {/* Density controls bar */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-background shrink-0">
         <input
+          ref={searchFieldRef}
           type="search"
           placeholder={t(
             'graph.clusterGraphView.filterByNodeRunnerCap',

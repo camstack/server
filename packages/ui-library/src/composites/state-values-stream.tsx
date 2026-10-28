@@ -23,6 +23,7 @@
  * subscription is torn down automatically when hidden.
  */
 import { useEffect, useMemo, useRef, useState, useCallback, type JSX } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import { useQuery } from '@tanstack/react-query'
 import {
   X,
@@ -237,6 +238,8 @@ export function StateValuesStream({
   onClose,
   className,
 }: StateValuesStreamProps): JSX.Element | null {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const t = useUiText()
   const initialActiveCaps = useMemo(() => new Set<string>(defaultCaps ?? []), [defaultCaps])
   const [activeCaps, setActiveCaps] = useState<Set<string>>(initialActiveCaps)
@@ -580,6 +583,7 @@ export function StateValuesStream({
 
               <div className="relative">
                 <input
+                  ref={searchFieldRef}
                   type="text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}

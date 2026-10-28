@@ -16,6 +16,7 @@
  * mountAddonPage(MyPage, { serverUrl: 'https://localhost:4443', title: 'My Addon' })
  * ```
  */
+import { HotkeyProvider } from '../hotkeys/hotkey-provider'
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { DevShell } from './dev-shell'
@@ -49,17 +50,21 @@ export function mountAddonPage(
   }
 
   createRoot(root).render(
-    createElement(DevShell, {
-      serverUrl,
-      title,
-      children: ({ trpc, theme }) =>
-        createElement(PageComponent, {
-          trpc,
-          theme: { isDark: theme.resolvedMode === 'dark' },
-          navigate: (path: string) => {
-            console.log('[dev] navigate:', path)
-          },
-        }),
-    }),
+    createElement(
+      HotkeyProvider,
+      null,
+      createElement(DevShell, {
+        serverUrl,
+        title,
+        children: ({ trpc, theme }) =>
+          createElement(PageComponent, {
+            trpc,
+            theme: { isDark: theme.resolvedMode === 'dark' },
+            navigate: (path: string) => {
+              console.log('[dev] navigate:', path)
+            },
+          }),
+      }),
+    ),
   )
 }

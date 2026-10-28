@@ -45,6 +45,7 @@ import {
 } from '@camstack/types'
 import type { LucideIcon } from 'lucide-react'
 import { type JSX, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
 import { loadIconGlyphs, useDisplayIconResolver } from './icon-glyphs'
 
@@ -171,6 +172,8 @@ export function IconPicker({
   categoryLabel = iconCategoryLabel,
   disabled = false,
 }: IconPickerProps): JSX.Element | null {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [scrollTop, setScrollTop] = useState(0)
@@ -235,6 +238,7 @@ export function IconPicker({
       <PopoverContent aria-label={labels.panel} aria-labelledby={undefined} className="w-72 p-2">
         <div className="w-full">
           <input
+            ref={searchFieldRef}
             type="search"
             value={query}
             autoFocus

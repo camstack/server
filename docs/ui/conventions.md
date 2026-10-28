@@ -232,3 +232,24 @@ not exist — the update confirm promised an automatic rollback for a while afte
 
 When a server capability is removed, remove the UI that consumed it. Dead controls
 are worse than absent ones: they tell the operator a feature exists.
+
+## Keyboard shortcuts (`useHotkey`)
+
+Shortcuts go through the library's hotkey registry, never a page-local
+`keydown` listener. `HotkeyProvider` sits at the app root (admin-ui `App`, the
+`mountAddonPage` dev shell); an addon page is host-provided, so it already has
+it. `useHotkey('mod+f', handler, { scope?, enabled?, preventDefault?, allowInInput? })`
+takes a typed combo (`HotkeyCombo`); `mod` is Command on macOS and Ctrl
+elsewhere. The newest binding wins, and a `HotkeyScope` stacks above the page —
+`DialogContent` pushes a modal one while open, so a dialog's bindings beat the
+page's and nothing below a modal scope fires. A handler that returns `false`
+declines: nothing is prevented and the browser keeps its shortcut. Events while
+composing (IME) are ignored, and plain keys are ignored while typing in a field
+(`mod+…` combos still fire).
+
+**Search fields register themselves.** `Input type="search"` (or `searchHotkey`,
+`searchHotkey={false}` to opt out) and the library's filter bars bind ⌘F / Ctrl+F
+and ⌘K / Ctrl+K to focus and select the field. A raw search `<input>` calls
+`useSearchFieldHotkey(ref)`. When no field is registered, or the field is hidden,
+the browser's find runs as usual. To add a new global shortcut, extend the
+`HotkeyKey` union and bind it with `useHotkey`.

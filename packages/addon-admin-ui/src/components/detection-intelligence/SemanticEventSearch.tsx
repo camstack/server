@@ -34,9 +34,10 @@ import {
   useDeviceManagerListAll,
   usePipelineAnalyticsListEventKindsBatch,
   usePipelineAnalyticsSearchObjectEvents,
+  useSearchFieldHotkey,
 } from '@camstack/ui-library'
 import { Loader2, Search, X } from 'lucide-react'
-import { type JSX, useEffect, useMemo, useState } from 'react'
+import { type JSX, useEffect, useMemo, useState, useRef } from 'react'
 import { EventCard } from './EventCard.js'
 import { EventDetailPanel } from './EventDetailPanel.js'
 import { searchableMacros } from './event-kind-vocabulary.js'
@@ -128,6 +129,8 @@ interface SemanticEventSearchProps {
 }
 
 export function SemanticEventSearch({ onActiveChange }: SemanticEventSearchProps): JSX.Element {
+  const searchFieldRef = useRef<HTMLInputElement>(null)
+  useSearchFieldHotkey(searchFieldRef)
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [strictness, setStrictness] = useState<ClipSearchStrictness>('loose')
@@ -222,6 +225,7 @@ export function SemanticEventSearch({ onActiveChange }: SemanticEventSearchProps
           <div className="relative min-w-[16rem] flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle" />
             <input
+              ref={searchFieldRef}
               type="text"
               value={text}
               onChange={(e) => setText(e.target.value)}

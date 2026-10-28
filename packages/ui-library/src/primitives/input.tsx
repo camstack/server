@@ -2,11 +2,14 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
   forwardRef,
+  useCallback,
+  useRef,
   type ForwardRefExoticComponent,
   type RefAttributes,
 } from 'react'
 import { cva } from 'class-variance-authority'
 import { cn } from '../lib/cn'
+import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 
 /**
  * `disabled:opacity-50 disabled:cursor-not-allowed` for the same reason as
@@ -33,11 +36,27 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   state?: 'default' | 'error'
   leftSlot?: ReactNode
   rightSlot?: ReactNode
+  /**
+   * ⌘F / Ctrl+F and ⌘K / Ctrl+K focus this field instead of the browser's find.
+   * On by default for `type="search"`; pass it for a search field of another type,
+   * or `false` to opt out.
+   */
+  searchHotkey?: boolean
 }
 
 export const Input: ForwardRefExoticComponent<InputProps & RefAttributes<HTMLInputElement>> =
   forwardRef<HTMLInputElement, InputProps>(
-    ({ className, state, leftSlot, rightSlot, ...props }, ref) => {
+    ({ className, state, leftSlot, rightSlot, searchHotkey, ...props }, ref) => {
+      const innerRef = useRef<HTMLInputElement | null>(null)
+      const setRef = useCallback(
+        (node: HTMLInputElement | null) => {
+          innerRef.current = node
+          if (typeof ref === 'function') ref(node)
+          else if (ref) ref.current = node
+        },
+        [ref],
+      )
+      useSearchFieldHotkey(innerRef, { enabled: searchHotkey ?? props.type === 'search' })
       if (leftSlot || rightSlot) {
         return (
           <div className={cn('relative flex items-center', className)}>
@@ -47,7 +66,7 @@ export const Input: ForwardRefExoticComponent<InputProps & RefAttributes<HTMLInp
               </div>
             )}
             <input
-              ref={ref}
+              ref={setRef}
               className={cn(
                 inputVariants({ state }),
                 leftSlot && 'pl-8',
@@ -65,7 +84,7 @@ export const Input: ForwardRefExoticComponent<InputProps & RefAttributes<HTMLInp
         )
       }
 
-      return <input ref={ref} className={cn(inputVariants({ state }), className)} {...props} />
+      return <input ref={setRef} className={cn(inputVariants({ state }), className)} {...props} />
     },
   )
 

@@ -5,6 +5,7 @@ import {
   type CustomFieldRendererProps,
   CustomFieldRenderersProvider,
   DeviceFleetFromServer,
+  HotkeyProvider,
   RoleDisplayDefaultsFromServer,
   SystemProvider,
   ThemeProvider,
@@ -339,323 +340,330 @@ function PageSuspenseFallback() {
 export function App() {
   return (
     <ThemeProvider defaultMode="dark">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <AppShell>
-            <ConfirmDialogProvider>
-              <KeychainRevealHost>
-                <CustomFieldRenderersProvider renderers={CUSTOM_FIELD_RENDERERS}>
-                  <BrowserRouter basename={routerBasename()}>
-                    {/* Inside BrowserRouter so the modal's <Link> has a
+      <HotkeyProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AppShell>
+              <ConfirmDialogProvider>
+                <KeychainRevealHost>
+                  <CustomFieldRenderersProvider renderers={CUSTOM_FIELD_RENDERERS}>
+                    <BrowserRouter basename={routerBasename()}>
+                      {/* Inside BrowserRouter so the modal's <Link> has a
                       basename (mounting the host in AppShell crashed
                       with "basename is null"). Every DeviceItem below
                       draws the glyph from this context. */}
-                    <DeviceQuickDetailHost>
-                      <Suspense fallback={<PageSuspenseFallback />}>
-                        <Routes>
-                          <Route path="/login" element={<LoginPage />} />
-                          <Route path="/admin/*" element={<LegacyAdminRedirect />} />
-                          <Route path="/admin" element={<LegacyAdminRedirect />} />
-                          <Route
-                            path="/change-password"
-                            element={
-                              <ProtectedRoute>
-                                <ChangePasswordPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route path="/showroom" element={<ShowroomPage />} />
-                          {/* Login-bypassing, chrome-less live player for the native
+                      <DeviceQuickDetailHost>
+                        <Suspense fallback={<PageSuspenseFallback />}>
+                          <Routes>
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route path="/admin/*" element={<LegacyAdminRedirect />} />
+                            <Route path="/admin" element={<LegacyAdminRedirect />} />
+                            <Route
+                              path="/change-password"
+                              element={
+                                <ProtectedRoute>
+                                  <ChangePasswordPage />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route path="/showroom" element={<ShowroomPage />} />
+                            {/* Login-bypassing, chrome-less live player for the native
                         iOS WKWebView. Auth comes from a JWT injected into
                         window.__CAMSTACK_EMBED__ before load — NO auth gate,
                         so it must stay OUTSIDE ProtectedRoute/AppLayout. */}
-                          <Route path="/embed/player" element={<EmbedPlayerPage />} />
-                          <Route
-                            element={
-                              <ProtectedRoute>
-                                <AddonIconsProvider>
-                                  <AppLayout />
-                                </AddonIconsProvider>
-                              </ProtectedRoute>
-                            }
-                          >
-                            <Route index element={<RestoreLastLocation />} />
-                            {/* Mounted inside AppLayout so the sidebar stays
+                            <Route path="/embed/player" element={<EmbedPlayerPage />} />
+                            <Route
+                              element={
+                                <ProtectedRoute>
+                                  <AddonIconsProvider>
+                                    <AppLayout />
+                                  </AddonIconsProvider>
+                                </ProtectedRoute>
+                              }
+                            >
+                              <Route index element={<RestoreLastLocation />} />
+                              {/* Mounted inside AppLayout so the sidebar stays
                           visible — operators landing here from a denied
                           deep-link can still reach pages they DO have
                           access to without a fresh login. */}
-                            <Route path="/access-denied" element={<AccessDeniedPage />} />
-                            <Route path="/dashboard" element={<Navigate to="/devices" replace />} />
-                            <Route path="/devices" element={<DevicesPage />} />
-                            {/* /cameras was the legacy entry — keep a redirect so
+                              <Route path="/access-denied" element={<AccessDeniedPage />} />
+                              <Route
+                                path="/dashboard"
+                                element={<Navigate to="/devices" replace />}
+                              />
+                              <Route path="/devices" element={<DevicesPage />} />
+                              {/* /cameras was the legacy entry — keep a redirect so
                           bookmarks + linked references resolve. */}
-                            <Route path="/cameras" element={<Navigate to="/devices" replace />} />
-                            <Route path="/integrations" element={<IntegrationsPage />} />
-                            <Route
-                              path="/integrations/:addonId"
-                              element={<IntegrationDetailPage />}
-                            />
-                            <Route
-                              path="/system/pipeline"
-                              element={
-                                <PageRequiresCapability path="/system/pipeline">
-                                  <PipelinePage />
-                                </PageRequiresCapability>
-                              }
-                            />
-                            {/* Pre-`/system` bookmarks and mistyped paths. */}
-                            <Route
-                              path="/pipeline"
-                              element={<Navigate to="/system/pipeline" replace />}
-                            />
-                            {/* The hub-served viewer, framed same-origin. `/live`, not
+                              <Route path="/cameras" element={<Navigate to="/devices" replace />} />
+                              <Route path="/integrations" element={<IntegrationsPage />} />
+                              <Route
+                                path="/integrations/:addonId"
+                                element={<IntegrationDetailPage />}
+                              />
+                              <Route
+                                path="/system/pipeline"
+                                element={
+                                  <PageRequiresCapability path="/system/pipeline">
+                                    <PipelinePage />
+                                  </PageRequiresCapability>
+                                }
+                              />
+                              {/* Pre-`/system` bookmarks and mistyped paths. */}
+                              <Route
+                                path="/pipeline"
+                                element={<Navigate to="/system/pipeline" replace />}
+                              />
+                              {/* The hub-served viewer, framed same-origin. `/live`, not
                           `/viewer`: that path is the hub's own redirect into the
                           viewer app and is excluded from the SPA fallback. */}
-                            <Route path="/live" element={<ViewerPage />} />
-                            <Route path="/devices/:deviceId" element={<DeviceDetailPage />} />
-                            <Route
-                              path="/system/logs"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <LogsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/addons"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <AddonsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/ai"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <AiProfilesPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/settings"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <SystemPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/nodes"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <ClusterPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/notifications"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <NotificationsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/history"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <HistoryPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/calendars"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <CalendarsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {/* Combined pages */}
-                            <Route
-                              path="/system/identity"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <IdentityPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {/* "My access" — every authenticated user can see their own
+                              <Route path="/live" element={<ViewerPage />} />
+                              <Route path="/devices/:deviceId" element={<DeviceDetailPage />} />
+                              <Route
+                                path="/system/logs"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <LogsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/addons"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <AddonsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/ai"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <AiProfilesPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/settings"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <SystemPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/nodes"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <ClusterPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/notifications"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <NotificationsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/history"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <HistoryPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/calendars"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <CalendarsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Combined pages */}
+                              <Route
+                                path="/system/identity"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <IdentityPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* "My access" — every authenticated user can see their own
                           scope grants (no admin gate). Useful for non-admin users to
                           troubleshoot 403s and verify what an admin granted them. */}
-                            <Route path="/system/my-access" element={<MyAccessPage />} />
-                            <Route
-                              path="/system/network"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <NetworkPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/integrations"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <SystemIntegrationsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/system/data"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <DataPage />
-                                </ProtectedRoute>
-                              }
-                            />
-
-                            {/* Former standalone System pages → their tab of System. */}
-                            <Route
-                              path="/system"
-                              element={<Navigate to={SYSTEM_PAGE_PATH} replace />}
-                            />
-                            <Route
-                              path="/system/terminal"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <TerminalPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {SYSTEM_LEGACY_ROUTES.map((r) => (
+                              <Route path="/system/my-access" element={<MyAccessPage />} />
                               <Route
-                                key={r.path}
-                                path={r.path}
-                                element={<SystemTabRedirect tab={r.tab} />}
+                                path="/system/network"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <NetworkPage />
+                                  </ProtectedRoute>
+                                }
                               />
-                            ))}
-                            {/* Legacy single-cap routes — redirect to combined page with the
+                              <Route
+                                path="/system/integrations"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <SystemIntegrationsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/data"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <DataPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+
+                              {/* Former standalone System pages → their tab of System. */}
+                              <Route
+                                path="/system"
+                                element={<Navigate to={SYSTEM_PAGE_PATH} replace />}
+                              />
+                              <Route
+                                path="/system/terminal"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <TerminalPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {SYSTEM_LEGACY_ROUTES.map((r) => (
+                                <Route
+                                  key={r.path}
+                                  path={r.path}
+                                  element={<SystemTabRedirect tab={r.tab} />}
+                                />
+                              ))}
+                              {/* Legacy single-cap routes — redirect to combined page with the
                           matching tab pre-selected. Operators with bookmarks land on the
                           right tab. */}
-                            <Route
-                              path="/system/users"
-                              element={<Navigate to="/system/identity?tab=users" replace />}
-                            />
-                            <Route
-                              path="/system/api-keys"
-                              element={<Navigate to="/system/identity?tab=api-keys" replace />}
-                            />
-                            <Route
-                              path="/system/authentication"
-                              element={
-                                <Navigate to={integrationHubHref('authentication')} replace />
-                              }
-                            />
-                            <Route
-                              path="/system/linked-sessions"
-                              element={
-                                <Navigate to="/system/identity?tab=linked-sessions" replace />
-                              }
-                            />
-                            <Route
-                              path="/system/remote-access"
-                              element={<Navigate to={integrationHubHref('remoteAccess')} replace />}
-                            />
-                            <Route
-                              path="/system/turn"
-                              element={<Navigate to={integrationHubHref('turn')} replace />}
-                            />
-                            <Route
-                              path="/system/storage"
-                              element={<Navigate to="/system/data?tab=storage" replace />}
-                            />
-                            <Route
-                              path="/system/backup"
-                              element={<Navigate to="/system/data?tab=backup" replace />}
-                            />
-                            <Route
-                              path="/library"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <LibraryPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {/* Legacy standalone Retrain route → Training addon page */}
-                            <Route
-                              path="/retrain"
-                              element={<Navigate to="/addon/training" replace />} // hub-path-ok: react-router redirect, not a URL
-                            />
-                            <Route
-                              path="/recordings"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <RecordingsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/build"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <BuildPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path={NEW_COMPOSITION_PATH}
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <CompositionEditorPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path={COMPOSITION_EDITOR_ROUTE}
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <CompositionEditorPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/locations"
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <LocationsPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {/* `/automation` became Build-your-self at `/build`. The
+                              <Route
+                                path="/system/users"
+                                element={<Navigate to="/system/identity?tab=users" replace />}
+                              />
+                              <Route
+                                path="/system/api-keys"
+                                element={<Navigate to="/system/identity?tab=api-keys" replace />}
+                              />
+                              <Route
+                                path="/system/authentication"
+                                element={
+                                  <Navigate to={integrationHubHref('authentication')} replace />
+                                }
+                              />
+                              <Route
+                                path="/system/linked-sessions"
+                                element={
+                                  <Navigate to="/system/identity?tab=linked-sessions" replace />
+                                }
+                              />
+                              <Route
+                                path="/system/remote-access"
+                                element={
+                                  <Navigate to={integrationHubHref('remoteAccess')} replace />
+                                }
+                              />
+                              <Route
+                                path="/system/turn"
+                                element={<Navigate to={integrationHubHref('turn')} replace />}
+                              />
+                              <Route
+                                path="/system/storage"
+                                element={<Navigate to="/system/data?tab=storage" replace />}
+                              />
+                              <Route
+                                path="/system/backup"
+                                element={<Navigate to="/system/data?tab=backup" replace />}
+                              />
+                              <Route
+                                path="/library"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <LibraryPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Legacy standalone Retrain route → Training addon page */}
+                              <Route
+                                path="/retrain"
+                                element={<Navigate to="/addon/training" replace />} // hub-path-ok: react-router redirect, not a URL
+                              />
+                              <Route
+                                path="/recordings"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <RecordingsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/build"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <BuildPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path={NEW_COMPOSITION_PATH}
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <CompositionEditorPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path={COMPOSITION_EDITOR_ROUTE}
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <CompositionEditorPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/locations"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <LocationsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* `/automation` became Build-your-self at `/build`. The
                           tab ids did NOT change, so the query string is carried
                           across rather than dropped. */}
-                            <Route
-                              path="/automation"
-                              element={<RedirectKeepingQuery to="/build" />}
-                            />
-                            <Route
-                              path="/addon/:pagePath" // hub-path-ok: router pattern, not a URL
-                              element={
-                                <ProtectedRoute requireAdmin>
-                                  <AddonPageLoader />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {/* Unknown in-app paths → Devices (not a blank "no routes" screen). */}
-                            <Route path="*" element={<Navigate to="/devices" replace />} />
-                          </Route>
-                        </Routes>
-                      </Suspense>
-                    </DeviceQuickDetailHost>
-                  </BrowserRouter>
-                  <ToastContainer />
-                </CustomFieldRenderersProvider>
-              </KeychainRevealHost>
-            </ConfirmDialogProvider>
-          </AppShell>
-        </AuthProvider>
-      </QueryClientProvider>
+                              <Route
+                                path="/automation"
+                                element={<RedirectKeepingQuery to="/build" />}
+                              />
+                              <Route
+                                path="/addon/:pagePath" // hub-path-ok: router pattern, not a URL
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <AddonPageLoader />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Unknown in-app paths → Devices (not a blank "no routes" screen). */}
+                              <Route path="*" element={<Navigate to="/devices" replace />} />
+                            </Route>
+                          </Routes>
+                        </Suspense>
+                      </DeviceQuickDetailHost>
+                    </BrowserRouter>
+                    <ToastContainer />
+                  </CustomFieldRenderersProvider>
+                </KeychainRevealHost>
+              </ConfirmDialogProvider>
+            </AppShell>
+          </AuthProvider>
+        </QueryClientProvider>
+      </HotkeyProvider>
     </ThemeProvider>
   )
 }

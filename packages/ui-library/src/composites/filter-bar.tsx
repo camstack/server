@@ -46,6 +46,7 @@ export function FilterBar({
             placeholder={searchFilter.placeholder ?? t('uiLibrary.filterBar.search', 'Search...')}
             value={(values[searchFilter.key] as string) ?? ''}
             onChange={(e) => handleChange(searchFilter.key, e.target.value)}
+            searchHotkey
             leftSlot={<Search className="h-3 w-3 text-foreground-subtle" />}
             className="flex-1"
           />
@@ -136,6 +137,7 @@ export function FilterBar({
                 placeholder={filter.placeholder ?? t('uiLibrary.filterBar.search', 'Search...')}
                 value={(values[filter.key] as string) ?? ''}
                 onChange={(e) => handleChange(filter.key, e.target.value)}
+                searchHotkey
                 leftSlot={<Search className="h-3 w-3 text-foreground-subtle" />}
                 className="w-48"
               />

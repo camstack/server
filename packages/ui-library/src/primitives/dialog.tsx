@@ -18,6 +18,7 @@ import { cva } from 'class-variance-authority'
 import { X } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { IconButton } from './icon-button'
+import { HotkeyScope } from '../hotkeys/hotkey-provider'
 
 interface DialogContextValue {
   open: boolean
@@ -275,7 +276,9 @@ export const DialogContent: ForwardRefExoticComponent<
           className="absolute right-4 top-4 z-10 shrink-0"
           onClick={() => setOpen(false)}
         />
-        {children}
+        <HotkeyScope id={contentId} modal enabled={open}>
+          {children}
+        </HotkeyScope>
       </dialog>
     )
   },

@@ -1,4 +1,5 @@
 export * from './composites'
+export * from './hotkeys'
 export * from './contexts/custom-field-renderers'
 export * from './contexts/device-context'
 export * from './contexts/device-quick-detail'

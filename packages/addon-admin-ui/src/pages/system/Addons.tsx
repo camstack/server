@@ -862,6 +862,7 @@ function InstalledTab({
         <div className="relative flex-1 min-w-0 sm:min-w-[200px]" ref={searchContainerRef}>
           <Input
             type="text"
+            searchHotkey
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value)
