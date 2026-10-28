@@ -11,13 +11,19 @@ import {
   IncompatibleApiVersionError,
   NegotiationFailedError,
   openEspHomeClient,
+  ServiceArgType,
   type Entity,
   type EspHomeClient,
+  type ExecuteServiceArgumentValue,
   type TelemetryEvent,
 } from 'esphome-client'
 import type { EspConnection } from './config.js'
 import {
   EspLinkError,
+  EspServiceError,
+  type EspServiceArgType,
+  type EspServiceArgValue,
+  type EspServiceInfo,
   type EspBoardInfo,
   type EspCommand,
   type EspEntity,
@@ -227,6 +233,49 @@ export function toEspState(event: TelemetryEvent): EspState | null {
   }
 }
 
+const SERVICE_ARG_TYPES: Readonly<Record<number, EspServiceArgType>> = {
+  [ServiceArgType.BOOL]: 'bool',
+  [ServiceArgType.INT]: 'int',
+  [ServiceArgType.FLOAT]: 'float',
+  [ServiceArgType.STRING]: 'string',
+  [ServiceArgType.BOOL_ARRAY]: 'bool[]',
+  [ServiceArgType.INT_ARRAY]: 'int[]',
+  [ServiceArgType.FLOAT_ARRAY]: 'float[]',
+  [ServiceArgType.STRING_ARRAY]: 'string[]',
+}
+
+function isArrayOf<T>(value: unknown, guard: (v: unknown) => v is T): value is readonly T[] {
+  return Array.isArray(value) && value.every(guard)
+}
+const isBool = (v: unknown): v is boolean => typeof v === 'boolean'
+const isNum = (v: unknown): v is number => typeof v === 'number'
+const isStr = (v: unknown): v is string => typeof v === 'string'
+
+/** One argument value in the wire library's tagged shape; null when it does not fit the type. */
+function toWireArg(
+  type: EspServiceArgType,
+  value: EspServiceArgValue,
+): ExecuteServiceArgumentValue | null {
+  switch (type) {
+    case 'bool':
+      return isBool(value) ? { boolValue: value } : null
+    case 'int':
+      return isNum(value) ? { intValue: value } : null
+    case 'float':
+      return isNum(value) ? { floatValue: value } : null
+    case 'string':
+      return isStr(value) ? { stringValue: value } : null
+    case 'bool[]':
+      return isArrayOf(value, isBool) ? { boolArray: [...value] } : null
+    case 'int[]':
+      return isArrayOf(value, isNum) ? { intArray: [...value] } : null
+    case 'float[]':
+      return isArrayOf(value, isNum) ? { floatArray: [...value] } : null
+    case 'string[]':
+      return isArrayOf(value, isStr) ? { stringArray: [...value] } : null
+  }
+}
+
 /** The real session over `esphome-client`. */
 class ClientLink implements EspLink {
   private readonly client: EspHomeClient
@@ -325,6 +374,49 @@ class ClientLink implements EspLink {
       case 'select':
         this.client.command(entityRef('select', id), { state: command.state })
         return
+    }
+  }
+
+  listServices(): readonly EspServiceInfo[] {
+    const out: EspServiceInfo[] = []
+    for (const service of this.client.services.list()) {
+      const args: { name: string; type: EspServiceArgType }[] = []
+      for (const arg of service.args) {
+        const type = SERVICE_ARG_TYPES[arg.type]
+        if (type !== undefined) args.push({ name: arg.name, type })
+      }
+      // A service with an argument type this library version cannot name is not offered.
+      if (args.length === service.args.length) {
+        out.push({ name: service.name, key: service.key, args })
+      }
+    }
+    return out
+  }
+
+  async executeService(
+    name: string,
+    args: Readonly<Record<string, EspServiceArgValue>>,
+  ): Promise<void> {
+    const service = this.listServices().find((s) => s.name === name)
+    if (service === undefined) {
+      throw new EspServiceError('unknown-service', `the board has no service '${name}'`)
+    }
+    const wire: ExecuteServiceArgumentValue[] = []
+    for (const arg of service.args) {
+      const value = args[arg.name]
+      const encoded = value === undefined ? null : toWireArg(arg.type, value)
+      if (encoded === null) {
+        throw new EspServiceError(
+          'bad-argument',
+          `argument '${arg.name}' of '${name}' must be ${arg.type}`,
+        )
+      }
+      wire.push(encoded)
+    }
+    try {
+      this.client.services.execute(service.key, wire)
+    } catch (err: unknown) {
+      throw new EspServiceError('send-failed', safeMessage(err))
     }
   }
 

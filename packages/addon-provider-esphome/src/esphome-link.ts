@@ -172,6 +172,55 @@ export class EspLinkError extends Error {
   }
 }
 
+/** Argument types of an ESPHome API user-defined service. */
+export type EspServiceArgType =
+  | 'bool'
+  | 'int'
+  | 'float'
+  | 'string'
+  | 'bool[]'
+  | 'int[]'
+  | 'float[]'
+  | 'string[]'
+
+export interface EspServiceArgInfo {
+  readonly name: string
+  readonly type: EspServiceArgType
+}
+
+/** One user-defined service (a YAML `api: actions:` entry) a board exposes. */
+export interface EspServiceInfo {
+  readonly name: string
+  readonly key: number
+  readonly args: readonly EspServiceArgInfo[]
+}
+
+/** A value passed for one service argument. */
+export type EspServiceArgValue =
+  | boolean
+  | number
+  | string
+  | readonly boolean[]
+  | readonly number[]
+  | readonly string[]
+
+/** Why a service call was refused before or while sending. */
+export type EspServiceFailureReason =
+  | 'not-connected'
+  | 'unknown-service'
+  | 'bad-argument'
+  | 'send-failed'
+
+export class EspServiceError extends Error {
+  readonly reason: EspServiceFailureReason
+
+  constructor(reason: EspServiceFailureReason, message: string) {
+    super(message)
+    this.name = 'EspServiceError'
+    this.reason = reason
+  }
+}
+
 /** One live session with one board. */
 export interface EspLink {
   entities(): readonly EspEntity[]
@@ -182,6 +231,13 @@ export interface EspLink {
   /** Fires once when the session ends; `null` cause = closed by us. */
   onClose(handler: (cause: EspLinkError | null) => void): () => void
   command(command: EspCommand): void
+  /** The user-defined services discovered on connect. */
+  listServices(): readonly EspServiceInfo[]
+  /**
+   * Run a service. `args` are already validated against {@link listServices} by
+   * the caller (`esphome-services.ts`); rejects with {@link EspServiceError}.
+   */
+  executeService(name: string, args: Readonly<Record<string, EspServiceArgValue>>): Promise<void>
   close(): Promise<void>
 }
 

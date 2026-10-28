@@ -6,6 +6,8 @@ import {
   type EspEntity,
   type EspLink,
   type EspLinkFactory,
+  type EspServiceArgValue,
+  type EspServiceInfo,
   type EspState,
 } from '../esphome-link.js'
 
@@ -42,6 +44,11 @@ export function entity(partial: Partial<EspEntity> & Pick<EspEntity, 'id' | 'typ
 /** A scripted board session. */
 export class FakeLink implements EspLink {
   readonly commands: EspCommand[] = []
+  readonly serviceCalls: {
+    name: string
+    args: Record<string, EspServiceArgValue>
+  }[] = []
+  services: readonly EspServiceInfo[] = []
   closed = false
   private states: EspState[]
   private readonly stateHandlers = new Set<(state: EspState) => void>()
@@ -77,6 +84,15 @@ export class FakeLink implements EspLink {
   }
   command(command: EspCommand): void {
     this.commands.push(command)
+  }
+  listServices(): readonly EspServiceInfo[] {
+    return this.services
+  }
+  async executeService(
+    name: string,
+    args: Readonly<Record<string, EspServiceArgValue>>,
+  ): Promise<void> {
+    this.serviceCalls.push({ name, args: { ...args } })
   }
   async close(): Promise<void> {
     if (this.closed) return

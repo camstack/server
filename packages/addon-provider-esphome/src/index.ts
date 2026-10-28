@@ -1,4 +1,5 @@
 export { ESPHomeProviderAddon } from './addon.js'
+export { espServiceActions as customActions } from './custom-actions.js'
 export { EspContainerDevice, espContainerSchema } from './devices/esp-container-device.js'
 export type { EspContainerConfig } from './devices/esp-container-device.js'
 export { espConnectionSchema, buildConnectionFormSchema } from './config.js'

@@ -5,6 +5,7 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  type AddonInitResult,
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
@@ -13,7 +14,6 @@ import {
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
   type SystemEvent,
 } from '@camstack/types'
 import { ESPHOME_DEFAULT_PORT, type EspAddonConfig, type EspBrokerEntry } from './config.js'
@@ -31,6 +31,11 @@ import { clientLinkFactory } from './esphome-client-link.js'
 import { browseBoards, proposeBoards } from './esphome-discovery.js'
 import { computeBrokerCleanup, linkBrokersToIntegrations } from './esphome-reconciler.js'
 import { EspContainerDevice } from './devices/esp-container-device.js'
+import { EspServiceRunner } from './esphome-services.js'
+import { espServiceActions } from './custom-actions.js'
+import type { EspServiceArgValue, EspServiceInfo } from './esphome-link.js'
+
+export { espServiceActions as customActions } from './custom-actions.js'
 
 const DEFAULTS: EspAddonConfig = { brokers: [] }
 
@@ -48,6 +53,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
   }
 
   private registry: EspBrokerRegistry | null = null
+  private services: EspServiceRunner | null = null
   private brokerStore: EspBrokerStore | null = null
   private activeBrokers: readonly EspBrokerEntry[] = []
 
@@ -55,7 +61,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     super({ ...DEFAULTS })
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult<typeof espServiceActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
     const records = this.ctx.records
@@ -86,11 +92,47 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     await this.reconcileIntegrationsToBrokers()
     this.subscribeIntegrationLifecycle()
 
-    return [
-      ...regs,
-      { capability: brokerCapability, provider: this.buildBrokerProvider() },
-      { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-    ]
+    const registry = this.registry
+    this.services = new EspServiceRunner({
+      getLink: (brokerId) => registry.getLink(brokerId),
+      logger: this.ctx.logger,
+    })
+
+    return {
+      providers: [
+        ...regs,
+        { capability: brokerCapability, provider: this.buildBrokerProvider() },
+        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
+      ],
+      customActions: espServiceActions,
+      actionHandlers: {
+        listServices: async (input) => this.listServices(input.brokerId),
+        executeService: async (input) => {
+          await this.executeService(input.brokerId, input.name, input.args)
+          return { ok: true }
+        },
+      },
+    }
+  }
+
+  /** The user-defined services a connected board exposes. Throws {@link EspServiceError} when it is not connected. */
+  listServices(boardId: string): readonly EspServiceInfo[] {
+    return this.requireServices().listServices(boardId)
+  }
+
+  /** Run a board's service; `deviceId` tags the log line when a device asks. */
+  executeService(
+    boardId: string,
+    name: string,
+    args: Readonly<Record<string, EspServiceArgValue>>,
+    deviceId?: number,
+  ): Promise<void> {
+    return this.requireServices().executeService(boardId, name, args, deviceId)
+  }
+
+  private requireServices(): EspServiceRunner {
+    if (!this.services) throw new Error('ESPHome provider not initialised')
+    return this.services
   }
 
   private async persistBrokerEntries(entries: readonly EspBrokerEntry[]): Promise<void> {

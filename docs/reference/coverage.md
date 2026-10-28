@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**217 units · 7302 source files · 205 units claimed by at least one document (7264 files).**
+**217 units · 7304 source files · 205 units claimed by at least one document (7266 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -63,11 +63,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0475-a-motion-episode-belongs-to-its-source-and-the-pipeline-never-overwrites-a-sensor.md`, +1 more | 2026-10-26 |
 | `packages/addon-provider-bosch/src/shc` | 28 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md` | 2026-10-26 |
 | `packages/develop` | 27 | — | `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
+| `packages/addon-provider-esphome` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md` | 2026-10-26 |
 | `packages/addon-provider-reolink/src/clips` | 26 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-20-clip-export.md` _(covers)_, +19 more | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +10 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
 | `packages/addon-notifiers` | 24 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md`, 1 ADR | 2026-10-07 |
-| `packages/addon-provider-esphome` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md` | 2026-10-26 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 24 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-08-05-home-assistant-native-export.md` _(covers)_, +5 more, 9 ADRs | 2026-10-26 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |
 | `packages/ui-library/src/primitives` | 24 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +3 more | 2026-10-26 |
