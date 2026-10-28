@@ -68,6 +68,7 @@ import { blankToNull, PRODUCT_VERSION_ENV } from './core/release-identity'
 import { RunnerBootCheckService } from './core/runner-health/runner-boot-check'
 import { clusterBaseUrlResolver, resolveHubBaseUrl } from './api/hub-cluster-url'
 import { buildModelDistributorProvider } from './api/model-distributor.js'
+import { dataPlaneReplayBody } from './api/data-plane/form-body.js'
 import { registerOauth2Routes } from './api/oauth2/oauth2-routes.js'
 import { registerEmbedAuthRoute } from './auth/embed-auth-route.js'
 import { liveUserCheck } from './auth/live-user.js'
@@ -1325,16 +1326,12 @@ async function bootstrap() {
             delete request.raw.headers[name]
         }
         if (shareHeaders !== null) Object.assign(request.raw.headers, shareHeaders)
+        const replayBody = dataPlaneReplayBody(request.raw, request.body, addonGateLogger)
+        if (replayBody === null) {
+          return reply.status(500).send({ error: 'Request body could not be forwarded' })
+        }
         // Take over the socket — `proxyToUpstream` drives the raw response.
         reply.hijack()
-        const replayBody =
-          request.body === undefined
-            ? undefined
-            : Buffer.isBuffer(request.body)
-              ? request.body
-              : Buffer.from(
-                  typeof request.body === 'string' ? request.body : JSON.stringify(request.body),
-                )
         proxyToUpstream({
           baseUrl: dpMatch.endpoint.baseUrl,
           secret: dpMatch.endpoint.secret,

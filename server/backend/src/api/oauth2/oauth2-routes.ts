@@ -16,6 +16,7 @@ import {
   shouldRedirectToLogin,
 } from '../../auth/session-cookie.js'
 import { resolveAppPageLang } from '../../auth/app-page-strings.js'
+import { registerFormBodyParser } from '../data-plane/form-body.js'
 import { renderConsentPage } from './consent-page.js'
 import { isPrivateHost } from './private-host.js'
 
@@ -555,31 +556,10 @@ async function readIntegrationRegistry(
   return { descriptors, pendingAddons }
 }
 
-/** Parse an application/x-www-form-urlencoded body string into a plain object. */
-function parseFormBody(raw: string): Record<string, string> {
-  const params = new URLSearchParams(raw)
-  const result: Record<string, string> = {}
-  for (const [key, value] of params.entries()) {
-    result[key] = value
-  }
-  return result
-}
-
 export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps): void {
-  // Register a content-type parser for application/x-www-form-urlencoded so that
-  // consent POST and token POST can read form bodies. @fastify/formbody is not in
-  // the project's dependencies; we use URLSearchParams (Node built-in) instead.
-  fastify.addContentTypeParser(
-    'application/x-www-form-urlencoded',
-    { parseAs: 'string' },
-    (_req, body, done) => {
-      try {
-        done(null, parseFormBody(body as string))
-      } catch (err) {
-        done(err as Error, undefined)
-      }
-    },
-  )
+  // Form bodies (consent POST, token POST): parsed object for these routes, raw
+  // bytes recorded for the data plane (api/data-plane/form-body.ts).
+  registerFormBodyParser(fastify)
 
   // ─── GET /api/oauth2/authorize ────────────────────────────────────────────
   // Mounted under /api/* so it is naturally excluded from the SPA catch-all,
