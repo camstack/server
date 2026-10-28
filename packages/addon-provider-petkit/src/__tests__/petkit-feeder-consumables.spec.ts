@@ -25,6 +25,9 @@ function slice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
     indicatorLight: true,
     feedSound: false,
     volume: 1,
+    lastFeedGrams: null,
+    lastFeedHopper1: null,
+    lastFeedHopper2: null,
     lastFetchedAt: 1,
     ...overrides,
   }

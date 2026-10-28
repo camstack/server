@@ -118,6 +118,30 @@ export const petkitFeederDeviceSchema = z.object({
   model: z.string().optional().describe('PetKit model string'),
   system: z.literal('petkit').optional(),
   name: z.string().optional(),
+  lastFeedGrams: z
+    .number()
+    .int()
+    .min(4)
+    .max(200)
+    .nullable()
+    .optional()
+    .describe('Last manual-feed portion (single hopper)'),
+  lastFeedHopper1: z
+    .number()
+    .int()
+    .min(4)
+    .max(200)
+    .nullable()
+    .optional()
+    .describe('Last manual-feed portion, hopper 1'),
+  lastFeedHopper2: z
+    .number()
+    .int()
+    .min(4)
+    .max(200)
+    .nullable()
+    .optional()
+    .describe('Last manual-feed portion, hopper 2'),
 })
 
 export type PetkitFeederDeviceConfig = z.infer<typeof petkitFeederDeviceSchema>

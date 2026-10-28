@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import type { PetFeederStatus } from '@camstack/types'
 import { PetFeederInlineControl, PetFeederHeroCard } from '../pet-feeder-panel'
 
@@ -26,6 +26,9 @@ function makeSlice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
     indicatorLight: true,
     feedSound: true,
     volume: 3,
+    lastFeedGrams: null,
+    lastFeedHopper1: null,
+    lastFeedHopper2: null,
     lastFetchedAt: 0,
     ...overrides,
   }
@@ -243,5 +246,68 @@ describe('PetFeederHeroCard', () => {
     mockResult = { ...mockResult, slice: makeSlice({ error: 'Food tank empty' }) }
     rerender(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('Food tank empty')).toBeTruthy()
+  })
+})
+
+/** The manual-feed stepper's grams, read from its own readout. */
+function portionGrams(): number {
+  const node = document.querySelector('span.w-12')
+  return Number(node?.firstChild?.textContent)
+}
+
+describe('PetFeederHeroCard manual-feed portion', () => {
+  it('starts from the last manual feed the device remembers', () => {
+    mockResult.slice = makeSlice({ lastFeedGrams: 45 })
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('45')).toBeTruthy()
+    fireEvent.click(screen.getByText('Feed'))
+    expect(feed).toHaveBeenCalledWith({ grams: 45 })
+  })
+
+  it('steps locally and instantly, and a slice refresh does not move it back', () => {
+    mockResult.slice = makeSlice({ lastFeedGrams: 45 })
+    const { rerender } = render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    fireEvent.click(screen.getByLabelText('Increase Manual feed portion'))
+    fireEvent.click(screen.getByLabelText('Increase Manual feed portion'))
+    expect(screen.getByText('47')).toBeTruthy()
+    // The server slice arrives again with the OLD remembered value.
+    mockResult.slice = makeSlice({ lastFeedGrams: 45, lastFetchedAt: 5 })
+    rerender(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('47')).toBeTruthy()
+    expect(feed).not.toHaveBeenCalled()
+  })
+
+  it('keeps stepping while a feed is in progress (only Feed is gated)', () => {
+    mockResult.slice = makeSlice({ feeding: true })
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    const inc = screen.getByLabelText('Increase Manual feed portion')
+    expect((inc as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('holding the button repeats and speeds up; releasing stops', () => {
+    vi.useFakeTimers()
+    try {
+      render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+      const inc = screen.getByLabelText('Increase Manual feed portion')
+      fireEvent.pointerDown(inc, { button: 0 })
+      expect(screen.getByText('21')).toBeTruthy()
+      act(() => {
+        vi.advanceTimersByTime(350 + 70 * 3)
+      })
+      expect(screen.getByText('24')).toBeTruthy()
+      act(() => {
+        vi.advanceTimersByTime(70 * 10)
+      })
+      // 5 more single steps (to 29), then 5 g steps.
+      expect(portionGrams()).toBeGreaterThan(40)
+      fireEvent.pointerUp(inc)
+      const before = portionGrams()
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+      expect(portionGrams()).toBe(before)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

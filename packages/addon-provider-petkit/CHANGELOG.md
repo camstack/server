@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pet feeder remembers the last manual feed per device and uses it as the next default
+
 ## [0.2.152] - 2026-10-28
 
 ### Changed

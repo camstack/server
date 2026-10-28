@@ -12,6 +12,37 @@ import type { PetFeederStatus } from '@camstack/types'
  * the vendor→cap vocabulary translation.
  */
 
+/** The portions of the last manual feed the operator sent (persisted per
+ *  device by the device class); `null` = never sent. */
+export interface LastFeedPortions {
+  readonly grams: number | null
+  readonly hopper1: number | null
+  readonly hopper2: number | null
+}
+
+export const NO_LAST_FEED: LastFeedPortions = { grams: null, hopper1: null, hopper2: null }
+
+/** The device-config keys that remember a manual feed. */
+export type FeedMemoryPatch = {
+  readonly lastFeedGrams?: number
+  readonly lastFeedHopper1?: number
+  readonly lastFeedHopper2?: number
+}
+
+/** What to remember after a manual feed: only the portions that were fed, so a
+ *  one-hopper feed on a dual-hopper model keeps the other hopper's memory. */
+export function feedMemoryPatch(feed: {
+  readonly grams?: number
+  readonly hopper1?: number
+  readonly hopper2?: number
+}): FeedMemoryPatch {
+  return {
+    ...(feed.grams !== undefined ? { lastFeedGrams: feed.grams } : {}),
+    ...(feed.hopper1 !== undefined ? { lastFeedHopper1: feed.hopper1 } : {}),
+    ...(feed.hopper2 !== undefined ? { lastFeedHopper2: feed.hopper2 } : {}),
+  }
+}
+
 /** Decoded connectivity / power status — the non-null half of the cap enum. */
 export type PetFeederDeviceStatus = NonNullable<PetFeederStatus['status']>
 
@@ -152,7 +183,11 @@ function desiccantSeconds(days: number | null): number | null {
  * Map a {@link FeederReading} to the full `pet-feeder` cap status slice.
  * Pure: same reading + timestamp in → same slice out.
  */
-export function mapFeederToStatus(reading: FeederReading, now: number): PetFeederStatus {
+export function mapFeederToStatus(
+  reading: FeederReading,
+  now: number,
+  lastFeed: LastFeedPortions = NO_LAST_FEED,
+): PetFeederStatus {
   const foodLevel = resolveFoodLevel(reading)
   return {
     foodLevel,
@@ -174,6 +209,9 @@ export function mapFeederToStatus(reading: FeederReading, now: number): PetFeede
     indicatorLight: reading.indicatorLight ?? false,
     feedSound: reading.feedSound ?? false,
     volume: reading.volume ?? 0,
+    lastFeedGrams: lastFeed.grams,
+    lastFeedHopper1: lastFeed.hopper1,
+    lastFeedHopper2: lastFeed.hopper2,
     lastFetchedAt: now,
   }
 }
@@ -184,7 +222,10 @@ export function mapFeederToStatus(reading: FeederReading, now: number): PetFeede
  * is known from the persisted device type so the two-hopper UI gates
  * correctly before the first poll.
  */
-export function coldStartFeederStatus(isDualHopper: boolean): PetFeederStatus {
+export function coldStartFeederStatus(
+  isDualHopper: boolean,
+  lastFeed: LastFeedPortions = NO_LAST_FEED,
+): PetFeederStatus {
   return {
     foodLevel: null,
     bowlFood: null,
@@ -205,6 +246,9 @@ export function coldStartFeederStatus(isDualHopper: boolean): PetFeederStatus {
     indicatorLight: false,
     feedSound: false,
     volume: 0,
+    lastFeedGrams: lastFeed.grams,
+    lastFeedHopper1: lastFeed.hopper1,
+    lastFeedHopper2: lastFeed.hopper2,
     lastFetchedAt: 0,
   }
 }

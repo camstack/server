@@ -30,6 +30,9 @@ describe('PetFeederStatusSchema', () => {
       indicatorLight: true,
       feedSound: true,
       volume: 3,
+      lastFeedGrams: null,
+      lastFeedHopper1: null,
+      lastFeedHopper2: null,
       lastFetchedAt: 1234,
     }
     expect(PetFeederStatusSchema.parse(status)).toEqual(status)
@@ -56,6 +59,9 @@ describe('PetFeederStatusSchema', () => {
       indicatorLight: false,
       feedSound: false,
       volume: 1,
+      lastFeedGrams: null,
+      lastFeedHopper1: null,
+      lastFeedHopper2: null,
       lastFetchedAt: 5678,
     }
     expect(PetFeederStatusSchema.parse(status)).toEqual(status)
@@ -82,6 +88,9 @@ describe('PetFeederStatusSchema', () => {
       indicatorLight: false,
       feedSound: false,
       volume: 0,
+      lastFeedGrams: null,
+      lastFeedHopper1: null,
+      lastFeedHopper2: null,
       lastFetchedAt: 0,
     })
     expect(() => PetFeederStatusSchema.parse({ ...base, batteryPower: 120 })).toThrow()

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pet feeder: the status carries the last manual-feed portion so a client can start from it
+
 ## [1.2.440] - 2026-10-28
 
 ### Changed

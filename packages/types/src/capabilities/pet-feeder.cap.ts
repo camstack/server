@@ -112,6 +112,14 @@ export const PetFeederStatusSchema = z.object({
   feedSound: z.boolean(),
   /** Speaker / prompt volume level (device-scaled integer). */
   volume: z.number().meta(readingMeta('none')),
+  /** Portion (grams) of the last manual feed sent from a single-hopper
+   *  stepper — the default the next manual feed starts from. Persisted per
+   *  device by the provider; null until a manual feed has been sent. */
+  lastFeedGrams: gramsPortion.nullable(),
+  /** Hopper-1 portion of the last manual feed (dual-hopper); null until sent. */
+  lastFeedHopper1: gramsPortion.nullable(),
+  /** Hopper-2 portion of the last manual feed (dual-hopper); null until sent. */
+  lastFeedHopper2: gramsPortion.nullable(),
   /** Ms epoch when the slice was last refreshed from the cloud. */
   lastFetchedAt: z.number(),
 })

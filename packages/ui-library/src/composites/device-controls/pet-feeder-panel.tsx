@@ -18,7 +18,7 @@
  * the row and hero never diverge. Actions are gated on `available`.
  */
 import { useUiText } from '../../contexts/ui-text'
-import { useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
   BatteryMedium,
@@ -49,6 +49,13 @@ const VOLUME_MAX = 9
 /** Amber kibble accent for the bowl fill; destructive red when low. */
 const KIBBLE = '#f59e0b'
 const KIBBLE_LOW = '#ef4444'
+
+/** Hold-to-repeat timing: first repeat after HOLD_DELAY_MS, then every
+ *  HOLD_INTERVAL_MS, and after HOLD_ACCEL_AFTER repeats the step grows to 5 g. */
+const HOLD_DELAY_MS = 350
+const HOLD_INTERVAL_MS = 70
+const HOLD_ACCEL_AFTER = 8
+const HOLD_FAST_STEP = 5
 
 function clampPortion(grams: number): number {
   return Math.min(PET_FEEDER_MANUAL_FEED_MAX, Math.max(PET_FEEDER_MANUAL_FEED_MIN, grams))
@@ -81,9 +88,12 @@ export function PetFeederPanel({
     enabled: optimistic ?? true,
   })
 
-  const [portion, setPortion] = useState(DEFAULT_PORTION)
-  const [hopper1, setHopper1] = useState(DEFAULT_PORTION)
-  const [hopper2, setHopper2] = useState(DEFAULT_PORTION)
+  // The stepper is local state the moment the operator touches it; until then
+  // it starts from the last manual feed the device remembers. Taps never wait
+  // for the server and a slice refresh never moves a value the operator set.
+  const [portion, setPortion] = usePortion(display?.lastFeedGrams ?? null)
+  const [hopper1, setHopper1] = usePortion(display?.lastFeedHopper1 ?? null)
+  const [hopper2, setHopper2] = usePortion(display?.lastFeedHopper2 ?? null)
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -356,7 +366,8 @@ export function PetFeederPanel({
             label={t('uiLibrary.petFeeder.decreaseVolume', 'Decrease volume')}
             symbol="−"
             disabled={busy || display.volume <= 0}
-            onClick={() => {
+            repeat={false}
+            onStep={() => {
               const next = Math.max(0, display.volume - 1)
               applyOptimistic({ volume: next })
               void cap.setVolume({ level: next })
@@ -369,7 +380,8 @@ export function PetFeederPanel({
             label={t('uiLibrary.petFeeder.increaseVolume', 'Increase volume')}
             symbol="+"
             disabled={busy || display.volume >= VOLUME_MAX}
-            onClick={() => {
+            repeat={false}
+            onStep={() => {
               const next = Math.min(VOLUME_MAX, display.volume + 1)
               applyOptimistic({ volume: next })
               void cap.setVolume({ level: next })
@@ -382,6 +394,26 @@ export function PetFeederPanel({
 }
 
 // ── Building blocks ───────────────────────────────────────────────────────────
+
+/**
+ * Local manual-feed portion. `null` = untouched: the value follows the device's
+ * remembered last feed (or the default) and picks it up when the slice arrives;
+ * once the operator steps it, the local value wins and stays put.
+ */
+function usePortion(
+  remembered: number | null,
+): readonly [number, (update: (current: number) => number) => void] {
+  const [local, setLocal] = useState<number | null>(null)
+  const value = local ?? remembered ?? DEFAULT_PORTION
+  const valueRef = useRef(value)
+  valueRef.current = value
+  const set = useCallback((update: (current: number) => number): void => {
+    const next = clampPortion(update(valueRef.current))
+    valueRef.current = next
+    setLocal(next)
+  }, [])
+  return [value, set]
+}
 
 /** Labelled control group — a small uppercase header above its control. */
 function Field({
@@ -483,7 +515,7 @@ interface HopperFeedProps {
   readonly label: string
   readonly grams: number
   readonly busy: boolean
-  readonly onGrams: (grams: number) => void
+  readonly onGrams: (update: (current: number) => number) => void
   readonly onFeed: () => void
 }
 
@@ -502,8 +534,9 @@ function HopperFeed({ label, grams, busy, onGrams, onFeed }: HopperFeedProps): R
               label,
             })}
             symbol="−"
-            disabled={busy || grams <= PET_FEEDER_MANUAL_FEED_MIN}
-            onClick={() => onGrams(clampPortion(grams - 1))}
+            large
+            disabled={grams <= PET_FEEDER_MANUAL_FEED_MIN}
+            onStep={(step) => onGrams((current) => current - step)}
           />
           <span className="w-12 text-center text-sm font-semibold tabular-nums text-foreground">
             {grams}
@@ -514,8 +547,9 @@ function HopperFeed({ label, grams, busy, onGrams, onFeed }: HopperFeedProps): R
               label,
             })}
             symbol="+"
-            disabled={busy || grams >= PET_FEEDER_MANUAL_FEED_MAX}
-            onClick={() => onGrams(clampPortion(grams + 1))}
+            large
+            disabled={grams >= PET_FEEDER_MANUAL_FEED_MAX}
+            onStep={(step) => onGrams((current) => current + step)}
           />
         </div>
         <button
@@ -535,26 +569,77 @@ function HopperFeed({ label, grams, busy, onGrams, onFeed }: HopperFeedProps): R
   )
 }
 
-/** Circular ± button. */
+/**
+ * Circular ± button. Pressing steps once at once; holding repeats (and speeds
+ * up) so a large change is one gesture, not dozens of taps. `repeat={false}`
+ * makes it a plain one-shot button (the volume steppers). A keyboard activation
+ * (click without a pointer press, `detail === 0`) steps once.
+ */
 function RoundStep({
   label,
   symbol,
   disabled,
-  onClick,
+  onStep,
+  repeat = true,
+  large = false,
 }: {
   readonly label: string
   readonly symbol: string
   readonly disabled: boolean
-  readonly onClick: () => void
+  /** Called with the step size (1, or {@link HOLD_FAST_STEP} while held). */
+  readonly onStep: (step: number) => void
+  readonly repeat?: boolean
+  readonly large?: boolean
 }): ReactNode {
+  const stepRef = useRef(onStep)
+  stepRef.current = onStep
+  const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loopRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stop = useCallback((): void => {
+    if (delayRef.current !== null) clearTimeout(delayRef.current)
+    if (loopRef.current !== null) clearInterval(loopRef.current)
+    delayRef.current = null
+    loopRef.current = null
+  }, [])
+  useEffect(() => stop, [stop])
+  useEffect(() => {
+    if (disabled) stop()
+  }, [disabled, stop])
+
+  const start = (): void => {
+    if (disabled) return
+    stepRef.current(1)
+    if (!repeat) return
+    let repeats = 0
+    delayRef.current = setTimeout(() => {
+      loopRef.current = setInterval(() => {
+        repeats += 1
+        stepRef.current(repeats > HOLD_ACCEL_AFTER ? HOLD_FAST_STEP : 1)
+      }, HOLD_INTERVAL_MS)
+    }, HOLD_DELAY_MS)
+  }
+
   return (
     <button
       type="button"
       aria-label={label}
       disabled={disabled}
-      onClick={onClick}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return
+        start()
+      }}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      onClick={(e) => {
+        // A pointer press already stepped in onPointerDown.
+        if (e.detail === 0 && !disabled) stepRef.current(1)
+      }}
       className={cn(
-        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-base leading-none text-foreground-subtle transition-colors hover:bg-surface-hover hover:text-foreground active:scale-95',
+        'flex shrink-0 touch-manipulation select-none items-center justify-center rounded-full border border-border bg-surface leading-none text-foreground-subtle transition-colors hover:bg-surface-hover hover:text-foreground active:bg-surface-hover',
+        large ? 'h-9 w-9 text-xl' : 'h-7 w-7 text-base',
         disabled && 'opacity-40 cursor-not-allowed',
       )}
     >

@@ -5,6 +5,7 @@ import {
   decodeFeederStatus,
   type FeederReading,
   mapFeederToStatus,
+  feedMemoryPatch,
   PETKIT_POWER_MODE_BATTERY,
   PETKIT_POWER_MODE_MAINS,
 } from '../petkit-feeder-mapping.js'
@@ -132,6 +133,9 @@ describe('mapFeederToStatus — single hopper', () => {
       indicatorLight: true,
       feedSound: true,
       volume: 3,
+      lastFeedGrams: null,
+      lastFeedHopper1: null,
+      lastFeedHopper2: null,
       lastFetchedAt: NOW,
     })
   })
@@ -218,5 +222,41 @@ describe('coldStartFeederStatus', () => {
     expect(cold.supportsMarkRefilled).toBe(false)
     expect(cold.isDualHopper).toBe(true)
     expect(cold.lastFetchedAt).toBe(0)
+  })
+})
+
+describe('last manual feed memory', () => {
+  it('the slice carries the remembered portions; none remembered is null', () => {
+    const fresh = mapFeederToStatus(singleHopperReading(), NOW)
+    expect([fresh.lastFeedGrams, fresh.lastFeedHopper1, fresh.lastFeedHopper2]).toEqual([
+      null,
+      null,
+      null,
+    ])
+    const slice = mapFeederToStatus(singleHopperReading(), NOW, {
+      grams: 45,
+      hopper1: 30,
+      hopper2: null,
+    })
+    expect([slice.lastFeedGrams, slice.lastFeedHopper1, slice.lastFeedHopper2]).toEqual([
+      45,
+      30,
+      null,
+    ])
+  })
+
+  it('the cold-start slice already shows the remembered portion', () => {
+    expect(
+      coldStartFeederStatus(false, { grams: 60, hopper1: null, hopper2: null }).lastFeedGrams,
+    ).toBe(60)
+  })
+
+  it('remembers only the portions that were fed', () => {
+    expect(feedMemoryPatch({ grams: 45 })).toEqual({ lastFeedGrams: 45 })
+    expect(feedMemoryPatch({ hopper2: 20 })).toEqual({ lastFeedHopper2: 20 })
+    expect(feedMemoryPatch({ hopper1: 10, hopper2: 12 })).toEqual({
+      lastFeedHopper1: 10,
+      lastFeedHopper2: 12,
+    })
   })
 })

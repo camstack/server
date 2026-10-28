@@ -4759,6 +4759,9 @@ Enum: `"f32le" \| "s16le"`
 - `indicatorLight`: `boolean`
 - `feedSound`: `boolean`
 - `volume`: `number`
+- `lastFeedGrams`: `number \| null`
+- `lastFeedHopper1`: `number \| null`
+- `lastFeedHopper2`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `PickedCamStreamSchema`

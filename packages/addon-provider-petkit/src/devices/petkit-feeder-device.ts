@@ -13,6 +13,9 @@ import { petkitFeederDeviceSchema } from '../config.js'
 import {
   coldStartFeederStatus,
   type FeederReading,
+  feedMemoryPatch,
+  type FeedMemoryPatch,
+  type LastFeedPortions,
   mapFeederToStatus,
   supportsFoodReplenished,
 } from '../petkit-feeder-mapping.js'
@@ -167,6 +170,27 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     void this.updateSourceInfo({ id: this.petkitDeviceId, system: 'petkit' })
   }
 
+  /** The last manual-feed portions, persisted in the device's own config. */
+  private lastFeed(): LastFeedPortions {
+    return {
+      grams: this.config.get('lastFeedGrams') ?? null,
+      hopper1: this.config.get('lastFeedHopper1') ?? null,
+      hopper2: this.config.get('lastFeedHopper2') ?? null,
+    }
+  }
+
+  /** Remember what the operator just fed, so the next manual feed starts there. */
+  private async rememberFeed(patch: FeedMemoryPatch): Promise<void> {
+    try {
+      await this.config.setAll(patch)
+    } catch (err: unknown) {
+      this.ctx.logger.warn('petkit feeder: could not persist the last manual feed', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
   private resolveHandle(): FeederDevice | null {
     return petkitConnections.getDevice(this.integrationId, this.petkitDeviceId)
   }
@@ -185,7 +209,10 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     await super.onActivate()
     this.registerCap()
     this.registerConsumablesCap()
-    this.runtimeState.setCapState(PET_FEEDER_CAP, coldStartFeederStatus(this.dualHopper))
+    this.runtimeState.setCapState(
+      PET_FEEDER_CAP,
+      coldStartFeederStatus(this.dualHopper, this.lastFeed()),
+    )
     // Re-poll whenever the account surface is (re)published (restore may race
     // the account login, so the handle can be null at activate time).
     this.surfaceUnsub = petkitConnections.onSurface(this.integrationId, () => {
@@ -233,7 +260,7 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     const reading = extractFeederReading(handle)
     this.logBowlSourceOnce(handle)
     const now = Date.now()
-    const status = mapFeederToStatus(reading, now)
+    const status = mapFeederToStatus(reading, now, this.lastFeed())
     this.runtimeState.setCapState(PET_FEEDER_CAP, status)
     writeFeederConsumables(this.runtimeState, status, now)
     this.markOnline(reading.online)
@@ -316,8 +343,10 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
             ...(hopper1 !== undefined ? { hopper1 } : {}),
             ...(hopper2 !== undefined ? { hopper2 } : {}),
           })
+          await this.rememberFeed(feedMemoryPatch({ hopper1, hopper2 }))
         } else if (grams !== undefined) {
           await handle.feed(grams)
+          await this.rememberFeed(feedMemoryPatch({ grams }))
         } else {
           throw new Error('petkit feed: one of grams / hopper1 / hopper2 is required')
         }

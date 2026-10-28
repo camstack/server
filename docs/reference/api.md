@@ -3500,7 +3500,7 @@
 
 ### `pet-feeder` → `petFeeder.*`
 
-- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:121`
+- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:129`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-feeder`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IPetFeederProvider`
