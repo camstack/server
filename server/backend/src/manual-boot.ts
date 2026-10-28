@@ -8,7 +8,11 @@
 
 import { randomUUID } from 'node:crypto'
 import * as path from 'node:path'
-import { AddonDepsManager, ConsoleDestination } from '@camstack/system'
+import {
+  AddonDepsManager,
+  ConsoleDestination,
+  setHuggingFaceReachabilityObserver,
+} from '@camstack/system'
 import type { ILocalNetworkProvider } from '@camstack/types'
 import { EventCategory, memoizePinnedFfmpeg, ServerPackageStatusSchema } from '@camstack/types'
 import type { FastifyInstance } from 'fastify'
@@ -57,6 +61,7 @@ import {
   type AgentStatusBroker,
   fetchAgentInstalledPackages,
 } from './core/updates/agent-installed-packages.js'
+import { RegistryReachabilityTracker } from './core/updates/registry-reachability.js'
 import { UpdateCheckScheduler } from './core/updates/update-check-scheduler.js'
 import { WrapperUpdateChecker } from './core/updates/wrapper-update-checker.js'
 
@@ -420,6 +425,24 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
       const status: unknown = await proxy['getServerPackageStatus']?.({})
       return ServerPackageStatusSchema.parse(status)
     },
+  })
+  // npm / Hugging Face unreachable → one critical alert episode. No clock of
+  // its own: npm is heard from the sweep below, Hugging Face from the model
+  // downloads this process makes anyway.
+  const registryReachability = new RegistryReachabilityTracker({
+    logger: updateCheckLogger,
+    getAlerts: () =>
+      addonRegistryService.getCapabilityRegistry().getSingleton('alerts') ??
+      undefined,
+  })
+  addonPackageService.setNpmReachabilityObserver({
+    reached: () => registryReachability.reached('npm'),
+    failed: (reason) => registryReachability.failed('npm', reason),
+  })
+  setHuggingFaceReachabilityObserver((outcome) => {
+    void (outcome.reached
+      ? registryReachability.reached('huggingface')
+      : registryReachability.failed('huggingface', outcome.detail))
   })
   const updateCheckScheduler = new UpdateCheckScheduler({
     logger: updateCheckLogger,

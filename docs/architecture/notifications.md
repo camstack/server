@@ -2189,6 +2189,18 @@ Template variables: `{{title}}`, `{{message}}`, `{{severity}}`, `{{category}}`,
 `{{actionUrl}}` (the alert's own action link, empty when it has none). The
 `nodeIds` filter applies when the alert names a node.
 
+**A registry the hub cannot reach is one such alert.** npm and Hugging Face
+outages raise a `critical` alert `registry-unreachable:<npm|huggingface>`
+(category `registry.unreachable`, source `registry`), so a rule on
+`alert-critical` / `alert-critical-resolved` tells the phone and the recovery.
+`RegistryReachabilityTracker` (`server/backend/src/core/updates`) has no clock:
+npm is heard from the hub's addon sweep (one sweep is one probe: lookups made and
+none answered), Hugging Face from the model downloads the hub process makes
+(`setHuggingFaceReachabilityObserver`; a 404 is a missing file, a throw or 5xx is
+an outage). It opens on the second consecutive failure when the first is at least
+10 minutes old, and resolves on the first success. The alert text is English, as
+for every alert-centre emitter.
+
 **One notification per EPISODE.** The alert centre stamps `metadata.episodeId`
 when an alert opens and keeps it through every re-emit while the alert is open
 (whatever `createdAt` the emitter re-stamps); completing or dismissing it closes

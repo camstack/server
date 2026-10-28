@@ -169,6 +169,7 @@ export { WinstonDestination, WinstonLoggingAddon } from './builtins/winston-logg
 export { ModelDownloadService } from './download/model-download-service.js'
 export type {
   DownloadProgressCallback,
+  HuggingFaceReachabilityOutcome,
   ModelRevisionAdoption,
   RevisionWeightFile,
 } from './download/model-downloader.js'
@@ -184,6 +185,7 @@ export {
   isModelDownloaded,
   resolveFormatRevision,
   revisionWeightUrl,
+  setHuggingFaceReachabilityObserver,
 } from './download/model-downloader.js'
 export { EventBus } from './events/event-bus.js'
 export type {

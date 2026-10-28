@@ -207,6 +207,15 @@ interface AutoUpdateConfig {
 interface AddonUpdateSweep {
   readonly updates: readonly PackageUpdate[]
   readonly failures: number
+  /** Registry lookups attempted, and how many of them got an answer. */
+  readonly lookups: number
+  readonly reached: number
+}
+
+/** Hears whether a sweep's registry lookups reached npm at all. */
+export interface NpmReachabilityObserver {
+  reached(): Promise<void>
+  failed(reason: string): Promise<void>
 }
 
 export type RegistryLookup =
@@ -319,6 +328,7 @@ export class AddonPackageService {
    * the scheduler's dependencies back.
    */
   private updateCheckRescheduler: (() => void) | null = null
+  private npmReachability: NpmReachabilityObserver | null = null
 
   // -- Timing constants -----------------------------------------------------
   // Short TTL — operators expect to see freshly-published versions
@@ -1695,6 +1705,11 @@ export class AddonPackageService {
   // Auto-update settings
   // =========================================================================
 
+  /** The hub's npm sweep reports whether the registry answered at all (alert on an outage). */
+  setNpmReachabilityObserver(observer: NpmReachabilityObserver): void {
+    this.npmReachability = observer
+  }
+
   /**
    * Register the availability poller's re-arm hook. Called once at boot so a
    * `setAutoUpdateSettings` write takes effect without a restart.
@@ -1996,7 +2011,11 @@ export class AddonPackageService {
     const updates: PackageUpdate[] = []
     let failures = 0
 
-    if (!fs.existsSync(addonsDir)) return { updates, failures }
+    let lookups = 0
+    let reached = 0
+    let lastLookupError = ''
+
+    if (!fs.existsSync(addonsDir)) return { updates, failures, lookups, reached }
 
     // Collect all package.json paths -- handles both flat and scoped layouts
     const pkgJsonPaths: string[] = []
@@ -2042,6 +2061,9 @@ export class AddonPackageService {
         }
 
         const lookup = await this.lookupLatestVersion(name)
+        lookups += 1
+        if (lookup.ok) reached += 1
+        else lastLookupError = lookup.error
         if (!lookup.ok) {
           failures += 1
           this.logger.warn('Registry lookup failed for installed addon package', {
@@ -2074,7 +2096,21 @@ export class AddonPackageService {
       }
     }
 
-    return { updates, failures }
+    this.reportNpmReachability(lookups, reached, lastLookupError)
+    return { updates, failures, lookups, reached }
+  }
+
+  /**
+   * One sweep is one probe: npm is unreachable only when lookups were made and
+   * NONE got an answer. A sweep with no lookups says nothing either way.
+   */
+  private reportNpmReachability(lookups: number, reached: number, lastError: string): void {
+    const observer = this.npmReachability
+    if (observer === null || lookups === 0) return
+    const report = reached > 0 ? observer.reached() : observer.failed(lastError)
+    void report.catch((error: unknown) => {
+      this.logger.warn('npm reachability report failed', { meta: { error: errMsg(error) } })
+    })
   }
 
   // =========================================================================

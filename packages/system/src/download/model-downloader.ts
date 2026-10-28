@@ -61,6 +61,56 @@ function buildHeaders(_url: string): Record<string, string> {
   return { 'User-Agent': 'CamStack/1.0' }
 }
 
+/**
+ * What one request to Hugging Face says about reaching it: `reached` is true
+ * when the host ANSWERED with anything below 500 (a 404 is a missing file, not
+ * an outage) and false for a network error, a timeout or a 5xx.
+ */
+export interface HuggingFaceReachabilityOutcome {
+  readonly reached: boolean
+  readonly detail: string
+}
+
+type HuggingFaceReachabilityObserver = (outcome: HuggingFaceReachabilityOutcome) => void
+
+let huggingFaceObserver: HuggingFaceReachabilityObserver | null = null
+
+/**
+ * Register the one observer of Hugging Face reachability in THIS process (the
+ * hub wires it to the registry-unreachable alert). Pass `null` to clear. No
+ * polling: it only hears the downloads that were being made anyway.
+ */
+export function setHuggingFaceReachabilityObserver(
+  observer: HuggingFaceReachabilityObserver | null,
+): void {
+  huggingFaceObserver = observer
+}
+
+function isHuggingFaceUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname
+    return host === 'huggingface.co' || host.endsWith('.huggingface.co') || host.endsWith('.hf.co')
+  } catch {
+    return false
+  }
+}
+
+function reportHuggingFace(url: string, outcome: HuggingFaceReachabilityOutcome): void {
+  if (huggingFaceObserver === null || !isHuggingFaceUrl(url)) return
+  huggingFaceObserver(outcome)
+}
+
+function reportHuggingFaceResponse(url: string, status: number): void {
+  reportHuggingFace(url, { reached: status < 500, detail: `HTTP ${String(status)}` })
+}
+
+function reportHuggingFaceFailure(url: string, error: unknown): void {
+  reportHuggingFace(url, {
+    reached: false,
+    detail: error instanceof Error ? error.message : String(error),
+  })
+}
+
 export type DownloadRedirectPolicy = (url: URL, hop: number) => void
 
 /**
@@ -179,6 +229,10 @@ export async function downloadFile(
           headers: buildHeaders(current),
           ...(controller ? { signal: controller.signal } : {}),
         })
+        reportHuggingFaceResponse(current, response.status)
+      } catch (fetchError: unknown) {
+        reportHuggingFaceFailure(current, fetchError)
+        throw fetchError
       } finally {
         if (timer) clearTimeout(timer)
       }
@@ -251,10 +305,17 @@ export async function downloadFile(
  * Fetch JSON from a URL using native fetch().
  */
 export async function fetchJson(url: string): Promise<unknown> {
-  const response = await fetch(url, {
-    redirect: 'follow',
-    headers: buildHeaders(url),
-  })
+  let response: Response
+  try {
+    response = await fetch(url, {
+      redirect: 'follow',
+      headers: buildHeaders(url),
+    })
+  } catch (fetchError: unknown) {
+    reportHuggingFaceFailure(url, fetchError)
+    throw fetchError
+  }
+  reportHuggingFaceResponse(url, response.status)
   if (!response.ok) {
     throw new ModelDownloadHttpError(response.status, url, 'fetching')
   }
