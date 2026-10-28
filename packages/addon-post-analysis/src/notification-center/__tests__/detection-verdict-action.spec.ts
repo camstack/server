@@ -13,6 +13,7 @@ import { NcRuleInputSchema } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeTestObjectEvent } from '../../__tests__/support/events.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
+import type { NcVerdictFrameOutcome } from '../center-deps.js'
 import { NcActionPlane } from '../action-plane.js'
 import { NcActionTokenRegistry, buildActionUrl, type NcActionGrant } from '../action-token.js'
 import type { NcSendInput, NcTargetRef } from '../dispatcher.js'
@@ -36,6 +37,8 @@ interface HarnessOptions {
   /** The target kind's declared action budget (`TargetKindCaps.actions`). */
   readonly maxActions?: number
   readonly mark?: MarkOutcome
+  /** The recording fallback's answer; absent = no fallback wired. */
+  readonly frame?: NcVerdictFrameOutcome
 }
 
 const centers: NotificationCenter[] = []
@@ -67,6 +70,7 @@ async function makeHarness(options: HarnessOptions = {}) {
   ]
   const sends: NcSendInput[] = []
   const marked: { deviceId: number; trackId: string }[] = []
+  const framed: { deviceId: number; epochMs: number }[] = []
   let now = T0
   let built: NotificationCenter | null = null
   const events = [] as ReturnType<typeof makeTestObjectEvent>[]
@@ -98,6 +102,14 @@ async function makeHarness(options: HarnessOptions = {}) {
       if (outcome.ok) marked.push(input)
       return outcome
     },
+    ...(options.frame === undefined
+      ? {}
+      : {
+          addVerdictFrameFromRecording: async (input: { deviceId: number; epochMs: number }) => {
+            framed.push(input)
+            return options.frame!
+          },
+        }),
   })
   built = center
   centers.push(center)
@@ -127,6 +139,7 @@ async function makeHarness(options: HarnessOptions = {}) {
     world,
     sends,
     marked,
+    framed,
     plane,
     fire: async (trackId: string) => {
       const event = makeTestObjectEvent({ trackId, deviceId: 101, timestamp: now, zones: [] })
@@ -250,6 +263,40 @@ describe('tapping applies the mark exactly once and records who and when', () =>
     expect(page).toContain('Nothing was done')
     expect(page).toContain('already used for training')
     expect(verdictRows(h)).toHaveLength(0)
+  })
+})
+
+describe('a verdict on a track that is gone still lands a training frame', () => {
+  const GONE: MarkOutcome = { ok: false, reason: 'unknown-track' }
+
+  it('falls back to the recording at the notification instant and records the verdict', async () => {
+    const h = await makeHarness({ mark: GONE, frame: { ok: true } })
+    await h.fire('trk-1')
+    h.advance(30_000)
+    const page = await tap(h, button(h, 'detection-verdict-wrong')!.url!)
+    expect(page).toContain('Done')
+    expect(h.framed).toEqual([{ deviceId: 101, epochMs: T0 }])
+    expect(verdictRows(h)).toHaveLength(1)
+    expect(JSON.stringify(verdictRows(h)[0])).toContain('"verdict":"wrong"')
+  })
+
+  it('a refused recording is named to the tapper and writes no ledger row', async () => {
+    const h = await makeHarness({
+      mark: GONE,
+      frame: { ok: false, reason: 'still-unavailable' },
+    })
+    await h.fire('trk-1')
+    const page = await tap(h, button(h, 'detection-verdict-correct')!.url!)
+    expect(page).toContain('Nothing was done')
+    expect(page).toContain('recording')
+    expect(verdictRows(h)).toHaveLength(0)
+  })
+
+  it('other refusals (trained, budget) never reach the recording', async () => {
+    const h = await makeHarness({ mark: { ok: false, reason: 'trained' }, frame: { ok: true } })
+    await h.fire('trk-1')
+    await tap(h, button(h, 'detection-verdict-correct')!.url!)
+    expect(h.framed).toEqual([])
   })
 })
 

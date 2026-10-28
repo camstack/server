@@ -182,6 +182,7 @@ export async function mintButtons(
                 // A channel with no buttons shows these as links in the body,
                 // where a preview bot will open them: confirm before claiming.
                 ...(input.maxActions === 0 ? { viaLink: true } : {}),
+                ...(input.eventAtMs !== undefined ? { eventAtMs: input.eventAtMs } : {}),
                 deviceId: input.deviceId,
                 actionId: spec.actionId,
                 targetId: input.targetId,

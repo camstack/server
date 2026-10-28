@@ -65,3 +65,15 @@ Three choices were not forced by that:
   annotation flow does not consume it yet.
 - The viewer rule editor needs the same toggle (`askVerdict`) and, if it lists
   a notification's buttons, the three `button.verdict.*` labels.
+
+## Amendment 2026-10-28 — a verdict on a gone track
+
+A still-object track is discarded about 30 s after it is notified, so an
+`unknown-track` answer lost the example although the recording still covers the
+instant. The grant now freezes `eventAtMs` (the notification's own instant). On
+`unknown-track` the tap falls back to `pipelineAnalytics.addRetrainFrameFromRecording`
+into the "Notification verdicts" collection (found by name, created on first
+need) and writes the ledger row as for a live track. A refused recording
+(`still-unavailable`, `still-busy`, other) is logged with the device tag, named
+to the tapper, and writes no ledger row. Follow-up, not built: the notification's
+stored still as a second fallback (needs `ctx.peerBytes`, D613).

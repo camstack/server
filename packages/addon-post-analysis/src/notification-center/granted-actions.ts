@@ -286,6 +286,54 @@ export const VERDICT_REFUSAL_COPY: Readonly<
   'unknown-track': 'This track is no longer available — nothing was changed',
 }
 
+/** What a person is told when the recording fallback refuses too. */
+export const VERDICT_FRAME_REFUSAL_COPY: Readonly<
+  Record<'still-unavailable' | 'still-busy' | 'failed', string>
+> = {
+  'still-unavailable':
+    'The track is gone and the recording has no frame for that moment — nothing was changed',
+  'still-busy': 'The track is gone and the recorder is busy — nothing was changed, try again later',
+  failed: 'The track is gone and its frame could not be saved — nothing was changed',
+}
+
+/**
+ * The track is gone (aged out, or discarded as a still object): the camera's
+ * RECORDING still covers the instant, so the verdict lands a frame there
+ * instead. Returns when the frame landed; throws a named refusal otherwise —
+ * every branch that drops the example logs.
+ */
+async function landFrameFromRecording(
+  host: GrantedActionsHost,
+  grant: NcDetectionVerdictGrant,
+): Promise<void> {
+  const tags = { deviceId: grant.deviceId }
+  const addFrame = host.deps.addVerdictFrameFromRecording
+  if (addFrame === undefined || grant.eventAtMs === undefined) {
+    host.logger.warn('detection verdict dropped — the track is gone and no recording fallback', {
+      tags,
+      meta: { trackId: grant.trackId, verdict: grant.verdict, wired: addFrame !== undefined },
+    })
+    throw new NcActionRefusedError(VERDICT_REFUSAL_COPY['unknown-track'])
+  }
+  const landed = await addFrame({ deviceId: grant.deviceId, epochMs: grant.eventAtMs })
+  if (!landed.ok) {
+    host.logger.warn('detection verdict dropped — the track is gone and the recording refused', {
+      tags,
+      meta: {
+        trackId: grant.trackId,
+        verdict: grant.verdict,
+        reason: landed.reason,
+        ...(landed.detail !== undefined ? { detail: landed.detail } : {}),
+      },
+    })
+    throw new NcActionRefusedError(VERDICT_FRAME_REFUSAL_COPY[landed.reason])
+  }
+  host.logger.info('detection verdict landed a recording frame — the track is gone', {
+    tags,
+    meta: { trackId: grant.trackId, verdict: grant.verdict, epochMs: grant.eventAtMs },
+  })
+}
+
 /**
  * Mark the track one notification reported for retraining, and record who was
  * asked and when.
@@ -302,7 +350,9 @@ export async function applyGrantedDetectionVerdict(
   const mark = host.deps.markTrackForRetrain
   if (mark === undefined) throw new Error('no retrain mark is wired on this node')
   const outcome = await mark({ deviceId: grant.deviceId, trackId: grant.trackId })
-  if (!outcome.ok) {
+  if (!outcome.ok && outcome.reason === 'unknown-track') {
+    await landFrameFromRecording(host, grant)
+  } else if (!outcome.ok) {
     host.logger.info('detection verdict changed nothing — the retrain flow refused the mark', {
       tags: { deviceId: grant.deviceId },
       meta: { trackId: grant.trackId, reason: outcome.reason, verdict: grant.verdict },

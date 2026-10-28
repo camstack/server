@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Correct/Wrong tap on a notification whose track has already been discarded now still saves a training frame from the recording, into the Notification verdicts collection.
+
 ## [1.2.649] - 2026-10-28
 
 ### Changed

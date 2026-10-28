@@ -772,6 +772,8 @@ export interface NcMintButtonsInput {
   readonly className?: string
   /** The track a detection notification reports (the verdict buttons' subject). */
   readonly trackId?: string
+  /** The instant the notification reports (`subject.timestamp`). */
+  readonly eventAtMs?: number
   /**
    * How many buttons this target's KIND can carry (`TargetKindCaps.actions`).
    * `0` = none: the verdict choices travel as links in the body instead.
@@ -1906,6 +1908,7 @@ export class NcDispatcher {
         ...(entry.payload.subject.trackId !== undefined
           ? { trackId: entry.payload.subject.trackId }
           : {}),
+        eventAtMs: entry.payload.subject.timestamp,
         ...(target.maxActions !== undefined ? { maxActions: target.maxActions } : {}),
         ...(entry.payload.subject.systemEvent !== undefined
           ? { systemEvent: entry.payload.subject.systemEvent }

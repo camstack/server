@@ -33,6 +33,7 @@ import { makeNcOwnerMediaReader } from '../nc-owner-media-reader.js'
 import { buildOccupancyDepartureDeps } from '../occupancy-departure-deps.js'
 import { FACE_SETTLE_HOLD_MS } from '../pipeline/tracker-v2/constants.js'
 import { retrainRefusalReason } from '../pipeline/track-flags.js'
+import { addVerdictFrameFromRecording } from './verdict-recording-frame.js'
 import { recognitionOutlook } from '../recognition-outlook.js'
 import { buildLinkedSnapshotReads } from '../runtime/linked-snapshot-reads.js'
 import { resolveMediaOwnerId } from '../track-alias-resolution.js'
@@ -433,6 +434,29 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           const reason = retrainRefusalReason(err)
           if (reason === null) throw err
           return { ok: false as const, reason }
+        }
+      },
+      // The fallback when the track is gone: the camera's recording at the
+      // notification's instant, into the "Notification verdicts" collection.
+      addVerdictFrameFromRecording: async (input) => {
+        const pa = this.ctx.api.pipelineAnalytics
+        try {
+          return await addVerdictFrameFromRecording(
+            {
+              listRetrainCollections: () => pa.listRetrainCollections.query({}),
+              createRetrainCollection: (name) => pa.createRetrainCollection.mutate({ name }),
+              addRetrainFrameFromRecording: (frame) =>
+                pa.addRetrainFrameFromRecording.mutate(frame),
+            },
+            this.ctx.logger,
+            input,
+          )
+        } catch (err: unknown) {
+          this.ctx.logger.warn('verdict frame dropped — the recording fallback threw', {
+            tags: { deviceId: input.deviceId },
+            meta: { error: errMsg(err) },
+          })
+          return { ok: false as const, reason: 'failed' as const, detail: errMsg(err) }
         }
       },
       readDeviceStates: async (ids) => {

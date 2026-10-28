@@ -55,6 +55,19 @@ export type NcMarkForRetrainOutcome =
   | { readonly ok: true }
   | { readonly ok: false; readonly reason: 'trained' | 'budget' | 'unknown-track' }
 
+/**
+ * What the recording fallback answered when the track a verdict was about is
+ * gone: the frame at the notification's instant landed in the verdict
+ * collection, or a NAMED refusal.
+ */
+export type NcVerdictFrameOutcome =
+  | { readonly ok: true }
+  | {
+      readonly ok: false
+      readonly reason: 'still-unavailable' | 'still-busy' | 'failed'
+      readonly detail?: string
+    }
+
 export interface NotificationCenterDeps {
   /**
    * `ctx.records` — every NC config and ledger kind lives on it, on every node.
@@ -354,6 +367,18 @@ export interface NotificationCenterDeps {
     readonly deviceId: number
     readonly trackId: string
   }) => Promise<NcMarkForRetrainOutcome>
+  /**
+   * The fallback when {@link markTrackForRetrain} says `unknown-track`: add the
+   * frame the camera's RECORDING holds at `epochMs` to the "Notification
+   * verdicts" retrain collection (`pipelineAnalytics.addRetrainFrameFromRecording`),
+   * so the operator's answer still lands a training example once the track has
+   * aged out. A named refusal comes back as a value; a throw is a failure of
+   * the call itself. Optional: absent = an `unknown-track` stays a refusal.
+   */
+  readonly addVerdictFrameFromRecording?: (input: {
+    readonly deviceId: number
+    readonly epochMs: number
+  }) => Promise<NcVerdictFrameOutcome>
   /**
    * The scheduled-timelapse producer's outside world (export engine, footage
    * availability, track history, artifact publishing).

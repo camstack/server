@@ -208,6 +208,9 @@ export interface NcDetectionVerdictGrant extends NcActionGrantBase {
   readonly userId: string
   /** The class the operator said it really was. Only with `wrong`. */
   readonly suggestedClass?: string
+  /** The instant the notification reported, frozen at mint: where the
+   *  recording fallback looks once the track itself is gone. */
+  readonly eventAtMs?: number
   readonly viaLink?: boolean
 }
 
