@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.163] - 2026-10-28
+
 ### Changed
 
 - The Amazon login proxy logs each step it takes (without secrets), and the start log names the region
