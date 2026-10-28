@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.504] - 2026-10-28
+
 ### Changed
 
 - Integrations page splits integrations into Providers and System blocks in both the grid and the table; grid cards drop the id line and the chevron
