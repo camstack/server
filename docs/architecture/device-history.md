@@ -230,8 +230,8 @@ For an enum, `mean` / `twMean` are null, `state` names `last` and a rollup's
 `states` gives ms per state by name.
 
 **Energy** (`derived:energy.kwh`, listed by `listSeries` for a device with a
-power meter). The device's `cap:power-meter.kwhTotal` when it has that series
-(its per-bucket `delta`), else the integral of `cap:power-meter.watts`
+power meter). The device's `cap:power-meter.energy` when it has that series
+(its per-bucket `delta`), else the integral of `cap:power-meter.power`
 (`tw_sum` / 3.6e9 kWh). Never raw; `derivedFrom` names the source key. One place
 makes the choice, so two charts of one device cannot disagree, and it covers
 history recorded before the key existed.

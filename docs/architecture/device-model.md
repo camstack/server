@@ -582,7 +582,7 @@ or false (D393). The counts are the `group-status` capability (`included`,
 statistic reads is the output cap's own history block. The output stays in the
 members' base unit. A save that finds two quantities on one group is refused
 `mixed-quantity`. Nobody reporting writes `null` on a nullable reading, omits
-an optional one (`power-meter.watts`, `kwhTotal` — the slice is replaced so
+an optional one (`power-meter.power`, `energy` — the slice is replaced so
 the previous number does not linger), or takes a non-nullable boolean device
 offline rather than publishing false. A member that is gone fails the field.
 

@@ -114,9 +114,9 @@ const DISHWASHER = {
   program: null,
   selectedProgram: 'Dishcare.Dishwasher.Program.Eco50',
   availablePrograms: ['Dishcare.Dishwasher.Program.Eco50', 'Dishcare.Dishwasher.Program.Quick65'],
-  remainingSeconds: 12_600,
-  delayedStartSeconds: 0,
-  progressPercent: 0,
+  remaining: 12_600,
+  delayedStart: 0,
+  progress: 0,
   doorOpen: false,
   doorLocked: false,
   remoteStartAllowed: true,
@@ -250,7 +250,7 @@ const VACUUM = {
   batteryLevel: 100,
   fanSpeed: 'standard',
   availableFanSpeeds: ['quiet', 'standard', 'strong'],
-  progressPercent: null,
+  progress: null,
   errorCode: null,
   errorLabel: null,
   lastChangedAt: NOW,
@@ -338,7 +338,7 @@ const WIREABLE: Readonly<Record<number, unknown>> = {
     caps: [
       {
         cap: 'dishwasher',
-        fields: [{ path: 'remainingSeconds', kind: 'number' }],
+        fields: [{ path: 'remaining', kind: 'number' }],
       },
       {
         cap: 'consumables',

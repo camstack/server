@@ -73,7 +73,7 @@ const KNOWN_CAPS: ReadonlySet<AlexaCap> = new Set<AlexaCap>([
  * {@link alexaAccounts}; each `getStatus` prefers the latest decoded live value
  * (via `alexa-state-to-cap`) and falls back to the runtime/cold slice when a
  * property hasn't been polled yet — e.g. PowerController.powerState 'ON' →
- * switch.on, BrightnessController.brightness 0..100 → brightness.percentage,
+ * switch.on, BrightnessController.brightness 0..100 → brightness.level,
  * ContactSensor.detectionState 'DETECTED' → contact.entryOpen.
  *
  * TODO(caps): 'climate-control' (ThermostatController), 'control'

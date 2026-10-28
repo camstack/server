@@ -14,7 +14,7 @@ const COLD_START: PowerMeterStatus = { lastFetchedAt: 0 }
 
 /**
  * HA-backed power-meter sensor child. Multi-field cap — the slice
- * carries `watts` / `volts` / `amps` / `kwhTotal` etc., but each HA
+ * carries `power` / `voltage` / `current` / `energy` etc., but each HA
  * `sensor.*` entity surfaces ONE metric (device_class = `power` /
  * `voltage` / `current` / `energy`). The class populates the field
  * corresponding to the entity's device_class.

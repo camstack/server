@@ -194,7 +194,7 @@ export const SENSOR_SPECS: Readonly<Record<string, HapSensorSpec>> = {
       accessory.addService(Service.TemperatureSensor, name, subtype),
     getStatus: (proxy) => proxy.temperatureSensor?.getStatus({}),
     subscribe: (proxy, onValue) => proxy.state.temperatureSensor?.subscribe(onValue) ?? null,
-    // The cap's field is `celsius`, which is also HomeKit's unit. A refused
+    // The cap field is `temperature`, in °C, which is also HomeKit's unit. A refused
     // sample is null (D944 §4, D393); HomeKit has no null, and 0 °C would be
     // a freezing reading nobody took, so the characteristic is left alone.
     read: reader(TemperatureSensorStatusSchema.pick({ temperature: true }), (status) =>

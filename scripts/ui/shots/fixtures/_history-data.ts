@@ -175,7 +175,7 @@ export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
       at: dishwasherOrdinal,
     }),
     spec({
-      key: 'cap:dishwasher.progressPercent',
+      key: 'cap:dishwasher.progress',
       scope: '',
       kind: 'gauge',
       unit: '%',

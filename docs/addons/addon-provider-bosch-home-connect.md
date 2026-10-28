@@ -52,7 +52,7 @@ the integration across a client swap and attaches to a client that appears after
   heuristics. Percent entities (`EnergyForecast`, `WaterForecast`, `ProgramProgress`) are not energy
   sensors.
 - A unit is the one the description declares, else the few the interface fixes, else **none**. The
-  cumulative energy counter becomes a `power-meter` `kwhTotal` only when its declared unit is an energy
+  cumulative energy counter becomes a `power-meter` `energy` only when its declared unit is an energy
   unit (conversion follows that unit); otherwise it is published raw and unitless. The per-cycle
   `Option.EnergyConsumption` is a separate gauge — the two never share a key.
 - `DishwasherStatus` carries `null` for everything the appliance has not reported. The generic sensor

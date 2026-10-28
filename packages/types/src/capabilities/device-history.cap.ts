@@ -40,8 +40,8 @@ export type DeviceHistoryProducerKind = z.infer<typeof DeviceHistoryProducerKind
 /**
  * A key computed at READ time from stored series of the same device, never
  * stored itself. Energy (kWh per bucket) comes from the power meter's
- * `kwhTotal` counter when the device has one, else from integrating its
- * `watts` gauge over time.
+ * `energy` counter when the device has one, else from integrating its
+ * `power` gauge over time.
  */
 export const DEVICE_HISTORY_ENERGY_KEY = 'derived:energy.kwh'
 
