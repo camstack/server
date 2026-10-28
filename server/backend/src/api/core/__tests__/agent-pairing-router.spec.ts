@@ -62,7 +62,9 @@ function memoryStore(): SettingsStoreClient {
       mutate: async (a: { collection: string; key: string }) =>
         void coll(a.collection).delete(a.key),
     },
-    query: { query: async (a: { collection: string }) => [...coll(a.collection).values()] },
+    query: {
+      query: async (a: { collection: string }) => [...coll(a.collection).values()],
+    },
   }
   return store as unknown as SettingsStoreClient
 }
@@ -151,7 +153,11 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
   const router = createAgentPairingRouter({
     registry: null,
     nodeClient: (id) => (id === 'agent-a' ? client : null),
-    log: { info: () => undefined, warn: () => undefined, error: () => undefined },
+    log: {
+      info: () => undefined,
+      warn: () => undefined,
+      error: () => undefined,
+    },
     transport,
     meshCa: () => ca,
     meshRegistry: () => registry,
@@ -171,7 +177,16 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
     browse: async () => found,
   })
   const ctx: TrpcContext = { user: admin }
-  return { caller: router.createCaller(ctx), agent, operator, registry, crl, installed, events, ca }
+  return {
+    caller: router.createCaller(ctx),
+    agent,
+    operator,
+    registry,
+    crl,
+    installed,
+    events,
+    ca,
+  }
 }
 
 describe('agentPairing router', () => {
@@ -190,7 +205,11 @@ describe('agentPairing router', () => {
     ])
 
     const typed = await caller.addAgentByAddress({ host: '192.168.10.77' })
-    expect(typed).toMatchObject({ nodeId: 'agent-a', state: 'unpaired', source: 'address' })
+    expect(typed).toMatchObject({
+      nodeId: 'agent-a',
+      state: 'unpaired',
+      source: 'address',
+    })
     const again = await caller.listDiscoveredAgents()
     expect(again.agents.map((a) => `${a.host}:${a.port}`).toSorted()).toEqual([
       '192.168.10.128:4444',
@@ -200,10 +219,14 @@ describe('agentPairing router', () => {
 
   it('pairs an agent: begin, both operators type the other screen, a certificate is recorded', async () => {
     const { caller, operator, registry, installed } = await setup()
-    const started = await caller.beginPairing({ host: '192.168.10.128', port: 4444 })
+    const started = await caller.beginPairing({
+      host: '192.168.10.128',
+      port: 4444,
+    })
     expect(started.state).toBe('awaiting-confirmation')
     expect(started.code).toMatch(/^\d{6}$/)
-    expect(operator.code()).toMatch(/^\d{6}$/)
+    // The agent shows its own code only after its operator confirmed locally (D857).
+    expect(operator.code()).toBe('')
 
     // The pairing now shows under the agent that is being paired.
     const during = await caller.listDiscoveredAgents()
@@ -227,17 +250,28 @@ describe('agentPairing router', () => {
 
   it('rejecting cancels the agent as well', async () => {
     const { caller, agent } = await setup()
-    const started = await caller.beginPairing({ host: '192.168.10.128', port: 4444 })
-    const rejected = await caller.rejectPairing({ pairingId: started.pairingId })
+    const started = await caller.beginPairing({
+      host: '192.168.10.128',
+      port: 4444,
+    })
+    const rejected = await caller.rejectPairing({
+      pairingId: started.pairingId,
+    })
     expect(rejected.state).toBe('rejected')
     expect(agent.state()).toBe('unpaired')
   })
 
   it('unpairing tells the agent FIRST, then revokes every certificate and drops the connection', async () => {
     const { caller, operator, registry, crl, events } = await setup()
-    const started = await caller.beginPairing({ host: '192.168.10.128', port: 4444 })
+    const started = await caller.beginPairing({
+      host: '192.168.10.128',
+      port: 4444,
+    })
     operator.confirm(started.code)
-    await caller.confirmPairing({ pairingId: started.pairingId, code: operator.code() })
+    await caller.confirmPairing({
+      pairingId: started.pairingId,
+      code: operator.code(),
+    })
     expect(registry.list('agent-a')[0]?.revokedAt).toBeNull()
 
     const result = await caller.unpairAgent({ nodeId: 'agent-a' })
@@ -250,10 +284,18 @@ describe('agentPairing router', () => {
   })
 
   it('an agent that cannot be reached is still revoked, and the answer says it must be unpaired by hand', async () => {
-    const { caller, operator, crl } = await setup({ agentReachableForUnpair: false })
-    const started = await caller.beginPairing({ host: '192.168.10.128', port: 4444 })
+    const { caller, operator, crl } = await setup({
+      agentReachableForUnpair: false,
+    })
+    const started = await caller.beginPairing({
+      host: '192.168.10.128',
+      port: 4444,
+    })
     operator.confirm(started.code)
-    await caller.confirmPairing({ pairingId: started.pairingId, code: operator.code() })
+    await caller.confirmPairing({
+      pairingId: started.pairingId,
+      code: operator.code(),
+    })
 
     const result = await caller.unpairAgent({ nodeId: 'agent-a' })
     expect(result.agentNotified).toBe(false)

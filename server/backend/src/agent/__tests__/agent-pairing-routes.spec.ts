@@ -118,7 +118,10 @@ async function start(): Promise<Rig> {
         headers: { 'content-type': 'application/json', ...headers },
         body: JSON.stringify(body),
       })
-      return { status: res.status, body: (await res.json()) as Record<string, unknown> }
+      return {
+        status: res.status,
+        body: (await res.json()) as Record<string, unknown>,
+      }
     },
   }
 }
@@ -163,7 +166,9 @@ describe('pairing over the agent HTTP routes', () => {
 
     // ... the operator types the code the HUB shows (and, from another PC, the PIN).
     const agentCode = started.code
-    const confirmed = await r.post('/api/agent/pairing/confirm', { code: started.code })
+    const confirmed = await r.post('/api/agent/pairing/confirm', {
+      code: started.code,
+    })
     expect(confirmed.status).toBe(200)
     const view = await r.hub.confirm(started.pairingId, agentCode)
     expect(view.state).toBe('paired')
@@ -192,7 +197,10 @@ describe('pairing over the agent HTTP routes', () => {
       { pairingId: started.pairingId, code: started.code },
       REMOTE_HEADERS,
     )
-    expect(noPin).toMatchObject({ status: 401, body: { error: 'pin-required' } })
+    expect(noPin).toMatchObject({
+      status: 401,
+      body: { error: 'pin-required' },
+    })
     const wrongPin = await r.post(
       '/api/agent/pairing/confirm',
       { code: started.code, pin: '00000000' },
@@ -218,7 +226,12 @@ describe('pairing over the agent HTTP routes', () => {
         headers: REMOTE_HEADERS,
       })
     ).text()
-    for (const leak of [started.pairingId, started.code, secret.pin, secret.code ?? 'x']) {
+    for (const leak of [
+      started.pairingId,
+      started.code,
+      secret.pin,
+      ...(secret.code === null ? [] : [secret.code]),
+    ]) {
       expect(remote).not.toContain(leak)
     }
     expect(JSON.parse(remote)).toMatchObject({ state: 'pending' })
@@ -243,7 +256,10 @@ describe('pairing over the agent HTTP routes', () => {
     const r = current()
     await r.hub.begin({ host: '127.0.0.1', port: r.port })
     const bad = await r.post('/api/agent/pairing/reset', { code: '00000000' }, REMOTE_HEADERS)
-    expect(bad).toMatchObject({ status: 401, body: { error: 'reset-code-required' } })
+    expect(bad).toMatchObject({
+      status: 401,
+      body: { error: 'reset-code-required' },
+    })
     const noCode = await r.post('/api/agent/pairing/reset', {}, REMOTE_HEADERS)
     expect(noCode.status).toBe(401)
     const ok = await r.post(
@@ -272,7 +288,10 @@ describe('pairing over the agent HTTP routes', () => {
     const started = await r.hub.begin(endpoint)
     const wrong = started.code === '000000' ? '111111' : '000000'
     const bad = await r.post('/api/agent/pairing/confirm', { code: wrong })
-    expect(bad).toMatchObject({ status: 403, body: { error: 'code-mismatch' } })
+    expect(bad).toMatchObject({
+      status: 403,
+      body: { error: 'code-mismatch' },
+    })
 
     await r.post('/api/agent/pairing/confirm', { code: started.code })
     await r.hub.confirm(started.pairingId, started.code)
@@ -305,7 +324,10 @@ describe('pairing over the agent HTTP routes', () => {
 
   it('forget on an unpaired agent is refused', async () => {
     const forgot = await current().post('/api/agent/pairing/forget', {})
-    expect(forgot).toMatchObject({ status: 409, body: { error: 'not-paired' } })
+    expect(forgot).toMatchObject({
+      status: 409,
+      body: { error: 'not-paired' },
+    })
   })
 
   it('the hub client refuses a public address before it sends anything', async () => {
