@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.636] - 2026-10-28
+
 ### Changed
 
 - The hub serves viewer 1.0.665: a notification rule can ask you to confirm whether a detection was right
