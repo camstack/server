@@ -217,12 +217,15 @@ function theLocal(r: Rig, pairingId?: string): LocalPairingSecret {
 async function bothOperatorsConfirm(r: Rig, pairingId: string, order: 'hub-first' | 'agent-first') {
   const hubView = r.hub.get(pairingId)
   const local = r.local.get(pairingId)
-  if (hubView === undefined || local === undefined || local.code === null) {
+  if (hubView === undefined || local === undefined) {
     throw new Error('pairing not ready')
   }
-  const confirmAgent = () => unwrap(r.agent.confirm({ pin: local.pin, code: hubView.code }, REMOTE))
+  let agentCode: string | undefined
+  const confirmAgent = () => {
+    agentCode = unwrap(r.agent.confirm({ pin: local.pin, code: hubView.code }, REMOTE)).code
+  }
   if (order === 'agent-first') confirmAgent()
-  await r.hub.confirm(pairingId, local.code)
+  await r.hub.confirm(pairingId, agentCode ?? hubView.code)
   if (order === 'hub-first') confirmAgent()
   return r.hub.advance(pairingId)
 }
@@ -252,7 +255,7 @@ describe('pairing - the happy path', () => {
     const r = await rig()
     const started = await r.hub.begin(ENDPOINT)
     expect(started.code).toMatch(/^\d{6}$/)
-    expect(theLocal(r).code).toBe(started.code)
+    expect(theLocal(r).code).toBeNull()
     expect(r.agent.state()).toBe('pending')
 
     const done = await bothOperatorsConfirm(r, started.pairingId, 'hub-first')
@@ -283,7 +286,7 @@ describe('pairing - the happy path', () => {
   it('does not complete on the hub alone: the agent has not confirmed', async () => {
     const r = await rig()
     const started = await r.hub.begin(ENDPOINT)
-    const view = await r.hub.confirm(started.pairingId, theLocal(r).code ?? '')
+    const view = await r.hub.confirm(started.pairingId, started.code)
     expect(view.hubConfirmed).toBe(true)
     expect(view.agentConfirmed).toBe(false)
     expect(view.state).toBe('awaiting-confirmation')
@@ -294,7 +297,7 @@ describe('pairing - the happy path', () => {
     const r = await rig()
     const started = await r.hub.begin(ENDPOINT)
     // Pairing begun, both confirmed on the hub side only: nothing revoked yet.
-    await r.hub.confirm(started.pairingId, theLocal(r).code ?? '')
+    await r.hub.confirm(started.pairingId, started.code)
     expect(r.revocations).toEqual([])
     unwrap(r.agent.confirm({ pin: theLocal(r).pin, code: started.code }, REMOTE))
     await r.hub.advance(started.pairingId)
@@ -311,7 +314,7 @@ describe('the agent confirms only for someone at its own machine (C1)', () => {
     const started = await r.hub.begin(ENDPOINT)
     const exposed = JSON.stringify(r.agent.publicView())
     const local = theLocal(r)
-    for (const secret of [local.pin, local.code ?? '', started.pairingId, started.code]) {
+    for (const secret of [local.pin, started.pairingId, started.code]) {
       expect(exposed).not.toContain(secret)
     }
     expect(r.agent.publicView().pending).toHaveLength(1)
@@ -326,9 +329,12 @@ describe('the agent confirms only for someone at its own machine (C1)', () => {
     const r = await rig()
     const started = await r.hub.begin(ENDPOINT)
     const local = theLocal(r)
-    expect(local.code).toBe(started.code)
+    // The console/file announcement at reveal carries the PIN and no code.
+    expect(local.code).toBeNull()
     expect(r.agent.localView().pending[0]?.code).toBeNull()
     const confirmed = r.agent.confirm({ code: started.code }, LOCAL)
+    // After the local confirmation the console is told the agent's own code.
+    expect(theLocal(r).code).toBe(started.code)
     expect(confirmed).toMatchObject({ ok: true, code: started.code })
     expect(r.agent.localView().pending[0]?.code).toBe(started.code)
   })
@@ -431,7 +437,7 @@ describe('the agent installs nothing without its own operator', () => {
     })
     const started = await spy.hub.begin(ENDPOINT)
     // The hub is lied to (or races): it sends the completion with no local confirmation.
-    await spy.hub.confirm(started.pairingId, theLocal(spy).code ?? '')
+    await spy.hub.confirm(started.pairingId, started.code)
     expect(captured).not.toBeNull()
     expect(spy.installed).toEqual([])
     expect(spy.agent.state()).toBe('pending')
@@ -482,12 +488,14 @@ describe('pairing - a man in the middle shows a different code', () => {
     const m = await mitm(attackerCa)
     const base = await rig({ transport: m.transport })
     const started = await base.hub.begin(ENDPOINT)
-    const agentCode = theLocal(base).code ?? ''
-    expect(agentCode).toMatch(/^\d{6}$/)
-    expect(started.code).not.toBe(agentCode)
+    expect(started.code).toMatch(/^\d{6}$/)
+    // The agent's own code is not announced before its operator confirmed: nothing to copy.
+    expect(theLocal(base).code).toBeNull()
 
-    // The operator reads each screen and types it on the other. Both refuse.
-    await expect(base.hub.confirm(started.pairingId, agentCode)).rejects.toThrow(/not the code/)
+    // The agent's operator types the hub's code: the agent computed another one and refuses, so it
+    // never reveals its code; the hub refuses a code that is not the one it computed.
+    const notTheHubs = started.code === '000000' ? '111111' : '000000'
+    await expect(base.hub.confirm(started.pairingId, notTheHubs)).rejects.toThrow(/not the code/)
     const wrong = base.agent.confirm({ pin: theLocal(base).pin, code: started.code }, REMOTE)
     expect(wrong.ok).toBe(false)
     expect(base.agent.localView().pending[0]?.localConfirmed).toBe(false)
@@ -777,9 +785,11 @@ describe('offer squatting and grinding (H2, M4)', () => {
         expect(offered.retryAfterMs).toBeGreaterThan(0)
         continue
       }
-      // The attacker commits correctly, reveals, learns the agent's code ...
+      // The attacker commits correctly, reveals, reveals ...
       expect(r.agent.reveal({ pairingId: offered.answer.pairingId, hubNonce: nonce }).ok).toBe(true)
-      if (r.local.get(offered.answer.pairingId)?.code !== null) codesSeen += 1
+      codesSeen += 1
+      // ... but the agent announces no code of its own before a local confirmation.
+      expect(r.local.get(offered.answer.pairingId)?.code).toBeNull()
       // ... and aborts before anyone at the agent confirmed anything.
       const pin = r.local.get(offered.answer.pairingId)?.pin
       r.agent.reject({ pin }, REMOTE)
@@ -989,7 +999,7 @@ describe('a failed completion never revokes a leaf the agent may have installed 
     })
     const started = await r.hub.begin(ENDPOINT)
     unwrap(r.agent.confirm({ pin: theLocal(r).pin, code: started.code }, REMOTE))
-    await r.hub.confirm(started.pairingId, theLocal(r).code ?? '')
+    await r.hub.confirm(started.pairingId, started.code)
     return { r, view: await r.hub.advance(started.pairingId) }
   }
 
@@ -1053,7 +1063,7 @@ describe('the outcome of a pairing survives the end of the others (NEW-1)', () =
     unwrap(await r.agent.offer(otherOffer(await generateMeshCa())))
     const started = await r.hub.begin(ENDPOINT)
     unwrap(r.agent.confirm({ pin: theLocal(r, started.pairingId).pin, code: started.code }, REMOTE))
-    await r.hub.confirm(started.pairingId, theLocal(r, started.pairingId).code ?? '')
+    await r.hub.confirm(started.pairingId, started.code)
     const view = await r.hub.advance(started.pairingId)
     expect(view.state).toBe('paired')
     expect(r.leafRevocations).toEqual([])
@@ -1079,7 +1089,7 @@ describe('the outcome of a pairing survives the end of the others (NEW-1)', () =
     })
     const started = await r.hub.begin(ENDPOINT)
     unwrap(r.agent.confirm({ pin: theLocal(r).pin, code: started.code }, REMOTE))
-    await r.hub.confirm(started.pairingId, theLocal(r).code ?? '')
+    await r.hub.confirm(started.pairingId, started.code)
     const view = await r.hub.advance(started.pairingId)
     expect(view.failure).toMatch(/^unconfirmed/)
     expect(r.leafRevocations).toEqual([])
@@ -1106,7 +1116,7 @@ describe('the outcome of a pairing survives the end of the others (NEW-1)', () =
     })
     const started = await r.hub.begin(ENDPOINT)
     unwrap(r.agent.confirm({ pin: theLocal(r).pin, code: started.code }, REMOTE))
-    await r.hub.confirm(started.pairingId, theLocal(r).code ?? '')
+    await r.hub.confirm(started.pairingId, started.code)
     const view = await r.hub.advance(started.pairingId)
     expect(view.state).toBe('paired')
     expect(r.leafRevocations).toEqual([])

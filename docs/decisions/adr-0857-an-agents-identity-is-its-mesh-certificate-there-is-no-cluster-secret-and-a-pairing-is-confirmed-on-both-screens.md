@@ -296,3 +296,4 @@ that does not protect against a man in the middle faking "agent confirmed" on th
   never carries it (unchanged).
 - A successful `confirm` (which required the PIN, or loopback) answers `{ ok: true, code }`; the page shows
   that code ("type this code on the hub"). Counters and constant-time compares are unchanged.
+- The console and `pairing-pin.txt` print the PIN and who asks at reveal; the agent's code is printed there only after the local confirmation.

@@ -32,7 +32,7 @@ function describe(s: LocalPairingSecret): string {
   return [
     `Pairing request from hub "${s.hub.nodeId}" (${s.hub.url}), CA ${fp}`,
     `  PIN:        ${s.pin}   (type it on this agent's page with the code the HUB shows)`,
-    `  this agent's code: ${s.code ?? '(not known yet - the hub has not revealed its nonce)'}   (type it on the hub)`,
+    `  this agent's code: ${s.code ?? "(shown here once you confirmed on this agent's page)"}   (type this on the hub)`,
     `  expires:    ${new Date(s.expiresAt).toISOString()}`,
   ].join('\n')
 }

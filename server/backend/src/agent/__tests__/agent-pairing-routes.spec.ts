@@ -162,7 +162,7 @@ describe('pairing over the agent HTTP routes', () => {
     expect(JSON.stringify(status)).toContain(started.pairingId)
 
     // ... the operator types the code the HUB shows (and, from another PC, the PIN).
-    const agentCode = theSecret(r).code ?? ''
+    const agentCode = started.code
     const confirmed = await r.post('/api/agent/pairing/confirm', { code: started.code })
     expect(confirmed.status).toBe(200)
     const view = await r.hub.confirm(started.pairingId, agentCode)
@@ -275,7 +275,7 @@ describe('pairing over the agent HTTP routes', () => {
     expect(bad).toMatchObject({ status: 403, body: { error: 'code-mismatch' } })
 
     await r.post('/api/agent/pairing/confirm', { code: started.code })
-    await r.hub.confirm(started.pairingId, theSecret(r).code ?? '')
+    await r.hub.confirm(started.pairingId, started.code)
     await expect(r.hub.begin(endpoint)).rejects.toThrow(/already paired/)
   })
 
@@ -283,7 +283,7 @@ describe('pairing over the agent HTTP routes', () => {
     const r = current()
     const endpoint = { host: '127.0.0.1', port: r.port }
     const started = await r.hub.begin(endpoint)
-    const agentCode = theSecret(r).code ?? ''
+    const agentCode = started.code
     await r.post('/api/agent/pairing/confirm', { code: started.code })
     await r.hub.confirm(started.pairingId, agentCode)
     expect(isAgentPaired(r.configPath)).toBe(true)

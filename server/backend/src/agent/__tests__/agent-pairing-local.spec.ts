@@ -53,6 +53,21 @@ describe('local pairing announcer', () => {
     expect(fs.existsSync(file)).toBe(false)
   })
 
+  it("prints the PIN and no agent code at reveal, and the agent's code after the local confirmation", () => {
+    const dir = tmp()
+    const lines: string[] = []
+    const a = createLocalPairingAnnouncer(dir, { warn: (m) => lines.push(m) })
+    a.onSecret({ ...secret, code: null })
+    const file = path.join(dir, PAIRING_PIN_FILE)
+    expect(lines.join('\n')).toContain('12345678')
+    expect(lines.join('\n')).not.toContain('654321')
+    expect(fs.readFileSync(file, 'utf8')).not.toContain('654321')
+    a.onSecret(secret)
+    expect(lines.at(-1)).toContain('654321')
+    expect(lines.at(-1)).toContain('type this on the hub')
+    expect(fs.readFileSync(file, 'utf8')).toContain('654321')
+  })
+
   it('writes the reset code to a 0600 file and the console', () => {
     const dir = tmp()
     const lines: string[] = []

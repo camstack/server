@@ -64,7 +64,7 @@ export interface InstalledPairing {
 export interface LocalPairingSecret {
   readonly pairingId: string
   readonly pin: string
-  /** The six digits, once the hub revealed its nonce; `null` before that. */
+  /** The agent's own six digits, only once its operator confirmed locally; `null` before that. */
   readonly code: string | null
   readonly hub: { readonly nodeId: string; readonly url: string; readonly caFingerprint: string }
   readonly expiresAt: number
@@ -82,9 +82,9 @@ export interface AgentPairingDeps {
   /** The pairing state may have changed (pending <-> unpaired): re-announce it. */
   readonly onStateChange?: () => void
   /**
-   * A pairing needs the operator's eyes on THIS machine: print the PIN and the code to the console,
-   * write them to a 0600 file, show them in the local window. Called at the offer (code `null`)
-   * and again when the code is known.
+   * A pairing needs the operator's eyes on THIS machine: print the PIN to the console, write it to
+   * a 0600 file, show it in the local window. Called at the offer (code `null`) and again after the
+   * local confirmation, which adds the agent's own code.
    */
   readonly onLocalSecret?: (secret: LocalPairingSecret) => void
   /** The pairing ended: remove what `onLocalSecret` wrote. */
@@ -541,6 +541,7 @@ export class AgentPairing {
       return fail(403, 'code-mismatch', 'that is not the code this agent computed')
     }
     session.localConfirmed = true
+    this.announceLocally(session)
     // The answer to a confirm that proved the operator is here (hub code + PIN unless loopback):
     // the code to type ON THE HUB. Status from the network never carries it.
     return { ok: true, code: session.code }
@@ -808,7 +809,8 @@ export class AgentPairing {
     this.deps.onLocalSecret?.({
       pairingId: session.pairingId,
       pin: session.pin,
-      code: session.code,
+      // Printed only after the local confirmation, like the loopback status (D857).
+      code: session.localConfirmed ? session.code : null,
       hub: {
         nodeId: session.hub.nodeId,
         url: session.hub.url,
