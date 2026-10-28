@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.633] - 2026-10-28
+
 ### Changed
 
 - A battery camera waking up for an event no longer reports its stream offline and online again

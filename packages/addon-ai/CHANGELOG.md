@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.173] - 2026-10-28
+
 ### Changed
 
 - An AI profile can turn the model's thinking off or set its effort

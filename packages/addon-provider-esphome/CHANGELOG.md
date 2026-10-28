@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-28
+
 ### Changed
 
 - ESPHome boards' own actions (API services) can be listed and run, e.g. an IR blaster's send_raw_command

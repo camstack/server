@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.165] - 2026-10-28
+
 ### Changed
 
 - The Alexa sign-in keeps Amazon's session cookie through the hub proxy (the email step still fails upstream, tracked separately)
