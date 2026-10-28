@@ -32,8 +32,8 @@ import type { LoggingService } from '../core/logging/logging.service.js'
 import type { CapabilityService } from '../core/capability/capability.service.js'
 import type { StreamProbeService } from '../core/streaming/stream-probe.service.js'
 
-const NATIVE = { percentage: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
-const OWNED_SLICE = { ...NATIVE, percentage: 90 }
+const NATIVE = { level: 40, charging: 'none', sleeping: false, lastUpdated: 1 }
+const OWNED_SLICE = { ...NATIVE, level: 90 }
 const DEVICE = 7
 const OTHER_DEVICE = 8
 const CHILD_NODE = 'hub/provider-homeassistant'

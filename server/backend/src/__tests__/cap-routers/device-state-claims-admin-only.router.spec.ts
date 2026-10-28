@@ -41,7 +41,7 @@ const INPUT: Record<string, unknown> = {
   owner: 'blk-1',
   mode: 'replace',
   fields: ['percentage'],
-  values: { percentage: 90 },
+  values: { level: 90 },
   ownerPrefix: 'blk-',
 }
 

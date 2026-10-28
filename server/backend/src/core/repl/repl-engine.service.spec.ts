@@ -229,7 +229,7 @@ describe('ReplEngineService — system scope sandbox', () => {
     h = makeHarness({
       bindings: new Map([[1, mkBinding(1, ['battery'])]]),
       devices: new Map([[1, mkDevice(1, { name: 'Test Cam' })]]),
-      snapshots: { '1': { battery: { sleeping: true, percentage: 50 } } },
+      snapshots: { '1': { battery: { sleeping: true, level: 50 } } },
     })
   })
 
@@ -294,12 +294,12 @@ describe('ReplEngineService — device scope sandbox', () => {
     h = makeHarness({
       bindings: new Map([[8, mkBinding(8, ['battery', 'snapshot'])]]),
       devices: new Map([[8, mkDevice(8, { name: 'Sala', addonId: 'reolink' })]]),
-      snapshots: { '8': { battery: { sleeping: false, percentage: 88 } } },
+      snapshots: { '8': { battery: { sleeping: false, level: 88 } } },
     })
   })
 
   it('pre-binds `device` as a DeviceProxy with sync state', async () => {
-    const r = await h.service.execute('device.state.battery.value.percentage', DEVICE_CTX)
+    const r = await h.service.execute('device.state.battery.value.level', DEVICE_CTX)
     expect(r.type).toBe('value')
     expect(r.output).toBe('88')
   })
@@ -375,7 +375,7 @@ describe('ReplEngineService — SystemManager warm-boot resilience', () => {
     const h = makeHarness({
       bindings: new Map([[1, mkBinding(1, ['battery'])]]),
       devices: new Map([[1, mkDevice(1)]]),
-      snapshots: { '1': { battery: { sleeping: true, percentage: 50 } } },
+      snapshots: { '1': { battery: { sleeping: true, level: 50 } } },
     })
 
     // Boot SM via first eval.
@@ -387,7 +387,7 @@ describe('ReplEngineService — SystemManager warm-boot resilience', () => {
       timestamp: new Date(),
       category: EventCategory.DeviceStateChanged,
       source: { type: 'device', id: 1, deviceId: 1 },
-      data: { deviceId: 1, capName: 'battery', slice: { sleeping: false, percentage: 90 } },
+      data: { deviceId: 1, capName: 'battery', slice: { sleeping: false, level: 90 } },
     })
     // Microtask flush.
     await new Promise((r) => setTimeout(r, 10))
