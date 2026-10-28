@@ -60,6 +60,7 @@ import {
   Volume2,
   WashingMachine,
   Waves,
+  RadioTower,
   Wifi,
   Wind,
   Workflow,
@@ -555,6 +556,11 @@ export const DEVICE_ROLE_META: Record<DeviceRole, DeviceMetaEntry> = {
     icon: Bell,
     labelKey: 'uiLibrary.deviceMeta.role.genericNotifier',
     labelFallback: 'Notifier',
+  },
+  [DeviceRole.IrTransmitter]: {
+    icon: RadioTower,
+    labelKey: 'uiLibrary.deviceMeta.role.irTransmitter',
+    labelFallback: 'IR/RF transmitter',
   },
 }
 

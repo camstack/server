@@ -8652,7 +8652,8 @@
         "coverGarage": "Garage door",
         "coverGate": "Gate",
         "coverDoor": "Door",
-        "coverWindow": "Window"
+        "coverWindow": "Window",
+        "irTransmitter": "IR/RF transmitter"
       },
       "noun": {
         "role": {

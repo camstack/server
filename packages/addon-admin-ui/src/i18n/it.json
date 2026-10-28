@@ -8674,7 +8674,8 @@
         "coverGarage": "Porta del garage",
         "coverGate": "Cancello",
         "coverDoor": "Porta",
-        "coverWindow": "Finestra"
+        "coverWindow": "Finestra",
+        "irTransmitter": "Trasmettitore IR/RF"
       },
       "noun": {
         "role": {
