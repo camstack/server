@@ -139,7 +139,14 @@ function fieldForDevice(
       member.source.addonId === device.addonId && member.source.stableId === device.stableId,
   )
   if (previous !== undefined && accepted(input.request, previous)) return previous
-  const only = input.request.accept.length === 1 ? input.request.accept[0] : undefined
+  const candidates =
+    input.request.fieldChoice === 'first-match'
+      ? input.request.accept.filter((entry) => device.caps.includes(entry.cap))
+      : input.request.accept
+  const only =
+    input.request.fieldChoice === 'first-match' || candidates.length === 1
+      ? candidates[0]
+      : undefined
   if (only === undefined) return null
   return { cap: only.cap, fieldPath: only.fieldPath }
 }

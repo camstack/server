@@ -73,20 +73,35 @@ function numeric(input: {
   readonly defaultAggregate: NumericAggregate
   readonly empty: AggregateEmpty
   readonly companions: readonly HelperCompanion[]
+  /**
+   * Extra sources for a device that has no dedicated sensor: its device types
+   * and the field it reads instead (D944 addendum). The dedicated sensor field
+   * is listed first and wins when a device has both.
+   */
+  readonly alsoFrom?: {
+    readonly deviceTypes: readonly DeviceType[]
+    readonly accept: HelperAccept
+  }
 }): GroupTemplate {
+  const { alsoFrom, ...base } = input
   return {
-    ...input,
+    ...base,
     family: 'numeric',
     deviceType: DeviceType.Sensor,
     memberDeviceType: DeviceType.Sensor,
-    memberDeviceTypes: [DeviceType.Sensor],
+    memberDeviceTypes: [DeviceType.Sensor, ...(alsoFrom?.deviceTypes ?? [])],
     activeWhen: undefined,
     commandCaps: [],
     baseUnit: baseUnitOf(input.quantity),
     aggregates: NUMERIC_AGGREGATES,
-    accept: [{ cap: input.outputCap, fieldPath: input.outputField }],
+    accept: [
+      { cap: input.outputCap, fieldPath: input.outputField },
+      ...(alsoFrom === undefined ? [] : [alsoFrom.accept]),
+    ],
   }
 }
+
+const CLIMATE_DEVICES: readonly DeviceType[] = [DeviceType.Thermostat, DeviceType.Climate]
 
 function binary(input: {
   readonly id: GroupTemplateId
@@ -125,6 +140,10 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
     defaultAggregate: 'mean',
     empty: 'null',
     companions: [NOW],
+    alsoFrom: {
+      deviceTypes: CLIMATE_DEVICES,
+      accept: { cap: 'climate-control', fieldPath: 'currentTemp' },
+    },
   }),
   numeric({
     id: 'humidity',
@@ -136,6 +155,10 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
     defaultAggregate: 'mean',
     empty: 'null',
     companions: [NOW],
+    alsoFrom: {
+      deviceTypes: CLIMATE_DEVICES,
+      accept: { cap: 'climate-control', fieldPath: 'currentHumidity' },
+    },
   }),
   numeric({
     id: 'pressure',

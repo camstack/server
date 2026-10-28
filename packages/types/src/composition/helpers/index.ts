@@ -126,6 +126,7 @@ export {
 export {
   type SourcePick,
   type SourcePickAccept,
+  type SourcePickFieldChoice,
   type SourcePickHistory,
   type SourcePickRequest,
   type MathSourceKind,

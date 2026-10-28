@@ -20,7 +20,15 @@ export interface SourcePickHistory {
   readonly minRetentionMs: number | null
 }
 
+/**
+ * How a device that satisfies several accept entries gets its field. `first-match`
+ * takes the first listed entry the device has (the dedicated sensor before a
+ * climate reading); `operator` waits for the operator to pick (occupancy).
+ */
+export type SourcePickFieldChoice = 'first-match' | 'operator'
+
 export interface SourcePickRequest {
+  readonly fieldChoice: SourcePickFieldChoice
   readonly purpose: 'member' | 'reading' | 'historised'
   readonly multiple: boolean
   readonly max: number
@@ -52,6 +60,7 @@ export function sourcePickForTemplate(template: GroupTemplate): SourcePickReques
         ? 'boolean'
         : 'state'
   return {
+    fieldChoice: template.family === 'numeric' ? 'first-match' : 'operator',
     purpose: 'member',
     multiple: true,
     max: MAX_HELPER_MEMBERS,
@@ -66,6 +75,7 @@ export function sourcePickForTemplate(template: GroupTemplate): SourcePickReques
 /** A statistic or integral reads one field that declares history. */
 export function sourcePickForHistory(kind: 'statistic' | 'integral'): SourcePickRequest {
   return {
+    fieldChoice: 'operator',
     purpose: 'historised',
     multiple: false,
     max: 1,
@@ -113,6 +123,7 @@ export function sourcePickForMath(kind: MathSourceKind): SourcePickRequest {
   const multiple = kind === 'sum' || kind === 'expression'
   const max = kind === 'difference' || kind === 'ratio' ? 2 : multiple ? MAX_HELPER_MEMBERS : 1
   return {
+    fieldChoice: 'operator',
     purpose: 'reading',
     multiple: multiple || max > 1,
     max,

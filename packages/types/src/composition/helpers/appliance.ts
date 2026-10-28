@@ -65,6 +65,7 @@ export function isApplianceKind(value: string): value is ApplianceKind {
 /** The member step: one power reading, from a sensor or from the plug itself. */
 export function sourcePickForAppliance(): SourcePickRequest {
   return {
+    fieldChoice: 'operator',
     purpose: 'reading',
     multiple: false,
     max: 1,

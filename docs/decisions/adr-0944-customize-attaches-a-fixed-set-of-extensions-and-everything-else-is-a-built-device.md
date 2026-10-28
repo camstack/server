@@ -127,3 +127,18 @@ whatever unit the provider used. That is the main reason anyone wants to
   `precision` / `*Unit` sibling next to a numeric reading fails; the unit lives
   in the reading's declaration.
 - Review only until those land.
+
+## Addendum (2026-10-28): a group template may accept more than one source
+
+A `temperature` or `humidity` group also takes thermostats and climate devices
+that have no dedicated sensor, through `climate-control.currentTemp` and
+`climate-control.currentHumidity`. The catalog's `accept` is an ordered list; a
+member carries the one `(cap, fieldPath)` it was picked with, and the compiled
+aggregate reads each member from that field, so a mixed sensor and climate group
+needs no new runtime path. The dedicated sensor field is listed first and wins
+when a device has both. A null `currentTemp` / `currentHumidity` is left out like
+an offline member, never read as 0. The selector request carries `fieldChoice`:
+`first-match` for these numeric templates (take the first listed field the device
+binds), `operator` where the operator picks the field (occupancy). Save-time
+checks are unchanged: the compiled features must be the spec's, and one quantity
+across members (`currentTemp` declares `temperature`).
