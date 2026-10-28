@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The breadcrumb usage example links to the new per-addon integration URL
+
 ## [1.2.343] - 2026-10-28
 
 ### Changed
