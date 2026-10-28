@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.680] - 2026-10-28
+
 ### Fixed
 
 - A desktop or container agent renamed from its own page now shows the new name on the hub right away, even when the rename was made while it was pairing

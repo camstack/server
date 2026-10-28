@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.511] - 2026-10-28
+
 ### Fixed
 
 - Pairing: the agent reveals its own code only after local confirmation; the confirm answer carries it
