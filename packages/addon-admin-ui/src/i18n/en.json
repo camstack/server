@@ -5876,7 +5876,11 @@
       "pickDeviceFirst": "Pick a device first",
       "readingDevice": "Reading this device…",
       "noReadableCaps": "This device reports no readable capabilities",
-      "selectCap": "Select a capability…"
+      "selectCap": "Select a capability…",
+      "pickAValue": "Pick a device value…",
+      "value": "Device value",
+      "title": "Device value",
+      "use": "Use this value"
     },
     "generatedCodePanel": {
       "ejectToCodeThisCannot": "Eject to code — this cannot be undone",

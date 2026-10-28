@@ -106,6 +106,8 @@ export interface SourceSelectorFormulaProps {
   readonly field: SourceFieldPick | null
   readonly onDeviceChange: (device: PickerDevice | null) => void
   readonly onFieldChange: (field: SourceFieldPick | null) => void
+  /** A surface's own validity rule on the device list (keep it referentially stable). */
+  readonly deviceFilter?: (device: PickerDevice) => boolean
 }
 
 export interface SourceSelectorEventProps {
@@ -204,10 +206,12 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const [incompatibleOpen, setIncompatibleOpen] = useState(false)
   const [incompatibleValuesOpen, setIncompatibleValuesOpen] = useState(false)
   const devices = useDeviceManagerListAll({ projection: 'slim' })
-  const fleet = useMemo(
-    () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
-    [devices.status, devices.data],
-  )
+  const deviceFilter = props.kind === 'formula' ? props.deviceFilter : undefined
+  const fleet = useMemo(() => {
+    if (devices.status !== 'success') return []
+    const all = toPickerDevices(devices.data)
+    return deviceFilter === undefined ? all : all.filter(deviceFilter)
+  }, [devices.status, devices.data, deviceFilter])
   const indexCaps = useMemo(() => indexCapsForDestination(props.destination), [props.destination])
   const capIndex = useCapIndex(indexCaps, props.enabled)
   const { compatible, incompatible } = useMemo(() => {

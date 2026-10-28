@@ -1,11 +1,10 @@
 /**
  * Multi-select half of `SourceSelector` for a group helper (D944 §5).
  * Devices are the template's type and catalog caps. Values are direct
- * matches only — a group does not offer incompatible fields.
+ * matches only — a group does not offer incompatible fields, and an incompatible device is not listed at all.
  */
 import type { HelperMember, SourcePickRequest } from '@camstack/types'
 import {
-  Button,
   type DeviceListState,
   DeviceName,
   DevicePicker,
@@ -14,7 +13,6 @@ import {
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
 } from '@camstack/ui-library'
-import { ChevronDown } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCapIndex } from '../assignments/use-cap-index'
@@ -105,7 +103,6 @@ export function SourceSelectorMembers({
   const { t, i18n } = useTranslation()
   const [focusId, setFocusId] = useState<number | null>(null)
   const [step, setStep] = useState<SourceSelectorStep>('devices')
-  const [incompatibleOpen, setIncompatibleOpen] = useState(false)
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const fleet = useMemo(
     () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
@@ -184,30 +181,6 @@ export function SourceSelectorMembers({
           showAll
           testId="helper-member-picker"
         />
-      )}
-      {partitioned.incompatible.length > 0 && (
-        <div data-testid="helper-incompatible-devices">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-auto w-full justify-start gap-1 px-0 text-[11px] text-foreground-muted"
-            onClick={() => setIncompatibleOpen((open) => !open)}
-          >
-            <ChevronDown
-              className={`size-3 transition-transform ${incompatibleOpen ? 'rotate-180' : ''}`}
-            />
-            {t('customize.sourceSelector.notCompatibleDevices', {
-              count: partitioned.incompatible.length,
-            })}
-          </Button>
-          {incompatibleOpen && (
-            <ul className="mt-1 flex flex-col gap-0.5 pl-4 text-[11px] text-foreground-subtle">
-              {partitioned.incompatible.map((row) => (
-                <li key={row.id}>{row.name}</li>
-              ))}
-            </ul>
-          )}
-        </div>
       )}
     </div>
   )

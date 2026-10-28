@@ -44,6 +44,7 @@ import { DeviceFilterBar, typeLabel } from './device-filter-bar'
 import type { PickerFleetView } from './device-fleet-view'
 import { withResolvedParentDetail } from './device-parent.js'
 import { useDeviceLabelById } from '../device-name'
+import { useDeviceProviderLabels } from './device-provider-label'
 import { usePickerSiteZones, useStoredGroupBy } from './device-picker-grouping'
 import {
   applyPickerFilters,
@@ -326,7 +327,7 @@ export function DevicePicker<Id extends PickerId = number>({
       {listState === 'failed' && (
         <DevicesFailedLine noun={noun === 'camera' ? 'devices' : plural} />
       )}
-      {!(selection === 'single' && chips.length === 0) && (
+      {!(selection === 'single' && chips.length === 0 && showAll) && (
         <div className="flex flex-wrap items-center gap-1">
           {chips.length === 0 ? (
             <span className="text-[11px] text-foreground-subtle">
@@ -349,7 +350,9 @@ export function DevicePicker<Id extends PickerId = number>({
                 stored={chip.label}
                 removed={chip.removed}
                 {...(!disabled
-                  ? { onRemove: () => onChange(value.filter((id) => id !== chip.id)) }
+                  ? {
+                      onRemove: () => onChange(value.filter((id) => id !== chip.id)),
+                    }
                   : {})}
               />
             ))
@@ -360,7 +363,9 @@ export function DevicePicker<Id extends PickerId = number>({
               className="rounded-md border border-border px-1.5 py-0.5 text-[11px] text-foreground-subtle hover:bg-surface-hover"
               onClick={() => setChipsExpanded(true)}
             >
-              {t('uiLibrary.devicePicker.moreChips', '+{{count}} more', { count: overflow.hidden })}
+              {t('uiLibrary.devicePicker.moreChips', '+{{count}} more', {
+                count: overflow.hidden,
+              })}
             </button>
           )}
           {chipsExpanded && chips.length > PICKER_CHIP_LIMIT && (
@@ -445,7 +450,11 @@ interface PickerPanelProps<Id extends PickerId> {
   readonly pinnedGroupBy?: PickerGroupBy
   /** "Group by" — the device picker only; absent keeps the (type, room) groups. */
   readonly grouping?: PickerGroupingControl
+  /** Who offers each device — the device picker only. */
+  readonly providers?: ReadonlyMap<number, string>
 }
+
+const NO_PROVIDERS: ReadonlyMap<number, string> = new Map()
 
 /**
  * The device picker's panel: mounted only while the list is open, so the zone
@@ -465,7 +474,11 @@ function GroupedPickerPanel<Id extends PickerId>(props: PickerPanelProps<Id>) {
   }
   // Asked whenever the panel is open: the Zone filter needs the read as much as Zone grouping.
   const zones = usePickerSiteZones(true)
-  return <PickerPanel {...props} grouping={{ groupBy, onGroupByChange, zones }} />
+  // Only a DEVICE picker (the one with a "Group by") names who offers a row.
+  const providers = useDeviceProviderLabels(true)
+  return (
+    <PickerPanel {...props} providers={providers} grouping={{ groupBy, onGroupByChange, zones }} />
+  )
 }
 
 /** The search box's hint: a device has a room and a type, a class a category, a node or package an id. */
@@ -499,6 +512,7 @@ function PickerPanel<Id extends PickerId>({
   showAll,
   selection,
   grouping,
+  providers = NO_PROVIDERS,
 }: PickerPanelProps<Id>) {
   const t = useUiText()
   const radioName = useId()
@@ -630,6 +644,7 @@ function PickerPanel<Id extends PickerId>({
               lockedNote={lockedNote}
               selection={selection}
               radioName={radioName}
+              providers={providers}
             />
           ))}
           {page.remaining > 0 && (
@@ -671,6 +686,8 @@ interface PickerRowViewProps<Id extends PickerId> {
   readonly lockedNote: string
   readonly selection: DevicePickerSelection
   readonly radioName: string
+  /** Who offers each device: "{addon} ({integration})". */
+  readonly providers: ReadonlyMap<number, string>
 }
 
 /** The second line: under "Group by" the room (where the header lacks it) and type, then the container. */
@@ -701,6 +718,7 @@ function PickerRowView<Id extends PickerId>({
   lockedNote,
   selection,
   radioName,
+  providers,
 }: PickerRowViewProps<Id>) {
   const t = useUiText()
   const single = selection === 'single'
@@ -751,6 +769,8 @@ function PickerRowView<Id extends PickerId>({
   const isLocked = locked.has(row.device.id)
   const note = isLocked ? lockedNote : annotate?.(row.device.id)
   const second = secondLine(row.device, groupBy)
+  const rowId = row.device.id
+  const provider = typeof rowId === 'number' ? providers.get(rowId) : undefined
   return (
     <label
       className="flex cursor-pointer items-center gap-2.5 px-3 py-1 text-xs text-foreground hover:bg-surface-hover"
@@ -771,6 +791,14 @@ function PickerRowView<Id extends PickerId>({
         <PickerDeviceName id={row.device.id} stored={row.device.name} className="truncate" />
         {second !== undefined && (
           <span className="truncate text-[10px] text-foreground-subtle">{second}</span>
+        )}
+        {provider !== undefined && (
+          <span
+            className="truncate text-[10px] text-foreground-subtle"
+            data-testid="device-picker-provider"
+          >
+            {provider}
+          </span>
         )}
         {note !== undefined && (
           <span

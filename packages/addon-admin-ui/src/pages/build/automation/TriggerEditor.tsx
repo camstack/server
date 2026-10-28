@@ -32,6 +32,7 @@ import {
   Select,
 } from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
+import { BuildDevicePicker } from '../flow/BuildDevicePicker'
 import type { AutomationDevice } from './automation-data'
 import { DetectionFields, IntervalFields, StationaryFields } from './SceneFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
@@ -338,7 +339,12 @@ function DeviceStateFields({ trigger, devices, onChange }: DeviceStateFieldsProp
           value={trigger.forMs === undefined ? '' : String(trigger.forMs / 1000)}
           placeholder="0"
           onChange={(e) =>
-            onChange(buildStateTrigger(selection, { ...options, forMs: toMs(e.target.value) }))
+            onChange(
+              buildStateTrigger(selection, {
+                ...options,
+                forMs: toMs(e.target.value),
+              }),
+            )
           }
         />
       </label>
@@ -351,7 +357,12 @@ function DeviceStateFields({ trigger, devices, onChange }: DeviceStateFieldsProp
           value={trigger.debounceMs === undefined ? '' : String(trigger.debounceMs / 1000)}
           placeholder="0"
           onChange={(e) =>
-            onChange(buildStateTrigger(selection, { ...options, debounceMs: toMs(e.target.value) }))
+            onChange(
+              buildStateTrigger(selection, {
+                ...options,
+                debounceMs: toMs(e.target.value),
+              }),
+            )
           }
         />
       </label>
@@ -390,28 +401,31 @@ function DeviceEventFields({ trigger, devices, onChange }: DeviceEventFieldsProp
             })
           }
           options={[
-            { value: '', label: t('automation.triggerEditor.selectAnEvent', 'Select an event…') },
+            {
+              value: '',
+              label: t('automation.triggerEditor.selectAnEvent', 'Select an event…'),
+            },
             ...EVENT_CATEGORIES.map((c) => ({ value: c, label: c })),
           ]}
         />
       </label>
-      <label className="min-w-[11rem] flex-1">
+      <div className="min-w-[11rem] flex-1">
         <PickerLabel>{t('automation.triggerEditor.fromDevice', 'From device')}</PickerLabel>
-        <Select
-          value={trigger.deviceId === undefined ? '' : String(trigger.deviceId)}
-          onChange={(e) =>
+        <BuildDevicePicker
+          devices={devices}
+          selection="single"
+          value={trigger.deviceId === undefined ? [] : [trigger.deviceId]}
+          emptyLabel={t('automation.triggerEditor.anyDevice', 'Any device')}
+          testId="trigger-event-device"
+          onChange={(ids) =>
             onChange({
               kind: 'device-event',
               category: trigger.category,
-              ...(e.target.value === '' ? {} : { deviceId: Number(e.target.value) }),
+              ...(ids[0] === undefined ? {} : { deviceId: ids[0] }),
             })
           }
-          options={[
-            { value: '', label: t('automation.triggerEditor.anyDevice', 'Any device') },
-            ...devices.map((d) => ({ value: String(d.id), label: d.name })),
-          ]}
         />
-      </label>
+      </div>
     </>
   )
 }

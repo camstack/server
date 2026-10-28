@@ -9,9 +9,20 @@ import {
   DeviceType,
   generateAutomationBlock,
 } from '@camstack/types'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('../../../../../../ui-library/src/contexts/system-context.js', () => ({
+  useSystem: () => ({
+    trpcClient: {
+      deviceManager: {
+        listSiteZones: { query: () => new Promise(() => undefined) },
+      },
+    },
+  }),
+}))
 
 vi.mock('@camstack/ui-library', async () => {
   const actual =
@@ -57,7 +68,13 @@ function DetectionHarness({ onTrigger }: { readonly onTrigger: (t: DetectionTrig
 function recipeWith(triggers: AutomationRecipe['triggers']): AutomationRecipe {
   return {
     triggers,
-    actions: [{ kind: 'action', actionId: 'internal:feed-dog', variables: { grams: 30 } }],
+    actions: [
+      {
+        kind: 'action',
+        actionId: 'internal:feed-dog',
+        variables: { grams: 30 },
+      },
+    ],
   }
 }
 
@@ -76,10 +93,17 @@ describe('scene blocks build recipe parts the schema accepts', () => {
 
   it('picking class, camera and zone in the editor yields a valid trigger without empty keys', () => {
     let last: DetectionTrigger | null = null
-    render(<DetectionHarness onTrigger={(t) => (last = t)} />)
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <DetectionHarness onTrigger={(t) => (last = t)} />
+      </QueryClientProvider>,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Animal' }))
-    fireEvent.change(screen.getByLabelText('Add camera'), { target: { value: '101' } })
+    fireEvent.click(screen.getByRole('button', { name: /Add cameras/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Kitchen/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Bowl' }))
 
     expect(last).toEqual({
@@ -91,7 +115,11 @@ describe('scene blocks build recipe parts the schema accepts', () => {
 
     // Un-picking the only zone removes the key: absence means the whole scene.
     fireEvent.click(screen.getByRole('button', { name: 'Bowl' }))
-    expect(last).toEqual({ kind: 'detection', classes: ['animal'], deviceIds: [101] })
+    expect(last).toEqual({
+      kind: 'detection',
+      classes: ['animal'],
+      deviceIds: [101],
+    })
     expect(last !== null && 'zones' in last).toBe(false)
   })
 
@@ -139,7 +167,13 @@ describe('editing to recipe round trip', () => {
         kind: 'all',
         children: [{ kind: 'stationary-present', deviceId: 101 }],
       },
-      actions: [{ kind: 'action', actionId: 'internal:feed-dog', variables: { grams: 30 } }],
+      actions: [
+        {
+          kind: 'action',
+          actionId: 'internal:feed-dog',
+          variables: { grams: 30 },
+        },
+      ],
       runMode: { mode: 'cooldown', minutes: 60 },
     }
     expect(AutomationRecipeSchema.safeParse(recipe).success).toBe(true)

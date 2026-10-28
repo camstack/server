@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The notification rule editor shows delivery options (such as Echo mode and volume) when a selected target supports them.
 - The New Integration dialog shows the integrations like the Integrations page: bigger icons, up to three columns, Providers and System
 - Integrations are listed alphabetically by name, on the page and in the New Integration dialog
+- Build-your-self picks devices with the common device selector everywhere, and the helper member picker lists only compatible devices
 
 ## [1.2.504] - 2026-10-28
 

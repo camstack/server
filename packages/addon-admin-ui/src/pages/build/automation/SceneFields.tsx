@@ -12,7 +12,7 @@ import { DeviceType } from '@camstack/types'
 import { SegmentedChoice } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
-import { FixedSelect } from '../flow/FixedSelect'
+import { BuildDevicePicker } from '../flow/BuildDevicePicker'
 import { CameraPicker, ClassChips, FieldLabel, ZonePicker } from '../flow/scene-pickers'
 import type { AutomationDevice } from './automation-data'
 
@@ -122,7 +122,10 @@ export function StationaryFields({ trigger, devices, onChange }: StationaryField
         value={trigger.phase}
         onChange={(phase) => onChange({ ...trigger, phase })}
         options={[
-          { value: 'appeared', label: t('flow.scene.phaseAppeared', 'Stopped (parked)') },
+          {
+            value: 'appeared',
+            label: t('flow.scene.phaseAppeared', 'Stopped (parked)'),
+          },
           { value: 'departed', label: t('flow.scene.phaseDeparted', 'Left') },
         ]}
       />
@@ -179,16 +182,15 @@ export function StationaryPresentFields({ leaf, devices, onChange }: StationaryP
     <div className="space-y-3" data-testid="stationary-present-fields">
       <div className="space-y-1">
         <FieldLabel>{t('flow.scene.parkedOn', 'An object is parked on')}</FieldLabel>
-        <FixedSelect
-          widthClass="w-48"
-          aria-label={t('flow.scene.camera', 'Camera')}
-          value={leaf.deviceId > 0 ? String(leaf.deviceId) : ''}
-          options={[
-            { value: '', label: t('flow.scene.pickCamera', 'Pick a camera') },
-            ...cameras.map((c) => ({ value: String(c.id), label: c.name })),
-          ]}
-          onChange={(e) => {
-            if (e.target.value !== '') setCamera(Number(e.target.value))
+        <BuildDevicePicker
+          devices={cameras}
+          selection="single"
+          noun="camera"
+          value={leaf.deviceId > 0 ? [leaf.deviceId] : []}
+          testId="stationary-present-camera"
+          onChange={(ids) => {
+            const id = ids[0]
+            if (id !== undefined && id !== leaf.deviceId) setCamera(id)
           }}
         />
       </div>

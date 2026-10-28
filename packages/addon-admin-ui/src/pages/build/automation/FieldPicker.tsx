@@ -1,23 +1,39 @@
 /**
- * Device → capability → field, the one picker every surface here shares.
+ * Device → value, the one picker every surface here shares — and it is the
+ * common `SourceSelector` (D944 §5), not a list of its own: the device column
+ * scrolls inside its container, shows the parent, groups by room and suggests
+ * the siblings, and the values column lists the fields with their live reading.
  *
  * A trigger that watches a field and a condition that compares one are asking
  * the same question, so they ask it with the same control — and both get the
  * field's KIND from the same place, which is what lets the operator list narrow
  * honestly instead of offering `>` next to a boolean.
  *
- * Choosing a device clears the capability, and choosing a capability clears the
- * field. That is not tidiness: `power-switch.on` left behind after the device
- * changes is a perfectly well-formed row that reads a field the new device does
- * not have, and the leaf evaluates FALSE forever without ever looking broken.
+ * Choosing a device clears the field. That is not tidiness: `power-switch.on`
+ * left behind after the device changes is a perfectly well-formed row that
+ * reads a field the new device does not have, and the leaf evaluates FALSE
+ * forever without ever looking broken.
  */
 
-import { Select } from '@camstack/ui-library'
-import type { ReactNode } from 'react'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  useDeviceManagerListAll,
+} from '@camstack/ui-library'
+import { ChevronDown } from 'lucide-react'
+import { type ReactNode, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import {
+  type PickerDevice,
+  toPickerDevices,
+} from '../../../components/device/customize/source-picker-model'
+import { SourceSelector } from '../../../components/device/customize/source-selector/SourceSelector'
 import { type AutomationDevice, fieldsOfCap, useWireableFields } from './automation-data'
 import type { WireableField } from './recipe-parts'
-import { useTranslation } from 'react-i18next'
-import i18n from '../../../i18n/index'
 
 export interface FieldSelection {
   readonly deviceId: number
@@ -52,69 +68,117 @@ export function useFieldDescriptor(selection: FieldSelection): WireableField | u
 
 export function FieldPicker({ value, devices, onChange }: FieldPickerProps) {
   const { t } = useTranslation()
-  const fields = useWireableFields(value.deviceId)
-  const caps = fields.data ?? []
-  const capFields = fieldsOfCap(caps, value.cap)
+  const [open, setOpen] = useState(false)
+  const device = devices.find((d) => d.id === value.deviceId)
+  const summary =
+    value.deviceId === 0
+      ? t('automation.fieldPicker.pickAValue', 'Pick a device value…')
+      : `${device?.name ?? `#${String(value.deviceId)}`}${
+          value.cap === '' ? '' : ` · ${value.cap}.${value.fieldPath}`
+        }`
 
   return (
-    <>
-      <label className="min-w-[10rem] flex-1">
-        <PickerLabel>{t('automation.fieldPicker.device', 'Device')}</PickerLabel>
-        <Select
-          value={String(value.deviceId)}
-          onChange={(e) => onChange({ deviceId: Number(e.target.value), cap: '', fieldPath: '' })}
-          options={[
-            { value: '0', label: t('automation.fieldPicker.selectADevice', 'Select a device…') },
-            ...devices.map((d) => ({ value: String(d.id), label: d.name })),
-          ]}
+    <div className="min-w-[14rem] max-w-full flex-[2]">
+      <PickerLabel>{t('automation.fieldPicker.value', 'Device value')}</PickerLabel>
+      <Button
+        variant="outline"
+        className="w-full min-w-0 justify-between"
+        data-testid="field-picker-open"
+        onClick={() => setOpen(true)}
+      >
+        <span className="w-0 flex-1 truncate text-left">{summary}</span>
+        <ChevronDown className="size-3.5 shrink-0" />
+      </Button>
+      {open && (
+        <FieldPickerDialog
+          value={value}
+          devices={devices}
+          onCancel={() => setOpen(false)}
+          onConfirm={(next) => {
+            setOpen(false)
+            onChange(next)
+          }}
         />
-      </label>
-
-      <label className="min-w-[9rem] flex-1">
-        <PickerLabel>{t('automation.fieldPicker.capability', 'Capability')}</PickerLabel>
-        <Select
-          value={value.cap}
-          disabled={value.deviceId === 0}
-          onChange={(e) => onChange({ ...value, cap: e.target.value, fieldPath: '' })}
-          options={[
-            { value: '', label: capsPlaceholder(value.deviceId, caps.length, fields.isLoading) },
-            ...caps.map((c) => ({ value: c.cap, label: c.cap })),
-          ]}
-        />
-      </label>
-
-      <label className="min-w-[9rem] flex-1">
-        <PickerLabel>{t('automation.fieldPicker.field', 'Field')}</PickerLabel>
-        <Select
-          value={value.fieldPath}
-          disabled={value.cap === ''}
-          onChange={(e) => onChange({ ...value, fieldPath: e.target.value })}
-          options={[
-            {
-              value: '',
-              label:
-                capFields.length === 0
-                  ? t('automation.fieldPicker.noReadableFields', 'No readable fields')
-                  : t('automation.fieldPicker.selectAField', 'Select a field…'),
-            },
-            ...capFields.map((f) => ({ value: f.path, label: `${f.path} (${f.kind})` })),
-          ]}
-        />
-      </label>
-    </>
+      )}
+    </div>
   )
 }
 
-/**
- * What the capability box says when it has nothing to offer.
- *
- * "No capabilities" while the read is still in flight states as fact the one
- * thing that is not yet known — the same mistake as rendering "no scripts" over
- * a failed list read.
- */
-function capsPlaceholder(deviceId: number, count: number, loading: boolean): string {
-  if (deviceId === 0) return i18n.t('automation.fieldPicker.pickDeviceFirst')
-  if (loading) return i18n.t('automation.fieldPicker.readingDevice')
-  if (count === 0) return i18n.t('automation.fieldPicker.noReadableCaps')
-  return i18n.t('automation.fieldPicker.selectCap')
+interface FieldPickerDialogProps {
+  readonly value: FieldSelection
+  readonly devices: readonly AutomationDevice[]
+  readonly onCancel: () => void
+  readonly onConfirm: (next: FieldSelection) => void
+}
+
+/** The common selector in a dialog: destination (this surface) → device → value. */
+function FieldPickerDialog({
+  value,
+  devices,
+  onCancel,
+  onConfirm,
+}: FieldPickerDialogProps): ReactNode {
+  const { t } = useTranslation()
+  const fleet = useDeviceManagerListAll({ projection: 'slim' })
+  const allowed = useMemo(() => new Set(devices.map((d) => d.id)), [devices])
+  const deviceFilter = useMemo(
+    () =>
+      (d: PickerDevice): boolean =>
+        allowed.has(d.id),
+    [allowed],
+  )
+  const [picked, setPicked] = useState<PickerDevice | null>(null)
+  const [seeded, setSeeded] = useState(false)
+  const [field, setField] = useState<{ cap: string; path: string } | null>(
+    value.cap === '' ? null : { cap: value.cap, path: value.fieldPath },
+  )
+  if (!seeded && fleet.status === 'success') {
+    setSeeded(true)
+    setPicked(toPickerDevices(fleet.data).find((d) => d.id === value.deviceId) ?? null)
+  }
+  const title = t('automation.fieldPicker.title', 'Device value')
+  return (
+    <Dialog open onOpenChange={(next) => !next && onCancel()}>
+      <DialogContent width="xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <SourceSelector
+          kind="formula"
+          enabled
+          hostId={-1}
+          destination={{
+            cap: 'automation',
+            targetId: 'field',
+            title,
+            pickerTargetKind: null,
+          }}
+          device={picked}
+          field={field}
+          deviceFilter={deviceFilter}
+          onDeviceChange={setPicked}
+          onFieldChange={setField}
+        />
+        <DialogFooter className="flex flex-wrap gap-2">
+          <Button variant="ghost" onClick={onCancel}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button
+            disabled={picked === null || field === null}
+            data-testid="field-picker-confirm"
+            onClick={() => {
+              if (picked === null || field === null) return
+              onConfirm({
+                deviceId: picked.id,
+                cap: field.cap,
+                fieldPath: field.path,
+              })
+            }}
+          >
+            {t('automation.fieldPicker.use', 'Use this value')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

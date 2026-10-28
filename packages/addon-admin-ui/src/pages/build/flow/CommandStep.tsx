@@ -27,6 +27,7 @@ import {
 import { useDeviceBoundCaps } from '../../../components/device-do-action/use-device-bound-caps'
 import type { AutomationDevice } from '../automation/automation-data'
 import { ArgField, type ScopeVariable } from './ArgField'
+import { BuildDevicePicker } from './BuildDevicePicker'
 import {
   buildCapStep,
   type CapStep,
@@ -37,7 +38,6 @@ import {
   type StepArgValue,
   vocabLocale,
 } from './command-vocab'
-import { FixedSelect } from './FixedSelect'
 
 export interface CommandStepProps {
   readonly step: CapStep
@@ -103,9 +103,7 @@ export function CommandStep({
     )
   }
 
-  const deviceOptions = devices
-    .filter((d) => isDoPickerDeviceType(d.type ?? ''))
-    .map((d) => ({ value: String(d.id), label: d.name }))
+  const doDevices = devices.filter((d) => isDoPickerDeviceType(d.type ?? ''))
 
   return (
     <div className="space-y-2" data-testid="command-step">
@@ -122,17 +120,16 @@ export function CommandStep({
         </Button>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <FixedSelect
-          widthClass="w-full"
-          aria-label={t('flow.command.device', 'Device')}
-          value={deviceId > 0 ? String(deviceId) : ''}
-          onChange={(e) =>
-            onChange({ kind: 'cap', deviceId: Number(e.target.value), cap: '', method: '' })
-          }
-          options={[
-            { value: '', label: t('flow.command.pickDevice', 'Pick a device') },
-            ...deviceOptions,
-          ]}
+        <BuildDevicePicker
+          devices={doDevices}
+          selection="single"
+          listState={devicesState}
+          value={deviceId > 0 ? [deviceId] : []}
+          testId="command-step-device"
+          onChange={(ids) => {
+            const id = ids[0] ?? 0
+            if (id !== deviceId) onChange({ kind: 'cap', deviceId: id, cap: '', method: '' })
+          }}
         />
         <OptionSelect
           mode="single"

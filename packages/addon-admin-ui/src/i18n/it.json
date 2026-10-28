@@ -5937,7 +5937,11 @@
       "pickDeviceFirst": "Scegli prima un dispositivo",
       "readingDevice": "Lettura del dispositivo…",
       "noReadableCaps": "Questo dispositivo non riporta capacità leggibili",
-      "selectCap": "Seleziona una capacità…"
+      "selectCap": "Seleziona una capacità…",
+      "pickAValue": "Scegli un valore del dispositivo…",
+      "value": "Valore del dispositivo",
+      "title": "Valore del dispositivo",
+      "use": "Usa questo valore"
     },
     "generatedCodePanel": {
       "ejectToCodeThisCannot": "Converti in codice — l'operazione non può essere annullata",

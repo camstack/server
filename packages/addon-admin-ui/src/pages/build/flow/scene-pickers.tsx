@@ -5,10 +5,10 @@
  */
 
 import { DeviceType, MACRO_LABELS } from '@camstack/types'
-import { Button, SelectedChip, useZonesListZones } from '@camstack/ui-library'
+import { Button, useZonesListZones } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../automation/automation-data'
-import { FixedSelect } from './FixedSelect'
+import { BuildDevicePicker } from './BuildDevicePicker'
 
 const FIELD_LABEL = 'text-xs text-foreground-subtle'
 
@@ -78,37 +78,21 @@ export interface CameraPickerProps {
   readonly onChange: (next: readonly number[]) => void
 }
 
-/** Chosen cameras as removable chips, and a select that adds the next one. */
+/** The chosen cameras, picked with the common device picker. */
 export function CameraPicker({ devices, selected, onChange }: CameraPickerProps) {
   const { t } = useTranslation()
   const cameras = devices.filter((d) => d.type === DeviceType.Camera)
-  const name = (id: number): string => devices.find((d) => d.id === id)?.name ?? `#${String(id)}`
   return (
     <div className="space-y-1">
       <FieldLabel>{t('flow.scene.cameras', 'Cameras')}</FieldLabel>
-      <div className="flex flex-wrap items-center gap-2">
-        {selected.map((id) => (
-          <SelectedChip
-            key={id}
-            label={name(id)}
-            onRemove={() => onChange(selected.filter((x) => x !== id))}
-          />
-        ))}
-        <FixedSelect
-          aria-label={t('flow.scene.addCamera', 'Add camera')}
-          widthClass="w-44"
-          value=""
-          options={[
-            { value: '', label: t('flow.scene.addCamera', 'Add camera') },
-            ...cameras
-              .filter((c) => !selected.includes(c.id))
-              .map((c) => ({ value: String(c.id), label: c.name })),
-          ]}
-          onChange={(e) => {
-            if (e.target.value !== '') onChange([...selected, Number(e.target.value)])
-          }}
-        />
-      </div>
+      <BuildDevicePicker
+        devices={cameras}
+        selection="multiple"
+        noun="camera"
+        value={selected}
+        testId="scene-cameras"
+        onChange={onChange}
+      />
     </div>
   )
 }

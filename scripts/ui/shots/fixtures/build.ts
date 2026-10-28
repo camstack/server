@@ -16,6 +16,7 @@ const device = (
   type: string,
   isCamera: boolean,
   location: string,
+  integrationId?: string,
 ) => ({
   id,
   stableId,
@@ -33,11 +34,12 @@ const device = (
   config: {},
   secretConfigPaths: [],
   metadata: {},
+  ...(integrationId === undefined ? {} : { integrationId }),
 })
 
 const KITCHEN = device(101, 'Kitchen', 'cam.kitchen', 'camera', true, 'Kitchen')
 const GARAGE = device(102, 'Garage', 'cam.garage', 'camera', true, 'Garage')
-const FEEDER = device(201, 'FRESHELEMENT 3', 'feeder.dog', 'pet-feeder', false, 'Kitchen')
+const FEEDER = device(201, 'FRESHELEMENT 3', 'feeder.dog', 'pet-feeder', false, 'Kitchen', 'int-ha')
 
 const RECIPE = {
   triggers: [
@@ -48,8 +50,40 @@ const RECIPE = {
       zones: ['zone-bowl'],
     },
     { kind: 'interval' as const, minutes: 480 },
+    {
+      kind: 'device-state' as const,
+      deviceId: 201,
+      cap: 'pet-feeder',
+      fieldPath: 'hopperLevel',
+    },
+    { kind: 'device-event' as const, category: 'system.boot', deviceId: 101 },
+    {
+      kind: 'stationary' as const,
+      deviceIds: [101],
+      phase: 'appeared' as const,
+    },
   ],
-  actions: [{ kind: 'action' as const, actionId: 'internal:feed-dog', variables: { grams: 30 } }],
+  conditions: {
+    kind: 'all' as const,
+    children: [
+      {
+        kind: 'condition' as const,
+        deviceId: 201,
+        cap: 'pet-feeder',
+        fieldPath: 'hopperLevel',
+        operator: 'gt' as const,
+        value: 10,
+      },
+      { kind: 'stationary-present' as const, deviceId: 101 },
+    ],
+  },
+  actions: [
+    {
+      kind: 'action' as const,
+      actionId: 'internal:feed-dog',
+      variables: { grams: 30 },
+    },
+  ],
   runMode: { mode: 'cooldown' as const, minutes: 60 },
 }
 
@@ -101,7 +135,11 @@ export const ACTIONS = [
     addonId: 'provider-homeassistant',
     source: 'addon',
     readOnly: true,
-    status: { isRunning: false, lastRunAt: NOW - 3_600_000, lastError: 'Scene unavailable' },
+    status: {
+      isRunning: false,
+      lastRunAt: NOW - 3_600_000,
+      lastError: 'Scene unavailable',
+    },
   },
 ]
 
@@ -147,9 +185,21 @@ const TRACES = [
     runId: 'run-3',
     startedAt: NOW - 3 * 3_600_000,
     endedAt: NOW - 3 * 3_600_000 + 2_000,
-    trigger: { kind: 'interval', outcome: 'pass', reason: 'every 480 minutes', vars: {} },
+    trigger: {
+      kind: 'interval',
+      outcome: 'pass',
+      reason: 'every 480 minutes',
+      vars: {},
+    },
     conditions: [],
-    steps: [{ path: '0', kind: 'action', outcome: 'error', message: 'Feeder offline' }],
+    steps: [
+      {
+        path: '0',
+        kind: 'action',
+        outcome: 'error',
+        message: 'Feeder offline',
+      },
+    ],
     outcome: 'failed',
     repeat: 1,
     lastAt: NOW - 3 * 3_600_000,
@@ -178,6 +228,55 @@ export default defineFixtures({
             ]
           : [],
     }),
+    'deviceManager.listSiteZones': [],
+    'deviceManager.getWireableFields': (input: { deviceId?: number }) =>
+      input.deviceId === 201
+        ? {
+            caps: [
+              {
+                cap: 'pet-feeder',
+                fields: [
+                  { path: 'hopperLevel', kind: 'number' },
+                  { path: 'feeding', kind: 'boolean' },
+                ],
+              },
+            ],
+          }
+        : { caps: [] },
+    'deviceState.getSnapshot': (input: { deviceId?: number }) =>
+      input.deviceId === 201 ? { 'pet-feeder': { hopperLevel: 64, feeding: false } } : {},
+    'addons.list': [
+      {
+        manifest: {
+          id: 'provider-reolink',
+          name: 'Reolink',
+          packageName: 'x',
+          packageVersion: '1',
+        },
+        source: 'npm',
+      },
+      {
+        manifest: {
+          id: 'provider-homeassistant',
+          name: 'Home Assistant',
+          packageName: 'y',
+          packageVersion: '1',
+        },
+        source: 'npm',
+      },
+    ],
+    'integrations.list': [
+      {
+        id: 'int-ha',
+        addonId: 'provider-homeassistant',
+        name: 'Casa',
+        enabled: true,
+        info: {},
+        createdAt: 0,
+        updatedAt: 0,
+        processState: 'running',
+      },
+    ],
     'zones.listZones': (input: { deviceId?: number }) =>
       input.deviceId === 101
         ? [
