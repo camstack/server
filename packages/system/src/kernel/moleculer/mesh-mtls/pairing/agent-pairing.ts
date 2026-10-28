@@ -159,6 +159,8 @@ export interface AgentPairingPublicView {
 
 /** The local view: the same, plus what only the agent's own machine may see. */
 export interface AgentPairingLocalView extends AgentPairingPublicView {
+  /** Some pairing lockout is in force (offer budget, per-hub backoff, wrong-PIN lock): the reset would change something. */
+  readonly lockedOut: boolean
   readonly pending: readonly (PendingPairingPublic & {
     readonly pairingId: string
     readonly pin: string
@@ -343,6 +345,7 @@ export class AgentPairing {
     this.expireIfDue()
     return {
       state: this.state(),
+      lockedOut: this.isLockedOut(),
       pending: [...this.sessions.values()].map((s) => ({
         pairingId: s.pairingId,
         hub: {
@@ -614,6 +617,15 @@ export class AgentPairing {
   }
 
   // ── internals ────────────────────────────────────────────────────────
+
+  /** Any lockout `reset` would lift: the offer budget, a hub CA's backoff, or a source locked for wrong secrets. */
+  private isLockedOut(): boolean {
+    const at = this.now()
+    if (at < this.lockedUntil) return true
+    for (const ca of this.perCa.values()) if (at < ca.until) return true
+    for (const entry of this.pinBySource.values()) if (at < entry.lockedUntil) return true
+    return false
+  }
 
   /** Remaining lock for a source, or `null`. Loopback never calls this. */
   private sourceLock(source: string, at: number): number | null {

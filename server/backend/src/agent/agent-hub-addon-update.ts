@@ -47,7 +47,7 @@ export interface PackageUpdateProgress {
 
 export type HubVersions =
   | { readonly ok: true; readonly versions: ReadonlyMap<string, string> }
-  | { readonly ok: false; readonly error: string }
+  | { readonly ok: false; readonly reason: 'unpaired' | 'unanswered' }
 
 export interface StartResult {
   readonly started: boolean
@@ -65,6 +65,8 @@ export interface AgentHubAddonControls {
 export interface AgentHubAddonDeps {
   readonly nodeId: string
   readonly callHub: HubCall
+  /** An agent with no hub does not ask one; absent = always asks. */
+  readonly isPaired?: () => boolean
   readonly onProblem?: (message: string) => void
 }
 
@@ -111,11 +113,14 @@ export function createAgentHubAddonControls(deps: AgentHubAddonDeps): AgentHubAd
   const states = new Map<string, PackageUpdateProgress>()
 
   const getHubVersions = async (): Promise<HubVersions> => {
+    if (deps.isPaired !== undefined && !deps.isPaired()) return { ok: false, reason: 'unpaired' }
     try {
       const list = await deps.callHub(HUB_ADDON_LIST_ACTION, undefined, HUB_LIST_TIMEOUT_MS)
       return { ok: true, versions: hubVersionsFromList(list) }
     } catch (err: unknown) {
-      return { ok: false, error: errorMessage(err) }
+      // The transport's own words (a service name) are for the log, not the operator.
+      deps.onProblem?.(`the hub did not answer addons.list: ${errorMessage(err)}`)
+      return { ok: false, reason: 'unanswered' }
     }
   }
 
@@ -157,7 +162,10 @@ export function createAgentHubAddonControls(deps: AgentHubAddonDeps): AgentHubAd
       if (!hub.ok) {
         return {
           started: false,
-          message: `The hub could not be asked which version this node should run: ${hub.error}`,
+          message:
+            hub.reason === 'unpaired'
+              ? 'This agent is not paired with a hub, so there is no version to bring it to.'
+              : 'The hub did not answer, so the version this node should run is unknown.',
         }
       }
       const hubVersion = hub.versions.get(packageName)

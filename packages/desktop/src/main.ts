@@ -30,6 +30,7 @@
  */
 
 import * as fs from 'node:fs'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import {
   app,
@@ -77,6 +78,7 @@ import { connectionLabel } from './role/viewer-connection'
 import { ViewerWindowController } from './role/viewer-window'
 import { parseRoleSetting } from './role-setting'
 import type { HubMode } from './setup/render-setup-html'
+import { defaultAgentName } from './setup/default-agent-name'
 import { renderSetupHtml } from './setup/render-setup-html'
 import type { NodeRole } from './types'
 import { buildAgentServiceSpec, serviceResourcePaths } from './windows-service/agent-service-spec'
@@ -602,6 +604,7 @@ function showSetupWindow(): void {
     hubAddress: store.get('hubAddress') ?? '',
     hubPort: store.get('hubPort'),
     agentName: store.get('agentName') ?? '',
+    defaultAgentName: defaultAgentName(os.hostname(), os.arch()),
     viewerHubUrl: activeHub(store.get('viewerHubs'))?.origin ?? '',
   })
   void setupWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)

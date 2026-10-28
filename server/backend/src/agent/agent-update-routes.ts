@@ -104,8 +104,11 @@ export interface AgentAddonUpdateRow extends AgentAddonUpdateEntry {
 
 export interface AgentAddonUpdateView extends Omit<AgentAddonUpdateReport, 'entries'> {
   readonly entries: readonly AgentAddonUpdateRow[]
-  /** Why the hub's versions are unknown, or `null`. Unknown is never "aligned". */
-  readonly hubVersionsError: string | null
+  /**
+   * Whether the hub's versions are known: `unpaired` (not asked at all) or `unanswered`
+   * (asked, no answer). Unknown is never "aligned".
+   */
+  readonly hubVersions: 'known' | 'unpaired' | 'unanswered'
 }
 
 export type AgentAddonUpdateResponse =
@@ -233,7 +236,7 @@ async function withHubVersions(
   const progress = hub?.progress()
   return {
     ...report,
-    hubVersionsError: versions === null || versions.ok ? null : versions.error,
+    hubVersions: versions === null || versions.ok ? 'known' : versions.reason,
     entries: report.entries.map((entry) => {
       const hubVersion =
         versions?.ok === true ? (versions.versions.get(entry.packageName) ?? null) : null

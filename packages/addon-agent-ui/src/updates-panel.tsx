@@ -161,7 +161,7 @@ function FrameworkCard({
           >
             {checking ? t('updates.checking') : t('updates.check')}
           </Button>
-          {!pendingRestart && (
+          {!pendingRestart && status.updateAvailable && (
             <Button
               type="button"
               variant={armed ? 'danger' : 'primary'}
@@ -174,7 +174,7 @@ function FrameworkCard({
                 setArmed(false)
                 onApply()
               }}
-              disabled={busy || !status.updateAvailable}
+              disabled={busy}
             >
               <Download className="h-3 w-3" />
               {armed

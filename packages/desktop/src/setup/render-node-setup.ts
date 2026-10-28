@@ -19,6 +19,8 @@ export interface NodeSetupInitial {
   readonly hubAddress: string
   readonly hubPort: number
   readonly agentName: string
+  /** What the agent will be called when the field is left empty. */
+  readonly defaultAgentName: string
 }
 
 export function renderNodeSetup(initial: NodeSetupInitial): string {
@@ -65,15 +67,16 @@ export function renderNodeSetup(initial: NodeSetupInitial): string {
   </div>
 
   <div id="modeInfoAuto" class="mode-info" style="display:${isAuto ? 'block' : 'none'}">
-    The agent starts without a hub. Pair it from the hub (System → Cluster →
-    Agents) and confirm the same six digits on both screens.
+    The agent starts without a hub. On the hub open Cluster → Nodes, pick this
+    agent under "Agents found on the network" and confirm the same six digits
+    on both screens.
   </div>
   <div id="modeInfoManual" class="mode-info" style="display:${isAuto ? 'none' : 'block'}">
     Specify the hub's IP address (or hostname). Use this when the hub is on a
     different subnet or its address is already known.
   </div>
 
-  <div class="row">
+  <div class="row" id="manualFields" style="display:${isAuto ? 'none' : 'flex'}">
     <div class="field-wrap">
       <label class="field" for="hub">Hub address</label>
       <input id="hub" type="text" placeholder="192.168.10.10" value="${escapeHtml(initial.hubAddress)}" ${isAuto ? 'disabled' : ''} />
@@ -85,7 +88,7 @@ export function renderNodeSetup(initial: NodeSetupInitial): string {
   </div>
 
   <label class="field" for="name">Agent name <small>(optional)</small></label>
-  <input id="name" type="text" placeholder="$(hostname)" value="${escapeHtml(initial.agentName)}" />
+  <input id="name" type="text" placeholder="${escapeHtml(initial.defaultAgentName)}" value="${escapeHtml(initial.agentName)}" />
 
 </div>`,
     script: `  const hubInput = document.getElementById('hub');
@@ -94,6 +97,7 @@ export function renderNodeSetup(initial: NodeSetupInitial): string {
   const roleInfoAgent = document.getElementById('roleInfoAgent');
   const infoAuto = document.getElementById('modeInfoAuto');
   const infoManual = document.getElementById('modeInfoManual');
+  const manualFields = document.getElementById('manualFields');
 
   function getRole() { return document.querySelector('input[name="role"]:checked').value; }
   function getMode() { return document.querySelector('input[name="mode"]:checked').value; }
@@ -108,10 +112,12 @@ export function renderNodeSetup(initial: NodeSetupInitial): string {
     const m = getMode();
     if (m === 'auto') {
       hubInput.disabled = true;
+      manualFields.style.display = 'none';
       infoAuto.style.display = 'block';
       infoManual.style.display = 'none';
     } else {
       hubInput.disabled = false;
+      manualFields.style.display = 'flex';
       hubInput.focus();
       infoAuto.style.display = 'none';
       infoManual.style.display = 'block';

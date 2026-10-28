@@ -731,8 +731,15 @@ describe('offer squatting and grinding (H2, M4)', () => {
     expect(await r.agent.offer(offerFrom(await generateMeshCa(), 'real'))).toMatchObject({
       error: 'offer-budget',
     })
+    expect(r.agent.localView().lockedOut).toBe(true)
     expect(r.agent.reset({}, LOCAL).ok).toBe(true)
+    expect(r.agent.localView().lockedOut).toBe(false)
     expect((await r.agent.offer(offerFrom(await generateMeshCa(), 'real2'))).ok).toBe(true)
+  })
+
+  it('the local view reports no lockout on a fresh agent', async () => {
+    const r = await rig()
+    expect(r.agent.localView().lockedOut).toBe(false)
   })
 
   it('a hub offering again replaces its own pending pairing, and that counts as abandoned', async () => {

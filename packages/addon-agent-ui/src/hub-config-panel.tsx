@@ -171,6 +171,9 @@ export function HubConfigPanel({ status, onStatusRefresh }: HubConfigPanelProps)
   const paired = view?.state === 'paired' || (view === null && status?.paired === true)
   const pending = view?.pending ?? []
   const loopback = isLoopbackView(pending) || pageIsLocal(window.location.hostname)
+  // A viewer with no session (a network view of an unpaired agent, D857) can write nothing:
+  // offering a rename or a reset would only end in a 401.
+  const canWrite = loopback || status !== null
   const unsupported = view === null && pairing.error !== null && pairing.error.includes('404')
 
   const afterChange = useCallback(async () => {
@@ -202,9 +205,11 @@ export function HubConfigPanel({ status, onStatusRefresh }: HubConfigPanelProps)
         )}
 
         <div className="space-y-0">
-          <SettingRow label={t('hubConfig.hubAddress')} valueClassName="font-mono">
-            {hubAddressLabel ?? t('hubConfig.connection.unpaired')}
-          </SettingRow>
+          {hubAddressLabel !== null && (
+            <SettingRow label={t('hubConfig.hubAddress')} valueClassName="font-mono">
+              {hubAddressLabel}
+            </SettingRow>
+          )}
           <SettingRow label={t('hubConfig.pairing')}>
             {pairingLabel(t, view, status?.paired === true)}
           </SettingRow>
@@ -251,9 +256,17 @@ export function HubConfigPanel({ status, onStatusRefresh }: HubConfigPanelProps)
         {view !== null && !paired && pending.length === 0 && (
           <p className="text-xs text-foreground-subtle">{t('hubConfig.emptyPairing')}</p>
         )}
-        {view !== null && !paired && <PairingReset local={loopback} onReset={afterChange} />}
+        {view !== null && !paired && loopback && view.lockedOut === true && (
+          <PairingReset local onReset={afterChange} />
+        )}
 
-        <NameEditor status={status} onSaved={onStatusRefresh} />
+        {canWrite ? (
+          <NameEditor status={status} onSaved={onStatusRefresh} />
+        ) : (
+          <p className="border-t border-border pt-3 text-[11px] text-foreground-subtle">
+            {t('hubConfig.name.remoteHint')}
+          </p>
+        )}
       </div>
     </SectionCard>
   )

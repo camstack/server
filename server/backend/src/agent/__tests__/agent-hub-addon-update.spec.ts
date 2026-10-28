@@ -158,7 +158,7 @@ describe('Update asks the hub', () => {
     })
     const refused = await down.start('@camstack/addon-a', ['@camstack/addon-a'])
     expect(refused.started).toBe(false)
-    expect(refused.message).toContain('no hub')
+    expect(refused.message).toContain('hub did not answer')
     // Nothing was deployed by any refused start.
     expect(hub.calls.filter((c) => c.action === HUB_ADDON_UPDATE_ACTION)).toHaveLength(0)
   })
@@ -201,9 +201,9 @@ describe('addon-updates routes', () => {
     hubReachable: true,
   }
 
-  async function serve(callHub: HubCall) {
+  async function serve(callHub: HubCall, isPaired: () => boolean = () => true) {
     const app = Fastify()
-    const hub = createAgentHubAddonControls({ nodeId: 'agent-1', callHub })
+    const hub = createAgentHubAddonControls({ nodeId: 'agent-1', callHub, isPaired })
     registerAgentUpdateRoutes(app, { addons: { getReport: async () => report, hub } })
     return app
   }
@@ -220,7 +220,7 @@ describe('addon-updates routes', () => {
     const byName = new Map(body.entries.map((e) => [e.packageName, e]))
     expect(byName.get('@camstack/addon-a')).toMatchObject({ hubVersion: '1.2.0', behindHub: true })
     expect(byName.get('@camstack/addon-b')).toMatchObject({ hubVersion: '2.0.0', behindHub: false })
-    expect(body.hubVersionsError).toBeNull()
+    expect(body.hubVersions).toBe('known')
   })
 
   it('says why the hub versions are unknown instead of showing aligned', async () => {
@@ -230,8 +230,20 @@ describe('addon-updates routes', () => {
     const body = (
       await app.inject({ method: 'GET', url: '/api/agent/addon-updates' })
     ).json<AgentAddonUpdateView>()
-    expect(body.hubVersionsError).toContain('hub offline')
+    expect(body.hubVersions).toBe('unanswered')
+    // The internal service name and the transport's own words never reach the operator.
+    expect(JSON.stringify(body)).not.toContain('hub offline')
     expect(body.entries.every((e) => e.behindHub === false && e.hubVersion === null)).toBe(true)
+  })
+
+  it('an unpaired agent does not ask the hub at all', async () => {
+    const hub = fakeHub({ '@camstack/addon-a': '1.2.0' }, async () => ({ success: true }))
+    const app = await serve(hub.callHub, () => false)
+    const body = (
+      await app.inject({ method: 'GET', url: '/api/agent/addon-updates' })
+    ).json<AgentAddonUpdateView>()
+    expect(hub.calls).toHaveLength(0)
+    expect(body.hubVersions).toBe('unpaired')
   })
 
   it('POST update calls the hub, never a local install', async () => {

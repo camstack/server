@@ -9,6 +9,7 @@
 import type { SettingsStoreClient } from '@camstack/types'
 import {
   AgentPairing,
+  DEFAULT_HUB_TLS_TCP_PORT,
   type AgentPairingTransport,
   type LocalPairingSecret,
   generateMeshCa,
@@ -21,7 +22,7 @@ import type { MdnsAgent } from '@camstack/develop/hub-discovery'
 import { describe, expect, it } from 'vitest'
 import type { NodeCertificatesClient } from '../../../core/agent/node-certificates-client.js'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'
-import { createAgentPairingRouter } from '../agent-pairing.router.js'
+import { createAgentPairingRouter, resolveAgentHubAddresses } from '../agent-pairing.router.js'
 
 const admin: AuthenticatedAgent = {
   id: 'u-admin',
@@ -306,5 +307,25 @@ describe('agentPairing router', () => {
   it('refuses to unpair the hub', async () => {
     const { caller } = await setup()
     await expect(caller.unpairAgent({ nodeId: 'hub' })).rejects.toThrow(/not an agent/)
+  })
+})
+
+describe('the address an agent is offered', () => {
+  const roles = (internal: string | null, publicEndpoint: string | null) => ({
+    roles: { internal: { resolved: internal }, publicEndpoint: { resolved: publicEndpoint } },
+  })
+
+  it('is the INTERNAL role, never the public endpoint an agent on the LAN need not reach', () => {
+    const offered = resolveAgentHubAddresses(
+      roles('https://192.168.1.9:4443', 'https://camstack.example.test'),
+    )
+    expect(offered.hubUrl).toBe('https://192.168.1.9:4443')
+    expect(offered.hubMeshAddress).toBe(`192.168.1.9:${DEFAULT_HUB_TLS_TCP_PORT}`)
+  })
+
+  it('refuses when the hub has no internal address yet', () => {
+    expect(() => resolveAgentHubAddresses(roles(null, 'https://camstack.example.test'))).toThrow(
+      /no LAN address/,
+    )
   })
 })

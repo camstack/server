@@ -46,6 +46,8 @@ export interface PendingPairing {
 
 export interface PairingStatusView {
   readonly state: PairingState
+  /** Loopback view only: a pairing lockout is in force, so "Reset pairing lockout" would change something. */
+  readonly lockedOut?: boolean
   readonly pending: readonly PendingPairing[]
 }
 

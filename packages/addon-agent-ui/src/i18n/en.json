@@ -99,16 +99,17 @@
     "hubAddress": "Hub Address",
     "pairing": "Pairing",
     "clusterNodes": "Cluster nodes",
-    "unsupported": "This agent is too old to pair from here. Update it from the hub (System → Cluster → Nodes), then pair it again.",
+    "unsupported": "This agent is too old to pair from here. Update it from the hub (Cluster → Nodes), then pair it again.",
     "statusUnavailable": "Pairing status unavailable",
-    "emptyPairing": "This agent is not paired. On the hub open System → Cluster → Agents, pick this agent and start pairing; the request appears here.",
+    "emptyPairing": "This agent is not paired. On the hub open Cluster → Nodes, find this agent under \"Agents found on the network\" and start pairing; the request appears here.",
     "name": {
       "label": "Agent Name",
       "placeholder": "e.g. kitchen-agent",
       "rename": "Rename agent",
       "saveFailed": "Save failed",
       "saveFailedWith": "Save failed: {{error}}",
-      "saved": "Name saved."
+      "saved": "Name saved.",
+      "remoteHint": "Renaming is done on the machine itself."
     }
   },
   "paired": {
@@ -165,7 +166,7 @@
     "title": "Addons",
     "empty": "No addons loaded",
     "readFailed": "Could not read the addons: {{error}}",
-    "hubVersionsFailed": "The hub could not be asked which versions this node should run: {{error}}",
+    "hubVersionsFailed": "The hub did not answer, so the versions this node should run are unknown.",
     "startFailed": "The update could not be started",
     "columns": {
       "addon": "Addon",
@@ -188,7 +189,8 @@
     "shared_other": "shared with {{count}} others",
     "updating": "Updating…",
     "updateTo": "Update to {{version}}",
-    "restart": "Restart {{name}}"
+    "restart": "Restart {{name}}",
+    "hubVersionsUnpaired": "Addon versions follow the hub once this agent is paired."
   },
   "updates": {
     "title": "Framework update",

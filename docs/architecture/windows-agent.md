@@ -86,7 +86,7 @@ write):
 2. Run `CamStack-Setup-<v>.exe`. For the service, choose **Install for all
    users**.
 3. First launch: role **Agent**, hub address (or automatic). The setup window asks for
-   no secret (D857): the hub pairs the agent (System → Cluster → Agents, the same six digits on
+   no secret (D857): the hub pairs the agent (Cluster → Nodes, "Agents found on the network", the same six digits on
    both screens).
 4. Optional: tray → *Run as Windows service*, accept UAC. Check
    `Get-Service CamStackAgent` and `%ProgramData%\CamStack\service\logs`.

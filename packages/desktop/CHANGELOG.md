@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The setup window hides the hub address and port unless Manual is chosen, shows the real default agent name, and names the right place on the hub to pair
+
 ## [0.1.0] - 2026-10-27
 
 ### Added

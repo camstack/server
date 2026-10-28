@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SetupInitial } from '../setup/render-setup-html'
+import { defaultAgentName } from '../setup/default-agent-name'
 import { renderSetupHtml } from '../setup/render-setup-html'
 
 function initial(overrides: Partial<SetupInitial> = {}): SetupInitial {
@@ -10,6 +11,7 @@ function initial(overrides: Partial<SetupInitial> = {}): SetupInitial {
     hubAddress: '',
     hubPort: 4443,
     agentName: '',
+    defaultAgentName: 'mini-arm64',
     viewerHubUrl: '',
     ...overrides,
   }
@@ -74,6 +76,44 @@ describe('renderSetupHtml — the node product', () => {
     const html = renderSetupHtml(initial({ role: 'agent', agentName: '"><script>x()</script>' }))
     expect(html).not.toContain('<script>x()')
     expect(html).toContain('&quot;&gt;&lt;script&gt;')
+  })
+})
+
+describe('renderSetupHtml — the agent hub connection', () => {
+  it('hides the Hub address and Port fields in auto mode, and shows them in Manual', () => {
+    expect(renderSetupHtml(initial({ role: 'agent', hubMode: 'auto' }))).toContain(
+      'id="manualFields" style="display:none"',
+    )
+    expect(renderSetupHtml(initial({ role: 'agent', hubMode: 'manual' }))).toContain(
+      'id="manualFields" style="display:flex"',
+    )
+  })
+
+  it('toggles the fields when the mode radio changes, not only on first paint', () => {
+    const html = renderSetupHtml(initial({ role: 'agent' }))
+    expect(html).toContain("manualFields.style.display = 'none'")
+    expect(html).toContain("manualFields.style.display = 'flex'")
+  })
+
+  it('points to the real place on the hub, with the hub page labels', () => {
+    const body = documentBody(renderSetupHtml(initial({ role: 'agent' })))
+    expect(body).toContain('Cluster → Nodes')
+    expect(body).toContain('Agents found on the network')
+    expect(body).not.toContain('Cluster → Agents')
+  })
+
+  it('shows the real computed default name as the placeholder, not a shell expression', () => {
+    const html = renderSetupHtml(initial({ role: 'agent', defaultAgentName: 'mini-arm64' }))
+    expect(html).toContain('placeholder="mini-arm64"')
+    expect(html).not.toContain('$(hostname)')
+  })
+})
+
+describe('defaultAgentName', () => {
+  it('is the short host name and the architecture, as the agent computes it', () => {
+    expect(defaultAgentName('Mac-mini.local', 'arm64')).toBe('Mac-mini-arm64')
+    expect(defaultAgentName('box.localdomain', 'x64')).toBe('box-x64')
+    expect(defaultAgentName('', 'x64')).toBe('agent-x64')
   })
 })
 

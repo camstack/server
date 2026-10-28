@@ -99,16 +99,17 @@
     "hubAddress": "Indirizzo dell'hub",
     "pairing": "Associazione",
     "clusterNodes": "Nodi del cluster",
-    "unsupported": "Questo agente è troppo vecchio per essere associato da qui. Aggiornalo dall'hub (Sistema → Cluster → Nodi), poi associalo di nuovo.",
+    "unsupported": "Questo agente è troppo vecchio per essere associato da qui. Aggiornalo dall'hub (Cluster → Nodi), poi associalo di nuovo.",
     "statusUnavailable": "Stato dell'associazione non disponibile",
-    "emptyPairing": "Questo agente non è associato. Sull'hub apri Sistema → Cluster → Agenti, scegli questo agente e avvia l'associazione: la richiesta compare qui.",
+    "emptyPairing": "Questo agente non è associato. Sull'hub apri Cluster → Nodi, trova questo agente in \"Agenti trovati sulla rete\" e avvia l'associazione; la richiesta compare qui.",
     "name": {
       "label": "Nome dell'agente",
       "placeholder": "es. agent-kitchen",
       "rename": "Rinomina agente",
       "saveFailed": "Salvataggio non riuscito",
       "saveFailedWith": "Salvataggio non riuscito: {{error}}",
-      "saved": "Nome salvato."
+      "saved": "Nome salvato.",
+      "remoteHint": "Il nome si cambia sulla macchina stessa."
     }
   },
   "paired": {
@@ -165,7 +166,7 @@
     "title": "Addon",
     "empty": "Nessun addon caricato",
     "readFailed": "Impossibile leggere gli addon: {{error}}",
-    "hubVersionsFailed": "Impossibile chiedere all'hub quali versioni questo nodo deve eseguire: {{error}}",
+    "hubVersionsFailed": "L'hub non ha risposto, quindi le versioni che questo nodo deve eseguire sono sconosciute.",
     "startFailed": "Impossibile avviare l'aggiornamento",
     "columns": {
       "addon": "Addon",
@@ -188,7 +189,8 @@
     "shared_other": "condiviso con altri {{count}}",
     "updating": "Aggiornamento…",
     "updateTo": "Aggiorna a {{version}}",
-    "restart": "Riavvia {{name}}"
+    "restart": "Riavvia {{name}}",
+    "hubVersionsUnpaired": "Le versioni degli addon seguono l'hub una volta associato questo agente."
   },
   "updates": {
     "title": "Aggiornamento del framework",

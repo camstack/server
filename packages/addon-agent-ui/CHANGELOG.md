@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The agent page no longer asks the hub for addon versions while unpaired, hides rename and reset where they cannot work, offers the pairing lockout reset only while locked out, and shows the framework Update button only when a newer release exists
+
 ## [1.2.288] - 2026-10-28
 
 ### Fixed

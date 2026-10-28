@@ -85,6 +85,26 @@ function parseMeshTls(value: unknown): AgentMeshTls | undefined {
   return { certPem, keyPem, caCertPem }
 }
 
+/**
+ * The name an agent without a chosen one carries: the host name up to its first dot (so
+ * `.local` / `.localdomain` and a domain suffix drop out), then the architecture.
+ */
+function defaultAgentName(hostname: string, arch: string): string {
+  const short = hostname.trim().split('.')[0] ?? ''
+  return `${short.length > 0 ? short : 'agent'}-${arch}`
+}
+
+/**
+ * The name before anyone renamed the agent: `CAMSTACK_AGENT_NAME` when set, else the default.
+ * Never the node id - that is an identity, not a label.
+ */
+function seededAgentName(): string {
+  const fromEnv = process.env.CAMSTACK_AGENT_NAME
+  return fromEnv !== undefined && fromEnv.trim().length > 0
+    ? fromEnv.trim()
+    : defaultAgentName(os.hostname(), os.arch())
+}
+
 function loadAgentConfig(configPath?: string, dataDirOverride?: string): AgentConfig {
   const filePath = configPath ?? 'agent.json'
   const dataDir = dataDirOverride ?? process.env.CAMSTACK_DATA ?? './camstack-data'
@@ -92,10 +112,7 @@ function loadAgentConfig(configPath?: string, dataDirOverride?: string): AgentCo
 
   // Name: config file takes priority over env (allows UI rename to stick).
   // Env is the initial seed, config file is the persisted override.
-  const envName =
-    process.env.CAMSTACK_NODE_ID ??
-    process.env.CAMSTACK_AGENT_NAME ??
-    `${os.hostname()}-${os.arch()}`
+  const envName = seededAgentName()
 
   // Environment variable for the hub connection (optional — agent starts
   // without). Pairing material lives only in agent.json.
@@ -135,5 +152,5 @@ function loadAgentConfig(configPath?: string, dataDirOverride?: string): AgentCo
   }
 }
 
-export { loadAgentConfig }
+export { defaultAgentName, loadAgentConfig, seededAgentName }
 export type { AgentConfig, AgentMeshTls }

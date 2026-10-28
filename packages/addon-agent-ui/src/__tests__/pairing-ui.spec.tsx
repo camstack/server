@@ -329,26 +329,34 @@ describe('a pairing request on the agent itself', () => {
 })
 
 describe('reset pairing lockout', () => {
-  it('asks for the reset code away from the agent and says where it is', async () => {
-    pairingView = REMOTE_PENDING
-    vi.stubGlobal('location', { ...window.location, hostname: '192.0.2.20' })
+  it('is offered on the agent itself only while a lockout is in force, and needs no code', async () => {
+    pairingView = { ...LOCAL_PENDING, lockedOut: true }
     mount()
     fireEvent.click(await screen.findByText('Reset pairing lockout'))
-    expect(screen.getByLabelText(/Reset code/)).toBeTruthy()
-    expect(document.body.textContent).toMatch(/pairing-reset\.txt/)
-    fireEvent.change(screen.getByLabelText(/Reset code/), {
-      target: { value: '99887766' },
-    })
+    expect(screen.queryByLabelText(/Reset code/)).toBeNull()
     fireEvent.click(screen.getByText('Reset pairing'))
     await waitFor(() =>
-      expect(calls.find((c) => c.url.endsWith('/pairing/reset'))?.body).toEqual({
-        code: '99887766',
-      }),
+      expect(calls.find((c) => c.url.endsWith('/pairing/reset'))?.body).toEqual({}),
     )
   })
 
+  it('is not offered while nothing is locked', async () => {
+    pairingView = { ...LOCAL_PENDING, lockedOut: false }
+    mount()
+    await screen.findByLabelText(/Code shown on the hub/)
+    expect(screen.queryByText('Reset pairing lockout')).toBeNull()
+  })
+
+  it('is not offered from the network, locked or not', async () => {
+    pairingView = { state: 'unpaired', pending: [], lockedOut: true }
+    vi.stubGlobal('location', { ...window.location, hostname: '192.0.2.20' })
+    render(<HubConfigPanel status={null} onStatusRefresh={async () => undefined} />)
+    await screen.findByText(/start pairing; the request appears here/)
+    expect(screen.queryByText('Reset pairing lockout')).toBeNull()
+  })
+
   it('asks for the code after all when the agent does not see this page as local', async () => {
-    pairingView = { state: 'unpaired', pending: [] }
+    pairingView = { state: 'unpaired', pending: [], lockedOut: true }
     answers['/api/agent/pairing/reset'] = {
       status: 401,
       body: {
@@ -362,16 +370,30 @@ describe('reset pairing lockout', () => {
     fireEvent.click(screen.getByText('Reset pairing'))
     expect(await screen.findByLabelText('Reset code')).toBeTruthy()
   })
+})
 
-  it('needs no code on the agent itself', async () => {
-    pairingView = LOCAL_PENDING
-    mount()
-    fireEvent.click(await screen.findByText('Reset pairing lockout'))
-    expect(screen.queryByLabelText(/Reset code/)).toBeNull()
-    fireEvent.click(screen.getByText('Reset pairing'))
-    await waitFor(() =>
-      expect(calls.find((c) => c.url.endsWith('/pairing/reset'))?.body).toEqual({}),
-    )
+describe('an unpaired agent seen from the network offers no write', () => {
+  beforeEach(() => {
+    vi.stubGlobal('location', { ...window.location, hostname: '192.0.2.20' })
+  })
+
+  it('hides Rename and says renaming is done on the machine itself', async () => {
+    render(<HubConfigPanel status={null} onStatusRefresh={async () => undefined} />)
+    await screen.findByText(/start pairing; the request appears here/)
+    expect(screen.queryByText('Rename agent')).toBeNull()
+    expect(screen.getByText('Renaming is done on the machine itself.')).toBeTruthy()
+  })
+
+  it('does not repeat Not paired as a Hub Address row', async () => {
+    render(<HubConfigPanel status={null} onStatusRefresh={async () => undefined} />)
+    await screen.findByText(/start pairing; the request appears here/)
+    expect(screen.queryByText('Hub Address')).toBeNull()
+  })
+
+  it('names the real place to start a pairing on the hub', async () => {
+    render(<HubConfigPanel status={null} onStatusRefresh={async () => undefined} />)
+    await screen.findByText(/Cluster → Nodes.*Agents found on the network/)
+    expect(document.body.textContent).not.toMatch(/Cluster → Agents/)
   })
 })
 

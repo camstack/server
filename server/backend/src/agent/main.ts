@@ -1055,6 +1055,7 @@ async function startAgent(configPath?: string): Promise<void> {
     addons: {
       hub: createAgentHubAddonControls({
         nodeId: config.nodeId,
+        isPaired: () => isAgentPaired(config.configPath),
         // The mesh channel the agent already holds; the hub names this caller
         // `node:<id>` and answers per its remote privilege grant.
         callHub: (action, params, timeoutMs) =>

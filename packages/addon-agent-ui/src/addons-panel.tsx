@@ -71,7 +71,7 @@ export type AddonUpdatesResponse =
       readonly available: true
       readonly entries: readonly AddonUpdateRow[]
       readonly error: string | null
-      readonly hubVersionsError: string | null
+      readonly hubVersions: 'known' | 'unpaired' | 'unanswered'
     }
   | { readonly available: false; readonly reason: string }
 
@@ -405,11 +405,11 @@ export function AddonsPanel({
       <div className={`${SECTION_BODY} space-y-3`}>
         {error !== null && <ErrorBox message={t('addons.readFailed', { error })} />}
         {startError !== null && <ErrorBox message={startError} />}
-        {updates?.available === true && updates.hubVersionsError !== null && (
-          <ErrorBox
-            variant="warning"
-            message={t('addons.hubVersionsFailed', { error: updates.hubVersionsError })}
-          />
+        {updates?.available === true && updates.hubVersions === 'unpaired' && (
+          <p className="text-[11px] text-foreground-subtle">{t('addons.hubVersionsUnpaired')}</p>
+        )}
+        {updates?.available === true && updates.hubVersions === 'unanswered' && (
+          <ErrorBox variant="warning" message={t('addons.hubVersionsFailed')} />
         )}
         {updates?.available === true && updates.error !== null && (
           <ErrorBox variant="warning" message={updates.error} />

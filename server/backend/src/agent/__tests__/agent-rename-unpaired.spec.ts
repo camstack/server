@@ -7,6 +7,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import type { ServiceBroker } from 'moleculer'
 import { afterAll, describe, expect, it } from 'vitest'
+import { defaultAgentName } from '../agent-config.js'
 import { createAgentHttpServer } from '../agent-http.js'
 
 const dirs: string[] = []
@@ -46,6 +47,24 @@ describe('renaming an agent that is not paired', () => {
     expect(file['name']).toBe('kitchen-mac')
     const status = await app.inject({ method: 'GET', url: '/api/agent/status' })
     expect(status.json()).toMatchObject({ name: 'kitchen-mac', paired: false })
+    await app.close()
+  })
+
+  it('reports host-arch, not the node id, while agent.json carries no name', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-default-name-'))
+    dirs.push(dir)
+    const app = await createAgentHttpServer(brokerThatCannotRename, {
+      port: 0,
+      nodeId: 'agent-bbce9dde',
+      dataDir: dir,
+      configPath: path.join(dir, 'agent.json'),
+    })
+    const status = await app.inject({ method: 'GET', url: '/api/agent/status' })
+    const name: unknown = status.json().name
+    expect(name).not.toBe('agent-bbce9dde')
+    expect(name).toBe(
+      process.env['CAMSTACK_AGENT_NAME'] || defaultAgentName(os.hostname(), os.arch()),
+    )
     await app.close()
   })
 })

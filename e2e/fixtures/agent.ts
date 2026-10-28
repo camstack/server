@@ -191,6 +191,7 @@ export async function spawnAgent(opts: SpawnAgentOptions): Promise<SpawnedAgent>
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     CAMSTACK_NODE_ID: opts.nodeId,
+    CAMSTACK_AGENT_NAME: opts.nodeId,
     CAMSTACK_HUB_ADDRESS: opts.hubAddress,
     CAMSTACK_DATA_DIR: dataDir,
     CAMSTACK_STATUS_PORT: String(statusPort),

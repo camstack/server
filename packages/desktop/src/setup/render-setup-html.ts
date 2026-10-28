@@ -31,6 +31,8 @@ export interface SetupInitial {
   readonly hubAddress: string
   readonly hubPort: number
   readonly agentName: string
+  /** The agent's default name (`<short host name>-<arch>`), shown as the name field's placeholder. */
+  readonly defaultAgentName: string
   /** The viewer product's target hub, a full URL (`https://host[:port]`). */
   readonly viewerHubUrl: string
 }
@@ -45,5 +47,6 @@ export function renderSetupHtml(initial: SetupInitial): string {
     hubAddress: initial.hubAddress,
     hubPort: initial.hubPort,
     agentName: initial.agentName,
+    defaultAgentName: initial.defaultAgentName,
   })
 }

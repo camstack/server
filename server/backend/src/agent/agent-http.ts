@@ -28,6 +28,7 @@ import {
 import { registerAgentPairingRoutes } from './agent-pairing-routes.js'
 import { isAgentPaired, pinnedMeshCaCert } from './agent-pairing-store.js'
 import { writeOwnerOnlyFileSync } from '@camstack/types/node'
+import { seededAgentName } from './agent-config.js'
 import type { AgentUpdateControls } from './agent-update-routes.js'
 import { registerAgentUpdateRoutes } from './agent-update-routes.js'
 import type { HubRegistryNode } from './derive-hub-url.js'
@@ -361,10 +362,7 @@ function deriveHubConnectionState(
  * Read the current effective config from the persisted file.
  * This is the single source of truth -- always reflects what the UI wrote.
  */
-function getEffectiveConfig(
-  configPath: string,
-  nodeId: string,
-): {
+function getEffectiveConfig(configPath: string): {
   name: string
   hubAddress: string | null
   paired: boolean
@@ -372,7 +370,7 @@ function getEffectiveConfig(
 } {
   const raw = readConfigFile(configPath)
   return {
-    name: typeof raw.name === 'string' ? raw.name : nodeId,
+    name: typeof raw.name === 'string' && raw.name.length > 0 ? raw.name : seededAgentName(),
     hubAddress: typeof raw.hubAddress === 'string' ? raw.hubAddress : null,
     paired: isAgentPaired(configPath),
     hasMeshTls: raw.meshTls !== null && typeof raw.meshTls === 'object',
@@ -509,7 +507,7 @@ export async function createAgentHttpServer(
 
   app.get('/api/agent/status', async () => {
     const broker = getBroker()
-    const eff = getEffectiveConfig(config.configPath, config.nodeId)
+    const eff = getEffectiveConfig(config.configPath)
     const nodes = getRegistryNodes(broker)
     const hubConnected = nodes.some((n) => n.id === 'hub')
     const hubConnectionState: HubConnectionState = config.getHubConnectionState
@@ -583,7 +581,7 @@ export async function createAgentHttpServer(
   // -- Unlock info (public; Continue-with-hub needs hub origin while locked) --
 
   app.get('/api/agent/unlock-info', async () => {
-    const eff = getEffectiveConfig(config.configPath, config.nodeId)
+    const eff = getEffectiveConfig(config.configPath)
     const nodes = getRegistryNodes(getBroker())
     const resolvedHubAddress = resolveHubEndpoint(nodes)
     const hubHttpsOrigin =
@@ -674,7 +672,7 @@ export async function createAgentHttpServer(
 
   app.get('/api/agent/config', async () => {
     const persisted = readConfigFile(config.configPath)
-    const eff = getEffectiveConfig(config.configPath, config.nodeId)
+    const eff = getEffectiveConfig(config.configPath)
     return {
       nodeId: config.nodeId,
       name: eff.name,
@@ -755,8 +753,7 @@ export async function createAgentHttpServer(
   const hubsFinder: HubsFinder =
     config.hubsFinder ??
     createHubsFinder({
-      getConfiguredHubAddress: () =>
-        getEffectiveConfig(config.configPath, config.nodeId).hubAddress,
+      getConfiguredHubAddress: () => getEffectiveConfig(config.configPath).hubAddress,
       log: (message) => console.warn(`[Agent] ${message}`),
     })
   app.get('/api/agent/hubs-found', async () => hubsFinder.snapshot())

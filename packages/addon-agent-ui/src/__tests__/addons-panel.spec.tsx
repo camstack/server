@@ -91,7 +91,7 @@ const mount = () => render(<AddonsPanel locked={false} onUnauthorized={() => und
 
 describe('one addon list', () => {
   it('lists each addon with its runner, shared runners, and a runner with no addon', async () => {
-    stub({ available: true, entries: [], error: null, hubVersionsError: null })
+    stub({ available: true, entries: [], error: null, hubVersions: 'known' })
     mount()
     await screen.findByText('ml-a')
     expect(screen.getByText('decoder')).toBeTruthy()
@@ -107,7 +107,7 @@ describe('Update goes to the hub', () => {
   const behind = updateRow({ installedVersion: '1.0.0', hubVersion: '1.1.0', behindHub: true })
 
   it('offers it only where the hub is newer, and posts the package to the hub route', async () => {
-    const post = stub({ available: true, entries: [behind], error: null, hubVersionsError: null })
+    const post = stub({ available: true, entries: [behind], error: null, hubVersions: 'known' })
     mount()
     const button = await screen.findByText('Update to 1.1.0')
     expect(screen.queryAllByText(/Update to/)).toHaveLength(1)
@@ -133,14 +133,14 @@ describe('Update goes to the hub', () => {
         },
       ],
       error: null,
-      hubVersionsError: null,
+      hubVersions: 'known',
     })
     mount()
     await screen.findByText(/not on the remote privilege grant/)
   })
 
   it('shows a start refusal from the agent', async () => {
-    stub({ available: true, entries: [behind], error: null, hubVersionsError: null }, () => ({
+    stub({ available: true, entries: [behind], error: null, hubVersions: 'known' }, () => ({
       started: false,
       message: 'The hub does not install @camstack/addon-d',
     }))
@@ -150,8 +150,18 @@ describe('Update goes to the hub', () => {
   })
 
   it('says when the hub versions are unknown instead of showing aligned', async () => {
-    stub({ available: true, entries: [], error: null, hubVersionsError: 'hub offline' })
+    stub({ available: true, entries: [], error: null, hubVersions: 'unanswered' })
     mount()
-    await screen.findByText(/hub offline/)
+    await screen.findByText(
+      'The hub did not answer, so the versions this node should run are unknown.',
+    )
+    expect(document.body.textContent).not.toMatch(/core-caps|not found on/)
+  })
+
+  it('an unpaired agent shows a neutral line, not a warning', async () => {
+    stub({ available: true, entries: [], error: null, hubVersions: 'unpaired' })
+    mount()
+    await screen.findByText('Addon versions follow the hub once this agent is paired.')
+    expect(document.body.textContent).not.toMatch(/did not answer/)
   })
 })

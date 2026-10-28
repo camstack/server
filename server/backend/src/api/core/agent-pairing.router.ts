@@ -114,6 +114,35 @@ export interface AgentPairingRouterDeps {
 
 type HubAgentPairingBrowse = ConstructorParameters<typeof HubAgentPairing>[0]['browse']
 
+/** The part of the local-network address book an agent offer reads. */
+interface AgentOfferAddressBook {
+  readonly roles: { readonly internal: { readonly resolved: string | null } }
+}
+
+/** The hub addresses an agent offer carries. */
+export interface AgentHubAddresses {
+  readonly hubUrl: string
+  readonly hubMeshAddress: string
+}
+
+/**
+ * What an agent is offered: the hub's INTERNAL role for the API URL and the mesh
+ * address alike. The public endpoint is for people outside the LAN; an agent on the
+ * LAN is shown, and keeps, the address it actually dials.
+ */
+export function resolveAgentHubAddresses(book: AgentOfferAddressBook): AgentHubAddresses {
+  const internal = book.roles.internal.resolved
+  if (internal === null) {
+    throw new Error(
+      'The hub has no LAN address to give an agent yet - set one on System -> Network',
+    )
+  }
+  return {
+    hubUrl: internal,
+    hubMeshAddress: `${new URL(internal).hostname}:${DEFAULT_HUB_TLS_TCP_PORT}`,
+  }
+}
+
 export function createAgentPairingRouter(deps: AgentPairingRouterDeps) {
   const transport = deps.transport ?? createHttpAgentPairingTransport()
   const meshCa =
@@ -137,23 +166,10 @@ export function createAgentPairingRouter(deps: AgentPairingRouterDeps) {
     }
     return provider
   }
-  /** The address an agent dials (its `internal` role) and the URL the hub serves its API on. */
+  /** The address an agent dials and is shown: the hub's `internal` role. */
   const hubAddresses =
     deps.hubAddresses ??
-    (async () => {
-      const book = await localNetwork().getAddresses({ scheme: 'https' })
-      const internal = book.roles.internal.resolved
-      const hubUrl = book.roles.publicEndpoint.resolved ?? internal
-      if (internal === null || hubUrl === null) {
-        throw new Error(
-          'The hub has no LAN address to give an agent yet - set one on System -> Network',
-        )
-      }
-      return {
-        hubUrl,
-        hubMeshAddress: `${new URL(internal).hostname}:${DEFAULT_HUB_TLS_TCP_PORT}`,
-      }
-    })
+    (async () => resolveAgentHubAddresses(await localNetwork().getAddresses({ scheme: 'https' })))
 
   const pairing = new HubPairing({
     transport,
