@@ -105,6 +105,52 @@ const RECIPE = {
   actions: [{ kind: 'cap', cap: 'power-meter', method: 'reset', args: { watts: 0 } }],
   code: 'return ctx.read.watts > 5',
 }
+/**
+ * The shapes main added after the migration was first written: an automation
+ * recipe whose conditions are a tree (leaf, expression with field and global
+ * bindings, the `stationary-present` leaf that carries NO field), a `device-state`
+ * and a `stationary` trigger, and a Customize keyed-array override whose
+ * `source` is itself a `(cap, fieldPath)` pair.
+ */
+const AUTOMATION = {
+  triggers: [
+    { kind: 'device-state', deviceId: 7, cap: 'power-meter', fieldPath: 'watts', edge: true },
+    { kind: 'stationary', deviceId: 7, zones: ['porch'] },
+  ],
+  conditions: {
+    kind: 'all',
+    children: [
+      { kind: 'condition', deviceId: 7, cap: 'battery', fieldPath: 'percentage', operator: 'lt', value: 20 },
+      { kind: 'stationary-present', deviceId: 7, className: 'package' },
+      {
+        kind: 'not',
+        child: {
+          kind: 'expression',
+          expr: 'a > 3 && b < 5',
+          bindings: {
+            a: { kind: 'field', sourceKey: 'self', cap: 'temperature-sensor', fieldPath: 'celsius' },
+            b: { kind: 'global', sourceStableId: 'x', cap: 'media-player', fieldPath: 'durationMs' },
+          },
+        },
+      },
+    ],
+  },
+  actions: [],
+}
+const CUSTOMIZATION = {
+  overrides: [
+    {
+      kind: 'keyedArray',
+      cap: 'consumables',
+      targetId: 't',
+      key: 'k',
+      label: 'L',
+      fieldPath: 'level',
+      source: { addonId: 'a', stableId: 's', cap: 'battery', fieldPath: 'percentage' },
+      transform: { kind: 'identity' },
+    },
+  ],
+}
 const RULE = {
   name: 'cold',
   conditions: [{ cap: 'temperature-sensor', fieldPath: 'celsius' }],
@@ -169,6 +215,16 @@ async function writeSettingsFile(): Promise<void> {
     owner: 'core-blocks',
     kind: 'blocks',
     record: { id: 'recipe-1', data: RECIPE },
+  })
+  await engine.put({
+    owner: 'core-blocks',
+    kind: 'blocks',
+    record: { id: 'auto-1', data: AUTOMATION },
+  })
+  await engine.put({
+    owner: 'core-blocks',
+    kind: 'blocks',
+    record: { id: 'custom-1', data: CUSTOMIZATION },
   })
   await engine.put({
     owner: 'pipeline-analytics',
@@ -389,6 +445,49 @@ describe('quantity-field migration', () => {
       fieldPath: 'humidity',
     })
     expect(kvRow('system-settings', 'misc')).toEqual({ volts: 5, watts: 6 })
+  })
+
+  it('rewrites an automation recipe tree, a stationary trigger and a Customize override source', () => {
+    expect(run().exitCode).toBe(EXIT_OK)
+    expect(recordRow('blocks', 'auto-1')).toEqual({
+      triggers: [
+        { kind: 'device-state', deviceId: 7, cap: 'power-meter', fieldPath: 'power', edge: true },
+        { kind: 'stationary', deviceId: 7, zones: ['porch'] },
+      ],
+      conditions: {
+        kind: 'all',
+        children: [
+          { kind: 'condition', deviceId: 7, cap: 'battery', fieldPath: 'level', operator: 'lt', value: 20 },
+          { kind: 'stationary-present', deviceId: 7, className: 'package' },
+          {
+            kind: 'not',
+            child: {
+              kind: 'expression',
+              expr: 'a > 3 && b < 5',
+              bindings: {
+                a: { kind: 'field', sourceKey: 'self', cap: 'temperature-sensor', fieldPath: 'temperature' },
+                b: { kind: 'global', sourceStableId: 'x', cap: 'media-player', fieldPath: 'duration' },
+              },
+            },
+          },
+        ],
+      },
+      actions: [],
+    })
+    expect(recordRow('blocks', 'custom-1')).toEqual({
+      overrides: [
+        {
+          kind: 'keyedArray',
+          cap: 'consumables',
+          targetId: 't',
+          key: 'k',
+          label: 'L',
+          fieldPath: 'level',
+          source: { addonId: 'a', stableId: 's', cap: 'battery', fieldPath: 'level' },
+          transform: { kind: 'identity' },
+        },
+      ],
+    })
   })
 
   it('reports what it cannot rewrite (free code, action arguments) and leaves it alone', () => {
