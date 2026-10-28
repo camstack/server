@@ -36,7 +36,11 @@ The verdict is made at the emitter, by `judgeStaleStream`, from the battery slee
 - asleep and a stream is demanded (live viewer, recording, force) but none arrived:
   `stream.offline` with reason `wake-timeout`. A failed wake-on-play (no broker at all)
   announces the same through `announceBatteryWakeFailure`;
-- reported awake and the stream is gone: `connection-error`;
+- reported awake and the stream is gone: `connection-error`, but only once the camera has
+  been awake longer than `WAKE_DEMAND_BOUND_MS` (`awakeSince`, stamped when `sleeping` flips to
+  false). Inside that window the quiet stream is the normal wake (first keyframe not yet here):
+  suppressed, logged, and re-judged by the level sweep. An unknown `awakeSince` (restart, slice
+  read) judges immediately, as before;
 - silent past `BATTERY_UNREACHABLE_AFTER_MS` (the D847 refresh window): `battery-unreachable`;
 - mains cameras: `stale-timeout`, as before.
 

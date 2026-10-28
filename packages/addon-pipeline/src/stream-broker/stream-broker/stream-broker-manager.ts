@@ -703,6 +703,33 @@ interface BatteryProbe {
   readonly readAt: number
 }
 
+/**
+ * `awakeSince` for a sleep fact just observed: stamped when `sleeping` flips to
+ * false (from asleep, or from nothing known — the event IS the flip), kept while
+ * it stays awake, absent while asleep.
+ */
+function awakeSinceFor(
+  previous: BatterySleepFacts | null,
+  sleeping: boolean,
+  nowMs: number,
+): { readonly awakeSince?: number } {
+  if (sleeping) return {}
+  if (previous !== null && !previous.sleeping && previous.awakeSince !== undefined) {
+    return { awakeSince: previous.awakeSince }
+  }
+  return { awakeSince: nowMs }
+}
+
+/** A slice READ carries no flip time: keep the one an event gave while the camera stays awake. */
+function carryAwakeSince(
+  previous: BatterySleepFacts | null,
+  read: BatterySleepFacts | null,
+): BatterySleepFacts | null {
+  if (read === null || read.sleeping) return read
+  if (previous === null || previous.sleeping || previous.awakeSince === undefined) return read
+  return { ...read, awakeSince: previous.awakeSince }
+}
+
 /** How often an unanswered / stale battery probe is asked again. */
 const BATTERY_PROBE_RETRY_MS = 60_000
 /** A wake-only outage with no further failed wake for this long is over: the demand is gone. */
@@ -5090,10 +5117,15 @@ export class StreamBrokerManager {
   ): void {
     this.sleepSuppressedBrokers.add(brokerId)
     this.streamOfflineReasonByBroker.delete(brokerId)
-    this.logger.info('stream quiet on a sleeping battery camera — not an outage', {
-      tags: { deviceId: context.deviceId },
-      meta: { camStreamId: context.camStreamId, presence, lastPacketAt },
-    })
+    this.logger.info(
+      presence === 'awake'
+        ? 'stream quiet on a battery camera that just woke — not an outage yet, judged again after the wake bound'
+        : 'stream quiet on a sleeping battery camera — not an outage',
+      {
+        tags: { deviceId: context.deviceId },
+        meta: { camStreamId: context.camStreamId, presence, lastPacketAt },
+      },
+    )
     void this.writeCameraStreamsSlice(context.deviceId, this.snapshotProfileSlots(context.deviceId))
   }
 
@@ -5284,7 +5316,7 @@ export class StreamBrokerManager {
         this.batteryProbe.set(deviceId, {
           state: 'done',
           isBattery: true,
-          facts: facts ?? current?.facts ?? null,
+          facts: carryAwakeSince(current?.facts ?? null, facts) ?? current?.facts ?? null,
           readAt: Date.now(),
         })
       })
@@ -5308,6 +5340,7 @@ export class StreamBrokerManager {
     status: { sleeping?: unknown; lastContactAt?: unknown } | null | undefined,
   ): void {
     const previous = this.batteryProbe.get(deviceId)
+    const nowMs = Date.now()
     const facts: BatterySleepFacts | null =
       status && typeof status.sleeping === 'boolean'
         ? {
@@ -5315,6 +5348,7 @@ export class StreamBrokerManager {
             ...(typeof status.lastContactAt === 'number'
               ? { lastContactAt: status.lastContactAt }
               : {}),
+            ...awakeSinceFor(previous?.facts ?? null, status.sleeping, nowMs),
           }
         : null
     // The event is only ever emitted by a battery cap: it is also the class.

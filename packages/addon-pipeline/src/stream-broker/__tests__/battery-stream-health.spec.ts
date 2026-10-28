@@ -207,9 +207,38 @@ describe('stream health — battery sleep is not an outage, a failure is one dev
     expect(h.seen.map((e) => [e.category, e.reason])).toEqual([['stream.online', 'recovered']])
   })
 
+  it('a camera that just woke is not reported offline; the outage is raised after the wake bound if no stream came', async () => {
+    h.batteryStatus({ sleeping: false, lastContactAt: clock.now })
+    const { main } = await twoProfiles(106)
+    advance(500)
+    h.sweep('106/native:main', main) // wake window: first keyframe not yet here
+    expect(h.seen).toEqual([])
+    expect(h.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('just woke'),
+      expect.objectContaining({ tags: { deviceId: 106 } }),
+    )
+
+    advance(WAKE_DEMAND_BOUND_MS)
+    h.sweep('106/native:main', main) // rejudged: still nothing after the bound
+    expect(h.seen.map((e) => [e.category, e.reason])).toEqual([
+      ['stream.offline', 'connection-error'],
+    ])
+  })
+
+  it('a camera that wakes and delivers inside the bound emits no offline and no online', async () => {
+    h.batteryStatus({ sleeping: false, lastContactAt: clock.now })
+    const { main } = await twoProfiles(106)
+    advance(500)
+    h.sweep('106/native:main', main)
+    lastPacket.value = clock.now
+    h.sweep('106/native:main', main)
+    expect(h.seen).toEqual([])
+  })
+
   it('a stream lost while the camera is reported awake is a connection-error', async () => {
     h.batteryStatus({ sleeping: false, lastContactAt: clock.now })
     const { main } = await twoProfiles(106)
+    advance(WAKE_DEMAND_BOUND_MS + 1)
     h.sweep('106/native:main', main)
     expect(h.seen.map((e) => [e.category, e.reason])).toEqual([
       ['stream.offline', 'connection-error'],

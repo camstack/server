@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { BATTERY_UNREACHABLE_AFTER_MS } from '@camstack/types'
-import { isStreamOutageReason, judgeStaleStream } from '../stream-broker/stream-health-policy.js'
+import {
+  WAKE_DEMAND_BOUND_MS,
+  isStreamOutageReason,
+  judgeStaleStream,
+} from '../stream-broker/stream-health-policy.js'
 
 const NOW = 1_800_000_000_000
 
@@ -39,6 +43,33 @@ describe('judgeStaleStream (D883)', () => {
         nowMs: NOW,
       }),
     ).toEqual({ kind: 'outage', reason: 'connection-error' })
+  })
+
+  it('a camera that JUST woke and has no keyframe yet is not a fault (wake window)', () => {
+    expect(
+      judgeStaleStream({
+        battery: { facts: { sleeping: false, awakeSince: NOW - 500 } },
+        demanded: false,
+        nowMs: NOW,
+      }),
+    ).toEqual({ kind: 'suppressed', presence: 'awake' })
+  })
+
+  it('awake past the wake bound with no stream is a connection-error', () => {
+    expect(
+      judgeStaleStream({
+        battery: { facts: { sleeping: false, awakeSince: NOW - WAKE_DEMAND_BOUND_MS } },
+        demanded: false,
+        nowMs: NOW,
+      }),
+    ).toEqual({ kind: 'outage', reason: 'connection-error' })
+  })
+
+  it('a mains camera is unchanged by awakeSince (battery null)', () => {
+    expect(judgeStaleStream({ battery: null, demanded: false, nowMs: NOW })).toEqual({
+      kind: 'outage',
+      reason: 'stale-timeout',
+    })
   })
 
   it('silence past the battery refresh window is battery-unreachable, demanded or not', () => {

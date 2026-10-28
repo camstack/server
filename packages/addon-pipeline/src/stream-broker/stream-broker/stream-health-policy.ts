@@ -13,7 +13,10 @@
  *
  *  - asleep and nobody asked for the stream — NOT an outage (`asleep`);
  *  - asleep, a stream was DEMANDED and none arrived — `wake-timeout`;
- *  - reported awake and the stream is gone — `connection-error`;
+ *  - reported awake, the stream is gone, and the camera has been awake longer
+ *    than a wake needs (`WAKE_DEMAND_BOUND_MS`) — `connection-error`; inside
+ *    that window it is the normal wake (sleeping flipped, first keyframe not
+ *    yet here) and is suppressed, then re-judged;
  *  - silent past the battery refresh window — `battery-unreachable`.
  *
  * A sleep verdict needs a sleep state that was actually READ. A mirror that
@@ -59,6 +62,13 @@ export function isStreamOutageReason(
 export interface BatterySleepFacts {
   readonly sleeping: boolean
   readonly lastContactAt?: number
+  /**
+   * Epoch ms when `sleeping` last flipped to false, as the broker saw it.
+   * Unknown (a restart, a slice read of an already-awake camera) = judged as
+   * awake for long enough: today's immediate `connection-error`, never a
+   * silent suppression on a fact nobody observed (D49).
+   */
+  readonly awakeSince?: number
 }
 
 export interface StaleStreamInput {
@@ -86,7 +96,13 @@ export function judgeStaleStream(input: StaleStreamInput): StaleStreamVerdict {
     nowMs: input.nowMs,
   })
   if (presence === 'unreachable') return { kind: 'outage', reason: 'battery-unreachable' }
-  if (presence === 'awake') return { kind: 'outage', reason: 'connection-error' }
+  if (presence === 'awake') {
+    const awakeSince = input.battery.facts.awakeSince
+    if (awakeSince !== undefined && input.nowMs - awakeSince < WAKE_DEMAND_BOUND_MS) {
+      return { kind: 'suppressed', presence }
+    }
+    return { kind: 'outage', reason: 'connection-error' }
+  }
   if (input.demanded) return { kind: 'outage', reason: 'wake-timeout' }
   return { kind: 'suppressed', presence }
 }
