@@ -4849,17 +4849,18 @@
       "requestFailed": "Request failed",
       "lookingForAgents": "Looking for agents…",
       "noAgentsFound": "No agents found",
-      "nothingIsAdvertisingOnThis": "Nothing is advertising on this network. Start the agent on its own IP (or host networking), or add it by address."
+      "nothingIsAdvertisingOnThis": "Nothing is advertising on this network. Start the agent on its own IP (or host networking), or add it by address.",
+      "resume": "Resume"
     },
     "pairingDialog": {
-      "eachScreenShowsACode": "Each screen shows a code; you type the code from the OTHER screen. Agent at {{value1}}",
+      "eachScreenShowsACode": "Both screens show the same six digits. Check they match, then type the code you read on the agent. Agent at {{value1}}",
       "couldNotStartThePairing": "Could not start the pairing",
       "reject": "Reject",
       "codeOnThisHub": "Code on this hub",
-      "codeOnThisHubRead": "Code on this hub — read it out to the agent",
+      "codeOnThisHubRead": "Code on this hub: the agent must show the same digits",
       "onTheAgentEnterThis": "On the agent, enter this code and the agent’s local PIN (shown on the agent’s console or log, or on its own screen).",
       "codeShownOnTheAgent": "Code shown on the agent",
-      "typeTheSixDigitsThe": "Type the six digits the agent displays. Do not copy the code above.",
+      "typeTheSixDigitsThe": "Type the six digits you read on the agent; do not paste. If they differ from the code above, stop and press Reject.",
       "youConfirmedHereTheAgent": "You confirmed here. The agent still has to enter the hub code and its PIN.",
       "working": "Working…",
       "hubConfirmed": "Hub: confirmed",

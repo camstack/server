@@ -2,9 +2,10 @@
  * Pair an agent with this hub (D857).
  *
  * Opening the dialog starts the pairing (`beginPairing`): the hub offers the
- * mesh CA to the agent and both screens show a six-digit code. Each side types
- * the OTHER side's code — this dialog shows the hub's code to read out, and an
- * input, always empty at the start, for the code the AGENT shows. The hub's
+ * mesh CA to the agent and both screens show the SAME six-digit code. Each side
+ * types the code it reads on the OTHER screen, so a match proves both computed
+ * one value — this dialog shows the hub's code, and an input, always empty at
+ * the start, for the code the AGENT shows. The hub's
  * code is never offered back to the input, and `confirmPairing` is sent only
  * what the operator typed.
  *
@@ -56,6 +57,8 @@ export interface PairingTarget {
   readonly nodeId: string
   readonly host: string
   readonly port: number
+  /** An already-open pairing to reattach to; absent starts a new one. */
+  readonly pairingId?: string
 }
 
 export interface PairingDialogProps {
@@ -115,6 +118,10 @@ export function PairingDialog({
     }
     if (startedFor.current === target) return
     startedFor.current = target
+    if (target.pairingId !== undefined) {
+      setPairingId(target.pairingId)
+      return
+    }
     void begin
       .mutateAsync({ host: target.host, port: target.port })
       .then((view) => {
@@ -190,7 +197,7 @@ export function PairingDialog({
               ? ''
               : t(
                   'pairing.pairingDialog.eachScreenShowsACode',
-                  'Each screen shows a code; you type the code from the OTHER screen. Agent at {{value1}}',
+                  'Both screens show the same six digits. Check they match, then type the code you read on the agent. Agent at {{value1}}',
                   { value1: formatEndpoint(target.host, target.port) },
                 )}
           </DialogDescription>
@@ -323,7 +330,7 @@ function ActiveSteps({
         <p className="text-xs text-foreground-muted">
           {t(
             'pairing.pairingDialog.codeOnThisHubRead',
-            'Code on this hub — read it out to the agent',
+            'Code on this hub: the agent must show the same digits',
           )}
         </p>
         <p
@@ -352,7 +359,7 @@ function ActiveSteps({
             label={t('pairing.pairingDialog.codeShownOnTheAgent', 'Code shown on the agent')}
             description={t(
               'pairing.pairingDialog.typeTheSixDigitsThe',
-              'Type the six digits the agent displays. Do not copy the code above.',
+              'Type the six digits you read on the agent; do not paste. If they differ from the code above, stop and press Reject.',
             )}
             {...(confirmError !== null ? { error: confirmError } : {})}
           >

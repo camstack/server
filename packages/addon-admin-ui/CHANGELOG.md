@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- An agent whose pairing was left open can be resumed from Agents found on the network
+
 ## [1.2.508] - 2026-10-28
 
 ### Changed

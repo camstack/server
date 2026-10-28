@@ -46,10 +46,18 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
         },
       },
       confirmPairing: {
-        useMutation: () => ({ mutate: confirmMutate, data: undefined, isPending: false }),
+        useMutation: () => ({
+          mutate: confirmMutate,
+          data: undefined,
+          isPending: false,
+        }),
       },
       rejectPairing: {
-        useMutation: () => ({ mutate: rejectMutate, data: undefined, isPending: false }),
+        useMutation: () => ({
+          mutate: rejectMutate,
+          data: undefined,
+          isPending: false,
+        }),
       },
     },
   },
@@ -91,7 +99,10 @@ beforeEach(() => {
 
 afterEach(cleanup)
 
-async function open(): Promise<{ onClose: () => void; onOpenNode: (id: string) => void }> {
+async function open(): Promise<{
+  onClose: () => void
+  onOpenNode: (id: string) => void
+}> {
   const onClose = vi.fn()
   const onOpenNode = vi.fn()
   await act(async () => {
@@ -108,7 +119,9 @@ async function open(): Promise<{ onClose: () => void; onOpenNode: (id: string) =
 }
 
 const codeInput = (): HTMLInputElement =>
-  screen.getByRole('textbox', { name: 'Code shown on the agent' }) as HTMLInputElement
+  screen.getByRole('textbox', {
+    name: 'Code shown on the agent',
+  }) as HTMLInputElement
 
 describe('PairingDialog', () => {
   it('says the offer is going out until the first answer, then shows the hub code', async () => {
@@ -138,7 +151,10 @@ describe('PairingDialog', () => {
     expect(codeInput().value).toBe('123456')
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
     expect(confirmMutate).toHaveBeenCalledTimes(1)
-    expect(confirmMutate.mock.calls[0]?.[0]).toEqual({ pairingId: 'p1', code: '123456' })
+    expect(confirmMutate.mock.calls[0]?.[0]).toEqual({
+      pairingId: 'p1',
+      code: '123456',
+    })
   })
 
   it('shows the server message on a wrong code and clears the input', async () => {
@@ -182,7 +198,11 @@ describe('PairingDialog', () => {
   })
 
   it('on success waits for the node to register, then links to it', async () => {
-    polled = view({ state: 'paired', hubConfirmed: true, agentConfirmed: true })
+    polled = view({
+      state: 'paired',
+      hubConfirmed: true,
+      agentConfirmed: true,
+    })
     topologyNodes = []
     await open()
     await waitFor(() => expect(screen.getByText(/Waiting for it to connect/)).toBeTruthy())
@@ -205,6 +225,25 @@ describe('PairingDialog', () => {
     await open()
     await waitFor(() => expect(screen.getByText('Agent refused the offer')).toBeTruthy())
     expect(screen.getByText('The agent could not be reached')).toBeTruthy()
+  })
+
+  it('a resumed target attaches to its pairing and never begins another', async () => {
+    const beginSpy = vi.fn(async () => view())
+    begin = beginSpy
+    polled = view({ pairingId: 'p-open' })
+    await act(async () => {
+      render(
+        <PairingDialog
+          target={{ ...TARGET, pairingId: 'p-open' }}
+          onClose={vi.fn()}
+          onSettled={vi.fn()}
+          onOpenNode={vi.fn()}
+        />,
+      )
+    })
+    await waitFor(() => expect(screen.getByTestId('hub-code')).toBeTruthy())
+    expect(beginSpy).not.toHaveBeenCalled()
+    expect(pollOptions?.enabled).toBe(true)
   })
 
   it('rejects through the hub', async () => {

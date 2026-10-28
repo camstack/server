@@ -38,8 +38,12 @@ function agent(over: Partial<DiscoveredAgent> & { nodeId: string }): DiscoveredA
 }
 
 vi.mock('../PairingDialog', () => ({
-  PairingDialog: ({ target }: { target: { nodeId: string } | null }) =>
-    target === null ? null : <div data-testid="pairing-dialog">{target.nodeId}</div>,
+  PairingDialog: ({ target }: { target: { nodeId: string; pairingId?: string } | null }) =>
+    target === null ? null : (
+      <div data-testid="pairing-dialog" data-pairing-id={target.pairingId ?? ''}>
+        {target.nodeId}
+      </div>
+    ),
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
@@ -88,7 +92,11 @@ beforeEach(() => {
   addMutate.mockReset()
   unpairMutate.mockReset()
   confirmAnswer = true
-  list = { isLoading: false, isError: false, data: { agents: [], scannedAt: 1 } }
+  list = {
+    isLoading: false,
+    isError: false,
+    data: { agents: [], scannedAt: 1 },
+  }
 })
 
 afterEach(cleanup)
@@ -104,7 +112,11 @@ describe('AgentsFoundSection discovery states', () => {
   })
 
   it('reports a failed scan as an error, not as an empty network', () => {
-    list = { isLoading: false, isError: true, error: { message: 'mDNS browse failed' } }
+    list = {
+      isLoading: false,
+      isError: true,
+      error: { message: 'mDNS browse failed' },
+    }
     mount()
     expect(screen.getByText('mDNS browse failed')).toBeTruthy()
     expect(screen.queryByText('No agents found')).toBeNull()
@@ -152,12 +164,44 @@ describe('AgentsFoundSection discovery states', () => {
   })
 })
 
+describe('AgentsFoundSection resume', () => {
+  const pendingAgent = (): DiscoveredAgent =>
+    agent({
+      nodeId: 'a-pending',
+      state: 'pending',
+      pairing: {
+        pairingId: 'p-open',
+        code: '123456',
+        state: 'awaiting-confirmation',
+        expiresAt: Date.now() + 60_000,
+      } as DiscoveredAgent['pairing'],
+    })
+
+  it('offers Resume on a pending agent with an open pairing and reattaches to it', () => {
+    list = {
+      isLoading: false,
+      isError: false,
+      data: { scannedAt: 1, agents: [pendingAgent()] },
+    }
+    mount()
+    expect(screen.queryByRole('button', { name: 'Pair' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }))
+    const dialog = screen.getByTestId('pairing-dialog')
+    expect(dialog.textContent).toBe('a-pending')
+    expect(dialog.getAttribute('data-pairing-id')).toBe('p-open')
+  })
+})
+
 describe('AgentsFoundSection add by address', () => {
   it('sends the trimmed address and the optional port', () => {
     mount()
     fireEvent.click(screen.getByRole('button', { name: /Add by address/ }))
-    fireEvent.change(screen.getByLabelText('Agent address'), { target: { value: ' 192.0.2.50 ' } })
-    fireEvent.change(screen.getByLabelText('Agent port'), { target: { value: '4455' } })
+    fireEvent.change(screen.getByLabelText('Agent address'), {
+      target: { value: ' 192.0.2.50 ' },
+    })
+    fireEvent.change(screen.getByLabelText('Agent port'), {
+      target: { value: '4455' },
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
     expect(addMutate).toHaveBeenCalledWith({ host: '192.0.2.50', port: 4455 })
   })
@@ -165,17 +209,25 @@ describe('AgentsFoundSection add by address', () => {
   it('refuses a bad port locally and shows the server message for a public address', async () => {
     mount()
     fireEvent.click(screen.getByRole('button', { name: /Add by address/ }))
-    fireEvent.change(screen.getByLabelText('Agent address'), { target: { value: '8.8.8.8' } })
-    fireEvent.change(screen.getByLabelText('Agent port'), { target: { value: '99999' } })
+    fireEvent.change(screen.getByLabelText('Agent address'), {
+      target: { value: '8.8.8.8' },
+    })
+    fireEvent.change(screen.getByLabelText('Agent port'), {
+      target: { value: '99999' },
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
     expect(addMutate).not.toHaveBeenCalled()
     expect(screen.getByText(/between 1 and 65535/)).toBeTruthy()
 
-    fireEvent.change(screen.getByLabelText('Agent port'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Agent port'), {
+      target: { value: '' },
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
     expect(addMutate).toHaveBeenCalledWith({ host: '8.8.8.8' })
     await act(async () =>
-      addOptions?.onError({ message: 'Only private or local addresses can be added.' }),
+      addOptions?.onError({
+        message: 'Only private or local addresses can be added.',
+      }),
     )
     expect(screen.getByText('Only private or local addresses can be added.')).toBeTruthy()
   })

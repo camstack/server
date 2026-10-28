@@ -132,7 +132,9 @@ export function AgentsFoundSection({ onOpenNode }: AgentsFoundSectionProps): Rea
 
   const askUnpair = async (agent: DiscoveredAgent): Promise<void> => {
     const ok = await confirm({
-      title: t('pairing.agentsFoundSection.unpair', 'Unpair {{nodeId}}', { nodeId: agent.nodeId }),
+      title: t('pairing.agentsFoundSection.unpair', 'Unpair {{nodeId}}', {
+        nodeId: agent.nodeId,
+      }),
       message: t(
         'pairing.agentsFoundSection.sCertificatesAreRevokedAt',
         "{{nodeId}}'s certificates are revoked at once and it is disconnected from the mesh. It must be paired again before it can rejoin.",
@@ -190,8 +192,9 @@ export function AgentsFoundSection({ onOpenNode }: AgentsFoundSectionProps): Rea
         header: '',
         align: 'right',
         notSortableReason: 'Row actions',
-        render: (a) =>
-          a.state === 'unpaired' ? (
+        render: (a) => {
+          const open = a.pairing
+          return a.state === 'unpaired' ? (
             <Button
               type="button"
               size="sm"
@@ -209,7 +212,23 @@ export function AgentsFoundSection({ onOpenNode }: AgentsFoundSectionProps): Rea
             >
               {t('pairing.agentsFoundSection.unpair2', 'Unpair')}
             </Button>
-          ) : null,
+          ) : a.state === 'pending' && open !== null ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() =>
+                setTarget({
+                  nodeId: a.nodeId,
+                  host: a.host,
+                  port: a.port,
+                  pairingId: open.pairingId,
+                })
+              }
+            >
+              {t('pairing.agentsFoundSection.resume', 'Resume')}
+            </Button>
+          ) : null
+        },
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
