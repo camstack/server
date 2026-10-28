@@ -7437,7 +7437,9 @@
       "levelUnknown": "Livello del cibo sconosciuto",
       "gramsInBowl": "{{grams}} nella ciotola",
       "decreasePortion": "Riduci la porzione {{label}}",
-      "increasePortion": "Aumenta la porzione {{label}}"
+      "increasePortion": "Aumenta la porzione {{label}}",
+      "mains": "Rete elettrica",
+      "backupBattery": "Backup {{percent}}%"
     },
     "recordingBands": {
       "mon": "Lun",

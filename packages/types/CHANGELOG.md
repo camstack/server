@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A pet feeder shows whether it runs on mains or on its battery
+
 ## [1.2.437] - 2026-10-28
 
 ### Changed

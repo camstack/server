@@ -29,6 +29,7 @@ import {
   Lightbulb,
   Lock,
   PawPrint,
+  Plug,
   UtensilsCrossed,
   Volume2,
   WifiOff,
@@ -94,6 +95,16 @@ export function PetFeederPanel({
   const faultMsg = display.error && display.error !== 'no_error' ? display.error : null
   const offline = display.status === 'offline'
   const onBatteries = display.status === 'on_batteries'
+  // On mains the battery is only a backup: shown quietly, never as the main
+  // readout nor as a low-battery alarm. Unknown (null) keeps the plain readout.
+  const onMains = display.powerSource === 'mains'
+  const mainsLabel = t('uiLibrary.petFeeder.mains', 'Mains')
+  const backupLabel =
+    display.batteryPower === null
+      ? null
+      : t('uiLibrary.petFeeder.backupBattery', 'Backup {{percent}}%', {
+          percent: display.batteryPower,
+        })
 
   // ── Compact layout (device-row inline) ──────────────────────────────────────
   if (layout === 'compact') {
@@ -121,10 +132,16 @@ export function PetFeederPanel({
           <UtensilsCrossed className="h-3.5 w-3.5" aria-hidden />
           {display.bowlFood ?? '—'}
         </span>
+        {onMains && (
+          <span className="inline-flex items-center gap-0.5 text-xs text-foreground-subtle">
+            <Plug className="h-3.5 w-3.5" aria-hidden />
+            {mainsLabel}
+          </span>
+        )}
         {display.batteryPower !== null && (
           <span className="inline-flex items-center gap-0.5 text-xs tabular-nums text-foreground-subtle">
             <BatteryMedium className="h-3.5 w-3.5" aria-hidden />
-            {display.batteryPower}%
+            {onMains ? backupLabel : `${display.batteryPower}%`}
           </span>
         )}
         <button
@@ -176,10 +193,11 @@ export function PetFeederPanel({
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-subtle">
+            {onMains && <Readout icon={<Plug className="h-3.5 w-3.5" />} label={mainsLabel} />}
             {display.batteryPower !== null && (
               <Readout
                 icon={<BatteryMedium className="h-3.5 w-3.5" />}
-                label={`${display.batteryPower}%`}
+                label={onMains ? (backupLabel ?? '') : `${display.batteryPower}%`}
               />
             )}
             {onBatteries && (

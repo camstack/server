@@ -65,6 +65,13 @@ export interface FeederReading {
   readonly volume: number | null
 }
 
+/** Power-interface indicator to the cap's power source; unknown codes are null. */
+export function decodePowerSource(powerMode: number | null): PetFeederStatus['powerSource'] {
+  if (powerMode === PETKIT_POWER_MODE_MAINS) return 'mains'
+  if (powerMode === PETKIT_POWER_MODE_BATTERY) return 'battery'
+  return null
+}
+
 /**
  * Decode the feeder connectivity / power status to the cap enum:
  * `offline` when the cloud is unreachable, `on_batteries` when running on
@@ -158,6 +165,7 @@ export function mapFeederToStatus(reading: FeederReading, now: number): PetFeede
     batteryPower: clampBattery(reading.batteryPower),
     desiccantLeftDays: desiccantSeconds(reading.desiccantLeftDays),
     feeding: reading.feeding,
+    powerSource: decodePowerSource(reading.powerMode),
     status: decodeFeederStatus(reading),
     error: decodeFeederError(reading.errorCode, reading.errorMsg),
     errorCode: reading.errorCode,
@@ -188,6 +196,7 @@ export function coldStartFeederStatus(isDualHopper: boolean): PetFeederStatus {
     batteryPower: null,
     desiccantLeftDays: null,
     feeding: false,
+    powerSource: null,
     status: null,
     error: null,
     errorCode: null,

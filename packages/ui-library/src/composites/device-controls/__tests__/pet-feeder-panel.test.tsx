@@ -15,6 +15,7 @@ function makeSlice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
     food2: null,
     lowFood: false,
     batteryPower: 88,
+    powerSource: null,
     desiccantLeftDays: 12 * 86_400,
     feeding: false,
     status: 'normal',
@@ -198,6 +199,41 @@ describe('PetFeederHeroCard', () => {
     mockResult = { ...mockResult, slice: makeSlice({ status: 'on_batteries' }) }
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('On battery')).toBeTruthy()
+  })
+
+  it('on mains shows Mains and the battery as backup, not as an alarm', () => {
+    mockResult = {
+      ...mockResult,
+      slice: makeSlice({ powerSource: 'mains', batteryPower: 4, status: 'normal' }),
+    }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('Mains')).toBeTruthy()
+    expect(screen.getByText('Backup 4%')).toBeTruthy()
+    expect(screen.queryByText('On battery')).toBeNull()
+  })
+
+  it('on battery keeps the plain battery readout and On battery', () => {
+    mockResult = {
+      ...mockResult,
+      slice: makeSlice({ powerSource: 'battery', batteryPower: 40, status: 'on_batteries' }),
+    }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('On battery')).toBeTruthy()
+    expect(screen.getByText('40%')).toBeTruthy()
+    expect(screen.queryByText('Mains')).toBeNull()
+  })
+
+  it("with an unknown source shows today's battery readout only", () => {
+    mockResult = { ...mockResult, slice: makeSlice({ powerSource: null, batteryPower: 4 }) }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('4%')).toBeTruthy()
+    expect(screen.queryByText('Mains')).toBeNull()
+  })
+
+  it('compact layout on mains shows Mains and a backup label', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ powerSource: 'mains', batteryPower: 4 }) }
+    render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('Backup 4%')).toBeTruthy()
   })
 
   it('renders a fault banner with the error message, ignoring the no_error sentinel', () => {

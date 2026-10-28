@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The FRESHELEMENT 3 feeder shows the grams in its bowl
+- A pet feeder shows whether it runs on mains or on its battery
 
 ## [0.2.151] - 2026-10-28
 

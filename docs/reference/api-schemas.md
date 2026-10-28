@@ -4733,6 +4733,7 @@ Enum: `"f32le" \| "s16le"`
 - `food2`: `number \| null`
 - `lowFood`: `boolean`
 - `batteryPower`: `number \| null`
+- `powerSource`: `"mains" \| "battery" \| null`
 - `desiccantLeftDays`: `number \| null`
 - `feeding`: `boolean`
 - `status`: `"normal" \| "offline" \| "on_batteries" \| null`

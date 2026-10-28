@@ -48,6 +48,17 @@ function dualHopperReading(overrides: Partial<FeederReading> = {}): FeederReadin
 
 const NOW = 1_700_000_000_000
 
+describe('powerSource', () => {
+  it('maps pim 1 to mains, pim 2 to battery, anything else to null', () => {
+    const src = (powerMode: number | null) =>
+      mapFeederToStatus(singleHopperReading({ powerMode }), NOW).powerSource
+    expect(src(1)).toBe('mains')
+    expect(src(2)).toBe('battery')
+    expect(src(null)).toBeNull()
+    expect(src(7)).toBeNull()
+  })
+})
+
 describe('decodeFeederStatus', () => {
   it('maps an unreachable feeder to offline', () => {
     expect(decodeFeederStatus(singleHopperReading({ online: false }))).toBe('offline')
@@ -109,6 +120,7 @@ describe('mapFeederToStatus — single hopper', () => {
       food1: null,
       food2: null,
       lowFood: false,
+      powerSource: 'mains',
       batteryPower: 80,
       desiccantLeftDays: 20 * 86_400,
       feeding: false,

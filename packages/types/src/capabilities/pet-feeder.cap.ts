@@ -77,9 +77,14 @@ export const PetFeederStatusSchema = z.object({
    *  (`device_class: problem`, on = low). True when the tank reports empty,
    *  or, on a dual-hopper model, when EITHER hopper is empty. */
   lowFood: z.boolean(),
-  /** Battery charge 0..100 (%). Null on mains-powered models or when the
-   *  device has no battery reading. */
+  /** Battery charge 0..100 (%). On a feeder running on `mains` this is the
+   *  BACKUP battery's charge, not the power source. Null when the device has
+   *  no battery reading. */
   batteryPower: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),
+  /** What the feeder is powered from right now: `mains` (plugged in, the
+   *  battery is only a backup) or `battery`. Null when the device does not
+   *  report it. */
+  powerSource: z.enum(['mains', 'battery']).nullable(),
   /**
    * Desiccant life remaining, stored in seconds (duration base, D944).
    * Providers convert from the days the feeder reports. Null when the

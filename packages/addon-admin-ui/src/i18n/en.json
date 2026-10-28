@@ -7415,7 +7415,9 @@
       "levelUnknown": "Food level unknown",
       "gramsInBowl": "{{grams}} in bowl",
       "decreasePortion": "Decrease {{label}} portion",
-      "increasePortion": "Increase {{label}} portion"
+      "increasePortion": "Increase {{label}} portion",
+      "mains": "Mains",
+      "backupBattery": "Backup {{percent}}%"
     },
     "recordingBands": {
       "mon": "Mon",
