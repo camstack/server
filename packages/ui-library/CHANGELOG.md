@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.342] - 2026-10-28
+
 ### Changed
 
 - Option lists can group options under headings, and a dropdown can be opened and closed from outside
