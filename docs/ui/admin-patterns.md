@@ -268,10 +268,15 @@ one collapsible row per addon. They are a pill selector now; see
 `/integrations` keeps that table as the default and offers a card grid beside
 it (`ViewSwitch` in the page toolbar). The choice is remembered in this
 browser under `camstack.admin.integrations.view` (guarded `localStorage`;
-default `table`). A card shows the row's icon, name, provider, status and
-device count, and the row's actions: expand (the nested device list is still
-`DeviceList`) and open (the row click). Pending, empty and error are drawn
-once, above either layout. `DataTable` still does not turn itself into cards.
+default `table`). The grid has one card per providing ADDON (icon over the
+card's full height, friendly name, "N integrations · M devices", status; no id
+line, no chevron); the whole card opens `/integrations/<addonId>`, where the
+`?instance=` selector picks the integration. In BOTH layouts the list is split
+into a `Providers` block and a `System` block (an empty block is hidden). System
+is every integration whose providing addon ships in a framework package, read
+from `addons.list` `manifest.packageName` through `lib/integration-sections.ts`
+(`lib/framework-packages.ts`), never from an addon id. Pending, empty and error
+are drawn once, above either layout. `DataTable` still does not turn itself into cards.
 
 ### What an export entry shows, and why the rest could go
 

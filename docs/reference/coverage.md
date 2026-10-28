@@ -14,12 +14,12 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**216 units · 7289 source files · 204 units claimed by at least one document (7251 files).**
+**216 units · 7294 source files · 204 units claimed by at least one document (7256 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1029 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-0880-core-block-passwords-and-waste-source-credentials-are-keychain-backed-and-a-read-only-scan-finds-what-no-code-writes.md`, +1 more | 2026-10-18 |
-| `packages/addon-admin-ui/src/components` | 535 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +73 more, 4 ADRs | 2026-10-27 |
+| `packages/addon-admin-ui/src/components` | 536 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +73 more, 4 ADRs | 2026-10-27 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 471 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +166 more, 27 ADRs | 2026-10-14 |
 | `scripts` | 443 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +133 more, 14 ADRs | 2026-10-27 |
 | `packages/system/src/builtins` | 394 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +163 more, 21 ADRs | 2026-10-26 |
@@ -41,7 +41,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +4 more, 1 ADR | 2026-10-14 |
 | `packages/addon-pipeline/src/pipeline-runner` | 57 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-provider-reolink` | 56 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +22 more, 2 ADRs | 2026-10-26 |
-| `packages/addon-admin-ui/src/lib` | 51 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-10-27 |
+| `packages/addon-admin-ui/src/lib` | 55 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-10-27 |
 | `packages/addon-provider-dreame` | 51 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, `decisions/adr-0371-a-device-signal-is-a-level-the-recorder-holds-and-a-publisher-names-the-slot-its-stream-is.md`, +4 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-provider-hikvision` | 51 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +12 more, 2 ADRs | 2026-10-26 |
 | `packages/types/src/device` | 51 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md`, +24 more, 1 ADR | 2026-10-26 |

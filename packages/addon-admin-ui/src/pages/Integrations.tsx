@@ -31,6 +31,7 @@ import {
   type DeviceItemParent,
   DeviceList,
   ErrorBox,
+  useAddonsList,
   useDeviceManagerListAll,
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
@@ -48,6 +49,8 @@ import {
   type IntegrationAddonGroup,
 } from '../lib/integration-addon-groups'
 import { integrationDetailUrl } from '../lib/integration-instance-selection'
+import { splitIntegrationSections, systemAddonIdsOf } from '../lib/integration-sections'
+import { IntegrationSection } from '../components/integrations/integration-section'
 import { IntegrationGrid } from '../components/integrations/integration-grid'
 import {
   useIntegrationsView,
@@ -265,9 +268,17 @@ export function IntegrationsPage(): ReactNode {
     window.dispatchEvent(new PopStateEvent('popstate'))
   }, [])
 
-  const addonGroups = useMemo(
-    () => groupIntegrationsByAddon(tableRows, addonNames),
-    [tableRows, addonNames],
+  // System = integrations the platform itself offers: the providing addon ships
+  // in a framework package (`manifest.packageName`, from `addons.list`).
+  const { data: installedAddons } = useAddonsList(undefined)
+  const systemAddonIds = useMemo(() => systemAddonIdsOf(installedAddons), [installedAddons])
+  const tableSections = useMemo(
+    () => splitIntegrationSections(tableRows, systemAddonIds),
+    [tableRows, systemAddonIds],
+  )
+  const gridSections = useMemo(
+    () => splitIntegrationSections(groupIntegrationsByAddon(tableRows, addonNames), systemAddonIds),
+    [tableRows, addonNames, systemAddonIds],
   )
   const onGroupOpen = useCallback(
     (group: IntegrationAddonGroup) => navigate(integrationDetailUrl(group.addonId)),
@@ -332,6 +343,21 @@ export function IntegrationsPage(): ReactNode {
   )
 
   const getKey = useCallback((integration: Integration): string => integration.id, [])
+
+  const renderTable = (rows: readonly Integration[]): ReactNode => (
+    <DeviceList
+      mode="generic"
+      items={rows}
+      getKey={getKey}
+      getSearchText={getSearchText}
+      columns={integrationColumns}
+      onRowClick={onRowClick}
+      isExpanded={isExpanded}
+      renderExpanded={renderExpanded}
+      searchPlaceholder={t('integrations.search', { defaultValue: 'Search integrations…' })}
+      emptyLabel={t('integrations.empty', { defaultValue: 'No integrations found.' })}
+    />
+  )
 
   const handleRefresh = useCallback(() => {
     void refetchIntegrations()
@@ -422,23 +448,24 @@ export function IntegrationsPage(): ReactNode {
       )}
 
       {!listFailed && !awaiting && hasIntegrations && view === 'table' && (
-        <DeviceList
-          mode="generic"
-          items={tableRows}
-          getKey={getKey}
-          getSearchText={getSearchText}
-          columns={integrationColumns}
-          onRowClick={onRowClick}
-          isExpanded={isExpanded}
-          renderExpanded={renderExpanded}
-          searchPlaceholder={t('integrations.search', { defaultValue: 'Search integrations…' })}
-          emptyLabel={t('integrations.empty', { defaultValue: 'No integrations found.' })}
-        />
+        <div className="space-y-4">
+          {tableSections.providers.length > 0 && (
+            <IntegrationSection kind="providers">
+              {renderTable(tableSections.providers)}
+            </IntegrationSection>
+          )}
+          {tableSections.system.length > 0 && (
+            <IntegrationSection kind="system">
+              {renderTable(tableSections.system)}
+            </IntegrationSection>
+          )}
+        </div>
       )}
 
       {!listFailed && !awaiting && hasIntegrations && view === 'grid' && (
         <IntegrationGrid
-          groups={addonGroups}
+          providers={gridSections.providers}
+          system={gridSections.system}
           onOpen={onGroupOpen}
           searchPlaceholder={t('integrations.search', { defaultValue: 'Search integrations…' })}
           emptyLabel={t('integrations.empty', { defaultValue: 'No integrations found.' })}

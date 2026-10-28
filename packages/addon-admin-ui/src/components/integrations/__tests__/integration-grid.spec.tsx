@@ -31,11 +31,24 @@ const shc: IntegrationAddonGroup = {
   status: 'stopped',
 }
 
-function renderGrid() {
+const blocks: IntegrationAddonGroup = {
+  addonId: 'core-blocks',
+  name: 'Core Blocks',
+  instances: [inst('d', 'core-blocks', 'Blocks', 4)],
+  instanceCount: 1,
+  deviceCount: 4,
+  status: 'running',
+}
+
+function renderGrid(
+  providers: readonly IntegrationAddonGroup[] = [wyze, shc],
+  system: readonly IntegrationAddonGroup[] = [],
+) {
   const onOpen = vi.fn<(group: IntegrationAddonGroup) => void>()
   render(
     <IntegrationGrid
-      groups={[wyze, shc]}
+      providers={providers}
+      system={system}
       onOpen={onOpen}
       searchPlaceholder="Search integrations…"
       emptyLabel="No integrations found."
@@ -66,5 +79,31 @@ describe('IntegrationGrid', () => {
     expect(screen.queryByTestId('integration-card-bosch-shc')).toBeNull()
     fireEvent.change(search, { target: { value: 'missing' } })
     expect(screen.getByText('No integrations found.')).toBeTruthy()
+  })
+
+  it('splits the cards into a Providers and a System block, each with its heading', () => {
+    renderGrid([wyze], [blocks])
+    const providers = screen.getByTestId('integrations-section-providers')
+    const system = screen.getByTestId('integrations-section-system')
+    expect(within(providers).getByRole('heading', { name: 'Providers' })).toBeTruthy()
+    expect(within(system).getByRole('heading', { name: 'System' })).toBeTruthy()
+    expect(within(providers).getByTestId('integration-card-provider-wyze')).toBeTruthy()
+    expect(within(system).getByTestId('integration-card-core-blocks')).toBeTruthy()
+    expect(within(providers).queryByTestId('integration-card-core-blocks')).toBeNull()
+  })
+
+  it('hides an empty block', () => {
+    renderGrid([wyze], [])
+    expect(screen.queryByTestId('integrations-section-system')).toBeNull()
+    expect(screen.getByTestId('integrations-section-providers')).toBeTruthy()
+  })
+
+  it('one search narrows both blocks and hides the block it empties', () => {
+    renderGrid([wyze], [blocks])
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search integrations…' }), {
+      target: { value: 'blocks' },
+    })
+    expect(screen.queryByTestId('integrations-section-providers')).toBeNull()
+    expect(screen.getByTestId('integrations-section-system')).toBeTruthy()
   })
 })

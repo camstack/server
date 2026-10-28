@@ -3,7 +3,8 @@
  * other layout. One card per providing ADDON (its friendly name as the title)
  * that has at least one integration instance: the card says how many
  * integrations the addon has and how many devices they hold together, and the
- * whole card opens the addon's integration page.
+ * whole card opens the addon's integration page. The cards are split into a
+ * `Providers` and a `System` block; an empty block is not shown.
  */
 import { type ReactElement, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,30 +12,34 @@ import { Search } from 'lucide-react'
 import { Button, Input, StatusBadge } from '@camstack/ui-library'
 import type { IntegrationAddonGroup } from '../../lib/integration-addon-groups'
 import { ProviderIcon } from '../shared/ProviderIcon'
+import { IntegrationSection } from './integration-section'
 
 export interface IntegrationGridProps {
-  readonly groups: readonly IntegrationAddonGroup[]
+  readonly providers: readonly IntegrationAddonGroup[]
+  readonly system: readonly IntegrationAddonGroup[]
   readonly onOpen: (group: IntegrationAddonGroup) => void
   readonly searchPlaceholder: string
   readonly emptyLabel: string
 }
 
 export function IntegrationGrid({
-  groups,
+  providers,
+  system,
   onOpen,
   searchPlaceholder,
   emptyLabel,
 }: IntegrationGridProps): ReactElement {
   const [query, setQuery] = useState('')
-  const filtered = useMemo(() => {
+  const matching = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (q.length === 0) return groups
-    return groups.filter((group) =>
+    const matches = (group: IntegrationAddonGroup): boolean =>
+      q.length === 0 ||
       `${group.name} ${group.addonId} ${group.instances.map((i) => i.name).join(' ')}`
         .toLowerCase()
-        .includes(q),
-    )
-  }, [query, groups])
+        .includes(q)
+    return { providers: providers.filter(matches), system: system.filter(matches) }
+  }, [query, providers, system])
+  const nothingFound = matching.providers.length === 0 && matching.system.length === 0
 
   return (
     <div className="space-y-3">
@@ -52,15 +57,37 @@ export function IntegrationGrid({
           className="pl-8"
         />
       </div>
-      {filtered.length === 0 ? (
+      {nothingFound ? (
         <p className="py-8 text-center text-xs text-foreground-subtle">{emptyLabel}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
-          {filtered.map((group) => (
-            <AddonCard key={group.addonId} group={group} onOpen={onOpen} />
-          ))}
+        <div className="space-y-4">
+          {matching.providers.length > 0 && (
+            <IntegrationSection kind="providers">
+              <CardGrid groups={matching.providers} onOpen={onOpen} />
+            </IntegrationSection>
+          )}
+          {matching.system.length > 0 && (
+            <IntegrationSection kind="system">
+              <CardGrid groups={matching.system} onOpen={onOpen} />
+            </IntegrationSection>
+          )}
         </div>
       )}
+    </div>
+  )
+}
+
+interface CardGridProps {
+  readonly groups: readonly IntegrationAddonGroup[]
+  readonly onOpen: (group: IntegrationAddonGroup) => void
+}
+
+function CardGrid({ groups, onOpen }: CardGridProps): ReactElement {
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+      {groups.map((group) => (
+        <AddonCard key={group.addonId} group={group} onOpen={onOpen} />
+      ))}
     </div>
   )
 }

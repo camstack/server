@@ -39,6 +39,7 @@ import { NodeOnlyPackagesPanel } from '../../components/addons/NodeOnlyPackagesP
 import { StaleNodeNotice } from '../../components/shared/StaleNodeNotice'
 import { AvailableToInstall, NpmAddonRow } from './CapabilityCatalog'
 import { useNodeUrlSelection } from '../../hooks/useNodeUrlSelection'
+import { isFrameworkPackage } from '../../lib/framework-packages'
 import type { SelectableNode } from '../../lib/node-url-selection'
 import { useTranslation } from 'react-i18next'
 
@@ -78,18 +79,6 @@ const UPDATE_CHECK_INTERVAL_CHOICES: readonly { seconds: number; label: string }
   { seconds: 43200, label: '12h' },
   { seconds: 86400, label: '24h' },
 ]
-
-const FRAMEWORK_PACKAGE_NAMES: ReadonlySet<string> = new Set([
-  '@camstack/system',
-  '@camstack/types',
-  '@camstack/sdk',
-  '@camstack/shm-ring',
-  '@camstack/ui-library',
-])
-
-function isFrameworkPackage(packageName: string | undefined): boolean {
-  return packageName !== undefined && FRAMEWORK_PACKAGE_NAMES.has(packageName)
-}
 
 /**
  * The node this page is scoped to.

@@ -80,6 +80,8 @@ vi.mock('@camstack/ui-library', async () => {
     ...actual,
     useIntegrationsList: () => ({ data: integrations, isLoading: false, refetch: vi.fn() }),
     useDeviceManagerListAll: () => ({ data: devices, isLoading: false, refetch: vi.fn() }),
+    useIntegrationsGetAvailableTypes: () => ({ data: [], isLoading: false, isError: false }),
+    useAddonsList: () => ({ data: [] }),
     useSystem: () => ({ trpcClient: {} }),
   }
 })

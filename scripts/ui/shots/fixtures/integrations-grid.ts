@@ -65,6 +65,40 @@ const INTEGRATIONS = [
   integration('int-wyze2', 'provider-wyze', 'Garage', true, 'running'),
   integration('int-bosch', 'bosch-home-connect', 'Casa', true, 'running'),
   integration('int-shc', 'bosch-shc', 'Casa', true, 'stopped'),
+  integration('int-blocks', 'core-blocks', 'Blocks', true, 'running'),
+  integration('int-grids', 'camera-grid', 'Camera grids', true, 'running'),
+]
+
+/** One `addons.list` row: the package the addon ships in decides Providers vs System. */
+const installedAddon = (id: string, name: string, packageName: string) => ({
+  manifest: {
+    id,
+    name,
+    version: '1.2.3',
+    packageName,
+    packageVersion: '1.2.3',
+    capabilities: [],
+  },
+  source: 'installed',
+  installSource: 'npm',
+  process: { pid: 4100, mode: 'forked', state: 'running' },
+  hasBackup: false,
+  health: null,
+})
+
+const ADDONS = [
+  installedAddon('provider-reolink', 'Reolink', '@camstack/addon-provider-reolink'),
+  installedAddon('provider-onvif', 'ONVIF', '@camstack/addon-provider-onvif'),
+  installedAddon(
+    'provider-homeassistant',
+    'Home Assistant',
+    '@camstack/addon-provider-homeassistant',
+  ),
+  installedAddon('provider-wyze', 'Wyze', '@camstack/addon-provider-wyze'),
+  installedAddon('bosch-home-connect', 'Bosch Home Connect', '@camstack/addon-bosch-home-connect'),
+  installedAddon('bosch-shc', 'Bosch Smart Home Controller', '@camstack/addon-bosch-shc'),
+  installedAddon('core-blocks', 'Core Blocks', '@camstack/system'),
+  installedAddon('camera-grid', 'Camera Grid', '@camstack/system'),
 ]
 
 export default defineFixtures({
@@ -74,6 +108,7 @@ export default defineFixtures({
     'integrations.list': INTEGRATIONS,
     'integrations.get': (input: { id?: string }) =>
       INTEGRATIONS.find((i) => i.id === input.id) ?? null,
+    'addons.list': ADDONS,
     'integrations.getAvailableTypes': [
       availableType('provider-reolink', 'Reolink'),
       availableType('provider-onvif', 'ONVIF'),
@@ -81,6 +116,8 @@ export default defineFixtures({
       availableType('provider-wyze', 'Wyze'),
       availableType('bosch-home-connect', 'Bosch Home Connect'),
       availableType('bosch-shc', 'Bosch Smart Home Controller'),
+      availableType('core-blocks', 'Core Blocks'),
+      availableType('camera-grid', 'Camera Grid'),
     ],
     'deviceManager.listAll': [
       device(101, 'Front door', 'provider-reolink', 'int-reolink'),
@@ -88,6 +125,7 @@ export default defineFixtures({
       device(103, 'Living room', 'provider-wyze', 'int-wyze'),
       device(104, 'Kitchen', 'provider-wyze', 'int-wyze'),
       device(105, 'Garage door', 'provider-wyze', 'int-wyze2'),
+      device(106, 'Driveway composite', 'composer', 'int-blocks'),
     ],
   },
 })

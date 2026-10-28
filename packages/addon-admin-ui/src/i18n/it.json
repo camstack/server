@@ -1728,6 +1728,10 @@
       "summary": "{{integrations}} · {{devices}}",
       "integrationCount_one": "{{count}} integrazione",
       "integrationCount_other": "{{count}} integrazioni"
+    },
+    "sections": {
+      "providers": "Fornitori",
+      "system": "Sistema"
     }
   },
   "serverManagement": {

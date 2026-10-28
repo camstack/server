@@ -46,6 +46,9 @@ const queries = vi.hoisted(() => ({
     isError: false,
     refetch: vi.fn(),
   },
+  addons: {
+    data: undefined as unknown,
+  },
 }))
 
 vi.mock('@camstack/ui-library', async () => {
@@ -56,6 +59,7 @@ vi.mock('@camstack/ui-library', async () => {
     useIntegrationsList: () => queries.integrations,
     useIntegrationsGetAvailableTypes: () => ({ data: [], isLoading: false, isError: false }),
     useDeviceManagerListAll: () => queries.devices,
+    useAddonsList: () => queries.addons,
     useSystem: () => ({ trpcClient: {} }),
   }
 })
@@ -91,8 +95,14 @@ function renderPage(): ReactElement {
   )
 }
 
+const addonRows = [
+  { manifest: { id: 'provider-reolink', packageName: '@camstack/addon-provider-reolink' } },
+  { manifest: { id: 'core-blocks', packageName: '@camstack/system' } },
+]
+
 beforeEach(() => {
   localStorage.clear()
+  queries.addons.data = addonRows
   queries.integrations.data = integrations
   queries.integrations.isLoading = false
   queries.integrations.isError = false
@@ -145,5 +155,54 @@ describe('Integrations page views', () => {
     render(renderPage())
     expect(screen.getByText('No integrations configured.')).toBeTruthy()
     expect(screen.queryByTestId('integration-card-provider-reolink')).toBeNull()
+  })
+
+  describe('Providers and System blocks', () => {
+    const withBlocks = [
+      ...integrations,
+      {
+        id: 'int_blocks',
+        addonId: 'core-blocks',
+        name: 'Blocks',
+        enabled: true,
+        processState: 'running',
+      },
+    ]
+
+    it('splits the table into a Providers and a System block', () => {
+      queries.integrations.data = withBlocks
+      render(renderPage())
+      const providers = screen.getByTestId('integrations-section-providers')
+      const system = screen.getByTestId('integrations-section-system')
+      expect(within(providers).getByText('Reolink')).toBeTruthy()
+      expect(within(providers).queryByText('Blocks')).toBeNull()
+      expect(within(system).getByText('Blocks')).toBeTruthy()
+    })
+
+    it('splits the grid the same way', () => {
+      localStorage.setItem(INTEGRATIONS_VIEW_STORAGE_KEY, 'grid')
+      queries.integrations.data = withBlocks
+      render(renderPage())
+      expect(
+        within(screen.getByTestId('integrations-section-providers')).getByTestId(
+          'integration-card-provider-reolink',
+        ),
+      ).toBeTruthy()
+      expect(
+        within(screen.getByTestId('integrations-section-system')).getByTestId(
+          'integration-card-core-blocks',
+        ),
+      ).toBeTruthy()
+    })
+
+    it('shows no System block when nothing system is configured, and no Providers block when only system is', () => {
+      const first = render(renderPage())
+      expect(screen.queryByTestId('integrations-section-system')).toBeNull()
+      first.unmount()
+      queries.integrations.data = [withBlocks[1]]
+      render(renderPage())
+      expect(screen.queryByTestId('integrations-section-providers')).toBeNull()
+      expect(screen.getByTestId('integrations-section-system')).toBeTruthy()
+    })
   })
 })

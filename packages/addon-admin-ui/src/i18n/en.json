@@ -1728,6 +1728,10 @@
       "summary": "{{integrations}} · {{devices}}",
       "integrationCount_one": "{{count}} integration",
       "integrationCount_other": "{{count}} integrations"
+    },
+    "sections": {
+      "providers": "Providers",
+      "system": "System"
     }
   },
   "ai": {
