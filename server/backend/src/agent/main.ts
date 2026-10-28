@@ -115,6 +115,7 @@ import { createAgentNodeCertificates } from './agent-node-certificates.js'
 import { createReconnectRunner } from './agent-reconnect.js'
 import { createSerialQueue } from './serial-queue.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
+import { decideAgentBootMode } from './agent-boot-mode.js'
 import { resolveAgentInfraCapabilities } from './agent-infra-capabilities.js'
 import type { LoadedAddonEntry } from './agent-service.js'
 import { createAgentService } from './agent-service.js'
@@ -125,6 +126,7 @@ import {
   AGENT_RUNTIME_ADDON_ID,
   AgentUpdateService,
   agentRuntimeManifestEntry,
+  scheduleAgentRestart,
 } from './agent-update-service.js'
 import { deriveHubUrlForExport } from './derive-hub-url.js'
 import type { InfraResolution } from './infra-boot-guard.js'
@@ -1075,6 +1077,7 @@ async function startAgent(configPath?: string): Promise<void> {
       leafFingerprint: pairedLeafFingerprint(config.configPath),
     })
   }
+  const addonsBooted = decideAgentBootMode({ paired: isAgentPaired(config.configPath) }) === 'full'
   const localPairing = createLocalPairingAnnouncer(config.dataDir, consoleLogger)
   const pairing: AgentPairing = new AgentPairing({
     nodeId: config.nodeId,
@@ -1087,7 +1090,15 @@ async function startAgent(configPath?: string): Promise<void> {
         meta: { hubUrl: installed.hubUrl, hubAddress: installed.hubAddress },
       })
       // The completion is answered first; the wire is replaced right after.
-      const timer = setTimeout(() => void reconnect().then(advertise, advertise), 400)
+      const timer = setTimeout(() => {
+        if (addonsBooted) {
+          void reconnect().then(advertise, advertise)
+        } else {
+          // Booted unpaired: no addon was started (agent-boot-mode.ts). Relaunch (D5) so
+          // the core addons boot with the hub reachable.
+          scheduleAgentRestart(consoleLogger, 'paired with the hub', config.dataDir)
+        }
+      }, 400)
       timer.unref?.()
     },
     log: (message, meta) => consoleLogger.info(`pairing: ${message}`, meta ? { meta } : undefined),
@@ -1129,6 +1140,43 @@ async function startAgent(configPath?: string): Promise<void> {
   }).then((listener) => {
     agentHttpListener = listener
   })
+
+  // Graceful shutdown
+  const shutdown = async () => {
+    console.log('[Agent] Shutting down...')
+    // Abort any in-flight upward hub registration retry loop.
+    registerAbortController.abort()
+    // Dispose the UDS event bridge to remove the parent-bus subscriber and
+    // clear the child-event handler, preventing subscriber leaks on shutdown.
+    udsEventBridgeDispose?.()
+    udsEventBridgeDispose = null
+    for (const [, entry] of loadedAddons) {
+      if (entry.addon?.shutdown) {
+        try {
+          await entry.addon.shutdown()
+        } catch {
+          /* */
+        }
+      }
+    }
+    // Withdraw the mDNS advertisement, then stop accepting new HTTP/HTTPS connections before
+    // the broker goes away.
+    await agentMdns.stop().catch(() => undefined)
+    await agentHttpListener?.close().catch(() => undefined)
+    await broker.stop()
+    process.exit(0)
+  }
+  process.on('SIGTERM', shutdown)
+  process.on('SIGINT', shutdown)
+
+  // An unpaired agent has no hub to read settings from (D857): serve pairing only and
+  // relaunch after the certificate is installed (D5). See agent-boot-mode.ts.
+  if (!addonsBooted) {
+    console.log(
+      `[Agent] Node "${config.nodeId}" is unpaired - serving pairing only; addons boot after pairing`,
+    )
+    return
+  }
 
   // ── Phase 1: Load core infrastructure addons (in-process) ──
   // storage + settings + metrics + hub-forwarder (log destination)
@@ -1197,34 +1245,6 @@ async function startAgent(configPath?: string): Promise<void> {
   console.log(
     `[Agent] Node "${config.nodeId}" (name="${config.name}") ready — ${loadedAddons.size} addon(s) loaded`,
   )
-
-  // Graceful shutdown
-  const shutdown = async () => {
-    console.log('[Agent] Shutting down...')
-    // Abort any in-flight upward hub registration retry loop.
-    registerAbortController.abort()
-    // Dispose the UDS event bridge to remove the parent-bus subscriber and
-    // clear the child-event handler, preventing subscriber leaks on shutdown.
-    udsEventBridgeDispose?.()
-    udsEventBridgeDispose = null
-    for (const [, entry] of loadedAddons) {
-      if (entry.addon?.shutdown) {
-        try {
-          await entry.addon.shutdown()
-        } catch {
-          /* */
-        }
-      }
-    }
-    // Withdraw the mDNS advertisement, then stop accepting new HTTP/HTTPS connections before
-    // the broker goes away.
-    await agentMdns.stop().catch(() => undefined)
-    await agentHttpListener?.close().catch(() => undefined)
-    await broker.stop()
-    process.exit(0)
-  }
-  process.on('SIGTERM', shutdown)
-  process.on('SIGINT', shutdown)
 }
 
 // ---------------------------------------------------------------------------
@@ -1441,7 +1461,10 @@ async function loadClusterCapableAddons(
       try {
         await broker.call('$process.spawnRunner', {
           runnerId: groupId,
-          addons: addons.map((a) => ({ addonId: a.addonId, addonDir: a.addonDir })),
+          addons: addons.map((a) => ({
+            addonId: a.addonId,
+            addonDir: a.addonDir,
+          })),
         })
         // Shared with the reload path (`ensureGroupRunner`) so the boot and
         // reload registrations can never drift — the drift was the in-process
