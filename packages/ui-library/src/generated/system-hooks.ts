@@ -1403,6 +1403,12 @@ export const useIntercomEndTalkSession: typeof trpc.intercom.endTalkSession.useM
 /** Generated alias around `trpc.intercom.getStatus.useQuery`. */
 export const useIntercomGetStatus: typeof trpc.intercom.getStatus.useQuery = trpc.intercom.getStatus.useQuery
 
+/** Generated alias around `trpc.irTransmitter.send.useMutation`. */
+export const useIrTransmitterSend: typeof trpc.irTransmitter.send.useMutation = trpc.irTransmitter.send.useMutation
+
+/** Generated alias around `trpc.irTransmitter.getInfo.useQuery`. */
+export const useIrTransmitterGetInfo: typeof trpc.irTransmitter.getInfo.useQuery = trpc.irTransmitter.getInfo.useQuery
+
 /** Generated alias around `trpc.keychainAdmin.status.useQuery`. */
 export const useKeychainAdminStatus: typeof trpc.keychainAdmin.status.useQuery = trpc.keychainAdmin.status.useQuery
 
