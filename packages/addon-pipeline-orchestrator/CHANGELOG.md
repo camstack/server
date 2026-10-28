@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub serves viewer 1.0.664: device values read the quantity field names, falling back to the old ones
+
 ## [1.2.634] - 2026-10-28
 
 ### Changed
