@@ -2894,7 +2894,7 @@
 
 ### `llm` → `llm.*`
 
-- **Source:** `packages/types/src/capabilities/llm.cap.ts:330`
+- **Source:** `packages/types/src/capabilities/llm.cap.ts:337`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · nodeIdMode: `data` · providerKind: `ai`
 - **Archetypes:** —
 - **Provider interface:** `ILlmProvider`

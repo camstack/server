@@ -22,9 +22,18 @@ import type {
   LlmProfileField,
   LlmProfileKindDescriptor,
 } from '@camstack/types'
-import { LlmTimeoutDefaults } from '@camstack/types'
+import { LlmProfileSchema, LlmTimeoutDefaults } from '@camstack/types'
 import i18n from '../../i18n/index'
 import { AI_ADDON_ID, readBoolean, readNumber, readString } from './ai-page.helpers'
+
+/** The select's "leave it to the model" option; stored as an omitted field. */
+const REASONING_DEFAULT = 'default'
+
+/** The select's value → the profile field; the default option is an omitted field. */
+function reasoningEffortOf(value: unknown): LlmProfile['reasoningEffort'] {
+  const parsed = LlmProfileSchema.shape.reasoningEffort.safeParse(value)
+  return parsed.success ? parsed.data : undefined
+}
 
 /**
  * Each common field, drawn once. A kind offers the ones its wire carries. Built
@@ -68,6 +77,22 @@ function fieldDefs(): Readonly<Record<LlmProfileField, readonly ConfigField[]>> 
         key: 'maxTokens',
         label: i18n.t('helpers.aiProfileForm.maxTokens'),
         min: 1,
+      },
+    ],
+    reasoningEffort: [
+      {
+        type: 'select',
+        key: 'reasoningEffort',
+        label: i18n.t('helpers.aiProfileForm.reasoningEffort'),
+        default: REASONING_DEFAULT,
+        options: [
+          { value: REASONING_DEFAULT, label: i18n.t('helpers.aiProfileForm.reasoningDefault') },
+          { value: 'off', label: i18n.t('helpers.aiProfileForm.reasoningOff') },
+          { value: 'low', label: i18n.t('helpers.aiProfileForm.reasoningLow') },
+          { value: 'medium', label: i18n.t('helpers.aiProfileForm.reasoningMedium') },
+          { value: 'high', label: i18n.t('helpers.aiProfileForm.reasoningHigh') },
+        ],
+        description: i18n.t('helpers.aiProfileForm.reasoningEffortHint'),
       },
     ],
     contextLength: [
@@ -168,6 +193,7 @@ const GENERATION_FIELDS: readonly LlmProfileField[] = [
   'topP',
   'topK',
   'maxTokens',
+  'reasoningEffort',
   'contextLength',
   'systemPrompt',
 ]
@@ -212,6 +238,7 @@ export function commonValuesOf(profile: LlmProfile | null): Record<string, unkno
     topP: profile.topP,
     topK: profile.topK,
     maxTokens: profile.maxTokens,
+    reasoningEffort: profile.reasoningEffort ?? REASONING_DEFAULT,
     contextLength: profile.contextLength,
     systemPrompt: profile.systemPrompt,
     timeoutMs: profile.timeoutMs,
@@ -273,6 +300,9 @@ export function draftToProfile(
   const topK = num('topK')
   const maxTokens = num('maxTokens')
   const contextLength = num('contextLength')
+  const reasoningEffort = offered.includes('reasoningEffort')
+    ? reasoningEffortOf(c.reasoningEffort)
+    : existing?.reasoningEffort
   const systemPrompt = offered.includes('systemPrompt')
     ? readString(c.systemPrompt)
     : existing?.systemPrompt
@@ -307,6 +337,7 @@ export function draftToProfile(
     ...(topP !== undefined ? { topP } : {}),
     ...(topK !== undefined ? { topK } : {}),
     ...(maxTokens !== undefined ? { maxTokens } : {}),
+    ...(reasoningEffort !== undefined ? { reasoningEffort } : {}),
     ...(contextLength !== undefined ? { contextLength } : {}),
     ...(systemPrompt !== undefined ? { systemPrompt } : {}),
     providerConfig: draft.providerConfig,

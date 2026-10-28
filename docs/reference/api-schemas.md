@@ -2865,7 +2865,7 @@ Enum: `"auth" \| "network" \| "unsupported" \| "invalid"`
 
 ### `LlmProfileFieldSchema`
 
-Enum: `"temperature" \| "topP" \| "topK" \| "maxTokens" \| "contextLength" \| "systemPrompt" \| "timeoutMs" \| "connectTimeoutMs" \| "firstTokenTimeoutMs" \| "idleTimeoutMs" \| "retry" \| "toolsEnabled"`
+Enum: `"temperature" \| "topP" \| "topK" \| "maxTokens" \| "reasoningEffort" \| "contextLength" \| "systemPrompt" \| "timeoutMs" \| "connectTimeoutMs" \| "firstTokenTimeoutMs" \| "idleTimeoutMs" \| "retry" \| "toolsEnabled"`
 
 ### `LlmProfileKindDescriptorSchema`
 
@@ -2895,6 +2895,7 @@ Enum: `"temperature" \| "topP" \| "topK" \| "maxTokens" \| "contextLength" \| "s
 - `topP?`: `number`
 - `topK?`: `number`
 - `maxTokens?`: `number`
+- `reasoningEffort?`: `"off" \| "low" \| "medium" \| "high"`
 - `contextLength?`: `number`
 - `systemPrompt?`: `string`
 - `timeoutMs?`: `number = 60000`

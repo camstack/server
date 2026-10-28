@@ -9915,7 +9915,14 @@
       "toolsEnabled": "Abilita gli strumenti",
       "toolsEnabledHint": "Consente a questo profilo di chiamare strumenti. Nessuno strumento è ancora registrato.",
       "generation": "Generazione",
-      "bounds": "Timeout e policy"
+      "bounds": "Timeout e policy",
+      "reasoningEffort": "Ragionamento",
+      "reasoningEffortHint": "Quanto ragiona il modello prima di rispondere. Disattivato aiuta le risposte strutturate di un modello che ragiona. Predefinito lascia decidere al modello.",
+      "reasoningDefault": "Predefinito",
+      "reasoningOff": "Disattivato",
+      "reasoningLow": "Basso",
+      "reasoningMedium": "Medio",
+      "reasoningHigh": "Alto"
     }
   },
   "history": {

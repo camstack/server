@@ -34,7 +34,20 @@ const ALL_HTTP_FIELDS: readonly LlmProfileField[] = [
 ]
 
 /** NEITHER OpenAI wire carries top-k (measured: the body gets `top_p`, no `top_k`). */
-const OPENAI_WIRE_FIELDS: readonly LlmProfileField[] = ALL_HTTP_FIELDS.filter((f) => f !== 'topK')
+const OPENAI_WIRE_FIELDS: readonly LlmProfileField[] = ALL_HTTP_FIELDS.filter(
+  (f) => f !== 'topK' && f !== 'reasoningEffort',
+)
+
+/**
+ * `reasoning_effort` is sent only on the openai-compatible wire (LM Studio,
+ * llama-server, Ollama's /v1) where 'none' is measured to switch thinking off.
+ * The OpenAI cloud rejects it on non-reasoning models, Anthropic has no 'off',
+ * so those kinds do not offer it.
+ */
+const OPENAI_COMPATIBLE_FIELDS: readonly LlmProfileField[] = [
+  ...OPENAI_WIRE_FIELDS,
+  'reasoningEffort',
+]
 
 interface HttpConnectionOptions {
   readonly baseUrlRequired: boolean
@@ -129,7 +142,7 @@ export const HTTP_KIND_DESCRIPTORS: readonly KindDescriptor[] = [
     },
     // An arbitrary server: assume the least, let the operator say more.
     { vision: false, tools: false, streaming: true },
-    OPENAI_WIRE_FIELDS,
+    OPENAI_COMPATIBLE_FIELDS,
   ),
   httpKind(
     'openai',

@@ -153,3 +153,31 @@ describe('features and the model list', () => {
     ])
   })
 })
+
+describe('reasoningEffort in the editor', () => {
+  const OFFERING = { ...KIND, profileFields: [...KIND.profileFields, 'reasoningEffort' as const] }
+
+  it('an offered select maps to the profile field; the default option omits it', () => {
+    const off = draftToProfile(OFFERING, null, draft({ common: { reasoningEffort: 'off' } }))
+    expect(off.reasoningEffort).toBe('off')
+    const dflt = draftToProfile(OFFERING, null, draft({ common: { reasoningEffort: 'default' } }))
+    expect('reasoningEffort' in dflt).toBe(false)
+  })
+
+  it('a kind that does not offer it keeps the stored value', () => {
+    const out = draftToProfile(KIND, { ...EXISTING, reasoningEffort: 'low' }, draft())
+    expect(out.reasoningEffort).toBe('low')
+  })
+
+  it('is drawn as a select only where offered', () => {
+    const withIt = generationSchema(['temperature', 'reasoningEffort'])
+    expect(withIt?.sections[0]?.fields.map((f) => f.key)).toContain('reasoningEffort')
+    const without = generationSchema(['temperature'])
+    expect(without?.sections[0]?.fields.map((f) => f.key)).not.toContain('reasoningEffort')
+  })
+
+  it('shows the stored value, or Default when unset', () => {
+    expect(commonValuesOf({ ...EXISTING, reasoningEffort: 'high' }).reasoningEffort).toBe('high')
+    expect(commonValuesOf(EXISTING).reasoningEffort).toBe('default')
+  })
+})

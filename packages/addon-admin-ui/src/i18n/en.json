@@ -9893,7 +9893,14 @@
       "toolsEnabled": "Enable tools",
       "toolsEnabledHint": "Lets this profile make tool calls. No tools are registered yet.",
       "generation": "Generation",
-      "bounds": "Timeouts and policy"
+      "bounds": "Timeouts and policy",
+      "reasoningEffort": "Thinking",
+      "reasoningEffortHint": "How much the model reasons before answering. Off helps structured answers on a thinking model. Default leaves it to the model.",
+      "reasoningDefault": "Default",
+      "reasoningOff": "Off",
+      "reasoningLow": "Low",
+      "reasoningMedium": "Medium",
+      "reasoningHigh": "High"
     }
   },
   "history": {

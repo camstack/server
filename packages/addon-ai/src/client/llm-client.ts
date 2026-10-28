@@ -269,6 +269,34 @@ interface CallSettings {
   readonly topK?: number
   readonly maxOutputTokens?: number
   readonly maxRetries: number
+  readonly providerOptions?: Record<string, Record<string, string>>
+}
+
+/**
+ * The provider-options key the openai-compatible provider reads for a kind: its
+ * name in camelCase (`openai-compatible` -> `openaiCompatible`).
+ */
+function providerOptionsKeyOf(kind: string): string {
+  return kind.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase())
+}
+
+/**
+ * `reasoning_effort` for the kinds whose descriptor offers `reasoningEffort`.
+ * The top-level `reasoning` call option cannot carry `none` on this wire (the
+ * library drops it), so the provider option is the only way to switch thinking
+ * off. `off` is the wire's `none`.
+ */
+function reasoningOptionsFor(
+  profile: LlmProfile,
+): { providerOptions: Record<string, Record<string, string>> } | Record<string, never> {
+  const effort = profile.reasoningEffort
+  if (effort === undefined) return {}
+  if (descriptorOf(profile.kind)?.profileFields.includes('reasoningEffort') !== true) return {}
+  return {
+    providerOptions: {
+      [providerOptionsKeyOf(profile.kind)]: { reasoningEffort: effort === 'off' ? 'none' : effort },
+    },
+  }
 }
 
 export function callSettingsFor(request: LlmCallRequest): CallSettings {
@@ -283,6 +311,7 @@ export function callSettingsFor(request: LlmCallRequest): CallSettings {
     ...(topP !== undefined ? { topP } : {}),
     ...(topK !== undefined ? { topK } : {}),
     ...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
+    ...reasoningOptionsFor(profile),
     // The library counts RETRIES; we configure ATTEMPTS. `enabled: false` and
     // `maxAttempts: 1` both mean "call once".
     maxRetries: retry.enabled ? Math.max(0, retry.maxAttempts - 1) : 0,

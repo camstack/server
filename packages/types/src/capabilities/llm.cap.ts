@@ -95,6 +95,12 @@ export const LlmProfileSchema = z.object({
    *  field in its editor only when its descriptor lists it in `profileFields`. */
   topK: z.number().int().positive().optional(),
   maxTokens: z.number().int().positive().optional(),
+  /** How hard the model "thinks" before it answers. Omitted = the model's own
+   *  default. `off` matters for structured output: a thinking model can spend
+   *  the whole completion on reasoning and return an empty `content`. Carried
+   *  only by the wires that have it — a kind offers the field in its editor
+   *  only when its descriptor lists it in `profileFields`. */
+  reasoningEffort: z.enum(['off', 'low', 'medium', 'high']).optional(),
   /** Prompt context window. Advisory for cloud kinds (they enforce their own). */
   contextLength: z.number().int().positive().optional(),
   /** Default system prompt. A caller's `system` REPLACES it (never appends —
@@ -137,6 +143,7 @@ export const LlmProfileFieldSchema = z.enum([
   'topP',
   'topK',
   'maxTokens',
+  'reasoningEffort',
   'contextLength',
   'systemPrompt',
   'timeoutMs',
