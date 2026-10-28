@@ -4914,14 +4914,14 @@
       "resume": "Riprendi"
     },
     "pairingDialog": {
-      "eachScreenShowsACode": "Entrambi gli schermi mostrano le stesse sei cifre. Verifica che coincidano, poi digita il codice letto sull agente. Agente a {{value1}}",
+      "eachScreenShowsACode": "Entrambi gli schermi mostrano le stesse sei cifre. Verifica che coincidano, poi digita il codice letto sull'agente. Agente a {{value1}}",
       "couldNotStartThePairing": "Impossibile avviare l'accoppiamento",
       "reject": "Rifiuta",
       "codeOnThisHub": "Codice su questo hub",
-      "codeOnThisHubRead": "Codice su questo hub: sull agente devono comparire le stesse cifre",
+      "codeOnThisHubRead": "Codice su questo hub: sull'agente devono comparire le stesse cifre",
       "onTheAgentEnterThis": "Sull'agente, inserisci questo codice e il PIN locale dell'agente (mostrato sulla console o nel log dell'agente, oppure sul suo schermo).",
       "codeShownOnTheAgent": "Codice mostrato sull'agente",
-      "typeTheSixDigitsThe": "Digita le sei cifre lette sull agente, senza incollare. Se sono diverse dal codice qui sopra, fermati e premi Rifiuta.",
+      "typeTheSixDigitsThe": "Digita le sei cifre lette sull'agente, senza incollare. Se sono diverse dal codice qui sopra, fermati e premi Rifiuta.",
       "youConfirmedHereTheAgent": "Hai confermato qui. L'agente deve ancora inserire il codice dell'hub e il suo PIN.",
       "working": "Elaborazione…",
       "hubConfirmed": "Hub: confermato",
