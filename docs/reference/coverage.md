@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**217 units · 7304 source files · 205 units claimed by at least one document (7266 files).**
+**218 units · 7310 source files · 206 units claimed by at least one document (7272 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -148,6 +148,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-onvif` | 6 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-reolink/src/accessories` | 6 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, `design/2026-08-29-hub-main-memory-what-crosses-it.md` _(covers)_ | 2026-08-29 |
+| `packages/types/src/ir` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/layouts` | 5 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +1 more | 2026-10-27 |
 | `packages/addon-export-alexa/src/access` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0767-an-alexa-link-reaches-only-what-the-linking-user-may-reach.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 2 ADRs | 2026-08-26 |

@@ -2199,3 +2199,5 @@ export {
   type RemovalReconcileOutcome,
   type TombstoneSource,
 } from './device/device-removal-reconcile.js'
+// IR / RF codecs: pulse-train schemas, Pronto, SmartIR import
+export * from './ir/index.js'
