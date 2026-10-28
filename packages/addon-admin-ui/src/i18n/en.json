@@ -5654,7 +5654,7 @@
     }
   },
   "build": {
-    "automationsScriptsAndComposedDevices": "Automations, scripts and composed devices — what this installation does on its own.",
+    "automationsScriptsAndComposedDevices": "Automations, actions and composed devices — what this installation does on its own.",
     "automationsTab": {
       "automation": "Automation",
       "couldNotReadTheAutomations": "Could not read the automations",
