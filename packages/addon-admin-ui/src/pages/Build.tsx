@@ -12,11 +12,12 @@ import { useSearchParams } from 'react-router-dom'
 import { AdminSectionedPage } from '../components/AdminSectionedPage'
 import { navChromeForPath } from '../lib/nav-items'
 import { looksLikeAutomation } from './build/automation/recipe-from-code'
+import { ActionsTab } from './build/actions/ActionsTab'
 import { AutomationsTab } from './build/AutomationsTab'
 import { CustomDeviceTab } from './build/CustomDeviceTab'
 import { ScriptsTab } from './build/ScriptsTab'
 
-const TABS = ['automations', 'scripts', 'custom-device'] as const
+const TABS = ['automations', 'actions', 'scripts', 'custom-device'] as const
 type BuildTab = (typeof TABS)[number]
 
 function isTab(value: string | null): value is BuildTab {
@@ -24,8 +25,9 @@ function isTab(value: string | null): value is BuildTab {
 }
 
 const BLOCKS_KEY = ['coreBlocks', 'list', 'build-counts'] as const
+const ACTIONS_COUNT_KEY = ['actions', 'list', 'build-counts'] as const
 /** `new` is the composition chooser (`useItemFormUrl`). Cleared on leaving a section so it cannot reopen another tab's create dialog. */
-const EDITOR_OWNED = ['block', 'create', 'new'] as const
+const EDITOR_OWNED = ['block', 'action', 'create', 'new'] as const
 
 function countScripts(blocks: readonly CoreBlock[]): number {
   return blocks.filter((b) => coreBlockSourceKind(b) === 'code').length
@@ -58,6 +60,13 @@ export function BuildPage() {
   const blocks = countsQuery.data
   const scriptCount = blocks === undefined ? null : countScripts(blocks)
   const automationCount = blocks === undefined ? null : countAutomations(blocks)
+
+  const actionsQuery = useQuery({
+    queryKey: ACTIONS_COUNT_KEY,
+    refetchInterval: 10_000,
+    queryFn: async () => system.trpcClient.actions.list.query({}),
+  })
+  const actionCount = actionsQuery.data === undefined ? null : actionsQuery.data.length
 
   const compositionsQuery = useQuery({
     queryKey: ['coreBlocks', 'listCompositions', 'build-counts'],
@@ -148,7 +157,12 @@ export function BuildPage() {
     )
   }
 
-  const newLabel = tab === 'automations' ? 'New automation' : 'New script'
+  const newLabel =
+    tab === 'automations'
+      ? t('build.newAutomation', 'New automation')
+      : tab === 'actions'
+        ? t('build.newAction', 'New action')
+        : t('build.newScript', 'New script')
 
   const chrome = navChromeForPath('/build', { t, isAdmin: true }) ?? {
     icon: Hammer,
@@ -194,7 +208,7 @@ export function BuildPage() {
       sections={[
         {
           id: 'automations',
-          label: withCount('Automations', automationCount),
+          label: withCount(t('build.tabAutomations', 'Automations'), automationCount),
           ownedParams: EDITOR_OWNED,
           content: (
             <AutomationsTab
@@ -209,8 +223,19 @@ export function BuildPage() {
           ),
         },
         {
+          id: 'actions',
+          label: withCount(t('build.tabActions', 'Actions'), actionCount),
+          ownedParams: EDITOR_OWNED,
+          content: (
+            <ActionsTab
+              createRequested={tab === 'actions' && createRequested}
+              onCreateConsumed={clearCreate}
+            />
+          ),
+        },
+        {
           id: 'scripts',
-          label: withCount('Scripts', scriptCount),
+          label: withCount(t('build.tabCode', 'Code'), scriptCount),
           ownedParams: EDITOR_OWNED,
           content: (
             <ScriptsTab
@@ -223,7 +248,7 @@ export function BuildPage() {
         },
         {
           id: 'custom-device',
-          label: withCount('Custom Device', compositionCount),
+          label: withCount(t('build.tabCustomDevice', 'Custom Device'), compositionCount),
           ownedParams: EDITOR_OWNED,
           content: (
             <CustomDeviceTab

@@ -18,6 +18,7 @@ vi.mock('@camstack/ui-library', async () => {
     ...actual,
     useSystem: () => ({
       trpcClient: {
+        actions: { list: { query: async () => [] } },
         coreBlocks: {
           list: { query: async () => ({ blocks: [] }) },
           listCompositions: { query: async () => ({ state: 'loaded' as const, views: [] }) },
@@ -29,6 +30,9 @@ vi.mock('@camstack/ui-library', async () => {
 
 vi.mock('../build/AutomationsTab', () => ({
   AutomationsTab: () => <div data-testid="automations-body">automations</div>,
+}))
+vi.mock('../build/actions/ActionsTab', () => ({
+  ActionsTab: () => <div data-testid="actions-body">actions</div>,
 }))
 vi.mock('../build/ScriptsTab', () => ({
   ScriptsTab: () => <div data-testid="scripts-body">scripts</div>,
@@ -93,5 +97,17 @@ describe('BuildPage section tabs', () => {
     const afterLeave = screen.getByTestId('location').textContent ?? ''
     expect(afterLeave).toContain('tab=automations')
     expect(afterLeave).not.toContain('block=')
+  })
+
+  it('has an Actions tab that clears the action editor param when leaving it', () => {
+    renderBuild('/build?tab=actions&action=internal:abc')
+
+    expect(screen.getByTestId('section-actions').getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByTestId('actions-body')).toBeTruthy()
+
+    fireEvent.click(screen.getByTestId('section-scripts'))
+    const location = screen.getByTestId('location').textContent ?? ''
+    expect(location).toContain('tab=scripts')
+    expect(location).not.toContain('action=')
   })
 })

@@ -5810,7 +5810,14 @@
       "edit": "Modifica {{name}}",
       "newScript": "Nuovo script",
       "deleteMessage": "{{name}} e il suo sorgente verranno eliminati. L'operazione non può essere annullata."
-    }
+    },
+    "newAction": "Nuova azione",
+    "newAutomation": "Nuova automazione",
+    "newScript": "Nuovo script",
+    "tabActions": "Azioni",
+    "tabAutomations": "Automazioni",
+    "tabCode": "Codice",
+    "tabCustomDevice": "Dispositivo personalizzato"
   },
   "automation": {
     "actionList": {
@@ -5826,7 +5833,8 @@
       "kindWait": "Attendi",
       "kindCode": "Esegui codice",
       "codeHint": "Compilato nel blocco proprio di questa automazione dallo stesso compilatore di uno script — non valutato a runtime. <code>ctx</code> e <code>vars</code> sono disponibili.",
-      "addStep": "Passaggio"
+      "addStep": "Passaggio",
+      "kindAction": "Esegui un'azione"
     },
     "automationEditor": {
       "runsOnTheHub": "eseguito sull'hub",
@@ -5956,6 +5964,14 @@
       "any": "qualsiasi",
       "editInCode": "Questa parte non ha ancora un editor visuale; viene conservata così com'è.",
       "otherTrigger": "Trigger senza editor visuale"
+    },
+    "runAction": {
+      "action": "Azione",
+      "defaultIs": "predefinito {{value}}",
+      "missing": "Azione mancante ({{id}})",
+      "missingHint": "Questa azione non esiste più. Sceglierne un'altra, altrimenti il passo fallirà.",
+      "pick": "Scegli un'azione",
+      "required": "obbligatorio"
     }
   },
   "accessDenied": {
@@ -10341,5 +10357,103 @@
     "absentTitle": "{{page}} non è installato",
     "absentDescription": "L'addon che fornisce questa pagina non è installato. Installalo da Sistema → Addon.",
     "openAddons": "Apri Addon"
+  },
+  "actions": {
+    "editor": {
+      "deleteMessage": "{{name}} verrà eliminata e rimossa da ogni telecamera che la collega.",
+      "deleteTitle": "Eliminare questa azione?",
+      "name": "Nome",
+      "namePlaceholder": "Cosa fa questa azione",
+      "problemBadName": "Il nome della variabile \"{{name}}\" deve iniziare con una lettera e usare lettere, cifre o _.",
+      "problemDuplicate": "La variabile {{name}} è dichiarata due volte.",
+      "problemName": "Dai un nome all'azione.",
+      "problemNoSteps": "Aggiungi almeno un passo.",
+      "problemUndeclared": "Un passo usa {{name}}, che non è dichiarata tra le variabili.",
+      "readOnly": "Questa azione è dichiarata da {{addon}}. Modificala lì; da qui puoi eseguirla.",
+      "runNeedsDefaults": "Dai un valore predefinito a ogni variabile obbligatoria per eseguirla da qui.",
+      "runNow": "Esegui ora",
+      "steps": "Passi"
+    },
+    "list": {
+      "couldNotRead": "Impossibile leggere le azioni",
+      "emptyDescription": "Un'azione è un breve elenco di comandi, come dar da mangiare al cane, che puoi riutilizzare.",
+      "emptyTitle": "Ancora nessuna azione",
+      "hint": "Le azioni sono cose che questa installazione sa fare. Eseguila da qui, collegala a una telecamera o usala in un'automazione.",
+      "lastRun": "Ultima esecuzione",
+      "loading": "Caricamento azioni…",
+      "name": "Nome",
+      "new": "Nuova azione",
+      "run": "Esegui",
+      "runAria": "Esegui {{name}}",
+      "runNotSortable": "Un comando",
+      "source": "Origine",
+      "status": "Stato",
+      "statusNotSortable": "Ricavato dall'ultima esecuzione"
+    },
+    "source": {
+      "internal": "Interna"
+    },
+    "status": {
+      "failed": "Fallita",
+      "neverRan": "Mai eseguita",
+      "ok": "OK",
+      "running": "In esecuzione"
+    },
+    "variables": {
+      "add": "Variabile",
+      "default": "Predefinito",
+      "hint": "Chi la esegue può cambiare una variabile. In un passo, il pulsante {x} ne inserisce una in un argomento.",
+      "label": "Etichetta",
+      "name": "Nome",
+      "nameAria": "Nome della variabile",
+      "noDefault": "Nessuno",
+      "options": "Opzioni",
+      "optionsHint": "Solo per una scelta",
+      "remove": "Rimuovi variabile",
+      "title": "Variabili",
+      "type": "Tipo",
+      "typeBoolean": "sì / no",
+      "typeNumber": "numero",
+      "typeSelect": "scelta",
+      "typeText": "testo"
+    }
+  },
+  "flow": {
+    "arg": {
+      "atLeast": "almeno {{min}} {{unit}}",
+      "atMost": "al massimo {{max}} {{unit}}",
+      "range": "da {{min}} a {{max}} {{unit}}",
+      "useVariable": "Usa una variabile per {{label}}"
+    },
+    "command": {
+      "advanced": "Avanzate",
+      "backToSentence": "Torna alla frase",
+      "device": "Dispositivo",
+      "noCommands": "Questo dispositivo non offre comandi.",
+      "pickCommand": "Scegli un comando",
+      "pickDevice": "Scegli un dispositivo",
+      "pickDeviceFirst": "Scegli prima un dispositivo"
+    },
+    "runs": {
+      "emptyDescription": "Ogni esecuzione compare qui con ciò che ha deciso.",
+      "emptyTitle": "Ancora nessuna esecuzione",
+      "hint": "Seleziona un'esecuzione per colorare i blocchi: verde superato, rosso fallito, grigio non valutato.",
+      "outcomeAborted": "Interrotta",
+      "outcomeFailed": "Fallita",
+      "outcomeRan": "Eseguita",
+      "outcomeSkippedConditions": "Saltata dalle condizioni",
+      "outcomeSkippedCooldown": "Saltata dall'attesa",
+      "outcomeSkippedOverlap": "Saltata dalla modalità di esecuzione",
+      "outcomeSkippedTrigger": "Evento non soddisfatto",
+      "title": "Esecuzioni"
+    },
+    "scope": {
+      "className": "cosa ha visto",
+      "deviceId": "la telecamera che l'ha visto",
+      "entryId": "l'oggetto fermo",
+      "phase": "comparso o partito",
+      "score": "quanto era sicuro il rilevatore",
+      "trackId": "la traccia"
+    }
   }
 }

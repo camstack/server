@@ -5749,7 +5749,14 @@
       "edit": "Edit {{name}}",
       "newScript": "New script",
       "deleteMessage": "{{name}} and its source will be deleted. This cannot be undone."
-    }
+    },
+    "newAction": "New action",
+    "newAutomation": "New automation",
+    "newScript": "New script",
+    "tabActions": "Actions",
+    "tabAutomations": "Automations",
+    "tabCode": "Code",
+    "tabCustomDevice": "Custom Device"
   },
   "automation": {
     "actionList": {
@@ -5765,7 +5772,8 @@
       "kindWait": "Wait",
       "kindCode": "Run code",
       "codeHint": "Compiled into this automation's own block by the same compiler as a script — not evaluated at run time. <code>ctx</code> and <code>vars</code> are in scope.",
-      "addStep": "Step"
+      "addStep": "Step",
+      "kindAction": "Run an action"
     },
     "automationEditor": {
       "runsOnTheHub": "runs on the hub",
@@ -5895,6 +5903,14 @@
       "any": "any",
       "editInCode": "This part has no visual editor yet; it is kept as is.",
       "otherTrigger": "Trigger without a visual editor"
+    },
+    "runAction": {
+      "action": "Action",
+      "defaultIs": "default {{value}}",
+      "missing": "Missing action ({{id}})",
+      "missingHint": "This action no longer exists. Pick another, or the step will fail.",
+      "pick": "Pick an action",
+      "required": "required"
     }
   },
   "accessDenied": {
@@ -10319,5 +10335,103 @@
     "absentTitle": "{{page}} is not installed",
     "absentDescription": "The addon that provides this page is not installed. Install it from System → Addons.",
     "openAddons": "Open Addons"
+  },
+  "actions": {
+    "editor": {
+      "deleteMessage": "{{name}} will be deleted, and removed from every camera that links it.",
+      "deleteTitle": "Delete this action?",
+      "name": "Name",
+      "namePlaceholder": "What this action does",
+      "problemBadName": "The variable name \"{{name}}\" must start with a letter and use letters, digits or _.",
+      "problemDuplicate": "The variable {{name}} is declared twice.",
+      "problemName": "Give the action a name.",
+      "problemNoSteps": "Add at least one step.",
+      "problemUndeclared": "A step uses {{name}}, which is not declared under Variables.",
+      "readOnly": "This action is declared by {{addon}}. Edit it there; you can run it from here.",
+      "runNeedsDefaults": "Give each required variable a default to run it from here.",
+      "runNow": "Run now",
+      "steps": "Steps"
+    },
+    "list": {
+      "couldNotRead": "Could not read the actions",
+      "emptyDescription": "An action is a short list of commands, such as feeding the dog, that you can reuse.",
+      "emptyTitle": "No actions yet",
+      "hint": "Actions are things this installation can do. Run one here, link it to a camera, or use it in an automation.",
+      "lastRun": "Last run",
+      "loading": "Loading actions…",
+      "name": "Name",
+      "new": "New action",
+      "run": "Run",
+      "runAria": "Run {{name}}",
+      "runNotSortable": "A control",
+      "source": "Source",
+      "status": "Status",
+      "statusNotSortable": "Derived from the latest run"
+    },
+    "source": {
+      "internal": "Internal"
+    },
+    "status": {
+      "failed": "Failed",
+      "neverRan": "Never ran",
+      "ok": "OK",
+      "running": "Running"
+    },
+    "variables": {
+      "add": "Variable",
+      "default": "Default",
+      "hint": "Callers can override a variable. In a step, the {x} button puts one in an argument.",
+      "label": "Label",
+      "name": "Name",
+      "nameAria": "Variable name",
+      "noDefault": "None",
+      "options": "Options",
+      "optionsHint": "Only for a select",
+      "remove": "Remove variable",
+      "title": "Variables",
+      "type": "Type",
+      "typeBoolean": "yes / no",
+      "typeNumber": "number",
+      "typeSelect": "select",
+      "typeText": "text"
+    }
+  },
+  "flow": {
+    "arg": {
+      "atLeast": "at least {{min}} {{unit}}",
+      "atMost": "at most {{max}} {{unit}}",
+      "range": "{{min}} to {{max}} {{unit}}",
+      "useVariable": "Use a variable for {{label}}"
+    },
+    "command": {
+      "advanced": "Advanced",
+      "backToSentence": "Back to the sentence",
+      "device": "Device",
+      "noCommands": "This device has no commands to offer.",
+      "pickCommand": "Pick a command",
+      "pickDevice": "Pick a device",
+      "pickDeviceFirst": "Pick a device first"
+    },
+    "runs": {
+      "emptyDescription": "Each run appears here with what it decided.",
+      "emptyTitle": "No runs yet",
+      "hint": "Select a run to colour the blocks: green passed, red failed, grey not evaluated.",
+      "outcomeAborted": "Stopped",
+      "outcomeFailed": "Failed",
+      "outcomeRan": "Ran",
+      "outcomeSkippedConditions": "Skipped by conditions",
+      "outcomeSkippedCooldown": "Skipped by cooldown",
+      "outcomeSkippedOverlap": "Skipped by run mode",
+      "outcomeSkippedTrigger": "Trigger not met",
+      "title": "Runs"
+    },
+    "scope": {
+      "className": "what it saw",
+      "deviceId": "the camera that saw it",
+      "entryId": "the stopped object",
+      "phase": "appeared or departed",
+      "score": "how sure the detector was",
+      "trackId": "the track"
+    }
   }
 }

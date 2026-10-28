@@ -22,19 +22,17 @@
 import type { AutomationAction } from '@camstack/types'
 import { Badge, Button, Input, Select, type DeviceListState } from '@camstack/ui-library'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
-import {
-  DeviceDoActionFields,
-  type CapDeviceTarget,
-} from '../../../components/device-do-action/DeviceDoActionFields'
+import { CommandStep } from '../flow/CommandStep'
+import type { ScopeVariable } from '../flow/ArgField'
 import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
+import { RunActionFields } from './RunActionFields'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
 import { Trans, useTranslation } from 'react-i18next'
 
-type CapAction = Extract<AutomationAction, { kind: 'cap' }>
-
 const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
   { value: 'cap', labelKey: 'automation.actionList.kindCap' },
+  { value: 'action', labelKey: 'automation.actionList.kindAction' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
   { value: 'code', labelKey: 'automation.actionList.kindCode' },
 ]
@@ -43,6 +41,10 @@ export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
   readonly devices: readonly AutomationDevice[]
   readonly devicesState?: DeviceListState
+  /** Which step kinds the operator may add or switch to. Default: all. */
+  readonly allowedKinds?: readonly ActionKind[]
+  /** Variables an argument may name (`{x}`). */
+  readonly variables?: readonly ScopeVariable[]
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -50,9 +52,14 @@ export function ActionList({
   actions,
   devices,
   devicesState = 'answered',
+  allowedKinds,
+  variables = [],
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
+  const kinds = ACTION_KINDS.filter(
+    (k) => allowedKinds === undefined || allowedKinds.includes(k.value),
+  )
   return (
     <div className="space-y-2">
       {actions.length === 0 && (
@@ -78,7 +85,7 @@ export function ActionList({
                 onChange={(e) =>
                   onChange(replaceAt(actions, index, newAction(asKind(e.target.value))))
                 }
-                options={ACTION_KINDS.map((k) => ({ value: k.value, label: t(k.labelKey) }))}
+                options={kinds.map((k) => ({ value: k.value, label: t(k.labelKey) }))}
               />
             </label>
             <div className="ml-auto flex items-center gap-1">
@@ -143,10 +150,18 @@ export function ActionList({
           )}
 
           {action.kind === 'cap' && (
-            <CapActionFields
-              action={action}
+            <CommandStep
+              step={action}
               devices={devices}
               devicesState={devicesState}
+              variables={variables}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
+          {action.kind === 'action' && (
+            <RunActionFields
+              step={action}
               onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}
@@ -154,7 +169,10 @@ export function ActionList({
       ))}
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={() => onChange([...actions, newAction('cap')])}>
+        <Button
+          variant="outline"
+          onClick={() => onChange([...actions, newAction(kinds[0]?.value ?? 'cap')])}
+        >
           <Plus className="h-4 w-4" /> {t('automation.actionList.addStep')}
         </Button>
         {actions.length > 1 && (
@@ -173,43 +191,4 @@ export function ActionList({
 function asKind(value: string): ActionKind {
   const hit = ACTION_KINDS.find((k) => k.value === value)
   return hit?.value ?? 'cap'
-}
-
-interface CapActionFieldsProps {
-  readonly action: CapAction
-  readonly devices: readonly AutomationDevice[]
-  readonly devicesState: DeviceListState
-  readonly onChange: (next: AutomationAction) => void
-}
-
-/** Recipe schema wants a mutable `number[]`; the picker may hand a readonly one. */
-function mutableCapTarget(deviceId: CapDeviceTarget): number | number[] | { $var: string } {
-  if (typeof deviceId === 'number') return deviceId
-  // Prefer `$var` before Array.isArray: TS does not narrow `readonly number[]`
-  // out of the negative branch of `Array.isArray` in this union.
-  if (typeof deviceId === 'object' && deviceId !== null && '$var' in deviceId) {
-    return { $var: deviceId.$var }
-  }
-  return [...deviceId]
-}
-
-function CapActionFields({ action, devices, devicesState, onChange }: CapActionFieldsProps) {
-  return (
-    <DeviceDoActionFields
-      value={action}
-      allowTriggerDevice
-      allowMultiSameFamily
-      devices={devices}
-      listState={devicesState}
-      onChange={(next) =>
-        onChange({
-          kind: 'cap',
-          deviceId: mutableCapTarget(next.deviceId),
-          cap: next.cap,
-          method: next.method,
-          ...(next.args !== undefined ? { args: { ...next.args } } : {}),
-        })
-      }
-    />
-  )
 }

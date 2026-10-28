@@ -18,6 +18,9 @@ let editorView: CompositionView | null = null
 vi.mock('../build/AutomationsTab', () => ({
   AutomationsTab: () => <div data-testid="automations-body" />,
 }))
+vi.mock('../build/actions/ActionsTab', () => ({
+  ActionsTab: () => <div data-testid="actions-body">actions</div>,
+}))
 vi.mock('../build/ScriptsTab', () => ({
   ScriptsTab: () => <div data-testid="scripts-body" />,
 }))
@@ -36,6 +39,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     ...actual,
     useSystem: () => ({
       trpcClient: {
+        actions: { list: { query: async () => [] } },
         coreBlocks: {
           list: { query: async () => ({ blocks: [] }) },
           listCompositions: { query: async () => ({ state: 'loaded' as const, views: [] }) },
