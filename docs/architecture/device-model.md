@@ -70,7 +70,7 @@ commit the base: the operator's number is converted once, on the write.
 Every device-native number declares a quantity, or `none` when it is
 dimensionless. A second reading (Ecowitt battery voltage) is its own field
 (`battery.voltage`), not a companion sensor.
-**A field is named after its QUANTITY, never its unit (D953):** `power`, not
+**A field is named after its QUANTITY, never its unit (D957):** `power`, not
 `watts`; `level`, not `percentage`. `scripts/check-device-field-quantity-names.ts`
 refuses a unit name or suffix on a device-scoped status or history field.
 

@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 77 caps with 352 state leaves.
+ * Coverage: 1 advance-derived caps, 77 caps with 355 state leaves.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -24,6 +24,8 @@ export const CAP_ADVANCE_FIELDS: Readonly<Record<string, string>> = Object.freez
 /** Every capability name, so addon code can check a name without the schema graph. */
 export const CAP_NAMES: readonly string[] = Object.freeze([
   "accessories",
+  "action-source",
+  "actions",
   "addon-pages",
   "addon-pages-source",
   "addon-routes",
@@ -264,7 +266,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "network-link": [{"path":"type","valueType":"enum","enumValues":["wifi","ethernet","cellular","unknown"]}, {"path":"signal","valueType":"number"}, {"path":"rssi","valueType":"number"}, {"path":"ssid","valueType":"string"}, {"path":"lastUpdated","valueType":"number"}],
   "notifier": [{"path":"lastSentAt","valueType":"number"}, {"path":"lastError","valueType":"string"}, {"path":"queueDepth","valueType":"number"}, {"path":"supports.image","valueType":"boolean"}, {"path":"supports.priority","valueType":"boolean"}, {"path":"supports.data","valueType":"boolean"}, {"path":"supports.actions","valueType":"boolean"}, {"path":"supports.recipients","valueType":"boolean"}],
   "numeric-sensor": [{"path":"value","valueType":"number"}],
-  "pet-feeder": [{"path":"foodLevel","valueType":"number"}, {"path":"food1","valueType":"number"}, {"path":"food2","valueType":"number"}, {"path":"lowFood","valueType":"boolean"}, {"path":"batteryPower","valueType":"number"}, {"path":"desiccantLeftDays","valueType":"number"}, {"path":"feeding","valueType":"boolean"}, {"path":"status","valueType":"enum","enumValues":["normal","offline","on_batteries"]}, {"path":"error","valueType":"string"}, {"path":"errorCode","valueType":"number"}, {"path":"isDualHopper","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"indicatorLight","valueType":"boolean"}, {"path":"feedSound","valueType":"boolean"}, {"path":"volume","valueType":"number"}],
+  "pet-feeder": [{"path":"foodLevel","valueType":"number"}, {"path":"bowlFood","valueType":"number"}, {"path":"eating","valueType":"boolean"}, {"path":"supportsMarkRefilled","valueType":"boolean"}, {"path":"food1","valueType":"number"}, {"path":"food2","valueType":"number"}, {"path":"lowFood","valueType":"boolean"}, {"path":"batteryPower","valueType":"number"}, {"path":"desiccantLeftDays","valueType":"number"}, {"path":"feeding","valueType":"boolean"}, {"path":"status","valueType":"enum","enumValues":["normal","offline","on_batteries"]}, {"path":"error","valueType":"string"}, {"path":"errorCode","valueType":"number"}, {"path":"isDualHopper","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"indicatorLight","valueType":"boolean"}, {"path":"feedSound","valueType":"boolean"}, {"path":"volume","valueType":"number"}],
   "power-meter": [{"path":"power","valueType":"number"}, {"path":"energy","valueType":"number"}, {"path":"voltage","valueType":"number"}, {"path":"current","valueType":"number"}, {"path":"apparentPower","valueType":"number"}, {"path":"powerFactor","valueType":"number"}],
   "presence": [{"path":"state","valueType":"string"}, {"path":"location","valueType":"string"}, {"path":"gps.latitude","valueType":"number"}, {"path":"gps.longitude","valueType":"number"}, {"path":"gps.accuracyMeters","valueType":"number"}],
   "pressure-sensor": [{"path":"pressure","valueType":"number"}],

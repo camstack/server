@@ -1,5 +1,5 @@
 ---
-id: D953
+id: D957
 title: A device value field names its quantity, never its unit
 status: accepted
 date: 2026-10-27
