@@ -29,11 +29,12 @@ import {
   type HttpConnection,
   type HttpKind,
 } from '../kinds/http-connection.js'
-import { anthropicModelInfo, AnthropicModelsPageSchema } from './anthropic-models.js'
-import { requestJson, type ListModelsOptions, type Page } from './list-models-http.js'
+import { AnthropicModelsPageSchema, anthropicModelInfo } from './anthropic-models.js'
+import { type ListModelsOptions, type Page, requestJson } from './list-models-http.js'
 import {
   OpenAiModelEntrySchema,
   openAiModelInfo,
+  serverRootOf,
   withOllamaFeatures,
 } from './local-model-features.js'
 
@@ -78,6 +79,46 @@ function withExtra(conn: HttpConnection, headers: Record<string, string>): Recor
   return { ...headers, ...extraHeadersOf(conn) }
 }
 
+type OpenAiList =
+  | { readonly ok: true; readonly base: string; readonly models: LlmModelInfo[] }
+  | { readonly ok: false; readonly fail: Extract<LlmListModelsResult, { ok: false }> }
+
+const OllamaTagsListSchema = z.object({ models: z.array(z.object({ name: z.string() })) })
+
+/**
+ * `{base}/models`, then — only for a server the operator pointed at, and only
+ * when it says "no such list" — the two places a local server keeps it when the
+ * typed base is a bare host: `{base}/v1/models`, and Ollama's own `/api/tags`.
+ */
+async function openAiModelList(
+  kind: 'openai' | 'openai-compatible',
+  base: string,
+  headers: Record<string, string>,
+  key: string | undefined,
+  opts: ListModelsOptions,
+): Promise<OpenAiList> {
+  const first = await getJson(`${base}/models`, headers, OpenAiModelsSchema, key, opts)
+  if (first.ok) return { ok: true, base, models: first.body.data.map(openAiModelInfo) }
+  if (kind === 'openai' || first.code !== 'unsupported') return { ok: false, fail: first }
+  if (!base.endsWith('/v1')) {
+    const v1 = `${base}/v1`
+    const second = await getJson(`${v1}/models`, headers, OpenAiModelsSchema, key, opts)
+    if (second.ok) return { ok: true, base: v1, models: second.body.data.map(openAiModelInfo) }
+  }
+  const root = serverRootOf(base)
+  if (root !== null) {
+    const tags = await getJson(`${root}/api/tags`, headers, OllamaTagsListSchema, key, opts)
+    if (tags.ok) {
+      return {
+        ok: true,
+        base: `${root}/v1`,
+        models: tags.body.models.map((m) => ({ id: m.name })),
+      }
+    }
+  }
+  return { ok: false, fail: first }
+}
+
 async function listOpenAiWire(
   kind: 'openai' | 'openai-compatible',
   conn: HttpConnection,
@@ -87,15 +128,26 @@ async function listOpenAiWire(
   if (base === null) return { ok: false, code: 'invalid', message: 'set the base URL first' }
   const key = apiKeyOf(conn)
   const headers = withExtra(conn, key !== undefined ? { authorization: `Bearer ${key}` } : {})
-  const page = await getJson(`${base}/models`, headers, OpenAiModelsSchema, key, opts)
-  if (!page.ok) return page
-  const models = page.body.data.map(openAiModelInfo)
+  const found = await openAiModelList(kind, base, headers, key, opts)
+  if (!found.ok) return found.fail
+  const { models } = found
   // Only a server the operator pointed at can be a local one; the cloud wire
   // is never probed for another server's endpoints.
   if (kind === 'openai') return { ok: true, models }
   return {
     ok: true,
-    models: await withOllamaFeatures(base, models, headers, key, opts),
+    models: await withOllamaFeatures(found.base, models, headers, key, opts),
+  }
+}
+
+/** A host with no path means `/v1`; a pasted `/models` suffix is not doubled. */
+function anthropicBase(explicit: string | null): string {
+  if (explicit === null) return ANTHROPIC_DEFAULT_BASE_URL
+  const trimmed = explicit.endsWith('/models') ? explicit.slice(0, -'/models'.length) : explicit
+  try {
+    return new URL(trimmed).pathname === '/' ? `${trimmed}/v1` : trimmed
+  } catch {
+    return trimmed
   }
 }
 
@@ -103,7 +155,7 @@ async function listAnthropic(
   conn: HttpConnection,
   opts: ListModelsOptions,
 ): Promise<LlmListModelsResult> {
-  const base = explicitBaseUrl(conn) ?? ANTHROPIC_DEFAULT_BASE_URL
+  const base = anthropicBase(explicitBaseUrl(conn))
   const key = apiKeyOf(conn)
   if (key === undefined) return { ok: false, code: 'auth', message: 'an Anthropic key is required' }
   const headers = withExtra(conn, {
@@ -112,10 +164,20 @@ async function listAnthropic(
   })
   const models: LlmModelInfo[] = []
   let after: string | undefined
+  // A gateway in front of the API may refuse the page size; the first 400 is
+  // answered once at the API's default size, which every server accepts.
+  let withLimit = true
   for (let i = 0; i < MAX_PAGES; i += 1) {
-    const cursor = after !== undefined ? `&after_id=${encodeURIComponent(after)}` : ''
-    const url = `${base}/models?limit=${String(ANTHROPIC_PAGE_LIMIT)}${cursor}`
-    const page = await getJson(url, headers, AnthropicModelsPageSchema, key, opts)
+    const params = [
+      ...(withLimit ? [`limit=${String(ANTHROPIC_PAGE_LIMIT)}`] : []),
+      ...(after !== undefined ? [`after_id=${encodeURIComponent(after)}`] : []),
+    ]
+    const url = `${base}/models${params.length > 0 ? `?${params.join('&')}` : ''}`
+    let page = await getJson(url, headers, AnthropicModelsPageSchema, key, opts)
+    if (!page.ok && page.code === 'invalid' && withLimit && i === 0) {
+      withLimit = false
+      page = await getJson(`${base}/models`, headers, AnthropicModelsPageSchema, key, opts)
+    }
     if (!page.ok) return page
     for (const m of page.body.data) models.push(anthropicModelInfo(m))
     const next = page.body.last_id ?? undefined

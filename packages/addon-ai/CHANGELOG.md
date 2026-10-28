@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- AI model lists: an Anthropic list that answered HTTP 400 is retried at the default page size, a base URL typed without /v1 or with a pasted /models works, and local servers (Ollama, llama.cpp, LM Studio) list their models even from a bare host.
+
 ## [0.4.171] - 2026-10-27
 
 ### Changed

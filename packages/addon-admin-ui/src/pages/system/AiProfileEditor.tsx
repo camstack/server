@@ -40,7 +40,7 @@ import {
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { groupKindsByAddon, iconForName, REDACTED_MARKER } from './ai-page.helpers'
 import {
@@ -241,6 +241,17 @@ export function ProfileEditorDialog({
   const canVerify = kind.modelCatalog === 'fetch' && modelWidget === null
   const hasConnection =
     fieldsOfSchema(kind.connectionSchema).length > 0 || connectionWidgets.length > 0
+
+  // A saved profile's models and features load as the editor opens — its
+  // connection is complete and its key is the stored one, so nothing waits on a
+  // click. A new profile waits for the operator: a half-typed key must not be
+  // sent to the vendor.
+  const autoLoad = existing !== null && canVerify && missing.length === 0
+  useEffect(() => {
+    if (autoLoad) listing.mutate()
+    // Once per open: `listing` and the draft change on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const pickModel = (id: string): void => {
     const info = choices.find((m) => m.id === id)
@@ -461,7 +472,18 @@ export function ProfileEditorDialog({
                     id="ai-model-id"
                     aria-label={t('ai.customModel', 'Model id')}
                     value={model.id}
-                    onChange={(e) => setModel({ ...model, id: e.target.value })}
+                    onChange={(e) => {
+                      // A typed id the list knows is that model: its features apply.
+                      const info = choices.find((m) => m.id === e.target.value)
+                      setModel(
+                        info === undefined
+                          ? { ...model, id: e.target.value }
+                          : {
+                              id: e.target.value,
+                              supportsVision: effectiveFeatures(kind, info).vision,
+                            },
+                      )
+                    }}
                     placeholder={choices[0]?.id ?? 'model-id'}
                   />
                 </FormField>

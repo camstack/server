@@ -509,6 +509,50 @@ describe('AiProfilesPage — an open kind (D893)', () => {
     )
   })
 
+  it('opening a saved profile loads its models and features without a click', async () => {
+    mockProfiles = [
+      profile({
+        id: 'p-acme',
+        name: 'Acme prod',
+        kind: 'acme-llm',
+        addonId: 'acme',
+        model: 'acme-vision',
+        supportsVision: false,
+        providerConfig: { endpoint: 'https://acme.example.com', token: '__redacted__' },
+      }),
+    ]
+    renderPage()
+    fireEvent.click(await screen.findByTitle('Edit'))
+    const title = await screen.findByText(/Edit Acme prod/)
+    const dialog = title.closest('dialog')!
+    await waitFor(() => expect(mockListModels).toHaveBeenCalledTimes(1))
+    expect(await within(dialog).findByText('2 models found')).toBeTruthy()
+    // The listed model's own vision flag replaced the stale stored one.
+    await waitFor(() =>
+      expect(within(dialog).getByTestId('ai-model-features').textContent).toContain('vision'),
+    )
+  })
+
+  it('typing a model id the list knows takes on that model’s features', async () => {
+    renderPage()
+    const dialog = await openEditorFor('Acme LLM')
+    fireEvent.change(fieldInput(dialog, /Acme endpoint/), {
+      target: { value: 'https://acme.example.com' },
+    })
+    fireEvent.change(fieldInput(dialog, /Acme token/), { target: { value: 'typed-token-0002' } })
+    fireEvent.click(within(dialog).getByTestId('ai-verify-models'))
+    expect(await within(dialog).findByText('2 models found')).toBeTruthy()
+    fireEvent.change(within(dialog).getByLabelText('Model id'), {
+      target: { value: 'acme-vision' },
+    })
+    fireEvent.click(within(dialog).getByText('Create profile'))
+    await waitFor(() => expect(mockUpsert).toHaveBeenCalled())
+    expect(mockUpsert.mock.calls[0]?.[0].profile).toMatchObject({
+      model: 'acme-vision',
+      supportsVision: true,
+    })
+  })
+
   it('the provider header goes back to the pre-modal, never to another kind in place', async () => {
     renderPage()
     const dialog = await openEditorFor('Acme LLM')

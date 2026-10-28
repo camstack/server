@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- AI profile editor: opening a saved profile loads its models and features automatically, and typing a listed model id applies that model's features.
+
 ## [1.2.499] - 2026-10-28
 
 ### Changed
