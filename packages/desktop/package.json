@@ -1,6 +1,6 @@
 {
   "name": "@camstack/desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "CamStack — single desktop app (hub or agent, chosen at first run)",
   "repository": {
