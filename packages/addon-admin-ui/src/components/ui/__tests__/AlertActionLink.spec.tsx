@@ -19,7 +19,7 @@ vi.mock('@camstack/ui-library', () => ({
   useSystem: () => ({ trpcClient: { addons: { custom: { mutate: custom } } } }),
 }))
 
-import { hasUsableAction, isServerAlertAction } from '../critical-alerts'
+import { alertAction, hasUsableAction, isServerAlertAction } from '../critical-alerts'
 import { AlertActionLink } from '../AlertActionLink'
 import type { UsableAlertAction } from '../critical-alerts'
 
@@ -153,5 +153,39 @@ describe('an invoke action', () => {
     renderLink({ label: 'Rebalance now', invoke })
     fireEvent.click(screen.getByRole('button', { name: 'Rebalance now' }))
     expect(await screen.findByText(/runner offline/)).toBeInTheDocument()
+  })
+})
+
+describe('alertAction', () => {
+  const invoke = { addonId: 'a', action: 'b' }
+  const base = {
+    id: 'x',
+    category: 'system',
+    severity: 'warning' as const,
+    title: 't',
+    message: 'm',
+    read: false,
+    createdAt: 1,
+    updatedAt: 1,
+  }
+
+  it('keeps an invoke action only while the alert is still open', () => {
+    const open = alertAction({ ...base, status: 'active', action: { label: 'Go', invoke } })
+    expect(open?.invoke).toEqual(invoke)
+    expect(
+      alertAction({ ...base, status: 'failed', action: { label: 'Go', invoke } }),
+    ).toBeDefined()
+    expect(
+      alertAction({ ...base, status: 'completed', action: { label: 'Go', invoke } }),
+    ).toBeUndefined()
+    expect(
+      alertAction({ ...base, status: 'dismissed', action: { label: 'Go', invoke } }),
+    ).toBeUndefined()
+  })
+
+  it('keeps a link action on a completed alert', () => {
+    expect(
+      alertAction({ ...base, status: 'completed', action: { label: 'Go', href: '/x' } }),
+    ).toBeDefined()
   })
 })

@@ -59,3 +59,20 @@ export function isServerAlertAction(action: AlertActionWithHref): boolean {
   if (action.navigation !== undefined) return action.navigation === 'server'
   return ADDON_OAUTH_ROUTE.test(action.href)
 }
+
+/**
+ * The action to render for an alert. A button that RUNS something is offered
+ * only while the alert is open: once completed or dismissed it has done its
+ * job, and the update that closes an alert cannot remove the field.
+ */
+export function alertAction(alert: Alert): UsableAlertAction | undefined {
+  const action = alert.action
+  if (!hasUsableAction(action)) return undefined
+  if (
+    action.invoke !== undefined &&
+    (alert.status === 'completed' || alert.status === 'dismissed')
+  ) {
+    return undefined
+  }
+  return action
+}

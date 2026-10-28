@@ -27,7 +27,7 @@ import {
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
-import { hasUsableAction, isUnreadCriticalAlert } from './critical-alerts'
+import { alertAction, isUnreadCriticalAlert } from './critical-alerts'
 
 // ── Props ───────────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ function AlertCard({
   const { t } = useTranslation()
   const severity =
     alert.severity in SEVERITY_ICONS ? alert.severity : ('info' as keyof typeof SEVERITY_ICONS)
-  const action = hasUsableAction(alert.action) ? alert.action : undefined
+  const action = alertAction(alert)
   const status = alert.status in STATUS_COLORS ? alert.status : 'active'
   const Icon = SEVERITY_ICONS[severity]
   const iconColor = SEVERITY_COLORS[severity]
