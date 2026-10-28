@@ -48,7 +48,9 @@ describe('Agent discovery + connection', { timeout: 30_000 }, () => {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-discovery-'))
   const agentDataDir = path.join(tmpRoot, 'agent')
   const configPath = path.join(agentDataDir, 'agent.json')
-  const agentPort = 14444 // Use high port to avoid conflicts
+  // An ephemeral port: a fixed one can be held by something real (an SSH tunnel
+  // to a live agent), and these tests then write to that agent's config.
+  let agentPort = 0
 
   fs.mkdirSync(agentDataDir, { recursive: true })
 
@@ -118,7 +120,8 @@ describe('Agent discovery + connection', { timeout: 30_000 }, () => {
     }
 
     agentApp = await createAgentHttpServer(() => agentBroker, httpConfig)
-    await agentApp.listen({ port: agentPort, host: '127.0.0.1' })
+    const address = await agentApp.listen({ port: 0, host: '127.0.0.1' })
+    agentPort = Number(new URL(address).port)
 
     // Public /health is liveness-only post-hardening — nodeId moved to the
     // authenticated /health/details (loopback callers are always allowed).
