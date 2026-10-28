@@ -4605,7 +4605,27 @@
       "kind": "component",
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/dropdown.tsx",
-      "summary": ""
+      "summary": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Controlled open state. Give both `open` and `onOpenChange` to drive the menu from outside (a \"{\" typed in a field opens the variable list); "
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "DropdownContent",

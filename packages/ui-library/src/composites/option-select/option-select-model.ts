@@ -14,6 +14,12 @@ export type OptionSelectOption = {
   iconId?: string
   disabled?: boolean
   badge?: string
+  /**
+   * Heading this option is listed under. Options of one group are expected
+   * together (the list keeps its order); a heading is drawn where the group
+   * changes.
+   */
+  group?: string
 }
 
 /** Number of options at/above which search is enabled by default (unless creatable). */

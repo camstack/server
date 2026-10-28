@@ -35,8 +35,32 @@ function useDropdownContext() {
 
 /* ── Root ── */
 
-export function Dropdown({ children }: { children: ReactNode }): JSX.Element | null {
-  const [open, setOpen] = useState(false)
+export interface DropdownProps {
+  readonly children: ReactNode
+  /**
+   * Controlled open state. Give both `open` and `onOpenChange` to drive the menu
+   * from outside (a "{" typed in a field opens the variable list); give neither
+   * and the dropdown keeps its own state.
+   */
+  readonly open?: boolean
+  readonly onOpenChange?: (open: boolean) => void
+}
+
+export function Dropdown({
+  children,
+  open: controlledOpen,
+  onOpenChange,
+}: DropdownProps): JSX.Element | null {
+  const [innerOpen, setInnerOpen] = useState(false)
+  const controlled = controlledOpen !== undefined && onOpenChange !== undefined
+  const open = controlled ? controlledOpen : innerOpen
+  const setOpen = useCallback(
+    (next: boolean): void => {
+      if (controlled) onOpenChange(next)
+      else setInnerOpen(next)
+    },
+    [controlled, onOpenChange],
+  )
   const triggerId = useId()
   const contentId = useId()
   const triggerRef = useRef<HTMLButtonElement | null>(null)
@@ -89,7 +113,11 @@ export function DropdownContent({
 }: DropdownContentProps): JSX.Element | null {
   const { open, setOpen, contentId, triggerId, triggerRef } = useDropdownContext()
   const ref = useRef<HTMLDivElement>(null)
-  const [coords, setCoords] = useState<{ top: number; left: number; minWidth: number } | null>(null)
+  const [coords, setCoords] = useState<{
+    top: number
+    left: number
+    minWidth: number
+  } | null>(null)
 
   // Compute absolute position from the trigger's bounding rect so the menu
   // renders in a portal (document.body) and escapes any ancestor overflow/clip.

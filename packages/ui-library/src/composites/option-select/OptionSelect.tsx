@@ -1,5 +1,6 @@
 import { useUiText } from '../../contexts/ui-text'
 import {
+  Fragment,
   type JSX,
   useEffect,
   useLayoutEffect,
@@ -171,7 +172,11 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
   const showAddNewFooter = shouldShowAddNewFooter(creatable, onCreateRequest !== undefined)
 
   type DropdownRow =
-    | { readonly kind: 'option'; readonly opt: OptionSelectOption; readonly index: number }
+    | {
+        readonly kind: 'option'
+        readonly opt: OptionSelectOption
+        readonly index: number
+      }
     | { readonly kind: 'use-query'; readonly draft: string }
 
   const dropdownRows: readonly DropdownRow[] = useMemo(() => {
@@ -344,7 +349,9 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
   } else if (dropdownRows.length === 0 && !creatable) {
     dropdownBody = (
       <div className="px-2.5 py-2 text-[11px] text-foreground-subtle italic">
-        {t('uiLibrary.optionSelect.noMatches', 'No matches for “{{query}}”', { query })}
+        {t('uiLibrary.optionSelect.noMatches', 'No matches for “{{query}}”', {
+          query,
+        })}
       </div>
     )
   } else {
@@ -368,7 +375,9 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
               >
                 <Plus className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="truncate text-foreground">
-                  {t('uiLibrary.optionSelect.use', 'Use “{{value}}”', { value: row.draft })}
+                  {t('uiLibrary.optionSelect.use', 'Use “{{value}}”', {
+                    value: row.draft,
+                  })}
                 </span>
               </button>
             )
@@ -379,38 +388,54 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
             mode === 'single' ? props.value === opt.value : props.value.includes(opt.value)
           const blockedByMax = mode === 'multi' && !checked && atMax === true
           const optionDisabled = opt.disabled === true || blockedByMax
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              role="option"
-              aria-selected={checked}
-              disabled={optionDisabled}
-              data-testid={
-                optionTestIdPrefix !== undefined ? `${optionTestIdPrefix}-${opt.value}` : undefined
-              }
-              className={[
-                'flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors',
-                i === highlight ? 'bg-primary/10' : 'hover:bg-surface-hover',
-                optionDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
-              ].join(' ')}
-              onMouseEnter={() => setHighlight(i)}
-              onClick={() => activateRow(row)}
-            >
-              <span
-                className={[
-                  'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border',
-                  checked ? 'border-primary bg-primary text-white' : 'border-border',
-                ].join(' ')}
+          const previous = dropdownRows[i - 1]
+          const previousGroup =
+            previous !== undefined && previous.kind === 'option' ? previous.opt.group : undefined
+          const heading =
+            opt.group !== undefined && opt.group !== previousGroup ? (
+              <div
+                role="presentation"
+                className="px-2.5 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle"
               >
-                {checked && <Check className="h-2.5 w-2.5" />}
-              </span>
-              <OptionIcon opt={opt} />
-              <span className="min-w-0 flex-1 truncate text-foreground">{opt.label}</span>
-              {opt.badge !== undefined && opt.badge.length > 0 ? (
-                <Badge variant="default">{opt.badge}</Badge>
-              ) : null}
-            </button>
+                {opt.group}
+              </div>
+            ) : null
+          return (
+            <Fragment key={opt.value}>
+              {heading}
+              <button
+                type="button"
+                role="option"
+                aria-selected={checked}
+                disabled={optionDisabled}
+                data-testid={
+                  optionTestIdPrefix !== undefined
+                    ? `${optionTestIdPrefix}-${opt.value}`
+                    : undefined
+                }
+                className={[
+                  'flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors',
+                  i === highlight ? 'bg-primary/10' : 'hover:bg-surface-hover',
+                  optionDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+                ].join(' ')}
+                onMouseEnter={() => setHighlight(i)}
+                onClick={() => activateRow(row)}
+              >
+                <span
+                  className={[
+                    'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border',
+                    checked ? 'border-primary bg-primary text-white' : 'border-border',
+                  ].join(' ')}
+                >
+                  {checked && <Check className="h-2.5 w-2.5" />}
+                </span>
+                <OptionIcon opt={opt} />
+                <span className="min-w-0 flex-1 truncate text-foreground">{opt.label}</span>
+                {opt.badge !== undefined && opt.badge.length > 0 ? (
+                  <Badge variant="default">{opt.badge}</Badge>
+                ) : null}
+              </button>
+            </Fragment>
           )
         })}
       </>
