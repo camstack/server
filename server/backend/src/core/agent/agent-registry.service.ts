@@ -14,7 +14,7 @@ import type {
   NodeDirectory,
   NodeLiveness,
 } from '@camstack/types'
-import { EventCategory, resolveAddonPlacement } from '@camstack/types'
+import { type AddonPlacement, EventCategory, resolveAddonPlacement } from '@camstack/types'
 import type { AddonRegistryService } from '../addon/addon-registry.service'
 import { CapabilityService } from '../capability/capability.service'
 import { EventBusService } from '../events/event-bus.service'
@@ -793,6 +793,7 @@ export class AgentRegistryService {
       const hubPlacements = new Map<string, ReturnType<typeof resolveAddonPlacement>>()
       const hubPackages = new Set<string>()
       const hubVersions = new Map<string, string>()
+      const hubPackagePlacements = new Map<string, AddonPlacement[]>()
       for (const row of this.addonRegistry.listAddons()) {
         const declId = row.manifest.id
         if (typeof declId !== 'string') continue
@@ -801,6 +802,9 @@ export class AgentRegistryService {
         const packageName = row.manifest.packageName
         if (typeof packageName === 'string' && packageName.length > 0) {
           hubPackages.add(packageName)
+          const siblings = hubPackagePlacements.get(packageName) ?? []
+          siblings.push(resolveAddonPlacement(decl))
+          hubPackagePlacements.set(packageName, siblings)
           const packageVersion = row.manifest.packageVersion
           if (typeof packageVersion === 'string' && packageVersion.length > 0) {
             hubVersions.set(packageName, packageVersion)
@@ -886,7 +890,14 @@ export class AgentRegistryService {
         }
       }
 
-      await this.backfillAgentAddons(agentId, agentAddons, undeployedPackages, hubVersions, trigger)
+      await this.backfillAgentAddons(
+        agentId,
+        agentAddons,
+        undeployedPackages,
+        hubVersions,
+        hubPackagePlacements,
+        trigger,
+      )
     } catch (err) {
       console.error(
         `[agent-registry] Reconcile failed for agent ${agentId}:`,
@@ -914,11 +925,15 @@ export class AgentRegistryService {
     agentAddons: readonly AgentStatusAddon[],
     undeployedPackages: ReadonlySet<string>,
     hubVersions: ReadonlyMap<string, string>,
+    hubPackagePlacements: ReadonlyMap<string, readonly AddonPlacement[]>,
     trigger: BackfillTrigger,
   ): Promise<void> {
     const store = this.historyStore
     if (!store) return
 
+    // Read BEFORE recording: a fresh node is one that never declared a roster
+    // (D962), and the record below would make it look like it had one.
+    const priorRoster = await store.getPackages(agentId)
     const live = rosterFromAddons(agentAddons)
     await store.recordPackages(agentId, live)
     if (undeployedPackages.size > 0) {
@@ -936,7 +951,24 @@ export class AgentRegistryService {
       undeployed: undeployedPackages,
       retired: this.backfillTracker.retiredFor(agentId),
       hubVersions,
+      freshNode: priorRoster.length === 0 ? { hubPackagePlacements } : undefined,
     })
+
+    if (priorRoster.length === 0) {
+      this.logger?.info(
+        'back-fill: fresh node (no prior declared roster), plan from the hub any-node set',
+        {
+          tags: { nodeId: agentId },
+          meta: { planned: planned.targets.map((t) => `${t.name}@${t.version}`) },
+        },
+      )
+      for (const skip of planned.skipped) {
+        this.logger?.info('back-fill: fresh node not given a hub package', {
+          tags: { nodeId: agentId },
+          meta: { package: skip.name, reason: skip.reason },
+        })
+      }
+    }
 
     // Never a delivery, and said so: an addon the hub no longer installs stays
     // off the node even though the node once declared it (the stale sweep above

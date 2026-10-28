@@ -270,7 +270,13 @@ directions ([D24](../decisions/adr-0024.md)):
 | Remove | An addon on the node that the hub does not install, or installs as `hub-only`, is undeployed. Bootstrap infrastructure (`@camstack/system`, `@camstack/addon-agent-ui`) never is. |
 | Add | A package in the node's own last-declared roster that the node no longer reports is re-delivered — packed hub-side, shipped over `$agent.deploy`, followed by one `$agent.reload`. **Only a package the hub installs**: one the hub does not is reported as `notOnHub` and never delivered ([D766](../decisions/adr-0766-an-uninstall-names-its-nodes-and-the-hubs-install-set-bounds-the-back-fill.md)). |
 
-The intended set is the roster **the node itself declared**, kept in
+A **fresh node** — one the hub holds no declared roster for (newly paired, or
+wiped and re-registered under a new id) — is given every hub-installed package
+whose addons are all `any-node`/`agent-only` (never one with a `hub-only` addon),
+at the hub's version; each package left off is logged with its reason
+([D962](../decisions/adr-0962-a-fresh-node-is-given-the-hubs-any-node-addons.md)).
+
+The intended set is otherwise the roster **the node itself declared**, kept in
 `ClusterNodeHistoryStore`. It grows when a node reports a package and shrinks only
 on an explicit undeploy or uninstall, so a rebuilt node comes back with what it
 had and a deliberate per-node removal stays removed. The version pushed is the

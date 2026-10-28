@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A freshly paired or re-registered agent node now receives every any-node addon installed on the hub, at the hub version
+
 ## [1.2.681] - 2026-10-28
 
 ### Changed

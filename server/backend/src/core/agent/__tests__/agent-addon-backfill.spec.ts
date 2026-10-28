@@ -194,7 +194,7 @@ describe('confirmBackfillPlan', () => {
 
   it('drops a target the second read already shows at the hub version', () => {
     const { plan, contradicted } = confirmBackfillPlan(
-      { targets: [target], retired: [], notOnHub: [], liveCount: 0 },
+      { targets: [target], retired: [], notOnHub: [], liveCount: 0, skipped: [] },
       [pkg('@camstack/addon-ai', '1.2.6')],
     )
     expect(plan.targets).toEqual([])
@@ -203,7 +203,7 @@ describe('confirmBackfillPlan', () => {
 
   it('keeps a target the second read still shows at a different version', () => {
     const { plan, contradicted } = confirmBackfillPlan(
-      { targets: [target], retired: [], notOnHub: [], liveCount: 1 },
+      { targets: [target], retired: [], notOnHub: [], liveCount: 1, skipped: [] },
       [pkg('@camstack/addon-ai', '1.2.7')],
     )
     expect(plan.targets).toEqual([target])
@@ -212,7 +212,7 @@ describe('confirmBackfillPlan', () => {
 
   it('keeps a target the second read still does not list', () => {
     const { plan } = confirmBackfillPlan(
-      { targets: [target], retired: [], notOnHub: [], liveCount: 0 },
+      { targets: [target], retired: [], notOnHub: [], liveCount: 0, skipped: [] },
       [],
     )
     expect(plan.targets).toEqual([target])
@@ -303,6 +303,7 @@ describe('executeBackfill', () => {
         retired: [],
         notOnHub: [],
         liveCount: 0,
+        skipped: [],
       },
       new BackfillAttemptTracker(),
     )
@@ -321,7 +322,7 @@ describe('executeBackfill', () => {
     await executeBackfill(
       seam,
       'agent-a',
-      { targets: [], retired: [], notOnHub: [], liveCount: 0 },
+      { targets: [], retired: [], notOnHub: [], liveCount: 0, skipped: [] },
       new BackfillAttemptTracker(),
     )
 
@@ -351,6 +352,7 @@ describe('executeBackfill', () => {
         retired: [],
         notOnHub: [],
         liveCount: 0,
+        skipped: [],
       },
       new BackfillAttemptTracker(),
     )
@@ -376,6 +378,7 @@ describe('executeBackfill', () => {
       retired: [],
       notOnHub: [],
       liveCount: 0,
+      skipped: [],
     }
 
     for (let i = 0; i < MAX_BACKFILL_ATTEMPTS; i++) {
