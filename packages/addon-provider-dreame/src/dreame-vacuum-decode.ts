@@ -126,6 +126,21 @@ export function clampBatteryLevel(value: number | null): number | null {
   return Math.max(0, Math.min(100, value))
 }
 
+/**
+ * MiotError codes that are BENIGN completion / reminder states, not active
+ * faults. A fresh cloud-shadow read of an idle docked robot legitimately
+ * returns `TaskComplete` (68); it is not an error to show. The Error sensor
+ * (`dreame-entity-catalog.ts`) and the vacuum card both read this set.
+ * Extend it if other non-fault codes surface as spurious "errors".
+ */
+export const BENIGN_ERROR_CODES: ReadonlySet<number> = new Set<number>([MiotError.TaskComplete])
+
+/** The card's error label: null for no error and for a benign completion code. */
+export function vacuumErrorLabel(code: number | null): string | null {
+  if (!code || BENIGN_ERROR_CODES.has(code)) return null
+  return `Error ${code}`
+}
+
 /** Clamp a 0..100 percentage (progress, coverage, …), null-safe. */
 export function clampPercent(value: number | null): number | null {
   if (value === null || !Number.isFinite(value)) return null

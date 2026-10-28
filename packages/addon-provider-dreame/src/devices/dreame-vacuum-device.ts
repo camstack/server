@@ -24,6 +24,7 @@ import {
   supportedFanSpeedTokens,
   tokenToSuctionLevel,
   VACUUM_TANK_PROPS,
+  vacuumErrorLabel,
 } from '../dreame-vacuum-decode.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 import {
@@ -237,7 +238,7 @@ export class DreameVacuumDevice extends DreameChildDevice {
       availableFanSpeeds: supportedFanSpeedTokens(vacuum.supportedSuctionLevels),
       progressPercent: clampPercent(vacuum.taskProgressPct),
       errorCode: vacuum.errorCode,
-      errorLabel: vacuum.errorCode ? `Error ${vacuum.errorCode}` : null,
+      errorLabel: vacuumErrorLabel(vacuum.errorCode),
       lastChangedAt: Date.now(),
     }
     const toWrite = nextVacuumControlSlice(

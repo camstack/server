@@ -8,6 +8,7 @@ import {
   MowerStatus,
   MowerTaskStatus,
 } from '@apocaliss92/nodedreame'
+import { BENIGN_ERROR_CODES } from './dreame-vacuum-decode.js'
 
 /**
  * Data-driven Dreame entity catalog. Rather than a class per entity, each
@@ -552,15 +553,6 @@ function enumOptions(e: Record<string, string | number>): readonly SelectOption[
     .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
     .map(([name, value]) => ({ value, label: humanizeEnumName(name) }))
 }
-
-/**
- * MiotError codes that are BENIGN completion / reminder states, not active
- * faults. HA does not surface these as errors — a fresh cloud-shadow read of an
- * idle docked robot legitimately returns `TaskComplete` (68). We relabel them to
- * the `Clear` label so the Error sensor only shows real faults (HA parity).
- * Extend this set if other non-fault codes surface as spurious "errors".
- */
-const BENIGN_ERROR_CODES: ReadonlySet<number> = new Set<number>([MiotError.TaskComplete])
 
 /** `MiotError` options with the benign completion codes remapped to the `Clear`
  *  label, so the Error sensor reads as no-error for them (matches HA). */
