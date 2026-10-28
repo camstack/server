@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The AI runtimes table has a Feature column and a translated state chip, red when stopped
+- Automations using the parked-object trigger or condition open read-only in the editor instead of breaking it
 
 ## [1.2.498] - 2026-10-28
 

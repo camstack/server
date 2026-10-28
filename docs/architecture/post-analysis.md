@@ -626,7 +626,12 @@ holds it, and its face read is the only record there will ever be.
 Appear and depart still emit `pipeline-analytics.stationary-changed` (the
 occupancy total is unchanged on promotion, so `occupancy-changed` is not
 enough). The viewer overlay follows that category; a 15 s poll is not the
-mechanism.
+mechanism. The payload also carries `zones` — the ids of the camera's zones the
+parked box is in, from `computeStationaryEntryZones` (the one membership rule,
+with the camera's `zoneMembershipMinOverlap`), empty when none apply. It feeds
+the automation `stationary` trigger; the `stationary-present` condition reads
+the registry through the `zone-analytics` snapshot instead, never this event
+(D956).
 
 ### A promotion ends the track (D683)
 

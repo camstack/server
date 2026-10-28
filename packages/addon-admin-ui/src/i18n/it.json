@@ -5944,6 +5944,18 @@
     },
     "editor": {
       "listUnreadable": "La sua ricetta non è leggibile ({{reason}}), quindi non può essere aperta in modo visuale. Il codice è intatto e ancora in esecuzione — modificalo come script."
+    },
+    "readOnly": {
+      "stationaryPresent": "Oggetto parcheggiato presente",
+      "stationaryTrigger": "Oggetto parcheggiato",
+      "phaseAppeared": "comparso",
+      "phaseDeparted": "partito",
+      "cameras": "Telecamere",
+      "classes": "Classi",
+      "zones": "Zone",
+      "any": "qualsiasi",
+      "editInCode": "Questa parte non ha ancora un editor visuale; viene conservata così com'è.",
+      "otherTrigger": "Trigger senza editor visuale"
     }
   },
   "accessDenied": {

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Unknown event kinds, state words and class names read as words instead of raw ids
+- Automations can start on, and be conditioned by, a parked object (appeared or departed, with class and zone filters)
 
 ## [1.2.432] - 2026-10-28
 

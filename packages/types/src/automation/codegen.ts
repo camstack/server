@@ -195,6 +195,33 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
       ),
     )
   }`
+    case 'stationary':
+      return `  // trigger ${index}: stationary — a parked object appeared / departed. Stateless:
+  // the registry emits one event per transition. A dropped event only misses a fire;
+  // the stationary-present CONDITION reads the registry, not this event.
+  {
+    const trigger = ${j(trigger)} as const
+    disposers.push(
+      ctx.eventBus.subscribe(
+        { category: EventCategory.PipelineAnalyticsStationaryChanged },
+        (event) => {
+          const decision = evaluateStationaryTrigger(trigger, event.data)
+          if (decision.kind === 'ignore') return
+          if (decision.kind === 'reject') {
+            ctx.logger.debug('stationary trigger rejected an event', {
+              tags: { deviceId: decision.vars.deviceId },
+              reason: decision.reason,
+            })
+          }
+          void run(
+            { kind: 'stationary', at: Date.now(), ...decision.vars },
+            decision.reason,
+            decision.kind === 'fire',
+          )
+        },
+      ),
+    )
+  }`
   }
 }
 
@@ -282,6 +309,7 @@ import {
   collectMirrorSources,
   coreBlockIdFromAddonId,
   evaluateConditionTree,
+  evaluateStationaryTrigger,
   isSkippedTrace,
   mergeSkipTraces,
   resolveDeviceTarget,

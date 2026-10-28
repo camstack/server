@@ -24,6 +24,7 @@ import { useMemo, useState } from 'react'
 import type { AutomationDevice } from './automation-data'
 import { ConditionLeafRow } from './ConditionRow'
 import { ExpressionLeafRow } from './ExpressionLeafRow'
+import { StationaryPresentRow } from './ReadOnlyParts'
 import {
   addCondition,
   type ConditionContainer,
@@ -352,12 +353,14 @@ function NodeRow({ node, path, handlers }: NodeRowProps) {
             devices={handlers.devices}
             onChange={(next) => handlers.onUpdate(path, next)}
           />
-        ) : (
+        ) : node.kind === 'expression' ? (
           <ExpressionLeafRow
             leaf={node}
             devices={handlers.devices}
             onChange={(next) => handlers.onUpdate(path, next)}
           />
+        ) : (
+          <StationaryPresentRow leaf={node} devices={handlers.devices} />
         )}
       </div>
       <Button

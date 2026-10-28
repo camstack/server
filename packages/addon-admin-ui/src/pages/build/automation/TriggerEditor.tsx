@@ -25,6 +25,7 @@ import { Badge, Button, Checkbox, Input, Select } from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import type { AutomationDevice } from './automation-data'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
+import { ReadOnlyTriggerFields } from './ReadOnlyParts'
 import { newTrigger, removeAt, replaceAt, type TriggerKind, triggerKindLabel } from './recipe-parts'
 import { type ScalarValue, ScalarValueInput } from './ValueInput'
 import { Trans, useTranslation } from 'react-i18next'
@@ -104,14 +105,20 @@ function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerR
             ? t('automation.triggerEditor.when', 'When')
             : t('automation.triggerEditor.orWhen', 'or when')}
         </Badge>
-        <label className="min-w-[13rem] flex-1">
-          <PickerLabel>{t('automation.triggerEditor.trigger', 'Trigger')}</PickerLabel>
-          <Select
-            value={trigger.kind}
-            onChange={(e) => onChange(newTrigger(asTriggerKind(e.target.value)))}
-            options={TRIGGER_KINDS.map((k) => ({ value: k, label: triggerKindLabel(k) }))}
-          />
-        </label>
+        {isEditableKind(trigger.kind) ? (
+          <label className="min-w-[13rem] flex-1">
+            <PickerLabel>{t('automation.triggerEditor.trigger', 'Trigger')}</PickerLabel>
+            <Select
+              value={trigger.kind}
+              onChange={(e) => onChange(newTrigger(asTriggerKind(e.target.value)))}
+              options={TRIGGER_KINDS.map((k) => ({ value: k, label: triggerKindLabel(k) }))}
+            />
+          </label>
+        ) : (
+          <div className="min-w-[13rem] flex-1">
+            <Badge variant="default">{triggerKindLabel(trigger.kind)}</Badge>
+          </div>
+        )}
         <Button
           variant="ghost"
           onClick={onRemove}
@@ -143,6 +150,9 @@ function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerR
             </span>
           </label>
         )}
+        {!isEditableKind(trigger.kind) && (
+          <ReadOnlyTriggerFields trigger={trigger} devices={devices} />
+        )}
         {trigger.kind === 'manual' && (
           <p className="text-xs text-foreground-subtle">
             <Trans i18nKey="automation.triggerEditor.manualHint" components={{ b: <strong /> }} />
@@ -151,6 +161,11 @@ function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerR
       </div>
     </div>
   )
+}
+
+/** The kinds the editor can author; any other kind in a recipe is shown read-only. */
+function isEditableKind(kind: TriggerKind): boolean {
+  return TRIGGER_KINDS.some((k) => k === kind)
 }
 
 function asTriggerKind(value: string): TriggerKind {

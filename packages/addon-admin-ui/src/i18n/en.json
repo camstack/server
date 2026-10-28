@@ -5883,6 +5883,18 @@
     },
     "editor": {
       "listUnreadable": "Its recipe cannot be read ({{reason}}), so it cannot be opened visually. The code is intact and still running — edit it as a script."
+    },
+    "readOnly": {
+      "stationaryPresent": "Parked object present",
+      "stationaryTrigger": "Parked object",
+      "phaseAppeared": "appeared",
+      "phaseDeparted": "departed",
+      "cameras": "Cameras",
+      "classes": "Classes",
+      "zones": "Zones",
+      "any": "any",
+      "editInCode": "This part has no visual editor yet; it is kept as is.",
+      "otherTrigger": "Trigger without a visual editor"
     }
   },
   "accessDenied": {

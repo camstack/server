@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The parked-object appeared/departed event now names the zones the object is in
+
 ## [1.2.646] - 2026-10-28
 
 ### Changed

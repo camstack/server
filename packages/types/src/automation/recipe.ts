@@ -11,10 +11,10 @@
  *
  * Three vocabularies, each salvaged rather than invented:
  *
- *  - **Triggers** — the only genuinely new surface. Six members, none of which
+ *  - **Triggers** — the only genuinely new surface. Seven members, none of which
  *    touches notification delivery. The NC keeps its four *pipeline* triggers;
  *    these are device/time triggers and the two sets do not overlap.
- *  - **Conditions** — `ALL`/`ANY`/`NOT` over two leaf kinds, bounded. The
+ *  - **Conditions** — `ALL`/`ANY`/`NOT` over three leaf kinds, bounded. The
  *    expression leaf is the bounded engine at `../expression/`, which is where
  *    arithmetic between two device fields lives and the only place it lives.
  *  - **Actions** — `NcRuleActionSchema`'s two steps, plus the `{kind:'code'}`
@@ -78,6 +78,19 @@ export interface AutomationConditionExpression {
   readonly bindings: Readonly<Record<string, ExpressionBindingSource>>
 }
 
+/**
+ * True when the camera currently has a PARKED object (stationary registry)
+ * matching `classes` (macro classes match like the detection trigger) in at
+ * least one of `zones`. Reads the zone-analytics snapshot through the same
+ * mirror as every other leaf, so a dropped event never decides it (D49).
+ */
+export interface AutomationConditionStationaryPresent {
+  readonly kind: 'stationary-present'
+  readonly deviceId: number
+  readonly classes?: readonly string[]
+  readonly zones?: readonly string[]
+}
+
 export interface AutomationConditionAll {
   readonly kind: 'all'
   readonly children: readonly AutomationCondition[]
@@ -97,6 +110,7 @@ export type AutomationCondition =
   | AutomationConditionNot
   | AutomationConditionLeaf
   | AutomationConditionExpression
+  | AutomationConditionStationaryPresent
 
 const AutomationConditionLeafSchema = z.object({
   kind: z.literal('condition'),
@@ -105,6 +119,15 @@ const AutomationConditionLeafSchema = z.object({
   fieldPath: z.string().min(1),
   operator: AutomationConditionOperatorSchema,
   value: z.union([z.string(), z.number(), z.boolean(), z.array(z.union([z.string(), z.number()]))]),
+})
+
+const AutomationConditionStationaryPresentSchema = z.object({
+  kind: z.literal('stationary-present'),
+  deviceId: z.number().int().nonnegative(),
+  /** Class names; a macro class matches every raw class that maps to it. */
+  classes: z.array(z.string().min(1)).min(1).optional(),
+  /** The parked object must be in at least one of these zones. */
+  zones: z.array(z.string().min(1)).min(1).optional(),
 })
 
 /**
@@ -132,6 +155,7 @@ export const AutomationConditionSchema: z.ZodType<AutomationCondition> = z.lazy(
     z.object({ kind: z.literal('not'), child: AutomationConditionSchema }),
     AutomationConditionLeafSchema,
     AutomationConditionExpressionSchema,
+    AutomationConditionStationaryPresentSchema,
   ]),
 )
 
@@ -192,6 +216,17 @@ export const AutomationTriggerSchema = z.discriminatedUnion('kind', [
     zones: z.array(z.string().min(1)).min(1).optional(),
     /** Best-so-far confidence the track must reach. */
     minScore: z.number().min(0).max(1).optional(),
+  }),
+  z.object({
+    kind: z.literal('stationary'),
+    deviceIds: z.array(z.number().int().nonnegative()).min(1),
+    /** Class names; a macro class matches like the detection trigger. */
+    classes: z.array(z.string().min(1)).min(1).optional(),
+    /** The parked object must be in at least one of these zones. */
+    zones: z.array(z.string().min(1)).min(1).optional(),
+    /** `appeared`: it became parked. `departed`: the registry retired it.
+     *  The vocabulary of `PipelineAnalyticsStationaryChanged`. */
+    phase: z.enum(['appeared', 'departed']),
   }),
   z.object({ kind: z.literal('interval'), minutes: z.number().int().min(1).max(1440) }),
 ])
@@ -305,9 +340,20 @@ export const AutomationRecipeSchema = z.object({
 })
 export type AutomationRecipe = z.infer<typeof AutomationRecipeSchema>
 
+function isLeaf(
+  cond: AutomationCondition,
+): cond is
+  | AutomationConditionLeaf
+  | AutomationConditionExpression
+  | AutomationConditionStationaryPresent {
+  return (
+    cond.kind === 'condition' || cond.kind === 'expression' || cond.kind === 'stationary-present'
+  )
+}
+
 /** Depth of a tree, root container = 1. A bare leaf is depth 1. */
 export function conditionDepth(cond: AutomationCondition): number {
-  if (cond.kind === 'condition' || cond.kind === 'expression') return 1
+  if (isLeaf(cond)) return 1
   if (cond.kind === 'not') return 1 + conditionDepth(cond.child)
   const children = cond.children
   if (children.length === 0) return 1
@@ -321,7 +367,7 @@ export function conditionDepth(cond: AutomationCondition): number {
 
 /** Leaves only — containers do not count toward the leaf budget. */
 export function countConditionLeaves(cond: AutomationCondition): number {
-  if (cond.kind === 'condition' || cond.kind === 'expression') return 1
+  if (isLeaf(cond)) return 1
   if (cond.kind === 'not') return countConditionLeaves(cond.child)
   let total = 0
   for (const child of cond.children) total += countConditionLeaves(child)
@@ -329,7 +375,7 @@ export function countConditionLeaves(cond: AutomationCondition): number {
 }
 
 function findEmptyContainer(cond: AutomationCondition): boolean {
-  if (cond.kind === 'condition' || cond.kind === 'expression') return false
+  if (isLeaf(cond)) return false
   if (cond.kind === 'not') return findEmptyContainer(cond.child)
   if (cond.children.length === 0) return true
   return cond.children.some(findEmptyContainer)

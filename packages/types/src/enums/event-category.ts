@@ -664,7 +664,7 @@ export enum EventCategory {
    * (a track was promoted to a stationary-registry entry) or departs (the
    * object moved / was removed). Telemetry (D8): lossy, drives a UI refresh of
    * the dedicated "Stationary" section — never the live event feed. Payload:
-   * `{ deviceId, entryId, className, phase:'appeared'|'departed', timestamp }`.
+   * `{ deviceId, entryId, className, phase:'appeared'|'departed', timestamp, observedAt, zones }`.
    */
   PipelineAnalyticsStationaryChanged = 'pipeline-analytics.stationary-changed',
   /**

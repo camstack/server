@@ -210,6 +210,27 @@ export interface PipelineAnalyticsFrameTrackedPayload {
 export type TrackLifecyclePhase = 'start' | 'update' | 'end'
 
 /**
+ * Emitted on `pipeline-analytics.stationary-changed` when a parked object
+ * appears (a track was promoted to a stationary-registry entry) or departs.
+ * Telemetry (D8): a dropped event delays nothing durable — the registry is the
+ * authority and the automation `stationary-present` condition reads it.
+ */
+export interface PipelineAnalyticsStationaryChangedPayload {
+  readonly deviceId: number
+  readonly entryId: string
+  readonly className: string
+  readonly phase: 'appeared' | 'departed'
+  /** When the registry CONCLUDED the change. */
+  readonly timestamp: number
+  /** When the change was actually OBSERVED (a departure is confirmed later). */
+  readonly observedAt: number
+  /** Ids of the camera's zones the parked object's box is in (the same
+   *  membership rule as occupancy); empty when the camera has none or none match. */
+  readonly zones: readonly string[]
+  readonly [key: string]: unknown
+}
+
+/**
  * Emitted on `pipeline-analytics.track-lifecycle` at three moments of a
  * tracked object's life — `phase:'start'` when it first appears,
  * `phase:'update'` when its best observation MATERIALLY improves (a
@@ -1197,6 +1218,7 @@ export interface EventCatalog {
   'motion.on-motion-changed': MotionOnMotionChangedPayload
   'pipeline-analytics.frame-tracked': PipelineAnalyticsFrameTrackedPayload
   'pipeline-analytics.track-lifecycle': PipelineAnalyticsTrackLifecyclePayload
+  'pipeline-analytics.stationary-changed': PipelineAnalyticsStationaryChangedPayload
   'pipeline-analytics.face-gallery-changed': PipelineAnalyticsFaceGalleryChangedPayload
   'pipeline-analytics.plate-gallery-changed': PipelineAnalyticsPlateGalleryChangedPayload
   'pipeline-analytics.package-delivered': PipelineAnalyticsPackageDeliveredPayload

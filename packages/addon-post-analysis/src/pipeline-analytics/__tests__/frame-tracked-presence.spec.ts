@@ -343,6 +343,20 @@ describe('a track no longer earns a stationary entry by surviving', () => {
     expect(stationaryBirths(booted.bus).length).toBeGreaterThan(0)
     await booted.addon.shutdown()
   })
+
+  it('the birth event carries the zones the parked box is in (none on a camera without zones)', async () => {
+    const booted = await boot()
+    await parkFor(booted.bus, 130_000)
+    await flush()
+    const birth = booted.bus.captured.find(
+      (e) =>
+        e.category === EventCategory.PipelineAnalyticsStationaryChanged &&
+        (e.data as { phase?: string }).phase === 'appeared',
+    )
+    expect(birth).toBeDefined()
+    expect(birth?.data).toHaveProperty('zones', [])
+    await booted.addon.shutdown()
+  })
 })
 
 /**

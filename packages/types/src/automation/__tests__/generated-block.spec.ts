@@ -512,6 +512,85 @@ describe('action step', () => {
   })
 })
 
+describe('stationary trigger and condition', () => {
+  const STATIONARY = 'pipeline-analytics.stationary-changed'
+  const born = {
+    deviceId: 7,
+    entryId: 'e1',
+    className: 'car',
+    phase: 'appeared',
+    zones: ['drive'],
+  }
+
+  it('fires on an appeared event and hands deviceId, className, zones, phase, entryId to the steps', async () => {
+    const block = await load({
+      triggers: [{ kind: 'stationary', deviceIds: [7], classes: ['vehicle'], phase: 'appeared' }],
+      actions: [{ kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' }],
+    })
+    const h = start(block)
+    await settle()
+    h.emit(STATIONARY, { ...born, phase: 'departed' })
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    h.emit(STATIONARY, born)
+    await settle()
+    expect(h.mutate).toHaveBeenCalledWith({ deviceId: 7 })
+    expect(h.traces()[0]?.trigger).toMatchObject({ kind: 'stationary', outcome: 'pass' })
+    expect(h.traces()[0]?.trigger.vars).toMatchObject({
+      deviceId: 7,
+      className: 'car',
+      zones: ['drive'],
+      phase: 'appeared',
+      entryId: 'e1',
+    })
+  })
+
+  it('a class or zone mismatch is traced and never fires', async () => {
+    const block = await load({
+      triggers: [{ kind: 'stationary', deviceIds: [7], zones: ['garage'], phase: 'appeared' }],
+      actions: [SIREN],
+    })
+    const h = start(block)
+    await settle()
+    h.emit(STATIONARY, born)
+    await settle(5_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]).toMatchObject({ outcome: 'skipped-trigger' })
+    expect(h.traces()[0]?.trigger.reason).toContain('zone')
+  })
+
+  it('stationary-present reads the zone-analytics slice: runs when parked, skips when not', async () => {
+    const recipe: AutomationRecipe = {
+      triggers: [MOTION],
+      conditions: { kind: 'stationary-present', deviceId: 7, classes: ['vehicle'] },
+      actions: [SIREN],
+    }
+    const block = await load(recipe)
+    const parked = start(block, {
+      slices: {
+        '7|zone-analytics': {
+          frame: { totalObjects: 1 },
+          zones: [],
+          stationaryObjects: [{ id: 'e1', className: 'car' }],
+        },
+      },
+    })
+    await settle()
+    parked.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(parked.mutate).toHaveBeenCalledTimes(1)
+    parked.stop()
+
+    const none = start(block, {
+      slices: { '7|zone-analytics': { frame: { totalObjects: 0 }, zones: [] } },
+    })
+    await settle()
+    none.emit('motion.on-motion-changed', {}, 616)
+    await settle(5_000)
+    expect(none.mutate).not.toHaveBeenCalled()
+  })
+})
+
 afterAll(() => {
   rmSync(workDir, { recursive: true, force: true })
 })

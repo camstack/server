@@ -55,7 +55,7 @@ export type AutomationTriggerTrace = z.infer<typeof AutomationTriggerTraceSchema
 export const AutomationConditionTraceNodeSchema = z.object({
   /** `conditions` for the root, `conditions.<i>` for its i-th child, … */
   path: z.string().min(1),
-  kind: z.enum(['all', 'any', 'not', 'condition', 'expression']),
+  kind: z.enum(['all', 'any', 'not', 'condition', 'expression', 'stationary-present']),
   outcome: TraceNodeOutcomeSchema,
   reason: z.string(),
   deviceId: z.number().int().optional(),
@@ -195,7 +195,7 @@ export function appendTrace(
 
 /**
  * The trigger stage of a trace from the bag a trigger handed to `run()`:
- * primitives only (a device-state `to` that is an object is left out), minus the
+ * primitives and short lists of them (a device-state `to` that is an object is left out), minus the
  * bookkeeping keys `kind` and `at`.
  */
 export function buildTriggerTrace(
@@ -211,6 +211,11 @@ export function buildTriggerTrace(
       typeof value === 'number' ||
       typeof value === 'boolean' ||
       value === null
+    ) {
+      vars[key] = value
+    } else if (
+      Array.isArray(value) &&
+      value.every((v) => typeof v === 'string' || typeof v === 'number')
     ) {
       vars[key] = value
     }

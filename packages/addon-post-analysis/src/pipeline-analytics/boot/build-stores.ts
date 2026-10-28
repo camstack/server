@@ -39,6 +39,7 @@ import type { PackageLlmConfirmOutcome } from '../pipeline/package/package-llm-c
 import { PackageDropDetector } from '../pipeline/package-drop-detector.js'
 import { PhantomCellRegistry } from '../pipeline/stationary/phantom-cells.js'
 import { StationaryEvidenceLedger } from '../pipeline/stationary/stationary-evidence-ledger.js'
+import { resolveStationaryEventZones } from '../pipeline/stationary/stationary-event-zones.js'
 import { StationaryObjectRegistry } from '../pipeline/stationary/stationary-registry.js'
 import type { StationaryEntry } from '../pipeline/stationary/stationary-types.js'
 import { RetrainAnnotationStore } from '../retrain/retrain-annotation-store.js'
@@ -248,6 +249,9 @@ export abstract class BuildStoresBase {
   protected set aliasResolveFailureLogger(value: ((failure: AliasResolveFailure) => void) | null) {
     this.deps.setAliasResolveFailureLogger(value)
   }
+
+  /** Serialises the StationaryChanged emits (each waits for its zone reads). */
+  private stationaryEmitChain: Promise<void> = Promise.resolve()
 
   protected get stationaryRegistry(): StationaryObjectRegistry | null {
     return this.deps.stationaryRegistry()
@@ -649,28 +653,42 @@ export abstract class BuildStoresBase {
       // the camera CAN be looked at belongs to the runner, one addon away.
       requestConfirmationLook: (ask) => this.frameAdmission.requestConfirmationLook(ask),
       onChange: ({ phase, entry, timestamp, observedAt }) => {
-        this.ctx.eventBus.emit({
-          id: `pa-stationary-${entry.id}-${phase}`,
-          timestamp: new Date(timestamp),
-          source: {
-            type: 'addon',
-            id: 'pipeline-analytics',
-            addonId: 'pipeline-analytics',
-          },
-          category: EventCategory.PipelineAnalyticsStationaryChanged,
-          data: {
-            deviceId: entry.deviceId,
-            entryId: entry.id,
-            className: entry.className,
-            phase,
-            timestamp,
-            // WHEN IT HAPPENED, beside when we concluded it. A notification
-            // anchors its media on this: a departure is confirmed by an
-            // independent read that can arrive minutes later (D279), and a clip
-            // cut at the conclusion shows an empty space with nothing leaving
-            // it — which is what the operator received.
-            observedAt,
-          },
+        // The event also names the zones the parked box is in, which costs two
+        // reads, so the emit follows them; the chain keeps an appear ahead of
+        // its own depart. A dropped StationaryChanged delays nothing durable:
+        // the automation `stationary-present` condition reads the registry
+        // (the zone-analytics snapshot), never this event (D8).
+        this.stationaryEmitChain = this.stationaryEmitChain.then(async () => {
+          const zones = await resolveStationaryEventZones(entry, {
+            resolveZones: (deviceId) => this.resolveDeviceZones(deviceId),
+            resolveMinOverlap: async (deviceId) =>
+              (await this.resolveDeviceTrackingSettings(deviceId)).zoneMembershipMinOverlap,
+            logger,
+          })
+          this.ctx.eventBus.emit({
+            id: `pa-stationary-${entry.id}-${phase}`,
+            timestamp: new Date(timestamp),
+            source: {
+              type: 'addon',
+              id: 'pipeline-analytics',
+              addonId: 'pipeline-analytics',
+            },
+            category: EventCategory.PipelineAnalyticsStationaryChanged,
+            data: {
+              deviceId: entry.deviceId,
+              entryId: entry.id,
+              className: entry.className,
+              phase,
+              timestamp,
+              // WHEN IT HAPPENED, beside when we concluded it. A notification
+              // anchors its media on this: a departure is confirmed by an
+              // independent read that can arrive minutes later (D279), and a clip
+              // cut at the conclusion shows an empty space with nothing leaving
+              // it — which is what the operator received.
+              observedAt,
+              zones,
+            },
+          })
         })
         // Additive consumer of the SAME appear/depart signal — turns a
         // parked package into delivered / picked-up events. Fire-and-forget

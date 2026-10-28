@@ -14,7 +14,12 @@
  */
 
 import { evaluateExpressionSource, toExpressionValue } from '../expression/expression-source.js'
-import type { AutomationCondition, AutomationConditionOperator } from './recipe.js'
+import { detectionClassMatches } from './detection-trigger.js'
+import type {
+  AutomationCondition,
+  AutomationConditionOperator,
+  AutomationConditionStationaryPresent,
+} from './recipe.js'
 import type { AutomationConditionTraceNode, TraceValue } from './trace.js'
 
 // ── The mirror ────────────────────────────────────────────────────────────
@@ -23,6 +28,9 @@ import type { AutomationConditionTraceNode, TraceValue } from './trace.js'
 export type MirrorSource =
   | { readonly kind: 'device'; readonly deviceId: number; readonly cap: string }
   | { readonly kind: 'stable'; readonly stableId: string; readonly cap: string }
+
+/** The cap whose runtime-state slice IS the occupancy snapshot, parked objects included. */
+const ZONE_ANALYTICS_CAP = 'zone-analytics'
 
 function collectInto(cond: AutomationCondition, out: MirrorSource[]): void {
   switch (cond.kind) {
@@ -35,6 +43,9 @@ function collectInto(cond: AutomationCondition, out: MirrorSource[]): void {
       return
     case 'condition':
       out.push({ kind: 'device', deviceId: cond.deviceId, cap: cond.cap })
+      return
+    case 'stationary-present':
+      out.push({ kind: 'device', deviceId: cond.deviceId, cap: ZONE_ANALYTICS_CAP })
       return
     case 'expression':
       for (const binding of Object.values(cond.bindings)) {
@@ -245,6 +256,81 @@ function markSkipped(
   }
 }
 
+interface ParkedObjectRow {
+  readonly id: string
+  readonly className: string
+}
+
+function parkedObjectsOf(value: unknown): readonly ParkedObjectRow[] {
+  if (!Array.isArray(value)) return []
+  const rows: ParkedObjectRow[] = []
+  for (const item of value) {
+    const id = Reflect.get(Object(item), 'id')
+    const className = Reflect.get(Object(item), 'className')
+    if (typeof id === 'string' && typeof className === 'string') rows.push({ id, className })
+  }
+  return rows
+}
+
+/** `zoneId`s whose `trackIds` list the parked object (`stationary:<id>`, as the snapshot builds it). */
+function zonesOfParked(zones: unknown, parkedId: string): readonly string[] {
+  if (!Array.isArray(zones)) return []
+  const out: string[] = []
+  for (const zone of zones) {
+    const zoneId = Reflect.get(Object(zone), 'zoneId')
+    const trackIds = Reflect.get(Object(zone), 'trackIds')
+    if (
+      typeof zoneId === 'string' &&
+      Array.isArray(trackIds) &&
+      trackIds.includes(`stationary:${parkedId}`)
+    ) {
+      out.push(zoneId)
+    }
+  }
+  return out
+}
+
+/**
+ * Is a matching parked object there NOW? Read off the mirrored zone-analytics
+ * snapshot: `frame` is always present in a snapshot, so its absence means the
+ * slice was never read (UNKNOWN, a fail that says so), while a snapshot without
+ * `stationaryObjects` is a definite "nothing parked" (the provider omits an
+ * empty list).
+ */
+function judgeStationaryPresent(
+  cond: AutomationConditionStationaryPresent,
+  reader: ConditionReader,
+): { readonly pass: boolean; readonly why: string } {
+  const frame = reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'frame')
+  if (frame === undefined) {
+    return { pass: false, why: `device ${cond.deviceId} occupancy snapshot unknown` }
+  }
+  const parked = parkedObjectsOf(
+    reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'stationaryObjects'),
+  )
+  if (parked.length === 0) {
+    return { pass: false, why: `no parked objects on device ${cond.deviceId}` }
+  }
+  const zones = reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'zones')
+  for (const obj of parked) {
+    if (
+      cond.classes !== undefined &&
+      !cond.classes.some((c) => detectionClassMatches(c, obj.className))
+    ) {
+      continue
+    }
+    if (cond.zones !== undefined) {
+      const inZones = zonesOfParked(zones, obj.id)
+      if (!cond.zones.some((z) => inZones.includes(z))) continue
+    }
+    return { pass: true, why: `parked ${obj.className} (${obj.id}) on device ${cond.deviceId}` }
+  }
+  return {
+    pass: false,
+    why: `${parked.length} parked on device ${cond.deviceId}, none matching the class/zone filter`,
+  }
+}
+
 function evalNode(
   cond: AutomationCondition,
   path: string,
@@ -276,6 +362,18 @@ function evalNode(
         reason: `${cond.fieldPath} ${show(observed)}, expected ${OPERATOR_SYMBOL[cond.operator]} ${show(cond.value)} → ${ok ? 'pass' : 'fail'}`,
       })
       return ok
+    }
+    case 'stationary-present': {
+      const verdict = judgeStationaryPresent(cond, reader)
+      out.push({
+        path,
+        kind: cond.kind,
+        outcome: verdict.pass ? 'pass' : 'fail',
+        reason: `${verdict.why} → ${verdict.pass ? 'pass' : 'fail'}`,
+        deviceId: cond.deviceId,
+        cap: ZONE_ANALYTICS_CAP,
+      })
+      return verdict.pass
     }
     case 'expression': {
       const values: Record<string, string | number | boolean | null> = {}

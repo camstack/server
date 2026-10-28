@@ -34,6 +34,13 @@ export {
   FIRED_MAX,
   FIRED_TTL_MS,
 } from './detection-trigger.js'
+export type {
+  StationaryChangedInput,
+  StationaryDecision,
+  StationaryTrigger,
+  StationaryVars,
+} from './stationary-trigger.js'
+export { evaluateStationaryTrigger } from './stationary-trigger.js'
 export type { CooldownInput, CooldownVerdict, RunGateAdmission } from './run-gate.js'
 export { RunGate } from './run-gate.js'
 export type {
@@ -74,6 +81,7 @@ export type {
   AutomationConditionLeaf,
   AutomationConditionNot,
   AutomationConditionOperator,
+  AutomationConditionStationaryPresent,
   AutomationRecipe,
   AutomationRunMode,
   AutomationTrigger,

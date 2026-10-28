@@ -109,6 +109,11 @@ export function triggerKindLabel(kind: TriggerKind): string {
       return i18n.t('helpers.recipeParts.trigger_device_event')
     case 'schedule':
       return i18n.t('helpers.recipeParts.trigger_schedule')
+    case 'stationary':
+      return i18n.t('automation.readOnly.stationaryTrigger')
+    case 'detection':
+    case 'interval':
+      return i18n.t('automation.readOnly.otherTrigger')
     default:
       return i18n.t('helpers.recipeParts.trigger_manual')
   }
