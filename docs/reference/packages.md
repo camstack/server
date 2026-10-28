@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.670 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.671 | the update itself | — |
 
 ## Framework (5)
 
@@ -67,7 +67,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.161 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
 | `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.30 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.150 | addons dir | ONVIF camera device provider addon for CamStack |
-| `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.150 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
+| `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.151 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
 | `@camstack/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.2.148 | addons dir | Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
 | `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.213 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
 | `@camstack/addon-provider-rtsp` | `packages/addon-provider-rtsp` | 1.2.148 | addons dir | Generic RTSP camera device provider addon for CamStack |
