@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.160] - 2026-10-28
+
 ### Fixed
 
 - A docked Dreame robot at rest no longer shows Error 68

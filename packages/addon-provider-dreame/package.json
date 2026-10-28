@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-dreame",
-  "version": "0.2.159",
+  "version": "0.2.160",
   "description": "Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client",
   "keywords": [
     "camstack",

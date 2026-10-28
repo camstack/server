@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.634] - 2026-10-28
+
 ### Changed
 
 - The hub serves viewer 1.0.663: the embed hides the assignment chip, shows short ages up to a week and follows the lang parameter

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.433] - 2026-10-28
+
 ### Changed
 
 - Unknown event kinds, state words and class names read as words instead of raw ids

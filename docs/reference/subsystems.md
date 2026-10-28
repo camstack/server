@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7274 source files · 1201 file(s) in no subsystem.**
+**31 subsystems · 7276 source files · 1201 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -33,7 +33,7 @@ commits. A generated page may not.
 | Pipeline orchestration and placement | 199 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +100 more, 27 ADRs | 2026-10-26 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 501 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +170 more, 29 ADRs | 2026-10-14 | ✅ |
 | Face, plate and embedding recognition | 50 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +26 more, 4 ADRs | 2026-10-04 | ⚠️ |
-| Notification Center — rules, outbox, occupancy, timelapse | 264 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +85 more, 27 ADRs | 2026-10-07 | ✅ |
+| Notification Center — rules, outbox, occupancy, timelapse | 265 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +85 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, `design/2026-08-25-scrub-advanced-analysis.md` _(covers)_, +93 more, 19 ADRs | 2026-10-26 | ⚠️ |
 | Stream broker, WebRTC and live delivery | 166 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
 | Audio analysis and audio delivery | 17 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
@@ -43,7 +43,7 @@ commits. A generated page may not.
 | Auth, scopes and method tiers | 96 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +28 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 158 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +101 more, 18 ADRs | 2026-10-27 | ⚠️ |
 | Shared types, schemas and enums | 99 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-26 | ⚠️ |
-| Update, release, OTA and agent delivery | 57 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +30 more, 10 ADRs | 2026-10-27 | ✅ |
+| Update, release, OTA and agent delivery | 58 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +30 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 295 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +47 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 51 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +16 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 136 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +24 more, 1 ADR | 2026-10-26 | ⚠️ |
@@ -153,7 +153,7 @@ Decides whether a track deserves to reach a human, and delivers it.
 
 - **Owner doc**: `docs/architecture/notifications.md`
 - **Code**: `packages/addon-post-analysis/src/notification-center/**`, `packages/types/src/notification/**`, `packages/types/src/i18n/**`, `packages/system/src/notification/**`, `packages/addon-notifiers/**`, `packages/addon-smtp-nodemailer/**`, `server/backend/src/core/notification/**`
-- **Files**: 264 (260 claimed by some document)
+- **Files**: 265 (261 claimed by some document)
 - **Uncovered**: `packages/addon-smtp-nodemailer/src` (2), `server/backend/src/core/notification` (2)
 
 ### ⚠️ Recorder, scrub and recorded playback
@@ -243,7 +243,7 @@ Gets new code onto a running cluster — package publication, agent bundles and 
 
 - **Owner doc**: `docs/architecture/update-and-release.md`
 - **Code**: `server/backend/src/agent/**`, `server/backend/src/core/agent/**`, `server/backend/src/core/server-update/**`, `server/backend/src/core/updates/**`, `packages/system/src/kernel/addon-installer.ts`, `packages/system/src/kernel/addon-loader.ts`, `packages/system/src/kernel/addon-manifest.ts`, `packages/system/src/kernel/addon-residue.ts`, `packages/system/src/kernel/workspace-detect.ts`
-- **Files**: 57 (57 claimed by some document)
+- **Files**: 58 (58 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT
