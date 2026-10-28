@@ -1775,7 +1775,7 @@
     "appleAsking": "Asking the nodes…",
     "appleHint": "Text only for now — notification titles and summaries. Apple refuses prompts framed as surveillance; when it does, the next profile in the chain answers instead.",
     "colFeatures": "Features",
-    "featureApple": "apple",
+    "featureApple": "Apple",
     "featureAppleImages": "apple images",
     "featureGpu": "GPU",
     "appleAvailable": "available",
@@ -1813,7 +1813,7 @@
     "testSubtitle": "A throwaway conversation with one profile. Attach a live camera snapshot or a recent track to check the model can actually read a picture. Nothing is saved — only the usage row.",
     "testTitle": "Test chat",
     "trackOf": "{{class}} on {{name}}",
-    "unreachable": "unreachable",
+    "unreachable": "Unreachable",
     "usageFailed": "Failed to read usage",
     "usageSubtitle": "Server-side rollup per day, consumer and profile — never raw call rows. Errors are counted, so a profile that always fails is visible here before a feature reports it.",
     "usageTitle": "Usage",
@@ -1871,7 +1871,14 @@
     "supportsVisionHint": "A vision call against a text-only profile is refused, never downgraded.",
     "unknownWidget": "This provider needs an editor part this build does not have ({{id}}).",
     "missingRequired": "required: {{fields}}",
-    "completeProvider": "complete the provider settings"
+    "completeProvider": "complete the provider settings",
+    "colFeature": "Feature",
+    "stateReady": "Ready",
+    "stateDownloading": "Downloading",
+    "stateStarting": "Starting",
+    "stateStopped": "Stopped",
+    "stateCrashed": "Crashed",
+    "stateFailed": "Failed"
   },
   "logging": {
     "levels": {

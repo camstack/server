@@ -23,7 +23,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Server } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RUNTIME_NODES_KEY, runtimeNodeFeatures, runtimeStateTone } from './ai-page.helpers'
+import { RUNTIME_NODES_KEY,
+  runtimeNodeFeatures,
+  runtimeStateLabelKey,
+  runtimeStateTone,
+ } from './ai-page.helpers'
 import i18n from '../../i18n/index'
 
 const REFETCH_MS = 5_000
@@ -58,9 +62,7 @@ export function AiRuntimesPage() {
         render: (n) => (
           <span className="flex items-center gap-1.5">
             <Badge variant={runtimeStateTone(n)}>
-              {n.reachable
-                ? (n.status?.state ?? t('ai.ready', 'ready'))
-                : t('ai.unreachable', 'unreachable')}
+              {t(runtimeStateLabelKey(n))}
             </Badge>
             {n.status?.downloadProgress !== undefined && (
               <Badge variant="info">{`${String(Math.round(n.status.downloadProgress * 100))}%`}</Badge>
@@ -86,7 +88,7 @@ export function AiRuntimesPage() {
       },
       {
         key: 'features',
-        header: t('ai.colFeatures', 'Features'),
+        header: t('ai.colFeature', 'Feature'),
         render: (n) => {
           const badges = runtimeNodeFeatures(n)
           if (badges.length === 0) return <span className="text-foreground-subtle">—</span>

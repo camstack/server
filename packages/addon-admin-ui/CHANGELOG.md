@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A sign-in step that gets a non-JSON answer now names the step and HTTP status instead of a browser parse error
+- AI Runtimes table: the Features column is now Feature, a stopped runtime reads Stopped (Fermo) in red, and Apple is capitalised.
 
 ## [1.2.497] - 2026-10-27
 

@@ -202,6 +202,21 @@ const STATE_TONE: Readonly<Record<RuntimeState, RuntimeTone>> = {
   failed: 'danger',
 }
 
+/** i18n key of the chip text for each runtime state, so none draws raw. */
+const STATE_LABEL_KEY: Readonly<Record<RuntimeState, string>> = {
+  ready: 'ai.stateReady',
+  downloading: 'ai.stateDownloading',
+  starting: 'ai.stateStarting',
+  stopped: 'ai.stateStopped',
+  crashed: 'ai.stateCrashed',
+  failed: 'ai.stateFailed',
+}
+
+export function runtimeStateLabelKey(node: LlmRuntimeNode): string {
+  if (!node.reachable) return 'ai.unreachable'
+  return node.status === undefined ? 'ai.stateReady' : STATE_LABEL_KEY[node.status.state]
+}
+
 export function runtimeStateTone(node: LlmRuntimeNode): RuntimeTone {
   if (!node.reachable) return 'danger'
   // Reachable with no status reads as "ready" (the label the table draws).

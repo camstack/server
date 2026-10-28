@@ -1836,7 +1836,7 @@
     "appleAsking": "Interrogo i nodi…",
     "appleHint": "Per ora solo testo: titoli e riassunti delle notifiche. Apple rifiuta le richieste formulate come sorveglianza; in quel caso risponde il profilo successivo della catena.",
     "colFeatures": "Funzionalità",
-    "featureApple": "apple",
+    "featureApple": "Apple",
     "featureAppleImages": "apple immagini",
     "featureGpu": "GPU",
     "appleAvailable": "disponibile",
@@ -1874,7 +1874,7 @@
     "testSubtitle": "Una conversazione usa e getta con un solo profilo. Allega uno snapshot dal vivo o una traccia recente per verificare che il modello sappia davvero leggere un'immagine. Non viene salvato nulla — solo la riga di utilizzo.",
     "testTitle": "Chat di test",
     "trackOf": "{{class}} su {{name}}",
-    "unreachable": "irraggiungibile",
+    "unreachable": "Irraggiungibile",
     "usageFailed": "Impossibile leggere l'utilizzo",
     "usageSubtitle": "Aggregato lato server per giorno, consumatore e profilo — mai le singole chiamate. Gli errori sono contati, così un profilo che fallisce sempre è visibile qui prima che una funzione lo segnali.",
     "usageTitle": "Utilizzo",
@@ -1932,7 +1932,14 @@
     "supportsVisionHint": "Una richiesta con immagini a un profilo solo testo viene rifiutata, mai declassata.",
     "unknownWidget": "Questo provider richiede una parte dell’editor che questa versione non ha ({{id}}).",
     "missingRequired": "obbligatori: {{fields}}",
-    "completeProvider": "completa le impostazioni del provider"
+    "completeProvider": "completa le impostazioni del provider",
+    "colFeature": "Funzionalità",
+    "stateReady": "Pronto",
+    "stateDownloading": "In download",
+    "stateStarting": "Avvio",
+    "stateStopped": "Fermo",
+    "stateCrashed": "Andato in crash",
+    "stateFailed": "Fallito"
   },
   "logging": {
     "levels": {

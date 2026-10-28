@@ -16,6 +16,7 @@ import {
   groupKindsByAddon,
   iconForName,
   runtimeNodeFeatures,
+  runtimeStateLabelKey,
   runtimeStateTone,
 } from '../ai-page.helpers'
 
@@ -137,6 +138,11 @@ describe('runtimeStateTone', () => {
     expect(runtimeStateTone(status('stopped'))).toBe('danger')
     expect(runtimeStateTone(status('crashed'))).toBe('danger')
     expect(runtimeStateTone(status('failed'))).toBe('danger')
+  })
+
+  it('a stopped runtime draws the translated Stopped label, not the raw state', () => {
+    expect(runtimeStateLabelKey(status('stopped'))).toBe('ai.stateStopped')
+    expect(runtimeStateLabelKey(node({ reachable: false }))).toBe('ai.unreachable')
   })
 
   it('only READY is success; work in progress is info; unreachable is danger', () => {
