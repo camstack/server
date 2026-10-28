@@ -9,7 +9,7 @@ import { AlertActionLink } from './AlertActionLink'
 import {
   dismissCriticalAlertsPanelThisLoad,
   filterUnreadCriticalAlerts,
-  hasNonEmptyActionHref,
+  hasUsableAction,
   isCriticalAlertsPanelDismissedThisLoad,
 } from './critical-alerts'
 
@@ -21,7 +21,7 @@ function CriticalAlertPanelRow({
   readonly onMarkRead: (id: string) => void
 }) {
   const { t } = useTranslation()
-  const action = hasNonEmptyActionHref(alert.action) ? alert.action : undefined
+  const action = hasUsableAction(alert.action) ? alert.action : undefined
 
   return (
     <div className="border-b border-border last:border-b-0 px-3 py-2.5">

@@ -4443,3 +4443,13 @@ The intake (`incomingFromAlertEpisode`) maps that episode to
 device rule's `deviceIds` / `deviceTypes` apply and the alert never notifies
 through two families. Template variables: `{{deviceName}}`, `{{title}}`,
 `{{message}}`, `{{actionUrl}}`, `{{category}}`.
+
+## A system alert's action is a link or a button that runs a custom action ([D961](../decisions/adr-0961-an-alert-action-may-invoke-a-custom-action-and-a-rebalance-is-suggested-not-forced.md), 2026-10-28)
+
+`Alert.action` is `{ label, href? , navigation?, invoke? }`. `href` goes
+somewhere (an admin route, or a hub route with `navigation: 'server'`).
+`invoke: { addonId, action, input? }` RUNS something: the admin UI shows a
+button that calls `addons.custom` with those fields, shows the pending and
+failure state in place, and refreshes the alerts on success. The producer
+decides what the action does and closes or fails its own alert; the UI knows no
+addon and no alert kind. An action has `href` or `invoke`, not both.

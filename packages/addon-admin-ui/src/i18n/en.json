@@ -5642,6 +5642,9 @@
       "title": "Urgent alerts",
       "subtitle": "These need your attention.",
       "close": "Close"
+    },
+    "alertAction": {
+      "running": "Working…"
     }
   },
   "layouts": {

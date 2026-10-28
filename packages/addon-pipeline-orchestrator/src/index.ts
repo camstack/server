@@ -192,9 +192,15 @@ import { PlacementLedger } from './placement-ledger.js'
 import {
   PlacementService,
   PREFERRED_AGENT_SETTING,
+  type RebalanceOptions,
   type RebalanceResult,
 } from './placement-service.js'
 import { ReconcileController } from './reconcile-controller.js'
+import {
+  DEFAULT_SUGGESTION_DEBOUNCE_MS,
+  REBALANCE_SUGGESTED_ALERT_ID,
+  RebalanceSuggestion,
+} from './rebalance-suggestion.js'
 import {
   type PinResetTrigger,
   type ResetModelPin,
@@ -382,6 +388,9 @@ export default class PipelineOrchestratorAddon
    * Constructed right after `loadShed`. Nulled at the end of `onShutdown`.
    */
   private placement: PlacementService | null = null
+  /** The debounced "placement can be rebalanced" evaluation; see `rebalance-suggestion.ts`. */
+  private rebalanceSuggestion: RebalanceSuggestion | null = null
+  private unsubSuggestionEvents: Unsubscribe[] = []
   /** EventBus unsubscribes for agent online/offline events. */
   private unsubAgentOnline: Unsubscribe | null = null
   private unsubAgentOffline: Unsubscribe | null = null
@@ -709,6 +718,7 @@ export default class PipelineOrchestratorAddon
     this.localNodeId = controllers.localNodeId
     this.unsubAgentOnline = controllers.unsubAgentOnline
     this.unsubAgentOffline = controllers.unsubAgentOffline
+    this.startRebalanceSuggestion()
     this.unsubOrchestratorSubscriptions = controllers.unsubOrchestratorSubscriptions
     this.pendingRetryTimer = controllers.pendingRetryTimer
     this.autoRebalanceTimer = controllers.autoRebalanceTimer
@@ -755,6 +765,7 @@ export default class PipelineOrchestratorAddon
       customActions: pipelineOrchestratorActions,
       actionHandlers: {
         dumpState: async () => this.dumpDiagnostics(),
+        rebalanceNow: async () => this.rebalanceNow(),
         nodeStressStats: async (input: NodeStressStatsInput): Promise<NodeStressStatsOutput> => {
           const lts = this.nodeStressLts
           const moves = this.nodeStress?.historyView() ?? []
@@ -883,6 +894,7 @@ export default class PipelineOrchestratorAddon
 
     this.unsubAgentOffline?.()
     this.unsubAgentOffline = null
+    this.stopRebalanceSuggestion()
     this.effectiveSharesService?.stop()
     this.unsubAgentOnline?.()
     this.unsubAgentOnline = null
@@ -980,8 +992,101 @@ export default class PipelineOrchestratorAddon
     return { deviceKey: await this.readPipelineDevicePin(input.deviceId) }
   }
 
-  async rebalance(opts?: { readonly minImprovement?: number }): Promise<RebalanceResult> {
+  async rebalance(opts?: RebalanceOptions): Promise<RebalanceResult> {
     return this.placement!.rebalance(opts)
+  }
+
+  /**
+   * The `rebalanceNow` custom action: a manual rebalance, and the verdict on
+   * the suggestion alert that offered it. Every branch is logged.
+   */
+  private async rebalanceNow(): Promise<{ migrated: number; skipped: number }> {
+    const alertId = REBALANCE_SUGGESTED_ALERT_ID
+    try {
+      const result = await this.rebalance({ minImprovement: 0 })
+      const message = `${String(result.migrated)} ${result.migrated === 1 ? 'camera' : 'cameras'} moved`
+      this.ctx.logger.info('rebalanceNow: done', {
+        meta: { migrated: result.migrated, skipped: result.skipped.length },
+      })
+      await this.ctx.api.alerts.update
+        .mutate({
+          alertId,
+          patch: { status: 'completed', message, updatedAt: Date.now() },
+        })
+        .catch((err: unknown) =>
+          this.ctx.logger.warn('rebalanceNow: could not close the suggestion alert', {
+            meta: { error: errMsg(err) },
+          }),
+        )
+      return { migrated: result.migrated, skipped: result.skipped.length }
+    } catch (err: unknown) {
+      const reason = errMsg(err)
+      this.ctx.logger.error('rebalanceNow: failed', {
+        meta: { error: reason },
+      })
+      await this.ctx.api.alerts.update
+        .mutate({
+          alertId,
+          patch: {
+            status: 'failed',
+            message: `Rebalance failed: ${reason}`,
+            updatedAt: Date.now(),
+          },
+        })
+        .catch((e: unknown) =>
+          this.ctx.logger.warn('rebalanceNow: could not mark the suggestion alert failed', {
+            meta: { error: errMsg(e) },
+          }),
+        )
+      throw err
+    }
+  }
+
+  private startRebalanceSuggestion(): void {
+    const ctx = this.ctx
+    const suggestion = new RebalanceSuggestion({
+      addonId: 'pipeline-orchestrator',
+      logger: ctx.logger,
+      debounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
+      now: () => Date.now(),
+      plan: (minImprovement) => this.rebalance({ minImprovement, dryRun: true }),
+      enabledNodes: () => this.topology?.enabledNodes ?? [],
+      runnerNodes: () => this.topology?.collectRunnerNodeIds() ?? [],
+      alerts: {
+        emit: (alert) => ctx.api.alerts.emit.mutate(alert),
+        complete: (alertId) =>
+          ctx.api.alerts.update.mutate({
+            alertId,
+            patch: { status: 'completed', updatedAt: Date.now() },
+          }),
+      },
+    })
+    this.rebalanceSuggestion = suggestion
+    this.unsubSuggestionEvents = [
+      ctx.eventBus.subscribe({ category: EventCategory.AgentOnline }, (event) =>
+        suggestion.noteNodeEvent({
+          kind: 'joined',
+          nodeId: event.data.agentId,
+        }),
+      ),
+      ctx.eventBus.subscribe({ category: EventCategory.AgentOffline }, (event) =>
+        suggestion.noteNodeEvent({
+          kind: 'left',
+          nodeId: event.data.agentId,
+        }),
+      ),
+      ctx.eventBus.subscribe({ category: EventCategory.AgentUnregistered }, (event) => {
+        const agentId = event.data['agentId']
+        if (typeof agentId === 'string') suggestion.noteNodeEvent({ kind: 'left', nodeId: agentId })
+      }),
+    ]
+  }
+
+  private stopRebalanceSuggestion(): void {
+    for (const unsub of this.unsubSuggestionEvents) unsub()
+    this.unsubSuggestionEvents = []
+    this.rebalanceSuggestion?.dispose()
+    this.rebalanceSuggestion = null
   }
 
   getPipelineAssignments(): readonly PipelineAssignment[] {
@@ -1361,7 +1466,12 @@ export default class PipelineOrchestratorAddon
   }
 
   async getAudioAssignments(): Promise<
-    Array<{ deviceId: number; nodeId: string; pinned: boolean; assignedAt: number }>
+    Array<{
+      deviceId: number
+      nodeId: string
+      pinned: boolean
+      assignedAt: number
+    }>
   > {
     return this.audio!.getAssignments().map((a) => ({
       deviceId: a.deviceId,
@@ -1513,6 +1623,10 @@ export default class PipelineOrchestratorAddon
     this.topology!.addKnownRunnerNode(input.agentNodeId)
     this.reconcile!.schedulePendingRetry()
     if (input.detect !== undefined) this.noteShareChange(`node-detect:${input.agentNodeId}`)
+    this.rebalanceSuggestion?.noteNodeEvent({
+      kind: 'capabilities',
+      nodeId: input.agentNodeId,
+    })
     return { success: true as const }
   }
 
@@ -1527,7 +1641,9 @@ export default class PipelineOrchestratorAddon
     readonly maxLiveDecodeWorkers?: number | null
   }): Promise<{ success: true }> {
     const all = await this.settingsStore!.readAgentSettingsMap()
-    const existing: AgentPipelineSettings = all[input.agentNodeId] ?? { maxCameras: null }
+    const existing: AgentPipelineSettings = all[input.agentNodeId] ?? {
+      maxCameras: null,
+    }
     const applyLimit = (key: 'decodeBudgetMb' | 'maxLiveDecodeWorkers'): number | undefined => {
       const patch = input[key]
       if (patch === undefined) return existing[key]
@@ -2024,7 +2140,11 @@ export default class PipelineOrchestratorAddon
     this.ctx.eventBus.emit({
       id: randomUUID(),
       timestamp: new Date(),
-      source: { type: 'addon', id: 'pipeline-orchestrator', addonId: 'pipeline-orchestrator' },
+      source: {
+        type: 'addon',
+        id: 'pipeline-orchestrator',
+        addonId: 'pipeline-orchestrator',
+      },
       category: EventCategory.PipelineNodeInferenceUnavailable,
       data: { nodeId, unavailableDeviceKeys: usability.unavailableKeys },
     })
@@ -2077,7 +2197,9 @@ export default class PipelineOrchestratorAddon
     try {
       const api = this.ctx.api
       if (!api) return null
-      const health = await api.pipelineExecutor.getInferenceDeviceHealth.query({ nodeId })
+      const health = await api.pipelineExecutor.getInferenceDeviceHealth.query({
+        nodeId,
+      })
       return health.unhealthy.map((entry) => entry.deviceKey)
     } catch (err: unknown) {
       // WARN, not ERROR, and rate-limited by its own change-gate upstream: a
@@ -2170,7 +2292,11 @@ export default class PipelineOrchestratorAddon
       tags: { nodeId },
       meta: {
         eligible: eligibleKeys,
-        excluded: excluded.map((e) => ({ key: e.key, reason: e.reason, format: e.format })),
+        excluded: excluded.map((e) => ({
+          key: e.key,
+          reason: e.reason,
+          format: e.format,
+        })),
       },
     })
   }
@@ -2315,7 +2441,9 @@ export default class PipelineOrchestratorAddon
       rewriteAgentSettings: (transform) => store.rewriteAgentSettingsMap(transform),
       cameraFps: async () => this.autoTuneCameraFps(),
       // Node benchmark results (D791): measured on the node beats the table.
-      measuredCapacity: { readMeasuredCapacity: (nodeIds) => this.readMeasuredCapacity(nodeIds) },
+      measuredCapacity: {
+        readMeasuredCapacity: (nodeIds) => this.readMeasuredCapacity(nodeIds),
+      },
       measuredLatency: (nodeIds) => this.readMeasuredLatency(nodeIds),
       downloadModel: async (nodeId, modelId, format) => {
         const api = this.ctx.api
@@ -2454,7 +2582,11 @@ export default class PipelineOrchestratorAddon
       readSource: () => this.readShareSource(),
       readStored: async () => storedShareWeights(await store.readAgentSettingsMap()),
       // ONE computation: the automatic shares ARE the suggestion for the source.
-      suggest: (source) => this.autoTune().suggestShares({ headroom: AUTO_SHARE_HEADROOM, source }),
+      suggest: (source) =>
+        this.autoTune().suggestShares({
+          headroom: AUTO_SHARE_HEADROOM,
+          source,
+        }),
       topologySignature: async () => {
         const nodeIds = [...new Set(['hub', ...this.topology!.collectRunnerNodeIds()])]
         const blob = await store.readAgentSettingsMap()
@@ -2491,7 +2623,11 @@ export default class PipelineOrchestratorAddon
       out[nodeId] = annotateInferenceDeviceExclusions(
         mergeInferenceDevices(probed, stored),
         eligibility,
-      ).map((d) => ({ key: d.key, available: d.available, exclusion: d.exclusion }))
+      ).map((d) => ({
+        key: d.key,
+        available: d.available,
+        exclusion: d.exclusion,
+      }))
     }
     return out
   }
@@ -2551,7 +2687,10 @@ export default class PipelineOrchestratorAddon
         (await this.getNodeInferenceDevices({ nodeId })).devices.map((d) => d.key),
       sessionsNow: () => this.placementStats.snapshot(60_000).sessionsNow,
       suggestShares: () =>
-        this.autoTune().suggestShares({ headroom: AUTO_SHARE_HEADROOM, source: 'benchmark' }),
+        this.autoTune().suggestShares({
+          headroom: AUTO_SHARE_HEADROOM,
+          source: 'benchmark',
+        }),
       pollIntervalMs: this.nodeBenchmarkPollMs,
       onResultsWritten: (nodeId) => {
         this.currentPoolCache.clear()
@@ -2674,7 +2813,9 @@ export default class PipelineOrchestratorAddon
       readDevices: (nodeId) => this.getNodeInferenceDevices({ nodeId }),
       readCatalog: (nodeId) => this.settingsStore!.readCatalogForNode(nodeId),
       autoTunePicks: async (nodeId) => {
-        const plan = await this.autoTune().plan({ headroom: AUTO_SHARE_HEADROOM })
+        const plan = await this.autoTune().plan({
+          headroom: AUTO_SHARE_HEADROOM,
+        })
         const node = plan.nodes.find((n) => n.nodeId === nodeId)
         const out: Record<string, string> = {}
         for (const d of node?.devices ?? []) {
@@ -2699,7 +2840,9 @@ export default class PipelineOrchestratorAddon
   async deleteNodeBenchmarkResult(input: { readonly id: string }): Promise<{ deleted: boolean }> {
     const deleted = (await this.nodeBenchmarkStore?.deleteResult(input.id)) ?? false
     if (deleted) {
-      this.ctx.logger.info('node benchmark result deleted', { meta: { id: input.id } })
+      this.ctx.logger.info('node benchmark result deleted', {
+        meta: { id: input.id },
+      })
       this.noteShareChange('benchmark-result-deleted')
     }
     return { deleted }
@@ -2756,7 +2899,10 @@ export default class PipelineOrchestratorAddon
     const rows = this.nodeBenchmarkStore?.listResults() ?? []
     const out = new Map<string, MeasuredLatency>()
     if (rows.length === 0) return out
-    const ctx = { nowMs: Date.now(), currentPools: await this.readCurrentPools(rows) }
+    const ctx = {
+      nowMs: Date.now(),
+      currentPools: await this.readCurrentPools(rows),
+    }
     for (const nodeId of nodeIds) {
       const cells = measuredDetectorCells(rows, nodeId, ctx)
       if (Object.keys(cells).length > 0) out.set(nodeId, cells)
@@ -2831,7 +2977,9 @@ export default class PipelineOrchestratorAddon
       const auto = this.effectiveShares().current()
       if (auto !== null) await this.setLoadBalancingShares(auto.weights)
     }
-    await this.updateGlobalSettings({ [SHARE_SOURCE_SETTING_KEY]: input.source })
+    await this.updateGlobalSettings({
+      [SHARE_SOURCE_SETTING_KEY]: input.source,
+    })
     this.ctx.logger.info('load balancing: share source changed', {
       meta: { from: previous, to: input.source },
     })

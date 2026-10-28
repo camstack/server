@@ -189,15 +189,33 @@ const NodeStressStatsOutputSchema = z.object({
    *  Exposed for the same reason the heartbeat exists: "nothing moved" has to
    *  be distinguishable from "nothing is watching". */
   moves: z
-    .array(z.object({ deviceId: z.number(), fromNodeId: z.string(), at: z.number() }))
+    .array(
+      z.object({
+        deviceId: z.number(),
+        fromNodeId: z.string(),
+        at: z.number(),
+      }),
+    )
     .readonly(),
 })
 
 export type NodeStressStatsInput = z.infer<typeof NodeStressStatsInputSchema>
 export type NodeStressStatsOutput = z.infer<typeof NodeStressStatsOutputSchema>
 
+const RebalanceNowOutputSchema = z.object({
+  migrated: z.number(),
+  skipped: z.number(),
+})
+
 export const pipelineOrchestratorActions = defineCustomActions({
   dumpState: customAction(z.void(), OrchestratorDiagnosticsSchema),
+  /**
+   * A manual rebalance (margin 0) — the action behind the "Camera placement can
+   * be rebalanced" alert. Closes that alert as completed, or marks it failed.
+   */
+  rebalanceNow: customAction(z.void(), RebalanceNowOutputSchema, {
+    auth: 'admin',
+  }),
   nodeStressStats: customAction(NodeStressStatsInputSchema, NodeStressStatsOutputSchema, {
     auth: 'admin',
   }),

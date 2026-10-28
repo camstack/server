@@ -209,12 +209,29 @@ export interface RebalanceOptions {
    * Absent = every camera.
    */
   readonly onlyDeviceIds?: ReadonlySet<number>
+  /**
+   * Plan only: run the same decision loop (same balancer, same hysteresis,
+   * same running tally) and report the moves it WOULD make, without detaching,
+   * attaching or touching the ledger. The act and the plan share one loop so
+   * they cannot disagree.
+   */
+  readonly dryRun?: boolean
+}
+
+/** One camera a rebalance pass moves (or, under `dryRun`, would move). */
+export interface RebalanceMove {
+  readonly deviceId: number
+  /** The node it leaves; `null` for a camera with no current assignment. */
+  readonly fromNodeId: string | null
+  readonly toNodeId: string
 }
 
 /** What a rebalance pass did — and what it could not do. */
 export interface RebalanceResult {
   readonly migrated: number
   readonly skipped: readonly RebalanceSkip[]
+  /** The moves made — or, under `dryRun`, the moves that would be made. */
+  readonly moves: readonly RebalanceMove[]
 }
 
 /** A node that has never answered what a re-place needs — see `EligibilityIfCached`. */
@@ -266,7 +283,10 @@ export class PlacementService {
     }
     this.deps.ctx().logger.info('nodes dropped from placement — no usable inference device', {
       tags: { deviceId },
-      meta: { dropped: nodes.filter((n) => !usable.includes(n)), kept: usable },
+      meta: {
+        dropped: nodes.filter((n) => !usable.includes(n)),
+        kept: usable,
+      },
     })
     return usable
   }
@@ -429,7 +449,9 @@ export class PlacementService {
     // resolved in one device-store read by `readPipelinePin`.
     const preferredAgent = await this.deps.readPipelinePin(runnerConfig.deviceId)
 
-    const loads = await this.deps.loadService.collectAgentLoad({ onlyEnabled: true })
+    const loads = await this.deps.loadService.collectAgentLoad({
+      onlyEnabled: true,
+    })
     const eligible = this.filterInferenceUsable(
       this.deps.topology.detectionEligibleNodes(runnerConfig.deviceId),
       runnerConfig.deviceId,
@@ -486,7 +508,10 @@ export class PlacementService {
         this.handlePendingDecision(runnerConfig.deviceId, decision.reason)
         // Leave unassigned; the next dispatchCamera or rebalance will retry when
         // capacity frees / a frame-source node becomes eligible.
-        return { success: true, kind: 'pending' } satisfies DispatchResultPending
+        return {
+          success: true,
+          kind: 'pending',
+        } satisfies DispatchResultPending
       }
 
       targetNodeId = decision.agentNodeId
@@ -709,7 +734,9 @@ export class PlacementService {
 
     const clearing = input.deviceKey === '' || input.deviceKey === 'auto'
     await ctx.settings
-      ?.writeDeviceStore(input.deviceId, { pipelineDeviceKey: clearing ? 'auto' : input.deviceKey })
+      ?.writeDeviceStore(input.deviceId, {
+        pipelineDeviceKey: clearing ? 'auto' : input.deviceKey,
+      })
       .catch((err: unknown) => {
         ctx.logger.warn('setPipelineDevicePin: failed to persist device pin', {
           tags: { deviceId: input.deviceId },
@@ -730,7 +757,10 @@ export class PlacementService {
         'setPipelineDevicePin: closed active session — next dispatch honours the device pin',
         {
           tags: { deviceId: input.deviceId },
-          meta: { deviceKey: clearing ? 'auto' : input.deviceKey, node: sessionNode },
+          meta: {
+            deviceKey: clearing ? 'auto' : input.deviceKey,
+            node: sessionNode,
+          },
         },
       )
     }
@@ -767,7 +797,9 @@ export class PlacementService {
     const current = this.deps.ledger.getAssignment(input.deviceId)
 
     if (cached) {
-      const loads = await this.deps.loadService.collectAgentLoad({ onlyEnabled: true })
+      const loads = await this.deps.loadService.collectAgentLoad({
+        onlyEnabled: true,
+      })
       const decision: BalancerDecision | null = balance({
         nodes: loads,
         preferredAgent: null,
@@ -889,7 +921,9 @@ export class PlacementService {
     // already-balanced cluster (a 1-camera gap would just reverse on the move).
     const minImprovement = Math.max(opts?.minImprovement ?? 0, 0)
 
-    const loads = await this.deps.loadService.collectAgentLoad({ onlyEnabled: true })
+    const loads = await this.deps.loadService.collectAgentLoad({
+      onlyEnabled: true,
+    })
     const nodeCaps = await this.deps.settingsStore.buildNodeCaps()
     const nodeWeights = await this.deps.settingsStore.buildNodeWeights()
 
@@ -927,6 +961,8 @@ export class PlacementService {
     // manual rebalance toward a node that has not answered yet does not look
     // like "nothing to do" (D650 round 3).
     const skipped: RebalanceSkip[] = []
+    const moves: RebalanceMove[] = []
+    const dryRun = opts?.dryRun === true
 
     for (const [deviceId, config] of this.deps.ledger.configEntries()) {
       // Idle on-motion cameras have no standing attach to rebalance until a
@@ -956,7 +992,7 @@ export class PlacementService {
       })
       if (!decision) continue
       if (decision.kind === 'pending') {
-        this.handlePendingDecision(deviceId, decision.reason)
+        if (!dryRun) this.handlePendingDecision(deviceId, decision.reason)
         continue
       }
       if (current && current.agentNodeId === decision.agentNodeId) continue
@@ -981,6 +1017,19 @@ export class PlacementService {
         ) {
           continue
         }
+      }
+
+      if (dryRun) {
+        // Plan: assume the move lands, so the tally the next camera sees is
+        // the one the real pass would have produced.
+        if (current) bumpAttached(current.agentNodeId, -1, config.deviceKey)
+        bumpAttached(decision.agentNodeId, 1, config.deviceKey)
+        moves.push({
+          deviceId,
+          fromNodeId: current?.agentNodeId ?? null,
+          toNodeId: decision.agentNodeId,
+        })
+        continue
       }
 
       // The pipeline is PER-(node, device): elect the TARGET node's device and
@@ -1042,10 +1091,21 @@ export class PlacementService {
         dispatchGuard.dispose()
       }
       migrated++
+      moves.push({
+        deviceId,
+        fromNodeId: current?.agentNodeId ?? null,
+        toNodeId: decision.agentNodeId,
+      })
     }
 
+    if (dryRun) {
+      ctx.logger.debug('rebalance: plan', {
+        meta: { minImprovement, wouldMove: moves.length },
+      })
+      return { migrated: 0, skipped, moves }
+    }
     ctx.logger.info('rebalance: migrated cameras', { meta: { migrated } })
-    return { migrated, skipped }
+    return { migrated, skipped, moves }
   }
 
   getPipelineAssignments(): readonly PipelineAssignment[] {
@@ -1126,7 +1186,11 @@ export class PlacementService {
 
     this.inFlightAttaches++
     try {
-      await api.pipelineRunner.attachCamera.mutate({ ...config, frameSource, nodeId })
+      await api.pipelineRunner.attachCamera.mutate({
+        ...config,
+        frameSource,
+        nodeId,
+      })
     } catch (err: unknown) {
       // Diagnostic: a "Maximum call stack size exceeded" here surfaces
       // a recursion bug somewhere between the tRPC proxy and the
@@ -1255,7 +1319,10 @@ export class PlacementService {
     if (config.audioMode !== 'always-on') return { camStreamId: null, hasTrack: false }
     const camStreamId = await this.deps.audioCamStreamFor(config)
     if (camStreamId === null) return { camStreamId: null, hasTrack: false }
-    return { camStreamId, hasTrack: await this.deps.hasAudioSource(config.deviceId, camStreamId) }
+    return {
+      camStreamId,
+      hasTrack: await this.deps.hasAudioSource(config.deviceId, camStreamId),
+    }
   }
 
   // ── Internals ─────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -13,14 +13,21 @@ vi.mock('../../../lib/broker-oauth-popup', () => ({
   startServerNavigation: (...args: unknown[]) => startServerNavigation(...args),
 }))
 
-import { isServerAlertAction } from '../critical-alerts'
+const custom = vi.fn()
+vi.mock('../../../lib/mount', () => ({ hubPath: (path: string) => path }))
+vi.mock('@camstack/ui-library', () => ({
+  useSystem: () => ({ trpcClient: { addons: { custom: { mutate: custom } } } }),
+}))
+
+import { hasUsableAction, isServerAlertAction } from '../critical-alerts'
 import { AlertActionLink } from '../AlertActionLink'
+import type { UsableAlertAction } from '../critical-alerts'
 
 function Where() {
   return <div data-testid="where">{useLocation().pathname}</div>
 }
 
-function renderLink(action: { label: string; href: string; navigation?: 'app' | 'server' }) {
+function renderLink(action: UsableAlertAction) {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter initialEntries={['/start']}>
@@ -40,13 +47,26 @@ function renderLink(action: { label: string; href: string; navigation?: 'app' | 
   )
 }
 
-beforeEach(() => startServerNavigation.mockClear())
+beforeEach(() => {
+  startServerNavigation.mockClear()
+  custom.mockReset()
+})
 
 describe('isServerAlertAction', () => {
   it('trusts the explicit navigation field', () => {
-    expect(isServerAlertAction({ label: 'x', href: '/anything', navigation: 'server' })).toBe(true)
     expect(
-      isServerAlertAction({ label: 'x', href: '/addon/a/oauth/start', navigation: 'app' }),
+      isServerAlertAction({
+        label: 'x',
+        href: '/anything',
+        navigation: 'server',
+      }),
+    ).toBe(true)
+    expect(
+      isServerAlertAction({
+        label: 'x',
+        href: '/addon/a/oauth/start',
+        navigation: 'app',
+      }),
     ).toBe(false)
   })
 
@@ -81,7 +101,10 @@ describe('AlertActionLink', () => {
   })
 
   it('a stored alert with no navigation field still does a server navigation', () => {
-    renderLink({ label: 'Go', href: '/addon/google-services/oauth/start?brokerId=g' })
+    renderLink({
+      label: 'Go',
+      href: '/addon/google-services/oauth/start?brokerId=g',
+    })
     fireEvent.click(screen.getByRole('link', { name: 'Go' }))
     expect(startServerNavigation).toHaveBeenCalledTimes(1)
   })
@@ -91,5 +114,44 @@ describe('AlertActionLink', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Open' }))
     expect(startServerNavigation).not.toHaveBeenCalled()
     expect(screen.getByTestId('where')).toHaveTextContent('/devices')
+  })
+})
+
+describe('an invoke action', () => {
+  const invoke = {
+    addonId: 'pipeline-orchestrator',
+    action: 'rebalanceNow',
+    input: { a: 1 },
+  }
+
+  it('is a usable action even with no href, and an empty action is not', () => {
+    expect(hasUsableAction({ label: 'Go', invoke })).toBe(true)
+    expect(hasUsableAction({ label: 'Go' })).toBe(false)
+    expect(hasUsableAction({ label: 'Go', href: '' })).toBe(false)
+    expect(hasUsableAction(undefined)).toBe(false)
+  })
+
+  it('is a button that calls addons.custom with the producer fields, then refreshes alerts', async () => {
+    custom.mockResolvedValue({ ok: true })
+    const client = new QueryClient()
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <AlertActionLink action={{ label: 'Rebalance now', invoke }} className="x" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Rebalance now' }))
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: [['alerts']] }))
+    expect(custom).toHaveBeenCalledWith(invoke)
+    expect(startServerNavigation).not.toHaveBeenCalled()
+  })
+
+  it('shows the failure and does not refresh when the call rejects', async () => {
+    custom.mockRejectedValue(new Error('runner offline'))
+    renderLink({ label: 'Rebalance now', invoke })
+    fireEvent.click(screen.getByRole('button', { name: 'Rebalance now' }))
+    expect(await screen.findByText(/runner offline/)).toBeInTheDocument()
   })
 })

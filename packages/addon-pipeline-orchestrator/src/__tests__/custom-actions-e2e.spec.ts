@@ -108,7 +108,11 @@ describe('PipelineOrchestratorAddon — custom actions envelope', () => {
 
     expect(result.localNodeId).toBe('hub')
     expect(result.enabledNodes).toEqual(expect.arrayContaining(['hub', 'agent-gpu']))
-    expect(registry.listActions('pipeline-orchestrator')).toEqual(['dumpState', 'nodeStressStats'])
+    expect(registry.listActions('pipeline-orchestrator')).toEqual([
+      'dumpState',
+      'rebalanceNow',
+      'nodeStressStats',
+    ])
     expect(registry.resolve('pipeline-orchestrator', 'nonexistent')).toBeNull()
   })
 })

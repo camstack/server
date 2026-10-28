@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An alert action can now run an addon's custom action as well as link to a page
+
 ## [1.2.438] - 2026-10-28
 
 ### Changed

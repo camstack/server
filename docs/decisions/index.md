@@ -4,7 +4,7 @@
 
 # Decisions
 
-923 architecture decision records. One file per decision, never
+924 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -938,6 +938,7 @@ that rots.
 | D957 | [A device value field names its quantity, never its unit](adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md) | ✅ accepted | 2026-10-27 |
 | D959 | [A PetKit re-login is gated, because the account has one session](adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md) | ✅ accepted | 2026-10-28 |
 | D960 | [A notifier declares its delivery parameters; a rule offers them when a selected notifier declares them](adr-0960-a-notifier-declares-its-delivery-parameters-and-a-rule-offers-them.md) | ✅ accepted | 2026-10-28 |
+| D961 | [An alert action may invoke an addon custom action; a skewed placement is suggested, not auto-corrected](adr-0961-an-alert-action-may-invoke-a-custom-action-and-a-rebalance-is-suggested-not-forced.md) | ✅ accepted | 2026-10-28 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

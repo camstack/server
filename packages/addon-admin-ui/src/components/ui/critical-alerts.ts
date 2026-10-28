@@ -24,11 +24,25 @@ export function filterUnreadCriticalAlerts(alerts: readonly Alert[]): Alert[] {
   return alerts.filter(isUnreadCriticalAlert)
 }
 
+type AlertAction = NonNullable<Alert['action']>
+
 /** An alert action that has somewhere to go. */
-export type AlertActionWithHref = NonNullable<Alert['action']> & { readonly href: string }
+export type AlertActionWithHref = AlertAction & { readonly href: string }
+
+/** An alert action that runs an addon's custom action. */
+export type AlertActionWithInvoke = AlertAction & {
+  readonly invoke: NonNullable<AlertAction['invoke']>
+}
+
+/** An alert action the UI can render: a link or an invoke button. */
+export type UsableAlertAction = AlertActionWithHref | AlertActionWithInvoke
 
 export function hasNonEmptyActionHref(action: Alert['action']): action is AlertActionWithHref {
   return action !== undefined && typeof action.href === 'string' && action.href.length > 0
+}
+
+export function hasUsableAction(action: Alert['action']): action is UsableAlertAction {
+  return hasNonEmptyActionHref(action) || (action !== undefined && action.invoke !== undefined)
 }
 
 /** `/addon/<id>/oauth/…` — an addon HTTP route (OAuth start/callback), not an admin page. */

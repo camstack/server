@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An alert whose action runs a command now shows a button that runs it in place
+
 ## [1.2.509] - 2026-10-28
 
 ### Fixed

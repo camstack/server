@@ -1629,7 +1629,7 @@
 
 ### `alerts` → `alerts.*`
 
-- **Source:** `packages/types/src/capabilities/alerts.cap.ts:65`
+- **Source:** `packages/types/src/capabilities/alerts.cap.ts:78`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IAlertsProvider`
@@ -1637,7 +1637,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | emit | `alerts.emit` | mutation | protected | `AlertSchema` | `void` |
-| update | `alerts.update` | mutation | protected | `{ alertId: string; patch: { id?: string; category?: string; severity?: AlertSeveritySchema; title?: string; message?: string; action?: { label: string; href?: string; navigation?: "app" \| "server" }; status?: AlertStatusSchema; progress?: number; read?: boolean; createdAt?: number; updatedAt?: number; source?: AlertSourceSchema; metadata?: Record<string, unknown> } }` | `void` |
+| update | `alerts.update` | mutation | protected | `{ alertId: string; patch: { id?: string; category?: string; severity?: AlertSeveritySchema; title?: string; message?: string; action?: { label: string; href?: string; invoke?: { addonId: string; action: string; input?: Record<string, unknown> }; navigation?: "app" \| "server" }; status?: AlertStatusSchema; progress?: number; read?: boolean; createdAt?: number; updatedAt?: number; source?: AlertSourceSchema; metadata?: Record<string, unknown> } }` | `void` |
 | list | `alerts.list` | query | protected | `{ unreadOnly?: boolean; limit?: number }?` | `AlertSchema[]` |
 | getUnreadCount | `alerts.getUnreadCount` | query | protected | `void` | `number` |
 | markRead | `alerts.markRead` | mutation | protected | `{ alertId: string }` | `void` |

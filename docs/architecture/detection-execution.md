@@ -1103,6 +1103,14 @@ it:
 - executor-readiness re-attach and its sweep;
 - package-zone re-attach.
 
+A skew smaller than the auto sweep's hysteresis (1.5) is never corrected by the
+sweep, by design. After a node joins, leaves or changes its roles the
+orchestrator waits 90 s, plans a manual rebalance beside the sweep's plan
+(`rebalance({ dryRun: true })`, the same loop) and, when only the manual plan
+would move cameras, raises the alert `pipeline-orchestrator:rebalance-suggested`
+whose action invokes the custom action `rebalanceNow`
+([D961](../decisions/adr-0961-an-alert-action-may-invoke-a-custom-action-and-a-rebalance-is-suggested-not-forced.md)).
+
 Only a FIRST placement waits for the node's catalog. The re-place paths
 (the pending-retry sweep, the remote-health re-place, a rebalance migration)
 use `resolveAttachPipelineIfCatalogCached`: a node whose executor has not

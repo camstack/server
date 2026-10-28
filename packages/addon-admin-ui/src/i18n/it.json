@@ -5703,6 +5703,9 @@
       "title": "Avvisi urgenti",
       "subtitle": "Richiedono la tua attenzione.",
       "close": "Chiudi"
+    },
+    "alertAction": {
+      "running": "In corso…"
     }
   },
   "layouts": {

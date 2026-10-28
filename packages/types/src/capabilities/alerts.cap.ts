@@ -13,9 +13,22 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 
 export const AlertSeveritySchema = z.enum(['info', 'success', 'warning', 'error', 'critical'])
 
+/**
+ * An action that RUNS something instead of going somewhere: the admin UI calls
+ * the addon's custom action (`addons.custom`) with exactly these fields. The
+ * producer owns the meaning; the UI knows nothing about the addon or the kind.
+ */
+export const AlertActionInvokeSchema = z.object({
+  addonId: z.string().min(1),
+  action: z.string().min(1),
+  input: z.record(z.string(), z.unknown()).optional(),
+})
+
+/** An action has `href` (a link) OR `invoke` (a button that runs a custom action). */
 export const AlertActionSchema = z.object({
   label: z.string(),
   href: z.string().optional(),
+  invoke: AlertActionInvokeSchema.optional(),
   /**
    * How `href` is followed. Absent / `app`: an admin-ui route (client-side).
    * `server`: a route the HUB serves (an addon HTTP route such as an OAuth
@@ -72,13 +85,22 @@ export const alertsCapability = {
       kind: 'mutation',
     }),
     list: method(
-      z.object({ unreadOnly: z.boolean().optional(), limit: z.number().optional() }).optional(),
+      z
+        .object({
+          unreadOnly: z.boolean().optional(),
+          limit: z.number().optional(),
+        })
+        .optional(),
       z.array(AlertSchema).readonly(),
     ),
     getUnreadCount: method(z.void(), z.number()),
-    markRead: method(z.object({ alertId: z.string() }), z.void(), { kind: 'mutation' }),
+    markRead: method(z.object({ alertId: z.string() }), z.void(), {
+      kind: 'mutation',
+    }),
     markAllRead: method(z.void(), z.void(), { kind: 'mutation' }),
-    dismiss: method(z.object({ alertId: z.string() }), z.void(), { kind: 'mutation' }),
+    dismiss: method(z.object({ alertId: z.string() }), z.void(), {
+      kind: 'mutation',
+    }),
   },
 } as const satisfies CapabilityDefinition
 

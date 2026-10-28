@@ -6,14 +6,20 @@
  * tab, copy address).
  */
 import { useQueryClient } from '@tanstack/react-query'
-import type { MouseEvent, JSX } from 'react'
+import { useSystem } from '@camstack/ui-library'
+import { useState, type MouseEvent, type JSX } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { startServerNavigation } from '../../lib/broker-oauth-popup'
 import { hubPath } from '../../lib/mount'
-import { isServerAlertAction, type AlertActionWithHref } from './critical-alerts'
+import {
+  hasNonEmptyActionHref,
+  isServerAlertAction,
+  type UsableAlertAction,
+} from './critical-alerts'
 
 export interface AlertActionLinkProps {
-  readonly action: AlertActionWithHref
+  readonly action: UsableAlertAction
   readonly className: string
   /** Runs before the action is followed (the bell stops the row click here). */
   readonly onActivate?: (event: MouseEvent) => void
@@ -25,6 +31,43 @@ export function AlertActionLink({
   onActivate,
 }: AlertActionLinkProps): JSX.Element {
   const queryClient = useQueryClient()
+  const system = useSystem()
+  const { t } = useTranslation()
+  const [pending, setPending] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  if (action.invoke !== undefined) {
+    const { addonId, action: actionName, input } = action.invoke
+    return (
+      <span className="inline-flex flex-col items-start gap-0.5">
+        <button // ui-check-ok: takes the caller's link-button classes, same as the anchors beside it
+          type="button"
+          className={className}
+          disabled={pending}
+          onClick={(event) => {
+            event.preventDefault()
+            onActivate?.(event)
+            setPending(true)
+            setFailure(null)
+            void system.trpcClient.addons.custom
+              .mutate({ addonId, action: actionName, input })
+              .then(() => queryClient.invalidateQueries({ queryKey: [['alerts']] }))
+              .catch((err: unknown) => setFailure(err instanceof Error ? err.message : String(err)))
+              .finally(() => setPending(false))
+          }}
+        >
+          {pending ? t('ui.alertAction.running', 'Working…') : action.label}
+        </button>
+        {failure !== null && (
+          <span role="alert" className="text-[10px] text-destructive">
+            {failure}
+          </span>
+        )}
+      </span>
+    )
+  }
+
+  if (!hasNonEmptyActionHref(action)) return <></>
 
   if (!isServerAlertAction(action)) {
     return (

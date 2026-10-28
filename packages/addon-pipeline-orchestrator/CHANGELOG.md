@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Raises an alert when a node joining or leaving leaves cameras that a manual rebalance would move, with a one-click Rebalance now
+
 ## [1.2.636] - 2026-10-28
 
 ### Changed

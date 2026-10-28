@@ -154,7 +154,7 @@ Enum: `"disarmed" \| "armed_home" \| "armed_away" \| "armed_night" \| "armed_vac
 - `severity`: `AlertSeveritySchema`
 - `title`: `string`
 - `message`: `string`
-- `action?`: `{ label: string; href?: string; navigation?: "app" \| "server" }`
+- `action?`: `{ label: string; href?: string; invoke?: { addonId: string; action: string; input?: Record<string, unknown> }; navigation?: "app" \| "server" }`
 - `status`: `AlertStatusSchema`
 - `progress?`: `number`
 - `read`: `boolean`
