@@ -16,6 +16,7 @@ import {
   DataTable,
   EmptyState,
   ErrorBox,
+  Skeleton,
   TABLE_SCROLL_MAX_H,
   useActionsList,
   useActionsRun,
@@ -161,15 +162,18 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
           'Actions are things this installation can do. Run one here, link it to a camera, or use it in an automation.',
         )}
       </p>
-      {list.error != null && (
-        <ErrorBox
-          title={t('actions.list.couldNotRead', 'Could not read the actions')}
-          message={errorMessage(list.error)}
-          onRetry={() => void list.refetch()}
-        />
-      )}
       {run.error != null && <ErrorBox message={errorMessage(run.error)} />}
-      {list.data !== undefined && entries.length === 0 ? (
+      {list.data === undefined ? (
+        list.error != null ? (
+          <ErrorBox
+            title={t('actions.list.couldNotRead', 'Could not read the actions')}
+            message={errorMessage(list.error)}
+            onRetry={() => void list.refetch()}
+          />
+        ) : (
+          <Skeleton className="h-24 w-full" />
+        )
+      ) : entries.length === 0 ? (
         <EmptyState
           icon={ListChecks}
           title={t('actions.list.emptyTitle', 'No actions yet')}
@@ -184,15 +188,24 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
           }
         />
       ) : (
-        <DataTable
-          columns={columns}
-          rows={entries}
-          rowKey={(entry) => entry.id}
-          pageSize={25}
-          maxBodyHeight={TABLE_SCROLL_MAX_H}
-          emptyMessage={t('actions.list.loading', 'Loading actions…')}
-          onRowClick={(entry) => openEdit(entry.id)}
-        />
+        <>
+          {list.error != null && (
+            <ErrorBox
+              title={t('actions.list.couldNotRead', 'Could not read the actions')}
+              message={errorMessage(list.error)}
+              onRetry={() => void list.refetch()}
+            />
+          )}
+          <DataTable
+            columns={columns}
+            rows={entries}
+            rowKey={(entry) => entry.id}
+            pageSize={25}
+            maxBodyHeight={TABLE_SCROLL_MAX_H}
+            emptyMessage={t('actions.list.emptyTitle', 'No actions yet')}
+            onRowClick={(entry) => openEdit(entry.id)}
+          />
+        </>
       )}
     </div>
   )
