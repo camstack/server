@@ -7,6 +7,7 @@ import {
   EventCategory,
   type AddonInitResult,
   type ConfigUISchema,
+  type ConfigUISchemaWithValues,
   type CreateDeviceSpec,
   type DeviceConstructor,
   type DeviceSummary,
@@ -32,6 +33,7 @@ import { browseBoards, proposeBoards } from './esphome-discovery.js'
 import { computeBrokerCleanup, linkBrokersToIntegrations } from './esphome-reconciler.js'
 import { EspContainerDevice } from './devices/esp-container-device.js'
 import { EspServiceRunner } from './esphome-services.js'
+import { espIrOverrides, loadIrOverrides } from './esphome-ir-overrides.js'
 import { espServiceActions } from './custom-actions.js'
 import type { EspServiceArgValue, EspServiceInfo } from './esphome-link.js'
 
@@ -71,6 +73,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     await records.declare({ brokers: espBrokersEntryKind })
     this.brokerStore = EspBrokerStore.of(records)
     this.activeBrokers = await this.brokerStore.listResolved()
+    await this.loadAllIrOverrides()
 
     this.registry = new EspBrokerRegistry({
       factory: clientLinkFactory,
@@ -200,6 +203,71 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
     const brokerId = String(config?.['brokerId'] ?? 'unknown')
     return `esp:${brokerId}:board`
+  }
+
+  // ── per-board transmitter override (device settings store) ──────────────
+
+  protected override deviceSettingsSchema(): ConfigUISchema | null {
+    return this.schema({
+      sections: [
+        {
+          id: 'esp-ir',
+          title: 'Infrared / RF transmitters',
+          columns: 1,
+          fields: [
+            {
+              type: 'tags' as const,
+              key: 'irServices',
+              label: 'Transmitter services',
+              description:
+                'API services of this board that become transmitters. Leave unset for automatic ' +
+                '(every service whose only argument is an int[]). Write a name, or name:rf for a ' +
+                'radio transmitter. Setting the list empty removes every transmitter.',
+            },
+          ],
+        },
+      ],
+    })
+  }
+
+  /** Only a board container has a transmitter list; its children and other devices show nothing. */
+  override async getDeviceSettings(deviceId: number): Promise<ConfigUISchemaWithValues> {
+    if (this.containerById(deviceId) === undefined) return { sections: [] }
+    return super.getDeviceSettings(deviceId)
+  }
+
+  override async updateDeviceSettings(
+    deviceId: number,
+    patch: Record<string, unknown>,
+  ): Promise<void> {
+    await super.updateDeviceSettings(deviceId, patch)
+    const container = this.containerById(deviceId)
+    if (container === undefined) return
+    await this.loadIrOverridesFor([deviceId])
+    await container.reprobe()
+  }
+
+  private containerById(deviceId: number): EspContainerDevice | undefined {
+    return this.ctx.kernel.deviceRegistry
+      ?.getAllForAddon(this.addonId)
+      .find((d): d is EspContainerDevice => d instanceof EspContainerDevice && d.id === deviceId)
+  }
+
+  private async loadAllIrOverrides(): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) return
+    await this.loadIrOverridesFor(await settings.listDeviceStoreIds())
+  }
+
+  private async loadIrOverridesFor(deviceIds: readonly number[]): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) return
+    await loadIrOverrides({
+      deviceIds,
+      overrides: espIrOverrides,
+      logger: this.ctx.logger,
+      readStores: (ids) => settings.readDeviceStoreBatch(ids),
+    })
   }
 
   // ── LAN scan ────────────────────────────────────────────────────────────

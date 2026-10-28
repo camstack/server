@@ -2316,6 +2316,12 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'ir-transmitter',
+    reason:
+      'A pulse-train emitter with no state: it is driven by the remote that owns ' +
+      'a command table, and a raw send has no meaningful single entity.',
+  },
+  {
     cap: 'group-status',
     reason:
       'Bookkeeping for a helper group (D944): how many members were included, ' +

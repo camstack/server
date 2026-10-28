@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1404 method paths across 187 capabilities.
+ * Coverage: 1406 method paths across 188 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -529,6 +529,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'intercom.startSession': { capName: "intercom", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'intercom.startTalkSession': { capName: "intercom", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'intercom.stopSession': { capName: "intercom", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'irTransmitter.getInfo': { capName: "ir-transmitter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'irTransmitter.send': { capName: "ir-transmitter", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'keychain.delete': { capName: "keychain", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'keychain.deleteDeviceScope': { capName: "keychain", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'keychain.getState': { capName: "keychain", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1516,6 +1518,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "image-settings",
   "integrations",
   "intercom",
+  "ir-transmitter",
   "keychain",
   "keychain-admin",
   "lawn-mower-control",
@@ -1668,6 +1671,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "image",
   "image-settings",
   "intercom",
+  "ir-transmitter",
   "lawn-mower-control",
   "lock-control",
   "media-player",

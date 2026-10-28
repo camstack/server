@@ -23,6 +23,7 @@ type ActuatorCap =
   | 'heating-valve'
   | 'alarm-panel'
   | 'button'
+  | 'ir-transmitter'
   | 'control'
   | 'motion-trigger'
 
@@ -1382,6 +1383,14 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         icon: 'circle-dot',
       },
     ],
+  },
+
+  'ir-transmitter': {
+    scope: 'device',
+    noun: t('IR / RF transmitter', 'Trasmettitore IR / RF'),
+    notOperatorFacing: {
+      send: 'a raw pulse train is not something an operator composes in an automation; the remote that owns the command table sends it',
+    },
   },
 
   control: {

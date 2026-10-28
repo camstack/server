@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A pet feeder shows whether it runs on mains or on its battery
 - Pure IR/RF codecs: pulse-train and transmit-settings schemas, Pronto decoding and SmartIR media_player import.
+- Added the ir-transmitter capability: send an infrared or RF pulse train with per-call settings.
 
 ## [1.2.437] - 2026-10-28
 

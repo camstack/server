@@ -249,5 +249,7 @@
   "tls.ca-not-issuer": "The certificate was not issued by the CA certificate you supplied.",
   "tls.ca-not-a-ca": "The supplied CA certificate is not a certificate authority (CA:TRUE is missing).",
   "tls.ca-expired": "The supplied CA certificate has expired or is not valid yet.",
-  "tls.no-stored-upload": "No uploaded certificate is kept on this node."
+  "tls.no-stored-upload": "No uploaded certificate is kept on this node.",
+  "ir-transmitter.offline": "The transmitter {name} is not reachable",
+  "ir-transmitter.too-long": "The command has {count} pulses but the transmitter accepts at most {max}"
 }

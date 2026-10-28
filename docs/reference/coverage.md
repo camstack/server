@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**218 units · 7310 source files · 206 units claimed by at least one document (7272 files).**
+**218 units · 7314 source files · 206 units claimed by at least one document (7276 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ it never describes how the thing works, and it is never re-verified.
 | `scripts` | 443 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +133 more, 14 ADRs | 2026-10-27 |
 | `packages/system/src/builtins` | 394 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +163 more, 21 ADRs | 2026-10-26 |
 | `packages/ui-library/src/composites` | 347 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +52 more, 3 ADRs | 2026-10-27 |
-| `packages/types/src/capabilities` | 213 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +190 more, 41 ADRs | 2026-10-26 |
+| `packages/types/src/capabilities` | 214 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +190 more, 41 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/notification-center` | 210 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +81 more, 27 ADRs | 2026-10-07 |
 | `packages/addon-admin-ui/src/pages` | 198 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +51 more, 8 ADRs | 2026-10-27 |
 | `packages/addon-pipeline/src/stream-broker` | 186 | `recorder`, `stream-broker` | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +58 more, 21 ADRs | 2026-10-08 |
@@ -61,9 +61,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-osd-manager` | 31 | `device-surfaces` | `architecture/osd-manager.md`, `design/2026-08-30-fleet-multiplier-round-trip-audit.md` _(covers)_, 1 ADR | 2026-10-04 |
 | `packages/types/src/pipeline` | 31 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +27 more, 2 ADRs | 2026-10-24 |
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0475-a-motion-episode-belongs-to-its-source-and-the-pipeline-never-overwrites-a-sensor.md`, +1 more | 2026-10-26 |
+| `packages/addon-provider-esphome` | 29 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md` | 2026-10-26 |
 | `packages/addon-provider-bosch/src/shc` | 28 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md` | 2026-10-26 |
 | `packages/develop` | 27 | — | `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
-| `packages/addon-provider-esphome` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md` | 2026-10-26 |
 | `packages/addon-provider-reolink/src/clips` | 26 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-20-clip-export.md` _(covers)_, +19 more | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +10 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |

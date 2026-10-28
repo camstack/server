@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Each ESPHome board service that takes only a pulse train becomes an infrared transmitter device; the list can be overridden per board.
+
 ## [0.1.4] - 2026-10-28
 
 ### Changed

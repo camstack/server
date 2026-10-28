@@ -453,6 +453,8 @@
   "intercom.startSession": "protected",
   "intercom.startTalkSession": "protected",
   "intercom.stopSession": "protected",
+  "irTransmitter.getInfo": "protected",
+  "irTransmitter.send": "protected",
   "keychain.delete": "admin",
   "keychain.deleteDeviceScope": "admin",
   "keychain.getState": "admin",

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A pet feeder shows whether it runs on mains or on its battery
+- Added the ir-transmitter capability and its error texts.
 
 ## [1.2.509] - 2026-10-28
 

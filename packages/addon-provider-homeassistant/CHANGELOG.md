@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Recorded that the ir-transmitter capability is not exported to Home Assistant.
+
 ## [1.2.634] - 2026-10-28
 
 ### Changed

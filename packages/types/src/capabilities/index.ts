@@ -1954,6 +1954,18 @@ export {
 } from './brightness.cap.js'
 // HA-targeted actuator caps (Phase C4 — fire-only button)
 export { buttonCapability, type IButtonProvider } from './button.cap.js'
+export {
+  irTransmitterCapability,
+  TransmitSettingKeySchema,
+  IrMediumSchema,
+  IrSendResultSchema,
+  IrTransmitterInfoSchema,
+  type IIrTransmitterProvider,
+  type TransmitSettingKey,
+  type IrMedium,
+  type IrSendResult,
+  type IrTransmitterInfo,
+} from './ir-transmitter.cap.js'
 export type {
   CalendarEvent,
   CalendarInfo,
@@ -3148,6 +3160,7 @@ import type { binaryCapability } from './binary.cap.js'
 import type { brightnessCapability } from './brightness.cap.js'
 import type { brokerCapability } from './broker.cap.js'
 import type { buttonCapability } from './button.cap.js'
+import type { irTransmitterCapability } from './ir-transmitter.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
 import type { calendarsCapability } from './calendars.cap.js'
 import type { cameraCredentialsCapability } from './camera-credentials.cap.js'
@@ -3483,6 +3496,7 @@ type AnyCapability =
   | typeof batteryCapability
   | typeof networkLinkCapability
   | typeof buttonCapability
+  | typeof irTransmitterCapability
   | typeof cameraCredentialsCapability
   | typeof deviceStatusCapability
   | typeof doorbellCapability

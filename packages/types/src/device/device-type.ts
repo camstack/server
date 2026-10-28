@@ -394,4 +394,9 @@ export enum DeviceRole {
   /** Fallback when the notifier service name doesn't match a known
    *  pattern. */
   GenericNotifier = 'generic-notifier',
+
+  // ── Generic-type sub-roles ───────────────────────────────
+  /** Emits a pulse train (infrared or RF) on request — the `ir-transmitter`
+   *  cap. A `DeviceType.Generic` device. */
+  IrTransmitter = 'ir-transmitter',
 }

@@ -2,13 +2,17 @@ import { z } from 'zod'
 import {
   BaseDevice,
   DeviceFeature,
+  DeviceRole,
   DeviceType,
   type AccessoryChildSpec,
   type DeviceContext,
 } from '@camstack/types'
 import { childConfigFor, childFactoryFor, deviceTypeOf, roleOf } from '../esphome-child-spec.js'
 import { planBoard, type ChildPlan } from '../esphome-entity-spec.js'
+import { espIrOverrides } from '../esphome-ir-overrides.js'
+import { planIrServices, type IrServicePlan } from '../esphome-ir-plan.js'
 import { espLinkHub } from '../esphome-link-hub.js'
+import { EspIrTransmitterDevice } from './esp-ir-transmitter-device.js'
 
 /**
  * Persisted config of a board container. One board = one container; its
@@ -69,7 +73,33 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
       })
       return []
     }
-    return planBoard(link.entities()).map((plan) => this.childSpec(plan))
+    const entityChildren = planBoard(link.entities()).map((plan) => this.childSpec(plan))
+    const transmitters = planIrServices(link.listServices(), espIrOverrides.get(this.id)).map(
+      (plan) => this.irChildSpec(plan),
+    )
+    return [...entityChildren, ...transmitters]
+  }
+
+  /** One `ir-transmitter` child per API service the board exposes as a transmitter. */
+  private irChildSpec(plan: IrServicePlan): AccessoryChildSpec {
+    return {
+      stableIdSuffix: `svc:${plan.name}`,
+      meta: {
+        type: DeviceType.Generic,
+        name: plan.name,
+        linkDeviceId: this.id,
+        ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
+        role: String(DeviceRole.IrTransmitter),
+      },
+      config: {
+        brokerId: this.brokerId,
+        service: plan.name,
+        timingsArg: plan.timingsArg,
+        ...(plan.carrierArg !== undefined ? { carrierArg: plan.carrierArg } : {}),
+        media: [...plan.media],
+      },
+      factory: (ctx) => new EspIrTransmitterDevice(ctx),
+    }
   }
 
   private childSpec(plan: ChildPlan): AccessoryChildSpec {

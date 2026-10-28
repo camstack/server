@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 555 methods carry a device reference, of which
+ * Coverage: 557 methods carry a device reference, of which
  * 179 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -243,6 +243,8 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'intercom.startSession': [{ name: "deviceId", form: "single", optional: false }] as const,
   'intercom.startTalkSession': [{ name: "deviceId", form: "single", optional: false }] as const,
   'intercom.stopSession': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'irTransmitter.getInfo': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'irTransmitter.send': [{ name: "deviceId", form: "single", optional: false }] as const,
   'keychain.deleteDeviceScope': [{ name: "deviceId", form: "single", optional: false }] as const,
   'lawnMowerControl.dock': [{ name: "deviceId", form: "single", optional: false }] as const,
   'lawnMowerControl.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,

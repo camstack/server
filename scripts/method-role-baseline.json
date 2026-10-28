@@ -506,6 +506,8 @@
   "intercom.startSession": "viewer",
   "intercom.startTalkSession": "viewer",
   "intercom.stopSession": "viewer",
+  "irTransmitter.getInfo": "viewer",
+  "irTransmitter.send": "viewer",
   "keychain.delete": "admin",
   "keychain.deleteDeviceScope": "admin",
   "keychain.getState": "admin",

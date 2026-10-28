@@ -55,6 +55,7 @@ import type { humiditySensorCapability } from '../capabilities/humidity-sensor.c
 import type { imageCapability } from '../capabilities/image.cap.js'
 import type { imageSettingsCapability } from '../capabilities/image-settings.cap.js'
 import type { intercomCapability } from '../capabilities/intercom.cap.js'
+import type { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
 import type { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
 import type { lockControlCapability } from '../capabilities/lock-control.cap.js'
 import type { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
@@ -272,6 +273,7 @@ export interface DeviceProxy {
   readonly image?: InferDeviceProxyCap<typeof imageCapability>
   readonly imageSettings?: InferDeviceProxyCap<typeof imageSettingsCapability>
   readonly intercom?: InferDeviceProxyCap<typeof intercomCapability>
+  readonly irTransmitter?: InferDeviceProxyCap<typeof irTransmitterCapability>
   readonly lawnMowerControl?: InferDeviceProxyCap<typeof lawnMowerControlCapability>
   readonly lockControl?: InferDeviceProxyCap<typeof lockControlCapability>
   readonly mediaPlayer?: InferDeviceProxyCap<typeof mediaPlayerCapability>
@@ -689,6 +691,11 @@ export function createDeviceProxy(
     pushTalkAudio: (input?: unknown) => dispatch('intercom', 'intercom', 'pushTalkAudio', 'mutation', input),
     endTalkSession: (input?: unknown) => dispatch('intercom', 'intercom', 'endTalkSession', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('intercom', 'intercom', 'getStatus', 'query', input),
+  }
+
+  const irTransmitterInterface = {
+    send: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'send', 'mutation', input),
+    getInfo: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'getInfo', 'query', input),
   }
 
   const lawnMowerControlInterface = {
@@ -1432,6 +1439,7 @@ export function createDeviceProxy(
     ...(bound('image') ? { image: imageInterface } : {}),
     ...(bound('image-settings') ? { imageSettings: imageSettingsInterface } : {}),
     ...(bound('intercom') ? { intercom: intercomInterface } : {}),
+    ...(bound('ir-transmitter') ? { irTransmitter: irTransmitterInterface } : {}),
     ...(bound('lawn-mower-control') ? { lawnMowerControl: lawnMowerControlInterface } : {}),
     ...(bound('lock-control') ? { lockControl: lockControlInterface } : {}),
     ...(bound('media-player') ? { mediaPlayer: mediaPlayerInterface } : {}),
