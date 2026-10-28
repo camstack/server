@@ -10387,7 +10387,8 @@
       "calculation": "Calculation: {{kind}}",
       "advanced": "Advanced",
       "advancedKind": "Advanced: {{kind}}"
-    }
+    },
+    "saving": "Saving…"
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",

@@ -20,7 +20,7 @@ import {
   useUiText,
 } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { customizePath, devicePath } from '../../lib/customization-routes'
@@ -70,22 +70,37 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
     if (!free) onTitle(title)
   }, [onTitle, title, free])
 
+  // The block a draft already created, so a retry after a failed lookup
+  // resolves the same device instead of creating a second one.
+  const createdBlock = useRef<{ readonly draft: HelperDraft; readonly blockId: string } | null>(
+    null,
+  )
+
   const save = async (next: HelperDraft, intent: HelperSaveIntent): Promise<HelperSaveResult> => {
     let deviceId: number | null = null
     const lines = await writeHelper(next, async (composition, name) => {
-      const { block } = await create.mutateAsync({
-        block: {
-          ...(name === '' ? {} : { name }),
-          enabled: true,
-          composition,
-        },
-      })
-      const id = await deviceIdForBlock(block.id, async () => {
+      const earlier = createdBlock.current
+      let blockId: string
+      if (earlier !== null && earlier.draft === next) {
+        blockId = earlier.blockId
+      } else {
+        const { block } = await create.mutateAsync({
+          block: {
+            ...(name === '' ? {} : { name }),
+            enabled: true,
+            composition,
+          },
+        })
+        blockId = block.id
+        createdBlock.current = { draft: next, blockId }
+      }
+      const id = await awaitDeviceIdForBlock(blockId, async () => {
         const refreshed = await fleet.refetch()
         return refreshed.data ?? fleet.data
       })
       if (id === null) throw new Error(t('helper.devicePending'))
       deviceId = id
+      createdBlock.current = null
       if (name !== '') await setName.mutateAsync({ deviceId: id, name })
       if (intent === 'open') navigate(devicePath(id), { replace: true })
     })
@@ -224,7 +239,7 @@ async function saveBlank(input: BlankSave): Promise<void> {
       enabled: true,
       composition: input.composition,
     })
-    const id = await deviceIdForBlock(block.id, input.readFleet)
+    const id = await awaitDeviceIdForBlock(block.id, input.readFleet)
     if (id === null) {
       input.onError(input.pending)
       return
@@ -262,6 +277,26 @@ async function deviceIdForBlock(
   const stableId = `${COMPOSED_DEVICE_STABLE_ID_PREFIX}${blockId}`
   const rows = await read()
   return rows?.find((item) => item.stableId === stableId)?.id ?? null
+}
+
+const DEVICE_LOOKUP_ATTEMPTS = 10
+const DEVICE_LOOKUP_DELAY_MS = 400
+
+/**
+ * `createComposition` answers with the block; its device registers a moment
+ * later. Look it up by stable id until it is there, a bounded number of times.
+ */
+export async function awaitDeviceIdForBlock(
+  blockId: string,
+  read: () => Promise<readonly FleetRow[] | undefined>,
+  delayMs: number = DEVICE_LOOKUP_DELAY_MS,
+): Promise<number | null> {
+  for (let attempt = 0; attempt < DEVICE_LOOKUP_ATTEMPTS; attempt += 1) {
+    const id = await deviceIdForBlock(blockId, read)
+    if (id !== null) return id
+    await new Promise<void>((resolve) => setTimeout(resolve, delayMs))
+  }
+  return null
 }
 
 function refused(lines: readonly RefusalLine[], t: TFunction): readonly RefusalLine[] {

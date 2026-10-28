@@ -105,6 +105,9 @@ describe('HelperWizard', () => {
     fireEvent.click(screen.getByTestId('helper-save-open'))
     await vi.waitFor(() => expect(onSave).toHaveBeenCalled())
     expect(onSave.mock.calls[0]?.[1]).toBe('open')
+    await vi.waitFor(() =>
+      expect((screen.getByTestId('helper-save-more') as HTMLButtonElement).disabled).toBe(false),
+    )
 
     fireEvent.click(screen.getByTestId('helper-save-more'))
     expect(await screen.findByTestId('helper-template-picker')).toBeTruthy()
@@ -163,5 +166,31 @@ describe('HelperWizard', () => {
     expect((screen.getByTestId('helper-per') as HTMLSelectElement).value).toBe('hour')
     fireEvent.change(screen.getByTestId('helper-per'), { target: { value: 'minute' } })
     expect((screen.getByTestId('helper-per') as HTMLSelectElement).value).toBe('minute')
+  })
+
+  it('a second click while a save is pending does not call save again', async () => {
+    let finish: (result: HelperSaveResult) => void = () => undefined
+    const onSave = vi.fn(
+      () =>
+        new Promise<HelperSaveResult>((resolve) => {
+          finish = resolve
+        }),
+    )
+    renderWizard(onSave)
+    pick('temperature')
+    fireEvent.change(screen.getByTestId('helper-name'), { target: { value: 'Front door' } })
+    fireEvent.click(screen.getByTestId('helper-to-members'))
+    fireEvent.click(screen.getByTestId('source-selector'))
+    fireEvent.click(screen.getByTestId('helper-save-open'))
+    fireEvent.click(screen.getByTestId('helper-save-open'))
+    fireEvent.click(screen.getByTestId('helper-save-more'))
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect((screen.getByTestId('helper-save-open') as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByTestId('helper-save-more') as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByTestId('helper-save-open').textContent).toContain('Saving')
+    finish({ kind: 'refused', lines: [] })
+    await vi.waitFor(() =>
+      expect((screen.getByTestId('helper-save-open') as HTMLButtonElement).disabled).toBe(false),
+    )
   })
 })

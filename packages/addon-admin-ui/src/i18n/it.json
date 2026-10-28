@@ -10409,7 +10409,8 @@
       "calculation": "Calcolo: {{kind}}",
       "advanced": "Avanzato",
       "advancedKind": "Avanzato: {{kind}}"
-    }
+    },
+    "saving": "Salvataggio…"
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",

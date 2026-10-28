@@ -17,7 +17,7 @@ import {
   STATISTIC_STATS,
 } from '@camstack/types'
 import { Button, Input, Select } from '@camstack/ui-library'
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { SourceSelector } from '../device/customize/source-selector/SourceSelector'
@@ -80,6 +80,11 @@ export function HelperWizard({
   const [draft, setDraft] = useState<HelperDraft | null>(initial)
   const [refusals, setRefusals] = useState<readonly RefusalLine[]>([])
   const [created, setCreated] = useState<CreatedDevice | null>(null)
+  // A second click while a save runs is a no-op: the ref closes the window
+  // before the state re-render disables the buttons.
+  const inFlight = useRef(false)
+  const [pressed, setPressed] = useState<HelperSaveIntent | null>(null)
+  const busy = saving || pressed !== null
 
   useEffect(() => {
     onDraftChange?.(draft)
@@ -102,10 +107,18 @@ export function HelperWizard({
   }
 
   const save = (intent: HelperSaveIntent): void => {
-    if (draft === null) return
+    if (draft === null || inFlight.current) return
+    inFlight.current = true
+    setPressed(intent)
     const savingDraft = draft
     void (async () => {
-      const result = await onSave(savingDraft, intent)
+      let result: HelperSaveResult
+      try {
+        result = await onSave(savingDraft, intent)
+      } finally {
+        inFlight.current = false
+        setPressed(null)
+      }
       if (result.kind === 'refused') {
         setRefusals(result.lines)
         return
@@ -270,28 +283,28 @@ export function HelperWizard({
         {step === 'members' && draft !== null && purpose === 'edit' && (
           <Button
             data-testid="helper-save"
-            disabled={!canSaveDraft(draft) || saving}
+            disabled={!canSaveDraft(draft) || busy}
             onClick={() => save('open')}
           >
-            {t('helper.save')}
+            {pressed === 'open' ? t('helper.saving') : t('helper.save')}
           </Button>
         )}
         {step === 'members' && draft !== null && purpose === 'create' && (
           <>
             <Button
               data-testid="helper-save-open"
-              disabled={!canSaveDraft(draft) || saving}
+              disabled={!canSaveDraft(draft) || busy}
               onClick={() => save('open')}
             >
-              {t('helper.saveOpen')}
+              {pressed === 'open' ? t('helper.saving') : t('helper.saveOpen')}
             </Button>
             <Button
               variant="outline"
               data-testid="helper-save-more"
-              disabled={!canSaveDraft(draft) || saving}
+              disabled={!canSaveDraft(draft) || busy}
               onClick={() => save('again')}
             >
-              {t('helper.saveMore')}
+              {pressed === 'again' ? t('helper.saving') : t('helper.saveMore')}
             </Button>
           </>
         )}
