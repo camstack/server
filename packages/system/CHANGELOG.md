@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.507] - 2026-10-28
+
 ### Fixed
 
 - An agent advertises itself on the network again, so the hub lists a new agent for pairing without typing its address

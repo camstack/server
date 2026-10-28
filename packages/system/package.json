@@ -1,6 +1,6 @@
 {
   "name": "@camstack/system",
-  "version": "1.2.506",
+  "version": "1.2.507",
   "description": "Core addon for CamStack — builtins, pipeline, process management, auth, logging, events",
   "keywords": [
     "camstack",
