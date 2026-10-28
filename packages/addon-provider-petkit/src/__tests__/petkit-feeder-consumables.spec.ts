@@ -14,6 +14,7 @@ function slice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
     food2: null,
     lowFood: false,
     batteryPower: null,
+    powerSource: null,
     desiccantLeftDays: 12 * SECONDS_PER_DAY,
     feeding: false,
     status: 'normal',
