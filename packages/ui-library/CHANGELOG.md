@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Option lists can group options under headings, and a dropdown can be opened and closed from outside
+- Device value fields are named after their quantity instead of their unit; run the quantity-field migration after updating
 
 ## [1.2.341] - 2026-10-28
 

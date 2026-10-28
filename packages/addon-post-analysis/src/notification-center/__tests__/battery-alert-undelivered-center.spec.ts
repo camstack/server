@@ -77,7 +77,7 @@ describe('an undelivered battery raise is delivered once the rule is fixed', () 
       timestamp: new Date(clock),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 0, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 0, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 200))
     expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
@@ -146,7 +146,7 @@ describe('an undelivered battery raise is delivered once the rule is fixed', () 
       timestamp: new Date(),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 0, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 0, lastUpdated: 5_000 } },
     })
     // Several reload ticks with the rule UNCHANGED: still nothing, and no
     // re-offer storm either.

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automations can start on a parked object appearing or leaving, filtered by camera, class and zone, and check whether one is present
 
+### Changed
+
+- Device value fields are named after their quantity (power, level, speed, signal...) instead of their unit; run the quantity-field migration after updating
+
 ## [1.2.433] - 2026-10-28
 
 ### Changed
