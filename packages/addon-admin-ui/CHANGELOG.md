@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Integrations page places an integration in System or Providers from the addon's declared integrationSection, falling back to the framework-package rule
+- The notification rule editor shows delivery options (such as Echo mode and volume) when a selected target supports them.
 
 ## [1.2.504] - 2026-10-28
 

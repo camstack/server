@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Notification center now appears under System on the Integrations page
+- A notification rule passes the delivery parameters its target's notifier declares (such as Echo mode and volume) along with the message.
 
 ## [1.2.648] - 2026-10-28
 

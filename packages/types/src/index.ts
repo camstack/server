@@ -1494,6 +1494,7 @@ export {
   prepareNotification,
   type ResolvedLevel,
 } from './notification/degrade-engine.js'
+export { deliveryParamsDeclaredBy, resolveDeliveryParams } from './notification/delivery-params.js'
 export {
   htmlToText,
   markdownToHtmlLite,

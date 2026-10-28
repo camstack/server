@@ -14,7 +14,7 @@ operator signs in once, on the broker (Integrations, Alexa).
 | --- | --- | --- |
 | What it does | Import smart-home appliances and poll their state | Read a notification aloud on Echo devices and groups |
 | Secret | `cookie` / `refreshToken` on the broker | the broker's refresh token (read, never copied) plus a derived cookie jar per broker (`speak-sessions` record, secret field) |
-| Where it is set up | Integrations, Alexa, plus the login proxy | nowhere: Notifications, Targets, kind Alexa. The Speak on Echo page only shows each account's state and sends a test |
+| Where it is set up | Integrations, Alexa, plus the login proxy | nowhere: Notifications, Targets, kind Alexa; a rule can override mode and volume per notification |
 
 The official Alexa skill (`addon-export-alexa`) is a separate thing. It
 publishes CamStack devices to Amazon and cannot carry arbitrary text. See
@@ -62,14 +62,14 @@ pins the account on the target. Targets page, Find devices, asks every kind
 that declares `supportsDiscovery` and proposes the devices no saved target
 covers.
 
-A sign-in the broker has not made is the state `broker-not-signed-in`, shown
-on the Speak page and as a failed probe. The old standalone login (password,
-one-time code) is gone; at first start it migrates once: with exactly one
-broker its jar and targets move onto it, otherwise targets stay unassigned and
-the page says `no-broker` or `choose-broker`.
+A sign-in the broker has not made shows as a failed probe. The old standalone
+login (password, one-time code), its migration and the Speak on Echo page are
+gone; Echo targets are stored under `echoTargets` in the addon settings.
 
-A test phrase on the Speak page speaks on the ticked devices and saves them as
-notification targets.
+The kind declares `mode` and `volume` as delivery parameters
+([D960](../decisions/adr-0960-a-notifier-declares-its-delivery-parameters-and-a-rule-offers-them.md)).
+A rule that addresses an Echo target offers them; the rule's value wins over
+the target's saved one for that send.
 
 ## Latency
 

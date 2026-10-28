@@ -9,6 +9,7 @@ import {
   type ConfigField,
   type ConfigSelectField,
   type ConfigUISchema,
+  type DeliveryParam,
   type DiscoveredTarget,
   type INotificationOutputProvider,
   type IScopedLogger,
@@ -96,15 +97,45 @@ function readString(config: Record<string, unknown>, key: string): string {
   return typeof value === 'string' ? value : ''
 }
 
-function readMode(config: Record<string, unknown>): SpeakMode {
-  return config['mode'] === 'announce' ? 'announce' : 'speak'
+/** The rule's value for this send wins; the target's saved config is the fallback. */
+function readMode(config: Record<string, unknown>, delivery: Notification['delivery']): SpeakMode {
+  const value = delivery?.['mode'] ?? config['mode']
+  return value === 'announce' ? 'announce' : 'speak'
 }
 
-function readVolume(config: Record<string, unknown>): number {
-  const value = config['volume']
+function readVolume(config: Record<string, unknown>, delivery: Notification['delivery']): number {
+  const ruled = delivery?.['volume']
+  const value = typeof ruled === 'number' ? ruled : config['volume']
   if (typeof value !== 'number' || !Number.isFinite(value)) return 40
   return Math.max(0, Math.min(100, Math.round(value)))
 }
+
+/**
+ * The delivery parameters a rule may set for an Echo target (D938). The
+ * target's own config holds the default; these override it per notification.
+ */
+const DELIVERY_PARAMS: DeliveryParam[] = [
+  {
+    key: 'mode',
+    label: 'Mode',
+    labelKey: 'import-alexa:echoTarget.s_echo.mode.label',
+    type: 'enum',
+    options: [
+      { value: 'speak', label: 'Speak (quiet hours apply)' },
+      { value: 'announce', label: 'Announce (chime, then speech)' },
+    ],
+    default: 'speak',
+  },
+  {
+    key: 'volume',
+    label: 'Volume',
+    labelKey: 'import-alexa:echoTarget.s_echo.volume.label',
+    type: 'number',
+    min: 0,
+    max: 100,
+    default: 40,
+  },
+]
 
 function respectDnd(config: Record<string, unknown>): boolean {
   return config['respectDnd'] !== false
@@ -218,6 +249,7 @@ export function alexaTargetKind(brokers: readonly SpeakBrokerView[]): TargetKind
     supportsDiscovery: true,
     destinationKeys: ['brokerId', 'echoId'],
     configSchema: configSchema(brokers),
+    deliveryParams: DELIVERY_PARAMS,
     caps: {
       attachments: { mediaTypes: [], mode: 'url', max: 0 },
       actions: 0,
@@ -340,14 +372,14 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       })
       return { success: true, renderedAs: speech.renderedAs }
     }
-    const mode = readMode(target.config)
+    const mode = readMode(target.config, notification.delivery)
     try {
       const outcomes = await ports.speak({
         brokerId: broker.id,
         mode,
         targets: [echoId],
         text: speech.text,
-        volume: readVolume(target.config),
+        volume: readVolume(target.config, notification.delivery),
       })
       const one = outcomes.find((row) => row.targetId === echoId) ?? outcomes[0]
       if (one === undefined || !one.ok) {

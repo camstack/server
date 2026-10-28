@@ -5,10 +5,7 @@
  * broker, and never again here.
  */
 import type { IScopedLogger, Target } from '@camstack/types'
-import type { z } from 'zod'
-import type { AlexaSpeakSettings } from '../config.js'
-import { readSpeakSettings } from '../config.js'
-import { alexaSpeakActions, type SpeakStatus } from './actions.js'
+import { type AlexaEchoTarget, readEchoTargets } from '../config.js'
 import { BrokerEcho } from './broker-echo.js'
 import type { BrokerSeed } from './broker-seed.js'
 import {
@@ -17,13 +14,6 @@ import {
   DEVICE_REFRESH_MS,
   type SpeakMode,
 } from './constants.js'
-import {
-  legacyLoginOf,
-  noticeFor,
-  planLegacyMigration,
-  unassignedCount,
-  type SpeakTargetRow,
-} from './migration.js'
 import {
   createAlexaNotificationProvider,
   type AlexaNotificationProvider,
@@ -43,29 +33,21 @@ export interface SpeakBrokerRef {
 
 export interface AlexaSpeakHost {
   readonly logger: IScopedLogger
-  readonly readConfig: () => { speak?: unknown }
-  readonly writeSpeak: (speak: AlexaSpeakSettings) => Promise<void>
+  readonly readConfig: () => { echoTargets?: unknown }
+  readonly writeTargets: (targets: readonly AlexaEchoTarget[]) => Promise<void>
   /** The brokers right now. Read on every use: accounts come and go. */
   readonly listBrokers: () => readonly SpeakBrokerRef[]
   /** The broker's current refresh token, or null when it holds none. */
   readonly readSeed: (brokerId: string) => Promise<BrokerSeed | null>
   readonly sessions: SpeakSessionStore
-  /** Forget the keychain copies of the old standalone login. */
-  readonly clearLegacySecrets: () => Promise<void>
   readonly ensurePython: () => Promise<string | null>
   /** Tests inject a fake worker; production starts the Python one. */
   readonly startWorker?: (brokerId: string, pythonPath: string) => AlexaWorker
   readonly now?: () => number
 }
 
-export type AlexaSpeakHandlers = {
-  [K in keyof typeof alexaSpeakActions]: (
-    input: z.infer<(typeof alexaSpeakActions)[K]['input']>,
-  ) => Promise<z.infer<(typeof alexaSpeakActions)[K]['output']>>
-}
-
-function targetsFrom(settings: AlexaSpeakSettings): readonly Target[] {
-  return settings.targets.map((row) => ({
+function targetsFrom(rows: readonly AlexaEchoTarget[]): readonly Target[] {
+  return rows.map((row) => ({
     id: row.id,
     name: row.name,
     kind: ALEXA_SPEAK_KIND,
@@ -81,7 +63,7 @@ function targetsFrom(settings: AlexaSpeakSettings): readonly Target[] {
   }))
 }
 
-function rowsFrom(targets: readonly Target[]): readonly SpeakTargetRow[] {
+function rowsFrom(targets: readonly Target[]): readonly AlexaEchoTarget[] {
   return targets.map((target) => ({
     id: target.id,
     name: target.name,
@@ -96,7 +78,7 @@ function rowsFrom(targets: readonly Target[]): readonly SpeakTargetRow[] {
 
 export class AlexaSpeakController {
   readonly provider: AlexaNotificationProvider
-  private settings: AlexaSpeakSettings
+  private rows: readonly AlexaEchoTarget[]
   private pythonPath: string | null = null
   private readonly echoes = new Map<string, BrokerEcho>()
   private timer: ReturnType<typeof setInterval> | null = null
@@ -105,14 +87,14 @@ export class AlexaSpeakController {
 
   constructor(private readonly host: AlexaSpeakHost) {
     this.now = host.now ?? (() => Date.now())
-    this.settings = readSpeakSettings(host.readConfig())
+    this.rows = readEchoTargets(host.readConfig())
     this.provider = createAlexaNotificationProvider({
       brokers: () => this.brokerViews(),
       now: this.now,
       logger: host.logger,
-      loadTargets: () => targetsFrom(this.settings),
+      loadTargets: () => targetsFrom(this.rows),
       saveTargets: (targets) => {
-        this.settings = { ...this.settings, targets: [...rowsFrom(targets)] }
+        this.rows = rowsFrom(targets)
         void this.persist()
       },
       speak: (command) =>
@@ -126,7 +108,6 @@ export class AlexaSpeakController {
       this.host.logger.warn('alexa speak: embedded Python unavailable; Echo speech will not run')
       return
     }
-    await this.migrateLegacyLogin()
     await this.brokersChanged()
     this.timer = setInterval(() => {
       void this.refreshAll()
@@ -146,13 +127,6 @@ export class AlexaSpeakController {
     return this.queue
   }
 
-  handlers(): AlexaSpeakHandlers {
-    return {
-      speakStatus: async () => this.status(),
-      sendTest: async (input) => this.sendTest(input),
-    }
-  }
-
   private brokerViews(): readonly SpeakBrokerView[] {
     return this.host.listBrokers().map((ref) => {
       const echo = this.echoes.get(ref.id)
@@ -167,46 +141,12 @@ export class AlexaSpeakController {
 
   private async persist(): Promise<void> {
     try {
-      await this.host.writeSpeak(this.settings)
+      await this.host.writeTargets(this.rows)
     } catch (err: unknown) {
-      this.host.logger.warn('alexa speak: could not store settings', {
+      this.host.logger.warn('alexa speak: could not store targets', {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
     }
-  }
-
-  /**
-   * Drain the old standalone login once. With exactly one broker its jar and
-   * its targets move onto that broker; otherwise the jar is dropped and the
-   * targets wait for the operator to choose (the status names that state).
-   */
-  private async migrateLegacyLogin(): Promise<void> {
-    const brokers = this.host.listBrokers()
-    const plan = planLegacyMigration(
-      legacyLoginOf(this.settings),
-      brokers.map((ref) => ref.id),
-      this.settings.targets,
-    )
-    if (!plan.present) return
-    if (plan.attachTo !== null) {
-      await this.host.sessions.put(plan.attachTo, this.settings.session)
-    }
-    this.settings = {
-      ...this.settings,
-      email: '',
-      password: '',
-      session: '',
-      targets: [...plan.targets],
-    }
-    await this.persist()
-    await this.host.clearLegacySecrets()
-    this.host.logger.info('alexa speak: the old standalone login was retired', {
-      meta: {
-        attachedTo: plan.attachTo ?? 'none',
-        brokers: brokers.length,
-        targets: plan.targets.length,
-      },
-    })
   }
 
   private makeWorker(brokerId: string, pythonPath: string): AlexaWorker {
@@ -278,78 +218,5 @@ export class AlexaSpeakController {
     const echo = this.echoes.get(brokerId)
     if (echo === undefined) throw new Error('no Echo session for this Amazon account')
     return echo.utter(mode === 'announce' ? 'announce' : 'speak', targets, text, volume)
-  }
-
-  private async status(): Promise<SpeakStatus> {
-    const brokers = this.host.listBrokers()
-    const rows = await Promise.all(
-      brokers.map(async (ref) => {
-        const echo = this.echoes.get(ref.id)
-        return {
-          id: ref.id,
-          name: ref.name,
-          state: echo?.state ?? 'failed',
-          ...(echo === undefined
-            ? { error: 'embedded Python unavailable' }
-            : echo.error === null
-              ? {}
-              : { error: echo.error }),
-          devices: [...(echo?.devices ?? [])],
-          session:
-            echo === undefined
-              ? { loggedIn: false, ageSec: 0, lastSuccessAt: null }
-              : await echo.session(),
-        }
-      }),
-    )
-    const targets = this.settings.targets
-    const ids = brokers.map((ref) => ref.id)
-    return {
-      brokers: rows,
-      unassignedTargets: unassignedCount(targets),
-      notice: noticeFor(targets, ids),
-    }
-  }
-
-  private async sendTest(input: {
-    brokerId: string
-    echoIds: readonly string[]
-    mode: SpeakMode
-    volume: number
-    text: string
-  }): Promise<{ outcomes: Array<{ echoId: string; ok: boolean; error?: string }> }> {
-    const outcomes = await this.utter(
-      input.brokerId,
-      input.mode,
-      input.echoIds,
-      input.text,
-      input.volume,
-    )
-    const known = new Map(
-      (this.echoes.get(input.brokerId)?.devices ?? []).map((device) => [device.id, device]),
-    )
-    const next = [...this.settings.targets]
-    for (const echoId of input.echoIds) {
-      if (next.some((row) => row.echoId === echoId && row.brokerId === input.brokerId)) continue
-      next.push({
-        id: `echo-${input.brokerId}-${echoId}`,
-        name: known.get(echoId)?.name ?? echoId,
-        enabled: true,
-        brokerId: input.brokerId,
-        echoId,
-        mode: input.mode,
-        volume: input.volume,
-        respectDnd: true,
-      })
-    }
-    this.settings = { ...this.settings, targets: next }
-    await this.persist()
-    return {
-      outcomes: outcomes.map((row) => ({
-        echoId: row.targetId,
-        ok: row.ok,
-        ...(row.error !== undefined ? { error: row.error } : {}),
-      })),
-    }
   }
 }

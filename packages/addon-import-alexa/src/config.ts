@@ -84,49 +84,33 @@ export const alexaProxyLoginSchema = z.object({
 export type AlexaProxyLogin = z.infer<typeof alexaProxyLoginSchema>
 
 /**
- * Echo speech settings. Speech signs in as an import broker, so the targets
- * are what lives here. `email`, `password`, `region` and `session` are the OLD
- * standalone login: they are read once to migrate it onto the single broker
- * (see `speak/migration.ts`) and written back empty.
+ * The Echo notification targets this addon owns. Speech signs in as an import
+ * broker, so a target is only the Echo it speaks on and how.
  */
-export const alexaSpeakSettingsSchema = z.object({
-  email: z.string().default(''),
-  password: z.string().default('').describe('Legacy Amazon password').meta({ secret: true }),
-  region: z.enum(['NA', 'EU', 'FE']).default('EU'),
-  session: z.string().default('').describe('Legacy Alexa session blob').meta({ secret: true }),
-  targets: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        enabled: z.boolean(),
-        /** The broker (Amazon account) the Echo belongs to; '' until one is chosen. */
-        brokerId: z.string().default(''),
-        echoId: z.string(),
-        mode: z.enum(['speak', 'announce']),
-        volume: z.number(),
-        respectDnd: z.boolean(),
-      }),
-    )
-    .default([]),
+export const alexaEchoTargetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  enabled: z.boolean(),
+  /** The broker (Amazon account) the Echo belongs to; '' until one is chosen. */
+  brokerId: z.string().default(''),
+  echoId: z.string(),
+  mode: z.enum(['speak', 'announce']),
+  volume: z.number(),
+  respectDnd: z.boolean(),
 })
-export type AlexaSpeakSettings = z.infer<typeof alexaSpeakSettingsSchema>
+export type AlexaEchoTarget = z.infer<typeof alexaEchoTargetSchema>
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** Resolved settings. A keychain marker (an object) is an empty secret, not a password. */
-export function readSpeakSettings(config: { speak?: unknown }): AlexaSpeakSettings {
-  const raw = isRecord(config.speak) ? config.speak : {}
-  const region = raw['region']
-  const targets = raw['targets']
-  return alexaSpeakSettingsSchema.parse({
-    email: typeof raw['email'] === 'string' ? raw['email'] : '',
-    password: typeof raw['password'] === 'string' ? raw['password'] : '',
-    session: typeof raw['session'] === 'string' ? raw['session'] : '',
-    ...(region === 'NA' || region === 'EU' || region === 'FE' ? { region } : {}),
-    ...(Array.isArray(targets) ? { targets } : {}),
+/** The stored Echo targets; a row that no longer parses is dropped, never guessed. */
+export function readEchoTargets(config: { echoTargets?: unknown }): readonly AlexaEchoTarget[] {
+  const raw = config.echoTargets
+  if (!Array.isArray(raw)) return []
+  return raw.flatMap((row) => {
+    const parsed = alexaEchoTargetSchema.safeParse(isRecord(row) ? row : {})
+    return parsed.success ? [parsed.data] : []
   })
 }
 
@@ -134,13 +118,7 @@ export function readSpeakSettings(config: { speak?: unknown }): AlexaSpeakSettin
 export const alexaAddonConfigSchema = z.object({
   brokers: z.array(AlexaBrokerEntrySchema).default([]),
   proxyLogin: alexaProxyLoginSchema.default({ proxyPort: 3456 }),
-  speak: alexaSpeakSettingsSchema.default({
-    email: '',
-    password: '',
-    region: 'EU',
-    session: '',
-    targets: [],
-  }),
+  echoTargets: z.array(alexaEchoTargetSchema).default([]),
 })
 export type AlexaAddonConfig = z.infer<typeof alexaAddonConfigSchema>
 

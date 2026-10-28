@@ -501,7 +501,11 @@
       "showSubjectPathHelp": "Disegna la linea percorsa dal soggetto fino al momento della foto. Su un ritaglio, solo la parte al suo interno.",
       "askVerdict": "Chiedimi di confermare le rilevazioni",
       "askVerdictAria": "chiedimi di confermare le rilevazioni",
-      "askVerdictHint": "La notifica porta Corretto e Sbagliato. Un tocco segna la rilevazione per il riaddestramento, lo stesso segno della Libreria, e registra a chi è stato chiesto e quando. I canali senza pulsanti (email, Pushover, Gotify, WhatsApp, Discord) ricevono le stesse due scelte come link."
+      "askVerdictHint": "La notifica porta Corretto e Sbagliato. Un tocco segna la rilevazione per il riaddestramento, lo stesso segno della Libreria, e registra a chi è stato chiesto e quando. I canali senza pulsanti (email, Pushover, Gotify, WhatsApp, Discord) ricevono le stesse due scelte come link.",
+      "deliveryOptions": {
+        "title": "Opzioni di consegna",
+        "useDefault": "Usa l'impostazione del target"
+      }
     },
     "notificationSequences": {
       "name": "Nome",

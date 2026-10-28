@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Amazon login proxy logs each step it takes (without secrets), and the start log names the region
+- Echo speech mode and volume can be set per notification rule; the Speak on Echo page is gone, Echo targets are managed under Notifications, Targets.
 
 ## [0.2.162] - 2026-10-28
 

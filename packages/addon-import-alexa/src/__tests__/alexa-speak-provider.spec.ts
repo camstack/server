@@ -168,6 +168,43 @@ describe('alexa notification provider', () => {
   })
 })
 
+describe('Alexa delivery parameters (declared on the kind, set by a rule)', () => {
+  it('declares mode and volume on the kind', () => {
+    const declared = alexaTargetKind([]).deliveryParams ?? []
+    expect(declared.map((p) => [p.key, p.type])).toEqual([
+      ['mode', 'enum'],
+      ['volume', 'number'],
+    ])
+    expect(declared[0]?.options?.map((o) => o.value)).toEqual(['speak', 'announce'])
+  })
+
+  it('a rule delivery overrides the target config; absent falls back to it', async () => {
+    const spoken: SpeakCommand[] = []
+    let now = 10_000
+    const provider = createAlexaNotificationProvider({
+      brokers: () => [broker('b1', 'Home', [echo()])],
+      now: () => now,
+      logger: logger(),
+      loadTargets: () => [target({ mode: 'speak', volume: 40 })],
+      saveTargets: () => {},
+      speak: async (command) => {
+        spoken.push(command)
+        return [{ targetId: command.targets[0] ?? '', ok: true }]
+      },
+    })
+    await provider.send({
+      targetId: 't1',
+      notification: { ...note('first'), delivery: { mode: 'announce', volume: 85 } },
+    })
+    now += SPEAK_MIN_GAP_MS
+    await provider.send({ targetId: 't1', notification: note('second') })
+    expect(spoken.map((c) => [c.mode, c.volume])).toEqual([
+      ['announce', 85],
+      ['speak', 40],
+    ])
+  })
+})
+
 describe('the Alexa target kind', () => {
   const fieldsOf = (brokers: readonly SpeakBrokerView[]) =>
     alexaTargetKind(brokers).configSchema.sections.flatMap((section) => section.fields)

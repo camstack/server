@@ -1,5 +1,4 @@
 import {
-  addonPagesSourceCapability,
   addonRoutesCapability,
   BaseDeviceProvider,
   brokerCapability,
@@ -11,17 +10,14 @@ import {
   EventCategory,
   type AddonDataPlaneHandle,
   type AddonInitResult,
-  type AddonPageDeclaration,
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
-  type IAddonPageProvider,
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
   notificationOutputCapability,
   type SystemEvent,
-  SECRET_CLEAR,
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
 } from '@camstack/types'
@@ -46,29 +42,16 @@ import { AlexaDevice } from './devices/alexa-device.js'
 import { alexaRecordKinds } from './broker-record-kinds.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import type { AlexaBrokerEntry } from './config.js'
-import { alexaSpeakActions } from './speak/actions.js'
 import { readBrokerSeed } from './speak/broker-seed.js'
 import { AlexaSpeakController } from './speak/controller.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
 
-export { alexaSpeakActions as customActions } from './speak/actions.js'
-
-const SPEAK_PAGE: AddonPageDeclaration = {
-  id: 'speak',
-  label: 'Speak on Echo',
-  icon: 'megaphone',
-  path: '/addon/import-alexa',
-  remoteName: 'addon_import_alexa_page',
-  bundle: 'remoteEntry.js',
-  section: 'administration',
-}
-
 /** Default config — a fresh install starts with no accounts. */
 const DEFAULTS: AlexaAddonConfig = {
   brokers: [],
   proxyLogin: { proxyPort: 3456 },
-  speak: { email: '', password: '', region: 'EU', session: '', targets: [] },
+  echoTargets: [],
 }
 
 /** Device types an imported Alexa appliance can materialise as. */
@@ -117,13 +100,11 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
 
-  protected override readonly secretStatePaths = ['speak.password', 'speak.session']
-
   constructor() {
     super({ ...DEFAULTS })
   }
 
-  protected override async onInitialize(): Promise<AddonInitResult<typeof alexaSpeakActions>> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
     const records = this.ctx.records
@@ -195,8 +176,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     const speak = new AlexaSpeakController({
       logger: this.ctx.logger.child('speak'),
       readConfig: () => this.config,
-      writeSpeak: async (next) => {
-        await this.updateGlobalSettings({ speak: next })
+      writeTargets: async (next) => {
+        await this.updateGlobalSettings({ echoTargets: [...next] })
       },
       listBrokers: () =>
         this.activeBrokers.map((entry) => ({
@@ -209,13 +190,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         return entry === undefined ? null : readBrokerSeed(this.ctx.dataDir, entry)
       },
       sessions: RecordsSpeakSessionStore.of(records),
-      clearLegacySecrets: async () => {
-        // Nested secrets clear in place; `clearSecrets` only reaches top-level keys,
-        // and clearing `speak` would take the targets with it.
-        await this.updateGlobalSettingsAsOperator({
-          speak: { ...this.config.speak, password: SECRET_CLEAR, session: SECRET_CLEAR },
-        })
-      },
       ensurePython: () => this.ctx.deps.ensurePython(),
     })
     this.speak = speak
@@ -225,11 +199,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
     })
-
-    const pages: IAddonPageProvider = {
-      id: this.addonId,
-      listPages: () => [SPEAK_PAGE],
-    }
 
     return {
       providers: [
@@ -241,10 +210,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           provider: buildAddonRouteProvider('import-alexa', loginRoutes),
         },
         { capability: notificationOutputCapability, provider: speak.provider },
-        { capability: addonPagesSourceCapability, provider: pages },
       ],
-      customActions: alexaSpeakActions,
-      actionHandlers: speak.handlers(),
     }
   }
 

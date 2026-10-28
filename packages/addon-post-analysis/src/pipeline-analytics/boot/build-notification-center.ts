@@ -580,12 +580,15 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           // The button budget of each kind: 0 means the verdict choices travel
           // as links in the body, not as buttons.
           const maxActionsByKind = new Map(kinds.map((k) => [k.kind, k.caps.actions]))
+          // What each kind lets a rule set at send time (D938).
+          const deliveryParamsByKind = new Map(kinds.map((k) => [k.kind, k.deliveryParams]))
           return targets.map((t) => {
             // Personal-target owner rides INSIDE the open config blob (the
             // nc.upsertMyTarget convention) — surfaced for rule→user fan-out.
             const owner = (t.config as Record<string, unknown>)['ownerUserId']
             const bodyMaxLen = bodyMaxLenByKind.get(t.kind)
             const maxActions = maxActionsByKind.get(t.kind)
+            const deliveryParams = deliveryParamsByKind.get(t.kind)
             return {
               id: t.id,
               addonId: t.addonId,
@@ -595,6 +598,9 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
               ...(typeof owner === 'string' && owner.length > 0 ? { ownerUserId: owner } : {}),
               ...(typeof bodyMaxLen === 'number' ? { bodyMaxLen } : {}),
               ...(typeof maxActions === 'number' ? { maxActions } : {}),
+              ...(deliveryParams !== undefined && deliveryParams.length > 0
+                ? { deliveryParams }
+                : {}),
             }
           })
         },

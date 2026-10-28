@@ -159,6 +159,35 @@ export const NotificationActionSchema = z.object({
 })
 export type NotificationAction = z.infer<typeof NotificationActionSchema>
 
+/** A delivery parameter value: what a notifier declared it takes. */
+export const DeliveryParamValueSchema = z.union([z.string(), z.number(), z.boolean()])
+export type DeliveryParamValue = z.infer<typeof DeliveryParamValueSchema>
+
+/**
+ * One extra delivery parameter a notifier KIND declares (D938). A rule that
+ * addresses a target of that kind may set it; a kind that declares nothing is
+ * never handed one. The admin UI derives its control from this descriptor —
+ * no editor knows a service by name.
+ *
+ * Optional fields are `.optional()`, never `.default()` (a Zod default does not
+ * run on the addon cap path).
+ */
+export const DeliveryParamSchema = z.object({
+  key: z.string().min(1),
+  label: z.string(),
+  /** i18n key of the label, resolved by the declaring addon's namespace. */
+  labelKey: z.string().optional(),
+  type: z.enum(['enum', 'number', 'boolean', 'string']),
+  /** `enum` only: the closed set of accepted values. */
+  options: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
+  /** `number` only. */
+  min: z.number().optional(),
+  max: z.number().optional(),
+  /** What the notifier does when the rule sets nothing; shown as the placeholder. */
+  default: DeliveryParamValueSchema.optional(),
+})
+export type DeliveryParam = z.infer<typeof DeliveryParamSchema>
+
 /**
  * The canonical notification. `body` is the only hard field (Apprise model).
  * `priority` is a 5-level ORDINAL (1=lowest … 3=normal(default) … 5=urgent),
@@ -182,6 +211,12 @@ export const NotificationSchema = z.object({
   deviceId: z.number().optional(),
   eventId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  /**
+   * Values for the parameters the target's kind DECLARES in
+   * {@link TargetKindSchema} `deliveryParams`. Already validated against the
+   * declaration by the sender; a notifier reads only the keys it declared.
+   */
+  delivery: z.record(z.string(), DeliveryParamValueSchema).optional(),
 })
 
 // ── Per-kind capability descriptor (§3 of the matrix) ───────────────
@@ -296,6 +331,11 @@ export const TargetKindSchema = z.object({
    */
   destinationKeys: z.array(z.string()).optional(),
   supportsDiscovery: z.boolean(),
+  /**
+   * Extra delivery parameters a rule may set for a target of this kind (D938).
+   * Absent = none; the rule editor then offers nothing.
+   */
+  deliveryParams: z.array(DeliveryParamSchema).optional(),
   caps: TargetKindCapsSchema,
 })
 /** A kind descriptor with `configSchema` tightened to `ConfigUISchema`. */

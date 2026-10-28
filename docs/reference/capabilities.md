@@ -128,7 +128,7 @@ Singleton or collection providers, addressed without a device.
 | `action-source` | 3 | — | — | — | — | — |
 | `actions` | 11 | — | — | — | — | `core-blocks` |
 | `addon-pages` | 1 | — | — | — | — | `addon-pages-aggregator` |
-| `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `import-alexa` `model-studio` `osd-manager` `training` |
+| `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `model-studio` `osd-manager` `training` |
 | `addon-routes` | 2 | — | — | — | ✓ | `auth-oidc` `export-alexa` `export-google` `google-services` `import-alexa` `notifiers` `provider-homeassistant` `homeassistant-export` |
 | `addon-settings` | 5 | — | — | — | — | — |
 | `addon-widgets` | 1 | — | — | — | — | `addon-widgets-aggregator` |

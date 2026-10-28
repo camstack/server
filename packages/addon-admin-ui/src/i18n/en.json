@@ -501,7 +501,11 @@
       "showSubjectPathHelp": "Draws the line the subject walked, up to the moment of the picture. On a crop, only the part inside it.",
       "askVerdict": "Ask me to confirm detections",
       "askVerdictAria": "ask me to confirm detections",
-      "askVerdictHint": "The notification carries Correct and Wrong. A tap marks the detection for retraining, the same mark as in the Library, and records who was asked and when. Channels with no buttons (email, Pushover, Gotify, WhatsApp, Discord) get the same two choices as links."
+      "askVerdictHint": "The notification carries Correct and Wrong. A tap marks the detection for retraining, the same mark as in the Library, and records who was asked and when. Channels with no buttons (email, Pushover, Gotify, WhatsApp, Discord) get the same two choices as links.",
+      "deliveryOptions": {
+        "title": "Delivery options",
+        "useDefault": "Use the target setting"
+      }
     },
     "notificationSequences": {
       "name": "Name",

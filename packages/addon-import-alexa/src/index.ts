@@ -1,4 +1,4 @@
-export { AlexaImportAddon, customActions } from './addon.js'
+export { AlexaImportAddon } from './addon.js'
 export {
   alexaAddonConfigSchema,
   alexaConnectionSchema,

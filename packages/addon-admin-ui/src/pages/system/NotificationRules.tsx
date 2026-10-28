@@ -77,6 +77,13 @@ import { varsForContext } from '../../components/notifications/template-field.he
 import { useTemplateCatalog } from '../../components/notifications/use-template-catalog'
 import { useScenesFeed } from '../../hooks/use-scenes-feed'
 import { NotificationRuleActions } from './NotificationRuleActions'
+import { NotificationRuleDeliveryOptions } from './NotificationRuleDeliveryOptions'
+import {
+  type DeliveryKindRef,
+  deliveryParamsForSelection,
+  readDeliveryValue,
+  writeDeliveryValue,
+} from './rule-form-delivery'
 import { formToActions } from './notification-rule-actions'
 import {
   type RuleCameraOption,
@@ -911,6 +918,16 @@ function RuleFormDialog({
 
   const targetNames = form.targetIds.map((id) => targets.find((t) => t.id === id)?.name ?? id)
 
+  // What the selected notifiers let a rule set at send time (D938). A kind
+  // catalog that has not answered offers nothing — never a guess.
+  const kinds =
+    useQuery({
+      queryKey: ['notificationOutput', 'listTargetKinds', 'forRuleDelivery'],
+      queryFn: (): Promise<readonly DeliveryKindRef[]> =>
+        system.trpcClient.notificationOutput.listTargetKinds.query({}),
+    }).data ?? []
+  const deliveryParams = deliveryParamsForSelection(form.targetIds, targets, kinds)
+
   // Read through `system.trpcClient` like every other query on this page: the
   // generated React hook needs a tRPC provider this page never mounts in, so
   // using it made the dialog throw the moment it opened.
@@ -1289,6 +1306,26 @@ function RuleFormDialog({
               'No delivery targets configured. Add one under the Targets tab first.',
             )}
             testIdPrefix="rule-target"
+          />
+
+          <NotificationRuleDeliveryOptions
+            params={deliveryParams}
+            valueOf={(key) => readDeliveryValue(form.targetIds, form.targetParams, key)}
+            onChange={(key, value) =>
+              setForm((prev) => ({
+                ...prev,
+                targetParams: writeDeliveryValue(
+                  {
+                    targetIds: prev.targetIds,
+                    targets,
+                    kinds,
+                    targetParams: prev.targetParams,
+                  },
+                  key,
+                  value,
+                ),
+              }))
+            }
           />
 
           {/* Users — fan out to each user's OWN targets at fire time */}

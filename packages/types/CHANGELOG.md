@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Addon manifest entries can declare which Integrations block they belong to (integrationSection)
+- A notifier can declare extra delivery parameters (type, options, default) and a rule target can carry them to it.
 
 ## [1.2.435] - 2026-10-28
 

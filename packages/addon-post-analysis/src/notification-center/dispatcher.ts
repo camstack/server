@@ -27,12 +27,15 @@
 
 import { isVerdictAction, verdictLinkLines } from './detection-verdict-buttons.js'
 import {
+  type DeliveryParam,
+  type DeliveryParamValue,
   eventKindLabel,
   type IScopedLogger,
   type MediaFileBytes,
   NC_CLIP_POST_ROLL_DEFAULT_SEC,
   NC_CLIP_PRE_ROLL_DEFAULT_SEC,
   type NotificationAction,
+  resolveDeliveryParams,
   type ViewerLinkBase,
 } from '@camstack/types'
 import { isStateSummaryData } from './state-summary/state-summary-delivery.js'
@@ -182,6 +185,12 @@ export interface NcTargetRef {
   readonly bodyMaxLen?: number
   /** The KIND's declared button budget (`TargetKindCaps.actions`). Absent = unknown. */
   readonly maxActions?: number
+  /**
+   * The delivery parameters the KIND declares (`TargetKind.deliveryParams`, D938).
+   * Absent = none: the rule's params are never forwarded to this target as
+   * `delivery`.
+   */
+  readonly deliveryParams?: readonly DeliveryParam[]
 }
 
 /**
@@ -262,6 +271,8 @@ export interface NcNotificationInput {
    */
   readonly actions?: ReadonlyArray<NotificationAction>
   readonly attachments?: ReadonlyArray<NcNotificationAttachment>
+  /** Declared delivery parameters the rule set for THIS target (D938). */
+  readonly delivery?: Readonly<Record<string, DeliveryParamValue>>
 }
 
 /**
@@ -2008,6 +2019,7 @@ export class NcDispatcher {
       ...frozenArtifactAttachments(entry),
     ]
     const params = pickParams(entry.payload.params)
+    const delivery = resolveDeliveryParams(target.deliveryParams, entry.payload.params)
     // Default tap target: the camera AT the event instant (operator decision,
     // 2026-08-18 — D1 of the click-actions design), or — for a SYSTEM event —
     // the admin page where the operator can act on it (2026-08-30, see
@@ -2063,6 +2075,7 @@ export class NcDispatcher {
         paramNumber(entry.payload.params, 'priority') ?? entry.payload.priority,
       ),
       ...params,
+      ...(delivery !== undefined ? { delivery } : {}),
       ...(tapUrl !== null ? { clickUrl: tapUrl } : {}),
       // No row carries a push tag (D686, D692): a notifier is one-shot.
       ...(systemEvent !== undefined

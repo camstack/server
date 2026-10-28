@@ -7,8 +7,39 @@
  */
 import { alexaTargetKind } from '../../../../packages/addon-import-alexa/src/speak/provider'
 import { ALEXA_ICON_SVG } from '../../../../packages/addon-import-alexa/src/speak/icon-routes'
-import { SAMPLE_ECHOES } from '../../../../packages/addon-import-alexa/src/speak/setup-sample'
 import { defineFixtures } from './_define'
+
+/** Invented Echo devices. Not a real account. */
+const SAMPLE_ECHOES = [
+  {
+    id: 'echo-kitchen',
+    name: 'Kitchen',
+    family: 'ECHO',
+    online: true,
+    kind: 'device' as const,
+    dnd: false,
+    deviceType: 'A3S5BH2HU6VAYF',
+    room: 'Ground floor',
+  },
+  {
+    id: 'echo-hall',
+    name: 'Hall',
+    family: 'ECHO',
+    online: true,
+    kind: 'device' as const,
+    dnd: true,
+    deviceType: 'A3S5BH2HU6VAYF',
+  },
+  {
+    id: 'group-downstairs',
+    name: 'Downstairs',
+    family: 'WHA',
+    online: true,
+    kind: 'group' as const,
+    dnd: false,
+    deviceType: 'A3S5BH2HU6VAYF',
+  },
+]
 
 const ACCOUNT = { id: 'alexa_001', name: 'Home', ready: true, devices: SAMPLE_ECHOES }
 

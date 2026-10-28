@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**965 shared schemas.**
+**967 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1502,6 +1502,23 @@ Enum: `"auto" \| "day" \| "night" \| "schedule"`
 
 - `success`: `boolean`
 - `deletedId`: `string`
+
+### `DeliveryParamSchema`
+
+- `key`: `string`
+- `label`: `string`
+- `labelKey?`: `string`
+- `type`: `"enum" \| "number" \| "boolean" \| "string"`
+- `options?`: `({ value: string; label: string })[]`
+- `min?`: `number`
+- `max?`: `number`
+- `default?`: `DeliveryParamValueSchema`
+
+### `DeliveryParamValueSchema`
+
+- `string`
+- `number`
+- `boolean`
 
 ### `DetectionSourceSchema`
 
@@ -4368,6 +4385,7 @@ Enum: `"text" \| "markdown" \| "html"`
 - `deviceId?`: `number`
 - `eventId?`: `string`
 - `metadata?`: `Record<string, unknown>`
+- `delivery?`: `Record<string, DeliveryParamValueSchema>`
 
 ### `NotifierStatusSchema`
 
@@ -6415,6 +6433,7 @@ Enum: `"jwt-signing-key"`
 - `configSchema`: `unknown`
 - `destinationKeys?`: `string[]`
 - `supportsDiscovery`: `boolean`
+- `deliveryParams?`: `DeliveryParamSchema[]`
 - `caps`: `TargetKindCapsSchema`
 
 ### `TargetSchema`
