@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub serves viewer 1.0.662: events embed tile settings and a track detail page
+
 ## [1.2.632] - 2026-10-27
 
 ### Changed
