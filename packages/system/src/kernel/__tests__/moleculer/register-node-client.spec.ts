@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
   callRegisterNodeWithRetry,
+  hubServerVersionOf,
   buildNodeManifest,
 } from '../../moleculer/register-node-client.js'
 import type { RegisterNodeParams } from '../../moleculer/node-registry.js'
@@ -118,5 +119,24 @@ describe('callRegisterNodeWithRetry', () => {
     )
     ac.abort()
     await expect(p).rejects.toThrow(/abort/i)
+  })
+})
+
+describe('hubServerVersionOf', () => {
+  it('reads the hub version off an ack, and null for anything else', () => {
+    expect(hubServerVersionOf({ ok: true, hubServerVersion: '1.2.650' })).toBe('1.2.650')
+    expect(hubServerVersionOf({ ok: true })).toBeNull()
+    expect(hubServerVersionOf(undefined)).toBeNull()
+    expect(hubServerVersionOf({ ok: true, hubServerVersion: 5 })).toBeNull()
+  })
+
+  it('callRegisterNodeWithRetry resolves with the ack', async () => {
+    const broker = { call: async () => ({ ok: true, hubServerVersion: '1.2.650' }) }
+    const ack = await callRegisterNodeWithRetry(
+      broker,
+      { nodeId: 'a', addons: [] },
+      { target: 'hub' },
+    )
+    expect(hubServerVersionOf(ack)).toBe('1.2.650')
   })
 })

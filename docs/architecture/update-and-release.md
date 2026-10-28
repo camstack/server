@@ -430,6 +430,27 @@ A full major.minor behind is the pinned-tag / dead-repo shape a `docker pull`
 cannot fix — rare, actionable, still red. The verdict itself is unchanged: both
 states are still computed, still warn-logged, still exported.
 
+### An agent follows its own closure (2026-10-28)
+
+The hub is no longer the only thing that moves an agent's `@camstack/server` closure. Each agent
+keeps it current itself (`server/backend/src/agent/agent-self-update.ts`), through the same
+`AgentUpdateService` stage + apply + `scheduleAgentRestart` path the hub drives (lifecycle =
+respawn, D5). A freshly installed desktop agent boots the seed baked into the app and, unpaired,
+had no hub to receive a fix from.
+
+- **Target.** Unpaired: the npm `latest` of `@camstack/server`. Paired: the version the HUB runs,
+  carried on the `$hub.registerNode` ack (`hubServerVersion`) — never npm latest, so there is no
+  hub/agent skew. A hub too old to say its version leaves the agent where it is, and that is logged.
+- **When.** Unpaired: at boot. Paired: on the first registration ack. Then every
+  `DEFAULT_UPDATE_CHECK_INTERVAL_SECONDS` (6 h). One periodic check, no retry loop (D3).
+- **Never a downgrade.** An equal or older target is skipped. A failed registry or hub-version read
+  is logged with its reason and changes nothing; it is never "up to date" (D49, D393). Every
+  decision (checked, skip, staging, applied, not applied) is one `agent self-update:` log line with
+  the versions.
+- **Off switch.** `CAMSTACK_AGENT_SELF_UPDATE=off` (or `0`, `false`, `no`) on the agent. Default on;
+  the hub's auto-update settings only pace the hub's notifications and do not reach agents.
+- Containers are in scope: closures are applied in a container by the data-root swap.
+
 ## Being TOLD an update exists
 
 Notification of an available update is a different mechanism from applying one,

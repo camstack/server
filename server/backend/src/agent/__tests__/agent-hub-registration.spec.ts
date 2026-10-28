@@ -115,3 +115,22 @@ describe('agent hub registration', () => {
     expect(h.sent[1]?.addons[0]?.capabilities).toEqual(['pipeline-runner', 'decoder'])
   })
 })
+
+describe('agent hub registration: the hub version on the ack', () => {
+  it('hands the hub server version to onAcked (null when the ack does not carry it)', async () => {
+    const acks: Array<string | null> = []
+    let answer: unknown = { ok: true, hubServerVersion: '1.2.650' }
+    const reg = createAgentHubRegistration({
+      buildManifest: () => buildNodeManifest('agent-a', []),
+      broker: () => ({ call: async () => answer }),
+      log: () => {},
+      onAcked: (v) => acks.push(v),
+    })
+    reg.trigger('boot')
+    await flush()
+    answer = { ok: true }
+    reg.trigger('again')
+    await flush()
+    expect(acks).toEqual(['1.2.650', null])
+  })
+})

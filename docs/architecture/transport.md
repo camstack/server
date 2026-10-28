@@ -548,6 +548,11 @@ hub                                   agent (unpaired, plain HTTP :4444)
 - **Surface.** An unpaired agent's `:4444` serves only these routes, health and the static
   UI to the network; every other `/api/` route needs loopback or a session redeemed from a
   hub unlock ticket (ES256 by the mesh CA key, verified against the CA the agent pinned).
+- **Boot mode.** An unpaired agent boots `pairing-only` (`agent-boot-mode.ts`): pairing, health,
+  the static UI and its mDNS advertisement, no core addon. It has no mesh transport, so booting the
+  core addons would block on the hub's settings and abort in a respawn loop. Once pairing installs
+  the certificate the process relaunches (D5) and boots in full. An unpaired agent still updates
+  its own closure from npm (`update-and-release.md`, "An agent follows its own closure").
 - **Unpair.** Hub: `agentPairing.unpairAgent` tells the agent first
   (`node-certificates.forgetHub`), then revokes every certificate and drops the sockets.
   Agent: `POST /api/agent/pairing/forget` from its machine or a hub-unlocked session.

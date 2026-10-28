@@ -25,6 +25,8 @@ interface HubServiceDeps {
   readonly onRegisterNode?: (params: RegisterNodeParams) => void
   /** Explicit deregistration (graceful shutdown). `$node.disconnected` covers crashes. */
   readonly onUnregisterNode?: (nodeId: string) => void
+  /** The hub's running `@camstack/server` version, carried on the `registerNode` ack. */
+  readonly getServerVersion?: () => string | null
   /**
    * The hub's mesh identity gate (D857). When present, `registerNode` asks it
    * whether the SENDER may register: a node registers only itself, and only
@@ -91,7 +93,8 @@ function createHubService(deps: HubServiceDeps): ServiceSchema {
           // device-scoped `nativeCaps`. The action forwards it verbatim; the
           // hub-side `onRegisterNode` decides how to apply each part.
           deps.onRegisterNode?.(ctx.params)
-          return { ok: true }
+          const hubServerVersion = deps.getServerVersion?.() ?? null
+          return hubServerVersion === null ? { ok: true } : { ok: true, hubServerVersion }
         },
       },
       unregisterNode: {

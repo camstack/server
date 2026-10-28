@@ -116,6 +116,12 @@ import { createReconnectRunner } from './agent-reconnect.js'
 import { createSerialQueue } from './serial-queue.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
 import { decideAgentBootMode } from './agent-boot-mode.js'
+import {
+  agentSelfUpdateEnabled,
+  runAgentSelfUpdate,
+  type AgentSelfUpdatePorts,
+} from './agent-self-update.js'
+import { DEFAULT_UPDATE_CHECK_INTERVAL_SECONDS } from '../core/updates/update-check-scheduler.js'
 import { resolveAgentInfraCapabilities } from './agent-infra-capabilities.js'
 import type { LoadedAddonEntry } from './agent-service.js'
 import { createAgentService } from './agent-service.js'
@@ -410,6 +416,9 @@ async function startAgent(configPath?: string): Promise<void> {
   // AbortController for the upward hub registration retry loop — cancelled on
   // agent shutdown so we don't leak the retry loop after stop().
   const registerAbortController = new AbortController()
+  // The hub's `@camstack/server` version from the last `registerNode` ack (agent self-update).
+  let hubServerVersion: string | null = null
+  let selfUpdateOnFirstAck: (() => void) | null = null
 
   /**
    * Build the manifest for the agent's OWN in-process addons (those loaded by
@@ -509,9 +518,14 @@ async function startAgent(configPath?: string): Promise<void> {
     log: (msg) => console.log(`[Agent] ${msg}`),
     // The hub acked the manifest — the agent reached its registered state.
     // Run the single-copy GC sweep once (first ack only; no-op after).
-    onAcked: () => {
+    onAcked: (ackedHubServerVersion) => {
       if (hubConnectionStateOverride === 'certificate-rejected') hubConnectionStateOverride = null
+      hubServerVersion = ackedHubServerVersion
       confirmAgentBootHealthy()
+      // Paired: the first ack is the first moment the hub's version is known.
+      const firstAck = selfUpdateOnFirstAck
+      selfUpdateOnFirstAck = null
+      firstAck?.()
     },
     onCertificateRefused: () => {
       if (hubConnectionStateOverride === 'certificate-rejected') return
@@ -1078,6 +1092,45 @@ async function startAgent(configPath?: string): Promise<void> {
     })
   }
   const addonsBooted = decideAgentBootMode({ paired: isAgentPaired(config.configPath) }) === 'full'
+  // ── Self-update (agent-self-update.ts): keep this closure current with nobody driving it.
+  // Unpaired -> npm latest, at boot; paired -> the hub's version, at the first registration ack.
+  // Then on the update-check cadence (a periodic check, no retry loop). Lifecycle = respawn (D5).
+  const selfUpdatePorts: AgentSelfUpdatePorts = {
+    enabled: () => agentSelfUpdateEnabled(process.env),
+    isPaired: () => isAgentPaired(config.configPath),
+    getHubServerVersion: () => hubServerVersion,
+    runningVersion: () => agentUpdateService.getRunningRootPackage().version,
+    checkLatest: async () => {
+      const check = await agentUpdateService.checkServerUpdate()
+      return {
+        latestVersion: check.latestVersion,
+        error: check.error,
+        pendingVersion: check.pendingVersion ?? null,
+      }
+    },
+    apply: async (version) => {
+      const result = await agentUpdateService.applyServerUpdate({ version })
+      return {
+        accepted: result.accepted,
+        outcome: result.outcome ?? 'unknown',
+        message: result.message,
+      }
+    },
+    log: {
+      info: (message) => consoleLogger.info(message, { tags: { nodeId: config.nodeId } }),
+      warn: (message) => consoleLogger.warn(message, { tags: { nodeId: config.nodeId } }),
+    },
+  }
+  if (isAgentPaired(config.configPath)) {
+    selfUpdateOnFirstAck = () => void runAgentSelfUpdate(selfUpdatePorts)
+  } else {
+    void runAgentSelfUpdate(selfUpdatePorts)
+  }
+  const selfUpdateTimer = setInterval(
+    () => void runAgentSelfUpdate(selfUpdatePorts),
+    DEFAULT_UPDATE_CHECK_INTERVAL_SECONDS * 1000,
+  )
+  selfUpdateTimer.unref()
   const localPairing = createLocalPairingAnnouncer(config.dataDir, consoleLogger)
   const pairing: AgentPairing = new AgentPairing({
     nodeId: config.nodeId,

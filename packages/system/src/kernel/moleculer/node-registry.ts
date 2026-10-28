@@ -71,6 +71,11 @@ interface RegisterNodeParams {
 /** Ack returned by `$hub.registerNode` — presence of `ok` is the signal. */
 interface RegisterNodeResult {
   readonly ok: true
+  /**
+   * The `@camstack/server` version the HUB runs, when it knows it. Lets an agent align its own
+   * closure to the hub's without a second call; absent from an older hub.
+   */
+  readonly hubServerVersion?: string
 }
 
 /** Flattened registry view: one row per (node, addon, capability). */

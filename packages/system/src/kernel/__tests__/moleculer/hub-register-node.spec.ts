@@ -82,4 +82,16 @@ describe('$hub.registerNode', () => {
       await broker.stop()
     }
   })
+
+  it('carries the hub server version on the ack when it knows it', async () => {
+    const broker = new ServiceBroker({ nodeID: 'hub', transporter: 'Fake', logger: false })
+    broker.createService(createHubService(baseDeps({ getServerVersion: () => '1.2.650' })))
+    await broker.start()
+    try {
+      const result = await broker.call('$hub.registerNode', { nodeId: 'a', addons: [] })
+      expect(result).toEqual({ ok: true, hubServerVersion: '1.2.650' })
+    } finally {
+      await broker.stop()
+    }
+  })
 })

@@ -64,6 +64,7 @@ import { StreamProbeService } from '../streaming/stream-probe.service'
 import { filterAgentAuthoritativeRecords } from './agent-readiness-pull.js'
 import { requestAgentRegistration } from './agent-registration-request.js'
 import { HubMeshGuard } from './hub-mesh-guard.js'
+import { readHubServerVersion } from './hub-server-version.js'
 import { buildCapCallFn } from './cap-call-fn.js'
 import {
   createHubResidentProviderLookup,
@@ -356,6 +357,8 @@ export class MoleculerService {
       onUnregisterNode: (nodeId) => {
         this.removeNodeFromRegistry(nodeId)
       },
+      // The ack carries the hub's closure version so an agent aligns to it (agent self-update).
+      getServerVersion: () => readHubServerVersion(),
       // D857: a node registers only itself, and only with a certificate identity.
       meshIdentity: this.meshGuard.gate,
     }

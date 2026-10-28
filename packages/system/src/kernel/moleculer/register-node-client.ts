@@ -49,7 +49,10 @@ function buildNodeManifest(
 ): RegisterNodeParams {
   const params: RegisterNodeParams = {
     nodeId,
-    addons: addons.map((a) => ({ addonId: a.addonId, capabilities: [...a.capabilities] })),
+    addons: addons.map((a) => ({
+      addonId: a.addonId,
+      capabilities: [...a.capabilities],
+    })),
     ...(nativeCaps === undefined
       ? {}
       : {
@@ -61,7 +64,9 @@ function buildNodeManifest(
         }),
     ...(rootPackage === undefined
       ? {}
-      : { rootPackage: { name: rootPackage.name, version: rootPackage.version } }),
+      : {
+          rootPackage: { name: rootPackage.name, version: rootPackage.version },
+        }),
   }
   return params
 }
@@ -94,7 +99,7 @@ async function callRegisterNodeWithRetry(
   broker: RegisterNodeBroker,
   params: RegisterNodeParams,
   opts: CallRegisterNodeOptions,
-): Promise<void> {
+): Promise<unknown> {
   const action = opts.target === 'hub' ? '$hub.registerNode' : '$agent.registerNode'
   // Pin the destination node for `$hub.*`.
   // Without `nodeID`, Moleculer requires registry.actions.isAvailable — on the
@@ -111,9 +116,9 @@ async function callRegisterNodeWithRetry(
   for (;;) {
     if (opts.signal?.aborted) throw new Error('aborted')
     try {
-      await broker.call(action, params, callOpts)
+      const ack = await broker.call(action, params, callOpts)
       if (attempt > 0) opts.log?.(`[register-node] ${action} acked after ${attempt + 1} attempt(s)`)
-      return
+      return ack
     } catch (err) {
       opts.onAttemptFailed?.(err)
       attempt++
@@ -126,5 +131,12 @@ async function callRegisterNodeWithRetry(
   }
 }
 
-export { callRegisterNodeWithRetry, buildNodeManifest }
+/** The hub's `@camstack/server` version off a `$hub.registerNode` ack; null when it did not say. */
+function hubServerVersionOf(ack: unknown): string | null {
+  if (typeof ack !== 'object' || ack === null) return null
+  const version: unknown = Reflect.get(ack, 'hubServerVersion')
+  return typeof version === 'string' && version.length > 0 ? version : null
+}
+
+export { callRegisterNodeWithRetry, buildNodeManifest, hubServerVersionOf }
 export type { RegisterNodeBroker, CallRegisterNodeOptions }

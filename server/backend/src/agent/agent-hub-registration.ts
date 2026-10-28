@@ -27,6 +27,7 @@
  */
 import {
   callRegisterNodeWithRetry,
+  hubServerVersionOf,
   meshErrorType,
   MESH_NODE_UNAUTHENTICATED_TYPE,
   type RegisterNodeBroker,
@@ -40,8 +41,8 @@ export interface AgentHubRegistrationOptions {
   readonly broker: () => RegisterNodeBroker
   readonly signal?: AbortSignal
   readonly log: (message: string) => void
-  /** The hub acked a registration. */
-  readonly onAcked?: () => void
+  /** The hub acked a registration; `hubServerVersion` is the hub's closure version when it said. */
+  readonly onAcked?: (hubServerVersion: string | null) => void
   /** The hub refused the registration because it does not accept this agent's certificate. */
   readonly onCertificateRefused?: (err: unknown) => void
 }
@@ -76,11 +77,11 @@ export function createAgentHubRegistration(
         if (meshErrorType(err) === MESH_NODE_UNAUTHENTICATED_TYPE) opts.onCertificateRefused?.(err)
       },
     })
-      .then(() => {
+      .then((ack) => {
         opts.log(
           `[register-node] the hub acked this node's capabilities: ${manifest.addons.length} addon(s), ${bindings} binding(s) (${reason})`,
         )
-        opts.onAcked?.()
+        opts.onAcked?.(hubServerVersionOf(ack))
       })
       .catch(() => {
         // Aborted: shutting down.

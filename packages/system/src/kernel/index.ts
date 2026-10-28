@@ -247,7 +247,11 @@ export type {
   NodeCapEntry,
   NodeNativeCapEntry,
 } from './moleculer/node-registry.js'
-export { callRegisterNodeWithRetry, buildNodeManifest } from './moleculer/register-node-client.js'
+export {
+  callRegisterNodeWithRetry,
+  buildNodeManifest,
+  hubServerVersionOf,
+} from './moleculer/register-node-client.js'
 export type {
   RegisterNodeBroker,
   CallRegisterNodeOptions,
