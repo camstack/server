@@ -57,6 +57,12 @@ const providers = vi.hoisted(() => ({
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useIntegrationsGetAvailableTypes: () => ({ data: providers.list, isLoading: false }),
+  useAddonsList: () => ({
+    data: [
+      { manifest: { id: 'provider-reolink' } },
+      { manifest: { id: 'provider-tuya', integrationSection: 'system' } },
+    ],
+  }),
 }))
 
 import { ProviderPicker } from '../ProviderPicker'
@@ -71,7 +77,7 @@ describe('ProviderPicker', () => {
     Reflect.deleteProperty(window, 'matchMedia')
   })
 
-  it('renders a 2-column grid of providers and filters by search', () => {
+  it('renders the providers in Providers and System sections and filters by search', () => {
     const onSelect = vi.fn()
     render(
       <MemoryRouter>
@@ -81,12 +87,43 @@ describe('ProviderPicker', () => {
     expect(screen.getByTestId('provider-picker')).toBeTruthy()
     expect(screen.getByTestId('provider-pick-provider-reolink')).toBeTruthy()
     expect(screen.getByTestId('provider-pick-provider-tuya')).toBeTruthy()
+    expect(
+      screen
+        .getByTestId('integrations-section-providers')
+        .contains(screen.getByTestId('provider-card-provider-reolink')),
+    ).toBe(true)
+    expect(
+      screen
+        .getByTestId('integrations-section-system')
+        .contains(screen.getByTestId('provider-card-provider-tuya')),
+    ).toBe(true)
 
     fireEvent.change(screen.getByTestId('provider-picker-search'), {
       target: { value: 'reolink' },
     })
     expect(screen.getByTestId('provider-pick-provider-reolink')).toBeTruthy()
     expect(screen.queryByTestId('provider-pick-provider-tuya')).toBeNull()
+    expect(screen.queryByTestId('integrations-section-system')).toBeNull()
+  })
+
+  it('selects a provider when its card is clicked', () => {
+    const onSelect = vi.fn()
+    render(
+      <MemoryRouter>
+        <ProviderPicker onSelect={onSelect} onClose={vi.fn()} />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByTestId('provider-pick-provider-reolink'))
+    expect(onSelect).toHaveBeenCalledWith(
+      'provider-reolink',
+      'multiple',
+      'scan',
+      'Reolink',
+      'device-provider',
+      null,
+      'standalone',
+      true,
+    )
   })
 
   it('does not show a trailing arrow on a provider card', () => {
@@ -95,8 +132,7 @@ describe('ProviderPicker', () => {
         <ProviderPicker onSelect={vi.fn()} onClose={vi.fn()} />
       </MemoryRouter>,
     )
-    const card = screen.getByTestId('provider-pick-provider-reolink')
-    expect(card.querySelector('svg')).toBeNull()
+    const card = screen.getByTestId('provider-card-provider-reolink')
     expect(card.textContent).not.toContain('>')
   })
 

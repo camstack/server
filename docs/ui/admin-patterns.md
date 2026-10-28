@@ -278,7 +278,7 @@ addon declares its block on its `camstack.addons[]` entry with
 several addons); absent, System is every integration whose providing addon ships
 in a framework package (`manifest.packageName`, `lib/framework-packages.ts`).
 Both are read from `addons.list` through `lib/integration-sections.ts`, never
-from an addon id. Pending, empty and error
+from an addon id. The New Integration dialog (`ProviderPicker`) uses the same sections and the same `IntegrationCard` (`components/integrations/integration-card.tsx`), 1 to 3 columns. Pending, empty and error
 are drawn once, above either layout. `DataTable` still does not turn itself into cards.
 
 ### What an export entry shows, and why the rest could go

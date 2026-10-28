@@ -350,7 +350,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     picker: t('integrations.newIntegration'),
     config: t('integrations.configureIntegration'),
     discovery: t('integrations.importDevices'),
-    broker: t('integrations.connectBroker', { defaultValue: 'Connect a broker' }),
+    broker: t('integrations.connectBroker', {
+      defaultValue: 'Connect a broker',
+    }),
   }
 
   const pendingAddonId = isCreating ? selectedAddonId : null
@@ -362,7 +364,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={lockModal ? undefined : handleClose} />
-      <div className="relative z-10 w-full max-w-lg max-h-[calc(85dvh-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] rounded-xl border border-border bg-background shadow-2xl flex flex-col overflow-hidden">
+      <div
+        className={`relative z-10 w-full ${step === 'picker' ? 'max-w-5xl' : 'max-w-lg'} max-h-[calc(85dvh-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] rounded-xl border border-border bg-background shadow-2xl flex flex-col overflow-hidden`}
+      >
         <div className="flex items-center justify-between border-b border-border px-5 py-4 flex-shrink-0">
           <h2 className="text-sm font-semibold text-foreground">{titles[step]}</h2>
           <button
@@ -432,7 +436,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-sm px-6 text-center">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-xs font-medium text-foreground">
-              {t('integrations.creating', { defaultValue: 'Creating integration…' })}
+              {t('integrations.creating', {
+                defaultValue: 'Creating integration…',
+              })}
             </p>
             {!createOverdue && (
               <p className="text-[10px] text-foreground-subtle">
