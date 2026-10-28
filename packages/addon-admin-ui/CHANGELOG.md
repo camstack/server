@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.501] - 2026-10-28
+
 ### Changed
 
 - The automation editor shows parked-object, detection and interval triggers and the parked-object condition read-only instead of dropping them

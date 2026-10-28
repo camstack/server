@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.434] - 2026-10-28
+
 ### Added
 
 - Automations can start on a parked object appearing or leaving, filtered by camera, class and zone, and check whether one is present
