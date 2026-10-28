@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addon manifest entries can declare which Integrations block they belong to (integrationSection)
 - A notifier can declare extra delivery parameters (type, options, default) and a rule target can carry them to it.
+- Vendor sign-in proxy: form fields carrying a proxied address are sent back to the vendor with the vendor's own address
 
 ## [1.2.435] - 2026-10-28
 

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Alexa sign-in opens the login page of the chosen Amazon region and in its language, and no longer fails right after entering the email
+
+## [0.2.163] - 2026-10-28
+
+### Changed
+
 - The Amazon login proxy logs each step it takes (without secrets), and the start log names the region
 - Echo speech mode and volume can be set per notification rule; the Speak on Echo page is gone, Echo targets are managed under Notifications, Targets.
 

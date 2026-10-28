@@ -6,6 +6,7 @@ import {
   rewriteBody,
   rewriteLocation,
   rewriteReferer,
+  rewriteFormBody,
   rewriteSetCookie,
   upstreamUrlFor,
   type LoginProxyRoute,
@@ -91,6 +92,24 @@ describe('request side', () => {
       ),
     ).toBe('https://auth.vendor.test/p?q=1')
     expect(rewriteReferer('https://hub.lan/admin/page', route)).toBeNull()
+  })
+  it('turns proxy URLs in urlencoded form values back into vendor URLs, nothing else', () => {
+    const proxied = encodeURIComponent(
+      '/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/ap/land?x=1',
+    )
+    const absolute = encodeURIComponent(
+      'https://hub.lan/addon/demo/vendor-login/ATTEMPT12/auth.vendor.test/ap/other',
+    )
+    const body = `email=a%40b.c&ret=${proxied}&abs=${absolute}&plain=https%3A%2F%2Fother.test%2Fx&empty=&flag`
+    expect(rewriteFormBody(body, route)).toBe(
+      `email=a%40b.c&ret=${encodeURIComponent('https://auth.vendor.test/ap/land?x=1')}` +
+        `&abs=${encodeURIComponent('https://auth.vendor.test/ap/other')}` +
+        '&plain=https%3A%2F%2Fother.test%2Fx&empty=&flag',
+    )
+  })
+  it('returns a form body byte-identical when no value is ours', () => {
+    const body = 'a=1+2&b=%E2%82%AC&b=x%20y&c'
+    expect(rewriteFormBody(body, route)).toBe(body)
   })
   it('never forwards the hub session cookie', () => {
     expect(filterForwardedCookies('camstack_session=SECRET; sid=1; theme=x')).toBe('sid=1; theme=x')

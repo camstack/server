@@ -1,6 +1,7 @@
 import AlexaRemote from 'alexa-remote2'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
+import { alexaRegionOptions } from './alexa-region-options.js'
 import { sanitizeProxyTraceLine } from './alexa-proxy-trace.js'
 
 /**
@@ -150,7 +151,7 @@ export class AlexaProxyLoginSession {
   async start(): Promise<void> {
     const remote = new AlexaRemote()
     this.#remote = remote
-    const amazonPage = this.#opts.amazonDomain.length > 0 ? this.#opts.amazonDomain : 'amazon.com'
+    const region = alexaRegionOptions(this.#opts.amazonDomain)
 
     remote.on('cookie', () => this.#onCookieEvent(remote))
 
@@ -161,7 +162,7 @@ export class AlexaProxyLoginSession {
         proxyListenBind: ALEXA_PROXY_LOOPBACK_HOST,
         proxyPort: this.#opts.proxyPort,
         proxyLogLevel: 'warn',
-        amazonPage,
+        ...region,
         apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
         logger: (...args: unknown[]) => {
           const line = args.map(String).join(' ')

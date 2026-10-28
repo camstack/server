@@ -92,3 +92,12 @@ replay and expiry), `packages/addon-provider-bosch/src/shared/__tests__/login-pr
 `packages/addon-import-alexa/src/__tests__/alexa-login-through-hub-proxy.spec.ts`
 (loopback bind asserted on the options alexa-cookie2 receives). No guard; review only for
 a new vendor's host list.
+
+## Addendum: form fields travel back reversed
+
+The response rewrite also touches hidden-input values, so a page that carries a return URL
+in a form field reaches the browser as a proxy address. On the way back, the proxy therefore
+reverses every `application/x-www-form-urlencoded` field value that is a proxy URL of this
+attempt (absolute or root-relative, host in the attempt's upstreams) to the vendor URL,
+the same rule as the `Referer` (`rewriteFormBody`). Other pairs stay byte-identical;
+multipart bodies are not reversed (no current vendor posts one).

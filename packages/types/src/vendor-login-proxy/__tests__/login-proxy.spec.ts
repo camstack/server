@@ -38,6 +38,7 @@ describe('VendorLoginProxy against a fake vendor', () => {
   let vendorPort: number
   let frontPort: number
   let seen: Seen[]
+  let posted: string[]
   let now = 1_000
   let proxy: VendorLoginProxy
   const ATTEMPT = 'ATTEMPT-ABCDEFGH'
@@ -46,6 +47,7 @@ describe('VendorLoginProxy against a fake vendor', () => {
 
   beforeEach(async () => {
     seen = []
+    posted = []
     now = 1_000
     onDone.mockReset()
     terminalSeen.length = 0
@@ -62,6 +64,14 @@ describe('VendorLoginProxy against a fake vendor', () => {
           'set-cookie': ['sid=abc; Domain=127.0.0.1; Path=/; Secure; HttpOnly'],
         })
         res.end(body)
+      } else if (req.url === '/post' && req.method === 'POST') {
+        const chunks: Buffer[] = []
+        req.on('data', (c: Buffer) => chunks.push(c))
+        req.on('end', () => {
+          posted.push(Buffer.concat(chunks).toString('utf8'))
+          res.writeHead(200, { 'content-type': 'text/plain' })
+          res.end('ok')
+        })
       } else if (req.url === '/step2') {
         res.writeHead(302, { location: `http://127.0.0.1:${vendorPort}/final` })
         res.end()
@@ -134,6 +144,22 @@ describe('VendorLoginProxy against a fake vendor', () => {
     expect(headers?.authorization).toBeUndefined()
     expect(headers?.origin).toBe(`http://127.0.0.1:${vendorPort}`)
     expect(headers?.referer).toBe(`http://127.0.0.1:${vendorPort}/prev`)
+  })
+
+  it('turns a proxy URL in a posted form field back into the vendor URL', async () => {
+    const base = `/addon/demo/vendor-login/${ATTEMPT}/127.0.0.1:${vendorPort}`
+    const res = await fetch(
+      `http://127.0.0.1:${frontPort}/${ATTEMPT}/127.0.0.1:${vendorPort}/post`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: `email=a%40b.c&ret=${encodeURIComponent(`${base}/ap/maplanding`)}`,
+      },
+    )
+    expect(res.status).toBe(200)
+    expect(posted).toEqual([
+      `email=a%40b.c&ret=${encodeURIComponent(`http://127.0.0.1:${vendorPort}/ap/maplanding`)}`,
+    ])
   })
 
   it('follows the vendor redirects inside the proxy until the terminal fires, then lands on the result page', async () => {

@@ -9,6 +9,7 @@ export {
   rewriteBody,
   rewriteLocation,
   rewriteReferer,
+  rewriteFormBody,
   rewriteSetCookie,
   type LoginProxyRoute,
   type LoginProxyScheme,

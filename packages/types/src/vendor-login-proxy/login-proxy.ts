@@ -34,6 +34,7 @@ import {
   rewriteBody,
   rewriteLocation,
   rewriteReferer,
+  rewriteFormBody,
   rewriteSetCookie,
   upstreamUrlFor,
   type BodyKind,
@@ -150,6 +151,12 @@ function bodyKindOf(contentType: string): BodyKind | null {
   )
     return 'other'
   return null
+}
+
+function isFormEncoded(contentType: string | string[] | undefined): boolean {
+  return (firstHeader(contentType) ?? '')
+    .toLowerCase()
+    .startsWith('application/x-www-form-urlencoded')
 }
 
 function firstHeader(value: string | string[] | undefined): string | undefined {
@@ -295,7 +302,9 @@ export class VendorLoginProxy {
         sendPlain(res, 413, 'Request too large')
         return
       }
-      body = read
+      body = isFormEncoded(req.headers['content-type'])
+        ? Buffer.from(rewriteFormBody(read.toString('utf8'), route), 'utf8')
+        : read
     }
 
     const headers = this.#requestHeaders(req, route, upstream)
@@ -313,8 +322,14 @@ export class VendorLoginProxy {
     const bufferText = kind !== null && !(declaredLength > MAX_TEXT_BODY_BYTES) && method !== 'HEAD'
     const text = bufferText ? await upstreamRes.text() : null
 
-    this.#logger.debug('vendor login proxy: upstream answered', {
-      meta: { addonId: this.#addonId, host: upstream.host, status: upstreamRes.status, method },
+    this.#logger.info('vendor login proxy: upstream answered', {
+      meta: {
+        addonId: this.#addonId,
+        host: upstream.host,
+        path: target.pathname,
+        status: upstreamRes.status,
+        method,
+      },
     })
 
     const settled = await attempt.evaluate({

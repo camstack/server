@@ -194,6 +194,34 @@ export function rewriteReferer(referer: string, route: LoginProxyRoute): string 
   return `${upstream.scheme}://${upstream.host}${rest?.[2] ?? '/'}${url.search}`
 }
 
+function decodeFormComponent(raw: string): string | null {
+  try {
+    return decodeURIComponent(raw.replace(/\+/g, ' '))
+  } catch {
+    return null
+  }
+}
+
+/**
+ * An `application/x-www-form-urlencoded` body whose field VALUES that are proxy URLs of
+ * this attempt (absolute or root-relative) are turned back into the vendor URL they stand
+ * for — the page's hidden inputs were rewritten on the way out (`rewriteBody`), and the
+ * vendor must get its own URL back. Field order and every untouched pair stay byte-identical.
+ */
+export function rewriteFormBody(body: string, route: LoginProxyRoute): string {
+  return body
+    .split('&')
+    .map((pair) => {
+      const eq = pair.indexOf('=')
+      if (eq === -1) return pair
+      const value = decodeFormComponent(pair.slice(eq + 1))
+      if (value === null || !/^(?:https?:\/\/|\/)/i.test(value)) return pair
+      const back = rewriteReferer(value, route)
+      return back === null ? pair : `${pair.slice(0, eq + 1)}${encodeURIComponent(back)}`
+    })
+    .join('&')
+}
+
 /** Cookies the browser holds for the hub itself must never reach a vendor. */
 export function filterForwardedCookies(cookieHeader: string): string {
   return cookieHeader
