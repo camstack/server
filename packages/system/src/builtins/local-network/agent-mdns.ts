@@ -23,6 +23,8 @@ import type { AgentPairingState } from '../../kernel/moleculer/mesh-mtls/pairing
 export interface AgentMdnsInputs {
   readonly nodeId: string
   readonly version: string | null
+  /** The agent's display name; omitted from the record when absent. */
+  readonly name?: string | null
   readonly port: number
   readonly state: AgentPairingState
   /** Short fingerprint of the agent's mesh leaf, `null` while unpaired. */
@@ -35,6 +37,8 @@ export function buildAgentAnnouncement(inputs: AgentMdnsInputs): HubMdnsAnnounce
     [AGENT_MDNS_TXT_KEYS.state]: inputs.state,
   }
   if (inputs.version !== null) txt[AGENT_MDNS_TXT_KEYS.version] = inputs.version
+  if (inputs.name !== undefined && inputs.name !== null && inputs.name.length > 0)
+    txt[AGENT_MDNS_TXT_KEYS.name] = inputs.name
   if (inputs.leafFingerprint !== null)
     txt[AGENT_MDNS_TXT_KEYS.keyFingerprint] = inputs.leafFingerprint
   return {

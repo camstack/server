@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Agents found on the network shows a Name column
+
 ## [1.2.510] - 2026-10-28
 
 ### Changed

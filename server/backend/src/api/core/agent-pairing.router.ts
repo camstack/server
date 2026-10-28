@@ -72,6 +72,8 @@ const DiscoveredAgentSchema = z.object({
   host: z.string(),
   port: z.number(),
   version: z.string().nullable(),
+  /** The agent's display name; `null` when it does not tell (an older agent). */
+  name: z.string().nullable(),
   state: z.enum(['unpaired', 'pending', 'paired']),
   fingerprint: z.string().nullable(),
   source: z.enum(['mdns', 'address']),

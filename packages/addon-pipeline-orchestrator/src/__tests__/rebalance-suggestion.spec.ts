@@ -25,6 +25,7 @@ interface Harness {
   setPlans(byMargin: (margin: number) => readonly number[]): void
   enabled: string[]
   runners: string[]
+  readonly names: Record<string, string>
 }
 
 function harness(): Harness {
@@ -34,6 +35,7 @@ function harness(): Harness {
   const state = {
     enabled: ['hub', 'agent-a'],
     runners: ['hub', 'agent-a'],
+    names: {} as Record<string, string>,
     planFor: (_margin: number): readonly number[] => [],
   }
   const deps: RebalanceSuggestionDeps = {
@@ -47,6 +49,7 @@ function harness(): Harness {
     },
     enabledNodes: () => state.enabled,
     runnerNodes: () => state.runners,
+    nodeName: async (nodeId) => state.names[nodeId] ?? null,
     alerts: {
       emit: async (alert) => {
         emitted.push(alert)
@@ -70,6 +73,7 @@ function harness(): Harness {
     set enabled(v: string[]) {
       state.enabled = v
     },
+    names: state.names,
     get runners() {
       return state.runners
     },
@@ -181,6 +185,27 @@ describe('RebalanceSuggestion', () => {
     s.noteNodeEvent({ kind: 'capabilities', nodeId: 'agent-b' })
     await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
     expect(h.completed).toContain(`${NODE_NOT_USED_ALERT_PREFIX}agent-b`)
+    s.dispose()
+  })
+
+  it('names a node by its display name and id in both alerts, and by id alone when no name is known', async () => {
+    const h = harness()
+    h.names['agent-a'] = 'garage-arm64'
+    h.names['agent-b'] = 'agent-b'
+    h.setPlans((margin) => (margin === 0 ? [1] : []))
+    h.runners = ['hub', 'agent-a', 'agent-b', 'agent-c']
+    h.enabled = ['hub']
+    const s = new RebalanceSuggestion(h.deps)
+    s.noteNodeEvent({ kind: 'joined', nodeId: 'agent-a' })
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
+
+    const message = (id: string): string | undefined => h.emitted.find((a) => a.id === id)?.message
+    expect(message(REBALANCE_SUGGESTED_ALERT_ID)).toContain('Node garage-arm64 (agent-a) joined')
+    expect(message(`${NODE_NOT_USED_ALERT_PREFIX}agent-a`)).toContain(
+      'Node garage-arm64 (agent-a) is online',
+    )
+    expect(message(`${NODE_NOT_USED_ALERT_PREFIX}agent-b`)).toContain('Node agent-b is online')
+    expect(message(`${NODE_NOT_USED_ALERT_PREFIX}agent-c`)).toContain('Node agent-c is online')
     s.dispose()
   })
 

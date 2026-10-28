@@ -4911,7 +4911,8 @@
       "lookingForAgents": "Ricerca agenti…",
       "noAgentsFound": "Nessun agente trovato",
       "nothingIsAdvertisingOnThis": "Nessuno si sta annunciando su questa rete. Avvia l'agente con un proprio IP (o rete host), oppure aggiungilo per indirizzo.",
-      "resume": "Riprendi"
+      "resume": "Riprendi",
+      "name": "Nome"
     },
     "pairingDialog": {
       "eachScreenShowsACode": "Entrambi gli schermi mostrano le stesse sei cifre. Verifica che coincidano, poi digita il codice letto sull'agente. Agente a {{value1}}",

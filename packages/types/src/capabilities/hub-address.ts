@@ -407,6 +407,8 @@ export const AGENT_MDNS_QUERY_NAME = '_camstack-agent._tcp.local'
 export const AGENT_MDNS_TXT_KEYS = {
   nodeId: 'nodeId',
   version: 'version',
+  /** The agent's display name; absent on an older agent. */
+  name: 'name',
   /** `unpaired` | `pending` | `paired`. */
   state: 'state',
   /** First 16 hex chars of the SHA-256 of the agent's mesh leaf; present once paired. */

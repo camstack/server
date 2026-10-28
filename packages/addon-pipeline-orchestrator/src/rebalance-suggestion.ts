@@ -44,6 +44,11 @@ export interface RebalanceSuggestionDeps {
   readonly plan: (minImprovement: number) => Promise<PlannedMoves>
   readonly enabledNodes: () => readonly string[]
   readonly runnerNodes: () => readonly string[]
+  /**
+   * The node's display name, `null` when none is known (or it cannot be read). Asked at the moment
+   * a message is written; a failed read must resolve `null`, never reject.
+   */
+  readonly nodeName: (nodeId: string) => Promise<string | null>
   readonly alerts: {
     readonly emit: (alert: Alert) => Promise<void>
     readonly complete: (alertId: string) => Promise<void>
@@ -57,6 +62,12 @@ const VERB: Record<NodeEventKind, string> = {
 }
 
 export class RebalanceSuggestion {
+  /** `name (id)` when a name distinct from the id is known, else the id. */
+  private async label(nodeId: string): Promise<string> {
+    const name = await this.deps.nodeName(nodeId)
+    return name === null || name.length === 0 || name === nodeId ? nodeId : `${name} (${nodeId})`
+  }
+
   private timer: ReturnType<typeof setTimeout> | null = null
   private lastNote: NodeEventNote | null = null
   private readonly notUsedRaised = new Set<string>()
@@ -112,7 +123,10 @@ export class RebalanceSuggestion {
       return
     }
     const note = this.lastNote
-    const cause = note === null ? 'The cluster changed' : `Node ${note.nodeId} ${VERB[note.kind]}`
+    const cause =
+      note === null
+        ? 'The cluster changed'
+        : `Node ${await this.label(note.nodeId)} ${VERB[note.kind]}`
     const count = manual.moves.length
     const now = this.deps.now()
     logger.info('rebalance suggestion: raising the alert', {
@@ -152,7 +166,7 @@ export class RebalanceSuggestion {
         category: ALERT_CATEGORY,
         severity: 'info',
         title: 'Node is not used for detection',
-        message: `Node ${nodeId} is online but detection is not enabled on it, so no camera will be placed there.`,
+        message: `Node ${await this.label(nodeId)} is online but detection is not enabled on it, so no camera will be placed there.`,
         action: {
           label: 'Open node',
           href: `/system/pipeline?view=nodes&node=${encodeURIComponent(nodeId)}`,

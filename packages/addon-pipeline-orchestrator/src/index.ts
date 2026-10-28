@@ -1052,6 +1052,14 @@ export default class PipelineOrchestratorAddon
       plan: (minImprovement) => this.rebalance({ minImprovement, dryRun: true }),
       enabledNodes: () => this.topology?.enabledNodes ?? [],
       runnerNodes: () => this.topology?.collectRunnerNodeIds() ?? [],
+      nodeName: async (nodeId) => {
+        try {
+          const directory = await ctx.api.nodes.directory.query()
+          return directory.nodes.find((n) => n.id === nodeId)?.name ?? null
+        } catch {
+          return null
+        }
+      },
       alerts: {
         emit: (alert) => ctx.api.alerts.emit.mutate(alert),
         complete: (alertId) =>

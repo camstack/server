@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Agents advertise their display name over mDNS so a hub can show which machine is which
+
 ## [1.2.439] - 2026-10-28
 
 ### Changed

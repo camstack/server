@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A freshly paired or re-registered agent node now receives every any-node addon installed on the hub, at the hub version
 - A fresh agent is named after its short host name and architecture, and the hub offers agents its internal address instead of the public endpoint
+- Agents found on the network lists each agent's name
 
 ## [1.2.681] - 2026-10-28
 

@@ -73,6 +73,8 @@ export interface LocalPairingSecret {
 export interface AgentPairingDeps {
   readonly nodeId: string
   readonly version: string | null
+  /** The agent's display name, told to a hub that says hello. */
+  readonly name?: string | null
   /** True when `agent.json` already holds mesh material. */
   readonly isPaired: () => boolean
   /** Persist the material and reconnect. A throw cancels the pairing. */
@@ -114,6 +116,8 @@ export interface AgentHello {
   readonly protocol: number
   readonly nodeId: string
   readonly version: string | null
+  /** The agent's display name; absent from an older agent's answer. */
+  readonly name?: string | null
   readonly state: AgentPairingState
   readonly pendingExpiresAt: number | null
 }
@@ -313,6 +317,7 @@ export class AgentPairing {
       protocol: PAIRING_PROTOCOL,
       nodeId: this.deps.nodeId,
       version: this.deps.version,
+      name: this.deps.name ?? null,
       state: this.state(),
       pendingExpiresAt: expiries.length === 0 ? null : Math.min(...expiries),
     }

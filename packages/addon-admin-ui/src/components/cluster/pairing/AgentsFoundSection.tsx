@@ -151,6 +151,12 @@ export function AgentsFoundSection({ onOpenNode }: AgentsFoundSectionProps): Rea
   const columns = useMemo<readonly DataColumn<DiscoveredAgent>[]>(
     () => [
       {
+        key: 'name',
+        header: t('pairing.agentsFoundSection.name', 'Name'),
+        render: (a) => a.name ?? '—',
+        sortValue: (a) => a.name,
+      },
+      {
         key: 'node',
         header: t('pairing.agentsFoundSection.node', 'Node'),
         render: (a) => <span className="font-medium text-foreground">{a.nodeId}</span>,

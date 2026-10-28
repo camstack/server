@@ -22,6 +22,8 @@ export interface MdnsAgent {
   readonly host: string
   readonly port: number
   readonly version: string | null
+  /** The agent's display name; `null` when it does not advertise one (an older agent). */
+  readonly name: string | null
   readonly state: AgentMdnsState
   /** Short leaf fingerprint, once paired. */
   readonly fingerprint: string | null
@@ -61,6 +63,7 @@ export function agentsFromResponses(responses: readonly MdnsResponse[]): readonl
         host,
         port: srv.port,
         version: txt.get(AGENT_MDNS_TXT_KEYS.version) ?? null,
+        name: txt.get(AGENT_MDNS_TXT_KEYS.name) ?? null,
         state: stateOf(txt.get(AGENT_MDNS_TXT_KEYS.state)),
         fingerprint: txt.get(AGENT_MDNS_TXT_KEYS.keyFingerprint) ?? null,
       })

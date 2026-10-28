@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Node alerts name the node by its display name and id
+
 ## [1.2.637] - 2026-10-28
 
 ### Changed

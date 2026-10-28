@@ -28,6 +28,7 @@ function agent(over: Partial<DiscoveredAgent> & { nodeId: string }): DiscoveredA
     host: '192.0.2.20',
     port: 4444,
     version: '1.2.421',
+    name: null,
     state: 'unpaired',
     fingerprint: null,
     source: 'mdns',
@@ -150,6 +151,27 @@ describe('AgentsFoundSection discovery states', () => {
     expect(screen.getAllByRole('button', { name: 'Unpair' })).toHaveLength(1)
     expect(screen.getByText('connected')).toBeTruthy()
     expect(screen.getByTitle('AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89')).toBeTruthy()
+  })
+
+  it('shows the agent name first, and a dash when an older agent does not tell it', () => {
+    list = {
+      isLoading: false,
+      isError: false,
+      data: {
+        scannedAt: 1,
+        agents: [
+          agent({ nodeId: 'a-named', name: 'garage-arm64' }),
+          agent({ nodeId: 'a-old', name: null }),
+        ],
+      },
+    }
+    mount()
+    const headers = screen.getAllByRole('columnheader').map((h) => h.textContent)
+    expect(headers[0]).toBe('Name')
+    expect(screen.getByText('garage-arm64')).toBeTruthy()
+    const rows = screen.getAllByRole('row')
+    const oldRow = rows.find((r) => r.textContent?.includes('a-old'))
+    expect(oldRow?.querySelector('td')?.textContent).toBe('—')
   })
 
   it('opens the pairing dialog for the chosen agent', () => {

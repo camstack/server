@@ -85,6 +85,7 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
   const agent = new AgentPairing({
     nodeId: 'agent-a',
     version: '1.0.0',
+    name: 'agent-a-host',
     isPaired: () => installed.length > 0,
     install: async (p) => {
       installed.push(p.meshTls.certPem)
@@ -119,6 +120,7 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
       host: '192.168.10.128',
       port: 4444,
       version: '1.0.0',
+      name: 'agent-a-host',
       state: 'unpaired',
       fingerprint: null,
     },
@@ -198,6 +200,7 @@ describe('agentPairing router', () => {
       expect.objectContaining({
         nodeId: 'agent-a',
         host: '192.168.10.128',
+        name: 'agent-a-host',
         state: 'unpaired',
         source: 'mdns',
         connected: false,
@@ -208,6 +211,7 @@ describe('agentPairing router', () => {
     const typed = await caller.addAgentByAddress({ host: '192.168.10.77' })
     expect(typed).toMatchObject({
       nodeId: 'agent-a',
+      name: 'agent-a-host',
       state: 'unpaired',
       source: 'address',
     })

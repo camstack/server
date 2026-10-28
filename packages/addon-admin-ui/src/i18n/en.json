@@ -4850,7 +4850,8 @@
       "lookingForAgents": "Looking for agents…",
       "noAgentsFound": "No agents found",
       "nothingIsAdvertisingOnThis": "Nothing is advertising on this network. Start the agent on its own IP (or host networking), or add it by address.",
-      "resume": "Resume"
+      "resume": "Resume",
+      "name": "Name"
     },
     "pairingDialog": {
       "eachScreenShowsACode": "Both screens show the same six digits. Check they match, then type the code you read on the agent. Agent at {{value1}}",

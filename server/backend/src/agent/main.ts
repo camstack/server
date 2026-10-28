@@ -1087,6 +1087,7 @@ async function startAgent(configPath?: string): Promise<void> {
     void agentMdns.sync({
       nodeId: config.nodeId,
       version: agentVersion,
+      name: config.name,
       port: config.statusPort ?? 4444,
       state: pairing.state(),
       leafFingerprint: pairedLeafFingerprint(config.configPath),
@@ -1136,6 +1137,7 @@ async function startAgent(configPath?: string): Promise<void> {
   const pairing: AgentPairing = new AgentPairing({
     nodeId: config.nodeId,
     version: agentVersion,
+    name: config.name,
     isPaired: () => isAgentPaired(config.configPath),
     install: async (installed) => {
       persistPairing(config.configPath, installed)

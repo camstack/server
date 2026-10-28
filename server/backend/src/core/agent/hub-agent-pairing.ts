@@ -24,6 +24,8 @@ export interface DiscoveredAgent {
   readonly host: string
   readonly port: number
   readonly version: string | null
+  /** The agent's display name; `null` when it does not tell (an older agent). */
+  readonly name: string | null
   readonly state: AgentPairingState
   /** Short leaf fingerprint, once paired. */
   readonly fingerprint: string | null
@@ -59,6 +61,7 @@ interface ManualAgent {
   readonly endpoint: AgentEndpoint
   readonly nodeId: string
   readonly version: string | null
+  readonly name: string | null
   readonly state: AgentPairingState
   readonly seenAt: number
 }
@@ -109,7 +112,7 @@ export class HubAgentPairing {
           m.nodeId,
           m.endpoint.host,
           m.endpoint.port,
-          { version: m.version, state: m.state, fingerprint: null },
+          { version: m.version, name: m.name, state: m.state, fingerprint: null },
           'address',
         ),
       )
@@ -125,6 +128,7 @@ export class HubAgentPairing {
       endpoint,
       nodeId: hello.nodeId,
       version: hello.version,
+      name: hello.name ?? null,
       state: hello.state,
       seenAt: this.now(),
     })
@@ -132,7 +136,7 @@ export class HubAgentPairing {
       hello.nodeId,
       host,
       port,
-      { version: hello.version, state: hello.state, fingerprint: null },
+      { version: hello.version, name: hello.name ?? null, state: hello.state, fingerprint: null },
       'address',
     )
   }
@@ -190,7 +194,7 @@ export class HubAgentPairing {
     nodeId: string,
     host: string,
     port: number,
-    facts: Pick<MdnsAgent, 'version' | 'state' | 'fingerprint'>,
+    facts: Pick<MdnsAgent, 'version' | 'name' | 'state' | 'fingerprint'>,
     source: DiscoveredAgent['source'],
   ): DiscoveredAgent {
     const active = this.deps.pairing
@@ -204,6 +208,7 @@ export class HubAgentPairing {
       host,
       port,
       version: facts.version,
+      name: facts.name,
       state: facts.state,
       fingerprint: facts.fingerprint,
       source,

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The agent pairing status tells the local view whether a pairing lockout is in force
+- An agent tells its display name in its mDNS record and pairing hello
 
 ## [1.2.512] - 2026-10-28
 

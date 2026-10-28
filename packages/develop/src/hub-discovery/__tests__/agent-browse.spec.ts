@@ -25,7 +25,12 @@ function response(
 describe('agentsFromResponses', () => {
   it('lists an unpaired and a paired agent with their state, version and fingerprint', () => {
     const agents = agentsFromResponses([
-      response('camstack-agent-agent-a', ['nodeId=agent-a', 'state=unpaired', 'version=1.2.3']),
+      response('camstack-agent-agent-a', [
+        'nodeId=agent-a',
+        'state=unpaired',
+        'version=1.2.3',
+        'name=garage-arm64',
+      ]),
       response('camstack-agent-mac', ['nodeId=mac', 'state=paired', 'fp=0123456789abcdef'], {
         from: '192.168.1.31',
         port: 4445,
@@ -37,6 +42,7 @@ describe('agentsFromResponses', () => {
         host: '192.168.1.20',
         port: 4444,
         version: '1.2.3',
+        name: 'garage-arm64',
         state: 'unpaired',
         fingerprint: null,
       },
@@ -45,6 +51,7 @@ describe('agentsFromResponses', () => {
         host: '192.168.1.31',
         port: 4445,
         version: null,
+        name: null,
         state: 'paired',
         fingerprint: '0123456789abcdef',
       },

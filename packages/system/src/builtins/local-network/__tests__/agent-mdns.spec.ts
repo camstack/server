@@ -32,6 +32,17 @@ const UNPAIRED: AgentMdnsInputs = {
 }
 
 describe('AgentMdnsAdvertiser', () => {
+  it('carries the display name in the TXT record, and omits it when there is none', async () => {
+    const publisher = recordingPublisher()
+    const advertiser = new AgentMdnsAdvertiser({ publisher, logger: silentLogger })
+
+    await advertiser.sync({ ...UNPAIRED, name: 'garage-arm64' })
+    await advertiser.sync(UNPAIRED)
+
+    expect(publisher.published[0]?.txt['name']).toBe('garage-arm64')
+    expect(publisher.published[1]?.txt['name']).toBeUndefined()
+  })
+
   it('advertises on the first sync, with no separate start (the agent boot only syncs)', async () => {
     const publisher = recordingPublisher()
     const advertiser = new AgentMdnsAdvertiser({ publisher, logger: silentLogger })
