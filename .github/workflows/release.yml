@@ -253,7 +253,7 @@ jobs:
           # Commit log between previous tag and current — feed for the
           # auto-changelog. Empty if no previous tag.
           if [ -n "$PREV_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:'- %s (%h) — @%an' "${PREV_TAG}..HEAD" 2>/dev/null || true)
+            CHANGELOG=$(git log --pretty=format:'- %s (%h) — %an' "${PREV_TAG}..HEAD" 2>/dev/null || true)
             COMPARE_URL="${{ github.server_url }}/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}"
             COMMITS_LINE="**Changes since [\`${PREV_TAG}\`](${{ github.server_url }}/${{ github.repository }}/releases/tag/${PREV_TAG}):** [compare](${COMPARE_URL})"
           else
