@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.513] - 2026-10-28
+
 ### Changed
 
 - The agent pairing status tells the local view whether a pairing lockout is in force
