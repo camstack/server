@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.32] - 2026-10-28
+
 ### Changed
 
 - Device value fields are named after their quantity instead of their unit; run the quantity-field migration after updating

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.648] - 2026-10-28
+
 ### Changed
 
 - Battery alerts, state summaries and analytics history read device values by their quantity name after the field rename

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-unraid",
-  "version": "0.2.150",
+  "version": "0.2.151",
   "description": "Unraid device-provider addon for CamStack — one Container per Unraid instance fanning out array, disk, docker and notification entities",
   "keywords": [
     "camstack",
