@@ -175,6 +175,37 @@ export function rewriteSetCookie(cookie: string, route: LoginProxyRoute): string
 }
 
 /**
+ * Every Set-Cookie of one vendor response, rewritten. Dropping `Domain` folds cookies
+ * the vendor keeps apart (`session-id` on `.amazon.it` and on `.www.amazon.it`) into
+ * one, so a past-dated set that only deleted the other domain's copy would delete the
+ * live one the same response just set: that deletion is dropped.
+ */
+export function rewriteSetCookies(cookies: readonly string[], route: LoginProxyRoute): string[] {
+  const now = Date.now()
+  const liveNames = new Set(cookies.filter((c) => !isExpiredCookie(c, now)).map(cookieName))
+  return cookies
+    .filter((c) => !(isExpiredCookie(c, now) && liveNames.has(cookieName(c))))
+    .map((c) => rewriteSetCookie(c, route))
+}
+
+function cookieName(cookie: string): string {
+  return cookie.split(';')[0]?.split('=')[0]?.trim() ?? ''
+}
+
+function isExpiredCookie(cookie: string, now: number): boolean {
+  const attrs = cookie
+    .split(';')
+    .slice(1)
+    .map((part) => part.trim())
+  const maxAge = attrs.find((a) => /^max-age=/i.test(a))
+  if (maxAge !== undefined) return Number(maxAge.slice('max-age='.length)) <= 0
+  const expires = attrs.find((a) => /^expires=/i.test(a))
+  if (expires === undefined) return false
+  const at = Date.parse(expires.slice('expires='.length))
+  return Number.isFinite(at) && at <= now
+}
+
+/**
  * A browser `Referer` that points into this proxy, turned back into the vendor URL it
  * stands for. A Referer that is not ours is dropped (null): it names the hub.
  */

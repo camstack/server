@@ -35,7 +35,7 @@ import {
   rewriteLocation,
   rewriteReferer,
   rewriteFormBody,
-  rewriteSetCookie,
+  rewriteSetCookies,
   upstreamUrlFor,
   type BodyKind,
   type LoginProxyRoute,
@@ -173,6 +173,40 @@ async function readRequestBody(req: IncomingMessage): Promise<Buffer | 'too-larg
     chunks.push(buf)
   }
   return Buffer.concat(chunks)
+}
+
+/** The path of the Referer sent upstream, or why none was sent — the query is never logged. */
+function forwardedRefererPath(
+  forwarded: string | undefined,
+  received: string | string[] | undefined,
+): string {
+  if (forwarded !== undefined)
+    return URL.canParse(forwarded) ? new URL(forwarded).pathname : 'unparsable'
+  return received === undefined ? 'absent' : 'unmapped'
+}
+
+/** The form targets a vendor page posts to, path only (no query), so a lost path prefix is visible. */
+function formActionPaths(html: string): string {
+  const actions = [...html.matchAll(/<form\b[^>]*\baction\s*=\s*["']([^"']*)["']/gi)]
+    .map((m) => (m[1] ?? '').split('?')[0] ?? '')
+    .slice(0, 5)
+  return actions.length === 0 ? 'none' : actions.join(' | ')
+}
+
+/** Cookie NAMES only — values are session secrets and are never logged. */
+function cookieNames(header: string | undefined): string {
+  if (header === undefined || header.length === 0) return 'none'
+  return header
+    .split(';')
+    .map((part) => part.split('=')[0]?.trim() ?? '')
+    .join(',')
+}
+
+/** A Set-Cookie's name and attributes without its value, so a cookie the browser refuses is visible. */
+function setCookieShape(cookie: string): string {
+  const [first, ...attrs] = cookie.split(';').map((part) => part.trim())
+  const name = first?.split('=')[0] ?? ''
+  return [name, ...attrs.filter((a) => !/^expires=/i.test(a))].join(';')
 }
 
 function sendPlain(res: ServerResponse, status: number, text: string): void {
@@ -329,6 +363,10 @@ export class VendorLoginProxy {
         path: target.pathname,
         status: upstreamRes.status,
         method,
+        refererPath: forwardedRefererPath(headers['referer'], req.headers['referer']),
+        formActions: kind === 'html' && text !== null ? formActionPaths(text) : undefined,
+        sentNames: cookieNames(headers['cookie']),
+        vendorSets: setCookies.map(setCookieShape).join(' | '),
       },
     })
 
@@ -352,7 +390,7 @@ export class VendorLoginProxy {
     upstreamRes.headers.forEach((value, name) => {
       if (!DROP_RESPONSE_HEADERS.has(name.toLowerCase())) out[name] = value
     })
-    if (setCookies.length > 0) out['set-cookie'] = setCookies.map((c) => rewriteSetCookie(c, route))
+    if (setCookies.length > 0) out['set-cookie'] = rewriteSetCookies(setCookies, route)
     if (location !== null) out['location'] = rewriteLocation(location, upstream, route)
     out['cache-control'] = 'no-store'
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The vendor sign-in proxy keeps the vendor's session cookie when the vendor also deletes a same-named cookie on another domain
+
 ## [1.2.436] - 2026-10-28
 
 ### Changed

@@ -11,6 +11,7 @@ export {
   rewriteReferer,
   rewriteFormBody,
   rewriteSetCookie,
+  rewriteSetCookies,
   type LoginProxyRoute,
   type LoginProxyScheme,
   type LoginProxyUpstream,

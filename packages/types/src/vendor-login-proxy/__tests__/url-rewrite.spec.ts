@@ -8,6 +8,7 @@ import {
   rewriteReferer,
   rewriteFormBody,
   rewriteSetCookie,
+  rewriteSetCookies,
   upstreamUrlFor,
   type LoginProxyRoute,
   type LoginProxyUpstream,
@@ -80,6 +81,23 @@ describe('rewriteSetCookie', () => {
   it('drops Domain, scopes Path to the attempt and keeps Secure and HttpOnly', () => {
     const out = rewriteSetCookie('sid=abc; Domain=.vendor.test; Path=/; Secure; HttpOnly', route)
     expect(out).toBe('sid=abc; Secure; HttpOnly; Path=/addon/demo/vendor-login/ATTEMPT12/')
+  })
+})
+
+describe('rewriteSetCookies', () => {
+  it('drops an expiry that only deleted a same-named cookie on another vendor domain', () => {
+    const out = rewriteSetCookies(
+      [
+        'session-id=live; Domain=.vendor.test; Expires=Thu, 28-Oct-2027 15:53:52 GMT; Path=/; Secure',
+        'session-id=-; path=/; domain=.www.vendor.test; expires=Tue, 28-Oct-2014 15:53:52 GMT',
+        'gone=-; path=/; expires=Tue, 28-Oct-2014 15:53:52 GMT',
+      ],
+      route,
+    )
+    expect(out).toEqual([
+      'session-id=live; Expires=Thu, 28-Oct-2027 15:53:52 GMT; Secure; Path=/addon/demo/vendor-login/ATTEMPT12/',
+      'gone=-; expires=Tue, 28-Oct-2014 15:53:52 GMT; Path=/addon/demo/vendor-login/ATTEMPT12/',
+    ])
   })
 })
 
