@@ -50,13 +50,15 @@ describe('stateLabel', () => {
     expect(stateLabel('not_home', 'it')).toBe('Fuori casa')
   })
 
-  it('falls back to the key itself for a word it does not know — never throws', () => {
-    expect(stateLabel('garden', 'en')).toBe('garden')
+  it('humanizes a word it does not know — never throws', () => {
+    expect(stateLabel('garden', 'en')).toBe('Garden')
+    expect(stateLabel('delivery_truck', 'it')).toBe('Delivery truck')
+    expect(stateLabel('open-door', 'en')).toBe('Open door')
     expect(stateLabel('', 'it')).toBe('')
   })
 
   it('does not answer for inherited object keys', () => {
-    expect(stateLabel('toString', 'en')).toBe('toString')
+    expect(stateLabel('toString', 'en')).toBe('ToString')
     expect(isStateLabelKey('constructor')).toBe(false)
   })
 })

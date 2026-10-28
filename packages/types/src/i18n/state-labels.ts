@@ -21,6 +21,8 @@
  * scene gate's verdicts and read modes.
  */
 
+import { humanizeId } from './humanize-id.js'
+
 /** A label in every locale both editors ship. */
 export interface StateLabel {
   readonly en: string
@@ -116,5 +118,5 @@ export function isStateLabelKey(key: string): key is StateLabelKey {
  * dictionary does not know it. Never throws.
  */
 export function stateLabel(key: string, locale: StateLabelLocale): string {
-  return isStateLabelKey(key) ? STATE_LABELS[key][locale] : key
+  return isStateLabelKey(key) ? STATE_LABELS[key][locale] : humanizeId(key)
 }

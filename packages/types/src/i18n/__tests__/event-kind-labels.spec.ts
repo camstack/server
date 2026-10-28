@@ -60,13 +60,15 @@ describe('eventKindLabel', () => {
     expect(eventKindLabel('  Cat ', 'it')).toBe('Gatto')
   })
 
-  it('falls back to the raw word for an unknown kind', () => {
-    expect(eventKindLabel('forklift', 'en')).toBe('forklift')
+  it('humanizes the id of an unknown kind instead of inventing a translation', () => {
+    expect(eventKindLabel('forklift', 'en')).toBe('Forklift')
+    expect(eventKindLabel('delivery_truck', 'it')).toBe('Delivery truck')
+    expect(eventKindLabel('open-door', 'en')).toBe('Open door')
     expect(eventKindLabel('', 'it')).toBe('')
   })
 
   it('never resolves Object.prototype names', () => {
-    expect(eventKindLabel('toString', 'en')).toBe('toString')
+    expect(eventKindLabel('toString', 'en')).toBe('ToString')
     expect(isEventKindLabelKey('constructor')).toBe(false)
   })
 })

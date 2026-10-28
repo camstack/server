@@ -11,6 +11,8 @@
  * back to the raw word — never an exception, never an empty chip.
  */
 
+import { humanizeId } from './humanize-id.js'
+
 /** A label in every locale both editors and the hub ship. */
 export interface EventKindLabel {
   readonly en: string
@@ -194,5 +196,5 @@ export function isEventKindLabelKey(key: string): key is EventKindLabelKey {
  */
 export function eventKindLabel(kind: string, locale: EventKindLabelLocale): string {
   const key = kind.trim().toLowerCase()
-  return isEventKindLabelKey(key) ? EVENT_KIND_LABELS[key][locale] : kind
+  return isEventKindLabelKey(key) ? EVENT_KIND_LABELS[key][locale] : humanizeId(kind)
 }

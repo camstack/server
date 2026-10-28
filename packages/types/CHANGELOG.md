@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The vendor login proxy is served on one shared vendor-login prefix that cannot shadow an addon's own routes
+- Unknown event kinds and state words now read as a humanized label ("Delivery truck") instead of the raw id
 
 ## [1.2.431] - 2026-10-27
 
