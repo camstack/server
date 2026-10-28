@@ -134,8 +134,8 @@ const contentVariants = cva(
        * flex chain does not resolve without it on iOS Safari.
        */
       scroll: {
-        content: 'overflow-y-auto',
-        body: 'flex flex-col overflow-hidden',
+        content: 'overflow-y-auto overscroll-contain',
+        body: 'flex flex-col overflow-hidden overscroll-contain',
       },
       placement: {
         center: '',
@@ -308,7 +308,12 @@ export function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElem
  * or it collapses and takes the body with it.
  */
 export function DialogBody({ className, ...props }: HTMLAttributes<HTMLDivElement>): JSX.Element {
-  return <div className={cn('flex-1 min-h-0 overflow-y-auto', className)} {...props} />
+  return (
+    <div
+      className={cn('flex-1 min-h-0 overflow-y-auto overscroll-contain', className)}
+      {...props}
+    />
+  )
 }
 
 export function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>): JSX.Element {

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device selector shows which addon and integration provides each device
 - The climate control keeps the set temperature steady when it gains decimals, and the preset menu has no inner border
+- Scrolling inside a dialog stays inside the dialog and no longer reaches the page behind it
 
 ## [1.2.344] - 2026-10-28
 
