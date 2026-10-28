@@ -490,14 +490,11 @@ jobs:
     if: ${{ !cancelled() && needs.derive-version.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') && inputs.dry_run == false }}
     strategy:
       fail-fast: false
-      # The two mac legs (arm64 + x64 of the SAME desktop app) run on two
-      # dedicated per-user macOS runners. Both match the same
-      # `self-hosted,macos,arm64` labels; GitHub Actions places one leg on
-      # each runner. Distinct users mean distinct login keychains, so signing
-      # and notarization no longer share the mutable keychain state that
-      # forced `max-parallel: 1` (both legs used to run as one user and raced,
-      # dropping one job's signing identity). The two legs CAN sign
-      # concurrently, one per runner.
+      # The mac legs run on two self-hosted runners that may run as the SAME
+      # macOS user. Every leg is therefore self-contained: it creates its own
+      # uniquely named signing keychain and hands it to the signer explicitly
+      # (CSC_KEYCHAIN, `notarytool --keychain`); it never touches user-wide
+      # keychain state (search list, default keychain). See D429.
       #
       # They are NOT serialised (D429). `max-parallel: 1` was added when a tag
       # push attached ~2.2 GB of installers at once and saturated the runners'
@@ -799,14 +796,14 @@ jobs:
               # `set-key-partition-list` on the temp keychain it makes.
               #
               # So we create the keychain ourselves: import the p12, set the
-              # partition list (lets codesign use the key with no UI prompt),
-              # unlock it, and put it first on the user search list.
-              # electron-builder's CSC_IDENTITY_AUTO_DISCOVERY then resolves
-              # the identity from it. Fully self-contained — no dependency on
-              # the machine's login keychain or an interactive session.
+              # partition list (lets codesign use the key with no UI prompt)
+              # and unlock it. electron-builder resolves the identity from it
+              # through CSC_KEYCHAIN. Fully self-contained — no dependency on
+              # the machine's login keychain or an interactive session, and
+              # no user-wide keychain state is read or written.
               if [ -n "${CSC_LINK:-}" ] && [ -n "${CSC_KEY_PASSWORD:-}" ]; then
                 echo "Mac signing: building a dedicated keychain from CSC_LINK"
-                SIGN_KC="$RUNNER_TEMP/camstack-signing.keychain-db"
+                SIGN_KC="$RUNNER_TEMP/camstack-signing-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.target }}-${{ matrix.arch }}.keychain-db"
                 SIGN_KC_PW="$(openssl rand -base64 24)"
                 P12="$RUNNER_TEMP/camstack-cert.p12"
                 printf '%s' "$CSC_LINK" | openssl base64 -d -A > "$P12"
@@ -818,31 +815,26 @@ jobs:
                   -T /usr/bin/codesign -T /usr/bin/security
                 security set-key-partition-list -S apple-tool:,apple:,codesign: \
                   -s -k "$SIGN_KC_PW" "$SIGN_KC" >/dev/null
-                # Prepend our keychain to the user search list (keep the
-                # existing ones for the Apple WWDR intermediate chain).
-                security list-keychains -d user -s "$SIGN_KC" \
-                  $(security list-keychains -d user | sed -e 's/^ *"//' -e 's/" *$//' | grep -v camstack-signing)
-                # notarytool (the Notarize step) needs an UNLOCKED *default*
-                # keychain — even with explicit --apple-id/--password it errors
-                # `keychainLocked: default` against the login keychain. Point
-                # the default at our unlocked keychain. No race: `-d user` is
-                # PER-USER and the two mac legs run as different users,
-                # one leg each. That — not the former
-                # `max-parallel: 1` — is what makes this safe, and it is why
-                # removing the serialisation (D429) does not reintroduce the
-                # 2026-08 identity race.
-                security default-keychain -d user -s "$SIGN_KC"
+                # NO `security list-keychains -d user -s` and NO
+                # `security default-keychain`: those are USER-WIDE and the
+                # mac legs may share one macOS user, so a leg replacing the
+                # list drops the other leg's keychain mid-sign
+                # (`no identity found` / `errSecInternalComponent`, D429).
+                # The keychain is handed to the tools by path instead.
+                echo "CAMSTACK_SIGN_KC=$SIGN_KC" >> "$GITHUB_ENV"
                 rm -f "$P12"
                 # electron-builder must NOT run its own (partition-list-less)
-                # keychain import — unset so it falls back to
-                # CSC_IDENTITY_AUTO_DISCOVERY against our search list.
+                # keychain import — unset CSC_LINK so it looks the identity up
+                # in OUR keychain (CSC_KEYCHAIN is passed to `security
+                # find-identity` and to `codesign --keychain`).
                 unset CSC_LINK CSC_KEY_PASSWORD
-                if ! security find-identity -v -p codesigning \
+                export CSC_KEYCHAIN="$SIGN_KC"
+                if ! security find-identity -v -p codesigning "$SIGN_KC" \
                      | grep -q "Developer ID Application"; then
                   echo "::error::Developer ID Application identity not found after importing CSC_LINK into the dedicated keychain."
                   exit 1
                 fi
-                security find-identity -v -p codesigning | grep "Developer ID Application"
+                security find-identity -v -p codesigning "$SIGN_KC" | grep "Developer ID Application"
               fi
           fi
 
@@ -945,7 +937,7 @@ jobs:
           set -e
           cd "$WORKSPACE"
           # Per-job notary log path. MUST NOT be a shared, hardcoded /tmp file:
-          # the two mac legs run as different users on the same machine and
+          # the mac legs may share one machine and
           # would collide on a fixed /tmp path — and a
           # file left behind by a prior run's user is unwritable, so `tee`
           # fails with "Permission denied", the log comes back empty, the
@@ -983,6 +975,7 @@ jobs:
                  --apple-id "$APPLE_ID" \
                  --password "$APPLE_APP_SPECIFIC_PASSWORD" \
                  --team-id "$APPLE_TEAM_ID" \
+                 ${CAMSTACK_SIGN_KC:+--keychain "$CAMSTACK_SIGN_KC"} \
                  --wait 2>&1 | tee "$NOTARY_LOG"; then
               if grep -q "status: Accepted" "$NOTARY_LOG"; then
                 echo "── Accepted ──"
@@ -1005,24 +998,17 @@ jobs:
           echo "── All notarize+staple complete ──"
         shell: bash
 
-      # The signing step makes the temporary camstack-signing keychain the
-      # user's DEFAULT keychain and prepends it to the search list, then
-      # $RUNNER_TEMP is wiped at job end. On a runner that runs as a real
-      # login user (a macOS runner that uses a real login session),
-      # that left the operator's default pointing at a deleted file, and macOS
-      # warned "the CamStack keychain was renamed" at every app start. Always
-      # restore login as default and drop the temporary keychain, even when
-      # the build or notarization failed.
-      - name: Restore the user's keychains (macOS)
+      # Delete ONLY this job's signing keychain. The signing step never
+      # touches the user's search list or default keychain, so there is
+      # nothing user-wide to restore — and another leg on the same macOS user
+      # may be mid-sign, so nothing else may be touched.
+      - name: Delete this job's signing keychain (macOS)
         if: always() && matrix.platform == 'mac'
         run: |
-          LOGIN_KC="$HOME/Library/Keychains/login.keychain-db"
-          SIGN_KC="$RUNNER_TEMP/camstack-signing.keychain-db"
-          security default-keychain -d user -s "$LOGIN_KC" || true
-          security list-keychains -d user -s "$LOGIN_KC" \
-            $(security list-keychains -d user | sed -e 's/^ *"//' -e 's/" *$//' | grep -v camstack-signing | grep -v "$LOGIN_KC") || true
-          security delete-keychain "$SIGN_KC" 2>/dev/null || true
-          echo "default: $(security default-keychain -d user)"
+          if [ -n "${CAMSTACK_SIGN_KC:-}" ]; then
+            security delete-keychain "$CAMSTACK_SIGN_KC" 2>/dev/null || true
+            rm -f "$CAMSTACK_SIGN_KC" 2>/dev/null || true
+          fi
         shell: bash
 
       # Self-hosted runners keep installers in `_work/` (and MinIO, task #129).

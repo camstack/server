@@ -5,7 +5,7 @@ status: accepted
 date: 2026-09-10
 applies-to:
   - .github/workflows/release.yml
-last-verified: 2026-09-26
+last-verified: 2026-10-28
 ---
 
 ## Context
@@ -78,4 +78,18 @@ distinct `publish.channel` per product, which is now guarded
 (`check-desktop-update-feeds.ts`). The parallel legs make this worse rather
 than causing it: two legs writing one filename is a race, and `max-parallel`
 only changes which one wins.
+
+**Amended 2026-10-28 — legs on one macOS user must not share keychain state.**
+The claim above that the keychain race "does not exist" assumed one macOS user
+per runner. Both self-hosted Mac runners run as the SAME user on the Mac mini,
+and every mac leg replaced the user-wide search list (`security list-keychains
+-d user -s`) and the default keychain, so parallel legs dropped each other's
+signing keychain (run 40728859444: `no identity found`,
+`errSecInternalComponent`). The invariant is now: **a leg creates its own
+keychain, uniquely named by run, attempt, target and arch, under
+`$RUNNER_TEMP`, and hands it to the tools by path — `CSC_KEYCHAIN` for
+electron-builder (it feeds `security find-identity` and `codesign --keychain`),
+`--keychain` for `notarytool`. It never rewrites the search list and never sets
+the default keychain; cleanup deletes only its own keychain.** There is no
+per-user runner requirement.
 
