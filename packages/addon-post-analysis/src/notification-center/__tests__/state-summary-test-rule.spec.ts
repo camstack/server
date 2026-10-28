@@ -149,7 +149,7 @@ describe('TEST on a state-summary rule (D698)', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 100))
 
@@ -196,7 +196,7 @@ describe('TEST on a state-summary rule (D698)', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 100))
     const result = await handlersOf(center, world)['nc.testRule'](
@@ -235,7 +235,7 @@ describe('TEST on a state-summary rule (D698)', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 100))
     await provider.setDeviceMuted({ deviceId: 3615, muted: true })
@@ -324,7 +324,7 @@ describe('TEST on a state-summary rule (D698)', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 100))
     await handlersOf(center, world)['nc.testRule']({ ruleId: created.rule.id }, ADMIN)

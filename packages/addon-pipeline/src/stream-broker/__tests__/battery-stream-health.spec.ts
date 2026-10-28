@@ -218,7 +218,7 @@ describe('stream health — battery sleep is not an outage, a failure is one dev
 
   describe('after a restart the mirror is EMPTY — the registry and the slice are asked (M3/H1)', () => {
     const sleepingSlice = {
-      percentage: 50,
+      level: 50,
       charging: 'none',
       sleeping: true,
       lastUpdated: 1_799_999_999_000,

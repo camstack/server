@@ -125,7 +125,7 @@ describe('a scheduled state summary, through the centre', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     // The INSTANT rule fired; the summary rule said nothing.
     await vi.waitFor(() => expect(outboxRows(world)).toHaveLength(1), { timeout: 2_000 })
@@ -195,7 +195,7 @@ describe('a scheduled state summary, through the centre', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     // Let the door answer and the row settle (a refused raise is put back to 0).
     await new Promise<void>((resolve) => setTimeout(resolve, 200))
@@ -349,7 +349,7 @@ describe('a scheduled state summary, through the centre', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 120))
     clock.now = Date.UTC(2026, 8, 25, 8, 0, 30)
@@ -379,7 +379,7 @@ describe('a scheduled state summary, through the centre', () => {
       timestamp: new Date(clock.now),
       source: { type: 'device', id: 3615 },
       category: 'device.state-changed',
-      data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+      data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
     })
     await new Promise<void>((resolve) => setTimeout(resolve, 50))
     const preview = await center.buildProvider().previewStateSummary({

@@ -98,7 +98,7 @@ function openStates(center: NotificationCenter, now: number): void {
     timestamp: new Date(now),
     source: { type: 'device', id: 3615 },
     category: 'device.state-changed',
-    data: { deviceId: 3615, capName: 'battery', slice: { percentage: 4, lastUpdated: 5_000 } },
+    data: { deviceId: 3615, capName: 'battery', slice: { level: 4, lastUpdated: 5_000 } },
   })
   center.onSystemEvent({
     id: 'stream-offline',
