@@ -110,10 +110,11 @@ export function triggerKindLabel(kind: TriggerKind): string {
     case 'schedule':
       return i18n.t('helpers.recipeParts.trigger_schedule')
     case 'stationary':
-      return i18n.t('automation.readOnly.stationaryTrigger')
+      return i18n.t('flow.trigger.stationary')
     case 'detection':
+      return i18n.t('flow.trigger.detection')
     case 'interval':
-      return i18n.t('automation.readOnly.otherTrigger')
+      return i18n.t('flow.trigger.interval')
     default:
       return i18n.t('helpers.recipeParts.trigger_manual')
   }
@@ -132,6 +133,12 @@ export function newTrigger(kind: TriggerKind): AutomationTrigger {
       return { kind, category: '' }
     case 'schedule':
       return { kind, cron: '0 30 23 * * *' }
+    case 'detection':
+      return { kind, classes: [], deviceIds: [] }
+    case 'stationary':
+      return { kind, deviceIds: [], phase: 'appeared' }
+    case 'interval':
+      return { kind, minutes: 5 }
     default:
       return { kind: 'manual' }
   }
@@ -154,6 +161,11 @@ export function newAction(kind: ActionKind): AutomationAction {
  *  supports — whichever field is picked next, the row stays legal. */
 export function newConditionLeaf(): AutomationCondition {
   return { kind: 'condition', deviceId: 0, cap: '', fieldPath: '', operator: 'eq', value: '' }
+}
+
+/** A parked-object condition; the camera is picked by the operator. */
+export function newStationaryLeaf(): AutomationCondition {
+  return { kind: 'stationary-present', deviceId: 0 }
 }
 
 export function newExpressionLeaf(): AutomationCondition {

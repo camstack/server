@@ -1,8 +1,9 @@
 /**
  * WHEN — the only genuinely new vocabulary in an automation.
  *
- * Four kinds, and the list is closed: a device field taking a value, an event on
- * the bus, a cron schedule, and by hand. Triggers are ANY-of — the first one
+ * The kinds, and the list is closed: a device field taking a value, an event on
+ * the bus, a cron schedule, an interval, a detected class, a parked object, and
+ * by hand. Triggers are ANY-of — the first one
  * that fires starts a run — which is why they render as a flat list with no
  * joiner to choose. Ordering them would suggest a precedence that does not
  * exist.
@@ -21,11 +22,19 @@
 
 import type { AutomationTrigger } from '@camstack/types'
 import { EventCategory } from '@camstack/types'
-import { Badge, Button, Checkbox, Input, Select } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Input,
+  OptionSelect,
+  type OptionSelectOption,
+  Select,
+} from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import type { AutomationDevice } from './automation-data'
+import { DetectionFields, IntervalFields, StationaryFields } from './SceneFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
-import { ReadOnlyTriggerFields } from './ReadOnlyParts'
 import { newTrigger, removeAt, replaceAt, type TriggerKind, triggerKindLabel } from './recipe-parts'
 import { type ScalarValue, ScalarValueInput } from './ValueInput'
 import { Trans, useTranslation } from 'react-i18next'
@@ -33,7 +42,54 @@ import { Trans, useTranslation } from 'react-i18next'
 type DeviceStateTrigger = Extract<AutomationTrigger, { kind: 'device-state' }>
 type DeviceEventTrigger = Extract<AutomationTrigger, { kind: 'device-event' }>
 
-const TRIGGER_KINDS: readonly TriggerKind[] = ['device-state', 'device-event', 'schedule', 'manual']
+/** Palette order: the groups read left to right as "what the world does". */
+const TRIGGER_KINDS: readonly TriggerKind[] = [
+  'detection',
+  'stationary',
+  'device-state',
+  'device-event',
+  'schedule',
+  'interval',
+  'manual',
+]
+
+type TriggerGroup = 'scene' | 'device' | 'time' | 'manual'
+
+const TRIGGER_GROUP: Readonly<Record<TriggerKind, TriggerGroup>> = {
+  detection: 'scene',
+  stationary: 'scene',
+  'device-state': 'device',
+  'device-event': 'device',
+  schedule: 'time',
+  interval: 'time',
+  manual: 'manual',
+}
+
+/** The grouped block palette: every trigger kind, under its heading. */
+function usePaletteOptions(): readonly OptionSelectOption[] {
+  const { t } = useTranslation()
+  const groupLabel: Readonly<Record<TriggerGroup, string>> = {
+    scene: t('flow.triggerGroup.scene', 'Scene'),
+    device: t('flow.triggerGroup.device', 'Devices'),
+    time: t('flow.triggerGroup.time', 'Time'),
+    manual: t('flow.triggerGroup.manual', 'By hand'),
+  }
+  const description: Readonly<Record<TriggerKind, string>> = {
+    detection: t('flow.triggerHint.detection', 'An object class is detected on a camera'),
+    stationary: t('flow.triggerHint.stationary', 'An object stops, or leaves'),
+    'device-state': t('flow.triggerHint.deviceState', 'A device value changes or takes a value'),
+    'device-event': t('flow.triggerHint.deviceEvent', 'An event on the system'),
+    schedule: t('flow.triggerHint.schedule', 'At a time of day'),
+    interval: t('flow.triggerHint.interval', 'Again and again, every few minutes'),
+    manual: t('flow.triggerHint.manual', 'Only when you run it'),
+  }
+  return TRIGGER_KINDS.map((k) => ({
+    value: k,
+    label: triggerKindLabel(k),
+    description: description[k],
+    group: groupLabel[TRIGGER_GROUP[k]],
+  }))
+}
 
 /** Sorted once at module load — the enum is 146 entries and the order it is
  *  declared in is grouped by subsystem, which is not how anyone searches it. */
@@ -97,6 +153,7 @@ interface TriggerRowProps {
 
 function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerRowProps) {
   const { t } = useTranslation()
+  const palette = usePaletteOptions()
   return (
     <div className="rounded border border-border p-3">
       <div className="flex flex-wrap items-end gap-2">
@@ -105,20 +162,18 @@ function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerR
             ? t('automation.triggerEditor.when', 'When')
             : t('automation.triggerEditor.orWhen', 'or when')}
         </Badge>
-        {isEditableKind(trigger.kind) ? (
-          <label className="min-w-[13rem] flex-1">
-            <PickerLabel>{t('automation.triggerEditor.trigger', 'Trigger')}</PickerLabel>
-            <Select
-              value={trigger.kind}
-              onChange={(e) => onChange(newTrigger(asTriggerKind(e.target.value)))}
-              options={TRIGGER_KINDS.map((k) => ({ value: k, label: triggerKindLabel(k) }))}
-            />
-          </label>
-        ) : (
-          <div className="min-w-[13rem] flex-1">
-            <Badge variant="default">{triggerKindLabel(trigger.kind)}</Badge>
-          </div>
-        )}
+        <div className="min-w-[13rem] flex-1">
+          <PickerLabel>{t('automation.triggerEditor.trigger', 'Trigger')}</PickerLabel>
+          <OptionSelect
+            mode="single"
+            singleDisplay="field"
+            options={palette}
+            value={trigger.kind}
+            onChange={(kind) => {
+              if (kind !== trigger.kind) onChange(newTrigger(asTriggerKind(kind)))
+            }}
+          />
+        </div>
         <Button
           variant="ghost"
           onClick={onRemove}
@@ -150,9 +205,13 @@ function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerR
             </span>
           </label>
         )}
-        {!isEditableKind(trigger.kind) && (
-          <ReadOnlyTriggerFields trigger={trigger} devices={devices} />
+        {trigger.kind === 'detection' && (
+          <DetectionFields trigger={trigger} devices={devices} onChange={onChange} />
         )}
+        {trigger.kind === 'stationary' && (
+          <StationaryFields trigger={trigger} devices={devices} onChange={onChange} />
+        )}
+        {trigger.kind === 'interval' && <IntervalFields trigger={trigger} onChange={onChange} />}
         {trigger.kind === 'manual' && (
           <p className="text-xs text-foreground-subtle">
             <Trans i18nKey="automation.triggerEditor.manualHint" components={{ b: <strong /> }} />
@@ -161,11 +220,6 @@ function TriggerRow({ trigger, devices, position, onChange, onRemove }: TriggerR
       </div>
     </div>
   )
-}
-
-/** The kinds the editor can author; any other kind in a recipe is shown read-only. */
-function isEditableKind(kind: TriggerKind): boolean {
-  return TRIGGER_KINDS.some((k) => k === kind)
 }
 
 function asTriggerKind(value: string): TriggerKind {

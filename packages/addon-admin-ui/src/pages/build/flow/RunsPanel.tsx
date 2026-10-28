@@ -125,20 +125,28 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
   )
 }
 
+/** Border and fill of an item the selected run did (or did not) reach. */
+export function toneBorderClass(tone: keyof typeof TONE_CLASS): string {
+  return TONE_CLASS[tone]
+}
+
 export interface TraceBlockProps {
   readonly step: string
   readonly title: string
+  /** One line under the title: what this block is for. */
+  readonly hint?: string
   readonly trace: BlockView | null
   readonly children: ReactNode
 }
 
 /** One When / If / Then block; tinted by the selected run, plain without one. */
-export function TraceBlock({ step, title, trace, children }: TraceBlockProps) {
+export function TraceBlock({ step, title, hint, trace, children }: TraceBlockProps) {
   const tone = trace === null ? 'border-border bg-surface' : TONE_CLASS[trace.tone]
   return (
     <section className={`rounded-lg border p-3 ${tone}`} data-testid={`block-${step}`}>
       <div className="mb-2 flex flex-wrap items-baseline gap-2">
         <h4 className="text-sm font-semibold uppercase tracking-wide">{title}</h4>
+        {hint !== undefined && <span className="text-xs text-foreground-subtle">{hint}</span>}
       </div>
       {trace !== null && trace.reason !== null && (
         <p className={`mb-2 text-xs font-medium ${TONE_REASON_CLASS[trace.tone]}`}>

@@ -23,6 +23,8 @@ import type { AutomationAction } from '@camstack/types'
 import { Badge, Button, Input, Select, type DeviceListState } from '@camstack/ui-library'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
+import { toneBorderClass } from '../flow/RunsPanel'
+import type { BlockTone } from '../flow/trace-view'
 import type { ScopeVariable } from '../flow/ArgField'
 import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
@@ -45,6 +47,8 @@ export interface ActionListProps {
   readonly allowedKinds?: readonly ActionKind[]
   /** Variables an argument may name (`{x}`). */
   readonly variables?: readonly ScopeVariable[]
+  /** The selected run's outcome per step, by index; steps it did not reach are idle. */
+  readonly stepTones?: readonly BlockTone[]
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -54,6 +58,7 @@ export function ActionList({
   devicesState = 'answered',
   allowedKinds,
   variables = [],
+  stepTones,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
@@ -74,7 +79,9 @@ export function ActionList({
       {actions.map((action, index) => (
         <div
           key={`${action.kind}-${String(index)}`}
-          className="rounded border border-border p-3 space-y-2"
+          className={`space-y-2 rounded border p-3 ${
+            stepTones === undefined ? 'border-border' : toneBorderClass(stepTones[index] ?? 'idle')
+          }`}
         >
           <div className="flex flex-wrap items-end gap-2">
             <Badge variant="default">{index + 1}</Badge>

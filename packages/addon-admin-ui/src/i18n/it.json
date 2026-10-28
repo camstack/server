@@ -10454,6 +10454,72 @@
       "phase": "comparso o partito",
       "score": "quanto era sicuro il rilevatore",
       "trackId": "la traccia"
+    },
+    "class": {
+      "animal": "Animale",
+      "package": "Pacco",
+      "person": "Persona",
+      "vehicle": "Veicolo"
+    },
+    "runMode": {
+      "cooldown": "Attendi dopo un'esecuzione",
+      "cooldownHint": "Nessuna nuova esecuzione finché non passa questo tempo dall'inizio dell'ultima.",
+      "hint": "Cosa succede se un evento arriva durante un'esecuzione.",
+      "label": "Quando è già in esecuzione",
+      "max": "Fino a",
+      "minutes": "Minuti",
+      "parallel": "Esegui in parallelo",
+      "parallelHint": "Le esecuzioni si sovrappongono, fino al limite.",
+      "queued": "Metti in coda",
+      "queuedHint": "Gli eventi aspettano il proprio turno, fino al limite.",
+      "restart": "Riavvia l'esecuzione",
+      "restartHint": "L'esecuzione in corso si ferma e ne parte una nuova.",
+      "single": "Ignora",
+      "singleHint": "Un evento che arriva durante un'esecuzione viene scartato.",
+      "title": "Sovrapposizione"
+    },
+    "scene": {
+      "addCamera": "Aggiungi telecamera",
+      "addParked": "Oggetto fermo",
+      "addParkedTitle": "Vero finché un oggetto è fermo su una telecamera, in una zona",
+      "anyClass": "Nessuna scelta: vale qualsiasi classe.",
+      "camera": "Telecamera",
+      "cameras": "Telecamere",
+      "class": "Classe",
+      "every": "Ogni",
+      "firesWhen": "Scatta quando",
+      "intervalMinutes": "Minuti",
+      "minScore": "Punteggio minimo: {{value}}",
+      "minScoreAny": "Punteggio minimo: qualsiasi",
+      "minScoreAria": "Punteggio minimo",
+      "minutes": "minuti",
+      "parkedOn": "Un oggetto è fermo su",
+      "phaseAppeared": "Si è fermato",
+      "phaseDeparted": "Se n'è andato",
+      "pickCamera": "Scegli una telecamera",
+      "wholeScene": "Nessuna scelta: conta tutta la scena.",
+      "zones": "Zone",
+      "zonesPicked": "Contano solo queste zone."
+    },
+    "triggerGroup": {
+      "device": "Dispositivi",
+      "manual": "A mano",
+      "scene": "Scena",
+      "time": "Tempo"
+    },
+    "triggerHint": {
+      "detection": "Una classe di oggetti viene rilevata su una telecamera",
+      "deviceEvent": "Un evento nel sistema",
+      "deviceState": "Un valore di un dispositivo cambia o assume un valore",
+      "interval": "Ripetuto, ogni tot minuti",
+      "manual": "Solo quando lo esegui tu",
+      "schedule": "A un'ora del giorno",
+      "stationary": "Un oggetto si ferma o se ne va"
+    },
+    "trigger": {
+      "detection": "Viene rilevato un oggetto",
+      "stationary": "Un oggetto si ferma o se ne va",
+      "interval": "Ogni tot minuti"
     }
   }
 }

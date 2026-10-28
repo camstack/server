@@ -19,12 +19,11 @@
 
 import type { AutomationCondition, AutomationRecipe } from '@camstack/types'
 import { Badge, Button, Checkbox, Select } from '@camstack/ui-library'
-import { Braces, Plus, Trash2, Ungroup } from 'lucide-react'
+import { Braces, Car, Plus, Trash2, Ungroup } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { AutomationDevice } from './automation-data'
 import { ConditionLeafRow } from './ConditionRow'
 import { ExpressionLeafRow } from './ExpressionLeafRow'
-import { StationaryPresentRow } from './ReadOnlyParts'
 import {
   addCondition,
   type ConditionContainer,
@@ -41,7 +40,8 @@ import {
   ungroup,
   updateCondition,
 } from './recipe-ops'
-import { newConditionLeaf, newExpressionLeaf } from './recipe-parts'
+import { newConditionLeaf, newExpressionLeaf, newStationaryLeaf } from './recipe-parts'
+import { StationaryPresentFields } from './SceneFields'
 import { useTranslation } from 'react-i18next'
 
 export interface ConditionTreeProps {
@@ -160,6 +160,17 @@ export function ConditionTree({ recipe, devices, onChange }: ConditionTreeProps)
           )}
         >
           <Braces className="h-4 w-4" /> {t('automation.conditionTree.addExpression')}
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => apply(addCondition(recipe, newStationaryLeaf()))}
+          title={t(
+            'flow.scene.addParkedTitle',
+            'True while an object is parked on a camera, in a zone',
+          )}
+        >
+          <Car className="h-4 w-4" /> {t('flow.scene.addParked', 'Parked object')}
         </Button>
 
         <span className="mx-1 h-5 w-px bg-border" />
@@ -360,7 +371,11 @@ function NodeRow({ node, path, handlers }: NodeRowProps) {
             onChange={(next) => handlers.onUpdate(path, next)}
           />
         ) : (
-          <StationaryPresentRow leaf={node} devices={handlers.devices} />
+          <StationaryPresentFields
+            leaf={node}
+            devices={handlers.devices}
+            onChange={(next) => handlers.onUpdate(path, next)}
+          />
         )}
       </div>
       <Button

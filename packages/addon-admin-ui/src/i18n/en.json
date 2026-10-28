@@ -10432,6 +10432,72 @@
       "phase": "appeared or departed",
       "score": "how sure the detector was",
       "trackId": "the track"
+    },
+    "class": {
+      "animal": "Animal",
+      "package": "Package",
+      "person": "Person",
+      "vehicle": "Vehicle"
+    },
+    "runMode": {
+      "cooldown": "Wait after a run",
+      "cooldownHint": "No new run until this long after the last one began.",
+      "hint": "What happens when a trigger arrives mid-run.",
+      "label": "When it is already running",
+      "max": "Up to",
+      "minutes": "Minutes",
+      "parallel": "Run at the same time",
+      "parallelHint": "Runs overlap, up to the limit.",
+      "queued": "Queue it",
+      "queuedHint": "Triggers wait their turn, up to the limit.",
+      "restart": "Restart the run",
+      "restartHint": "The run in progress stops and a new one starts.",
+      "single": "Skip it",
+      "singleHint": "A trigger that arrives during a run is dropped.",
+      "title": "Overlap"
+    },
+    "scene": {
+      "addCamera": "Add camera",
+      "addParked": "Parked object",
+      "addParkedTitle": "True while an object is parked on a camera, in a zone",
+      "anyClass": "None picked: any class counts.",
+      "camera": "Camera",
+      "cameras": "Cameras",
+      "class": "Class",
+      "every": "Every",
+      "firesWhen": "Fires when it",
+      "intervalMinutes": "Minutes",
+      "minScore": "Minimum score: {{value}}",
+      "minScoreAny": "Minimum score: any",
+      "minScoreAria": "Minimum score",
+      "minutes": "minutes",
+      "parkedOn": "An object is parked on",
+      "phaseAppeared": "Stopped (parked)",
+      "phaseDeparted": "Left",
+      "pickCamera": "Pick a camera",
+      "wholeScene": "None picked: the whole scene counts.",
+      "zones": "Zones",
+      "zonesPicked": "Only these zones count."
+    },
+    "triggerGroup": {
+      "device": "Devices",
+      "manual": "By hand",
+      "scene": "Scene",
+      "time": "Time"
+    },
+    "triggerHint": {
+      "detection": "An object class is detected on a camera",
+      "deviceEvent": "An event on the system",
+      "deviceState": "A device value changes or takes a value",
+      "interval": "Again and again, every few minutes",
+      "manual": "Only when you run it",
+      "schedule": "At a time of day",
+      "stationary": "An object stops, or leaves"
+    },
+    "trigger": {
+      "detection": "An object is detected",
+      "stationary": "An object stops or leaves",
+      "interval": "Every few minutes"
     }
   }
 }

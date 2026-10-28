@@ -9,7 +9,6 @@ import type { CoreBlock, CoreBlockInput } from '@camstack/types'
 import {
   DataTable,
   ErrorBox,
-  ItemFormDialog,
   TABLE_SCROLL_MAX_H,
   useConfirm,
   useItemFormUrl,
@@ -232,6 +231,43 @@ export function AutomationsTab({
     [confirm, logsFor, onBlockIdChange, openEdit, remove, setEnabled, t],
   )
 
+  if (editingOpen) {
+    return (
+      <div className="space-y-3" data-testid="automation-editor-panel">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Workflow className="h-4 w-4 text-foreground-muted" />
+          {editing !== null
+            ? t('build.automationsTab.edit', 'Edit {{name}}', { name: editing.name })
+            : t('build.automationsTab.newAutomation', 'New automation')}
+        </h3>
+        <AutomationEditor
+          key={editing?.id ?? 'new'}
+          existing={editing}
+          initialRecipe={parsed !== null && parsed.ok ? parsed.recipe : EMPTY_RECIPE}
+          saving={create.isPending || update.isPending}
+          saveError={saveError}
+          ejecting={eject.isPending}
+          onSave={(input) => {
+            if (editing === null) create.mutate(input)
+            else update.mutate({ blockId: editing.id, block: input })
+          }}
+          onEject={() => {
+            if (editing !== null) eject.mutate(editing)
+          }}
+          onCancel={() => {
+            create.reset()
+            update.reset()
+            eject.reset()
+            setSavedBlock(null)
+            closeForm()
+            onBlockIdChange?.(null)
+          }}
+        />
+        {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-foreground-subtle">
@@ -276,52 +312,6 @@ export function AutomationsTab({
           }}
         />
       )}
-
-      <ItemFormDialog
-        open={editingOpen}
-        onClose={() => {
-          create.reset()
-          update.reset()
-          eject.reset()
-          setSavedBlock(null)
-          closeForm()
-          onBlockIdChange?.(null)
-        }}
-        title={
-          editing !== null
-            ? t('build.automationsTab.edit', 'Edit {{name}}', {
-                name: editing.name,
-              })
-            : t('build.automationsTab.newAutomation', 'New automation')
-        }
-        icon={Workflow}
-        width="xl"
-        testId="automation-editor-panel"
-      >
-        <AutomationEditor
-          key={editing?.id ?? 'new'}
-          existing={editing}
-          initialRecipe={parsed !== null && parsed.ok ? parsed.recipe : EMPTY_RECIPE}
-          saving={create.isPending || update.isPending}
-          saveError={saveError}
-          ejecting={eject.isPending}
-          onSave={(input) => {
-            if (editing === null) create.mutate(input)
-            else update.mutate({ blockId: editing.id, block: input })
-          }}
-          onEject={() => {
-            if (editing !== null) eject.mutate(editing)
-          }}
-          onCancel={() => {
-            create.reset()
-            update.reset()
-            eject.reset()
-            setSavedBlock(null)
-            closeForm()
-            onBlockIdChange?.(null)
-          }}
-        />
-      </ItemFormDialog>
 
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
       {setEnabled.error != null && <ErrorBox message={errorMessage(setEnabled.error)} />}
