@@ -460,3 +460,26 @@ describe('naming the hub', () => {
     expect(discoveredLabel({ ...hub, displayName: '192.0.2.10' }, null)).toBe('192.0.2.10 (hub)')
   })
 })
+
+describe('renaming an unpaired agent', () => {
+  it('says the name was saved even when refreshing the status afterwards fails (hub unreachable)', async () => {
+    answers['/api/agent/config'] = { status: 200, body: { success: true, restartRequired: false } }
+    render(
+      <HubConfigPanel
+        status={{ ...status, name: 'old-name' }}
+        onStatusRefresh={async () => {
+          throw new Error('hub unreachable')
+        }}
+      />,
+    )
+    fireEvent.click(await screen.findByText('Rename agent'))
+    fireEvent.change(screen.getByLabelText(/Name/i, { selector: '#agent-name' }), {
+      target: { value: 'kitchen-mac' },
+    })
+    fireEvent.click(screen.getByText('Save'))
+    expect(await screen.findByText('Name saved.')).toBeTruthy()
+    expect(screen.queryByText(/Save failed/)).toBeNull()
+    const sent = calls.find((c) => c.url.endsWith('/api/agent/config'))
+    expect(sent?.body).toEqual({ name: 'kitchen-mac' })
+  })
+})

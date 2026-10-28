@@ -94,7 +94,9 @@ function NameEditor({
       }
       setEditing(false)
       setMessage(t('hubConfig.name.saved'))
-      await onSaved()
+      // The name is already persisted on this agent. A status refresh that fails afterwards (an
+      // unpaired agent, a hub that is unreachable) is not a failed save.
+      await onSaved().catch(() => undefined)
     } catch (err) {
       setMessage(
         t('hubConfig.name.saveFailedWith', {

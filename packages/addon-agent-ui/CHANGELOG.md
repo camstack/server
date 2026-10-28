@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The agent page now shows the agent's own pairing code after you confirm there, so you can type it on the hub
+- Renaming an agent that is not paired now reports success once the name is saved, even when the hub cannot be reached
 
 ## [1.2.287] - 2026-10-28
 
