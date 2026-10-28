@@ -272,10 +272,13 @@ default `table`). The grid has one card per providing ADDON (icon over the
 card's full height, friendly name, "N integrations · M devices", status; no id
 line, no chevron); the whole card opens `/integrations/<addonId>`, where the
 `?instance=` selector picks the integration. In BOTH layouts the list is split
-into a `Providers` block and a `System` block (an empty block is hidden). System
-is every integration whose providing addon ships in a framework package, read
-from `addons.list` `manifest.packageName` through `lib/integration-sections.ts`
-(`lib/framework-packages.ts`), never from an addon id. Pending, empty and error
+into a `Providers` block and a `System` block (an empty block is hidden). An
+addon declares its block on its `camstack.addons[]` entry with
+`integrationSection: 'system' | 'providers'` (per entry, since a package can host
+several addons); absent, System is every integration whose providing addon ships
+in a framework package (`manifest.packageName`, `lib/framework-packages.ts`).
+Both are read from `addons.list` through `lib/integration-sections.ts`, never
+from an addon id. Pending, empty and error
 are drawn once, above either layout. `DataTable` still does not turn itself into cards.
 
 ### What an export entry shows, and why the rest could go

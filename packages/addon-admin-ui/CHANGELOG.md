@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Integrations page places an integration in System or Providers from the addon's declared integrationSection, falling back to the framework-package rule
+
 ## [1.2.504] - 2026-10-28
 
 ### Changed

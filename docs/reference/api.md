@@ -1543,7 +1543,7 @@
 
 ### `addons` → `addons.*`
 
-- **Source:** `packages/types/src/capabilities/addons.cap.ts:360`
+- **Source:** `packages/types/src/capabilities/addons.cap.ts:362`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonsProvider`

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Addon manifest entries can declare which Integrations block they belong to (integrationSection)
+
 ## [1.2.435] - 2026-10-28
 
 ### Changed

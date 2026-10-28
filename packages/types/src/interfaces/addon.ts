@@ -1118,6 +1118,9 @@ export interface IAdminUI {
  * This is the SINGLE SOURCE OF TRUTH for addon identity and metadata.
  * Addon classes no longer declare a `manifest` property.
  */
+/** The two blocks of the admin Integrations page. */
+export type IntegrationSection = 'system' | 'providers'
+
 export interface AddonDeclaration {
   // ── Identity ────────────────────────────────────────────────────────
   readonly id: string
@@ -1185,6 +1188,12 @@ export interface AddonDeclaration {
   readonly supportsLocationImport?: boolean
   /** Whether this addon is protected (required by the system, cannot be uninstalled) */
   readonly protected?: boolean
+  /**
+   * Which block of the admin Integrations page this addon's integrations land in.
+   * Declared per addon ENTRY (one package can host several addons). Absent: `system`
+   * for an addon shipped in a framework package, `providers` otherwise.
+   */
+  readonly integrationSection?: IntegrationSection
   /**
    * Group-runner execution model.
    *

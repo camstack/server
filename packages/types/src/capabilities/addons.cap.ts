@@ -66,6 +66,8 @@ const ManifestShapeSchema = z.object({
     .optional(),
   protected: z.boolean().optional(),
   removable: z.boolean().optional(),
+  /** Declared Integrations-page block (mirror of `AddonDeclaration.integrationSection`). */
+  integrationSection: z.enum(['system', 'providers']).optional(),
 })
 
 const AddonProcessSchema = z.object({

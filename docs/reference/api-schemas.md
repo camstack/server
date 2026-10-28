@@ -30,7 +30,7 @@ Enum: `"off" \| "latest" \| "beta" \| "inherit"`
 
 ### `AddonListItemSchema`
 
-- `manifest`: `{ id: string; name?: string; version?: string; description?: string; icon?: string; color?: string; capabilities?: unknown[]; packageName: string; packageVersion: string; packageDisplayName?: string; bundle?: { displayName: string; description?: string; icon?: string }; protected?: boolean; removable?: boolean }`
+- `manifest`: `{ id: string; name?: string; version?: string; description?: string; icon?: string; color?: string; capabilities?: unknown[]; packageName: string; packageVersion: string; packageDisplayName?: string; bundle?: { displayName: string; description?: string; icon?: string }; protected?: boolean; removable?: boolean; integrationSection?: "system" \| "providers" }`
 - `declaration?`: `unknown`
 - `source`: `string`
 - `installSource?`: `string`

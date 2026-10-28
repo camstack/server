@@ -3,6 +3,26 @@ import { splitIntegrationSections, systemAddonIdsOf } from '../integration-secti
 
 const addon = (id: string, packageName: string) => ({ manifest: { id, packageName } })
 
+describe('systemAddonIdsOf - declared section', () => {
+  it('a declared system wins over a non-framework package', () => {
+    const ids = systemAddonIdsOf([
+      {
+        manifest: { id: 'hosted', packageName: '@camstack/addon-x', integrationSection: 'system' },
+      },
+      addon('plain', '@camstack/addon-x'),
+    ])
+    expect([...ids]).toEqual(['hosted'])
+  })
+
+  it('a declared providers wins over a framework package', () => {
+    const ids = systemAddonIdsOf([
+      { manifest: { id: 'p', packageName: '@camstack/system', integrationSection: 'providers' } },
+      addon('s', '@camstack/system'),
+    ])
+    expect([...ids]).toEqual(['s'])
+  })
+})
+
 describe('systemAddonIdsOf', () => {
   it('names the addons shipped in a framework package, never by addon id', () => {
     const ids = systemAddonIdsOf([

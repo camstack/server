@@ -80,6 +80,7 @@
           "rssBudgetMb": 2048
         },
         "protected": true,
+        "integrationSection": "system",
         "capabilities": [
           {
             "name": "device-removal-hook",
