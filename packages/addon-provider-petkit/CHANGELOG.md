@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The FRESHELEMENT 3 feeder shows the grams in its bowl
+
 ## [0.2.151] - 2026-10-28
 
 ### Changed

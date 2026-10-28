@@ -64,6 +64,41 @@ function strOrNull(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
+/** Which wire key fed the bowl reading (`none` when neither is present). */
+export type BowlSource = 'bowl' | 'weight' | 'none'
+
+/** Bowl weight in grams plus the wire key it came from. */
+export interface BowlReading {
+  readonly value: number | null
+  readonly source: BowlSource
+  /** Keys of the feeder's inner `state` object, for diagnosing a model without either key. */
+  readonly innerKeys: readonly string[]
+}
+
+/**
+ * The food in the bowl. Bowl cameras (D4H / D4SH) report `state.bowl`; the
+ * D3 (Fresh Element 3, which has a bowl scale) reports grams as `state.weight`.
+ * Prefers `bowl` when numeric, else `weight`.
+ */
+export function readBowl(inner: Record<string, unknown> | null): BowlReading {
+  const innerKeys = inner === null ? [] : Object.keys(inner)
+  const bowl = numOrNull(inner?.['bowl'])
+  if (bowl !== null) return { value: bowl, source: 'bowl', innerKeys }
+  const weight = numOrNull(inner?.['weight'])
+  if (weight !== null) return { value: weight, source: 'weight', innerKeys }
+  return { value: null, source: 'none', innerKeys }
+}
+
+/** The one-time diagnostic line: which key fed the bowl, and the keys that were there. */
+export function describeBowlSource(bowl: BowlReading): string {
+  return `petkit feeder: bowl fed by ${bowl.source} (state keys: ${bowl.innerKeys.join(', ')})`
+}
+
+/** The bowl reading of a live feeder handle (wire `state.state` boundary). */
+export function readFeederBowl(feeder: FeederDevice): BowlReading {
+  return readBowl(nestedObject(feeder.state, 'state'))
+}
+
 /**
  * Extract a library-free {@link FeederReading} from a live `FeederDevice`
  * handle. Typed getters carry the food / battery / desiccant / feeding /
@@ -82,7 +117,7 @@ export function extractFeederReading(feeder: FeederDevice): FeederReading {
     isDualHopper: feeder.isDualHopper,
     feeding: feeder.feeding,
     eating: boolFrom01(inner?.['eating']) ?? false,
-    bowl: numOrNull(inner?.['bowl']),
+    bowl: readBowl(inner).value,
     food: feeder.food ?? null,
     food1: feeder.food1 ?? null,
     food2: feeder.food2 ?? null,
@@ -120,6 +155,7 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
   private readonly dualHopper: boolean
   private surfaceUnsub: (() => void) | null = null
   private pollTimer: ReturnType<typeof setInterval> | null = null
+  private bowlSourceLogged = false
 
   constructor(ctx: DeviceContext) {
     const persisted = petkitFeederDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -195,11 +231,27 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     }
     void petkitSession.ok(this.integrationId)
     const reading = extractFeederReading(handle)
+    this.logBowlSourceOnce(handle)
     const now = Date.now()
     const status = mapFeederToStatus(reading, now)
     this.runtimeState.setCapState(PET_FEEDER_CAP, status)
     writeFeederConsumables(this.runtimeState, status, now)
     this.markOnline(reading.online)
+  }
+
+  /** One info line per device per process: which wire key fed the bowl. */
+  private logBowlSourceOnce(handle: FeederDevice): void {
+    if (this.bowlSourceLogged) return
+    this.bowlSourceLogged = true
+    const bowl = readFeederBowl(handle)
+    this.ctx.logger.info(describeBowlSource(bowl), {
+      tags: { deviceId: this.id },
+      meta: {
+        petkitDeviceId: this.petkitDeviceId,
+        bowlSource: bowl.source,
+        stateKeys: bowl.innerKeys,
+      },
+    })
   }
 
   /** Trigger a poll when the slice is missing or older than {@link STALE_MS}. */
