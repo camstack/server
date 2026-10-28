@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The AI runtimes table has a Feature column and a translated state chip, red when stopped
+
 ## [1.2.498] - 2026-10-28
 
 ### Changed
