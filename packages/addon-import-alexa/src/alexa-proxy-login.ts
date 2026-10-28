@@ -1,6 +1,7 @@
 import AlexaRemote from 'alexa-remote2'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
+import { sanitizeProxyTraceLine } from './alexa-proxy-trace.js'
 
 /**
  * INTERACTIVE Amazon login via `alexa-remote2`'s built-in proxy auth mode, behind the
@@ -164,6 +165,17 @@ export class AlexaProxyLoginSession {
         apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
         logger: (...args: unknown[]) => {
           const line = args.map(String).join(' ')
+          // Step lines (router, upstream request, redirect) carry headers and
+          // query values; only the sanitised method/path/host trace is kept,
+          // and it is checked BEFORE the secret drop (a Router line embeds the
+          // cookie header and would otherwise vanish whole).
+          const trace = sanitizeProxyTraceLine(line)
+          if (trace !== null) {
+            this.#logger.info(`alexa proxy-login: ${trace}`, {
+              meta: { sessionId: this.#opts.sessionId },
+            })
+            return
+          }
           // alexa-cookie2 logs raw cookie/CSRF values (e.g. "Result: csrf=…,
           // Cookie=…"). Drop any line that contains credential material so it
           // never reaches the structured logger / Loki.
@@ -245,7 +257,7 @@ export class AlexaProxyLoginSession {
       if (this.#phase === 'starting') {
         this.#phase = 'awaiting-login'
         this.#logger.info('alexa proxy-login: proxy ready — awaiting Amazon login', {
-          meta: { sessionId: this.#opts.sessionId },
+          meta: { sessionId: this.#opts.sessionId, amazonDomain: this.#opts.amazonDomain },
         })
       }
       return
