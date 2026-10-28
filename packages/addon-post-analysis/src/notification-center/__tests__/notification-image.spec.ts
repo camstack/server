@@ -110,7 +110,7 @@ describe('the caption', () => {
     expect(
       imageBoxCaption({ className: 'vehicle', label: 'AB123CD', labelKind: 'plate' }, 'it'),
     ).toBe('AB123CD')
-    expect(imageBoxCaption({ className: 'forklift', confidence: 0.4 }, 'it')).toBe('forklift 40%')
+    expect(imageBoxCaption({ className: 'forklift', confidence: 0.4 }, 'it')).toBe('Forklift 40%')
   })
 })
 

@@ -415,7 +415,7 @@ describe('summaryTileCaption', () => {
     expect(summaryTileCaption('Cortile', '07:49', 'person', 'it')).toBe('Cortile · 07:49 · Persona')
     expect(summaryTileCaption('Cortile', '07:49', 'package', 'it')).toBe('Cortile · 07:49 · Pacco')
     expect(summaryTileCaption('Yard', '07:49', 'car', 'en')).toBe('Yard · 07:49 · Car')
-    expect(summaryTileCaption('Yard', '07:49', 'forklift', 'it')).toBe('Yard · 07:49 · forklift')
+    expect(summaryTileCaption('Yard', '07:49', 'forklift', 'it')).toBe('Yard · 07:49 · Forklift')
   })
 })
 
