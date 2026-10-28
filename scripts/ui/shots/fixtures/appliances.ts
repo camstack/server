@@ -43,8 +43,19 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
   502: appliance(502, 'Robot vacuum', 'vacuum', 'provider-dreame'),
   503: appliance(503, 'Utility dishwasher', 'dishwasher', 'bosch-home-connect'),
   504: appliance(504, 'Mopping robot', 'vacuum', 'provider-dreame'),
-  5063: { ...appliance(5063, 'Pet feeder', 'pet-feeder', 'provider-petkit'), location: '' },
+  5063: {
+    ...appliance(5063, 'Pet feeder', 'pet-feeder', 'provider-petkit'),
+    location: '',
+  },
   5064: appliance(5064, 'Pet feeder (consumables)', 'pet-feeder', 'provider-petkit'),
+  521: {
+    ...appliance(521, 'Living room AC', 'climate', 'provider-homeassistant'),
+    location: 'Living room',
+  },
+  522: {
+    ...appliance(522, 'Bedroom AC', 'climate', 'provider-homeassistant'),
+    location: 'Bedroom',
+  },
   510: appliance(510, 'Filter life', 'sensor', 'provider-homeassistant'),
   511: appliance(511, 'Hall sensor', 'sensor', 'provider-homeassistant'),
   513: {
@@ -97,6 +108,14 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
     entry('device-status', 'provider-petkit'),
     entry('pet-feeder', 'provider-petkit'),
     entry('consumables', 'provider-petkit'),
+  ],
+  521: [
+    entry('device-status', 'provider-homeassistant'),
+    entry('climate-control', 'provider-homeassistant'),
+  ],
+  522: [
+    entry('device-status', 'provider-homeassistant'),
+    entry('climate-control', 'provider-homeassistant'),
   ],
   510: [entry('numeric-sensor', 'provider-homeassistant')],
   511: [
@@ -291,7 +310,33 @@ const FEEDER_CONSUMABLES = {
   lastChangedAt: NOW,
 }
 
+/** Climate hero: 521 shows an integer target, 522 a .5 target (5-30 step 0.5). */
+const CLIMATE = {
+  mode: 'cool',
+  availableModes: ['off', 'cool', 'heat', 'auto', 'fan_only', 'dry'],
+  fanMode: 'auto',
+  availableFanModes: ['auto', 'low', 'medium', 'high'],
+  preset: 'custom',
+  availablePresets: ['none', 'eco', 'sleep', 'turbo', 'custom'],
+  target: 21,
+  targetHigh: null,
+  targetLow: null,
+  targetHumidity: null,
+  currentTemp: 23,
+  currentHumidity: 48,
+  swingVertical: null,
+  swingHorizontal: null,
+  minTemp: 5,
+  maxTemp: 30,
+  tempStep: 0.5,
+  lastFetchedAt: NOW,
+}
+
 const SLICES: Readonly<Record<string, unknown>> = {
+  '521/device-status': { online: true, lastChangedAt: NOW },
+  '521/climate-control': CLIMATE,
+  '522/device-status': { online: true, lastChangedAt: NOW },
+  '522/climate-control': { ...CLIMATE, target: 21.5 },
   '5063/device-status': { online: true, lastChangedAt: NOW },
   '5063/pet-feeder': PET_FEEDER,
   '5064/device-status': { online: true, lastChangedAt: NOW },
@@ -364,8 +409,15 @@ const WIREABLE: Readonly<Record<number, unknown>> = {
   },
 }
 
-const FILTER_SOURCE = { addonId: 'provider-homeassistant', stableId: 'appliance-510' }
-const expr = (text: string) => ({ kind: 'expression' as const, expr: text, bindings: {} })
+const FILTER_SOURCE = {
+  addonId: 'provider-homeassistant',
+  stableId: 'appliance-510',
+}
+const expr = (text: string) => ({
+  kind: 'expression' as const,
+  expr: text,
+  bindings: {},
+})
 const FILTER_VIEW = {
   block: {
     id: 'blk-dishwasher-filter',

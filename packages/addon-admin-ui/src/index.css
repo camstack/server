@@ -87,10 +87,15 @@ body {
 }
 
 /* Focus ring for keyboard accessibility */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 4px;
+/* In the base layer so a component's own `outline-none` utility wins over it
+   (an unlayered rule beats every layered utility and drew a ring inside the
+   climate Preset select's bordered wrapper). */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 /* Input placeholder color */

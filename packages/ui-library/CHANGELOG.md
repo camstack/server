@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device selector shows which addon and integration provides each device
+- The climate control keeps the set temperature steady when it gains decimals, and the preset menu has no inner border
 
 ## [1.2.344] - 2026-10-28
 

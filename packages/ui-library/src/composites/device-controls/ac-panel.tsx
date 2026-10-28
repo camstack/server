@@ -36,6 +36,7 @@ import {
   MODE_COLOR,
   MODE_TEXT_COLOR,
   nextClimateTarget,
+  climateTargetWidthClass,
   resolveClimateTempStep,
 } from './climate-panel.js'
 
@@ -375,7 +376,10 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
               />
               <div className="flex items-baseline gap-0.5">
                 <span
-                  className="text-4xl font-bold leading-none tabular-nums"
+                  className={cn(
+                    'text-4xl font-bold leading-none tabular-nums',
+                    climateTargetWidthClass(display),
+                  )}
                   style={{ color: accent }}
                 >
                   {display.target}
@@ -417,7 +421,12 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
           </>
         ) : (
           <div className="relative z-10 flex items-baseline gap-0.5">
-            <span className="text-4xl font-bold leading-none tabular-nums text-foreground">
+            <span
+              className={cn(
+                'text-4xl font-bold leading-none tabular-nums text-foreground',
+                climateTargetWidthClass(display),
+              )}
+            >
               {display.currentTemp ?? '—'}
             </span>
             <span className="text-lg text-foreground-subtle">°</span>
@@ -563,7 +572,7 @@ function CompactSelect({
       </span>
       <div
         className={cn(
-          'flex items-center gap-1 overflow-hidden rounded-lg border border-border/60 bg-surface-subtle px-1.5 py-1.5',
+          'flex items-center gap-1 overflow-hidden rounded-lg border border-border/60 bg-surface-subtle px-1.5 py-1.5 has-[:focus-visible]:border-primary',
           disabled && 'opacity-40',
         )}
       >

@@ -14,6 +14,59 @@ export function resolveClimateTempStep(tempStep: number | null | undefined): num
   return 1
 }
 
+const TARGET_FALLBACK_INT_DIGITS = 2
+const TARGET_MAX_DECIMALS = 3
+
+function decimalPlaces(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  for (let d = 0; d < TARGET_MAX_DECIMALS; d += 1) {
+    if (Math.abs(n * 10 ** d - Math.round(n * 10 ** d)) < 1e-9) return d
+  }
+  return TARGET_MAX_DECIMALS
+}
+
+/**
+ * Character count of the longest set-temperature the device can show, derived
+ * from its range and step (5-30 step 0.5 reserves "30.5" = 4). The big target
+ * number reserves this width so the − / + buttons do not move when the value
+ * gains decimals or loses a digit.
+ */
+export function climateTargetWidthChars(
+  display: Pick<ClimateControlStatus, 'tempStep' | 'minTemp' | 'maxTemp'>,
+): number {
+  const step = resolveClimateTempStep(display.tempStep)
+  const bounds = [display.minTemp, display.maxTemp].filter(
+    (v): v is number => typeof v === 'number' && Number.isFinite(v),
+  )
+  const intDigits =
+    bounds.length === 0
+      ? TARGET_FALLBACK_INT_DIGITS
+      : Math.max(...bounds.map((v) => String(Math.trunc(Math.abs(v))).length))
+  const sign = bounds.some((v) => v < 0) ? 1 : 0
+  const decimals = Math.max(decimalPlaces(step), ...bounds.map(decimalPlaces))
+  return sign + intDigits + (decimals > 0 ? 1 + decimals : 0)
+}
+
+/** Static class names so Tailwind generates them (no runtime-built classes). */
+const TARGET_MIN_WIDTH_CLASS: Record<number, string> = {
+  1: 'min-w-[1ch]',
+  2: 'min-w-[2ch]',
+  3: 'min-w-[3ch]',
+  4: 'min-w-[4ch]',
+  5: 'min-w-[5ch]',
+  6: 'min-w-[6ch]',
+  7: 'min-w-[7ch]',
+  8: 'min-w-[8ch]',
+}
+
+/** `min-w-[Nch]` + right alignment for the big target number. */
+export function climateTargetWidthClass(
+  display: Pick<ClimateControlStatus, 'tempStep' | 'minTemp' | 'maxTemp'>,
+): string {
+  const chars = Math.min(Math.max(climateTargetWidthChars(display), 1), 8)
+  return `${TARGET_MIN_WIDTH_CLASS[chars]} text-center`
+}
+
 export function nextClimateTarget(
   current: number,
   deltaSteps: number,
