@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.345] - 2026-10-28
+
 ### Changed
 
 - The device selector shows which addon and integration provides each device

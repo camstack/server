@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.164] - 2026-10-28
+
 ### Changed
 
 - Alexa sign-in opens the login page of the chosen Amazon region and in its language, and no longer fails right after entering the email

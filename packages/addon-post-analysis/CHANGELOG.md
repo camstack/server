@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.649] - 2026-10-28
+
 ### Changed
 
 - The Notification center now appears under System on the Integrations page
