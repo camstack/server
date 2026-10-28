@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.676 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.677 | the update itself | — |
 
 ## Framework (5)
 
@@ -24,7 +24,7 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | --- | --- | --- | --- | --- |
 | `@camstack/develop` | `packages/develop` | 0.1.38 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.154 | `@camstack/server` closure | — |
-| `@camstack/system` | `packages/system` | 1.2.507 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
+| `@camstack/system` | `packages/system` | 1.2.508 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
 | `@camstack/types` | `packages/types` | 1.2.436 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
 | `@camstack/ui-library` | `packages/ui-library` | 1.2.345 | `@camstack/server` closure | — |
 

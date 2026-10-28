@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.508] - 2026-10-28
+
 ### Changed
 
 - The hub's registration ack now carries the hub's server version so agents can align to it.
