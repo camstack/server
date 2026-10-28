@@ -354,6 +354,25 @@ function isHubConnected(broker: ServiceBroker): boolean {
   }
 }
 
+/**
+ * The agent's name as persisted in `agent.json` — the single source of truth the agent UI
+ * writes (`POST /api/agent/config`). The in-memory `deps.agentName` is only a fallback: the
+ * UI's follow-up `$agent.rename` call is best-effort and can be lost (broker mid-reconnect
+ * while pairing), which left the hub on the old name until a restart.
+ */
+function persistedAgentName(configPath: string, fallback: string): string {
+  try {
+    const raw: unknown = JSON.parse(fs.readFileSync(path.resolve(configPath), 'utf-8'))
+    if (typeof raw === 'object' && raw !== null && 'name' in raw) {
+      const name = raw.name
+      if (typeof name === 'string' && name.trim().length > 0) return name.trim()
+    }
+  } catch {
+    /* no file yet, or unreadable: the in-memory name stands */
+  }
+  return fallback
+}
+
 function createAgentService(deps: AgentServiceDeps): ServiceSchema {
   return {
     name: '$agent',
@@ -382,7 +401,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
           const decodeDetection = buildDecodeDetectionSlice()
           return {
             nodeId: broker.nodeID,
-            name: deps.agentName,
+            name: persistedAgentName(deps.configPath, deps.agentName),
             platform: os.platform(),
             arch: os.arch(),
             hostname: os.hostname(),
@@ -456,7 +475,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
           return {
             ok: errored === 0,
             nodeId: broker.nodeID,
-            name: deps.agentName,
+            name: persistedAgentName(deps.configPath, deps.agentName),
             version: deps.agentVersion ?? 'unknown',
             uptimeSeconds: Math.round(process.uptime()),
             pid: process.pid,

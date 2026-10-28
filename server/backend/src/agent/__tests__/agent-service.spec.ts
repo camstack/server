@@ -276,4 +276,24 @@ describe('$agent service', () => {
       /process restart failed for "ghost-addon": not found/,
     )
   })
+
+  it('a name persisted to agent.json shows in $agent.status even when the in-memory rename never ran', async () => {
+    broker = new ServiceBroker({ nodeID: 'agent-test', transporter: 'Fake', logger: false })
+    const configPath = path.join(tmpDir, 'agent.json')
+    broker.createService(
+      createAgentService({
+        addonsDir: path.join(tmpDir, 'addons'),
+        agentName: 'old-name',
+        configPath,
+        dataDir: tmpDir,
+        loadedAddons: new Map(),
+      }),
+    )
+    await broker.start()
+    // The agent UI writes the file first and calls `$agent.rename` best-effort; when that call
+    // is lost (broker mid-reconnect while pairing) only the file carries the new name.
+    fs.writeFileSync(configPath, JSON.stringify({ name: 'mac-mini' }), 'utf-8')
+    const status = (await broker.call('$agent.status')) as Record<string, unknown>
+    expect(status.name).toBe('mac-mini')
+  })
 })
