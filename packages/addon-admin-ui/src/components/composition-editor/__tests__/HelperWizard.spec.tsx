@@ -112,12 +112,16 @@ describe('HelperWizard', () => {
     expect(link.getAttribute('href')).toBe('/devices/4701')
   })
 
-  it('offers the six math tiles in a Math section, each with a whole title', () => {
+  it('offers the calculations in a Calculation section and expression in Advanced, with no sum tile', () => {
     renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
-    for (const id of ['threshold', 'sum', 'difference', 'ratio', 'expression', 'derivative']) {
+    for (const id of ['threshold', 'difference', 'ratio', 'derivative', 'expression']) {
       expect(screen.getByTestId(`helper-template-${id}`), id).toBeTruthy()
     }
-    expect(screen.getByText('Math')).toBeTruthy()
+    expect(screen.queryByTestId('helper-template-sum')).toBeNull()
+    expect(screen.getByText('Calculation')).toBeTruthy()
+    expect(screen.getByText('Advanced')).toBeTruthy()
+    // Free composition is offered only where the wizard can hand over to it.
+    expect(screen.queryByTestId('helper-template-composition')).toBeNull()
   })
 
   it('a threshold asks for its two edges and warns when they are reversed', () => {

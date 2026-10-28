@@ -161,6 +161,18 @@ export function mathTileIds(): readonly MathTileId[] {
   return MATH_TILES
 }
 
+/**
+ * The picker's Calculation section, in order: the math tiles a new device may
+ * start from, without `sum` (a sum is the aggregation of a readings group) and
+ * without `expression` (it sits in Advanced). A saved `sum` helper still opens
+ * through `draftFromHelper`; only the picker stopped offering it.
+ */
+const CALCULATION_TILES: readonly MathTileId[] = ['threshold', 'difference', 'ratio', 'derivative']
+
+export function calculationTileIds(): readonly MathTileId[] {
+  return CALCULATION_TILES
+}
+
 export function isMathTileId(value: string): value is MathTileId {
   return MATH_TILES.some((id) => id === value)
 }

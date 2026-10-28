@@ -57,6 +57,8 @@ export interface HelperWizardProps {
   readonly saving: boolean
   readonly onSave: (draft: HelperDraft, intent: HelperSaveIntent) => Promise<HelperSaveResult>
   readonly onDraftChange?: (draft: HelperDraft | null) => void
+  /** Create only: the picker's Advanced "Free composition" tile. */
+  readonly onFreeComposition?: () => void
 }
 
 interface CreatedDevice {
@@ -71,6 +73,7 @@ export function HelperWizard({
   saving,
   onSave,
   onDraftChange,
+  onFreeComposition,
 }: HelperWizardProps): ReactNode {
   const { t } = useTranslation()
   const [step, setStep] = useState<WizardStep>(initial === null ? 'template' : start)
@@ -139,7 +142,9 @@ export function HelperWizard({
         </p>
       )}
       <p className="text-[11px] text-foreground-muted">{t(stepCopy(step, draft))}</p>
-      {step === 'template' && <HelperTemplatePicker onPick={pick} />}
+      {step === 'template' && (
+        <HelperTemplatePicker onPick={pick} onFreeComposition={onFreeComposition} />
+      )}
       {step === 'parameters' &&
         draft?.kind === 'group' &&
         draft.templateId === APPLIANCE_TEMPLATE_ID && (

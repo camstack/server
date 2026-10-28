@@ -22,6 +22,7 @@
  */
 
 import {
+  type Composition,
   type CompositionBlockState,
   type CompositionFieldSource,
   type CompositionSourceRef,
@@ -68,6 +69,33 @@ export interface CompositionRowState {
 
 export type CompositionRowKind = 'composed' | 'customization'
 
+/**
+ * Which creation section a composed device came from, read from the helper
+ * spec the composition already records. `kind` is the i18n key tail of the
+ * template (`helper.template.<kind>`); null for a free composition.
+ */
+export interface CompositionRowOrigin {
+  readonly section: 'group' | 'calculation' | 'advanced'
+  readonly kind: string | null
+}
+
+export function originOfComposition(composition: Composition): CompositionRowOrigin {
+  const helper = composition.helper
+  if (helper === undefined) return { section: 'advanced', kind: null }
+  switch (helper.kind) {
+    case 'group':
+      return { section: 'group', kind: helper.templateId }
+    case 'appliance':
+      return { section: 'group', kind: 'appliance' }
+    case 'arithmetic':
+      return { section: 'calculation', kind: helper.op }
+    case 'expression':
+      return { section: 'advanced', kind: 'expression' }
+    default:
+      return { section: 'calculation', kind: helper.kind }
+  }
+}
+
 export interface CompositionRow {
   readonly blockId: string
   readonly kind: CompositionRowKind
@@ -77,6 +105,8 @@ export interface CompositionRow {
   readonly namePresence: SourcePresence
   /** Device type, or null while the target's row is not known. */
   readonly type: string | null
+  /** Group / Calculation / Advanced, from the recorded helper spec. */
+  readonly origin: CompositionRowOrigin
   /** The capabilities the composition composes, `(off)` when a feature is disabled. */
   readonly features: readonly string[]
   readonly state: CompositionRowState
@@ -282,6 +312,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
       name: view.block.name,
       namePresence: 'present',
       type: target.role === undefined ? target.type : `${target.type} · ${target.role}`,
+      origin: originOfComposition(composition),
       features,
       state,
       sources,
@@ -295,6 +326,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
     name: self ? self.name : refLabel(target.device),
     namePresence,
     type: self ? self.type : null,
+    origin: originOfComposition(composition),
     features,
     state,
     sources,

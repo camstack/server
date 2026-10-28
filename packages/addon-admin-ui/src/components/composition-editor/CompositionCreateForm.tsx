@@ -63,11 +63,12 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
   const [draft, setDraft] = useState<HelperDraft | null>(null)
+  const [free, setFree] = useState(false)
   const title = titleForDraft(draft, t)
 
   useEffect(() => {
-    onTitle(title)
-  }, [onTitle, title])
+    if (!free) onTitle(title)
+  }, [onTitle, title, free])
 
   const save = async (next: HelperDraft, intent: HelperSaveIntent): Promise<HelperSaveResult> => {
     let deviceId: number | null = null
@@ -93,9 +94,12 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
     return { kind: 'saved', deviceId: savedId }
   }
 
+  if (free) return <BlankCompositionForm onTitle={onTitle} />
+
   return (
     <div className="flex flex-col gap-3" data-testid="composition-create-form">
       <HelperWizard
+        onFreeComposition={() => setFree(true)}
         purpose="create"
         initial={null}
         start="template"
@@ -233,7 +237,7 @@ async function saveBlank(input: BlankSave): Promise<void> {
 }
 
 function titleForDraft(draft: HelperDraft | null, t: TFunction): string {
-  if (draft === null) return t('helper.newHelper')
+  if (draft === null) return t('helper.newComposed')
   if (draft.kind === 'statistic') return t('helper.newTitle.statistic')
   if (draft.kind === 'integral') return t('helper.newTitle.integral')
   if (draft.kind === 'arithmetic') return t(`helper.newTitle.${draft.op}`)
@@ -243,9 +247,9 @@ function titleForDraft(draft: HelperDraft | null, t: TFunction): string {
   if (draft.templateId === 'appliance' && draft.appliance !== null) {
     return t(`helper.newTitle.${draft.appliance}`)
   }
-  if (draft.templateId === 'appliance') return t('helper.newHelper')
+  if (draft.templateId === 'appliance') return t('helper.newComposed')
   const template = groupTemplate(draft.templateId)
-  if (template === null) return t('helper.newHelper')
+  if (template === null) return t('helper.newComposed')
   // One whole phrase per template and locale: gluing a type word and a
   // template word reads backwards in Italian ("Nuovo Temperatura sensore").
   return t(`helper.newTitle.${template.id}`)

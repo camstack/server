@@ -182,23 +182,13 @@ export function BuildPage() {
       fill
       actions={
         tab === 'custom-device' ? (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => openCustomDevice('blank')}
-              data-testid="build-new-composition"
-            >
-              <Plus className="h-4 w-4" /> {t('helper.newComposition')}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => openCustomDevice('helper')}
-              data-testid="build-new-helper"
-            >
-              <Plus className="h-4 w-4" /> {t('helper.newHelper')}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            onClick={() => openCustomDevice('helper')}
+            data-testid="build-new-composed"
+          >
+            <Plus className="h-4 w-4" /> {t('helper.newComposed')}
+          </Button>
         ) : (
           <Button type="button" onClick={requestCreate} data-testid="build-new">
             <Plus className="h-4 w-4" /> {newLabel}

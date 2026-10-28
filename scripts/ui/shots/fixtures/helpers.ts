@@ -308,6 +308,7 @@ export default defineFixtures({
       }
       return {}
     },
+    'actions.list': [],
     'coreBlocks.list': { blocks: [] },
     'coreBlocks.getComposition': (input: { blockId?: string }) => {
       if (input.blockId === 'blk-veranda') {
@@ -345,6 +346,14 @@ export default defineFixtures({
         {
           block: BLOCK,
           state: { kind: 'answered', state: { deviceId: 910 } },
+        },
+        {
+          block: LIGHT_BLOCK,
+          state: { kind: 'answered', state: { deviceId: 911 } },
+        },
+        {
+          block: DOOR_BLOCK,
+          state: { kind: 'answered', state: { deviceId: 912 } },
         },
       ],
     },

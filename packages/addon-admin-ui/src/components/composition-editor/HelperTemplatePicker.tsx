@@ -12,30 +12,41 @@ import {
 } from '@camstack/types'
 import { deviceRoleMeta, deviceTypeMeta, GroupedTilePicker } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
-import { BarChart3, Divide, Gauge, Minus, Plus, Sigma, TrendingUp, Zap } from 'lucide-react'
+import { BarChart3, Blocks, Divide, Gauge, Minus, Plus, Sigma, TrendingUp, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  calculationTileIds,
   helperTemplateGroups,
   type HelperPickerId,
   type HelperTemplatePick,
   isMathTileId,
   type MathTileId,
-  mathTileIds,
   pickForMathTile,
 } from './helper-form-model'
 
 export interface HelperTemplatePickerProps {
   readonly onPick: (pick: HelperTemplatePick) => void
+  /** The Advanced "Free composition" tile; omitted where only helpers are offered. */
+  readonly onFreeComposition?: () => void
 }
 
-export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): ReactNode {
+const FREE_COMPOSITION_KEY = 'composition'
+
+export function HelperTemplatePicker({
+  onPick,
+  onFreeComposition,
+}: HelperTemplatePickerProps): ReactNode {
   const { t } = useTranslation()
   return (
     <div data-testid="helper-template-picker">
       <GroupedTilePicker
         emptyMessage={t('helper.noTemplates')}
         onPick={(key) => {
+          if (key === FREE_COMPOSITION_KEY) {
+            onFreeComposition?.()
+            return
+          }
           if (key === 'statistic' || key === 'integral') {
             onPick({ kind: key })
             return
@@ -54,19 +65,42 @@ export function HelperTemplatePicker({ onPick }: HelperTemplatePickerProps): Rea
         groups={[
           ...pickerGroups(t),
           {
-            id: 'math',
-            label: t('helper.group.math'),
-            tiles: mathTileIds().map((id) => mathTile(id, t)),
+            id: 'calculation',
+            label: t('helper.section.calculation'),
+            tiles: [
+              ...calculationTileIds().map((id) => mathTile(id, t)),
+              historyTile('statistic', BarChart3, t),
+              historyTile('integral', Zap, t),
+            ],
           },
           {
-            id: 'history',
-            label: t('helper.group.history'),
-            tiles: [historyTile('statistic', BarChart3, t), historyTile('integral', Zap, t)],
+            id: 'advanced',
+            label: t('helper.section.advanced'),
+            tiles: [
+              ...(onFreeComposition === undefined ? [] : [compositionTile(t)]),
+              mathTile('expression', t),
+            ],
           },
         ]}
       />
     </div>
   )
+}
+
+function compositionTile(t: TFunction): PickerTile {
+  const label = t('helper.template.composition')
+  return {
+    key: FREE_COMPOSITION_KEY,
+    label,
+    testId: 'helper-template-composition',
+    icon: <Blocks className="h-5 w-5 text-foreground-muted" aria-hidden />,
+    detailLabel: t('helper.detailsOf', { name: label }),
+    detail: (
+      <div className="max-w-xs text-xs">
+        <p className="text-foreground-muted">{t('helper.detail.composition')}</p>
+      </div>
+    ),
+  }
 }
 
 function historyTile(
@@ -161,7 +195,7 @@ interface PickerGroup {
 function pickerGroups(t: TFunction): readonly PickerGroup[] {
   return helperTemplateGroups().map((group) => ({
     id: group.id,
-    label: t(`helper.group.${group.id}`),
+    label: `${t('helper.section.group')} · ${t(`helper.group.${group.id}`)}`,
     tiles: tilesOf(group.templateIds, t),
   }))
 }

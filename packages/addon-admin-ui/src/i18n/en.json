@@ -5737,7 +5737,8 @@
       "deviceListUnreadable": "the device list could not be read ({{error}})",
       "deviceListPending": "the device list has not answered yet",
       "deleteThisComposedDevice": "Delete this composed device?",
-      "deleteMessage": "{{name}} will be deleted. This cannot be undone."
+      "deleteMessage": "{{name}} will be deleted. This cannot be undone.",
+      "builtAs": "Built as"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Could not list devices:",
@@ -10063,7 +10064,8 @@
       "valveSummary": "Open when at least one valve is open, or only when all are. Position appears only when every valve has it.",
       "lockSummary": "Locked when at least one lock is locked, or only when all are. Unlocking the group always asks for a confirmation.",
       "media-playerSummary": "Playing when at least one player is playing, or only when all are. Volume appears only when every player has it.",
-      "climateSummary": "Running when at least one device is not off, or only when all are. Target temperature and fan appear only when every device has them."
+      "climateSummary": "Running when at least one device is not off, or only when all are. Target temperature and fan appear only when every device has them.",
+      "composition": "Free composition"
     },
     "aggregate": {
       "mean": "Mean",
@@ -10080,7 +10082,7 @@
     "next": "Next",
     "save": "Save",
     "step": {
-      "template": "Choose what the helper reports.",
+      "template": "Pick a group, a calculation or an advanced build.",
       "parameters": "Name it and choose how members combine.",
       "members": "Choose the members.",
       "appliance": "Name it and choose the appliance.",
@@ -10221,7 +10223,8 @@
       "expression": "Your own formula over named readings, for anything the other tiles do not cover.",
       "expressionStale": "Unlike the groups, an expression keeps using an input's last value when that input goes offline.",
       "derivative": "How fast a reading rises or falls over a window, per second, minute or hour.",
-      "lockConfirm": "Unlocking the group always asks for a confirmation, and nothing is sent without it."
+      "lockConfirm": "Unlocking the group always asks for a confirmation, and nothing is sent without it.",
+      "composition": "Build the device block by block: pick its type and edit its fields yourself."
     },
     "stat": "Statistic",
     "statName": {
@@ -10357,7 +10360,19 @@
     "unlockAll": "Unlock all",
     "unlockTitle": "Unlock every lock in this group?",
     "unlockBody": "Every lock in the group will be told to unlock. A lock that cannot be reached is reported and the rest still unlock.",
-    "unlockConfirm": "Unlock all"
+    "unlockConfirm": "Unlock all",
+    "newComposed": "New composed device",
+    "section": {
+      "group": "Group",
+      "calculation": "Calculation",
+      "advanced": "Advanced"
+    },
+    "badge": {
+      "group": "Group: {{kind}}",
+      "calculation": "Calculation: {{kind}}",
+      "advanced": "Advanced",
+      "advancedKind": "Advanced: {{kind}}"
+    }
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",

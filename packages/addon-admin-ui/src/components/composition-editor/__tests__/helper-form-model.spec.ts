@@ -19,6 +19,7 @@ import {
   draftFromHelper,
   draftMembers,
   fieldStateOf,
+  calculationTileIds,
   mathTileIds,
   sharedMethodsView,
   withDraftMembers,
@@ -369,6 +370,27 @@ describe('math drafts', () => {
       'expression',
       'derivative',
     ])
+  })
+
+  it('the picker no longer starts a device from sum: it is a readings aggregation', () => {
+    expect(calculationTileIds()).toEqual(['threshold', 'difference', 'ratio', 'derivative'])
+    expect(withAggregate(draftForTemplate('temperature') as HelperFormDraft, 'sum').aggregate).toBe(
+      'sum',
+    )
+  })
+
+  it('a saved math sum still opens as its arithmetic draft', () => {
+    const member = {
+      source: { addonId: 'provider-homeassistant', stableId: 'sensor.a' },
+      cap: 'temperature-sensor',
+      fieldPath: 'temperature',
+    }
+    const draft = draftFromHelper(
+      { kind: 'arithmetic', op: 'sum', inputs: [member, member] },
+      'Total',
+      '',
+    )
+    expect(draft?.kind).toBe('arithmetic')
   })
 
   it('a threshold needs one reading and a low edge that is not above the high edge', () => {

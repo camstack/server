@@ -37,6 +37,7 @@ import {
   buildCompositionRows,
   type CompositionRow,
   type CompositionRowLists,
+  type CompositionRowOrigin,
   type CompositionRowSource,
   type FleetLookup,
   fleetLookupOf,
@@ -147,7 +148,7 @@ export function CustomDeviceTab({
         title={
           isNew
             ? createTitle ||
-              (createMode === 'blank' ? t('helper.newComposition') : t('helper.newHelper'))
+              (createMode === 'blank' ? t('helper.newComposition') : t('helper.newComposed'))
             : t('build.customDeviceTab.editComposedDevice', 'Edit composed device')
         }
         icon={Boxes}
@@ -346,6 +347,20 @@ function columnsFor(
         </span>
       ),
     },
+    ...(kind === 'composed'
+      ? [
+          {
+            key: 'origin',
+            header: i18n.t('build.customDeviceTab.builtAs', 'Built as'),
+            sortValue: (row: CompositionRow) => originLabel(row.origin, t),
+            render: (row: CompositionRow) => (
+              <Badge variant="default" data-testid="composed-origin-badge">
+                {originLabel(row.origin, t)}
+              </Badge>
+            ),
+          } satisfies DataColumn<CompositionRow>,
+        ]
+      : []),
     {
       key: 'state',
       header: i18n.t('build.customDeviceTab.state', 'State'),
@@ -408,6 +423,14 @@ function columnsFor(
     })
   }
   return cols
+}
+
+/** `Group: Temperature` / `Calculation: Ratio` / `Advanced`. */
+export function originLabel(origin: CompositionRowOrigin, t: TFunction): string {
+  const kind = origin.kind === null ? null : t(`helper.template.${origin.kind}`)
+  if (origin.section === 'group') return t('helper.badge.group', { kind })
+  if (origin.section === 'calculation') return t('helper.badge.calculation', { kind })
+  return kind === null ? t('helper.badge.advanced') : t('helper.badge.advancedKind', { kind })
 }
 
 interface RowNameProps {

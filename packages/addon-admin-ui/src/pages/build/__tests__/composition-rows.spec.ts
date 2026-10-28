@@ -1,10 +1,17 @@
-import type { CompositionView, CoreBlock } from '@camstack/types'
+import {
+  type Composition,
+  type CompositionView,
+  compileHelper,
+  type CoreBlock,
+  type HelperSpec,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildCompositionRows,
   describeCompositionState,
   type FleetLookup,
   fleetLookupOf,
+  originOfComposition,
 } from '../composition-rows'
 
 function block(over: Partial<CoreBlock>): CoreBlock {
@@ -240,5 +247,42 @@ describe('describeCompositionState', () => {
       label: 'Running',
       reason: null,
     })
+  })
+})
+
+describe('originOfComposition', () => {
+  const member = {
+    source: { addonId: 'provider-homeassistant', stableId: 'sensor.a' },
+    cap: 'temperature-sensor',
+    fieldPath: 'temperature',
+  }
+  function compositionOf(spec: HelperSpec): Composition {
+    const compiled = compileHelper(spec)
+    if (!compiled.ok) throw new Error('fixture did not compile')
+    return compiled.composition
+  }
+
+  it('reads a group from the recorded helper spec', () => {
+    const composition = compositionOf({
+      kind: 'group',
+      templateId: 'temperature',
+      aggregate: 'sum',
+      members: [member],
+    })
+    expect(originOfComposition(composition)).toEqual({ section: 'group', kind: 'temperature' })
+  })
+
+  it('keeps a legacy math sum a calculation, so it still lists', () => {
+    const other = { ...member, source: { ...member.source, stableId: 'sensor.b' } }
+    const composition = compositionOf({ kind: 'arithmetic', op: 'sum', inputs: [member, other] })
+    expect(originOfComposition(composition)).toEqual({ section: 'calculation', kind: 'sum' })
+  })
+
+  it('files a composition without a helper spec under Advanced', () => {
+    const view = customization()
+    const composition =
+      view.block.source?.kind === 'composition' ? view.block.source.composition : null
+    if (composition === null) throw new Error('fixture')
+    expect(originOfComposition(composition)).toEqual({ section: 'advanced', kind: null })
   })
 })

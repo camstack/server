@@ -186,27 +186,56 @@ describe('Build New composition', () => {
     window.history.replaceState(null, '', '/build?tab=custom-device')
   })
 
-  it('New composition opens a blank composition, and New helper opens the type tiles', async () => {
+  it('one New composed device button opens the picker with Group, Calculation and Advanced', async () => {
     renderAt('/build?tab=custom-device', <BuildPage />)
-    expect(screen.getByTestId('build-new-composition').textContent).toContain('New composition')
-    expect(screen.getByTestId('build-new-helper').textContent).toContain('New helper')
+    expect(screen.getByTestId('build-new-composed').textContent).toContain('New composed device')
+    expect(screen.queryByTestId('build-new-helper')).toBeNull()
+    expect(screen.queryByTestId('build-new-composition')).toBeNull()
 
-    fireEvent.click(screen.getByTestId('build-new-helper'))
+    fireEvent.click(screen.getByTestId('build-new-composed'))
 
     expect(await screen.findByTestId('helper-template-picker')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
     expect(window.location.search).toContain('new=helper')
-    expect(window.location.search).toContain('tab=custom-device')
+    // Group section: readings, no separate sum tile (a sum is an aggregation).
+    expect(screen.getByTestId('helper-template-temperature')).toBeTruthy()
+    expect(screen.getByTestId('helper-template-power')).toBeTruthy()
+    expect(screen.queryByTestId('helper-template-sum')).toBeNull()
+    // Calculation section.
+    for (const id of ['threshold', 'difference', 'ratio', 'derivative', 'statistic', 'integral']) {
+      expect(screen.getByTestId(`helper-template-${id}`)).toBeTruthy()
+    }
+    // Advanced section.
+    expect(screen.getByTestId('helper-template-composition')).toBeTruthy()
+    expect(screen.getByTestId('helper-template-expression')).toBeTruthy()
+    expect(screen.getByText('Calculation')).toBeTruthy()
+    expect(screen.getByText('Advanced')).toBeTruthy()
+    expect(screen.getByText('Group · Readings')).toBeTruthy()
+  })
 
-    fireEvent.click(screen.getByTestId('build-new-composition'))
+  it('Advanced > Free composition opens the free composition form', async () => {
+    renderAt('/build?tab=custom-device', <BuildPage />)
+    fireEvent.click(screen.getByTestId('build-new-composed'))
+    fireEvent.click(await screen.findByTestId('helper-template-composition'))
     expect(await screen.findByTestId('blank-composition-form')).toBeTruthy()
     expect(screen.queryByTestId('helper-template-picker')).toBeNull()
-    expect(window.location.search).toContain('new=blank')
+  })
+
+  it('the legacy new=blank link still opens the free composition form', async () => {
+    renderAt('/build?tab=custom-device&new=blank', <BuildPage />)
+    expect(await screen.findByTestId('blank-composition-form')).toBeTruthy()
+  })
+
+  it('lists a group, a calculation and a free composition with their type badge', async () => {
+    views = [helperView(), plainView()]
+    renderAt('/build?tab=custom-device', <BuildPage />)
+    const badges = await screen.findAllByTestId('composed-origin-badge')
+    expect(badges.map((b) => b.textContent).sort()).toEqual(['Advanced', 'Group: Temperature'])
   })
 
   it('names the dialog after the chosen helper type', async () => {
     renderAt('/build?tab=custom-device', <BuildPage />)
-    fireEvent.click(screen.getByTestId('build-new-helper'))
+    fireEvent.click(screen.getByTestId('build-new-composed'))
     fireEvent.click(await screen.findByTestId('helper-template-temperature'))
     expect(await screen.findByRole('heading', { name: 'New temperature sensor' })).toBeTruthy()
     // The type is fixed once chosen: no way back to the tiles.

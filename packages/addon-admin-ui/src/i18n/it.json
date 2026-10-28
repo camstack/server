@@ -5798,7 +5798,8 @@
       "deviceListUnreadable": "impossibile leggere l'elenco dei dispositivi ({{error}})",
       "deviceListPending": "l'elenco dei dispositivi non ha ancora risposto",
       "deleteThisComposedDevice": "Eliminare questo dispositivo composto?",
-      "deleteMessage": "{{name}} verrà eliminato. L'operazione non può essere annullata."
+      "deleteMessage": "{{name}} verrà eliminato. L'operazione non può essere annullata.",
+      "builtAs": "Creato come"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Impossibile elencare i dispositivi:",
@@ -10085,7 +10086,8 @@
       "valveSummary": "Aperta se almeno una valvola è aperta, oppure solo se lo sono tutte. La posizione compare solo se ogni valvola la ha.",
       "lockSummary": "Chiusa se almeno una serratura è chiusa, oppure solo se lo sono tutte. Aprire il gruppo chiede sempre una conferma.",
       "media-playerSummary": "In riproduzione se almeno un lettore riproduce, oppure solo se lo fanno tutti. Il volume compare solo se ogni lettore lo ha.",
-      "climateSummary": "Attivo se almeno un dispositivo non è spento, oppure solo se lo sono tutti. Temperatura obiettivo e ventola compaiono solo se ogni dispositivo le ha."
+      "climateSummary": "Attivo se almeno un dispositivo non è spento, oppure solo se lo sono tutti. Temperatura obiettivo e ventola compaiono solo se ogni dispositivo le ha.",
+      "composition": "Composizione libera"
     },
     "aggregate": {
       "mean": "Media",
@@ -10102,7 +10104,7 @@
     "next": "Avanti",
     "save": "Salva",
     "step": {
-      "template": "Scegli cosa riporta l'helper.",
+      "template": "Scegli un gruppo, un calcolo o una costruzione avanzata.",
       "parameters": "Dagli un nome e scegli come combinare i membri.",
       "members": "Scegli i membri.",
       "appliance": "Dagli un nome e scegli l'elettrodomestico.",
@@ -10243,7 +10245,8 @@
       "expression": "La tua formula su letture con nome, per quello che le altre schede non coprono.",
       "expressionStale": "A differenza dei gruppi, un'espressione continua a usare l'ultimo valore di un ingresso quando va offline.",
       "derivative": "Quanto velocemente una lettura sale o scende su una finestra, al secondo, al minuto o all'ora.",
-      "lockConfirm": "Aprire il gruppo chiede sempre una conferma e senza non viene inviato nulla."
+      "lockConfirm": "Aprire il gruppo chiede sempre una conferma e senza non viene inviato nulla.",
+      "composition": "Costruisci il dispositivo blocco per blocco: scegli il tipo e modifica i campi a mano."
     },
     "stat": "Statistica",
     "statName": {
@@ -10379,7 +10382,19 @@
     "unlockAll": "Apri tutte",
     "unlockTitle": "Aprire tutte le serrature di questo gruppo?",
     "unlockBody": "A ogni serratura del gruppo verrà ordinato di aprire. Una serratura non raggiungibile viene segnalata e le altre si aprono comunque.",
-    "unlockConfirm": "Apri tutte"
+    "unlockConfirm": "Apri tutte",
+    "newComposed": "Nuovo dispositivo composto",
+    "section": {
+      "group": "Gruppo",
+      "calculation": "Calcolo",
+      "advanced": "Avanzato"
+    },
+    "badge": {
+      "group": "Gruppo: {{kind}}",
+      "calculation": "Calcolo: {{kind}}",
+      "advanced": "Avanzato",
+      "advancedKind": "Avanzato: {{kind}}"
+    }
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",
