@@ -258,7 +258,7 @@ describe('actuator template round-trip', () => {
         {
           source: { addonId: 'provider-homeassistant', stableId: 'sensor-1' },
           cap: 'temperature-sensor',
-          fieldPath: 'celsius',
+          fieldPath: 'temperature',
         },
       ],
     })

@@ -121,7 +121,7 @@ function helperView(): CompositionView {
       {
         source: { addonId: 'provider-homeassistant', stableId: 'sensor.porch' },
         cap: 'temperature-sensor',
-        fieldPath: 'celsius',
+        fieldPath: 'temperature',
       },
     ],
   })
@@ -154,7 +154,7 @@ function plainView(): CompositionView {
                   kind: 'from',
                   source: { addonId: 'provider-homeassistant', stableId: 'porch-temp' },
                   cap: 'temperature-sensor',
-                  fieldPath: 'celsius',
+                  fieldPath: 'temperature',
                 },
               },
             },

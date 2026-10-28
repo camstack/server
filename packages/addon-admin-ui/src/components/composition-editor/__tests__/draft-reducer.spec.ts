@@ -22,7 +22,7 @@ describe('editorReducer', () => {
       type: 'set-field',
       cap: 'temperature-sensor',
       path: 'celsius',
-      source: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'celsius' },
+      source: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'temperature' },
     })
     expect(draft).toEqual(before)
   })
@@ -38,8 +38,8 @@ describe('editorReducer', () => {
         kind: 'expression',
         expr: 'round(avg(t1, t2), 1)',
         bindings: {
-          t1: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'celsius' },
-          t2: { kind: 'from', source: T2, cap: 'temperature-sensor', fieldPath: 'celsius' },
+          t1: { kind: 'from', source: T1, cap: 'temperature-sensor', fieldPath: 'temperature' },
+          t2: { kind: 'from', source: T2, cap: 'temperature-sensor', fieldPath: 'temperature' },
         },
       },
     })

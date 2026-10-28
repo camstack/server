@@ -6,7 +6,7 @@ describe('scalarFieldFit', () => {
     expect(
       scalarFieldFit('running-state', 'running', {
         cap: 'power-meter',
-        path: 'watts',
+        path: 'power',
         kind: 'number',
         unit: 'W',
       }).ok,

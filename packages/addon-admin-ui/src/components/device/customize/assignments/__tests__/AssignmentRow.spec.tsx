@@ -16,7 +16,7 @@ describe('AssignmentRow', () => {
         name="Batteria nativa"
         detail="Reolink"
         meta="Native"
-        value={{ deviceId: 103, cap: 'battery', path: 'percentage' }}
+        value={{ deviceId: 103, cap: 'battery', path: 'level' }}
         onRemove={onRemove}
         removeLabel="Remove Batteria nativa"
       />,

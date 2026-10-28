@@ -30,7 +30,7 @@ vi.mock('../../device/customize/source-selector/SourceSelector', () => ({
           {
             source: { addonId: 'provider-homeassistant', stableId: 'sensor.porch' },
             cap: 'temperature-sensor',
-            fieldPath: 'celsius',
+            fieldPath: 'temperature',
           },
         ])
       }

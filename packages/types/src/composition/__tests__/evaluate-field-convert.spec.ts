@@ -8,7 +8,7 @@ function expr(text: string): CompositionFieldSource {
   return {
     kind: 'expression',
     expr: text,
-    bindings: { t: { kind: 'from', source: SRC, cap: 'temperature-sensor', fieldPath: 'celsius' } },
+    bindings: { t: { kind: 'from', source: SRC, cap: 'temperature-sensor', fieldPath: 'temperature' } },
   }
 }
 

@@ -242,7 +242,7 @@ const PRESENT: Query = {
     {
       kind: 'fields',
       cap: 'battery',
-      fields: { percentage: { kind: 'expression', expr: 'null', bindings: {} } },
+      fields: { level: { kind: 'expression', expr: 'null', bindings: {} } },
     },
   ]),
   refetch: vi.fn(async () => undefined),
@@ -270,7 +270,7 @@ const REMAINING = {
 }
 
 function batteryFeature(): object {
-  return { kind: 'fields', cap: 'battery', fields: { percentage: REMAINING } }
+  return { kind: 'fields', cap: 'battery', fields: { level: REMAINING } }
 }
 
 function consumablesFeature(): object {
@@ -404,7 +404,7 @@ describe('CustomizeTab — layout (spec §5)', () => {
     renderTab()
     expect(screen.queryByRole('heading', { name: 'Battery' })).toBeNull()
     expect(screen.getByRole('heading', { name: 'Consumables' })).toBeTruthy()
-    expect(screen.queryByText('battery.percentage')).toBeNull()
+    expect(screen.queryByText('battery.level')).toBeNull()
   })
   it('pending or failed facts speak no preset sentence — the presets are gone (task 7 L5, task 15 L2)', () => {
     customization.current = PRESENT
@@ -430,7 +430,7 @@ describe('CustomizeTab — layout (spec §5)', () => {
     {
       heading: 'Battery',
       cap: 'battery',
-      feature: (): object => ({ kind: 'fields', cap: 'battery', fields: { percentage: hand } }),
+      feature: (): object => ({ kind: 'fields', cap: 'battery', fields: { level: hand } }),
     },
     {
       heading: 'Consumables',

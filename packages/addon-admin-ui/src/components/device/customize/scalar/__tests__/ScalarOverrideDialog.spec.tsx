@@ -61,7 +61,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
             status: 'success' as const,
             data: {
               caps: [
-                { cap: 'power-meter', fields: [{ path: 'watts', kind: 'number' as const }] },
+                { cap: 'power-meter', fields: [{ path: 'power', kind: 'number' as const }] },
                 { cap: 'numeric-sensor', fields: [{ path: 'voltage', kind: 'number' as const }] },
               ],
             },
@@ -72,7 +72,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
         ? {
             status: 'success' as const,
             data: {
-              'power-meter': { watts: 8.4, unit: 'W' },
+              'power-meter': { power: 8.4, unit: 'W' },
               'numeric-sensor': { voltage: 231, unit: 'V' },
             },
           }
@@ -133,13 +133,13 @@ describe('ScalarOverrideDialog', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Porch power meter/ }))
     expect(screen.getByTestId('source-incompatible-values')).toBeTruthy()
-    fireEvent.click(screen.getByTestId('source-value-power-meter.watts'))
-    const watts = screen.getByTestId('source-value-power-meter.watts')
+    fireEvent.click(screen.getByTestId('source-value-power-meter.power'))
+    const watts = screen.getByTestId('source-value-power-meter.power')
     expect(watts instanceof HTMLInputElement && watts.checked).toBe(true)
     const deviceRow = screen.getAllByRole('button', { name: /Porch power meter/ })[0]
     if (deviceRow === undefined) throw new Error('device row missing')
     fireEvent.click(deviceRow)
-    const still = screen.getByTestId('source-value-power-meter.watts')
+    const still = screen.getByTestId('source-value-power-meter.power')
     expect(still instanceof HTMLInputElement && still.checked).toBe(true)
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/8\.4 W/)
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/30/)

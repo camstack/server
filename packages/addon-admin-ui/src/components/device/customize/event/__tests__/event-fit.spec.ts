@@ -15,7 +15,7 @@ const SWITCH_ONLY: WireableCatalog = {
 }
 
 const NO_SOURCE_BOOLEAN: WireableCatalog = {
-  caps: [{ cap: 'power-meter', fields: [{ path: 'watts', kind: 'number' }] }],
+  caps: [{ cap: 'power-meter', fields: [{ path: 'power', kind: 'number' }] }],
 }
 
 describe('eventDeclarationCaps', () => {

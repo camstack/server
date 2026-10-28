@@ -206,7 +206,7 @@ const COMPOSED: CompositionView = {
                   stableId: 'porch-temp',
                 },
                 cap: 'temperature-sensor',
-                fieldPath: 'celsius',
+                fieldPath: 'temperature',
               },
             },
           },

@@ -84,7 +84,7 @@ function handleOf(
 function batteryFeature(apply: 'add' | 'replace'): Composition['features'][number] {
   const feature = scalarFeatureFromForm({
     cap: 'battery',
-    targetId: 'percentage',
+    targetId: 'level',
     device: TARGET,
     apply,
     source: {
@@ -167,7 +167,7 @@ describe('ScalarOverrideCard', () => {
         {
           kind: 'fields',
           cap: 'battery',
-          fields: { percentage: { kind: 'expression', expr: 'x * 2', bindings: {} } },
+          fields: { level: { kind: 'expression', expr: 'x * 2', bindings: {} } },
         },
       ],
     }

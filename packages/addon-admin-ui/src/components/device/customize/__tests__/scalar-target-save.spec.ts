@@ -33,16 +33,16 @@ function feature(targetId: string, stableId: string, unit: string) {
 }
 
 describe('assigning two readings to one device', () => {
-  const watts = feature('watts', 'plug-1-power', 'W')
-  const energy = feature('kwhTotal', 'plug-1-energy', 'kWh')
+  const power = feature('power', 'plug-1-power', 'W')
+  const energy = feature('energy', 'plug-1-energy', 'kWh')
 
   it('keeps the first assignment when the second is added', () => {
-    const first = withScalarTarget(null, HOST, watts, 'power-meter', 'watts')
-    const both = withScalarTarget(first, HOST, energy, 'power-meter', 'kwhTotal')
+    const first = withScalarTarget(null, HOST, power, 'power-meter', 'power')
+    const both = withScalarTarget(first, HOST, energy, 'power-meter', 'energy')
     expect(both.features).toHaveLength(1)
     for (const [targetId, stableId] of [
-      ['watts', 'plug-1-power'],
-      ['kwhTotal', 'plug-1-energy'],
+      ['power', 'plug-1-power'],
+      ['energy', 'plug-1-energy'],
     ] as const) {
       const stored = featureOf(both, 'power-meter')
       expect(stored).not.toBeNull()
@@ -56,17 +56,17 @@ describe('assigning two readings to one device', () => {
 
   it('removes one reading and keeps the other, then the feature when none is left', () => {
     const both = withScalarTarget(
-      withScalarTarget(null, HOST, watts, 'power-meter', 'watts'),
+      withScalarTarget(null, HOST, power, 'power-meter', 'power'),
       HOST,
       energy,
       'power-meter',
-      'kwhTotal',
+      'energy',
     )
-    const onlyEnergy = withoutScalarTarget(both, 'power-meter', 'watts')
-    expect(featureOf(onlyEnergy, 'power-meter')?.fields['watts']).toBeUndefined()
-    expect(featureOf(onlyEnergy, 'power-meter')?.fields['kwhTotal']).toBeDefined()
+    const onlyEnergy = withoutScalarTarget(both, 'power-meter', 'power')
+    expect(featureOf(onlyEnergy, 'power-meter')?.fields['power']).toBeUndefined()
+    expect(featureOf(onlyEnergy, 'power-meter')?.fields['energy']).toBeDefined()
     expect(
-      onlyEnergy === null ? null : withoutScalarTarget(onlyEnergy, 'power-meter', 'kwhTotal'),
+      onlyEnergy === null ? null : withoutScalarTarget(onlyEnergy, 'power-meter', 'energy'),
     ).toBeNull()
   })
 })
