@@ -2644,6 +2644,18 @@
       "done": "Done",
       "pickedCount_one": "{{count}} selected",
       "pickedCount_other": "{{count}} selected"
+    },
+    "linkedActions": {
+      "title": "Linked actions",
+      "add": "Add",
+      "loading": "Checking linked actions.",
+      "none": "None linked.",
+      "run": "Run {{name}}",
+      "unlink": "Unlink {{name}}",
+      "hint": "Linked actions show as buttons on this camera. Nothing is linked unless you pick it.",
+      "pickTitle": "Link actions to {{name}}",
+      "pickHint": "Pick the actions to link. Nothing is chosen for you.",
+      "addN": "Add {{count}}"
     }
   },
   "compositionEditor": {

@@ -161,6 +161,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
     useDeviceExtensionListCandidates: () => ({ status: 'pending', data: undefined, error: null }),
     useDeviceExtensionSetSlot: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    // The camera's Linked actions card; its own spec covers it.
+    useActionsList: () => ({ data: undefined }),
+    useActionsGetLinks: () => ({ data: undefined }),
+    useActionsSetLinks: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+    useActionsRun: () => ({ mutate: vi.fn(), isPending: false }),
     // The Motion card (Task 15) writes the camera-sensors setting; not under test here.
     usePipelineOrchestratorSetCameraSensors: () => ({ mutateAsync: vi.fn(), isPending: false }),
     usePipelineOrchestratorApplyDeviceSettingsPatch: () => ({

@@ -26,6 +26,7 @@ import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { KeyedArrayCustomizeList } from './keyed/KeyedArrayCard'
 import { ScalarCustomizeList } from './scalar/ScalarOverrideCard'
 import { EventCustomizeList } from './event/EventCustomizeList'
+import { LinkedActionsCard } from './kinds/LinkedActionsCard'
 import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
 import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
@@ -141,6 +142,7 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
       />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
       <LinkedDevicesTable device={device} />
+      {device.type === DeviceType.Camera && <LinkedActionsCard device={device} />}
     </div>
   )
 }

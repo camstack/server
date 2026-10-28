@@ -66,7 +66,7 @@ const BLOCK = {
   lastChangedAt: NOW - 3_600_000,
 }
 
-const ACTIONS = [
+export const ACTIONS = [
   {
     id: 'internal:feed-dog',
     name: 'Feed the dog',

@@ -5,6 +5,7 @@
  * a path wins.
  */
 import { PORCH_COMPOSITION } from '../../../../packages/types/src/composition/cards/__fixtures__/stored-compositions.ts'
+import { ACTIONS } from './build'
 import cameraArea from './camera'
 import { defineFixtures } from './_define'
 
@@ -579,6 +580,12 @@ export default defineFixtures({
             }
           : { state: 'configured', sensors: [] },
     }),
+    'actions.list': ACTIONS,
+    'actions.getLinks': (i: { deviceId?: number }) => ({
+      deviceId: i.deviceId ?? 0,
+      actionIds: i.deviceId === 101 ? ['internal:feed-dog'] : [],
+    }),
+    'mut:actions.setLinks': (input: unknown) => input,
     'deviceExtension.listSlots': (i: { deviceId: number }) => [
       {
         state: 'ok',

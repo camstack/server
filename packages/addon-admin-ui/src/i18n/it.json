@@ -2705,6 +2705,18 @@
       "done": "Fatto",
       "pickedCount_one": "{{count}} selezionato",
       "pickedCount_other": "{{count}} selezionati"
+    },
+    "linkedActions": {
+      "title": "Azioni collegate",
+      "add": "Aggiungi",
+      "loading": "Controllo delle azioni collegate.",
+      "none": "Nessuna collegata.",
+      "run": "Esegui {{name}}",
+      "unlink": "Scollega {{name}}",
+      "hint": "Le azioni collegate compaiono come pulsanti su questa telecamera. Non viene collegato nulla se non lo scegli tu.",
+      "pickTitle": "Collega azioni a {{name}}",
+      "pickHint": "Scegli le azioni da collegare. Non viene scelto nulla al posto tuo.",
+      "addN": "Aggiungi {{count}}"
     }
   },
   "compositionEditor": {

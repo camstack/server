@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The automation editor shows parked-object, detection and interval triggers and the parked-object condition read-only instead of dropping them
+- The Build page now has an Actions tab to create, run and trace actions, automations edit detection, parked-object and interval blocks with a run mode and a Runs panel, and a camera's Customize tab can link actions to it.
 
 ## [1.2.500] - 2026-10-28
 
