@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.515] - 2026-10-29
+
 ### Changed
 
 - SmartIR code import, remote command engine and an assumed-state media player for infrared appliances

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.513] - 2026-10-29
+
 ### Added
 
 - Media players get a Remote control card in Customize: pick a layout template, bind each button to a device command, import a SmartIR file, and test a saved command

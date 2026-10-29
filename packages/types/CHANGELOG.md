@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.441] - 2026-10-29
+
 ### Added
 
 - New ir-transmitter and remote capabilities for infrared control, and media-player status now says whether its state is reported or assumed
