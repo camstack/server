@@ -52,6 +52,7 @@ import type { SharedBusState } from '../moleculer/event-bus-core.js'
 import {
   createSharedBusState,
   deliverShared,
+  isHighFrequencyCategory,
   matchesEventFilter,
   matchesPattern,
   registerSubscriber,
@@ -80,6 +81,31 @@ export interface UdsEventChannel {
   emitEvent(event: SystemEvent): void
   onEvent(handler: (event: SystemEvent) => void): void
   updateEventPatterns(ownerId: string, patterns: readonly string[]): void
+  /**
+   * Optional: receive the categories someone else wants (`event-interest`).
+   * Single slot, registered once per channel. A channel without it never learns
+   * an interest set, so its bus sends everything (fail open).
+   */
+  onEventInterest?(handler: (patterns: readonly string[] | null) => void): void
+}
+
+/** The slice of a scoped logger the bus needs for its one-line-per-spell record. */
+export interface UdsEventBusLogger {
+  info(message: string, context?: Record<string, unknown>): void
+}
+
+export interface UdsEventBusOptions {
+  readonly logger?: UdsEventBusLogger
+}
+
+/**
+ * What the parent last said others want, per channel. `patterns === null` until
+ * the first push (and after a `null` push): send everything.
+ */
+interface InterestState {
+  patterns: readonly string[] | null
+  /** Categories already logged in the CURRENT suppressed spell. */
+  readonly logged: Set<string>
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +118,18 @@ export interface UdsEventChannel {
  * process does not pin its state.
  */
 const sharedStateByChannel = new WeakMap<UdsEventChannel, SharedBusState>()
+const interestByChannel = new WeakMap<UdsEventChannel, InterestState>()
+
+/**
+ * Should `category` cross the process boundary? A category the hub retains
+ * (anything not high-frequency) always goes; a high-frequency one goes only if
+ * the parent said someone else wants it. No set yet → everything goes.
+ */
+function crossesBoundary(interest: InterestState, category: string): boolean {
+  if (interest.patterns === null) return true
+  if (!isHighFrequencyCategory(category)) return true
+  return interest.patterns.some((p) => matchesPattern(p, category))
+}
 
 /**
  * Resolve (or lazily create) the channel's shared bus state, registering the
@@ -111,6 +149,14 @@ function sharedStateFor(client: UdsEventChannel): SharedBusState {
   // recent[] backlog.
   const created = createSharedBusState()
   sharedStateByChannel.set(client, created)
+  const interest: InterestState = { patterns: null, logged: new Set() }
+  interestByChannel.set(client, interest)
+  client.onEventInterest?.((patterns) => {
+    interest.patterns = patterns
+    // A new set starts a new suppressed spell: a category that was announced
+    // before may be announced again if it goes unwanted again.
+    interest.logged.clear()
+  })
   client.onEvent((event: SystemEvent) => {
     deliverShared(created, event)
   })
@@ -126,8 +172,13 @@ function sharedStateFor(client: UdsEventChannel): SharedBusState {
  *                  on every outbound event so cluster consumers can attribute
  *                  events to their source addon.
  */
-export function createUdsEventBus(client: UdsEventChannel, addonId: string): IEventBus {
+export function createUdsEventBus(
+  client: UdsEventChannel,
+  addonId: string,
+  options?: UdsEventBusOptions,
+): IEventBus {
   const state = sharedStateFor(client)
+  const interest = interestByChannel.get(client)
 
   // Report the current category-pattern key set to the parent so it can
   // subscription-filter the fan-out. The reported set IS `[...handlers.keys()]`
@@ -149,7 +200,20 @@ export function createUdsEventBus(client: UdsEventChannel, addonId: string): IEv
       deliverShared(state, enriched)
       // Cross-process forwarding — the parent delivers to the hub event bus
       // and fan-out to other nodes. Fire-and-forget (buffered pre-connect).
-      client.emitEvent(enriched)
+      //
+      // Telemetry may be dropped (D8): a high-frequency category nobody else
+      // wants is not serialised at all. The first one of each spell is logged
+      // (D391) — the silence is otherwise indistinguishable from "never emitted".
+      if (interest === undefined || crossesBoundary(interest, enriched.category)) {
+        client.emitEvent(enriched)
+        return
+      }
+      if (!interest.logged.has(enriched.category)) {
+        interest.logged.add(enriched.category)
+        options?.logger?.info('event category suppressed: no consumer', {
+          category: enriched.category,
+        })
+      }
     },
 
     subscribe(filter: EventFilter | string, handler: (event: SystemEvent) => void): () => void {

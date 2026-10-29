@@ -227,6 +227,8 @@ export {
   adaptBrokerToCluster,
   registerEventBusService,
   setNodeEventInterest,
+  onLocalEventInterestChange,
+  getLocalEventInterest,
   getMoleculerEventStats,
   subscribePassthrough,
   getBrokerEventBus,

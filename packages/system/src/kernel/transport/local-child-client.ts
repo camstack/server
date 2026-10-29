@@ -13,6 +13,7 @@ import type {
   ChildEventMessage,
   ChildLogMessage,
   EventSubUpdateMessage,
+  EventInterestMessage,
   ParentEventMessage,
   ParentToChildRequest,
   ReadinessSnapshotRequest,
@@ -119,6 +120,9 @@ export class LocalChildClient {
   /** Handler for parent→child events. Registered via `onEvent`. */
   private eventHandler: ((event: SystemEvent) => void) | null = null
 
+  /** Handler for `event-interest` pushes. Registered via `onEventInterest`. */
+  private eventInterestHandler: ((patterns: readonly string[] | null) => void) | null = null
+
   /**
    * Handler for parent→child addon-level calls (`routes` / `custom`).
    * Registered via `onAddonCall`. Resolves the loaded addon instance and
@@ -202,6 +206,15 @@ export class LocalChildClient {
    */
   onEvent(handler: (event: SystemEvent) => void): void {
     this.eventHandler = handler
+  }
+
+  /**
+   * Register the handler invoked when the parent pushes the categories someone
+   * else wants (`event-interest`). `null` = unknown → send everything. Replaces
+   * any prior handler; one slot, registered once per channel by the event bus.
+   */
+  onEventInterest(handler: (patterns: readonly string[] | null) => void): void {
+    this.eventInterestHandler = handler
   }
 
   /**
@@ -289,9 +302,13 @@ export class LocalChildClient {
       throw new Error(`unknown parent request kind: ${(msg as { kind: string }).kind}`) // wire-boundary: trusted local UDS channel
     })
     channel.onEvent((body) => {
-      const msg = body as ParentEventMessage | SetLogLevelMessage // wire-boundary: trusted local UDS channel
+      const msg = body as ParentEventMessage | SetLogLevelMessage | EventInterestMessage // wire-boundary: trusted local UDS channel
       if (msg.kind === 'event') {
         this.eventHandler?.(msg.event)
+        return
+      }
+      if (msg.kind === 'event-interest') {
+        this.eventInterestHandler?.(msg.patterns)
         return
       }
       if (msg.kind === 'set-log-level') {

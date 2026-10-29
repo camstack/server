@@ -26,6 +26,7 @@ import type {
   ChildLogMessage,
   ChildToParentRequest,
   EventSubUpdateMessage,
+  EventInterestMessage,
   ParentEventMessage,
   ReadinessSnapshotResponse,
   RegisterAck,
@@ -416,6 +417,10 @@ export class LocalChildRegistry {
   private categoryOverflowLogged = false
   /** Last pattern-set string logged per child, to dedup the INFO line. */
   private readonly loggedPatternSet = new Map<string, string>()
+  /** Source of the parent's own subscriber patterns; null = suppression off. */
+  private eventInterestSource: (() => readonly string[]) | null = null
+  /** Last `event-interest` set sent per child, as a key (dedupes the push). */
+  private readonly lastInterestKey = new Map<string, string>()
   /**
    * Derived `(cap, device?) → child` index over {@link children}, or `null`
    * when it must be rebuilt. See {@link capIndex} for why it is a cache and
@@ -615,6 +620,48 @@ export class LocalChildRegistry {
     for (const entry of this.children.values()) {
       if (entry.eventPatterns === null) return null // undeclared child → node fails open
       for (const p of entry.eventPatterns) union.add(p)
+    }
+    return [...union]
+  }
+
+  /**
+   * Install (or clear, with `null`) the source of the parent's OWN in-process
+   * subscriber patterns. Installing it turns producer-side suppression on: every
+   * child is then told which categories someone else wants (`event-interest`).
+   * Left uninstalled (agents, whose cluster consumers the node cannot see) no
+   * child ever receives a set and all of them send everything.
+   */
+  setEventInterestSource(source: (() => readonly string[]) | null): void {
+    this.eventInterestSource = source
+    this.refreshEventInterest()
+  }
+
+  /**
+   * Recompute and push each child's interest set, skipping a child whose set did
+   * not change. Called on every input change (a child registers, re-declares or
+   * leaves; the parent's local subscribers change) — never on a timer.
+   */
+  refreshEventInterest(): void {
+    const source = this.eventInterestSource
+    if (source === null) return
+    const local = source()
+    for (const entry of this.children.values()) {
+      const patterns = this.interestFor(entry, local)
+      const key = patterns === null ? '<open>' : JSON.stringify([...patterns].toSorted())
+      if (this.lastInterestKey.get(entry.childId) === key) continue
+      this.lastInterestKey.set(entry.childId, key)
+      const msg: EventInterestMessage = { kind: 'event-interest', patterns }
+      entry.channel.emit(msg)
+    }
+  }
+
+  /** What someone OTHER than `entry` wants; `null` while any of them is undeclared. */
+  private interestFor(entry: ChildEntry, local: readonly string[]): readonly string[] | null {
+    const union = new Set<string>(local)
+    for (const other of this.children.values()) {
+      if (other.childId === entry.childId) continue
+      if (other.eventPatterns === null) return null
+      for (const p of other.eventPatterns) union.add(p)
     }
     return [...union]
   }
@@ -1076,6 +1123,7 @@ export class LocalChildRegistry {
         if (entry === undefined) return
         this.children.set(childId, { ...entry, eventPatterns: msg.patterns })
         this.logPatternSet(childId, msg.patterns)
+        this.refreshEventInterest()
         return
       }
       // Unknown fire-and-forget kind: ignore (mixed-version safety — an old
@@ -1118,6 +1166,9 @@ export class LocalChildRegistry {
         // and not only when a child is new.
         this.invalidateCapIndex()
         this.logPatternSet(msg.childId, eventPatterns)
+        // A reconnect under the same id is a fresh process with no set yet.
+        this.lastInterestKey.delete(msg.childId)
+        this.refreshEventInterest()
         // Before the handler and before the ack: the child loads no addon until
         // this frame is acked, so a consumer hears of the new incarnation before
         // anything it runs can act. `announceOnline` emits on the parent bus
@@ -1358,6 +1409,8 @@ export class LocalChildRegistry {
       this.children.delete(childId)
       this.invalidateCapIndex()
       this.childEventStats.delete(childId)
+      this.lastInterestKey.delete(childId)
+      this.refreshEventInterest()
       // Drop the peer's per-action counters with it. A replaced runner
       // reconnects under the SAME id (`resolveRunnerId`), and leaving the dead
       // generation's totals in place would charge its successor bytes it never

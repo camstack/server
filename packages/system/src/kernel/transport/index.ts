@@ -59,6 +59,7 @@ export type {
   AddonSettingsMethod,
   ParentToChildRequest,
   RegisteredChild,
+  EventInterestMessage,
   SetLogLevelMessage,
 } from './child-cap-protocol.js'
 export {

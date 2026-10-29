@@ -24,7 +24,7 @@ commits. A generated page may not.
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 104 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +77 more, 13 ADRs | 2026-10-27 | ✅ |
-| Transport and cross-node routing | 104 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +54 more, 12 ADRs | 2026-10-22 | ✅ |
+| Transport and cross-node routing | 104 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +55 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 319 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +224 more, 51 ADRs | 2026-10-26 | ✅ |
 | Device model and the provider contract | 108 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +54 more, 6 ADRs | 2026-10-26 | ✅ |
 | Device providers (per vendor) | 665 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +79 more, 14 ADRs | 2026-10-26 | ✅ |

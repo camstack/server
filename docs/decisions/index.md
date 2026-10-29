@@ -4,7 +4,7 @@
 
 # Decisions
 
-931 architecture decision records. One file per decision, never
+932 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -946,6 +946,7 @@ that rots.
 | D966 | [Forgetting a node revokes its certificates; a revoked agent resets to unpaired](adr-0966-forgetting-a-node-revokes-its-certificates-and-a-revoked-agent-resets-to-unpaired.md) | ✅ accepted | 2026-10-29 |
 | D967 | [A built device serves a method by forwarding it to one source device's method, and names the source when it cannot](adr-0967-a-built-device-serves-a-method-by-forwarding-it-to-one-source-device-method-and-names-the-source-when-it-cannot.md) | ✅ accepted | 2026-10-29 |
 | D968 | [An exporter may expose actions and notification targets as list entries beside devices, through the same export table](adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md) | ✅ accepted | 2026-10-29 |
+| D969 | [A forked child keeps a high-frequency category nobody else wants off the socket](adr-0969-a-forked-child-keeps-a-high-frequency-category-nobody-wants-off-the-socket.md) | ✅ accepted | 2026-10-29 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

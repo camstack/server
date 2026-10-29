@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The agent now reports its own [mem] agent-main heartbeat and reclaims stranded memory, as the hub does
+- The hub tells its addon runners which telemetry categories anyone consumes, so unused ones stop crossing the process boundary
 
 ## [1.2.688] - 2026-10-29
 

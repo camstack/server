@@ -122,15 +122,49 @@ function bumpLocalInterest(broker: ServiceBroker, pattern: string): void {
     m = new Map<string, number>()
     brokerLocalInterest.set(broker, m)
   }
-  m.set(pattern, (m.get(pattern) ?? 0) + 1)
+  const before = m.get(pattern) ?? 0
+  m.set(pattern, before + 1)
+  if (before === 0) notifyLocalInterestChange(broker)
 }
 
 function dropLocalInterest(broker: ServiceBroker, pattern: string): void {
   const m = brokerLocalInterest.get(broker)
   if (m === undefined) return
   const next = (m.get(pattern) ?? 0) - 1
-  if (next <= 0) m.delete(pattern)
-  else m.set(pattern, next)
+  if (next <= 0) {
+    m.delete(pattern)
+    notifyLocalInterestChange(broker)
+  } else m.set(pattern, next)
+}
+
+const localInterestListeners = new WeakMap<ServiceBroker, Set<() => void>>()
+
+function notifyLocalInterestChange(broker: ServiceBroker): void {
+  for (const listener of localInterestListeners.get(broker) ?? []) listener()
+}
+
+/**
+ * Be told when the SET of in-process subscriber patterns on `broker` changes (a
+ * pattern gains its first subscriber or loses its last). The hub's child
+ * registry uses it to re-push what its children may keep off the socket. Returns
+ * the unsubscribe.
+ */
+export function onLocalEventInterestChange(
+  broker: ServiceBroker,
+  listener: () => void,
+): () => void {
+  let set = localInterestListeners.get(broker)
+  if (set === undefined) {
+    set = new Set()
+    localInterestListeners.set(broker, set)
+  }
+  set.add(listener)
+  return () => set.delete(listener)
+}
+
+/** The in-process subscriber category patterns on `broker` right now. */
+export function getLocalEventInterest(broker: ServiceBroker): readonly string[] {
+  return localSubscriberPatterns(broker)
 }
 
 /** Snapshot of the in-process subscriber category patterns for `broker`. */

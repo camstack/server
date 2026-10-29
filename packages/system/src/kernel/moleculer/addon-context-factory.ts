@@ -57,6 +57,8 @@ import {
   getBrokerEventBus,
   registerEventBusService,
   setNodeEventInterest,
+  onLocalEventInterestChange,
+  getLocalEventInterest,
   getMoleculerEventStats,
   subscribePassthrough,
   clusterEventTopic,
@@ -469,7 +471,7 @@ async function buildAddonContext(
   const scopedEventBus =
     runtime.mode === 'broker'
       ? createBrokerEventBus(runtime.broker, addonId)
-      : createUdsEventBus(runtime.client, addonId)
+      : createUdsEventBus(runtime.client, addonId, { logger: scopedLogger })
   // One source for every DeviceProxy this context mints. `live.onEvent` is a
   // hub-main tRPC subscription and never reports UDS interest; the bus does.
   // Documented type boundary: AddonApi is the generated tRPC client; the
@@ -1040,6 +1042,8 @@ export {
   drainWorkerDisposerChain,
   registerEventBusService,
   setNodeEventInterest,
+  onLocalEventInterestChange,
+  getLocalEventInterest,
   getMoleculerEventStats,
   subscribePassthrough,
   clusterEventTopic,

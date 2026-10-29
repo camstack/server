@@ -37,6 +37,8 @@ import {
   registerEventBusService,
   serializeTypedArrays,
   setNodeEventInterest,
+  onLocalEventInterestChange,
+  getLocalEventInterest,
   emitProcessNodeRegistered,
   setProcessMeshPeerTransportLookup,
   setProcessMeshTlsEnabler,
@@ -899,6 +901,14 @@ export class MoleculerService {
       // agents (non-retaining nodes).
       const hubChildRegistry = this.localChildRegistry
       setNodeEventInterest(this.broker, () => hubChildRegistry.aggregateEventInterest())
+      // Producer-side suppression (D8): tell each forked child which categories
+      // someone else wants — siblings plus the hub's own in-process subscribers
+      // (the admin live stream is one) — so a high-frequency category nobody
+      // wants never leaves its process. Hub only: an agent cannot see the hub's
+      // subscribers, so its children keep sending everything. A remote node's
+      // interest in a ring-denied category is NOT visible here (ADR 0969).
+      hubChildRegistry.setEventInterestSource(() => getLocalEventInterest(this.broker))
+      onLocalEventInterestChange(this.broker, () => hubChildRegistry.refreshEventInterest())
     }
   }
 

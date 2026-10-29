@@ -303,10 +303,24 @@ export interface SetLogLevelMessage {
   readonly level: string
 }
 
+/**
+ * Parent → child: the categories SOMEONE ELSE wants — the child's siblings and
+ * the parent's own in-process subscribers (never the child's own set). A child
+ * keeps a high-frequency category outside this set off the socket, because the
+ * parent would only drop it. `patterns: null` means "unknown" and clears any
+ * earlier set: the child sends everything (fail open). Fire-and-forget, full-set
+ * replace; telemetry plane only — never a gate on durable state (D8).
+ */
+export interface EventInterestMessage {
+  readonly kind: 'event-interest'
+  readonly patterns: readonly string[] | null
+}
+
 /** Parent → child request bodies. */
 export type ParentToChildRequest =
   | CapCallMessage
   | ParentEventMessage
+  | EventInterestMessage
   | ReadinessSnapshotResponse
   | SetLogLevelMessage
   | AddonCallMessage
