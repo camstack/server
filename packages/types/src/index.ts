@@ -686,6 +686,7 @@ export {
 } from './automation/index.js'
 export * from './automation/action.js'
 export * from './automation/step-runner.js'
+export * from './automation/export-entities.js'
 // Per-call node pinning for ctx.api capability calls
 export * from './cap-call-context.js'
 // ── Capability definitions (Zod-schema-first) ──────────────────
