@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.32] - 2026-10-29
+
 ### Changed
 
 - Runs in the shared integrations runner with the other low-traffic integration addons, saving one process of memory (restarting it restarts them together)
