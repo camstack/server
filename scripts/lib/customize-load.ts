@@ -12,6 +12,7 @@ import {
   vocabularyHas,
   type CustomizeCapView,
   type CustomizeItemArrayView,
+  type CustomizeMethodView,
 } from './customize-declaration.ts'
 
 const CAPS_DIR = path.resolve(import.meta.dirname, '../../packages/types/src/capabilities')
@@ -38,6 +39,7 @@ export async function loadCustomizeCaps(): Promise<readonly CustomizeCapView[]> 
     out.push({
       capName: info.capName,
       runtimeState: runtime,
+      methods: readMethods(def.methods),
       deviceTypes: readStrings(def.deviceTypes),
       events: readEvents(def.events),
       itemArray: readItemArray(def.status),
@@ -110,4 +112,17 @@ function readItemArray(status: unknown): CustomizeItemArrayView | undefined {
     return undefined
   }
   return { path: itemPath, keyField, labelField }
+}
+
+function readMethods(value: unknown): Readonly<Record<string, CustomizeMethodView>> {
+  if (!isRecord(value)) return {}
+  const out: Record<string, CustomizeMethodView> = {}
+  for (const [name, method] of Object.entries(value)) {
+    if (!isRecord(method)) continue
+    out[name] = {
+      kind: method.kind === 'mutation' ? 'mutation' : 'query',
+      takesDeviceId: method.input instanceof z.ZodObject && 'deviceId' in method.input.shape,
+    }
+  }
+  return out
 }

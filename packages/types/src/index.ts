@@ -240,6 +240,7 @@ export type * from './interfaces/server-analysis.js'
 export * from './interfaces/server-analysis.js'
 export type * from './interfaces/server-network.js'
 export type * from './interfaces/status-overlay.js'
+export type * from './interfaces/device-call-redirect.js'
 // --- Server interfaces (consolidated from server/backend/src/interfaces/) ---
 export type * from './interfaces/storage.js'
 export type {
@@ -690,6 +691,10 @@ export * from './cap-call-context.js'
 // ── Capability definitions (Zod-schema-first) ──────────────────
 export * from './capabilities/index.js'
 export * from './running-state/defaults.js'
+export * from './remote/remote-roles.js'
+export * from './remote/remote-config.js'
+export * from './remote/smartir-draft.js'
+export * from './template/template-kinds.js'
 export * from './running-state/from-operation.js'
 // Our detections joined onto any clip source's listing — one overlap rule (D923).
 export * from './clips/clip-event-labels.js'

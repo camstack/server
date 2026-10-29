@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 557 methods carry a device reference, of which
- * 179 are on SYSTEM-scope caps.
+ * Coverage: 562 methods carry a device reference, of which
+ * 184 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -489,6 +489,11 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'records.histogram': [{ name: "deviceId", form: "single", optional: true }] as const,
   'records.putMany': [{ name: "records", form: "object-array", optional: false, itemField: "deviceId" }] as const,
   'records.query': [{ name: "deviceId", form: "single", optional: true }] as const,
+  'remote.getConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'remote.listCommands': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'remote.sendCommand': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'remote.sendMediaCommand': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'remote.setConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
   'runningState.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'sceneMonitor.captureReference': [{ name: "deviceId", form: "single", optional: false }] as const,
   'sceneMonitor.createScene': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -754,6 +759,11 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "records.histogram",
   "records.putMany",
   "records.query",
+  "remote.getConfig",
+  "remote.listCommands",
+  "remote.sendCommand",
+  "remote.sendMediaCommand",
+  "remote.setConfig",
   "storageAdmin.readRecords",
   "streamBroker.acquireEgressTranscode",
   "streamBroker.applyDeviceSettingsPatch",

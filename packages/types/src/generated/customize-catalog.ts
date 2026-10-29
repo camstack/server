@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 6 caps. Field keys are `runtimeState` paths. No Zod.
+ * 7 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -449,6 +449,25 @@ export const CAP_CUSTOMIZE_CATALOG = {
             when: 'always',
           },
         ],
+      },
+    ],
+  },
+  'remote': {
+    version: 1,
+    targets: [
+      {
+        id: 'remote',
+        cardinality: 'config',
+        deviceTypes: [DeviceType.MediaPlayer],
+        apply: 'add',
+        readMethod: 'getConfig',
+        writeMethod: 'setConfig',
+        vocabularyCap: 'remote',
+        sources: [],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
       },
     ],
   },

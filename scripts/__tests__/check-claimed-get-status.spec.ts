@@ -25,7 +25,7 @@ describe('check-claimed-get-status rule', () => {
       checkClaimedGetStatusFacts([
         file(
           'packages/system/src/kernel/transport/some-entry.ts',
-          'const c = await answerClaimedGetStatus(r, call); if (c) return c.slice; resolver.resolveCapRoute(cap, {})',
+          'const c = await answerClaimedGetStatus(r, call); if (c) return c.slice; const d = await answerDeviceCallRedirect(h, call); if (d) return d.result; resolver.resolveCapRoute(cap, {})',
         ),
       ]),
     ).toEqual([])
@@ -46,10 +46,23 @@ describe('check-claimed-get-status rule', () => {
           `export async function go() { return ${call} }`,
         ),
       ])
-      expect(failures).toHaveLength(1)
+      // One line per missing question: the claim authority and the redirect.
+      expect(failures).toHaveLength(2)
       expect(failures[0]).toContain('server/backend/src/core/new-dispatcher.ts')
       expect(failures[0]).toContain('answerClaimedGetStatus')
+      expect(failures[1]).toContain('answerDeviceCallRedirect')
     }
+  })
+
+  it('refuses an entry that asks the claim authority but not the device-call redirect (D963)', () => {
+    const failures = checkClaimedGetStatusFacts([
+      file(
+        'packages/system/src/kernel/transport/half-entry.ts',
+        'const c = await answerClaimedGetStatus(r, call); resolver.resolveCapRoute(cap, {})',
+      ),
+    ])
+    expect(failures).toHaveLength(1)
+    expect(failures[0]).toContain('answerDeviceCallRedirect')
   })
 
   it('a mention in a COMMENT is not a call — neither the resolution nor the ask', () => {
@@ -67,10 +80,10 @@ describe('check-claimed-get-status rule', () => {
       checkClaimedGetStatusFacts([
         file(
           'packages/system/src/kernel/y.ts',
-          '// answerClaimedGetStatus() is called elsewhere\nresolver.resolveCapRoute(cap, {})',
+          '// answerClaimedGetStatus() answerDeviceCallRedirect() are called elsewhere\nresolver.resolveCapRoute(cap, {})',
         ),
       ]),
-    ).toHaveLength(1)
+    ).toHaveLength(2)
   })
 
   it('tests and codegen output may resolve by name freely', () => {
@@ -109,6 +122,10 @@ describe('check-claimed-get-status rule', () => {
           'server/backend/src/core/moleculer/moleculer.service.ts',
         ]),
       )
+      const redirecting = files
+        .filter((f) => /\banswerDeviceCallRedirect\(/.test(f.code))
+        .map((f) => f.rel)
+      expect(redirecting).toEqual(expect.arrayContaining(asking))
     },
   )
 })

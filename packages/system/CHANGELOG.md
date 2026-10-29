@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- SmartIR code import, remote command engine and an assumed-state media player for infrared appliances
+- Remote and templates are served by core-blocks; a device-call redirect gives a bound remote command precedence over the native media-player cap for every caller
+
 ## [1.2.514] - 2026-10-28
 
 ### Changed

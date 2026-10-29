@@ -2322,6 +2322,14 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'a command table, and a raw send has no meaningful single entity.',
   },
   {
+    cap: 'remote',
+    reason:
+      'A named command map sent through a transmitter. Its useful surface for an ' +
+      'ecosystem is the `media-player` the same device provides (power, volume, ' +
+      'source); the free-form command name has no typed entity. Its state ' +
+      '(last command, last send time) is session-only bookkeeping.',
+  },
+  {
     cap: 'group-status',
     reason:
       'Bookkeeping for a helper group (D944): how many members were included, ' +

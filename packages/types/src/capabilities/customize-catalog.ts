@@ -100,6 +100,9 @@ export interface CustomizeCatalogTarget {
   readonly sourceModes?: readonly CameraSensorCustomizeMode[]
   readonly start?: 'rising-edge'
   readonly end?: 'falling-edge-or-timeout'
+  /** A `config` target: the cap methods that read and write the stored configuration. */
+  readonly readMethod?: string
+  readonly writeMethod?: string
   readonly vocabularyCap: string
   readonly vocabularyStateField?: string
   readonly vocabularyEvent?: string

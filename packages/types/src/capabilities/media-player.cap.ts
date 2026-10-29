@@ -45,9 +45,34 @@ const MediaInfoSchema = z.object({
 })
 export type MediaInfo = z.infer<typeof MediaInfoSchema>
 
+/**
+ * Where `state`, `volumeLevel`, `isMuted` and `source` come from. `reported`:
+ * the device said so. `assumed`: the driver has no feedback (infrared) and
+ * tracks what it last SENT; it moves only after a send was accepted, and a
+ * human at the real remote makes it wrong. A UI shows an assumed value as a
+ * guess, never as a reading.
+ */
+export const MediaPlayerStateSourceSchema = z.enum(['reported', 'assumed'])
+export type MediaPlayerStateSource = z.infer<typeof MediaPlayerStateSourceSchema>
+
+/** The fields of a media-player status a driver can only guess. */
+export const MediaPlayerAssumedFieldSchema = z.enum(['state', 'volumeLevel', 'isMuted', 'source'])
+export type MediaPlayerAssumedField = z.infer<typeof MediaPlayerAssumedFieldSchema>
+
 export const MediaPlayerStatusSchema = z.object({
   /** Playback lifecycle state. */
   state: MediaPlayerStateSchema,
+  /**
+   * Whether the state fields are readings or the driver's own bookkeeping.
+   * A slice written before this field existed parses as `reported`.
+   */
+  stateSource: MediaPlayerStateSourceSchema.default('reported'),
+  /**
+   * Which fields are the driver's own guess. `stateSource` is `assumed` when
+   * this is not empty; a field not listed here is a reading even then (power
+   * from a running-state source, mute guessed from the last send).
+   */
+  assumedFields: z.array(MediaPlayerAssumedFieldSchema).default([]),
   /** Volume as 0..100 inclusive. Null when the device has no volume
    *  surface. Pair with `DeviceFeature.MediaPlayerVolume`. */
   volumeLevel: z.number().min(0).max(100).nullable().meta(readingMeta('percentage')),

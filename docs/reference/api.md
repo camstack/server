@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**188 capabilities · 1406 methods.**
+**190 capabilities · 1416 methods.**
 
 ## Method index
 
@@ -1111,6 +1111,11 @@
 | `records.transact` | mutation | admin | records |
 | `records.deleteDevice` | mutation | admin | records |
 | `records.allocateId` | mutation | admin | records |
+| `remote.getConfig` | query | admin | remote |
+| `remote.setConfig` | mutation | admin | remote |
+| `remote.listCommands` | query | protected | remote |
+| `remote.sendCommand` | mutation | protected | remote |
+| `remote.sendMediaCommand` | mutation | protected | remote |
 | `runningState.getStatus` | query | protected | running-state (auto) |
 | `sceneMonitor.getStatus` | query | protected | scene-monitor (auto) |
 | `sceneMonitor.listScenes` | query | protected | scene-monitor |
@@ -1281,6 +1286,11 @@
 | `system.setLoggingSettings` | mutation | admin | system |
 | `tamper.getStatus` | query | protected | tamper (auto) |
 | `temperatureSensor.getStatus` | query | protected | temperature-sensor (auto) |
+| `template.list` | query | protected | template |
+| `template.get` | query | protected | template |
+| `template.create` | mutation | admin | template |
+| `template.update` | mutation | admin | template |
+| `template.delete` | mutation | admin | template |
 | `terminalSession.listProfiles` | query | admin | terminal-session |
 | `terminalSession.listInstances` | query | admin | terminal-session |
 | `terminalSession.createInstance` | mutation | admin | terminal-session |
@@ -3055,7 +3065,7 @@
 
 ### `media-player` → `mediaPlayer.*`
 
-- **Source:** `packages/types/src/capabilities/media-player.cap.ts:82`
+- **Source:** `packages/types/src/capabilities/media-player.cap.ts:107`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMediaPlayerProvider`
@@ -4051,6 +4061,21 @@
 | deleteDevice | `records.deleteDevice` | mutation | admin | `{ deviceId: number; kinds?: string[] }` | `{ deleted: Record<string, number>; secretRefs: string[] }` |
 | allocateId | `records.allocateId` | mutation | admin | `{ kind: string }` | `{ id: number }` |
 
+### `remote` → `remote.*`
+
+- **Source:** `packages/types/src/capabilities/remote.cap.ts:117`
+- **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
+- **Archetypes:** —
+- **Provider interface:** `IRemoteProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown> } }>; customButtons: ({ key: string; name: string })[]; power: { mode: "toggle" \| "discrete" } }` |
+| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown> } }>; customButtons: ({ key: string; name: string })[]; power: { mode: "toggle" \| "discrete" } } }` | `RemoteSetConfigResultSchema` |
+| listCommands | `remote.listCommands` | query | protected | `{ deviceId: number }` | `RemoteCommandListSchema` |
+| sendCommand | `remote.sendCommand` | mutation | protected | `{ deviceId: number; role: string; repeat?: number = 1 }` | `RemoteSendResultSchema` |
+| sendMediaCommand | `remote.sendMediaCommand` | mutation | protected | `{ deviceId: number; command: RemoteMediaCommandSchema; muted?: boolean; source?: string; repeat?: number = 1 }` | `RemoteMediaCommandResultSchema` |
+
 ### `running-state` → `runningState.*`
 
 - **Source:** `packages/types/src/capabilities/running-state.cap.ts:107`
@@ -4461,6 +4486,21 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `temperatureSensor.getStatus` | query | protected | `{ deviceId: number }` | `TemperatureSensorStatusSchema` |
+
+### `template` → `template.*`
+
+- **Source:** `packages/types/src/capabilities/template.cap.ts:53`
+- **Meta:** scope: `system` · mode: `collection` · mount: `collection`
+- **Archetypes:** —
+- **Provider interface:** `ITemplateProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| list | `template.list` | query | protected | `{ kind?: "remote" }` | `TemplateRecordSchema[]` |
+| get | `template.get` | query | protected | `{ id: string }` | `TemplateRecordSchema \| null` |
+| create | `template.create` | mutation | admin | `{ kind: "remote"; name: string; payload: unknown }` | `TemplateWriteResultSchema` |
+| update | `template.update` | mutation | admin | `{ id: string; name?: string; payload?: unknown }` | `TemplateWriteResultSchema` |
+| delete | `template.delete` | mutation | admin | `{ id: string }` | `TemplateDeleteResultSchema` |
 
 ### `terminal-session` → `terminalSession.*`
 

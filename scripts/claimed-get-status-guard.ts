@@ -47,6 +47,8 @@ export function collectClaimedGetStatusFiles(): readonly GuardFile[] {
  */
 const NAME_RESOLUTION = /\b(resolveCapRoute|resolveChildId|callCapOnChild|callCap)\b/
 const ASKS_CLAIM_AUTHORITY = /\banswerClaimedGetStatus\(/
+/** The device-call redirect (D963): the same entries, a second question before routing. */
+const ASKS_CALL_REDIRECT = /\banswerDeviceCallRedirect\(/
 
 /**
  * Files that resolve by name WITHOUT asking, each with the reason it may.
@@ -81,11 +83,17 @@ export function checkClaimedGetStatusFacts(files: readonly GuardFile[]): readonl
   for (const f of files) {
     if (isTest(f.rel) || isGenerated(f.rel)) continue
     if (!NAME_RESOLUTION.test(f.code)) continue
-    if (ASKS_CLAIM_AUTHORITY.test(f.code)) continue
     if (f.rel in NAME_RESOLUTION_EXCEPTIONS) continue
-    failures.push(
-      `${f.rel}: resolves a cap call by name (resolveCapRoute / resolveChildId / callCapOnChild / callCap) without asking the claim authority — call answerClaimedGetStatus() before routing a device-scoped getStatus (D663, S3), or name it in NAME_RESOLUTION_EXCEPTIONS with the reason it is downstream of an entry that did`,
-    )
+    if (!ASKS_CLAIM_AUTHORITY.test(f.code)) {
+      failures.push(
+        `${f.rel}: resolves a cap call by name (resolveCapRoute / resolveChildId / callCapOnChild / callCap) without asking the claim authority — call answerClaimedGetStatus() before routing a device-scoped getStatus (D663, S3), or name it in NAME_RESOLUTION_EXCEPTIONS with the reason it is downstream of an entry that did`,
+      )
+    }
+    if (!ASKS_CALL_REDIRECT.test(f.code)) {
+      failures.push(
+        `${f.rel}: resolves a cap call by name without asking the device-call redirect — call answerDeviceCallRedirect() before routing a device-scoped call (D963), or name it in NAME_RESOLUTION_EXCEPTIONS with the reason it is downstream of an entry that did`,
+      )
+    }
   }
   return failures
 }

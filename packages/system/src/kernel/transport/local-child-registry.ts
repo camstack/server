@@ -13,6 +13,7 @@ import { buildCapChildIndex, type CapChildIndex } from './cap-child-index.js'
 import { liftRoutingHints, type CapRoutingHints } from './cap-routing-hints.js'
 import { extractDeviceId } from './cap-route-resolver.js'
 import { answerClaimedGetStatus, GET_STATUS_METHOD } from './claimed-get-status.js'
+import { answerDeviceCallRedirect, type DeviceCallRedirectHook } from './device-call-redirect.js'
 import type { ClaimedStatusResolver } from '../status-overlay.js'
 import type {
   AddonCallInput,
@@ -269,6 +270,16 @@ export interface LocalChildRegistryOptions {
    */
   readonly claimedStatus?: ClaimedStatusResolver
   /**
+   * The device-call redirect (D963): asked right after the claim authority for a
+   * COVERED device-scoped call — a media-player command whose role the device's
+   * remote binds — before the sibling short-circuit can hand it to the owning
+   * child's native cap. Same shared function (`answerDeviceCallRedirect`) as the
+   * parent-routed handler and `callCapabilityOnNode`. A redirected call is
+   * answered here; a failing redirect fails the call. Omitted (the agent has no
+   * redirect authority) ⇒ prior behaviour exactly.
+   */
+  readonly deviceCallRedirect?: DeviceCallRedirectHook
+  /**
    * Per-cap-method bound for UDS cap calls, in ms — read from the cap
    * definition's declared `timeoutMs`. The SAME resolver the remote plane uses
    * (`CapRouteResolver.capTimeoutMs`), so the two planes agree by construction
@@ -389,6 +400,8 @@ export class LocalChildRegistry {
   private readonly capTimeoutMs?: (capName: string, method: string) => number | undefined
   /** See {@link LocalChildRegistryOptions.claimedStatus}. */
   private readonly claimedStatus?: ClaimedStatusResolver
+  /** See {@link LocalChildRegistryOptions.deviceCallRedirect}. */
+  private readonly deviceCallRedirect?: DeviceCallRedirectHook
   /** See {@link LocalChildRegistryOptions.capUsageObserver}. */
   private readonly capUsageObserver?: (obs: CapUsageCallRecord) => void
   /** Tracks capNames already logged as UDS-routed; one INFO line per capName per process. */
@@ -443,6 +456,7 @@ export class LocalChildRegistry {
       this.isAddonPinnedCall = opts.isAddonPinnedCall
       this.capTimeoutMs = opts.capTimeoutMs
       this.claimedStatus = opts.claimedStatus
+      this.deviceCallRedirect = opts.deviceCallRedirect
       this.capUsageObserver = opts.capUsageObserver
     } else {
       // Positional form: LocalChildRegistry(server, onUnownedCall?)
@@ -1179,6 +1193,18 @@ export class LocalChildRegistry {
             this.recordCapUsage(childId, null, out.capName, out.method)
             return claimed.slice
           }
+        }
+        // A covered device-scoped call the device's remote takes over (D963).
+        // Args are decoded only for a method the hook covers (D448).
+        const redirected = await answerDeviceCallRedirect(this.deviceCallRedirect, {
+          capName: out.capName,
+          method: out.method,
+          ...(out.deviceId !== undefined ? { deviceId: out.deviceId } : {}),
+          args: materialise,
+        })
+        if (redirected !== null) {
+          this.recordCapUsage(childId, null, out.capName, out.method)
+          return redirected.result
         }
         // Explicit per-call node pin (op.context `nodeId`, or an inline `nodeId`
         // in the args). A pin naming ANOTHER node must NOT be short-circuited to

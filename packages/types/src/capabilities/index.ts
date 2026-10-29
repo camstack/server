@@ -1952,6 +1952,42 @@ export {
   brightnessCapability,
   type IBrightnessProvider,
 } from './brightness.cap.js'
+// Infrared: the command map (remote); the transport (ir-transmitter) is exported below
+export {
+  type IRemoteProvider,
+  REMOTE_CONFIG_REFUSALS,
+  REMOTE_MAX_REPEAT,
+  REMOTE_MEDIA_COMMANDS,
+  REMOTE_REFUSAL_REASONS,
+  type RemoteBoundCommand,
+  type RemoteCommandList,
+  RemoteCommandListSchema,
+  RemoteBoundCommandSchema,
+  type RemoteMediaCommand,
+  type RemoteMediaCommandResult,
+  RemoteMediaCommandResultSchema,
+  RemoteMediaCommandSchema,
+  type RemoteRefusalReason,
+  RemoteRefusalReasonSchema,
+  type RemoteSendResult,
+  RemoteSendResultSchema,
+  type RemoteSetConfigResult,
+  RemoteSetConfigResultSchema,
+  remoteCapability,
+} from './remote.cap.js'
+export {
+  type ITemplateProvider,
+  TEMPLATE_WRITE_REFUSALS,
+  type TemplateDeleteResult,
+  TemplateDeleteResultSchema,
+  type TemplateRecord,
+  TemplateRecordSchema,
+  type TemplateUser,
+  TemplateUserSchema,
+  type TemplateWriteResult,
+  TemplateWriteResultSchema,
+  templateCapability,
+} from './template.cap.js'
 // HA-targeted actuator caps (Phase C4 — fire-only button)
 export { buttonCapability, type IButtonProvider } from './button.cap.js'
 export {
@@ -2379,6 +2415,10 @@ export {
   MediaPlayerRepeatSchema,
   type MediaPlayerState,
   MediaPlayerStateSchema,
+  type MediaPlayerStateSource,
+  MediaPlayerStateSourceSchema,
+  MediaPlayerAssumedFieldSchema,
+  type MediaPlayerAssumedField,
   type MediaPlayerStatus,
   MediaPlayerStatusSchema,
   mediaPlayerCapability,
@@ -3161,6 +3201,8 @@ import type { brightnessCapability } from './brightness.cap.js'
 import type { brokerCapability } from './broker.cap.js'
 import type { buttonCapability } from './button.cap.js'
 import type { irTransmitterCapability } from './ir-transmitter.cap.js'
+import type { remoteCapability } from './remote.cap.js'
+import type { templateCapability } from './template.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
 import type { calendarsCapability } from './calendars.cap.js'
 import type { cameraCredentialsCapability } from './camera-credentials.cap.js'
@@ -3497,6 +3539,8 @@ type AnyCapability =
   | typeof networkLinkCapability
   | typeof buttonCapability
   | typeof irTransmitterCapability
+  | typeof remoteCapability
+  | typeof templateCapability
   | typeof cameraCredentialsCapability
   | typeof deviceStatusCapability
   | typeof doorbellCapability

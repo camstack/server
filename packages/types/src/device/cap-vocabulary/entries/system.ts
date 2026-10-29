@@ -103,6 +103,9 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
     'recording exports — requested from the timeline, not an automation step',
   ),
   records: system(INTERNAL),
+  remote: system(
+    'the per-device remote setup — authored in the Customize remote editor, sent through the remote UI',
+  ),
   'server-management': system(CLUSTER),
   'settings-store': system(INTERNAL),
   'smtp-provider': system(INTERNAL),
@@ -115,6 +118,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'storage-provider': system(STORAGE),
   'stream-broker': system(PIPELINE),
   system: system(CLUSTER),
+  template: system('operator-authored templates — edited in their own editor, never actuated'),
   'terminal-session': system(CLUSTER),
   toast: system(UI_PLUMBING),
   training: system(ML),

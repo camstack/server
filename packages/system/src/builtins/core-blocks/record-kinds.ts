@@ -5,6 +5,7 @@ import {
   ActionStepSchema,
   ActionVariableSchema,
   AutomationStateDocSchema,
+  TemplateKindSchema,
   defineRecordKinds,
   type DefinedRecordKind,
 } from '@camstack/types'
@@ -77,6 +78,22 @@ export const ActionLinksRowBodySchema: z.ZodType<ActionLinksRowBody> = z.object(
   actionIds: z.array(z.string().min(1)).max(100),
 })
 
+/** A template (D963): the kind names the payload schema, the store never reads the payload. */
+export type TemplateRowBody = {
+  readonly kind: z.infer<typeof TemplateKindSchema>
+  readonly name: string
+  readonly payload: unknown
+  readonly createdAt: number
+  readonly updatedAt: number
+}
+export const TemplateRowBodySchema: z.ZodType<TemplateRowBody> = z.object({
+  kind: TemplateKindSchema,
+  name: z.string().min(1).max(120),
+  payload: z.unknown(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+})
+
 const _coreBlocksRecordKinds = defineRecordKinds({
   blocks: {
     schema: CoreBlockRowBodySchema,
@@ -118,6 +135,16 @@ const _coreBlocksRecordKinds = defineRecordKinds({
     deviceRemoval: 'delete',
     retention: { none: 'the row goes with its camera (device removal)' },
   },
+  templates: {
+    schema: TemplateRowBodySchema,
+    class: 'config',
+    writeTrigger: 'create / update / delete of a template by the operator',
+    device: 'none',
+    at: 'none',
+    indexes: [{ name: 'kind', fields: ['kind'] }],
+    retention: { none: 'operator delete only; a template a device still uses is refused' },
+    maxDataBytes: 256 * 1024,
+  },
   settings: {
     schema: CoreBlockSettingsBodySchema,
     class: 'config',
@@ -133,6 +160,7 @@ export type CoreBlocksRecordKindsMap = {
   readonly runs: DefinedRecordKind<z.ZodType<RunsRowBody>>
   readonly actions: DefinedRecordKind<z.ZodType<ActionRowBody>>
   readonly 'action-links': DefinedRecordKind<z.ZodType<ActionLinksRowBody>>
+  readonly templates: DefinedRecordKind<z.ZodType<TemplateRowBody>>
   readonly settings: DefinedRecordKind<z.ZodType<CoreBlockSettingsBody>>
 }
 

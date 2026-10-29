@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 77 caps with 359 state leaves.
+ * Coverage: 1 advance-derived caps, 77 caps with 357 state leaves.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -168,6 +168,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "recording-onboard",
   "recording-signal",
   "records",
+  "remote",
   "running-state",
   "scene-monitor",
   "script-runner",
@@ -191,6 +192,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "system",
   "tamper",
   "temperature-sensor",
+  "template",
   "terminal-session",
   "toast",
   "training",
@@ -256,7 +258,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "intercom": [{"path":"talking","valueType":"boolean"}, {"path":"lastSessionAt","valueType":"number"}, {"path":"ability.sampleRate","valueType":"number"}, {"path":"ability.duplex","valueType":"enum","enumValues":["half","full"]}, {"path":"ability.maxBacklogMs","valueType":"number"}],
   "lawn-mower-control": [{"path":"activity","valueType":"enum","enumValues":["idle","mowing","paused","docked","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"progress","valueType":"number"}, {"path":"currentCode","valueType":"number"}, {"path":"currentCodeLabel","valueType":"string"}, {"path":"severity","valueType":"enum","enumValues":["info","warning","error"]}],
   "lock-control": [{"path":"state","valueType":"enum","enumValues":["locked","unlocked","locking","unlocking","jammed"]}],
-  "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"position","valueType":"number"}, {"path":"duration","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}],
+  "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"stateSource","valueType":"enum","enumValues":["reported","assumed"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"position","valueType":"number"}, {"path":"duration","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}],
   "meter": [{"path":"value","valueType":"number"}],
   "motion": [{"path":"detected","valueType":"boolean"}, {"path":"lastDetectedAt","valueType":"number"}, {"path":"autoClearAfterMs","valueType":"number"}],
   "motion-trigger": [{"path":"enabled","valueType":"boolean"}],
@@ -267,7 +269,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "network-link": [{"path":"type","valueType":"enum","enumValues":["wifi","ethernet","cellular","unknown"]}, {"path":"signal","valueType":"number"}, {"path":"rssi","valueType":"number"}, {"path":"ssid","valueType":"string"}, {"path":"lastUpdated","valueType":"number"}],
   "notifier": [{"path":"lastSentAt","valueType":"number"}, {"path":"lastError","valueType":"string"}, {"path":"queueDepth","valueType":"number"}, {"path":"supports.image","valueType":"boolean"}, {"path":"supports.priority","valueType":"boolean"}, {"path":"supports.data","valueType":"boolean"}, {"path":"supports.actions","valueType":"boolean"}, {"path":"supports.recipients","valueType":"boolean"}],
   "numeric-sensor": [{"path":"value","valueType":"number"}],
-  "pet-feeder": [{"path":"foodLevel","valueType":"number"}, {"path":"bowlFood","valueType":"number"}, {"path":"eating","valueType":"boolean"}, {"path":"supportsMarkRefilled","valueType":"boolean"}, {"path":"food1","valueType":"number"}, {"path":"food2","valueType":"number"}, {"path":"lowFood","valueType":"boolean"}, {"path":"batteryPower","valueType":"number"}, {"path":"powerSource","valueType":"enum","enumValues":["mains","battery"]}, {"path":"desiccantLeftDays","valueType":"number"}, {"path":"feeding","valueType":"boolean"}, {"path":"status","valueType":"enum","enumValues":["normal","offline","on_batteries"]}, {"path":"error","valueType":"string"}, {"path":"errorCode","valueType":"number"}, {"path":"isDualHopper","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"indicatorLight","valueType":"boolean"}, {"path":"feedSound","valueType":"boolean"}, {"path":"volume","valueType":"number"}, {"path":"lastFeedGrams","valueType":"number"}, {"path":"lastFeedHopper1","valueType":"number"}, {"path":"lastFeedHopper2","valueType":"number"}],
+  "pet-feeder": [{"path":"foodLevel","valueType":"number"}, {"path":"bowlFood","valueType":"number"}, {"path":"eating","valueType":"boolean"}, {"path":"supportsMarkRefilled","valueType":"boolean"}, {"path":"food1","valueType":"number"}, {"path":"food2","valueType":"number"}, {"path":"lowFood","valueType":"boolean"}, {"path":"batteryPower","valueType":"number"}, {"path":"powerSource","valueType":"enum","enumValues":["mains","battery"]}, {"path":"desiccantLeftDays","valueType":"number"}, {"path":"feeding","valueType":"boolean"}, {"path":"status","valueType":"enum","enumValues":["normal","offline","on_batteries"]}, {"path":"error","valueType":"string"}, {"path":"errorCode","valueType":"number"}, {"path":"isDualHopper","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"indicatorLight","valueType":"boolean"}, {"path":"feedSound","valueType":"boolean"}, {"path":"volume","valueType":"number"}],
   "power-meter": [{"path":"power","valueType":"number"}, {"path":"energy","valueType":"number"}, {"path":"voltage","valueType":"number"}, {"path":"current","valueType":"number"}, {"path":"apparentPower","valueType":"number"}, {"path":"powerFactor","valueType":"number"}],
   "presence": [{"path":"state","valueType":"string"}, {"path":"location","valueType":"string"}, {"path":"gps.latitude","valueType":"number"}, {"path":"gps.longitude","valueType":"number"}, {"path":"gps.accuracyMeters","valueType":"number"}],
   "pressure-sensor": [{"path":"pressure","valueType":"number"}],

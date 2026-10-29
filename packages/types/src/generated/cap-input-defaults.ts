@@ -11,7 +11,7 @@
  * Plain data, zero Zod: a forked runner must not import the schema barrel
  * (~144MB RSS per runner — D28).
  *
- * Coverage: 29 caps, 72 methods with defaults.
+ * Coverage: 30 caps, 75 methods with defaults.
  */
 export const CAP_INPUT_DEFAULTS: Readonly<
   Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>
@@ -104,6 +104,11 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   },
   "records": {
     "query": {"limit":100},
+  },
+  "remote": {
+    "sendCommand": {"repeat":1},
+    "sendMediaCommand": {"repeat":1},
+    "setConfig": {"config":{"__nested__":{"defaultTransmitterId":null}}},
   },
   "storage": {
     "upsertLocation": {"isSystem":false},

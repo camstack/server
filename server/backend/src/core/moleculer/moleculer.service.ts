@@ -44,6 +44,8 @@ import {
   udsChildLogToWorkerEntry,
   UNCLAIMED,
   answerClaimedGetStatus,
+  answerDeviceCallRedirect,
+  type DeviceCallRedirectHook,
 } from '@camstack/system'
 import type { CapabilityDefinition, StatusOverlayAnswer } from '@camstack/types'
 import { EventCategory, emitReadiness, errMsg, ReadinessRegistry } from '@camstack/types'
@@ -435,6 +437,9 @@ export class MoleculerService {
         // owning runner, whose `getStatus` is the native slice. The SAME
         // question the registry's resolvers ask, through the same method.
         claimedStatus: (capName, deviceId) => this.resolveClaimedStatus(capName, deviceId),
+        // A covered device call the device's remote takes over (D963) — the
+        // same question the registry's wrappers and the other entries ask.
+        deviceCallRedirect: this.deviceCallRedirectHook(),
         // `nodeIdMode: 'data'` signal: for these caps (`addon-settings`,
         // `addons`, `nodes`, `pipeline-orchestrator`) an inline `args.nodeId`
         // is provider DATA — the hub singleton dispatches internally — never a
@@ -555,6 +560,8 @@ export class MoleculerService {
         // sibling short-circuit can dispatch it to the owning child (D663, S3)
         // — the same resolver the handler above and `callCapabilityOnNode` use.
         claimedStatus: (capName, deviceId) => this.resolveClaimedStatus(capName, deviceId),
+        // The same device-call redirect, before the sibling short-circuit (D963).
+        deviceCallRedirect: this.deviceCallRedirectHook(),
         // A collection ARRAY method must reach `onUnownedCall` (which fans it
         // across every provider) instead of being short-circuited to ONE local
         // sibling. Same predicate the aggregate itself uses, so the two agree
@@ -960,6 +967,24 @@ export class MoleculerService {
   }
 
   /**
+   * The device-call redirect (D963): `CapabilityRegistry.coversDeviceCall` /
+   * `redirectDeviceCall`, resolved at CALL time so a redirect installed after
+   * this entry was wired (core-blocks boots later) is honoured. Every entry
+   * that routes a device-scoped call by name asks it through
+   * `answerDeviceCallRedirect`.
+   */
+  private deviceCallRedirectHook(): DeviceCallRedirectHook {
+    return {
+      covers: (capName, method) =>
+        this.capabilityService.getRegistry()?.coversDeviceCall(capName, method) === true,
+      attempt: async (call) =>
+        (await this.capabilityService.getRegistry()?.redirectDeviceCall(call)) ?? {
+          kind: 'not-redirected',
+        },
+    }
+  }
+
+  /**
    * Call a capability method on a specific node.
    *
    * Delegates all routing decisions to the CapRouteResolver, which classifies
@@ -992,6 +1017,14 @@ export class MoleculerService {
       { capName: capabilityName, method: methodName, args: params },
     )
     if (claimed !== null) return claimed.slice
+    // A covered device call the device's remote takes over (D963): the hub's
+    // own tRPC and every in-process `ctx.api` call arrive here with a pin.
+    const redirected = await answerDeviceCallRedirect(this.deviceCallRedirectHook(), {
+      capName: capabilityName,
+      method: methodName,
+      args: params,
+    })
+    if (redirected !== null) return redirected.result
     const resolver = this.resolver
     if (resolver !== null) {
       // Extract deviceId from params so device-scoped native caps (ptz, motion-zones, …)

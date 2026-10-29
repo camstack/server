@@ -35,6 +35,8 @@ import {
   type IScopedLogger,
   normalizeCoreBlockWrite,
   type ProviderRegistration,
+  remoteCapability,
+  templateCapability,
 } from '@camstack/types'
 import {
   type BlockProcessHost,
@@ -43,6 +45,8 @@ import {
 } from './block-supervisor.js'
 import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
 import { actionOwner, automationOwner } from './runs-ledger.js'
+import { remoteCallRedirect } from './remote-call-redirect.js'
+import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
 import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integration.js'
@@ -85,6 +89,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private supervisor: BlockSupervisor | null = null
   /** The actions surface and the runs ledger — built with the store, gone with it. */
   private actions: ActionsRuntime | null = null
+  /** The templates engine and the remote — needs the per-device settings store, so absent without one. */
+  private remoteRuntime: RemoteRuntime | null = null
   /** The shared integration, or null when this node does not own it. */
   private blocksIntegrationId: string | null = null
 
@@ -120,6 +126,7 @@ export class CoreBlocksAddon extends BaseAddon {
       logger: this.ctx.logger,
     })
     void this.sweepRunsLedger()
+    this.remoteRuntime = this.buildRemote(records)
 
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
     // failure to load it must degrade the compile gate rather than the node.
@@ -154,10 +161,48 @@ export class CoreBlocksAddon extends BaseAddon {
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
       { capability: actionsCapability, provider: this.requireActions().service },
+      ...this.remoteRegistrations(),
+    ]
+  }
+
+  private buildRemote(records: NonNullable<typeof this.ctx.records>): RemoteRuntime | null {
+    const settings = this.ctx.settings
+    if (settings === undefined) {
+      this.ctx.logger.warn(
+        'core-blocks: no settings store — the remote and templates are not registered',
+      )
+      return null
+    }
+    const runtime = buildRemoteRuntime({
+      records,
+      settings,
+      api: () => this.ctx.api,
+      logger: this.ctx.logger,
+    })
+    // Precedence at DISPATCH (D963): the redirect lives in the registry, so it holds for every caller.
+    const registry = this.ctx.kernel?.capabilityRegistry
+    registry?.setDeviceCallRedirect(
+      remoteCallRedirect({
+        remote: runtime.remote,
+        hasNative: (deviceId) => registry.getProviderForDevice('media-player', deviceId) !== null,
+        logger: this.ctx.logger.child('remote'),
+      }),
+    )
+    return runtime
+  }
+
+  private remoteRegistrations(): ProviderRegistration[] {
+    const runtime = this.remoteRuntime
+    if (runtime === null) return []
+    return [
+      { capability: templateCapability, provider: runtime.templates },
+      { capability: remoteCapability, provider: runtime.remote },
     ]
   }
 
   protected async onShutdown(): Promise<void> {
+    this.ctx.kernel?.capabilityRegistry?.setDeviceCallRedirect(null)
+    this.remoteRuntime = null
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null

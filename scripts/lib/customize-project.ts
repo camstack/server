@@ -16,6 +16,7 @@ import type {
 } from '../../packages/types/src/capabilities/customize-catalog.ts'
 import type {
   CapabilityCustomizeTarget,
+  ConfigCustomizeTarget,
   CustomizeSourceSpec,
   CustomizeTransformSpec,
   EventCustomizeTarget,
@@ -48,10 +49,10 @@ interface ListedCompanions {
 
 export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry {
   const spec = view.customize
-  const runtime = view.runtimeState
-  if (spec === undefined || runtime === undefined) {
+  if (spec === undefined) {
     throw new Error(`customize catalog: ${view.capName} has nothing to project`)
   }
+  const runtime = view.runtimeState ?? z.object({})
   const entry = {
     version: 1 as const,
     targets: spec.targets.map((target) => projectTarget(view, target, runtime)),
@@ -66,12 +67,32 @@ function projectTarget(
   runtime: Schema,
 ): CustomizeCatalogTarget {
   switch (target.cardinality) {
+    case 'config':
+      return projectConfig(view, target)
     case 'scalar':
       return projectScalar(view, target, runtime)
     case 'keyedArray':
       return projectKeyed(view, target, runtime)
     case 'event':
       return projectEvent(view, target, runtime)
+  }
+}
+
+function projectConfig(
+  view: CustomizeCapView,
+  target: ConfigCustomizeTarget,
+): CustomizeCatalogTarget {
+  return {
+    id: target.id,
+    cardinality: 'config',
+    deviceTypes: effectiveDeviceTypes(view, target),
+    apply: target.apply,
+    readMethod: target.readMethod,
+    writeMethod: target.writeMethod,
+    vocabularyCap: target.vocabulary.cap,
+    sources: [],
+    sourceReport: { status: 'assignment-status' },
+    advancedExpression: false,
   }
 }
 
@@ -184,7 +205,7 @@ function listedLiterals(literals: readonly KeyedArrayLiteralSpec[] | undefined):
 
 function identity(
   view: CustomizeCapView,
-  target: CapabilityCustomizeTarget,
+  target: Exclude<CapabilityCustomizeTarget, ConfigCustomizeTarget>,
 ): CustomizeCatalogTarget {
   return {
     id: target.id,

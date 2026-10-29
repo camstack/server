@@ -8,6 +8,7 @@ import type {
   CapabilityCustomizeTarget,
 } from '../../packages/types/src/capabilities/customize-spec.ts'
 import type {
+  ConfigCustomizeTarget,
   CustomizeCompanion,
   CustomizeSourceReport,
   CustomizeSourceSpec,
@@ -63,6 +64,8 @@ export type CustomizeViolationRule =
   | 'source-modes'
   | 'bad-source-mode'
   | 'event-claims-scalar'
+  | 'unknown-config-method'
+  | 'bad-config-method'
 
 export interface CustomizeViolation {
   readonly capName: string
@@ -77,9 +80,16 @@ export interface CustomizeItemArrayView {
   readonly labelField: string
 }
 
+/** What a `config` target checks about a cap method: its kind and whether its input names a device. */
+export interface CustomizeMethodView {
+  readonly kind: 'query' | 'mutation'
+  readonly takesDeviceId: boolean
+}
+
 export interface CustomizeCapView {
   readonly capName: string
   readonly runtimeState: z.ZodObject<z.core.$ZodLooseShape> | undefined
+  readonly methods: Readonly<Record<string, CustomizeMethodView>>
   readonly deviceTypes: readonly string[] | undefined
   readonly events:
     | Readonly<
@@ -112,7 +122,8 @@ export function judgeCustomize(view: CustomizeCapView): readonly CustomizeViolat
   const spec = view.customize
   const runtime = view.runtimeState
   if (spec === undefined) return []
-  if (runtime === undefined) {
+  const needsRuntime = spec.targets.some((target) => target.cardinality !== 'config')
+  if (needsRuntime && runtime === undefined) {
     return [fail(view, undefined, 'no-runtime-state', 'declares customize but no runtimeState')]
   }
   if (spec.targets.length === 0) {
@@ -128,8 +139,10 @@ export function judgeCustomize(view: CustomizeCapView): readonly CustomizeViolat
 function judgeTarget(
   view: CustomizeCapView,
   target: CapabilityCustomizeTarget,
-  runtime: z.ZodType,
+  runtime: z.ZodType | undefined,
 ): readonly CustomizeViolation[] {
+  if (target.cardinality === 'config') return judgeConfig(view, target)
+  if (runtime === undefined) return []
   switch (target.cardinality) {
     case 'scalar':
       return judgeScalar(view, target, runtime)
@@ -138,6 +151,43 @@ function judgeTarget(
     case 'event':
       return judgeEvent(view, target, runtime)
   }
+}
+
+function judgeConfig(
+  view: CustomizeCapView,
+  target: ConfigCustomizeTarget,
+): readonly CustomizeViolation[] {
+  const out: CustomizeViolation[] = [
+    ...judgeVocabulary(view, target),
+    ...judgeDeviceTypes(view, target),
+  ]
+  const ends = [
+    { name: target.readMethod, kind: 'query' as const },
+    { name: target.writeMethod, kind: 'mutation' as const },
+  ]
+  for (const end of ends) {
+    const found = view.methods[end.name]
+    if (found === undefined) {
+      out.push(
+        fail(
+          view,
+          target.id,
+          'unknown-config-method',
+          `\`${end.name}\` is not a method of the cap`,
+        ),
+      )
+    } else if (found.kind !== end.kind || !found.takesDeviceId) {
+      out.push(
+        fail(
+          view,
+          target.id,
+          'bad-config-method',
+          `\`${end.name}\` must be a ${end.kind} whose input carries a top-level deviceId`,
+        ),
+      )
+    }
+  }
+  return out
 }
 
 function judgeScalar(
@@ -183,7 +233,7 @@ function judgeEvent(
 
 function shared(
   view: CustomizeCapView,
-  target: CapabilityCustomizeTarget,
+  target: Exclude<CapabilityCustomizeTarget, ConfigCustomizeTarget>,
   runtime: z.ZodType,
 ): readonly CustomizeViolation[] {
   return [

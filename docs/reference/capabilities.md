@@ -4,7 +4,7 @@
 
 # Capabilities
 
-188 capability definitions in `packages/types/src/capabilities/`.
+190 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -120,7 +120,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (92)
+## System-scoped (94)
 
 Singleton or collection providers, addressed without a device.
 
@@ -197,6 +197,7 @@ Singleton or collection providers, addressed without a device.
 | `recording-archive` | 34 | ✓ | — | — | — | `recorder` |
 | `recording-export` | 7 | — | — | — | — | `recorder` |
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
+| `remote` | 5 | — | — | — | — | `core-blocks` |
 | `server-management` | 5 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |
 | `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |
@@ -209,6 +210,7 @@ Singleton or collection providers, addressed without a device.
 | `storage-provider` | 16 | — | — | — | ✓ | `sftp-storage` `s3-storage` `webdav-storage` `smb-storage` `filesystem-storage` |
 | `stream-broker` | 38 | — | — | — | — | `stream-broker` |
 | `system` | 15 | — | — | — | — | — |
+| `template` | 5 | — | — | — | — | `core-blocks` |
 | `terminal-session` | 14 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |
 | `training` | 13 | — | — | — | — | `training` |

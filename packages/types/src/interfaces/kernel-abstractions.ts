@@ -10,6 +10,7 @@ import type { FrameInput } from '../types/io.js'
 import type { CropInput } from '../types/detection.js'
 import type { InferenceOutput } from './pipeline-runner.js'
 import type { CapabilityProviderMap } from './capability.js'
+import type { DeviceCall, DeviceCallAnswer, DeviceCallRedirect } from './device-call-redirect.js'
 import type { StatusOverlay, StatusOverlayAnswer } from './status-overlay.js'
 
 // ---------------------------------------------------------------------------
@@ -66,6 +67,17 @@ export interface ICapabilityRegistry {
    * native (D315, D49).
    */
   resolveClaimedStatus(capName: string, deviceId: number): Promise<StatusOverlayAnswer>
+  /**
+   * Install (or remove, with `null`) the device-call redirect (D963). While
+   * installed, a covered device-scoped call resolved through the registry —
+   * and, through `redirectDeviceCall`, through the transport entries — may be
+   * taken over before it reaches the provider.
+   */
+  setDeviceCallRedirect(redirect: DeviceCallRedirect | null): void
+  /** Cheap and synchronous: could a redirect take this `(cap, method)` over? Asked before args are decoded. */
+  coversDeviceCall(capName: string, method: string): boolean
+  /** The one question every name-resolving entry asks before routing. */
+  redirectDeviceCall(call: DeviceCall): Promise<DeviceCallAnswer>
   /** Get the addonId that registered a native provider for (cap, device). */
   getNativeAddonId(capName: string, deviceId: number): string | null
   /** List all capability names with a native registration for a device. */

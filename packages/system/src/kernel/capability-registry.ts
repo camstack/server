@@ -18,10 +18,14 @@ import type {
   CapabilityMode,
   CapabilityProviderMap,
   CollectionCapabilityMap,
+  DeviceCall,
+  DeviceCallAnswer,
+  DeviceCallRedirect,
   IEventBus,
   IScopedLogger,
   SingletonCapabilityMap,
 } from '@camstack/types'
+import { redirectDeviceCalls } from './device-call-redirect.js'
 import {
   overlayGetStatus,
   type StatusOverlay,
@@ -932,10 +936,55 @@ export class CapabilityRegistry {
    * overlay installed it pays nothing.
    */
   private withOverlay<T>(capName: string, deviceId: number, provider: T): T {
+    return this.withRedirect(capName, deviceId, this.withClaims(capName, deviceId, provider))
+  }
+
+  private withClaims<T>(capName: string, deviceId: number, provider: T): T {
     if (this.statusOverlay === null) return provider
     if (typeof provider !== 'object' || provider === null) return provider
     if (this.statusOverlay.peek(capName, deviceId).kind === 'unclaimed') return provider
     return overlayGetStatus(provider, () => this.resolveClaimedStatus(capName, deviceId))
+  }
+
+  // ── Device-call redirect (D963) ────────────────────────────────────────
+
+  private deviceCallRedirect: DeviceCallRedirect | null = null
+
+  /**
+   * Install (or remove, with `null`) the device-call redirect. Installed by
+   * core-blocks over the remote; wrappers already resolved re-read it at call
+   * time, so a removal hands every covered method back to the provider.
+   */
+  setDeviceCallRedirect(redirect: DeviceCallRedirect | null): void {
+    this.deviceCallRedirect = redirect
+  }
+
+  /** Cheap and synchronous, so an entry asks it BEFORE it decodes any args. */
+  coversDeviceCall(capName: string, method: string): boolean {
+    return this.deviceCallRedirect?.covers(capName, method) === true
+  }
+
+  /**
+   * THE question every name-resolving entry asks before routing a device-scoped
+   * call (the registry's own wrappers at call time, the three transport
+   * entries through `answerDeviceCallRedirect`). `not-redirected` when no
+   * redirect is installed or it does not cover the method.
+   */
+  async redirectDeviceCall(call: DeviceCall): Promise<DeviceCallAnswer> {
+    const redirect = this.deviceCallRedirect
+    if (redirect === null || !redirect.covers(call.capName, call.method)) {
+      return { kind: 'not-redirected' }
+    }
+    return redirect.attempt(call)
+  }
+
+  private withRedirect<T>(capName: string, deviceId: number, provider: T): T {
+    if (this.deviceCallRedirect === null) return provider
+    if (typeof provider !== 'object' || provider === null) return provider
+    return redirectDeviceCalls(provider, capName, deviceId, {
+      covers: (method) => this.deviceCallRedirect?.covers(capName, method) === true,
+      attempt: (call) => this.redirectDeviceCall(call),
+    })
   }
 
   /** Resolve the addonId that registered the native provider for `(capName, deviceId)`. */

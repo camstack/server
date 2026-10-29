@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**971 shared schemas.**
+**984 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3308,6 +3308,10 @@ Enum: `"crop" \| "thumbnail" \| "snapshot" \| "firstFrame" \| "lastFrame" \| "fu
 - `url`: `string`
 - `base64`: `string`
 
+### `MediaPlayerAssumedFieldSchema`
+
+Enum: `"state" \| "volumeLevel" \| "isMuted" \| "source"`
+
 ### `MediaPlayerRepeatSchema`
 
 Enum: `"off" \| "all" \| "one"`
@@ -3316,9 +3320,15 @@ Enum: `"off" \| "all" \| "one"`
 
 Enum: `"off" \| "on" \| "idle" \| "playing" \| "paused" \| "buffering" \| "standby"`
 
+### `MediaPlayerStateSourceSchema`
+
+Enum: `"reported" \| "assumed"`
+
 ### `MediaPlayerStatusSchema`
 
 - `state`: `MediaPlayerStateSchema`
+- `stateSource?`: `MediaPlayerStateSourceSchema = "reported"`
+- `assumedFields?`: `MediaPlayerAssumedFieldSchema[] = []`
 - `volumeLevel`: `number \| null`
 - `isMuted`: `boolean \| null`
 - `source`: `string`
@@ -5331,6 +5341,44 @@ Enum: `"continuous" \| "motion" \| "person" \| "vehicle" \| "animal" \| "lineCro
 - `linkable?`: `boolean`
 - `app?`: `{ kind: "native" } \| { kind: "browser"; startPath: string } \| null`
 
+### `RemoteBoundCommandSchema`
+
+- `role`: `string`
+- `label?`: `string`
+- `custom`: `boolean`
+
+### `RemoteCommandListSchema`
+
+- `layoutTemplateId`: `string \| null`
+- `power`: `{ mode: "toggle" \| "discrete" }`
+- `commands`: `RemoteBoundCommandSchema[]`
+
+### `RemoteMediaCommandResultSchema`
+
+- `{ status: "sent"; sends: number }`
+- `{ status: "skipped"; reason: "already-in-state" }`
+- `{ status: "refused"; reason: RemoteRefusalReasonSchema; detail?: string }`
+- `{ status: "not-routed" }`
+
+### `RemoteMediaCommandSchema`
+
+Enum: `"play" \| "pause" \| "stop" \| "next" \| "previous" \| "setMute" \| "selectSource"`
+
+### `RemoteRefusalReasonSchema`
+
+Enum: `"no-remote" \| "unbound-role" \| "action-failed"`
+
+### `RemoteSendResultSchema`
+
+- `{ status: "sent"; sends: number }`
+- `{ status: "skipped"; reason: "already-in-state" }`
+- `{ status: "refused"; reason: RemoteRefusalReasonSchema; detail?: string }`
+
+### `RemoteSetConfigResultSchema`
+
+- `{ status: "saved" }`
+- `{ status: "refused"; reason: "unknown-template" \| "not-a-media-player"; detail: string }`
+
 ### `RenderedAsSchema`
 
 - `level`: `string`
@@ -6469,6 +6517,31 @@ Enum: `"jwt-signing-key"`
 
 - `temperature`: `number \| null`
 - `lastFetchedAt`: `number`
+
+### `TemplateDeleteResultSchema`
+
+- `{ status: "deleted" }`
+- `{ status: "not-found" }`
+- `{ status: "in-use"; devices: TemplateUserSchema[] }`
+
+### `TemplateRecordSchema`
+
+- `id`: `string`
+- `kind`: `"remote"`
+- `name`: `string`
+- `payload`: `unknown`
+- `createdAt`: `number`
+- `updatedAt`: `number`
+
+### `TemplateUserSchema`
+
+- `deviceId`: `number`
+- `name`: `string`
+
+### `TemplateWriteResultSchema`
+
+- `{ status: "saved"; template: TemplateRecordSchema }`
+- `{ status: "refused"; reason: "invalid-payload" \| "not-found"; detail: string }`
 
 ### `TerminalInstanceInfoSchema`
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Generated routers for the new ir-transmitter and remote capabilities
+- The remote and template capabilities are routed, and a bound remote command is honoured on cross-node calls
+
 ## [1.2.684] - 2026-10-29
 
 ### Changed

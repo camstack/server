@@ -478,6 +478,12 @@
           },
           {
             "name": "actions"
+          },
+          {
+            "name": "template"
+          },
+          {
+            "name": "remote"
           }
         ]
       },

@@ -267,7 +267,12 @@ describe('HA actuator caps — Phase C3', () => {
         repeat: 'all' as const,
         lastChangedAt: 1,
       }
-      expect(MediaPlayerStatusSchema.parse(sample)).toEqual(sample)
+      // A slice written before `stateSource` existed parses as a reading.
+      expect(MediaPlayerStatusSchema.parse(sample)).toEqual({
+        ...sample,
+        stateSource: 'reported',
+        assumedFields: [],
+      })
     })
 
     it('status accepts a minimal off-state sample with nullables', () => {
@@ -284,7 +289,14 @@ describe('HA actuator caps — Phase C3', () => {
         repeat: null,
         lastChangedAt: 0,
       }
-      expect(MediaPlayerStatusSchema.parse(sample)).toEqual(sample)
+      expect(MediaPlayerStatusSchema.parse(sample)).toEqual({
+        ...sample,
+        stateSource: 'reported',
+        assumedFields: [],
+      })
+      expect(MediaPlayerStatusSchema.parse({ ...sample, stateSource: 'assumed' }).stateSource).toBe(
+        'assumed',
+      )
     })
 
     it('seek rejects negative position', () => {

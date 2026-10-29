@@ -36,6 +36,7 @@ import { brokerCallForCap } from '../moleculer/trpc-links.js'
 import type { HubNodeRegistry } from '../moleculer/node-registry.js'
 import type { ClaimedStatusResolver } from '../status-overlay.js'
 import { answerClaimedGetStatus } from './claimed-get-status.js'
+import { answerDeviceCallRedirect, type DeviceCallRedirectHook } from './device-call-redirect.js'
 import type { ServiceBroker } from 'moleculer'
 
 /**
@@ -272,6 +273,15 @@ export interface ParentUnownedCallDeps {
    * no hub round-trip, so a claim is not honoured there (D663 open item).
    */
   readonly claimedStatus?: ClaimedStatusResolver
+  /**
+   * The device-call redirect (D963): asked, right after the claim authority and
+   * before any route, for a covered device-scoped call — a media-player command
+   * whose role the device's remote binds. A redirected call IS answered here and
+   * the resolver is never consulted; a failing redirect throws. Omitted (the
+   * agent has no redirect authority; its forward reaches the hub's) ⇒ legacy
+   * routing exactly.
+   */
+  readonly deviceCallRedirect?: DeviceCallRedirectHook
   /** Optional logger for the broker-fallback diagnostic line. */
   readonly logger?: ParentUnownedCallLogger
 }
@@ -377,6 +387,15 @@ export function createParentUnownedCallHandler(
       args: input.args,
     })
     if (claimed !== null) return claimed.slice
+
+    // A covered device-scoped call the device's remote takes over (D963).
+    const redirected = await answerDeviceCallRedirect(deps.deviceCallRedirect, {
+      capName: input.capName,
+      method: input.method,
+      ...(deviceId !== undefined ? { deviceId } : {}),
+      args: input.args,
+    })
+    if (redirected !== null) return redirected.result
 
     // Explicit per-call node pin. Two sources, in priority order:
     //   1. `input.nodeId` — the out-of-band `nodePin(op.context)` lifted onto

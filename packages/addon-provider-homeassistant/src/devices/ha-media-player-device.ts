@@ -15,6 +15,8 @@ import type { HaEntityState } from '../ha-types.js'
 
 const COLD_START: MediaPlayerStatus = {
   state: 'off',
+  stateSource: 'reported',
+  assumedFields: [],
   volumeLevel: null,
   isMuted: null,
   source: '',
@@ -49,6 +51,8 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
     const playerState = mapHaMediaPlayerState(state.state)
     const slice: MediaPlayerStatus = {
       state: playerState ?? 'off',
+      stateSource: 'reported',
+      assumedFields: [],
       volumeLevel: readVolumeAsPercent(attrs),
       isMuted: readBooleanAttr(attrs, 'is_volume_muted'),
       source: readStringAttr(attrs, 'source') ?? '',

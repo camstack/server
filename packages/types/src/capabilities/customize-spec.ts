@@ -8,7 +8,7 @@
 import type { z } from 'zod'
 import type { DeviceType } from '../device/device-type.js'
 
-export type CustomizeCardinality = 'scalar' | 'keyedArray' | 'event'
+export type CustomizeCardinality = 'scalar' | 'keyedArray' | 'event' | 'config'
 export type CustomizeValueKind = 'boolean' | 'number' | 'string' | 'enum'
 /** An extension is offered only when the device lacks the capability (D944). */
 export type CustomizeApplyMode = 'add'
@@ -22,6 +22,7 @@ export type CapabilityCustomizeTarget =
   | ScalarCustomizeTarget
   | KeyedArrayCustomizeTarget
   | EventCustomizeTarget
+  | ConfigCustomizeTarget
 
 export interface CustomizeVocabularyRef {
   readonly cap: string
@@ -263,3 +264,22 @@ export interface SpanEventCustomizeTarget extends EventCustomizeTargetBase {
 }
 
 export type EventCustomizeTarget = PulseEventCustomizeTarget | SpanEventCustomizeTarget
+
+/**
+ * An extension that is not a value composed from other devices but a
+ * configuration the operator keeps for the device (D963: the remote). It has no
+ * sources, no composition claim and no runtime-state path: the capability reads
+ * and writes it through two of its own methods, both taking a top-level
+ * `deviceId`, and the editor is derived from that pair.
+ */
+export interface ConfigCustomizeTarget {
+  readonly id: string
+  readonly cardinality: 'config'
+  readonly vocabulary: CustomizeVocabularyRef
+  readonly deviceTypes?: readonly DeviceType[]
+  readonly apply: CustomizeApplyMode
+  /** The query that returns the stored configuration of a device. */
+  readonly readMethod: string
+  /** The mutation that replaces it. */
+  readonly writeMethod: string
+}

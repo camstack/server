@@ -4,7 +4,7 @@
 
 # Decisions
 
-925 architecture decision records. One file per decision, never
+927 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -940,6 +940,8 @@ that rots.
 | D960 | [A notifier declares its delivery parameters; a rule offers them when a selected notifier declares them](adr-0960-a-notifier-declares-its-delivery-parameters-and-a-rule-offers-them.md) | ✅ accepted | 2026-10-28 |
 | D961 | [An alert action may invoke an addon custom action; a skewed placement is suggested, not auto-corrected](adr-0961-an-alert-action-may-invoke-a-custom-action-and-a-rebalance-is-suggested-not-forced.md) | ✅ accepted | 2026-10-28 |
 | D962 | [A fresh node is given every any-node addon the hub installs](adr-0962-a-fresh-node-is-given-the-hubs-any-node-addons.md) | ✅ accepted | 2026-10-28 |
+| D963 | [Infrared control is two caps, a transport on the board and a remote on the appliance, and its state is assumed, never reported](adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md) | ✅ accepted | 2026-10-28 |
+| D964 | [A remote is a Customize extension over a generic template collection, binds roles to Actions, and takes precedence at dispatch](adr-0964-a-remote-is-a-customize-extension-over-a-generic-template-collection-binds-roles-to-actions-and-takes-precedence-at-dispatch.md) | ✅ accepted | 2026-10-28 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

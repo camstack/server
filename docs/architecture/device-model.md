@@ -417,6 +417,22 @@ capability gained by the host from other devices — with a `projects` cap and a
 D648): a host that gains a capability from other devices is a composition or a
 customization (below), not a slot.
 
+## A remote: commands that outrank the native cap, at dispatch (D964)
+
+A media-player device can carry a `remote` Customize extension (`config`
+cardinality, per-device settings store): a layout template (the generic
+`template` collection, kind `remote`), a role to Actions-step binding map, custom
+buttons and a power mode. An IR binding is `ir-transmitter.send` on a
+transmitter device (a default one is stored, a binding may name another). Precedence is NOT a UI rule: core-blocks installs a device-call redirect
+in the capability registry (`setDeviceCallRedirect`), so every registry
+resolution (and the three by-name transport entries: local child registry,
+parent unowned call, Moleculer `callCapabilityOnNode`) hands a covered
+`media-player` command to `remote.sendMediaCommand` first. `not-routed` (role
+unbound) falls through to the native cap; a failing binding fails the call.
+`getStatus` is answered from the remote's assumed state only when no native
+provider exists. `scripts/check-claimed-get-status.ts` fails an entry that skips
+the hook. Repeat counts are per call, never stored. See D964.
+
 ## Composed devices: a device built from other devices' fields
 
 [D659](../decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md).

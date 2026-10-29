@@ -31,7 +31,7 @@ function main(): void {
   }
   // eslint-disable-next-line no-console
   console.log(
-    `check-claimed-get-status: OK — ${files.length} source files, every name-resolving entry asks the claim authority`,
+    `check-claimed-get-status: OK — ${files.length} source files, every name-resolving entry asks the claim authority and the device-call redirect`,
   )
 }
 

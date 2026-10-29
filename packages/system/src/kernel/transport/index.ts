@@ -125,6 +125,12 @@ export {
   GET_STATUS_METHOD,
 } from './claimed-get-status.js'
 export type { ClaimedGetStatusAnswer, ClaimedGetStatusCall } from './claimed-get-status.js'
+export { answerDeviceCallRedirect } from './device-call-redirect.js'
+export type {
+  DeviceCallRedirectInput,
+  DeviceCallRedirectResult,
+  DeviceCallRedirectHook,
+} from './device-call-redirect.js'
 export type { ParentUnownedCallDeps, ParentUnownedCallLogger } from './parent-unowned-call.js'
 export {
   createHubCapForwardService,

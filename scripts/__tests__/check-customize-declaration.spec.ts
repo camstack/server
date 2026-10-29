@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { CAP_CUSTOMIZE_CATALOG } from '../../packages/types/src/generated/customize-catalog.ts'
 import type { CapabilityCustomizeSpec } from '../../packages/types/src/capabilities/customize-spec.ts'
 import type {
+  ConfigCustomizeTarget,
   KeyedArrayCustomizeTarget,
   PulseEventCustomizeTarget,
   ScalarCustomizeTarget,
@@ -37,10 +38,11 @@ interface ViewOptions {
   readonly events?: CustomizeCapView['events']
   readonly itemArray?: CustomizeCapView['itemArray']
   readonly vocabularyHas?: CustomizeCapView['vocabularyHas']
+  readonly methods?: CustomizeCapView['methods']
 }
 
 function view(
-  runtime: z.ZodObject<z.core.$ZodLooseShape>,
+  runtime: z.ZodObject<z.core.$ZodLooseShape> | undefined,
   customize: CapabilityCustomizeSpec,
   options: ViewOptions = {},
 ): CustomizeCapView {
@@ -50,6 +52,7 @@ function view(
     deviceTypes: options.deviceTypes ?? [DeviceType.Camera],
     events: options.events,
     itemArray: options.itemArray,
+    methods: options.methods ?? {},
     customize,
     vocabularyHas: options.vocabularyHas ?? (() => true),
   }
@@ -285,6 +288,7 @@ describe('customize declaration guard', () => {
       'doorbell',
       'motion',
       'power-meter',
+      'remote',
       'running-state',
     ])
     expect(CAP_CUSTOMIZE_CATALOG['temperature-sensor']).toBeUndefined()
@@ -320,5 +324,58 @@ describe('customize declaration guard', () => {
       DeviceType.PetFeeder,
     ])
     expect(runningTypes).not.toContain(DeviceType.Camera)
+  })
+})
+
+describe('a config target (D963)', () => {
+  const config: ConfigCustomizeTarget = {
+    id: 'remote',
+    cardinality: 'config',
+    vocabulary: { cap: 'demo' },
+    apply: 'add',
+    readMethod: 'getConfig',
+    writeMethod: 'setConfig',
+  }
+  const spec: CapabilityCustomizeSpec = { version: 1, targets: [config] }
+  const methods: CustomizeCapView['methods'] = {
+    getConfig: { kind: 'query', takesDeviceId: true },
+    setConfig: { kind: 'mutation', takesDeviceId: true },
+  }
+
+  it('needs no runtime state and judges clean when its two methods exist', () => {
+    expect(judgeCustomize(view(undefined, spec, { methods }))).toEqual([])
+  })
+
+  it('names a read or write method the cap does not have', () => {
+    const found = judgeCustomize(
+      view(undefined, spec, { methods: { getConfig: methods.getConfig! } }),
+    )
+    expect(rules(found)).toEqual(['unknown-config-method'])
+  })
+
+  it('refuses a write that is not a mutation or a method that does not take deviceId', () => {
+    const wrongKind = judgeCustomize(
+      view(undefined, spec, {
+        methods: { ...methods, setConfig: { kind: 'query', takesDeviceId: true } },
+      }),
+    )
+    expect(rules(wrongKind)).toEqual(['bad-config-method'])
+    const noDevice = judgeCustomize(
+      view(undefined, spec, {
+        methods: { ...methods, getConfig: { kind: 'query', takesDeviceId: false } },
+      }),
+    )
+    expect(rules(noDevice)).toEqual(['bad-config-method'])
+  })
+
+  it('projects to the catalog with both methods and no sources', () => {
+    const entry = projectCustomize(view(undefined, spec, { methods }))
+    expect(entry.targets[0]).toMatchObject({
+      id: 'remote',
+      cardinality: 'config',
+      readMethod: 'getConfig',
+      writeMethod: 'setConfig',
+      sources: [],
+    })
   })
 })

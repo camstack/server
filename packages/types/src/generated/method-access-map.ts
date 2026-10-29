@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1406 method paths across 188 capabilities.
+ * Coverage: 1416 method paths across 190 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1120,6 +1120,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'records.query': { capName: "records", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'records.secretRefs': { capName: "records", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'records.transact': { capName: "records", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'remote.getConfig': { capName: "remote", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'remote.listCommands': { capName: "remote", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'remote.sendCommand': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'remote.sendMediaCommand': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'remote.setConfig': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'runningState.getStatus': { capName: "running-state", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'sceneMonitor.captureReference': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
   'sceneMonitor.createScene': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
@@ -1290,6 +1295,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'system.setSiteLocation': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'tamper.getStatus': { capName: "tamper", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'temperatureSensor.getStatus': { capName: "temperature-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'template.create': { capName: "template", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'template.delete': { capName: "template", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'template.get': { capName: "template", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'template.list': { capName: "template", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'template.update': { capName: "template", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.adoptLegacyMonitor': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.close': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.createInstance': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1577,6 +1587,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "recording-onboard",
   "recording-signal",
   "records",
+  "remote",
   "running-state",
   "scene-monitor",
   "script-runner",
@@ -1600,6 +1611,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "system",
   "tamper",
   "temperature-sensor",
+  "template",
   "terminal-session",
   "toast",
   "training",
@@ -1795,6 +1807,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "recording-archive",
   "recording-export",
   "records",
+  "remote",
   "server-management",
   "settings-store",
   "smtp-provider",
@@ -1807,6 +1820,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "storage-provider",
   "stream-broker",
   "system",
+  "template",
   "terminal-session",
   "toast",
   "training",

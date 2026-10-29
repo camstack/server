@@ -50,12 +50,14 @@ import type { plateGalleryCapability } from '../capabilities/plate-gallery.cap.j
 import type { recordEntriesCapability } from '../capabilities/record-entries.cap.js'
 import type { recordingArchiveCapability } from '../capabilities/recording-archive.cap.js'
 import type { recordingExportCapability } from '../capabilities/recording-export.cap.js'
+import type { remoteCapability } from '../capabilities/remote.cap.js'
 import type { serverManagementCapability } from '../capabilities/server-management.cap.js'
 import type { settingsStoreCapability } from '../capabilities/settings-store.cap.js'
 import type { storageCapability } from '../capabilities/storage.cap.js'
 import type { storageMigrationCapability } from '../capabilities/storage-migration.cap.js'
 import type { streamBrokerCapability } from '../capabilities/stream-broker.cap.js'
 import type { systemCapability } from '../capabilities/system.cap.js'
+import type { templateCapability } from '../capabilities/template.cap.js'
 import type { terminalSessionCapability } from '../capabilities/terminal-session.cap.js'
 import type { toastCapability } from '../capabilities/toast.cap.js'
 import type { trainingCapability } from '../capabilities/training.cap.js'
@@ -116,12 +118,14 @@ export interface SystemProxy {
   readonly recordEntries: Pick<InferProvider<typeof recordEntriesCapability>, 'listEntryKinds' | 'listEntries' | 'putEntry' | 'deleteEntry'>
   readonly recordingArchive: Pick<InferProvider<typeof recordingArchiveCapability>, 'getAvailabilityBatch' | 'getDaysWithRecordingsBatch' | 'getStorageUsage' | 'listOpsLog' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'refreshStorageLocationsForMigration' | 'startStorageMigrationMove' | 'getStorageMigrationMoveStatus' | 'cancelStorageMigrationMove' | 'relocateFootage' | 'listRelocateJobs' | 'getRelocateResidue' | 'reconcileLedgerAgainstDisk' | 'cancelRelocateJob' | 'planStorageRebalance' | 'startStorageRebalance' | 'getPlacement' | 'setDevicePlacement'>
   readonly recordingExport: Pick<InferProvider<typeof recordingExportCapability>, 'createExport' | 'getExport' | 'cancelExport' | 'deleteExport' | 'getDownloadUrl' | 'readExportBytes'>
+  readonly remote: Pick<InferProvider<typeof remoteCapability>, 'getConfig' | 'setConfig' | 'listCommands' | 'sendCommand' | 'sendMediaCommand'>
   readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'rollbackServerUpdate' | 'restartServer'>
   readonly settingsStore: Pick<InferProvider<typeof settingsStoreCapability>, 'get' | 'set' | 'query' | 'upsert' | 'upsertMany' | 'insert' | 'insertMany' | 'transact' | 'update' | 'delete' | 'deleteWhere' | 'updateWhere' | 'count' | 'aggregate' | 'histogram' | 'isEmpty' | 'declareCollection'>
   readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'upsertLocation' | 'deleteLocation' | 'listDrainProgress' | 'testLocation' | 'listProviders' | 'testConfig'>
   readonly storageMigration: Pick<InferProvider<typeof storageMigrationCapability>, 'plan' | 'start' | 'status' | 'cancel' | 'movers' | 'moverClearance' | 'residue' | 'drain' | 'cleanupStart' | 'cleanupStatus' | 'cleanupCancel' | 'history'>
   readonly streamBroker: Pick<InferProvider<typeof streamBrokerCapability>, 'fetchEventMedia' | 'listAllCameraStreams' | 'listAllProfileSlots' | 'getBrokerStats' | 'probeStream' | 'listClients' | 'getLiveViewerCounts' | 'killClient' | 'getStreamUrl' | 'getStreamWithCodec' | 'releaseStreamWithCodec' | 'acquireEgressTranscode' | 'releaseEgressTranscode' | 'subscribeAudioChunks' | 'pullAudioChunks' | 'unsubscribeAudioChunks' | 'setPreBufferDuration' | 'getPreBufferInfo' | 'getRtspPort' | 'getAllRtspEntries' | 'getRtspEntry' | 'regenerateRtspToken' | 'setRtspEnabled' | 'isRtspEnabled'>
   readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings'>
+  readonly template: Pick<InferProvider<typeof templateCapability>, 'list' | 'get' | 'create' | 'update' | 'delete'>
   readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listInstances' | 'createInstance' | 'updateInstance' | 'deleteInstance' | 'setInstanceEnabled' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
   readonly toast: Pick<InferProvider<typeof toastCapability>, 'onToast'>
   readonly training: Pick<InferProvider<typeof trainingCapability>, 'listBaseModels' | 'planJob' | 'startJob' | 'startJobBatch' | 'listJobs' | 'getJob' | 'cancelJob' | 'getJobResult' | 'listCanaryTargets' | 'registerResult' | 'canaryResult' | 'rollbackCanary' | 'discardResult'>
@@ -824,6 +828,14 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     readExportBytes: (input?: unknown) => dispatch('recordingExport', 'readExportBytes', 'query', input),
   }
 
+  const remoteInterface = {
+    getConfig: (input?: unknown) => dispatch('remote', 'getConfig', 'query', input),
+    setConfig: (input?: unknown) => dispatch('remote', 'setConfig', 'mutation', input),
+    listCommands: (input?: unknown) => dispatch('remote', 'listCommands', 'query', input),
+    sendCommand: (input?: unknown) => dispatch('remote', 'sendCommand', 'mutation', input),
+    sendMediaCommand: (input?: unknown) => dispatch('remote', 'sendMediaCommand', 'mutation', input),
+  }
+
   const serverManagementInterface = {
     getServerPackageStatus: (input?: unknown) => dispatch('serverManagement', 'getServerPackageStatus', 'query', input),
     checkServerUpdate: (input?: unknown) => dispatch('serverManagement', 'checkServerUpdate', 'mutation', input),
@@ -935,6 +947,14 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getFailureContributions: (input?: unknown) => dispatch('system', 'getFailureContributions', 'query', input),
     getLoggingSettings: (input?: unknown) => dispatch('system', 'getLoggingSettings', 'query', input),
     setLoggingSettings: (input?: unknown) => dispatch('system', 'setLoggingSettings', 'mutation', input),
+  }
+
+  const templateInterface = {
+    list: (input?: unknown) => dispatch('template', 'list', 'query', input),
+    get: (input?: unknown) => dispatch('template', 'get', 'query', input),
+    create: (input?: unknown) => dispatch('template', 'create', 'mutation', input),
+    update: (input?: unknown) => dispatch('template', 'update', 'mutation', input),
+    delete: (input?: unknown) => dispatch('template', 'delete', 'mutation', input),
   }
 
   const terminalSessionInterface = {
@@ -1049,12 +1069,14 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     recordEntries: recordEntriesInterface,
     recordingArchive: recordingArchiveInterface,
     recordingExport: recordingExportInterface,
+    remote: remoteInterface,
     serverManagement: serverManagementInterface,
     settingsStore: settingsStoreInterface,
     storage: storageInterface,
     storageMigration: storageMigrationInterface,
     streamBroker: streamBrokerInterface,
     system: systemInterface,
+    template: templateInterface,
     terminalSession: terminalSessionInterface,
     toast: toastInterface,
     training: trainingInterface,

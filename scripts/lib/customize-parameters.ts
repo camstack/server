@@ -37,6 +37,8 @@ function gapsForTarget(
   projected: CustomizeCatalogTarget,
 ): readonly string[] {
   switch (target.cardinality) {
+    case 'config':
+      return []
     case 'scalar':
       return sourceGaps(target.id, target.sources, projected.sources)
     case 'keyedArray':

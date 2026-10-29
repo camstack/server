@@ -3002,6 +3002,21 @@ export const useRecordingOnboardGetStatus: typeof trpc.recordingOnboard.getStatu
 /** Generated alias around `trpc.recordingSignal.getStatus.useQuery`. */
 export const useRecordingSignalGetStatus: typeof trpc.recordingSignal.getStatus.useQuery = trpc.recordingSignal.getStatus.useQuery
 
+/** Generated alias around `trpc.remote.getConfig.useQuery`. */
+export const useRemoteGetConfig: typeof trpc.remote.getConfig.useQuery = trpc.remote.getConfig.useQuery
+
+/** Generated alias around `trpc.remote.setConfig.useMutation`. */
+export const useRemoteSetConfig: typeof trpc.remote.setConfig.useMutation = trpc.remote.setConfig.useMutation
+
+/** Generated alias around `trpc.remote.listCommands.useQuery`. */
+export const useRemoteListCommands: typeof trpc.remote.listCommands.useQuery = trpc.remote.listCommands.useQuery
+
+/** Generated alias around `trpc.remote.sendCommand.useMutation`. */
+export const useRemoteSendCommand: typeof trpc.remote.sendCommand.useMutation = trpc.remote.sendCommand.useMutation
+
+/** Generated alias around `trpc.remote.sendMediaCommand.useMutation`. */
+export const useRemoteSendMediaCommand: typeof trpc.remote.sendMediaCommand.useMutation = trpc.remote.sendMediaCommand.useMutation
+
 /** Generated alias around `trpc.runningState.getStatus.useQuery`. */
 export const useRunningStateGetStatus: typeof trpc.runningState.getStatus.useQuery = trpc.runningState.getStatus.useQuery
 
@@ -3430,6 +3445,21 @@ export const useTamperGetStatus: typeof trpc.tamper.getStatus.useQuery = trpc.ta
 
 /** Generated alias around `trpc.temperatureSensor.getStatus.useQuery`. */
 export const useTemperatureSensorGetStatus: typeof trpc.temperatureSensor.getStatus.useQuery = trpc.temperatureSensor.getStatus.useQuery
+
+/** Generated alias around `trpc.template.list.useQuery`. */
+export const useTemplateList: typeof trpc.template.list.useQuery = trpc.template.list.useQuery
+
+/** Generated alias around `trpc.template.get.useQuery`. */
+export const useTemplateGet: typeof trpc.template.get.useQuery = trpc.template.get.useQuery
+
+/** Generated alias around `trpc.template.create.useMutation`. */
+export const useTemplateCreate: typeof trpc.template.create.useMutation = trpc.template.create.useMutation
+
+/** Generated alias around `trpc.template.update.useMutation`. */
+export const useTemplateUpdate: typeof trpc.template.update.useMutation = trpc.template.update.useMutation
+
+/** Generated alias around `trpc.template.delete.useMutation`. */
+export const useTemplateDelete: typeof trpc.template.delete.useMutation = trpc.template.delete.useMutation
 
 /** Generated alias around `trpc.terminalSession.listProfiles.useQuery`. */
 export const useTerminalSessionListProfiles: typeof trpc.terminalSession.listProfiles.useQuery = trpc.terminalSession.listProfiles.useQuery
