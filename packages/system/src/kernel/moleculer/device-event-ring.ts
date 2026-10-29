@@ -28,10 +28,10 @@
  * default; silently collapsing an unclassified category would lose data nobody
  * decided to lose.
  *
- * NO deviceId ⇒ NOT HERE. An event that carries no device attribution
- * (`broker.message`, the Home Assistant state mirror, ~64 000/day, carries only
- * `brokerId` / `subscriptionId` / `key`) is a first-class case: it is retained
- * in the GLOBAL ring only and no device is invented for it. If attribution is
+ * NO deviceId ⇒ NOT HERE. An event that carries no device attribution is a
+ * first-class case: it is retained in the GLOBAL ring only and no device is
+ * invented for it. (`broker.message`, the Home Assistant state mirror, used to be
+ * the example; it is on `RING_BUFFER_DENY_PATTERNS` now and is retained nowhere.) If attribution is
  * added later, the event starts landing in a device ring with no change here.
  *
  * MEMORY. The retained `data` payload is capped

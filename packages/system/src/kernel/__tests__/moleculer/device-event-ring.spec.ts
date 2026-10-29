@@ -159,13 +159,14 @@ describe('device-event-ring — mirror coalescing', () => {
 describe('device-event-ring — events with no deviceId', () => {
   it('stays in the GLOBAL ring and fabricates no device', () => {
     const state = createSharedBusState(true)
-    for (let i = 0; i < 5; i++) deliverShared(state, unattributedEvent('broker.message'))
+    for (let i = 0; i < 5; i++)
+      deliverShared(state, unattributedEvent('broker.unattributed-sample'))
 
     // Retained globally, exactly as before.
-    expect(state.recent.filter((e) => e.category === 'broker.message').length).toBe(5)
+    expect(state.recent.filter((e) => e.category === 'broker.unattributed-sample').length).toBe(5)
     // …and it created no device bucket at all.
     expect(state.deviceRings.byDevice.size).toBe(0)
-    expect(eventDeviceId(unattributedEvent('broker.message'))).toBeUndefined()
+    expect(eventDeviceId(unattributedEvent('broker.unattributed-sample'))).toBeUndefined()
   })
 
   it('a non-numeric device source id is unattributable, not a bucket of its own', () => {
@@ -289,9 +290,9 @@ describe('getRecent — a per-device ask is served from the per-device ring', ()
     broker = new ServiceBroker({ nodeID: 'hub3', transporter: 'Fake', logger: false })
     await broker.start()
     const bus = getBrokerEventBus(broker, { retainRecent: true })
-    bus.emit(unattributedEvent('broker.message'))
-    expect(bus.getRecent({ category: 'broker.message' }).length).toBe(1)
+    bus.emit(unattributedEvent('broker.unattributed-sample'))
+    expect(bus.getRecent({ category: 'broker.unattributed-sample' }).length).toBe(1)
     // An unattributed event never surfaces under a device scope.
-    expect(bus.getRecent({ deviceId: 42, category: 'broker.message' }).length).toBe(0)
+    expect(bus.getRecent({ deviceId: 42, category: 'broker.unattributed-sample' }).length).toBe(0)
   })
 })

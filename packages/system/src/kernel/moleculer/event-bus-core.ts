@@ -290,6 +290,10 @@ export const RING_BUFFER_DENY_PATTERNS: readonly string[] = [
   // A camera's RAW onboard motion push (D673), re-emitted at ~1 Hz by some
   // providers: the same noise `motion.on-motion-changed` was before the split.
   'provider.motion',
+  // The broker state mirror (Home Assistant entity states, ~64 000/day): the
+  // only readers are live subscribers (the HA child devices), which the deny
+  // list never gates — nothing reads it back out of the ring.
+  'broker.message',
   // `device.state-changed` is intentionally NOT denied (audit-grade) — the
   // MAX_RECENT_EVENTS length cap in `deliverShared` bounds it instead.
   'capability.binding-changed',

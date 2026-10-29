@@ -77,8 +77,19 @@ describe('createUdsEventBus — event interest', () => {
     const bus = createUdsEventBus(channel, 'pipeline')
     pushInterest([])
     bus.emit(evt('device.state-changed'))
-    bus.emit(evt('broker.message'))
+    bus.emit(evt('recording.started'))
     expect(emitEvent).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the broker state mirror off the socket unless a node wants it', () => {
+    const { channel, emitEvent, pushInterest } = makeChannel()
+    const bus = createUdsEventBus(channel, 'homeassistant')
+    pushInterest([])
+    bus.emit(evt('broker.message'))
+    expect(emitEvent).not.toHaveBeenCalled()
+    pushInterest(['broker.message'])
+    bus.emit(evt('broker.message'))
+    expect(emitEvent).toHaveBeenCalledTimes(1)
   })
 
   it('a null set clears the suppression (fail open again)', () => {

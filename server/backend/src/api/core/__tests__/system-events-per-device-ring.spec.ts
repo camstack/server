@@ -38,14 +38,14 @@ const deviceEvent = (deviceId: number, category: string): SystemEvent => {
   }
 }
 
-/** `broker.message` — the Home Assistant mirror — carries no device attribution. */
+/** A category with no device attribution (the old Home Assistant mirror shape). */
 const unattributedEvent = (): SystemEvent => {
   seq += 1
   return {
     id: `e-${seq}`,
     timestamp: new Date(1_800_000_000_000 + seq),
     source: { type: 'addon', id: 'homeassistant' },
-    category: 'broker.message',
+    category: 'broker.unattributed-sample',
     data: { brokerId: 'ha-1', subscriptionId: 's-1', key: 'sensor.x' },
   }
 }
@@ -124,6 +124,6 @@ describe('systemEvents.getRecent — per-device ring', () => {
 
     expect((await caller.getRecent({ deviceId: 102 })).length).toBe(0)
     // …and it is still there, in the global ring, for the unscoped panel.
-    expect((await caller.getRecent({ category: 'broker.message' })).length).toBe(5)
+    expect((await caller.getRecent({ category: 'broker.unattributed-sample' })).length).toBe(5)
   })
 })

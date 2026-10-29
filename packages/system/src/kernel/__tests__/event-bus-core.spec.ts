@@ -79,6 +79,9 @@ describe('event-bus-core deliverShared — one-shot vs retaining bus', () => {
       // A camera's RAW onboard motion push (D673): Hikvision re-emits it at ~1 Hz,
       // so it is the same noise the effective event is, and must not fill the rings.
       'provider.motion',
+      // The Home Assistant state mirror, ~64 000/day: live subscribers (the HA
+      // child devices) are the only readers; no consumer reads it from the ring.
+      'broker.message',
     ]) {
       expect(isHighFrequencyCategory(cat)).toBe(true)
     }

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Heap-watch exports the agent-main label used by the agent root heartbeat
 - A forked addon runner no longer sends high-frequency telemetry (pipeline traces, metrics snapshots) to the hub when nothing there listens, cutting event traffic
 - The hub and agent boot line says who chose the heap ceiling (override, legacy env, computed or V8 default)
+- The broker state mirror (broker.message) is no longer kept in the recent-events ring, so it stops evicting other events; live subscribers are unaffected
 
 ## [1.2.517] - 2026-10-29
 
