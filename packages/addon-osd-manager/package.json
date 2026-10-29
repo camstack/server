@@ -43,7 +43,8 @@
         "instanceMode": "unique",
         "mode": "standalone",
         "execution": {
-          "placement": "hub-only"
+          "placement": "hub-only",
+          "group": "integrations"
         },
         "capabilities": [
           {

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The pet fountain capability is listed as not exported to Home Assistant
 - The exported node memory sensor stays unknown when the node's memory could not be read
+- The Home Assistant export runs in the shared integrations runner with the other low-traffic integration addons, saving one process of memory
 
 ## [1.2.636] - 2026-10-29
 

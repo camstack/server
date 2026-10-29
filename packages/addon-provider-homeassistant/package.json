@@ -106,7 +106,8 @@
         "icon": "assets/icon.svg",
         "color": "#41bdf5",
         "execution": {
-          "placement": "hub-only"
+          "placement": "hub-only",
+          "group": "integrations"
         },
         "capabilities": [
           {

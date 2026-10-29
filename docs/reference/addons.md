@@ -46,11 +46,11 @@ this column exists to stop.
 | `device-manager` | `@camstack/system` | system | hub-main | `any-node` | — | — | `device-extension` `device-manager` `device-state` |
 | `embedding-encoder` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `embedding-encoder` |
 | `export-alexa` | `@camstack/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `oauth-integration` |
-| `export-google` | `@camstack/addon-export-google` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `oauth-integration` |
+| `export-google` | `@camstack/addon-export-google` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `oauth-integration` |
 | `export-hap` | `@camstack/addon-export-hap` | exports | own runner | `hub-only` | — | — | `device-export` `videoclips` |
 | `filesystem-storage` | `@camstack/system` | system | hub-main | `any-node` | — | — | `filesystem-browse` `storage-provider` |
 | `google-services` | `@camstack/addon-google-services` | messaging | own runner | `hub-only` | — | — | `addon-routes` `broker` `calendar-source` `smtp-provider` |
-| `homeassistant-export` | `@camstack/addon-provider-homeassistant` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `oauth-integration` |
+| `homeassistant-export` | `@camstack/addon-provider-homeassistant` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `oauth-integration` |
 | `hub-forwarder` | `@camstack/system` | system | hub-main | `agent-only` | — | — | `log-destination` |
 | `import-alexa` | `@camstack/addon-import-alexa` | providers | own runner | `any-node` | — | multiple | `addon-routes` `broker` `device-adoption` `device-provider` `notification-output` |
 | `keychain` | `@camstack/system` | system | hub-main | `any-node` | — | — | `keychain` `keychain-admin` |
@@ -64,7 +64,7 @@ this column exists to stop.
 | `motion-wasm` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |
 | `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `mqtt-broker` |
 | `notifiers` | `@camstack/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `notification-output` |
-| `osd-manager` | `@camstack/addon-osd-manager` | system | own runner | `hub-only` | — | unique | `addon-pages-source` `osd-manager` |
+| `osd-manager` | `@camstack/addon-osd-manager` | system | own runner | `hub-only` | `integrations` | unique | `addon-pages-source` `osd-manager` |
 | `pipeline-analytics` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |
 | `pipeline-orchestrator` | `@camstack/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `camera-pipeline-config` `display-palette` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
 | `pipeline-runner` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `failure-contribution` `load-contribution` `pipeline-runner` |
@@ -109,7 +109,7 @@ this column exists to stop.
 | `terminal` | `@camstack/addon-terminal` | system | own runner | `any-node` | — | unique | `terminal-session` |
 | `training` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `addon-pages-source` `training` |
 | `training-modal` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `training-provider` |
-| `waste-collections` | `@camstack/addon-waste-collections` | messaging | own runner | `hub-only` | — | — | `calendar-source` |
+| `waste-collections` | `@camstack/addon-waste-collections` | messaging | own runner | `hub-only` | `integrations` | — | `calendar-source` |
 | `webdav-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
 | `winston-logging` | `@camstack/system` | system | hub-main | `any-node` | — | — | `log-destination` |
 

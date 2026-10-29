@@ -39,7 +39,8 @@
         "description": "Fetches municipal waste collection schedules through the HACS waste_collection_schedule source catalog (full set) and exposes them as calendars.",
         "entry": "./dist/waste-collections.addon.js",
         "execution": {
-          "placement": "hub-only"
+          "placement": "hub-only",
+          "group": "integrations"
         },
         "capabilities": [
           {

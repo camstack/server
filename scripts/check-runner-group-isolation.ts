@@ -54,6 +54,21 @@ const ROOT = path.resolve(import.meta.dirname, '..')
 /** Groups exempted by D29 — non-live, frame-free, low-crash addons only. */
 const ALLOWED_GROUPS: ReadonlySet<string> = new Set(['ml'])
 
+/**
+ * The `integrations` group (D29): non-live, frame-free, low-crash integration
+ * addons that share one runner. A member that also declares one of these is a
+ * delivery, storage or login path — each must survive a sibling's crash, so it
+ * stays on its own runner. Membership itself is pinned by
+ * `scripts/__tests__/integrations-runner-group.spec.ts`.
+ */
+const INTEGRATIONS_GROUP = 'integrations'
+const INTEGRATIONS_FORBIDDEN_CAPS: ReadonlySet<string> = new Set([
+  'notification-output',
+  'storage-provider',
+  'auth-provider',
+  'login-method',
+])
+
 /** Declaring any of these makes an addon a device provider. */
 const PROVIDER_CAPS: ReadonlySet<string> = new Set(['broker', 'device-adoption'])
 
@@ -144,6 +159,18 @@ function checkPackage(pkgDir: string, problems: Problem[], members: GroupMember[
       addonId: typeof addon['id'] === 'string' ? addon['id'] : '(unnamed)',
       group,
     })
+    if (group === INTEGRATIONS_GROUP) {
+      const forbidden = capabilityNames(addon).find((c) => INTEGRATIONS_FORBIDDEN_CAPS.has(c))
+      if (forbidden !== undefined) {
+        problems.push({
+          pkg: pkgName,
+          addonId: typeof addon['id'] === 'string' ? addon['id'] : '(unnamed)',
+          message:
+            `declares \`execution.group: '${INTEGRATIONS_GROUP}'\` but also the \`${forbidden}\` ` +
+            `capability — a delivery, storage or login path must not die with a sibling (D29).`,
+        })
+      }
+    }
     if (ALLOWED_GROUPS.has(group)) continue
 
     const addonId = typeof addon['id'] === 'string' ? addon['id'] : '(unnamed)'
