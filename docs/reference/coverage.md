@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7375 source files · 208 units claimed by at least one document (7337 files).**
+**220 units · 7376 source files · 208 units claimed by at least one document (7338 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -67,8 +67,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-reolink/src/clips` | 26 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-20-clip-export.md` _(covers)_, +19 more | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +10 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
+| `packages/addon-provider-homeassistant/src/ha-export` | 25 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-08-05-home-assistant-native-export.md` _(covers)_, +5 more, 9 ADRs | 2026-10-26 |
 | `packages/addon-notifiers` | 24 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md`, 1 ADR | 2026-10-07 |
-| `packages/addon-provider-homeassistant/src/ha-export` | 24 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-08-05-home-assistant-native-export.md` _(covers)_, +5 more, 9 ADRs | 2026-10-26 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |
 | `packages/ui-library/src/primitives` | 24 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +3 more | 2026-10-26 |
 | `packages/addon-provider-bosch/src/homecom` | 22 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |

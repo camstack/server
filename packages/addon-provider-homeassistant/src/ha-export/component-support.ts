@@ -84,6 +84,7 @@ const KNOWN_PLATFORMS: ReadonlySet<string> = new Set<HaPlatform>([
   'camera',
   'alarm_control_panel',
   'number',
+  'notify',
   'cover',
   'climate',
   'lock',

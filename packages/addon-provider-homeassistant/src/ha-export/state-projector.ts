@@ -142,7 +142,9 @@ function renderCapValue(mapping: CapEntityDescriptor, raw: unknown): string | nu
     case 'camera':
       return typeof raw === 'string' ? raw : null
     case 'button':
-      // A button is write-only; the catalog gives it no `state_topic`.
+    case 'notify':
+      // A button and a notify entity are write-only; the catalog gives them no
+      // `state_topic`.
       return null
     case 'cover':
     case 'climate':

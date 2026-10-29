@@ -42,6 +42,9 @@ export type HaPlatform =
   | 'camera'
   | 'alarm_control_panel'
   | 'number'
+  // Component >= 0.5.0: a notify entity (a message sent to it leaves through a
+  // notification target). Negotiated; never assumed.
+  | 'notify'
   // ── Native device platforms. Component >= 0.4.0 (Tier B) ───────────────
   | 'cover'
   | 'climate'

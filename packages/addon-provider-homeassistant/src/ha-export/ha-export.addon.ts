@@ -141,7 +141,12 @@ import {
   type SyntheticRule,
   syntheticPlans,
 } from './synthetic-devices.js'
-import { parseCommandTopic, stateTopic } from './topics.js'
+import {
+  EXPORTED_ENTITIES_STABLE_ID,
+  ExportedEntities,
+  type ExportedEntitiesState,
+} from './exported-entities.js'
+import { parseCommandTopic, stateTopic, syntheticDeviceKeyFor } from './topics.js'
 import { SUPPORTED_DEVICE_KINDS } from './supported-device-kinds.js'
 import type {
   CatalogDevice,
@@ -190,6 +195,11 @@ interface HaExportConfig {
   /** Refreshed on every reconcile so the checkbox list stays honest. */
   readonly knownBrokers: readonly KnownBroker[]
   /**
+   * The actions and notification targets exported beside the devices (D967).
+   * Hidden state, written through `exposeEntity` / `unexposeEntity` only.
+   */
+  readonly exportedEntities: ExportedEntitiesState
+  /**
    * Base URL Home Assistant should use to FETCH media from this hub.
    * Empty means "work it out from the network caps"; a link that cannot
    * be resolved is never minted, because a broken image URL in HA reads
@@ -204,6 +214,7 @@ const DEFAULT_CONFIG: HaExportConfig = {
   reconcileIntervalSec: 300,
   membership: {},
   knownBrokers: [],
+  exportedEntities: { actions: [], targets: [] },
   publicBaseUrl: '',
 }
 
@@ -323,6 +334,8 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * whenever the synthetic devices are, never written to.
    */
   private syntheticRules: readonly SyntheticRule[] = []
+  /** D967: the actions and notification targets exported beside the devices. */
+  private exportedEntities: ExportedEntities | null = null
   /**
    * `pipelineOrchestrator.getCameraStatuses`, keyed by deviceId — ONE call
    * per reconcile pass for every exported camera (Task C3), never per
@@ -408,6 +421,17 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       this.links.clear()
     })
 
+    const exportedEntities = new ExportedEntities(
+      {
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        persist: (next) => this.updateGlobalSettings({ exportedEntities: next }),
+        reconcile: () => this.reconcile('exported-entities-changed'),
+      },
+      this.config.exportedEntities ?? DEFAULT_CONFIG.exportedEntities,
+    )
+    this.exportedEntities = exportedEntities
+
     const exportProvider: IDeviceExportProvider = {
       getStatus: async () => this.buildStatus(),
       listSupportedDeviceKinds: async () => [...SUPPORTED_DEVICE_KINDS],
@@ -420,6 +444,27 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         })),
       exposeDevice: async ({ deviceId }) => this.setMembershipEverywhere(deviceId, true),
       unexposeDevice: async ({ deviceId }) => this.setMembershipEverywhere(deviceId, false),
+      listSupportedEntityKinds: async () => ['device', 'action', 'notifier'],
+      listExposedEntities: async () => {
+        await exportedEntities.pruneDeleted()
+        return [
+          ...exposedDeviceIds(this.config.membership, this.enabledBrokerIds()).map((deviceId) => ({
+            entity: { kind: 'device' as const, deviceId },
+            exposedAs: brokersExposing(this.config.membership, deviceId)
+              .map((brokerId) => this.brokerName(brokerId))
+              .join(', '),
+          })),
+          ...exportedEntities.list(),
+        ]
+      },
+      exposeEntity: async ({ entity }) =>
+        entity.kind === 'device'
+          ? this.setMembershipEverywhere(entity.deviceId, true)
+          : exportedEntities.expose(entity),
+      unexposeEntity: async ({ entity }) =>
+        entity.kind === 'device'
+          ? this.setMembershipEverywhere(entity.deviceId, false)
+          : exportedEntities.unexpose(entity),
       getDeviceSettingsContribution: async ({ deviceId }) => this.buildContribution(deviceId),
       getDeviceLiveContribution: async () => null,
       applyDeviceSettingsPatch: async ({ deviceId, patch }) =>
@@ -1209,6 +1254,36 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
        * `brokerIds` is every enabled broker, because they belong to the server
        * and not to a membership the operator picks per camera.
        */
+      /**
+       * The exported actions and notification targets (D967): one more
+       * synthetic device. What the operator deleted is dropped first (a failed
+       * read changes nothing); a target the component cannot build as `notify`
+       * is named, not silently lost.
+       */
+      if (this.exportedEntities !== null) {
+        await this.exportedEntities.pruneDeleted()
+        const { plan: entitiesPlan, withheld } = this.exportedEntities.plan(
+          this.componentSupport.supportForAll([...enabled]),
+        )
+        if (withheld.length > 0) {
+          this.ctx.logger.warn(
+            'ha-export: notification targets withheld — the Home Assistant component does not build notify entities yet',
+            { meta: { targetIds: withheld } },
+          )
+        }
+        if (entitiesPlan !== null) {
+          exported.set(entitiesPlan.deviceKey, {
+            plan: entitiesPlan,
+            deviceId: -1,
+            target: { deviceId: -1, type: 'synthetic', boundCaps: [] },
+            brokerIds: [...enabled],
+            streams: [],
+            cameraFunctions: null,
+          })
+          entityCount += Object.keys(entitiesPlan.cmps).length
+        }
+      }
+
       const synthetic = await this.buildSynthetic(byId)
       if (synthetic !== null) {
         for (const plan of syntheticPlans(synthetic)) {
@@ -2489,6 +2564,23 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
      * `setRuleEnabled`, never a store of its own. A second knob that can
      * disagree with the admin UI is worse than no knob (D62).
      */
+    if (
+      this.exportedEntities !== null &&
+      parsed.deviceKey === syntheticDeviceKeyFor(EXPORTED_ENTITIES_STABLE_ID)
+    ) {
+      const outcome = await this.exportedEntities.handleCommand(parsed.entity, value)
+      if (!outcome.handled) {
+        this.ctx.logger.warn('ha-export: dropping a command for an entity that is not exported', {
+          meta: { topic, entity: parsed.entity },
+        })
+        reply.status(422)
+        reply.send({ error: 'entity not exported' })
+        return
+      }
+      reply.status(outcome.applied ? 200 : 422)
+      reply.send(outcome.applied ? {} : { error: 'command not applied' })
+      return
+    }
     if (isSyntheticDeviceKey(parsed.deviceKey)) {
       const ruleId = ruleIdFromEntity(parsed.entity, this.syntheticRules)
       if (ruleId === null) {
