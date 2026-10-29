@@ -4,7 +4,18 @@ import type {
   InferenceCapabilities,
   ModelAvailability,
 } from '../interfaces/inference-capabilities.js'
-import type { AudioResult, FrameResult } from '../types/detection.js'
+import type { AudioResult } from '../types/detection.js'
+import {
+  PipelineRunResultBridge,
+  PipelineStepInputSchema,
+  type PipelineStepInputOutput,
+} from './pipeline-step-input.js'
+
+// The step-input schema and the run-result bridge live in a schema-light module
+// (`addon-dist-footprint`, D28) so an addon can reach them without evaluating
+// this file's graph. Re-exported here: the barrel surface is unchanged.
+export { PipelineRunResultBridge, PipelineStepInputSchema }
+export type { PipelineStepInputOutput }
 import {
   ModelProviderIdSchema,
   RootStepSupplySchema,
@@ -286,35 +297,6 @@ export type EngineProvisioning = z.infer<typeof EngineProvisioningSchema>
 // `settings` (each step declares its own field in `configSchema`); the
 // runtime executor falls back to `StepDefinition.defaultConfidence`
 // when settings don't override.
-export type PipelineStepInputOutput = {
-  readonly addonId: string
-  readonly modelId?: string
-  readonly enabled: boolean
-  readonly children?: readonly PipelineStepInputOutput[]
-  readonly settings?: Readonly<Record<string, unknown>>
-  /**
-   * Step-tree device jump (same-node, phase 1). Operator manual override
-   * carried from the per-(node,device) BASE
-   * (`inferenceDevices[node][deviceKey].steps[step].jumpDeviceKey`): run THIS
-   * enrichment step (and its inherited children) on a DIFFERENT enabled device
-   * of the SAME node — `<backend>:<device>` (e.g. `openvino:npu`). Absent ⇒ the
-   * runner AUTO-jumps only when the effective device's format cannot run the
-   * step's model, else the step inherits the effective device. Same-node only.
-   */
-  readonly jumpDeviceKey?: string
-}
-
-export const PipelineStepInputSchema: z.ZodType<PipelineStepInputOutput> = z.lazy(() =>
-  z.object({
-    addonId: z.string(),
-    modelId: z.string().optional(),
-    enabled: z.boolean().default(true),
-    children: z.array(PipelineStepInputSchema).optional(),
-    settings: z.record(z.string(), z.unknown()).optional(),
-    jumpDeviceKey: z.string().optional(),
-  }),
-)
-
 // ── Pre-init validation (Gate B) ──────────────────────────────────
 // `validatePipeline` is PURE COMPUTE against the calling node's
 // `currentEngine.format` — it never writes the node-global
@@ -434,7 +416,6 @@ const ConfigUISchemaBridge = z.custom<ConfigUISchema>()
 const ConfigUISchemaNullableBridge = z.custom<ConfigUISchema | null>()
 const InferenceCapabilitiesBridge = z.custom<InferenceCapabilities>()
 const ModelAvailabilityListBridge = z.custom<readonly ModelAvailability[]>()
-export const PipelineRunResultBridge = z.custom<FrameResult>()
 
 /**
  * Pipeline executor — detection engine + configuration + inference API.

@@ -3643,7 +3643,7 @@
 
 ### `pipeline-executor` → `pipelineExecutor.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-executor.cap.ts:451`
+- **Source:** `packages/types/src/capabilities/pipeline-executor.cap.ts:432`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IPipelineExecutorProvider`

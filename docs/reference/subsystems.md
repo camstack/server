@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7365 source files · 1212 file(s) in no subsystem.**
+**31 subsystems · 7366 source files · 1212 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -25,7 +25,7 @@ commits. A generated page may not.
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 103 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +77 more, 13 ADRs | 2026-10-27 | ✅ |
 | Transport and cross-node routing | 104 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +54 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 317 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +223 more, 51 ADRs | 2026-10-26 | ✅ |
+| Capability system and codegen | 318 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +223 more, 51 ADRs | 2026-10-26 | ✅ |
 | Device model and the provider contract | 108 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +54 more, 6 ADRs | 2026-10-26 | ✅ |
 | Device providers (per vendor) | 661 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +78 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
@@ -81,7 +81,7 @@ Declares what a node can do — every `*.cap.ts`, the routers generated from the
 
 - **Owner doc**: `docs/architecture/capabilities.md`
 - **Code**: `packages/types/src/capabilities/**`, `packages/types/src/generated/**`, `packages/types/src/interfaces/**`, `packages/types/src/cap-call-context.ts`, `packages/system/src/kernel/capability-registry.ts`, `packages/system/src/kernel/capability-handle.ts`, `packages/system/src/kernel/cap-router-builder.ts`, `packages/system/src/kernel/infra-capabilities.ts`, `server/backend/src/core/capability/**`
-- **Files**: 317 (316 claimed by some document)
+- **Files**: 318 (317 claimed by some document)
 - **Uncovered**: `server/backend/src/core/capability` (1)
 
 ### ✅ Device model and the provider contract

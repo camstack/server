@@ -31,7 +31,19 @@ export { expandCapMethods } from './capabilities/capability-definition.js'
 // from the root barrel pulled the whole schema graph in with it (D28, ~146 MB
 // RSS per forked runner). Safe here: `custom-actions.ts` imports zod
 // TYPE-only, so it adds no schema construction to this entry's graph.
-export { describeCustomActions } from './capabilities/custom-actions.js'
+export {
+  customAction,
+  defineCustomActions,
+  describeCustomActions,
+} from './capabilities/custom-actions.js'
+// Schema-light pipeline run shapes (own module, not `pipeline-executor.cap`).
+export {
+  PipelineRunResultBridge,
+  PipelineStepInputSchema,
+} from './capabilities/pipeline-step-input.js'
+export type { PipelineStepInputOutput } from './capabilities/pipeline-step-input.js'
+export { defineRecordKinds } from './records/record-kind.js'
+export { addonPagesSourceCapability } from './capabilities/addon-pages-source.cap.js'
 // Schema-free list the transport uses to strip spoofable caller stamps (D28).
 export {
   CALLER_STAMPED_CAPABILITIES,

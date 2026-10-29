@@ -9,7 +9,7 @@
  * D791), which drives the measured node's own runner; the Audio section calls
  * the executor directly. History and the session replay are gone.
  */
-import { customAction, defineCustomActions, PipelineRunResultBridge } from '@camstack/types'
+import { customAction, defineCustomActions, PipelineRunResultBridge } from '@camstack/types/addon'
 import { PipelineRunInputSchema } from './benchmark-schemas.js'
 
 export const benchmarkActions = defineCustomActions({

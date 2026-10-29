@@ -4,7 +4,7 @@
  *
  * No side effects: the records guards import this module.
  */
-import { defineRecordKinds } from '@camstack/types'
+import { defineRecordKinds } from '@camstack/types/addon'
 import { EvalRunBodySchema, EvalSampleBodySchema } from './benchmark-schemas.js'
 import { EVAL_RUNS_KEPT_PER_DATASET_DEVICE } from './accuracy/eval-retention.js'
 

@@ -15,7 +15,7 @@ import type {
   FrameResult,
   IAddonPageProvider,
 } from '@camstack/types'
-import { BaseAddon, addonPagesSourceCapability } from '@camstack/types'
+import { BaseAddon, addonPagesSourceCapability } from '@camstack/types/addon'
 import type { z } from 'zod'
 import { benchmarkActions, type BenchmarkActions } from './benchmark-actions.js'
 import { benchmarkRecordKinds } from './record-kinds.js'

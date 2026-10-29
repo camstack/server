@@ -2,9 +2,5 @@
   "addon-post-analysis:pipeline-analytics": {
     "maxGrowthMb": 80,
     "reason": "Measured +67 MB over the bare runner after ALL_CAPABILITY_DEFINITIONS left the bundle. The shared clip-model-registry chunk still evaluates ~44 MB of inlined types schemas through other barrel value imports; shrinking it further is a follow-up, this budget stops it growing back."
-  },
-  "addon-benchmark:benchmark": {
-    "maxGrowthMb": 130,
-    "reason": "Measured +110 MB on 2026-10-13: it imports pipeline step schemas (PipelineStepInputSchema, PipelineRunResultBridge, customAction) as barrel VALUES, which evaluates the pipeline schema graph. Not yet reduced; the budget stops it growing, replacing those imports is a follow-up."
   }
 }
