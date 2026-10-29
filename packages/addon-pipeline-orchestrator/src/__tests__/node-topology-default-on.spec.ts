@@ -3,19 +3,34 @@
  * explicit stored `false` turns a role off. A re-paired agent (new node id, no
  * stored settings) must enter balancing.
  */
-import { describe, it, expect, vi } from 'vitest'
-import type { IEventBus, IScopedLogger } from '@camstack/types'
+import { describe, it, expect } from 'vitest'
+import type { IEventBus, IScopedLogger, LogTags } from '@camstack/types'
 import { NodeTopologyService } from '../node-topology.js'
 import type { AgentSettingsMapBlob } from '../orchestrator-store-schemas.js'
 
+function makeLogger(): IScopedLogger {
+  const self: IScopedLogger = {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+    child: (_scope: string) => self,
+    withTags: (_tags: LogTags) => self,
+  }
+  return self
+}
+
+function makeEventBus(): IEventBus {
+  return {
+    emit: () => {},
+    subscribe: () => () => {},
+    getRecent: () => [],
+  }
+}
+
 function makeTopology(blob: AgentSettingsMapBlob): NodeTopologyService {
-  const logger = {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  } as unknown as IScopedLogger
-  const eventBus = { emit: vi.fn(), subscribe: vi.fn() } as unknown as IEventBus
+  const logger = makeLogger()
+  const eventBus = makeEventBus()
   return new NodeTopologyService({
     readAgentSettingsMap: async () => blob,
     eventBus,
@@ -27,7 +42,7 @@ function makeTopology(blob: AgentSettingsMapBlob): NodeTopologyService {
 
 describe('NodeTopologyService — placement flags default on', () => {
   it('an agent with an empty stored entry is enabled for every role', async () => {
-    const topology = makeTopology({ 'mac-new': {} })
+    const topology = makeTopology({ 'mac-new': { maxCameras: null } })
     await topology.refreshNodeCapabilities()
     expect(topology.enabledNodes).toEqual(['hub', 'mac-new'])
     expect(topology.enabledAudioNodes).toEqual(['hub', 'mac-new'])
@@ -45,7 +60,7 @@ describe('NodeTopologyService — placement flags default on', () => {
   })
 
   it('an explicit false turns only that role off', async () => {
-    const topology = makeTopology({ 'mac-new': { detect: false, audio: true } })
+    const topology = makeTopology({ 'mac-new': { maxCameras: null, detect: false, audio: true } })
     topology.addKnownRunnerNode('mac-new')
     await topology.refreshNodeCapabilities()
     expect(topology.enabledNodes).toEqual(['hub'])
