@@ -34,6 +34,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import {
   app,
+  autoUpdater as nativeAutoUpdater,
   BrowserWindow,
   dialog,
   ipcMain,
@@ -1063,11 +1064,22 @@ app.on('window-all-closed', () => {
   }
 })
 
-app.on('before-quit', () => {
+function markQuitting(): void {
   appQuitting = true
-  viewerWindow?.dispose()
   ;(app as { isQuitting?: boolean }).isQuitting = true
+}
+
+app.on('before-quit', () => {
+  markQuitting()
+  viewerWindow?.dispose()
 })
+
+// "Install update & restart" closes every window BEFORE `before-quit` fires.
+// Without this, the tray's close handlers still see "not quitting", hide the
+// window and cancel the close — the quit aborts, the app lingers windowless
+// and the update never installs. electron-updater emits this event on every
+// platform right before it starts closing windows.
+nativeAutoUpdater.on('before-quit-for-update', markQuitting)
 
 app.on('will-quit', async (event) => {
   if (nodeManager.isRunning) {
