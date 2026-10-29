@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.516] - 2026-10-29
+
 ### Changed
 
 - The sign-in result page explains a sign-in that finished without granting access (no_authorization_code)

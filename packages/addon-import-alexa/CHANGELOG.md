@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.166] - 2026-10-29
+
 ### Changed
 
 - Amazon sign-in now finishes when Amazon's final maplanding redirect passes through the hub login proxy, and ends on the CamStack result page

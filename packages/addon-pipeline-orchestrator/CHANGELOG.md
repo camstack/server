@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.639] - 2026-10-29
+
 ### Added
 
 - A newly paired agent joins detection, audio and ingest balancing by default; a role is off only when turned off

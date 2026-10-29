@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.517] - 2026-10-29
+
 ### Added
 
 - The Actions list answers at once when no addon provides actions, instead of waiting about 30 seconds.

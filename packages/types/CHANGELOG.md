@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.443] - 2026-10-29
+
 ### Added
 
 - The vendor login proxy writes a names-only trace line per proxied sign-in request (parameter, form-field and cookie names, never values) to show where a sign-in loses a parameter

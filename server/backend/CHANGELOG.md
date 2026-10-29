@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.688] - 2026-10-29
+
 ### Changed
 
 - Forgetting a node now clears its per-node capability overrides and tells every node-removal-hook owner
