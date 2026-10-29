@@ -26,7 +26,7 @@ import { Boxes, Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
-import { CompositionBlockEditor } from '../../components/composition-editor/CompositionBlockEditor'
+import { ComposedDeviceEditDialog } from '../../components/composition-editor/ComposedDeviceEditDialog'
 import {
   type CompositionCreateMode,
   CompositionCreateForm,
@@ -143,25 +143,22 @@ export function CustomDeviceTab({
     <>
       {body}
       <ItemFormDialog
-        open={isNew || editingId !== null}
+        open={isNew}
         onClose={closeDialog}
         title={
-          isNew
-            ? createTitle ||
-              (createMode === 'blank' ? t('helper.newComposition') : t('helper.newComposed'))
-            : t('build.customDeviceTab.editComposedDevice', 'Edit composed device')
+          createTitle ||
+          (createMode === 'blank' ? t('helper.newComposition') : t('helper.newComposed'))
         }
         icon={Boxes}
         width="xl"
         testId="composed-device-editor"
         fill
       >
-        {isNew && createMode !== null ? (
+        {createMode !== null && (
           <CompositionCreateForm key={createMode} mode={createMode} onTitle={setCreateTitle} />
-        ) : editingId !== null ? (
-          <CompositionBlockEditor blockId={editingId} fillHeight />
-        ) : null}
+        )}
       </ItemFormDialog>
+      <ComposedDeviceEditDialog blockId={editingId} onClose={closeDialog} />
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
     </>
   )

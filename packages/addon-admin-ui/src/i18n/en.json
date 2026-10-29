@@ -2245,7 +2245,12 @@
       "missingBlock": "This composed device has no block id.",
       "loadFailed": "Could not read the composition",
       "notFound": "Composition block not found.",
-      "noDelete": "Delete the composed device from Build, not here."
+      "noDelete": "Delete the composed device from Build, not here.",
+      "helper": {
+        "title": "Helper",
+        "function": "Function",
+        "members": "Members"
+      }
     },
     "identity": {
       "title": "Identity",

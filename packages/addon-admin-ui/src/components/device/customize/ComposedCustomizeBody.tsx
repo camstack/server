@@ -11,21 +11,16 @@ import {
   ErrorBox,
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
-  useDeviceManagerSetLocation,
-  useDeviceManagerSetName,
 } from '@camstack/ui-library'
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
-import { HelperWizard } from '../../composition-editor/HelperWizard'
-import {
-  draftFromHelper,
-  isHelperComposition,
-  writeHelper,
-} from '../../composition-editor/helper-form-model'
+import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDeviceEditDialog'
+import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
 import { ConfigCustomizeList, configCardCaps } from './config/ConfigCustomizeList'
 import { eventCardTargets } from './event/event-targets'
+import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
 import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
 import { scalarCardTargets } from './scalar/ScalarOverrideCard'
@@ -44,8 +39,7 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     { enabled: blockId !== null },
   )
   const update = useCoreBlocksUpdateComposition()
-  const setName = useDeviceManagerSetName()
-  const setLocation = useDeviceManagerSetLocation()
+  const [editing, setEditing] = useState(false)
   const skipCaps = useMemo(() => {
     const s = new Set<string>()
     for (const { cap } of scalarCardTargets()) s.add(cap)
@@ -98,31 +92,12 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     return (
       <div className="flex flex-col gap-3">
         <IdentityRow device={device} />
-        <HelperWizard
-          purpose="edit"
-          initial={helperDraft}
-          start="parameters"
-          saving={update.isPending}
-          onSave={async (draft) => {
-            const lines = await writeHelper(draft, async (next, name) => {
-              await update.mutateAsync({
-                blockId: view.block.id,
-                expectedUpdatedAt: view.block.updatedAt,
-                block: {
-                  composition: next,
-                  ...(name === '' ? {} : { name }),
-                },
-              })
-              if (name !== '' && name !== device.name) {
-                await setName.mutateAsync({ deviceId: device.id, name })
-              }
-              if (draft.room.trim() !== '' && draft.room.trim() !== (device.location ?? '')) {
-                await setLocation.mutateAsync({ deviceId: device.id, location: draft.room.trim() })
-              }
-              await read.refetch()
-            })
-            if (lines.length > 0) return { kind: 'refused', lines }
-            return { kind: 'saved', deviceId: device.id }
+        <HelperSummaryCard draft={helperDraft} device={device} onEdit={() => setEditing(true)} />
+        <ComposedDeviceEditDialog
+          blockId={editing ? view.block.id : null}
+          onClose={() => {
+            setEditing(false)
+            void read.refetch()
           }}
         />
       </div>
@@ -135,7 +110,10 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     saving: update.isPending,
     save: async (next: typeof composition | null) => {
       if (next === null)
-        return { kind: 'refused' as const, reason: t('customize.composed.noDelete') }
+        return {
+          kind: 'refused' as const,
+          reason: t('customize.composed.noDelete'),
+        }
       try {
         await update.mutateAsync({
           blockId: view.block.id,

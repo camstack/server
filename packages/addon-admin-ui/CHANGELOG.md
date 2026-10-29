@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A helper's Customize tab shows a summary and edits it in the helper dialog instead of an inline step flow
+
 ### Changed
 
 - The helper member picker shows the value fields of every selected device, not only the last one

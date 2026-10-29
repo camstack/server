@@ -547,6 +547,86 @@ describe('CustomizeTab — a composed device', () => {
   })
 })
 
+describe('CustomizeTab — a helper device', () => {
+  const SOURCE = {
+    id: 77,
+    name: 'Porch thermometer',
+    addonId: 'provider-homeassistant',
+    stableId: 'ha:device:porch-thermo',
+    type: 'sensor',
+    role: null,
+    display: undefined,
+  }
+  function helperRead(): unknown {
+    return {
+      state: 'loaded',
+      view: {
+        block: {
+          id: 'blk-porch',
+          name: 'Porch max',
+          code: '',
+          enabled: true,
+          placement: 'hub',
+          createdAt: 1,
+          updatedAt: 1,
+          createdBy: 'admin',
+          status: 'running',
+          lastChangedAt: 1,
+          source: {
+            kind: 'composition',
+            composition: {
+              target: {
+                kind: 'new',
+                type: 'sensor',
+                role: 'temperature-sensor',
+              },
+              features: [],
+              helper: {
+                kind: 'statistic',
+                stat: 'max',
+                window: { kind: 'rolling', span: '24h' },
+                source: {
+                  source: {
+                    addonId: SOURCE.addonId,
+                    stableId: SOURCE.stableId,
+                  },
+                  cap: 'temperature-sensor',
+                  fieldPath: 'celsius',
+                },
+              },
+            },
+          },
+        },
+        state: { kind: 'answered', state: { deviceId: 4603 } },
+      },
+    }
+  }
+  function renderHelper(): void {
+    device.current = COMPOSED
+    fleet.current = { status: 'success', data: [SOURCE] }
+    compositionRead.current = {
+      status: 'success',
+      data: helperRead(),
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+  }
+  it('shows a read-only summary of the function and the members, with no inline step flow', () => {
+    renderHelper()
+    const summary = screen.getByTestId('helper-summary')
+    expect(within(summary).getByText('Maximum')).toBeTruthy()
+    const members = within(summary).getByTestId('helper-summary-members')
+    expect(members.textContent).toContain('Porch thermometer')
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
+    expect(screen.queryByTestId('composed-device-editor')).toBeNull()
+  })
+  it('Edit opens the helper dialog with the editor and refetches on close', async () => {
+    renderHelper()
+    fireEvent.click(screen.getByTestId('helper-summary-edit'))
+    expect(await screen.findByTestId('composed-device-editor')).toBeTruthy()
+  })
+})
+
 const SENSOR = {
   ...FEEDER,
   id: 510,

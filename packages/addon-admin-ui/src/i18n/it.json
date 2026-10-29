@@ -2306,7 +2306,12 @@
       "missingBlock": "Questo dispositivo composto non ha un id blocco.",
       "loadFailed": "Impossibile leggere la composizione",
       "notFound": "Blocco composizione non trovato.",
-      "noDelete": "Elimina il dispositivo composto da Build, non da qui."
+      "noDelete": "Elimina il dispositivo composto da Build, non da qui.",
+      "helper": {
+        "title": "Helper",
+        "function": "Funzione",
+        "members": "Membri"
+      }
     },
     "identity": {
       "title": "Identità",
