@@ -11432,14 +11432,14 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
-      "summary": "Drop a parent prefix. `\" — \"` before a space, case-insensitive, so a provider that capitalised the parent differently still strips, and an em-dash child does not keep a dangling dash."
+      "summary": "Drop a parent prefix. The separators `\" — \"`, `\" - \"` and `\": \"` are tried before a plain space, case-insensitive, so a provider that capitalised the parent differently still strips, and a dash or colon child does not…"
     },
     {
       "name": "stripParentNamePrefix",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-item/helpers.ts",
-      "summary": "Shared types + helpers for the DeviceItem composite. Lives outside the orchestrator file so every sub-component can import without cycles."
+      "summary": "Strip a redundant parent-name prefix from a child device's name. Providers name container children fully-qualified so the entity reads cleanly on its own detail page / exports / Alexa / the parent badge — Dreame joins…"
     },
     {
       "name": "summarizeHubCandidates",

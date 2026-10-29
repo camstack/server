@@ -22,6 +22,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   PrimaryChildPicker,
+  childListName,
   resolveContainerPrimary,
   useDeviceManagerSetPrimaryChildEntityId,
   type ContainerChild,
@@ -57,11 +58,14 @@ export function PrimaryChildRow({ deviceId }: { readonly deviceId: number }) {
   const deviceType = String((device as { type?: unknown }).type ?? '')
   if (deviceType !== DeviceType.Container) return null
 
+  // Inside the container's own list a child drops the container's name (D356
+  // names children after it); the full name stays on every other surface.
+  const parentName = String((device as { name?: unknown }).name ?? '')
   const options: readonly PrimaryChildOption[] = (childrenData ?? []).map((c) => ({
     id: c.id,
     stableId: c.stableId,
     type: c.type,
-    name: c.name,
+    name: childListName(c, parentName),
     ...(c.sourceInfo ? { sourceInfo: { id: c.sourceInfo.id } } : {}),
   }))
 

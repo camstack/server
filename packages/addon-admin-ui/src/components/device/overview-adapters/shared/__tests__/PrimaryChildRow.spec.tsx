@@ -55,6 +55,7 @@ vi.mock('@camstack/ui-library', () => ({
   LIST_ROW: 'list-row',
   TEXT_HINT: 'text-hint',
   TEXT_METRIC: 'text-metric',
+  childListName: (child: { readonly name: string }) => child.name,
   resolveContainerPrimary: (children: readonly StubChild[]) =>
     children.length === 0 ? null : children[0],
   useDeviceManagerSetPrimaryChildEntityId: () => ({

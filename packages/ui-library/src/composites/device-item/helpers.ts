@@ -36,6 +36,8 @@ import {
   RotateCw,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import type { DeviceNameForm } from '../device-name'
+import { stripDeviceParentPrefix } from '../device-name/format-device-name'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { resolveContainerPrimary } from '../device-controls/container-primary'
 import { deviceRoleMetaOf, deviceTypeMetaOf } from '../device-meta'
@@ -159,6 +161,13 @@ export interface DeviceItemProps {
    * only for the accessory passes inside <DeviceList>.
    */
   readonly isAccessoryRow?: boolean
+  /**
+   * Name form override. A row listed INSIDE its parent's own list passes
+   * `'nested'` (with `parent`) so the name reads as the bare noun, never
+   * `"<Parent> · <Noun>"`. Omitted: `'nested'` for an accessory row, else
+   * `'compact'`.
+   */
+  readonly nameForm?: DeviceNameForm
   /**
    * Indent level for the `<td>` first cell in `view='table'`. Controls
    * `pl-N` on the name cell so adopted-under-hub rows can be visually
@@ -370,18 +379,14 @@ export function displayRoleLabel(device: DeviceItemDevice, t: UiTextFn = default
  *
  * The `" — "` separator is tried BEFORE the plain space so an Ecowitt child
  * (`"Ecowitt Gateway — gateway"`) yields `"gateway"` rather than `"— gateway"`.
- * A missing parent name, or a name that doesn't carry the prefix, is returned
- * verbatim.
+ * Matching is case-insensitive and also accepts `" - "` and `": "`. A missing
+ * parent name, a name that doesn't carry the prefix, a name equal to the
+ * parent's, or one with nothing after the prefix is returned verbatim.
  */
-const CHILD_NAME_SEPARATORS: readonly string[] = [' — ', ' ']
-
 export function stripParentNamePrefix(name: string, parentName: string): string {
-  if (parentName.length === 0) return name
-  for (const sep of CHILD_NAME_SEPARATORS) {
-    const prefix = `${parentName}${sep}`
-    if (name.startsWith(prefix)) return name.slice(prefix.length)
-  }
-  return name
+  const rest = stripDeviceParentPrefix(name, parentName.trim())
+  // Nothing left after the prefix: the child keeps its full name.
+  return rest.length > 0 ? rest : name
 }
 
 /**

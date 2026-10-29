@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Pet feeder: the manual-feed portion stepper responds instantly, repeats and speeds up while held, and starts from the last manual feed
+- A device listed inside its container's own list no longer repeats the container's name; the prefix is also stripped after a hyphen or a colon.
 
 ## [1.2.347] - 2026-10-29
 

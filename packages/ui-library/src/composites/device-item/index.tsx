@@ -75,7 +75,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   const flags = resolveFlags(props)
   const variant = props.variant ?? 'compact'
   const view = props.view ?? 'card'
-  const nameForm = props.isAccessoryRow ? 'nested' : 'compact'
+  const nameForm = props.nameForm ?? (props.isAccessoryRow ? 'nested' : 'compact')
   const nameParent =
     nameForm === 'nested' && parent
       ? { id: parent.id, name: parent.name, type: parent.type ?? 'unknown', stableId: '' }

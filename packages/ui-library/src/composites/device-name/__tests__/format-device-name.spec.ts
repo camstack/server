@@ -5,7 +5,12 @@
  */
 import { describe, expect, it } from 'vitest'
 import { deviceNameNouns } from '../device-name-nouns'
-import { type DeviceNameFields, type DeviceNameForm, formatDeviceName } from '../format-device-name'
+import {
+  type DeviceNameFields,
+  type DeviceNameForm,
+  formatDeviceName,
+  stripDeviceParentPrefix,
+} from '../format-device-name'
 
 interface NameCase {
   readonly id: number
@@ -420,5 +425,21 @@ describe('formatDeviceName — hub examples', () => {
         deviceNameNouns('it'),
       ),
     ).toBe('Motion')
+  })
+})
+
+describe('stripDeviceParentPrefix separators', () => {
+  it.each([
+    ['Zigbee hub - Door contact', 'Door contact'],
+    ['Zigbee hub: Door contact', 'Door contact'],
+    ['Zigbee hub \u2014 Door contact', 'Door contact'],
+    ['ZIGBEE HUB: Window contact', 'Window contact'],
+    ['Zigbee hub Door contact', 'Door contact'],
+  ])('%s -> %s', (name, expected) => {
+    expect(stripDeviceParentPrefix(name, 'Zigbee hub')).toBe(expected)
+  })
+
+  it('leaves a name that is not prefixed by the parent', () => {
+    expect(stripDeviceParentPrefix('Zigbee hubble', 'Zigbee hub')).toBe('Zigbee hubble')
   })
 })

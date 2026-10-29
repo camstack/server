@@ -67,6 +67,16 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
     location: 'Kitchen',
     parentDeviceId: 513,
   },
+  // Children named after their container (D356): the container's own list
+  // shows them without the "Zigbee hub" prefix.
+  514: {
+    ...appliance(514, 'Zigbee hub - Door contact', 'sensor', 'provider-homeassistant'),
+    parentDeviceId: 513,
+  },
+  515: {
+    ...appliance(515, 'ZIGBEE HUB: Window contact', 'sensor', 'provider-homeassistant'),
+    parentDeviceId: 513,
+  },
 }
 
 const entry = (capName: string, nativeAddonId: string) => ({
@@ -517,7 +527,8 @@ export default defineFixtures({
     'deviceManager.getWireableFields': (i: { deviceId: number }) =>
       WIREABLE[i.deviceId] ?? { caps: [] },
     'deviceManager.listBindableCapsForDeviceType': [],
-    'deviceManager.getChildren': [],
+    'deviceManager.getChildren': (i: { parentDeviceId: number }) =>
+      Object.values(DEVICES).filter((d) => d.parentDeviceId === i.parentDeviceId),
     'deviceManager.listSiteZones': [],
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) =>
       SLICES[`${i.deviceId}/${i.capName}`] ?? null,

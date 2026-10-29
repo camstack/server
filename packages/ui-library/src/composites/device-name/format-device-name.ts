@@ -48,7 +48,7 @@ export interface DeviceNameNouns {
   readonly isStockPhrase: DeviceNameStockPhrase
 }
 
-const PARENT_SEPARATORS: readonly string[] = [' — ', ' ']
+const PARENT_SEPARATORS: readonly string[] = [' — ', ' - ', ': ', ' ']
 
 /**
  * Readings that are never what a container is. Matches the comment on
@@ -79,9 +79,10 @@ export function sameDeviceName(left: string, right: string): boolean {
 }
 
 /**
- * Drop a parent prefix. `" — "` before a space, case-insensitive, so a provider
- * that capitalised the parent differently still strips, and an em-dash child
- * does not keep a dangling dash.
+ * Drop a parent prefix. The separators `" — "`, `" - "` and `": "` are tried
+ * before a plain space, case-insensitive, so a provider that capitalised the
+ * parent differently still strips, and a dash or colon child does not keep a
+ * dangling mark.
  */
 export function stripDeviceParentPrefix(name: string, parentName: string): string {
   if (parentName.length === 0) return name

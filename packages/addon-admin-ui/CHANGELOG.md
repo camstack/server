@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The Device details list of a container shows its children without the container's name, and the primary-child picker does the same.
+
 ## [1.2.512] - 2026-10-29
 
 ### Added

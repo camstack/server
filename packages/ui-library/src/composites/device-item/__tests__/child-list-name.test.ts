@@ -35,6 +35,25 @@ describe('stripParentNamePrefix', () => {
     expect(stripParentNamePrefix('Filter Time Left', '')).toBe('Filter Time Left')
   })
 
+  it('strips hyphen and colon separators', () => {
+    expect(stripParentNamePrefix('Hub - Temperature', 'Hub')).toBe('Temperature')
+    expect(stripParentNamePrefix('Hub: Temperature', 'Hub')).toBe('Temperature')
+  })
+
+  it('matches the parent name case-insensitively', () => {
+    expect(stripParentNamePrefix('ROBOT primo piano Filter', 'Robot Primo Piano')).toBe('Filter')
+  })
+
+  it('keeps the full name when it equals the parent or nothing follows the prefix', () => {
+    expect(stripParentNamePrefix('Hub', 'Hub')).toBe('Hub')
+    expect(stripParentNamePrefix('Hub - ', 'Hub')).toBe('Hub - ')
+    expect(stripParentNamePrefix('Hub  ', 'Hub')).toBe('Hub  ')
+  })
+
+  it('does not strip a prefix that is only part of a longer word', () => {
+    expect(stripParentNamePrefix('Hubble Sensor', 'Hub')).toBe('Hubble Sensor')
+  })
+
   it('returns the name verbatim when it does not carry the prefix', () => {
     expect(stripParentNamePrefix('Standalone Sensor', 'Some Other Parent')).toBe(
       'Standalone Sensor',

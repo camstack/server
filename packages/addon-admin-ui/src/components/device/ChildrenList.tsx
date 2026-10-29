@@ -103,6 +103,8 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
       key={childId}
       trpc={system.trpcClient}
       device={{ ...child, name: childListName(child, parentName) }}
+      nameForm="nested"
+      {...(parent ? { parent: { id: parent.id, name: parent.name, type: parent.type } } : {})}
       variant="minimal"
       onNavigate={navigateToChild}
     />
