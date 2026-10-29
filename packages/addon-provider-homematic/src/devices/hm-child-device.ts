@@ -118,6 +118,10 @@ export abstract class HmChildDevice<
     this.valueChangedUnsub = facade.on('valueChanged', (event) => {
       if (event.device !== this.address) return
       if (!this.ownsEventChannel(event)) return
+      this.ctx.logger.debug('Homematic value change accepted', {
+        tags: { deviceId: this.ctx.id },
+        meta: { address: this.address, channel: event.channel, parameter: event.parameter },
+      })
       handle(event, 'live')
     })
     // The library seeds current values at startup SILENTLY (no `valueChanged`),
@@ -208,13 +212,34 @@ export abstract class HmChildDevice<
     return onStatus !== true
   }
 
+  /** A value change the filter refused — named, per reason, on the record. */
+  private logValueDropped(event: ValueChangedEvent, reason: string): void {
+    this.ctx.logger.debug('Homematic value change dropped', {
+      tags: { deviceId: this.ctx.id },
+      meta: {
+        address: this.address,
+        ownedChannel: this.channel,
+        channel: event.channel,
+        parameter: event.parameter,
+        reason,
+      },
+    })
+  }
+
   private ownsEventChannel(event: ValueChangedEvent): boolean {
     const owned = this.channel
     if (owned === undefined) return true
     const channel = event.channel
     if (typeof channel === 'string' && channel.length > 0) {
-      if (!this.ownedChannels().includes(channel)) return false
-      return this.isPreferredSource(event)
+      if (!this.ownedChannels().includes(channel)) {
+        this.logValueDropped(event, 'foreign-channel')
+        return false
+      }
+      if (!this.isPreferredSource(event)) {
+        this.logValueDropped(event, 'not-status-source')
+        return false
+      }
+      return true
     }
     // Unmappable: we cannot tell which entity of a multi-entity device this
     // belongs to, and defaulting to "all channels" is exactly the collapse
