@@ -1,4 +1,3 @@
-import { userError } from '@camstack/types'
 import {
   BaseDeviceProvider,
   type ConfigUISchema,
@@ -6,19 +5,18 @@ import {
   type DeviceConstructor,
   DeviceType,
   type IDevice,
-  errMsg,
+  userError,
 } from '@camstack/types'
 import {
   buildConnectionFormSchema,
-  type VeluxConnectionConfig,
   settingsToConnection,
   slugifyHost,
+  type VeluxConnectionConfig,
   veluxConnectionSchema,
 } from './config.js'
 import { VeluxCoverDevice } from './devices/velux-cover-device.js'
 import { VeluxGatewayDevice } from './devices/velux-gateway-device.js'
-import { veluxGateways } from './velux-node-resolver.js'
-import { VeluxIntegrationManager } from './velux-integration-manager.js'
+import { VeluxRainSensorDevice } from './devices/velux-rain-sensor-device.js'
 
 /**
  * Velux KLF-200 device-provider addon — `mode: standalone` (the Reolink /
@@ -29,10 +27,10 @@ import { VeluxIntegrationManager } from './velux-integration-manager.js'
  * client and registers `device-discovery` to adopt its own window / shutter
  * children as {@link DeviceType.Cover} devices.
  *
- * NOTE: no KLF-200 client library is wired yet (see `plan-velux.md`) — the
- * integration manager's default factory throws until one is implemented, so a
- * created gateway installs cleanly but stays offline. Everything else (config,
- * discovery flow, cover cap surface) is complete and type-checked.
+ * The live session is the `klf-200-api` library behind {@link KlfGatewayClient}:
+ * one TLS socket per gateway, node changes PUSHED by the gateway, a keepalive
+ * and a bounded-backoff reconnect (see the README for the gateway's connection
+ * limit).
  *
  * `instanceMode: multiple` — many gateways may be added. Network auto-discovery
  * is not implemented (the KLF-200 has no broadcast beacon we probe); the gateway
@@ -44,6 +42,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Hub]: VeluxGatewayDevice,
     [DeviceType.Cover]: VeluxCoverDevice,
+    [DeviceType.Sensor]: VeluxRainSensorDevice,
   }
 
   constructor() {
@@ -84,36 +83,10 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       throw userError('velux.host-required', undefined, 'Gateway host is required')
     }
 
-    // Build the live client ONCE here so the gateway device adopts a warm client.
-    // With no library wired, `start()` throws — caught + logged, the device is
-    // kept so the row persists for when the library lands.
-    const stableId = this.generateStableId(DeviceType.Hub, { connection })
-    const manager = new VeluxIntegrationManager({
-      id: stableId,
-      name,
-      connection,
-      logger: this.ctx.logger,
-      onConnected: () => undefined,
-      onDisconnected: () => undefined,
-      onPolled: (gatewayId) => veluxGateways.emitSnapshot(gatewayId),
-    })
-    veluxGateways.set(stableId, manager)
-    try {
-      await manager.start()
-    } catch (err) {
-      this.ctx.logger.warn('Velux create: initial client connect failed — device kept', {
-        meta: { stableId, error: errMsg(err) },
-      })
-    }
-
     return {
       meta: { type: DeviceType.Hub, name },
+      // The gateway device builds its own live client when it activates.
       config: { connection, system: 'velux-gateway' },
-      onAfterCreate: async (device: IDevice) => {
-        if (device instanceof VeluxGatewayDevice) {
-          device.adoptManager(manager)
-        }
-      },
     }
   }
 

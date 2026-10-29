@@ -1,7 +1,7 @@
 import {
   BaseDevice,
-  coverCapability,
   type CoverStatus,
+  coverCapability,
   type DeviceContext,
   DeviceFeature,
   DeviceType,
@@ -11,9 +11,11 @@ import {
 import { veluxCoverSchema } from '../config.js'
 import type { VeluxGatewayClient, VeluxNode } from '../velux-client-contract.js'
 import { veluxGateways } from '../velux-node-resolver.js'
+import { nodeToCoverStatus } from '../velux-protocol.js'
 
+/** Before the first report from the gateway nothing is known: not "closed". */
 const COLD_START: CoverStatus = {
-  state: 'closed',
+  state: 'stopped',
   position: null,
   tiltPosition: null,
   lastChangedAt: 0,
@@ -34,6 +36,7 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
   readonly features: readonly DeviceFeature[] = [DeviceFeature.CoverPositionable]
 
   private readonly nodeId: number
+  private readonly serial: string
   private readonly gatewayId: string
 
   private snapshotUnsub: (() => void) | null = null
@@ -42,11 +45,18 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
     const cfg = veluxCoverSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, veluxCoverSchema, { type: DeviceType.Cover })
     this.nodeId = cfg.nodeId
+    this.serial = cfg.serial
     this.gatewayId = cfg.gatewayId
-    this.online = veluxGateways.getNode(this.gatewayId, this.nodeId)?.online ?? false
+    this.online = this.liveNode()?.online ?? false
     this.registerCoverCap()
     this.runtimeState.setCapState('cover', COLD_START)
-    void this.updateSourceInfo({ id: `${this.gatewayId}:${this.nodeId}`, system: 'velux' })
+    void this.updateSourceInfo({
+      id:
+        this.serial.length > 0
+          ? `${this.gatewayId}:${this.serial}`
+          : `${this.gatewayId}:${this.nodeId}`,
+      system: 'velux',
+    })
   }
 
   override async onActivate(): Promise<void> {
@@ -75,6 +85,7 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
         this.recomputeSlice()
       } catch (err) {
         this.ctx.logger.warn('velux cover: snapshot handler error', {
+          tags: { deviceId: this.id },
           meta: { nodeId: this.nodeId, error: errMsg(err) },
         })
       }
@@ -84,10 +95,26 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
 
   /** Recompute + write this cover's `cover` cap slice from the live node. */
   private recomputeSlice(): void {
-    const node = veluxGateways.getNode(this.gatewayId, this.nodeId)
+    const node = this.liveNode()
     if (node === null) return
     if (this.online !== node.online) this.markOnline(node.online)
-    this.runtimeState.setCapState('cover', nodeToCoverStatus(node, Date.now()))
+    const prior = this.runtimeState.getCapState<CoverStatus>('cover') ?? COLD_START
+    const next = nodeToCoverStatus(node, Date.now())
+    // The change time moves only when the cover actually changed, not on every push.
+    const unchanged = prior.state === next.state && prior.position === next.position
+    this.runtimeState.setCapState('cover', unchanged ? prior : next)
+  }
+
+  private liveNode(): VeluxNode | null {
+    return veluxGateways.findNode(this.gatewayId, {
+      serial: this.serial,
+      nodeId: this.nodeId,
+    })
+  }
+
+  /** Node id to command: the live one, since a serial-keyed node may have been renumbered. */
+  private liveNodeId(): number {
+    return this.liveNode()?.nodeId ?? this.nodeId
   }
 
   private resolveClient(): VeluxGatewayClient {
@@ -104,16 +131,16 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
     const provider: InferNativeProvider<typeof coverCapability> = {
       getStatus: async () => this.runtimeState.getCapState<CoverStatus>('cover') ?? COLD_START,
       open: async () => {
-        await this.resolveClient().open(this.nodeId)
+        await this.resolveClient().open(this.liveNodeId())
       },
       close: async () => {
-        await this.resolveClient().close(this.nodeId)
+        await this.resolveClient().close(this.liveNodeId())
       },
       stop: async () => {
-        await this.resolveClient().stop(this.nodeId)
+        await this.resolveClient().stop(this.liveNodeId())
       },
       setPosition: async ({ position }) => {
-        await this.resolveClient().setPosition(this.nodeId, position)
+        await this.resolveClient().setPosition(this.liveNodeId(), position)
       },
       // Velux actuators have no tilt — the cap method is a no-op that reports the
       // unsupported surface honestly.
@@ -122,17 +149,5 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
       },
     }
     this.ctx.registerNativeCap(coverCapability, provider)
-  }
-}
-
-/** Map a live Velux node onto the `cover` cap status. Positional, no tilt. */
-function nodeToCoverStatus(node: VeluxNode, now: number): CoverStatus {
-  const position = node.position
-  const state: CoverStatus['state'] = position === null || position <= 0 ? 'closed' : 'open'
-  return {
-    state,
-    position,
-    tiltPosition: null,
-    lastChangedAt: now,
   }
 }

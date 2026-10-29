@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7380 source files · 208 units claimed by at least one document (7342 files).**
+**220 units · 7383 source files · 208 units claimed by at least one document (7345 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -107,6 +107,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-model-studio/src/tabs` | 12 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0746-installed-lists-files-per-model-and-format-and-in-use-means-resident-in-a-pool.md` | — |
 | `packages/addon-provider-unifi` | 12 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-unraid` | 12 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
+| `packages/addon-provider-velux` | 12 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-training/src/providers` | 12 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0828-training-provider-entries-are-edited-via-updateentry-not-settings-array.md`, `decisions/adr-0829-training-provider-entry-forms-use-configschema-like-notification-targets.md`, +2 more | 2026-10-14 |
 | `packages/node-root` | 12 | `kernel` | `architecture/update-and-release.md`, `design/2026-09-10-wrapper-identity-and-update.md` _(covers)_, `decisions/adr-0187-an-update-notification-names-one-node-and-both-versions.md`, +7 more, 4 ADRs | 2026-10-27 |
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
@@ -132,7 +133,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline/src/audio-analyzer` | 9 | `audio` | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0461-the-analyzer-pulls-its-own-audio-and-the-broker-reaps-a-queue-nobody-drains.md`, +4 more | 2026-10-02 |
 | `packages/addon-pipeline/src/shared` | 9 | `decode-and-data-planes` | `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0199-a-model-choice-has-a-scope-and-a-scope-change-has-a-workflow.md`, `decisions/adr-0236-the-electron-bundle-seeds-addons-from-its-own-closure.md`, +2 more | — |
 | `packages/addon-provider-rademacher` | 9 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
-| `packages/addon-provider-velux` | 9 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/nx-plugin` | 9 | `tooling` | — | — |
 | `packages/system/src/logging` | 9 | `logging`, `secrets` | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-10-04-logs-history-beyond-the-ring.md` _(covers)_, +7 more | 2026-10-21 |
 | `packages/ui-library/src/theme` | 9 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +2 more | 2026-10-26 |

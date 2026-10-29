@@ -1,74 +1,36 @@
-# Velux (KLF-200) provider — plan & status
+# Velux (KLF-200) provider — status
 
-**Phase D scaffold — 2026-07-05.** Compiling skeleton, NO live onboarding, NO
-client library wired yet.
+**Live-capable since 2026-10-29.** The scaffold (2026-07-05) is complete: the client library is wired,
+state is pushed, the session reconnects. The operator-facing description (pairing, the connection limit,
+the certificate, the cover mapping) is in [README.md](./README.md).
 
-## What this integration is
+## Shape
 
-A Velux **KLF-200** gateway (@ `192.168.x.x` on the reference HA instance) is a
-local bridge to io-homecontrol windows / roller shutters. The reference site has
-**1 window + 1 shutter**:
+| Piece | File |
+| --- | --- |
+| Wire semantics (position 0..0xC800, 0 = open; actuator classes; rain; identity) | `src/velux-protocol.ts` |
+| Gateway client over `klf-200-api` 8.x (one socket, house status monitor, keepalive, session watch) | `src/klf-gateway-client.ts` |
+| Contract the manager and devices build against (specs substitute a fake) | `src/velux-client-contract.ts` |
+| Connection lifecycle: bounded-backoff reconnect, offline-on-drop, push fan-out | `src/velux-integration-manager.ts` |
+| Manager/snapshot sharing between the gateway and its children | `src/velux-node-resolver.ts` |
+| Discovery candidates, native ids (serial-keyed) | `src/velux-discovery.ts` |
+| Gateway `Hub`, `Cover` and rain `Sensor` devices | `src/devices/*` |
+| Scripted TLS gateway used by the specs | `src/__tests__/fake-klf-gateway.ts` |
 
-- `finestra…` → HA `cover`, **device_class window**, position 100, supported_features 15
-  (OPEN | CLOSE | SET_POSITION | STOP).
-- `tapparella…` → HA `cover`, **device_class shutter**, position 0.
-- 3 buttons: per-node identify ×2 + `klf_200_gateway_riavvia` (gateway reboot).
+Existing caps only: `device-discovery` (gateway), `cover` (actuators), `flood` (rain sensor, role leak sensor).
 
-Positional only — **no tilt, no climate**. Identical cover shape to Rademacher.
+## Library decision
 
-## Mapping (existing caps only — nothing new needed)
+`klf-200-api` (MiSchroe, MIT, TypeScript, three small runtime dependencies) at **8.x**, not 6.x: 6.0.1 pins the
+VELUX certificate but requires the chain to be `authorized`, and the shared VELUX certificate expired on
+2026-07-12, so 6.0.1 can no longer connect. 8.0.0 accepts exactly "expired AND fingerprint equals the pinned
+certificate". The `disposablestack/auto` polyfill it imports is stubbed out in `vite.config.ts` (Node 24 has the
+globals natively).
 
-| Source | CamStack DeviceType | Cap | Notes |
-|---|---|---|---|
-| KLF-200 gateway | `Hub` (`VeluxGatewayDevice`) | `device-discovery` | connection lives on the device (standalone mode) |
-| window / shutter node | `Cover` (`VeluxCoverDevice`) | `cover` | `open`/`close`/`stop`/`setPosition`; `position` 0..100; `DeviceFeature.CoverPositionable`; no tilt |
+## Open
 
-`coverClass` (`window` \| `shutter`) is persisted on the cover config and carried
-in the discovery candidate's `metadata.model`. It drives the `device_class` /
-icon — the `cover` cap itself is class-agnostic.
-
-**No new cap required.** The `cover` cap covers the full surface.
-
-## Library status — CHOSEN: `klf-200-api` (existing, well-maintained)
-
-**Chosen library: [`klf-200-api`](https://www.npmjs.com/package/klf-200-api)
-v6.0.1** — MIT, TypeScript-native (ships `dist/types`), actively maintained
-(last publish Sep 2025), dual ESM/CJS. It is the established KLF-200 client and
-exposes `Connection` / `Gateway` / `Products` / `Product` / `Groups` / `Scenes`.
-Declared in `package.json`. NOT installed/wired in this scaffold (Phase D is
-scaffold-only and does not touch the monorepo lockfile); the device layer is
-built against the local seam `src/velux-client-contract.ts` →
-`VeluxGatewayClient` / `VeluxNode`, which is modelled on this library's API.
-
-Wiring is the single remaining code step to go live:
-
-1. `npm install` records `klf-200-api` (a later, deliberate install — not done
-   here to avoid a concurrent lockfile edit).
-2. Implement `VeluxGatewayClient` over `klf-200-api`: `Connection` for
-   connect/auth, `Products`/`Product` for listNodes/getNode + open/close/stop/
-   setPosition (`Product.setTargetPositionAsync` / `stopAsync`), `Gateway` for
-   `reboot`. Map `Product.TypeID`/subtype → `coverClass` (`window` vs `shutter`);
-   map the library's normalized position (0..1) → HA orientation (0 closed ..
-   100 open).
-3. Replace `defaultVeluxClientFactory` (currently throws "not wired") in
-   `velux-integration-manager.ts`, or pass a real `makeClient` from `addon.ts`.
-   **Nothing else changes** — the manager, resolver, discovery, and cover device
-   are complete and type-checked.
-
-## Remaining for a full build
-
-- Wire the KLF-200 client library (above).
-- Optional: expose the **gateway reboot** button (HA `klf_200_gateway_riavvia`).
-  The contract already has `reboot()`; register the `reboot` cap (or a `button`
-  accessory child with `DeviceRole`) on `VeluxGatewayDevice`. Left out of the
-  scaffold to keep the surface minimal.
-- The KLF-200 caps a small number of concurrent connections — the manager already
-  holds ONE long-lived client per gateway (poll loop), which is the right shape;
-  confirm the wrapper honours the single-session constraint.
-
-## Remaining for Phase-C live onboard
-
-- Deploy + create a gateway device with host `192.168.x.x` + web password.
-- Verify discovery enumerates the window + shutter nodes; adopt both.
-- Verify `open`/`close`/`setPosition` drive the real actuators and the polled
-  `position` tracks live.
+- The rain sensor subtype (window opener, subtype 1) follows the reference library's convention but was not
+  verified against a real unit; a window whose rain sensor is not found needs its `TypeID` / `SubType` read from
+  the gateway (`GW_GET_NODE_INFORMATION_NTF`).
+- A dual roller shutter is one cover (two entities in Home Assistant).
+- No live check against a real gateway has been made (the password is the operator's to enter).

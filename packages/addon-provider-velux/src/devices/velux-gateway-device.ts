@@ -1,23 +1,24 @@
 import {
   BaseDevice,
+  buildDeviceAdminUrl,
   type DeviceContext,
   type DeviceDiscoveryStatus,
   type DeviceFeature,
   DeviceType,
-  deviceDiscoveryCapability,
   type DiscoveredChildDevice,
-  errMsg,
-  EventCategory,
-  type IDevice,
-  buildDeviceAdminUrl,
   deviceAdminLinkCapability,
+  deviceDiscoveryCapability,
+  EventCategory,
+  errMsg,
+  type IDevice,
   type InferNativeProvider,
 } from '@camstack/types'
 import { veluxGatewaySchema } from '../config.js'
-import { buildNodeCandidates, nodeNativeId, parseNodeNativeId } from '../velux-discovery.js'
-import { veluxGateways } from '../velux-node-resolver.js'
+import { buildNodeCandidates, findNodeByNativeId } from '../velux-discovery.js'
 import { VeluxIntegrationManager } from '../velux-integration-manager.js'
+import { veluxGateways } from '../velux-node-resolver.js'
 import { VeluxCoverDevice } from './velux-cover-device.js'
+import { VeluxRainSensorDevice } from './velux-rain-sensor-device.js'
 
 /**
  * Velux KLF-200 gateway — a {@link DeviceType.Hub} device (standalone mode, the
@@ -93,26 +94,14 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
     this.ctx.registerNativeCap(deviceAdminLinkCapability, provider)
   }
 
-  /** Adopt a pre-built manager (created by `onCreateDevice` so the live client
-   *  connects once). Published on the resolver so children pick it up. */
-  adoptManager(manager: VeluxIntegrationManager): void {
-    this.manager = manager
-    veluxGateways.set(this.stableId, manager)
-  }
-
   override async onActivate(): Promise<void> {
     await super.onActivate()
-    if (this.manager === null) {
-      void this.ensureManager().catch((err) => {
-        this.ctx.logger.warn('Velux gateway initial connect failed', {
-          meta: { error: errMsg(err) },
-        })
+    void this.ensureManager().catch((err) => {
+      this.ctx.logger.warn('Velux gateway initial connect failed', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err) },
       })
-    } else {
-      void this.refreshDiscoveryFromClient().catch(() => {
-        /* best-effort */
-      })
-    }
+    })
 
     // A child removed externally (operator delete, restore prune) → refresh so
     // the panel's `alreadyAdopted` flag flips without waiting for a poll.
@@ -144,6 +133,7 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
         await mgr.stop()
       } catch (err) {
         this.ctx.logger.warn('Velux gateway: client stop failed', {
+          tags: { deviceId: this.id },
           meta: { error: errMsg(err) },
         })
       }
@@ -164,12 +154,14 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
         await mgr.applyConnection(parsed.connection)
       } catch (err) {
         this.ctx.logger.warn('Velux gateway: applyConnection failed', {
+          tags: { deviceId: this.id },
           meta: { error: errMsg(err) },
         })
       }
     } else {
       await this.ensureManager().catch((err) => {
         this.ctx.logger.warn('Velux gateway re-connect after settings change failed', {
+          tags: { deviceId: this.id },
           meta: { error: errMsg(err) },
         })
       })
@@ -188,10 +180,12 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
       logger: this.ctx.logger,
       onConnected: () => this.setGatewayOnline(true),
       onDisconnected: () => this.setGatewayOnline(false),
-      onPolled: (gatewayId) => this.handlePolled(gatewayId),
+      onNodesChanged: (gatewayId) => this.handleNodesChanged(gatewayId),
     })
+    mgr.bindDevice(this.id)
     this.manager = mgr
     veluxGateways.set(this.stableId, mgr)
+    // start() never throws: a gateway that is down is retried with backoff.
     await mgr.start()
   }
 
@@ -203,8 +197,8 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
     })
   }
 
-  /** On each poll tick: re-derive discovery + fan the snapshot out to covers. */
-  private handlePolled(gatewayId: string): void {
+  /** On every push, (re)connect or drop: re-derive discovery + fan the snapshot out to the children. */
+  private handleNodesChanged(gatewayId: string): void {
     void this.refreshDiscoveryFromClient().catch(() => {
       /* best-effort */
     })
@@ -258,16 +252,17 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
     let discovered: readonly DiscoveredChildDevice[] = []
     try {
       const nodes = veluxGateways.getNodes(this.stableId)
-      const adoptedByNode = await this.adoptedCoverIdByNode()
+      const adoptedByNativeId = await this.adoptedIdByNativeId()
       discovered = buildNodeCandidates({
         gatewayId: this.stableId,
         gatewayName: this.name,
         nodes,
-        adoptedDeviceIdByNode: adoptedByNode,
+        adoptedDeviceIdByNativeId: adoptedByNativeId,
       })
     } catch (err) {
       lastError = errMsg(err)
       this.ctx.logger.warn('Velux gateway discovery refresh failed', {
+        tags: { deviceId: this.id },
         meta: { error: lastError },
       })
     }
@@ -279,66 +274,69 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewaySchema> {
     })
   }
 
-  /** Map each node id → the adopted cover child's device id (null when not
-   *  adopted), by walking this gateway's direct children. */
-  private async adoptedCoverIdByNode(): Promise<Record<number, number | null>> {
-    const out: Record<number, number | null> = {}
+  /** Map each adopted child's native id (= its stableId) to its device id, by
+   *  walking this gateway's direct children. */
+  private async adoptedIdByNativeId(): Promise<Record<string, number | null>> {
+    const out: Record<string, number | null> = {}
     const children = await this.ctx.devices.getChildren(this.id).catch((): readonly IDevice[] => [])
-    for (const child of children) {
-      if (child.type !== DeviceType.Cover) continue
-      const cfg = await this.ctx.devices
-        .loadConfig(child.id)
-        .catch((): Record<string, unknown> => ({}))
-      const nodeId = cfg['nodeId']
-      if (typeof nodeId === 'number') out[nodeId] = child.id
-    }
+    for (const child of children) out[child.stableId] = child.id
     return out
   }
 
-  /** Promote a discovered node candidate to a real cover child. */
+  /** Promote a discovered candidate (a cover, or a window's rain sensor) to a real child. */
   private async adoptCover(
     childNativeId: string,
     nameOverride?: string,
   ): Promise<{ deviceId: number; stableId: string }> {
-    const nodeId = parseNodeNativeId(childNativeId)
-    if (nodeId === null) {
-      throw new Error(`adoptDevice: ${childNativeId} is not a Velux node native id`)
+    const resolved = findNodeByNativeId(
+      this.stableId,
+      veluxGateways.getNodes(this.stableId),
+      childNativeId,
+    )
+    if (resolved === null) {
+      throw new Error(`adoptDevice: ${childNativeId} is not a node of this Velux gateway`)
     }
-    const node = veluxGateways.getNode(this.stableId, nodeId)
-    if (node === null) {
-      throw new Error(`adoptDevice: no Velux node ${nodeId} on this gateway`)
-    }
+    const { kind, node } = resolved
 
-    // Idempotent: return the existing child when this node is already adopted.
-    const existingByNode = await this.adoptedCoverIdByNode()
-    const existingId = existingByNode[nodeId]
-    if (typeof existingId === 'number') {
-      const all = await this.ctx.devices.getAll()
-      const existing = all.find((d) => d.id === existingId)
-      if (existing) return { deviceId: existing.id, stableId: existing.stableId }
-    }
+    // Idempotent: return the existing child when this candidate is already adopted.
+    const existingId = (await this.adoptedIdByNativeId())[childNativeId]
+    if (typeof existingId === 'number') return { deviceId: existingId, stableId: childNativeId }
 
-    const name = nameOverride ?? (node.name.length > 0 ? node.name : `${node.coverClass} ${nodeId}`)
-    const config: Record<string, unknown> = {
-      nodeId,
+    const baseName = node.name.length > 0 ? node.name : `${node.coverClass} ${node.nodeId}`
+    const name = nameOverride ?? (kind === 'rain' ? `${baseName} rain` : baseName)
+    const identity = {
+      nodeId: node.nodeId,
+      serial: node.serial,
       gatewayId: this.stableId,
-      coverClass: node.coverClass,
       system: 'velux',
       name,
     }
-    const stableId = nodeNativeId(this.stableId, nodeId)
-    const created = await this.ctx.devices.create(stableId, VeluxCoverDevice, config, this.id, {
-      type: DeviceType.Cover,
-      name,
-    })
-    this.ctx.logger.info('Velux gateway: adopted cover', {
+    const created =
+      kind === 'rain'
+        ? await this.ctx.devices.create(childNativeId, VeluxRainSensorDevice, identity, this.id, {
+            type: DeviceType.Sensor,
+            name,
+          })
+        : await this.ctx.devices.create(
+            childNativeId,
+            VeluxCoverDevice,
+            { ...identity, coverClass: node.coverClass },
+            this.id,
+            { type: DeviceType.Cover, name },
+          )
+    this.ctx.logger.info('Velux gateway: adopted child', {
       tags: { deviceId: created.id },
-      meta: { nodeId, coverClass: node.coverClass, stableId },
+      meta: {
+        kind,
+        nodeId: node.nodeId,
+        coverClass: node.coverClass,
+        stableId: childNativeId,
+      },
     })
     await this.refreshDiscoveryFromClient().catch(() => {
       /* best-effort */
     })
-    return { deviceId: created.id, stableId }
+    return { deviceId: created.id, stableId: childNativeId }
   }
 
   private async releaseCover(childDeviceId: number): Promise<void> {

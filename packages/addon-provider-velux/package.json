@@ -66,13 +66,13 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
     "test": "vitest run",
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
     "@camstack/types": "*",
-    "klf-200-api": "^6.0.1",
+    "klf-200-api": "^8.0.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0",

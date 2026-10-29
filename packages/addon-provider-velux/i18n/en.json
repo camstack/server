@@ -4,6 +4,5 @@
   "connection.s_connection.title": "Connection",
   "connection.s_connection.description": "The password is the WiFi/web password printed on the back of the unit.",
   "connection.s_connection.host.label": "Gateway host / IP",
-  "connection.s_connection.password.label": "Password",
-  "connection.s_connection.pollIntervalMs.label": "Poll interval (ms)"
+  "connection.s_connection.password.label": "Password"
 }

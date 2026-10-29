@@ -1,13 +1,12 @@
-import { z } from 'zod'
 import type { ConfigUISchema } from '@camstack/types'
+import { z } from 'zod'
 
 /**
  * Operator-supplied connection to ONE Velux KLF-200 gateway on the local
  * network. The addon runs in `standalone` mode (the Reolink / Ecowitt /
  * Rademacher pattern): the CONNECTION lives on the gateway DEVICE config, not a
- * broker registry. The KLF-200 has no push channel exposed by the wrapper we
- * target, so the gateway is POLLED — `pollIntervalMs` drives the node-state
- * refresh cadence.
+ * broker registry. The KLF-200 PUSHES node changes over its socket
+ * (`GW_NODE_STATE_POSITION_CHANGED_NTF`), so there is no poll interval.
  */
 export const veluxConnectionSchema = z.object({
   host: z.string().min(1).describe('KLF-200 host name or IP address'),
@@ -16,12 +15,6 @@ export const veluxConnectionSchema = z.object({
     .default('')
     .describe('KLF-200 WiFi/web password (printed on the back of the unit)')
     .meta({ secret: true }),
-  pollIntervalMs: z
-    .preprocess(
-      (v) => (v === '' || v === null ? undefined : v),
-      z.number().int().min(2000).max(3_600_000).default(30_000),
-    )
-    .describe('Node-state poll interval (ms)'),
 })
 
 export type VeluxConnectionConfig = z.infer<typeof veluxConnectionSchema>
@@ -39,8 +32,15 @@ export const veluxGatewaySchema = z.object({
 
 export type VeluxGatewayConfig = z.infer<typeof veluxGatewaySchema>
 
-/** HA-oriented cover device class (`device_class` window vs shutter). */
-export const VeluxCoverClassSchema = z.enum(['window', 'shutter'])
+/** HA-oriented cover device class (`device_class`) of a KLF-200 actuator. */
+export const VeluxCoverClassSchema = z.enum([
+  'window',
+  'shutter',
+  'blind',
+  'awning',
+  'garage',
+  'gate',
+])
 export type VeluxCoverClass = z.infer<typeof VeluxCoverClassSchema>
 
 /**
@@ -52,12 +52,27 @@ export type VeluxCoverClass = z.infer<typeof VeluxCoverClassSchema>
  */
 export const veluxCoverSchema = z.object({
   nodeId: z.number().int().nonnegative().describe('KLF-200 actuator node id'),
+  /** Hex serial of the actuator — the stable identity; '' when the gateway reported none. */
+  serial: z.string().default(''),
   gatewayId: z.string().min(1).describe('Parent gateway stableId'),
   coverClass: VeluxCoverClassSchema.default('window'),
   system: z.literal('velux').optional(),
 })
 
 export type VeluxCoverConfig = z.infer<typeof veluxCoverSchema>
+
+/**
+ * Persisted config of the rain-sensor child a window with an integrated rain
+ * sensor spawns. It follows the same node as the window cover.
+ */
+export const veluxRainSensorSchema = z.object({
+  nodeId: z.number().int().nonnegative(),
+  serial: z.string().default(''),
+  gatewayId: z.string().min(1),
+  system: z.literal('velux').optional(),
+})
+
+export type VeluxRainSensorConfig = z.infer<typeof veluxRainSensorSchema>
 
 /**
  * Narrow an `unknown` value to a shallow-cloned plain object record, or an empty
@@ -135,15 +150,6 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             label: 'Password',
             labelKey: 'provider-velux:connection.s_connection.password.label',
             showToggle: true,
-          },
-          {
-            type: 'number',
-            key: 'pollIntervalMs',
-            label: 'Poll interval (ms)',
-            labelKey: 'provider-velux:connection.s_connection.pollIntervalMs.label',
-            min: 2000,
-            max: 3_600_000,
-            default: 30_000,
           },
         ],
       },

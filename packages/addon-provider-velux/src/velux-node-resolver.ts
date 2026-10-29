@@ -1,5 +1,17 @@
-import type { VeluxNode } from './velux-client-contract.js'
-import type { VeluxIntegrationManager } from './velux-integration-manager.js'
+import type { VeluxGatewayClient, VeluxNode } from './velux-client-contract.js'
+
+/** What the resolver needs from a gateway manager. */
+export type VeluxNodeSource = {
+  getNodes(): readonly VeluxNode[]
+  getNode(nodeId: number): VeluxNode | null
+  readonly client: VeluxGatewayClient | null
+}
+
+/** How a child names its node: the serial when the gateway reported one, else the node id. */
+export interface VeluxNodeRef {
+  readonly serial: string
+  readonly nodeId: number
+}
 
 /**
  * Per-gateway registry that device classes use to reach the live
@@ -13,7 +25,7 @@ import type { VeluxIntegrationManager } from './velux-integration-manager.js'
  * transparently pick up the new manager.
  */
 export class VeluxNodeResolver {
-  readonly #managers: Map<string, VeluxIntegrationManager> = new Map()
+  readonly #managers: Map<string, VeluxNodeSource> = new Map()
   /**
    * Per-gateway poll-tick fan-out. Cover children subscribe here instead of
    * attaching a listener per child — the gateway device pumps this bus once per
@@ -22,7 +34,7 @@ export class VeluxNodeResolver {
   readonly #snapshotSubs: Map<string, Set<() => void>> = new Map()
 
   /** Publish or remove the manager for a gateway id. `null` removes the entry. */
-  set(gatewayId: string, manager: VeluxIntegrationManager | null): void {
+  set(gatewayId: string, manager: VeluxNodeSource | null): void {
     if (manager === null) {
       this.#managers.delete(gatewayId)
       return
@@ -31,7 +43,7 @@ export class VeluxNodeResolver {
   }
 
   /** The live manager for a gateway id, or null when unknown / stopped. */
-  getManager(gatewayId: string): VeluxIntegrationManager | null {
+  getManager(gatewayId: string): VeluxNodeSource | null {
     return this.#managers.get(gatewayId) ?? null
   }
 
@@ -43,6 +55,17 @@ export class VeluxNodeResolver {
   /** Resolve a single node handle by node id for a gateway, or null. */
   getNode(gatewayId: string, nodeId: number): VeluxNode | null {
     return this.#managers.get(gatewayId)?.getNode(nodeId) ?? null
+  }
+
+  /**
+   * Resolve a child's node. The serial is the identity (a node id is a reusable
+   * index), so a renumbered node is still found; the node id only serves nodes
+   * the gateway reported no serial for.
+   */
+  findNode(gatewayId: string, ref: VeluxNodeRef): VeluxNode | null {
+    const nodes = this.getNodes(gatewayId)
+    if (ref.serial.length > 0) return nodes.find((n) => n.serial === ref.serial) ?? null
+    return nodes.find((n) => n.serial.length === 0 && n.nodeId === ref.nodeId) ?? null
   }
 
   /** Subscribe a child to per-gateway poll ticks. Returns an unsubscribe fn. */

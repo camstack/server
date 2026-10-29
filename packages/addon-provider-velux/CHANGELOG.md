@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Velux KLF-200 now connects for real: windows, shutters, blinds and awnings are covers whose state is pushed by the gateway, a roof window's rain sensor is a leak sensor, and a dropped session reconnects by itself (see the addon README for the gateway's two-connection limit)
+
 ## [0.2.148] - 2026-10-27
 
 ### Changed

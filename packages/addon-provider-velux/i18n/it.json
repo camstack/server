@@ -4,6 +4,5 @@
   "connection.s_connection.title": "Connessione",
   "connection.s_connection.description": "La password è quella WiFi/web stampata sul retro del dispositivo.",
   "connection.s_connection.host.label": "Host / IP del gateway",
-  "connection.s_connection.password.label": "Password",
-  "connection.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)"
+  "connection.s_connection.password.label": "Password"
 }
