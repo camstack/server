@@ -109,15 +109,14 @@ describe('NodeList enablement pills', () => {
     expect(screen.getAllByTestId('pill')).toHaveLength(4)
   })
 
-  it('shows hub-enabled / agent-disabled defaults while settings are loading', () => {
+  it('shows every node enabled by default while settings are loading', () => {
     mockUseAgentSettings.mockReturnValue({ data: undefined })
     render(<NodeList selectedNodeId="__cluster__" onSelect={vi.fn()} refreshToken={0} />)
     const pills = screen.getAllByTestId('pill')
     expect(pills).toHaveLength(4)
-    expect(screen.getAllByTitle('Pipeline: enabled')).toHaveLength(1)
-    expect(screen.getAllByTitle('Audio: enabled')).toHaveLength(1)
-    expect(screen.getAllByTitle('Pipeline: not enabled (agent capability)')).toHaveLength(1)
-    expect(screen.getAllByTitle('Audio: not enabled (agent capability)')).toHaveLength(1)
+    expect(screen.getAllByTitle('Pipeline: enabled')).toHaveLength(2)
+    expect(screen.getAllByTitle('Audio: enabled')).toHaveLength(2)
+    expect(screen.queryAllByTitle('Pipeline: not enabled (agent capability)')).toHaveLength(0)
   })
 })
 

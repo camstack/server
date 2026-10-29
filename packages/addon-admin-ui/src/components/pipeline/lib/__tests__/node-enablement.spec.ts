@@ -2,26 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { concernEnablement, effectiveCapabilitySettings } from '../node-enablement'
 
 describe('effectiveCapabilitySettings', () => {
-  it('defaults unset hub capabilities to enabled', () => {
-    expect(effectiveCapabilitySettings({}, true)).toEqual({
+  it('defaults unset capabilities to enabled', () => {
+    expect(effectiveCapabilitySettings({})).toEqual({
       pipeline: true,
       audio: true,
       ingest: true,
     })
   })
 
-  it('defaults unset non-hub capabilities to disabled', () => {
-    expect(effectiveCapabilitySettings({}, false)).toEqual({
+  it('an explicit false turns a capability off', () => {
+    expect(effectiveCapabilitySettings({ detect: false })).toEqual({
       pipeline: false,
-      audio: false,
-      ingest: false,
+      audio: true,
+      ingest: true,
     })
   })
 
   it('uses explicit flags over node defaults', () => {
-    expect(
-      effectiveCapabilitySettings({ detect: true, audio: true, ingest: false }, false),
-    ).toEqual({
+    expect(effectiveCapabilitySettings({ detect: true, audio: true, ingest: false })).toEqual({
       pipeline: true,
       audio: true,
       ingest: false,
@@ -31,8 +29,8 @@ describe('effectiveCapabilitySettings', () => {
   it('ignores the deprecated legacy decode flag entirely (detect ⇒ decode)', () => {
     // A legacy store carrying decode:false must NOT surface any decode
     // concern — decode is always co-located with detection.
-    const enablement = effectiveCapabilitySettings({ detect: true, decode: false }, false)
-    expect(enablement).toEqual({ pipeline: true, audio: false, ingest: false })
+    const enablement = effectiveCapabilitySettings({ detect: true, decode: false })
+    expect(enablement).toEqual({ pipeline: true, audio: true, ingest: true })
     expect('decode' in enablement).toBe(false)
   })
 })
@@ -43,15 +41,15 @@ describe('concernEnablement', () => {
       { nodeId: 'hub', settings: { detect: true, audio: true } },
       { nodeId: 'mac', settings: { detect: true, audio: true } },
     ]
-    expect(concernEnablement(rows, 'mac', false)).toEqual({
+    expect(concernEnablement(rows, 'mac')).toEqual({
       pipeline: true,
       audio: true,
-      ingest: false,
+      ingest: true,
     })
   })
 
   it('falls back to node defaults when the row is absent or still loading', () => {
-    expect(concernEnablement(undefined, 'hub', true).pipeline).toBe(true)
-    expect(concernEnablement([], 'mac', false).pipeline).toBe(false)
+    expect(concernEnablement(undefined, 'hub').pipeline).toBe(true)
+    expect(concernEnablement([], 'mac').pipeline).toBe(true)
   })
 })

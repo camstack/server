@@ -92,7 +92,7 @@ export function NodeList({ selectedNodeId, onSelect, refreshToken: _refreshToken
           // Which pipeline concerns actually run on this node (detection /
           // audio). Optimistic green while settings load. Decode has no pill:
           // it is always co-located with detection (detect ⇒ decode).
-          const enablement = concernEnablement(agentSettings, node.id, node.isHub)
+          const enablement = concernEnablement(agentSettings, node.id)
           const relativeLastSeen = node.isOnline
             ? null
             : formatLastSeen(lastSeenToMs(node.lastSeen), uiText)

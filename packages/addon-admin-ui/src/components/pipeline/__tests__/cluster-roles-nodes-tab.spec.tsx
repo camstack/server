@@ -82,21 +82,21 @@ describe('Cluster → Roles & nodes', () => {
         .getAllByRole('columnheader')
         .map((h) => h.textContent),
     ).toEqual([expect.stringMatching(/Node/), 'Detect', 'Audio'])
-    // An agent with no stored flag is off (the hub is on by default).
+    // A node with no stored flag is on; only an explicit false turns it off.
     const macDetect = within(card).getByRole('switch', { name: 'Detect on macmini' })
-    expect(macDetect).toHaveAttribute('aria-checked', 'false')
+    expect(macDetect).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(macDetect)
     expect(setCapabilities).toHaveBeenCalledWith({
       agentNodeId: 'MacMiniAgent.localdomain',
-      detect: true,
+      detect: false,
     })
     setCapabilities.mockClear()
     const macAudio = within(card).getByRole('switch', { name: 'Audio on macmini' })
-    expect(macAudio).toHaveAttribute('aria-checked', 'false')
+    expect(macAudio).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(macAudio)
     expect(setCapabilities).toHaveBeenCalledWith({
       agentNodeId: 'MacMiniAgent.localdomain',
-      audio: true,
+      audio: false,
     })
   })
 

@@ -149,7 +149,7 @@ export function NodeLoadOverview({
           id: node.id,
           name: node.name,
           isOnline: node.isOnline,
-          detectEnabled: effectiveCapabilitySettings(settings, node.isHub).pipeline,
+          detectEnabled: effectiveCapabilitySettings(settings).pipeline,
           weight: targetWeights?.[node.id] ?? readNumberObjectField(settings, 'detectWeight') ?? 1,
           maxCameras: readNumberObjectField(settings, 'maxCameras'),
         }

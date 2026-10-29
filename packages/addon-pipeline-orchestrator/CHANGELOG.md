@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A newly paired agent joins detection, audio and ingest balancing by default; a role is off only when turned off
+
 ### Changed
 
 - The pipeline-steps-not-provisioned warning now names the node and device in the log line

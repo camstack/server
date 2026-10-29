@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Comments on the placement flags now say a role defaults on for every node
+
 ### Changed
 
 - A node-removal-hook capability: addons are told when the operator forgets a cluster node

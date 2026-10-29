@@ -68,7 +68,7 @@ export function ClusterRolesNodesTab() {
   const boardNodes = useMemo<readonly BoardNode[]>(() => {
     return nodes.map((node) => {
       const settings = settingsByNode.get(node.id)
-      const effective = effectiveCapabilitySettings(settings, node.isHub)
+      const effective = effectiveCapabilitySettings(settings)
       return {
         id: node.id,
         name: node.name,

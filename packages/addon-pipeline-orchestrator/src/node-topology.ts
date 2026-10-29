@@ -39,12 +39,12 @@ export interface NodeTopologyServiceDeps {
 }
 
 /**
- * Default placement capability for a node when its stored flag is unset:
- * the hub is capable of every role out of the box; every other node must be
- * explicitly enabled.
+ * A placement flag (detect, audio, ingest) is ON unless the operator stored an
+ * explicit `false`. A newly paired agent has no stored settings and must still
+ * join balancing (D965).
  */
-function nodeCapabilityDefault(nodeId: string): boolean {
-  return nodeId === 'hub'
+function isRoleOn(flag: boolean | undefined): boolean {
+  return flag !== false
 }
 
 export class NodeTopologyService {
@@ -216,7 +216,9 @@ export class NodeTopologyService {
       })
     }
     const nodeIds = new Set<string>(['hub'])
-    for (const nodeId of Object.keys(blob)) {
+    // Stored nodes plus every node known to run pipeline-runner: an agent with
+    // no stored entry yet (just paired) is still iterated.
+    for (const nodeId of [...Object.keys(blob), ...this.knownRunnerNodes]) {
       if (typeof nodeId === 'string' && nodeId.length > 0 && !nodeId.includes('/')) {
         nodeIds.add(nodeId)
       }
@@ -225,13 +227,11 @@ export class NodeTopologyService {
     const audio: string[] = []
     const ingest: string[] = []
     const reachableHosts = new Map<string, string>()
-    const capable = (flag: boolean | undefined, nodeId: string): boolean =>
-      typeof flag === 'boolean' ? flag : nodeCapabilityDefault(nodeId)
     for (const nodeId of nodeIds) {
       const settings = blob[nodeId]
-      if (capable(settings?.detect, nodeId)) detect.push(nodeId)
-      if (capable(settings?.audio, nodeId)) audio.push(nodeId)
-      if (capable(settings?.ingest, nodeId)) ingest.push(nodeId)
+      if (isRoleOn(settings?.detect)) detect.push(nodeId)
+      if (isRoleOn(settings?.audio)) audio.push(nodeId)
+      if (isRoleOn(settings?.ingest)) ingest.push(nodeId)
       const host = settings?.reachableHost?.trim()
       if (host !== undefined && host.length > 0) reachableHosts.set(nodeId, host)
     }

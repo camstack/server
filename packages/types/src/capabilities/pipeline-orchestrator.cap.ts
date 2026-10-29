@@ -90,8 +90,8 @@ const DeviceStepConfigSchema = z.object({
 // that replaced the four flat orchestrator lists (`enabledNodes`,
 // `enabledDecoderNodes`, `enabledAudioNodes`, `remoteSourcingNodes`), plus
 // the capacity knobs `maxCameras` + `detectWeight`. Every capability is
-// OPTIONAL: an unset flag inherits the node default (`hub` → capable, every
-// other node → not), so an empty store keeps the classic hub-only cluster.
+// OPTIONAL: an unset flag is ON for every node; only an explicit `false`
+// turns a role off, so a newly paired agent joins balancing.
 const AgentPipelineSettingsSchema = z.object({
   maxCameras: z.number().int().nonnegative().nullable().default(null),
   /** Per-node detection weight (relative share for the quota balancer). */
@@ -1020,8 +1020,7 @@ export const pipelineOrchestratorCapability = {
      * replaced the four flat orchestrator lists (`enabledNodes`,
      * `enabledDecoderNodes`, `enabledAudioNodes`, `remoteSourcingNodes`).
      * Each flag is optional in the patch: omit a flag to leave it unchanged,
-     * pass `null` to reset it to the node default (`hub` → capable, every
-     * other node → not). Detection/audio eligibility is derived from these
+     * pass `null` to reset it to the default (ON for every node). Detection/audio eligibility is derived from these
      * flags across the cluster; changing them re-derives the enabled sets
      * and reconciles dispatch immediately. There is NO separate decode flag:
      * decode is always co-located with its frame consumer, so decode

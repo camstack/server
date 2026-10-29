@@ -140,7 +140,7 @@ export function ClusterLoadBalancingTab({
   const shareNodes = useMemo<readonly ShareNode[]>(() => {
     const byNode = new Map((settingsQuery.data ?? []).map((row) => [row.nodeId, row.settings]))
     return nodes
-      .filter((node) => effectiveCapabilitySettings(byNode.get(node.id), node.isHub).pipeline)
+      .filter((node) => effectiveCapabilitySettings(byNode.get(node.id)).pipeline)
       .map((node) => {
         const settings = byNode.get(node.id)
         return {

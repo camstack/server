@@ -1145,6 +1145,17 @@ export async function buildOrchestratorControllers(
       // its top-level nodeId scope subscription — the forked
       // child's `ready` emit is keyed on its parent nodeId.
       if (!nodeId.includes('/')) topology.addKnownRunnerNode(nodeId)
+      // A new agent has no stored settings: re-derive the enabled sets so it
+      // enters detect/audio/ingest balancing (default ON) without waiting for a
+      // capability edit.
+      if (!nodeId.includes('/')) {
+        void topology.refreshNodeCapabilities().catch((err: unknown) => {
+          deps.ctx().logger.warn('refreshNodeCapabilities after agent online failed', {
+            tags: { nodeId },
+            meta: { error: errMsg(err) },
+          })
+        })
+      }
       // Before anything below can re-attach a camera: a (re)connecting process
       // may be a respawned runner, a rolled-back one included, that writes the
       // motion slice. Its node's answer is forgotten, so the motion-slice gate

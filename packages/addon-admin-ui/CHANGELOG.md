@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The helper member picker shows the value fields of every selected device, not only the last one
+- The cluster pages show an unset node role (detect, audio, ingest) as on, matching the orchestrator
 
 ## [1.2.514] - 2026-10-29
 

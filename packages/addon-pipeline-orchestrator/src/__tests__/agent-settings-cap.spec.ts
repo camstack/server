@@ -349,8 +349,7 @@ describe('PipelineOrchestrator — agent settings cap handlers', () => {
 
   it('setAgentCapabilities persists flags and re-derives the enabled-node sets', async () => {
     const broker = makeFakeBroker('hub')
-    broker.addNode('agent-a')
-    // Fresh install: NO capability seed → hub-only default must hold.
+    // Fresh install: NO capability seed → every role is on for every node.
     const { ctx } = makeFakeContext({ addonConfig: { moleculerBroker: broker } })
     addon = new PipelineOrchestratorAddon()
     const envelope = await addon.initialize(ctx)
@@ -358,36 +357,41 @@ describe('PipelineOrchestrator — agent settings cap handlers', () => {
     if (!dumpState) throw new Error('expected dumpState handler')
     const dump = async () =>
       pipelineOrchestratorActions.dumpState.output.parse(await dumpState(undefined))
+    // A newly paired agent has NO stored settings; coming online is enough.
+    broker.addNode('agent-a')
+    for (let i = 0; i < 100 && !(await dump()).enabledNodes.includes('agent-a'); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    }
 
-    // Default derivation: hub is capable of everything, agent-a of nothing.
+    // Default derivation: hub and agent-a are both capable of everything.
     const before = await dump()
-    expect(before.enabledNodes).toEqual(['hub'])
-    expect(before.enabledDecoderNodes).toEqual(['hub'])
-    expect(before.enabledAudioNodes).toEqual(['hub'])
+    expect(before.enabledNodes).toEqual(['agent-a', 'hub'])
+    expect(before.enabledDecoderNodes).toEqual(['agent-a', 'hub'])
+    expect(before.enabledAudioNodes).toEqual(['agent-a', 'hub'])
 
-    // Enable detect on agent-a — the derived sets widen. Decode has NO flag:
+    // Turn detect off on agent-a — the derived sets narrow. Decode has NO flag:
     // it follows detect (decode is co-located with its frame consumer).
-    await addon.setAgentCapabilities({ agentNodeId: 'agent-a', detect: true })
+    await addon.setAgentCapabilities({ agentNodeId: 'agent-a', detect: false })
     const persisted = await addon.getAgentSettings({ agentNodeId: 'agent-a' })
-    expect(persisted?.detect).toBe(true)
+    expect(persisted?.detect).toBe(false)
     const after = await dump()
-    expect(after.enabledNodes).toEqual(['agent-a', 'hub'])
-    expect(after.enabledDecoderNodes).toEqual(['agent-a', 'hub'])
-    // audio untouched → still hub-only.
-    expect(after.enabledAudioNodes).toEqual(['hub'])
+    expect(after.enabledNodes).toEqual(['hub'])
+    expect(after.enabledDecoderNodes).toEqual(['hub'])
+    // audio untouched → still on for both.
+    expect(after.enabledAudioNodes).toEqual(['agent-a', 'hub'])
 
     // Disabling the hub's detect flag removes it from BOTH derived sets
     // (detect ⇒ decode — the sets are identical by construction).
     await addon.setAgentCapabilities({ agentNodeId: 'hub', detect: false })
     const afterHubOff = await dump()
-    expect(afterHubOff.enabledNodes).toEqual(['agent-a'])
-    expect(afterHubOff.enabledDecoderNodes).toEqual(['agent-a'])
+    expect(afterHubOff.enabledNodes).toEqual([])
+    expect(afterHubOff.enabledDecoderNodes).toEqual([])
 
-    // A `null` patch resets a flag to the node default (agent-a → non-hub → off).
+    // A `null` patch resets a flag to the default (on for every node).
     await addon.setAgentCapabilities({ agentNodeId: 'agent-a', detect: null })
     const afterReset = await dump()
-    expect(afterReset.enabledNodes).toEqual([])
-    expect(afterReset.enabledDecoderNodes).toEqual([])
+    expect(afterReset.enabledNodes).toEqual(['agent-a'])
+    expect(afterReset.enabledDecoderNodes).toEqual(['agent-a'])
   })
 
   it('setAgentDecodeLimits persists a per-node decode budget and worker cap, and null clears each', async () => {
@@ -447,8 +451,7 @@ describe('PipelineOrchestrator — agent settings cap handlers', () => {
 
   it('setAgentCapabilities persists the ingest flag and re-derives enabledIngestNodes', async () => {
     const broker = makeFakeBroker('hub')
-    broker.addNode('agent-a')
-    // Fresh install: NO capability seed → hub-only default must hold.
+    // Fresh install: NO capability seed → every node is ingest-capable.
     const { ctx } = makeFakeContext({ addonConfig: { moleculerBroker: broker } })
     addon = new PipelineOrchestratorAddon()
     const envelope = await addon.initialize(ctx)
@@ -456,26 +459,30 @@ describe('PipelineOrchestrator — agent settings cap handlers', () => {
     if (!dumpState) throw new Error('expected dumpState handler')
     const dump = async () =>
       pipelineOrchestratorActions.dumpState.output.parse(await dumpState(undefined))
+    // A newly paired agent has NO stored settings; coming online is enough.
+    broker.addNode('agent-a')
+    for (let i = 0; i < 100 && !(await dump()).enabledNodes.includes('agent-a'); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    }
 
-    // Default derivation: hub is ingest-capable by default, agent-a is not.
     const before = await dump()
-    expect(before.enabledIngestNodes).toEqual(['hub'])
+    expect(before.enabledIngestNodes).toEqual(['agent-a', 'hub'])
 
-    // Enable ingest on agent-a — the derived set widens.
-    await addon.setAgentCapabilities({ agentNodeId: 'agent-a', ingest: true })
+    // Turn ingest off on agent-a — the derived set narrows.
+    await addon.setAgentCapabilities({ agentNodeId: 'agent-a', ingest: false })
     const persisted = await addon.getAgentSettings({ agentNodeId: 'agent-a' })
-    expect(persisted?.ingest).toBe(true)
+    expect(persisted?.ingest).toBe(false)
     const after = await dump()
-    expect(after.enabledIngestNodes).toEqual(['agent-a', 'hub'])
+    expect(after.enabledIngestNodes).toEqual(['hub'])
 
     // Explicitly disabling the hub's ingest flag removes it (no hard-coded hub inclusion).
     await addon.setAgentCapabilities({ agentNodeId: 'hub', ingest: false })
     const afterHubOff = await dump()
-    expect(afterHubOff.enabledIngestNodes).toEqual(['agent-a'])
+    expect(afterHubOff.enabledIngestNodes).toEqual([])
 
-    // A `null` patch resets a flag to the node default (agent-a → non-hub → off).
+    // A `null` patch resets a flag to the default (on for every node).
     await addon.setAgentCapabilities({ agentNodeId: 'agent-a', ingest: null })
     const afterReset = await dump()
-    expect(afterReset.enabledIngestNodes).toEqual([])
+    expect(afterReset.enabledIngestNodes).toEqual(['agent-a'])
   })
 })

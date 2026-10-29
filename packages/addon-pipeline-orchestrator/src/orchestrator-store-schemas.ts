@@ -64,8 +64,8 @@ const StoredAgentPipelineSettingsSchema = z.object({
   detectWeight: z.number().positive().optional(),
   // Placement capabilities (placement-model-design §6) — the per-node record
   // that replaced the four flat orchestrator lists. Each flag is optional; an
-  // absent flag inherits the node default (`hub` → capable, others → not), so
-  // an empty store keeps the classic hub-only cluster.
+  // absent flag is ON for every node; only an explicit `false` turns a role
+  // off, so a newly paired agent joins balancing.
   detect: z.boolean().optional(),
   // DEPRECATED-AND-IGNORED: decode eligibility IS detect eligibility (decode
   // is always co-located with its frame consumer). Kept schema-optional so

@@ -72,8 +72,8 @@ export interface AgentPipelineSettings {
    * Placement capabilities (placement-model-design §6) — the per-node record
    * that replaced the four flat orchestrator lists (`enabledNodes`,
    * `enabledDecoderNodes`, `enabledAudioNodes`, `remoteSourcingNodes`). Each
-   * flag is optional; an absent flag inherits the node default (`hub` →
-   * capable, every other node → not). The orchestrator derives its
+   * flag is optional; an absent flag is ON for every node (only an
+   * explicit `false` turns a role off). The orchestrator derives its
    * enabled-node sets from these flags across the cluster.
    */
   readonly detect?: boolean
