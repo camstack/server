@@ -396,8 +396,11 @@ for dev in /dev/bus/usb/*/*; do
     6e1a9a08|d1180293) chmod 666 "$dev" 2>/dev/null || true ;;
   esac
 done
-# hub-main gets NO hardcoded heap cap. Node's own default is used unless an
-# operator sets CAMSTACK_HUB_HEAP_MB.
+# The node's launch parameters (heap ceiling, native allocator env) are decided
+# by the SERVER CLOSURE, not by this image: `dist/launch-args.js` prints them and
+# the block below only executes what it printed (ADR 0970). hub-main still gets
+# NO hardcoded heap cap — that module returns V8's default for the hub unless a
+# per-node override or CAMSTACK_HUB_HEAP_MB is set. The history below is why.
 #
 # It used to be a hard `--max-old-space-size=1536`, and that number killed the
 # hub four times in ~15h on 2026-08-01/02 — once nine seconds after a viewer
@@ -449,35 +452,89 @@ done
 # paid for with more frequent scavenges on the one thread that must not stall
 # (D181). Not worth an image rebuild.
 #
-# ⚠ This is an IMAGE-level knob. `serverManagement.applyServerUpdate` replaces
-# the /data server closure, not the container's environment — the value only
-# takes effect when the container is RECREATED with the extra `-e`. The hub now
-# says which case it is in on every boot: `[mem] hub-main heap ceiling is V8's
-# DEFAULT (…MB)` appears iff no `--max-old-space-size` reached argv.
+# This is no longer an IMAGE-level knob: the ceiling comes from the closure's
+# launch-args module (a per-node override set from the hub, then the legacy
+# CAMSTACK_HUB_HEAP_MB), so changing it needs a closure update and a restart,
+# not a new image or a recreated container. The node says which case it is in
+# on every boot: `[mem] hub-main heap ceiling …MB, set by <override|legacy-env|
+# computed>`, or `… is V8's DEFAULT (…MB)` when no `--max-old-space-size`
+# reached argv.
 #
 # Set on argv, NOT via NODE_OPTIONS — that would be inherited by every forked
 # addon-runner child, which are sized separately in process-service.ts.
-# Native allocator, welded here so the operator does not carry it in the
-# container template.
 #
-# glibc reads MALLOC_ARENA_MAX once at malloc init, so hub-main cannot set it
-# for itself — it must exist before `exec node`. "Before exec" does not mean
-# "in the Unraid template": it means HERE. Every forked runner then inherits it,
-# and `applyRunnerNativeAllocator` still lets `CAMSTACK_RUNNER_NATIVE_ALLOCATOR=off`
-# remove it per child (it DELETES now, because omitting no longer suffices once
-# the parent has it).
+# The native allocator pair (MALLOC_ARENA_MAX=2 + VIPS_CONCURRENCY=1) is decided
+# by the same module, for the same reason, and is welded: glibc reads
+# MALLOC_ARENA_MAX once at malloc init, so hub-main cannot set it for itself —
+# it must exist before `exec node`. Every forked runner then inherits it, and
+# `applyRunnerNativeAllocator` still lets `CAMSTACK_RUNNER_NATIVE_ALLOCATOR=off`
+# remove it per child. sharp reads MALLOC_ARENA_MAX in its NATIVE binding and,
+# the moment it appears, restores libvips concurrency from 1 to
+# `availableParallelism()` — 20 on the live host — so the pair travels together
+# or not at all. An operator value already in the environment wins.
 #
-# The pair is welded, never one without the other: sharp reads MALLOC_ARENA_MAX
-# in its NATIVE binding and, the moment it appears, restores libvips concurrency
-# from 1 to `availableParallelism()` — 20 on this host. Verified in the live
-# container: unset -> 1, MALLOC_ARENA_MAX=2 -> 20, the pair -> 1. Shipping the
-# arena bound alone would quietly ship a 20x libvips threading change under the
-# banner of a memory fix.
-#
-# An operator value already in the environment wins: this only fills the gap.
-: "${MALLOC_ARENA_MAX:=2}"
-: "${VIPS_CONCURRENCY:=1}"
-export MALLOC_ARENA_MAX VIPS_CONCURRENCY
+# FAIL OPEN: a missing module, a non-zero exit, a timeout or garbage output means
+# NO extra args and no allocator env, and says so in ONE log line. The module is
+# looked up in the active closure first, then in the baked seed (always present
+# in this image), so the only way to lose the allocator pair is a module that
+# crashes.
+launch_candidates="${CAMSTACK_DATA:-/data}/server-root/current/node_modules/@camstack/server/dist/launch-args.js /opt/camstack-hub/node_modules/@camstack/server/dist/launch-args.js"
+# [launch-args-begin]
+launch_role="${CAMSTACK_ROLE:-hub}"
+launch_js=""
+for f in $launch_candidates; do
+  if [ -f "$f" ]; then launch_js="$f"; break; fi
+done
+launch_records=""
+launch_ok=""
+launch_source=""
+launch_extra=""
+if [ -z "$launch_js" ]; then
+  echo "[entrypoint] launch-args module not found — launching node with no extra args"
+else
+  launch_records="$(timeout 10 gosu camstack:camstack node "$launch_js" --role "$launch_role" --allocator-env 2>/dev/null)" || launch_records=""
+fi
+while IFS= read -r line; do
+  case "$line" in
+    "arg --"*)
+      val="${line#arg }"
+      case "$val" in *[!A-Za-z0-9=._-]*) continue ;; esac
+      launch_extra="$val
+$launch_extra"
+      ;;
+    "env "[A-Z]*=*)
+      kv="${line#env }"
+      name="${kv%%=*}"
+      val="${kv#*=}"
+      case "$name" in *[!A-Z0-9_]*) continue ;; esac
+      # The loader and the shell are never the closure's to set.
+      case "$name" in LD_*|DYLD_*|NODE_*|PATH|HOME|SHELL|IFS|USER) continue ;; esac
+      case "$val" in *[!A-Za-z0-9._-]*) continue ;; esac
+      # CAMSTACK_HEAP_CEILING_SOURCE is a fact about THIS launch, not a default.
+      if [ "$name" = "CAMSTACK_HEAP_CEILING_SOURCE" ] || [ -z "$(printenv "$name")" ]; then
+        export "$name=$val"
+      fi
+      ;;
+    "source "*) launch_ok=1; launch_source="${line#source }" ;;
+    "warn "*) echo "[entrypoint] launch-args: ${line#warn }" ;;
+  esac
+done <<LAUNCH_EOF
+$launch_records
+LAUNCH_EOF
+if [ -n "$launch_js" ] && [ -z "$launch_ok" ]; then
+  echo "[entrypoint] launch-args printed no usable plan — launching node with no extra args"
+  launch_extra=""
+fi
+# `launch_extra` was built newest-first, so prepending line by line restores order.
+while IFS= read -r val; do
+  if [ -n "$val" ]; then set -- "$val" "$@"; fi
+done <<LAUNCH_EOF
+$launch_extra
+LAUNCH_EOF
+if [ -n "$launch_ok" ]; then
+  echo "[entrypoint] node launch: role=$launch_role ceiling-source=$launch_source"
+fi
+# [launch-args-end]
 
 # Privileged package helper (D326). This script is still root; Node is not.
 # The helper is reparented to tini on exec and dies with the container.
@@ -495,37 +552,6 @@ if [ ! -S "$CAMSTACK_PKGD_SOCKET" ]; then
   echo "[entrypoint] camstack-pkgd did not bind $CAMSTACK_PKGD_SOCKET — distro package installs will refuse until the next recreate"
 fi
 
-# [agent-heap-begin]
-# The AGENT root's old-space ceiling (role=agent only; the hub keeps V8's
-# default or CAMSTACK_HUB_HEAP_MB). clamp(RAM/4, 1536, 4096) MB — V8's own rule
-# with a floor above every measured agent RSS (0.8-1.4GB), so it bounds a runaway
-# and never a healthy root. Mirrored by packages/desktop/src/agent-heap-flag.ts
-# (a spec pins both to the same answers). RAM is the smaller of MemTotal and the
-# cgroup limit. CAMSTACK_AGENT_HEAP_MB (positive integer) overrides.
-agent_heap_mb() {
-  case "${CAMSTACK_AGENT_HEAP_MB:-}" in
-    ''|*[!0-9]*|0*) ;;
-    *) echo "$CAMSTACK_AGENT_HEAP_MB"; return ;;
-  esac
-  kb=$(awk '/^MemTotal:/ {print $2; exit}' "${CAMSTACK_MEMINFO:-/proc/meminfo}" 2>/dev/null)
-  case "$kb" in ''|*[!0-9]*) echo 1536; return ;; esac
-  mb=$((kb / 1024 / 4))
-  cg=$(cat "${CAMSTACK_CGROUP_MEM_MAX:-/sys/fs/cgroup/memory.max}" 2>/dev/null || true)
-  case "$cg" in
-    ''|*[!0-9]*) ;;
-    *) cgmb=$((cg / 1048576 / 4)); [ "$cgmb" -lt "$mb" ] && mb=$cgmb ;;
-  esac
-  [ "$mb" -lt 1536 ] && mb=1536
-  [ "$mb" -gt 4096 ] && mb=4096
-  echo "$mb"
-}
-# [agent-heap-end]
-if [ "${CAMSTACK_ROLE:-hub}" = "agent" ]; then
-  exec gosu camstack:camstack node --max-old-space-size="$(agent_heap_mb)" "$@"
-fi
-if [ -n "${CAMSTACK_HUB_HEAP_MB:-}" ]; then
-  exec gosu camstack:camstack node --max-old-space-size="$CAMSTACK_HUB_HEAP_MB" "$@"
-fi
 exec gosu camstack:camstack node "$@"
 EOF
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

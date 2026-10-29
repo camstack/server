@@ -755,6 +755,67 @@ describe('the heap ceiling says whether anyone CHOSE it', () => {
     }
   })
 
+  it('names WHO chose the ceiling when the launcher said so (ADR 0970)', () => {
+    vi.stubEnv('CAMSTACK_HEAP_CEILING_SOURCE', 'override')
+    const info = vi.fn()
+    const stop = startHeapWatch(
+      'agent-main',
+      { info, warn: vi.fn() },
+      60_000,
+      undefined,
+      { read: () => ZERO_LOOP_DELAY, stop: () => undefined },
+      ['--max-old-space-size=3072'],
+    )
+    try {
+      const said = info.mock.calls.map((c) => String(c[0])).filter((l) => l.includes('ceiling'))
+      expect(said).toHaveLength(1)
+      expect(said[0]).toMatch(/heap ceiling = \d+MB, set by override/)
+    } finally {
+      stop()
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('a forked runner inheriting the env never claims the launcher chose ITS ceiling', () => {
+    vi.stubEnv('CAMSTACK_HEAP_CEILING_SOURCE', 'override')
+    const info = vi.fn()
+    const stop = startHeapWatch(
+      'recorder',
+      { info, warn: vi.fn() },
+      60_000,
+      undefined,
+      { read: () => ZERO_LOOP_DELAY, stop: () => undefined },
+      ['--max-old-space-size=1024'],
+    )
+    try {
+      expect(
+        info.mock.calls.map((c) => String(c[0])).filter((l) => l.includes('ceiling')),
+      ).toHaveLength(0)
+    } finally {
+      stop()
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('the V8-default line carries the source too', () => {
+    vi.stubEnv('CAMSTACK_HEAP_CEILING_SOURCE', 'v8-default')
+    const info = vi.fn()
+    const stop = startHeapWatch(
+      'hub-main',
+      { info, warn: vi.fn() },
+      60_000,
+      undefined,
+      { read: () => ZERO_LOOP_DELAY, stop: () => undefined },
+      [],
+    )
+    try {
+      expect(info.mock.calls.map((c) => String(c[0])).join('\n')).toMatch(/set by v8-default/)
+    } finally {
+      stop()
+      vi.unstubAllEnvs()
+    }
+  })
+
   it('a process that WAS given a ceiling stays quiet', () => {
     const info = vi.fn()
     const warn = vi.fn()

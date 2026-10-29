@@ -5,8 +5,7 @@
  * asar under the bundled real Node, with nothing but Node built-ins.
  */
 import { spawn } from 'node:child_process'
-import { totalmem } from 'node:os'
-import { agentHeapNodeArgs } from '../agent-heap-flag'
+import { resolveLaunchArgs } from '../launch-args-client'
 import { NodeSupervisor } from './supervisor'
 
 const starter = process.argv[2]
@@ -17,9 +16,21 @@ if (starter === undefined || starter.length === 0) {
 
 const supervisor = new NodeSupervisor({
   spawnChild: () => {
-    const proc = spawn(process.execPath, [...agentHeapNodeArgs(totalmem(), process.env), starter], {
-      stdio: 'inherit',
+    // Re-resolved on every (re)launch: a closure update that changes the formula
+    // or a node's override takes effect at the next relaunch, without a new
+    // installer. The module is the closure's, never ours (ADR 0970); fails open.
+    const launch = resolveLaunchArgs({
+      role: 'agent',
+      dataDir: process.env['CAMSTACK_DATA'] ?? '',
+      starterPath: starter,
+      nodeExecPath: process.execPath,
+      runAsElectron: false,
       env: process.env,
+    })
+    for (const note of launch.notes) console.log(`[service-supervisor] ${note}`)
+    const proc = spawn(process.execPath, [...launch.args, starter], {
+      stdio: 'inherit',
+      env: { ...process.env, ...launch.env },
     })
     const exited = new Promise<{ code: number | null; signal: string | null }>((resolve) => {
       proc.once('exit', (code, signal) => resolve({ code, signal }))

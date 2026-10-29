@@ -24,7 +24,8 @@
     "./package.json": "./package.json",
     "./main.js": "./dist/main.js",
     "./launcher.js": "./dist/launcher.js",
-    "./starter.js": "./dist/starter.js"
+    "./starter.js": "./dist/starter.js",
+    "./launch-args.js": "./dist/launch-args.js"
   },
   "scripts": {
     "build": "../../scripts/tsc7 -p tsconfig.build.json && tsup && node scripts/copy-closure-patches.mjs",

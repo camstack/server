@@ -527,6 +527,30 @@ export function heapCeilingOrigin(
   return explicit ? 'explicit' : 'v8-default'
 }
 
+/** Env var the launch-args module hands the node: who chose its heap ceiling. */
+export const HEAP_CEILING_SOURCE_ENV = 'CAMSTACK_HEAP_CEILING_SOURCE'
+
+const LAUNCHER_SOURCES: ReadonlySet<string> = new Set([
+  'override',
+  'legacy-env',
+  'computed',
+  'v8-default',
+])
+
+/**
+ * Who chose this process's ceiling, as told by the launch-args module (ADR 0970).
+ * Only the two launcher-controlled processes report it: a forked runner inherits
+ * the variable but its ceiling is sized by process-service, so for it the claim
+ * would be false.
+ */
+function launcherCeilingSource(label: string): string | undefined {
+  if (label !== HUB_MAIN_HEAP_WATCH_LABEL && label !== AGENT_MAIN_HEAP_WATCH_LABEL) {
+    return undefined
+  }
+  const value = process.env[HEAP_CEILING_SOURCE_ENV]
+  return value !== undefined && LAUNCHER_SOURCES.has(value) ? value : undefined
+}
+
 export interface HeapSample {
   readonly rssMb: number
   readonly heapUsedMb: number
@@ -1451,12 +1475,16 @@ export function startHeapWatch(
         `working set.`,
     )
   }
+  const ceilingSource = launcherCeilingSource(label)
   if (announceCeilingOrigin && heapCeilingOrigin(execArgv) === 'v8-default') {
     sink.info(
       `[mem] ${label} heap ceiling is V8's DEFAULT (${read().heapLimitMb}MB) — no ` +
         `--max-old-space-size on argv. Nothing here CHOSE that number; it is derived ` +
-        `from host RAM and moves with it.`,
+        `from host RAM and moves with it.` +
+        (ceilingSource === undefined ? '' : ` set by ${ceilingSource}`),
     )
+  } else if (announceCeilingOrigin && ceilingSource !== undefined) {
+    sink.info(`[mem] ${label} heap ceiling = ${read().heapLimitMb}MB, set by ${ceilingSource}`)
   }
   let stopped = false
   return () => {

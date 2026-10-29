@@ -43,10 +43,10 @@ import {
   shell,
   Tray,
 } from 'electron'
-import { agentHeapNodeArgs } from './agent-heap-flag'
 import type { UpdateState } from './auto-updater'
 import { initAutoUpdater, notifyUpdateReady, shutdownAutoUpdater } from './auto-updater'
 import { loadOrCreatePlatformKeychainKey } from './keychain-platform-key'
+import { resolveLaunchArgs } from './launch-args-client'
 import type { AgentConnectionInput } from './node-env'
 import { buildNodeEnv } from './node-env'
 import { classifyNodeExit, roleLabel, summarizeNodeRootStatus } from './node-supervisor'
@@ -369,16 +369,28 @@ function startNodeProcess(): void {
     }
   }
 
+  // The node's launch args (heap ceiling) are decided by the server closure's
+  // launch-args module, never by this app (ADR 0970). Set on argv, not
+  // NODE_OPTIONS: runners are sized separately. Fails open.
+  const bundledNode = nodeExecPath !== null && fs.existsSync(nodeExecPath)
+  const launch = resolveLaunchArgs({
+    role,
+    dataDir,
+    starterPath: entryPath,
+    nodeExecPath: bundledNode ? nodeExecPath : process.execPath,
+    runAsElectron: !bundledNode,
+    env: process.env,
+  })
+  for (const note of launch.notes) console.warn(`[main] ${note}`)
+
   try {
     nodeManager.start({
       entryPath,
       cwd: path.dirname(entryPath),
-      env,
+      env: { ...env, ...launch.env },
       nodeExecPath,
       keychainKey,
-      // The agent root's old-space ceiling (hub keeps V8's default). Set on
-      // argv, not NODE_OPTIONS: runners are sized separately.
-      ...(role === 'agent' ? { nodeArgs: agentHeapNodeArgs(os.totalmem(), process.env) } : {}),
+      nodeArgs: launch.args,
     })
     nodeStartedAt = Date.now()
     console.log(`[main] node started (role=${role}, data=${dataDir})`)
