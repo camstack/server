@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A transcode of a local restream starts its first frame sooner (bounded input probe)
+
 ## [1.2.441] - 2026-10-29
 
 ### Added
