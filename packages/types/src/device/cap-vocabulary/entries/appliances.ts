@@ -473,7 +473,7 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
           {
             key: 'grams',
             label: t('Grams', 'Grammi'),
-            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g' },
+            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g', quantity: 'mass' },
             optional: true,
           },
         ],
@@ -491,13 +491,13 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
           {
             key: 'hopper1',
             label: t('Hopper 1', 'Serbatoio 1'),
-            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g' },
+            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g', quantity: 'mass' },
             optional: true,
           },
           {
             key: 'hopper2',
             label: t('Hopper 2', 'Serbatoio 2'),
-            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g' },
+            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g', quantity: 'mass' },
             optional: true,
           },
         ],

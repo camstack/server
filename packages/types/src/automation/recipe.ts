@@ -33,6 +33,7 @@ import {
 } from '../expression/binding-source.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
+import { type QuantityValue, QuantityValueSchema } from '../units/quantity-input.js'
 
 /**
  * Depth of a condition tree, counting the root container as level 1.
@@ -68,7 +69,15 @@ export interface AutomationConditionLeaf {
   readonly cap: string
   readonly fieldPath: string
   readonly operator: AutomationConditionOperator
-  readonly value: string | number | boolean | readonly (string | number)[]
+  /**
+   * The value. A number on a quantity field is stored in the field's base unit
+   * (D944); {@link QuantityValue} is the WRITE form — "this number is in this
+   * unit" — which the save boundary replaces with the converted number and
+   * `unit`. A leaf that still carries one is never evaluated (it fails).
+   */
+  readonly value: string | number | boolean | readonly (string | number)[] | QuantityValue
+  /** The unit the person picked for `value` (display only; `value` is in the base unit). */
+  readonly unit?: string
 }
 
 /** The escape hatch: the bounded expression engine over named device bindings. */
@@ -118,7 +127,14 @@ const AutomationConditionLeafSchema = z.object({
   cap: z.string().min(1),
   fieldPath: z.string().min(1),
   operator: AutomationConditionOperatorSchema,
-  value: z.union([z.string(), z.number(), z.boolean(), z.array(z.union([z.string(), z.number()]))]),
+  value: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.union([z.string(), z.number()])),
+    QuantityValueSchema,
+  ]),
+  unit: z.string().min(1).optional(),
 })
 
 const AutomationConditionStationaryPresentSchema = z.object({
@@ -273,7 +289,14 @@ export const AutomationCapStepSchema = z.object({
    *  SUBSTITUTE and do not evaluate (§3.2.3). Anything beyond substitution is
    *  the expression leaf. */
   args: z.record(z.string(), z.unknown()).optional(),
+  /**
+   * The unit the person picked per arg (display only). `args` always hold the
+   * value in the unit the method's input DECLARES (`paramMeta`); on a write an
+   * arg may be a {@link QuantityValue}, which the save boundary converts.
+   */
+  argUnits: z.record(z.string(), z.string().min(1)).optional(),
 })
+export type AutomationCapStep = z.infer<typeof AutomationCapStepSchema>
 
 /**
  * The steps an internal Action may contain: cap and wait, and nothing that can

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Saving an internal Action converts a quantity argument entered in another unit (0.1 kg for a feed in grams) and reports a bare number as a warning
+
 ## [1.2.520] - 2026-10-29
 
 ### Changed

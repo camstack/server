@@ -13,6 +13,7 @@
  * the editor can paint each block.
  */
 
+import { isQuantityValue } from '../units/quantity-input.js'
 import { evaluateExpressionSource, toExpressionValue } from '../expression/expression-source.js'
 import { detectionClassMatches } from './detection-trigger.js'
 import type {
@@ -351,6 +352,14 @@ function evalNode(
         expected: toTraceValue(cond.value),
         observed: toTraceValue(observed),
       } as const
+      if (isQuantityValue(cond.value)) {
+        out.push({
+          ...base,
+          outcome: 'fail',
+          reason: `${cond.fieldPath} expected value's unit was never converted → fail`,
+        })
+        return false
+      }
       if (observed === undefined) {
         out.push({ ...base, outcome: 'fail', reason: `${cond.fieldPath} value unknown → fail` })
         return false

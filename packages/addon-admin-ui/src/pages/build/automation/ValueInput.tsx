@@ -14,8 +14,10 @@
  */
 
 import {
+  isQuantityValue,
   isReadingQuantity,
   type DeviceDisplayOverride,
+  type QuantityValue,
   type ReadingQuantity,
 } from '@camstack/types'
 import {
@@ -30,7 +32,8 @@ import type { WireableField } from './recipe-parts'
 import { useTranslation } from 'react-i18next'
 
 export type ScalarValue = string | number | boolean
-export type ConditionValue = ScalarValue | readonly (string | number)[]
+/** The `{ value, unit }` write form is not shown here: the control reads its number. */
+export type ConditionValue = ScalarValue | readonly (string | number)[] | QuantityValue
 
 export interface ScalarValueInputProps {
   readonly value: ScalarValue
@@ -141,18 +144,20 @@ export function ListValueInput({ value, field, deviceId, cap, onChange }: ListVa
  *  A hand-written guard rather than `Array.isArray`, whose declared narrowing is
  *  to a MUTABLE array and does not describe this union. */
 function isList(value: ConditionValue): value is readonly (string | number)[] {
-  return typeof value === 'object'
+  return typeof value === 'object' && !isQuantityValue(value)
 }
 
 /** Narrow a stored value to a scalar for a control that cannot show a list —
  *  the first entry, because dropping to `''` would erase what is stored the
  *  moment an operator switches the operator back and forth. */
 export function toScalar(value: ConditionValue): ScalarValue {
+  if (isQuantityValue(value)) return value.value
   if (!isList(value)) return value
   return value[0] ?? ''
 }
 
 export function toList(value: ConditionValue): readonly (string | number)[] {
+  if (isQuantityValue(value)) return [value.value]
   if (isList(value)) return value
   if (typeof value === 'boolean') return []
   return [value]

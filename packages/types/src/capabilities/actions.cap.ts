@@ -7,6 +7,7 @@ import {
   ActionRunResultSchema,
   ActionVariableValueSchema,
 } from '../automation/action.js'
+import { UnitWarningSchema } from '../automation/normalize-units.js'
 import { AutomationRunTraceSchema } from '../automation/trace.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
@@ -79,10 +80,18 @@ export const actionsCapability = {
     getTraces: method(ActionIdInput, z.object({ traces: z.array(AutomationRunTraceSchema) }), {
       auth: 'admin',
     }),
-    /** Internal actions only. A read-only (addon) entry is refused with `[read-only]`. */
+    /**
+     * Internal actions only; a read-only (addon) entry is refused with `[read-only]`.
+     * Create an internal action. A cap step arg that is a physical quantity may
+     * be sent as `{ value, unit }` ("value expressed in unit"); the server
+     * converts it to the unit the method's input declares, stores the bare
+     * number plus the picked unit in `argUnits`, and refuses a unit of another
+     * dimension (`[invalid-steps]`). A bare number is taken as the declared
+     * unit and answered as a `warnings` entry (D972).
+     */
     create: method(
       z.object({ action: ActionInputSchema }),
-      z.object({ action: ActionEntrySchema }),
+      z.object({ action: ActionEntrySchema, warnings: z.array(UnitWarningSchema).optional() }),
       {
         kind: 'mutation',
         auth: 'admin',
@@ -90,7 +99,7 @@ export const actionsCapability = {
     ),
     update: method(
       z.object({ actionId: z.string().min(1), action: ActionInputSchema.partial() }),
-      z.object({ action: ActionEntrySchema }),
+      z.object({ action: ActionEntrySchema, warnings: z.array(UnitWarningSchema).optional() }),
       { kind: 'mutation', auth: 'admin' },
     ),
     delete: method(ActionIdInput, z.void(), { kind: 'mutation', auth: 'admin' }),

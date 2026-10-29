@@ -26,6 +26,21 @@ export {
   readingMeta,
 } from './quantity.js'
 export type { DisplayPreference, ReadingMeta, ReadingQuantity } from './quantity.js'
+export { baseUnitForQuantity, unitsForQuantity } from './quantity-units.js'
+export {
+  QuantityUnitError,
+  QuantityValueSchema,
+  convertQuantityInput,
+  isQuantityValue,
+  paramMeta,
+  paramMetaOf,
+} from './quantity-input.js'
+export type {
+  ConvertQuantityInput,
+  ParamMeta,
+  QuantityUnitErrorCode,
+  QuantityValue,
+} from './quantity-input.js'
 export { thresholdToBase, thresholdToDisplay } from './threshold.js'
 export { formatReading } from './format-reading.js'
 export type { FormatReadingInput, FormattedReading } from './format-reading.js'

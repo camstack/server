@@ -20,6 +20,7 @@ import type * as CapRegistry from '../../generated/capability-router-map.js'
 import type { EventCategory } from '../../enums/event-category.js'
 import type { ICON_KEYS } from '../icon-catalog.generated.js'
 import type { DeviceRole, DeviceType } from '../device-type.js'
+import type { ReadingQuantity } from '../../units/quantity.js'
 
 /** One catalog icon key (lucide id) — the same vocabulary as `IconKey`. */
 export type VocabIcon = (typeof ICON_KEYS)[number]
@@ -115,13 +116,20 @@ export interface EnumOffer {
   readonly values: readonly VocabChoice[]
 }
 
-/** A number, within the Zod input's bounds. `unit` is a display suffix. */
+/**
+ * A number, within the Zod input's bounds. With `quantity` the number is a
+ * physical quantity: `unit` is the unit the METHOD expects (what its input
+ * declares with `paramMeta`) and a client lets the person pick any unit of
+ * that quantity (`unitsForQuantity`), converting to `unit` before the call.
+ * Without `quantity`, `unit` is only a display suffix.
+ */
 export interface NumberOffer {
   readonly kind: 'number'
   readonly min?: number
   readonly max?: number
   readonly step?: number
   readonly unit?: string
+  readonly quantity?: ReadingQuantity
 }
 
 /** Free text. */

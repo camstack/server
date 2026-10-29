@@ -35,7 +35,9 @@ import type {
   LooseVocabAction,
   LooseVocabStateTrigger,
   LooseVocabWording,
+  NumberOffer,
 } from '../../packages/types/src/device/cap-vocabulary/types.ts'
+import { paramMetaOf } from '../../packages/types/src/units/quantity-input.ts'
 
 /** What the judge is handed. */
 export interface CapVocabularyCheckInput {
@@ -224,6 +226,41 @@ function checkDynamicOffer(
   }
 }
 
+/** D972: an offer for a quantity param repeats what the input declares. */
+function checkNumberOfferUnit(
+  where: string,
+  key: string,
+  offer: NumberOffer,
+  field: z.ZodType,
+  problems: string[],
+): void {
+  const declared = paramMetaOf(field)
+  if (declared === undefined) {
+    if (offer.quantity !== undefined) {
+      problems.push(
+        `${where}: '${key}' offers quantity '${offer.quantity}' but the input declares none`,
+      )
+    }
+    return
+  }
+  if (offer.quantity === undefined) {
+    problems.push(
+      `${where}: '${key}' is a ${declared.quantity} param (${declared.unit}) and its offer carries no quantity`,
+    )
+    return
+  }
+  if (offer.quantity !== declared.quantity) {
+    problems.push(
+      `${where}: '${key}' offers quantity '${offer.quantity}' but the input declares '${declared.quantity}'`,
+    )
+  }
+  if (offer.unit !== declared.unit) {
+    problems.push(
+      `${where}: '${key}' offers unit '${String(offer.unit)}' but the input is declared in '${declared.unit}'`,
+    )
+  }
+}
+
 function checkAction(
   def: CapabilityDefinition,
   action: LooseVocabAction,
@@ -290,6 +327,7 @@ function checkAction(
             `${where}: '${arg.key}' offers max ${offer.max} above the schema's ${bounds.max}`,
           )
         }
+        checkNumberOfferUnit(where, arg.key, offer, field, problems)
       }
     } else if (offer.kind === 'boolean') {
       if (scalarKind(field) !== 'boolean') {

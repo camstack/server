@@ -31,19 +31,25 @@ import {
   type ActionRunResult,
   type ActionVariableValue,
   addonIdOfActionId,
+  ALL_CAPABILITY_DEFINITIONS,
   type AutomationRunOutcome,
   type AutomationRunTrace,
   type AutomationStepTrace,
   buildActionSteps,
+  capUnitResolver,
   type CapCall,
   type CapCaller,
   type IActionsProvider,
   type IScopedLogger,
   isInternalActionId,
+  normalizeActionUnits,
+  QuantityUnitError,
   resolveActionVariables,
   type RunnableStep,
   runSteps,
   type TraceValue,
+  type UnitResolver,
+  type UnitWarning,
 } from '@camstack/types'
 import type { ActionsStore } from './actions-store.js'
 import { actionOwner, type RunsLedger, type RunsLedgerView } from './runs-ledger.js'
@@ -71,6 +77,8 @@ export interface ActionsServiceDeps {
   readonly logger: IScopedLogger
   readonly now?: () => number
   readonly newRunId?: () => string
+  /** What the caps say about quantity params; the generated registry by default. */
+  readonly units?: UnitResolver
 }
 
 /** A run in flight: the stop flag and whatever sleeps it can wake. */
@@ -103,6 +111,7 @@ interface RunningRun {
   readonly addonId: string | null
 }
 
+type ActionInput = Parameters<IActionsProvider['create']>[0]['action']
 type RunInput = Parameters<IActionsProvider['run']>[0]
 type GetInput = Parameters<IActionsProvider['get']>[0]
 
@@ -119,6 +128,7 @@ export class ActionsService implements IActionsProvider {
   private readonly logger: IScopedLogger
   private readonly now: () => number
   private readonly newRunId: () => string
+  private readonly units: UnitResolver
   private readonly running = new Map<string, RunningRun>()
 
   constructor(deps: ActionsServiceDeps) {
@@ -130,6 +140,7 @@ export class ActionsService implements IActionsProvider {
     this.logger = deps.logger
     this.now = deps.now ?? Date.now
     this.newRunId = deps.newRunId ?? randomUUID
+    this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
   }
 
   // ── reads ──────────────────────────────────────────────────────────────
@@ -422,28 +433,74 @@ export class ActionsService implements IActionsProvider {
 
   // ── authoring (internal actions only) ───────────────────────────────────
 
-  async create(input: Parameters<IActionsProvider['create']>[0]): Promise<{ action: ActionEntry }> {
-    const action = await this.store.create(input.action)
+  async create(input: Parameters<IActionsProvider['create']>[0]): Promise<{
+    action: ActionEntry
+    warnings?: UnitWarning[]
+  }> {
+    const { steps, warnings } = this.normalizeSteps(input.action.steps, input.action.name)
+    const action = await this.store.create({ ...input.action, steps })
     this.logger.info('internal action created', {
       meta: { actionId: action.id, name: action.name },
     })
-    return { action }
+    return { action, ...(warnings.length > 0 ? { warnings } : {}) }
   }
 
-  async update(input: Parameters<IActionsProvider['update']>[0]): Promise<{ action: ActionEntry }> {
+  async update(input: Parameters<IActionsProvider['update']>[0]): Promise<{
+    action: ActionEntry
+    warnings?: UnitWarning[]
+  }> {
     await this.requireInternal(input.actionId)
     const existing = await this.store.get(input.actionId)
     if (existing === null) throw new ActionError('not-found', `no action "${input.actionId}"`)
     const patch = input.action
+    const { steps, warnings } = this.normalizeSteps(
+      patch.steps ?? existing.steps ?? [],
+      patch.name ?? existing.name,
+    )
     const action = await this.store.update(input.actionId, {
       name: patch.name ?? existing.name,
-      steps: patch.steps ?? existing.steps ?? [],
+      steps,
       ...((patch.variables ?? existing.variables) === undefined
         ? {}
         : { variables: patch.variables ?? existing.variables }),
     })
     this.logger.info('internal action updated', { meta: { actionId: action.id } })
-    return { action }
+    return { action, ...(warnings.length > 0 ? { warnings } : {}) }
+  }
+
+  /**
+   * D972: a quantity arg sent as `{ value, unit }` is converted to the unit the
+   * method declares; a unit that cannot be that quantity refuses the save; a
+   * bare number is accepted as the declared unit and answered as a warning.
+   */
+  private normalizeSteps(
+    steps: ActionInput['steps'],
+    actionName: string,
+  ): { steps: ActionInput['steps']; warnings: UnitWarning[] } {
+    try {
+      const normalized = normalizeActionUnits(steps, this.units)
+      for (const warning of normalized.warnings) {
+        this.logger.warn('bare number on a quantity arg taken as its declared unit', {
+          ...(warning.deviceId === undefined ? {} : { tags: { deviceId: warning.deviceId } }),
+          meta: {
+            action: actionName,
+            path: warning.path,
+            field: warning.field,
+            value: warning.value,
+            assumedUnit: warning.assumedUnit,
+          },
+        })
+      }
+      return { steps: normalized.value, warnings: [...normalized.warnings] }
+    } catch (err: unknown) {
+      if (err instanceof QuantityUnitError) {
+        this.logger.warn('action save refused — a unit does not fit its quantity', {
+          meta: { action: actionName, error: err.message },
+        })
+        throw new ActionError('invalid-steps', err.message)
+      }
+      throw err
+    }
   }
 
   async delete(input: { actionId: string }): Promise<void> {

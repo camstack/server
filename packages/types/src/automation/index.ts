@@ -74,6 +74,7 @@ export {
 export type {
   ActionStep,
   AutomationAction,
+  AutomationCapStep,
   AutomationCondition,
   AutomationConditionAll,
   AutomationConditionAny,
@@ -106,3 +107,11 @@ export {
 } from './recipe.js'
 export * from './action.js'
 export * from './step-runner.js'
+export {
+  UnitWarningSchema,
+  capUnitResolver,
+  normalizeActionUnits,
+  normalizeConditionUnits,
+  normalizeRecipeUnits,
+} from './normalize-units.js'
+export type { UnitResolver, UnitWarning, UnitsNormalized } from './normalize-units.js'

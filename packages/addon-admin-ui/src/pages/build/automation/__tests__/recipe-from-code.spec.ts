@@ -107,6 +107,35 @@ describe('parseRecipeFromCode', () => {
     if (parsed.ok) expect(parsed.recipe).toEqual(RICH)
   })
 
+  it('keeps the unit the person picked, on a leaf and on a step arg', () => {
+    const withUnits: AutomationRecipe = {
+      triggers: [{ kind: 'manual' }],
+      conditions: {
+        kind: 'condition',
+        deviceId: 7,
+        cap: 'pet-feeder',
+        fieldPath: 'bowlFood',
+        operator: 'lt',
+        value: 0.01,
+        unit: 'g',
+      },
+      actions: [
+        {
+          kind: 'cap',
+          deviceId: 7,
+          cap: 'pet-feeder',
+          method: 'feed',
+          args: { grams: 100 },
+          argUnits: { grams: 'kg' },
+        },
+      ],
+    }
+    const code = generateAutomationBlock({ name: 'Units', recipe: withUnits })
+    const parsed = parseRecipeFromCode(code)
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) expect(parsed.recipe).toEqual(withUnits)
+  })
+
   it('survives a value containing UNBALANCED braces, quotes and backslashes', () => {
     // The literal is scanned by counting braces, so a value carrying more `}`
     // than `{` is the case that decides whether strings are tracked. Without

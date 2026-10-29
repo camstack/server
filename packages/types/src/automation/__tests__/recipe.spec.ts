@@ -260,3 +260,31 @@ describe('run mode and trace retention', () => {
     expect(AutomationRecipeSchema.safeParse({ ...base, keepTraces: 0 }).success).toBe(false)
   })
 })
+
+describe('the picked unit survives the recipe schema', () => {
+  it('keeps `unit` on a leaf and `argUnits` on a cap step', () => {
+    const recipe: AutomationRecipe = {
+      triggers: [{ kind: 'manual' }],
+      conditions: {
+        kind: 'condition',
+        deviceId: 7,
+        cap: 'pet-feeder',
+        fieldPath: 'bowlFood',
+        operator: 'lt',
+        value: 0.01,
+        unit: 'g',
+      },
+      actions: [
+        {
+          kind: 'cap',
+          deviceId: 7,
+          cap: 'pet-feeder',
+          method: 'feed',
+          args: { grams: 100 },
+          argUnits: { grams: 'kg' },
+        },
+      ],
+    }
+    expect(AutomationRecipeSchema.parse(recipe)).toEqual(recipe)
+  })
+})

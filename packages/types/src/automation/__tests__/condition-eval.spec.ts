@@ -123,3 +123,20 @@ describe('the mirror', () => {
     expect(m.read(2, 'sensor', 'tank')).toBeUndefined()
   })
 })
+
+describe('a leaf that was never normalised', () => {
+  it('fails with a reason instead of comparing against the { value, unit } pair', () => {
+    const raw: AutomationCondition = {
+      kind: 'condition',
+      deviceId: 1,
+      cap: 'sensor',
+      fieldPath: 'bowl',
+      operator: 'ne',
+      value: { value: 10, unit: 'g' },
+    }
+    const m = mirrorWith(raw, { 1: { bowl: 0.01 } })
+    const r = evaluateConditionTree(raw, m, 0)
+    expect(r.pass).toBe(false)
+    expect(r.nodes[0]?.reason).toContain('unit was never converted')
+  })
+})

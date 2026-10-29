@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { paramMeta } from '../units/quantity-input.js'
 import { readingMeta } from '../units/quantity.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
@@ -51,6 +52,12 @@ const gramsPortion = z
   .int()
   .min(PET_FEEDER_MANUAL_FEED_MIN)
   .max(PET_FEEDER_MANUAL_FEED_MAX)
+
+/** A portion REQUESTED of the feeder is a mass the method takes in GRAMS (the
+ *  hardware's own unit). The bounds are grams; a caller entering another unit
+ *  converts to grams first (`paramMeta`, D972). The STATUS fields above stay
+ *  plain grams — they are not readings in the kilogram base. */
+const gramsParam = gramsPortion.meta(paramMeta({ quantity: 'mass', unit: 'g' }))
 
 export const PetFeederStatusSchema = z.object({
   /** Food in the TANK (hopper), as the feeder's own sensor reports it
@@ -144,9 +151,9 @@ export const petFeederCapability = {
     feed: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
-        grams: gramsPortion.optional(),
-        hopper1: gramsPortion.optional(),
-        hopper2: gramsPortion.optional(),
+        grams: gramsParam.optional(),
+        hopper1: gramsParam.optional(),
+        hopper2: gramsParam.optional(),
       }),
       z.void(),
       { kind: 'mutation', auth: 'protected' },

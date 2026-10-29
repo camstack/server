@@ -4,7 +4,7 @@
 
 # Decisions
 
-934 architecture decision records. One file per decision, never
+935 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -949,6 +949,7 @@ that rots.
 | D969 | [A forked child keeps a high-frequency category nobody else wants off the socket](adr-0969-a-forked-child-keeps-a-high-frequency-category-nobody-wants-off-the-socket.md) | ✅ accepted | 2026-10-29 |
 | D970 | [Node launch parameters are decided by the server closure, and the image only executes them](adr-0970-node-launch-parameters-are-decided-by-the-server-closure-and-the-image-only-executes-them.md) | ✅ accepted | 2026-10-29 |
 | D971 | [The desktop app and its node talk through data-dir files](adr-0971-the-desktop-app-and-its-node-talk-through-data-dir-files.md) | ✅ accepted | 2026-10-29 |
+| D972 | [A number tied to a quantity is entered in a unit the person picks; readings store the base unit, method params their declared unit; a bare API value is the base unit with a warning](adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md) | ✅ accepted | 2026-10-29 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

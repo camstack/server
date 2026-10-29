@@ -608,6 +608,7 @@ export {
 export type {
   ActionStep,
   AutomationAction,
+  AutomationCapStep,
   AutomationCondition,
   AutomationConditionAll,
   AutomationConditionAny,
@@ -684,6 +685,14 @@ export {
   TraceValueSchema,
   validateRecipeBounds,
 } from './automation/index.js'
+export {
+  UnitWarningSchema,
+  capUnitResolver,
+  normalizeActionUnits,
+  normalizeConditionUnits,
+  normalizeRecipeUnits,
+} from './automation/index.js'
+export type { UnitResolver, UnitWarning, UnitsNormalized } from './automation/index.js'
 export * from './automation/action.js'
 export * from './automation/step-runner.js'
 export * from './automation/export-entities.js'

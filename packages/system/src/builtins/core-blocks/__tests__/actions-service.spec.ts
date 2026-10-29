@@ -183,6 +183,74 @@ describe('actions — internal actions', () => {
   })
 })
 
+const FEED = (args: Record<string, unknown>, deviceId = 41) =>
+  ({ kind: 'cap', deviceId, cap: 'pet-feeder', method: 'feed', args }) as const
+
+describe('actions — a number tied to a quantity (D972)', () => {
+  it('converts a step arg entered in kilograms to the grams the method takes, keeping the picked unit', async () => {
+    const w = await world()
+    const { action, warnings } = await w.service.create({
+      action: { name: 'Meal', steps: [FEED({ grams: { value: 0.1, unit: 'kg' } })] },
+    })
+    expect(action.steps).toEqual([{ ...FEED({ grams: 100 }), argUnits: { grams: 'kg' } }])
+    expect(warnings ?? []).toEqual([])
+    const stored = await w.store.get(action.id)
+    expect(stored?.steps).toEqual(action.steps)
+    await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(w.calls).toEqual([
+      { deviceId: 41, cap: 'pet-feeder', method: 'feed', args: { grams: 100 } },
+    ])
+  })
+
+  it('converts on update too, and re-saving what it stored converts nothing twice', async () => {
+    const w = await world()
+    const { action } = await w.service.create({
+      action: { name: 'Meal', steps: [FEED({ grams: 60 })] },
+    })
+    const updated = await w.service.update({
+      actionId: action.id,
+      action: { steps: [FEED({ hopper1: { value: 0.05, unit: 'kg' } })] },
+    })
+    expect(updated.action.steps).toEqual([
+      { ...FEED({ hopper1: 50 }), argUnits: { hopper1: 'kg' } },
+    ])
+    const again = await w.service.update({
+      actionId: action.id,
+      action: { steps: updated.action.steps },
+    })
+    expect(again.action.steps).toEqual(updated.action.steps)
+    expect(again.warnings ?? []).toEqual([])
+  })
+
+  it('refuses a unit of another dimension with the invalid-steps code, storing nothing', async () => {
+    const w = await world()
+    await expect(
+      w.service.create({
+        action: { name: 'Meal', steps: [FEED({ grams: { value: 1, unit: 'L' } })] },
+      }),
+    ).rejects.toThrow(/\[invalid-steps\].*cross-dimension/)
+    expect(await w.store.list()).toEqual([])
+  })
+
+  it('accepts a bare number as the declared unit, answers a warning and logs it with the deviceId tag', async () => {
+    const w = await world()
+    const { action, warnings } = await w.service.create({
+      action: { name: 'Meal', steps: [FEED({ grams: 50 })] },
+    })
+    expect(action.steps).toEqual([FEED({ grams: 50 })])
+    expect(warnings).toHaveLength(1)
+    expect(warnings?.[0]).toMatchObject({
+      field: 'grams',
+      value: 50,
+      assumedUnit: 'g',
+      deviceId: 41,
+    })
+    const logged = w.log.lines.find((l) => l.level === 'warn' && l.message.includes('bare number'))
+    expect(logged?.extras?.tags).toEqual({ deviceId: 41 })
+    expect(logged?.extras?.meta).toMatchObject({ field: 'grams', value: 50, assumedUnit: 'g' })
+  })
+})
+
 describe('actions — addon entries are read-only here', () => {
   it('refuses to update or delete an addon entry with a typed error', async () => {
     const w = await world({ addonActions: [addonEntry('ha:script.night')] })
