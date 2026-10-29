@@ -23,6 +23,14 @@
  *     The Loki queries written on 2026-08-29 match this prefix.
  */
 import { describe, expect, it, vi } from 'vitest'
+
+// The default RssAnon reader reads the HOST's /proc/self/status on Linux, so the
+// gate would judge this machine's real anonymous memory instead of the
+// `readMemory` fixture (macOS has no such split and keeps `rss`). Pin the reader
+// to the non-Linux answer so the result does not depend on the host.
+vi.mock('../anon-rss.js', () => ({
+  createAnonRssReader: (): (() => number | undefined) => () => undefined,
+}))
 import { HEAP_WATCH_FAST_INTERVAL_MS, startHeapWatch } from '../heap-watch.js'
 import { ZERO_LOOP_DELAY, type LoopDelayMeter } from '../heap-watch.js'
 

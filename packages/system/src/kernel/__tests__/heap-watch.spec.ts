@@ -1,4 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
+
+// The default RssAnon reader reads the HOST's /proc/self/status on Linux, so the
+// gate would judge this machine's real anonymous memory instead of the
+// `readMemory` fixture (macOS has no such split and keeps `rss`). The specs
+// drive the gate with fixtures; pin the reader to the non-Linux answer so the
+// result does not depend on the host. heap-reclaim-anon-rss.spec.ts covers the real reader.
+vi.mock('../anon-rss.js', () => ({
+  createAnonRssReader: (): (() => number | undefined) => () => undefined,
+}))
 import {
   buildHeapSample,
   createLoopDelayMeter,
