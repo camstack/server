@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The automation editor keeps the unit a person picked on a condition or step value
+- The pet feeder card shows the bowl weight with its unit (22 g, or oz in imperial).
 
 ## [1.2.520] - 2026-10-29
 
