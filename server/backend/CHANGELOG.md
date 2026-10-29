@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Generated routers for the pet-fountain capability
+
 ## [1.2.688] - 2026-10-29
 
 ### Changed

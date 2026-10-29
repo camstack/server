@@ -147,7 +147,8 @@ describe('mapFeederToStatus — single hopper', () => {
   it('keeps the bowl amount and the eating flag apart from the tank level', () => {
     const slice = mapFeederToStatus(singleHopperReading({ food: 1, bowl: 35, eating: true }), NOW)
     expect(slice.foodLevel).toBe(1)
-    expect(slice.bowlFood).toBe(35)
+    // The bowl is a mass: the provider reads grams, the slice stores kilograms (D944).
+    expect(slice.bowlFood).toBeCloseTo(0.035, 6)
     expect(slice.eating).toBe(true)
   })
 

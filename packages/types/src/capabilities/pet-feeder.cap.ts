@@ -59,9 +59,10 @@ export const PetFeederStatusSchema = z.object({
    *  combined reading; per-hopper levels live in `food1`/`food2`. Null when
    *  the device has not reported yet. */
   foodLevel: z.number().nullable().meta(readingMeta('none')),
-  /** Food in the BOWL as the feeder reports it (`state.bowl`), in the
-   *  feeder's own units. Null when the model reports none. */
-  bowlFood: z.number().nullable().meta(readingMeta('none')),
+  /** Food in the BOWL, a mass (stored in kilograms, D944). Reported only by a
+   *  feeder with a bowl scale; null when the model has none or its reading is
+   *  of an unproven unit. */
+  bowlFood: z.number().nullable().meta(readingMeta('mass')),
   /** True while the pet is eating (`state.eating`). */
   eating: z.boolean(),
   /** Whether `markFoodReplenished` does anything on this model. When false

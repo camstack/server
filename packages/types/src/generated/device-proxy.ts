@@ -71,6 +71,7 @@ import type { notifierCapability } from '../capabilities/notifier.cap.js'
 import type { numericSensorCapability } from '../capabilities/numeric-sensor.cap.js'
 import type { osdCapability } from '../capabilities/osd.cap.js'
 import type { petFeederCapability } from '../capabilities/pet-feeder.cap.js'
+import type { petFountainCapability } from '../capabilities/pet-fountain.cap.js'
 import type { pipelineAnalyticsCapability } from '../capabilities/pipeline-analytics.cap.js'
 import type { powerMeterCapability } from '../capabilities/power-meter.cap.js'
 import type { presenceCapability } from '../capabilities/presence.cap.js'
@@ -180,6 +181,7 @@ export interface DeviceProxyState {
   readonly notifier: SliceHandle<InferRuntimeState<typeof notifierCapability>>
   readonly numericSensor: SliceHandle<InferRuntimeState<typeof numericSensorCapability>>
   readonly petFeeder: SliceHandle<InferRuntimeState<typeof petFeederCapability>>
+  readonly petFountain: SliceHandle<InferRuntimeState<typeof petFountainCapability>>
   readonly powerMeter: SliceHandle<InferRuntimeState<typeof powerMeterCapability>>
   readonly presence: SliceHandle<InferRuntimeState<typeof presenceCapability>>
   readonly pressureSensor: SliceHandle<InferRuntimeState<typeof pressureSensorCapability>>
@@ -289,6 +291,7 @@ export interface DeviceProxy {
   readonly numericSensor?: InferDeviceProxyCap<typeof numericSensorCapability>
   readonly osd?: InferDeviceProxyCap<typeof osdCapability>
   readonly petFeeder?: InferDeviceProxyCap<typeof petFeederCapability>
+  readonly petFountain?: InferDeviceProxyCap<typeof petFountainCapability>
   readonly pipelineAnalytics?: InferDeviceProxyCap<typeof pipelineAnalyticsCapability>
   readonly powerMeter?: InferDeviceProxyCap<typeof powerMeterCapability>
   readonly presence?: InferDeviceProxyCap<typeof presenceCapability>
@@ -809,6 +812,15 @@ export function createDeviceProxy(
     setFeedSound: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setFeedSound', 'mutation', input),
     setVolume: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setVolume', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'getStatus', 'query', input),
+  }
+
+  const petFountainInterface = {
+    setPump: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPump', 'mutation', input),
+    setPumpInterval: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPumpInterval', 'mutation', input),
+    setPumpOnMinutes: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPumpOnMinutes', 'mutation', input),
+    setPumpOffMinutes: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPumpOffMinutes', 'mutation', input),
+    resetDailyConsumption: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'resetDailyConsumption', 'mutation', input),
+    getStatus: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'getStatus', 'query', input),
   }
 
   const pipelineAnalyticsInterface = {
@@ -1365,6 +1377,7 @@ export function createDeviceProxy(
       notifier: createSliceHandle<InferRuntimeState<typeof notifierCapability>>(stateSource, binding.deviceId, 'notifier'),
       numericSensor: createSliceHandle<InferRuntimeState<typeof numericSensorCapability>>(stateSource, binding.deviceId, 'numeric-sensor'),
       petFeeder: createSliceHandle<InferRuntimeState<typeof petFeederCapability>>(stateSource, binding.deviceId, 'pet-feeder'),
+      petFountain: createSliceHandle<InferRuntimeState<typeof petFountainCapability>>(stateSource, binding.deviceId, 'pet-fountain'),
       powerMeter: createSliceHandle<InferRuntimeState<typeof powerMeterCapability>>(stateSource, binding.deviceId, 'power-meter'),
       presence: createSliceHandle<InferRuntimeState<typeof presenceCapability>>(stateSource, binding.deviceId, 'presence'),
       pressureSensor: createSliceHandle<InferRuntimeState<typeof pressureSensorCapability>>(stateSource, binding.deviceId, 'pressure-sensor'),
@@ -1455,6 +1468,7 @@ export function createDeviceProxy(
     ...(bound('numeric-sensor') ? { numericSensor: numericSensorInterface } : {}),
     ...(bound('osd') ? { osd: osdInterface } : {}),
     ...(bound('pet-feeder') ? { petFeeder: petFeederInterface } : {}),
+    ...(bound('pet-fountain') ? { petFountain: petFountainInterface } : {}),
     ...(bound('pipeline-analytics') ? { pipelineAnalytics: pipelineAnalyticsInterface } : {}),
     ...(bound('power-meter') ? { powerMeter: powerMeterInterface } : {}),
     ...(bound('presence') ? { presence: presenceInterface } : {}),

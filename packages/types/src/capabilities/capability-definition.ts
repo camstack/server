@@ -501,6 +501,7 @@ export type HistoryUnit =
   | 'kbps'
   | 'fps'
   | 'm/s'
+  | 'L'
 
 /** Display label per {@link HistoryUnit}. */
 export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
@@ -517,6 +518,7 @@ export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
   ppm: 'ppm',
   ppb: 'ppb',
   'µg/m³': 'µg/m³',
+  L: 'L',
   hPa: 'hPa',
   count: 'count',
   ratio: 'ratio',

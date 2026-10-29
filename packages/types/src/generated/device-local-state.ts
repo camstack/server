@@ -53,6 +53,7 @@ import { networkLinkCapability } from '../capabilities/network-link.cap.js'
 import { notifierCapability } from '../capabilities/notifier.cap.js'
 import { numericSensorCapability } from '../capabilities/numeric-sensor.cap.js'
 import { petFeederCapability } from '../capabilities/pet-feeder.cap.js'
+import { petFountainCapability } from '../capabilities/pet-fountain.cap.js'
 import { powerMeterCapability } from '../capabilities/power-meter.cap.js'
 import { presenceCapability } from '../capabilities/presence.cap.js'
 import { pressureSensorCapability } from '../capabilities/pressure-sensor.cap.js'
@@ -142,6 +143,7 @@ export interface DeviceLocalState {
   notifier: InferRuntimeState<typeof notifierCapability>
   numericSensor: InferRuntimeState<typeof numericSensorCapability>
   petFeeder: InferRuntimeState<typeof petFeederCapability>
+  petFountain: InferRuntimeState<typeof petFountainCapability>
   powerMeter: InferRuntimeState<typeof powerMeterCapability>
   presence: InferRuntimeState<typeof presenceCapability>
   pressureSensor: InferRuntimeState<typeof pressureSensorCapability>
@@ -227,6 +229,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   notifier: notifierCapability,
   numericSensor: numericSensorCapability,
   petFeeder: petFeederCapability,
+  petFountain: petFountainCapability,
   powerMeter: powerMeterCapability,
   presence: presenceCapability,
   pressureSensor: pressureSensorCapability,
@@ -319,6 +322,7 @@ export interface CapNameToRuntimeStateMap {
   'notifier': InferRuntimeState<typeof notifierCapability>
   'numeric-sensor': InferRuntimeState<typeof numericSensorCapability>
   'pet-feeder': InferRuntimeState<typeof petFeederCapability>
+  'pet-fountain': InferRuntimeState<typeof petFountainCapability>
   'power-meter': InferRuntimeState<typeof powerMeterCapability>
   'presence': InferRuntimeState<typeof presenceCapability>
   'pressure-sensor': InferRuntimeState<typeof pressureSensorCapability>

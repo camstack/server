@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A pet fountain hero card with tank gauge, drinking totals and pump controls; the feeder shows the bowl in grams
+
 ## [1.2.349] - 2026-10-29
 
 ### Changed

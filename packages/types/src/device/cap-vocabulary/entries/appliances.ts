@@ -13,6 +13,7 @@ type ApplianceCap =
   | 'lawn-mower-control'
   | 'dishwasher'
   | 'pet-feeder'
+  | 'pet-fountain'
   | 'media-player'
   | 'consumables'
   | 'running-state'
@@ -645,6 +646,119 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
         label: t('Desiccant', 'Essiccante'),
         unit: 'd',
         icon: 'calendar-clock',
+      },
+    ],
+  },
+
+  'pet-fountain': {
+    scope: 'device',
+    noun: t('Pet fountain', 'Fontana per animali'),
+    actions: [
+      {
+        id: 'petFountain.pumpOn',
+        method: 'setPump',
+        label: t('Pump on', 'Pompa accesa'),
+        phrase: t('Start the pump of {device}', 'Avvia la pompa di {device}'),
+        icon: 'play',
+        args: { on: true },
+      },
+      {
+        id: 'petFountain.pumpOff',
+        method: 'setPump',
+        label: t('Pump off', 'Pompa spenta'),
+        phrase: t('Stop the pump of {device}', 'Ferma la pompa di {device}'),
+        icon: 'square',
+        args: { on: false },
+      },
+      {
+        id: 'petFountain.intervalOn',
+        method: 'setPumpInterval',
+        label: t('Pump cycle on', 'Ciclo pompa attivo'),
+        phrase: t(
+          'Run the pump of {device} on its on/off cycle',
+          'Fai lavorare la pompa di {device} a ciclo acceso/spento',
+        ),
+        icon: 'timer',
+        args: { on: true },
+      },
+      {
+        id: 'petFountain.intervalOff',
+        method: 'setPumpInterval',
+        label: t('Pump cycle off', 'Ciclo pompa spento'),
+        phrase: t(
+          'Run the pump of {device} continuously',
+          'Fai lavorare la pompa di {device} in continuo',
+        ),
+        icon: 'timer-off',
+        args: { on: false },
+      },
+      {
+        id: 'petFountain.pumpOnMinutes',
+        method: 'setPumpOnMinutes',
+        label: t('Set pump run time', 'Imposta il tempo di lavoro della pompa'),
+        phrase: t(
+          'Set the pump of {device} to run {minutes} minutes per cycle',
+          'Imposta la pompa di {device} a lavorare {minutes} minuti per ciclo',
+        ),
+        icon: 'timer',
+        openArgs: [
+          {
+            key: 'minutes',
+            label: t('Minutes', 'Minuti'),
+            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'petFountain.pumpOffMinutes',
+        method: 'setPumpOffMinutes',
+        label: t('Set pump rest time', 'Imposta il tempo di riposo della pompa'),
+        phrase: t(
+          'Set the pump of {device} to rest {minutes} minutes per cycle',
+          'Imposta la pompa di {device} a riposare {minutes} minuti per ciclo',
+        ),
+        icon: 'timer-off',
+        openArgs: [
+          {
+            key: 'minutes',
+            label: t('Minutes', 'Minuti'),
+            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'petFountain.resetDailyConsumption',
+        method: 'resetDailyConsumption',
+        label: t('Clear daily consumption', 'Azzera il consumo giornaliero'),
+        phrase: t(
+          'Clear the daily water consumption of {device}',
+          'Azzera il consumo giornaliero di acqua di {device}',
+        ),
+        icon: 'rotate-ccw',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'empty',
+        label: t('Tank empty', 'Serbatoio vuoto'),
+        whenTrue: t(
+          'When the tank of {device} is empty',
+          'Quando il serbatoio di {device} è vuoto',
+        ),
+        whenFalse: t(
+          'When the tank of {device} is refilled',
+          'Quando il serbatoio di {device} viene riempito',
+        ),
+        icon: 'droplet',
+      },
+      {
+        kind: 'numeric',
+        field: 'waterLevel',
+        quantity: t('the water level', 'il livello dell’acqua'),
+        label: t('Water level', 'Livello dell’acqua'),
+        unit: '%',
+        icon: 'droplets',
       },
     ],
   },

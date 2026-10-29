@@ -91,6 +91,10 @@ export enum DeviceType {
    *  native PetKit (`nodepetkit` `FeederDevice`), reusable by other feeder
    *  integrations sharing the same food/desiccant/hopper surface. */
   PetFeeder = 'pet-feeder',
+  /** Pet water fountain — tank level, water drunk, pump and its duty cycle.
+   *  Installed with the `pet-fountain` cap. Reaches CamStack as loose entities
+   *  of a container and is BUILT as a composed device (D967). */
+  PetFountain = 'pet-fountain',
   /** Built-in dishwasher — program lifecycle, door / remote-start gates,
    *  salt and rinse-aid levels. Installed with the `dishwasher` cap.
    *  Sources: native Bosch Home Connect, reusable by similar integrations.

@@ -254,6 +254,11 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     labelKey: 'uiLibrary.deviceMeta.type.petFeeder',
     labelFallback: 'Pet feeder',
   },
+  [DeviceType.PetFountain]: {
+    icon: Droplets,
+    labelKey: 'uiLibrary.deviceMeta.type.petFountain',
+    labelFallback: 'Pet fountain',
+  },
   [DeviceType.Dishwasher]: {
     icon: Waves,
     labelKey: 'uiLibrary.deviceMeta.type.dishwasher',

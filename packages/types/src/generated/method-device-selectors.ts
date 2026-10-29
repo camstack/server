@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 562 methods carry a device reference, of which
+ * Coverage: 568 methods carry a device reference, of which
  * 184 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -326,6 +326,12 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'petFeeder.setFeedSound': [{ name: "deviceId", form: "single", optional: false }] as const,
   'petFeeder.setIndicatorLight': [{ name: "deviceId", form: "single", optional: false }] as const,
   'petFeeder.setVolume': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'petFountain.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'petFountain.resetDailyConsumption': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'petFountain.setPump': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'petFountain.setPumpInterval': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'petFountain.setPumpOffMinutes': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'petFountain.setPumpOnMinutes': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pipelineAnalytics.addRetrainFrameFromRecording': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pipelineAnalytics.applyDeviceSettingsPatch': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pipelineAnalytics.backfillRetrainOrigins': [{ name: "deviceId", form: "single", optional: false }] as const,

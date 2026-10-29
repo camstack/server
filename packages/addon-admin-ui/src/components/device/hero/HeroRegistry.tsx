@@ -110,6 +110,9 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   [DeviceType.Weather]: ControlHero,
   [DeviceType.Image]: ControlHero,
   [DeviceType.PetFeeder]: ControlHero,
+  // Pet fountain: ControlHero renders the registry-backed PetFountainHeroCard
+  // (tank level, water drunk, pump controls).
+  [DeviceType.PetFountain]: ControlHero,
   // Dishwasher: ControlHero renders the registry-backed DishwasherHeroCard
   // (program state + start/stop/pause).
   [DeviceType.Dishwasher]: ControlHero,

@@ -57,6 +57,11 @@ const HOLD_INTERVAL_MS = 70
 const HOLD_ACCEL_AFTER = 8
 const HOLD_FAST_STEP = 5
 
+/** The slice stores the bowl as a mass in kilograms (D944); the card draws grams. */
+function bowlGrams(kilograms: number | null): number | null {
+  return kilograms === null ? null : Math.round(kilograms * 1000)
+}
+
 function clampPortion(grams: number): number {
   return Math.min(PET_FEEDER_MANUAL_FEED_MAX, Math.max(PET_FEEDER_MANUAL_FEED_MIN, grams))
 }
@@ -140,7 +145,7 @@ export function PetFeederPanel({
           )}
         >
           <UtensilsCrossed className="h-3.5 w-3.5" aria-hidden />
-          {display.bowlFood ?? '—'}
+          {bowlGrams(display.bowlFood) ?? '—'}
         </span>
         {onMains && (
           <span className="inline-flex items-center gap-0.5 text-xs text-foreground-subtle">
@@ -189,14 +194,18 @@ export function PetFeederPanel({
 
       {/* ── Hero: food-bowl fill gauge + battery / feeding ─────── */}
       <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-surface-subtle/40 p-3">
-        <BowlGauge grams={display.bowlFood} low={display.lowFood} eating={display.eating} />
+        <BowlGauge
+          grams={bowlGrams(display.bowlFood)}
+          low={display.lowFood}
+          eating={display.eating}
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-baseline gap-1">
             <span
               className="text-3xl font-bold leading-none tabular-nums"
               style={{ color: display.lowFood ? KIBBLE_LOW : KIBBLE }}
             >
-              {display.bowlFood ?? '—'}
+              {bowlGrams(display.bowlFood) ?? '—'}
             </span>
             <span className="text-sm text-foreground-subtle">
               {t('uiLibrary.petFeeder.inBowl', 'in bowl')}

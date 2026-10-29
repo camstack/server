@@ -8640,7 +8640,8 @@
         "petFeeder": "Distributore di cibo per animali",
         "dishwasher": "Lavastoviglie",
         "washer": "Lavatrice",
-        "dryer": "Asciugatrice"
+        "dryer": "Asciugatrice",
+        "petFountain": "Fontana per animali"
       },
       "role": {
         "siren": "Sirena",
@@ -9027,6 +9028,28 @@
       "empty": "Esaurito",
       "full": "Pieno",
       "unknown": "Sconosciuto"
+    },
+    "petFountain": {
+      "empty": "Serbatoio vuoto",
+      "pump": "Pompa",
+      "levelUnknown": "Livello dell’acqua sconosciuto",
+      "levelPercent": "{{percent}}% di acqua",
+      "consumption": "Acqua bevuta",
+      "today": "Oggi",
+      "last24h": "Ultime 24 h",
+      "thisHour": "Quest’ora",
+      "lastDrink": "Ultima bevuta",
+      "pumpSection": "Controlli",
+      "cycle": "Ciclo acceso / spento",
+      "runMinutes": "Lavora per",
+      "restMinutes": "Riposa per",
+      "clearDaily": "Azzera il conteggio giornaliero",
+      "pumpRunning": "Pompa in funzione",
+      "pumpIdle": "Pompa ferma",
+      "pumpUnknown": "Stato della pompa sconosciuto",
+      "decrease": "Diminuisci: {{label}}",
+      "increase": "Aumenta: {{label}}",
+      "minutes": "{{count}} min"
     }
   },
   "helpers": {

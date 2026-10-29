@@ -58,6 +58,7 @@ import type { NotifierStatusSchema } from '../capabilities/notifier.cap.js'
 import type { NumericSensorStatusSchema } from '../capabilities/numeric-sensor.cap.js'
 import type { OsdStatusSchema } from '../capabilities/osd.cap.js'
 import type { PetFeederStatusSchema } from '../capabilities/pet-feeder.cap.js'
+import type { PetFountainStatusSchema } from '../capabilities/pet-fountain.cap.js'
 import type { PowerMeterStatusSchema } from '../capabilities/power-meter.cap.js'
 import type { PresenceStatusSchema } from '../capabilities/presence.cap.js'
 import type { PressureSensorStatusSchema } from '../capabilities/pressure-sensor.cap.js'
@@ -144,6 +145,7 @@ export type CapStatusTypeMap = {
   readonly 'numeric-sensor': z.infer<typeof NumericSensorStatusSchema>
   readonly 'osd': z.infer<typeof OsdStatusSchema>
   readonly 'pet-feeder': z.infer<typeof PetFeederStatusSchema>
+  readonly 'pet-fountain': z.infer<typeof PetFountainStatusSchema>
   readonly 'power-meter': z.infer<typeof PowerMeterStatusSchema>
   readonly 'presence': z.infer<typeof PresenceStatusSchema>
   readonly 'pressure-sensor': z.infer<typeof PressureSensorStatusSchema>
@@ -234,6 +236,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'numeric-sensor',
   'osd',
   'pet-feeder',
+  'pet-fountain',
   'power-meter',
   'presence',
   'pressure-sensor',

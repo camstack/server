@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 41 caps with series (76 series), 34 caps answered `'none'`.
+ * 42 caps with series (80 series), 34 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -120,6 +120,12 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'food2': { kind: 'gauge' },
     'batteryPower': { kind: 'gauge', unit: '%', deadband: 2 },
     'desiccantLeftDays': { kind: 'gauge', unit: 's' },
+  },
+  'pet-fountain': {
+    'waterLevel': { kind: 'gauge', unit: '%', deadband: 1 },
+    'waterVolume': { kind: 'gauge', unit: 'L' },
+    'todayDrink': { kind: 'gauge', unit: 'L' },
+    'last24hDrink': { kind: 'gauge', unit: 'L' },
   },
   'power-meter': {
     'power': { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },

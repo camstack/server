@@ -68,7 +68,7 @@ export interface FeederReading {
   readonly feeding: boolean
   /** True while the pet is eating (`state.eating`). */
   readonly eating: boolean
-  /** Food in the bowl (`state.bowl`), the feeder's own units. */
+  /** Food in the bowl, in GRAMS, from a source known to be grams (the D3 scale); null otherwise. */
   readonly bowl: number | null
   /** Tank (hopper) level code (`state.food`) — NOT the bowl; 0 = empty. */
   readonly food: number | null
@@ -179,6 +179,11 @@ function desiccantSeconds(days: number | null): number | null {
   return days * SECONDS_PER_DAY
 }
 
+/** The slice stores a mass in kilograms (D944); the provider reads grams. */
+function gramsToKilograms(grams: number | null): number | null {
+  return grams === null ? null : grams / 1000
+}
+
 /**
  * Map a {@link FeederReading} to the full `pet-feeder` cap status slice.
  * Pure: same reading + timestamp in → same slice out.
@@ -191,7 +196,7 @@ export function mapFeederToStatus(
   const foodLevel = resolveFoodLevel(reading)
   return {
     foodLevel,
-    bowlFood: reading.bowl,
+    bowlFood: gramsToKilograms(reading.bowl),
     eating: reading.eating,
     supportsMarkRefilled: supportsFoodReplenished(reading.deviceType),
     food1: reading.isDualHopper ? reading.food1 : null,

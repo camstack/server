@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The pet fountain capability is listed as not exported to Home Assistant
+
 ## [1.2.636] - 2026-10-29
 
 ### Changed

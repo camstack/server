@@ -25,6 +25,7 @@ export const CONTROL_CAP_NAMES = [
   'media-player',
   'control',
   'pet-feeder',
+  'pet-fountain',
   'dishwasher',
 ] as const
 

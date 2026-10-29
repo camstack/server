@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A built composed device serves its methods by forwarding them to a source device, and a consumable item can reset through a forwarded button
+- The pet-fountain capability reaches the kernel through the generated types
 
 ## [1.2.517] - 2026-10-29
 

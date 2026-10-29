@@ -15,6 +15,8 @@
  * binding, as on a hub whose provider has not registered the cap); 5064 is
  * the same feeder WITH the binding, so its Consumables section shows. Data
  * is invented.
+ * 5065 "Water fountain" is a pet fountain built from loose entities, with its
+ * filter as a consumable.
  */
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
@@ -48,6 +50,8 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
     location: '',
   },
   5064: appliance(5064, 'Pet feeder (consumables)', 'pet-feeder', 'provider-petkit'),
+  // A fountain BUILT from loose entities (a composed device of type pet-fountain).
+  5065: appliance(5065, 'Water fountain', 'pet-fountain', 'composer'),
   521: {
     ...appliance(521, 'Living room AC', 'climate', 'provider-homeassistant'),
     location: 'Living room',
@@ -118,6 +122,11 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
     entry('device-status', 'provider-petkit'),
     entry('pet-feeder', 'provider-petkit'),
     entry('consumables', 'provider-petkit'),
+  ],
+  5065: [
+    entry('device-status', 'composer'),
+    entry('pet-fountain', 'composer'),
+    entry('consumables', 'composer'),
   ],
   521: [
     entry('device-status', 'provider-homeassistant'),
@@ -320,6 +329,39 @@ const FEEDER_CONSUMABLES = {
   lastChangedAt: NOW,
 }
 
+const PET_FOUNTAIN = {
+  waterLevel: 64,
+  waterVolume: 1.3,
+  empty: false,
+  pumpRunning: true,
+  pumpIntervalEnabled: true,
+  pumpOnTime: 10 * 60,
+  pumpOffTime: 20 * 60,
+  lastDrink: 0.032,
+  currentHourDrink: 0.085,
+  last24hDrink: 0.61,
+  todayDrink: 0.42,
+  error: null,
+  lastFetchedAt: NOW,
+}
+
+/** The fountain's filter: a wear part, resettable through the forwarded button. */
+const FOUNTAIN_CONSUMABLES = {
+  items: [
+    {
+      key: 'filter',
+      label: 'Filter',
+      level: 35,
+      status: null,
+      kind: 'wear',
+      form: 'part',
+      lastResetAt: NOW - 20 * 86_400_000,
+      resettable: true,
+    },
+  ],
+  lastChangedAt: NOW,
+}
+
 /** Climate hero: 521 shows an integer target, 522 a .5 target (5-30 step 0.5). */
 const CLIMATE = {
   mode: 'cool',
@@ -352,6 +394,9 @@ const SLICES: Readonly<Record<string, unknown>> = {
   '5064/device-status': { online: true, lastChangedAt: NOW },
   '5064/pet-feeder': PET_FEEDER,
   '5064/consumables': FEEDER_CONSUMABLES,
+  '5065/device-status': { online: true, lastChangedAt: NOW },
+  '5065/pet-fountain': PET_FOUNTAIN,
+  '5065/consumables': FOUNTAIN_CONSUMABLES,
   '501/device-status': { online: true, lastChangedAt: NOW },
   '501/dishwasher': DISHWASHER,
   '501/consumables': DISHWASHER_CONSUMABLES,
@@ -506,7 +551,9 @@ const aggregateFor = (deviceId: number) => ({
           ? [consumablesSection('bosch-home-connect')]
           : deviceId === 5064
             ? [consumablesSection('provider-petkit')]
-            : [],
+            : deviceId === 5065
+              ? [consumablesSection('composer')]
+              : [],
   },
   live: { sections: [] },
   tabs: undefined,

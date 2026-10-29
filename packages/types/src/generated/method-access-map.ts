@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1417 method paths across 191 capabilities.
+ * Coverage: 1423 method paths across 192 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -799,6 +799,12 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'petFeeder.setFeedSound': { capName: "pet-feeder", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'petFeeder.setIndicatorLight': { capName: "pet-feeder", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'petFeeder.setVolume': { capName: "pet-feeder", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'petFountain.getStatus': { capName: "pet-fountain", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'petFountain.resetDailyConsumption': { capName: "pet-fountain", capScope: "device", addonId: null, access: "delete", role: "viewer" } as const,
+  'petFountain.setPump': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'petFountain.setPumpInterval': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'petFountain.setPumpOffMinutes': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'petFountain.setPumpOnMinutes': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'pipelineAnalytics.addRetrainFrameFromRecording': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "feature:retrain" } as const,
   'pipelineAnalytics.addRetrainFramesToCollection': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "feature:retrain" } as const,
   'pipelineAnalytics.applyDeviceSettingsPatch': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
@@ -1569,6 +1575,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "osd",
   "osd-manager",
   "pet-feeder",
+  "pet-fountain",
   "pipeline-analytics",
   "pipeline-executor",
   "pipeline-orchestrator",
@@ -1701,6 +1708,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "numeric-sensor",
   "osd",
   "pet-feeder",
+  "pet-fountain",
   "pipeline-analytics",
   "power-meter",
   "presence",

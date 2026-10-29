@@ -2102,6 +2102,24 @@ export const usePetFeederSetVolume: typeof trpc.petFeeder.setVolume.useMutation 
 /** Generated alias around `trpc.petFeeder.getStatus.useQuery`. */
 export const usePetFeederGetStatus: typeof trpc.petFeeder.getStatus.useQuery = trpc.petFeeder.getStatus.useQuery
 
+/** Generated alias around `trpc.petFountain.setPump.useMutation`. */
+export const usePetFountainSetPump: typeof trpc.petFountain.setPump.useMutation = trpc.petFountain.setPump.useMutation
+
+/** Generated alias around `trpc.petFountain.setPumpInterval.useMutation`. */
+export const usePetFountainSetPumpInterval: typeof trpc.petFountain.setPumpInterval.useMutation = trpc.petFountain.setPumpInterval.useMutation
+
+/** Generated alias around `trpc.petFountain.setPumpOnMinutes.useMutation`. */
+export const usePetFountainSetPumpOnMinutes: typeof trpc.petFountain.setPumpOnMinutes.useMutation = trpc.petFountain.setPumpOnMinutes.useMutation
+
+/** Generated alias around `trpc.petFountain.setPumpOffMinutes.useMutation`. */
+export const usePetFountainSetPumpOffMinutes: typeof trpc.petFountain.setPumpOffMinutes.useMutation = trpc.petFountain.setPumpOffMinutes.useMutation
+
+/** Generated alias around `trpc.petFountain.resetDailyConsumption.useMutation`. */
+export const usePetFountainResetDailyConsumption: typeof trpc.petFountain.resetDailyConsumption.useMutation = trpc.petFountain.resetDailyConsumption.useMutation
+
+/** Generated alias around `trpc.petFountain.getStatus.useQuery`. */
+export const usePetFountainGetStatus: typeof trpc.petFountain.getStatus.useQuery = trpc.petFountain.getStatus.useQuery
+
 /** Generated alias around `trpc.pipelineAnalytics.getActiveTracks.useQuery`. */
 export const usePipelineAnalyticsGetActiveTracks: typeof trpc.pipelineAnalytics.getActiveTracks.useQuery = trpc.pipelineAnalytics.getActiveTracks.useQuery
 

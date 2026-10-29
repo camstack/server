@@ -8618,7 +8618,8 @@
         "petFeeder": "Pet feeder",
         "dishwasher": "Dishwasher",
         "washer": "Washing machine",
-        "dryer": "Dryer"
+        "dryer": "Dryer",
+        "petFountain": "Pet fountain"
       },
       "role": {
         "siren": "Siren",
@@ -9005,6 +9006,28 @@
       "empty": "Empty",
       "full": "Full",
       "unknown": "Unknown"
+    },
+    "petFountain": {
+      "empty": "Tank empty",
+      "pump": "Pump",
+      "levelUnknown": "Water level unknown",
+      "levelPercent": "{{percent}}% water",
+      "consumption": "Water drunk",
+      "today": "Today",
+      "last24h": "Last 24 h",
+      "thisHour": "This hour",
+      "lastDrink": "Last drink",
+      "pumpSection": "Controls",
+      "cycle": "On / off cycle",
+      "runMinutes": "Runs for",
+      "restMinutes": "Rests for",
+      "clearDaily": "Clear daily count",
+      "pumpRunning": "Pump running",
+      "pumpIdle": "Pump idle",
+      "pumpUnknown": "Pump state unknown",
+      "decrease": "Decrease {{label}}",
+      "increase": "Increase {{label}}",
+      "minutes": "{{count}} min"
     }
   },
   "helpers": {

@@ -67,8 +67,11 @@ function strOrNull(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
-/** Which wire key fed the bowl reading (`none` when neither is present). */
-export type BowlSource = 'bowl' | 'weight' | 'none'
+/**
+ * Which wire key fed the bowl reading: `weight` (grams), `none` (neither key),
+ * or `bowl-unproven` (only `state.bowl`, whose unit nothing proves).
+ */
+export type BowlSource = 'weight' | 'bowl-unproven' | 'none'
 
 /** Bowl weight in grams plus the wire key it came from. */
 export interface BowlReading {
@@ -79,22 +82,31 @@ export interface BowlReading {
 }
 
 /**
- * The food in the bowl. Bowl cameras (D4H / D4SH) report `state.bowl`; the
- * D3 (Fresh Element 3, which has a bowl scale) reports grams as `state.weight`.
- * Prefers `bowl` when numeric, else `weight`.
+ * The food in the bowl, in GRAMS, from a source known to be grams: the D3
+ * (Fresh Element 3, which has a bowl scale) reports `state.weight` in grams.
+ *
+ * `state.bowl` (bowl cameras, D4H / D4SH) is NOT read as grams. Nothing in the
+ * library or the vendor payloads states its unit, and a number of unknown unit
+ * under a mass quantity is a wrong number the UI would draw as a gauge. Such a
+ * feeder reports no bowl amount (null) and the one-time diagnostic line says
+ * so. If `bowl` is ever proven to be grams on a model, read it here for that model.
  */
 export function readBowl(inner: Record<string, unknown> | null): BowlReading {
   const innerKeys = inner === null ? [] : Object.keys(inner)
-  const bowl = numOrNull(inner?.['bowl'])
-  if (bowl !== null) return { value: bowl, source: 'bowl', innerKeys }
   const weight = numOrNull(inner?.['weight'])
   if (weight !== null) return { value: weight, source: 'weight', innerKeys }
+  if (numOrNull(inner?.['bowl']) !== null) {
+    return { value: null, source: 'bowl-unproven', innerKeys }
+  }
   return { value: null, source: 'none', innerKeys }
 }
 
 /** The one-time diagnostic line: which key fed the bowl, and the keys that were there. */
 export function describeBowlSource(bowl: BowlReading): string {
-  return `petkit feeder: bowl fed by ${bowl.source} (state keys: ${bowl.innerKeys.join(', ')})`
+  const keys = bowl.innerKeys.join(', ')
+  if (bowl.source === 'bowl-unproven')
+    return `petkit feeder: bowl amount unknown - state.bowl is not read because its unit is unproven (state keys: ${keys})`
+  return `petkit feeder: bowl fed by ${bowl.source} (state keys: ${keys})`
 }
 
 /** The bowl reading of a live feeder handle (wire `state.state` boundary). */
@@ -266,19 +278,21 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     this.markOnline(reading.online)
   }
 
-  /** One info line per device per process: which wire key fed the bowl. */
+  /** One line per device per process: which wire key fed the bowl (a warning when it is unusable). */
   private logBowlSourceOnce(handle: FeederDevice): void {
     if (this.bowlSourceLogged) return
     this.bowlSourceLogged = true
     const bowl = readFeederBowl(handle)
-    this.ctx.logger.info(describeBowlSource(bowl), {
+    const fields = {
       tags: { deviceId: this.id },
       meta: {
         petkitDeviceId: this.petkitDeviceId,
         bowlSource: bowl.source,
         stateKeys: bowl.innerKeys,
       },
-    })
+    }
+    if (bowl.source === 'bowl-unproven') this.ctx.logger.warn(describeBowlSource(bowl), fields)
+    else this.ctx.logger.info(describeBowlSource(bowl), fields)
   }
 
   /** Trigger a poll when the slice is missing or older than {@link STALE_MS}. */

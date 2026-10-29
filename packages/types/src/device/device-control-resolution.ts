@@ -62,6 +62,7 @@ export type DeviceControlKind =
   | 'lawn-mower'
   | 'image'
   | 'pet-feeder'
+  | 'pet-fountain'
   | 'dishwasher'
   | 'script'
   | 'automation'
@@ -105,6 +106,7 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Container]: 'dummy',
   [DeviceType.Image]: 'image',
   [DeviceType.PetFeeder]: 'pet-feeder',
+  [DeviceType.PetFountain]: 'pet-fountain',
   [DeviceType.Dishwasher]: 'dishwasher',
   // No program surface. The list row stays a placeholder; power and running
   // are readings on the device, not an inline control.
