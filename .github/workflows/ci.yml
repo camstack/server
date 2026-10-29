@@ -25,8 +25,11 @@ on:
   workflow_dispatch:
   schedule:
     # Nightly FULL suite — the safety net that lets pushes test only what
-    # they touched (03:30 UTC = quiet cluster, after the recordings prune).
-    - cron: "30 3 * * *"
+    # they touched. GitHub delays scheduled runs under load, worst at the top
+    # of the hour and the half hours (measured 2026-10-28: a 03:30 trigger
+    # started 09:15-09:55 UTC), so the trigger sits at an off-peak odd minute
+    # early in the night to leave room for the queue.
+    - cron: "17 1 * * *"
   push:
     branches: [main]
   pull_request:
@@ -320,3 +323,39 @@ jobs:
       # actions/cache saves `.nx` when the key misses. An exact hit is not
       # rewritten, so unchanged packages stay warm and a changed package
       # rebuilds until the lockfile or nx.json changes the key.
+
+  # A red nightly used to notify nobody (2026-10-27). On a failed or cancelled
+  # scheduled run this opens ONE tracking issue (or comments on the open one);
+  # the next green nightly closes it. Uses the run's own GITHUB_TOKEN with
+  # `issues: write` on this job only — no secret.
+  nightly-verdict:
+    needs: tests
+    if: always() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      RESULT: ${{ needs.tests.result }}
+      TITLE: Nightly CI is red
+    steps:
+      - name: Open, update or close the nightly tracking issue
+        run: |
+          set -euo pipefail
+          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ "$RESULT" = "success" ]; then
+            if [ -n "$open" ]; then
+              gh issue close "$open" --repo "$GITHUB_REPOSITORY" \
+                --comment "The nightly is green again: $RUN_URL"
+            fi
+          elif [ -n "$open" ]; then
+            gh issue comment "$open" --repo "$GITHUB_REPOSITORY" \
+              --body "The nightly is still red ($RESULT): $RUN_URL"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" \
+              --body "The scheduled full CI run ended $RESULT: $RUN_URL"
+          fi
