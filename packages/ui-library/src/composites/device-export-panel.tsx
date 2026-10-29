@@ -52,16 +52,31 @@
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import { DeviceExportStatusSchema, ExposedDeviceSchema } from '@camstack/types'
 import { useQueryClient } from '@tanstack/react-query'
-import { Eye, EyeOff, Loader2, QrCode as QrCodeIcon, Share2, Unlink2 } from 'lucide-react'
+import {
+  Bell,
+  Eye,
+  EyeOff,
+  Loader2,
+  Play,
+  QrCode as QrCodeIcon,
+  Share2,
+  Unlink2,
+} from 'lucide-react'
 import { type MouseEvent, type ReactElement, useCallback, useMemo, useState } from 'react'
 import { z } from 'zod'
 import {
+  useActionsList,
   useDeviceExportExposeDevice,
+  useDeviceExportExposeEntity,
   useDeviceExportGetStatus,
   useDeviceExportListExposedDevices,
+  useDeviceExportListExposedEntities,
   useDeviceExportListSupportedDeviceKinds,
+  useDeviceExportListSupportedEntityKinds,
   useDeviceExportUnexposeDevice,
+  useDeviceExportUnexposeEntity,
   useDeviceManagerListAll,
+  useNotificationOutputListTargets,
 } from '../generated/system-hooks'
 import { Badge } from '../primitives/badge'
 import { Button } from '../primitives/button'
@@ -84,6 +99,13 @@ import {
 import { deviceTypeMetaOf } from './device-meta'
 import { EmptyState } from './empty-state'
 import { ErrorBox } from './error-box'
+import {
+  buildEntityRows,
+  ENTITY_FILTER_IDS,
+  entityFilterOptionIds,
+  type ExportEntityRow,
+  supportedEntityKinds,
+} from './export-entity-rows'
 import { QrCode } from './qr-code'
 import { SettingRow } from './setting-row'
 
@@ -317,6 +339,15 @@ interface BulkFailure {
 
 type ExportAction = 'expose' | 'unexpose'
 
+/**
+ * One row of the table: a device, or an action / notification target. The
+ * latter two are list entries (D954) and carry no device id, so the union
+ * keeps them apart from `DeviceItemDevice` rather than faking a device.
+ */
+type ExportRow =
+  | { readonly kind: 'device'; readonly key: string; readonly device: DeviceItemDevice }
+  | { readonly kind: 'entity'; readonly key: string; readonly entity: ExportEntityRow }
+
 interface ExportRowToggleProps {
   readonly addonId: string
   readonly device: DeviceItemDevice
@@ -361,12 +392,40 @@ function ExportRowToggle({
   busy,
   onToggle,
 }: ExportRowToggleProps): ReactElement {
-  const t = useUiText()
   const deviceLabel = useDeviceLabel(device, 'compact')
+  return (
+    <ExposeToggleButton
+      addonId={addonId}
+      label={deviceLabel}
+      exposed={exposed}
+      busy={busy}
+      onToggle={(action) => onToggle(device, action)}
+    />
+  )
+}
+
+interface ExposeToggleButtonProps {
+  readonly addonId: string
+  /** The name the accessible label carries (`Expose Garden cam`). */
+  readonly label: string
+  readonly exposed: boolean
+  readonly busy: boolean
+  readonly onToggle: (action: ExportAction) => void
+}
+
+/** The Expose / Exposed button every row kind (device, action, notifier) shares. */
+function ExposeToggleButton({
+  addonId,
+  label,
+  exposed,
+  busy,
+  onToggle,
+}: ExposeToggleButtonProps): ReactElement {
+  const t = useUiText()
   const handleClick = (e: MouseEvent): void => {
     e.stopPropagation()
     if (busy) return
-    onToggle(device, exposed ? 'unexpose' : 'expose')
+    onToggle(exposed ? 'unexpose' : 'expose')
   }
   return (
     <Button
@@ -376,8 +435,8 @@ function ExportRowToggle({
       onClick={handleClick}
       aria-label={
         exposed
-          ? t('uiLibrary.deviceExport.unexposeDevice', 'Unexpose {{name}}', { name: deviceLabel })
-          : t('uiLibrary.deviceExport.exposeDevice', 'Expose {{name}}', { name: deviceLabel })
+          ? t('uiLibrary.deviceExport.unexposeDevice', 'Unexpose {{name}}', { name: label })
+          : t('uiLibrary.deviceExport.exposeDevice', 'Expose {{name}}', { name: label })
       }
       title={
         exposed
@@ -524,12 +583,39 @@ export function DeviceExportPanel({
     { refetchInterval: FLEET_POLL_INTERVAL_MS },
   )
 
+  // Actions and notification targets (D967). What this exporter can expose
+  // beyond devices is ASKED, not assumed: a provider without the method (or an
+  // unanswered query) leaves `entityKinds` null, which is "unknown" — devices
+  // only, no filter entry — and the two lists below are not requested at all.
+  const entityKindsQuery = useDeviceExportListSupportedEntityKinds(
+    { nodeId: 'hub', addonId },
+    { retry: false },
+  )
+  const entityKinds = useMemo(
+    () => supportedEntityKinds(entityKindsQuery.data),
+    [entityKindsQuery.data],
+  )
+  const exposedEntitiesQuery = useDeviceExportListExposedEntities(
+    { nodeId: 'hub', addonId },
+    { refetchInterval: STATUS_POLL_INTERVAL_MS, retry: false, enabled: entityKinds !== null },
+  )
+  const actionsQuery = useActionsList(
+    {},
+    { refetchInterval: FLEET_POLL_INTERVAL_MS, enabled: entityKinds?.has('action') === true },
+  )
+  const targetsQuery = useNotificationOutputListTargets(
+    {},
+    { refetchInterval: FLEET_POLL_INTERVAL_MS, enabled: entityKinds?.has('notifier') === true },
+  )
+
   const invalidate = useCallback((): void => {
     queryClient.invalidateQueries({ queryKey: [['deviceExport']] })
   }, [queryClient])
 
   const exposeMutation = useDeviceExportExposeDevice({ onSuccess: invalidate })
   const unexposeMutation = useDeviceExportUnexposeDevice({ onSuccess: invalidate })
+  const exposeEntityMutation = useDeviceExportExposeEntity({ onSuccess: invalidate })
+  const unexposeEntityMutation = useDeviceExportUnexposeEntity({ onSuccess: invalidate })
 
   // `getStatus` / `listExposedDevices` are codegen'd with loose wire
   // output schemas (collection-cap framework methods). Validate against
@@ -588,14 +674,42 @@ export function DeviceExportPanel({
     return rows
   }, [devicesQuery.data, supportedKinds])
 
+  const entityRows = useMemo(
+    () =>
+      buildEntityRows({
+        kinds: entityKinds,
+        actions: actionsQuery.data,
+        targets: targetsQuery.data,
+        exposed: exposedEntitiesQuery.data,
+      }),
+    [entityKinds, actionsQuery.data, targetsQuery.data, exposedEntitiesQuery.data],
+  )
+
+  // The type filter: the exporter's device kinds, then one entry per
+  // supported entity kind — and only those.
+  const typeFilterOptions = useMemo<readonly MultiSelectOption[]>(() => {
+    const entityOptions = entityFilterOptionIds(entityKinds).map(
+      (id): MultiSelectOption =>
+        id === ENTITY_FILTER_IDS.action
+          ? { id, label: t('uiLibrary.deviceExport.typeAction', 'Action'), icon: Play }
+          : { id, label: t('uiLibrary.deviceExport.typeNotifier', 'Notifier'), icon: Bell },
+    )
+    return [...supportedTypeOptions, ...entityOptions]
+  }, [supportedTypeOptions, entityKinds, t])
+
   const linkState: DeviceExportStatus['linkState'] = status?.linkState ?? 'unlinked'
   const loading =
     statusQuery.isLoading ||
     exposedQuery.isLoading ||
     kindsQuery.isLoading ||
-    devicesQuery.isLoading
+    devicesQuery.isLoading ||
+    entityKindsQuery.isLoading
   const exposedCount = status?.exposedDeviceCount ?? exposedIds.size
-  const busy = exposeMutation.isPending || unexposeMutation.isPending
+  const busy =
+    exposeMutation.isPending ||
+    unexposeMutation.isPending ||
+    exposeEntityMutation.isPending ||
+    unexposeEntityMutation.isPending
 
   // ── Selection + the one runner every export goes through ──────────
 
@@ -663,6 +777,40 @@ export function DeviceExportPanel({
     [addonId, exposeMutation, unexposeMutation, labelFor, running],
   )
 
+  /**
+   * Expose / unexpose ONE action or notification target. Same contract as the
+   * device runner: the result is recorded either way and a refusal is named on
+   * screen, with the entity (it has no device id to tag).
+   */
+  const runEntityExport = useCallback(
+    async (action: ExportAction, row: ExportEntityRow): Promise<void> => {
+      if (running) return
+      setRunning(true)
+      setOutcome(null)
+      const mutation = action === 'expose' ? exposeEntityMutation : unexposeEntityMutation
+      const succeeded: string[] = []
+      const failed: BulkFailure[] = []
+      try {
+        await mutation.mutateAsync({ entity: row.ref, nodeId: 'hub', addonId })
+        succeeded.push(row.name)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error(`[device-export] ${action} ${row.kind} failed`, {
+          tags:
+            row.ref.kind === 'action'
+              ? { actionId: row.ref.actionId }
+              : { targetId: row.ref.targetId },
+          addonId,
+          error: message,
+        })
+        failed.push({ label: row.name, message })
+      }
+      setOutcome({ action, total: 1, succeeded, failed })
+      setRunning(false)
+    },
+    [addonId, exposeEntityMutation, unexposeEntityMutation, running],
+  )
+
   // D875: role / provider filters narrow the rows; "select shown" then acts on
   // what the search, the type filter and these leave, across every page.
   const [bulkFilters, setBulkFilters] = useState<ExportBulkFilters>(NO_EXPORT_FILTERS)
@@ -672,6 +820,18 @@ export function DeviceExportPanel({
     () => applyExportFilters(candidateDevices, bulkFilters),
     [candidateDevices, bulkFilters],
   )
+  // Actions and targets have neither a role nor a provider addon, so an active
+  // role / provider filter leaves them out; with none active they all show.
+  const shownRows = useMemo<readonly ExportRow[]>(() => {
+    const deviceRows = shownDevices.map(
+      (device): ExportRow => ({ kind: 'device', key: String(device.id), device }),
+    )
+    const filtered = bulkFilters.roles.length > 0 || bulkFilters.providers.length > 0
+    const entities = filtered
+      ? []
+      : entityRows.map((entity): ExportRow => ({ kind: 'entity', key: entity.key, entity }))
+    return [...deviceRows, ...entities]
+  }, [shownDevices, entityRows, bulkFilters])
   const setRoleFilter = useCallback(
     (roles: readonly string[]): void => setBulkFilters((f) => ({ ...f, roles })),
     [],
@@ -697,43 +857,57 @@ export function DeviceExportPanel({
   )
 
   const onRowClick = useCallback(
-    (device: DeviceItemDevice): void => onOpenDevice?.(String(device.id)),
+    (row: ExportRow): void => {
+      if (row.kind === 'device') onOpenDevice?.(String(row.device.id))
+    },
     [onOpenDevice],
   )
 
   // ── The three columns, plus the selection box ─────────────────────
 
-  const getKey = useCallback((device: DeviceItemDevice): string => String(device.id), [])
+  const getKey = useCallback((row: ExportRow): string => row.key, [])
   // `stableId` is searchable but NOT a column: the operator asked for three
   // fields on screen, and a filter input is not a field. Dropping it from the
   // search too would have removed the only way to find a device whose name is
   // ambiguous.
   const getSearchText = useCallback(
-    (device: DeviceItemDevice): string => `${device.name} ${device.stableId}`,
+    (row: ExportRow): string =>
+      row.kind === 'device' ? `${row.device.name} ${row.device.stableId}` : row.entity.name,
     [],
   )
-  const getFilterType = useCallback((device: DeviceItemDevice): string => device.type, [])
+  const getFilterType = useCallback(
+    (row: ExportRow): string =>
+      row.kind === 'device' ? row.device.type : ENTITY_FILTER_IDS[row.entity.kind],
+    [],
+  )
 
-  const columns = useMemo<readonly DeviceListColumn<DeviceItemDevice>[]>(
+  const columns = useMemo<readonly DeviceListColumn<ExportRow>[]>(
     () => [
       {
         key: 'select',
         header: '',
         headerClassName: 'w-8',
-        cell: (device) => (
-          <ExportSelectCell
-            device={device}
-            checked={selectedIds.has(String(device.id))}
-            onToggle={() => toggleSelection(String(device.id))}
-          />
-        ),
+        // Bulk selection is for devices; an action or target toggles per row.
+        cell: (row) =>
+          row.kind === 'device' ? (
+            <ExportSelectCell
+              device={row.device}
+              checked={selectedIds.has(String(row.device.id))}
+              onToggle={() => toggleSelection(String(row.device.id))}
+            />
+          ) : null,
       },
       {
         key: 'type',
         header: t('uiLibrary.deviceExport.colType', 'Type'),
         headerClassName: 'w-32',
-        cell: (device) => {
-          const meta = deviceTypeMetaOf(device.type, t)
+        cell: (row) => {
+          const meta =
+            row.kind === 'device'
+              ? deviceTypeMetaOf(row.device.type, t)
+              : row.entity.kind === 'action'
+                ? { label: t('uiLibrary.deviceExport.typeAction', 'Action'), icon: Play }
+                : { label: t('uiLibrary.deviceExport.typeNotifier', 'Notifier'), icon: Bell }
           const TypeIcon = meta.icon
           return (
             <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground-subtle">
@@ -746,92 +920,108 @@ export function DeviceExportPanel({
       {
         key: 'name',
         header: t('uiLibrary.deviceExport.colName', 'Name'),
-        cell: (device) => (
-          <DeviceName
-            device={device}
-            form="compact"
-            className="text-xs font-medium text-foreground"
-          />
-        ),
+        cell: (row) =>
+          row.kind === 'device' ? (
+            <DeviceName
+              device={row.device}
+              form="compact"
+              className="text-xs font-medium text-foreground"
+            />
+          ) : (
+            <span className="text-xs font-medium text-foreground">{row.entity.name}</span>
+          ),
       },
       {
         key: 'export',
         header: t('uiLibrary.deviceExport.colExport', 'Export'),
         headerClassName: 'w-32 text-right',
         cellClassName: 'text-right',
-        cell: (device) => (
-          <ExportRowToggle
-            addonId={addonId}
-            device={device}
-            exposed={exposedIds.has(String(device.id))}
-            busy={busy}
-            onToggle={onRowToggle}
-          />
-        ),
+        cell: (row) =>
+          row.kind === 'device' ? (
+            <ExportRowToggle
+              addonId={addonId}
+              device={row.device}
+              exposed={exposedIds.has(String(row.device.id))}
+              busy={busy}
+              onToggle={onRowToggle}
+            />
+          ) : (
+            <ExposeToggleButton
+              addonId={addonId}
+              label={row.entity.name}
+              exposed={row.entity.exposed}
+              busy={busy}
+              onToggle={(action) => void runEntityExport(action, row.entity)}
+            />
+          ),
       },
     ],
-    [addonId, busy, exposedIds, onRowToggle, selectedIds, toggleSelection, t],
+    [addonId, busy, exposedIds, onRowToggle, runEntityExport, selectedIds, toggleSelection, t],
   )
 
   const renderToolbar = useCallback(
-    ({ filtered }: { readonly filtered: readonly DeviceItemDevice[] }) => (
-      <span className="inline-flex flex-wrap items-center gap-1.5">
-        <MultiSelectDropdown
-          label={t('uiLibrary.deviceExport.filterRole', 'Role')}
-          options={roleOptions}
-          selected={bulkFilters.roles}
-          onChange={setRoleFilter}
-        />
-        <MultiSelectDropdown
-          label={t('uiLibrary.deviceExport.filterProvider', 'Provider')}
-          options={providerOptions}
-          selected={bulkFilters.providers}
-          onChange={setProviderFilter}
-        />
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={filtered.length === 0}
-          onClick={() => setSelectedIds((current) => selectShown(current, filtered))}
-        >
-          {t('uiLibrary.deviceExport.selectShown', 'Select {{count}} shown', {
-            count: filtered.length,
-          })}
-        </Button>
-        {selectedIds.size > 0 && (
-          <>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setSelectedIds((current) => deselectShown(current, filtered))}
-            >
-              {t('uiLibrary.deviceExport.deselectShown', 'Deselect shown')}
-            </Button>
-            <span
-              data-testid="export-selection-count"
-              className="text-[11px] text-foreground-subtle"
-            >
-              {t('uiLibrary.deviceExport.selected', '{{count}} selected', {
-                count: selectedIds.size,
-              })}
-            </span>
-            <Button size="sm" variant="primary" disabled={busy} onClick={exposeSelected}>
-              {t('uiLibrary.deviceExport.exposeN', 'Expose {{count}}', {
-                count: selectedIds.size,
-              })}
-            </Button>
-            <Button size="sm" variant="secondary" disabled={busy} onClick={unexposeSelected}>
-              {t('uiLibrary.deviceExport.unexposeN', 'Unexpose {{count}}', {
-                count: selectedIds.size,
-              })}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={clearSelection}>
-              {t('uiLibrary.deviceExport.clear', 'Clear')}
-            </Button>
-          </>
-        )}
-      </span>
-    ),
+    ({ filtered: filteredRows }: { readonly filtered: readonly ExportRow[] }) => {
+      // Bulk selection acts on devices; actions and targets toggle per row.
+      const filtered = filteredRows.flatMap((row) => (row.kind === 'device' ? [row.device] : []))
+      return (
+        <span className="inline-flex flex-wrap items-center gap-1.5">
+          <MultiSelectDropdown
+            label={t('uiLibrary.deviceExport.filterRole', 'Role')}
+            options={roleOptions}
+            selected={bulkFilters.roles}
+            onChange={setRoleFilter}
+          />
+          <MultiSelectDropdown
+            label={t('uiLibrary.deviceExport.filterProvider', 'Provider')}
+            options={providerOptions}
+            selected={bulkFilters.providers}
+            onChange={setProviderFilter}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={filtered.length === 0}
+            onClick={() => setSelectedIds((current) => selectShown(current, filtered))}
+          >
+            {t('uiLibrary.deviceExport.selectShown', 'Select {{count}} shown', {
+              count: filtered.length,
+            })}
+          </Button>
+          {selectedIds.size > 0 && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedIds((current) => deselectShown(current, filtered))}
+              >
+                {t('uiLibrary.deviceExport.deselectShown', 'Deselect shown')}
+              </Button>
+              <span
+                data-testid="export-selection-count"
+                className="text-[11px] text-foreground-subtle"
+              >
+                {t('uiLibrary.deviceExport.selected', '{{count}} selected', {
+                  count: selectedIds.size,
+                })}
+              </span>
+              <Button size="sm" variant="primary" disabled={busy} onClick={exposeSelected}>
+                {t('uiLibrary.deviceExport.exposeN', 'Expose {{count}}', {
+                  count: selectedIds.size,
+                })}
+              </Button>
+              <Button size="sm" variant="secondary" disabled={busy} onClick={unexposeSelected}>
+                {t('uiLibrary.deviceExport.unexposeN', 'Unexpose {{count}}', {
+                  count: selectedIds.size,
+                })}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>
+                {t('uiLibrary.deviceExport.clear', 'Clear')}
+              </Button>
+            </>
+          )}
+        </span>
+      )
+    },
     [
       t,
       roleOptions,
@@ -883,24 +1073,24 @@ export function DeviceExportPanel({
             operator this addon "reports no exportable device kinds" before it
             had been asked. Same defect as the storage-migration gate
             (2026-08-31): loading and absent are different facts. */}
-        {loading && candidateDevices.length === 0 ? (
+        {loading && candidateDevices.length === 0 && entityRows.length === 0 ? (
           <div className="flex items-center gap-2 px-1 py-6 text-xs text-foreground-subtle">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             {t('uiLibrary.deviceExport.loading', 'Loading exportable devices…')}
           </div>
-        ) : hasSupportedKinds && candidateDevices.length > 0 ? (
+        ) : (hasSupportedKinds && candidateDevices.length > 0) || entityRows.length > 0 ? (
           // Generic mode — the SAME table `/integrations` renders, driven by an
           // explicit column list rather than the device-mode column matrix.
           // That is what lets this surface show three fields and no more
           // without inventing a fourth `TableContext` that only one caller ever
           // selects.
-          <DeviceList<DeviceItemDevice>
+          <DeviceList<ExportRow>
             mode="generic"
-            items={shownDevices}
+            items={shownRows}
             getKey={getKey}
             getSearchText={getSearchText}
             getFilterType={getFilterType}
-            filterOptions={supportedTypeOptions}
+            filterOptions={typeFilterOptions}
             columns={columns}
             onRowClick={onOpenDevice ? onRowClick : undefined}
             toolbar={renderToolbar}

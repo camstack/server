@@ -74,6 +74,13 @@ vi.mock('../../generated/system-hooks', () => ({
     data: ['camera', 'light'],
     isLoading: false,
   }),
+  // An exporter that does not answer what else it can expose: devices only.
+  useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),
+  useDeviceExportListExposedEntities: () => ({ data: undefined, isLoading: false }),
+  useDeviceExportExposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeviceExportUnexposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useActionsList: () => ({ data: undefined, isLoading: false }),
+  useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: () => ({ data: DEVICES, isLoading: false }),
   useDeviceExportExposeDevice: () => ({
     mutateAsync: (input: MutationInput) => {

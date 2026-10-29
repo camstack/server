@@ -54,6 +54,13 @@ const EXPORT_STATUS = {
 }
 
 vi.mock('../../generated/system-hooks', () => ({
+  // An exporter that does not answer what else it can expose: devices only.
+  useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),
+  useDeviceExportListExposedEntities: () => ({ data: undefined, isLoading: false }),
+  useDeviceExportExposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeviceExportUnexposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useActionsList: () => ({ data: undefined, isLoading: false }),
+  useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: (input: unknown, options: unknown) => {
     fleetReads.push({ input, options })
     return { data: fleet, isLoading: false, error: null }

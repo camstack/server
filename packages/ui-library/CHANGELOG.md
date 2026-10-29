@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The device export table also lists actions and notification targets, for the exporters that support them, with the same Expose toggle and type filter.
 - Pages with a fixed-height body (Build-your-self Automations, Actions and Code tabs, OSD Manager) now scroll when their content is taller than the screen
 - A pet fountain hero card with tank gauge, drinking totals and pump controls; the feeder shows the bowl in grams
 
