@@ -1147,6 +1147,17 @@ update already landed: `node-updating not sent — the update already landed`
 (INFO, `nodeId`, `toVersion`). The viewer mirrors both kinds (1.0.667), so they
 are served in the template catalog again.
 
+**A node that announced an update is not paged for going offline.**
+`planned-update-window.ts` records the last `node-updating` / `node-restarting`
+per node (RAM, from the event; a lost event behaves as before). A `node-offline`
+within `PLANNED_UPDATE_OFFLINE_GRACE_MS` (10 min) of it is armed on the node
+hold-off with that whole window instead of 60 s (`armNodeLiveness` in
+`system-events.ts`). Back inside the window: no offline and no recovery, one
+INFO line `offline suppressed: planned update, back after Ns`. Not back: one
+`node-offline` with body `system.node-offline.body.agent.updating` ("went offline
+while updating and has not come back after 10 minutes"). An announcement older
+than the window, or none, leaves the 60 s behaviour untouched.
+
 **Three things can be updated, one event announces each.** The payload's `what`
 (`PendingRestartMarkerPayload.what`, absent = the server closure) names the part
 being replaced, and `packageName` its operator-facing name; a non-closure update

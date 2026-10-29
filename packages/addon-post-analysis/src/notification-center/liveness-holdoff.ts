@@ -100,13 +100,17 @@ export class DeviceLivenessHoldoff {
     if (!this.lastNotified.has(subject)) this.lastNotified.set(subject, state)
   }
 
-  /** A real ledger flip. Starts / resets the trailing timer. */
-  arm(subject: string, incoming: NcIncomingEvent): void {
+  /**
+   * A real ledger flip. Starts / resets the trailing timer. `delayMs` replaces
+   * the default delay for THIS arm only (a node's planned-update grace).
+   */
+  arm(subject: string, incoming: NcIncomingEvent, delayMs?: number): void {
+    const delay = delayMs ?? this.delayMs
     this.pending.set(subject, incoming)
     this.trackDeparture(subject, incoming)
     const existing = this.timers.get(subject)
     if (existing !== undefined) this.cancel(existing)
-    if (this.delayMs <= 0) {
+    if (delay <= 0) {
       this.timers.delete(subject)
       this.fire(subject)
       return
@@ -114,7 +118,7 @@ export class DeviceLivenessHoldoff {
     const id = this.schedule(() => {
       this.timers.delete(subject)
       this.fire(subject)
-    }, this.delayMs)
+    }, delay)
     this.timers.set(subject, id)
   }
 

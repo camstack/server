@@ -109,6 +109,7 @@
   "system.node-offline.body.agent": "Agent {{nodeName}} is offline",
   "system.node-offline.body.agent.connection-lost": "Agent {{nodeName}} lost its connection to the hub",
   "system.node-offline.body.agent.shutdown": "Agent {{nodeName}} shut down",
+  "system.node-offline.body.agent.updating": "Agent {{nodeName}} went offline while updating and has not come back after {{graceMin}} minutes",
   "system.node-inference-unavailable.title": "Node cannot infer — {{nodeId}}",
   "system.node-inference-unavailable.body": "Node {{nodeId}} can no longer run inference — every enabled device is unavailable ({{devices}}). It will not receive cameras until one returns.",
   "system.addon-crash-loop.title": "Addon crash-loop — {{nodeId}}",

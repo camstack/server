@@ -109,6 +109,7 @@
   "system.node-offline.body.agent": "L'agent {{nodeName}} è offline",
   "system.node-offline.body.agent.connection-lost": "L'agent {{nodeName}} ha perso la connessione con l'hub",
   "system.node-offline.body.agent.shutdown": "L'agent {{nodeName}} si è spento",
+  "system.node-offline.body.agent.updating": "L'agent {{nodeName}} è andato offline durante un aggiornamento e non è tornato dopo {{graceMin}} minuti",
   "system.node-inference-unavailable.title": "Nodo senza inferenza — {{nodeId}}",
   "system.node-inference-unavailable.body": "Il nodo {{nodeId}} non può più eseguire inferenza — tutti i dispositivi abilitati non sono disponibili ({{devices}}). Non riceverà camere finché uno non torna disponibile.",
   "system.addon-crash-loop.title": "Crash-loop addon — {{nodeId}}",

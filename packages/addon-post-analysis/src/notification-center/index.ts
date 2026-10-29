@@ -161,6 +161,7 @@ import { NcDeviceCompatWarnSampler } from './device-compat-guard.js'
 import { type NcRuleStatus } from './rule-status.js'
 import { NcRuleStore } from './rule-store.js'
 import { type NcSceneObservation, NcSceneStateCache } from './scene-state-cache.js'
+import { NcPlannedUpdateWindow } from './planned-update-window.js'
 import { NcUpdateLandings } from './restart-supersede.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { type NcSnoozeVerdict, type NcSnoozeVerdictSuppressed } from './snooze-verdict.js'
@@ -517,6 +518,7 @@ export class NotificationCenter implements NcEventConsumer {
   private readonly stateSummary: NcStateSummaryService
   /** Every `server-updated` heard, so a stale `node-updating` is not sent after it (D723). */
   private readonly updateLandings = new NcUpdateLandings()
+  private readonly plannedUpdates = new NcPlannedUpdateWindow()
   /** States the `deviceState` rule gate reads. Refreshed on the reload tick;
    *  read with no I/O on the persist hook. */
   private readonly deviceStates: NcDeviceStateCache
@@ -2219,6 +2221,9 @@ export class NotificationCenter implements NcEventConsumer {
       },
       get timelapseRules() {
         return self.timelapseRules
+      },
+      get plannedUpdates() {
+        return self.plannedUpdates
       },
       get updateLandings() {
         return self.updateLandings

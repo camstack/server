@@ -15,6 +15,7 @@ import { NcPruneLedger } from './device-prune-ledger.js'
 import { NcDeletedSubjectPruner } from './device-prune-runner.js'
 import { NcDeviceStateCache } from './device-state-cache.js'
 import type { NcIncomingEvent } from './event-intake.js'
+import type { NcSystemEventSubject } from './rule-engine.js'
 import {
   discardedSystemEvent,
   incomingFromSystemEvent,
@@ -27,6 +28,7 @@ import {
 } from './liveness-holdoff.js'
 import { NcLivenessLedger, ledgeredLiveness } from './liveness-ledger.js'
 import { OccupancyStore } from './occupancy-store.js'
+import { NcPlannedUpdateWindow } from './planned-update-window.js'
 import { NcUpdateLandings } from './restart-supersede.js'
 import { NcRuleAiStore } from './rule-ai-store.js'
 import { NcRuleHealthMonitor } from './rule-health.js'
@@ -110,6 +112,7 @@ export interface SystemEventsHost {
   observeAlarmOpenings(): Promise<void>
   readonly occupancyStore: OccupancyStore
   pruneAlarmInputBypasses(): void
+  readonly plannedUpdates: NcPlannedUpdateWindow
   readonly pruneLedger: NcPruneLedger
   readonly pruner: NcDeletedSubjectPruner
   refreshOccupancyWatch(): void
@@ -213,6 +216,9 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
   // A landing is a fact about the node, recorded whether or not a rule
   // matches it — it is what makes a late `node-updating` stale (D723).
   if (system !== undefined) host.updateLandings.observe(system, host.now())
+  // An announcement opens the node's planned-update window (see
+  // `planned-update-window.ts`): its offline is held for the whole window.
+  if (system !== undefined) host.plannedUpdates.observe(system, host.now())
   const observation = system !== undefined ? ledgeredLiveness(system) : null
   if (observation !== null) {
     const previous = host.liveness.stateOf(observation.subject)
@@ -250,7 +256,11 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
       })
       return
     }
-    if (isDeviceLivenessKind(observation.kind) || isNodeLivenessKind(observation.kind)) {
+    if (isNodeLivenessKind(observation.kind) && system !== undefined) {
+      armNodeLiveness(host, holdoff, observation.subject, incoming, system)
+      return
+    }
+    if (isDeviceLivenessKind(observation.kind)) {
       holdoff.arm(observation.subject, incoming)
       return
     }
@@ -265,6 +275,65 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
   }
   host.consumeEvent(incoming)
 }
+/**
+ * Arm a node liveness flip. An OFFLINE of a node that announced an update is
+ * held for the whole planned-update window and worded as such if it is still
+ * sent; the node's return inside the window is logged and sends nothing (the
+ * hold-off sees the state bounce back to the one last notified).
+ */
+function armNodeLiveness(
+  host: SystemEventsHost,
+  holdoff: DeviceLivenessHoldoff,
+  subject: string,
+  incoming: NcIncomingEvent,
+  system: NcSystemEventSubject,
+): void {
+  const nodeId = system.nodeId
+  const now = host.now()
+  if (nodeId === undefined) {
+    holdoff.arm(subject, incoming)
+    return
+  }
+  const window = host.plannedUpdates
+  if (system.kind === 'node-offline' && window.isPlanned(nodeId, now)) {
+    window.hold(nodeId, now)
+    holdoff.arm(
+      subject,
+      withPlannedUpdateWording(incoming, system, window.graceMinutes),
+      window.windowMs,
+    )
+    return
+  }
+  if (system.kind === 'node-online') {
+    const backAfterSec = window.release(nodeId, now)
+    if (backAfterSec !== null) {
+      host.logger.info(
+        `node ${nodeId}: offline suppressed: planned update, back after ${backAfterSec}s`,
+        { meta: { nodeId, backAfterSec } },
+      )
+    }
+  }
+  holdoff.arm(subject, incoming)
+}
+
+function withPlannedUpdateWording(
+  incoming: NcIncomingEvent,
+  system: NcSystemEventSubject,
+  graceMin: number,
+): NcIncomingEvent {
+  return {
+    ...incoming,
+    subject: {
+      ...incoming.subject,
+      systemEvent: {
+        ...system,
+        bodyKey: 'system.node-offline.body.agent.updating',
+        textParams: { ...system.textParams, graceMin: String(graceMin) },
+      },
+    },
+  }
+}
+
 /**
  * One edge of an alert episode, from the bus or from the reconcile. The
  * ledger decides whether it is news; only news reaches the rules.
