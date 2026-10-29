@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.692] - 2026-10-29
+
 ### Changed
 
 - A node inside the desktop app reports the app version and update state to the hub, and the hub can trigger install and restart.

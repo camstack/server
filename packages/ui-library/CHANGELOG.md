@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.352] - 2026-10-29
+
 ### Changed
 
 - Generated server-management hooks include installDesktopUpdate.
