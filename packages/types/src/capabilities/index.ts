@@ -1587,6 +1587,8 @@ export {
   ServerPackageStatusSchema,
   type ServerRollbackInfo,
   ServerRollbackInfoSchema,
+  type LaunchOverrides,
+  type SetLaunchOverridesResult,
   type ServerUpdateActionResult,
   ServerUpdateActionResultSchema,
   type ServerUpdateCheckResult,
