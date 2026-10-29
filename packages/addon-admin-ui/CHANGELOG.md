@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.512] - 2026-10-29
+
 ### Added
 
 - The helper creation dialog uses the full screen height; the member list scrolls instead of being cut short
