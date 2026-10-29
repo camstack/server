@@ -7516,7 +7516,9 @@
       "noMatch": "No device matches this search.",
       "emptyTitle": "No exportable devices",
       "emptyKinds": "No devices of the supported kinds ({{kinds}}) are available to expose to \"{{addon}}\".",
-      "emptyNoKinds": "\"{{addon}}\" reports no exportable device kinds yet."
+      "emptyNoKinds": "\"{{addon}}\" reports no exportable device kinds yet.",
+      "typeAction": "Action",
+      "typeNotifier": "Notifier"
     },
     "motionZones": {
       "title": "Motion Zones",

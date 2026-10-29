@@ -7538,7 +7538,9 @@
       "noMatch": "Nessun dispositivo corrisponde a questa ricerca.",
       "emptyTitle": "Nessun dispositivo esportabile",
       "emptyKinds": "Nessun dispositivo dei tipi supportati ({{kinds}}) è disponibile da esporre a \"{{addon}}\".",
-      "emptyNoKinds": "\"{{addon}}\" non segnala ancora alcun tipo di dispositivo esportabile."
+      "emptyNoKinds": "\"{{addon}}\" non segnala ancora alcun tipo di dispositivo esportabile.",
+      "typeAction": "Azione",
+      "typeNotifier": "Notificatore"
     },
     "motionZones": {
       "title": "Zone di movimento",
