@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import type {
@@ -13,6 +13,7 @@ import type {
   ProcessResourceInfo,
   SystemResourceSnapshot,
 } from '@camstack/types'
+import { computeDarwinMemory, parseVmStat } from './darwin-memory.js'
 import { findOnPath, readNvidiaGpu } from './gpu-probe.js'
 
 const IS_DARWIN = os.platform() === 'darwin'
@@ -67,8 +68,8 @@ export class NativeMetricsProvider {
   startSampling(intervalMs: number): void {
     // Seed macOS vm_stat cache immediately
     if (IS_DARWIN) {
-      sampleMacMemory(this)
-      this.macMemTimer = setInterval(() => sampleMacMemory(this), 5000)
+      void sampleMacMemory(this)
+      this.macMemTimer = setInterval(() => void sampleMacMemory(this), 5000)
       if (this.macMemTimer.unref) this.macMemTimer.unref()
     }
 
@@ -237,6 +238,7 @@ export class NativeMetricsProvider {
 
   /** Cached macOS memory (set by sampleMacMemory timer). */
   _cachedMacMem: MemoryInfo | null = null
+  _macMemInFlight = false
 
   private getMemoryInfo(): MemoryInfo {
     const total = os.totalmem()
@@ -314,48 +316,57 @@ function aggregateCpuTimes(): CpuTimes {
 
 // ─── macOS vm_stat memory sampling ─────────────────────────────────────────
 
-function sampleMacMemory(provider: NativeMetricsProvider): void {
+// Absolute paths: a packaged Electron app runs under a bare PATH where a
+// bare `vm_stat` is not found, which left the cache empty (and the node at 94%).
+const VM_STAT = '/usr/bin/vm_stat'
+const SYSCTL = '/usr/sbin/sysctl'
+
+function execFileText(file: string, args: readonly string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(file, [...args], { timeout: 2000, encoding: 'utf-8' }, (err, stdout) =>
+      err ? reject(err) : resolve(stdout),
+    )
+  })
+}
+
+async function readMacSwap(): Promise<{ used: number; total: number }> {
   try {
-    const output = execFileSync('vm_stat', { timeout: 2000, encoding: 'utf-8' })
-    const pageSize = 16384 // macOS ARM64
-    const parse = (label: string): number => {
-      const match = output.match(new RegExp(`${label}:\\s+(\\d+)`))
-      return match ? parseInt(match[1]!, 10) * pageSize : 0
+    const swapOut = await execFileText(SYSCTL, ['-n', 'vm.swapusage'])
+    const totalMatch = swapOut.match(/total\s*=\s*([\d.]+)M/)
+    const usedMatch = swapOut.match(/used\s*=\s*([\d.]+)M/)
+    return {
+      total: totalMatch ? parseFloat(totalMatch[1]!) * 1024 * 1024 : 0,
+      used: usedMatch ? parseFloat(usedMatch[1]!) * 1024 * 1024 : 0,
     }
+  } catch {
+    return { used: 0, total: 0 }
+  }
+}
 
-    const free = parse('Pages free')
-    const inactive = parse('Pages inactive')
-    const purgeable = parse('Pages purgeable')
-    const speculative = parse('Pages speculative')
-    const available = free + inactive + purgeable + speculative
-    const total = os.totalmem()
-    const used = total - available
-
-    let swapUsedBytes = 0
-    let swapTotalBytes = 0
-    try {
-      const swapOut = execFileSync('sysctl', ['-n', 'vm.swapusage'], {
-        timeout: 2000,
-        encoding: 'utf-8',
-      })
-      const totalMatch = swapOut.match(/total\s*=\s*([\d.]+)M/)
-      const usedMatch = swapOut.match(/used\s*=\s*([\d.]+)M/)
-      if (totalMatch) swapTotalBytes = parseFloat(totalMatch[1]!) * 1024 * 1024
-      if (usedMatch) swapUsedBytes = parseFloat(usedMatch[1]!) * 1024 * 1024
-    } catch {
-      /* ignore */
+/** One spawn per tick (never overlapping); a failed read clears the cache. */
+async function sampleMacMemory(provider: NativeMetricsProvider): Promise<void> {
+  if (provider._macMemInFlight) return
+  provider._macMemInFlight = true
+  try {
+    const pages = parseVmStat(await execFileText(VM_STAT, []))
+    const mem = pages ? computeDarwinMemory(pages, os.totalmem()) : null
+    if (!mem) {
+      provider._cachedMacMem = null
+      return
     }
-
+    const swap = await readMacSwap()
     provider._cachedMacMem = {
-      percent: Math.round((used / total) * 1000) / 10,
-      totalBytes: total,
-      usedBytes: used,
-      availableBytes: available,
-      swapUsedBytes,
-      swapTotalBytes,
+      percent: mem.percent,
+      totalBytes: os.totalmem(),
+      usedBytes: mem.usedBytes,
+      availableBytes: mem.availableBytes,
+      swapUsedBytes: swap.used,
+      swapTotalBytes: swap.total,
     }
   } catch {
     provider._cachedMacMem = null
+  } finally {
+    provider._macMemInFlight = false
   }
 }
 

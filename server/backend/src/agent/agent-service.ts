@@ -383,6 +383,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
           const cpus = os.cpus()
           let cpuPercent = 0
           let memoryPercent = 0
+          let freeMemoryBytes = os.freemem()
           const metrics = deps.getMetricsProvider?.()
           if (metrics) {
             // Bounded so $agent.status never hangs (and drops the node from
@@ -395,6 +396,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
             if (snapshot) {
               cpuPercent = snapshot.cpu.total
               memoryPercent = snapshot.memory.percent
+              freeMemoryBytes = snapshot.memory.availableBytes
             }
           }
           const mem = process.memoryUsage()
@@ -408,7 +410,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
             cpuCores: cpus.length,
             cpuModel: cpus[0]?.model,
             totalMemoryMB: Math.round(os.totalmem() / 1024 / 1024),
-            freeMemoryMB: Math.round(os.freemem() / 1024 / 1024),
+            freeMemoryMB: Math.round(freeMemoryBytes / 1024 / 1024),
             cpuPercent,
             memoryPercent,
             uptime: os.uptime(),

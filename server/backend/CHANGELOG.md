@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A node's free memory comes from the metrics provider instead of os.freemem(), which undercounts on macOS
 - device-export gains optional methods to list, expose and unexpose actions and notification targets beside devices.
 - Forget node now works on an online node too: its certificates are revoked, its connection is cut and calls pinned to it fail at once.
 - Generated routers for the pet-fountain capability
