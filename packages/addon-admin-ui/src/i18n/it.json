@@ -10448,7 +10448,8 @@
     "section": {
       "group": "Gruppo",
       "calculation": "Calcolo",
-      "advanced": "Avanzato"
+      "advanced": "Avanzato",
+      "presets": "Preset"
     },
     "badge": {
       "group": "Gruppo: {{kind}}",
@@ -10801,5 +10802,81 @@
       },
       "skipped_one": "{{count}} comando non utilizzabile:"
     }
+  },
+  "commands": {
+    "title": "Comandi · {{cap}}",
+    "hint": "Ogni metodo servito da questo dispositivo viene eseguito chiamando un metodo di un altro dispositivo. Scegli quel dispositivo e poi la chiamata.",
+    "unserved": "Nessun comando per: {{methods}}",
+    "resetOf": "Reset di {{item}}",
+    "none": "Nessun comando",
+    "calls": "Chiama {{call}} su {{device}}",
+    "set": "Imposta comando",
+    "change": "Modifica",
+    "remove": "Rimuovi",
+    "apply": "Applica",
+    "cancel": "Annulla",
+    "source": "Dispositivo sorgente",
+    "chooseDevice": "Scegli un dispositivo",
+    "noDevice": "Nessun dispositivo",
+    "cap": "Capability",
+    "method": "Metodo",
+    "pickCap": "Scegli una capability",
+    "pickMethod": "Scegli un metodo",
+    "loadingCaps": "Caricamento capability...",
+    "noCaps": "Questo dispositivo non ha capability richiamabili.",
+    "pickTitle": "Sorgente di {{method}}",
+    "pickConfirm": "Usa questo dispositivo",
+    "args": {
+      "passThrough": "Passa l'input invariato",
+      "template": "Argomenti",
+      "kind": "Valore di {{field}}",
+      "kinds": {
+        "unset": "Ometti",
+        "input": "Dall'input",
+        "constant": "Costante",
+        "structured": "Strutturato (JSON)"
+      },
+      "fromInput": "Campo di input per {{field}}",
+      "constant": "Costante per {{field}}",
+      "true": "Vero",
+      "false": "Falso",
+      "omitted": "Non inviato",
+      "structured": "JSON per {{field}}",
+      "invalidStructured": "Valore non valido."
+    }
+  },
+  "preset": {
+    "petFountain": {
+      "label": "Fontanella per animali",
+      "description": "Una fontanella per animali costruita dalle sue entita': scegli ciascuna e il dispositivo viene creato con i comandi collegati.",
+      "name": "Fontanella per animali",
+      "slot": {
+        "waterLevel": "Livello dell'acqua",
+        "waterVolume": "Volume dell'acqua",
+        "pump": "Pompa",
+        "pumpInterval": "Ciclo della pompa",
+        "pumpOnMinutes": "Minuti di pompa accesa",
+        "pumpOffMinutes": "Minuti di pompa spenta",
+        "lastDrink": "Ultima bevuta",
+        "currentHourDrink": "Bevuto quest'ora",
+        "last24hDrink": "Bevuto nelle ultime 24 h",
+        "todayDrink": "Bevuto oggi",
+        "clearDaily": "Azzera i contatori giornalieri",
+        "filterDaysRemaining": "Giorni residui del filtro",
+        "filterChanged": "Filtro sostituito"
+      }
+    },
+    "name": "Nome",
+    "slots": "Entita'",
+    "optional": "facoltativo, in coppia",
+    "choose": "Scegli",
+    "clear": "Rimuovi",
+    "missing": "Da scegliere: {{slots}}",
+    "preview": "Cosa verra' creato",
+    "previewFeature": "{{cap}}: {{fields}} campi, {{commands}} comandi",
+    "create": "Crea",
+    "back": "Indietro",
+    "pickTitle": "Scegli: {{slot}}",
+    "pickConfirm": "Usa questa entita'"
   }
 }

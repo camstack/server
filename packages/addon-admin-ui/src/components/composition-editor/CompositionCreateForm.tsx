@@ -4,6 +4,7 @@
  */
 import {
   COMPOSED_DEVICE_STABLE_ID_PREFIX,
+  type Composition,
   DeviceRole,
   DeviceType,
   groupTemplate,
@@ -22,10 +23,12 @@ import {
 import type { TFunction } from 'i18next'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { customizePath, devicePath } from '../../lib/customization-routes'
 import { buildSkeletonComposition } from './build-skeleton'
+import { presetById } from './composition-presets'
 import { HelperWizard } from './HelperWizard'
+import { PresetWizard } from './PresetWizard'
 import {
   type HelperDraft,
   type HelperSaveIntent,
@@ -34,6 +37,8 @@ import {
   refusalFromMessage,
   writeHelper,
 } from './helper-form-model'
+
+const PRESET_PARAM = 'preset'
 
 export type CompositionCreateMode = 'blank' | 'helper'
 
@@ -64,11 +69,47 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
   const [draft, setDraft] = useState<HelperDraft | null>(null)
   const [free, setFree] = useState(false)
-  const title = titleForDraft(draft, t)
+  const [params, setParams] = useSearchParams()
+  const preset = presetById(params.get(PRESET_PARAM))
+  const title = preset === null ? titleForDraft(draft, t) : t(preset.labelKey)
 
   useEffect(() => {
     if (!free) onTitle(title)
   }, [onTitle, title, free])
+
+  // Replace, not push: back from a preset must leave the dialog, not return to a half-picked tile.
+  const choosePreset = (id: string | null): void =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        if (id === null) next.delete(PRESET_PARAM)
+        else next.set(PRESET_PARAM, id)
+        return next
+      },
+      { replace: true },
+    )
+
+  const savePreset = async (composition: Composition, name: string): Promise<HelperSaveResult> => {
+    try {
+      const { block } = await create.mutateAsync({
+        block: { ...(name === '' ? {} : { name }), enabled: true, composition },
+      })
+      const id = await awaitDeviceIdForBlock(block.id, async () => {
+        const refreshed = await fleet.refetch()
+        return refreshed.data ?? fleet.data
+      })
+      if (id === null)
+        return { kind: 'refused', lines: refusalFromMessage(t('helper.devicePending')) }
+      if (name !== '') await setName.mutateAsync({ deviceId: id, name })
+      navigate(customizePath(id), { replace: true })
+      return { kind: 'saved', deviceId: id }
+    } catch (err: unknown) {
+      return {
+        kind: 'refused',
+        lines: refusalFromMessage(err instanceof Error ? err.message : String(err)),
+      }
+    }
+  }
 
   // The block a draft already created, so a retry after a failed lookup
   // resolves the same device instead of creating a second one.
@@ -110,12 +151,25 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
   }
 
   if (free) return <BlankCompositionForm onTitle={onTitle} />
+  if (preset !== null) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="composition-create-form">
+        <PresetWizard
+          preset={preset}
+          saving={create.isPending}
+          onSave={savePreset}
+          onBack={() => choosePreset(null)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="composition-create-form">
       <HelperWizard
         fillHeight
         onFreeComposition={() => setFree(true)}
+        onPreset={choosePreset}
         purpose="create"
         initial={null}
         start="template"

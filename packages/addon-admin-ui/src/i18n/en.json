@@ -10426,7 +10426,8 @@
     "section": {
       "group": "Group",
       "calculation": "Calculation",
-      "advanced": "Advanced"
+      "advanced": "Advanced",
+      "presets": "Presets"
     },
     "badge": {
       "group": "Group: {{kind}}",
@@ -10779,5 +10780,81 @@
       },
       "skipped_one": "{{count}} command could not be used:"
     }
+  },
+  "commands": {
+    "title": "Commands · {{cap}}",
+    "hint": "Each method this device serves is answered by calling a method on another device. Pick that device, then the call.",
+    "unserved": "No command yet for: {{methods}}",
+    "resetOf": "Reset of {{item}}",
+    "none": "No command",
+    "calls": "Calls {{call}} on {{device}}",
+    "set": "Set command",
+    "change": "Change",
+    "remove": "Remove",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "source": "Source device",
+    "chooseDevice": "Choose a device",
+    "noDevice": "No device",
+    "cap": "Capability",
+    "method": "Method",
+    "pickCap": "Pick a capability",
+    "pickMethod": "Pick a method",
+    "loadingCaps": "Loading capabilities...",
+    "noCaps": "This device has no capability that can be called.",
+    "pickTitle": "Source of {{method}}",
+    "pickConfirm": "Use this device",
+    "args": {
+      "passThrough": "Pass the input through unchanged",
+      "template": "Arguments",
+      "kind": "Value of {{field}}",
+      "kinds": {
+        "unset": "Omit",
+        "input": "From the input",
+        "constant": "Constant",
+        "structured": "Structured (JSON)"
+      },
+      "fromInput": "Input field for {{field}}",
+      "constant": "Constant for {{field}}",
+      "true": "True",
+      "false": "False",
+      "omitted": "Not sent",
+      "structured": "JSON for {{field}}",
+      "invalidStructured": "Not a valid value."
+    }
+  },
+  "preset": {
+    "petFountain": {
+      "label": "Pet fountain",
+      "description": "A pet fountain built from its separate entities: pick each one and the device is created with its commands wired.",
+      "name": "Pet fountain",
+      "slot": {
+        "waterLevel": "Water level",
+        "waterVolume": "Water volume",
+        "pump": "Pump",
+        "pumpInterval": "Pump cycle",
+        "pumpOnMinutes": "Pump on minutes",
+        "pumpOffMinutes": "Pump off minutes",
+        "lastDrink": "Last drink",
+        "currentHourDrink": "Drinking this hour",
+        "last24hDrink": "Drinking last 24 h",
+        "todayDrink": "Drinking today",
+        "clearDaily": "Clear daily counters",
+        "filterDaysRemaining": "Filter days remaining",
+        "filterChanged": "Filter changed"
+      }
+    },
+    "name": "Name",
+    "slots": "Entities",
+    "optional": "optional, as a pair",
+    "choose": "Choose",
+    "clear": "Clear",
+    "missing": "Still to pick: {{slots}}",
+    "preview": "What will be created",
+    "previewFeature": "{{cap}}: {{fields}} fields, {{commands}} commands",
+    "create": "Create",
+    "back": "Back",
+    "pickTitle": "Choose: {{slot}}",
+    "pickConfirm": "Use this entity"
   }
 }

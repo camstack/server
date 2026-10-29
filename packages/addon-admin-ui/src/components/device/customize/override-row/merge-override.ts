@@ -83,6 +83,8 @@ export function compositionWithoutFields(
   const fields = Object.fromEntries(
     Object.entries(feature.fields).filter(([path]) => !drop.has(path)),
   )
-  if (Object.keys(fields).length === 0) return withoutFeature(current, cap)
+  // A built cap's commands and items are not fields: the feature stays while it serves any.
+  const serves = feature.commands !== undefined || feature.items !== undefined
+  if (Object.keys(fields).length === 0 && !serves) return withoutFeature(current, cap)
   return withFeature(current, target, { ...feature, fields })
 }

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Cluster page shows a node's memory as unknown when it could not be read
+- A built device's methods are wired to other devices in a Commands card, and a Pet fountain preset creates a fountain from its entities.
 
 ## [1.2.516] - 2026-10-29
 

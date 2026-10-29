@@ -16,6 +16,7 @@ import { eventCardTargets } from '../device/customize/event/event-targets'
 import { keyedArrayCardTargets } from '../device/customize/keyed/KeyedArrayCard'
 import { scalarCardTargets } from '../device/customize/scalar/ScalarOverrideCard'
 import { skeletonFillStatus } from './build-skeleton'
+import { CommandsSection } from './CommandsSection'
 import { HelperWizard } from './HelperWizard'
 import { draftFromHelper, isHelperComposition, writeHelper } from './helper-form-model'
 
@@ -142,6 +143,9 @@ export function CompositionBlockEditor({
         {t(`customize.blockStatus.${fill === 'incomplete' ? 'incomplete' : view.block.status}`)}
       </Badge>
       <CompositionFieldsCardList device={deviceStub} handle={handle} skipCaps={skipCaps} />
+      {composition.target.kind === 'new' && (
+        <CommandsSection composition={composition} saving={update.isPending} save={handle.save} />
+      )}
     </div>
   )
 }

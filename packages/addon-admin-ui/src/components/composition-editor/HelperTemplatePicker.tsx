@@ -15,6 +15,7 @@ import type { TFunction } from 'i18next'
 import { BarChart3, Blocks, Divide, Gauge, Minus, Plus, Sigma, TrendingUp, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { COMPOSITION_PRESETS, type CompositionPreset } from './composition-presets'
 import {
   calculationTileIds,
   helperTemplateGroups,
@@ -29,6 +30,8 @@ export interface HelperTemplatePickerProps {
   readonly onPick: (pick: HelperTemplatePick) => void
   /** The Advanced "Free composition" tile; omitted where only helpers are offered. */
   readonly onFreeComposition?: () => void
+  /** A preset tile was picked (create flow only); omitted where presets are not offered. */
+  readonly onPreset?: (presetId: string) => void
 }
 
 const FREE_COMPOSITION_KEY = 'composition'
@@ -36,6 +39,7 @@ const FREE_COMPOSITION_KEY = 'composition'
 export function HelperTemplatePicker({
   onPick,
   onFreeComposition,
+  onPreset,
 }: HelperTemplatePickerProps): ReactNode {
   const { t } = useTranslation()
   return (
@@ -45,6 +49,11 @@ export function HelperTemplatePicker({
         onPick={(key) => {
           if (key === FREE_COMPOSITION_KEY) {
             onFreeComposition?.()
+            return
+          }
+          const preset = COMPOSITION_PRESETS.find((candidate) => candidate.id === key)
+          if (preset !== undefined) {
+            onPreset?.(preset.id)
             return
           }
           if (key === 'statistic' || key === 'integral') {
@@ -64,6 +73,15 @@ export function HelperTemplatePicker({
         }}
         groups={[
           ...pickerGroups(t),
+          ...(onPreset === undefined || COMPOSITION_PRESETS.length === 0
+            ? []
+            : [
+                {
+                  id: 'presets',
+                  label: t('helper.section.presets'),
+                  tiles: COMPOSITION_PRESETS.map((preset) => presetTile(preset, t)),
+                },
+              ]),
           {
             id: 'calculation',
             label: t('helper.section.calculation'),
@@ -85,6 +103,22 @@ export function HelperTemplatePicker({
       />
     </div>
   )
+}
+
+function presetTile(preset: CompositionPreset, t: TFunction): PickerTile {
+  const label = t(preset.labelKey)
+  return {
+    key: preset.id,
+    label,
+    testId: `helper-template-preset-${preset.id}`,
+    icon: <Blocks className="h-5 w-5 text-foreground-muted" aria-hidden />,
+    detailLabel: t('helper.detailsOf', { name: label }),
+    detail: (
+      <div className="max-w-xs text-xs">
+        <p className="text-foreground-muted">{t(preset.descriptionKey)}</p>
+      </div>
+    ),
+  }
 }
 
 function compositionTile(t: TFunction): PickerTile {

@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom'
 import { SourceSelector } from '../device/customize/source-selector/SourceSelector'
 import { devicePath } from '../../lib/customization-routes'
 import { ExpressionInput } from './ExpressionInput'
+import { RefusalList } from './RefusalList'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
 import {
   canSaveDraft,
@@ -59,6 +60,8 @@ export interface HelperWizardProps {
   readonly onDraftChange?: (draft: HelperDraft | null) => void
   /** Create only: the picker's Advanced "Free composition" tile. */
   readonly onFreeComposition?: () => void
+  /** Create only: a preset tile of the picker. */
+  readonly onPreset?: (presetId: string) => void
   /**
    * The host is a full-height dialog: the member list takes the remaining
    * height and scrolls, and the action row stays at the bottom.
@@ -79,6 +82,7 @@ export function HelperWizard({
   onSave,
   onDraftChange,
   onFreeComposition,
+  onPreset,
   fillHeight = false,
 }: HelperWizardProps): ReactNode {
   const { t } = useTranslation()
@@ -170,7 +174,11 @@ export function HelperWizard({
       )}
       <p className="text-[11px] text-foreground-muted">{t(stepCopy(step, draft))}</p>
       {step === 'template' && (
-        <HelperTemplatePicker onPick={pick} onFreeComposition={onFreeComposition} />
+        <HelperTemplatePicker
+          onPick={pick}
+          onFreeComposition={onFreeComposition}
+          onPreset={onPreset}
+        />
       )}
       {step === 'parameters' &&
         draft?.kind === 'group' &&
@@ -904,19 +912,5 @@ function Field({
       {label}
       {children}
     </label>
-  )
-}
-
-function RefusalList({ lines }: { readonly lines: readonly RefusalLine[] }): ReactNode {
-  if (lines.length === 0) return null
-  return (
-    <ul role="alert" className="flex flex-col gap-1" data-testid="helper-refusals">
-      {lines.map((line) => (
-        <li key={`${line.path}:${line.code}:${line.message}`} className="text-xs text-danger">
-          <span className="font-medium">{line.code}</span>
-          {line.message === '' ? '' : ` — ${line.message}`}
-        </li>
-      ))}
-    </ul>
   )
 }
