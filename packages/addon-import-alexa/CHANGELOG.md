@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.168] - 2026-10-29
+
 ### Changed
 
 - Alexa sign-in trace now records the proxy's first request to Amazon (parameter names and whether OAuth parameters are present) and the browser family, to diagnose logins that end without an authorization code.
