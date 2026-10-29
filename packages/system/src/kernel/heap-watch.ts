@@ -153,6 +153,9 @@ import {
  */
 export const HUB_MAIN_HEAP_WATCH_LABEL = 'hub-main'
 
+/** The agent's root process (container or desktop): `[mem] agent-main`. */
+export const AGENT_MAIN_HEAP_WATCH_LABEL = 'agent-main'
+
 /** Heartbeat period. Slow enough to be free, fast enough that the sample before
  *  a fatal is recent. */
 export const HEAP_WATCH_INTERVAL_MS = 60_000

@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generated routers for the pet-fountain capability
 - Agents report their own process memory in the topology (the core process showed 0), and an unreadable memory shows as unknown
 
+### Changed
+
+- The agent now reports its own [mem] agent-main heartbeat and reclaims stranded memory, as the hub does
+
 ## [1.2.688] - 2026-10-29
 
 ### Changed

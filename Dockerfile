@@ -495,6 +495,34 @@ if [ ! -S "$CAMSTACK_PKGD_SOCKET" ]; then
   echo "[entrypoint] camstack-pkgd did not bind $CAMSTACK_PKGD_SOCKET — distro package installs will refuse until the next recreate"
 fi
 
+# [agent-heap-begin]
+# The AGENT root's old-space ceiling (role=agent only; the hub keeps V8's
+# default or CAMSTACK_HUB_HEAP_MB). clamp(RAM/4, 1536, 4096) MB — V8's own rule
+# with a floor above every measured agent RSS (0.8-1.4GB), so it bounds a runaway
+# and never a healthy root. Mirrored by packages/desktop/src/agent-heap-flag.ts
+# (a spec pins both to the same answers). RAM is the smaller of MemTotal and the
+# cgroup limit. CAMSTACK_AGENT_HEAP_MB (positive integer) overrides.
+agent_heap_mb() {
+  case "${CAMSTACK_AGENT_HEAP_MB:-}" in
+    ''|*[!0-9]*|0*) ;;
+    *) echo "$CAMSTACK_AGENT_HEAP_MB"; return ;;
+  esac
+  kb=$(awk '/^MemTotal:/ {print $2; exit}' "${CAMSTACK_MEMINFO:-/proc/meminfo}" 2>/dev/null)
+  case "$kb" in ''|*[!0-9]*) echo 1536; return ;; esac
+  mb=$((kb / 1024 / 4))
+  cg=$(cat "${CAMSTACK_CGROUP_MEM_MAX:-/sys/fs/cgroup/memory.max}" 2>/dev/null || true)
+  case "$cg" in
+    ''|*[!0-9]*) ;;
+    *) cgmb=$((cg / 1048576 / 4)); [ "$cgmb" -lt "$mb" ] && mb=$cgmb ;;
+  esac
+  [ "$mb" -lt 1536 ] && mb=1536
+  [ "$mb" -gt 4096 ] && mb=4096
+  echo "$mb"
+}
+# [agent-heap-end]
+if [ "${CAMSTACK_ROLE:-hub}" = "agent" ]; then
+  exec gosu camstack:camstack node --max-old-space-size="$(agent_heap_mb)" "$@"
+fi
 if [ -n "${CAMSTACK_HUB_HEAP_MB:-}" ]; then
   exec gosu camstack:camstack node --max-old-space-size="$CAMSTACK_HUB_HEAP_MB" "$@"
 fi

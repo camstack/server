@@ -347,6 +347,7 @@ export type {
   RunnerHeapWatchOptions,
 } from './kernel/heap-watch.js'
 export {
+  AGENT_MAIN_HEAP_WATCH_LABEL,
   buildHeapSample,
   createDeferredHeapWatchSink,
   createLoopDelayMeter,

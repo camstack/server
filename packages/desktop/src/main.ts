@@ -43,6 +43,7 @@ import {
   shell,
   Tray,
 } from 'electron'
+import { agentHeapNodeArgs } from './agent-heap-flag'
 import type { UpdateState } from './auto-updater'
 import { initAutoUpdater, notifyUpdateReady, shutdownAutoUpdater } from './auto-updater'
 import { loadOrCreatePlatformKeychainKey } from './keychain-platform-key'
@@ -375,6 +376,9 @@ function startNodeProcess(): void {
       env,
       nodeExecPath,
       keychainKey,
+      // The agent root's old-space ceiling (hub keeps V8's default). Set on
+      // argv, not NODE_OPTIONS: runners are sized separately.
+      ...(role === 'agent' ? { nodeArgs: agentHeapNodeArgs(os.totalmem(), process.env) } : {}),
     })
     nodeStartedAt = Date.now()
     console.log(`[main] node started (role=${role}, data=${dataDir})`)

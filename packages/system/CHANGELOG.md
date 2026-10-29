@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Memory reclaim now judges the stranded memory by anonymous resident pages on Linux, so file-backed SQLite mappings no longer trigger useless reclaim passes
+- Heap-watch exports the agent-main label used by the agent root heartbeat
 
 ## [1.2.517] - 2026-10-29
 

@@ -149,6 +149,7 @@ import { registerAgentCapDispatch } from './register-agent-cap-dispatch.js'
 // entries flow through it (console output + hub forwarding).
 // ---------------------------------------------------------------------------
 import { LogManager, systemHostFacts } from '@camstack/system'
+import { startAgentHeapWatch } from './agent-heap-watch.js'
 
 /** A reconnect (stop + rebuild + start) that takes longer than this is abandoned. */
 const RECONNECT_DEADLINE_MS = 90_000
@@ -177,6 +178,11 @@ const DATA_NODEID_CAPS: ReadonlySet<string> = new Set(
 // ---------------------------------------------------------------------------
 
 async function startAgent(configPath?: string): Promise<void> {
+  // The agent root's own memory: `[mem] agent-main` heartbeat + the stranded-page
+  // reclaim hub-main has had since 2026-08. Started first so a slow boot is on the
+  // record; lines reach the hub through the same LogManager the addons use.
+  const heapWatchLogger = agentLogManager.createLogger().withTags({ addonId: 'heap-watch' })
+  startAgentHeapWatch(heapWatchLogger)
   const config = loadAgentConfig(configPath)
 
   // Derive CAMSTACK_HUB_URL from the configured hub address so remote agents
