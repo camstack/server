@@ -20,8 +20,10 @@ import { processEvent } from './ha-events.js'
  *     the same HA broker for overlapping entity sets. We keep ONE
  *     upstream `subscribe_entities` to HA with the UNION of every
  *     active subscription's entity ids, and fan inbound state changes
- *     out via `EventCategory.BrokerMessage` once per matching
- *     subscription.
+ *     out via `EventCategory.BrokerMessage` ONCE per change when at
+ *     least one subscription matches (the bus is shared and consumers
+ *     filter by `key`). A new subscriber's cache replay is the one
+ *     targeted emission: it carries that subscription's id.
  *   - When the active union changes (subscribe / unsubscribe call),
  *     we re-issue the upstream subscribe with the new set. HA accepts
  *     this efficiently (server-side filter).
@@ -34,6 +36,11 @@ import { processEvent } from './ha-events.js'
  */
 
 const HA_KIND = 'home-assistant'
+
+/** `subscriptionId` of a `broker.message` that is not addressed to one
+ *  subscription (a live state change fanned out once). The payload type
+ *  requires the field; the empty string is the repo convention for "none". */
+const FANOUT_SUBSCRIPTION_ID = ''
 
 /**
  * Curated device-event allowlist for the per-broker bus-event aggregator
@@ -531,9 +538,15 @@ export class HaIntegrationManager {
     for (const entityId of changed) {
       const state = next[entityId] ?? null
       if (state === null) continue // removal — consumers infer from getState returning null
+      // ONE event per (entity, change) when anything listens: the bus is
+      // shared, every consumer filters by `key`, so a copy per matching
+      // subscription (a child and its container watch the same entity) is
+      // pure duplicate traffic. The fan-out is not addressed to a
+      // subscription — it carries FANOUT_SUBSCRIPTION_ID.
       for (const sub of this.subscriptions.values()) {
         if (this.subscriptionMatches(sub, entityId)) {
-          this.emitBrokerMessage(sub.id, entityId, state)
+          this.emitBrokerMessage(FANOUT_SUBSCRIPTION_ID, entityId, state)
+          break
         }
       }
     }
