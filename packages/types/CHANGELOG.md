@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The node-restarting and node-updating events carry what is being updated, and both can be used in notification templates
+
 ## [1.2.447] - 2026-10-29
 
 ### Changed
