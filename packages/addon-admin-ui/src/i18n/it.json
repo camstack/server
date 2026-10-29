@@ -6237,7 +6237,8 @@
       "exchange_failed": "Il provider non ha accettato l’accesso. Controlla ID client e segreto, poi riprova.",
       "no_refresh_token": "Il provider non ha restituito un accesso di lunga durata. Rimuovi CamStack dalle app collegate dell’account, poi accedi di nuovo.",
       "unavailable": "L’hub sta ancora avviando questa integrazione. Attendi un momento e riprova.",
-      "unknown": "Qualcosa è andato storto. Riprova tra un momento."
+      "unknown": "Qualcosa è andato storto. Riprova tra un momento.",
+      "no_authorization_code": "Il provider ha concluso l'accesso senza concedere l'autorizzazione a CamStack. Riavvia l'accesso dall'inizio."
     }
   },
   "admin": {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the no_authorization_code reason to the OAuth result page codes
 - Comments on the placement flags now say a role defaults on for every node
 
 ### Changed

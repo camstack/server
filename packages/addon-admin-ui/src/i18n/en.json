@@ -6176,7 +6176,8 @@
       "exchange_failed": "The provider did not accept the sign-in. Check the client ID and secret, then try again.",
       "no_refresh_token": "The provider returned no long-lived access. Remove CamStack from the account’s connected apps, then sign in again.",
       "unavailable": "The hub is still starting this integration. Wait a moment and try again.",
-      "unknown": "Something went wrong. Try again in a moment."
+      "unknown": "Something went wrong. Try again in a moment.",
+      "no_authorization_code": "The provider finished the sign-in without granting CamStack access. Start the sign-in again from the beginning."
     }
   },
   "admin": {

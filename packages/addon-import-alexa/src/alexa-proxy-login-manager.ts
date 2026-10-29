@@ -49,20 +49,40 @@ const ATTEMPT_TTL_MS = 10 * 60 * 1000
 /** How long the browser waits on the Amazon page for alexa-cookie2 to finish registering. */
 const CAPTURE_WAIT_MS = 60_000
 
+/** How the Amazon pages ended: the registration can proceed, or Amazon never issued a code. */
+export type AlexaLoginEnd = 'registering' | 'no_authorization_code'
+
+/** The query parameter Amazon sets on `/ap/maplanding` when it honoured the oa2 request. */
+const AUTHORIZATION_CODE_PARAM = 'openid.oa2.authorization_code'
+
 /**
- * Terminal condition: alexa-cookie2 turns Amazon's final redirect into a 302 to its own
- * `/cookie-success` page once it holds the login cookie. Matching on the path of the raw
- * `Location` keeps this independent of the page's HTML.
+ * Terminal condition. The login is over when alexa-cookie2 turns Amazon's final redirect into
+ * a 302 to its own `/cookie-success` page (it only does so when the landing carries the oa2
+ * authorization code), OR when Amazon's `/ap/maplanding` itself shows up as a `Location` or as
+ * the request. A maplanding WITHOUT the authorization code is a dead end: alexa-cookie2 cannot
+ * register a device from it and no cookie will ever come, so it ends at once as
+ * `no_authorization_code` instead of after the capture wait. Only paths and parameter NAMES are
+ * read, never a value (the query carries signed openid values).
  */
-export function cookieSuccessTerminal(view: LoginProxyResponseView): LoginProxyVerdict<true> {
-  if (view.location === null) return { kind: 'continue' }
+export function cookieSuccessTerminal(
+  view: LoginProxyResponseView,
+): LoginProxyVerdict<AlexaLoginEnd> {
+  for (const raw of [view.url, view.location]) {
+    if (raw === null) continue
+    const end = loginEnd(raw)
+    if (end !== null) return { kind: 'done', payload: end }
+  }
+  return { kind: 'continue' }
+}
+
+function loginEnd(raw: string): AlexaLoginEnd | null {
   try {
-    const target = new URL(view.location, `http://${ALEXA_PROXY_LOOPBACK_HOST}`)
-    return target.pathname === '/cookie-success'
-      ? { kind: 'done', payload: true }
-      : { kind: 'continue' }
+    const url = new URL(raw, `http://${ALEXA_PROXY_LOOPBACK_HOST}`)
+    if (url.pathname === '/cookie-success') return 'registering'
+    if (!url.pathname.endsWith('/ap/maplanding')) return null
+    return url.searchParams.has(AUTHORIZATION_CODE_PARAM) ? 'registering' : 'no_authorization_code'
   } catch {
-    return { kind: 'continue' }
+    return null
   }
 }
 
@@ -104,12 +124,21 @@ export class AlexaProxyLoginManager {
     const upstreamHost = `${ALEXA_PROXY_LOOPBACK_HOST}:${proxyPort}`
 
     const sessionId = randomBytes(9).toString('base64url')
-    loginProxy.open<true>({
+    loginProxy.open<AlexaLoginEnd>({
       attemptId: sessionId,
       expiresAtMs: Date.now() + ATTEMPT_TTL_MS,
       upstreams: [{ host: upstreamHost, scheme: 'http' }],
       terminal: cookieSuccessTerminal,
-      onDone: async () => {
+      onDone: async (end) => {
+        if (end === 'no_authorization_code') {
+          this.#logger.warn(
+            'alexa proxy-login: Amazon ended the login without an authorization code',
+            {
+              meta: { sessionId },
+            },
+          )
+          return { status: 'error', addonId: ADDON_ID, reason: 'no_authorization_code' }
+        }
         const captured = await this.#session?.whenCaptured(this.#captureWaitMs)
         return captured === true
           ? { status: 'success', addonId: ADDON_ID }

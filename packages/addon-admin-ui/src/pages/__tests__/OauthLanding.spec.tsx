@@ -68,6 +68,7 @@ describe('OauthLandingPage', () => {
       'unknown_broker',
       'not_configured',
       'exchange_failed',
+      'no_authorization_code',
       'no_refresh_token',
       'unavailable',
       'unknown',
@@ -82,7 +83,7 @@ describe('OauthLandingPage', () => {
       texts.add(screen.getByTestId('oauth-landing-reason').textContent ?? '')
       unmount()
     }
-    expect(texts.size).toBe(9)
+    expect(texts.size).toBe(10)
   })
 
   it('offers to close only a window that was opened as a popup', () => {

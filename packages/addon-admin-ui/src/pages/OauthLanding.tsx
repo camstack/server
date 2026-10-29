@@ -63,6 +63,11 @@ function useReasonText(reason: OauthLandingReason): string {
         'oauthLanding.reason.exchange_failed',
         'The provider did not accept the sign-in. Check the client ID and secret, then try again.',
       )
+    case 'no_authorization_code':
+      return t(
+        'oauthLanding.reason.no_authorization_code',
+        'The provider finished the sign-in without granting CamStack access. Start the sign-in again from the beginning.',
+      )
     case 'no_refresh_token':
       return t(
         'oauthLanding.reason.no_refresh_token',

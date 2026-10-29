@@ -21,6 +21,7 @@ export const OAUTH_LANDING_REASONS = [
   'unknown_broker',
   'not_configured',
   'exchange_failed',
+  'no_authorization_code',
   'no_refresh_token',
   'unavailable',
   'unknown',

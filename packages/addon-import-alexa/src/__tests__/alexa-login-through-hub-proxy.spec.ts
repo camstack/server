@@ -11,7 +11,7 @@ interface SeenInit {
 
 const seen: { init: SeenInit | null; hostMismatches: number } = { init: null, hostMismatches: 0 }
 /** When false the fake never reports the registration as finished (a hung Amazon step). */
-const behaviour = { registers: true }
+const behaviour = { registers: true, withCode: true }
 
 /**
  * A stand-in for alexa-remote2 + alexa-cookie2: a real HTTP listener on the address the
@@ -45,6 +45,19 @@ vi.mock('alexa-remote2', () => {
           res.end(`<a href="http://${own}/www.amazon.it/ap/signin">sign in</a>`)
         } else if (url.startsWith('/www.amazon.it/ap/signin')) {
           res.writeHead(302, { location: `http://${own}/cookie-success` })
+          res.end()
+          if (behaviour.registers) {
+            setTimeout(() => {
+              this.cookie = 'session-cookie'
+              this.cookieData = { localCookie: 'session-cookie' }
+              this.#onCookie?.()
+            }, 30)
+          }
+        } else if (url.startsWith('/www.amazon.it/ap/final-step')) {
+          // Amazon's final redirect, rewritten by alexa-cookie2 to the loopback address.
+          res.writeHead(302, {
+            location: `http://${own}/www.amazon.it/ap/maplanding?openid.mode=id_res&openid.return_to=https%3A%2F%2Fwww.amazon.it%2Fap%2Fmaplanding&openid.sig=SECRETSIG&serial=${behaviour.withCode ? '&openid.oa2.authorization_code=SECRETCODE' : ''}`,
+          })
           res.end()
           if (behaviour.registers) {
             setTimeout(() => {
@@ -108,6 +121,7 @@ describe('the Amazon login through the hub login proxy', () => {
     seen.init = null
     seen.hostMismatches = 0
     behaviour.registers = true
+    behaviour.withCode = true
     upstreamPort = await freePort()
     proxy = new VendorLoginProxy({ addonId: 'import-alexa', logger })
     front = createServer((req, res) => void proxy.handler(req, res))
@@ -160,6 +174,34 @@ describe('the Amazon login through the hub login proxy', () => {
     expect(seen.hostMismatches).toBe(0)
     expect(manager.status(started.sessionId)?.phase).toBe('captured')
     expect(manager.takeCaptured(started.sessionId)?.cookie).toBe('session-cookie')
+  })
+
+  it("treats Amazon's maplanding redirect as the end of the login and lands on the result page", async () => {
+    const started = await manager.start('amazon.it')
+    const entry = viaFront(started.loginUrl).replace(/\/$/, '')
+    const last = await fetch(`${entry}/www.amazon.it/ap/final-step`, { redirect: 'manual' })
+    const landing = last.headers.get('location') ?? ''
+    expect(landing).toContain('/sso-complete#')
+    expect(landing).toContain('status=success')
+    expect(landing).not.toContain('maplanding')
+    expect(landing).not.toContain('SECRETSIG')
+    expect(landing).not.toContain('SECRETCODE')
+    expect(landing).not.toContain('127.0.0.1')
+    expect(manager.takeCaptured(started.sessionId)?.cookie).toBe('session-cookie')
+  })
+
+  it('ends at once with no_authorization_code when Amazon landed without the oa2 code', async () => {
+    behaviour.withCode = false
+    behaviour.registers = false
+    const started = await manager.start('amazon.it')
+    const entry = viaFront(started.loginUrl).replace(/\/$/, '')
+    const t0 = Date.now()
+    const last = await fetch(`${entry}/www.amazon.it/ap/final-step`, { redirect: 'manual' })
+    const landing = last.headers.get('location') ?? ''
+    expect(Date.now() - t0).toBeLessThan(5_000)
+    expect(landing).toContain('status=error')
+    expect(landing).toContain('reason=no_authorization_code')
+    expect(landing).not.toContain('SECRETSIG')
   })
 
   it('lands on the result page with a reason when the registration never completes', async () => {
