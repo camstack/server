@@ -95,6 +95,86 @@ function currentLabel(value: unknown, answered: boolean, unknownLabel: string): 
   return formatLiveValue(value, true)
 }
 
+interface MemberValueSectionProps {
+  readonly device: MemberDevice
+  readonly request: SourcePickRequest
+  readonly members: readonly HelperMember[]
+  readonly onChoose: (field: MemberField) => void
+}
+
+/** One selected device: its own fields, snapshot and pending/error/empty states. */
+function MemberValueSection({
+  device,
+  request,
+  members,
+  onChoose,
+}: MemberValueSectionProps): ReactNode {
+  const { t, i18n } = useTranslation()
+  const wireable = useDeviceManagerGetWireableFields({ deviceId: device.id })
+  const snapshot = useDeviceStateGetSnapshot({ deviceId: device.id })
+  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const direct = directAcceptFields(catalogFields(catalog), request)
+  const withoutHistory = unhistorisedFields(catalogFields(catalog), request)
+  const radioName = `helper-member-value-${device.id}`
+  return (
+    <section className="flex flex-col gap-1" data-testid={`helper-member-section-${device.id}`}>
+      <h3 className="text-[11px] font-medium text-foreground">
+        <DeviceName device={device} form="compact" />
+      </h3>
+      {wireable.status === 'pending' || snapshot.status === 'pending' ? (
+        <p role="status" className="text-[11px] text-foreground-subtle">
+          {t('customize.picker.loadingFields')}
+        </p>
+      ) : wireable.status === 'error' ? (
+        <ErrorBox
+          title={t('customize.picker.fieldsFailed')}
+          message={wireable.error?.message ?? ''}
+        />
+      ) : direct.length === 0 ? (
+        <p className="text-[11px] text-foreground-muted">{t('helper.noUsableValue')}</p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {direct.map((field) => {
+            const selectedField = members.some(
+              (member) =>
+                member.source.addonId === device.addonId &&
+                member.source.stableId === device.stableId &&
+                member.cap === field.cap &&
+                member.fieldPath === field.fieldPath,
+            )
+            const value =
+              snapshot.status === 'success'
+                ? readPath(snapshot.data[field.cap], field.fieldPath)
+                : undefined
+            return (
+              <li key={`${field.cap}.${field.fieldPath}`}>
+                <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
+                  <input
+                    type="radio"
+                    name={radioName}
+                    checked={selectedField}
+                    data-testid={`helper-value-${device.id}-${field.cap}.${field.fieldPath}`}
+                    onChange={() => onChoose(field)}
+                  />
+                  <span>{vocabularyFieldLabel(field.cap, field.fieldPath, i18n.language)}</span>
+                  <span className="text-foreground-muted">
+                    {currentLabel(value, snapshot.status === 'success', t('helper.valueUnknown'))}
+                  </span>
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {withoutHistory.length > 0 && (
+        <p className="text-[11px] text-foreground-muted" data-testid="helper-no-history">
+          {t('helper.noHistory')}
+        </p>
+      )}
+    </section>
+  )
+}
+
 export function SourceSelectorMembers({
   request,
   enabled,
@@ -104,7 +184,7 @@ export function SourceSelectorMembers({
   fillHeight = false,
 }: SourceSelectorMembersProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const [focusId, setFocusId] = useState<number | null>(null)
+  const [pickedIds, setPickedIds] = useState<readonly number[]>([])
   const [step, setStep] = useState<SourceSelectorStep>('devices')
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const fleet = useMemo(
@@ -123,19 +203,11 @@ export function SourceSelectorMembers({
     return partitionMemberDevices(toMemberDevices(fleet, capIndex.value), request)
   }, [capIndex, fleet, request])
   const listState = listStateOf(devices.status, capIndex)
-  const selected = selectedIdsForMembers(members, partitioned.compatible)
-  const focus = partitioned.compatible.find((row) => row.id === focusId) ?? null
-  const wireable = useDeviceManagerGetWireableFields(
-    { deviceId: focus?.id ?? 0 },
-    { enabled: focus !== null },
+  const withField = selectedIdsForMembers(members, partitioned.compatible)
+  // A ticked device whose field is still to be chosen has no member yet; it stays listed.
+  const selected = [...pickedIds, ...withField.filter((id) => !pickedIds.includes(id))].filter(
+    (id) => partitioned.compatible.some((device) => device.id === id),
   )
-  const snapshot = useDeviceStateGetSnapshot(
-    { deviceId: focus?.id ?? 0 },
-    { enabled: focus !== null },
-  )
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
-  const direct = directAcceptFields(catalogFields(catalog), request)
-  const withoutHistory = unhistorisedFields(catalogFields(catalog), request)
   const pickerItems = useMemo(
     () => compatiblePickerItems(partitioned.compatible.map(toCandidate)),
     [partitioned.compatible],
@@ -185,8 +257,7 @@ export function SourceSelectorMembers({
           selection="multiple"
           groupBy="location"
           onChange={(ids) => {
-            const added = ids.find((id) => !selected.includes(id)) ?? ids.at(-1) ?? null
-            setFocusId(added)
+            setPickedIds(ids)
             apply(ids, null, null)
           }}
           noun="device"
@@ -196,89 +267,38 @@ export function SourceSelectorMembers({
       )}
     </div>
   )
+  const selectedDevices = selected.flatMap((id) => {
+    const row = partitioned.compatible.find((device) => device.id === id)
+    return row === undefined ? [] : [row]
+  })
   const valueColumn = (
-    <div className="flex min-h-0 flex-col gap-2">
-      {focus === null ? (
+    <div className="flex min-h-0 flex-col gap-3">
+      {selectedDevices.length === 0 ? (
         <p className="text-[11px] text-foreground-subtle">{t('helper.pickMembersHint')}</p>
       ) : (
-        <>
-          <h3 className="text-[11px] font-medium text-foreground">{focus.name}</h3>
-          {wireable.status === 'pending' || snapshot.status === 'pending' ? (
-            <p role="status" className="text-[11px] text-foreground-subtle">
-              {t('customize.picker.loadingFields')}
-            </p>
-          ) : wireable.status === 'error' ? (
-            <ErrorBox
-              title={t('customize.picker.fieldsFailed')}
-              message={wireable.error?.message ?? ''}
-            />
-          ) : direct.length === 0 ? (
-            <p className="text-[11px] text-foreground-muted">{t('helper.noUsableValue')}</p>
-          ) : (
-            <ul className="flex flex-col gap-1">
-              {direct.map((field) => {
-                const selectedField = members.some(
-                  (member) =>
-                    member.source.addonId === focus.addonId &&
-                    member.source.stableId === focus.stableId &&
-                    member.cap === field.cap &&
-                    member.fieldPath === field.fieldPath,
-                )
-                const value =
-                  snapshot.status === 'success'
-                    ? readPath(snapshot.data[field.cap], field.fieldPath)
-                    : undefined
-                return (
-                  <li key={`${field.cap}.${field.fieldPath}`}>
-                    <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
-                      <input
-                        type="radio"
-                        name="helper-member-value"
-                        checked={selectedField}
-                        data-testid={`helper-value-${field.cap}.${field.fieldPath}`}
-                        onChange={() => apply(union(selected, focus.id), focus.id, field)}
-                      />
-                      <span>{vocabularyFieldLabel(field.cap, field.fieldPath, i18n.language)}</span>
-                      <span className="text-foreground-muted">
-                        {currentLabel(
-                          value,
-                          snapshot.status === 'success',
-                          t('helper.valueUnknown'),
-                        )}
-                      </span>
-                    </label>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-          {withoutHistory.length > 0 && (
-            <p className="text-[11px] text-foreground-muted" data-testid="helper-no-history">
-              {t('helper.noHistory')}
-            </p>
-          )}
-        </>
+        selectedDevices.map((device) => (
+          <MemberValueSection
+            key={device.id}
+            device={device}
+            request={request}
+            members={members}
+            onChoose={(field) => apply(union(selected, device.id), device.id, field)}
+          />
+        ))
       )}
     </div>
   )
   const openValues = (): void => {
     const next = stepAfterDone(selected.length)
     if (next === null) return
-    const focusStillSelected = focusId !== null && selected.includes(focusId)
-    if (!focusStillSelected) {
-      const first = selected[0]
-      if (first !== undefined) setFocusId(first)
-    }
     setStep(next)
   }
   const back =
-    focus === null
+    selected.length === 0
       ? null
       : {
-          label: <DeviceName device={focus} form="compact" />,
-          ariaLabel: t('customize.sourceSelector.backToDevice', {
-            name: focus.name,
-          }),
+          label: t('customize.sourceSelector.backToDevices'),
+          ariaLabel: t('customize.sourceSelector.backToDevices'),
         }
   return (
     <SourceSelectorColumns
