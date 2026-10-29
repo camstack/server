@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- deviceManager.updateConfig now refuses a key the device config does not own instead of answering success without writing
+
 ## [1.2.516] - 2026-10-29
 
 ### Changed

@@ -767,6 +767,30 @@ export async function getSettingsSchema(
   return (schema as ConfigUISchemaWithValues | null) ?? null
 }
 
+/**
+ * A key the device's config schema does not own is stripped by
+ * `config.setAll` (the schema parse drops it), so the write "succeeds" and
+ * stores nothing — typically a key claimed by a section of the device store,
+ * which needs `applyDeviceSettingsPatch`. Refuse by name BEFORE writing.
+ */
+function refuseUnownedConfigKeys(
+  deviceId: number,
+  ownedKeys: readonly string[],
+  values: Readonly<Record<string, unknown>>,
+): void {
+  const owned = new Set(ownedKeys)
+  const unowned = Object.keys(values).filter((k) => values[k] !== undefined && !owned.has(k))
+  if (unowned.length === 0) return
+  const keys = unowned.join(', ')
+  throw userError(
+    'device.config-key-not-owned',
+    { id: deviceId, keys },
+    `[device-manager] updateConfig on device ${deviceId} refused: ${keys} ` +
+      `not in the device config schema (a key claimed by a device-store section is ` +
+      `written through applyDeviceSettingsPatch); nothing was written`,
+  )
+}
+
 export async function updateConfig(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['updateConfig']>[0],
@@ -775,6 +799,11 @@ export async function updateConfig(
   if (pctx.registry) {
     const found = resolveDeviceById(pctx.registry, deviceId)
     if (found) {
+      refuseUnownedConfigKeys(
+        deviceId,
+        found.device.config.entries().map((e) => e.key),
+        input.values,
+      )
       await found.device.config.setAll(input.values)
       return { success: true as const }
     }
@@ -787,6 +816,12 @@ export async function updateConfig(
       `[device-manager] Device with id ${deviceId} not found`,
     )
   const ops = pctx.requireDeviceOps(deviceId)
+  const entries = await ops.getConfigEntries({ deviceId })
+  refuseUnownedConfigKeys(
+    deviceId,
+    entries.map((e) => e.key),
+    input.values,
+  )
   await ops.setConfig({ deviceId, values: input.values })
   return { success: true as const }
 }

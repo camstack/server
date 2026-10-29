@@ -1441,13 +1441,27 @@ describe('DeviceManagerAddon', () => {
   describe('updateConfig', () => {
     it('calls config.setAll on the device with the provided values', async () => {
       const registry = new DeviceRegistry()
-      const cam = new FakeDevice('cam-1')
+      const cam = new FakeDevice('cam-1', { name: 'cam-1', fps: 10 })
       registry.register('rtsp', asDevice(cam))
       const { provider } = await setup(registry)
 
       await provider.updateConfig({ deviceId: cam.id, values: { name: 'Updated', fps: 15 } })
 
       expect(cam.config.setAll).toHaveBeenCalledWith({ name: 'Updated', fps: 15 })
+    })
+
+    it('refuses by name a key the device config schema does not own, writing nothing', async () => {
+      const registry = new DeviceRegistry()
+      const cam = new FakeDevice('cam-1', { name: 'cam-1' })
+      registry.register('rtsp', asDevice(cam))
+      const { provider } = await setup(registry)
+
+      // `fps` is in the schema; `streamSection` is claimed by a device-store
+      // section, so `config.setAll` would strip it and still answer success.
+      await expect(
+        provider.updateConfig({ deviceId: cam.id, values: { name: 'x', streamSection: 1 } }),
+      ).rejects.toThrow(/streamSection/)
+      expect(cam.config.setAll).not.toHaveBeenCalled()
     })
 
     it('throws when device not found in live registry', async () => {
