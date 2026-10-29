@@ -9758,7 +9758,7 @@
           "name": "fill",
           "type": "boolean",
           "optional": true,
-          "doc": "Fill the parent height so a section body can host a flex-filling DataTable. Forwarded to `PageShell`; ignored for `sectionsOnly`."
+          "doc": "Fill the parent height so a section body can host a flex-filling DataTable. The section body scrolls vertically on its own, so a section tha"
         }
       ]
     },

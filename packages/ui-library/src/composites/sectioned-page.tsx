@@ -50,6 +50,9 @@ export interface SectionedPageProps {
   readonly onSectionChange?: (id: string, ownedParamsToClear: readonly string[]) => void
   /**
    * Fill the parent height so a section body can host a flex-filling DataTable.
+   * The section body scrolls vertically on its own, so a section that is plain
+   * flow content (a form, an editor) stays reachable when the host `<main>`
+   * does not scroll; a `DataTable fill` inside fits the body and scrolls itself.
    * Forwarded to `PageShell`; ignored for `sectionsOnly`.
    */
   readonly fill?: boolean
@@ -132,7 +135,12 @@ export function SectionedPage({
   const panel = (
     <StableTabPanel tabKey={activeId} fill={fill}>
       {fill ? (
-        <div className="flex min-h-0 flex-1 flex-col">{active?.content}</div>
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+          data-testid="sectioned-page-body"
+        >
+          {active?.content}
+        </div>
       ) : (
         active?.content
       )}

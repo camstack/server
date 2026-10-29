@@ -69,4 +69,19 @@ describe('SectionedPage', () => {
     expect(params.get('tab')).toBe('addresses')
     expect(params.get('integration')).toBeNull()
   })
+
+  it('fill: the section body scrolls on its own so plain-flow content is not clipped', () => {
+    render(
+      <SectionedPage
+        title="Build"
+        fill
+        defaultSection="a"
+        sections={[{ id: 'a', label: 'A', content: <div>tall editor</div> }]}
+      />,
+    )
+    const body = screen.getByTestId('sectioned-page-body')
+    expect(body.className).toContain('overflow-y-auto')
+    expect(body.className).toContain('min-h-0')
+    expect(body.className).toContain('flex-1')
+  })
 })
