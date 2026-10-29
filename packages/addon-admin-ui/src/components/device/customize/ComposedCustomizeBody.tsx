@@ -24,6 +24,7 @@ import {
   writeHelper,
 } from '../../composition-editor/helper-form-model'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
+import { ConfigCustomizeList, configCardCaps } from './config/ConfigCustomizeList'
 import { eventCardTargets } from './event/event-targets'
 import { IdentityRow } from './IdentityRow'
 import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
@@ -50,8 +51,9 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     for (const { cap } of scalarCardTargets()) s.add(cap)
     for (const { cap } of keyedArrayCardTargets()) s.add(cap)
     for (const { cap } of eventCardTargets()) s.add(cap)
+    for (const cap of configCardCaps(device.type)) s.add(cap)
     return s
-  }, [])
+  }, [device.type])
 
   if (blockId === null) {
     return <p className="text-xs text-foreground-subtle">{t('customize.composed.missingBlock')}</p>
@@ -155,6 +157,7 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
       {skeletonFillStatus(composition) === 'incomplete' && (
         <Badge variant="warning">{t('customize.blockStatus.incomplete')}</Badge>
       )}
+      <ConfigCustomizeList device={device} />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
     </div>
   )
