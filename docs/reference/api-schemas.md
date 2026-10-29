@@ -6678,7 +6678,7 @@ Enum: `"validated" \| "rejected" \| "inconclusive" \| "unsupported"`
 - `isHub`: `boolean`
 - `isOnline`: `boolean`
 - `cpuPercent`: `number`
-- `memoryPercent`: `number`
+- `memoryPercent`: `number \| null`
 - `uptime`: `number`
 - `lastSeen`: `string`
 - `localIps`: `string[]`

@@ -479,8 +479,13 @@ function AgentDashboard() {
     }
   }, [locked, ticketBoot])
 
-  const memUsedMB = status ? status.totalMemoryMB - status.freeMemoryMB : 0
-  const memPct = status ? Math.round((memUsedMB / status.totalMemoryMB) * 100) : 0
+  // A failed memory read is unknown, never 0 or 100 (D393).
+  const memUsedMB =
+    status && status.freeMemoryMB !== null && status.freeMemoryMB !== undefined
+      ? status.totalMemoryMB - status.freeMemoryMB
+      : null
+  const memPct = typeof status?.memoryPercent === 'number' ? Math.round(status.memoryPercent) : null
+  const memPctLabel = memPct === null ? t('dashboard.resources.unknown') : `${memPct}%`
   const cpuPct = status?.cpuPercent ?? 0
 
   if (ticketBoot === 'redeeming') {
@@ -572,8 +577,8 @@ function AgentDashboard() {
               <StatusMetricCard
                 icon={MemoryStick}
                 label={t('dashboard.overview.memory')}
-                value={`${memPct}%`}
-                tone={memPct > 90 ? 'danger' : 'primary'}
+                value={memPctLabel}
+                tone={memPct !== null && memPct > 90 ? 'danger' : 'primary'}
               />
               <StatusMetricCard
                 icon={Package}
@@ -619,14 +624,20 @@ function AgentDashboard() {
               <div>
                 <div className="flex justify-between text-xs text-foreground-subtle mb-1">
                   <span>
-                    {t('dashboard.resources.memory', {
-                      used: memUsedMB,
-                      total: status?.totalMemoryMB ?? 0,
-                    })}
+                    {memUsedMB === null
+                      ? t('dashboard.resources.memoryUnknown')
+                      : t('dashboard.resources.memory', {
+                          used: memUsedMB,
+                          total: status?.totalMemoryMB ?? 0,
+                        })}
                   </span>
-                  <span>{memPct}%</span>
+                  <span>{memPctLabel}</span>
                 </div>
-                <ProgressBar value={memPct} max={100} tone={memPct > 90 ? 'danger' : 'primary'} />
+                <ProgressBar
+                  value={memPct ?? 0}
+                  max={100}
+                  tone={memPct !== null && memPct > 90 ? 'danger' : 'primary'}
+                />
               </div>
             </div>
           </SectionCard>
@@ -648,7 +659,7 @@ function AgentDashboard() {
                   {status ? formatUptime(status.uptime) : '—'}
                 </SettingRow>
                 <SettingRow label={t('dashboard.host.memory')} valueClassName="font-mono">
-                  {status ? `${memUsedMB} / ${status.totalMemoryMB} MB` : '—'}
+                  {status && memUsedMB !== null ? `${memUsedMB} / ${status.totalMemoryMB} MB` : '—'}
                 </SettingRow>
                 <SettingRow label={t('dashboard.host.ipv4')} valueClassName="font-mono">
                   {ipv4}

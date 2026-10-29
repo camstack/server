@@ -106,7 +106,9 @@ export function NodeBox({ data }: NodeBoxProps) {
         <span className="text-xs text-muted-foreground shrink-0">{data.identity.ip}</span>
         {/* CPU + Mem */}
         <span className="text-xs text-muted-foreground shrink-0">{data.identity.cpu}%</span>
-        <span className="text-xs text-muted-foreground shrink-0">{data.identity.mem}%</span>
+        <span className="text-xs text-muted-foreground shrink-0">
+          {data.identity.mem === null ? t('cluster.memoryUnknown') : `${data.identity.mem}%`}
+        </span>
         {/* Detail link button */}
         <button
           type="button"

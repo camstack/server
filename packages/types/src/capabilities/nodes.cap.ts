@@ -83,7 +83,8 @@ const TopologyNodeSchema = z.object({
   isHub: z.boolean(),
   isOnline: z.boolean(),
   cpuPercent: z.number(),
-  memoryPercent: z.number(),
+  /** `null` when the node's memory read failed or it has not reported one (D393). */
+  memoryPercent: z.number().nullable(),
   uptime: z.number(),
   lastSeen: z.string(),
   localIps: z.array(z.string()).readonly(),

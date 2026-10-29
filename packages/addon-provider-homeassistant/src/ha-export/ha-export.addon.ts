@@ -1582,7 +1582,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       readonly name: string
       readonly isOnline: boolean
       readonly cpuPercent: number
-      readonly memoryPercent: number
+      readonly memoryPercent: number | null
       readonly uptime: number
       readonly isHub: boolean
       readonly rootPackage: { readonly version: string } | null

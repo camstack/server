@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - macOS nodes report memory the way Activity Monitor does (app + wired + compressed) instead of total minus free pages
 - A built composed device serves its methods by forwarding them to a source device, and a consumable item can reset through a forwarded button
 - The pet-fountain capability reaches the kernel through the generated types
+- Linux memory comes from MemAvailable; a failed memory read is reported as unknown instead of a made-up percentage
 
 ## [1.2.517] - 2026-10-29
 

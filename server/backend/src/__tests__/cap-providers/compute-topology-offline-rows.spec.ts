@@ -116,7 +116,7 @@ describe('computeTopology — offline-node union (Track A)', () => {
     expect(offline!.localIps).toEqual(['192.168.10.42'])
     // Metrics zeroed; no processes/categories for an unreachable node.
     expect(offline!.cpuPercent).toBe(0)
-    expect(offline!.memoryPercent).toBe(0)
+    expect(offline!.memoryPercent).toBeNull()
     expect(offline!.uptime).toBe(0)
     expect(offline!.processes).toEqual([])
     expect(offline!.categories).toEqual([])

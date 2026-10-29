@@ -13,11 +13,14 @@ const CpuBreakdownSchema = z.object({
   cores: z.number(),
 })
 
+// `percent`, `usedBytes` and `availableBytes` are `null` when the measurement
+// FAILED (D393): unknown is not 0% and not 100%. `totalBytes` is the machine's
+// installed memory, which does not depend on the sample.
 const MemoryInfoSchema = z.object({
-  percent: z.number(),
+  percent: z.number().nullable(),
   totalBytes: z.number(),
-  usedBytes: z.number(),
-  availableBytes: z.number(),
+  usedBytes: z.number().nullable(),
+  availableBytes: z.number().nullable(),
   swapUsedBytes: z.number(),
   swapTotalBytes: z.number(),
 })

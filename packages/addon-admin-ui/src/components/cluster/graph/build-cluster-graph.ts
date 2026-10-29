@@ -25,7 +25,8 @@ export interface ClusterGraphNodeIdentity {
   name: string
   ip: string
   cpu: number
-  mem: number
+  /** Percent; `null` when the node's memory read failed (D393). */
+  mem: number | null
   platform: string
   arch: string
 }

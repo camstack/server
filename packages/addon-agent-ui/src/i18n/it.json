@@ -33,7 +33,9 @@
       "title": "Risorse",
       "cpuCores": "CPU ({{cores}} core)",
       "cpuCoresModel": "CPU ({{cores}} core — {{model}})",
-      "memory": "Memoria ({{used}} / {{total}} MB)"
+      "memory": "Memoria ({{used}} / {{total}} MB)",
+      "memoryUnknown": "Memoria (non disponibile)",
+      "unknown": "sconosciuto"
     },
     "host": {
       "title": "Sistema (host)",

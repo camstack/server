@@ -77,7 +77,8 @@ export interface NodeData {
   readonly isHub: boolean
   readonly isOnline: boolean
   readonly cpuPercent: number
-  readonly memoryPercent: number
+  /** `null` when the node's memory read failed (D393): shown as unknown. */
+  readonly memoryPercent: number | null
   readonly uptime?: number
   readonly lastSeen?: string | number
   readonly localIps?: readonly string[]
@@ -413,7 +414,8 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
             <Cpu className="h-3 w-3" /> {node.cpuPercent}%
           </span>
           <span className="flex items-center gap-1">
-            <MemoryStick className="h-3 w-3" /> {node.memoryPercent}%
+            <MemoryStick className="h-3 w-3" />{' '}
+            {node.memoryPercent === null ? t('cluster.memoryUnknown') : `${node.memoryPercent}%`}
           </span>
         </div>
       </div>

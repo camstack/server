@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Agent page shows memory as unknown when it could not be read, instead of a wrong percentage
+
 ## [1.2.291] - 2026-10-29
 
 ### Changed

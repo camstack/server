@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A pet fountain device type with a pet-fountain capability (water level, drinking totals, pump controls)
 - A preset to build a pet fountain device from loose entities, with forwarded pump commands and a resettable filter
 
+### Changed
+
+- Node memory is nullable on the metrics and topology contracts: a failed read is unknown, not 0 or 100
+
 ## [1.2.443] - 2026-10-29
 
 ### Added

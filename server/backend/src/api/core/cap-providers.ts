@@ -463,7 +463,9 @@ async function computeTopologyInternal(
           name: `${node.info.id} (core)`,
           state: 'running' as const,
           cpuPercent: node.status?.cpuPercent ?? 0,
-          memoryRss: 0,
+          // The agent's own process RSS from $agent.status; 0 only for an agent
+          // that predates the field.
+          memoryRss: node.status?.processRssBytes ?? 0,
           uptimeSeconds: Math.floor((Date.now() - node.connectedSince) / 1000),
           services: mainProcessServices,
         }
@@ -535,7 +537,7 @@ async function computeTopologyInternal(
       isHub: node.isHub,
       isOnline: node.isOnline !== false,
       cpuPercent: node.status?.cpuPercent ?? 0,
-      memoryPercent: node.status?.memoryPercent ?? 0,
+      memoryPercent: node.status?.memoryPercent ?? null,
       uptime: Date.now() - node.connectedSince,
       // Fix (was hardcoded `new Date().toISOString()` — always "now", a bug
       // even for online nodes): report the persisted `lastActive` when we have
@@ -578,7 +580,7 @@ async function computeTopologyInternal(
       isHub: persisted.isHub,
       isOnline: false,
       cpuPercent: 0,
-      memoryPercent: 0,
+      memoryPercent: null,
       uptime: 0,
       lastSeen: new Date(persisted.lastActive).toISOString(),
       localIps: [...persisted.localIps],

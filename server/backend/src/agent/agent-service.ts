@@ -382,8 +382,8 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
           const { broker } = ctx
           const cpus = os.cpus()
           let cpuPercent = 0
-          let memoryPercent = 0
-          let freeMemoryBytes = os.freemem()
+          let memoryPercent: number | null = null
+          let freeMemoryBytes: number | null = null
           const metrics = deps.getMetricsProvider?.()
           if (metrics) {
             // Bounded so $agent.status never hangs (and drops the node from
@@ -410,9 +410,13 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
             cpuCores: cpus.length,
             cpuModel: cpus[0]?.model,
             totalMemoryMB: Math.round(os.totalmem() / 1024 / 1024),
-            freeMemoryMB: Math.round(freeMemoryBytes / 1024 / 1024),
+            freeMemoryMB:
+              freeMemoryBytes === null ? null : Math.round(freeMemoryBytes / 1024 / 1024),
             cpuPercent,
             memoryPercent,
+            // The agent's own (core) process, so a topology row can attribute
+            // the largest process on the node instead of showing 0.
+            processRssBytes: process.memoryUsage().rss,
             uptime: os.uptime(),
             // The agent *process* itself (distinct from the host `uptime` /
             // memory above) — surfaced so the UI can show how long THIS agent
@@ -447,7 +451,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
         handler: async (ctx: Context): Promise<AgentHealth> => {
           const { broker } = ctx
           let cpuPercent = 0
-          let memoryPercent = 0
+          let memoryPercent: number | null = null
           const metrics = deps.getMetricsProvider?.()
           if (metrics) {
             try {

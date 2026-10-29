@@ -802,7 +802,7 @@ export interface TopologyNode {
   readonly isHub: boolean
   readonly isOnline: boolean
   readonly cpuPercent: number
-  readonly memoryPercent: number
+  readonly memoryPercent: number | null
   readonly uptime: number
   readonly lastSeen: string
   /** Local IP addresses visible on the network (non-internal, IPv4/IPv6). */

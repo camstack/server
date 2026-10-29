@@ -4945,7 +4945,8 @@
       "unpairFailed": "Unpair failed: {{error}}"
     },
     "noNodes": "No nodes in this cluster yet.",
-    "subtitle": "One node at a time — topology and packages. Agents join by pairing (certificate, no shared secret)."
+    "subtitle": "One node at a time — topology and packages. Agents join by pairing (certificate, no shared secret).",
+    "memoryUnknown": "unknown"
   },
   "access": {
     "accessSection": {

@@ -242,43 +242,47 @@ export class NativeMetricsProvider {
 
   private getMemoryInfo(): MemoryInfo {
     const total = os.totalmem()
-    if (total === 0) {
-      return {
-        percent: 0,
-        totalBytes: 0,
-        usedBytes: 0,
-        availableBytes: 0,
-        swapUsedBytes: 0,
-        swapTotalBytes: 0,
-      }
+    const unknown: MemoryInfo = {
+      percent: null,
+      totalBytes: total,
+      usedBytes: null,
+      availableBytes: null,
+      swapUsedBytes: 0,
+      swapTotalBytes: 0,
     }
+    if (total === 0) return unknown
 
-    if (IS_DARWIN && this._cachedMacMem !== null) {
-      return this._cachedMacMem
-    }
+    // macOS: `os.freemem()` counts only truly free pages, so there is no
+    // fallback — a failed or not-yet-taken vm_stat sample is unknown (D393).
+    if (IS_DARWIN) return this._cachedMacMem ?? unknown
 
-    const free = os.freemem()
-    const used = total - free
+    let available: number | null = null
     let swapUsedBytes = 0
     let swapTotalBytes = 0
 
     if (IS_LINUX) {
       try {
         const meminfo = fs.readFileSync('/proc/meminfo', 'utf-8')
+        const availKb = meminfo.match(/MemAvailable:\s+(\d+)/)?.[1]
+        if (availKb !== undefined) available = parseInt(availKb, 10) * 1024
         const swapTotal = parseInt(meminfo.match(/SwapTotal:\s+(\d+)/)?.[1] ?? '0', 10) * 1024
         const swapFree = parseInt(meminfo.match(/SwapFree:\s+(\d+)/)?.[1] ?? '0', 10) * 1024
         swapTotalBytes = swapTotal
         swapUsedBytes = swapTotal - swapFree
       } catch {
-        /* ignore */
+        /* unknown */
       }
+    } else {
+      available = os.freemem()
     }
 
+    if (available === null) return unknown
+    const used = total - available
     return {
-      percent: Math.round(((total - free) / total) * 1000) / 10,
+      percent: Math.round((used / total) * 1000) / 10,
       totalBytes: total,
       usedBytes: used,
-      availableBytes: free,
+      availableBytes: available,
       swapUsedBytes,
       swapTotalBytes,
     }

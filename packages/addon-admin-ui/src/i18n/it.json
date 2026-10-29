@@ -5006,7 +5006,8 @@
       "unpairFailed": "Scollegamento non riuscito: {{error}}"
     },
     "noNodes": "Ancora nessun nodo in questo cluster.",
-    "subtitle": "Un nodo alla volta — topologia e pacchetti. Gli agent entrano tramite associazione (certificato, nessun segreto condiviso)."
+    "subtitle": "Un nodo alla volta — topologia e pacchetti. Gli agent entrano tramite associazione (certificato, nessun segreto condiviso).",
+    "memoryUnknown": "sconosciuta"
   },
   "access": {
     "accessSection": {

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A pet fountain device page uses the new hero card
 
+### Changed
+
+- Cluster page shows a node's memory as unknown when it could not be read
+
 ## [1.2.516] - 2026-10-29
 
 ### Changed

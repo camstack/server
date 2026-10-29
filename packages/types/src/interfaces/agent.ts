@@ -78,7 +78,8 @@ export interface AgentHealth {
   readonly hubAddress: string | null
   readonly addons: AgentHealthAddonCounts
   readonly cpuPercent: number
-  readonly memoryPercent: number
+  /** `null` when the memory read failed (D393). */
+  readonly memoryPercent: number | null
   /** ISO timestamp when this snapshot was generated. */
   readonly checkedAt: string
 }
@@ -168,7 +169,10 @@ export interface AgentListItem {
   readonly status: {
     readonly activeCameras: number
     readonly cpuPercent: number
-    readonly memoryPercent: number
+    /** `null` when the memory read failed or was never reported (D393). */
+    readonly memoryPercent: number | null
+    /** RSS of the node's own (core) process; absent from an agent that predates the field. */
+    readonly processRssBytes?: number | null
     readonly fps: Readonly<Record<string, number>>
     readonly errors: readonly string[]
   }

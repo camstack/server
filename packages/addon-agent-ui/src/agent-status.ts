@@ -24,9 +24,11 @@ export interface AgentStatus {
   readonly cpuCores: number
   readonly cpuModel?: string
   readonly totalMemoryMB: number
-  readonly freeMemoryMB: number
+  /** `null` when the memory read failed (D393). */
+  readonly freeMemoryMB: number | null
   readonly cpuPercent: number
-  readonly memoryPercent: number
+  /** `null` when the memory read failed (D393). */
+  readonly memoryPercent: number | null
   readonly uptime: number
   readonly localIps: readonly string[]
   readonly addons: readonly {

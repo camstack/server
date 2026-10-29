@@ -87,7 +87,7 @@ describe('AgentRegistryService.listNodes() — offline nodes', () => {
     expect(dead!.isHub).toBe(false)
     expect(dead!.info.hostname).toBe('dead-host')
     expect(dead!.status.cpuPercent).toBe(0)
-    expect(dead!.status.memoryPercent).toBe(0)
+    expect(dead!.status.memoryPercent).toBeNull()
 
     // The offline branch must never attempt the $agent.status RPC — the
     // node is unreachable by definition, so no round-trip should be tried.

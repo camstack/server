@@ -1429,7 +1429,8 @@ export class AgentRegistryService {
       status: {
         activeCameras: 0,
         cpuPercent: (status.cpuPercent as number) ?? 0,
-        memoryPercent: (status.memoryPercent as number) ?? 0,
+        memoryPercent: typeof status.memoryPercent === 'number' ? status.memoryPercent : null,
+        processRssBytes: typeof status.processRssBytes === 'number' ? status.processRssBytes : null,
         fps: {},
         errors: [],
       },
@@ -1495,7 +1496,7 @@ export class AgentRegistryService {
       status: {
         activeCameras: 0,
         cpuPercent: 0,
-        memoryPercent: 0,
+        memoryPercent: null,
         fps: {},
         errors: [],
       },
@@ -1514,7 +1515,7 @@ export class AgentRegistryService {
     // The cap contract only exposes async snapshots; the cached read is cheap
     // because the addon's background sampler keeps the snapshot warm.
     let cpuPercent = 0
-    let memoryPercent = 0
+    let memoryPercent: number | null = null
     const registry = this.capabilityService.getRegistry()
     if (registry) {
       const metricsProvider = registry.getSingleton<IMetricsProvider>('metrics-provider')
@@ -1544,6 +1545,7 @@ export class AgentRegistryService {
         activeCameras: 0,
         cpuPercent,
         memoryPercent,
+        processRssBytes: process.memoryUsage().rss,
         fps: {},
         errors: [],
       },

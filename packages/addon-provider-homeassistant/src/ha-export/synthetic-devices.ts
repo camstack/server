@@ -107,7 +107,8 @@ export interface SyntheticNode {
   readonly name: string
   readonly online: boolean
   readonly cpuPercent: number
-  readonly memoryPercent: number
+  /** `null` when unknown: no state is published (D393). */
+  readonly memoryPercent: number | null
   /** Milliseconds since the node booted — the topology's `uptime` is `Date.now() - connectedSince`. */
   readonly uptimeMs: number
   /** `nodes.topology[].isHub` — the hub already carries `server_version` /
@@ -738,8 +739,14 @@ export function projectSynthetic(
     values.push(
       { topic: stateTopic(srv, `${slug}_online`), value: String(node.online) },
       { topic: stateTopic(srv, `${slug}_cpu`), value: String(Math.round(node.cpuPercent)) },
-      { topic: stateTopic(srv, `${slug}_memory`), value: String(Math.round(node.memoryPercent)) },
     )
+    // Unknown memory publishes nothing (renders `unknown`), never 0 (D393).
+    if (node.memoryPercent !== null) {
+      values.push({
+        topic: stateTopic(srv, `${slug}_memory`),
+        value: String(Math.round(node.memoryPercent)),
+      })
+    }
     // A node that is offline has no meaningful boot instant to publish, and a
     // stale one would read as an uptime that keeps growing while the machine is
     // down. Absent renders as `unknown`, which is what it is.
