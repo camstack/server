@@ -10,6 +10,9 @@ import { EventCategory } from '@camstack/types'
 import { AddonRegistryService } from '../core/addon/addon-registry.service'
 import { EventBusService } from '../core/events/event-bus.service'
 import { LoggingService } from '../core/logging/logging.service'
+import { blankToNull, PRODUCT_VERSION_ENV } from '../core/release-identity.js'
+import { announceProductVersionChange } from '../core/updates/node-update-announcement.js'
+import { ELECTRON_APP_VERSION_ENV } from '../server-root/index.js'
 import { reconcileLifecycleJobsAtBoot } from './reconcile-lifecycle-jobs.js'
 
 export interface PostBootContext {
@@ -84,6 +87,10 @@ export class PostBootService {
     // we never re-fire on a crash-loop boot.
     this.emitRestartCompletedIfPending(dataPath)
 
+    // A container that came up on a different image than its previous boot
+    // says so (`node-updating`): the old container is gone before this runs.
+    this.announceImageChangeIfAny(dataPath)
+
     // A certificate that changed underneath the operator is an alert, not
     // a boot line they will never scroll back to (D227).
     this.emitTlsCertChangedIfReissued(tlsCert)
@@ -129,6 +136,25 @@ export class PostBootService {
       category: EventCategory.SystemTlsCertChanged,
       data: payload,
     })
+  }
+
+  private announceImageChangeIfAny(dataDir: string): void {
+    try {
+      announceProductVersionChange({
+        dataDir,
+        productVersion: blankToNull(process.env[PRODUCT_VERSION_ENV]),
+        underDesktopShell: (process.env[ELECTRON_APP_VERSION_ENV] ?? '').length > 0,
+        bus: this.eventBus,
+        sourceId: 'system',
+        nodeId: process.env['CAMSTACK_NODE_ID'] ?? 'hub',
+        logger: this.logger,
+      })
+    } catch (err) {
+      // Telemetry (D8): never block the boot.
+      this.logger.warn('image change check failed', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
   }
 
   private emitRestartCompletedIfPending(dataDir: string): void {

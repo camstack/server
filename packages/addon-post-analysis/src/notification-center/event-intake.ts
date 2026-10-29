@@ -1852,6 +1852,7 @@ function incomingFromNodeRestarting(
     })
   }
   const packageName = stringField(data, 'packageName') ?? '@camstack/server'
+  const what = stringField(data, 'what')
   const fromVersion = stringField(data, 'fromVersion')
   const bodyKey =
     toVersion === undefined
@@ -1862,7 +1863,12 @@ function incomingFromNodeRestarting(
   return systemSubject({
     facts,
     kind: 'node-updating',
-    subject: `node-updating:${nodeId}:${toVersion ?? 'unknown'}`,
+    // The closure keeps the slot `server-updated` shares; the shell and the
+    // container image get their own, or one update would swallow the other.
+    subject:
+      what === undefined || what === 'server'
+        ? `node-updating:${nodeId}:${toVersion ?? 'unknown'}`
+        : `node-updating:${nodeId}:${what}:${toVersion ?? 'unknown'}`,
     titleKey: 'system.node-updating.title',
     bodyKey,
     textParams: {

@@ -62,6 +62,33 @@ describe('system.restarting → node-restarting / node-updating', () => {
     })
   })
 
+  it('a desktop shell or container image update is node-updating, in a slot of its own', () => {
+    const shell = restarting({
+      kind: 'framework-update',
+      what: 'desktop-shell',
+      requestedAt: 1_000,
+      packageName: 'CamStack desktop app',
+      fromVersion: '1.2.10',
+      toVersion: '1.2.11',
+      nodeId: 'mac-mini',
+    })
+    expect(shell).toMatchObject({
+      kind: 'node-updating',
+      textParams: { nodeId: 'mac-mini', packageName: 'CamStack desktop app', toVersion: '1.2.11' },
+    })
+    const closure = restarting({
+      kind: 'framework-update',
+      requestedAt: 1_000,
+      packageName: '@camstack/server',
+      toVersion: '1.2.11',
+      nodeId: 'mac-mini',
+    })
+    // The same node and version, a different thing replaced: one must not
+    // swallow the other through the dedup slot.
+    expect(shell?.subject).not.toBe(closure?.subject)
+    expect(closure?.subject).toBe('node-updating:mac-mini:1.2.11')
+  })
+
   it('a server-update reason WITHOUT a version is a restart, not an update', () => {
     expect(
       restarting({ kind: 'system', requestedAt: 1, requestedBy: 'server-update: manual restart' })

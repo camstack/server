@@ -45,14 +45,20 @@ import { UpdateAvailabilityEmitter } from '../core/update-availability-emitter.j
 import type { IUpdateAvailabilityStore } from '../core/update-availability-store.js'
 import { FileUpdateAvailabilityStore } from '../core/update-availability-store.js'
 import {
+  ELECTRON_APP_VERSION_ENV,
   HUB_ROOT_SPEC,
   type NpmExecFn,
   type RootRestartUpdate,
   type RootUpdateLogger,
   RootUpdateService,
   serverRootDir,
+  type WrapperProbeReadings,
   writeRestartIntentMarker,
 } from '../server-root/index.js'
+import {
+  announceProductVersionChange,
+  buildNodeUpdateAnnouncement,
+} from '../core/updates/node-update-announcement.js'
 import { buildRestartMarker } from '../core/updates/restart-marker.js'
 
 /**
@@ -164,6 +170,8 @@ export interface AgentUpdateServiceOptions {
   readonly updateAvailabilityStore?: IUpdateAvailabilityStore
   /** The agent's runner boot check (D877), served on the status. */
   readonly runnerBootCheck?: () => RunnerBootCheck | undefined
+  /** Container probes (test override) — see `RootUpdateServiceOptions.readWrapperProbes`. */
+  readonly readWrapperProbes?: () => WrapperProbeReadings
 }
 
 /**
@@ -289,6 +297,20 @@ export class AgentUpdateService extends RootUpdateService {
         options.applyClosurePatches ?? buildSystemApplyClosurePatches(options.logger),
       env: options.env,
       now: options.now,
+      ...(options.readWrapperProbes !== undefined
+        ? { readWrapperProbes: options.readWrapperProbes }
+        : {}),
+      // The shell is about to replace itself, and this node with it: announce
+      // it through the same announcer a restart uses (D723), before the install.
+      onDesktopInstallRequested: (info) =>
+        restartAnnouncer.announce(
+          buildNodeUpdateAnnouncement({
+            what: 'desktop-shell',
+            fromVersion: info.fromVersion,
+            ...(info.toVersion !== null ? { toVersion: info.toVersion } : {}),
+            requestedAt: Date.now(),
+          }),
+        ),
       ...(options.runnerBootCheck !== undefined
         ? { runnerBootCheck: options.runnerBootCheck }
         : {}),
@@ -343,6 +365,26 @@ export class AgentUpdateService extends RootUpdateService {
       this.nodeId,
     )
     return result
+  }
+
+  /**
+   * Boot-time: a container that came up on a different image than its previous
+   * boot announces it as a `node-updating` (see `node-update-announcement.ts`).
+   * A no-op until the bus is bound — the caller runs it from the first acked
+   * registration, where the bus is.
+   */
+  announceImageChangeIfAny(productVersion: string | null, env: NodeJS.ProcessEnv): void {
+    const bus = this.eventBus
+    if (bus === null) return
+    announceProductVersionChange({
+      dataDir: this.agentDataDir,
+      productVersion,
+      underDesktopShell: (env[ELECTRON_APP_VERSION_ENV] ?? '').length > 0,
+      bus,
+      sourceId: 'agent-update-service',
+      nodeId: this.nodeId,
+      logger: this.agentLogger,
+    })
   }
 
   /** Consume `.restart-pending` and emit `system.restart-completed` if present. */

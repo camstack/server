@@ -74,10 +74,8 @@ describe('NC_TEMPLATE_VARS', () => {
  * (`scripts/check-nc-mirrors-in-sync.ts` expires the list when it does).
  */
 describe('the SERVED template catalog holds back kinds the viewer cannot parse', () => {
-  it('holds back the D723 restart kinds, the alert episode kinds and the D905 rule-health kinds today (D934 dropped tanks)', () => {
+  it('holds back the alert episode kinds and the D905 rule-health kinds today (D934 dropped tanks)', () => {
     expect([...NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS]).toEqual([
-      'node-restarting',
-      'node-updating',
       'alert-critical',
       'alert-error',
       'alert-critical-resolved',

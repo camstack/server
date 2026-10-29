@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Numbers tied to a physical quantity can be entered in a unit you pick: automation conditions and steps accept { value, unit }, converted to the stored unit, and a bare API number is accepted with a warning
+- node-restarting and node-updating are offered in the served notification template catalog again
 
 ## [1.2.446] - 2026-10-29
 

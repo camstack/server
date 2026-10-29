@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Node update notifications for the desktop app and the container image keep their own slot, so they never swallow a server update on the same node
+
 ## [1.2.651] - 2026-10-29
 
 ### Changed

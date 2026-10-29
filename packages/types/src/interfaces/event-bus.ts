@@ -697,6 +697,9 @@ export interface SystemReadyStatePayload {
   readonly [key: string]: unknown
 }
 
+/** What a node update replaces — see {@link PendingRestartMarkerPayload.what}. */
+export type NodeUpdateTarget = 'server' | 'desktop-shell' | 'container-image'
+
 /**
  * Payload carried on `system.restarting` (when the restart is being
  * scheduled) and `system.restart-completed` (after the new process
@@ -715,6 +718,13 @@ export interface SystemReadyStatePayload {
  */
 export interface PendingRestartMarkerPayload {
   readonly kind: 'framework-update' | 'manual' | 'system' | 'framework-bulk-update'
+  /**
+   * WHAT is being replaced when the restart is an update. Absent means the
+   * `@camstack/server` closure (every announcement predating the field):
+   * `desktop-shell` is the Electron app's own self-update, `container-image` a
+   * container that booted on a different image than its previous boot.
+   */
+  readonly what?: NodeUpdateTarget
   readonly packageName?: string
   readonly fromVersion?: string
   readonly toVersion?: string

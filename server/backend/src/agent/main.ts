@@ -142,6 +142,7 @@ import {
 import { deriveHubUrlForExport, deriveHubUrlFromHubAddress } from './derive-hub-url.js'
 import type { InfraResolution } from './infra-boot-guard.js'
 import { assertRequiredInfraResolved } from './infra-boot-guard.js'
+import { blankToNull, PRODUCT_VERSION_ENV } from '../core/release-identity.js'
 import { planInfraBoot, planToResolutions } from './infra-boot-plan.js'
 import { registerAgentCapDispatch } from './register-agent-cap-dispatch.js'
 
@@ -656,6 +657,10 @@ async function startAgent(configPath?: string): Promise<void> {
     try {
       agentUpdateService.confirmBootHealthy()
       agentUpdateService.emitRestartCompletedIfPending()
+      agentUpdateService.announceImageChangeIfAny(
+        blankToNull(process.env[PRODUCT_VERSION_ENV]),
+        process.env,
+      )
     } catch (err) {
       consoleLogger.warn(
         `agent root boot confirmation failed: ${err instanceof Error ? err.message : String(err)}`,

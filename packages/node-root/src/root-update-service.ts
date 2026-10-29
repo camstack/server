@@ -130,6 +130,12 @@ export interface RootRestartUpdate {
   readonly toVersion: string
 }
 
+/** What the shell is about to install: the app version leaving and the one arriving. */
+export interface DesktopInstallAnnouncement {
+  readonly fromVersion: string
+  readonly toVersion: string | null
+}
+
 export interface RootUpdateServiceOptions {
   readonly spec: RootPackageSpec
   readonly envNames: RootUpdateEnvNames
@@ -215,6 +221,13 @@ export interface RootUpdateServiceOptions {
   readonly execNpm?: NpmExecFn
   readonly env?: NodeJS.ProcessEnv
   readonly now?: () => number
+  /**
+   * Called once the desktop shell's install request is on disk — the moment the
+   * shell starts replacing itself, and this node with it. The adapter (hub or
+   * agent) turns it into the `system.restarting` announcement; node-root has
+   * no event bus. Telemetry: a throw is logged and never blocks the install.
+   */
+  readonly onDesktopInstallRequested?: (info: DesktopInstallAnnouncement) => void
   /** Pause between staging attempts (see {@link STAGING_RETRY_DELAYS_MS}); tests inject a no-op. */
   readonly sleep?: (ms: number) => Promise<void>
 }
@@ -364,6 +377,9 @@ export class RootUpdateService {
   private readonly env: NodeJS.ProcessEnv
   private readonly readWrapperProbesFn: () => WrapperProbeReadings
   private readonly now: () => number
+  private readonly onDesktopInstallRequested:
+    | ((info: DesktopInstallAnnouncement) => void)
+    | undefined
   private readonly sleep: (ms: number) => Promise<void>
   private readonly runningPackageJsonPath: string
   private readonly workspaceProbeDir: string
@@ -405,6 +421,7 @@ export class RootUpdateService {
     this.env = options.env ?? process.env
     this.readWrapperProbesFn = options.readWrapperProbes ?? readWrapperProbes
     this.now = options.now ?? Date.now
+    this.onDesktopInstallRequested = options.onDesktopInstallRequested
     this.sleep =
       options.sleep ??
       ((ms) =>
@@ -1170,6 +1187,17 @@ export class RootUpdateService {
       tags: this.logTags,
       meta: { appVersion: desktopApp.version, updateVersion: desktopApp.update.version },
     })
+    try {
+      this.onDesktopInstallRequested?.({
+        fromVersion: desktopApp.version,
+        toVersion: desktopApp.update.version,
+      })
+    } catch (err) {
+      this.logger.warn('desktop update announcement failed', {
+        tags: this.logTags,
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
     return { accepted: true, reason: null }
   }
 

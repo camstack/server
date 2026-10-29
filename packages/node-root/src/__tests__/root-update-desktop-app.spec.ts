@@ -23,6 +23,7 @@ import {
   RootUpdateService,
   type RootUpdateEnvNames,
   type RootUpdateLogger,
+  type RootUpdateServiceOptions,
 } from '../root-update-service.js'
 import type { WrapperProbeReadings } from '../wrapper-identity.js'
 
@@ -67,8 +68,12 @@ afterEach(() => {
   fs.rmSync(tmp, { recursive: true, force: true })
 })
 
-function makeService(env: NodeJS.ProcessEnv): RootUpdateService {
+function makeService(
+  env: NodeJS.ProcessEnv,
+  extra: Partial<RootUpdateServiceOptions> = {},
+): RootUpdateService {
   return new RootUpdateService({
+    ...extra,
     spec: HUB_ROOT_SPEC,
     envNames: ENV_NAMES,
     nodeId: 'agent-a',
@@ -133,6 +138,38 @@ describe('getServerPackageStatus.desktopApp', () => {
     fs.writeFileSync(desktopAppStatePath(rootDir), '{"appVersion": 3', 'utf-8')
     const status = await makeService(ELECTRON_ENV).getServerPackageStatus()
     expect(status.desktopApp).toBeUndefined()
+  })
+})
+
+describe('installDesktopUpdate announces the shell update to the node', () => {
+  it('tells the announce seam both app versions once the request is written', () => {
+    writeDesktopAppState(rootDir, appState())
+    const announced: Array<{ fromVersion: string; toVersion: string | null }> = []
+    const result = makeService(ELECTRON_ENV, {
+      onDesktopInstallRequested: (info) => announced.push(info),
+    }).installDesktopUpdate()
+    expect(result.accepted).toBe(true)
+    expect(announced).toEqual([{ fromVersion: '2.0.0', toVersion: '2.1.0' }])
+  })
+
+  it('announces nothing for a refused install', () => {
+    writeDesktopAppState(rootDir, appState({ downloaded: false }))
+    const announced: unknown[] = []
+    makeService(ELECTRON_ENV, {
+      onDesktopInstallRequested: (info) => announced.push(info),
+    }).installDesktopUpdate()
+    expect(announced).toEqual([])
+  })
+
+  it('a throwing announcement never blocks the install it announces', () => {
+    writeDesktopAppState(rootDir, appState())
+    const result = makeService(ELECTRON_ENV, {
+      onDesktopInstallRequested: () => {
+        throw new Error('bus down')
+      },
+    }).installDesktopUpdate()
+    expect(result).toEqual({ accepted: true, reason: null })
+    expect(fs.existsSync(desktopInstallRequestPath(rootDir))).toBe(true)
   })
 })
 

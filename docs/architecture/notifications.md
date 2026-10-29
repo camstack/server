@@ -1144,8 +1144,27 @@ A hub restart can leave its own "updating" undelivered; the outbox retries it
 after the reboot. `restart-supersede.ts` records every `server-updated` heard
 (node + version) and the outbox executor drops a `node-updating` row whose
 update already landed: `node-updating not sent — the update already landed`
-(INFO, `nodeId`, `toVersion`). Both kinds are held back from the served
-template catalog until every phone has the viewer build that mirrors them.
+(INFO, `nodeId`, `toVersion`). The viewer mirrors both kinds (1.0.667), so they
+are served in the template catalog again.
+
+**Three things can be updated, one event announces each.** The payload's `what`
+(`PendingRestartMarkerPayload.what`, absent = the server closure) names the part
+being replaced, and `packageName` its operator-facing name; a non-closure update
+gets its own dedup slot (`node-updating:<node>:<what>:<version>`), so it never
+swallows a closure update to the same version.
+
+| `what` | Emitted when | Where |
+| --- | --- | --- |
+| (closure) | `applyServerUpdate` is about to restart the node | `AddonPackageService.restartServer`, `AgentRestartAnnouncer` |
+| `desktop-shell` | the hub asked the Electron app to install its downloaded update (`installDesktopUpdate`, request file written) | `RootUpdateService.onDesktopInstallRequested`, wired in `ServerUpdateService` and `AgentUpdateService` |
+| `container-image` | a node boots with a `CAMSTACK_PRODUCT_VERSION` different from the previous boot's (`<dataDir>/last-boot-product-version`); silent under the desktop shell | `announceProductVersionChange` from `PostBootService` (hub) and `AgentUpdateService.announceImageChangeIfAny` (agent) |
+
+The container case is announced AFTER the swap, not before: the old container is
+gone before the new process exists, so "about to update" cannot be known earlier.
+A shell that quits to install on its own (`autoInstallOnAppQuit`) without the
+hub's request is not announced. There is no "back online after update" for the
+shell and the image: `server-updated` needs the restart marker only the closure
+writes, so the return is the ordinary `node-online`.
 
 ## Template variables — declared once ([D629](../decisions/adr-0629-template-variables-are-declared-once.md), 2026-09-24)
 
@@ -2142,7 +2161,7 @@ that: it opened at 25 and has nothing left to raise.
 - **Held back from the served template catalog.** The installed viewers parse
   `getTemplateCatalog` as a whole, with a strict kind enum, so
   `servedTemplateVars()` drops `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` until
-  the viewer mirrors them. `check-nc-mirrors-in-sync.ts` reads that list as the
+  the viewer mirrors them (the D723 restart kinds were released on viewer 1.0.667). `check-nc-mirrors-in-sync.ts` reads that list as the
   viewer's allowance and fails the day the viewer catches up.
 - **`consumables` is `durability: 'restored'`**, so a wake-window reading (the
   Dreame mower's CMS counters) survives an addon restart.

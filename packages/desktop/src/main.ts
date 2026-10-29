@@ -52,7 +52,9 @@ import { loadOrCreatePlatformKeychainKey } from './keychain-platform-key'
 import { resolveLaunchArgs } from './launch-args-client'
 import type { AgentConnectionInput } from './node-env'
 import { buildNodeEnv } from './node-env'
-import { classifyNodeExit, roleLabel, summarizeNodeRootStatus } from './node-supervisor'
+import { handleNodeExit } from './node-exit-handler'
+import { roleLabel, summarizeNodeRootStatus } from './node-supervisor'
+import { appendShellLog, formatFatal } from './shell-log'
 import { consumeRestartIntent, readNodeRootStateView } from './node-supervisor-io'
 import {
   NodeProcessManager,
@@ -144,9 +146,6 @@ interface AppConfig {
   viewerHubs: HubRecord
 }
 
-/** Prompt relaunch delay after an intentional update/rollback exit (no backoff). */
-const UPDATE_RESTART_DELAY_MS = 500
-
 /**
  * Effective role: the persisted setting, validated, then narrowed to what this
  * PRODUCT can run. The same `roleForProduct` the boot path used, so the tray,
@@ -230,6 +229,21 @@ interface TypedStore<T> {
 
 let store: TypedStore<AppConfig>
 
+/** The shell's own persistent log — where a fatal that has no window or stdout lands. */
+function shellLogPath(): string {
+  return path.join(app.getPath('userData'), 'shell.log')
+}
+
+// A shell-level fatal is logged to a file and swallowed: a dialog would block
+// the supervisor that keeps the node alive, and the default handler would end
+// the process (the node child with it).
+process.on('uncaughtException', (err) => {
+  appendShellLog(shellLogPath(), formatFatal('uncaughtException', err))
+})
+process.on('unhandledRejection', (reason) => {
+  appendShellLog(shellLogPath(), formatFatal('unhandledRejection', reason))
+})
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -272,51 +286,38 @@ let appQuitting = false
 let respawnState: RespawnState = { consecutiveCrashes: 0 }
 let nodeStartedAt = 0
 nodeManager.onExit((code, signal, wasIntentional) => {
-  console.log(
-    `[node] exited (code=${code ?? 'null'}, signal=${signal ?? 'null'}, intentional=${wasIntentional})`,
-  )
-  refreshTrayMenu()
-  if (appQuitting) return
-
-  // Classify WHY the child exited. An update/rollback apply makes the node
-  // gracefully self-exit AFTER dropping a restart-intent marker in its data
-  // dir; that is an intentional restart, not a crash, so it must relaunch
-  // promptly WITHOUT counting against the crash backoff. The marker is consumed
-  // (read + deleted) here so a later crash is never mis-classified.
-  const restartIntent = consumeRestartIntent(nodeDataDir())
-  const exitClass = classifyNodeExit({
-    wasParentIntentional: wasIntentional,
-    restartIntent,
-    nowMs: Date.now(),
-  })
-
-  if (exitClass.kind === 'parent-intentional') return
-
-  if (exitClass.kind === 'update-restart') {
-    // Reset backoff: the staged version boots on probation; the starter's own
-    // auto-rollback (crash-loop counter in state.json) is the safety net.
-    respawnState = { consecutiveCrashes: 0 }
-    console.log(
-      `[main] node exited to apply an update/rollback (${restartIntent?.reason ?? 'server-update'}) — relaunching to boot the staged version`,
+  // Keeping the node alive runs before anything that only reports — see
+  // `node-exit-handler.ts` for why the order matters.
+  try {
+    handleNodeExit(
+      {
+        appQuitting: () => appQuitting,
+        consumeRestartIntent: () => consumeRestartIntent(nodeDataDir()),
+        now: Date.now,
+        getRespawnState: () => respawnState,
+        setRespawnState: (next) => {
+          respawnState = next
+        },
+        uptimeMs: () => (nodeStartedAt > 0 ? Date.now() - nodeStartedAt : 0),
+        relaunch: (delayMs) => {
+          setTimeout(() => {
+            if (appQuitting) return
+            startNodeProcess()
+          }, delayMs)
+        },
+        refreshTray: refreshTrayMenu,
+        log: (line) => {
+          appendShellLog(shellLogPath(), line)
+          console.log(line)
+        },
+      },
+      code,
+      signal,
+      wasIntentional,
     )
-    setTimeout(() => {
-      if (appQuitting) return
-      startNodeProcess()
-    }, UPDATE_RESTART_DELAY_MS)
-    return
+  } catch (err) {
+    appendShellLog(shellLogPath(), formatFatal('uncaughtException', err))
   }
-
-  // Real crash → exponential backoff.
-  const uptimeMs = nodeStartedAt > 0 ? Date.now() - nodeStartedAt : 0
-  const decision = computeRespawn(respawnState, uptimeMs)
-  respawnState = decision.state
-  console.log(
-    `[main] Respawning node in ${decision.delayMs}ms (consecutive crashes: ${decision.state.consecutiveCrashes})`,
-  )
-  setTimeout(() => {
-    if (appQuitting) return
-    startNodeProcess()
-  }, decision.delayMs)
 })
 
 // ---------------------------------------------------------------------------

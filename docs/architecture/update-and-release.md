@@ -8,6 +8,8 @@ applies-to:
   - .github/workflows/release.yml
   - scripts/ci/align-nx-db.sh
   - packages/node-root/**
+  - packages/desktop/src/node-exit-handler.ts
+  - packages/desktop/src/shell-log.ts
   - server/backend/src/core/server-update/**
   - scripts/ci/verify-release-npm.mjs
   - scripts/check-npm-orphan-packages.ts
@@ -499,6 +501,24 @@ and the marker had one.
 A PLAIN node restart travels under the same `server-update:` reason prefix
 (`RootUpdateService.restartNode` → `server-update: manual restart`). It is not an
 update, carries no version, and is announced as neither.
+
+## Being told an update is STARTING, and the desktop shell's supervisor
+
+`node-updating` is announced before the restart for the closure, and for the
+desktop shell when the hub asks it to install (`installDesktopUpdate`); a
+container that boots on a new image says so after the swap (the old container is
+gone first). The table of emitters is in `notifications.md`, "A node announces
+its own restart". Those events are telemetry (D8): losing one never blocks the
+update.
+
+The Electron shell supervises its node child (`packages/desktop/src/main.ts`,
+`node-exit-handler.ts`). On a child exit the work that keeps the node alive —
+consume the restart-intent marker, classify the exit, schedule the relaunch —
+runs BEFORE anything that only reports (tray refresh, log line), and each of
+those is guarded: a throwing `console.log` (closed stdout, EPIPE) once left the
+child `<defunct>` with its marker unconsumed. The shell also logs
+`uncaughtException` / `unhandledRejection` to `<userData>/shell.log` (bounded,
+one rotated generation, `shell-log.ts`) and swallows them without a dialog.
 
 ## Traps that cost a session, each with its evidence
 

@@ -7,6 +7,7 @@ import {
   readRestartIntentMarker,
   rootPackageDir,
   serverRootDir,
+  writeDesktopAppState,
   type NpmExecFn,
 } from '@camstack/node-root'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -325,6 +326,68 @@ describe('the agent announces its own restart before exiting (D723)', () => {
       packageName: '@camstack/server',
       nodeId: 'agent-a',
     })
+  })
+
+  it('a desktop shell install announces the shell updating, with both app versions', () => {
+    const bus = new RecordingBus()
+    writeDesktopAppState(serverRootDir(dataDir), {
+      appVersion: '1.2.10',
+      available: true,
+      downloaded: true,
+      version: '1.2.11',
+      checking: false,
+      error: null,
+      updatedAtMs: NOW,
+    })
+    const svc = new AgentUpdateService({
+      logger: makeLogger(),
+      restartAgent: () => undefined,
+      dataDir,
+      execNpm: async () => ({ stdout: '' }),
+      env: { CAMSTACK_AGENT_APP_VERSION: '1.2.10' },
+      readWrapperProbes: () => ({
+        platform: 'darwin',
+        dockerEnvFileExists: false,
+        proc1Cgroup: null,
+      }),
+      now: () => NOW,
+      runningPackageJsonPath: runningPkgPath,
+      eventBus: bus,
+      nodeId: 'agent-a',
+    })
+    expect(svc.installDesktopUpdate().accepted).toBe(true)
+    expect(bus.emitted).toHaveLength(1)
+    expect(bus.emitted[0]).toMatchObject({
+      category: 'system.restarting',
+      data: {
+        kind: 'framework-update',
+        what: 'desktop-shell',
+        packageName: 'CamStack desktop app',
+        fromVersion: '1.2.10',
+        toVersion: '1.2.11',
+        nodeId: 'agent-a',
+      },
+    })
+  })
+
+  it('a boot on a different container image announces node-updating once; the first boot is silent', () => {
+    const bus = new RecordingBus()
+    const svc = serviceWith(bus, () => undefined)
+    svc.announceImageChangeIfAny('1.2.10', {})
+    expect(bus.emitted).toHaveLength(0)
+    svc.announceImageChangeIfAny('1.2.11', {})
+    expect(bus.emitted).toHaveLength(1)
+    expect(bus.emitted[0]).toMatchObject({
+      category: 'system.restarting',
+      data: {
+        what: 'container-image',
+        fromVersion: '1.2.10',
+        toVersion: '1.2.11',
+        nodeId: 'agent-a',
+      },
+    })
+    svc.announceImageChangeIfAny('1.2.11', {})
+    expect(bus.emitted).toHaveLength(1)
   })
 
   it('a bus bound later is the one announced on, under the bound node id', () => {

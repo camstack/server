@@ -28,7 +28,12 @@ import {
   type NpmExecFn,
   type RootRestartUpdate,
   RootUpdateService,
+  type WrapperProbeReadings,
 } from '../../server-root/index.js'
+import {
+  buildNodeUpdateAnnouncement,
+  emitNodeUpdateAnnouncement,
+} from '../updates/node-update-announcement.js'
 import { UpdateAvailabilityEmitter } from '../update-availability-emitter.js'
 import type { IUpdateAvailabilityStore } from '../update-availability-store.js'
 import {
@@ -74,6 +79,8 @@ export interface ServerUpdateServiceOptions {
   readonly updatePreflight?: (targetVersion: string) => Promise<readonly UpdateBlocker[]>
   /** The runner boot check (D877), served on the status. */
   readonly runnerBootCheck?: () => RunnerBootCheck | undefined
+  /** Container probes (test override) — see `RootUpdateServiceOptions.readWrapperProbes`. */
+  readonly readWrapperProbes?: () => WrapperProbeReadings
 }
 
 export class ServerUpdateService extends RootUpdateService {
@@ -129,6 +136,27 @@ export class ServerUpdateService extends RootUpdateService {
         options.applyClosurePatches ?? buildSystemApplyClosurePatches(options.logger),
       env: options.env,
       now: options.now,
+      ...(options.readWrapperProbes !== undefined
+        ? { readWrapperProbes: options.readWrapperProbes }
+        : {}),
+      // The shell is about to replace itself, and this node with it: tell the
+      // operator now (D723's `node-updating`), not after the node is gone.
+      onDesktopInstallRequested: (info) => {
+        const bus = options.eventBus
+        if (bus === undefined) return
+        emitNodeUpdateAnnouncement(
+          bus,
+          'server-update-service',
+          // The node, as `AddonPackageService.restartServer` names it (D723).
+          options.env?.['CAMSTACK_NODE_ID'] ?? process.env['CAMSTACK_NODE_ID'] ?? nodeId,
+          buildNodeUpdateAnnouncement({
+            what: 'desktop-shell',
+            fromVersion: info.fromVersion,
+            ...(info.toVersion !== null ? { toVersion: info.toVersion } : {}),
+            requestedAt: Date.now(),
+          }),
+        )
+      },
       ...(options.updatePreflight !== undefined
         ? { updatePreflight: options.updatePreflight }
         : {}),

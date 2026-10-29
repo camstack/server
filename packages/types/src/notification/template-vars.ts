@@ -1181,10 +1181,6 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
  * delete it from here then, and the served catalog names it again.
  */
 export const NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS: readonly NcSystemEventKind[] = [
-  // D723: a phone that has not installed the OTA mirroring these two would
-  // fail the whole catalog parse on `{{node}}` — held back like the tanks.
-  'node-restarting',
-  'node-updating',
   // The alert-centre episode kinds: a phone that has not installed the OTA
   // mirroring them would fail the catalog parse on `{{severity}}`.
   'alert-critical',
