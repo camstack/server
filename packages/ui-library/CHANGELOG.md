@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Live detection boxes ignore out-of-order frames and fade by frame age
+
 ## [1.2.348] - 2026-10-29
 
 ### Added

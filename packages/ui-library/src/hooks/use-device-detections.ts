@@ -64,6 +64,12 @@ const MOTION_FADE_MS = 500
  *  fallback when post-analysis is absent). Keeping the two equal means raw
  *  resumes exactly when the enriched display fades — no blank gap. */
 const DETECTION_FADE_MS = 800
+/**
+ * The most of a frame's age (arrival minus its capture timestamp) the fade
+ * deducts. Bounded so a skewed server/browser clock can never make boxes vanish
+ * on arrival: the server already drops frames older than 1 s from the overlay.
+ */
+const MAX_FRAME_AGE_FADE_DEDUCTION_MS = DETECTION_FADE_MS / 2
 
 // ---------------------------------------------------------------------------
 // tRPC subscription shape — typed to the procedures we actually call.
@@ -136,6 +142,8 @@ export function useDeviceDetections(
   const motionRawTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const detectionTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const lastEnrichedAt = useRef(0)
+  /** Capture timestamp of the newest enriched frame shown; older arrivals are dropped. */
+  const lastShownFrameTs = useRef(0)
 
   // Subscribe to motion analysis events
   useEffect(() => {
@@ -201,6 +209,7 @@ export function useDeviceDetections(
     // PREVIOUS device's stamp — otherwise the new device's raw detection.result
     // frames stay suppressed even though no enriched frame has arrived for it.
     lastEnrichedAt.current = 0
+    lastShownFrameTs.current = 0
 
     if (deviceId === null) return
 
@@ -218,7 +227,23 @@ export function useDeviceDetections(
       const first = data.detections[0] as { kind?: unknown } | undefined
       if (typeof first?.kind !== 'string') return // legacy emitter — fall through to raw path
 
-      lastEnrichedAt.current = Date.now()
+      // Frames can arrive out of order (replayed pre-roll, a slow relay): a
+      // frame older than the newest one already drawn would make the boxes
+      // jump backwards, so it is dropped. No timestamp = arrival order.
+      const frameTs = typeof data.timestamp === 'number' ? data.timestamp : null
+      if (frameTs !== null && frameTs < lastShownFrameTs.current) return
+      if (frameTs !== null) lastShownFrameTs.current = frameTs
+
+      // Fade by FRAME age, not arrival: a box that was already late when it
+      // arrived is not kept for the full window on top of that lag.
+      const ageMs =
+        frameTs === null
+          ? 0
+          : Math.min(Math.max(Date.now() - frameTs, 0), MAX_FRAME_AGE_FADE_DEDUCTION_MS)
+      const fadeInMs = DETECTION_FADE_MS - ageMs
+
+      // Raw-frame suppression ends with the display, so there is no blank gap.
+      lastEnrichedAt.current = Date.now() - ageMs
       setDetection({
         detections: data.detections,
         frameWidth: data.frameWidth,
@@ -226,7 +251,7 @@ export function useDeviceDetections(
       })
 
       if (detectionTimer.current) clearTimeout(detectionTimer.current)
-      detectionTimer.current = setTimeout(() => setDetection(null), DETECTION_FADE_MS)
+      detectionTimer.current = setTimeout(() => setDetection(null), fadeInMs)
     })
 
     return () => {

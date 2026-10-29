@@ -40,10 +40,10 @@ const FACE = {
   bbox: { x: 10, y: 5, width: 15, height: 20 },
 }
 
-function enrichedEvent(deviceId: number) {
+function enrichedEvent(deviceId: number, timestamp: number = 1) {
   return {
     source: { type: 'addon', id: 'pipeline-analytics' },
-    data: { deviceId, timestamp: 1, frameWidth: 640, frameHeight: 360, detections: [ROOT, FACE] },
+    data: { deviceId, timestamp, frameWidth: 640, frameHeight: 360, detections: [ROOT, FACE] },
   }
 }
 
@@ -126,5 +126,55 @@ describe('useDeviceDetections — frame-tracked enrichment', () => {
     rerender({ deviceId: 11 })
     act(() => handlers.get('detection.result')!(rawEvent(11)))
     expect(result.current.detection?.detections).toHaveLength(1) // raw accepted immediately for the new device
+  })
+
+  it('drops an out-of-order frame older than the latest one already shown', () => {
+    vi.setSystemTime(100_000)
+    const { handlers, trpc } = makeFakeTrpc()
+    const { result } = renderHook(() => useDeviceDetections(trpc, 9))
+    const fire = handlers.get('pipeline-analytics.frame-tracked')!
+    act(() => fire(enrichedEvent(9, 99_900)))
+    expect(result.current.detection?.detections).toHaveLength(2)
+    const shown = result.current.detection
+    // A late-arriving older frame must not replace the newer boxes.
+    act(() =>
+      fire({
+        ...enrichedEvent(9, 99_500),
+        data: { ...enrichedEvent(9, 99_500).data, detections: [ROOT] },
+      }),
+    )
+    expect(result.current.detection).toBe(shown)
+    // A newer one still does.
+    act(() =>
+      fire({
+        ...enrichedEvent(9, 99_950),
+        data: { ...enrichedEvent(9, 99_950).data, detections: [ROOT] },
+      }),
+    )
+    expect(result.current.detection?.detections).toHaveLength(1)
+  })
+
+  it('fades by frame age: a frame already 300 ms old at arrival is gone 500 ms later, not 800', () => {
+    vi.setSystemTime(100_000)
+    const { handlers, trpc } = makeFakeTrpc()
+    const { result } = renderHook(() => useDeviceDetections(trpc, 9))
+    act(() => handlers.get('pipeline-analytics.frame-tracked')!(enrichedEvent(9, 99_700)))
+    expect(result.current.detection).not.toBeNull()
+    act(() => vi.advanceTimersByTime(450))
+    expect(result.current.detection).not.toBeNull()
+    act(() => vi.advanceTimersByTime(100)) // 550 ms after arrival > 800 - 300
+    expect(result.current.detection).toBeNull()
+  })
+
+  it('falls back to arrival-based fade when the payload carries no timestamp', () => {
+    const { handlers, trpc } = makeFakeTrpc()
+    const { result } = renderHook(() => useDeviceDetections(trpc, 9))
+    const ev = enrichedEvent(9)
+    const { timestamp: _t, ...rest } = ev.data
+    act(() => handlers.get('pipeline-analytics.frame-tracked')!({ ...ev, data: rest }))
+    act(() => vi.advanceTimersByTime(700))
+    expect(result.current.detection).not.toBeNull()
+    act(() => vi.advanceTimersByTime(150))
+    expect(result.current.detection).toBeNull()
   })
 })
