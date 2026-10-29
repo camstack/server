@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An unpaired agent now shows its real memory on its own page instead of unknown.
+
 ## [1.2.690] - 2026-10-29
 
 ### Changed

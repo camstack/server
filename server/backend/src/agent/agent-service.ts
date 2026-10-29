@@ -12,6 +12,9 @@ import {
   resolveHwAccel,
 } from '@camstack/system'
 import type { AgentHealth, IMetricsProvider, IScopedLogger } from '@camstack/types'
+
+/** What `$agent.status` and `$agent.health` read from the metrics provider. */
+export type StatusMetricsSource = Pick<IMetricsProvider, 'getCached'>
 import { coralUsableUnits } from '@camstack/types'
 import type { Context, ServiceBroker, ServiceSchema } from 'moleculer'
 import { Errors } from 'moleculer'
@@ -167,7 +170,7 @@ interface AgentServiceDeps {
    * service still answers `$agent.status` even before the metrics addon has
    * finished initializing.
    */
-  readonly getMetricsProvider?: () => IMetricsProvider | null
+  readonly getMetricsProvider?: () => StatusMetricsSource | null
   /** Package version of the agent runtime (informational, surfaced via `$agent.health`). */
   readonly agentVersion?: string
   /**

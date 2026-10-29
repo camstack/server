@@ -52,6 +52,7 @@ import {
   AgentPairing,
   createCiaoPublisher,
   TlsTcpTransporter,
+  NativeMetricsProvider,
 } from '@camstack/system'
 import { EventCategory } from '@camstack/types'
 import type {
@@ -119,6 +120,7 @@ import { createReconnectRunner } from './agent-reconnect.js'
 import { createSerialQueue } from './serial-queue.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
 import { decideAgentBootMode } from './agent-boot-mode.js'
+import { resolveStatusMetrics } from './agent-status-metrics.js'
 import {
   agentSelfUpdateEnabled,
   runAgentSelfUpdate,
@@ -557,6 +559,7 @@ async function startAgent(configPath?: string): Promise<void> {
     withTags: () => consoleLogger,
   }
   const capabilityRegistry = new CapabilityRegistry(consoleLogger)
+  let unpairedMetrics: NativeMetricsProvider | null = null
 
   // Declare all capabilities the agent uses — required before registerProvider()
   const agentCapabilities = [
@@ -687,7 +690,20 @@ async function startAgent(configPath?: string): Promise<void> {
     // Resolve the current metrics-provider cap lazily from the registry.
     // The cap is registered during bootCoreAddons but may not exist in test
     // scenarios — `null` is a documented fallback for both.
-    getMetricsProvider: () => capabilityRegistry.getSingleton<IMetricsProvider>('metrics-provider'),
+    // An UNPAIRED agent boots no addon, so the registry has no provider: its own page
+    // reads the same native reader the addon would register (see agent-status-metrics.ts).
+    getMetricsProvider: resolveStatusMetrics(
+      () => capabilityRegistry.getSingleton<IMetricsProvider>('metrics-provider'),
+      () => {
+        if (decideAgentBootMode({ paired: isAgentPaired(config.configPath) }) === 'full')
+          return null
+        if (unpairedMetrics === null) {
+          unpairedMetrics = new NativeMetricsProvider()
+          unpairedMetrics.startSampling(5000)
+        }
+        return unpairedMetrics
+      },
+    ),
     agentVersion: readAgentVersion(),
     // Drives `$agent.reload` — re-runs the same discovery pass the bootstrap
     // does at startup, picking up tarballs just landed via `$agent.deploy`.

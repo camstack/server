@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7396 source files · 1212 file(s) in no subsystem.**
+**31 subsystems · 7397 source files · 1212 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -43,7 +43,7 @@ commits. A generated page may not.
 | Auth, scopes and method tiers | 96 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +28 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 161 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +103 more, 18 ADRs | 2026-10-27 | ⚠️ |
 | Shared types, schemas and enums | 99 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-26 | ⚠️ |
-| Update, release, OTA and agent delivery | 65 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +32 more, 10 ADRs | 2026-10-27 | ✅ |
+| Update, release, OTA and agent delivery | 66 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +32 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 297 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +49 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 51 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +16 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 145 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +28 more, 1 ADR | 2026-10-26 | ⚠️ |
@@ -243,7 +243,7 @@ Gets new code onto a running cluster — package publication, agent bundles and 
 
 - **Owner doc**: `docs/architecture/update-and-release.md`
 - **Code**: `server/backend/src/agent/**`, `server/backend/src/core/agent/**`, `server/backend/src/core/server-update/**`, `server/backend/src/core/updates/**`, `packages/system/src/kernel/addon-installer.ts`, `packages/system/src/kernel/addon-loader.ts`, `packages/system/src/kernel/addon-manifest.ts`, `packages/system/src/kernel/addon-residue.ts`, `packages/system/src/kernel/workspace-detect.ts`
-- **Files**: 65 (65 claimed by some document)
+- **Files**: 66 (66 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT
