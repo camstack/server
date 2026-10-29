@@ -119,7 +119,7 @@ change the record — do not quietly work around it.
   `pipelineRunner.runStatelessStep`, node-pinned, under ONE `modelId` pinned for
   the whole pass — a node that cannot serve that exact model REFUSES rather than
   substituting a format default. And the cheap question comes first: never load
-  media before knowing the work can run. (D54)
+  media before knowing the work can run. (D56)
 - **A storage location has ONE typed state, interpreted in ONE place.** `StorageLocation.mode` is `active | readonly | drain | disabled`, and only `storage-location-mode.ts` may read it — nothing else touches `config['readOnly']` or compares `enabled`. A `drain` shrinks at the pace the active locations of its class grew, from a persisted cap, with no operator rate knob. How much a location holds (`storage-occupancy`; absence means unknown, never zero) is separate from what may be evicted, and two locations of one type never share a physical root. (D385, D386, D388, D389)
 - **A per-camera function switch stores NOTHING.** It reads and writes the authority that already owned the function (`setDisabled`, `setWrapperActive`, `RecordingConfig.enabled`, the notification mute) and names it in `CameraSwitch.authority`. An off switch is reported off (`CameraStatus.switchedOff`): disabled must never look like broken. (D62)
 - **A camera links only what the operator picked.** Same-location devices are suggested by the picker, never linked on their own; a container is never a pick, its children are, named after it. (D356)
