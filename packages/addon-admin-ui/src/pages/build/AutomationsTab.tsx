@@ -19,7 +19,11 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { Workflow } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AutomationEditor } from './automation/AutomationEditor'
-import { AutomationEmptyState, AutomationRow } from './automation/AutomationList'
+import {
+  AutomationActions,
+  AutomationEmptyState,
+  AutomationSummary,
+} from './automation/AutomationList'
 import {
   ejectRecipeFromCode,
   looksLikeAutomation,
@@ -182,50 +186,60 @@ export function AutomationsTab({
   const columns: DataColumn<CoreBlock>[] = useMemo(
     () => [
       {
-        key: 'row',
+        key: 'name',
         header: t('build.automationsTab.automation', 'Automation'),
         nowrap: false,
-        notSortableReason: 'Composite status row',
         render: (block) => {
           const recipe = parseRecipeFromCode(block.code)
           return (
-            <ul className="list-none">
-              <AutomationRow
-                block={block}
-                busy={setEnabled.isPending || remove.isPending}
-                logsOpen={logsFor === block.id}
-                unreadable={recipe.ok ? null : recipe.reason}
-                onEdit={() => {
-                  setSavedBlock(block)
-                  openEdit(block.id)
-                  onBlockIdChange?.(block.id)
-                }}
-                onToggle={(enabled) => setEnabled.mutate({ blockId: block.id, enabled })}
-                onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
-                onDelete={() => {
-                  void confirm({
-                    title: t(
-                      'automation.automationList.deleteThisAutomation',
-                      'Delete this automation?',
-                    ),
-                    message: t(
-                      'automation.automationList.deleteMessage',
-                      '{{name}} will be deleted. This cannot be undone.',
-                      {
-                        name: block.name,
-                      },
-                    ),
-                    confirmLabel: t('common.delete', 'Delete'),
-                    variant: 'danger',
-                  }).then((accepted) => {
-                    if (accepted) remove.mutate(block.id)
-                  })
-                }}
-              />
-            </ul>
+            <AutomationSummary
+              block={block}
+              logsOpen={logsFor === block.id}
+              unreadable={recipe.ok ? null : recipe.reason}
+            />
           )
         },
         sortValue: (block) => block.name,
+      },
+      {
+        key: 'actions',
+        header: '',
+        align: 'right',
+        notSortableReason: 'Row actions',
+        render: (block) => {
+          const recipe = parseRecipeFromCode(block.code)
+          return (
+            <AutomationActions
+              block={block}
+              busy={setEnabled.isPending || remove.isPending}
+              unreadable={recipe.ok ? null : recipe.reason}
+              onEdit={() => {
+                setSavedBlock(block)
+                openEdit(block.id)
+                onBlockIdChange?.(block.id)
+              }}
+              onToggle={(enabled) => setEnabled.mutate({ blockId: block.id, enabled })}
+              onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
+              onDelete={() => {
+                void confirm({
+                  title: t(
+                    'automation.automationList.deleteThisAutomation',
+                    'Delete this automation?',
+                  ),
+                  message: t(
+                    'automation.automationList.deleteMessage',
+                    '{{name}} will be deleted. This cannot be undone.',
+                    { name: block.name },
+                  ),
+                  confirmLabel: t('common.delete', 'Delete'),
+                  variant: 'danger',
+                }).then((accepted) => {
+                  if (accepted) remove.mutate(block.id)
+                })
+              }}
+            />
+          )
+        },
       },
     ],
     [confirm, logsFor, onBlockIdChange, openEdit, remove, setEnabled, t],
@@ -237,7 +251,9 @@ export function AutomationsTab({
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <Workflow className="h-4 w-4 text-foreground-muted" />
           {editing !== null
-            ? t('build.automationsTab.edit', 'Edit {{name}}', { name: editing.name })
+            ? t('build.automationsTab.edit', 'Edit {{name}}', {
+                name: editing.name,
+              })
             : t('build.automationsTab.newAutomation', 'New automation')}
         </h3>
         <AutomationEditor

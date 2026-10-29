@@ -32,132 +32,43 @@ import { Pencil, Play, ScrollText, Trash2 } from 'lucide-react'
 import { badgeVariantForTone, describeBlockStatus } from '../core-block-status'
 import { Trans, useTranslation } from 'react-i18next'
 
-export interface AutomationRowProps {
+export interface AutomationSummaryProps {
   readonly block: CoreBlock
-  readonly busy: boolean
   readonly logsOpen: boolean
   /** Set when the block's embedded recipe could not be read — the row is still
    *  shown, because hiding a stored automation is how one goes missing. */
   readonly unreadable: string | null
-  readonly onEdit: () => void
-  readonly onToggle: (enabled: boolean) => void
-  readonly onToggleLogs: () => void
-  readonly onDelete: () => void
 }
 
-export function AutomationRow({
-  block,
-  busy,
-  logsOpen,
-  unreadable,
-  onEdit,
-  onToggle,
-  onToggleLogs,
-  onDelete,
-}: AutomationRowProps) {
+/** The name cell: name, status, last edit, and the logs panel when open. */
+export function AutomationSummary({ block, logsOpen, unreadable }: AutomationSummaryProps) {
   const uiText = useUiText()
   const { t } = useTranslation()
   const status = describeBlockStatus(block)
   const edited = formatLastSeen(block.updatedAt, uiText)
 
   return (
-    <li className="flex flex-col gap-2 p-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="truncate font-medium">{block.name}</span>
-            <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>
-            {edited !== null && (
-              <span className="text-xs text-foreground-subtle">
-                {t('common.edited', { when: edited })}
-              </span>
-            )}
-          </div>
-          {/* Never conditional — `describeBlockStatus` guarantees a line for
-              every state, and an automation that is not running with no reason
-              given is the failure this page exists to prevent. */}
-          <p className="mt-0.5 text-xs text-foreground-subtle">{status.detail}</p>
-          {unreadable !== null && (
-            <p className="mt-0.5 text-xs text-warning">
-              {t('automation.editor.listUnreadable', { reason: unreadable })}
-            </p>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit()
-            }}
-            disabled={unreadable !== null}
-            title={
-              unreadable === null
-                ? t('common.edit', 'Edit')
-                : t(
-                    'automation.automationList.thisBlockCannotBeOpened',
-                    'This block cannot be opened visually',
-                  )
-            }
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-
-          <Tooltip>
-            <TooltipTrigger>
-              <Button
-                variant="ghost"
-                disabled
-                title={t('automation.automationList.runActions', 'Run actions')}
-              >
-                <Play className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t(
-                'automation.automationList.runningAnAutomationByHand',
-                'Running an automation by hand needs the automation-control authority, which is not wired up yet. There is deliberately no second way to execute one.',
-              )}
-            </TooltipContent>
-          </Tooltip>
-
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleLogs()
-            }}
-            title={t('automation.automationList.logs', 'Logs')}
-          >
-            <ScrollText className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggle(!block.enabled)
-            }}
-            disabled={busy}
-            title={block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-          >
-            {block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete()
-            }}
-            title={t('common.delete', 'Delete')}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="min-w-0">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="truncate font-medium">{block.name}</span>
+        <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>
+        {edited !== null && (
+          <span className="text-xs text-foreground-subtle">
+            {t('common.edited', { when: edited })}
+          </span>
+        )}
       </div>
-
+      {/* Never conditional — `describeBlockStatus` guarantees a line for
+          every state, and an automation that is not running with no reason
+          given is the failure this page exists to prevent. */}
+      <p className="mt-0.5 text-xs text-foreground-subtle">{status.detail}</p>
+      {unreadable !== null && (
+        <p className="mt-0.5 text-xs text-warning">
+          {t('automation.editor.listUnreadable', { reason: unreadable })}
+        </p>
+      )}
       {logsOpen && (
-        <div className="rounded border border-border">
+        <div className="mt-2 rounded border border-border">
           <div className="border-b border-border px-3 py-1.5 text-xs text-foreground-subtle">
             <Trans
               i18nKey="common.logsOf"
@@ -172,7 +83,103 @@ export function AutomationRow({
           />
         </div>
       )}
-    </li>
+    </div>
+  )
+}
+
+export interface AutomationActionsProps {
+  readonly block: CoreBlock
+  readonly busy: boolean
+  readonly unreadable: string | null
+  readonly onEdit: () => void
+  readonly onToggle: (enabled: boolean) => void
+  readonly onToggleLogs: () => void
+  readonly onDelete: () => void
+}
+
+/** The actions cell, its own nowrap column so a phone scrolls the table
+ *  sideways instead of squeezing the buttons. */
+export function AutomationActions({
+  block,
+  busy,
+  unreadable,
+  onEdit,
+  onToggle,
+  onToggleLogs,
+  onDelete,
+}: AutomationActionsProps) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex justify-end gap-1">
+      <Button
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation()
+          onEdit()
+        }}
+        disabled={unreadable !== null}
+        title={
+          unreadable === null
+            ? t('common.edit', 'Edit')
+            : t(
+                'automation.automationList.thisBlockCannotBeOpened',
+                'This block cannot be opened visually',
+              )
+        }
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+
+      <Tooltip>
+        <TooltipTrigger>
+          <Button
+            variant="ghost"
+            disabled
+            title={t('automation.automationList.runActions', 'Run actions')}
+          >
+            <Play className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {t(
+            'automation.automationList.runningAnAutomationByHand',
+            'Running an automation by hand needs the automation-control authority, which is not wired up yet. There is deliberately no second way to execute one.',
+          )}
+        </TooltipContent>
+      </Tooltip>
+
+      <Button
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleLogs()
+        }}
+        title={t('automation.automationList.logs', 'Logs')}
+      >
+        <ScrollText className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggle(!block.enabled)
+        }}
+        disabled={busy}
+        title={block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
+      >
+        {block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete()
+        }}
+        title={t('common.delete', 'Delete')}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
   )
 }
 
