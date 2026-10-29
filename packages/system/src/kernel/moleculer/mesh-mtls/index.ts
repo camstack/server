@@ -40,11 +40,7 @@ export {
   type MeshCaState,
 } from './mesh-ca-keeper.js'
 
-export {
-  clearProcessMeshCrl,
-  MeshCrl,
-  processMeshCrl,
-} from './mesh-crl.js'
+export { clearProcessMeshCrl, MeshCrl, processMeshCrl } from './mesh-crl.js'
 
 export {
   describeMeshLeaf,
@@ -109,5 +105,18 @@ export {
   type TlsTcpTransporterOptions,
   type VerifiedMeshPeer,
 } from './tls-tcp-transporter.js'
+
+export {
+  MEMBERSHIP_PATHS,
+  MEMBERSHIP_TTL_MS,
+  MembershipResponder,
+  signMembershipProof,
+  verifyMembershipAnswer,
+  type MembershipAnswer,
+  type MembershipOutcome,
+  type MembershipRefusal,
+  type MembershipResponderDeps,
+  type MembershipStatus,
+} from './mesh-membership.js'
 
 export * from './pairing/index.js'

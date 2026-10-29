@@ -34,6 +34,7 @@ import {
   AgentRegistryService,
 } from './core/agent/agent-registry.service'
 import { ClusterNodeHistoryStore } from './core/agent/cluster-node-history-store'
+import { createForgottenNodeRevoker } from './core/agent/forgotten-node-revoker'
 import {
   clearSingletonNodeOverrides,
   NodeRemovalDispatcher,
@@ -223,6 +224,13 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   // Same post-construction reason: the cluster-node lifecycle (forget, catalog
   // removal) must leave a per-node line, and `console.log` is not a log store.
   agentRegistryService.setLogger(loggingService.createLogger('ClusterNodes'))
+  // Forgetting a node revokes its mesh certificates, so an old box that is powered on again
+  // is refused instead of walking back in (D857).
+  agentRegistryService.setNodeCertificateRevoker(
+    createForgottenNodeRevoker({
+      logger: loggingService.createLogger('ClusterNodes'),
+    }),
+  )
   // A1: durable, routing-blind offline-node history — the `cluster-agent`
   // records kind, bound by the addon registry once the records provider is up
   // (unavailable until then, D902). Wired post-construction so the service's
@@ -327,7 +335,10 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
     deploy: async (nodeId, packageName, bundle) => {
       await moleculerService.broker.call(
         '$agent.deploy',
-        { addonId: packageName, source: buildHubHttpSource(bundle, await resolveClusterBaseUrl()) },
+        {
+          addonId: packageName,
+          source: buildHubHttpSource(bundle, await resolveClusterBaseUrl()),
+        },
         { nodeID: nodeId, timeout: AGENT_BACKFILL_RPC_TIMEOUT_MS },
       )
     },
@@ -409,7 +420,10 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
           expected: check.expected,
           running: check.running,
           failed: [...check.failed],
-          refused: check.refused.map((r) => ({ runnerId: r.runnerId, reason: r.reason })),
+          refused: check.refused.map((r) => ({
+            runnerId: r.runnerId,
+            reason: r.reason,
+          })),
           missing: [...check.missing],
         },
       })
@@ -472,8 +486,7 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   const registryReachability = new RegistryReachabilityTracker({
     logger: updateCheckLogger,
     getAlerts: () =>
-      addonRegistryService.getCapabilityRegistry().getSingleton('alerts') ??
-      undefined,
+      addonRegistryService.getCapabilityRegistry().getSingleton('alerts') ?? undefined,
   })
   addonPackageService.setNpmReachabilityObserver({
     reached: () => registryReachability.reached('npm'),

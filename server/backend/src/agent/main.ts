@@ -94,12 +94,15 @@ import { buildAgentAddonUpdateReport } from './agent-addon-updates.js'
 import { createAgentHubRegistration } from './agent-hub-registration.js'
 import { createAgentMeshGate } from './agent-mesh-gate.js'
 import { createLocalPairingAnnouncer } from './agent-pairing-local.js'
+import { AgentMembershipWatch } from './agent-membership-watch.js'
 import {
   forgetPairing,
   isAgentPaired,
   pairedLeafFingerprint,
   persistPairing,
+  readPairedHubIdentity,
 } from './agent-pairing-store.js'
+import { askHubMembership } from './hub-membership-client.js'
 import type { AgentMeshTls } from './agent-config.js'
 import { loadAgentConfig } from './agent-config.js'
 import {
@@ -134,7 +137,7 @@ import {
   agentRuntimeManifestEntry,
   scheduleAgentRestart,
 } from './agent-update-service.js'
-import { deriveHubUrlForExport } from './derive-hub-url.js'
+import { deriveHubUrlForExport, deriveHubUrlFromHubAddress } from './derive-hub-url.js'
 import type { InfraResolution } from './infra-boot-guard.js'
 import { assertRequiredInfraResolved } from './infra-boot-guard.js'
 import { planInfraBoot, planToResolutions } from './infra-boot-plan.js'
@@ -149,6 +152,8 @@ import { LogManager, systemHostFacts } from '@camstack/system'
 
 /** A reconnect (stop + rebuild + start) that takes longer than this is abandoned. */
 const RECONNECT_DEADLINE_MS = 90_000
+/** How often the agent re-evaluates whether to ask its hub "am I still a member?" (D857). */
+const MEMBERSHIP_TICK_MS = 15_000
 
 const agentLogManager = new LogManager(5000)
 
@@ -1175,6 +1180,43 @@ async function startAgent(configPath?: string): Promise<void> {
     advertise()
   }
   advertise()
+
+  // A hub that forgot or unpaired this agent refuses its leaf without a word. While paired but not
+  // connected, ask the hub whether the leaf is still a member; two CA-signed `revoked` answers in a
+  // row discard the pairing, anything else changes nothing (D857, D49).
+  const membershipWatch = new AgentMembershipWatch({
+    nodeId: config.nodeId,
+    isPaired: () => isAgentPaired(config.configPath),
+    isConnected: () => getHubConnectionState() === 'connected',
+    ask: async () => {
+      const identity = readPairedHubIdentity(config.configPath)
+      const hubUrl =
+        identity?.hubUrl ??
+        (identity?.hubAddress != null ? deriveHubUrlFromHubAddress(identity.hubAddress) : undefined)
+      if (identity === null || hubUrl === undefined) {
+        return { kind: 'unreachable', error: 'no hub address on record' }
+      }
+      return askHubMembership({
+        hubUrl,
+        nodeId: config.nodeId,
+        certPem: identity.certPem,
+        keyPem: identity.keyPem,
+        caCertPem: identity.caCertPem,
+      })
+    },
+    onRevoked: (reason) => forgetHubNow(`the hub revoked this agent's certificate (${reason})`),
+    log: {
+      // The console line has no tag column: the node id rides in the text as well.
+      warn: (message, extras) => consoleLogger.warn(`${message} [nodeId=${config.nodeId}]`, extras),
+      info: (message, extras) => consoleLogger.info(`${message} [nodeId=${config.nodeId}]`, extras),
+    },
+  })
+  const membershipTimer = setInterval(() => {
+    void membershipWatch
+      .tick(Date.now())
+      .catch((err: unknown) => consoleLogger.warn(`membership check failed: ${errMsg(err)}`))
+  }, MEMBERSHIP_TICK_MS)
+  membershipTimer.unref()
 
   void startAgentHttpServer(getBrokerFn, {
     log: {

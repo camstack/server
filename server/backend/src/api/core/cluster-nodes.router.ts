@@ -35,6 +35,13 @@ const ForgetNodeResultSchema = z.object({
   registryRemoved: z.boolean(),
   /** Read back AFTER the attempt: the node is still in the cluster registry. */
   stillListed: z.boolean(),
+  /** What happened to the node's mesh certificates: `registry-unavailable` / `failed` = NOT revoked. */
+  certificates: z.discriminatedUnion('outcome', [
+    z.object({ outcome: z.literal('not-attempted') }),
+    z.object({ outcome: z.literal('revoked'), serials: z.array(z.string()) }),
+    z.object({ outcome: z.literal('registry-unavailable') }),
+    z.object({ outcome: z.literal('failed'), error: z.string() }),
+  ]),
   /** One operator-grade sentence naming what happened. */
   message: z.string(),
 })

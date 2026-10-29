@@ -9,7 +9,13 @@ import { agentHttpsPaths, type InstalledPairing } from '@camstack/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 
 /** Keys that exist only while this agent is paired. */
-const PAIRED_KEYS: readonly string[] = ['meshTls', 'meshTlsPrevious', 'meshSwap', 'hubAddress']
+const PAIRED_KEYS: readonly string[] = [
+  'meshTls',
+  'meshTlsPrevious',
+  'meshSwap',
+  'hubAddress',
+  'hubUrl',
+]
 
 /** `agent.json` holds mesh material: the agent is paired. */
 export function isAgentPaired(configPath: string): boolean {
@@ -37,8 +43,40 @@ export function persistPairing(configPath: string, pairing: InstalledPairing): v
   writeJsonFile0600(configPath, {
     ...existing,
     hubAddress: pairing.hubAddress,
+    // The hub's API address the hub itself gave: where a refused agent asks "am I still a member?".
+    hubUrl: pairing.hubUrl,
     meshTls: pairing.meshTls,
   })
+}
+
+/** What a refused agent needs to ask its hub whether it is still a member (D857), or `null`. */
+export interface PairedHubIdentity {
+  readonly hubUrl: string | null
+  readonly hubAddress: string | null
+  readonly certPem: string
+  readonly keyPem: string
+  readonly caCertPem: string
+}
+
+export function readPairedHubIdentity(configPath: string): PairedHubIdentity | null {
+  const config = readJsonFile(configPath)
+  const meshTls: unknown = config['meshTls']
+  if (meshTls === null || typeof meshTls !== 'object') return null
+  const certPem: unknown = Reflect.get(meshTls, 'certPem')
+  const keyPem: unknown = Reflect.get(meshTls, 'keyPem')
+  const caCertPem: unknown = Reflect.get(meshTls, 'caCertPem')
+  if (typeof certPem !== 'string' || typeof keyPem !== 'string' || typeof caCertPem !== 'string') {
+    return null
+  }
+  const hubUrl: unknown = config['hubUrl']
+  const hubAddress: unknown = config['hubAddress']
+  return {
+    hubUrl: typeof hubUrl === 'string' && hubUrl.length > 0 ? hubUrl : null,
+    hubAddress: typeof hubAddress === 'string' && hubAddress.length > 0 ? hubAddress : null,
+    certPem,
+    keyPem,
+    caCertPem,
+  }
 }
 
 /**

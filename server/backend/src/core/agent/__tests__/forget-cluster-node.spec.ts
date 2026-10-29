@@ -67,13 +67,18 @@ function makeHarness(
   const capabilityService = {} as unknown as CapabilityService
 
   const service = new AgentRegistryService(eventBus, moleculer, capabilityService)
-  service.setAddonRegistry({ listAddons: () => [] } as unknown as AddonRegistryService)
+  service.setAddonRegistry({
+    listAddons: () => [],
+  } as unknown as AddonRegistryService)
 
   const push =
     (level: LoggedLine['level']) =>
     (
       message: string,
-      extras?: { tags?: Record<string, unknown>; meta?: Record<string, unknown> },
+      extras?: {
+        tags?: Record<string, unknown>
+        meta?: Record<string, unknown>
+      },
     ) => {
       lines.push({
         level,
@@ -167,7 +172,10 @@ describe('AgentRegistryService.forgetClusterNode', () => {
     const line = lines.find((l) => l.message.includes('forget cluster node'))
     expect(line).toBeDefined()
     expect(line?.tags).toMatchObject({ nodeId: 'hub-test' })
-    expect(line?.meta).toMatchObject({ historyRemoved: true, registryRemoved: true })
+    expect(line?.meta).toMatchObject({
+      historyRemoved: true,
+      registryRemoved: true,
+    })
   })
 
   it('emits AgentUnregistered so the topology push drops the row immediately', async () => {
@@ -214,5 +222,70 @@ describe('AgentRegistryService.forgetClusterNode', () => {
     expect(result.forgotten).toBe(true)
     const line = lines.find((l) => l.message.includes('node removal cleanup failed'))
     expect(line?.tags).toMatchObject({ nodeId: 'hub-test' })
+  })
+})
+
+describe('AgentRegistryService.forgetClusterNode - certificates (D857)', () => {
+  it('revokes every certificate of the forgotten node, with the reason "forgotten"', async () => {
+    const { service } = makeHarness([{ id: 'agent-old', available: false }])
+    const revoker = vi.fn(async () => ['0a', '0b'])
+    service.setNodeCertificateRevoker(revoker)
+
+    const result = await service.forgetClusterNode('agent-old')
+
+    expect(revoker).toHaveBeenCalledWith('agent-old', 'forgotten')
+    expect(result.certificates).toEqual({
+      outcome: 'revoked',
+      serials: ['0a', '0b'],
+    })
+    expect(result.message).toContain('2 certificate')
+  })
+
+  it('reports an unloaded certificate registry as such - never as "0 revoked" (D393)', async () => {
+    const { service, lines } = makeHarness([{ id: 'agent-old', available: false }])
+    service.setNodeCertificateRevoker(async () => null)
+
+    const result = await service.forgetClusterNode('agent-old')
+
+    expect(result.certificates).toEqual({ outcome: 'registry-unavailable' })
+    expect(result.forgotten).toBe(true)
+    expect(result.message).toContain('NOT revoked')
+    const line = lines.find((l) => l.message.includes('certificates'))
+    expect(line?.tags).toMatchObject({ nodeId: 'agent-old' })
+  })
+
+  it('reports a missing revoker wiring the same way', async () => {
+    const { service } = makeHarness([{ id: 'agent-old', available: false }])
+    const result = await service.forgetClusterNode('agent-old')
+    expect(result.certificates).toEqual({ outcome: 'registry-unavailable' })
+  })
+
+  it('reports a revoke that throws as failed, logs it with tags.nodeId, and still forgets', async () => {
+    const { service, lines } = makeHarness([{ id: 'agent-old', available: false }])
+    service.setNodeCertificateRevoker(async () => {
+      throw new Error('disk full')
+    })
+
+    const result = await service.forgetClusterNode('agent-old')
+
+    expect(result.certificates).toEqual({
+      outcome: 'failed',
+      error: 'disk full',
+    })
+    expect(result.forgotten).toBe(true)
+    expect(result.message).toContain('NOT revoked')
+    const line = lines.find((l) => l.message.includes('certificates'))
+    expect(line?.tags).toMatchObject({ nodeId: 'agent-old' })
+  })
+
+  it('does not revoke an ONLINE node (the refusal stays as it is)', async () => {
+    const { service } = makeHarness([{ id: 'agent-a', available: true }])
+    const revoker = vi.fn(async () => ['01'])
+    service.setNodeCertificateRevoker(revoker)
+
+    const result = await service.forgetClusterNode('agent-a')
+
+    expect(revoker).not.toHaveBeenCalled()
+    expect(result.certificates).toEqual({ outcome: 'not-attempted' })
   })
 })

@@ -38,12 +38,17 @@ const DEFAULT_HUB_NODE_ID = 'hub'
 
 // Moleculer's TCP class is a CJS constructor; typed loosely at this boundary.
 type TcpTransporterConstructor = new (opts?: Record<string, unknown>) => TlsTcpTransporterBase
-type TcpTransporterClass = TcpTransporterConstructor & { prototype: TlsTcpTransporterBase }
+type TcpTransporterClass = TcpTransporterConstructor & {
+  prototype: TlsTcpTransporterBase
+}
 
 const TcpTransporter = Transporters.TCP as unknown as TcpTransporterClass // TECH-DEBT: moleculer TCP ctor
 
 const TcpTransporterBase: TcpTransporterConstructor =
   TcpTransporter as unknown as TcpTransporterConstructor // TECH-DEBT: moleculer CJS TCP ctor
+
+/** At most one "revoked certificate" line per node per this long. */
+const REVOKED_PEER_LOG_INTERVAL_MS = 60_000
 
 interface TlsTcpTransporterBase {
   opts: Record<string, unknown> & {
@@ -254,6 +259,7 @@ export class TlsTcpTransporter extends TcpTransporterBase {
   private tlsServer: tls.Server | null = null
   private meshTls: MeshTlsMaterial | null
   private readonly crl: MeshCrl
+  private readonly revokedPeerLoggedAt = new Map<string, number>()
   private readonly tlsSockets = new Set<TlsClientSocket>()
   /** Node id (certificate CN) → serial of every peer that completed a mutual-TLS handshake. */
   private readonly tlsPeers = new Map<string, string>()
@@ -590,12 +596,28 @@ export class TlsTcpTransporter extends TcpTransporterBase {
     this.logger.info('Mesh clear transport re-enabled.')
   }
 
+  /**
+   * A peer presented a revoked certificate: say so, once per node per minute (a revoked box retries
+   * every few seconds), with the node id as a tag and the reason (D391).
+   */
+  private noteRevokedPeer(nodeId: string, action: string): void {
+    const at = Date.now()
+    const last = this.revokedPeerLoggedAt.get(nodeId)
+    if (last !== undefined && at - last < REVOKED_PEER_LOG_INTERVAL_MS) return
+    if (this.revokedPeerLoggedAt.size >= 256) this.revokedPeerLoggedAt.clear()
+    this.revokedPeerLoggedAt.set(nodeId, at)
+    this.logger.warn(`Mesh TLS peer presented a revoked certificate - ${action}`, {
+      tags: { nodeId },
+      meta: { reason: 'revoked' },
+    })
+  }
+
   /** Close sockets whose peer serial was just revoked. */
   dropRevokedSockets(): void {
     for (const socket of [...this.tlsSockets]) {
       const serial = socket.meshPeerSerial
       if (serial !== undefined && this.crl.isRevoked(serial)) {
-        this.logger.warn(`Closing mesh TLS socket — certificate revoked (CN=${socket.meshPeerCn})`)
+        this.noteRevokedPeer(socket.meshPeerCn ?? 'unknown', 'closing its socket')
         socket.destroy()
         this.tlsSockets.delete(socket)
       }
@@ -700,7 +722,7 @@ export class TlsTcpTransporter extends TcpTransporterBase {
         return
       }
       if (identity.serial.length > 0 && this.crl.isRevoked(identity.serial)) {
-        this.logger.warn(`Dropping mesh packet — revoked cert CN=${identity.cn}`)
+        this.noteRevokedPeer(identity.cn, 'dropping its packet')
         tlsSock.destroy()
         return
       }
@@ -764,7 +786,7 @@ export class TlsTcpTransporter extends TcpTransporterBase {
       return
     }
     if (this.crl.isRevoked(identity.serial)) {
-      this.logger.warn(`Mesh TLS client rejected — revoked CN=${identity.cn}`)
+      this.noteRevokedPeer(identity.cn, 'rejecting its connection')
       socket.destroy()
       return
     }

@@ -49,6 +49,7 @@ import { applyWSSHandler } from '@trpc/server/adapters/ws'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { WebSocketServer } from 'ws'
 import { registerAddonUploadRoute } from './api/addon-upload'
+import { registerMeshMembershipRoutes } from './api/mesh-membership-routes'
 import { registerAuthWhoamiRoute } from './api/auth-whoami'
 import { registerBackupDownloadRoute } from './api/backup-download.js'
 import { buildSettingsStoreGateway } from './api/core/cap-providers'
@@ -571,6 +572,10 @@ async function bootstrap() {
     // token-still-valid without consuming a real cap.
     await registerAuthWhoamiRoute(fastify, uploadAuthService, uploadAddonRegistry)
     console.log('[bootstrap] Auth whoami route registered at GET /api/auth/whoami')
+    // A refused (forgotten / unpaired) agent asks here whether it is still a member (D857).
+    registerMeshMembershipRoutes(fastify, {
+      logger: app.get(LoggingService).createLogger('mesh-membership'),
+    })
   } catch (err) {
     console.warn('[bootstrap] Failed to register addon upload route:', err)
   }
@@ -881,7 +886,10 @@ async function bootstrap() {
     console.log(`[bootstrap] Health routes registered (hub v${hubVersion})`)
     registerAdaptiveProbeRoute(fastify, {
       verifyToken: (token) => app.get(AuthService).verifyToken(token),
-      limiter: createRateLimiter({ windowMs: 60_000, max: ADAPTIVE_PROBE_PER_IP_PER_MINUTE }),
+      limiter: createRateLimiter({
+        windowMs: 60_000,
+        max: ADAPTIVE_PROBE_PER_IP_PER_MINUTE,
+      }),
       network: authNetwork,
     })
   } catch (err) {
@@ -1166,7 +1174,9 @@ async function bootstrap() {
         return collectSecondFactors(
           {
             ...(um && typeof um.getTotpStatus === 'function'
-              ? { getTotpStatus: (input: { userId: string }) => um.getTotpStatus(input) }
+              ? {
+                  getTotpStatus: (input: { userId: string }) => um.getTotpStatus(input),
+                }
               : {}),
             passkeyProvider: () =>
               resolvePasskeyProvider(capabilityRegistry, app.get(MoleculerService)),
@@ -1303,7 +1313,12 @@ async function bootstrap() {
           const auth = await authorizeAddonBearer({
             bearer: token,
             verifier: addonVerifier,
-            target: { addonId, method, access, share: dpMatch.endpoint.share ?? [] },
+            target: {
+              addonId,
+              method,
+              access,
+              share: dpMatch.endpoint.share ?? [],
+            },
             facts: requestFacts(request),
             logger: addonGateLogger,
           })
@@ -1834,7 +1849,9 @@ async function bootstrap() {
 
   const logger = app.get(LoggingService).createLogger('System')
   const protocol = tlsOptions ? 'https' : 'http'
-  logger.info('CamStack server listening', { meta: { protocol, host, port, trpcRegistered } })
+  logger.info('CamStack server listening', {
+    meta: { protocol, host, port, trpcRegistered },
+  })
 
   // Certificate actions (Network → Local access) swap the served certificate
   // in place through this registration — without it an upload sat on disk
@@ -1863,7 +1880,9 @@ async function bootstrap() {
     if (lanHttp.listening) {
       logger.info('LAN HTTP listening', { meta: { port: lanHttp.port } })
     } else if (lanHttp.error) {
-      logger.warn('LAN HTTP not bound', { meta: { error: lanHttp.error, port: lanHttp.port } })
+      logger.warn('LAN HTTP not bound', {
+        meta: { error: lanHttp.error, port: lanHttp.port },
+      })
     }
   } catch (err: unknown) {
     logger.warn('LAN HTTP bind failed', {
@@ -1975,7 +1994,9 @@ function readHubVersion(): string {
   try {
     const pkgPath = path.resolve(__dirname, '..', 'package.json')
     if (fs.existsSync(pkgPath)) {
-      const raw = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as { version?: string }
+      const raw = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as {
+        version?: string
+      }
       if (typeof raw.version === 'string') return raw.version
     }
   } catch {

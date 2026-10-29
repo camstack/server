@@ -42,6 +42,38 @@ import type {
 } from './cluster-node-history-store'
 import { toNodeDirectory } from './node-directory'
 
+/** What forgetting a node did to its mesh certificates. */
+export type NodeCertificateRevocation =
+  | { readonly outcome: 'not-attempted' }
+  | { readonly outcome: 'revoked'; readonly serials: string[] }
+  | { readonly outcome: 'registry-unavailable' }
+  | { readonly outcome: 'failed'; readonly error: string }
+
+/**
+ * Revokes every certificate issued to `nodeId` and cuts its sockets. Resolves to the serials put
+ * on the revocation list, or `null` when the certificate registry is not loaded.
+ */
+export type NodeCertificateRevoker = (
+  nodeId: string,
+  reason: string,
+) => Promise<readonly string[] | null>
+
+/** The reason recorded on a certificate revoked because its node was forgotten. */
+export const FORGOTTEN_NODE_REVOCATION_REASON = 'forgotten'
+
+function describeRevocation(revocation: NodeCertificateRevocation): string {
+  switch (revocation.outcome) {
+    case 'not-attempted':
+      return ''
+    case 'revoked':
+      return ` ${revocation.serials.length} certificate(s) revoked - the node must be paired again.`
+    case 'registry-unavailable':
+      return ' Its certificates were NOT revoked (the certificate registry is not loaded) - it can still reconnect.'
+    case 'failed':
+      return ` Its certificates were NOT revoked (${revocation.error}) - it can still reconnect.`
+  }
+}
+
 /**
  * What "Forget node" removed — the honest answer the operator's button needs.
  *
@@ -51,6 +83,12 @@ import { toNodeDirectory } from './node-directory'
  * surviving instead of being asserted away.
  */
 export interface ForgetClusterNodeResult {
+  /**
+   * What happened to the node's mesh certificates (D857). A forgotten node whose leaf stays
+   * valid walks back in on its next boot, so this is reported separately: `registry-unavailable`
+   * and `failed` mean the certificates were NOT revoked (never "0 revoked", D393).
+   */
+  readonly certificates: NodeCertificateRevocation
   /** True when at least one source of the node's topology row was purged. */
   readonly forgotten: boolean
   /** The durable history row existed and is gone. */
@@ -205,7 +243,11 @@ export function toNodeLiveness(nodes: readonly RegistryNodeSnapshot[]): readonly
       // (seen live 2026-07-16 after agent churn): guard it or every consumer of
       // this projection 500s on `undefined.includes`.
       .filter((node) => typeof node.id === 'string' && !node.id.includes('/'))
-      .map((node) => ({ id: node.id, isHub: node.id === 'hub', isOnline: node.available }))
+      .map((node) => ({
+        id: node.id,
+        isHub: node.id === 'hub',
+        isOnline: node.available,
+      }))
   )
 }
 
@@ -340,6 +382,47 @@ export class AgentRegistryService {
 
   private nodeRemovalCleanup: ((nodeId: string, removedAt: number) => Promise<void>) | null = null
 
+  /**
+   * Wire the revocation of a forgotten node's mesh certificates (D857). Injected so this service
+   * never imports the pairing router; unwired reads as `registry-unavailable`.
+   */
+  setNodeCertificateRevoker(revoker: NodeCertificateRevoker): void {
+    this.nodeCertificateRevoker = revoker
+  }
+
+  private nodeCertificateRevoker: NodeCertificateRevoker | null = null
+
+  private async revokeForgottenNodeCertificates(
+    nodeId: string,
+  ): Promise<NodeCertificateRevocation> {
+    let revocation: NodeCertificateRevocation
+    try {
+      const serials =
+        (await this.nodeCertificateRevoker?.(nodeId, FORGOTTEN_NODE_REVOCATION_REASON)) ?? null
+      revocation =
+        serials === null
+          ? { outcome: 'registry-unavailable' }
+          : { outcome: 'revoked', serials: [...serials] }
+    } catch (err: unknown) {
+      revocation = {
+        outcome: 'failed',
+        error: err instanceof Error ? err.message : String(err),
+      }
+    }
+    if (revocation.outcome === 'revoked') {
+      this.logger?.info('node forgotten: certificates revoked', {
+        tags: { nodeId },
+        meta: { serials: revocation.serials },
+      })
+    } else {
+      this.logger?.warn('node forgotten: certificates were NOT revoked', {
+        tags: { nodeId },
+        meta: { outcome: revocation.outcome },
+      })
+    }
+    return revocation
+  }
+
   /** Wire the durable offline-node history store (A1). */
   setClusterNodeHistoryStore(store: ClusterNodeHistoryStore): void {
     this.historyStore = store
@@ -401,7 +484,12 @@ export class AgentRegistryService {
         timestamp: new Date(),
         source: { type: 'core', id: 'agent-registry' },
         category: EventCategory.AddonUninstalled,
-        data: { addonId, agentId: nodeId, packageName, reason: 'operator uninstall' },
+        data: {
+          addonId,
+          agentId: nodeId,
+          packageName,
+          reason: 'operator uninstall',
+        },
       })
     }
   }
@@ -469,9 +557,13 @@ export class AgentRegistryService {
         historyRemoved: false,
         registryRemoved: false,
         stillListed: true,
+        certificates: { outcome: 'not-attempted' },
         message,
       }
     }
+
+    // First: a forgotten node whose leaf stays valid walks back in on its next boot (D857).
+    const certificates = await this.revokeForgottenNodeCertificates(nodeId)
 
     const historyOutcome = this.historyStore
       ? await this.historyStore.forget(nodeId)
@@ -495,7 +587,9 @@ export class AgentRegistryService {
 
     const historyRemoved = historyOutcome === 'removed'
     const stillListed = this.isNodeKnown(nodeId)
-    const message = describeForgetOutcome(nodeId, historyOutcome, registryRemoved, stillListed)
+    const message =
+      describeForgetOutcome(nodeId, historyOutcome, registryRemoved, stillListed) +
+      describeRevocation(certificates)
     this.logger?.info('forget cluster node', {
       tags: { nodeId },
       meta: { historyOutcome, historyRemoved, registryRemoved, stillListed },
@@ -528,6 +622,7 @@ export class AgentRegistryService {
       historyRemoved,
       registryRemoved,
       stillListed,
+      certificates,
       message,
     }
   }
@@ -603,7 +698,10 @@ export class AgentRegistryService {
           timestamp: new Date(),
           source: { type: 'core', id: 'agent-registry' },
           category: EventCategory.AgentOnline,
-          data: { agentId: node.id, ...(nodeName !== undefined ? { nodeName } : {}) },
+          data: {
+            agentId: node.id,
+            ...(nodeName !== undefined ? { nodeName } : {}),
+          },
         })
       } else {
         this.eventBus.emit({
@@ -980,7 +1078,9 @@ export class AgentRegistryService {
         'back-fill: fresh node (no prior declared roster), plan from the hub any-node set',
         {
           tags: { nodeId: agentId },
-          meta: { planned: planned.targets.map((t) => `${t.name}@${t.version}`) },
+          meta: {
+            planned: planned.targets.map((t) => `${t.name}@${t.version}`),
+          },
         },
       )
       for (const skip of planned.skipped) {

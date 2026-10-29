@@ -171,6 +171,10 @@ export {
   issueMeshLeafForNode,
   issueMeshLeafFromCsr,
   loadMeshCa,
+  MEMBERSHIP_PATHS,
+  MembershipResponder,
+  signMembershipProof,
+  verifyMembershipAnswer,
   MESH_CA_FIELD,
   MESH_CA_KEY_REF,
   MESH_CA_SETTINGS_KEY,
@@ -184,6 +188,9 @@ export {
   MESH_TLS_PORT_HELLO_FIELD,
 } from './moleculer/mesh-mtls/index.js'
 export type {
+  MembershipAnswer,
+  MembershipOutcome,
+  MembershipStatus,
   MeshCertificateRecord,
   MeshLeafDescription,
   MeshLog,

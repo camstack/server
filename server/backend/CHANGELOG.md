@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Forgetting a node now clears its per-node capability overrides and tells every node-removal-hook owner
+- Forgetting an offline node now revokes its mesh certificates, so it can no longer rejoin by itself; a revoked agent learns it was removed and resets to unpaired.
 
 ## [1.2.687] - 2026-10-29
 

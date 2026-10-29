@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - deviceManager.updateConfig now refuses a key the device config does not own instead of answering success without writing
 - Forgetting a cluster node records a durable tombstone so node-scoped data is cleaned up even if an owner was down
+- A revoked mesh peer is refused and logged once per window, and the hub answers a signed membership query so a forgotten agent can reset itself.
 
 ## [1.2.516] - 2026-10-29
 

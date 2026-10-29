@@ -176,7 +176,10 @@ async function runRenewal(
   }
   log.info('Mesh renewal: starting', {
     tags,
-    meta: { currentSerial: previous?.serial ?? null, connected: live !== undefined },
+    meta: {
+      currentSerial: previous?.serial ?? null,
+      connected: live !== undefined,
+    },
   })
 
   const fail = (
@@ -184,25 +187,35 @@ async function runRenewal(
     reason: string,
     keptPreviousLeaf: boolean,
   ): RenewMeshResult => {
-    log.error('Mesh renewal: failed', { tags, meta: { stage, reason, keptPreviousLeaf } })
+    log.error('Mesh renewal: failed', {
+      tags,
+      meta: { stage, reason, keptPreviousLeaf },
+    })
     return { ok: false, stage, reason, keptPreviousLeaf }
   }
 
   let csrPem: string
   try {
     csrPem = (await deps.client.prepareMeshRenewal()).csrPem
-    log.info('Mesh renewal: the node generated a new key and sent its CSR', { tags })
+    log.info('Mesh renewal: the node generated a new key and sent its CSR', {
+      tags,
+    })
   } catch (error: unknown) {
     return fail('prepare', message(error), true)
   }
 
   let issued: { certPem: string; serialNumber: string; notAfter: Date }
   try {
-    issued = await issueMeshLeafFromCsr(deps.ca, csrPem, { expectedNodeId: nodeId })
+    issued = await issueMeshLeafFromCsr(deps.ca, csrPem, {
+      expectedNodeId: nodeId,
+    })
     await deps.registry.recordIssued(nodeId, issued.certPem, 'renewal')
     log.info('Mesh renewal: new leaf signed and recorded', {
       tags,
-      meta: { serial: issued.serialNumber, notAfter: issued.notAfter.toISOString() },
+      meta: {
+        serial: issued.serialNumber,
+        notAfter: issued.notAfter.toISOString(),
+      },
     })
   } catch (error: unknown) {
     return fail('issue', message(error), true)
@@ -279,7 +292,9 @@ async function runRenewal(
       true,
     )
   }
-  log.info('Mesh renewal: the node registered presenting the new leaf', { tags })
+  log.info('Mesh renewal: the node registered presenting the new leaf', {
+    tags,
+  })
 
   // The provider may not be routable for an instant after registering: retry to the deadline.
   let confirmError = 'the node did not confirm the new leaf'
@@ -296,7 +311,10 @@ async function runRenewal(
       confirmError = 'the node did not confirm the new leaf'
     } catch (error: unknown) {
       confirmError = message(error)
-      log.warn('Mesh renewal: confirm not accepted yet', { tags, meta: { error: confirmError } })
+      log.warn('Mesh renewal: confirm not accepted yet', {
+        tags,
+        meta: { error: confirmError },
+      })
     }
     if (now() >= deadline) break
     await sleep(confirmRetryMs)
@@ -319,7 +337,10 @@ async function runRenewal(
   }
   log.info('Mesh renewal: done', {
     tags,
-    meta: { newSerial: newLeaf.serial, notAfter: new Date(newLeaf.notAfter).toISOString() },
+    meta: {
+      newSerial: newLeaf.serial,
+      notAfter: new Date(newLeaf.notAfter).toISOString(),
+    },
   })
   return {
     ok: true,
@@ -350,6 +371,8 @@ export async function revokeMeshCertificate(deps: {
   readonly crl: MeshCrl
   readonly peers: MeshPeers
   readonly log: MeshLog
+  /** Recorded on every certificate revoked (default `revoked-by-operator`). */
+  readonly reason?: string
 }): Promise<RevokeMeshResult> {
   const { nodeId, log } = deps
   const tags = { nodeId }
@@ -366,7 +389,11 @@ export async function revokeMeshCertificate(deps: {
   }
   // EVERY leaf of the node - live, observed, renewal and set-aside - goes on the CRL.
   const serials = [
-    ...(await deps.registry.revokeAllForNode(nodeId, 'revoked-by-operator', deps.crl)),
+    ...(await deps.registry.revokeAllForNode(
+      nodeId,
+      deps.reason ?? 'revoked-by-operator',
+      deps.crl,
+    )),
   ]
   const disconnected = deps.peers.dropPeer(nodeId)
   log.warn('Mesh certificate revoked and the node disconnected', {
