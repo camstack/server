@@ -8,7 +8,7 @@ import { PetFeederInlineControl, PetFeederHeroCard } from '../pet-feeder-panel'
 function makeSlice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
   return {
     foodLevel: 1,
-    bowlFood: 120,
+    bowlFood: 0.12,
     eating: false,
     supportsMarkRefilled: false,
     food1: null,
@@ -180,7 +180,7 @@ describe('PetFeederHeroCard', () => {
   })
 
   it('shows the bowl amount, not the tank level', () => {
-    mockResult = { ...mockResult, slice: makeSlice({ foodLevel: 1, bowlFood: 37 }) }
+    mockResult = { ...mockResult, slice: makeSlice({ foodLevel: 1, bowlFood: 0.037 }) }
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('37')).toBeTruthy()
   })

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { CONTROL_CAP_NAMES } from '../types'
 
 describe('CONTROL_CAP_NAMES', () => {
-  it('lists exactly the ten control caps', () => {
+  it('lists exactly the eleven control caps', () => {
     expect([...CONTROL_CAP_NAMES].toSorted()).toEqual(
       [
         'brightness',
@@ -14,6 +14,7 @@ describe('CONTROL_CAP_NAMES', () => {
         'lock-control',
         'media-player',
         'pet-feeder',
+        'pet-fountain',
         'switch',
       ].toSorted(),
     )
