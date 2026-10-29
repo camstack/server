@@ -886,7 +886,7 @@ export class PipelineSettingsStore {
     // the node it may run on has a build (D650) → dropped and reported here,
     // naming what was asked: the elected device and the jump roster.
     if (skipped.length > 0) {
-      this.deps.logger.warn('pipeline steps gated on but not provisioned on this node — skipped', {
+      this.deps.logger.warn(`pipeline steps gated on but not provisioned on this node — skipped (node ${agentNodeId}, device ${deviceId})`, {
         tags: { deviceId, nodeId: agentNodeId },
         meta: {
           skipped: skipped.map((s) => `${s.addonId}:${s.reason}`).join(','),

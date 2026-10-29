@@ -107,6 +107,9 @@ describe('resolveAttachPipeline (D650)', () => {
       w.startsWith('pipeline steps gated on but not provisioned on this node — skipped'),
     )
     expect(skip).toContain('segmentation:root-not-runnable-on-elected-device')
+    // The printed line itself names the node and the device (tags alone are not rendered).
+    expect(skip).toContain(`node ${NODE}`)
+    expect(skip).toContain(`device ${DEVICE_ID}`)
   })
 
   it('refuses ONLY for the camera root: an elected device with no object-detection build', async () => {

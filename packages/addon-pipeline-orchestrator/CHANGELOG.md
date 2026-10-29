@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The pipeline-steps-not-provisioned warning now names the node and device in the log line
+
 ## [1.2.638] - 2026-10-28
 
 ### Changed
