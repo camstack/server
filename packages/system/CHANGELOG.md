@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The Actions list answers at once when no addon provides actions, instead of waiting about 30 seconds.
+
 ### Changed
 
 - deviceManager.updateConfig now refuses a key the device config does not own instead of answering success without writing

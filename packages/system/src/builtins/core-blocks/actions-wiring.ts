@@ -39,6 +39,8 @@ export interface ActionsRuntimeDeps {
   readonly logger: IScopedLogger
 }
 
+const ACTION_SOURCE_CAP = 'action-source'
+
 /** `ctx.api` as the `action-source` providers see it: the generated, typed client. */
 export function sourcesOver(api: () => AddonApi | undefined): ActionSources {
   const need = (): AddonApi => {
@@ -50,6 +52,13 @@ export function sourcesOver(api: () => AddonApi | undefined): ActionSources {
   }
   return {
     list: async (): Promise<ActionEntry[]> => {
+      // `action-source` is a COLLECTION: no provider means NONE, answered at
+      // once. The in-process `ctx.api` link waits for a provider to appear
+      // (up to the 30 s discovery deadline), so asking an empty collection
+      // would stall the whole list. A registry that does not answer (no
+      // entry) is not "absent": ask as before.
+      const info = await need().capabilities.getCapability.query({ name: ACTION_SOURCE_CAP })
+      if (info !== null && info.providers.length === 0) return []
       const entries = await need().actionSource.listActions.query({})
       return [...entries]
     },
