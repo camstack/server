@@ -206,23 +206,23 @@ describe('groupTemplateVars', () => {
  * installed viewer can still parse it. The admin restores them from its build.
  */
 describe('restoreHeldBackKinds', () => {
-  const nodeRestartRule: NcTemplateVarContext = {
+  const alertRule: NcTemplateVarContext = {
     family: 'rule',
     field: 'body',
     kind: 'system',
-    systemEventKinds: ['node-restarting'],
+    systemEventKinds: ['alert-critical'],
   }
 
   it('the served catalog alone offers a held-back kind nothing of its own', () => {
-    const names = varsForContext(servedTemplateVars(), nodeRestartRule).map((d) => d.name)
-    expect(names).not.toContain('node')
+    const names = varsForContext(servedTemplateVars(), alertRule).map((d) => d.name)
+    expect(names).not.toContain('severity')
   })
 
-  it('restored, it offers the node variable', () => {
-    const names = varsForContext(restoreHeldBackKinds(servedTemplateVars()), nodeRestartRule).map(
+  it('restored, it offers the severity variable', () => {
+    const names = varsForContext(restoreHeldBackKinds(servedTemplateVars()), alertRule).map(
       (d) => d.name,
     )
-    expect(names).toEqual(expect.arrayContaining(['node', 'rule', 'eventKind']))
+    expect(names).toEqual(expect.arrayContaining(['severity', 'rule', 'eventKind']))
   })
 
   it('restores ONLY held-back kinds, and only where this build declares them', () => {
