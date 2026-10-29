@@ -22,6 +22,7 @@ export type AlexaDisplayCategory =
   | 'EXTERIOR_BLIND'
   | 'THERMOSTAT'
   | 'AIR_CONDITIONER'
+  | 'SCENE_TRIGGER'
   | 'OTHER'
 
 export interface CameraStreamConfiguration {
@@ -92,6 +93,8 @@ export interface AlexaCapability {
   readonly version: string
   readonly instance?: string
   readonly proactivelyReported?: boolean
+  /** Alexa.SceneController: a scene trigger cannot be deactivated. */
+  readonly supportsDeactivation?: boolean
   readonly retrievable?: boolean
   readonly cameraStreamConfigurations?: readonly CameraStreamConfiguration[]
   readonly configuration?: Record<string, unknown>

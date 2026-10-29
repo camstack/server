@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Actions can be exported to Alexa as scenes: saying the scene name runs the action (admin links only).
+
 ## [1.2.174] - 2026-10-29
 
 ### Changed

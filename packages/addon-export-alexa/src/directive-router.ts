@@ -4,7 +4,7 @@
  * `header.namespace + name`, and falls back to the stub responder for
  * namespaces we haven't implemented yet.
  */
-import type { MethodAccess, TokenScope } from '@camstack/types'
+import type { ExportEntityApi, IScopedLogger, MethodAccess, TokenScope } from '@camstack/types'
 import { scopesAllowDeviceCap } from '@camstack/types'
 import { type AlexaPrincipal, endpointAccessTarget } from './access/access-gate.js'
 import { readConnectivity } from './connectivity.js'
@@ -14,6 +14,11 @@ import {
   genericDirectives,
   resolveGenericDirective,
 } from './endpoints/adapters/index.js'
+import {
+  type ActionSceneExports,
+  handleActionSceneDirective,
+  parseActionEndpointId,
+} from './action-scenes.js'
 import { parseCameraEndpointId } from './handlers/endpoint-id.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
 import { withholdInvalidEndpoints } from './endpoints/validate-endpoint.js'
@@ -124,6 +129,13 @@ export function requireDeviceScope(scopes: readonly TokenScope[], access: Method
 
 // ── Router types ─────────────────────────────────────────────────────
 
+/** What the router needs to answer a directive for an exported action. */
+export interface ActionSceneRouting {
+  readonly exports: ActionSceneExports
+  readonly api: ExportEntityApi
+  readonly logger: IScopedLogger
+}
+
 export interface DirectiveRouterDeps {
   readonly discovery: DiscoveryContext
   readonly cameraStream: CameraStreamContext
@@ -146,6 +158,8 @@ export interface DirectiveRouterDeps {
   readonly vision: VisionContext
   /** S1 (D767): the exposed set + the linking user's live grants. */
   readonly access: EndpointAccessDeps
+  /** D967: exported actions answered as scenes. Absent = none exported. */
+  readonly actionScenes?: ActionSceneRouting
   /**
    * Called with the endpoints a Discover answered, for the linking user. The
    * addon reports their initial connectivity from here (D770).
@@ -300,6 +314,8 @@ async function dispatchParsedDirective(
     'Alexa.DataController/DeleteData': 'view',
     'Alexa.LockController/Lock': 'create',
     'Alexa.LockController/Unlock': 'create',
+    // D967: running an action is an act.
+    'Alexa.SceneController/Activate': 'create',
     // Every directive an adapter handles actuates a device (D869).
     ...Object.fromEntries(GENERIC_DIRECTIVE_KEYS.map((k): [string, MethodAccess] => [k, 'create'])),
   }
@@ -347,6 +363,21 @@ async function dispatchParsedDirective(
         }
       }
       principal = lookup.principal
+      // D967: an action is not a device — it has no registry chain for the
+      // access gate to walk, so it is answered (admin only) before the gate.
+      if (
+        endpoint !== undefined &&
+        deps.actionScenes !== undefined &&
+        parseActionEndpointId(endpoint.endpointId) !== null
+      ) {
+        const scenes = deps.actionScenes
+        const body = await handleActionSceneDirective(header, endpoint, principal, {
+          api: scenes.api,
+          logger: scenes.logger,
+          isExposed: (actionId) => scenes.exports.isExposed(actionId),
+        })
+        return { status: 200, body }
+      }
       if (key !== 'Alexa.Discovery/Discover') {
         if (endpoint === undefined) {
           return {
@@ -421,11 +452,15 @@ async function dispatchParsedDirective(
               },
             })
           }
-          const valid = withholdInvalidEndpoints(filtered.kept, (message, violations) => {
-            deps.discovery.logger.warn(message, {
-              meta: { userId: callerIdentity.userId, violations },
-            })
-          })
+          const scenes = deps.actionScenes?.exports.endpointsFor(who) ?? []
+          const valid = withholdInvalidEndpoints(
+            [...filtered.kept, ...scenes],
+            (message, violations) => {
+              deps.discovery.logger.warn(message, {
+                meta: { userId: callerIdentity.userId, violations },
+              })
+            },
+          )
           deps.afterDiscovery(callerIdentity.userId, valid)
           return valid
         },

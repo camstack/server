@@ -41,6 +41,7 @@ export const ALLOWED_INTERFACE_VERSIONS: Readonly<Record<string, string>> = {
   'Alexa.SmartVision.SnapshotProvider': '1.1',
   'Alexa.SmartVision.ObjectDetectionSensor': '1.0',
   'Alexa.DataController': '1.0',
+  'Alexa.SceneController': '3',
 }
 
 /** `imageNetClass` values Amazon accepts (alexa-smartvision-objectdetectionsensor). */
@@ -87,6 +88,7 @@ const DISPLAY_CATEGORIES = new Set([
   'DOOR',
   'GATE',
   'GARAGE_DOOR',
+  'SCENE_TRIGGER',
   'OTHER',
 ])
 

@@ -128,6 +128,7 @@ import { StateChangeReporter } from './state-reports/state-change-reporter.js'
 import { StateReconciler } from './state-reports/state-reconciler.js'
 import { PUBLIC_SKILL_ID } from './public-skill.js'
 import { type ResyncResult, SyncEngine } from './sync-engine.js'
+import { type ActionSceneEntry, ActionSceneExports } from './action-scenes.js'
 import {
   type ExportDeviceSettings,
   type ExposedDeviceEntry,
@@ -216,6 +217,9 @@ export interface AlexaSettings {
   /** Operator-curated list of devices to surface to Alexa. Hidden state
    *  — written via the `device-export` cap, NOT operator-editable. */
   readonly exposed: readonly ExposedDeviceEntry[]
+  /** Actions exported as Alexa scenes (D967). Hidden state, written through
+   *  `exposeEntity` / `unexposeEntity` only. */
+  readonly exposedActions: readonly ActionSceneEntry[]
   /** Alexa users that have completed account-linking (cloud-mode
    *  `/oauth/lwa-tokens` callback). Hidden state. */
   readonly linkedAccounts: readonly LinkedAccount[]
@@ -318,6 +322,7 @@ const DEFAULT_CONFIG: AlexaSettings = {
   advertisedBrokerUrl: '',
   region: 'NA',
   exposed: [],
+  exposedActions: [],
   linkedAccounts: [],
   tokens: [],
   exportedEndpoints: {},
@@ -405,6 +410,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   private lwaGateway: LwaEventGateway | null = null
   private egressPrewarm: AlexaEgressPrewarm | null = null
   private syncEngine: SyncEngine | null = null
+  /** D967: exported actions, answered as Alexa scenes. */
+  private actionScenes: ActionSceneExports | null = null
   /** S1 (D767): the linking user's live grants. Built in `onInitialize`, the
    *  first point `ctx` exists. */
   private accessGateRef: AlexaAccessGate | null = null
@@ -506,6 +513,40 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       post: (opts) => this.requireGateway().postObjectDetection(opts),
     })
 
+    this.actionScenes = new ActionSceneExports(
+      {
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        linkedUserIds: () => this.config.linkedAccounts.map((a) => a.userId),
+        isAdminUser: async (userId) => {
+          const lookup = await this.accessGate.principal(userId)
+          return lookup.kind === 'found' && lookup.principal.kind === 'admin'
+        },
+        canPush: () => this.config.tokens.length > 0,
+        postAddOrUpdate: (userId, endpoints) =>
+          this.requireGateway().postReport(
+            userId,
+            (accessToken) => buildAddOrUpdateReportPayload(userId, endpoints, accessToken),
+            `action scenes add/update (${endpoints.length})`,
+          ),
+        postDelete: (userId, ids) =>
+          this.requireGateway().postReport(
+            userId,
+            (accessToken) => buildDeleteReportPayload(userId, ids, accessToken),
+            `action scenes delete (${ids.length})`,
+          ),
+        persist: (entries) => this.updateGlobalSettings({ exposedActions: [...entries] }),
+      },
+      this.config.exposedActions ?? [],
+    )
+    const actionScenes = this.actionScenes
+    // The operator may have deleted an action while this addon was down.
+    void actionScenes.reconcile().catch((err: unknown) => {
+      this.ctx.logger.warn('export-alexa: action scene reconcile at boot failed', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    })
+
     const deviceExportProvider: IDeviceExportProvider = {
       getStatus: async () => ({
         linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
@@ -519,6 +560,26 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         })),
       exposeDevice: async ({ deviceId }) => this.exposeDevice(deviceId),
       unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
+      listSupportedEntityKinds: async () => ['device', 'action'],
+      listExposedEntities: async () => {
+        await actionScenes.reconcile()
+        return [
+          ...this.config.exposed.map((e) => ({
+            entity: { kind: 'device' as const, deviceId: String(e.deviceId) },
+          })),
+          ...actionScenes.list(),
+        ]
+      },
+      exposeEntity: async ({ entity }) => {
+        if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
+        if (entity.kind === 'action') return actionScenes.expose(entity.actionId)
+        throw new Error('export-alexa: a notification target cannot be exported to Alexa')
+      },
+      unexposeEntity: async ({ entity }) => {
+        if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
+        if (entity.kind === 'action') return actionScenes.unexpose(entity.actionId)
+        throw new Error('export-alexa: a notification target cannot be exported to Alexa')
+      },
       getDeviceSettingsContribution: (input) =>
         // `device-export` types deviceId as a string; our exposed entries key
         // on numbers — coerce so `findEntry`'s strict === matches (otherwise an
@@ -610,6 +671,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         },
         vision: this.vision.context(),
         access: this.endpointAccess,
+        actionScenes: { exports: actionScenes, api: this.ctx.api, logger: this.ctx.logger },
         afterDiscovery: (userId, endpoints) =>
           this.requireGateway().scheduleInitialConnectivity(userId, endpoints),
       },
@@ -904,6 +966,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       this.lwaGateway = null
     }
     this.syncEngine = null
+    this.actionScenes = null
   }
 
   // ── Provider methods ────────────────────────────────────────────
