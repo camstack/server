@@ -34,11 +34,17 @@ import {
   Volume2,
   WifiOff,
 } from 'lucide-react'
-import type { PetFeederStatus } from '@camstack/types'
-import { PET_FEEDER_MANUAL_FEED_MAX, PET_FEEDER_MANUAL_FEED_MIN } from '@camstack/types'
+import type { DeviceDisplayOverride, PetFeederStatus } from '@camstack/types'
+import {
+  PET_FEEDER_MANUAL_FEED_MAX,
+  PET_FEEDER_MANUAL_FEED_MIN,
+  tryConvertUnit,
+} from '@camstack/types'
+import { useUnitPreferences } from '../../contexts/unit-preferences.js'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
 import { cn } from '../../lib/cn.js'
+import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
 import type { ControlPanelProps } from './types.js'
 
 /** Default one-tap manual-feed portion (grams) — the low end of the
@@ -57,9 +63,46 @@ const HOLD_INTERVAL_MS = 70
 const HOLD_ACCEL_AFTER = 8
 const HOLD_FAST_STEP = 5
 
-/** The slice stores the bowl as a mass in kilograms (D944); the card draws grams. */
-function bowlGrams(kilograms: number | null): number | null {
-  return kilograms === null ? null : Math.round(kilograms * 1000)
+/** Small bowl masses read in grams (ounces under imperial), never "0.022 kg":
+ *  the shared resolver keeps mass in kilograms, so the panel picks the
+ *  display unit and the resolver converts and labels it. */
+const BOWL_UNIT = { metric: 'g', imperial: 'oz' } as const
+const BOWL_PRECISION = { metric: 0, imperial: 1 } as const
+
+export interface BowlReading {
+  /** Number text, `—` when the bowl is unknown. */
+  readonly text: string
+  /** Unit symbol, `''` when the bowl is unknown. */
+  readonly unit: string
+  /** Number and unit as one string, for labels. */
+  readonly label: string
+  /** The bowl in grams, for the gauge fill; null when unknown. */
+  readonly grams: number | null
+}
+
+/** The slice stores the bowl as a mass in kilograms (D944). */
+export function resolveBowlReading(
+  kilograms: number | null,
+  system: 'metric' | 'imperial',
+): BowlReading {
+  if (kilograms === null) return { text: '—', unit: '', label: '—', grams: null }
+  const display: DeviceDisplayOverride = {
+    perCap: { 'pet-feeder': { unit: BOWL_UNIT[system], precision: BOWL_PRECISION[system] } },
+  }
+  const resolved = resolveSensorDisplay({
+    display,
+    capName: 'pet-feeder',
+    quantity: 'mass',
+    preference: system,
+  })
+  const shown = resolved.format(kilograms)
+  const grams = tryConvertUnit(kilograms, 'kg', 'g')
+  return {
+    text: shown.text,
+    unit: shown.unit,
+    label: `${shown.text} ${shown.unit}`,
+    grams: grams === undefined ? null : Math.round(grams),
+  }
 }
 
 function clampPortion(grams: number): number {
@@ -99,6 +142,7 @@ export function PetFeederPanel({
   const [portion, setPortion] = usePortion(display?.lastFeedGrams ?? null)
   const [hopper1, setHopper1] = usePortion(display?.lastFeedHopper1 ?? null)
   const [hopper2, setHopper2] = usePortion(display?.lastFeedHopper2 ?? null)
+  const bowl = resolveBowlReading(display?.bowlFood ?? null, useUnitPreferences().system)
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -145,7 +189,7 @@ export function PetFeederPanel({
           )}
         >
           <UtensilsCrossed className="h-3.5 w-3.5" aria-hidden />
-          {bowlGrams(display.bowlFood) ?? '—'}
+          {bowl.label}
         </span>
         {onMains && (
           <span className="inline-flex items-center gap-0.5 text-xs text-foreground-subtle">
@@ -195,7 +239,8 @@ export function PetFeederPanel({
       {/* ── Hero: food-bowl fill gauge + battery / feeding ─────── */}
       <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-surface-subtle/40 p-3">
         <BowlGauge
-          grams={bowlGrams(display.bowlFood)}
+          grams={bowl.grams}
+          label={bowl.label}
           low={display.lowFood}
           eating={display.eating}
         />
@@ -205,8 +250,11 @@ export function PetFeederPanel({
               className="text-3xl font-bold leading-none tabular-nums"
               style={{ color: display.lowFood ? KIBBLE_LOW : KIBBLE }}
             >
-              {bowlGrams(display.bowlFood) ?? '—'}
+              {bowl.text}
             </span>
+            {bowl.unit !== '' && (
+              <span className="text-sm text-foreground-subtle">{bowl.unit}</span>
+            )}
             <span className="text-sm text-foreground-subtle">
               {t('uiLibrary.petFeeder.inBowl', 'in bowl')}
             </span>
@@ -458,10 +506,12 @@ function Readout({ icon, label }: { readonly icon: ReactNode; readonly label: st
  */
 function BowlGauge({
   grams,
+  label,
   low,
   eating,
 }: {
   readonly grams: number | null
+  readonly label: string
   readonly low: boolean
   readonly eating: boolean
 }): ReactNode {
@@ -479,7 +529,7 @@ function BowlGauge({
       aria-label={
         grams === null
           ? t('uiLibrary.petFeeder.levelUnknown', 'Food level unknown')
-          : t('uiLibrary.petFeeder.gramsInBowl', '{{grams}} in bowl', { grams })
+          : t('uiLibrary.petFeeder.gramsInBowl', '{{amount}} in bowl', { amount: label })
       }
       className="shrink-0"
     >

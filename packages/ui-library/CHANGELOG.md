@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The pet feeder card shows the food in the bowl with its unit (grams, or ounces with imperial units) instead of a bare number.
+
 ## [1.2.352] - 2026-10-29
 
 ### Changed

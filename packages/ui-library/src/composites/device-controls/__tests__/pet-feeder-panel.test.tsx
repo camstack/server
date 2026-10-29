@@ -2,7 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import type { PetFeederStatus } from '@camstack/types'
-import { PetFeederInlineControl, PetFeederHeroCard } from '../pet-feeder-panel'
+import { PetFeederInlineControl, PetFeederHeroCard, resolveBowlReading } from '../pet-feeder-panel'
+import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
 
 /** Full default slice; spread overrides on top — no `as` casts in tests. */
 function makeSlice(overrides: Partial<PetFeederStatus> = {}): PetFeederStatus {
@@ -88,7 +89,7 @@ beforeEach(() => {
 describe('PetFeederInlineControl', () => {
   it('renders food level, battery and a Feed button', () => {
     render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
-    expect(screen.getByText('120')).toBeTruthy()
+    expect(screen.getByText('120 g')).toBeTruthy()
     expect(screen.getByText('88%')).toBeTruthy()
     expect(screen.getByLabelText('Feed now')).toBeTruthy()
   })
@@ -183,6 +184,31 @@ describe('PetFeederHeroCard', () => {
     mockResult = { ...mockResult, slice: makeSlice({ foodLevel: 1, bowlFood: 0.037 }) }
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.getByText('37')).toBeTruthy()
+    expect(screen.getByLabelText('37 g in bowl')).toBeTruthy()
+  })
+
+  it('reads ounces under the imperial preference', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ bowlFood: 0.1 }) }
+    render(
+      <UnitPreferencesProvider value={{ system: 'imperial', temperature: 'fahrenheit' }}>
+        <PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />
+      </UnitPreferencesProvider>,
+    )
+    expect(screen.getByText('3.5')).toBeTruthy()
+    expect(screen.getByLabelText('3.5 oz in bowl')).toBeTruthy()
+  })
+
+  it('shows a dash and no unit when the bowl is unknown', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ bowlFood: null }) }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('—')).toBeTruthy()
+    expect(screen.getByLabelText('Food level unknown')).toBeTruthy()
+  })
+
+  it('shows the inline bowl with its unit', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ bowlFood: 0.022 }) }
+    render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.getByText('22 g')).toBeTruthy()
   })
 
   it('flags low food in the readout', () => {
@@ -309,5 +335,32 @@ describe('PetFeederHeroCard manual-feed portion', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('resolveBowlReading', () => {
+  it('formats grams under metric and keeps the gauge in grams', () => {
+    expect(resolveBowlReading(0.022, 'metric')).toEqual({
+      text: '22',
+      unit: 'g',
+      label: '22 g',
+      grams: 22,
+    })
+    expect(resolveBowlReading(0, 'metric').label).toBe('0 g')
+  })
+
+  it('formats ounces under imperial', () => {
+    const r = resolveBowlReading(0.1, 'imperial')
+    expect(r.label).toBe('3.5 oz')
+    expect(r.grams).toBe(100)
+  })
+
+  it('is a dash with no unit when null', () => {
+    expect(resolveBowlReading(null, 'metric')).toEqual({
+      text: '—',
+      unit: '',
+      label: '—',
+      grams: null,
+    })
   })
 })

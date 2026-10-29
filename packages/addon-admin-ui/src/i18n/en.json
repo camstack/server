@@ -7453,7 +7453,7 @@
       "decreaseVolume": "Decrease volume",
       "increaseVolume": "Increase volume",
       "levelUnknown": "Food level unknown",
-      "gramsInBowl": "{{grams}} in bowl",
+      "gramsInBowl": "{{amount}} in bowl",
       "decreasePortion": "Decrease {{label}} portion",
       "increasePortion": "Increase {{label}} portion",
       "mains": "Mains",

@@ -7475,7 +7475,7 @@
       "decreaseVolume": "Abbassa il volume",
       "increaseVolume": "Alza il volume",
       "levelUnknown": "Livello del cibo sconosciuto",
-      "gramsInBowl": "{{grams}} nella ciotola",
+      "gramsInBowl": "{{amount}} nella ciotola",
       "decreasePortion": "Riduci la porzione {{label}}",
       "increasePortion": "Aumenta la porzione {{label}}",
       "mains": "Rete elettrica",

@@ -296,6 +296,9 @@ const VACUUM = {
 
 const PET_FEEDER = {
   foodLevel: 120,
+  // The bowl is a mass in kilograms (D944): 22 g.
+  bowlFood: 0.022,
+  eating: false,
   food1: null,
   food2: null,
   lowFood: false,
