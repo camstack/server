@@ -9,7 +9,10 @@ describe('resolveSensorDisplay', () => {
   })
 
   it('converts a base temperature to Fahrenheit for an imperial preference', () => {
-    const resolved = resolveSensorDisplay({ quantity: 'temperature', preference: 'imperial' })
+    const resolved = resolveSensorDisplay({
+      quantity: 'temperature',
+      preference: 'imperial',
+    })
     expect(resolved.unit).toBe('°F')
     expect(resolved.toDisplayValue(0)).toBeCloseTo(32)
   })
@@ -61,10 +64,64 @@ describe('resolveSensorDisplay', () => {
       perCap: { 'numeric-sensor': { unit: 'K' } },
     }
     expect(
-      resolveSensorDisplay({ quantity: 'temperature', display, capName: 'numeric-sensor' }).unit,
+      resolveSensorDisplay({
+        quantity: 'temperature',
+        display,
+        capName: 'numeric-sensor',
+      }).unit,
     ).toBe('K')
     expect(
-      resolveSensorDisplay({ quantity: 'temperature', display, capName: 'power-meter' }).unit,
+      resolveSensorDisplay({
+        quantity: 'temperature',
+        display,
+        capName: 'power-meter',
+      }).unit,
     ).toBe('°F')
+  })
+
+  describe('with the user unit preferences', () => {
+    it('shows Fahrenheit for a Fahrenheit user while other quantities stay metric', () => {
+      const unitPreferences = {
+        system: 'metric',
+        temperature: 'fahrenheit',
+      } as const
+      const temp = resolveSensorDisplay({
+        quantity: 'temperature',
+        unitPreferences,
+      })
+      expect(temp.unit).toBe('°F')
+      expect(temp.toDisplayValue(100)).toBeCloseTo(212)
+      const pressure = resolveSensorDisplay({
+        quantity: 'pressure',
+        unitPreferences,
+      })
+      expect(pressure.unit).toBe(resolveSensorDisplay({ quantity: 'pressure' }).unit)
+    })
+
+    it('keeps °C for an imperial-system user who chose Celsius', () => {
+      const unitPreferences = {
+        system: 'imperial',
+        temperature: 'celsius',
+      } as const
+      expect(resolveSensorDisplay({ quantity: 'temperature', unitPreferences }).unit).toBe('°C')
+      const pressure = resolveSensorDisplay({
+        quantity: 'pressure',
+        unitPreferences,
+      })
+      expect(pressure.unit).not.toBe(resolveSensorDisplay({ quantity: 'pressure' }).unit)
+    })
+
+    it('lets an explicit per-reading preference win', () => {
+      const unitPreferences = {
+        system: 'metric',
+        temperature: 'fahrenheit',
+      } as const
+      const resolved = resolveSensorDisplay({
+        quantity: 'temperature',
+        unitPreferences,
+        preference: 'metric',
+      })
+      expect(resolved.unit).toBe('°C')
+    })
   })
 })

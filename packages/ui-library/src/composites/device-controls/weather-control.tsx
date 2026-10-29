@@ -32,6 +32,8 @@ import {
   Navigation,
 } from 'lucide-react'
 import { formatReading, type ReadingQuantity, type WeatherStatus } from '@camstack/types'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
+import { preferenceForQuantity, type UnitPreferences } from '../../lib/unit-preferences'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { defaultUiText, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
@@ -197,10 +199,19 @@ function useWeather(trpc: DeviceControlProps['trpc'], deviceId: number) {
   })
 }
 
-/** Format a base-unit weather reading (metric). */
-function formatWeather(value: number | null, quantity: ReadingQuantity): string {
+/** Format a base-unit weather reading in the user's units. */
+function formatWeather(
+  value: number | null,
+  quantity: ReadingQuantity,
+  unitPreferences: UnitPreferences,
+): string {
   if (value === null) return '—'
-  const rendered = formatReading({ value, quantity, precision: 0 })
+  const rendered = formatReading({
+    value,
+    quantity,
+    precision: 0,
+    preference: preferenceForQuantity(unitPreferences, quantity),
+  })
   return rendered.unit.length === 0 ? rendered.text : `${rendered.text}${rendered.unit}`
 }
 
@@ -213,6 +224,7 @@ function formatWeather(value: number | null, quantity: ReadingQuantity): string 
 export function WeatherInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { slice } = useWeather(trpc, deviceId)
+  const unitPreferences = useUnitPreferences()
   if (slice === undefined) return null
 
   const meta = weatherConditionMeta(slice.condition, t)
@@ -223,7 +235,9 @@ export function WeatherInlineControl({ trpc, deviceId }: DeviceControlProps): Re
       <span className={cn('inline-flex', tint.accent)} title={meta.label} aria-label={meta.label}>
         {inlineGlyph(meta.glyph)}
       </span>
-      <span className="tabular-nums">{formatWeather(slice.temperature, 'temperature')}</span>
+      <span className="tabular-nums">
+        {formatWeather(slice.temperature, 'temperature', unitPreferences)}
+      </span>
     </div>
   )
 }
@@ -467,6 +481,7 @@ function Readout({ icon, label, value }: ReadoutProps): ReactNode {
 export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { slice } = useWeather(trpc, deviceId)
+  const unitPreferences = useUnitPreferences()
   if (slice === undefined) return null
 
   const meta = weatherConditionMeta(slice.condition, t)
@@ -474,7 +489,12 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
   const temperature =
     slice.temperature === null
       ? undefined
-      : formatReading({ value: slice.temperature, quantity: 'temperature', precision: 0 })
+      : formatReading({
+          value: slice.temperature,
+          quantity: 'temperature',
+          precision: 0,
+          preference: preferenceForQuantity(unitPreferences, 'temperature'),
+        })
 
   return (
     <div className="flex flex-col items-stretch gap-4 rounded-lg border border-border bg-surface p-4">
@@ -490,7 +510,11 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
             <span className="text-base text-foreground-subtle">
               {temperature !== undefined
                 ? temperature.unit
-                : formatReading({ value: 0, quantity: 'temperature' }).unit}
+                : formatReading({
+                    value: 0,
+                    quantity: 'temperature',
+                    preference: preferenceForQuantity(unitPreferences, 'temperature'),
+                  }).unit}
             </span>
             <span className="text-xs text-foreground-subtle ml-2 capitalize">{meta.label}</span>
           </div>
@@ -517,14 +541,14 @@ export function WeatherHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNo
                   )
                 }
                 label={t('uiLibrary.weatherControl.wind', 'Wind')}
-                value={formatWeather(slice.windSpeed, 'speed')}
+                value={formatWeather(slice.windSpeed, 'speed', unitPreferences)}
               />
             )}
             {slice.pressure !== null && (
               <Readout
                 icon={<Gauge className="h-3.5 w-3.5" />}
                 label={t('uiLibrary.weatherControl.pressure', 'Pressure')}
-                value={formatWeather(slice.pressure, 'pressure')}
+                value={formatWeather(slice.pressure, 'pressure', unitPreferences)}
               />
             )}
           </div>

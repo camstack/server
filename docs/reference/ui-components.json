@@ -3232,6 +3232,13 @@
       "summary": "Client-side pagination for {@link DataTable} — pure, no React."
     },
     {
+      "name": "DEFAULT_UNIT_PREFERENCES",
+      "kind": "constant",
+      "area": "lib",
+      "file": "packages/ui-library/src/lib/unit-preferences.ts",
+      "summary": "The signed-in user's unit preferences (account preference, namespace `admin.units`). Stored numbers stay in each quantity's base unit (D944); a preference only picks the label and the conversion at display time."
+    },
+    {
       "name": "defaultAxisSpec",
       "kind": "function",
       "area": "composites",
@@ -8561,6 +8568,13 @@
       "summary": ""
     },
     {
+      "name": "preferenceForQuantity",
+      "kind": "function",
+      "area": "lib",
+      "file": "packages/ui-library/src/lib/unit-preferences.ts",
+      "summary": "The display preference to hand `formatReading` for one quantity."
+    },
+    {
       "name": "previousWindow",
       "kind": "function",
       "area": "composites",
@@ -8844,6 +8858,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-grouping.ts",
       "summary": "The stored choice; the default when storage is absent, throws or is unreadable."
+    },
+    {
+      "name": "readUnitPreferences",
+      "kind": "function",
+      "area": "lib",
+      "file": "packages/ui-library/src/lib/unit-preferences.ts",
+      "summary": "A missing row or field is the default; a field of the wrong shape is unreadable."
     },
     {
       "name": "RECONNECT_POLICY",
@@ -11647,6 +11668,13 @@
       ]
     },
     {
+      "name": "TEMPERATURE_SCALES",
+      "kind": "constant",
+      "area": "lib",
+      "file": "packages/ui-library/src/lib/unit-preferences.ts",
+      "summary": "The signed-in user's unit preferences (account preference, namespace `admin.units`). Stored numbers stay in each quantity's base unit (D944); a preference only picks the label and the conversion at display time."
+    },
+    {
       "name": "TEXT_FIELD_LABEL",
       "kind": "constant",
       "area": "lib",
@@ -12086,6 +12114,13 @@
       ]
     },
     {
+      "name": "UNIT_PREFERENCES_NAMESPACE",
+      "kind": "constant",
+      "area": "lib",
+      "file": "packages/ui-library/src/lib/unit-preferences.ts",
+      "summary": "The signed-in user's unit preferences (account preference, namespace `admin.units`). Stored numbers stay in each quantity's base unit (D944); a preference only picks the label and the conversion at display time."
+    },
+    {
       "name": "unitAxes",
       "kind": "function",
       "area": "composites",
@@ -12154,6 +12189,27 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "UnitPreferencesFromServer",
+      "kind": "component",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/unit-preferences-from-server.tsx",
+      "summary": "Reads the user's unit preferences ONCE, at the top, and publishes them by context. While the read is pending or failed, the default applies — a reading is never withheld because the preference has not answered."
+    },
+    {
+      "name": "UnitPreferencesProvider",
+      "kind": "component",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/unit-preferences.tsx",
+      "summary": "The signed-in user's unit preferences, published by context so every reading renders in the same units without a query of its own. Without a provider (a spec, a standalone addon page) the default applies: metric, °C."
+    },
+    {
+      "name": "useAccountUnitPreferences",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-account-unit-preferences.ts",
+      "summary": "Unit preferences in the signed-in user's ACCOUNT preferences (D894): one row, namespace `admin.units`, synced to every device signed in as that user."
     },
     {
       "name": "useAddonT",
@@ -12693,6 +12749,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/ui-text.tsx",
       "summary": "The words a shared composite shows, resolved by the HOST."
+    },
+    {
+      "name": "useUnitPreferences",
+      "kind": "hook",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/unit-preferences.tsx",
+      "summary": "The signed-in user's unit preferences, published by context so every reading renders in the same units without a query of its own. Without a provider (a spec, a standalone addon page) the default applies: metric, °C."
     },
     {
       "name": "useUrlQueryParam",

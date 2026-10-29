@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SensorHeroCard } from '../sensor-hero-card'
+import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
 import { formatControlDateTime } from '../../../lib/format-control-datetime'
 
 // ── Slice state controlled by each test ─────────────────────────────────────
@@ -74,6 +75,19 @@ describe('SensorHeroCard', () => {
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
       expect(screen.getByText('21')).toBeTruthy()
       expect(screen.getByText('°C')).toBeTruthy()
+    })
+
+    it('shows Fahrenheit and the converted value for a Fahrenheit user (stored value stays °C)', () => {
+      mockSlice = { temperature: 21, lastFetchedAt: 1700000000000 }
+      mockDeviceData = makeDevice({ role: 'temperature-sensor' })
+      render(
+        <UnitPreferencesProvider value={{ system: 'metric', temperature: 'fahrenheit' }}>
+          <SensorHeroCard trpc={trpc} deviceId={1} features={[]} />
+        </UnitPreferencesProvider>,
+      )
+      expect(screen.getByText('°F')).toBeTruthy()
+      expect(screen.getByText('69.8')).toBeTruthy()
+      expect(screen.queryByText('°C')).toBeNull()
     })
 
     it('renders decimal value formatted to 1dp when not integer', () => {

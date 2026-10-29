@@ -6,6 +6,10 @@ export * from './contexts/device-quick-detail'
 export * from './contexts/player-overlays'
 export * from './contexts/recorded-playback'
 export * from './contexts/ui-text'
+export { UnitPreferencesProvider, useUnitPreferences } from './contexts/unit-preferences'
+export { UnitPreferencesFromServer } from './contexts/unit-preferences-from-server'
+export { useAccountUnitPreferences } from './hooks/use-account-unit-preferences'
+export type { AccountUnitPreferencesState } from './hooks/use-account-unit-preferences'
 export {
   SystemProvider,
   type SystemProviderProps,

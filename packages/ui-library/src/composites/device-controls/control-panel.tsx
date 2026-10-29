@@ -5,6 +5,7 @@ import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
 import { cn } from '../../lib/cn.js'
 import { formatNumeric } from '../../lib/format-numeric.js'
+import { useUnitPreferences } from '../../contexts/unit-preferences.js'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
 import {
   formatControlDateTime,
@@ -243,6 +244,7 @@ function ControlWidget({
   dateTimeShape,
 }: ControlWidgetProps): ReactNode {
   const t = useUiText()
+  const unitPreferences = useUnitPreferences()
   const kind = slice.kind
 
   switch (kind) {
@@ -251,7 +253,7 @@ function ControlWidget({
       const resolved =
         quantity === undefined
           ? undefined
-          : resolveSensorDisplay({ quantity, display, capName: 'control' })
+          : resolveSensorDisplay({ quantity, display, capName: 'control', unitPreferences })
       const toShown = resolved?.toDisplayValue ?? ((raw: number): number => raw)
       const toBase = resolved?.fromDisplayValue ?? ((shown: number): number => shown)
       const unit = resolved !== undefined && resolved.unit.length > 0 ? resolved.unit : undefined

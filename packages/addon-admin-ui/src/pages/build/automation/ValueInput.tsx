@@ -22,6 +22,7 @@ import {
   Input,
   Select,
   resolveSensorDisplay,
+  useUnitPreferences,
   useDeviceManagerGetDevice,
   type ResolvedSensorDisplay,
 } from '@camstack/ui-library'
@@ -175,6 +176,7 @@ function useReadingBridge(
   deviceId: number | undefined,
   cap: string | undefined,
 ): ResolvedSensorDisplay | undefined {
+  const unitPreferences = useUnitPreferences()
   const id = deviceId ?? 0
   const numeric = field?.kind === 'number' && field.quantity !== undefined
   const { data } = useDeviceManagerGetDevice({ deviceId: id }, { enabled: numeric && id > 0 })
@@ -183,5 +185,5 @@ function useReadingBridge(
   const quantity = concreteQuantity(field?.quantity, deviceQuantity)
   if (quantity === undefined) return undefined
   const display: DeviceDisplayOverride | undefined = data?.display
-  return resolveSensorDisplay({ quantity, display, capName: cap })
+  return resolveSensorDisplay({ quantity, display, capName: cap, unitPreferences })
 }

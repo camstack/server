@@ -362,11 +362,29 @@ const AUDIT = [
   },
 ]
 
+const UNITS_ROW = {
+  namespace: 'admin.units',
+  value: { system: 'imperial', temperature: 'fahrenheit' },
+  revision: 2,
+  updatedAt: NOW,
+}
+
 export default defineFixtures({
   area: 'access',
   description:
     'Identity → Tokens & sessions and My access: users, sessions, share links, tokens, linked apps, audit',
   handlers: {
+    // My access → Preferences → Units: the account row `admin.units`.
+    'preferences.get': () => ({ rows: [UNITS_ROW] }),
+    'mut:preferences.put': (i: { namespace: string; value: Record<string, unknown> }) => ({
+      status: 'saved',
+      row: {
+        ...UNITS_ROW,
+        namespace: i.namespace,
+        value: i.value,
+        revision: UNITS_ROW.revision + 1,
+      },
+    }),
     'auth.listLoginMethods': [
       { kind: 'redirect', id: 'auth-oidc', label: 'Authentik', startUrl: '#', stage: 'primary' },
     ],

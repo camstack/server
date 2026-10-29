@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pet feeder: the manual-feed portion stepper responds instantly, repeats and speeds up while held, and starts from the last manual feed
 - A device listed inside its container's own list no longer repeats the container's name; the prefix is also stripped after a hyphen or a colon.
+- Readings follow the signed-in user's unit preferences (temperature in °C or °F, other quantities metric or imperial), read once from the account preference admin.units; the default stays metric and °C
 
 ## [1.2.347] - 2026-10-29
 

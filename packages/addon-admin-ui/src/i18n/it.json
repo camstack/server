@@ -6344,7 +6344,8 @@
         "profile": "Profilo",
         "signIn": "Accesso e sicurezza",
         "sessions": "Sessioni e dispositivi",
-        "tokens": "Token"
+        "tokens": "Token",
+        "preferences": "Preferenze"
       },
       "administrator": "Amministratore",
       "user": "Utente",
@@ -6375,7 +6376,19 @@
       "2faIsActive": "La 2FA è attiva",
       "disable2fa": "Disabilita 2FA",
       "sessionId": "· id sessione <mono>{{id}}…</mono>",
-      "scanQr": "Inquadra il codice QR (o inserisci il segreto manualmente) nella tua app di autenticazione per <mono>{{username}}</mono>, poi inserisci qui sotto il codice a 6 cifre per confermare."
+      "scanQr": "Inquadra il codice QR (o inserisci il segreto manualmente) nella tua app di autenticazione per <mono>{{username}}</mono>, poi inserisci qui sotto il codice a 6 cifre per confermare.",
+      "units": {
+        "title": "Unità di misura",
+        "description": "Come ti vengono mostrate le misure, su ogni dispositivo in cui accedi. I valori memorizzati non cambiano.",
+        "loadError": "Impossibile leggere le tue preferenze sulle unità.",
+        "unreadable": "Le preferenze salvate hanno un formato che questa versione non sa leggere, quindi restano invariate.",
+        "temperature": "Temperatura",
+        "celsius": "Celsius (°C)",
+        "fahrenheit": "Fahrenheit (°F)",
+        "system": "Altre misure",
+        "metric": "Metrico (km/h, hPa, mm)",
+        "imperial": "Imperiale (mph, inHg, in)"
+      }
     },
     "identity": {
       "pairADevice": "Associa un dispositivo",

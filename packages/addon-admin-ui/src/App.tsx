@@ -7,6 +7,7 @@ import {
   DeviceFleetFromServer,
   HotkeyProvider,
   RoleDisplayDefaultsFromServer,
+  UnitPreferencesFromServer,
   SystemProvider,
   ThemeProvider,
   WidgetRegistryProvider,
@@ -294,9 +295,15 @@ function AppShell({ children }: AppShellProps) {
               devices table, a detail page's children, a room card — draws the
               same glyph without a query of its own. */}
             <RoleDisplayDefaultsFromServer>
-              {/* One slim fleet for every device name. A row reads its parent
-                  from this cache; it does not call getDevice. */}
-              <DeviceFleetFromServer>{bootReady ? children : <BootSplash />}</DeviceFleetFromServer>
+              {/* The signed-in user's units (°C/°F, metric/imperial), read once
+                  and published by context: every reading formats through them. */}
+              <UnitPreferencesFromServer>
+                {/* One slim fleet for every device name. A row reads its parent
+                    from this cache; it does not call getDevice. */}
+                <DeviceFleetFromServer>
+                  {bootReady ? children : <BootSplash />}
+                </DeviceFleetFromServer>
+              </UnitPreferencesFromServer>
             </RoleDisplayDefaultsFromServer>
             {bootReady && <ReconnectOverlay />}
             {bootError !== null && bootReady && (

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The Device details list of a container shows its children without the container's name, and the primary-child picker does the same.
+- My access has a Preferences tab where each user picks temperature in °C or °F and metric or imperial for other measurements; the choice follows the account on every device
 
 ## [1.2.512] - 2026-10-29
 

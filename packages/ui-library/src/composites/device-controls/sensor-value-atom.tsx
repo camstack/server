@@ -32,6 +32,7 @@ import {
   formatControlDateTime,
   type ControlDateTimeFormat,
 } from '../../lib/format-control-datetime'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import { useDeviceManagerGetRoleDisplayDefaults } from '../../generated/system-hooks'
 import type { DeviceItemDevice } from '../device-item/helpers'
@@ -404,6 +405,7 @@ export interface SensorValueAtomProps {
 
 export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNode {
   const t = useUiText()
+  const unitPreferences = useUnitPreferences()
   const roleDescriptor = device.role != null ? ROLE_DESCRIPTOR[device.role] : undefined
   const isBattery = isBatterySensorRole(device.role)
   // Per-role display defaults merge UNDER any per-device `display` override.
@@ -485,6 +487,7 @@ export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNo
       roleDefault: device.role != null ? roleDefaultsData?.defaults[device.role] : undefined,
       quantity: descriptor.quantity ?? 'device',
       deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
+      unitPreferences,
     })
     const rendered = resolved.format(rawValue)
     const unit = rendered.unit

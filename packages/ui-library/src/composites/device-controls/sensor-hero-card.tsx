@@ -25,6 +25,7 @@ import {
 import { cn } from '../../lib/cn'
 import { DeviceName } from '../device-name'
 import { formatControlDateTime } from '../../lib/format-control-datetime'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import {
   ROLE_DESCRIPTOR,
@@ -145,6 +146,7 @@ interface SensorHeroInnerProps {
 
 function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
   const t = useUiText()
+  const unitPreferences = useUnitPreferences()
   // Role missing (e.g. composed Room before role was stamped): fall back to
   // temperature-sensor so a live celsius slice is not stuck on "Awaiting…".
   const roleDescriptor =
@@ -249,6 +251,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
           : roleDefaultsData?.defaults?.['temperature-sensor'],
       quantity: descriptor.quantity ?? 'device',
       deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
+      unitPreferences,
     })
     const rendered = resolved.format(rawValue)
     const unit = rendered.unit

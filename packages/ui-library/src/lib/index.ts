@@ -5,6 +5,14 @@ export type { ControlDateTimeFormat } from './format-control-datetime'
 export { formatNumeric } from './format-numeric'
 export { resolveSensorDisplay } from './resolve-sensor-display'
 export type { SensorDisplayInput, ResolvedSensorDisplay } from './resolve-sensor-display'
+export {
+  DEFAULT_UNIT_PREFERENCES,
+  TEMPERATURE_SCALES,
+  UNIT_PREFERENCES_NAMESPACE,
+  preferenceForQuantity,
+  readUnitPreferences,
+} from './unit-preferences'
+export type { ParsedUnitPreferences, TemperatureScale, UnitPreferences } from './unit-preferences'
 export { isAbsentProvider } from './cap-error'
 export * from './responsive'
 export { PHASE_CONFIG, getPhaseVisual } from './phase-config'

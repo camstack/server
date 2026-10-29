@@ -15,6 +15,7 @@ import {
   type DisplayPreference,
 } from '@camstack/types'
 import { formatNumeric } from './format-numeric'
+import { preferenceForQuantity, type UnitPreferences } from './unit-preferences'
 
 export interface SensorDisplayInput {
   /** Per-device override from the row (`DeviceInfo.display`). */
@@ -29,8 +30,10 @@ export interface SensorDisplayInput {
   readonly deviceQuantity?: ReadingQuantity
   /** Precision declared on the reading, when the operator has not overridden it. */
   readonly declarationPrecision?: number
-  /** Read-time preference. Defaults to metric. */
+  /** Read-time preference for this one reading. Wins over `unitPreferences`. */
   readonly preference?: DisplayPreference
+  /** The user's unit preferences (`useUnitPreferences()`); metric and °C when absent. */
+  readonly unitPreferences?: UnitPreferences
 }
 
 export interface ResolvedSensorDisplay {
@@ -70,7 +73,11 @@ export function resolveSensorDisplay(input: SensorDisplayInput): ResolvedSensorD
     input.declarationPrecision
 
   const quantity = concreteQuantity(input)
-  const preference = input.preference ?? DEFAULT_DISPLAY_PREFERENCE
+  const preference =
+    input.preference ??
+    (input.unitPreferences === undefined
+      ? DEFAULT_DISPLAY_PREFERENCE
+      : preferenceForQuantity(input.unitPreferences, quantity))
   const base = quantity === undefined ? undefined : baseUnitOf(quantity)
   const preferred = quantity === undefined ? undefined : displayUnitFor(quantity, preference)
   const overrideUnit = canonUnit(perCap?.unit ?? input.display?.unit ?? input.roleDefault?.unit)

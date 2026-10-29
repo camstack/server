@@ -6283,7 +6283,8 @@
         "profile": "Profile",
         "signIn": "Sign-in & security",
         "sessions": "Sessions & devices",
-        "tokens": "Tokens"
+        "tokens": "Tokens",
+        "preferences": "Preferences"
       },
       "administrator": "Administrator",
       "user": "User",
@@ -6314,7 +6315,19 @@
       "2faIsActive": "2FA is active",
       "disable2fa": "Disable 2FA",
       "sessionId": "· session id <mono>{{id}}…</mono>",
-      "scanQr": "Scan the QR code (or enter the secret manually) into your authenticator app for <mono>{{username}}</mono>, then enter the 6-digit code below to confirm."
+      "scanQr": "Scan the QR code (or enter the secret manually) into your authenticator app for <mono>{{username}}</mono>, then enter the 6-digit code below to confirm.",
+      "units": {
+        "title": "Units",
+        "description": "How readings are shown to you, on every device you sign in on. Stored values do not change.",
+        "loadError": "Your unit preferences could not be read.",
+        "unreadable": "The saved unit preferences are in a format this version cannot read, so they are left untouched.",
+        "temperature": "Temperature",
+        "celsius": "Celsius (°C)",
+        "fahrenheit": "Fahrenheit (°F)",
+        "system": "Other measurements",
+        "metric": "Metric (km/h, hPa, mm)",
+        "imperial": "Imperial (mph, inHg, in)"
+      }
     },
     "identity": {
       "pairADevice": "Pair a device",

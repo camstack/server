@@ -6,6 +6,7 @@
  *   - Sign-in & security  — password, two-factor, passkeys, linked sign-in accounts
  *   - Sessions & devices  — your login sessions, phones kept signed in, connect a phone
  *   - Tokens              — your own tokens and share links
+ *   - Preferences         — how readings are shown to you (units)
  *
  * A linked-account popup returns here with `?linked=` / `?linkError=` and no
  * tab; that return opens Sign-in & security, where the outcome is shown.
@@ -27,6 +28,7 @@ import {
   PasskeySection,
   TotpSection,
 } from '../../components/users/OwnSignInSections'
+import { UnitsSection } from '../../components/users/UnitsSection'
 import { TokensSection } from '../../components/access/TokensSection'
 import { MySessionsSection } from '../../components/auth/MySessionsSection'
 import { MyDevicesSection } from '../../components/certificates/MyDevicesSection'
@@ -37,6 +39,7 @@ export const MY_ACCESS_SECTIONS = {
   signIn: 'sign-in',
   sessions: 'sessions',
   tokens: 'tokens',
+  preferences: 'preferences',
 } as const
 
 /** The params a linked-account popup returns with (read by `LinkedSignInsSection`). */
@@ -120,6 +123,11 @@ export function MyAccessPage(): ReactElement {
           id: MY_ACCESS_SECTIONS.tokens,
           label: t('systemPage.myAccess.sections.tokens', 'Tokens'),
           content: <TokensSection ownOnly />,
+        },
+        {
+          id: MY_ACCESS_SECTIONS.preferences,
+          label: t('systemPage.myAccess.sections.preferences', 'Preferences'),
+          content: <UnitsSection />,
         },
       ]}
     />
