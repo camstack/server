@@ -272,3 +272,46 @@ export function humanRole(role: string): string {
 export function isCustomRole(role: string): boolean {
   return customKeyOfRole(role) !== null && !isRemoteKnownRole(role)
 }
+
+export interface ButtonSpec {
+  readonly id: string
+  readonly role: string
+  readonly row: number
+  readonly col: number
+  readonly rowSpan?: number
+  readonly colSpan?: number
+  readonly icon?: string
+  readonly label?: string
+}
+
+/**
+ * A grid of `columns` × `rows` with `specs` placed on it, each through the same
+ * placement check an edit goes through. Meant for code-defined layouts (the
+ * built-in presets): a spec that overlaps or leaves the grid is a programming
+ * error, so it throws instead of returning a refusal.
+ */
+export function buildLayout(
+  columns: number,
+  rows: number,
+  specs: readonly ButtonSpec[],
+): RemoteLayoutPayload {
+  let grid: RemoteLayoutPayload = { columns, rows, buttons: [] }
+  for (const spec of specs) {
+    const candidate: RemoteLayoutButton = {
+      id: spec.id,
+      row: spec.row,
+      col: spec.col,
+      rowSpan: spec.rowSpan ?? 1,
+      colSpan: spec.colSpan ?? 1,
+      role: spec.role,
+      ...(spec.icon === undefined ? {} : { icon: spec.icon }),
+      ...(spec.label === undefined ? {} : { label: spec.label }),
+    }
+    const reason = placementRefusal(grid, candidate, null)
+    if (reason !== null || grid.buttons.some((b) => b.id === spec.id)) {
+      throw new Error(`layout button "${spec.id}": ${reason ?? 'duplicate id'}`)
+    }
+    grid = { ...grid, buttons: [...grid.buttons, candidate] }
+  }
+  return grid
+}

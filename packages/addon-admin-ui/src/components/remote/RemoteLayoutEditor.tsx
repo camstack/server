@@ -21,11 +21,13 @@ import {
   Input,
   OptionSelect,
   type OptionSelectOption,
+  Select,
   Stepper,
 } from '@camstack/ui-library'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Plus, Shapes, Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { APP_BRANDS, appIconKey, resolveAppBrand } from './app-brand-icons'
 import {
   addButton,
   humanRole,
@@ -226,6 +228,24 @@ function ButtonInspector({ grid, buttonId, apply, onRemove }: InspectorProps): R
           />
         </FormField>
       </div>
+      <FormField label={t('remote.layout.appIcon')}>
+        <Select
+          value={resolveAppBrand(button.icon)?.key ?? ''}
+          options={[
+            { value: '', label: t('remote.layout.noApp') },
+            ...APP_BRANDS.map((b) => ({ value: b.key, label: b.label })),
+          ]}
+          onChange={(e) => {
+            const brandKey = e.target.value
+            if (brandKey !== '') {
+              apply(setButtonFace(grid, button.id, { icon: appIconKey(brandKey) }))
+            } else if (resolveAppBrand(button.icon) !== undefined) {
+              apply(setButtonFace(grid, button.id, { icon: null }))
+            }
+          }}
+          data-testid="remote-app-icon"
+        />
+      </FormField>
       <div className="grid grid-cols-2 gap-3">
         <FormField label={t('remote.layout.move')}>
           <div className="flex items-center gap-1">

@@ -10649,6 +10649,16 @@
       "kind": {
         "label": "Kind",
         "remote": "Remote"
+      },
+      "startFrom": "Start from",
+      "startBlank": "Empty layout",
+      "preset": {
+        "samsung-classic": "Samsung classic (infrared)",
+        "hisense-vidaa": "Hisense VIDAA",
+        "samsung-smart": "Samsung Smart / One Remote",
+        "lg-magic": "LG Magic Remote",
+        "google-tv": "Android / Google TV",
+        "apple-tv": "Apple TV (Siri Remote)"
       }
     },
     "layout": {
@@ -10682,7 +10692,9 @@
       "positionValue": "Row {{row}}, column {{col}}",
       "height": "Height",
       "width": "Width",
-      "removeButton": "Remove button"
+      "removeButton": "Remove button",
+      "appIcon": "App icon",
+      "noApp": "No app"
     },
     "roleGroup": {
       "power": "Power",

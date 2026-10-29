@@ -9,6 +9,7 @@ import { checkTemplatePayload, TEMPLATE_KINDS, type TemplateKind } from '@camsta
 import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
 import { checkedLayout, emptyLayout, layoutOf } from './layout-model'
+import { copyOfPreset, REMOTE_LAYOUT_PRESETS } from './layout-presets'
 import { RemoteLayoutEditor } from './RemoteLayoutEditor'
 
 export interface TemplateKindView {
@@ -18,6 +19,15 @@ export interface TemplateKindView {
   readonly renderEditor: (payload: unknown, onChange: (next: unknown) => void) => ReactNode
   /** Whether the payload is one the store will accept. */
   readonly isSavable: (payload: unknown) => boolean
+  /** Built-in, read-only starting points; choosing one yields an editable copy. */
+  readonly presets: (t: TFunction) => readonly TemplatePresetChoice[]
+}
+
+export interface TemplatePresetChoice {
+  readonly id: string
+  readonly label: string
+  /** A fresh copy of the preset's payload on every call. */
+  readonly payload: () => unknown
 }
 
 const VIEWS: Readonly<Record<TemplateKind, TemplateKindView>> = {
@@ -36,6 +46,12 @@ const VIEWS: Readonly<Record<TemplateKind, TemplateKindView>> = {
       <RemoteLayoutEditor value={layoutOf(payload)} onChange={onChange} />
     ),
     isSavable: (payload) => checkedLayout(layoutOf(payload)) !== null,
+    presets: (t) =>
+      REMOTE_LAYOUT_PRESETS.map((preset) => ({
+        id: preset.id,
+        label: t(`remote.templates.preset.${preset.id}`),
+        payload: () => copyOfPreset(preset.id),
+      })),
   },
 }
 

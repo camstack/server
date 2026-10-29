@@ -10671,6 +10671,16 @@
       "kind": {
         "label": "Tipo",
         "remote": "Telecomando"
+      },
+      "startFrom": "Parti da",
+      "startBlank": "Layout vuoto",
+      "preset": {
+        "samsung-classic": "Samsung classico (infrarossi)",
+        "hisense-vidaa": "Hisense VIDAA",
+        "samsung-smart": "Samsung Smart / One Remote",
+        "lg-magic": "LG Magic Remote",
+        "google-tv": "Android / Google TV",
+        "apple-tv": "Apple TV (Siri Remote)"
       }
     },
     "layout": {
@@ -10704,7 +10714,9 @@
       "positionValue": "Riga {{row}}, colonna {{col}}",
       "height": "Altezza",
       "width": "Larghezza",
-      "removeButton": "Rimuovi tasto"
+      "removeButton": "Rimuovi tasto",
+      "appIcon": "Icona app",
+      "noApp": "Nessuna app"
     },
     "roleGroup": {
       "power": "Alimentazione",

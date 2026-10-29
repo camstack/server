@@ -7,6 +7,8 @@ import type { RemoteLayoutButton, RemoteLayoutPayload } from '@camstack/types'
 import { Button, useDisplayIconResolver } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AppBrandGlyph } from './AppBrandGlyph'
+import { resolveAppBrand } from './app-brand-icons'
 import { humanRole } from './layout-model'
 
 export interface RemoteGridProps {
@@ -31,15 +33,25 @@ function occupied(grid: RemoteLayoutPayload): ReadonlySet<string> {
   return cells
 }
 
+/** A glyph-only app key has no visible text, so it carries the brand's name. */
+function appButtonName(button: RemoteLayoutButton): { 'aria-label'?: string } {
+  const brand = resolveAppBrand(button.icon)
+  return brand === undefined ? {} : { 'aria-label': button.label ?? brand.label }
+}
+
 function Face({ button }: { readonly button: RemoteLayoutButton }): ReactNode {
   const { t } = useTranslation()
   const resolve = useDisplayIconResolver()
-  const Icon = button.icon === undefined ? undefined : resolve(button.icon)
+  const brand = resolveAppBrand(button.icon)
+  const Icon = button.icon === undefined || brand !== undefined ? undefined : resolve(button.icon)
   const words =
     button.label ??
-    (Icon === undefined ? t(`remote.role.${button.role}`, humanRole(button.role)) : null)
+    (Icon === undefined && brand === undefined
+      ? t(`remote.role.${button.role}`, humanRole(button.role))
+      : null)
   return (
     <span className="flex flex-col items-center justify-center gap-0.5 leading-none">
+      {brand !== undefined && <AppBrandGlyph brand={brand} />}
       {Icon !== undefined && <Icon className="h-4 w-4" aria-hidden />}
       {words !== null && <span className="max-w-full truncate text-[11px]">{words}</span>}
     </span>
@@ -91,6 +103,7 @@ export function RemoteGrid({
             size="sm"
             variant={selected ? 'primary' : bound ? 'secondary' : 'outline'}
             aria-pressed={onSelect === undefined ? undefined : selected}
+            {...appButtonName(button)}
             data-testid={`remote-grid-button-${button.id}`}
             className="h-full min-w-0 px-1"
             // ui-check-ok: computed grid placement of a button

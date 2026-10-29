@@ -741,3 +741,21 @@ pattern for an action that rewrites many nodes and cameras with no undo:
   never a plan the configuration has since moved away from;
 - `useConfirm` (a string) is not enough for this: the dialog is built from
   `Dialog` + `DialogBody` with `scroll="body"`.
+
+## Remote layouts: presets and app-brand icons
+
+- The template editor's "Start from" picker lists code-defined presets
+  (`components/remote/layout-presets.ts`, built through `buildLayout` so an
+  overlap throws at load). They are never stored; choosing one makes an
+  editable copy. A new preset is a spec entry plus an `remote.templates.preset.<id>`
+  string in both catalogs.
+- A button that opens a streaming app has `icon: "app:<brand>"`. The only
+  resolver is `resolveAppBrand` in `components/remote/app-brand-icons.ts`; an
+  unknown key falls through to the display-icon path. Glyphs come from
+  `simple-icons` (CC0, exact version pinned, named imports so the bundle keeps
+  only those), drawn in `currentColor` — the registry stores no brand colour,
+  because one would vanish on one of the two themes and colour belongs to the
+  tokens. A brand the package lacks is a lettermark entry.
+- Launching an app is just the usual action binding on that button; if a
+  provider exposes a launch-app action the binding picker can offer it, but no
+  capability is added for it.

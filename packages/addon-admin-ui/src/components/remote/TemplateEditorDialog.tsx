@@ -73,7 +73,9 @@ function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): React
   const [kind, setKind] = useState<TemplateKind>(draft.kind)
   const [name, setName] = useState(draft.name)
   const [payload, setPayload] = useState<unknown>(draft.payload)
+  const [presetId, setPresetId] = useState('')
   const view = templateKindView(kind)
+  const presets = view.presets(t)
   const clean = savablePayload(kind, payload)
   const canSave = name.trim() !== '' && clean !== null && view.isSavable(payload) && !saving
   return (
@@ -106,7 +108,26 @@ function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): React
                   if (next === undefined) return
                   setKind(next)
                   setPayload(templateKindView(next).emptyPayload())
+                  setPresetId('')
                 }}
+              />
+            </FormField>
+          )}
+          {draft.id === null && presets.length > 0 && (
+            <FormField label={t('remote.templates.startFrom')}>
+              <Select
+                value={presetId}
+                options={[
+                  { value: '', label: t('remote.templates.startBlank') },
+                  ...presets.map((p) => ({ value: p.id, label: p.label })),
+                ]}
+                onChange={(e) => {
+                  const chosen = presets.find((p) => p.id === e.target.value)
+                  setPresetId(chosen?.id ?? '')
+                  setPayload(chosen === undefined ? view.emptyPayload() : chosen.payload())
+                  if (chosen !== undefined && name.trim() === '') setName(chosen.label)
+                }}
+                data-testid="template-preset"
               />
             </FormField>
           )}
