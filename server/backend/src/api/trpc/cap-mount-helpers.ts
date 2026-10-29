@@ -136,9 +136,12 @@ export function requireDeviceScoped(registry: CapabilityRegistry | null, capName
 
 // ── Method-on-provider callable types ────────────────────────────────
 
-/** A key on T whose value is a function with array / promise-array return. */
+/**
+ * A key on T whose value is a function with array / promise-array return.
+ * An optional method counts too: a provider that omits it contributes nothing.
+ */
 type ArrayReturningMethodKey<T> = {
-  [K in keyof T]: T[K] extends (
+  [K in keyof T]-?: NonNullable<T[K]> extends (
     ...args: infer _A
   ) => readonly unknown[] | Promise<readonly unknown[]>
     ? K
@@ -153,7 +156,9 @@ type ArrayReturningMethodKey<T> = {
 export function concatCollection<T extends object, K extends ArrayReturningMethodKey<T>>(
   providers: readonly T[],
   method: K,
-): T[K] extends (...args: infer A) => readonly (infer R)[] | Promise<readonly (infer R)[]>
+): NonNullable<T[K]> extends (
+  ...args: infer A
+) => readonly (infer R)[] | Promise<readonly (infer R)[]>
   ? (...args: A) => Promise<readonly R[]>
   : never {
   const wrapper = async (...args: unknown[]): Promise<readonly unknown[]> => {
@@ -174,7 +179,7 @@ export function concatCollection<T extends object, K extends ArrayReturningMetho
   // matches the declared generic conditional return; TypeScript's
   // conditional types can't be narrowed inside a function body, so this
   // boundary assertion is required.
-  return wrapper as T[K] extends (
+  return wrapper as NonNullable<T[K]> extends (
     ...args: infer A
   ) => readonly (infer R)[] | Promise<readonly (infer R)[]>
     ? (...args: A) => Promise<readonly R[]>
