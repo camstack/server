@@ -1166,7 +1166,9 @@ jobs:
       - name: Publish the release (un-draft)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${{ needs.derive-version.outputs.tag }}" --draft=false
+        # No checkout in this job: gh cannot infer the repository from a
+        # .git directory, so it is named explicitly.
+        run: gh release edit "${{ needs.derive-version.outputs.tag }}" --repo "${{ github.repository }}" --draft=false
 
   # ── Step 5 — summary printed even when partial failures occurred ──
   summary:
