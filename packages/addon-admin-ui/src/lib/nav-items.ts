@@ -16,6 +16,7 @@ import {
   Bot,
   Box,
   Calendar,
+  LayoutTemplate,
   Camera,
   Cpu,
   Database,
@@ -205,6 +206,12 @@ export function buildNavSections({ t, isAdmin }: BuildNavSectionsParams): readon
         label: t('system.calendars', 'Calendars'),
         icon: Calendar,
         path: '/system/calendars',
+        adminOnly: true,
+      },
+      {
+        label: t('system.templates', 'Templates'),
+        icon: LayoutTemplate,
+        path: '/system/templates',
         adminOnly: true,
       },
       {

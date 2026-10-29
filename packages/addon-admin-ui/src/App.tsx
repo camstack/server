@@ -153,6 +153,11 @@ const CalendarsPage = lazy(() =>
     default: m.CalendarsPage,
   })),
 )
+const TemplatesPage = lazy(() =>
+  import('./pages/system/Templates').then((m) => ({
+    default: m.TemplatesPage,
+  })),
+)
 
 // gcTime: 0 — drop cached query data immediately when the last observer
 // unmounts (i.e. when navigating away from a page). This prevents stale
@@ -486,6 +491,14 @@ export function App() {
                                 element={
                                   <ProtectedRoute requireAdmin>
                                     <CalendarsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/system/templates"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <TemplatesPage />
                                   </ProtectedRoute>
                                 }
                               />
