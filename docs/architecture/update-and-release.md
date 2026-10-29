@@ -1398,6 +1398,20 @@ Squirrel.Mac applies a zip and nothing else; the order matters, and
 records why the zip is safe only after the channels are separate.
 `scripts/check-desktop-update-feeds.ts` fails the build on any of it.
 
+**One mac feed per product, whatever the number of mac legs.** Mac arm64 and
+x64 are separate legs, so each electron-builder run wrote a `latest-mac.yml`
+listing only its own arch and the last upload won: `v0.1.1` published an
+x64-only feed and Apple Silicon Macs updated to the Intel build (Rosetta
+prompt). A mac leg now stages its feed as `<feed>.<arch>.feedpart` (release
+assets, never `upload-artifact`: the org quota). The `merge-update-feeds` job
+runs after every `build-electron` leg, merges the parts with
+`scripts/ci/merge-mac-feeds.mjs` (union of `files` by url, everything else from
+the first part, x64 first), uploads the merged feed over the name, deletes the
+parts, re-downloads the published feed and fails the release if an arch a leg
+built has no entry. `publish-release` needs that job, so a draft with a bad
+feed is never un-drafted. Applies to `viewer-mac.yml` the day the viewer gets a
+second mac arch; a single part passes through unchanged.
+
 **Windows.** The `windows` column above is declared but not built. Enabling
 the leg is a matrix row with labels `self-hosted, windows, x64`; the app side
 is ready and described in [windows-agent.md](windows-agent.md). A service-mode

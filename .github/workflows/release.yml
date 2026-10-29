@@ -1043,6 +1043,17 @@ jobs:
           # ADR-0584.
           cp -v "${{ matrix.workspace }}/${{ matrix.output_dir }}/"${{ matrix.feed_glob }} \
             release-staging/ 2>/dev/null || true
+          # Legs of ONE product on the same OS each write a feed with the
+          # same name (`latest-mac.yml`) that lists only that leg's arch, and
+          # the last upload would win (v0.1.1: x64-only feed, Apple Silicon
+          # updated to the Intel build). A mac feed is therefore staged under
+          # a per-arch name and merged by `merge-mac-feeds` after every leg.
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            for f in release-staging/*-mac.yml; do
+              [ -e "$f" ] || continue
+              mv -v "$f" "$f.${{ matrix.arch }}.feedpart"
+            done
+          fi
           ls -la release-staging/
         shell: bash
 
@@ -1075,11 +1086,81 @@ jobs:
   # the Docker images are on GHCR and every installer is attached as an
   # asset, so it is safe to publish. The job is intentionally minimal: a
   # single `gh release edit --draft=false`.
+  # ── Step 3b — merge the per-arch mac feeds into one feed per product ──
+  #
+  # Runs once every build-electron leg is done (`needs`), so all parts are on
+  # the draft release. Parts are read from and written to release assets (no
+  # Actions artifact quota). Fails the release when a merged feed lacks an
+  # arch that a leg built. Draft releases are not found by tag, so assets go
+  # through the releases API by id.
+  merge-update-feeds:
+    needs: [derive-version, build-electron]
+    if: ${{ needs.derive-version.outputs.is_release == 'true' && needs.build-electron.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ needs.derive-version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Merge the mac feed parts and replace them with the merged feeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          rel=$(gh api "repos/${{ github.repository }}/releases" --paginate \
+            --jq ".[] | select(.tag_name==\"$TAG\") | .id" | head -1)
+          [ -n "$rel" ] || { echo "no release for $TAG"; exit 1; }
+          mkdir -p feeds merged
+          gh api "repos/${{ github.repository }}/releases/$rel/assets" --paginate \
+            --jq '.[] | select(.name|endswith(".feedpart")) | "\(.id) \(.name)"' > parts.txt
+          if [ ! -s parts.txt ]; then echo "no feed parts on $TAG — nothing to merge"; exit 0; fi
+          while read -r id name; do
+            gh api -H "Accept: application/octet-stream" \
+              "repos/${{ github.repository }}/releases/assets/$id" > "feeds/$name"
+          done < parts.txt
+          node scripts/ci/merge-mac-feeds.mjs merge feeds
+          for f in feeds/*.feedpart; do
+            b=$(basename "$f" .feedpart); cp "feeds/${b%.*}" merged/
+          done
+      - name: Upload the merged feeds
+        if: hashFiles('merged/*') != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.derive-version.outputs.tag }}
+          files: merged/*
+          overwrite_files: true
+          draft: true
+      - name: Drop the parts and verify the published feeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          [ -s parts.txt ] || exit 0
+          while read -r id _; do
+            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/$id"
+          done < parts.txt
+          rel=$(gh api "repos/${{ github.repository }}/releases" --paginate \
+            --jq ".[] | select(.tag_name==\"$TAG\") | .id" | head -1)
+          mkdir -p published
+          for f in feeds/*.feedpart; do
+            b=$(basename "$f" .feedpart); feed="${b%.*}"; arch="${b##*.}"
+            echo "$feed $arch"
+          done | sort -u > expected.txt
+          for feed in $(cut -d' ' -f1 expected.txt | sort -u); do
+            id=$(gh api "repos/${{ github.repository }}/releases/$rel/assets" --paginate \
+              --jq ".[] | select(.name==\"$feed\") | .id")
+            [ -n "$id" ] || { echo "published release lacks $feed"; exit 1; }
+            gh api -H "Accept: application/octet-stream" \
+              "repos/${{ github.repository }}/releases/assets/$id" > "published/$feed"
+            mapfile -t arches < <(grep "^$feed " expected.txt | cut -d' ' -f2)
+            node scripts/ci/merge-mac-feeds.mjs check "published/$feed" "${arches[@]}"
+          done
+
   publish-release:
-    needs: [derive-version, build-docker, build-electron]
+    needs: [derive-version, build-docker, build-electron, merge-update-feeds]
     # One failed leg leaves the release a draft. skip_docker skips this job
     # too: a publish without the image is not a finished release.
-    if: ${{ needs.derive-version.outputs.is_release == 'true' && needs.build-docker.result == 'success' && needs.build-electron.result == 'success' }}
+    if: ${{ needs.derive-version.outputs.is_release == 'true' && needs.build-docker.result == 'success' && needs.build-electron.result == 'success' && needs.merge-update-feeds.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Publish the release (un-draft)
@@ -1089,7 +1170,7 @@ jobs:
 
   # ── Step 5 — summary printed even when partial failures occurred ──
   summary:
-    needs: [derive-version, build-docker, build-electron, publish-release]
+    needs: [derive-version, build-docker, build-electron, merge-update-feeds, publish-release]
     runs-on: ubuntu-latest
     if: always()
     steps:
