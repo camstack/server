@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.690 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.691 | the update itself | — |
 
 ## Framework (5)
 
@@ -63,7 +63,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-esphome` | `packages/addon-provider-esphome` | 0.1.5 | addons dir | ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client |
 | `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.145 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.178 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
-| `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.638 | addons dir | Home Assistant device provider addon for CamStack |
+| `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.639 | addons dir | Home Assistant device provider addon for CamStack |
 | `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.162 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
 | `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.30 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.150 | addons dir | ONVIF camera device provider addon for CamStack |
