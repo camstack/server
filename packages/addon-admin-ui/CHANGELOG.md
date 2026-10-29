@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.522] - 2026-10-29
+
 ### Added
 
 - The remote template editor offers six built-in starting points (Samsung classic, Hisense VIDAA, Samsung Smart, LG Magic, Google TV, Apple TV) and app buttons with real brand icons
