@@ -1294,6 +1294,17 @@ const LTS_FLUSH_INTERVAL_MS = 60_000
 const OPS_LOG_RETENTION_FALLBACK_MS = 30 * 24 * 60 * 60_000
 /** Throttle for the "overlay synthesis failed" warn — one line / minute / device. */
 const OVERLAY_SYNTHESIS_WARN_THROTTLE_MS = 60_000
+
+/**
+ * A frame older than this is not drawn on the live overlay. On-motion session
+ * cameras replay the GOP pre-roll when a session starts, so frames 2-9 s old
+ * reach the tracker (they still feed tracking and analytics); drawing them
+ * paints boxes for where the subject WAS. 1 s is generous for a live frame's
+ * decode + inference latency.
+ */
+export const OVERLAY_MAX_FRAME_AGE_MS = 1000
+/** The stale-overlay-frame skip is logged at most once per device per this window. */
+const OVERLAY_STALE_LOG_THROTTLE_MS = 60_000
 /** How recently a spatial track must have been alive to count as "visual
  *  happening" — stamp audio labels on that track instead of opening a
  *  synthetic audio episode. */
@@ -5384,6 +5395,7 @@ export default class PipelineAnalyticsAddon
       this.frameState.packageLookDropReasons.delete(data.deviceId)
       this.overlayState.clearDevice(data.deviceId)
       this.frameState.overlaySynthesisWarnAt.delete(data.deviceId)
+      this.frameState.overlayStaleLogAt.delete(data.deviceId)
       this.forgetDeviceProcessors(data.deviceId)
       this.frameState.levelStateByDevice.delete(data.deviceId)
       this.frameState.audioConfirmByDevice.delete(data.deviceId)
@@ -5414,6 +5426,7 @@ export default class PipelineAnalyticsAddon
     this.frameState.packageLookDropReasons.delete(deviceId)
     this.overlayState.clearDevice(deviceId)
     this.frameState.overlaySynthesisWarnAt.delete(deviceId)
+    this.frameState.overlayStaleLogAt.delete(deviceId)
     this.forgetDeviceProcessors(deviceId)
     this.frameState.levelStateByDevice.delete(deviceId)
     this.frameState.motionOnsets.forgetDevice(deviceId)
@@ -6320,6 +6333,7 @@ export default class PipelineAnalyticsAddon
     this.parkedFrames?.dispose()
     this.overlayState.clear()
     this.frameState.overlaySynthesisWarnAt.clear()
+    this.frameState.overlayStaleLogAt.clear()
     // Every open segment ends `addon-stopped`. The field is nulled FIRST, so a
     // frame already past the `shuttingDown` check cannot open a segment this
     // close would never see; `stopAll` never rejects and gives up at
@@ -8240,6 +8254,19 @@ export default class PipelineAnalyticsAddon
         config: stillnessConfig,
       }).still
     })
+    const frameAgeMs = Date.now() - result.timestamp
+    if (frameAgeMs > OVERLAY_MAX_FRAME_AGE_MS) {
+      const nowMs = Date.now()
+      const lastLogAt = this.frameState.overlayStaleLogAt.get(deviceId) ?? 0
+      if (nowMs - lastLogAt >= OVERLAY_STALE_LOG_THROTTLE_MS) {
+        this.frameState.overlayStaleLogAt.set(deviceId, nowMs)
+        this.ctx.logger.debug('overlay skipped a stale frame (replayed pre-roll)', {
+          tags: { deviceId },
+          meta: { frameAgeMs, maxFrameAgeMs: OVERLAY_MAX_FRAME_AGE_MS },
+        })
+      }
+      return
+    }
     this.ctx.eventBus.emit({
       id: `pa-${randomUUID()}`,
       timestamp: new Date(result.timestamp),
@@ -11535,6 +11562,7 @@ export default class PipelineAnalyticsAddon
     void this.packageBackground?.clearDevice(input.deviceId)
     this.overlayState.clearDevice(input.deviceId)
     this.frameState.overlaySynthesisWarnAt.delete(input.deviceId)
+    this.frameState.overlayStaleLogAt.delete(input.deviceId)
     const prefix = `${input.deviceId}:`
     for (const k of this.frameState.lastActiveTrackIds.keys()) {
       if (k.startsWith(prefix)) this.frameState.lastActiveTrackIds.delete(k)

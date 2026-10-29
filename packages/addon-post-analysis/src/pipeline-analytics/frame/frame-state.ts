@@ -149,6 +149,8 @@ export class FrameState {
   readonly gatedNodeByDevice = new Map<number, string | null>()
   /** Throttle state for the "overlay synthesis failed" warn, one per device. */
   readonly overlaySynthesisWarnAt = new Map<number, number>()
+  /** Throttle state for the "overlay skipped a stale frame" debug line, one per device. */
+  readonly overlayStaleLogAt = new Map<number, number>()
   /** Per-device throttle for the inactive-binding frame-drop warn (5 min). */
   readonly inactiveBindingDropWarnAt = new Map<number, number>()
 

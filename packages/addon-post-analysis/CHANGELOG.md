@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The live detection overlay no longer shows boxes from replayed pre-roll frames
+
 ## [1.2.650] - 2026-10-28
 
 ### Changed

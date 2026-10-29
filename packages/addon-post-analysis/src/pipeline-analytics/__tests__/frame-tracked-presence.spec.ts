@@ -240,6 +240,41 @@ describe('pipeline-analytics — hasLiveTrack is PRESENCE, not motion', () => {
   })
 })
 
+describe('pipeline-analytics — the overlay event skips replayed (stale) frames', () => {
+  let booted: BootResult
+
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ['setInterval', 'clearInterval', 'setTimeout', 'clearTimeout', 'Date'],
+    })
+    vi.setSystemTime(100_000)
+  })
+
+  afterEach(async () => {
+    if (booted) await booted.addon.shutdown()
+    vi.useRealTimers()
+  })
+
+  it('emits for a fresh frame and not for a pre-roll frame older than OVERLAY_MAX_FRAME_AGE_MS', async () => {
+    booted = await boot()
+    const { bus } = booted
+    const emitted = (): number =>
+      bus.captured.filter((e) => e.category === EventCategory.PipelineAnalyticsFrameTracked).length
+
+    // A GOP pre-roll replay: frames 5 s old reach the tracker on session start.
+    for (const t of [95_000, 95_100, 95_200]) {
+      emit(bus.bus, t, [detection('p1')])
+      await flush()
+    }
+    expect(emitted()).toBe(0)
+
+    // A live frame (age 0) is overlaid.
+    emit(bus.bus, 100_000, [detection('p1')])
+    await flush()
+    expect(emitted()).toBe(1)
+  })
+})
+
 describe('FrameProcessor — the two mechanisms that end presence after a promotion', () => {
   const zones: readonly Zone[] = []
 

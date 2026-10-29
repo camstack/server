@@ -346,10 +346,19 @@ describe('pipeline-analytics E2E', () => {
 
   afterEach(async () => {
     if (booted) await booted.addon.shutdown()
+    vi.useRealTimers()
   })
+
+  /** The overlay event skips frames older than OVERLAY_MAX_FRAME_AGE_MS, so a
+   *  test that expects it must run on a clock near its frame timestamps. */
+  function clockAtFrames(nowMs: number): void {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(nowMs)
+  }
 
   it('produces tracks, events and bus emits when a device is active', async () => {
     booted = await boot(true)
+    clockAtFrames(1200)
     const { addon, fakes } = booted
     const det = detection('d1', { x: 100, y: 100, width: 50, height: 50 })
 
@@ -746,6 +755,7 @@ describe('pipeline-analytics E2E', () => {
 
   it('analyzes a camera-rooted frame through the same layers, tagged source=onboard', async () => {
     booted = await boot(true)
+    clockAtFrames(1200)
     const { addon, fakes } = booted
 
     // The camera was this frame's root detector. Warm up to minHits=3 at a
