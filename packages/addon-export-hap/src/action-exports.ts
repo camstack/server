@@ -1,5 +1,5 @@
 /**
- * The actions this bridge exposes (D967): the persisted selection and the
+ * The actions this bridge exposes (D968): the persisted selection and the
  * switch each entry is published as.
  *
  * Kept apart from the addon class so the lifecycle can be proved without a

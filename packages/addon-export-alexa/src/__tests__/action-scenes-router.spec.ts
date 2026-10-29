@@ -1,5 +1,5 @@
 /**
- * An exported action through the directive router (D967): Discovery adds the
+ * An exported action through the directive router (D968): Discovery adds the
  * scene for an ADMIN link only, and Activate reaches `actions.run` only for an
  * admin link and an exported action.
  */

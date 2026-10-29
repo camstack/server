@@ -217,7 +217,7 @@ export interface AlexaSettings {
   /** Operator-curated list of devices to surface to Alexa. Hidden state
    *  — written via the `device-export` cap, NOT operator-editable. */
   readonly exposed: readonly ExposedDeviceEntry[]
-  /** Actions exported as Alexa scenes (D967). Hidden state, written through
+  /** Actions exported as Alexa scenes (D968). Hidden state, written through
    *  `exposeEntity` / `unexposeEntity` only. */
   readonly exposedActions: readonly ActionSceneEntry[]
   /** Alexa users that have completed account-linking (cloud-mode
@@ -410,7 +410,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   private lwaGateway: LwaEventGateway | null = null
   private egressPrewarm: AlexaEgressPrewarm | null = null
   private syncEngine: SyncEngine | null = null
-  /** D967: exported actions, answered as Alexa scenes. */
+  /** D968: exported actions, answered as Alexa scenes. */
   private actionScenes: ActionSceneExports | null = null
   /** S1 (D767): the linking user's live grants. Built in `onInitialize`, the
    *  first point `ctx` exists. */

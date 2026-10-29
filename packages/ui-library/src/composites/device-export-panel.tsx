@@ -583,7 +583,7 @@ export function DeviceExportPanel({
     { refetchInterval: FLEET_POLL_INTERVAL_MS },
   )
 
-  // Actions and notification targets (D967). What this exporter can expose
+  // Actions and notification targets (D968). What this exporter can expose
   // beyond devices is ASKED, not assumed: a provider without the method (or an
   // unanswered query) leaves `entityKinds` null, which is "unknown" — devices
   // only, no filter entry — and the two lists below are not requested at all.

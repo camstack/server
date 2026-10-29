@@ -158,7 +158,7 @@ export interface DirectiveRouterDeps {
   readonly vision: VisionContext
   /** S1 (D767): the exposed set + the linking user's live grants. */
   readonly access: EndpointAccessDeps
-  /** D967: exported actions answered as scenes. Absent = none exported. */
+  /** D968: exported actions answered as scenes. Absent = none exported. */
   readonly actionScenes?: ActionSceneRouting
   /**
    * Called with the endpoints a Discover answered, for the linking user. The
@@ -314,7 +314,7 @@ async function dispatchParsedDirective(
     'Alexa.DataController/DeleteData': 'view',
     'Alexa.LockController/Lock': 'create',
     'Alexa.LockController/Unlock': 'create',
-    // D967: running an action is an act.
+    // D968: running an action is an act.
     'Alexa.SceneController/Activate': 'create',
     // Every directive an adapter handles actuates a device (D869).
     ...Object.fromEntries(GENERIC_DIRECTIVE_KEYS.map((k): [string, MethodAccess] => [k, 'create'])),
@@ -363,7 +363,7 @@ async function dispatchParsedDirective(
         }
       }
       principal = lookup.principal
-      // D967: an action is not a device — it has no registry chain for the
+      // D968: an action is not a device — it has no registry chain for the
       // access gate to walk, so it is answered (admin only) before the gate.
       if (
         endpoint !== undefined &&

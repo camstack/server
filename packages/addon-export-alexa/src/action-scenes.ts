@@ -1,5 +1,5 @@
 /**
- * Actions exported to Alexa as SCENES (D967).
+ * Actions exported to Alexa as SCENES (D968).
  *
  * Alexa has no "run" verb for an arbitrary automation, but it has a scene: an
  * endpoint with `Alexa.SceneController` whose Activate directive fires

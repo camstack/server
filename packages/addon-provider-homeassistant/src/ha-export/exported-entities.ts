@@ -1,5 +1,5 @@
 /**
- * Actions and notification targets exported to Home Assistant (D967).
+ * Actions and notification targets exported to Home Assistant (D968).
  *
  * An action is a `button`: pressing it runs the action through `actions.run`.
  * A notification target is a `notify` entity: a message sent to it goes out

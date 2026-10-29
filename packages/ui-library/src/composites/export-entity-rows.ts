@@ -1,5 +1,5 @@
 /**
- * The action and notification-target rows of the device export table (D967).
+ * The action and notification-target rows of the device export table (D968).
  *
  * An action and a notifier are list entries, never devices (D954): they are
  * merged into the SAME table as extra rows, built only from the kinds the

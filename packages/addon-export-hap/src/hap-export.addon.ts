@@ -403,7 +403,7 @@ interface ExportHapConfig {
    */
   readonly exposed: readonly ExposedConfigEntry[]
   /**
-   * Operator-curated list of ACTIONS published as momentary switches (D967).
+   * Operator-curated list of ACTIONS published as momentary switches (D968).
    * Actions are list entries, not devices (D954): this is a list of its own,
    * managed by `exposeEntity` / `unexposeEntity` only.
    */
@@ -497,7 +497,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   /** The bridge setup code pairs a controller: a credential, kept in the keychain (D787). */
   protected override readonly secretStatePaths = ['identity.pincode']
   private readonly exposed = new Map<string, Mapper>()
-  /** The exported actions — switches beside the devices (D967). */
+  /** The exported actions — switches beside the devices (D968). */
   private actionExports: ActionExports | null = null
   private lastError: string | undefined
   /** Shared HAP setup code applied to every published accessory. */
@@ -764,7 +764,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         }),
       exposeDevice: async ({ deviceId, capabilities }) => this.exposeDevice(deviceId, capabilities),
       unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
-      // ── Entities beside devices (D967): actions only, as momentary switches.
+      // ── Entities beside devices (D968): actions only, as momentary switches.
       listSupportedEntityKinds: async () => ['device', 'action'],
       listExposedEntities: async () => {
         await this.actionExports?.reconcile()

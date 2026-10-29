@@ -1,6 +1,6 @@
 /**
  * The Home Assistant side of exporting actions and notification targets
- * (D967): an action is a `button` (press runs it through `actions.run`), a
+ * (D968): an action is a `button` (press runs it through `actions.run`), a
  * target is a `notify` entity (a message is sent through
  * `notification-output.send`). Neither is a camstack device (D954): both live
  * on ONE synthetic device, and nothing here touches the device registry.

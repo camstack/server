@@ -1,5 +1,5 @@
 /**
- * `<DeviceExportPanel>` with actions and notification targets (D967): the SAME
+ * `<DeviceExportPanel>` with actions and notification targets (D968): the SAME
  * table, extra rows, and only for the kinds the exporter answered.
  *
  * Pinned here:

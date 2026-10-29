@@ -1,5 +1,5 @@
 /**
- * The HomeKit side of exporting actions (D967): the persisted selection, the
+ * The HomeKit side of exporting actions (D968): the persisted selection, the
  * switch each entry becomes, the press that runs it through `actions.run`, the
  * refusal that is logged and never queued, and the pruning of an action the
  * operator deleted.

@@ -253,3 +253,14 @@ npm. Its exposed set was empty (`linkState: unlinked`, `exposedDeviceCount: 0`),
 so nothing was migrated. Its capability-map discipline survives in
 `entity-catalog.ts` — `CAP_ENTITY_MAP` + `CAPS_NOT_EXPORTED` + `unclassifiedCaps()`,
 still with no default branch ([D48](../../docs/decisions/adr-0048.md)).
+
+## Actions and notification targets ([D968](../decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md))
+
+`homeassistant-export` also exports actions as `button` entities and
+notification targets as `notify` entities, on ONE synthetic device
+(`ha-export/exported-entities.ts`). Neither is a camstack device, so nothing
+touches the device registry. A button press runs `actions.run`; a `notify`
+message goes through `notification-output.send`. `notify` is a platform the
+custom component must BUILD: it is negotiated like the others
+(`component-support.ts`), and against a component that does not build it the
+targets are withheld and logged by name.

@@ -77,7 +77,7 @@ const ExposeInputSchema = z.object({
 const UnexposeInputSchema = z.object({ deviceId: z.string() })
 
 /**
- * What an exporter may expose besides devices (D967). An action and a
+ * What an exporter may expose besides devices (D968). An action and a
  * notification target are LIST ENTRIES, never devices (D954): they enter an
  * exporter's own selection, not the device registry.
  */
@@ -127,7 +127,7 @@ export const deviceExportCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
-    // Entities beyond devices (D967). A provider that implements none of these
+    // Entities beyond devices (D968). A provider that implements none of these
     // exports devices only; the UI treats an unanswered `listSupportedEntityKinds`
     // as "unknown", never as "devices only" (D315).
     listSupportedEntityKinds: optionalMethod(z.void(), z.array(ExportEntityKindSchema)),

@@ -195,7 +195,7 @@ interface HaExportConfig {
   /** Refreshed on every reconcile so the checkbox list stays honest. */
   readonly knownBrokers: readonly KnownBroker[]
   /**
-   * The actions and notification targets exported beside the devices (D967).
+   * The actions and notification targets exported beside the devices (D968).
    * Hidden state, written through `exposeEntity` / `unexposeEntity` only.
    */
   readonly exportedEntities: ExportedEntitiesState
@@ -334,7 +334,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * whenever the synthetic devices are, never written to.
    */
   private syntheticRules: readonly SyntheticRule[] = []
-  /** D967: the actions and notification targets exported beside the devices. */
+  /** D968: the actions and notification targets exported beside the devices. */
   private exportedEntities: ExportedEntities | null = null
   /**
    * `pipelineOrchestrator.getCameraStatuses`, keyed by deviceId — ONE call
@@ -1255,7 +1255,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
        * and not to a membership the operator picks per camera.
        */
       /**
-       * The exported actions and notification targets (D967): one more
+       * The exported actions and notification targets (D968): one more
        * synthetic device. What the operator deleted is dropped first (a failed
        * read changes nothing); a target the component cannot build as `notify`
        * is named, not silently lost.

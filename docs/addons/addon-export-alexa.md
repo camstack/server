@@ -249,3 +249,12 @@ is `auth: 'admin'` (the framework default is any authenticated user).
   (D779); R6 (remote live view) is a design only:
   `docs/design/2026-10-08-alexa-*.md`. The skill-console steps for the en-US
   test live in the publication runbook (`alexa-publish-notes/runbook.md`).
+
+## Actions as scenes ([D968](../decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md))
+
+An exported action is a scene endpoint (`action:<id>`, `SCENE_TRIGGER`,
+`Alexa.SceneController`); Activate runs `actions.run`. It is not a device, so it
+bypasses the per-device sync engine (`action-scenes.ts` holds its own push and
+delete). Only an ADMIN link sees or fires one — a scoped link is answered
+`NO_SUCH_ENDPOINT`. An action that is already running or in cooldown answers
+`ENDPOINT_BUSY` and is logged, never queued.

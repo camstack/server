@@ -1,5 +1,5 @@
 /**
- * An exported ACTION is an Alexa scene (D967): `Alexa.SceneController`,
+ * An exported ACTION is an Alexa scene (D968): `Alexa.SceneController`,
  * Activate → `actions.run`. Actions are list entries, not devices (D954), so
  * the endpoint is not under a device id and only an ADMIN link may see or
  * fire it (`actions.run` is an admin act; a scoped user reaches an action only

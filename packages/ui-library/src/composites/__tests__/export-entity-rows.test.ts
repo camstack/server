@@ -1,5 +1,5 @@
 /**
- * The action and notifier rows of the device export table (D967). They are
+ * The action and notifier rows of the device export table (D968). They are
  * built ONLY for the kinds the exporter answered: an unanswered kinds list is
  * unknown, which means devices only, never "supports nothing".
  */

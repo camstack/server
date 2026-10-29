@@ -1,5 +1,5 @@
 /**
- * An exported ACTION is a stateless momentary switch (D967): on → run the
+ * An exported ACTION is a stateless momentary switch (D968): on → run the
  * action → auto-off after about a second. It is an accessory beside the
  * devices, never a device.
  */

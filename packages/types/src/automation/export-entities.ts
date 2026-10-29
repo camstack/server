@@ -1,6 +1,6 @@
 /**
  * What a device exporter (HomeKit, Alexa, Home Assistant) does with the
- * non-device entities it may expose (D967): run an action, send through a
+ * non-device entities it may expose (D968): run an action, send through a
  * notification target, drop what was deleted.
  *
  * One implementation, so the three exporters refuse and log the same way:

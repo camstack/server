@@ -1,5 +1,5 @@
 /**
- * An exported ACTION as a HomeKit accessory (D967).
+ * An exported ACTION as a HomeKit accessory (D968).
  *
  * HomeKit has no "run" verb, so an action is a STATELESS MOMENTARY SWITCH:
  * turning it on runs the action, and the switch turns itself off about a
