@@ -49,6 +49,14 @@ export const CompositionProblemCodeSchema = z.enum([
   'member-constraint',
   /** A statistics or integral range is longer than the history that is kept (D944). */
   'retention',
+  /** A command names a method the built capability does not serve, or one the composer answers itself (D967). */
+  'command-method-unknown',
+  /** A forward names a capability or method that does not exist (D967). */
+  'command-source-unknown',
+  /** A forward uses an input field that is not in the method's input, named (D967). */
+  'command-input-unknown',
+  /** A forward leaves a required input of the source method unprovided (D967). */
+  'command-input-missing',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 
@@ -92,6 +100,8 @@ export const CompositionFieldItemSchema = z.object({
   arrayPath: z.string(),
   key: z.string(),
   label: z.string(),
+  /** True when the item carries a `reset` forward: the composer writes `resettable` from this (D967). */
+  resettable: z.boolean().optional(),
 })
 export type CompositionFieldItem = z.infer<typeof CompositionFieldItemSchema>
 

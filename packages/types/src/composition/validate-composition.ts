@@ -27,6 +27,14 @@ import {
 } from './composition.js'
 import { planItems } from './composition-items.js'
 import {
+  commandedMethods,
+  commandMethodProblems,
+  featureForwards,
+  forwardProblems,
+  forwardSourceProblems,
+  forwardSourceRefs,
+} from './validate-forward.js'
+import {
   compatibility,
   enumLiteralProblem,
   roleOf,
@@ -206,15 +214,20 @@ function builtCapProblems(
       ),
     )
   }
-  const served = Object.entries(def.methods)
-    .filter(([name, m]) => m.systemOnly !== true && def.composedMethods?.[name] === undefined)
-    .map(([name]) => `\`${name}\``)
-  if (served.length > 0 && !servedCommands.has(def.name)) {
+  const commanded = new Set(
+    Object.entries(feature.commands ?? {}).flatMap(([name, target]) =>
+      target.kind === 'forward' ? [name] : [],
+    ),
+  )
+  const unserved = commandedMethods(def)
+    .filter((name) => !commanded.has(name))
+    .map((name) => `\`${name}\``)
+  if (unserved.length > 0 && !servedCommands.has(def.name)) {
     problems.push(
       problem(
         'has-commands',
         `${at}.cap`,
-        `\`${def.name}\` has ${served.join(', ')}, which a composed device cannot serve until commands arrive (slice 3)`,
+        `\`${def.name}\` has ${unserved.join(', ')} with no command — a composed device serves a method only through a \`forward\` (D967)`,
       ),
     )
   }
@@ -300,6 +313,41 @@ function planTopLevelField(
   }
 }
 
+/**
+ * The commands of a feature (D967). Only a BUILT capability on a NEW device
+ * serves a method through a `forward`; on an existing device the native keeps
+ * its methods, and a `code` command is slice 4.
+ */
+function commandProblems(
+  def: CapabilityDefinition,
+  feature: CompositionFieldsFeature,
+  featureIndex: number,
+  mode: CompositionFeatureMode,
+  lookupCap: CapabilityLookup,
+): readonly CompositionProblem[] {
+  const at = `features[${featureIndex}]`
+  const forwards = featureForwards(feature, featureIndex)
+  const code = Object.entries(feature.commands ?? {}).filter(([, t]) => t.kind === 'code')
+  const problems: CompositionProblem[] = code.map(([method]) =>
+    problem('reserved-variant', `${at}.commands.${method}`, 'a `code` command arrives in slice 4'),
+  )
+  if (forwards.length > 0 && mode !== 'new') {
+    return [
+      ...problems,
+      problem(
+        'reserved-variant',
+        `${at}.commands`,
+        'commands (`forward`) are served only by a capability a NEW device builds — not on an existing device',
+      ),
+    ]
+  }
+  return [
+    ...problems,
+    ...commandMethodProblems(def, feature, at),
+    ...forwards.flatMap((forward) => forwardProblems(def, forward, lookupCap)),
+  ]
+}
+
 function planFeature(
   feature: CompositionFieldsFeature,
   featureIndex: number,
@@ -314,11 +362,7 @@ function planFeature(
     target.mode === 'replace'
       ? []
       : [...builtCapProblems(cap, feature, at, target.deviceType, servedCommands)]
-  if (feature.commands !== undefined && Object.keys(feature.commands).length > 0) {
-    capProblems.push(
-      problem('reserved-variant', `${at}.commands`, 'commands (`forward`) arrive in slice 3'),
-    )
-  }
+  capProblems.push(...commandProblems(cap.def, feature, featureIndex, target.mode, lookupCap))
   const perField = Object.entries(feature.fields).map(([path, source]) =>
     planTopLevelField(cap, { featureIndex, path, source }, target.mode, lookupCap),
   )
@@ -469,7 +513,11 @@ export function compositionSourceRefs(composition: Composition): readonly Compos
           .map((r) => r.source)
       : [],
   )
-  return [...new Map(refs.map((r) => [compositionSourceKey(r), r])).values()]
+  return [
+    ...new Map(
+      [...refs, ...forwardSourceRefs(composition)].map((r) => [compositionSourceKey(r), r]),
+    ).values(),
+  ]
 }
 
 /** The device the candidate writes, and what its own reads of that device mean. */
@@ -714,6 +762,7 @@ export function validateComposition(
   const problems = [
     ...plan.problems,
     ...sourceProblems(plan.fields, ctx, self),
+    ...forwardSourceProblems(composition, ctx.sources),
     ...cycles,
     ...helperSaveProblems(composition, facts),
   ]

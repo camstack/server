@@ -6,7 +6,7 @@ import {
   type GroupHelperSpec,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { actuatorDispatcher } from '../actuator-dispatch.js'
+import { actuatorDispatcher, type ActuatorDispatchInput } from '../actuator-dispatch.js'
 import {
   ActuatorGroups,
   type ActuatorGroupDevice,
@@ -325,5 +325,51 @@ describe('actuator groups beyond switch and light', () => {
       expect(world.calls).toEqual([])
       world.groups.shutdown()
     })
+  })
+})
+
+describe('actuator groups — forwards of a built cap (D967)', () => {
+  function forwardWorld() {
+    const handled: ActuatorDispatchInput[] = []
+    const recorded = recordingLogger()
+    const groups = new ActuatorGroups({
+      logger: recorded.logger,
+      now: () => 1,
+      resolve: () => ({ kind: 'other' }),
+      readMember: async () => ({ kind: 'unreadable', error: 'unused' }),
+      deviceOf: () => null,
+      invoke: async () => {
+        throw new Error('a forward must not fan out')
+      },
+      forwards: {
+        serves: (id) => id === 321,
+        command: async (input) => {
+          handled.push(input)
+        },
+      },
+    })
+    return { groups, handled }
+  }
+
+  it('hands a command of a forward-commanded device to the forwards, not to a group', async () => {
+    const { groups, handled } = forwardWorld()
+    const run = actuatorDispatcher()
+    if (run === null) throw new Error('dispatcher was not attached')
+    await run({ groupDeviceId: 321, cap: 'pump', method: 'setPump', args: { on: true } })
+    expect(handled).toEqual([
+      { groupDeviceId: 321, cap: 'pump', method: 'setPump', args: { on: true } },
+    ])
+    groups.shutdown()
+  })
+
+  it('a device the forwards do not serve still needs a live group', async () => {
+    const { groups, handled } = forwardWorld()
+    const run = actuatorDispatcher()
+    if (run === null) throw new Error('dispatcher was not attached')
+    await expect(
+      run({ groupDeviceId: 5, cap: 'switch', method: 'setState', args: { on: true } }),
+    ).rejects.toThrow('actuator group is not live')
+    expect(handled).toEqual([])
+    groups.shutdown()
   })
 })

@@ -69,6 +69,14 @@ function present(args: Readonly<Record<string, unknown>>): Readonly<Record<strin
 
 const COMPOSED_DEVICE_CONFIG_SCHEMA: z.ZodObject<Record<string, never>> = z.object({})
 
+type CommandProvider = Readonly<Record<string, (input: unknown) => Promise<void>>>
+
+/** What a command carries: the caller's input without `deviceId` (the composed device is the dispatch key). */
+function commandInput(input: unknown): Readonly<Record<string, unknown>> {
+  if (!isRecord(input)) return {}
+  return present(Object.fromEntries(Object.entries(input).filter(([key]) => key !== 'deviceId')))
+}
+
 function priorResults(slice: unknown): readonly GroupCommandResult[] {
   if (!isRecord(slice) || !Array.isArray(slice.results)) return []
   return slice.results.flatMap((row) => {
@@ -128,11 +136,34 @@ export class ComposedDevice
         })
         continue
       }
-      ctx.registerNativeCap(cap, {})
+      ctx.registerNativeCap(cap, this.commandProvider(cap))
     }
     if (GROUP_COMMAND_TYPES.has(type)) ctx.registerNativeCap(groupCommandsCapability, {})
     // NOT presumed reachable: available only once the runtime has seeded every cap.
     this.markOnline(false)
+  }
+
+  /**
+   * The methods of a BUILT cap are commands (D967): each one is dispatched under
+   * its own name and the composer's forwards decide what it calls. A method the
+   * cap refuses for a composed device (`consumables.reset`) is served the same
+   * way — an item's `reset` forward answers it. A cap with no such method stays
+   * an empty native, `getStatus` being the kernel default over the slice.
+   */
+  private commandProvider(cap: CapabilityDefinition): CommandProvider {
+    const forwarded = Object.entries(cap.methods)
+      .filter(([name, method]) => {
+        if (method.systemOnly === true) return false
+        const answer = cap.composedMethods?.[name]
+        return answer === undefined || answer.kind === 'refuse'
+      })
+      .map(([name]) => name)
+    return Object.fromEntries(
+      forwarded.map((name) => [
+        name,
+        (input: unknown): Promise<void> => this.dispatch(cap.name, name, commandInput(input)),
+      ]),
+    )
   }
 
   /**

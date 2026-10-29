@@ -193,7 +193,7 @@ describe('reserved variants are refused by name, with their slice', () => {
     expect(result.problems.find((p) => p.path === 'features[0]')?.message).toContain('slice 3')
   })
 
-  it('a `forward` command → slice 3', () => {
+  it('a `forward` command is checked, not reserved (D967): an unknown method and capability are named', () => {
     const c = CompositionSchema.parse({
       target: { kind: 'new', type: DeviceType.Sensor },
       features: [
@@ -206,12 +206,9 @@ describe('reserved variants are refused by name, with their slice', () => {
       ],
     })
     const result = validateComposition(c, ctx(c))
-    expect(result.problems).toContainEqual(
-      expect.objectContaining({ code: 'reserved-variant', path: 'features[0].commands' }),
-    )
-    expect(result.problems.find((p) => p.path === 'features[0].commands')?.message).toContain(
-      'slice 3',
-    )
+    expect(result.problems.map((p) => p.code)).toContain('command-method-unknown')
+    expect(result.problems.map((p) => p.code)).toContain('command-source-unknown')
+    expect(result.problems.map((p) => p.code)).not.toContain('reserved-variant')
   })
 
   it('a `code` source → slice 4', () => {

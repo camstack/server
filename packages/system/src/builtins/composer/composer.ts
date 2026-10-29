@@ -58,6 +58,7 @@ import {
   type CompositionBlockState,
   type CompositionFieldState,
   composedDeviceStableId,
+  compositionFeatureEnabled,
   type DeviceDeclaration,
   type DeviceHistoryQueryResult,
   type HistoryRetention,
@@ -84,6 +85,7 @@ import {
   ComposedDeviceSet,
   type ComposerDevicePorts,
 } from './composed-device-set.js'
+import { type ForwardBlock, ForwardCommands, type ForwardCommandsDeps } from './forward-commands.js'
 import { ApplyWaits, waitingResult } from './composer-apply-waits.js'
 import { ComposerGrafts } from './composer-grafts.js'
 import {
@@ -202,6 +204,12 @@ export interface ComposerDeps {
    */
   readonly readActuatorMember?: (deviceId: number) => Promise<ActuatorMemberLookup>
   readonly invokeActuator?: (call: FanOutCall) => Promise<void>
+  /**
+   * `<cap>.<method>` on a source device through `ctx.api`, for the `forward`
+   * commands of a built cap (D967). Absent in tests that predate them: such a
+   * device refuses its commands by name.
+   */
+  readonly callCapMethod?: ForwardCommandsDeps['callCapMethod']
 }
 
 interface RuntimeRebuild {
@@ -222,6 +230,7 @@ export class Composer {
   private readonly targets: TargetDescriptions
   private readonly grafts: ComposerGrafts
   private readonly actuators: ActuatorGroups | null
+  private readonly forwards: ForwardCommands | null
   private readonly history: HistoryHelpers | null
   private historySpecs: ReadonlyMap<string, HistoryHelperSpec> = new Map()
   /** The rows the composer owns, read ONCE before its first withdrawal decision. */
@@ -257,7 +266,8 @@ export class Composer {
       this.grafts.describing(deviceId)
       return deps.describeTarget(deviceId)
     })
-    this.actuators = this.attachActuators(deps)
+    this.forwards = this.attachForwards(deps)
+    this.actuators = this.attachActuators(deps, this.forwards)
     this.history = this.attachHistory(deps)
     this.waits = new ApplyWaits(deps.logger)
     this.rowSeed = composedRowSeed({
@@ -331,10 +341,33 @@ export class Composer {
     this.history?.stop()
   }
 
-  private attachActuators(deps: ComposerDeps): ActuatorGroups | null {
-    const read = deps.readActuatorMember
-    const invoke = deps.invokeActuator
-    if (read === undefined || invoke === undefined) return null
+  private attachForwards(deps: ComposerDeps): ForwardCommands | null {
+    const callCapMethod = deps.callCapMethod
+    if (callCapMethod === undefined) return null
+    return new ForwardCommands({
+      logger: deps.logger.child('forward'),
+      resolve: (ref) => deps.tracker.resolve(ref, true),
+      callCapMethod,
+      deviceIdOf: (blockId) => this.composed.idOf(composedDeviceStableId(blockId)),
+    })
+  }
+
+  /**
+   * The dispatch path of a composed device's commands. A forward-only
+   * deployment (no actuator ports) still gets it: the fan-out it never uses
+   * refuses by name.
+   */
+  private attachActuators(
+    deps: ComposerDeps,
+    forwards: ForwardCommands | null,
+  ): ActuatorGroups | null {
+    const read = deps.readActuatorMember ?? unattachedMemberRead
+    const invoke = deps.invokeActuator ?? unattachedInvoke
+    if (
+      forwards === null &&
+      (deps.readActuatorMember === undefined || deps.invokeActuator === undefined)
+    )
+      return null
     return new ActuatorGroups({
       logger: deps.logger.child('actuators'),
       now: deps.now,
@@ -350,6 +383,7 @@ export class Composer {
         return device !== null && isActuatorGroupDevice(device) ? device : null
       },
       invoke,
+      ...(forwards === null ? {} : { forwards }),
     })
   }
 
@@ -447,6 +481,7 @@ export class Composer {
     await Promise.all(rebuilt.stopped.map((runtime) => runtime.quiesce()))
     const unreleasedClaims = await this.releaseConfirmed(releasing)
     await this.syncSources(rebuilt)
+    this.forwards?.sync(forwardBlocksOf(input.blocks))
     await this.actuators?.sync(
       input.blocks.flatMap((block) => {
         const helper = block.composition.helper
@@ -890,4 +925,24 @@ function historySpecsOf(blocks: readonly ComposerBlock[]): ReadonlyMap<string, H
     specs.set(block.id, helper)
   }
   return specs
+}
+
+/** The fan-out ports a deployment without actuator helpers does not attach: a call names that. */
+const unattachedMemberRead: NonNullable<ComposerDeps['readActuatorMember']> = async () => ({
+  kind: 'unreadable',
+  error: 'actuator groups are not attached',
+})
+const unattachedInvoke: NonNullable<ComposerDeps['invokeActuator']> = async () => {
+  throw new Error('actuator fan-out is not attached')
+}
+
+/** The forwards of the enabled blocks that build a NEW device: the only target a built cap's commands serve (D967). */
+function forwardBlocksOf(blocks: readonly ComposerBlock[]): readonly ForwardBlock[] {
+  return blocks.flatMap((block): readonly ForwardBlock[] => {
+    if (!block.enabled || block.composition.target.kind !== 'new') return []
+    const features = block.composition.features.flatMap((feature) =>
+      feature.kind === 'fields' && compositionFeatureEnabled(feature) ? [feature] : [],
+    )
+    return [{ id: block.id, features }]
+  })
 }

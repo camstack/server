@@ -66,6 +66,17 @@ export interface ActuatorGroupsDeps {
   readonly readMember: (deviceId: number) => Promise<ActuatorMemberLookup>
   readonly deviceOf: (blockId: string) => ActuatorGroupDevice | null
   readonly invoke: (call: FanOutCall) => Promise<void>
+  /**
+   * The commands of a BUILT cap (D967). A device it serves is not a group: its
+   * calls take this path instead of the fan-out.
+   */
+  readonly forwards?: ForwardPort
+}
+
+/** What the group dispatch needs of `ForwardCommands`. */
+export interface ForwardPort {
+  serves(groupDeviceId: number): boolean
+  command(input: ActuatorDispatchInput): Promise<void>
 }
 
 interface RememberedGroup {
@@ -243,6 +254,8 @@ export class ActuatorGroups {
   }
 
   private async command(input: ActuatorDispatchInput): Promise<void> {
+    const forwards = this.deps.forwards
+    if (forwards?.serves(input.groupDeviceId) === true) return forwards.command(input)
     const group = [...this.groups.values()].find(
       (item) => item.groupDeviceId === input.groupDeviceId,
     )

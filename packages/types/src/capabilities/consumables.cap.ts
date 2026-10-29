@@ -267,15 +267,15 @@ export const consumablesCapability = {
     ),
   },
   /**
-   * A composed consumable (item added to a device with no native consumables
-   * provider) refuses `reset` by name: "Only meaningful when the item's
-   * `resettable` is true" — a composed item is never resettable until
-   * commands (`forward`) arrive in slice 3 (D663).
+   * A consumable ADDED to an existing device (a graft) refuses `reset` by
+   * name: only a composed device of a NEW type forwards an item's reset to a
+   * source button, and marks that item `resettable` (D967).
    */
   composedMethods: {
     reset: {
       kind: 'refuse',
-      reason: 'a composed consumable is not resettable until commands (forward) arrive — slice 3',
+      reason:
+        'a consumable added to an existing device is not resettable — only a new composed device forwards a reset',
     },
   },
   status: {

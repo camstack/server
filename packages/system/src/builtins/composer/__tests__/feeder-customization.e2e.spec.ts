@@ -241,7 +241,7 @@ describe('3 — the grafted methods answer through the Task 7 wrapper', () => {
     const battery = w.capabilities.getProviderForDevice<ProviderRecord>('battery', feederId)
     await expect(
       consumables?.['reset']?.({ deviceId: feederId, key: 'desiccant' }),
-    ).rejects.toThrow('a composed consumable is not resettable until commands (forward) arrive')
+    ).rejects.toThrow('a consumable added to an existing device is not resettable')
     await expect(
       battery?.['wakeForStream']?.({ deviceId: feederId, timeoutMs: 1000 }),
     ).resolves.toEqual({ awoke: false, durationMs: 0 })

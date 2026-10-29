@@ -146,3 +146,55 @@ describe('assembleSlice (D663)', () => {
     )
   })
 })
+
+describe('assembleSlice — an item with a reset forward is resettable (D967)', () => {
+  const BUTTON = { addonId: 'provider-homeassistant', stableId: 'ha:button.filter_changed' }
+  function resettablePlans(): readonly CompositionFieldPlan[] {
+    const plan = planComposition(
+      CompositionSchema.parse({
+        target: { kind: 'new', type: DeviceType.Generic },
+        features: [
+          {
+            kind: 'fields',
+            cap: 'consumables',
+            fields: {
+              lastChangedAt: { kind: 'expression', expr: 'now', bindings: {} },
+              lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+            },
+            items: {
+              filter: {
+                label: 'Filter',
+                fields: { status: { kind: 'expression', expr: '"ok"', bindings: {} } },
+                reset: { kind: 'forward', source: BUTTON, cap: 'button', method: 'press' },
+              },
+              fixed: {
+                label: 'Fixed',
+                fields: { status: { kind: 'expression', expr: '"ok"', bindings: {} } },
+              },
+            },
+          },
+        ],
+      }),
+      LOOKUP_CAP,
+    )
+    if (plan.problems.length > 0) throw new Error(plan.problems.map((p) => p.message).join('; '))
+    return plan.fields
+  }
+
+  it('writes resettable true only for the item that has a reset', () => {
+    const plans = new Map(resettablePlans().map((p) => [compositionFieldKey(p), p]))
+    const pick = (key: string): AssemblerEntry => {
+      const plan = plans.get(key)
+      if (plan === undefined) throw new Error(`no plan for ${key}`)
+      return { plan, value: 'ok' }
+    }
+    const items = assembleSlice(
+      [pick('consumables.items[filter].status'), pick('consumables.items[fixed].status')],
+      LOOKUP_CAP,
+    ).items
+    expect(items).toMatchObject([
+      { key: 'filter', resettable: true },
+      { key: 'fixed', resettable: false },
+    ])
+  })
+})

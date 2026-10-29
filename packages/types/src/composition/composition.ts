@@ -142,12 +142,55 @@ export const CompositionFieldSourceSchema = z.discriminatedUnion('kind', [
 ])
 export type CompositionFieldSource = z.infer<typeof CompositionFieldSourceSchema>
 
-/** `forward`: RESERVED for slice 3. Argument mapping arrives there as an additive optional `args`. */
+/** The marker of a forward argument that takes its value from the built method's input. */
+export const FORWARD_INPUT_KEY = '$input'
+
+/**
+ * One value of a forward's `args` template: a constant, `{ $input: '<field>' }`
+ * (the value of that field of the BUILT method's input), or a nested record of
+ * these — the source method may take a structured input (`control.setValue`).
+ */
+export type CompositionForwardArg =
+  | string
+  | number
+  | boolean
+  | { readonly $input: string }
+  | { readonly [key: string]: CompositionForwardArg }
+
+// Built once: the lazy getter must return the SAME schema each call, or a walker that
+// guards recursion by identity (the API reference generator) never sees the cycle close.
+const forwardArgUnion: z.ZodType<CompositionForwardArg> = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.strictObject({ [FORWARD_INPUT_KEY]: z.string().min(1) }),
+  z.record(
+    z.string().min(1),
+    z.lazy(() => forwardArgUnion),
+  ),
+])
+
+export const CompositionForwardArgSchema: z.ZodType<CompositionForwardArg> = forwardArgUnion
+
+/** True for `{ $input: '<field>' }`. */
+export function isForwardInputRef(
+  value: CompositionForwardArg,
+): value is { readonly $input: string } {
+  return typeof value === 'object' && typeof value.$input === 'string'
+}
+
+/**
+ * `forward` (D659, amended by D967): one method of a BUILT capability is one
+ * call of `cap.method` on `source`. Without `args` the built method's input
+ * passes through minus `deviceId`; with `args` the template IS the source's
+ * whole input. `deviceId` is always the source's own, never an argument.
+ */
 export const CompositionForwardCommandSchema = z.object({
   kind: z.literal('forward'),
   source: CompositionSourceRefSchema,
   cap: z.string().min(1),
   method: z.string().min(1),
+  args: z.record(z.string().min(1), CompositionForwardArgSchema).optional(),
 })
 export type CompositionForwardCommand = z.infer<typeof CompositionForwardCommandSchema>
 
@@ -171,6 +214,12 @@ export const COMPOSITION_ITEM_ARRAY_PATH = 'items'
 export const CompositionItemEntrySchema = z.object({
   label: z.string().min(1).max(80),
   fields: z.record(z.string().min(1), CompositionFieldSourceSchema),
+  /**
+   * What the cap's `reset` does for THIS item (consumables). Present = the item
+   * is resettable and a `reset` call naming its key forwards here. The item key
+   * selects the command, so it is never an argument: there is no pass-through.
+   */
+  reset: CompositionForwardCommandSchema.optional(),
 })
 export type CompositionItemEntry = z.infer<typeof CompositionItemEntrySchema>
 
@@ -193,7 +242,7 @@ export const CompositionFieldsFeatureSchema = z.object({
       message: `at most ${MAX_COMPOSITION_ITEMS} items`,
     })
     .optional(),
-  /** RESERVED for slice 3; refused by the validator when non-empty. */
+  /** Method name → what serves it. Only a BUILT capability takes commands (D967). */
   commands: z.record(z.string().min(1), CompositionCommandTargetSchema).optional(),
 })
 export type CompositionFieldsFeature = z.infer<typeof CompositionFieldsFeatureSchema>

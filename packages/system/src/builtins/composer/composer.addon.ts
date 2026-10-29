@@ -27,7 +27,9 @@ import {
   type HistoryRetention,
   type IComposerProvider,
   isReadingQuantity,
+  kebabToCamel,
   type ProviderRegistration,
+  resolveMutate,
 } from '@camstack/types'
 import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
 import { normalizedNativeOwner } from '../core-blocks/composition-sources.js'
@@ -237,6 +239,16 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
         } catch (err: unknown) {
           return { kind: 'unreadable', error: errMsg(err) }
         }
+      },
+      callCapMethod: async (deviceId, cap, method, args) => {
+        // A forward names its cap and method in the stored composition, so the
+        // router is reached by name; the typed client has no static path for it.
+        const router: unknown = Reflect.get(api, kebabToCamel(cap))
+        const mutate = resolveMutate(router, method)
+        if (mutate === null) {
+          throw new Error(`\`${cap}.${method}\` is not a mutation reachable through ctx.api`)
+        }
+        await mutate({ deviceId, ...args })
       },
       invokeActuator: (call) =>
         invokeActuatorCall(

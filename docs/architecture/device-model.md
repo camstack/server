@@ -450,8 +450,9 @@ runner (a group of one) for every declarative composition. Existing devices are 
 - **Sources are `{ addonId, stableId }`**, never numeric ids (`stableId` is
   unique only per addon); the tracker resolves them and follows
   re-registration under a new id.
-- **A composed cap is a native provider on the composed device** with no
-  methods of its own; `getStatus` is the kernel default over the runtime slice,
+- **A composed cap is a native provider on the composed device**; a cap with
+  methods serves each one by a `forward` command (below, D967); `getStatus` is
+  the kernel default over the runtime slice,
   so a composed device is read like any other: `getBindings` lists it,
   `getProviderForDevice` resolves it, the status aggregate shows it. Writes are
   a seed, then merges.
@@ -477,8 +478,18 @@ runner (a group of one) for every declarative composition. Existing devices are 
   `createComposition` / `updateComposition` reach): capability fit, kinds,
   nullability, sources, cycles — refused by name. Reads answer `not-loaded`
   before the store loads (D315); writes are serialized and an update carries
-  `expectedUpdatedAt`. Commands and media passthrough (slice 3) and code
-  fields (slice 4) are in the wire shape and refused by name today.
+  `expectedUpdatedAt`. Media passthrough and code fields (slice 4) are in the
+  wire shape and refused by name today.
+- **A built device's methods are forwards (D967).** A cap with methods on a
+  `target.kind: 'new'` device needs a `forward` command for every method: it
+  calls one mutation of one source device's cap, through the actuator
+  dispatch path (`ForwardCommands`). Without `args` the input passes through
+  minus `deviceId`; with `args` the template is the whole input and
+  `{ $input: 'field' }` reads the caller's input. A consumable item's `reset`
+  forward makes it `resettable`. The source is resolved on every command; a
+  gone, unknown or failing source fails the call with a reason naming it, logged
+  with `tags: { deviceId }`. Forwards on an existing target, `code` commands
+  and `passthrough` stay reserved.
 - **An EXISTING device can be the target (slice 2, D663, D944).** Nothing is
   declared. A feature ADDS a capability the device lacks and the composer
   CLAIMS those fields on the hub under the block id (`deviceState.claimFields`).

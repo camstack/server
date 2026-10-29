@@ -10,8 +10,8 @@
  *
  * The composer sets some item fields itself: the key and label (from the
  * entry) and {@link COMPOSED_ITEM_FIXED_FIELDS}. A source for any of them is
- * refused by name (`item-field-reserved`) — `resettable` is fixed `false`
- * because `reset` is refused until commands arrive (slice 3).
+ * refused by name (`item-field-reserved`) — `resettable` is written from the
+ * item's `reset` forward (D967): `true` with one, `false` without.
  */
 import type {
   CapabilityDefinition,
@@ -41,7 +41,7 @@ import {
 } from './field-kinds.js'
 import type { CapabilityLookup } from './validate-composition.js'
 
-/** Item fields the composer writes itself, with the value it writes. */
+/** Item fields the composer writes itself, with the value it writes. `resettable` is the default: an item with a `reset` forward writes `true` (D967). */
 export const COMPOSED_ITEM_FIXED_FIELDS = { resettable: false } as const
 
 type ItemArray = CapabilityStatusItemArray
@@ -102,6 +102,8 @@ function missingLeaves(
 interface ItemLeaf {
   readonly key: string
   readonly label: string
+  /** The item has a `reset` forward (D967). */
+  readonly resettable: boolean
   readonly path: string
   readonly source: CompositionFieldSource
 }
@@ -131,7 +133,12 @@ function planItemField(ctx: ItemArrayContext, leaf: ItemLeaf): CompositionPlanRe
   const plan: CompositionFieldPlan = {
     cap: capName,
     path,
-    item: { arrayPath: itemArray.path, key, label },
+    item: {
+      arrayPath: itemArray.path,
+      key,
+      label,
+      ...(leaf.resettable ? { resettable: true } : {}),
+    },
     featureIndex,
     kind: tf.kind,
     nullable: tf.nullable,
@@ -192,7 +199,13 @@ export function planItems(
   const results = Object.entries(feature.items ?? {}).flatMap(([key, item]) => [
     { problems: missingLeaves(ctx, item, `${at}.${key}`), fields: [], features: [], events: [] },
     ...Object.entries(item.fields).map(([path, source]) =>
-      planItemField(ctx, { key, label: item.label, path, source }),
+      planItemField(ctx, {
+        key,
+        label: item.label,
+        resettable: item.reset !== undefined,
+        path,
+        source,
+      }),
     ),
   ])
   return {

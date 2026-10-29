@@ -38,6 +38,8 @@ interface ItemGroup {
   readonly arrayPath: string
   readonly key: string
   readonly label: string
+  /** A `reset` forward serves the item (D967). */
+  readonly resettable: boolean
   readonly leaves: readonly AssemblerEntry[]
 }
 
@@ -76,6 +78,7 @@ function assembleItem(group: ItemGroup, lookupCap: CapabilityLookup): SliceItem 
     [itemArray.keyField]: group.key,
     ...(itemArray.labelField === undefined ? {} : { [itemArray.labelField]: group.label }),
     ...COMPOSED_ITEM_FIXED_FIELDS,
+    ...(group.resettable ? { resettable: true } : {}),
   }
   return group.leaves.reduce(
     (item, leaf) => setPath(item, leaf.plan.path.split('.'), leaf.value),
@@ -94,6 +97,7 @@ function groupItems(entries: readonly AssemblerEntry[]): readonly ItemGroup[] {
       arrayPath: item.arrayPath,
       key: item.key,
       label: item.label,
+      resettable: item.resettable === true,
       leaves: [],
     }
     groups.set(id, { ...group, leaves: [...group.leaves, entry] })
