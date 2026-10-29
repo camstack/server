@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The pet-fountain capability reaches the kernel through the generated types
 - Linux memory comes from MemAvailable; a failed memory read is reported as unknown instead of a made-up percentage
 
+### Changed
+
+- Memory reclaim now judges the stranded memory by anonymous resident pages on Linux, so file-backed SQLite mappings no longer trigger useless reclaim passes
+
 ## [1.2.517] - 2026-10-29
 
 ### Added

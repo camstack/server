@@ -90,6 +90,7 @@
 import { monitorEventLoopDelay } from 'node:perf_hooks'
 import * as v8 from 'node:v8'
 import * as vm from 'node:vm'
+import { createAnonRssReader } from './anon-rss.js'
 import {
   createEventPlaneMeter,
   type EventPlaneReader,
@@ -530,6 +531,13 @@ export interface HeapSample {
   readonly heapLimitMb: number
   readonly externalMb: number
   readonly arrayBuffersMb: number
+  /**
+   * `RssAnon` (Linux): private anonymous resident memory, the part a
+   * `last-resort` GC or `malloc_trim` can actually hand back. `undefined` when
+   * it was not measured (macOS, Windows, a failed `/proc` read) — never 0
+   * (D393); {@link strandedMb} then falls back to `rssMb`.
+   */
+  readonly anonRssMb?: number
   /** heapUsed / heapLimit, 0-1. */
   readonly usedRatio: number
   /** True once the heap is close enough to the ceiling to be worth shouting. */
@@ -546,6 +554,7 @@ export function buildHeapSample(
   mem: NodeJS.MemoryUsage,
   heapLimitBytes: number,
   warnRatio: number = HEAP_WATCH_WARN_RATIO,
+  anonRssBytes?: number,
 ): HeapSample {
   const usedRatio = heapLimitBytes > 0 ? mem.heapUsed / heapLimitBytes : 0
   return {
@@ -555,6 +564,7 @@ export function buildHeapSample(
     heapLimitMb: MB(heapLimitBytes),
     externalMb: MB(mem.external),
     arrayBuffersMb: MB(mem.arrayBuffers),
+    ...(anonRssBytes === undefined ? {} : { anonRssMb: MB(anonRssBytes) }),
     usedRatio: Math.round(usedRatio * 100) / 100,
     nearLimit: usedRatio >= warnRatio,
   }
@@ -666,7 +676,11 @@ export function createDeferredHeapWatchSink(
  * that. See {@link RssBudgetOptions} for the number that does answer it.
  */
 export function strandedMb(s: HeapSample): number {
-  return s.rssMb - s.heapUsedMb - s.externalMb
+  // `VmRSS` also counts file-backed pages (mmap'd SQLite, shared libraries):
+  // reclaimable by the kernel, never by a GC. sqlite-settings ran 45 useless
+  // passes in a day with VmRSS 1079 = RssAnon 585 + RssFile 493. Where the
+  // anonymous part is known, it is the honest numerator.
+  return (s.anonRssMb ?? s.rssMb) - s.heapUsedMb - s.externalMb
 }
 
 /** Whether it is worth paying a stop-the-world to get those pages back. */
@@ -840,6 +854,8 @@ export function createV8Reclaimer(): HeapReclaimer | undefined {
 export interface HeapReclaimOptions {
   readonly reclaim: HeapReclaimer
   readonly readMemory?: () => NodeJS.MemoryUsage
+  /** `RssAnon` in bytes, or `undefined` when unmeasured. Default: `/proc/self/status` on Linux. */
+  readonly readAnonRssBytes?: () => number | undefined
   readonly heapLimitBytes?: number
   readonly triggerMb?: number
   readonly minIntervalMs?: number
@@ -1121,9 +1137,11 @@ export function startHeapWatch(
   let passesAtFloor = 0
   let steadyStateAnnounced = false
 
+  const readAnonRss =
+    reclaimOptions?.readAnonRssBytes ?? createAnonRssReader((line) => sink.warn(line))
   const read = (): HeapSample => {
     const limit = reclaimOptions?.heapLimitBytes ?? v8.getHeapStatistics().heap_size_limit
-    return buildHeapSample(readMemory(), limit)
+    return buildHeapSample(readMemory(), limit, HEAP_WATCH_WARN_RATIO, readAnonRss())
   }
 
   const maybeReclaim = (sample: HeapSample): void => {
@@ -1174,7 +1192,10 @@ export function startHeapWatch(
         // after the pass, and every reader since has had to argue about what
         // happened in those 40 seconds. Cost: one string concatenation on a
         // path that has just spent ~1000ms in stop-the-world.
-        ` heapUsed=${sample.heapUsedMb}MB→${after.heapUsedMb}MB`,
+        ` heapUsed=${sample.heapUsedMb}MB→${after.heapUsedMb}MB` +
+        (sample.anonRssMb === undefined
+          ? ''
+          : ` anon=${sample.anonRssMb}MB→${after.anonRssMb === undefined ? 'n/a' : `${after.anonRssMb}MB`}`),
     )
     if (passesAtFloor >= RECLAIM_STEADY_STATE_PASSES && !steadyStateAnnounced) {
       steadyStateAnnounced = true
