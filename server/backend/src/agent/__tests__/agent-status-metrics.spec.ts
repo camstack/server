@@ -9,8 +9,30 @@ const GIB = 1024 * 1024 * 1024
 
 const workingReader: StatusMetricsSource = {
   getCached: async () => ({
-    cpu: { total: 7 },
-    memory: { percent: READER_PERCENT, availableBytes: 4 * GIB },
+    cpu: { total: 7, user: 0, system: 0, irq: 0, nice: 0, loadAvg: [0, 0, 0], cores: 1 },
+    memory: {
+      percent: READER_PERCENT,
+      totalBytes: 8 * GIB,
+      usedBytes: 4 * GIB,
+      availableBytes: 4 * GIB,
+      swapUsedBytes: 0,
+      swapTotalBytes: 0,
+    },
+    gpu: null,
+    network: {
+      rxBytes: 0,
+      txBytes: 0,
+      rxPackets: 0,
+      txPackets: 0,
+      rxErrors: 0,
+      txErrors: 0,
+      timestampMs: 0,
+    },
+    disk: { readBytes: 0, writeBytes: 0, readOps: 0, writeOps: 0, timestampMs: 0 },
+    pressure: { cpu: null, memory: null, io: null },
+    process: { openFds: 0, threadCount: 0, activeHandles: 0, activeRequests: 0 },
+    cpuTemperature: null,
+    timestampMs: 0,
   }),
 }
 
