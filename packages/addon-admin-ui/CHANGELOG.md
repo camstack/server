@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The node page shows the desktop app version and can install its downloaded update.
+
 ## [1.2.518] - 2026-10-29
 
 ### Added

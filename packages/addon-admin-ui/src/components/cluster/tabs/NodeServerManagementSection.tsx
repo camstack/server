@@ -34,6 +34,8 @@ import {
   useServerManagementRestartServer,
 } from '@camstack/ui-library'
 
+import { NodeDesktopAppRow } from './NodeDesktopAppRow'
+
 const STATUS_QUERY_KEY = [['serverManagement', 'getServerPackageStatus']] as const
 
 interface BadgeProps {
@@ -369,6 +371,14 @@ export function NodeServerManagementSection({ node }: NodeServerManagementSectio
             labelSeed={t('serverManagement.imageSeedShort', 'Seed')}
             labelRuntime={t('serverManagement.nodeRuntimeVersionShort', 'Node.js')}
           />
+          {status.desktopApp != null && (
+            <NodeDesktopAppRow
+              desktopApp={status.desktopApp}
+              nodeName={node.name}
+              routingInput={routingInput}
+              onSettled={invalidateStatus}
+            />
+          )}
           {status.pendingVersion != null && (
             <VersionRow
               label={t('serverManagement.pendingVersion', 'Staged (applies on restart)')}

@@ -6662,7 +6662,21 @@
     "updateAll": "Update all nodes",
     "updateAllHint": "Sequenced agents-first, hub-last — up-to-date nodes are skipped.",
     "updateTo": "Update to {{version}}",
-    "workspaceNote": "Development workspace detected — runtime updates are disabled (the dev loop resolves code from the workspace)."
+    "workspaceNote": "Development workspace detected — runtime updates are disabled (the dev loop resolves code from the workspace).",
+    "desktopApp": "Desktop app",
+    "desktopStale": "app state unknown (last seen {{when}})",
+    "desktopReady": "update {{version}} ready",
+    "desktopDownloading": "update {{version}} available — downloading",
+    "desktopUpdateError": "Update check failed: {{error}}",
+    "desktopInstallAction": "Install update & restart",
+    "desktopConfirmTitle": "Install desktop app update",
+    "desktopConfirmBody": "Install {{version}} on \"{{node}}\" and restart the desktop app? The node is offline while it restarts.",
+    "desktopRestarting": "The desktop app is restarting to install the update…",
+    "desktopRestartTimeout": "The desktop app has not come back with a new version after 3 minutes. Check the machine.",
+    "desktopRefusedNotElectron": "This node does not run inside the desktop app.",
+    "desktopRefusedNoState": "The desktop app has not reported its state yet.",
+    "desktopRefusedStale": "The desktop app stopped reporting — it is probably not running.",
+    "desktopRefusedNotDownloaded": "No update is downloaded yet."
   },
   "uiLibrary": {
     "accountSignIn": {

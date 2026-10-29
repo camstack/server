@@ -1798,7 +1798,21 @@
     "outcomeDropped": "La connessione è caduta e il risultato non ha potuto essere confermato. Il nodo potrebbe essere in riavvio — ricontrolla la versione qui sopra.",
     "outcomeNoTarget": "Nessuna versione di destinazione nota per questo nodo — esegui prima \"Cerca aggiornamenti\".",
     "runningVersionShort": "In esecuzione",
-    "stateRestartRequired": "riavvio necessario"
+    "stateRestartRequired": "riavvio necessario",
+    "desktopApp": "App desktop",
+    "desktopStale": "stato app sconosciuto (ultimo contatto {{when}})",
+    "desktopReady": "aggiornamento {{version}} pronto",
+    "desktopDownloading": "aggiornamento {{version}} disponibile — download in corso",
+    "desktopUpdateError": "Controllo aggiornamenti non riuscito: {{error}}",
+    "desktopInstallAction": "Installa aggiornamento e riavvia",
+    "desktopConfirmTitle": "Installa aggiornamento app desktop",
+    "desktopConfirmBody": "Installare {{version}} su \"{{node}}\" e riavviare l'app desktop? Il nodo è offline durante il riavvio.",
+    "desktopRestarting": "L'app desktop si sta riavviando per installare l'aggiornamento…",
+    "desktopRestartTimeout": "L'app desktop non è tornata con una nuova versione dopo 3 minuti. Controlla la macchina.",
+    "desktopRefusedNotElectron": "Questo nodo non gira nell'app desktop.",
+    "desktopRefusedNoState": "L'app desktop non ha ancora comunicato il suo stato.",
+    "desktopRefusedStale": "L'app desktop ha smesso di comunicare: probabilmente non è in esecuzione.",
+    "desktopRefusedNotDownloaded": "Nessun aggiornamento scaricato."
   },
   "ai": {
     "addProfile": "Aggiungi profilo",
