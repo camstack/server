@@ -155,8 +155,8 @@ export class NativeMetricsProvider {
 
   async getCurrent(): Promise<{
     cpuPercent: number
-    memoryPercent: number
-    memoryUsedMB: number
+    memoryPercent: number | null
+    memoryUsedMB: number | null
     memoryTotalMB: number
     diskPercent?: number
     temperature?: number
@@ -168,7 +168,7 @@ export class NativeMetricsProvider {
     return {
       cpuPercent: s.cpu.total,
       memoryPercent: s.memory.percent,
-      memoryUsedMB: mb(s.memory.usedBytes),
+      memoryUsedMB: s.memory.usedBytes === null ? null : mb(s.memory.usedBytes),
       memoryTotalMB: mb(s.memory.totalBytes),
       temperature: s.cpuTemperature ?? undefined,
       gpuPercent: s.gpu?.utilization,

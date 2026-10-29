@@ -6500,8 +6500,8 @@ Enum: `"jwt-signing-key"`
 ### `SystemMetricsSchema`
 
 - `cpuPercent`: `number`
-- `memoryPercent`: `number`
-- `memoryUsedMB`: `number`
+- `memoryPercent`: `number \| null`
+- `memoryUsedMB`: `number \| null`
 - `memoryTotalMB`: `number`
 - `diskPercent?`: `number`
 - `temperature?`: `number`

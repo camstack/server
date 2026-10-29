@@ -3133,7 +3133,7 @@
 
 ### `metrics-provider` → `metricsProvider.*`
 
-- **Source:** `packages/types/src/capabilities/metrics-provider.cap.ts:389`
+- **Source:** `packages/types/src/capabilities/metrics-provider.cap.ts:390`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IMetricsProvider`

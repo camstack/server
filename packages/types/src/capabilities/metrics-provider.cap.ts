@@ -375,8 +375,9 @@ const GetLoadSeriesInputSchema = z.object({
 // Public SystemMetrics summary — light-weight cached view used by UI widgets.
 const SystemMetricsSchema = z.object({
   cpuPercent: z.number(),
-  memoryPercent: z.number(),
-  memoryUsedMB: z.number(),
+  /** `null` when the memory sample failed or was not taken yet (D393). */
+  memoryPercent: z.number().nullable(),
+  memoryUsedMB: z.number().nullable(),
   memoryTotalMB: z.number(),
   diskPercent: z.number().optional(),
   temperature: z.number().optional(),
