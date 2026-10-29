@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A composed device of a new type can now be commanded: each method of its capability forwards to one method of a source device
 - A pet fountain device type with a pet-fountain capability (water level, drinking totals, pump controls)
+- A preset to build a pet fountain device from loose entities, with forwarded pump commands and a resettable filter
 
 ## [1.2.443] - 2026-10-29
 
