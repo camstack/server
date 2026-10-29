@@ -30,7 +30,14 @@
  * An entry that cannot be loaded standalone (a native dependency missing) is
  * reported as unmeasured and still gets the static check.
  *
- * Run: npx tsx scripts/check-addon-dist-footprint.ts
+ * 3. Expiry: every budget carries a required `expires` (ISO date). A missing,
+ *    malformed or past date fails the guard — renew deliberately with a new date,
+ *    or fix the addon. A "follow-up" exception must not outlive the schema graph.
+ *
+ * Run: npx tsx scripts/check-addon-dist-footprint.ts [--addons a,b]
+ * `--addons` takes package dirs (`addon-benchmark`) or full keys
+ * (`addon-benchmark:benchmark`); only those addons are measured. `verify:push`
+ * uses it to check just the addons a change touched.
  */
 
 import * as fs from 'node:fs'
@@ -63,6 +70,8 @@ export interface AddonEntry {
 export interface Budget {
   readonly maxGrowthMb: number
   readonly reason: string
+  /** ISO date (YYYY-MM-DD) after which the exception no longer holds. */
+  readonly expires: string
 }
 
 export type Budgets = Readonly<Record<string, Budget>>
@@ -85,7 +94,10 @@ export function filesNamingForbidden(files: readonly string[]): readonly string[
 
 interface ManifestShape {
   readonly camstack?: {
-    readonly addons?: readonly { readonly id?: string; readonly entry?: string }[]
+    readonly addons?: readonly {
+      readonly id?: string
+      readonly entry?: string
+    }[]
   }
 }
 
@@ -99,15 +111,28 @@ export function discoverAddonEntries(root: string): readonly AddonEntry[] {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as ManifestShape
     for (const addon of manifest.camstack?.addons ?? []) {
       if (addon.id === undefined || addon.entry === undefined) continue
-      out.push({ key: `${pkg}:${addon.id}`, entry: path.resolve(packagesDir, pkg, addon.entry) })
+      out.push({
+        key: `${pkg}:${addon.id}`,
+        entry: path.resolve(packagesDir, pkg, addon.entry),
+      })
     }
   }
   return out
 }
 
-/** Reject a budget without a numeric ceiling above the default and a real reason. */
-export function validateBudgets(budgets: Budgets, known: ReadonlySet<string>): readonly string[] {
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Reject a budget without a numeric ceiling above the default, a real reason and
+ * an `expires` date that is valid and not in the past (`today`, UTC midnight).
+ */
+export function validateBudgets(
+  budgets: Budgets,
+  known: ReadonlySet<string>,
+  today: Date = new Date(),
+): readonly string[] {
   const problems: string[] = []
+  const todayIso = today.toISOString().slice(0, 10)
   for (const [key, b] of Object.entries(budgets)) {
     if (!known.has(key)) problems.push(`budget "${key}" names no addon in any manifest`)
     if (!(b.maxGrowthMb > DEFAULT_MAX_GROWTH_MB)) {
@@ -118,8 +143,46 @@ export function validateBudgets(budgets: Budgets, known: ReadonlySet<string>): r
     if (typeof b.reason !== 'string' || b.reason.trim().length < 20) {
       problems.push(`budget "${key}" needs a reason (what is legitimately heavy, and why)`)
     }
+    if (
+      typeof b.expires !== 'string' ||
+      !ISO_DATE.test(b.expires) ||
+      Number.isNaN(Date.parse(b.expires))
+    ) {
+      problems.push(
+        `budget "${key}" needs an "expires" ISO date (YYYY-MM-DD): a budget is a dated exception`,
+      )
+    } else if (b.expires < todayIso) {
+      problems.push(
+        `budget "${key}" expired on ${b.expires}: renew it deliberately with a new "expires" date, or fix the addon`,
+      )
+    }
   }
   return problems
+}
+
+/** Parse `--addons a,b` (or `--addons=a,b`); undefined when the flag is absent. */
+export function parseAddonsFilter(argv: readonly string[]): readonly string[] | undefined {
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    const value =
+      arg === '--addons' ? argv[i + 1] : arg?.startsWith('--addons=') ? arg.slice(9) : undefined
+    if (value === undefined) continue
+    return value
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0)
+  }
+  return undefined
+}
+
+/** Keep the entries named by `filter` (package dir or full key); all when undefined. */
+export function selectEntries(
+  entries: readonly AddonEntry[],
+  filter: readonly string[] | undefined,
+): readonly AddonEntry[] {
+  if (filter === undefined) return entries
+  const wanted = new Set(filter)
+  return entries.filter((e) => wanted.has(e.key) || wanted.has(e.key.split(':')[0] ?? e.key))
 }
 
 export function allowedGrowthMb(key: string, budgets: Budgets): number {
@@ -137,9 +200,18 @@ function main(): void {
     console.error(`✗ ${path.relative(ROOT, RUNNER)} is missing — build packages/system first`)
     process.exit(2)
   }
-  const entries = discoverAddonEntries(ROOT)
+  const allEntries = discoverAddonEntries(ROOT)
+  const filter = parseAddonsFilter(process.argv.slice(2))
+  const entries = selectEntries(allEntries, filter)
+  if (filter !== undefined && entries.length === 0) {
+    // eslint-disable-next-line no-console
+    console.log(
+      `✔ addon-dist-footprint guard: --addons ${filter.join(',')} names no addon entry — nothing to measure`,
+    )
+    return
+  }
   const budgets = loadBudgets()
-  const failures: string[] = [...validateBudgets(budgets, new Set(entries.map((e) => e.key)))]
+  const failures: string[] = [...validateBudgets(budgets, new Set(allEntries.map((e) => e.key)))]
   const notes: string[] = []
   const baseline = probeClosure(RUNNER, [RUNNER])
   if (!entries.some((e) => fs.existsSync(e.entry))) {
@@ -187,7 +259,7 @@ function main(): void {
         `  An addon must not import ALL_CAPABILITY_DEFINITIONS or a barrel value that builds the cap schema graph\n` +
         `  (+~100 MB per runner): add the fact to scripts/generate-addon-cap-facts.ts and read it from\n` +
         `  '@camstack/types/addon'. A legitimately heavy addon is listed with a reason in\n` +
-        `  scripts/addon-dist-footprint-budgets.json. See docs/decisions/adr-0028.md.\n`,
+        `  scripts/addon-dist-footprint-budgets.json (reason + a dated "expires"). See docs/decisions/adr-0028.md.\n`,
     )
     for (const f of failures) {
       // eslint-disable-next-line no-console

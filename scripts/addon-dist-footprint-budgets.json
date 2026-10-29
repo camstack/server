@@ -1,6 +1,7 @@
 {
   "addon-post-analysis:pipeline-analytics": {
     "maxGrowthMb": 80,
-    "reason": "Measured +67 MB over the bare runner after ALL_CAPABILITY_DEFINITIONS left the bundle. The shared clip-model-registry chunk still evaluates ~44 MB of inlined types schemas through other barrel value imports; shrinking it further is a follow-up, this budget stops it growing back."
+    "reason": "Measured +67 MB over the bare runner after ALL_CAPABILITY_DEFINITIONS left the bundle. The shared clip-model-registry chunk still evaluates ~44 MB of inlined types schemas through other barrel value imports; shrinking it further is a follow-up, this budget stops it growing back.",
+    "expires": "2026-12-28"
   }
 }

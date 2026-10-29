@@ -13,6 +13,8 @@ import {
   DEFAULT_MAX_GROWTH_MB,
   discoverAddonEntries,
   filesNamingForbidden,
+  parseAddonsFilter,
+  selectEntries,
   stripJsComments,
   validateBudgets,
 } from '../check-addon-dist-footprint.js'
@@ -35,7 +37,9 @@ afterEach(() => {
 
 describe('the static refusal', () => {
   it('flags a file whose code names ALL_CAPABILITY_DEFINITIONS', () => {
-    const dir = tmp({ 'a.js': 'const defs = ALL_CAPABILITY_DEFINITIONS.map((d) => d.name)' })
+    const dir = tmp({
+      'a.js': 'const defs = ALL_CAPABILITY_DEFINITIONS.map((d) => d.name)',
+    })
     expect(filesNamingForbidden([path.join(dir, 'a.js')])).toEqual([path.join(dir, 'a.js')])
   })
 
@@ -72,7 +76,13 @@ describe('the runtime budget', () => {
   })
 
   it('a budget raises the ceiling for the addon that holds it, no other', () => {
-    const budgets = { 'p:a': { maxGrowthMb: 90, reason: 'a legitimately heavy addon, measured' } }
+    const budgets = {
+      'p:a': {
+        maxGrowthMb: 90,
+        reason: 'a legitimately heavy addon, measured',
+        expires: '2099-01-01',
+      },
+    }
     expect(allowedGrowthMb('p:a', budgets)).toBe(90)
     expect(allowedGrowthMb('p:b', budgets)).toBe(DEFAULT_MAX_GROWTH_MB)
   })
@@ -84,7 +94,13 @@ describe('budget hygiene', () => {
   it('accepts a budget above the default with a reason', () => {
     expect(
       validateBudgets(
-        { 'p:a': { maxGrowthMb: 90, reason: 'holds the ONNX session cache' } },
+        {
+          'p:a': {
+            maxGrowthMb: 90,
+            reason: 'holds the ONNX session cache',
+            expires: '2099-01-01',
+          },
+        },
         known,
       ),
     ).toEqual([])
@@ -93,8 +109,12 @@ describe('budget hygiene', () => {
   it('rejects a budget for an addon that does not exist, one without a reason, one not above the default', () => {
     const problems = validateBudgets(
       {
-        'p:gone': { maxGrowthMb: 90, reason: 'a legitimately heavy addon, once' },
-        'p:a': { maxGrowthMb: 40, reason: '' },
+        'p:gone': {
+          maxGrowthMb: 90,
+          reason: 'a legitimately heavy addon, once',
+          expires: '2099-01-01',
+        },
+        'p:a': { maxGrowthMb: 40, reason: '', expires: '2099-01-01' },
       },
       known,
     )
@@ -105,18 +125,75 @@ describe('budget hygiene', () => {
   })
 })
 
+describe('budget expiry', () => {
+  const known = new Set(['p:a'])
+  const today = new Date('2026-10-29T12:00:00Z')
+  const base = { maxGrowthMb: 90, reason: 'holds the ONNX session cache' }
+
+  it('accepts a budget whose date is today or later', () => {
+    expect(validateBudgets({ 'p:a': { ...base, expires: '2026-10-29' } }, known, today)).toEqual([])
+    expect(validateBudgets({ 'p:a': { ...base, expires: '2026-12-28' } }, known, today)).toEqual([])
+  })
+
+  it('fails a budget whose date has passed, telling the operator to renew or fix', () => {
+    const problems = validateBudgets({ 'p:a': { ...base, expires: '2026-10-28' } }, known, today)
+    expect(problems).toHaveLength(1)
+    expect(problems[0]).toMatch(/expired on 2026-10-28/)
+    expect(problems[0]).toMatch(/renew it deliberately.*or fix the addon/)
+  })
+
+  it('fails a budget without an expires, or with a malformed one', () => {
+    const missing = JSON.parse(JSON.stringify(base)) as typeof base & {
+      expires: string
+    }
+    expect(validateBudgets({ 'p:a': missing }, known, today).join()).toMatch(/needs an "expires"/)
+    expect(
+      validateBudgets({ 'p:a': { ...base, expires: 'next spring' } }, known, today).join(),
+    ).toMatch(/needs an "expires"/)
+  })
+})
+
+describe('the --addons subset filter', () => {
+  const entries = [
+    { key: 'addon-a:a', entry: '/x/a.js' },
+    { key: 'addon-b:b', entry: '/x/b.js' },
+    { key: 'addon-b:b2', entry: '/x/b2.js' },
+  ]
+
+  it('parses both flag spellings and is undefined without the flag', () => {
+    expect(parseAddonsFilter(['--addons', 'addon-a, addon-b:b'])).toEqual(['addon-a', 'addon-b:b'])
+    expect(parseAddonsFilter(['--addons=addon-a'])).toEqual(['addon-a'])
+    expect(parseAddonsFilter([])).toBeUndefined()
+  })
+
+  it('selects by package dir or full key, and everything when no filter is given', () => {
+    expect(selectEntries(entries, ['addon-b']).map((e) => e.key)).toEqual([
+      'addon-b:b',
+      'addon-b:b2',
+    ])
+    expect(selectEntries(entries, ['addon-b:b2']).map((e) => e.key)).toEqual(['addon-b:b2'])
+    expect(selectEntries(entries, ['nope'])).toEqual([])
+    expect(selectEntries(entries, undefined)).toEqual(entries)
+  })
+})
+
 describe('addon discovery', () => {
   it('reads <package>:<id> and the resolved entry from camstack.addons[], skipping the in-hub system package', () => {
     const dir = tmp({
       'packages/addon-x/package.json': JSON.stringify({
-        camstack: { addons: [{ id: 'x', entry: './dist/index.js' }, { id: 'uionly' }] },
+        camstack: {
+          addons: [{ id: 'x', entry: './dist/index.js' }, { id: 'uionly' }],
+        },
       }),
       'packages/system/package.json': JSON.stringify({
         camstack: { addons: [{ id: 'device-manager', entry: './dist/dm.js' }] },
       }),
     })
     expect(discoverAddonEntries(dir)).toEqual([
-      { key: 'addon-x:x', entry: path.join(dir, 'packages/addon-x/dist/index.js') },
+      {
+        key: 'addon-x:x',
+        entry: path.join(dir, 'packages/addon-x/dist/index.js'),
+      },
     ])
   })
 })

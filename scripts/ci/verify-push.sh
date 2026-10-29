@@ -10,6 +10,10 @@
 #   1. "Typecheck (TypeScript 7)"           -> scripts/typecheck-tsgo.ts <affected dirs>
 #   2. "Test affected packages (push/PR)"   -> scripts/ci/test-affected.sh --files
 #   3. "Test repo scripts"                  -> npm run test:scripts (if scripts/ changed)
+#   4. "Addon dist footprint (D28)"         -> scripts/check-addon-dist-footprint.ts
+#        only when packages/addon-*/ or packages/types/src/ changed: the touched
+#        addons (--addons), or every addon when types/src moved (all bundle it).
+#        It reads the dists the build step above just produced.
 #
 # Changed set = committed diff from the merge-base with origin/main PLUS the
 # working tree (staged, unstaged, untracked), minus package-lock.json (as CI).
@@ -73,6 +77,7 @@ fi
 TC_RESULT="skipped"
 TEST_RESULT="skipped"
 SCRIPTS_RESULT="skipped"
+FOOTPRINT_RESULT="skipped"
 RC=0
 
 # Affected nx projects -> package directory basenames (what typecheck-tsgo takes).
@@ -147,6 +152,34 @@ else
   fi
 fi
 
+# D28 footprint guard (CI: "Addon dist footprint (D28)"). A red main sat unseen
+# for several runs because only CI ran it. The affected build above already
+# produced the dists it reads (addons depend on types and system).
+if [[ -n "$TC_DIRS" ]]; then
+  FOOTPRINT_ADDONS=""
+  FOOTPRINT_ALL=0
+  if [[ ",${CHANGED}," == *",packages/types/src/"* ]]; then
+    FOOTPRINT_ALL=1
+  else
+    FOOTPRINT_ADDONS=$(
+      echo "$CHANGED" | tr ',' '\n' | sed -n -E 's#^packages/(addon-[^/]+)/.*#\1#p' | sort -u | paste -sd, -
+    )
+  fi
+  if [[ $FOOTPRINT_ALL -eq 1 || -n "$FOOTPRINT_ADDONS" ]]; then
+    FP_ARGS=()
+    if [[ $FOOTPRINT_ALL -eq 0 ]]; then FP_ARGS=(--addons "$FOOTPRINT_ADDONS"); fi
+    # The guard also needs the addon-runner dist; cached by nx when already built.
+    NODE_OPTIONS="--max-old-space-size=4096" npx nx run @camstack/system:build >/dev/null || true
+    echo "verify:push: addon dist footprint (D28) — ${FOOTPRINT_ADDONS:-all addons}"
+    if NODE_OPTIONS="--max-old-space-size=2048" npx tsx scripts/check-addon-dist-footprint.ts ${FP_ARGS[@]+"${FP_ARGS[@]}"}; then
+      FOOTPRINT_RESULT="ok"
+    else
+      FOOTPRINT_RESULT="RED"
+      RC=1
+    fi
+  fi
+fi
+
 # Do not `grep -q` this list under `pipefail`: on a long CHANGED set grep
 # exits at the first hit and the writer dies with SIGPIPE (141), so the
 # branch is skipped and the gate prints `scripts: skipped`.
@@ -161,5 +194,5 @@ if [[ ",${CHANGED}," == *",scripts/"* ]]; then
 fi
 
 if [[ $RC -eq 0 ]]; then VERDICT=GREEN; else VERDICT=RED; fi
-echo "verify:push $VERDICT — typecheck: $TC_RESULT, tests: $TEST_RESULT, scripts: $SCRIPTS_RESULT"
+echo "verify:push $VERDICT — typecheck: $TC_RESULT, tests: $TEST_RESULT, scripts: $SCRIPTS_RESULT, footprint: $FOOTPRINT_RESULT"
 exit $RC
