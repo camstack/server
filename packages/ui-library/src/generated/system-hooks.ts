@@ -3104,6 +3104,12 @@ export const useServerManagementRollbackServerUpdate: typeof trpc.serverManageme
 /** Generated alias around `trpc.serverManagement.restartServer.useMutation`. */
 export const useServerManagementRestartServer: typeof trpc.serverManagement.restartServer.useMutation = trpc.serverManagement.restartServer.useMutation
 
+/** Generated alias around `trpc.serverManagement.getLaunchOverrides.useQuery`. */
+export const useServerManagementGetLaunchOverrides: typeof trpc.serverManagement.getLaunchOverrides.useQuery = trpc.serverManagement.getLaunchOverrides.useQuery
+
+/** Generated alias around `trpc.serverManagement.setLaunchOverrides.useMutation`. */
+export const useServerManagementSetLaunchOverrides: typeof trpc.serverManagement.setLaunchOverrides.useMutation = trpc.serverManagement.setLaunchOverrides.useMutation
+
 /** Generated alias around `trpc.settingsStore.get.useQuery`. */
 export const useSettingsStoreGet: typeof trpc.settingsStore.get.useQuery = trpc.settingsStore.get.useQuery
 

@@ -16259,6 +16259,32 @@ export function createCapRouter_serverManagement(
         )
         return p.restartServer()
       }),
+    getLaunchOverrides: adminProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(serverManagementCapability.methods.getLaunchOverrides.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'server-management',
+          input?.nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        return p.getLaunchOverrides()
+      }),
+    setLaunchOverrides: adminProcedure
+      .input(serverManagementCapability.methods.setLaunchOverrides.input.loose())
+      .output(serverManagementCapability.methods.setLaunchOverrides.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'server-management',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setLaunchOverrides(methodInput as any)
+      }),
   })
 }
 

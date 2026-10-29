@@ -190,6 +190,28 @@ export function readHeapOverrideMb(dataDir: string, io: LaunchFs = realFs): numb
   }
 }
 
+/**
+ * Persist (or, with `null`, clear) the heap override. Validated against the same
+ * range the launcher enforces, so a value the next launch would ignore is refused
+ * here instead of silently doing nothing. Written atomically (temp + rename).
+ */
+export function writeHeapOverrideMb(dataDir: string, heapMb: number | null): void {
+  const file = overridesPath(dataDir)
+  if (heapMb === null) {
+    fs.rmSync(file, { force: true })
+    return
+  }
+  if (!validMb(heapMb)) {
+    throw new Error(
+      `heap override must be an integer in ${OVERRIDE_MIN_MB}-${OVERRIDE_MAX_MB} MB, got ${heapMb}`,
+    )
+  }
+  fs.mkdirSync(dataDir, { recursive: true })
+  const tmp = `${file}.${process.pid}.tmp`
+  fs.writeFileSync(tmp, `${JSON.stringify({ heapMb })}\n`, { mode: 0o600 })
+  fs.renameSync(tmp, file)
+}
+
 export function readCgroupLimitBytes(
   io: LaunchFs = realFs,
   files?: readonly string[],

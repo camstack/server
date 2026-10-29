@@ -392,6 +392,16 @@ const ServerUpdateActionResultSchema = z.object({
   blockers: z.array(UpdateBlockerSchema).optional(),
 })
 
+const LaunchOverridesSchema = z.object({
+  /** The persisted heap ceiling in MB, or `null` when none is set. */
+  heapMb: z.number().int().nullable(),
+})
+
+const SetLaunchOverridesResultSchema = LaunchOverridesSchema.extend({
+  /** Always true: the override is read at launch, not by the running process. */
+  restartRequired: z.boolean(),
+})
+
 export const serverManagementCapability = {
   name: 'server-management',
   scope: 'system',
@@ -450,6 +460,22 @@ export const serverManagementCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /**
+     * The node's persisted launch override (ADR 0970): the heap ceiling the node's
+     * `node` process is started with, or `null` when none is set (the closure's
+     * computed default applies). Read from the node's own data dir.
+     */
+    getLaunchOverrides: method(z.void(), LaunchOverridesSchema, { auth: 'admin' }),
+    /**
+     * Set (`heapMb`) or clear (`null`) the node's heap-ceiling override. It is
+     * written on the node itself and applies at the NEXT launch — restart the
+     * node (`restartServer`) for it to take effect.
+     */
+    setLaunchOverrides: method(
+      z.object({ heapMb: z.number().int().min(512).max(65536).nullable() }),
+      SetLaunchOverridesResultSchema,
+      { kind: 'mutation', auth: 'admin' },
+    ),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
@@ -469,6 +495,8 @@ export type ServerPackageStatus = z.infer<typeof ServerPackageStatusSchema>
 export type ServerUpdateCheckResult = z.infer<typeof ServerUpdateCheckResultSchema>
 export type ServerUpdateOutcome = z.infer<typeof ServerUpdateOutcomeSchema>
 export type ServerUpdateActionResult = z.infer<typeof ServerUpdateActionResultSchema>
+export type LaunchOverrides = z.infer<typeof LaunchOverridesSchema>
+export type SetLaunchOverridesResult = z.infer<typeof SetLaunchOverridesResultSchema>
 export type RunnerBootCheck = z.infer<typeof RunnerBootCheckSchema>
 export type RunnerRefusal = z.infer<typeof RunnerRefusalSchema>
 export type UpdateBlocker = z.infer<typeof UpdateBlockerSchema>

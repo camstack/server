@@ -368,7 +368,12 @@ function buildServerProviders(
       ),
     ),
     // server-management — runtime-updatable root package (phase 1: hub only).
-    'server-management': wrap(() => buildServerManagementProvider(services.serverUpdateService)),
+    'server-management': wrap(() =>
+      buildServerManagementProvider(
+        services.serverUpdateService,
+        path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data'),
+      ),
+    ),
     addons: wrap((ctx) =>
       buildAddonsProvider(
         services.addonRegistry,

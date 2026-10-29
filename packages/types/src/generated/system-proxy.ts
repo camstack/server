@@ -119,7 +119,7 @@ export interface SystemProxy {
   readonly recordingArchive: Pick<InferProvider<typeof recordingArchiveCapability>, 'getAvailabilityBatch' | 'getDaysWithRecordingsBatch' | 'getStorageUsage' | 'listOpsLog' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'refreshStorageLocationsForMigration' | 'startStorageMigrationMove' | 'getStorageMigrationMoveStatus' | 'cancelStorageMigrationMove' | 'relocateFootage' | 'listRelocateJobs' | 'getRelocateResidue' | 'reconcileLedgerAgainstDisk' | 'cancelRelocateJob' | 'planStorageRebalance' | 'startStorageRebalance' | 'getPlacement' | 'setDevicePlacement'>
   readonly recordingExport: Pick<InferProvider<typeof recordingExportCapability>, 'createExport' | 'getExport' | 'cancelExport' | 'deleteExport' | 'getDownloadUrl' | 'readExportBytes'>
   readonly remote: Pick<InferProvider<typeof remoteCapability>, 'getConfig' | 'setConfig' | 'listCommands' | 'sendCommand' | 'sendMediaCommand'>
-  readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'rollbackServerUpdate' | 'restartServer'>
+  readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'rollbackServerUpdate' | 'restartServer' | 'getLaunchOverrides' | 'setLaunchOverrides'>
   readonly settingsStore: Pick<InferProvider<typeof settingsStoreCapability>, 'get' | 'set' | 'query' | 'upsert' | 'upsertMany' | 'insert' | 'insertMany' | 'transact' | 'update' | 'delete' | 'deleteWhere' | 'updateWhere' | 'count' | 'aggregate' | 'histogram' | 'isEmpty' | 'declareCollection'>
   readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'upsertLocation' | 'deleteLocation' | 'listDrainProgress' | 'testLocation' | 'listProviders' | 'testConfig'>
   readonly storageMigration: Pick<InferProvider<typeof storageMigrationCapability>, 'plan' | 'start' | 'status' | 'cancel' | 'movers' | 'moverClearance' | 'residue' | 'drain' | 'cleanupStart' | 'cleanupStatus' | 'cleanupCancel' | 'history'>
@@ -846,6 +846,8 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     applyServerUpdate: (input?: unknown) => dispatch('serverManagement', 'applyServerUpdate', 'mutation', input),
     rollbackServerUpdate: (input?: unknown) => dispatch('serverManagement', 'rollbackServerUpdate', 'mutation', input),
     restartServer: (input?: unknown) => dispatch('serverManagement', 'restartServer', 'mutation', input),
+    getLaunchOverrides: (input?: unknown) => dispatch('serverManagement', 'getLaunchOverrides', 'query', input),
+    setLaunchOverrides: (input?: unknown) => dispatch('serverManagement', 'setLaunchOverrides', 'mutation', input),
   }
 
   const settingsStoreInterface = {

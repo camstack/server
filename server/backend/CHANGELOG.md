@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The agent now reports its own [mem] agent-main heartbeat and reclaims stranded memory, as the hub does
 - The hub tells its addon runners which telemetry categories anyone consumes, so unused ones stop crossing the process boundary
 - Node launch parameters (heap ceiling, allocator env) are decided by a closure module, with a per-node override and a source line in the boot log
+- A node's heap-ceiling override can be read and set through server-management (applies at the next restart)
 
 ## [1.2.688] - 2026-10-29
 

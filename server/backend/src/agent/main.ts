@@ -611,7 +611,7 @@ async function startAgent(configPath?: string): Promise<void> {
   capabilityRegistry.registerProvider(
     'server-management',
     AGENT_RUNTIME_ADDON_ID,
-    buildServerManagementProvider(agentUpdateService),
+    buildServerManagementProvider(agentUpdateService, config.dataDir),
   )
 
   // The agent's certificates (D856): mesh leaf swap with automatic rollback, and the

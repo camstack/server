@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**192 capabilities · 1427 methods.**
+**192 capabilities · 1429 methods.**
 
 ## Method index
 
@@ -1146,6 +1146,8 @@
 | `serverManagement.applyServerUpdate` | mutation | admin | server-management |
 | `serverManagement.rollbackServerUpdate` | mutation | admin | server-management |
 | `serverManagement.restartServer` | mutation | admin | server-management |
+| `serverManagement.getLaunchOverrides` | query | admin | server-management |
+| `serverManagement.setLaunchOverrides` | mutation | admin | server-management |
 | `settingsStore.get` | query | admin | settings-store |
 | `settingsStore.set` | mutation | admin | settings-store |
 | `settingsStore.query` | query | admin | settings-store |
@@ -4169,7 +4171,7 @@
 
 ### `server-management` → `serverManagement.*`
 
-- **Source:** `packages/types/src/capabilities/server-management.cap.ts:395`
+- **Source:** `packages/types/src/capabilities/server-management.cap.ts:405`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IServerManagementProvider`
@@ -4181,6 +4183,8 @@
 | applyServerUpdate | `serverManagement.applyServerUpdate` | mutation | admin | `{ version?: string; acknowledgeRefusals?: boolean }` | `ServerUpdateActionResultSchema` |
 | rollbackServerUpdate | `serverManagement.rollbackServerUpdate` | mutation | admin | `void` | `ServerUpdateActionResultSchema` |
 | restartServer | `serverManagement.restartServer` | mutation | admin | `void` | `ServerUpdateActionResultSchema` |
+| getLaunchOverrides | `serverManagement.getLaunchOverrides` | query | admin | `void` | `{ heapMb: number \| null }` |
+| setLaunchOverrides | `serverManagement.setLaunchOverrides` | mutation | admin | `{ heapMb: number \| null }` | `{ heapMb: number \| null; restartRequired: boolean }` |
 
 ### `settings-store` → `settingsStore.*`
 

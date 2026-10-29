@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Node memory is nullable on the metrics and topology contracts: a failed read is unknown, not 0 or 100
+- server-management gains getLaunchOverrides / setLaunchOverrides, the per-node heap-ceiling override
 
 ## [1.2.443] - 2026-10-29
 

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1427 method paths across 192 capabilities.
+ * Coverage: 1429 method paths across 192 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1152,9 +1152,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'scriptRunner.stop': { capName: "script-runner", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'serverManagement.applyServerUpdate': { capName: "server-management", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'serverManagement.checkServerUpdate': { capName: "server-management", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'serverManagement.getLaunchOverrides': { capName: "server-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'serverManagement.getServerPackageStatus': { capName: "server-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'serverManagement.restartServer': { capName: "server-management", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'serverManagement.rollbackServerUpdate': { capName: "server-management", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'serverManagement.setLaunchOverrides': { capName: "server-management", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'settingsStore.aggregate': { capName: "settings-store", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'settingsStore.count': { capName: "settings-store", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'settingsStore.declareCollection': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

@@ -180,13 +180,15 @@ describe('AgentUpdateService — agent bindings', () => {
 
 describe('provider + manifest surface', () => {
   it('exposes exactly the server-management cap methods', () => {
-    const provider = buildServerManagementProvider(makeService())
+    const provider = buildServerManagementProvider(makeService(), dataDir)
     expect(Object.keys(provider ?? {}).sort()).toEqual([
       'applyServerUpdate',
       'checkServerUpdate',
+      'getLaunchOverrides',
       'getServerPackageStatus',
       'restartServer',
       'rollbackServerUpdate',
+      'setLaunchOverrides',
     ])
   })
 
