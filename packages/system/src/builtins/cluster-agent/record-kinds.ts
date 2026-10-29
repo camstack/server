@@ -72,12 +72,41 @@ const clusterNodeHistoryKindSpec: RecordKindSpec<z.ZodType<ClusterNodeHistoryBod
   },
 }
 
+/**
+ * A forgotten node (`node-removal-hook`): the recorded fact the hub drives the
+ * hook from. `pending` lists the implementers that have not acknowledged yet;
+ * the row is deleted when it is empty.
+ */
+export interface ClusterNodeTombstoneBody {
+  readonly removedAt: number
+  readonly pending: readonly string[]
+}
+
+export const ClusterNodeTombstoneBodySchema: z.ZodType<ClusterNodeTombstoneBody> = z.object({
+  removedAt: z.number(),
+  pending: z.array(z.string()).readonly(),
+})
+
+const clusterNodeTombstoneKindSpec: RecordKindSpec<z.ZodType<ClusterNodeTombstoneBody>> = {
+  schema: ClusterNodeTombstoneBodySchema,
+  class: 'ledger',
+  writeTrigger: 'operator forget(nodeId); one write per implementer acknowledgement',
+  device: 'none',
+  at: 'required',
+  indexes: [],
+  retention: {
+    none: 'row deleted when every node-removal-hook implementer has acknowledged',
+  },
+}
+
 const _clusterAgentRecordKinds = defineRecordKinds({
   'node-history': clusterNodeHistoryKindSpec,
+  'node-tombstones': clusterNodeTombstoneKindSpec,
 }) satisfies IsolatedRecordKinds
 
 export type ClusterAgentRecordKindsMap = {
   readonly 'node-history': DefinedRecordKind<z.ZodType<ClusterNodeHistoryBody>>
+  readonly 'node-tombstones': DefinedRecordKind<z.ZodType<ClusterNodeTombstoneBody>>
 }
 
 export const clusterAgentRecordKinds: ClusterAgentRecordKindsMap = _clusterAgentRecordKinds
@@ -85,3 +114,7 @@ export const clusterAgentRecordKinds: ClusterAgentRecordKindsMap = _clusterAgent
 /** Narrow kind for `records.kind()` — `IsolatedRecordKinds` string index is `| undefined`. */
 export const clusterNodeHistoryRecordKind: DefinedRecordKind<z.ZodType<ClusterNodeHistoryBody>> =
   _clusterAgentRecordKinds['node-history']
+
+export const clusterNodeTombstoneRecordKind: DefinedRecordKind<
+  z.ZodType<ClusterNodeTombstoneBody>
+> = _clusterAgentRecordKinds['node-tombstones']

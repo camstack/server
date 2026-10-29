@@ -632,6 +632,16 @@ export {
   isEmbeddingModelFailed,
 } from './embedding-encoder.cap.js'
 export type {
+  INodeRemovalHookProvider,
+  NodeRemovedInput,
+  NodeRemovedResult,
+} from './node-removal-hook.cap.js'
+export {
+  NodeRemovedInputSchema,
+  NodeRemovedResultSchema,
+  nodeRemovalHookCapability,
+} from './node-removal-hook.cap.js'
+export type {
   DeviceDataEntry,
   DeviceRemovedInput,
   DeviceRemovedResult,
@@ -3246,6 +3256,7 @@ import type { deviceProviderCapability } from './device-provider.cap.js'
 import type { deviceStateCapability } from './device-state.cap.js'
 import type { deviceStatusCapability } from './device-status.cap.js'
 import type { deviceRemovalHookCapability } from './device-removal-hook.cap.js'
+import type { nodeRemovalHookCapability } from './node-removal-hook.cap.js'
 import type { dishwasherCapability } from './dishwasher.cap.js'
 import type { doorbellCapability } from './doorbell.cap.js'
 import type { embeddingEncoderCapability } from './embedding-encoder.cap.js'
@@ -3392,6 +3403,7 @@ type AnyCapability =
   | typeof loadContributionCapability
   | typeof failureContributionCapability
   | typeof deviceRemovalHookCapability
+  | typeof nodeRemovalHookCapability
   | typeof adminUiCapability
   | typeof viewerUiCapability
   | typeof ssoBridgeCapability

@@ -22,7 +22,7 @@ this column exists to stop.
 | `addon-widgets-aggregator` | `@camstack/system` | system | hub-main | `any-node` | — | — | `addon-widgets` |
 | `admin-ui` | `@camstack/addon-admin-ui` | system | own runner | `any-node` | — | — | `admin-ui` |
 | `agent-ui` | `@camstack/addon-agent-ui` | system | own runner | `agent-only` | — | — | `admin-ui` |
-| `ai` | `@camstack/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `llm` `llm-runtime` |
+| `ai` | `@camstack/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `llm` `llm-runtime` `node-removal-hook` |
 | `alert-center` | `@camstack/system` | system | hub-main | `any-node` | — | — | `alerts` |
 | `audio-analyzer` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `audio-analysis` `audio-analyzer` |
 | `auth-oidc` | `@camstack/addon-auth` | system | own runner | `any-node` | `auth` | — | `addon-routes` `auth-provider` `login-method` `oidc-connections` |

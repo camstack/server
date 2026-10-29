@@ -182,4 +182,37 @@ describe('AgentRegistryService.forgetClusterNode', () => {
       }),
     )
   })
+
+  it('runs the node-removal cleanup after a real forget, not after a refusal or a no-op', async () => {
+    const forgotten = makeHarness([{ id: 'hub-test', available: false }])
+    const onForgotten = vi.fn(async () => undefined)
+    forgotten.service.setNodeRemovalCleanup(onForgotten)
+    await forgotten.service.forgetClusterNode('hub-test')
+    expect(onForgotten).toHaveBeenCalledTimes(1)
+    expect(onForgotten).toHaveBeenCalledWith('hub-test', expect.any(Number))
+
+    const live = makeHarness([{ id: 'agent-a', available: true }])
+    const onLive = vi.fn(async () => undefined)
+    live.service.setNodeRemovalCleanup(onLive)
+    await live.service.forgetClusterNode('agent-a')
+    const ghost = makeHarness([{ id: 'hub', available: true }], 'not-found')
+    const onGhost = vi.fn(async () => undefined)
+    ghost.service.setNodeRemovalCleanup(onGhost)
+    await ghost.service.forgetClusterNode('ghost')
+    expect(onLive).not.toHaveBeenCalled()
+    expect(onGhost).not.toHaveBeenCalled()
+  })
+
+  it('still answers the forget when the cleanup throws, and logs it with tags.nodeId', async () => {
+    const { service, lines } = makeHarness([{ id: 'hub-test', available: false }])
+    service.setNodeRemovalCleanup(async () => {
+      throw new Error('boom')
+    })
+
+    const result = await service.forgetClusterNode('hub-test')
+
+    expect(result.forgotten).toBe(true)
+    const line = lines.find((l) => l.message.includes('node removal cleanup failed'))
+    expect(line?.tags).toMatchObject({ nodeId: 'hub-test' })
+  })
 })

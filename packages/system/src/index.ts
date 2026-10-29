@@ -522,9 +522,14 @@ export {
 export {
   clusterAgentRecordKinds,
   clusterNodeHistoryRecordKind,
+  clusterNodeTombstoneRecordKind,
   ClusterNodeHistoryBodySchema,
+  ClusterNodeTombstoneBodySchema,
 } from './builtins/cluster-agent/record-kinds.js'
-export type { ClusterNodeHistoryBody } from './builtins/cluster-agent/record-kinds.js'
+export type {
+  ClusterNodeHistoryBody,
+  ClusterNodeTombstoneBody,
+} from './builtins/cluster-agent/record-kinds.js'
 export {
   storageOrchestratorRecordKinds,
   STORAGE_DRAIN_STATE_LEGACY,

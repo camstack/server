@@ -329,6 +329,17 @@ export class AgentRegistryService {
     this.addonRegistry = addonRegistry
   }
 
+  /**
+   * Wire what runs AFTER a node is really forgotten: the `node-removal-hook`
+   * dispatch and the hub-owned node-scoped data (#265). It never runs for a
+   * refused or a no-op forget.
+   */
+  setNodeRemovalCleanup(cleanup: (nodeId: string, removedAt: number) => Promise<void>): void {
+    this.nodeRemovalCleanup = cleanup
+  }
+
+  private nodeRemovalCleanup: ((nodeId: string, removedAt: number) => Promise<void>) | null = null
+
   /** Wire the durable offline-node history store (A1). */
   setClusterNodeHistoryStore(store: ClusterNodeHistoryStore): void {
     this.historyStore = store
@@ -494,6 +505,16 @@ export class AgentRegistryService {
     // operator had to refresh by hand. `TopologyEmitterService` listens for
     // `AgentUnregistered` and re-emits immediately.
     if (historyRemoved || registryRemoved) {
+      // The recorded fact the owners of node-scoped data are driven from. A
+      // failure here must not turn a forget that happened into an error.
+      try {
+        await this.nodeRemovalCleanup?.(nodeId, Date.now())
+      } catch (err: unknown) {
+        this.logger?.warn('node removal cleanup failed', {
+          tags: { nodeId },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
       this.eventBus.emit({
         id: randomUUID(),
         timestamp: new Date(),

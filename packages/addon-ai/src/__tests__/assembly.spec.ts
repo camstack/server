@@ -46,6 +46,7 @@ describe('assembleAi', () => {
     expect(assembly.registrations.map((r) => r.capability.name).sort()).toEqual([
       'llm',
       'llm-runtime',
+      'node-removal-hook',
     ])
     expect(assembly.llmProvider).toBeDefined()
     const rows = await ProfileStore.of(world.records).list()

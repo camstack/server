@@ -58,6 +58,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   ),
   'device-provider': system(INTERNAL),
   'device-removal-hook': system(INTERNAL),
+  'node-removal-hook': system(INTERNAL),
   'device-state': system('the runtime-state mirror every trigger already reads through'),
   'display-palette': system(
     'the cluster display palette — one colour table for every client, not a device action',

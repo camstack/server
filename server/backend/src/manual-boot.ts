@@ -34,6 +34,12 @@ import {
   AgentRegistryService,
 } from './core/agent/agent-registry.service'
 import { ClusterNodeHistoryStore } from './core/agent/cluster-node-history-store'
+import {
+  clearSingletonNodeOverrides,
+  NodeRemovalDispatcher,
+  NodeTombstoneStore,
+  registryNodeRemovalHooks,
+} from './core/agent/node-removal-hooks'
 import { AuthService } from './core/auth/auth.service'
 import { CapabilityService } from './core/capability/capability.service'
 import { ConfigService } from './core/config/config.service'
@@ -226,6 +232,40 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   )
   agentRegistryService.setClusterNodeHistoryStore(clusterNodeHistoryStore)
   addonRegistryService.setClusterNodeHistoryStore(clusterNodeHistoryStore)
+
+  // A forgotten node leaves no node-scoped data behind (#265): a tombstone is
+  // recorded, then every `node-removal-hook` implementer is told; the hub-owned
+  // per-node singleton overrides are cleared in the same step.
+  const nodeRemovalLogger = loggingService.createLogger('node-removal')
+  const nodeTombstoneStore = new NodeTombstoneStore(nodeRemovalLogger)
+  addonRegistryService.setNodeTombstoneStore(nodeTombstoneStore)
+  const nodeRemovalDispatcher = new NodeRemovalDispatcher({
+    hooks: registryNodeRemovalHooks(addonRegistryService.getCapabilityRegistry()),
+    store: nodeTombstoneStore,
+    logger: nodeRemovalLogger,
+  })
+  agentRegistryService.setNodeRemovalCleanup(async (nodeId, removedAt) => {
+    const overrides = await clearSingletonNodeOverrides(
+      nodeId,
+      addonRegistryService.getCapabilityRegistry(),
+      configService,
+    )
+    if (overrides > 0) {
+      nodeRemovalLogger.info('cleared per-node singleton overrides of a forgotten node', {
+        tags: { nodeId },
+        meta: { overrides },
+      })
+    }
+    await nodeRemovalDispatcher.nodeForgotten(nodeId, removedAt)
+  })
+  // An implementer that was down at forget time is told once the addons are up.
+  eventBusService.subscribe({ category: EventCategory.SystemAddonsReady }, () => {
+    void nodeRemovalDispatcher.redrive().catch((err: unknown) =>
+      nodeRemovalLogger.warn('node removal re-drive failed', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      }),
+    )
+  })
 
   // ---- Layer 4: need AddonRegistry ---------------------------------------
   // AddonWidgetsService — needs AddonRegistryService for the bundled-addon

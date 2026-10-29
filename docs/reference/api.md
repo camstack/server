@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**190 capabilities · 1416 methods.**
+**191 capabilities · 1417 methods.**
 
 ## Method index
 
@@ -698,6 +698,7 @@
 | `nodeCertificates.prepareHttpsCertificate` | mutation | admin | node-certificates |
 | `nodeCertificates.forgetHub` | mutation | admin | node-certificates |
 | `nodeCertificates.installHttpsCertificate` | mutation | admin | node-certificates |
+| `nodeRemovalHook.onNodeRemoved` | mutation | admin | node-removal-hook |
 | `nodes.topology` | query | admin | nodes |
 | `nodes.directory` | query | admin | nodes |
 | `nodes.deployAddon` | mutation | admin | nodes |
@@ -3333,6 +3334,17 @@
 | prepareHttpsCertificate | `nodeCertificates.prepareHttpsCertificate` | mutation | admin | `{}` | `{ csrPem: string; hostnames: string[]; addresses: string[]; pinnedCaFingerprintSha256: string \| null }` |
 | forgetHub | `nodeCertificates.forgetHub` | mutation | admin | `{}` | `{ ok: true }` |
 | installHttpsCertificate | `nodeCertificates.installHttpsCertificate` | mutation | admin | `{ certPem: string; caCertPem: string; caRotation?: boolean }` | `HttpsLeafInfoSchema` |
+
+### `node-removal-hook` → `nodeRemovalHook.*`
+
+- **Source:** `packages/types/src/capabilities/node-removal-hook.cap.ts:55`
+- **Meta:** scope: `system` · mode: `collection` · mount: `skip`
+- **Archetypes:** internal
+- **Provider interface:** `INodeRemovalHookProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| onNodeRemoved | `nodeRemovalHook.onNodeRemoved` | mutation | admin | `NodeRemovedInputSchema` | `NodeRemovedResultSchema` |
 
 ### `nodes` → `nodes.*`
 

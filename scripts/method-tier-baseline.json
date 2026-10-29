@@ -618,6 +618,7 @@
   "nodeCertificates.prepareHttpsCertificate": "admin",
   "nodeCertificates.prepareMeshRenewal": "admin",
   "nodeCertificates.rollbackMeshLeaf": "admin",
+  "nodeRemovalHook.onNodeRemoved": "admin",
   "nodes.clusterAddonStatus": "admin",
   "nodes.deployAddon": "admin",
   "nodes.directory": "admin",

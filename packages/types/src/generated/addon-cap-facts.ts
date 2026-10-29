@@ -138,6 +138,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "network-link",
   "network-quality",
   "node-certificates",
+  "node-removal-hook",
   "nodes",
   "notification-output",
   "notification-rules",

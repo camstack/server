@@ -10,6 +10,7 @@ import {
   type ILlmRuntimeProvider,
   type IScopedLogger,
   llmCapability,
+  nodeRemovalHookCapability,
   llmRuntimeCapability,
   type ManagedModelRef,
   type ProviderRegistration,
@@ -18,6 +19,7 @@ import {
 import { createLlmClient, type LlmClient } from './client/llm-client.js'
 import { DefaultsStore } from './defaults-store.js'
 import { ProfileStore } from './profile-store.js'
+import { createNodeRemovalHook } from './node-removal.js'
 import { createLlmProvider } from './provider.js'
 import type { AppleFmBackend } from './runtime/apple/afm-backend.js'
 import type { LlamaSupervisor } from './runtime/llama-supervisor.js'
@@ -113,6 +115,10 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
     logger: deps.logger.child('llm'),
   })
   registrations.push({ capability: llmCapability, provider: llmProvider })
+  registrations.push({
+    capability: nodeRemovalHookCapability,
+    provider: createNodeRemovalHook({ store, logger: deps.logger.child('node-removal') }),
+  })
 
   return {
     registrations,

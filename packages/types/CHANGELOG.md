@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A node-removal-hook capability: addons are told when the operator forgets a cluster node
+
 ## [1.2.442] - 2026-10-29
 
 ### Changed

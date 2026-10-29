@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1416 method paths across 190 capabilities.
+ * Coverage: 1417 method paths across 191 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -707,6 +707,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'nodeCertificates.prepareHttpsCertificate': { capName: "node-certificates", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'nodeCertificates.prepareMeshRenewal': { capName: "node-certificates", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'nodeCertificates.rollbackMeshLeaf': { capName: "node-certificates", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'nodeRemovalHook.onNodeRemoved': { capName: "node-removal-hook", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'nodes.clusterAddonStatus': { capName: "nodes", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'nodes.deployAddon': { capName: "nodes", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'nodes.directory': { capName: "nodes", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1557,6 +1558,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "network-link",
   "network-quality",
   "node-certificates",
+  "node-removal-hook",
   "nodes",
   "notification-output",
   "notification-rules",
@@ -1792,6 +1794,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "network-access",
   "network-quality",
   "node-certificates",
+  "node-removal-hook",
   "nodes",
   "notification-output",
   "notification-rules",

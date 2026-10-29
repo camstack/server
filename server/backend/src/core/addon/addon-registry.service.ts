@@ -40,6 +40,7 @@ import {
   IntegrationRegistry,
   clusterAgentRecordKinds,
   clusterNodeHistoryRecordKind,
+  clusterNodeTombstoneRecordKind,
   integrationRegistryRecordKinds,
   type ISettingsStore,
   localProviderLink,
@@ -109,6 +110,7 @@ import {
 } from './forked-custom-actions.js'
 import { createFilteredIntegrationRegistry } from './integration-visibility.js'
 import type { ClusterNodeHistoryStore } from '../agent/cluster-node-history-store.js'
+import type { NodeTombstoneStore } from '../agent/node-removal-hooks.js'
 import { coreAuthRecordKinds } from '../auth/record-kinds.js'
 import type { CredentialTokenService } from '../auth/credential-token.service.js'
 import { materializeRoutePath } from './materialize-route-path.js'
@@ -579,6 +581,7 @@ export class AddonRegistryService {
   private activeSettingsBackend: ISettingsBackend | null = null
   private integrationRegistry: import('@camstack/system').IntegrationRegistry | null = null
   private clusterNodeHistoryStore: ClusterNodeHistoryStore | null = null
+  private nodeTombstoneStore: NodeTombstoneStore | null = null
   private clusterAgentRecords: RecordsAccess | null = null
   private credentialTokenService: CredentialTokenService | null = null
 
@@ -1695,6 +1698,20 @@ export class AddonRegistryService {
     clusterStore.bindRecordsKind(() => kind)
   }
 
+  /** Durable node tombstones (#265) — bound to the `cluster-agent` records like the history. */
+  setNodeTombstoneStore(store: NodeTombstoneStore): void {
+    this.nodeTombstoneStore = store
+    this.bindNodeTombstoneRecordsKind()
+  }
+
+  private bindNodeTombstoneRecordsKind(): void {
+    const store = this.nodeTombstoneStore
+    const records = this.clusterAgentRecords
+    if (store === null || records === null) return
+    const kind = records.kind(clusterNodeTombstoneRecordKind)
+    store.bindRecordsKind(() => kind)
+  }
+
   /** The unified token store (D892), bound to its `core-auth` records. */
   setCredentialTokenService(service: CredentialTokenService): void {
     this.credentialTokenService = service
@@ -1723,6 +1740,7 @@ export class AddonRegistryService {
     await clusterRecords.declare(clusterAgentRecordKinds)
     this.clusterAgentRecords = clusterRecords
     this.bindClusterNodeHistoryRecordsKind()
+    this.bindNodeTombstoneRecordsKind()
 
     const credentialTokens = this.credentialTokenService
     if (credentialTokens !== null) {

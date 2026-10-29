@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**984 shared schemas.**
+**986 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4377,6 +4377,15 @@ Enum: `"shared" \| "per-class"`
 
 - `{ state: "served"; leaf: HttpsLeafInfoSchema }`
 - `{ state: "not-issued"; reason: string }`
+
+### `NodeRemovedInputSchema`
+
+- `nodeId`: `string`
+- `removedAt`: `number`
+
+### `NodeRemovedResultSchema`
+
+- `counts`: `Record<string, number>`
 
 ### `NotificationActionIconSchema`
 

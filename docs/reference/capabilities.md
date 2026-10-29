@@ -4,7 +4,7 @@
 
 # Capabilities
 
-190 capability definitions in `packages/types/src/capabilities/`.
+191 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -120,7 +120,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (94)
+## System-scoped (95)
 
 Singleton or collection providers, addressed without a device.
 
@@ -182,6 +182,7 @@ Singleton or collection providers, addressed without a device.
 | `network-access` | 5 | — | — | — | — | `cloudflare-tunnel` `tailscale-client` `tailscale-ingress` |
 | `network-quality` | 3 | — | — | — | — | — |
 | `node-certificates` | 8 | — | — | — | ✓ | — |
+| `node-removal-hook` | 1 | — | — | — | ✓ | `ai` |
 | `nodes` | 14 | — | — | — | — | — |
 | `notification-output` | 10 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
 | `notification-rules` | 32 | — | — | — | — | `pipeline-analytics` |

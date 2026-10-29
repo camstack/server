@@ -48,6 +48,9 @@
           },
           {
             "name": "llm-runtime"
+          },
+          {
+            "name": "node-removal-hook"
           }
         ],
         "icon": "assets/icon.svg",
