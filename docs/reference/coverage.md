@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7358 source files · 208 units claimed by at least one document (7320 files).**
+**220 units · 7359 source files · 208 units claimed by at least one document (7321 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -56,8 +56,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homeassistant` | 35 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md`, +3 more | 2026-10-26 |
 | `packages/desktop` | 35 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +5 more | 2026-10-13 |
 | `packages/addon-provider-amcrest` | 34 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +8 more | 2026-10-26 |
+| `packages/ui-library/src/hooks` | 34 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +5 more | 2026-10-26 |
 | `packages/addon-provider-homematic` | 33 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
-| `packages/ui-library/src/hooks` | 33 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +5 more | 2026-10-26 |
 | `packages/addon-osd-manager` | 31 | `device-surfaces` | `architecture/osd-manager.md`, `design/2026-08-30-fleet-multiplier-round-trip-audit.md` _(covers)_, 1 ADR | 2026-10-04 |
 | `packages/types/src/pipeline` | 31 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +27 more, 2 ADRs | 2026-10-24 |
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0475-a-motion-episode-belongs-to-its-source-and-the-pipeline-never-overwrites-a-sensor.md`, +1 more | 2026-10-26 |

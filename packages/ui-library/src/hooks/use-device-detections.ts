@@ -4,7 +4,7 @@
  * Parametrized: accepts a tRPC-like proxy object so it works in both
  * admin-ui (BackendClient.trpc) and addon pages (AddonPageProps.trpc).
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type {
   DetectionResultPayload,
   MotionAnalysisPayload,
@@ -13,6 +13,7 @@ import type {
   PipelineAnalyticsFrameTrackedPayload,
   ObjectDetection,
 } from '@camstack/types'
+import { mergeDetections, type FramePart } from './merge-detections'
 
 // ---------------------------------------------------------------------------
 // Exported types
@@ -58,16 +59,16 @@ export interface DeviceDetections {
 }
 
 const MOTION_FADE_MS = 500
-/** Detection overlay fade — ALSO the raw-fallback suppression window: while an
- *  enriched frame-tracked event arrived within this window, raw detection.result
- *  frames are ignored (post-analysis is the richer source; raw remains the
- *  fallback when post-analysis is absent). Keeping the two equal means raw
- *  resumes exactly when the enriched display fades — no blank gap. */
+/** Fade of each detection source (raw roots, enriched extras), counted from the
+ *  frame's capture time so a late frame is not kept for the full window. */
 const DETECTION_FADE_MS = 800
+/** A frame older than this at arrival is replayed pre-roll and never drawn.
+ *  Same meaning as the server's OVERLAY_MAX_FRAME_AGE_MS. */
+const OVERLAY_MAX_FRAME_AGE_MS = 1000
 /**
  * The most of a frame's age (arrival minus its capture timestamp) the fade
  * deducts. Bounded so a skewed server/browser clock can never make boxes vanish
- * on arrival: the server already drops frames older than 1 s from the overlay.
+ * on arrival.
  */
 const MAX_FRAME_AGE_FADE_DEDUCTION_MS = DETECTION_FADE_MS / 2
 
@@ -140,10 +141,35 @@ export function useDeviceDetections(
 
   const motionTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const motionRawTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const detectionTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const lastEnrichedAt = useRef(0)
-  /** Capture timestamp of the newest enriched frame shown; older arrivals are dropped. */
-  const lastShownFrameTs = useRef(0)
+  const rawTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const extrasTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  /** Live part of each source: raw roots and enriched extras fade independently. */
+  const rawPart = useRef<FramePart | null>(null)
+  const extrasPart = useRef<FramePart | null>(null)
+  /** Capture timestamp of the newest frame shown, per source; older arrivals are dropped. */
+  const lastRawTs = useRef(0)
+  const lastExtrasTs = useRef(0)
+
+  const publish = useCallback(() => {
+    setDetection(mergeDetections(rawPart.current, extrasPart.current))
+  }, [])
+
+  /** Admit a frame: null = rejected (stale or out of order), else its fade in ms. */
+  const admit = useCallback(
+    (frameTs: number | null, lastTs: { current: number }): number | null => {
+      if (frameTs !== null) {
+        if (Date.now() - frameTs > OVERLAY_MAX_FRAME_AGE_MS) return null
+        if (frameTs < lastTs.current) return null
+        lastTs.current = frameTs
+      }
+      const ageMs =
+        frameTs === null
+          ? 0
+          : Math.min(Math.max(Date.now() - frameTs, 0), MAX_FRAME_AGE_FADE_DEDUCTION_MS)
+      return DETECTION_FADE_MS - ageMs
+    },
+    [],
+  )
 
   // Subscribe to motion analysis events
   useEffect(() => {
@@ -201,15 +227,16 @@ export function useDeviceDetections(
     }
   }, [trpc, deviceId])
 
-  // Subscribe to the enriched overlay frames (two-plane re-injection):
-  // roots + synthesized face/plate details + identity labels. Match on
-  // data.deviceId — the event source is the pipeline-analytics addon.
+  // Enriched overlay frames (post-analysis): ONLY the extras are taken — detail
+  // children (face, plate…) and identity labels. Root boxes come from the raw
+  // detector frames below. Match on data.deviceId — the event source is the
+  // pipeline-analytics addon.
   useEffect(() => {
-    // Switching device within the suppression window must not carry over the
-    // PREVIOUS device's stamp — otherwise the new device's raw detection.result
-    // frames stay suppressed even though no enriched frame has arrived for it.
-    lastEnrichedAt.current = 0
-    lastShownFrameTs.current = 0
+    extrasPart.current = null
+    rawPart.current = null
+    lastExtrasTs.current = 0
+    lastRawTs.current = 0
+    setDetection(null)
 
     if (deviceId === null) return
 
@@ -220,74 +247,72 @@ export function useDeviceDetections(
       if (!data.detections?.length) return
 
       // Shape guard: an OLD post-analysis emitter can still publish legacy
-      // `TrackedDetectionOut[]` (trackId/className/bbox{x,y,w,h}, no `kind`)
-      // on this same category/envelope. Accept only the current two-plane
-      // shape — otherwise we'd stamp lastEnrichedAt + suppress raw frames
-      // while DetectionCanvas (which partitions on `d.kind`) renders nothing.
+      // `TrackedDetectionOut[]` (no `kind`) on this category. Accept only the
+      // current two-plane shape.
       const first = data.detections[0] as { kind?: unknown } | undefined
-      if (typeof first?.kind !== 'string') return // legacy emitter — fall through to raw path
+      if (typeof first?.kind !== 'string') return
 
-      // Frames can arrive out of order (replayed pre-roll, a slow relay): a
-      // frame older than the newest one already drawn would make the boxes
-      // jump backwards, so it is dropped. No timestamp = arrival order.
-      const frameTs = typeof data.timestamp === 'number' ? data.timestamp : null
-      if (frameTs !== null && frameTs < lastShownFrameTs.current) return
-      if (frameTs !== null) lastShownFrameTs.current = frameTs
+      const fadeInMs = admit(
+        typeof data.timestamp === 'number' ? data.timestamp : null,
+        lastExtrasTs,
+      )
+      if (fadeInMs === null) return
 
-      // Fade by FRAME age, not arrival: a box that was already late when it
-      // arrived is not kept for the full window on top of that lag.
-      const ageMs =
-        frameTs === null
-          ? 0
-          : Math.min(Math.max(Date.now() - frameTs, 0), MAX_FRAME_AGE_FADE_DEDUCTION_MS)
-      const fadeInMs = DETECTION_FADE_MS - ageMs
-
-      // Raw-frame suppression ends with the display, so there is no blank gap.
-      lastEnrichedAt.current = Date.now() - ageMs
-      setDetection({
+      extrasPart.current = {
         detections: data.detections,
         frameWidth: data.frameWidth,
         frameHeight: data.frameHeight,
-      })
+      }
+      publish()
 
-      if (detectionTimer.current) clearTimeout(detectionTimer.current)
-      detectionTimer.current = setTimeout(() => setDetection(null), fadeInMs)
+      if (extrasTimer.current) clearTimeout(extrasTimer.current)
+      extrasTimer.current = setTimeout(() => {
+        extrasPart.current = null
+        publish()
+      }, fadeInMs)
     })
 
     return () => {
       sub?.unsubscribe()
-      // This effect arms the shared fade timer too — own its cleanup instead
-      // of relying on the sibling raw-detection effect's identical dep array.
-      if (detectionTimer.current) clearTimeout(detectionTimer.current)
+      if (extrasTimer.current) clearTimeout(extrasTimer.current)
     }
-  }, [trpc, deviceId])
+  }, [trpc, deviceId, admit, publish])
 
-  // Subscribe to detection result events
+  // Raw detector frames: the root boxes, drawn as soon as they arrive.
   useEffect(() => {
     if (deviceId === null) return
 
     const sub = safeSubscribe(trpc, 'detection.result', (event: unknown) => {
       const e = event as { source?: { id: string | number }; data?: DetectionResultPayload }
       if (!matchesDevice(e?.source, deviceId)) return
-      if (Date.now() - lastEnrichedAt.current < DETECTION_FADE_MS) return
       const frame = e.data?.frame
       if (!frame?.detections?.length) return
 
-      setDetection({
+      const fadeInMs = admit(
+        typeof frame.timestamp === 'number' ? frame.timestamp : null,
+        lastRawTs,
+      )
+      if (fadeInMs === null) return
+
+      rawPart.current = {
         detections: frame.detections,
         frameWidth: frame.width,
         frameHeight: frame.height,
-      })
+      }
+      publish()
 
-      if (detectionTimer.current) clearTimeout(detectionTimer.current)
-      detectionTimer.current = setTimeout(() => setDetection(null), DETECTION_FADE_MS)
+      if (rawTimer.current) clearTimeout(rawTimer.current)
+      rawTimer.current = setTimeout(() => {
+        rawPart.current = null
+        publish()
+      }, fadeInMs)
     })
 
     return () => {
       sub?.unsubscribe()
-      if (detectionTimer.current) clearTimeout(detectionTimer.current)
+      if (rawTimer.current) clearTimeout(rawTimer.current)
     }
-  }, [trpc, deviceId])
+  }, [trpc, deviceId, admit, publish])
 
   // Subscribe to detection phase transitions (real-time, not polling)
   useEffect(() => {
