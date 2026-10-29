@@ -27,11 +27,19 @@ export interface SourceSelectorColumnsProps {
   readonly onBack: () => void
   readonly done: SourceSelectorDone | null
   readonly onDone: () => void
+  /** Fill the height the host gives (a full-height dialog); columns scroll inside it. */
+  readonly fillHeight?: boolean
 }
 
 /** `hidden sm:block` — absent from the phone step, present from 640px up. */
-function columnClass(step: SourceSelectorStep, column: SourceSelectorStep): string | undefined {
-  return phoneColumnVisible(step, column) ? undefined : 'hidden sm:block'
+function columnClass(
+  step: SourceSelectorStep,
+  column: SourceSelectorStep,
+  fillHeight: boolean,
+): string | undefined {
+  const visible = phoneColumnVisible(step, column)
+  if (fillHeight) return visible ? 'flex min-h-0 flex-col' : 'hidden min-h-0 flex-col sm:flex'
+  return visible ? undefined : 'hidden sm:block'
 }
 
 export function SourceSelectorColumns({
@@ -42,14 +50,22 @@ export function SourceSelectorColumns({
   onBack,
   done,
   onDone,
+  fillHeight = false,
 }: SourceSelectorColumnsProps): ReactNode {
   return (
     <div
       data-testid="source-selector"
       data-step={step}
-      className="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4"
+      className={
+        fillHeight
+          ? 'flex min-h-0 flex-1 flex-col gap-3 sm:grid sm:grid-cols-2 sm:grid-rows-[minmax(0,1fr)] sm:gap-4'
+          : 'flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4'
+      }
     >
-      <div data-testid="source-selector-devices" className={columnClass(step, 'devices')}>
+      <div
+        data-testid="source-selector-devices"
+        className={columnClass(step, 'devices', fillHeight)}
+      >
         {done !== null && (
           <div className="mb-2 flex items-center justify-between gap-2 sm:hidden">
             <p
@@ -70,7 +86,7 @@ export function SourceSelectorColumns({
         )}
         {devices}
       </div>
-      <div data-testid="source-selector-values" className={columnClass(step, 'values')}>
+      <div data-testid="source-selector-values" className={columnClass(step, 'values', fillHeight)}>
         {back !== null && (
           <Button
             variant="ghost"
@@ -84,7 +100,7 @@ export function SourceSelectorColumns({
             {back.label}
           </Button>
         )}
-        {values}
+        {fillHeight ? <div className="min-h-0 flex-1 overflow-y-auto">{values}</div> : values}
       </div>
     </div>
   )

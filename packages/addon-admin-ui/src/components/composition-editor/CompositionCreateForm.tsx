@@ -112,8 +112,9 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
   if (free) return <BlankCompositionForm onTitle={onTitle} />
 
   return (
-    <div className="flex flex-col gap-3" data-testid="composition-create-form">
+    <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="composition-create-form">
       <HelperWizard
+        fillHeight
         onFreeComposition={() => setFree(true)}
         purpose="create"
         initial={null}

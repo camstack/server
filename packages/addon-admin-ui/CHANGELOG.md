@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The helper creation dialog uses the full screen height; the member list scrolls instead of being cut short
+
 ### Changed
 
 - The Actions tab shows an empty state with a create button when there are no actions, and an error instead of an endless loading message when the list cannot be read

@@ -51,6 +51,8 @@ export interface SourceSelectorMembersProps {
   readonly members: readonly HelperMember[]
   readonly onMembersChange: (members: readonly HelperMember[]) => void
   readonly onRefuse: (reason: MemberRefuse | null) => void
+  /** Fill the height the host gives instead of capping the list. */
+  readonly fillHeight?: boolean
 }
 
 function listStateOf(
@@ -99,6 +101,7 @@ export function SourceSelectorMembers({
   members,
   onMembersChange,
   onRefuse,
+  fillHeight = false,
 }: SourceSelectorMembersProps): ReactNode {
   const { t, i18n } = useTranslation()
   const [focusId, setFocusId] = useState<number | null>(null)
@@ -112,7 +115,10 @@ export function SourceSelectorMembers({
   const capIndex = useCapIndex(caps, enabled)
   const partitioned = useMemo(() => {
     if (capIndex.kind !== 'known') {
-      return { compatible: [] as MemberDevice[], incompatible: [] as MemberDevice[] }
+      return {
+        compatible: [] as MemberDevice[],
+        incompatible: [] as MemberDevice[],
+      }
     }
     return partitionMemberDevices(toMemberDevices(fleet, capIndex.value), request)
   }, [capIndex, fleet, request])
@@ -156,7 +162,13 @@ export function SourceSelectorMembers({
     onMembersChange(result.members)
   }
   const deviceColumn = (
-    <div className="flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]">
+    <div
+      className={
+        fillHeight
+          ? 'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto'
+          : 'flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]'
+      }
+    >
       <h3 className="text-[11px] font-medium text-foreground-muted">{t('helper.pickMembers')}</h3>
       {devices.status === 'error' ? (
         <ErrorBox
@@ -264,7 +276,9 @@ export function SourceSelectorMembers({
       ? null
       : {
           label: <DeviceName device={focus} form="compact" />,
-          ariaLabel: t('customize.sourceSelector.backToDevice', { name: focus.name }),
+          ariaLabel: t('customize.sourceSelector.backToDevice', {
+            name: focus.name,
+          }),
         }
   return (
     <SourceSelectorColumns
@@ -274,11 +288,14 @@ export function SourceSelectorMembers({
       back={back}
       onBack={() => setStep(stepAfterBack())}
       done={{
-        countLabel: t('customize.sourceSelector.pickedCount', { count: selected.length }),
+        countLabel: t('customize.sourceSelector.pickedCount', {
+          count: selected.length,
+        }),
         label: t('customize.sourceSelector.done'),
         disabled: selected.length === 0,
       }}
       onDone={openValues}
+      fillHeight={fillHeight}
     />
   )
 }

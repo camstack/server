@@ -20,10 +20,15 @@ import { HelperWizard } from './HelperWizard'
 import { draftFromHelper, isHelperComposition, writeHelper } from './helper-form-model'
 
 export interface CompositionBlockEditorProps {
+  /** Hosted by a full-height dialog: the helper wizard fills it. */
+  readonly fillHeight?: boolean
   readonly blockId: string
 }
 
-export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps): ReactNode {
+export function CompositionBlockEditor({
+  blockId,
+  fillHeight = false,
+}: CompositionBlockEditorProps): ReactNode {
   const { t } = useTranslation()
   const read = useCoreBlocksGetComposition({ blockId })
   const update = useCoreBlocksUpdateComposition()
@@ -58,6 +63,7 @@ export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps)
     const deviceId = view.state.kind === 'answered' ? (view.state.state?.deviceId ?? null) : null
     return (
       <HelperWizard
+        fillHeight={fillHeight}
         purpose="edit"
         initial={helperDraft}
         start="parameters"
@@ -73,7 +79,10 @@ export function CompositionBlockEditor({ blockId }: CompositionBlockEditorProps)
               },
             })
             if (deviceId !== null && draft.room.trim() !== '') {
-              await setLocation.mutateAsync({ deviceId, location: draft.room.trim() })
+              await setLocation.mutateAsync({
+                deviceId,
+                location: draft.room.trim(),
+              })
             }
             await read.refetch()
           })

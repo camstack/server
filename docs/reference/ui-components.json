@@ -6678,6 +6678,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "fill",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The body is a flex column, so a child with `min-h-0 flex-1` takes the dialog's remaining height and scrolls inside it (a long picker). Off b"
         }
       ]
     },

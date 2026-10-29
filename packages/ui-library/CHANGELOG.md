@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- ItemFormDialog accepts fill, so a child can take the dialog's remaining height and scroll inside it
+
 ## [1.2.346] - 2026-10-28
 
 ### Changed

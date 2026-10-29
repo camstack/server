@@ -35,6 +35,12 @@ export interface ItemFormDialogProps {
   /** Footer actions (Save, …). Dismiss is the Dialog Close control, not a second Cancel. */
   readonly footer?: ReactNode
   readonly testId?: string
+  /**
+   * The body is a flex column, so a child with `min-h-0 flex-1` takes the
+   * dialog's remaining height and scrolls inside it (a long picker). Off by
+   * default: the body scrolls as a whole.
+   */
+  readonly fill?: boolean
 }
 
 export function ItemFormDialog({
@@ -48,6 +54,7 @@ export function ItemFormDialog({
   beforeBody,
   footer,
   testId,
+  fill = false,
 }: ItemFormDialogProps): JSX.Element | null {
   if (!open) return null
   return (
@@ -70,7 +77,9 @@ export function ItemFormDialog({
         {beforeBody != null && <div className="mb-3 shrink-0">{beforeBody}</div>}
         {/* Body owns spacing + inset; fillers must not wrap in padding/chrome. */}
         {/* px keeps focus rings inside the dialog padding (flush-left Inputs). */}
-        <DialogBody className="space-y-3 px-1">{children}</DialogBody>
+        <DialogBody className={fill ? 'flex flex-col gap-3 px-1' : 'space-y-3 px-1'}>
+          {children}
+        </DialogBody>
         {footer != null && <DialogFooter className="mt-3 shrink-0">{footer}</DialogFooter>}
       </DialogContent>
     </Dialog>

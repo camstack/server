@@ -59,6 +59,11 @@ export interface HelperWizardProps {
   readonly onDraftChange?: (draft: HelperDraft | null) => void
   /** Create only: the picker's Advanced "Free composition" tile. */
   readonly onFreeComposition?: () => void
+  /**
+   * The host is a full-height dialog: the member list takes the remaining
+   * height and scrolls, and the action row stays at the bottom.
+   */
+  readonly fillHeight?: boolean
 }
 
 interface CreatedDevice {
@@ -74,6 +79,7 @@ export function HelperWizard({
   onSave,
   onDraftChange,
   onFreeComposition,
+  fillHeight = false,
 }: HelperWizardProps): ReactNode {
   const { t } = useTranslation()
   const [step, setStep] = useState<WizardStep>(initial === null ? 'template' : start)
@@ -124,7 +130,10 @@ export function HelperWizard({
         return
       }
       if (intent === 'again') {
-        setCreated({ deviceId: result.deviceId, name: savingDraft.name.trim() })
+        setCreated({
+          deviceId: result.deviceId,
+          name: savingDraft.name.trim(),
+        })
         setDraft(null)
         setStep('template')
         setRefusals([])
@@ -140,12 +149,17 @@ export function HelperWizard({
   const members = draft === null ? [] : draftMembers(draft)
 
   return (
-    <div className="flex flex-col gap-3" data-testid="helper-wizard">
+    <div
+      className={fillHeight ? 'flex min-h-0 flex-1 flex-col gap-3' : 'flex flex-col gap-3'}
+      data-testid="helper-wizard"
+    >
       {created !== null && (
         <p role="status" className="text-xs text-foreground" data-testid="helper-created">
           <Trans
             i18nKey="helper.created"
-            values={{ name: created.name === '' ? t('helper.newHelper') : created.name }}
+            values={{
+              name: created.name === '' ? t('helper.newHelper') : created.name,
+            }}
             components={{
               device: (
                 <Link to={devicePath(created.deviceId)} className="text-primary hover:underline" />
@@ -236,6 +250,7 @@ export function HelperWizard({
           kind="members"
           request={request}
           enabled
+          fillHeight={fillHeight}
           members={members}
           onMembersChange={(next) => setDraft(withDraftMembers(draft, next))}
           onRefuse={(reason) =>
@@ -262,7 +277,9 @@ export function HelperWizard({
         </p>
       )}
       <RefusalList lines={refusals} />
-      <div className="flex flex-wrap gap-2">
+      <div
+        className={fillHeight ? 'mt-auto flex shrink-0 flex-wrap gap-2' : 'flex flex-wrap gap-2'}
+      >
         {step === 'members' && (
           <Button variant="ghost" onClick={() => setStep('parameters')}>
             {t('helper.back')}
@@ -457,7 +474,10 @@ function StatisticParameters({
           value={draft.window.kind}
           onChange={(event) => {
             if (event.target.value === 'calendar')
-              onChange({ ...draft, window: { kind: 'calendar', period: 'today' } })
+              onChange({
+                ...draft,
+                window: { kind: 'calendar', period: 'today' },
+              })
             if (event.target.value === 'rolling')
               onChange({ ...draft, window: { kind: 'rolling', span: '24h' } })
           }}
@@ -682,7 +702,11 @@ function DerivativeParameters({
               ...draft,
               window:
                 span === 'custom'
-                  ? { kind: 'rolling', span, customMinutes: draft.window.customMinutes ?? 60 }
+                  ? {
+                      kind: 'rolling',
+                      span,
+                      customMinutes: draft.window.customMinutes ?? 60,
+                    }
                   : { kind: 'rolling', span },
             })
           }}

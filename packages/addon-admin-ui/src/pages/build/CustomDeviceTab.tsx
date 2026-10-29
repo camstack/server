@@ -154,11 +154,12 @@ export function CustomDeviceTab({
         icon={Boxes}
         width="xl"
         testId="composed-device-editor"
+        fill
       >
         {isNew && createMode !== null ? (
           <CompositionCreateForm key={createMode} mode={createMode} onTitle={setCreateTitle} />
         ) : editingId !== null ? (
-          <CompositionBlockEditor blockId={editingId} />
+          <CompositionBlockEditor blockId={editingId} fillHeight />
         ) : null}
       </ItemFormDialog>
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
