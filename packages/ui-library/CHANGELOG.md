@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Generated hooks for the node launch overrides
+
 ## [1.2.350] - 2026-10-29
 
 ### Added

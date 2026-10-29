@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- server-management can read and set a node's launch overrides
+
 ## [1.2.444] - 2026-10-29
 
 ### Added

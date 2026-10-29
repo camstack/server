@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Memory reclaim judges anonymous resident memory on Linux, and telemetry nobody listens to (including broker messages) no longer reaches a child process
+
 ## [1.2.518] - 2026-10-29
 
 ### Added

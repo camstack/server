@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A built device's commands can be edited, and a pet fountain can be created from a preset
+
 ## [1.2.517] - 2026-10-29
 
 ### Added

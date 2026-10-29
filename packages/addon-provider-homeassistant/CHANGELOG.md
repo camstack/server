@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Runs in the shared integrations runner with the other low-traffic integration addons
+
 ## [1.2.637] - 2026-10-29
 
 ### Added
