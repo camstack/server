@@ -491,6 +491,14 @@ into the CRL at boot. Two operator actions, both through `certificates.*`:
 - **Revoke** (`revokeMeshOnNode`) puts the serial on the CRL and closes the node's
   sockets; the node must be paired again.
   `clusterNodes.forgetNode` stays the way to remove a node.
+- **Forget** (`clusterNodes.forgetNode`) works on an ONLINE node as well (D966). Order: revoke every
+  certificate (the revoker closes the node's mutual-TLS sockets, since the CRL is read only at a
+  handshake), then `NodeCatalog.disconnected` (services unregistered, calls still waiting on the node
+  rejected with `RequestRejectedError`; a later pinned call fails fast with `ServiceNotFoundError`),
+  then the catalog delete and the rest of the cleanup. The agent, refused at its next handshake,
+  asks the hub and resets to unpaired after two CA-signed `revoked` answers (about two minutes).
+  `stillListed` is read back after the removal, so a node that came straight back (revocation
+  failed) is reported as listed.
 
 The hub reaches a node through the node-pinned `node-certificates` capability,
 provided by the agent runtime like `server-management`. An agent's API port also

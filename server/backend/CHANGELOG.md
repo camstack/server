@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Forget node now works on an online node too: its certificates are revoked, its connection is cut and calls pinned to it fail at once.
 - Generated routers for the pet-fountain capability
 
 ## [1.2.688] - 2026-10-29

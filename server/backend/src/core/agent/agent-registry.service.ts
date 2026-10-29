@@ -108,7 +108,14 @@ interface NodeCatalogRegistryLike {
     readonly available?: boolean
     readonly hostname?: string | null
   }[]
-  readonly nodes?: { readonly delete?: (id: string) => boolean }
+  readonly nodes?: {
+    readonly delete?: (id: string) => boolean
+    /**
+     * Moleculer's `NodeCatalog.disconnected`: marks an AVAILABLE node unavailable, unregisters its
+     * services and rejects the requests still waiting on it. A no-op for a node already offline.
+     */
+    readonly disconnected?: (id: string, isUnexpected: boolean) => void
+  }
 }
 
 /** Turn a forget outcome into the sentence the operator reads. */
@@ -540,28 +547,17 @@ export class AgentRegistryService {
    * nothing re-announces it, and the operator has no reason to wait for a
    * timer they cannot see.
    *
-   * An ONLINE node is REFUSED: dropping a live node from the routing catalog
-   * would break every cap call pinned to it, and it re-registers on the next
-   * heartbeat anyway — "forget" of a live node is not a slow success, it is
-   * not a thing.
+   * An ONLINE node is forgotten too (operator ruling 2026-10-29, D966). The old refusal said a
+   * live node re-registers at once; since D857 its leaf is on the CRL, so it cannot. The order
+   * matters: (1) revoke (the revoker also closes the node's mutual-TLS sockets, because the CRL is
+   * only read at a handshake), (2) `disconnected` in the catalog, which unregisters its services and
+   * rejects the cap calls still waiting on it with `RequestRejectedError` - a bare `nodes.delete`
+   * would leave both behind, (3) the delete and the rest of the cleanup. The agent finds out on
+   * its own: refused at the next handshake, it asks the hub (`agent-membership-watch`) and resets
+   * to unpaired after two CA-signed `revoked` answers. `stillListed` is read back at the end, so a
+   * node that came straight back (revocation failed) is reported as listed, never as forgotten.
    */
   async forgetClusterNode(nodeId: string): Promise<ForgetClusterNodeResult> {
-    if (this.isNodeOnline(nodeId)) {
-      const message = `Refused: ${nodeId} is ONLINE. Take the node down first — a live node re-registers immediately.`
-      this.logger?.warn('forget cluster node refused', {
-        tags: { nodeId },
-        meta: { reason: 'node-online' },
-      })
-      return {
-        forgotten: false,
-        historyRemoved: false,
-        registryRemoved: false,
-        stillListed: true,
-        certificates: { outcome: 'not-attempted' },
-        message,
-      }
-    }
-
     // First: a forgotten node whose leaf stays valid walks back in on its next boot (D857).
     const certificates = await this.revokeForgottenNodeCertificates(nodeId)
 
@@ -570,6 +566,7 @@ export class AgentRegistryService {
       : 'store-unavailable'
     // The mirror still lists the forgotten node: the next directory re-reads.
     this.historyMirror?.invalidate()
+    if (this.isNodeOnline(nodeId)) this.disconnectFromNodeCatalog(nodeId)
     const registryRemoved = this.removeFromNodeCatalog(nodeId)
     // Its intended set is gone with the row, so the back-fill breaker's memory
     // of failed deliveries to it is meaningless — drop it too.
@@ -625,6 +622,21 @@ export class AgentRegistryService {
       certificates,
       message,
     }
+  }
+
+  /**
+   * Take a LIVE node out of routing the way Moleculer does when its transport drops: services
+   * unregistered, pending requests rejected (typed, not left to time out). Idempotent.
+   */
+  private disconnectFromNodeCatalog(nodeId: string): void {
+    const nodes = this.nodeCatalogRegistry()?.nodes
+    if (nodes?.disconnected === undefined) {
+      this.logger?.warn('cluster node catalog does not expose disconnected - calls may hang', {
+        tags: { nodeId },
+      })
+      return
+    }
+    nodes.disconnected(nodeId, false)
   }
 
   /** Is the node currently AVAILABLE in Moleculer's catalog? */

@@ -30,6 +30,9 @@ interface RegistryNode {
   readonly available: boolean
 }
 
+/** What the harness did to the catalog, in order - the ORDER is the contract for a live node. */
+type CatalogStep = 'disconnected' | 'deleted'
+
 interface LoggedLine {
   readonly level: 'info' | 'warn'
   readonly message: string
@@ -41,9 +44,12 @@ function makeHarness(
   registryNodes: readonly RegistryNode[],
   historyOutcome: 'removed' | 'not-found' | 'store-unavailable' = 'removed',
   withStore = true,
+  /** The node announces itself again the moment it is deleted (a revocation that did not hold). */
+  reappearsOnDelete = false,
 ) {
-  const catalog = new Map(registryNodes.map((n) => [n.id, n]))
+  const catalog = new Map<string, RegistryNode>(registryNodes.map((n) => [n.id, n]))
   const deleted: string[] = []
+  const steps: CatalogStep[] = []
   const lines: LoggedLine[] = []
 
   const broker = {
@@ -54,9 +60,19 @@ function makeHarness(
       getNodeList: ({ onlyAvailable }: { onlyAvailable: boolean }) =>
         [...catalog.values()].filter((n) => (onlyAvailable ? n.available : true)),
       nodes: {
+        // Moleculer's NodeCatalog.disconnected: marks the node unavailable (and unregisters its services).
+        disconnected: (id: string): void => {
+          const node = catalog.get(id)
+          if (node?.available !== true) return
+          steps.push('disconnected')
+          catalog.set(id, { id, available: false })
+        },
         delete: (id: string): boolean => {
           deleted.push(id)
-          return catalog.delete(id)
+          steps.push('deleted')
+          const removed = catalog.delete(id)
+          if (reappearsOnDelete) catalog.set(id, { id, available: true })
+          return removed
         },
       },
     },
@@ -106,7 +122,7 @@ function makeHarness(
     } as unknown as ClusterNodeHistoryStore)
   }
 
-  return { service, deleted, lines, catalog, eventBus }
+  return { service, deleted, lines, catalog, eventBus, steps }
 }
 
 describe('AgentRegistryService.forgetClusterNode', () => {
@@ -137,20 +153,44 @@ describe('AgentRegistryService.forgetClusterNode', () => {
     expect(result.forgotten).toBe(false)
   })
 
-  it('refuses an ONLINE node instead of silently half-forgetting it', async () => {
-    const { service, deleted } = makeHarness([
+  it('forgets an ONLINE node: disconnects it from the catalog first, then deletes it', async () => {
+    const { service, deleted, steps, catalog } = makeHarness([
       { id: 'hub', available: true },
       { id: 'agent-a', available: true },
     ])
+    service.setNodeCertificateRevoker(async () => ['01'])
 
     const result = await service.forgetClusterNode('agent-a')
 
-    // Deleting a live node from the routing catalog would break every cap call
-    // pinned to it, and the node re-registers within a heartbeat anyway.
-    expect(deleted).toEqual([])
-    expect(result.forgotten).toBe(false)
+    // `nodes.delete` alone leaves a live node's services registered and its pending calls
+    // hanging; `disconnected` is what unregisters them and rejects those calls.
+    expect(steps).toEqual(['disconnected', 'deleted'])
+    expect(deleted).toEqual(['agent-a'])
+    expect(catalog.has('agent-a')).toBe(false)
+    expect(result.forgotten).toBe(true)
+    expect(result.registryRemoved).toBe(true)
+    expect(result.stillListed).toBe(false)
+    expect(result.certificates).toEqual({
+      outcome: 'revoked',
+      serials: ['01'],
+    })
+  })
+
+  it('reports an ONLINE node that comes straight back as STILL listed - no fake success', async () => {
+    const { service } = makeHarness([{ id: 'agent-a', available: true }], 'removed', true, true)
+    service.setNodeCertificateRevoker(async () => {
+      throw new Error('disk full')
+    })
+
+    const result = await service.forgetClusterNode('agent-a')
+
     expect(result.stillListed).toBe(true)
-    expect(result.message).toMatch(/online/i)
+    expect(result.certificates).toEqual({
+      outcome: 'failed',
+      error: 'disk full',
+    })
+    expect(result.message).toContain('STILL in the cluster registry')
+    expect(result.message).toContain('NOT revoked')
   })
 
   it('reports a missing history store as unknown, never as a successful delete', async () => {
@@ -191,7 +231,7 @@ describe('AgentRegistryService.forgetClusterNode', () => {
     )
   })
 
-  it('runs the node-removal cleanup after a real forget, not after a refusal or a no-op', async () => {
+  it('runs the node-removal cleanup after a real forget (online or offline), not after a no-op', async () => {
     const forgotten = makeHarness([{ id: 'hub-test', available: false }])
     const onForgotten = vi.fn(async () => undefined)
     forgotten.service.setNodeRemovalCleanup(onForgotten)
@@ -203,11 +243,11 @@ describe('AgentRegistryService.forgetClusterNode', () => {
     const onLive = vi.fn(async () => undefined)
     live.service.setNodeRemovalCleanup(onLive)
     await live.service.forgetClusterNode('agent-a')
+    expect(onLive).toHaveBeenCalledWith('agent-a', expect.any(Number))
     const ghost = makeHarness([{ id: 'hub', available: true }], 'not-found')
     const onGhost = vi.fn(async () => undefined)
     ghost.service.setNodeRemovalCleanup(onGhost)
     await ghost.service.forgetClusterNode('ghost')
-    expect(onLive).not.toHaveBeenCalled()
     expect(onGhost).not.toHaveBeenCalled()
   })
 
@@ -278,14 +318,18 @@ describe('AgentRegistryService.forgetClusterNode - certificates (D857)', () => {
     expect(line?.tags).toMatchObject({ nodeId: 'agent-old' })
   })
 
-  it('does not revoke an ONLINE node (the refusal stays as it is)', async () => {
-    const { service } = makeHarness([{ id: 'agent-a', available: true }])
-    const revoker = vi.fn(async () => ['01'])
-    service.setNodeCertificateRevoker(revoker)
+  it('revokes the certificates of an ONLINE node BEFORE it cuts it from the catalog', async () => {
+    const { service, steps } = makeHarness([{ id: 'agent-a', available: true }])
+    const order: string[] = []
+    service.setNodeCertificateRevoker(async () => {
+      order.push(`revoke (catalog steps so far: ${steps.length})`)
+      return ['01']
+    })
 
-    const result = await service.forgetClusterNode('agent-a')
+    await service.forgetClusterNode('agent-a')
 
-    expect(revoker).not.toHaveBeenCalled()
-    expect(result.certificates).toEqual({ outcome: 'not-attempted' })
+    // Revoked first: a socket cut before the CRL entry would let the node walk straight back in.
+    expect(order).toEqual(['revoke (catalog steps so far: 0)'])
+    expect(steps).toEqual(['disconnected', 'deleted'])
   })
 })

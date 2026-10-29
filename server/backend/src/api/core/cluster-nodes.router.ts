@@ -70,9 +70,9 @@ export function createClusterNodesRouter(agentRegistry: AgentRegistryService) {
         await agentRegistry.repairNodeAddons(input.nodeId)
         return { success: true }
       }),
-    // Purge one node's persisted offline history. Pairs with
-    // `pipelineOrchestrator.removeAgentSettings` on the frontend to fully
-    // forget an offline node (history row + per-node pipeline assignments).
+    // Forget a node, online or offline: revoke its certificates, cut it from routing, purge its
+    // persisted history. Pairs with `pipelineOrchestrator.removeAgentSettings` on the frontend
+    // (per-node pipeline assignments).
     forgetNode: adminProcedure
       .input(ForgetNodeInputSchema)
       .output(ForgetNodeResultSchema)

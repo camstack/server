@@ -25,7 +25,7 @@ scratch, and the agent was never told it had been removed.
 
 ## Decision
 
-Forgetting an OFFLINE node revokes every certificate the hub issued to it
+Forgetting a node, ONLINE or offline, revokes every certificate the hub issued to it
 (reason `forgotten`) through `revokeMeshCertificate`, which writes the CRL and
 cuts live sockets; the transporter reads the CRL on every check, so no restart
 is needed. The forget result carries a typed `certificates` outcome
@@ -51,6 +51,17 @@ The reset removes the pairing from `agent.json` (`meshTls`, `meshTlsPrevious`,
 the node id, name, log level, recordings, media and addons, and the agent then
 advertises as pairable.
 
+Amendment 2026-10-29: forget works while the node is online. The earlier refusal
+(`node-online`) rested on "a live node re-registers at once", which stopped being true once the
+leaf is on the CRL. The order is revoke (which closes the node's sockets, the CRL being read only
+at a handshake), `NodeCatalog.disconnected` (services unregistered, pending calls rejected with
+`RequestRejectedError`; later pinned calls fail with `ServiceNotFoundError`, never hang), then the
+catalog delete and the rest of the cleanup. A bare `nodes.delete` on a live node would leave its
+services registered and its calls waiting for the timeout. The agent needs no new signal: its
+socket is cut, the reconnect is refused, and the membership watch above resets it (about two
+minutes). `stillListed` is read back after the removal, so a revocation that failed and a node that
+came straight back are reported, not asserted away.
+
 ## Consequences
 
 Forgetting is final until the operator pairs the node again with the six-digit
@@ -64,4 +75,6 @@ Specs: `forget-cluster-node.spec.ts` (revoke called, outcomes distinct),
 `revoked-leaf-refused.spec.ts` (refused with no restart, logged once),
 `mesh-membership.spec.ts` (impostor, replay, forged CA),
 `agent-membership-watch.spec.ts` (two reads, end to end). Removing the revoke
-call in `forgetClusterNode` turns four forget specs red.
+call in `forgetClusterNode` turns eight forget specs red. `forget-online-node.spec.ts` runs a real
+mutual-TLS transporter (live socket closed, revoked leaf refused) and real Moleculer brokers
+(in-flight call rejected typed); removing the `disconnected` step makes it hang until timeout.
