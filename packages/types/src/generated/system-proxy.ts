@@ -51,6 +51,7 @@ import type { recordEntriesCapability } from '../capabilities/record-entries.cap
 import type { recordingArchiveCapability } from '../capabilities/recording-archive.cap.js'
 import type { recordingExportCapability } from '../capabilities/recording-export.cap.js'
 import type { remoteCapability } from '../capabilities/remote.cap.js'
+import type { remoteLayoutComponentsCapability } from '../capabilities/remote-layout-components.cap.js'
 import type { serverManagementCapability } from '../capabilities/server-management.cap.js'
 import type { settingsStoreCapability } from '../capabilities/settings-store.cap.js'
 import type { storageCapability } from '../capabilities/storage.cap.js'
@@ -119,6 +120,7 @@ export interface SystemProxy {
   readonly recordingArchive: Pick<InferProvider<typeof recordingArchiveCapability>, 'getAvailabilityBatch' | 'getDaysWithRecordingsBatch' | 'getStorageUsage' | 'listOpsLog' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'refreshStorageLocationsForMigration' | 'startStorageMigrationMove' | 'getStorageMigrationMoveStatus' | 'cancelStorageMigrationMove' | 'relocateFootage' | 'listRelocateJobs' | 'getRelocateResidue' | 'reconcileLedgerAgainstDisk' | 'cancelRelocateJob' | 'planStorageRebalance' | 'startStorageRebalance' | 'getPlacement' | 'setDevicePlacement'>
   readonly recordingExport: Pick<InferProvider<typeof recordingExportCapability>, 'createExport' | 'getExport' | 'cancelExport' | 'deleteExport' | 'getDownloadUrl' | 'readExportBytes'>
   readonly remote: Pick<InferProvider<typeof remoteCapability>, 'getConfig' | 'setConfig' | 'listCommands' | 'sendCommand' | 'sendMediaCommand'>
+  readonly remoteLayoutComponents: Pick<InferProvider<typeof remoteLayoutComponentsCapability>, 'listComponents'>
   readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'installDesktopUpdate' | 'rollbackServerUpdate' | 'restartServer' | 'getLaunchOverrides' | 'setLaunchOverrides'>
   readonly settingsStore: Pick<InferProvider<typeof settingsStoreCapability>, 'get' | 'set' | 'query' | 'upsert' | 'upsertMany' | 'insert' | 'insertMany' | 'transact' | 'update' | 'delete' | 'deleteWhere' | 'updateWhere' | 'count' | 'aggregate' | 'histogram' | 'isEmpty' | 'declareCollection'>
   readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'upsertLocation' | 'deleteLocation' | 'listDrainProgress' | 'testLocation' | 'listProviders' | 'testConfig'>
@@ -840,6 +842,10 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     sendMediaCommand: (input?: unknown) => dispatch('remote', 'sendMediaCommand', 'mutation', input),
   }
 
+  const remoteLayoutComponentsInterface = {
+    listComponents: (input?: unknown) => dispatch('remoteLayoutComponents', 'listComponents', 'query', input),
+  }
+
   const serverManagementInterface = {
     getServerPackageStatus: (input?: unknown) => dispatch('serverManagement', 'getServerPackageStatus', 'query', input),
     checkServerUpdate: (input?: unknown) => dispatch('serverManagement', 'checkServerUpdate', 'mutation', input),
@@ -1077,6 +1083,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     recordingArchive: recordingArchiveInterface,
     recordingExport: recordingExportInterface,
     remote: remoteInterface,
+    remoteLayoutComponents: remoteLayoutComponentsInterface,
     serverManagement: serverManagementInterface,
     settingsStore: settingsStoreInterface,
     storage: storageInterface,

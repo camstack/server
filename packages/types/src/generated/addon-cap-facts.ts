@@ -171,6 +171,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "recording-signal",
   "records",
   "remote",
+  "remote-layout-components",
   "running-state",
   "scene-monitor",
   "script-runner",

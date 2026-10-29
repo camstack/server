@@ -36,6 +36,7 @@ import {
   normalizeCoreBlockWrite,
   type ProviderRegistration,
   remoteCapability,
+  remoteLayoutComponentsCapability,
   templateCapability,
 } from '@camstack/types'
 import {
@@ -45,6 +46,7 @@ import {
 } from './block-supervisor.js'
 import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
 import { actionOwner, automationOwner } from './runs-ledger.js'
+import { RemoteComponentsService } from './remote-components-service.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
@@ -161,6 +163,8 @@ export class CoreBlocksAddon extends BaseAddon {
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
       { capability: actionsCapability, provider: this.requireActions().service },
+      // The built-in palette needs no store: it is served even when the remote is not.
+      { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
       ...this.remoteRegistrations(),
     ]
   }

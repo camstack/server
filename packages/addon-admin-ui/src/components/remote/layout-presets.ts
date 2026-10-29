@@ -11,7 +11,13 @@
  * (`app-brand-icons`). Key legends printed on the plastic are data, not
  * interface strings, so they are not translated.
  */
-import type { RemoteLayoutPayload } from '@camstack/types'
+import {
+  builtinRemoteComponent,
+  type ComponentButtonSpec,
+  type InsertOptions,
+  insertComponent,
+  type RemoteLayoutPayload,
+} from '@camstack/types'
 import { appIconKey } from './app-brand-icons'
 import { type ButtonSpec, buildLayout } from './layout-model'
 
@@ -60,20 +66,6 @@ function dpad(row: number): ButtonSpec[] {
   ]
 }
 
-/** 1-9 in three rows, then `[left] 0 [right]` on the fourth. */
-function digits(row: number, left?: ButtonSpec, right?: ButtonSpec): ButtonSpec[] {
-  const out: ButtonSpec[] = []
-  for (let n = 1; n <= 9; n += 1) {
-    out.push(
-      key(`d${n}`, `digit_${n}`, row + Math.floor((n - 1) / 3), ((n - 1) % 3) * THIRD, THIRD),
-    )
-  }
-  out.push(key('zero', 'digit_0', row + 3, THIRD, THIRD))
-  if (left !== undefined) out.push({ ...left, row: row + 3, col: 0, colSpan: THIRD })
-  if (right !== undefined) out.push({ ...right, row: row + 3, col: 2 * THIRD, colSpan: THIRD })
-  return out
-}
-
 /** Four equal keys on one row, each opening a streaming app. */
 function appRow(row: number, brands: readonly string[]): ButtonSpec[] {
   return brands.map((brand, i) =>
@@ -83,67 +75,156 @@ function appRow(row: number, brands: readonly string[]): ButtonSpec[] {
   )
 }
 
-const SAMSUNG_CLASSIC = buildLayout(COLUMNS, 17, [
-  key('power', 'power', 0, 0, THIRD),
-  key('input', 'input', 0, 2 * THIRD, THIRD),
-  ...digits(
-    1,
-    { id: 'ttx', role: custom('ttx_mix'), row: 0, col: 0, label: 'TTX/MIX' },
-    { id: 'prech', role: custom('pre_ch'), row: 0, col: 0, label: 'PRE-CH' },
-  ),
-  key('vol_up', 'volume_up', 5, 0, THIRD, { rowSpan: 2 }),
-  key('vol_down', 'volume_down', 7, 0, THIRD, { rowSpan: 2 }),
-  key('mute', 'mute', 5, THIRD, THIRD),
-  key('ch_list', custom('ch_list'), 6, THIRD, THIRD, { label: 'CH LIST' }),
-  key('settings', custom('settings'), 7, THIRD, THIRD, { label: 'Settings' }),
-  key('home', 'home', 8, THIRD, THIRD),
-  key('ch_up', 'channel_up', 5, 2 * THIRD, THIRD, { rowSpan: 2 }),
-  key('ch_down', 'channel_down', 7, 2 * THIRD, THIRD, { rowSpan: 2 }),
-  key('guide', 'guide', 9, 0, THIRD),
-  key('e_manual', custom('e_manual'), 9, THIRD, THIRD, { label: 'e-Manual' }),
-  key('info', 'info', 9, 2 * THIRD, THIRD),
-  ...dpad(10),
-  key('back', 'back', 12, 0, THIRD),
-  key('exit', 'exit', 12, 2 * THIRD, THIRD),
-  key('color_a', custom('color_a'), 13, 0, QUARTER, { label: 'A' }),
-  key('color_b', custom('color_b'), 13, QUARTER, QUARTER, { label: 'B' }),
-  key('color_c', custom('color_c'), 13, 2 * QUARTER, QUARTER, { label: 'C' }),
-  key('color_d', custom('color_d'), 13, 3 * QUARTER, QUARTER, { label: 'D' }),
-  key('pic_size', custom('pic_size'), 14, 0, THIRD, { label: 'P.SIZE' }),
-  key('picture', custom('picture'), 14, THIRD, THIRD, { label: 'Picture' }),
-  key('ad_subt', custom('ad_subt'), 14, 2 * THIRD, THIRD, { label: 'AD/SUBT' }),
-  key('rewind', 'rewind', 15, 0, QUARTER),
-  key('play', 'play', 15, QUARTER, QUARTER),
-  key('pause', 'pause', 15, 2 * QUARTER, QUARTER),
-  key('forward', 'fast_forward', 15, 3 * QUARTER, QUARTER),
-  key('stop', 'stop', 16, THIRD, THIRD),
-])
+/** A built-in component placed on the grid; a refusal is a programming error in the preset. */
+interface ComponentStep {
+  readonly id: string
+  readonly row: number
+  readonly col: number
+  readonly options?: InsertOptions
+}
 
-const HISENSE_VIDAA = buildLayout(COLUMNS, 15, [
-  key('power', 'power', 0, 0, THIRD),
-  key('input', 'input', 0, 2 * THIRD, THIRD),
-  ...appRow(1, ['netflix', 'youtube', 'primevideo', 'disneyplus']),
-  ...appRow(2, ['dazn', 'raiplay', 'spotify', 'plex']),
-  key('red', custom('color_red'), 3, 0, QUARTER, { label: 'Red' }),
-  key('green', custom('color_green'), 3, QUARTER, QUARTER, { label: 'Green' }),
-  key('yellow', custom('color_yellow'), 3, 2 * QUARTER, QUARTER, { label: 'Yellow' }),
-  key('blue', custom('color_blue'), 3, 3 * QUARTER, QUARTER, { label: 'Blue' }),
-  ...thirds(4, ['menu', 'home', 'exit']),
-  key('guide', 'guide', 5, 0, THIRD),
-  key('info', 'info', 5, 2 * THIRD, THIRD),
-  ...dpad(5),
-  key('back', 'back', 7, 0, THIRD),
-  key('play_pause', 'play_pause', 7, 2 * THIRD, THIRD),
-  key('vol_up', 'volume_up', 8, 0, THIRD),
-  key('mute', 'mute', 8, THIRD, THIRD),
-  key('ch_up', 'channel_up', 8, 2 * THIRD, THIRD),
-  key('vol_down', 'volume_down', 9, 0, THIRD),
-  key('ch_list', custom('ch_list'), 9, THIRD, THIRD, { label: 'CH.LIST' }),
-  key('ch_down', 'channel_down', 9, 2 * THIRD, THIRD),
-  key('subtitle', custom('subtitle'), 10, 0, 6, { label: 'Subtitle' }),
-  key('text', custom('text'), 10, 6, 6, { label: 'Text' }),
-  ...digits(11),
-])
+/** A section divider across the whole grid. */
+const divider = (row: number, title: string): ComponentStep => ({
+  id: 'core:section-divider',
+  row,
+  col: 0,
+  options: { scale: { cols: COLUMNS }, title },
+})
+
+/**
+ * `keys` placed first, then each built-in component through `insertComponent`,
+ * the same path the editor's "Add component" takes: a preset is made of the
+ * vocabulary an operator builds with.
+ */
+function compose(
+  rows: number,
+  keys: readonly ButtonSpec[],
+  steps: readonly ComponentStep[],
+): RemoteLayoutPayload {
+  let layout = buildLayout(COLUMNS, rows, keys)
+  for (const step of steps) {
+    const result = insertComponent(
+      layout,
+      builtinRemoteComponent(step.id),
+      { row: step.row, col: step.col },
+      step.options,
+    )
+    if (!result.ok) {
+      throw new Error(`preset component ${step.id} at ${step.row}:${step.col}: ${result.reason}`)
+    }
+    layout = result.layout
+  }
+  return layout
+}
+
+/** A 3-wide component stretched to the 12-column grid. */
+const FULL_WIDTH_3: InsertOptions = { scale: { cols: THIRD } }
+const TALL_ROCKER: InsertOptions = { scale: { rows: 2, cols: THIRD } }
+
+/** A key on the keypad's bottom row, left (`col` 0) or right (`col` 2) of the zero. */
+const keypadExtra = (
+  idSuffix: string,
+  col: number,
+  role: string,
+  label: string,
+): ComponentButtonSpec => ({ idSuffix, row: 3, col, rowSpan: 1, colSpan: 1, role, label })
+
+const SAMSUNG_CLASSIC = compose(
+  23,
+  [
+    key('input', 'input', 0, 2 * THIRD, THIRD),
+    key('mute', 'mute', 7, THIRD, THIRD),
+    key('ch_list', custom('ch_list'), 8, THIRD, THIRD, { label: 'CH LIST' }),
+    key('settings', custom('settings'), 9, THIRD, THIRD, { label: 'Settings' }),
+    key('home', 'home', 10, THIRD, THIRD),
+    key('guide', 'guide', 12, 0, THIRD),
+    key('e_manual', custom('e_manual'), 12, THIRD, THIRD, { label: 'e-Manual' }),
+    key('info', 'info', 12, 2 * THIRD, THIRD),
+    key('back', 'back', 17, 0, THIRD),
+    key('exit', 'exit', 17, 2 * THIRD, THIRD),
+    key('color_a', custom('color_a'), 19, 0, QUARTER, { label: 'A' }),
+    key('color_b', custom('color_b'), 19, QUARTER, QUARTER, { label: 'B' }),
+    key('color_c', custom('color_c'), 19, 2 * QUARTER, QUARTER, { label: 'C' }),
+    key('color_d', custom('color_d'), 19, 3 * QUARTER, QUARTER, { label: 'D' }),
+    key('pic_size', custom('pic_size'), 20, 0, THIRD, { label: 'P.SIZE' }),
+    key('picture', custom('picture'), 20, THIRD, THIRD, { label: 'Picture' }),
+    key('ad_subt', custom('ad_subt'), 20, 2 * THIRD, THIRD, { label: 'AD/SUBT' }),
+  ],
+  [
+    { id: 'core:power', row: 0, col: 0, options: { scale: { cols: 2 } } },
+    divider(1, 'Numbers'),
+    {
+      id: 'core:keypad',
+      row: 2,
+      col: 0,
+      options: {
+        scale: FULL_WIDTH_3.scale,
+        extras: [
+          keypadExtra('ttx', 0, custom('ttx_mix'), 'TTX/MIX'),
+          keypadExtra('prech', 2, custom('pre_ch'), 'PRE-CH'),
+        ],
+      },
+    },
+    divider(6, 'Volume and channels'),
+    { id: 'core:rocker-volume-v', row: 7, col: 0, options: TALL_ROCKER },
+    { id: 'core:rocker-channel-v', row: 7, col: 2 * THIRD, options: TALL_ROCKER },
+    divider(11, 'Menus'),
+    divider(13, 'Navigation'),
+    { id: 'core:dpad', row: 14, col: 0, options: FULL_WIDTH_3 },
+    divider(18, 'Colour and picture'),
+    divider(21, 'Playback'),
+    { id: 'core:media-transport', row: 22, col: 1, options: { scale: { cols: 2 } } },
+  ],
+)
+
+const HISENSE_APPS = ['netflix', 'youtube', 'primevideo', 'disneyplus', 'dazn', 'raiplay']
+
+const HISENSE_VIDAA = compose(
+  20,
+  [
+    key('input', 'input', 0, 2 * THIRD, THIRD),
+    ...thirds(4, ['menu', 'home', 'exit']),
+    key('guide', 'guide', 6, 0, THIRD),
+    key('info', 'info', 6, 2 * THIRD, THIRD),
+    key('back', 'back', 10, 0, THIRD),
+    key('play_pause', 'play_pause', 10, 2 * THIRD, THIRD),
+    key('mute', 'mute', 12, THIRD, THIRD),
+    key('ch_list', custom('ch_list'), 13, THIRD, THIRD, { label: 'CH.LIST' }),
+    key('subtitle', custom('subtitle'), 14, 0, 6, { label: 'Subtitle' }),
+    key('text', custom('text'), 14, 6, 6, { label: 'Text' }),
+  ],
+  [
+    { id: 'core:power', row: 0, col: 0, options: { scale: { cols: 2 } } },
+    {
+      id: 'core:panel',
+      row: 1,
+      col: 0,
+      options: {
+        scale: FULL_WIDTH_3.scale,
+        title: 'Apps',
+        extras: HISENSE_APPS.map(
+          (brand, i): ComponentButtonSpec => ({
+            idSuffix: brand,
+            row: Math.floor(i / 3),
+            col: i % 3,
+            rowSpan: 1,
+            colSpan: 1,
+            role: custom(`app_${brand}`),
+            icon: appIconKey(brand),
+          }),
+        ),
+      },
+    },
+    { id: 'core:colour-keys', row: 3, col: 0, options: { scale: { cols: QUARTER } } },
+    divider(5, 'Navigation'),
+    { id: 'core:dpad', row: 7, col: 0, options: FULL_WIDTH_3 },
+    divider(11, 'Volume and channels'),
+    { id: 'core:rocker-volume-v', row: 12, col: 0, options: FULL_WIDTH_3 },
+    { id: 'core:rocker-channel-v', row: 12, col: 2 * THIRD, options: FULL_WIDTH_3 },
+    divider(15, 'Numbers'),
+    { id: 'core:keypad', row: 16, col: 0, options: FULL_WIDTH_3 },
+  ],
+)
 
 const SAMSUNG_SMART = buildLayout(COLUMNS, 8, [
   key('power', 'power', 0, 0, THIRD),

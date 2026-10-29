@@ -4,7 +4,7 @@
 
 # Capabilities
 
-192 capability definitions in `packages/types/src/capabilities/`.
+193 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -121,7 +121,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (95)
+## System-scoped (96)
 
 Singleton or collection providers, addressed without a device.
 
@@ -200,6 +200,7 @@ Singleton or collection providers, addressed without a device.
 | `recording-export` | 7 | — | — | — | — | `recorder` |
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
 | `remote` | 5 | — | — | — | — | `core-blocks` |
+| `remote-layout-components` | 1 | — | — | — | — | `core-blocks` |
 | `server-management` | 8 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |
 | `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |

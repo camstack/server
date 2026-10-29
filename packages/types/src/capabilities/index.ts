@@ -2016,6 +2016,10 @@ export {
   TemplateWriteResultSchema,
   templateCapability,
 } from './template.cap.js'
+export {
+  type IRemoteLayoutComponentsProvider,
+  remoteLayoutComponentsCapability,
+} from './remote-layout-components.cap.js'
 // HA-targeted actuator caps (Phase C4 — fire-only button)
 export { buttonCapability, type IButtonProvider } from './button.cap.js'
 export {
@@ -3237,6 +3241,7 @@ import type { buttonCapability } from './button.cap.js'
 import type { irTransmitterCapability } from './ir-transmitter.cap.js'
 import type { remoteCapability } from './remote.cap.js'
 import type { templateCapability } from './template.cap.js'
+import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
 import type { calendarsCapability } from './calendars.cap.js'
 import type { cameraCredentialsCapability } from './camera-credentials.cap.js'
@@ -3579,6 +3584,7 @@ type AnyCapability =
   | typeof irTransmitterCapability
   | typeof remoteCapability
   | typeof templateCapability
+  | typeof remoteLayoutComponentsCapability
   | typeof cameraCredentialsCapability
   | typeof deviceStatusCapability
   | typeof doorbellCapability

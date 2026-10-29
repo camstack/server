@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**192 capabilities · 1430 methods.**
+**193 capabilities · 1431 methods.**
 
 ## Method index
 
@@ -1127,6 +1127,7 @@
 | `remote.listCommands` | query | protected | remote |
 | `remote.sendCommand` | mutation | protected | remote |
 | `remote.sendMediaCommand` | mutation | protected | remote |
+| `remoteLayoutComponents.listComponents` | query | protected | remote-layout-components |
 | `runningState.getStatus` | query | protected | running-state (auto) |
 | `sceneMonitor.getStatus` | query | protected | scene-monitor (auto) |
 | `sceneMonitor.listScenes` | query | protected | scene-monitor |
@@ -4121,6 +4122,17 @@
 | listCommands | `remote.listCommands` | query | protected | `{ deviceId: number }` | `RemoteCommandListSchema` |
 | sendCommand | `remote.sendCommand` | mutation | protected | `{ deviceId: number; role: string; repeat?: number = 1 }` | `RemoteSendResultSchema` |
 | sendMediaCommand | `remote.sendMediaCommand` | mutation | protected | `{ deviceId: number; command: RemoteMediaCommandSchema; muted?: boolean; source?: string; repeat?: number = 1 }` | `RemoteMediaCommandResultSchema` |
+
+### `remote-layout-components` → `remoteLayoutComponents.*`
+
+- **Source:** `packages/types/src/capabilities/remote-layout-components.cap.ts:16`
+- **Meta:** scope: `system` · mode: `collection` · mount: `collection`
+- **Archetypes:** —
+- **Provider interface:** `IRemoteLayoutComponentsProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| listComponents | `remoteLayoutComponents.listComponents` | query | protected | `{}` | `({ id: string; name: string; nameI18n?: { en: string; it: string }; icon: string; category: "power" \| "navigation" \| "volume" \| "numbers" \| "media" \| "colour" \| "apps" \| "layout"; size: { rows: number; cols: number }; group: { frame: "none" \| "panel" \| "divider" \| "dpad" \| "rocker-v" \| "rocker-h" \| "keypad"; title?: string } \| null; buttons: ({ idSuffix: string; row: number; col: number; rowSpan: number; colSpan: number; role: string; icon?: string; label?: string; shape?: "rect" \| "rounded" \| "round" \| "pill"; tone?: "neutral" \| "accent" \| "danger" \| "red" \| "green" \| "yellow" \| "blue" })[] })[]` |
 
 ### `running-state` → `runningState.*`
 

@@ -3047,6 +3047,9 @@ export const useRemoteSendCommand: typeof trpc.remote.sendCommand.useMutation = 
 /** Generated alias around `trpc.remote.sendMediaCommand.useMutation`. */
 export const useRemoteSendMediaCommand: typeof trpc.remote.sendMediaCommand.useMutation = trpc.remote.sendMediaCommand.useMutation
 
+/** Generated alias around `trpc.remoteLayoutComponents.listComponents.useQuery`. */
+export const useRemoteLayoutComponentsListComponents: typeof trpc.remoteLayoutComponents.listComponents.useQuery = trpc.remoteLayoutComponents.listComponents.useQuery
+
 /** Generated alias around `trpc.runningState.getStatus.useQuery`. */
 export const useRunningStateGetStatus: typeof trpc.runningState.getStatus.useQuery = trpc.runningState.getStatus.useQuery
 

@@ -107,6 +107,9 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   remote: system(
     'the per-device remote setup — authored in the Customize remote editor, sent through the remote UI',
   ),
+  'remote-layout-components': system(
+    'the palette of the remote template editor — read-only data, never actuated',
+  ),
   'server-management': system(CLUSTER),
   'settings-store': system(INTERNAL),
   'smtp-provider': system(INTERNAL),

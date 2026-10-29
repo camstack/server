@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The built-in Samsung classic and Hisense remote presets are rebuilt from the new components, with section dividers
+
 ## [1.2.522] - 2026-10-29
 
 ### Added

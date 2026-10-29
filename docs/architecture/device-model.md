@@ -433,6 +433,15 @@ unbound) falls through to the native cap; a failing binding fails the call.
 provider exists. `scripts/check-claimed-get-status.ts` fails an entry that skips
 the hook. Repeat counts are per call, never stored. See D964.
 
+The `remote` template's layout is a button grid plus optional **groups** (a
+titled panel, a section divider, a D-pad ring, a rocker, a keypad) that move as
+one thing. Buttons carry an optional `shape` and `tone`; groups a `frame` — all
+closed vocabularies the UI draws (D973). The editor's "Add component" palette
+is the `remote-layout-components` collection cap: core-blocks provides the
+built-in `core:*` entries, an addon adds `<addonId>:<name>` as pure data, and
+the reader dedupes by id with built-ins first. `insertComponent` / `moveGroup`
+/ `removeGroup` / `ungroup` (`@camstack/types`) are the one set of edits.
+
 ## Composed devices: a device built from other devices' fields
 
 [D659](../decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md).

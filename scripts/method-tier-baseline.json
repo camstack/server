@@ -1026,6 +1026,7 @@
   "remote.sendCommand": "protected",
   "remote.sendMediaCommand": "protected",
   "remote.setConfig": "admin",
+  "remoteLayoutComponents.listComponents": "protected",
   "sceneMonitor.captureReference": "admin",
   "sceneMonitor.createScene": "admin",
   "sceneMonitor.deleteReference": "admin",

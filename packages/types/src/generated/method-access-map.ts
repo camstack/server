@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1430 method paths across 192 capabilities.
+ * Coverage: 1431 method paths across 193 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1136,6 +1136,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'remote.sendCommand': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'remote.sendMediaCommand': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'remote.setConfig': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'remoteLayoutComponents.listComponents': { capName: "remote-layout-components", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'runningState.getStatus': { capName: "running-state", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'sceneMonitor.captureReference': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
   'sceneMonitor.createScene': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
@@ -1604,6 +1605,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "recording-signal",
   "records",
   "remote",
+  "remote-layout-components",
   "running-state",
   "scene-monitor",
   "script-runner",
@@ -1826,6 +1828,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "recording-export",
   "records",
   "remote",
+  "remote-layout-components",
   "server-management",
   "settings-store",
   "smtp-provider",

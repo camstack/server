@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The node-restarting and node-updating events carry what is being updated, and both can be used in notification templates
+- Remote templates gain section dividers, titled panels, button shapes and tones, and a palette of components (D-pad, rockers, keypad, colour keys, media row) that addons can extend
 
 ## [1.2.447] - 2026-10-29
 

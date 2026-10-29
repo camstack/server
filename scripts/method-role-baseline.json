@@ -1113,6 +1113,7 @@
   "remote.sendCommand": "admin",
   "remote.sendMediaCommand": "admin",
   "remote.setConfig": "admin",
+  "remoteLayoutComponents.listComponents": "admin",
   "runningState.getStatus": "viewer",
   "sceneMonitor.captureReference": "feature:scenes",
   "sceneMonitor.createScene": "feature:scenes",

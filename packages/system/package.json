@@ -484,6 +484,9 @@
           },
           {
             "name": "remote"
+          },
+          {
+            "name": "remote-layout-components"
           }
         ]
       },
