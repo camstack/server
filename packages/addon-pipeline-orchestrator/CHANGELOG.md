@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Serves viewer 1.0.668: timeline hours line up with playback, and a track shows the name of the node it ran on
+
 ## [1.2.639] - 2026-10-29
 
 ### Added

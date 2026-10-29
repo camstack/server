@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The remote template editor offers six built-in starting points (Samsung classic, Hisense VIDAA, Samsung Smart, LG Magic, Google TV, Apple TV) and app buttons with real brand icons
+
 ## [1.2.521] - 2026-10-29
 
 ### Changed
 
 - The automation editor keeps the unit a person picked on a condition or step value
 - The pet feeder card shows the bowl weight with its unit (22 g, or oz in imperial).
-- The remote template editor offers six built-in starting points (Samsung classic, Hisense VIDAA, Samsung Smart, LG Magic, Android/Google TV, Apple TV) and app buttons with the real icons of Netflix, YouTube, Spotify, Plex, Apple TV, DAZN, NOW, Twitch and more.
 
 ## [1.2.520] - 2026-10-29
 
