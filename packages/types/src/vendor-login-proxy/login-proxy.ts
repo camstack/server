@@ -41,6 +41,7 @@ import {
   type LoginProxyRoute,
   type LoginProxyUpstream,
 } from './url-rewrite.js'
+import { FLOW_TRACE_MAX_LINES, flowTraceMeta } from './flow-trace.js'
 
 /** What the terminal function sees of one upstream response. Never logged. */
 export interface LoginProxyResponseView {
@@ -223,6 +224,8 @@ export class VendorLoginProxy {
   readonly #now: () => number
   readonly #fetch: typeof fetch
   readonly #attempts = new Map<string, OpenAttempt>()
+  /** Trace lines written per attempt (bounded by FLOW_TRACE_MAX_LINES). */
+  readonly #traced = new Map<string, number>()
 
   constructor(options: VendorLoginProxyOptions) {
     this.#addonId = options.addonId
@@ -254,6 +257,7 @@ export class VendorLoginProxy {
 
   close(attemptId: string): void {
     this.#attempts.delete(attemptId)
+    this.#traced.delete(attemptId)
   }
 
   isOpen(attemptId: string): boolean {
@@ -306,7 +310,7 @@ export class VendorLoginProxy {
     )
     const attempt = this.#attempts.get(parsed.attemptId)
     if (attempt === undefined || this.#now() > attempt.expiresAtMs) {
-      if (attempt !== undefined) this.#attempts.delete(parsed.attemptId)
+      if (attempt !== undefined) this.close(parsed.attemptId)
       this.#logger.info('vendor login proxy: attempt refused', {
         meta: { addonId: this.#addonId, reason: attempt === undefined ? 'missing' : 'expired' },
       })
@@ -330,15 +334,19 @@ export class VendorLoginProxy {
 
     const method = (req.method ?? 'GET').toUpperCase()
     let body: Buffer | undefined
+    let formBodyRaw: string | null = null
     if (method !== 'GET' && method !== 'HEAD') {
       const read = await readRequestBody(req)
       if (read === 'too-large') {
         sendPlain(res, 413, 'Request too large')
         return
       }
-      body = isFormEncoded(req.headers['content-type'])
-        ? Buffer.from(rewriteFormBody(read.toString('utf8'), route), 'utf8')
-        : read
+      if (isFormEncoded(req.headers['content-type'])) {
+        formBodyRaw = read.toString('utf8')
+        body = Buffer.from(rewriteFormBody(formBodyRaw, route), 'utf8')
+      } else {
+        body = read
+      }
     }
 
     const headers = this.#requestHeaders(req, route, upstream)
@@ -370,6 +378,20 @@ export class VendorLoginProxy {
       },
     })
 
+    this.#trace(parsed.attemptId, {
+      attemptId: parsed.attemptId,
+      method,
+      upstreamHost: upstream.host,
+      upstreamPath: target.pathname,
+      requestSearch: target.search,
+      formBody: formBodyRaw,
+      contentType: firstHeader(req.headers['content-type']),
+      status: upstreamRes.status,
+      location,
+      setCookies,
+      cookieHeader: headers['cookie'],
+    })
+
     const settled = await attempt.evaluate({
       status: upstreamRes.status,
       url: target.toString(),
@@ -378,7 +400,7 @@ export class VendorLoginProxy {
       bodyText: text,
     })
     if (settled.kind === 'done') {
-      this.#attempts.delete(parsed.attemptId)
+      this.close(parsed.attemptId)
       this.#logger.info('vendor login proxy: sign-in finished', {
         meta: { addonId: this.#addonId, status: settled.landing.status },
       })
@@ -402,6 +424,16 @@ export class VendorLoginProxy {
     }
     res.writeHead(upstreamRes.status, out)
     await this.#pipeBody(upstreamRes, res)
+  }
+
+  /** One names-only line per proxied request, at most FLOW_TRACE_MAX_LINES per attempt. */
+  #trace(attemptId: string, input: Parameters<typeof flowTraceMeta>[0]): void {
+    const written = this.#traced.get(attemptId) ?? 0
+    if (written >= FLOW_TRACE_MAX_LINES) return
+    this.#traced.set(attemptId, written + 1)
+    this.#logger.info('vendor login proxy: flow', {
+      meta: { addonId: this.#addonId, ...flowTraceMeta(input) },
+    })
   }
 
   #requestHeaders(

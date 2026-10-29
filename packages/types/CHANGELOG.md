@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The vendor login proxy writes a names-only trace line per proxied sign-in request (parameter, form-field and cookie names, never values) to show where a sign-in loses a parameter
 - Added the no_authorization_code reason to the OAuth result page codes
 - Comments on the placement flags now say a role defaults on for every node
 

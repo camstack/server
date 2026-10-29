@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7364 source files · 208 units claimed by at least one document (7326 files).**
+**220 units · 7365 source files · 208 units claimed by at least one document (7327 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -158,12 +158,12 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-bosch/src/shared` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `addons/addon-provider-bosch-homecom.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
 | `packages/addon-provider-rtsp` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md`, 1 ADR | 2026-10-26 |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-10-07 |
+| `packages/types/src/vendor-login-proxy` | 5 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md` | — |
 | `packages/addon-admin-ui` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +3 more | 2026-10-27 |
 | `packages/addon-export-alexa/src/detection-sensors` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0772-alexa-detection-sensors-are-motionsensor-endpoints-fed-by-tracks-and-reconciled.md`, `decisions/adr-0778-alexa-detection-sensor-classes-are-chosen-per-camera-from-what-its-pipeline-produces-default-none.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/vision` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0779-alexa-object-detection-and-event-history-ship-as-a-switchable-experiment-on-the-camera-endpoint.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-post-analysis/src/durable` | 4 | `post-analysis` | `decisions/adr-0642-a-consumable-is-judged-at-each-rules-threshold-and-tanks-notify.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 1 ADR | 2026-10-03 |
 | `packages/types/src/schemas` | 4 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-10-26 |
-| `packages/types/src/vendor-login-proxy` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md` | — |
 | `packages/ui-library/src/hotkeys` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-10-26 |
 | `packages/addon-admin-ui/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +1 more | 2026-10-27 |
 | `packages/addon-export-alexa/src/snapshots` | 3 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0773-alexa-snapshots-are-signed-ten-minute-token-checked-urls-behind-an-integration-switch.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 2 ADRs | 2026-08-26 |
