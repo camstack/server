@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.350] - 2026-10-29
+
 ### Added
 
 - The device export table also lists actions and notification targets, for the exporters that support them, with the same Expose toggle and type filter.

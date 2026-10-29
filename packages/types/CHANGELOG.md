@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.444] - 2026-10-29
+
 ### Added
 
 - Device exporters can declare that they also expose actions and notification targets (device-export entity methods).

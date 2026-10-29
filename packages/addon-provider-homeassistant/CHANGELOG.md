@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.637] - 2026-10-29
+
 ### Added
 
 - Actions and notification targets can be exported to Home Assistant: an action becomes a button, a target becomes a notify entity (needs a component that builds notify).

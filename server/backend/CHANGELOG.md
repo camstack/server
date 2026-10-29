@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.689] - 2026-10-29
+
 ### Added
 
 - A node's free memory comes from the metrics provider instead of os.freemem(), which undercounts on macOS

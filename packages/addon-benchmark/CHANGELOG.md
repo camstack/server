@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.291] - 2026-10-29
+
 ### Added
 
 - Benchmark addon loads about 125 MB lighter: it no longer evaluates the whole pipeline schema graph at start
