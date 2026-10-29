@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.174] - 2026-10-29
+
 ### Changed
 
 - Alexa shows the doorbell camera sooner after a press: the stream starts warming up when the press is posted
