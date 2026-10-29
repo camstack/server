@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  optionalMethod,
+  type CapabilityDefinition,
+  type InferProvider,
+} from './capability-definition.js'
 
 /**
  * `device-export` — collection cap for addons that export camstack
@@ -71,6 +76,27 @@ const ExposeInputSchema = z.object({
 
 const UnexposeInputSchema = z.object({ deviceId: z.string() })
 
+/**
+ * What an exporter may expose besides devices (D967). An action and a
+ * notification target are LIST ENTRIES, never devices (D954): they enter an
+ * exporter's own selection, not the device registry.
+ */
+const ExportEntityKindSchema = z.enum(['device', 'action', 'notifier'])
+
+const ExportEntityRefSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('device'), deviceId: z.string() }),
+  z.object({ kind: z.literal('action'), actionId: z.string().min(1) }),
+  z.object({ kind: z.literal('notifier'), targetId: z.string().min(1) }),
+])
+
+const ExposedEntitySchema = z.object({
+  entity: ExportEntityRefSchema,
+  exposedAs: z.string().optional(),
+})
+
+const ExposeEntityInputSchema = z.object({ entity: ExportEntityRefSchema })
+const UnexposeEntityInputSchema = z.object({ entity: ExportEntityRefSchema })
+
 export const deviceExportCapability = {
   name: 'device-export',
   scope: 'system',
@@ -93,8 +119,27 @@ export const deviceExportCapability = {
     // Publishing a camera to HomeKit / Alexa / Google hands it to another
     // ecosystem's users — an administrator's act, not an operator's (D634 r3).
     // The only UI caller is the admin export panel.
-    exposeDevice: method(ExposeInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
-    unexposeDevice: method(UnexposeInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    exposeDevice: method(ExposeInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    unexposeDevice: method(UnexposeInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    // Entities beyond devices (D967). A provider that implements none of these
+    // exports devices only; the UI treats an unanswered `listSupportedEntityKinds`
+    // as "unknown", never as "devices only" (D315).
+    listSupportedEntityKinds: optionalMethod(z.void(), z.array(ExportEntityKindSchema)),
+    listExposedEntities: optionalMethod(z.void(), z.array(ExposedEntitySchema)),
+    exposeEntity: optionalMethod(ExposeEntityInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    unexposeEntity: optionalMethod(UnexposeEntityInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
   },
 } as const satisfies CapabilityDefinition
 
@@ -107,4 +152,12 @@ export {
   ExposedDeviceSchema,
   ExposeInputSchema,
   UnexposeInputSchema,
+  ExportEntityKindSchema,
+  ExportEntityRefSchema,
+  ExposedEntitySchema,
+  ExposeEntityInputSchema,
+  UnexposeEntityInputSchema,
 }
+export type ExportEntityKind = z.infer<typeof ExportEntityKindSchema>
+export type ExportEntityRef = z.infer<typeof ExportEntityRefSchema>
+export type ExposedEntity = z.infer<typeof ExposedEntitySchema>

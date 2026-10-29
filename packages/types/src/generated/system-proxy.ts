@@ -90,7 +90,7 @@ export interface SystemProxy {
   readonly decoder: Pick<InferProvider<typeof decoderCapability>, 'getInfo' | 'reprobeHwaccel'>
   readonly deviceAdoption: Pick<InferProvider<typeof deviceAdoptionCapability>, 'listCandidateFilters' | 'listCandidates' | 'getCandidate' | 'refresh' | 'adopt' | 'release' | 'resync'>
   readonly deviceCredentials: Pick<InferProvider<typeof deviceCredentialsCapability>, 'listDeviceCredentials' | 'startEnrollment' | 'revokeDeviceCredential' | 'getDeviceCertificateSettings' | 'setDeviceCertificateSettings' | 'deleteDeviceCredential' | 'getDeviceCaStatus' | 'renameDeviceCredential'>
-  readonly deviceExport: Pick<InferProvider<typeof deviceExportCapability>, 'getStatus' | 'listSupportedDeviceKinds' | 'listExposedDevices' | 'exposeDevice' | 'unexposeDevice'>
+  readonly deviceExport: Pick<InferProvider<typeof deviceExportCapability>, 'getStatus' | 'listSupportedDeviceKinds' | 'listExposedDevices' | 'exposeDevice' | 'unexposeDevice' | 'listSupportedEntityKinds' | 'listExposedEntities' | 'exposeEntity' | 'unexposeEntity'>
   readonly deviceHistory: Pick<InferProvider<typeof deviceHistoryCapability>, 'listNodeSeries' | 'queryNode' | 'queryMany' | 'declareSeries' | 'record' | 'recordBuckets' | 'getStatus' | 'listOrphanSeries' | 'deleteOrphanSeries'>
   readonly deviceManager: Pick<InferProvider<typeof deviceManagerCapability>, 'allocateDeviceId' | 'migrateDevice' | 'registerDevice' | 'removeDevice' | 'persistConfig' | 'getRoleDisplayDefaults' | 'setRoleDisplayDefaults' | 'listLocations' | 'addLocation' | 'removeLocation' | 'renameLocation' | 'listLocationIcons' | 'setLocationIcon' | 'listLocationDescriptions' | 'setLocationDescription' | 'listSiteZones' | 'setSiteZone' | 'removeSiteZone' | 'renameSiteZone' | 'setLocationZone' | 'listPersistedByAddon' | 'listAll' | 'getChildren' | 'getChildrenBatch' | 'getLinkedDevicesBatch' | 'listDeletedSince' | 'cleanupDeletedDevicesData' | 'removeByIntegration' | 'getBindingsBatch' | 'getAllBindings' | 'listDeviceIdsByCaps' | 'listWrappersForCap' | 'listBindableCapsForDeviceType' | 'discoverDevices' | 'adoptDevice' | 'getCreationSchema' | 'createDevice' | 'testCreationField' | 'adoptionListCandidateFilters' | 'adoptionListCandidates' | 'adoptionRefresh' | 'adoptionAdopt' | 'adoptionRelease' | 'adoptionStartJob' | 'adoptionListJobs' | 'adoptionCancelJob' | 'adoptionResync' | 'discoveryProviders' | 'discoverAllProviders' | 'discoverProvider' | 'providerCreationType' | 'providerDiscoveryParamsSchema' | 'getDeviceStatusAggregateBatch'>
   readonly deviceProvider: Pick<InferProvider<typeof deviceProviderCapability>, 'start' | 'stop' | 'getStatus' | 'getDevices' | 'reloadDevice' | 'supportsDiscovery' | 'discoverDevices' | 'getDiscoveryParamsSchema' | 'getManualCreationType' | 'adoptDiscoveredDevice' | 'supportsManualCreation' | 'getChildCreationSchema' | 'createDevice' | 'testCreationField'>
@@ -361,6 +361,10 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listExposedDevices: (input?: unknown) => dispatch('deviceExport', 'listExposedDevices', 'query', input),
     exposeDevice: (input?: unknown) => dispatch('deviceExport', 'exposeDevice', 'mutation', input),
     unexposeDevice: (input?: unknown) => dispatch('deviceExport', 'unexposeDevice', 'mutation', input),
+    listSupportedEntityKinds: (input?: unknown) => dispatch('deviceExport', 'listSupportedEntityKinds', 'query', input),
+    listExposedEntities: (input?: unknown) => dispatch('deviceExport', 'listExposedEntities', 'query', input),
+    exposeEntity: (input?: unknown) => dispatch('deviceExport', 'exposeEntity', 'mutation', input),
+    unexposeEntity: (input?: unknown) => dispatch('deviceExport', 'unexposeEntity', 'mutation', input),
   }
 
   const deviceHistoryInterface = {

@@ -4351,6 +4351,93 @@ export function createCapRouter_deviceExport(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unexposeDevice(methodInput as any)
       }),
+    listSupportedEntityKinds: protectedProcedure
+      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .output(deviceExportCapability.methods.listSupportedEntityKinds.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'device-export',
+          input?.nodeId,
+          () => getProvider(ctx, input?.addonId),
+          createRemoteProxy,
+        )
+        const fn = p.listSupportedEntityKinds
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message:
+              'Capability "device-export" provider does not implement "listSupportedEntityKinds"',
+          })
+        }
+        return fn.call(p)
+      }),
+    listExposedEntities: protectedProcedure
+      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .output(deviceExportCapability.methods.listExposedEntities.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'device-export',
+          input?.nodeId,
+          () => getProvider(ctx, input?.addonId),
+          createRemoteProxy,
+        )
+        const fn = p.listExposedEntities
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "device-export" provider does not implement "listExposedEntities"',
+          })
+        }
+        return fn.call(p)
+      }),
+    exposeEntity: adminProcedure
+      .input(deviceExportCapability.methods.exposeEntity.input.loose())
+      .output(deviceExportCapability.methods.exposeEntity.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
+        const p = resolveProvider(
+          'device-export',
+          nodeId,
+          () => getProvider(ctx, addonId),
+          createRemoteProxy,
+        )
+        const fn = p.exposeEntity
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "device-export" provider does not implement "exposeEntity"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    unexposeEntity: adminProcedure
+      .input(deviceExportCapability.methods.unexposeEntity.input.loose())
+      .output(deviceExportCapability.methods.unexposeEntity.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
+        const p = resolveProvider(
+          'device-export',
+          nodeId,
+          () => getProvider(ctx, addonId),
+          createRemoteProxy,
+        )
+        const fn = p.unexposeEntity
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "device-export" provider does not implement "unexposeEntity"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
   })
 }
 

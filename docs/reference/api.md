@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**192 capabilities · 1423 methods.**
+**192 capabilities · 1427 methods.**
 
 ## Method index
 
@@ -295,6 +295,10 @@
 | `deviceExport.listExposedDevices` | query | protected | device-export |
 | `deviceExport.exposeDevice` | mutation | admin | device-export |
 | `deviceExport.unexposeDevice` | mutation | admin | device-export |
+| `deviceExport.listSupportedEntityKinds` | query | protected | device-export |
+| `deviceExport.listExposedEntities` | query | protected | device-export |
+| `deviceExport.exposeEntity` | mutation | admin | device-export |
+| `deviceExport.unexposeEntity` | mutation | admin | device-export |
 | `deviceExtension.listSources` | query | protected | device-extension |
 | `deviceExtension.listSlots` | query | protected | device-extension |
 | `deviceExtension.listCandidates` | query | protected | device-extension |
@@ -2283,7 +2287,7 @@
 
 ### `device-export` → `deviceExport.*`
 
-- **Source:** `packages/types/src/capabilities/device-export.cap.ts:74`
+- **Source:** `packages/types/src/capabilities/device-export.cap.ts:100`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `device-export`
 - **Archetypes:** status(poll) · exposesDeviceSettings
 - **Provider interface:** `IDeviceExportProvider`
@@ -2298,6 +2302,10 @@
 | listExposedDevices | `deviceExport.listExposedDevices` | query | protected | `void` | `ExposedDeviceSchema[]` |
 | exposeDevice | `deviceExport.exposeDevice` | mutation | admin | `DeviceExportExposeInputSchema` | `void` |
 | unexposeDevice | `deviceExport.unexposeDevice` | mutation | admin | `DeviceExportUnexposeInputSchema` | `void` |
+| listSupportedEntityKinds | `deviceExport.listSupportedEntityKinds` | query | protected | `void` | `("device" \| "action" \| "notifier")[]` |
+| listExposedEntities | `deviceExport.listExposedEntities` | query | protected | `void` | `({ entity: { kind: "device"; deviceId: string } \| { kind: "action"; actionId: string } \| { kind: "notifier"; targetId: string }; exposedAs?: string })[]` |
+| exposeEntity | `deviceExport.exposeEntity` | mutation | admin | `{ entity: { kind: "device"; deviceId: string } \| { kind: "action"; actionId: string } \| { kind: "notifier"; targetId: string } }` | `void` |
+| unexposeEntity | `deviceExport.unexposeEntity` | mutation | admin | `{ entity: { kind: "device"; deviceId: string } \| { kind: "action"; actionId: string } \| { kind: "notifier"; targetId: string } }` | `void` |
 
 ### `device-extension` → `deviceExtension.*`
 

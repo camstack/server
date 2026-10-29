@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1423 method paths across 192 capabilities.
+ * Coverage: 1427 method paths across 192 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -298,12 +298,16 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceDiscovery.releaseDevice': { capName: "device-discovery", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.applyDeviceSettingsPatch': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.exposeDevice': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceExport.exposeEntity': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.getDeviceLiveContribution': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.getDeviceSettingsContribution': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.getStatus': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.listExposedDevices': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'deviceExport.listExposedEntities': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.listSupportedDeviceKinds': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'deviceExport.listSupportedEntityKinds': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.unexposeDevice': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceExport.unexposeEntity': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExtension.listCandidates': { capName: "device-extension", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceExtension.listSlots': { capName: "device-extension", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceExtension.listSources': { capName: "device-extension", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,

@@ -749,6 +749,18 @@ export const useDeviceExportExposeDevice: typeof trpc.deviceExport.exposeDevice.
 /** Generated alias around `trpc.deviceExport.unexposeDevice.useMutation`. */
 export const useDeviceExportUnexposeDevice: typeof trpc.deviceExport.unexposeDevice.useMutation = trpc.deviceExport.unexposeDevice.useMutation
 
+/** Generated alias around `trpc.deviceExport.listSupportedEntityKinds.useQuery`. */
+export const useDeviceExportListSupportedEntityKinds: typeof trpc.deviceExport.listSupportedEntityKinds.useQuery = trpc.deviceExport.listSupportedEntityKinds.useQuery
+
+/** Generated alias around `trpc.deviceExport.listExposedEntities.useQuery`. */
+export const useDeviceExportListExposedEntities: typeof trpc.deviceExport.listExposedEntities.useQuery = trpc.deviceExport.listExposedEntities.useQuery
+
+/** Generated alias around `trpc.deviceExport.exposeEntity.useMutation`. */
+export const useDeviceExportExposeEntity: typeof trpc.deviceExport.exposeEntity.useMutation = trpc.deviceExport.exposeEntity.useMutation
+
+/** Generated alias around `trpc.deviceExport.unexposeEntity.useMutation`. */
+export const useDeviceExportUnexposeEntity: typeof trpc.deviceExport.unexposeEntity.useMutation = trpc.deviceExport.unexposeEntity.useMutation
+
 /** Generated alias around `trpc.deviceExport.getDeviceSettingsContribution.useQuery`. */
 export const useDeviceExportGetDeviceSettingsContribution: typeof trpc.deviceExport.getDeviceSettingsContribution.useQuery = trpc.deviceExport.getDeviceSettingsContribution.useQuery
 

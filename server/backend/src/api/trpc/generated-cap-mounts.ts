@@ -886,6 +886,13 @@ export function mountAllCaps(services: MountAllCapsServices) {
         listExposedDevices: concatCollection(providers, 'listExposedDevices') as InferProvider<
           typeof deviceExportCapability
         >['listExposedDevices'],
+        listSupportedEntityKinds: concatCollection(
+          providers,
+          'listSupportedEntityKinds',
+        ) as InferProvider<typeof deviceExportCapability>['listSupportedEntityKinds'],
+        listExposedEntities: concatCollection(providers, 'listExposedEntities') as InferProvider<
+          typeof deviceExportCapability
+        >['listExposedEntities'],
       }
     }, remoteCapProxy),
     deviceExtension: createCapRouter_deviceExtension(

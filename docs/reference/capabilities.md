@@ -154,7 +154,7 @@ Singleton or collection providers, addressed without a device.
 | `decoder` | 2 | — | — | — | — | `decoder-nodeav` |
 | `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-tuya` `provider-wyze` |
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
-| `device-export` | 8 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
+| `device-export` | 12 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
 | `device-manager` | 92 | — | — | — | — | `device-manager` |
 | `device-provider` | 14 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
