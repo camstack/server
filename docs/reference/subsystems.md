@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7350 source files · 1211 file(s) in no subsystem.**
+**31 subsystems · 7353 source files · 1211 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -35,7 +35,7 @@ commits. A generated page may not.
 | Face, plate and embedding recognition | 50 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +26 more, 4 ADRs | 2026-10-04 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 266 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +86 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, `design/2026-08-25-scrub-advanced-analysis.md` _(covers)_, +93 more, 19 ADRs | 2026-10-26 | ⚠️ |
-| Stream broker, WebRTC and live delivery | 166 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
+| Stream broker, WebRTC and live delivery | 167 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
 | Audio analysis and audio delivery | 17 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
 | Storage, retention and backup | 120 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, `design/2026-08-03-db-remediation-plan.md` _(covers)_, +57 more, 11 ADRs | 2026-10-22 | ⚠️ |
@@ -44,7 +44,7 @@ commits. A generated page may not.
 | The hub API surface | 159 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +101 more, 18 ADRs | 2026-10-27 | ⚠️ |
 | Shared types, schemas and enums | 99 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, +33 more, 5 ADRs | 2026-10-26 | ⚠️ |
 | Update, release, OTA and agent delivery | 60 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +31 more, 10 ADRs | 2026-10-27 | ✅ |
-| Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 291 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +48 more, 20 ADRs | 2026-10-26 | ⚠️ |
+| Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 293 | `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +48 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 51 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +16 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 141 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +26 more, 1 ADR | 2026-10-26 | ⚠️ |
 | Alerts, liveness and system health | 53 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, `architecture/load-ledger.md` _(covers)_, +41 more | 2026-10-13 | ⚠️ |
@@ -171,7 +171,7 @@ Serves live media to every consumer — WebRTC, RTSP, RTMP and the frame transpo
 
 - **Owner doc**: `docs/architecture/data-planes.md`
 - **Code**: `packages/addon-pipeline/src/stream-broker/*.ts`, `packages/addon-pipeline/src/stream-broker/webrtc/**`, `packages/addon-pipeline/src/stream-broker/rtsp/**`, `packages/addon-pipeline/src/stream-broker/rtmp/**`, `packages/types/src/camera/**`, `packages/addon-pipeline/src/stream-broker/frame-transport/**`, `packages/addon-pipeline/src/stream-broker/derived/**`, `packages/addon-pipeline/src/stream-broker/stream-broker/**`, `packages/addon-pipeline/src/stream-broker/widgets/**`, `packages/addon-static-turn/**`, `packages/werift-turn-fix/**`, `server/backend/src/core/streaming/**`
-- **Files**: 166 (159 claimed by some document)
+- **Files**: 167 (160 claimed by some document)
 - **Uncovered**: `server/backend/src/core/streaming` (3), `packages/addon-static-turn/src` (2), `packages/werift-turn-fix/src` (2)
 
 ### ⚠️ Audio analysis and audio delivery
@@ -252,7 +252,7 @@ Publishes CamStack's devices into somebody else's ecosystem, and imports theirs.
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-export-hap/**`, `packages/addon-export-alexa/**`, `packages/addon-export-google/**`, `packages/addon-import-alexa/**`, `packages/addon-matter-broker/**`, `packages/addon-mqtt-broker/**`, `packages/addon-provider-homeassistant/src/ha-export/**`
-- **Files**: 291 (291 claimed by some document)
+- **Files**: 293 (293 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Remote access and networking

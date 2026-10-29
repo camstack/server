@@ -41,6 +41,7 @@ import {
   logReaped,
   reapDeadEgressHandles,
 } from './egress/egress-handle-reaper.js'
+import { AlexaEgressPrewarm } from './egress/alexa-egress-prewarm.js'
 import { forgetEgressHandle, heldEgressHandles } from './handlers/rtc-session.js'
 import {
   type AddonInitResult,
@@ -357,7 +358,11 @@ const VerifiedTokenSchema = z.object({ userId: z.string() }).nullable()
  */
 export function effectiveAlexaSettings(config: AlexaSettings): AlexaSettings {
   if (config.skillMode !== 'public') return config
-  return { ...config, expectedAudience: PUBLIC_SKILL_ID, enforceIngressToken: false }
+  return {
+    ...config,
+    expectedAudience: PUBLIC_SKILL_ID,
+    enforceIngressToken: false,
+  }
 }
 
 /** UI filter for the Export picker. `alarm-panel` publishes an
@@ -398,6 +403,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     'tokens[userId].brokerCredential',
   ]
   private lwaGateway: LwaEventGateway | null = null
+  private egressPrewarm: AlexaEgressPrewarm | null = null
   private syncEngine: SyncEngine | null = null
   /** S1 (D767): the linking user's live grants. Built in `onInitialize`, the
    *  first point `ctx` exists. */
@@ -433,7 +439,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // The snapshot URL signing key (R2). Generated once, hidden, rotated by
     // nothing: a minted URL lives ten minutes.
     if (!this.config.snapshotSigningKey) {
-      await this.updateGlobalSettings({ snapshotSigningKey: generateIngressToken() })
+      await this.updateGlobalSettings({
+        snapshotSigningKey: generateIngressToken(),
+      })
     }
     // R4 (D779): the namespace every object/event identifier is derived under.
     if (!this.config.visionNamespace) {
@@ -637,10 +645,19 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
     // Spin up the Event Gateway worker. Subscribes to doorbell events
     // and runs a 60s refresh scan — both teardown in `onShutdown`.
+    this.egressPrewarm = new AlexaEgressPrewarm({
+      api: this.ctx.api,
+      logger: this.ctx.logger,
+      listExposed: () => this.config.exposed,
+      hasLiveSession: (deviceId) => heldEgressHandles().some((h) => h.deviceId === deviceId),
+    })
     this.lwaGateway = new LwaEventGateway({
       ctx: this.ctx,
       logger: this.ctx.logger,
       listExposed: () => this.config.exposed,
+      onExposedDoorbellPress: (deviceId) => {
+        void this.egressPrewarm?.onPress(deviceId)
+      },
       listLinkedAccounts: () => this.config.linkedAccounts,
       listTokens: () => this.config.tokens,
       upsertToken: (input) => this.upsertToken(input),
@@ -661,8 +678,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       enabled: () => this.config.detectionSensors,
       isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
       readActiveTracks: async (deviceId) => {
-        const tracks = await this.ctx.api.pipelineAnalytics.getActiveTracks.query({ deviceId })
-        return tracks.map((t) => ({ trackId: t.trackId, className: t.className }))
+        const tracks = await this.ctx.api.pipelineAnalytics.getActiveTracks.query({
+          deviceId,
+        })
+        return tracks.map((t) => ({
+          trackId: t.trackId,
+          className: t.className,
+        }))
       },
       push: (deviceId, cls, detected, timestamp) =>
         gatewayForFeed.pushDetectionSensor({
@@ -833,7 +855,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       providers: [
         { capability: deviceExportCapability, provider: deviceExportProvider },
         { capability: addonRoutesCapability, provider: routeProvider },
-        { capability: oauthIntegrationCapability, provider: oauthIntegrationProvider },
+        {
+          capability: oauthIntegrationCapability,
+          provider: oauthIntegrationProvider,
+        },
       ],
       customActions: exportAlexaActions,
       actionHandlers: {
@@ -870,6 +895,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.stateReconciler = null
     this.stateReporter?.stop()
     this.stateReporter = null
+    if (this.egressPrewarm) {
+      await this.egressPrewarm.dispose()
+      this.egressPrewarm = null
+    }
     if (this.lwaGateway) {
       this.lwaGateway.stop()
       this.lwaGateway = null
@@ -905,14 +934,18 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     })
     await this.updateGlobalSettings({ exposed: next })
 
-    this.ctx.logger.info('export-alexa: exposed device', { meta: { deviceId } })
+    this.ctx.logger.info('export-alexa: exposed device', {
+      meta: { deviceId },
+    })
     // Push this one device to every linked account (AddOrUpdateReport). Records
     // the endpoint ids in `exportedEndpoints` so a later DeleteReport can clean
     // Alexa up even after the device leaves the registry.
     void this.requireSyncEngine()
       .pushDevice(deviceId)
       .then((r) => {
-        this.ctx.logger.info('export-alexa: synced exposed device', { meta: { ...r } })
+        this.ctx.logger.info('export-alexa: synced exposed device', {
+          meta: { ...r },
+        })
         return this.refreshVisibility()
       })
       .catch((err: unknown) => {
@@ -929,7 +962,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const next = this.config.exposed.filter((e) => e.deviceId !== deviceId)
     if (next.length === this.config.exposed.length) return // already absent
     await this.updateGlobalSettings({ exposed: next })
-    this.ctx.logger.info('export-alexa: unexposed device', { meta: { deviceId } })
+    this.ctx.logger.info('export-alexa: unexposed device', {
+      meta: { deviceId },
+    })
     // DeleteReport for this device's stored endpoint ids + drop it from
     // `exportedEndpoints`.
     void this.requireSyncEngine()
@@ -974,7 +1009,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       alexaName: async (id: number) => readAlexaName(await vision.readPrefs(id)),
       // D779: the camera's object detection + history.
       ...(this.config.objectDetection
-        ? { objectDetection: async (id: number) => vision.buildClasses(id, await classesOf(id)) }
+        ? {
+            objectDetection: async (id: number) => vision.buildClasses(id, await classesOf(id)),
+          }
         : {}),
     })
   }
@@ -1170,7 +1207,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         .reconcileAllExposed()
         .then((r) => {
           this.ctx.logger.info('export-alexa: boot discovery reconcile', {
-            meta: { checked: r.checkedDeviceIds.length, pushed: r.pushedDeviceIds },
+            meta: {
+              checked: r.checkedDeviceIds.length,
+              pushed: r.pushedDeviceIds,
+            },
           })
         })
         .catch((err: unknown) => {
@@ -1216,7 +1256,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       )
     }
     const r = await this.requireSyncEngine().resync()
-    this.ctx.logger.info('export-alexa: manual discovery re-sync', { meta: { ...r } })
+    this.ctx.logger.info('export-alexa: manual discovery re-sync', {
+      meta: { ...r },
+    })
     return r
   }
 
@@ -1320,7 +1362,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       tokens: this.config.tokens.filter((t) => t.userId !== userId),
       linkedAccounts: this.config.linkedAccounts.filter((a) => a.userId !== userId),
     })
-    this.ctx.logger.warn('export-alexa: unlinked revoked account', { meta: { userId } })
+    this.ctx.logger.warn('export-alexa: unlinked revoked account', {
+      meta: { userId },
+    })
   }
 
   private async recordLinkedAccount(input: { userId: string; username: string }): Promise<void> {
@@ -1425,7 +1469,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    * credential stops working at the broker immediately. A credential the
    * broker no longer recognises is reported, not retried — re-link instead.
    */
-  private async rotateBrokerCredentials(): Promise<{ rotated: number; failed: number }> {
+  private async rotateBrokerCredentials(): Promise<{
+    rotated: number
+    failed: number
+  }> {
     if (!this.config.tokens.some(isBrokerGrant)) {
       throw new Error(
         "No link is held at the skill's token broker, so there is no credential to rotate. Link the skill from the Alexa app first.",
@@ -1456,7 +1503,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         })
       }
     }
-    this.ctx.logger.info('export-alexa: broker credentials rotated', { meta: { rotated, failed } })
+    this.ctx.logger.info('export-alexa: broker credentials rotated', {
+      meta: { rotated, failed },
+    })
     return { rotated, failed }
   }
 
@@ -1806,7 +1855,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     if (!check.ok) throw new Error(`export-alexa: ${check.error}`)
     const before = readAlexaName(await this.vision.readPrefs(deviceId))
     if (before === check.name) return false
-    await this.vision.writePrefs(deviceId, { [ALEXA_NAME_KEY]: check.name ?? undefined })
+    await this.vision.writePrefs(deviceId, {
+      [ALEXA_NAME_KEY]: check.name ?? undefined,
+    })
     this.ctx.logger.info('export-alexa: Alexa name saved', {
       tags: { deviceId },
       meta: { name: check.name },
@@ -2010,7 +2061,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    */
   private async exportKindOf(deviceId: number): Promise<'camera' | 'generic' | null> {
     try {
-      const dev = await this.ctx.api.deviceManager.getDevice.query({ deviceId })
+      const dev = await this.ctx.api.deviceManager.getDevice.query({
+        deviceId,
+      })
       if (!dev) return 'camera'
       const type = String(dev.type)
       if (type === DeviceType.Camera) return 'camera'

@@ -235,6 +235,13 @@ export interface WeriftPcOptions {
    *  Used for diagnostics (log which pairs are tried) and to ban/force
    *  candidate types. */
   iceFilterCandidatePair?: (pair: WeriftCandidatePair) => boolean
+  /** Called once per inbound STUN binding request; return false to drop it.
+   *  The inbound-check probe observes through it and always returns true. */
+  iceFilterStunResponse?: (
+    message: unknown,
+    addr: readonly [string, number],
+    protocol: unknown,
+  ) => boolean
 }
 
 export interface WeriftIceCandidateInfo {

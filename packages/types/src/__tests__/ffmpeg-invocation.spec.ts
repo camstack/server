@@ -491,7 +491,9 @@ describe('buildFfmpegArgs — sinks', () => {
     // SELECTED fragment length", so this margin is the contract, not a tweak.
     for (const fragmentMs of [2000, 4000, 6000]) {
       const args = buildFfmpegArgs(
-        baseInvocation({ sink: { kind: 'stdout', container: 'mp4', fragmentMs } }),
+        baseInvocation({
+          sink: { kind: 'stdout', container: 'mp4', fragmentMs },
+        }),
       )
       const emitted = Number(args[args.indexOf('-min_frag_duration') + 1])
       expect(emitted).toBeLessThan(fragmentMs * 1000)
@@ -567,6 +569,31 @@ describe('invocationFromEncodeProfile — the EncodeProfile adapter', () => {
     audio: { codec: 'opus', bitrateKbps: 64, sampleRateHz: 48000, channels: 1 },
   }
 
+  /**
+   * The egress child dials the broker's own RTSP restream, whose SDP already
+   * names the codec. ffmpeg's default probe (5 s / 5 MB) cost an Alexa session
+   * ~3 s before the first packet; the argv carried neither flag.
+   */
+  it('bounds the input probe, BEFORE -i, for the RTSP restream it dials', () => {
+    const args = buildFfmpegArgs(
+      invocationFromEncodeProfile({
+        profile,
+        sourceCodec: 'h264',
+        sourceUrl: 'rtsp://127.0.0.1:8554/cam',
+        sink: { kind: 'stdout', container: 'h264' },
+        decodeHwAccel: null,
+      }),
+    )
+    const a = args.indexOf('-analyzeduration')
+    const p = args.indexOf('-probesize')
+    expect(a).toBeGreaterThan(-1)
+    expect(p).toBeGreaterThan(-1)
+    expect(args[a + 1]).toBe('200000')
+    expect(args[p + 1]).toBe('65536')
+    expect(a).toBeLessThan(inputIndex(args))
+    expect(p).toBeLessThan(inputIndex(args))
+  })
+
   it('re-encodes when the source codec differs from the target', () => {
     const inv = invocationFromEncodeProfile({
       profile,
@@ -590,7 +617,10 @@ describe('invocationFromEncodeProfile — the EncodeProfile adapter', () => {
    */
   it('asks x264 for ONE slice per access unit when the consumer said so', () => {
     const inv = invocationFromEncodeProfile({
-      profile: { ...profile, video: { ...profile.video, singleSlicePerFrame: true } },
+      profile: {
+        ...profile,
+        video: { ...profile.video, singleSlicePerFrame: true },
+      },
       sourceCodec: 'h265',
       sourceUrl: 'rtsp://x/y',
       sink: { kind: 'stdout', container: 'h264' },
@@ -615,7 +645,10 @@ describe('invocationFromEncodeProfile — the EncodeProfile adapter', () => {
 
   it('never hands the flag to a HARDWARE encoder, which would reject it', () => {
     const inv = invocationFromEncodeProfile({
-      profile: { ...profile, video: { ...profile.video, singleSlicePerFrame: true } },
+      profile: {
+        ...profile,
+        video: { ...profile.video, singleSlicePerFrame: true },
+      },
       sourceCodec: 'h265',
       sourceUrl: 'rtsp://x/y',
       sink: { kind: 'stdout', container: 'h264' },

@@ -51,6 +51,7 @@ import { WEBRTC_FALLBACK_PROFILE } from './webrtc-fallback-profile.js'
 import { SendHistory, type SendHistoryReader } from './delivery-meter.js'
 import { ADAPTIVE_DELIVERY_CONFIG } from './adaptive-config.js'
 import { RembWatch } from './climb-capacity.js'
+import { InboundStunProbe } from './inbound-stun-probe.js'
 
 /** A REMB unchanged this long is no estimate (`RembWatch`). */
 const REMB_STALE_MS = 30_000
@@ -857,6 +858,8 @@ export class AdaptiveSession {
   private audioSender: WeriftRtpSender | null = null
   private feedAbort: AbortController | null = null
   private closed = false
+  /** Armed by `handleOffer`; counts the peer's inbound ICE checks. */
+  private inboundStun: InboundStunProbe | null = null
   private statsTimer: ReturnType<typeof setInterval> | null = null
 
   /**
@@ -1820,6 +1823,17 @@ export class AdaptiveSession {
     const negotiateStart = Date.now()
     const { werift, pcOptions } = await this.buildPcOptions()
 
+    // Observe-only: does the peer ever send a connectivity check? Summarised
+    // on `close()` so a session that never leaves `checking` says whether the
+    // Echo sent nothing or our replies did not get back.
+    this.inboundStun = new InboundStunProbe((from, afterMs) => {
+      this.logger.info('ICE first inbound STUN binding request from the peer', {
+        tags: { deviceId: this.deviceId },
+        meta: { phase: 'session', sessionId: this.sessionId, from, afterMs },
+      })
+    })
+    pcOptions.iceFilterStunResponse = this.inboundStun.filter
+
     this.pc = new werift.RTCPeerConnection(pcOptions)
     const pcSetupMs = Date.now() - negotiateStart
     this.wireControlChannel()
@@ -1886,18 +1900,19 @@ export class AdaptiveSession {
       .split('\n')
       .map((l) => l.trim())
       .filter((l) => l.startsWith('a=candidate:'))
-    if (this.debug) {
-      this.logger.info('client offer REMOTE ICE candidates', {
-        meta: {
-          phase: 'session',
-          sessionId: this.sessionId,
-          deviceId: this.deviceId,
-          count: offerCandidates.length,
-          candidateTypes: summarizeCandidates(resolvedOfferSdp),
-          candidates: offerCandidates,
-        },
-      })
-    }
+    // Always at info: the next failed session has to say which candidates the
+    // peer offered (types and addresses; the ufrag/pwd are not in this list).
+    this.logger.info('client offer REMOTE ICE candidates', {
+      tags: { deviceId: this.deviceId },
+      meta: {
+        phase: 'session',
+        sessionId: this.sessionId,
+        deviceId: this.deviceId,
+        count: offerCandidates.length,
+        candidateTypes: summarizeCandidates(resolvedOfferSdp),
+        candidates: offerCandidates,
+      },
+    })
     const remoteDesc = new werift.RTCSessionDescription(resolvedOfferSdp, clientOffer.type)
     const setRemoteStart = Date.now()
     await this.pc.setRemoteDescription(remoteDesc)
@@ -2280,6 +2295,17 @@ export class AdaptiveSession {
     this.closed = true
     this.state = 'closed'
     this.logger.info('Closing', { meta: { phase: 'session', sessionId: this.sessionId } })
+    if (this.inboundStun !== null) {
+      this.logger.info('ICE inbound STUN summary at close', {
+        tags: { deviceId: this.deviceId },
+        meta: {
+          phase: 'session',
+          sessionId: this.sessionId,
+          iceConnectionState: this.pc?.iceConnectionState ?? 'unknown',
+          ...this.inboundStun.summary(),
+        },
+      })
+    }
 
     if (this.statsTimer) {
       clearInterval(this.statsTimer)

@@ -712,7 +712,10 @@ export function buildVideoArgs(
   outputArgs: readonly string[],
   filterGraph?: FfmpegFilterGraph | null,
   /** Set when the encoder runs on a GPU — see {@link FfmpegHwEncodeDevice}. */
-  hwEncode?: { readonly device: FfmpegHwEncodeDevice; readonly decodeHwAccel: string | null },
+  hwEncode?: {
+    readonly device: FfmpegHwEncodeDevice
+    readonly decodeHwAccel: string | null
+  },
 ): string[] {
   if (video.kind === 'raw') {
     // Same refusal as `copy` above, for the same reason: a simple `-vf` on an
@@ -943,9 +946,12 @@ function buildAudioSidecarArgs(sidecar: FfmpegAudioSidecar): string[] {
  * output, not as whatever the main output happens to carry.
  */
 /** The hardware-encode context for this invocation, or `undefined`. */
-function hwEncodeFor(
-  inv: FfmpegInvocation,
-): { readonly device: FfmpegHwEncodeDevice; readonly decodeHwAccel: string | null } | undefined {
+function hwEncodeFor(inv: FfmpegInvocation):
+  | {
+      readonly device: FfmpegHwEncodeDevice
+      readonly decodeHwAccel: string | null
+    }
+  | undefined {
   return inv.hwEncodeDevice === undefined
     ? undefined
     : { device: inv.hwEncodeDevice, decodeHwAccel: inv.decodeHwAccel }
@@ -1137,6 +1143,16 @@ export interface EncodeProfileInvocationInput {
  * plane. Width / height / fps / bitrate in the profile are a downstream BUDGET,
  * not a forced rescale.
  */
+/**
+ * Probe bound for an input that is one of OUR OWN RTSP restreams. Not zero: a
+ * zero-length probe makes ffmpeg trust the SDP completely, and a restream that
+ * announces a track it never sends would leave the mapping wrong unnoticed.
+ */
+export const RESTREAM_INPUT_PROBE = {
+  analyzeDurationUs: 200_000,
+  probeSizeBytes: 64 * 1024,
+} as const
+
 export function invocationFromEncodeProfile(input: EncodeProfileInvocationInput): FfmpegInvocation {
   const v = input.profile.video
   const shouldCopy =
@@ -1188,6 +1204,12 @@ export function invocationFromEncodeProfile(input: EncodeProfileInvocationInput)
       // reference pictures ffmpeg never saw. Drop them until it syncs to a
       // clean IDR rather than encoding a corrupt frame.
       fflags: ['+discardcorrupt'],
+      // The source is the broker's own RTSP restream, whose SDP names the
+      // codec: nothing for the probe to discover. ffmpeg's default (5 s / 5 MB)
+      // held an Alexa session's first packet back by ~3 s. Same bound HAP uses
+      // on the same kind of input.
+      analyzeDurationUs: RESTREAM_INPUT_PROBE.analyzeDurationUs,
+      probeSizeBytes: RESTREAM_INPUT_PROBE.probeSizeBytes,
       ...(input.profile.inputArgs?.length ? { extraArgs: input.profile.inputArgs } : {}),
     },
     video,

@@ -205,7 +205,8 @@ describe('acquireFragments — the argv', () => {
 
     const argv = h.argvs[0]!.join(' ')
     expect(argv).toContain('-c:a aac')
-    expect(argv).not.toContain('-an')
+    // Token-exact: `-analyzeduration` (the input probe bound) contains "-an".
+    expect(argv.split(' ')).not.toContain('-an')
     expect(argv).not.toContain('libopus')
   })
 

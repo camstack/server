@@ -100,6 +100,8 @@ export interface LwaEventGatewayDeps {
   readonly ctx: AddonContext
   readonly logger: IScopedLogger
   readonly listExposed: () => readonly ExposedDeviceEntry[]
+  /** A doorbell press for an exposed camera is about to be posted to Alexa. */
+  readonly onExposedDoorbellPress?: (deviceId: number) => void
   readonly listLinkedAccounts: () => readonly LinkedAccount[]
   readonly listTokens: () => readonly LwaTokenEntry[]
   readonly upsertToken: (input: UpsertLwaTokenInput) => Promise<void>
@@ -249,7 +251,11 @@ export class LwaEventGateway {
       { category: EventCategory.MotionOnMotionChanged },
       (event) => {
         this.onMotionChanged(
-          event.data as { deviceId: number; detected: boolean; timestamp: number },
+          event.data as {
+            deviceId: number
+            detected: boolean
+            timestamp: number
+          },
         ).catch((err: unknown) => {
           this.deps.logger.warn('alexa lwa-gateway: motion handler crashed', {
             meta: { error: err instanceof Error ? err.message : String(err) },
@@ -348,6 +354,11 @@ export class LwaEventGateway {
       return
     }
     if (!this.hasProactiveCredentials()) return
+
+    // The Echo asks for the stream 1.5 to 6 s after the press is posted; start
+    // the egress transcode now so its offer finds a running child. Fire and
+    // forget: the press itself never waits for, or fails on, the warm-up.
+    this.deps.onExposedDoorbellPress?.(parentDeviceId)
 
     for (const account of linked) {
       if (!this.mayPush(account.userId, parentDeviceId, 'doorbell press')) continue
@@ -454,7 +465,10 @@ export class LwaEventGateway {
     if (signature === null || !signatureNamesEndpoint(signature, opts.endpointId)) {
       this.deps.logger.debug(
         'alexa lwa-gateway: detection change not sent — Alexa has not been told about this sensor endpoint',
-        { tags: { deviceId: opts.deviceId }, meta: { endpointId: opts.endpointId } },
+        {
+          tags: { deviceId: opts.deviceId },
+          meta: { endpointId: opts.endpointId },
+        },
       )
       return
     }
@@ -493,7 +507,10 @@ export class LwaEventGateway {
           }).catch((err: unknown) => {
             this.deps.logger.warn(`alexa lwa-gateway: held ${opts.label} clear failed to post`, {
               tags: { deviceId },
-              meta: { endpointId, error: err instanceof Error ? err.message : String(err) },
+              meta: {
+                endpointId,
+                error: err instanceof Error ? err.message : String(err),
+              },
             })
           })
         })
@@ -693,7 +710,10 @@ export class LwaEventGateway {
         'alexa lwa-gateway: state change not sent — Alexa has not been told about this endpoint/interface',
         {
           tags: { deviceId: report.exposedDeviceId },
-          meta: { endpointId: report.endpointId, interfaceName: report.interfaceName },
+          meta: {
+            endpointId: report.endpointId,
+            interfaceName: report.interfaceName,
+          },
         },
       )
       return
@@ -760,7 +780,10 @@ export class LwaEventGateway {
     const timer = setTimeout(() => {
       void this.reportInitialConnectivity(userId, targets).catch((err: unknown) => {
         this.deps.logger.warn('alexa lwa-gateway: initial connectivity report failed', {
-          meta: { userId, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            userId,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       })
     }, INITIAL_CONNECTIVITY_DELAY_MS)
@@ -908,7 +931,10 @@ export class LwaEventGateway {
     if (response.status === 401) {
       const refreshed = await this.refreshAccessToken(userId).catch((err: unknown) => {
         this.deps.logger.warn('alexa lwa-gateway: refresh failed', {
-          meta: { userId, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            userId,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
         return null
       })
@@ -927,7 +953,12 @@ export class LwaEventGateway {
     if (!response.ok) {
       const text = await response.text().catch(() => '')
       this.deps.logger.warn(`alexa lwa-gateway: ${label} push failed`, {
-        meta: { userId, endpointId, status: response.status, body: text.slice(0, 500) },
+        meta: {
+          userId,
+          endpointId,
+          status: response.status,
+          body: text.slice(0, 500),
+        },
       })
       return false
     }
@@ -961,7 +992,10 @@ export class LwaEventGateway {
       if (!due) continue
       await this.refreshAccessToken(token.userId).catch((err: unknown) => {
         this.deps.logger.warn('alexa lwa-gateway: proactive refresh failed', {
-          meta: { userId: token.userId, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            userId: token.userId,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       })
     }
@@ -996,7 +1030,10 @@ export class LwaEventGateway {
         return null
       }
       this.deps.logger.warn('alexa lwa-gateway: broker renewal failed — will retry', {
-        meta: { userId, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
       return null
     }
@@ -1057,7 +1094,10 @@ export class LwaEventGateway {
         return null
       }
       this.deps.logger.warn('alexa lwa-gateway: migrating the push grant to the broker failed', {
-        meta: { userId, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
       return null
     }
@@ -1451,7 +1491,10 @@ function redactSignature(uri: string | undefined): string | undefined {
 export function redactedObjectDetectionSample(
   opts: Parameters<typeof buildSmartVisionObjectDetectionEvent>[0],
 ): SmartVisionObjectDetectionEvent {
-  const body = buildSmartVisionObjectDetectionEvent({ ...opts, accessToken: '<redacted>' })
+  const body = buildSmartVisionObjectDetectionEvent({
+    ...opts,
+    accessToken: '<redacted>',
+  })
   return {
     event: {
       ...body.event,

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Streams re-encoded for Alexa, HomeKit and other live viewers start sooner because ffmpeg no longer probes the local restream for seconds first
 - New ir-transmitter and remote capabilities for infrared control, and media-player status now says whether its state is reported or assumed
 - Remote: a generic template collection, a remote Customize extension for media players, and media-player commands that run a bound IR/Actions binding first
 
