@@ -10686,6 +10686,66 @@
       "digit_7": "7",
       "digit_8": "8",
       "digit_9": "9"
+    },
+    "card": {
+      "title": "Remote control",
+      "configure": "Configure",
+      "none": "No remote configured. The device's own commands are used.",
+      "summary": "Layout: {{template}} · {{count}} commands bound"
+    },
+    "dialog": {
+      "title": "Remote control — {{name}}",
+      "loading": "Loading the remote configuration…",
+      "unreadable": "The remote configuration could not be read",
+      "template": "Layout template",
+      "noTemplate": "No layout",
+      "noTemplatesHint": "There is no remote layout yet. Create one in System > Templates.",
+      "transmitter": "Default transmitter",
+      "noTransmitter": "None",
+      "power": "Power command",
+      "powerToggle": "One toggle button",
+      "powerDiscrete": "Separate on and off",
+      "preview": "Remote preview",
+      "incomplete_other": "{{count}} commands are not finished: pick a device and a command, or clear them.",
+      "incomplete_one": "{{count}} command is not finished: pick a device and a command, or clear it."
+    },
+    "bindings": {
+      "title": "Commands",
+      "empty": "Pick a layout or import a SmartIR file to list the commands.",
+      "custom": "Custom",
+      "notInLayout": "Not in the layout",
+      "infrared": "Infrared",
+      "native": "Uses the device's own command",
+      "bind": "Set command",
+      "test": "Test",
+      "clear": "Clear",
+      "saveToTest": "Save first: Test sends the saved command",
+      "transmitterFor": "Transmitter for {{name}}"
+    },
+    "test": {
+      "sent": "Sent ({{count}}).",
+      "skipped": "Nothing sent: the device is already in that state.",
+      "refused": {
+        "no-remote": "This device has no remote configured.",
+        "unbound-role": "That button has no saved command.",
+        "action-failed": "The command failed. {{detail}}"
+      }
+    },
+    "import": {
+      "title": "Import from SmartIR",
+      "hint": "Paste a SmartIR device file or pick one. It is read here and not stored; only the commands it produces are kept when you save.",
+      "pasteLabel": "SmartIR file (JSON)",
+      "chooseFile": "Choose file",
+      "read": "Read",
+      "apply": "Apply to the commands",
+      "summary": "The file fills {{count}} commands.",
+      "skipped_other": "{{count}} commands could not be used:",
+      "refused": {
+        "no-transmitter": "Pick the default transmitter first: the imported codes are sent through it.",
+        "not-json": "That is not valid JSON.",
+        "not-smartir": "That is not a SmartIR device file."
+      },
+      "skipped_one": "{{count}} command could not be used:"
     }
   }
 }

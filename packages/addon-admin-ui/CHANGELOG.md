@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Media players get a Remote control card in Customize: pick a layout template, bind each button to a device command, import a SmartIR file, and test a saved command
 - New System > Templates page to create, edit, duplicate and delete reusable layouts, with a touch-friendly remote button grid editor
 - The Device details list of a container shows its children without the container's name, and the primary-child picker does the same.
 - My access has a Preferences tab where each user picks temperature in °C or °F and metric or imperial for other measurements; the choice follows the account on every device

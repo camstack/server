@@ -10708,6 +10708,66 @@
       "digit_7": "7",
       "digit_8": "8",
       "digit_9": "9"
+    },
+    "card": {
+      "title": "Telecomando",
+      "configure": "Configura",
+      "none": "Nessun telecomando configurato. Si usano i comandi nativi del dispositivo.",
+      "summary": "Layout: {{template}} · {{count}} comandi associati"
+    },
+    "dialog": {
+      "title": "Telecomando — {{name}}",
+      "loading": "Caricamento della configurazione del telecomando…",
+      "unreadable": "Impossibile leggere la configurazione del telecomando",
+      "template": "Modello di layout",
+      "noTemplate": "Nessun layout",
+      "noTemplatesHint": "Non c'è ancora nessun layout di telecomando. Creane uno in Sistema > Modelli.",
+      "transmitter": "Trasmettitore predefinito",
+      "noTransmitter": "Nessuno",
+      "power": "Comando di accensione",
+      "powerToggle": "Un solo tasto on/off",
+      "powerDiscrete": "On e off separati",
+      "preview": "Anteprima del telecomando",
+      "incomplete_other": "{{count}} comandi non sono completi: scegli un dispositivo e un comando, oppure rimuovili.",
+      "incomplete_one": "{{count}} comando non è completo: scegli un dispositivo e un comando, oppure rimuovilo."
+    },
+    "bindings": {
+      "title": "Comandi",
+      "empty": "Scegli un layout o importa un file SmartIR per elencare i comandi.",
+      "custom": "Personalizzato",
+      "notInLayout": "Non nel layout",
+      "infrared": "Infrarossi",
+      "native": "Usa il comando nativo del dispositivo",
+      "bind": "Imposta comando",
+      "test": "Prova",
+      "clear": "Rimuovi",
+      "saveToTest": "Salva prima: Prova invia il comando salvato",
+      "transmitterFor": "Trasmettitore per {{name}}"
+    },
+    "test": {
+      "sent": "Inviato ({{count}}).",
+      "skipped": "Niente inviato: il dispositivo è già in quello stato.",
+      "refused": {
+        "no-remote": "Questo dispositivo non ha un telecomando configurato.",
+        "unbound-role": "Quel tasto non ha un comando salvato.",
+        "action-failed": "Il comando non è riuscito. {{detail}}"
+      }
+    },
+    "import": {
+      "title": "Importa da SmartIR",
+      "hint": "Incolla un file dispositivo SmartIR o sceglilo. Viene letto qui e non salvato; quando salvi restano solo i comandi che produce.",
+      "pasteLabel": "File SmartIR (JSON)",
+      "chooseFile": "Scegli file",
+      "read": "Leggi",
+      "apply": "Applica ai comandi",
+      "summary": "Il file compila {{count}} comandi.",
+      "skipped_other": "{{count}} comandi non utilizzabili:",
+      "refused": {
+        "no-transmitter": "Scegli prima il trasmettitore predefinito: i codici importati vengono inviati tramite quello.",
+        "not-json": "Non è un JSON valido.",
+        "not-smartir": "Non è un file dispositivo SmartIR."
+      },
+      "skipped_one": "{{count}} comando non utilizzabile:"
     }
   }
 }

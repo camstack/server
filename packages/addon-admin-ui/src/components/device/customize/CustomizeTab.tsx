@@ -32,6 +32,7 @@ import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
+import { ConfigCustomizeList, configCardCaps } from './config/ConfigCustomizeList'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
 import { ComposedCustomizeBody } from './ComposedCustomizeBody'
 import { scalarCardTargets } from './scalar/ScalarOverrideCard'
@@ -116,8 +117,9 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
     for (const { cap } of scalarCardTargets()) s.add(cap)
     for (const { cap } of keyedArrayCardTargets()) s.add(cap)
     for (const { cap } of eventCardTargets()) s.add(cap)
+    for (const cap of configCardCaps(device.type)) s.add(cap)
     return s
-  }, [])
+  }, [device.type])
   return (
     <div className="flex flex-col gap-3">
       <IdentityRow device={device} />
@@ -140,6 +142,7 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         facts={assignmentFacts}
         defaults={defaultConsumables}
       />
+      <ConfigCustomizeList device={device} />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
       <LinkedDevicesTable device={device} />
       {device.type === DeviceType.Camera && <LinkedActionsCard device={device} />}
