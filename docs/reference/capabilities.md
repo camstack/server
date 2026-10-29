@@ -200,7 +200,7 @@ Singleton or collection providers, addressed without a device.
 | `recording-export` | 7 | — | — | — | — | `recorder` |
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
 | `remote` | 5 | — | — | — | — | `core-blocks` |
-| `server-management` | 7 | — | — | — | — | — |
+| `server-management` | 8 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |
 | `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |
 | `sso-bridge` | 2 | — | — | — | ✓ | — |

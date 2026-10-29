@@ -16235,6 +16235,18 @@ export function createCapRouter_serverManagement(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyServerUpdate(methodInput as any)
       }),
+    installDesktopUpdate: adminProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(serverManagementCapability.methods.installDesktopUpdate.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'server-management',
+          input?.nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        return p.installDesktopUpdate()
+      }),
     rollbackServerUpdate: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.rollbackServerUpdate.output)

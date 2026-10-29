@@ -46,6 +46,8 @@ import {
 } from 'electron'
 import type { UpdateState } from './auto-updater'
 import { initAutoUpdater, notifyUpdateReady, shutdownAutoUpdater } from './auto-updater'
+import { takeInstallRequest, watchInstallRequests } from './desktop-install-request'
+import { publishDesktopAppState } from './desktop-state-file'
 import { loadOrCreatePlatformKeychainKey } from './keychain-platform-key'
 import { resolveLaunchArgs } from './launch-args-client'
 import type { AgentConnectionInput } from './node-env'
@@ -157,6 +159,63 @@ function currentRole(): NodeRole {
 /** The node's data dir — the starter roots `server-root/` here (both roles). */
 function nodeDataDir(): string {
   return path.join(app.getPath('userData'), 'data')
+}
+
+// -- Desktop data-dir channel (ADR-0971) ------------------------------------
+// The node reports this app's version + updater state to the hub, and the hub
+// can ask the app to install a downloaded update, through two files in the
+// node's data dir. Files, because the Windows service node is not our child.
+
+const DESKTOP_STATE_HEARTBEAT_MS = 5 * 60_000
+
+/**
+ * Every data dir a node of THIS app may read: the app's own, plus the Windows
+ * service's when the service owns the node. The service dir is ACL-locked to
+ * Administrators/SYSTEM, so a write there from the user's app can fail — that is
+ * logged once per dir, and the hub then reads the state as stale.
+ */
+function desktopChannelDirs(): readonly string[] {
+  const dirs = [nodeDataDir()]
+  if (serviceOwnsTheNode()) {
+    const serviceDir = createWindowsServiceManager().dataDir
+    if (serviceDir !== null && !dirs.includes(serviceDir)) dirs.push(serviceDir)
+  }
+  return dirs
+}
+
+const desktopChannelFailedDirs = new Set<string>()
+
+function publishDesktopState(): void {
+  for (const dir of desktopChannelDirs()) {
+    try {
+      publishDesktopAppState(dir, app.getVersion(), updateState)
+      desktopChannelFailedDirs.delete(dir)
+    } catch (err) {
+      if (!desktopChannelFailedDirs.has(dir)) {
+        desktopChannelFailedDirs.add(dir)
+        console.warn(`[main] could not publish desktop-app-state.json under ${dir}: ${String(err)}`)
+      }
+    }
+  }
+}
+
+function handleDesktopInstallRequests(): void {
+  if (appQuitting) return
+  for (const dir of desktopChannelDirs()) {
+    const outcome = takeInstallRequest(dir, updateState.downloaded)
+    if (outcome.kind === 'none') continue
+    if (outcome.kind === 'not-downloaded') {
+      console.warn(`[main] desktop install request ${outcome.nonce} ignored: no update downloaded`)
+      continue
+    }
+    console.log(
+      `[main] desktop install request ${outcome.nonce}: installing the update and restarting`,
+    )
+    // `before-quit-for-update` marks the app as quitting, so the node child is
+    // not respawned by `onExit` while the installer takes the app down.
+    updater?.installAndRestart()
+    return
+  }
 }
 
 // electron-store v11 is ESM-only — a static CJS `require('electron-store')`
@@ -1045,11 +1104,19 @@ void app.whenReady().then(async () => {
       updateState = state
       refreshTrayMenu()
       mainWindow?.webContents.send('camstack:update-state', state)
+      publishDesktopState()
     },
     onUpdateDownloaded: (version) => {
       notifyUpdateReady(version)
     },
   })
+
+  // The hub reads `desktop-app-state.json` with a freshness bound, so rewrite it
+  // on a heartbeat too — an idle app (no updater transition for hours) is not a
+  // dead one.
+  publishDesktopState()
+  setInterval(publishDesktopState, DESKTOP_STATE_HEARTBEAT_MS).unref()
+  watchInstallRequests({ dataDir: nodeDataDir(), onTick: handleDesktopInstallRequests })
 
   // macOS: closing the window hides it (tray keeps the app alive), so
   // getAllWindows() is never empty — Dock click must still show/focus.

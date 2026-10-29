@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The agent starts with a generous default heap ceiling (RAM/4 between 1.5 and 4 GB; CAMSTACK_AGENT_HEAP_MB overrides)
 - The agent app now takes its Node launch arguments (heap ceiling, allocator) from the server closure instead of a built-in formula
 - Install update & restart now quits and relaunches on the new version instead of only hiding the window.
+- The app publishes its version and update state to its node and installs a downloaded update when the hub asks.
 
 ## [0.1.0] - 2026-10-27
 

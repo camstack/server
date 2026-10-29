@@ -13,6 +13,7 @@
 export * from './dev-uploads.js'
 export * from './root-package-spec.js'
 export * from './root-state.js'
+export * from './desktop-app-channel.js'
 export * from './root-single-copy.js'
 export * from './boot-plan.js'
 export * from './semver-compare.js'

@@ -37,6 +37,7 @@ export function buildServerManagementProvider(
     getServerPackageStatus: () => service.getServerPackageStatus(),
     checkServerUpdate: () => service.checkServerUpdate(),
     applyServerUpdate: (input) => service.applyServerUpdate(input),
+    installDesktopUpdate: () => Promise.resolve(service.installDesktopUpdate()),
     rollbackServerUpdate: () => service.rollbackServerUpdate(),
     restartServer: () => Promise.resolve(service.restartNode()),
     ...buildLaunchOverrideMethods(dataDir),

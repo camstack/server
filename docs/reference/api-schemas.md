@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**992 shared schemas.**
+**995 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1520,6 +1520,13 @@ Enum: `"auto" \| "day" \| "night" \| "schedule"`
 - `number`
 - `boolean`
 
+### `DesktopAppStatusSchema`
+
+- `version`: `string`
+- `update`: `{ available: boolean; downloaded: boolean; version: string \| null; checking: boolean; error: string \| null }`
+- `stateAtMs`: `number`
+- `stale`: `boolean`
+
 ### `DetectionSourceSchema`
 
 Enum: `"pipeline" \| "onboard"`
@@ -2580,6 +2587,15 @@ Enum: `"disabled" \| "unavailable" \| "cannot-host-camera-root" \| "accelerator-
 - `ownerNodeId`: `string`
 - `reachableHost?`: `string`
 - `configIssue?`: `string`
+
+### `InstallDesktopUpdateReasonSchema`
+
+Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"`
+
+### `InstallDesktopUpdateResultSchema`
+
+- `accepted`: `boolean`
+- `reason`: `InstallDesktopUpdateReasonSchema \| null`
 
 ### `InstalledPackageSchema`
 
@@ -6150,6 +6166,7 @@ Enum: `"workspace" \| "baked" \| "data-root"`
 - `imageContract?`: `ImageContractSchema`
 - `wrapper?`: `WrapperIdentitySchema`
 - `runners?`: `RunnerBootCheckSchema`
+- `desktopApp?`: `DesktopAppStatusSchema`
 
 ### `ServerRollbackInfoSchema`
 

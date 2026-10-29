@@ -3098,6 +3098,9 @@ export const useServerManagementCheckServerUpdate: typeof trpc.serverManagement.
 /** Generated alias around `trpc.serverManagement.applyServerUpdate.useMutation`. */
 export const useServerManagementApplyServerUpdate: typeof trpc.serverManagement.applyServerUpdate.useMutation = trpc.serverManagement.applyServerUpdate.useMutation
 
+/** Generated alias around `trpc.serverManagement.installDesktopUpdate.useMutation`. */
+export const useServerManagementInstallDesktopUpdate: typeof trpc.serverManagement.installDesktopUpdate.useMutation = trpc.serverManagement.installDesktopUpdate.useMutation
+
 /** Generated alias around `trpc.serverManagement.rollbackServerUpdate.useMutation`. */
 export const useServerManagementRollbackServerUpdate: typeof trpc.serverManagement.rollbackServerUpdate.useMutation = trpc.serverManagement.rollbackServerUpdate.useMutation
 

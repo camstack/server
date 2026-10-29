@@ -22,8 +22,11 @@
 import { execFile } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { promisify } from 'node:util'
 import type {
+  DesktopAppStatus,
+  InstallDesktopUpdateResult,
   RunnerBootCheck,
   ServerBootMode,
   ServerPackageStatus,
@@ -41,6 +44,11 @@ import {
   isDevChannelVersion,
   readDevUploadManifest,
 } from './dev-uploads.js'
+import {
+  DESKTOP_APP_STATE_STALE_MS,
+  readDesktopAppState,
+  writeDesktopInstallRequest,
+} from './desktop-app-channel.js'
 import { assessImageContract } from './image-contract.js'
 import type { RootPackageSpec } from './root-package-spec.js'
 import { compareSemver } from './semver-compare.js'
@@ -497,6 +505,31 @@ export class RootUpdateService {
     })
   }
 
+  /**
+   * The desktop app's own report (ADR-0971), read from the data-dir state
+   * file. Empty when there is no readable file — absent, never a fabricated
+   * "no update". An old file is reported with `stale: true`, not dropped:
+   * the app that stopped writing is itself a fact the operator needs.
+   */
+  private desktopAppField(): { readonly desktopApp?: DesktopAppStatus } {
+    const state = readDesktopAppState(this.rootDir())
+    if (state === null) return {}
+    return {
+      desktopApp: {
+        version: state.appVersion,
+        update: {
+          available: state.available,
+          downloaded: state.downloaded,
+          version: state.version,
+          checking: state.checking,
+          error: state.error,
+        },
+        stateAtMs: state.updatedAtMs,
+        stale: this.now() - state.updatedAtMs > DESKTOP_APP_STATE_STALE_MS,
+      },
+    }
+  }
+
   private rootDir(): string {
     return serverRootDir(this.dataDir)
   }
@@ -563,6 +596,7 @@ export class RootUpdateService {
       // BEHIND; this says WHAT the shell is, which is the only thing that can
       // turn that verdict into an instruction the operator can act on.
       wrapper: this.wrapperIdentity(),
+      ...this.desktopAppField(),
       // Planned runners against the process service's states (D877); absent
       // until the one-shot boot check has run.
       ...(this.runnerBootCheckFn() !== undefined ? { runners: this.runnerBootCheckFn() } : {}),
@@ -1109,6 +1143,34 @@ export class RootUpdateService {
       reason,
       error: null,
     }
+  }
+
+  /**
+   * Ask the desktop app hosting this node to install its downloaded update
+   * (ADR-0971). Writes a request file in the data dir; the app consumes it.
+   * Every refusal names its reason, and the write happens ONLY when the app's
+   * own state says there is something downloaded and that state is fresh —
+   * a request into a dead or empty app would sit on disk until a later launch.
+   */
+  installDesktopUpdate(): InstallDesktopUpdateResult {
+    const refuse = (reason: NonNullable<InstallDesktopUpdateResult['reason']>) => {
+      this.logger.warn('desktop update install refused', {
+        tags: this.logTags,
+        meta: { reason },
+      })
+      return { accepted: false, reason }
+    }
+    if (this.wrapperIdentity().kind !== 'electron') return refuse('not-electron')
+    const desktopApp = this.desktopAppField().desktopApp
+    if (desktopApp === undefined) return refuse('no-app-state')
+    if (desktopApp.stale) return refuse('app-state-stale')
+    if (!desktopApp.update.downloaded) return refuse('not-downloaded')
+    writeDesktopInstallRequest(this.rootDir(), { requestedAtMs: this.now(), nonce: randomUUID() })
+    this.logger.info('desktop update install requested', {
+      tags: this.logTags,
+      meta: { appVersion: desktopApp.version, updateVersion: desktopApp.update.version },
+    })
+    return { accepted: true, reason: null }
   }
 
   restartNode(): ServerUpdateActionResult {

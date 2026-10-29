@@ -167,11 +167,13 @@ const WrapperEvidenceSchema = z.object({
  * The shell verdict (see {@link WrapperKindSchema}) with the proofs that
  * produced it.
  *
- * There is deliberately NO `canSelfUpdate` and no apply action: a wrapper
- * update is an ANNOUNCEMENT. The notification body carries the exact command
- * for a `docker` shell and says the app restarts into the new build for
- * `electron`, and that sentence is chosen from `kind` alone — a boolean
- * nothing reads is the defect this repo keeps paying for.
+ * There is deliberately NO `canSelfUpdate` boolean: a wrapper update is an
+ * ANNOUNCEMENT. The notification body carries the exact command for a `docker`
+ * shell and says the app restarts into the new build for `electron`, and that
+ * sentence is chosen from `kind` alone — a boolean nothing reads is the defect
+ * this repo keeps paying for. The one shell that CAN be acted on is the
+ * Electron app, and only through `installDesktopUpdate` (see
+ * {@link DesktopAppStatusSchema} for what the node reads from the app first).
  */
 const WrapperIdentitySchema = z.object({
   kind: WrapperKindSchema,
@@ -194,6 +196,52 @@ const ServerRollbackInfoSchema = z.object({
   toVersion: z.string().nullable(),
   atMs: z.number(),
   reason: z.string(),
+})
+
+/**
+ * What the native desktop app (Electron) that hosts this node says about
+ * itself, read from `<dataDir>/server-root/desktop-app-state.json` (ADR-0971).
+ * Absent on the status = no desktop app, or it never wrote the file.
+ *
+ * `stale` is the honest answer to an app that stopped writing (closed, hung,
+ * crashed): the update facts are then the LAST ones known, not current ones,
+ * and a consumer must not read `update.available: false` from a stale record
+ * as "no update". `stateAtMs` is when the app last wrote.
+ */
+const DesktopAppStatusSchema = z.object({
+  /** The Electron app's own version (not the node closure's). */
+  version: z.string(),
+  update: z.object({
+    available: z.boolean(),
+    /** The new build is downloaded and `installDesktopUpdate` can apply it. */
+    downloaded: z.boolean(),
+    version: z.string().nullable(),
+    checking: z.boolean(),
+    /** Why the app's last update check produced no answer; `null` when it did. */
+    error: z.string().nullable(),
+  }),
+  stateAtMs: z.number(),
+  stale: z.boolean(),
+})
+
+/**
+ * Why `installDesktopUpdate` did nothing. Stable names a UI maps to a sentence:
+ *  - `not-electron`   — this node does not run inside the desktop app.
+ *  - `no-app-state`   — the app never published its state (or the file is unreadable).
+ *  - `app-state-stale` — the app stopped writing; it is probably not running.
+ *  - `not-downloaded` — no update is downloaded yet; nothing to install.
+ */
+const InstallDesktopUpdateReasonSchema = z.enum([
+  'not-electron',
+  'no-app-state',
+  'app-state-stale',
+  'not-downloaded',
+])
+
+const InstallDesktopUpdateResultSchema = z.object({
+  accepted: z.boolean(),
+  /** Non-null exactly when `accepted` is false. */
+  reason: InstallDesktopUpdateReasonSchema.nullable(),
 })
 
 /**
@@ -303,6 +351,11 @@ const ServerPackageStatusSchema = z.object({
    * well": a consumer that needs the answer treats it as pending.
    */
   runners: RunnerBootCheckSchema.optional(),
+  /**
+   * The desktop app hosting this node (see {@link DesktopAppStatusSchema}).
+   * Optional for version skew AND because most nodes have no desktop app.
+   */
+  desktopApp: DesktopAppStatusSchema.optional(),
 })
 
 // ── Action results ───────────────────────────────────────────────────
@@ -445,6 +498,19 @@ export const serverManagementCapability = {
         timeoutMs: 16 * 60_000,
       },
     ),
+    /**
+     * Ask the desktop app hosting this node to install its DOWNLOADED update
+     * and restart. The request is a file in the node's data dir (the node may
+     * be a Windows service, not Electron's child); the app consumes it once.
+     * `accepted: true` means the request was WRITTEN — the app restarting is
+     * observed afterwards on `desktopApp.version`, not promised here. Refused
+     * with a named `reason` when not an electron shell, the app's state is
+     * absent or stale, or nothing is downloaded.
+     */
+    installDesktopUpdate: method(z.void(), InstallDesktopUpdateResultSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     rollbackServerUpdate: method(z.void(), ServerUpdateActionResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -490,6 +556,9 @@ export type ImageContract = z.infer<typeof ImageContractSchema>
 export type WrapperKind = z.infer<typeof WrapperKindSchema>
 export type WrapperEvidence = z.infer<typeof WrapperEvidenceSchema>
 export type WrapperIdentity = z.infer<typeof WrapperIdentitySchema>
+export type DesktopAppStatus = z.infer<typeof DesktopAppStatusSchema>
+export type InstallDesktopUpdateReason = z.infer<typeof InstallDesktopUpdateReasonSchema>
+export type InstallDesktopUpdateResult = z.infer<typeof InstallDesktopUpdateResultSchema>
 export type ServerRollbackInfo = z.infer<typeof ServerRollbackInfoSchema>
 export type ServerPackageStatus = z.infer<typeof ServerPackageStatusSchema>
 export type ServerUpdateCheckResult = z.infer<typeof ServerUpdateCheckResultSchema>
@@ -512,6 +581,9 @@ export {
   WrapperKindSchema,
   WrapperEvidenceSchema,
   WrapperIdentitySchema,
+  DesktopAppStatusSchema,
+  InstallDesktopUpdateReasonSchema,
+  InstallDesktopUpdateResultSchema,
   ServerRollbackInfoSchema,
   ServerPackageStatusSchema,
   ServerUpdateCheckResultSchema,

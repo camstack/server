@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The server-management capability reports the desktop app's version and update state and can ask it to install a downloaded update.
+
 ## [1.2.445] - 2026-10-29
 
 ### Added

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**192 capabilities · 1429 methods.**
+**192 capabilities · 1430 methods.**
 
 ## Method index
 
@@ -1144,6 +1144,7 @@
 | `serverManagement.getServerPackageStatus` | query | admin | server-management |
 | `serverManagement.checkServerUpdate` | mutation | admin | server-management |
 | `serverManagement.applyServerUpdate` | mutation | admin | server-management |
+| `serverManagement.installDesktopUpdate` | mutation | admin | server-management |
 | `serverManagement.rollbackServerUpdate` | mutation | admin | server-management |
 | `serverManagement.restartServer` | mutation | admin | server-management |
 | `serverManagement.getLaunchOverrides` | query | admin | server-management |
@@ -4171,7 +4172,7 @@
 
 ### `server-management` → `serverManagement.*`
 
-- **Source:** `packages/types/src/capabilities/server-management.cap.ts:405`
+- **Source:** `packages/types/src/capabilities/server-management.cap.ts:458`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IServerManagementProvider`
@@ -4181,6 +4182,7 @@
 | getServerPackageStatus | `serverManagement.getServerPackageStatus` | query | admin | `void` | `ServerPackageStatusSchema` |
 | checkServerUpdate | `serverManagement.checkServerUpdate` | mutation | admin | `void` | `ServerUpdateCheckResultSchema` |
 | applyServerUpdate | `serverManagement.applyServerUpdate` | mutation | admin | `{ version?: string; acknowledgeRefusals?: boolean }` | `ServerUpdateActionResultSchema` |
+| installDesktopUpdate | `serverManagement.installDesktopUpdate` | mutation | admin | `void` | `InstallDesktopUpdateResultSchema` |
 | rollbackServerUpdate | `serverManagement.rollbackServerUpdate` | mutation | admin | `void` | `ServerUpdateActionResultSchema` |
 | restartServer | `serverManagement.restartServer` | mutation | admin | `void` | `ServerUpdateActionResultSchema` |
 | getLaunchOverrides | `serverManagement.getLaunchOverrides` | query | admin | `void` | `{ heapMb: number \| null }` |

@@ -186,6 +186,7 @@ describe('provider + manifest surface', () => {
       'checkServerUpdate',
       'getLaunchOverrides',
       'getServerPackageStatus',
+      'installDesktopUpdate',
       'restartServer',
       'rollbackServerUpdate',
       'setLaunchOverrides',

@@ -1041,6 +1041,7 @@
   "serverManagement.checkServerUpdate": "admin",
   "serverManagement.getLaunchOverrides": "admin",
   "serverManagement.getServerPackageStatus": "admin",
+  "serverManagement.installDesktopUpdate": "admin",
   "serverManagement.restartServer": "admin",
   "serverManagement.rollbackServerUpdate": "admin",
   "serverManagement.setLaunchOverrides": "admin",
