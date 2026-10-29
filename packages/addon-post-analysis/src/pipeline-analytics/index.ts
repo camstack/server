@@ -8255,17 +8255,20 @@ export default class PipelineAnalyticsAddon
       }).still
     })
     const frameAgeMs = Date.now() - result.timestamp
-    if (frameAgeMs > OVERLAY_MAX_FRAME_AGE_MS) {
+    const frameIsStale = frameAgeMs > OVERLAY_MAX_FRAME_AGE_MS
+    if (frameIsStale) {
       const nowMs = Date.now()
       const lastLogAt = this.frameState.overlayStaleLogAt.get(deviceId) ?? 0
       if (nowMs - lastLogAt >= OVERLAY_STALE_LOG_THROTTLE_MS) {
         this.frameState.overlayStaleLogAt.set(deviceId, nowMs)
-        this.ctx.logger.debug('overlay skipped a stale frame (replayed pre-roll)', {
-          tags: { deviceId },
-          meta: { frameAgeMs, maxFrameAgeMs: OVERLAY_MAX_FRAME_AGE_MS },
-        })
+        this.ctx.logger.debug(
+          'overlay boxes withheld for a stale frame (replayed pre-roll); presence still emitted',
+          {
+            tags: { deviceId },
+            meta: { frameAgeMs, maxFrameAgeMs: OVERLAY_MAX_FRAME_AGE_MS },
+          },
+        )
       }
-      return
     }
     this.ctx.eventBus.emit({
       id: `pa-${randomUUID()}`,
@@ -8281,7 +8284,9 @@ export default class PipelineAnalyticsAddon
         timestamp: result.timestamp,
         frameWidth: result.frameWidth,
         frameHeight: result.frameHeight,
-        detections: overlayDetections,
+        // A stale frame still carries presence (`hasLiveTrack` drives the session
+        // hold) but draws no boxes; the overlay ignores an empty list.
+        detections: frameIsStale ? [] : overlayDetections,
         hasLiveTrack,
         // The tracker's own count, still subjects included — what the close
         // line reports as `liveTracks` (D652). Decides nothing.

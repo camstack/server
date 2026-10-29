@@ -255,23 +255,29 @@ describe('pipeline-analytics — the overlay event skips replayed (stale) frames
     vi.useRealTimers()
   })
 
-  it('emits for a fresh frame and not for a pre-roll frame older than OVERLAY_MAX_FRAME_AGE_MS', async () => {
+  it('withholds boxes of a pre-roll frame older than OVERLAY_MAX_FRAME_AGE_MS but keeps presence; a fresh frame carries boxes', async () => {
     booted = await boot()
     const { bus } = booted
-    const emitted = (): number =>
-      bus.captured.filter((e) => e.category === EventCategory.PipelineAnalyticsFrameTracked).length
+    const frames = (): readonly { detections?: readonly unknown[]; hasLiveTrack?: boolean }[] =>
+      bus.captured
+        .filter((e) => e.category === EventCategory.PipelineAnalyticsFrameTracked)
+        .map((e) => e.data as { detections?: readonly unknown[]; hasLiveTrack?: boolean })
 
     // A GOP pre-roll replay: frames 5 s old reach the tracker on session start.
-    for (const t of [95_000, 95_100, 95_200]) {
+    for (const t of [95_000, 95_100, 95_200, 95_300]) {
       emit(bus.bus, t, [detection('p1')])
       await flush()
     }
-    expect(emitted()).toBe(0)
+    const stale = frames()
+    expect(stale).toHaveLength(4)
+    expect(stale.every((f) => f.detections?.length === 0)).toBe(true)
+    expect(stale.at(-1)?.hasLiveTrack).toBe(true)
 
     // A live frame (age 0) is overlaid.
     emit(bus.bus, 100_000, [detection('p1')])
     await flush()
-    expect(emitted()).toBe(1)
+    const last = frames().at(-1)
+    expect(last?.detections?.length).toBeGreaterThan(0)
   })
 })
 
