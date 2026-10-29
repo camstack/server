@@ -1,6 +1,6 @@
 ---
 description: CamStack admin UI / ui-library / addon page rules (AdminPage, AdminTabs, IntegrationHub, DataTable, Dialog, theme tokens)
-globs: packages/addon-admin-ui/src/**, packages/ui-library/src/**, packages/addon-agent-ui/src/**, packages/addon-pipeline-orchestrator/src/widgets/**, packages/addon-pipeline/src/stream-broker/widgets/**, packages/addon-post-analysis/src/pipeline-analytics/widgets/**, packages/addon-benchmark/src/**, packages/addon-import-alexa/src/**, packages/addon-model-studio/src/**, packages/addon-osd-manager/src/**, packages/addon-training/src/**, packages/addon-*/src/**/*.tsx
+globs: packages/addon-admin-ui/src/**, packages/ui-library/src/**, packages/addon-agent-ui/src/**, packages/addon-pipeline-orchestrator/src/widgets/**, packages/addon-pipeline/src/stream-broker/widgets/**, packages/addon-post-analysis/src/pipeline-analytics/widgets/**, packages/addon-benchmark/src/**, packages/addon-model-studio/src/**, packages/addon-osd-manager/src/**, packages/addon-training/src/**, packages/addon-*/src/**/*.tsx
 alwaysApply: false
 ---
 <!-- Written by `npx tsx scripts/skills/gen-skill-pointers.ts` — a pointer, not a copy. The rules live in the skills below and in docs/ui/. -->
