@@ -35,6 +35,21 @@ tree. A commit only on your machine is silently absent from the publish:
 git log --oneline origin/main..HEAD    # MUST be empty before triggering
 ```
 
+**Check the changelogs exactly as CI will.** The job's first gate refuses
+any package changed since the newest `publish-*` tag ON ORIGIN without an
+`[Unreleased]` line. The gate fetches origin's tags itself before choosing
+its base; run it right before dispatching, and add the missing lines:
+
+```bash
+npx tsx scripts/check-changelog-unreleased.ts      # must print ✔
+npm run changelog:add -- <package> "<operator line>" --type changed
+```
+
+Two ways a line goes missing unseen: a changelog hunk cherry-picked across a
+publish lands under the released version instead of `[Unreleased]` (read the
+head of the file), and a bundle that changes without code (the viewer bundle
+in the orchestrator — `ship-viewer.mjs` now writes that line itself).
+
 **Sync the lockfile.** The job runs `npm ci`, which fails with `EUSAGE` /
 `Missing: … from lock file` whenever a new workspace package or a dependency
 bump is not in the root `package-lock.json` (the log tail is a long `npm help

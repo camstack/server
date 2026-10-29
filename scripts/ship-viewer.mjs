@@ -212,7 +212,18 @@ if (!served) {
 
 // ── 6. pin ──────────────────────────────────────────────────────────────────
 say('pin del submodule…')
-run('git', ['add', 'camstack', 'packages/addon-pipeline-orchestrator/assets/viewer'], ROOT)
+// The orchestrator carries the bundle, so the next publish refuses it without an
+// [Unreleased] line (check-changelog-unreleased); record one with the pin.
+run(
+  'npm',
+  ['run', '-s', 'changelog:add', '--', 'addon-pipeline-orchestrator', `Serves viewer ${shipped}`, '--type', 'changed'],
+  ROOT,
+)
+run(
+  'git',
+  ['add', 'camstack', 'packages/addon-pipeline-orchestrator/assets/viewer', 'packages/addon-pipeline-orchestrator/CHANGELOG.md'],
+  ROOT,
+)
 run('git', ['commit', '--no-verify', '-m', `chore(viewer): pin ${shipped}`], ROOT)
 run('git', ['push', 'origin', 'HEAD'], ROOT)
 

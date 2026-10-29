@@ -95,7 +95,27 @@ function argValue(flag: string): string | undefined {
   return index === -1 ? undefined : process.argv[index + 1]
 }
 
+/**
+ * CI compares against the newest `publish-*` tag on origin. A clone that has
+ * not fetched the last publish's tag would grade against an older base and
+ * pass a change CI then refuses, so fetch the tags first (best effort: an
+ * offline run keeps the local tags and says so).
+ */
+function fetchPublishTags(): void {
+  try {
+    execFileSync('git', ['fetch', '--quiet', '--tags', 'origin'], {
+      stdio: 'ignore',
+      timeout: 30_000,
+    })
+  } catch {
+    console.log(
+      '⚠ changelog: could not fetch publish tags from origin — grading against local tags',
+    )
+  }
+}
+
 function main(): number {
+  if (argValue('--base') === undefined) fetchPublishTags()
   const base =
     argValue('--base') ??
     git('tag', '--list', 'publish-*', '--sort=-creatordate').split('\n')[0]?.trim()
