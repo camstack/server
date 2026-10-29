@@ -26,13 +26,12 @@ import {
   writeFeederConsumables,
 } from '../petkit-feeder-consumables.js'
 import { petkitConnections } from '../petkit-gateway.js'
+import { PollCadence } from '../petkit-poll-cadence.js'
 import { petkitSession } from '../petkit-session.js'
 
 const PET_FEEDER_CAP = 'pet-feeder'
 /** How long a slice stays "fresh" before a read triggers a re-poll. */
 const STALE_MS = 15_000
-/** Fallback per-feeder poll cadence (PetKit has no push channel). */
-const DEFAULT_POLL_MS = 30_000
 
 /** Read a nested object out of a loose record, or null when absent. */
 function nestedObject(
@@ -154,8 +153,8 @@ export function extractFeederReading(feeder: FeederDevice): FeederReading {
  * container / accessory children) and maps the live `@apocaliss92/nodepetkit`
  * `FeederDevice` handle → the cap slice.
  *
- * PetKit exposes no push channel, so the device polls its handle on a cadence
- * and eagerly after every command; reads that find a stale slice trigger a poll
+ * PetKit exposes no usable push channel, so the device polls its handle on an
+ * adaptive cadence (`PollCadence`) and eagerly after every command; reads that find a stale slice trigger a poll
  * too (withhold-until-ready: the slice stays cold-start until the first poll
  * lands). Commands route to the handle: `feed` → `feed(grams | {hopper1,
  * hopper2})`, `cancelFeed`/`resetDesiccant`/`markFoodReplenished`/`callPet`/
@@ -169,7 +168,9 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
   private readonly integrationId: string
   private readonly dualHopper: boolean
   private surfaceUnsub: (() => void) | null = null
-  private pollTimer: ReturnType<typeof setInterval> | null = null
+  private pollTimer: ReturnType<typeof setTimeout> | null = null
+  private removed = false
+  private readonly cadence = new PollCadence()
   private bowlSourceLogged = false
 
   constructor(ctx: DeviceContext) {
@@ -230,15 +231,24 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     this.surfaceUnsub = petkitConnections.onSurface(this.integrationId, () => {
       void this.refreshFromCloud()
     })
-    this.pollTimer = setInterval(() => {
-      void this.refreshFromCloud()
-    }, DEFAULT_POLL_MS)
+    this.scheduleNextPoll()
     void this.refreshFromCloud()
   }
 
+  /** Arm the next poll at the adaptive cadence (fast while active, slow idle, backed off on failures). */
+  private scheduleNextPoll(): void {
+    if (this.removed) return
+    if (this.pollTimer !== null) clearTimeout(this.pollTimer)
+    this.pollTimer = setTimeout(() => {
+      this.pollTimer = null
+      void this.refreshFromCloud().finally(() => this.scheduleNextPoll())
+    }, this.cadence.nextDelay(Date.now()))
+  }
+
   override async removeDevice(): Promise<void> {
+    this.removed = true
     if (this.pollTimer !== null) {
-      clearInterval(this.pollTimer)
+      clearTimeout(this.pollTimer)
       this.pollTimer = null
     }
     if (this.surfaceUnsub !== null) {
@@ -258,6 +268,7 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     try {
       await handle.refresh()
     } catch (err: unknown) {
+      this.cadence.noteFailure()
       // A session the cloud ended (kicked, expired) is an integration-level fact:
       // report it once per integration, never per feeder.
       petkitSession.failure(this.integrationId, err)
@@ -269,13 +280,32 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
       return
     }
     void petkitSession.ok(this.integrationId)
+    this.cadence.noteSuccess()
     const reading = extractFeederReading(handle)
     this.logBowlSourceOnce(handle)
     const now = Date.now()
+    this.observeCadence(reading, now)
     const status = mapFeederToStatus(reading, now, this.lastFeed())
     this.runtimeState.setCapState(PET_FEEDER_CAP, status)
     writeFeederConsumables(this.runtimeState, status, now)
     this.markOnline(reading.online)
+  }
+
+  /** Feed the cadence from a reading and log a bowl weight change, so a cloud lag can be proven later. */
+  private observeCadence(reading: FeederReading, now: number): void {
+    if (reading.feeding || reading.eating) this.cadence.noteActivity(now)
+    const change = this.cadence.noteBowl(now, reading.bowl)
+    if (change === undefined) return
+    this.ctx.logger.debug('petkit feeder: bowl weight changed', {
+      tags: { deviceId: this.id },
+      meta: {
+        petkitDeviceId: this.petkitDeviceId,
+        fromGrams: change.from,
+        toGrams: reading.bowl,
+        source: 'poll',
+        cadence: this.cadence.fastReason(now) ?? 'idle',
+      },
+    })
   }
 
   /** One line per device per process: which wire key fed the bowl (a warning when it is unusable). */
@@ -297,6 +327,7 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
 
   /** Trigger a poll when the slice is missing or older than {@link STALE_MS}. */
   private async ensureFresh(): Promise<void> {
+    this.cadence.noteRead(Date.now())
     const slice = this.runtimeState.getCapState<PetFeederStatus>(PET_FEEDER_CAP)
     const fetchedAt = slice?.lastFetchedAt ?? 0
     if (!slice || Date.now() - fetchedAt > STALE_MS) await this.refreshFromCloud()
@@ -364,7 +395,9 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
         } else {
           throw new Error('petkit feed: one of grams / hopper1 / hopper2 is required')
         }
+        this.cadence.noteActivity(Date.now())
         await this.refreshFromCloud()
+        this.scheduleNextPoll()
       },
       cancelFeed: async () => {
         await this.requireHandle().cancelFeed()

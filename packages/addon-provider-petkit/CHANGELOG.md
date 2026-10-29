@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The PetKit feeder now polls every 10 s while a feed, eating or a bowl change is in progress (30 s otherwise, backing off on errors), so the bowl weight no longer lags minutes behind the app.
+
 ## [0.2.154] - 2026-10-29
 
 ### Changed
