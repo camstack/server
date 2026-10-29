@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generated hooks for the remote-layout-components capability
+
 ## [1.2.353] - 2026-10-29
 
 ### Changed
