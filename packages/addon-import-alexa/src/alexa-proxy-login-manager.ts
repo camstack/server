@@ -12,6 +12,7 @@ import {
   type AlexaProxyLoginStatus,
 } from './alexa-proxy-login.js'
 import { ALEXA_PROXY_LOOPBACK_HOST } from './alexa-proxy-login.js'
+import { describeUrlParams, formatUrlParams } from './alexa-url-params.js'
 
 /**
  * Owns the live interactive proxy-login sessions for the addon. One session at a
@@ -109,6 +110,20 @@ export class AlexaProxyLoginManager {
     this.#captureWaitMs = deps.captureWaitMs ?? CAPTURE_WAIT_MS
   }
 
+  /** One value-free line per upstream hop the hub login proxy sees (names only). */
+  #traceHop(sessionId: string, view: LoginProxyResponseView): void {
+    const url = describeUrlParams(view.url)
+    const landing = url.path.endsWith('/ap/maplanding') ? ' maplanding' : ''
+    const location =
+      view.location === null
+        ? 'none'
+        : `${describeUrlParams(view.location).path} ${formatUrlParams(view.location)}`
+    this.#logger.info(
+      `[alexa-login-trace] hub-hop${landing} status=${view.status} url=${url.path} ${formatUrlParams(view.url)} location=${location}`,
+      { meta: { sessionId } },
+    )
+  }
+
   /**
    * Start a fresh proxy-login. Cancels any in-flight session first (single
    * fixed port). Returns the `loginUrl` for the onboarding UI to open.
@@ -128,7 +143,10 @@ export class AlexaProxyLoginManager {
       attemptId: sessionId,
       expiresAtMs: Date.now() + ATTEMPT_TTL_MS,
       upstreams: [{ host: upstreamHost, scheme: 'http' }],
-      terminal: cookieSuccessTerminal,
+      terminal: (view) => {
+        this.#traceHop(sessionId, view)
+        return cookieSuccessTerminal(view)
+      },
       onDone: async (end) => {
         if (end === 'no_authorization_code') {
           this.#logger.warn(
@@ -137,7 +155,11 @@ export class AlexaProxyLoginManager {
               meta: { sessionId },
             },
           )
-          return { status: 'error', addonId: ADDON_ID, reason: 'no_authorization_code' }
+          return {
+            status: 'error',
+            addonId: ADDON_ID,
+            reason: 'no_authorization_code',
+          }
         }
         const captured = await this.#session?.whenCaptured(this.#captureWaitMs)
         return captured === true

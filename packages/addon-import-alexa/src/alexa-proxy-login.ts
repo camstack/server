@@ -172,7 +172,7 @@ export class AlexaProxyLoginSession {
           // cookie header and would otherwise vanish whole).
           const trace = sanitizeProxyTraceLine(line)
           if (trace !== null) {
-            this.#logger.info(`alexa proxy-login: ${trace}`, {
+            this.#logger.info(`[alexa-login-trace] ${trace}`, {
               meta: { sessionId: this.#opts.sessionId },
             })
             return
@@ -258,7 +258,10 @@ export class AlexaProxyLoginSession {
       if (this.#phase === 'starting') {
         this.#phase = 'awaiting-login'
         this.#logger.info('alexa proxy-login: proxy ready — awaiting Amazon login', {
-          meta: { sessionId: this.#opts.sessionId, amazonDomain: this.#opts.amazonDomain },
+          meta: {
+            sessionId: this.#opts.sessionId,
+            amazonDomain: this.#opts.amazonDomain,
+          },
         })
       }
       return
