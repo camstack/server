@@ -10,7 +10,9 @@
 
 import { formatUrlParams } from './alexa-url-params.js'
 
-const ROUTER_RE = /^Router: (\S+) \/ ([A-Z]+) \//
+const ROUTER_RE = /^Router: (\S+) \/ ([A-Z]+) \/ (.*)$/
+const INITIAL_REQUEST_RE = /^Alexa-Cookie: Initial Page Request: (\S+)$/
+const USER_AGENT_RE = /"user-agent":"([^"]*)"/i
 const PROXY_REQUEST_RE = /^Alexa-Cookie: Proxy-Request: ([A-Z]+) (\S+)$/
 const PROXY_RESPONSE_RE = /^Alexa-Cookie: Proxy Response from Host: (\S+)$/
 const REDIRECT_ORIGINAL_RE = /^Redirect: Original Location ----> (\S+)$/
@@ -27,9 +29,23 @@ function withParams(target: string): string {
   return `${stripQuery(target)} ${formatUrlParams(target)}`
 }
 
+/** Browser family of the header block's user-agent; the string itself is never kept. */
+function userAgentFamily(headers: string): string {
+  const ua = USER_AGENT_RE.exec(headers)?.[1]
+  if (ua === undefined) return 'none'
+  if (/CriOS|Chrome|Chromium|Edg\//.test(ua)) return 'chrome'
+  if (/Firefox|FxiOS/.test(ua)) return 'firefox'
+  if (/Safari/.test(ua)) return 'safari'
+  return 'other'
+}
+
 export function sanitizeProxyTraceLine(line: string): string | null {
   const router = ROUTER_RE.exec(line)
-  if (router !== null) return `router ${router[2]} ${withParams(router[1] ?? '')}`
+  if (router !== null) {
+    return `router ${router[2]} ${withParams(router[1] ?? '')} ua=${userAgentFamily(router[3] ?? '')}`
+  }
+  const initial = INITIAL_REQUEST_RE.exec(line)
+  if (initial !== null) return `initial-request ${withParams(initial[1] ?? '')}`
   const request = PROXY_REQUEST_RE.exec(line)
   if (request !== null) return `proxy-request ${request[1]} ${withParams(request[2] ?? '')}`
   const response = PROXY_RESPONSE_RE.exec(line)

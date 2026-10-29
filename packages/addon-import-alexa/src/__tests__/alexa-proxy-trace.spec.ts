@@ -6,7 +6,7 @@ describe('sanitizeProxyTraceLine', () => {
     const line =
       'Router: /ax/claim?arb=SECRETARB&openid.return_to=https://www.amazon.com/ap/maplanding / POST / {"cookie":"session-id=abc","host":"127.0.0.1:3456"}'
     expect(sanitizeProxyTraceLine(line)).toBe(
-      'router POST /ax/claim names=[arb,openid.return_to] oa2=false return_to=true assoc_handle=false mode=false',
+      'router POST /ax/claim names=[arb,openid.return_to] oa2=false return_to=true assoc_handle=false mode=false ua=none',
     )
   })
 
@@ -54,6 +54,25 @@ describe('sanitizeProxyTraceLine', () => {
     )
     expect(out).toContain('oa2=true')
     expect(out).not.toContain('SECRET')
+  })
+
+  it('traces the initial outgoing sign-in request: path, names, oa2 flag, never values', () => {
+    const out = sanitizeProxyTraceLine(
+      'Alexa-Cookie: Initial Page Request: https://www.amazon.it/ap/signin?openid.assoc_handle=amzn_dp_project_dee_iosit&openid.oa2.client_id=device%3ASECRETID&openid.oa2.code_challenge=SECRETCH&openid.mode=checkid_setup&language=it_IT',
+    )
+    expect(out).toBe(
+      'initial-request https://www.amazon.it/ap/signin names=[language,openid.assoc_handle,openid.mode,openid.oa2.client_id,openid.oa2.code_challenge] oa2=true return_to=false assoc_handle=true mode=true',
+    )
+    expect(out).not.toContain('SECRET')
+  })
+
+  it('adds the user-agent family to a Router line, not the agent string', () => {
+    const out = sanitizeProxyTraceLine(
+      'Router: /ap/signin / GET / {"user-agent":"Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15","cookie":"a=b"}',
+    )
+    expect(out).toContain('ua=safari')
+    expect(out).not.toContain('Mozilla')
+    expect(out).not.toContain('a=b')
   })
 
   it('returns null for any other line', () => {
