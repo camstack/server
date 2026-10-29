@@ -23,9 +23,16 @@ import {
 } from '../capabilities/notification-output.cap.js'
 import type { z } from 'zod'
 
+/** What an exporter needs to know about an action to offer it. */
+export interface ExportableAction {
+  readonly id: string
+  readonly name: string
+}
+
 /** The slice of `ctx.api` the exporters use for non-device entities. */
 export interface ExportEntityApi {
   readonly actions: {
+    readonly list: { query(input?: Record<string, never>): Promise<readonly ExportableAction[]> }
     readonly run: {
       mutate(input: { readonly actionId: string }): Promise<ActionRunResult>
     }

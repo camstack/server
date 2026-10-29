@@ -2302,10 +2302,10 @@
 | listExposedDevices | `deviceExport.listExposedDevices` | query | protected | `void` | `ExposedDeviceSchema[]` |
 | exposeDevice | `deviceExport.exposeDevice` | mutation | admin | `DeviceExportExposeInputSchema` | `void` |
 | unexposeDevice | `deviceExport.unexposeDevice` | mutation | admin | `DeviceExportUnexposeInputSchema` | `void` |
-| listSupportedEntityKinds | `deviceExport.listSupportedEntityKinds` | query | protected | `void` | `("device" \| "action" \| "notifier")[]` |
-| listExposedEntities | `deviceExport.listExposedEntities` | query | protected | `void` | `({ entity: { kind: "device"; deviceId: string } \| { kind: "action"; actionId: string } \| { kind: "notifier"; targetId: string }; exposedAs?: string })[]` |
-| exposeEntity | `deviceExport.exposeEntity` | mutation | admin | `{ entity: { kind: "device"; deviceId: string } \| { kind: "action"; actionId: string } \| { kind: "notifier"; targetId: string } }` | `void` |
-| unexposeEntity | `deviceExport.unexposeEntity` | mutation | admin | `{ entity: { kind: "device"; deviceId: string } \| { kind: "action"; actionId: string } \| { kind: "notifier"; targetId: string } }` | `void` |
+| listSupportedEntityKinds | `deviceExport.listSupportedEntityKinds` | query | protected | `void` | `ExportEntityKindSchema[]` |
+| listExposedEntities | `deviceExport.listExposedEntities` | query | protected | `void` | `ExposedEntitySchema[]` |
+| exposeEntity | `deviceExport.exposeEntity` | mutation | admin | `ExposeEntityInputSchema` | `void` |
+| unexposeEntity | `deviceExport.unexposeEntity` | mutation | admin | `UnexposeEntityInputSchema` | `void` |
 
 ### `device-extension` → `deviceExtension.*`
 

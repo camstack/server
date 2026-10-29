@@ -509,10 +509,20 @@ export {
   ListCandidatesOutputSchema as AdoptionListCandidatesOutputSchema,
   ReleaseInputSchema as AdoptionReleaseInputSchema,
 } from './device-adoption.cap.js'
-export type { IDeviceExportProvider } from './device-export.cap.js'
+export type {
+  ExportEntityKind,
+  ExportEntityRef,
+  ExposedEntity,
+  IDeviceExportProvider,
+} from './device-export.cap.js'
 export {
   DeviceExportStatusSchema,
   deviceExportCapability,
+  ExportEntityKindSchema,
+  ExportEntityRefSchema,
+  ExposedEntitySchema,
+  ExposeEntityInputSchema,
+  UnexposeEntityInputSchema,
   ExportSetupFieldSchema,
   ExportSetupSchema,
   ExposedDeviceSchema,

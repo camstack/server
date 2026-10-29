@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7372 source files · 208 units claimed by at least one document (7334 files).**
+**220 units · 7374 source files · 208 units claimed by at least one document (7336 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -128,6 +128,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/deps` | 10 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `architecture/windows-agent.md`, +3 more | 2026-10-24 |
 | `e2e` | 9 | `tooling` | — | — |
 | `packages/addon-decoder-nodeav` | 9 | `audio`, `decode-and-data-planes` | `decisions/adr-0281-a-talk-frame-at-the-wrong-rate-is-converted-by-the-codec-cap-or-refused-loudly.md`, `decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md` | — |
+| `packages/addon-export-hap` | 9 | `ecosystem-exports` | `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +4 more, 1 ADR | 2026-09-29 |
 | `packages/addon-pipeline/src/audio-analyzer` | 9 | `audio` | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0461-the-analyzer-pulls-its-own-audio-and-the-broker-reaps-a-queue-nobody-drains.md`, +4 more | 2026-10-02 |
 | `packages/addon-pipeline/src/shared` | 9 | `decode-and-data-planes` | `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0199-a-model-choice-has-a-scope-and-a-scope-change-has-a-workflow.md`, `decisions/adr-0236-the-electron-bundle-seeds-addons-from-its-own-closure.md`, +2 more | — |
 | `packages/addon-provider-rademacher` | 9 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
@@ -137,7 +138,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/theme` | 9 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +2 more | 2026-10-26 |
 | `packages/addon-tailscale` | 8 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
 | `packages/types/src/auth` | 8 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0801-a-native-account-link-returns-to-the-app-and-is-claimed-with-the-apps-own-session.md`, `decisions/adr-0810-an-sso-login-bridge-is-single-use-and-bound-to-the-browser-that-started-the-sign-in.md`, +5 more, 1 ADR | — |
-| `packages/addon-export-hap` | 7 | `ecosystem-exports` | `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, `design/ecosystem-export-plan.md` _(covers)_, +4 more, 1 ADR | 2026-09-29 |
 | `packages/addon-model-studio/src/plugin-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-model-studio/src/plus-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0214-step-settings-are-model-scoped.md`, +1 more | — |
 | `packages/types/src/units` | 7 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |

@@ -66,6 +66,7 @@ import {
   publishStandalone,
   unpublishAccessory,
 } from './accessory-publisher.js'
+import { type ActionExportEntry, ActionExports } from './action-exports.js'
 import { BridgeHost } from './bridge-host.js'
 import { shouldBridge } from './bridge-policy.js'
 import { carryForward } from './exposed-entry.js'
@@ -401,6 +402,12 @@ interface ExportHapConfig {
    * `exposeDevice` / `unexposeDevice` methods only.
    */
   readonly exposed: readonly ExposedConfigEntry[]
+  /**
+   * Operator-curated list of ACTIONS published as momentary switches (D967).
+   * Actions are list entries, not devices (D954): this is a list of its own,
+   * managed by `exposeEntity` / `unexposeEntity` only.
+   */
+  readonly exposedActions: readonly ActionExportEntry[]
   /** Durable per-device export sync state — the Phase-C reconciler cache.
    *  Key = `String(deviceId)`, value = the device's export fingerprint at last
    *  attach. Drives `diffExportTargets`: an unchanged restart hashes to the same
@@ -420,6 +427,7 @@ const DEFAULT_CONFIG: ExportHapConfig = {
   clipRetentionDays: DEFAULT_CLIP_RETENTION_DAYS,
   identity: EMPTY_IDENTITY,
   exposed: [],
+  exposedActions: [],
   exportSyncState: {},
 }
 
@@ -489,6 +497,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   /** The bridge setup code pairs a controller: a credential, kept in the keychain (D787). */
   protected override readonly secretStatePaths = ['identity.pincode']
   private readonly exposed = new Map<string, Mapper>()
+  /** The exported actions — switches beside the devices (D967). */
+  private actionExports: ActionExports | null = null
   private lastError: string | undefined
   /** Shared HAP setup code applied to every published accessory. */
   private pincode = ''
@@ -665,7 +675,37 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       }
     }
 
+    this.actionExports = new ActionExports(
+      {
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        publish: async (accessory) => {
+          const bridged = this.bridgeHost !== null && (await this.bridgeHost.add(accessory))
+          if (bridged) return
+          await publishStandalone(accessory, {
+            pincode: this.pincode,
+            port: 0,
+            bind: this.bind,
+            logger: this.ctx.logger,
+          })
+        },
+        unpublish: async (accessory) => {
+          if (this.bridgeHost?.holds(accessory) === true) {
+            this.bridgeHost.remove(accessory)
+            return
+          }
+          await unpublishAccessory(accessory, this.ctx.logger)
+        },
+        persist: (entries) => this.updateGlobalSettings({ exposedActions: [...entries] }),
+      },
+      this.config.exposedActions ?? [],
+    )
+    await this.actionExports.attachAll()
+    // The operator may have deleted an action while this addon was down.
+    await this.actionExports.reconcile()
+
     this.ctx.addDisposer(async () => {
+      await this.actionExports?.dispose()
       await this.detachAll()
       // The bridge goes down with the process, and only with the process: it is
       // never unpublished while the addon runs, because an unpublish drops the
@@ -724,6 +764,28 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         }),
       exposeDevice: async ({ deviceId, capabilities }) => this.exposeDevice(deviceId, capabilities),
       unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
+      // ── Entities beside devices (D967): actions only, as momentary switches.
+      listSupportedEntityKinds: async () => ['device', 'action'],
+      listExposedEntities: async () => {
+        await this.actionExports?.reconcile()
+        return [
+          ...Array.from(this.exposed.entries()).map(([deviceId, m]) => ({
+            entity: { kind: 'device' as const, deviceId },
+            exposedAs: m.accessory.displayName,
+          })),
+          ...(this.actionExports?.list() ?? []),
+        ]
+      },
+      exposeEntity: async ({ entity }) => {
+        if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
+        if (entity.kind === 'action') return this.requireActionExports().expose(entity.actionId)
+        throw new Error('export-hap: a notification target cannot be exported to HomeKit')
+      },
+      unexposeEntity: async ({ entity }) => {
+        if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
+        if (entity.kind === 'action') return this.requireActionExports().unexpose(entity.actionId)
+        throw new Error('export-hap: a notification target cannot be exported to HomeKit')
+      },
       // ── DeviceSettingsContribution surface ─────────────────────────
       getDeviceSettingsContribution: (input) =>
         this.buildDeviceSettingsContribution(input.deviceId),
@@ -1081,6 +1143,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           meta: { error: errMsg(err) },
         })
     })
+  }
+
+  private requireActionExports(): ActionExports {
+    if (this.actionExports === null) throw new Error('export-hap: addon is not initialised')
+    return this.actionExports
   }
 
   private async detachAll(): Promise<void> {

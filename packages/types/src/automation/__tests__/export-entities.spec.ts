@@ -32,6 +32,7 @@ function makeApi(overrides: {
 }): ExportEntityApi {
   return {
     actions: {
+      list: { query: async () => [] },
       run: {
         mutate: overrides.run ?? (async () => ({ runId: 'r1', outcome: 'started' as const })),
       },

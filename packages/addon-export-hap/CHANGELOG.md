@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeKit export can now expose an Action as a momentary switch that runs it and turns itself off after a second.
+
 ## [1.2.185] - 2026-10-28
 
 ### Changed
