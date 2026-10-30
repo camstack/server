@@ -1,15 +1,13 @@
+import { DeviceType, type DiscoveryHit } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
-  browseHomematicCcus,
-  HOMEMATIC_SETUP_INTEGRATION_KEY,
+  ccusFromHits,
+  HOMEMATIC_DISCOVERY_MODES,
   homematicDiscoveryCandidates,
   homematicDiscoverySummary,
-  lanHostsToProbe,
   parseAuthEnabledAnswer,
   proposeHomematicCcus,
-  type DiscoveryPost,
   type HomematicDiscoveredCcu,
-  type LanAddress,
 } from '../homematic-ccu-discovery.js'
 
 const ok = (result: unknown) => JSON.stringify({ result, error: null })
@@ -39,86 +37,48 @@ describe('parseAuthEnabledAnswer', () => {
   })
 })
 
-const addr = (address: string, over: Partial<LanAddress> = {}): LanAddress => ({
-  family: 'IPv4',
-  address,
-  internal: false,
-  ...over,
-})
-
-describe('lanHostsToProbe', () => {
-  it('walks the /24 of every external IPv4 address, skipping this host', () => {
-    const hosts = lanHostsToProbe([addr('192.168.1.20')])
-    expect(hosts).toHaveLength(253)
-    expect(hosts).toContain('192.168.1.1')
-    expect(hosts).toContain('192.168.1.254')
-    expect(hosts).not.toContain('192.168.1.20')
-    expect(hosts).not.toContain('192.168.1.0')
-    expect(hosts).not.toContain('192.168.1.255')
-  })
-
-  it('skips loopback, IPv6 and a second address on a /24 already walked', () => {
-    const hosts = lanHostsToProbe([
-      addr('127.0.0.1', { internal: true }),
-      addr('fe80::1', { family: 'IPv6' }),
-      addr('192.168.1.20'),
-      addr('192.168.1.21'),
-      addr('10.0.5.9'),
-    ])
-    // 253 (first /24, the second address is still probed) + 253 for 10.0.5.0/24, deduplicated.
-    expect(new Set(hosts).size).toBe(hosts.length)
-    expect(hosts.filter((h) => h.startsWith('192.168.1.'))).toHaveLength(252)
-    expect(hosts.filter((h) => h.startsWith('10.0.5.'))).toHaveLength(253)
-    expect(hosts.some((h) => h.startsWith('127.'))).toBe(false)
-  })
-})
-
-describe('browseHomematicCcus', () => {
-  const lan = [addr('192.168.1.20')]
-
-  it('finds the CCU among silent hosts and names it after its address', async () => {
-    const post: DiscoveryPost = async (url) => {
-      if (url.startsWith('http://192.168.1.40/')) return { status: 200, text: ok(false) }
-      throw new Error('timeout')
-    }
-    const found = await browseHomematicCcus({ addresses: () => lan, post })
-    expect(found).toEqual([
-      {
-        host: '192.168.1.40',
-        name: 'Homematic CCU (192.168.1.40)',
-        id: '192-168-1-40',
-        authEnabled: false,
-      },
-    ])
-  })
-
-  it('ignores a host that answers HTTP but is not a CCU', async () => {
-    const post: DiscoveryPost = async () => ({ status: 200, text: '<html></html>' })
-    expect(await browseHomematicCcus({ addresses: () => lan, post })).toEqual([])
-  })
-
-  it('never has more probes in flight than the concurrency bound', async () => {
-    let inFlight = 0
-    let peak = 0
-    const post: DiscoveryPost = async () => {
-      inFlight += 1
-      peak = Math.max(peak, inFlight)
-      await new Promise((resolve) => setTimeout(resolve, 0))
-      inFlight -= 1
-      throw new Error('no answer')
-    }
-    await browseHomematicCcus({ addresses: () => lan, post, concurrency: 8 })
-    expect(peak).toBeLessThanOrEqual(8)
-    expect(peak).toBeGreaterThan(1)
-  })
-})
-
 const CCU: HomematicDiscoveredCcu = {
   host: '192.168.1.40',
   name: 'Homematic CCU (192.168.1.40)',
   id: '192-168-1-40',
   authEnabled: true,
 }
+
+function hit(host: string, status: number, bodyText: string): DiscoveryHit {
+  return { modeIndex: 0, host, port: 80, http: { status, headers: {}, bodyText } }
+}
+
+describe('declared mode', () => {
+  it('asks CCU.getAuthEnabled on the JSON-RPC endpoint', () => {
+    const [mode] = HOMEMATIC_DISCOVERY_MODES
+    expect(mode).toMatchObject({
+      kind: 'http-probe',
+      port: 80,
+      path: '/api/homematic.cgi',
+      method: 'POST',
+      contentType: 'application/json',
+    })
+    expect(mode?.kind === 'http-probe' ? JSON.parse(mode.bodyText ?? '{}') : null).toMatchObject({
+      method: 'CCU.getAuthEnabled',
+    })
+  })
+})
+
+describe('ccusFromHits', () => {
+  it('keeps the host whose answer is the CCU JSON-RPC one, named after its address', () => {
+    expect(ccusFromHits([hit('192.168.1.40', 200, ok(true))])).toEqual([CCU])
+  })
+
+  it('rejects a host that answers HTTP but is not a CCU', () => {
+    expect(
+      ccusFromHits([
+        hit('192.168.1.41', 200, '<html>router</html>'),
+        hit('192.168.1.42', 404, ok(true)),
+        { modeIndex: 0, host: '192.168.1.43', port: 80 },
+      ]),
+    ).toEqual([])
+  })
+})
 
 describe('proposal and candidate shape', () => {
   it('does not propose a CCU whose host is already on an integration', () => {
@@ -130,8 +90,10 @@ describe('proposal and candidate shape', () => {
     const [candidate] = homematicDiscoveryCandidates([CCU])
     expect(candidate).toEqual({
       stableId: 'homematic:192-168-1-40',
+      type: DeviceType.Gateway,
       suggestedName: 'Homematic CCU (192.168.1.40)',
-      prefilledConfig: { host: '192.168.1.40', [HOMEMATIC_SETUP_INTEGRATION_KEY]: true },
+      prefilledConfig: { host: '192.168.1.40' },
+      setupIntegration: true,
     })
   })
 

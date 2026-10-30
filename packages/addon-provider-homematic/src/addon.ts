@@ -9,6 +9,8 @@ import {
   type DeviceSummary,
   DeviceType,
   type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
@@ -26,8 +28,8 @@ import { isStandaloneEntitySaved } from './devices/hm-standalone-entity.js'
 import { HomematicGatewayDevice } from './devices/homematic-gateway-device.js'
 import { buildHmAdoptionProvider } from './homematic-adoption-provider.js'
 import {
-  browseHomematicCcus,
-  type HomematicDiscoveredCcu,
+  ccusFromHits,
+  HOMEMATIC_DISCOVERY_MODES,
   homematicDiscoveryCandidates,
   homematicDiscoverySummary,
   proposeHomematicCcus,
@@ -101,11 +103,15 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       customActions: homematicActions,
       actionHandlers: {
         discoverCcu: async () => {
-          const { proposals, summary } = await this.discoverCcus()
-          return {
-            hosts: proposals.map((found) => ({ host: found.host, name: found.name, id: found.id })),
-            summary,
-          }
+          const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
+            addonId: this.ctx.id,
+          })
+          const hosts = candidates.map((candidate) => ({
+            host: String(candidate.prefilledConfig['host'] ?? ''),
+            name: candidate.suggestedName,
+            id: candidate.stableId.replace(/^homematic:/, ''),
+          }))
+          return { hosts, summary: homematicDiscoverySummary(hosts.length, hosts.length) }
         },
       },
     }
@@ -155,19 +161,25 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     return false
   }
 
-  /** LAN scan for CCU3 / RaspberryMatic WebUIs over the local /24 networks of this (hub-only) addon's host. */
+  /** A CCU is found by the scan engine's http-probe; this addon classifies the hits. */
   override async supportsDiscovery(): Promise<boolean> {
     return true
   }
 
-  override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
-    const { proposals } = await this.discoverCcus()
-    return homematicDiscoveryCandidates(proposals).map((candidate) => ({
-      stableId: candidate.stableId,
-      type: DeviceType.Gateway,
-      suggestedName: candidate.suggestedName,
-      prefilledConfig: { ...candidate.prefilledConfig },
-    }))
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return HOMEMATIC_DISCOVERY_MODES
+  }
+
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    const found = ccusFromHits(input.hits)
+    const proposals = proposeHomematicCcus(found, await this.knownCcuHosts())
+    this.ctx.logger.info('Homematic CCU discovery finished', {
+      meta: { found: found.length, proposed: proposals.length },
+    })
+    return homematicDiscoveryCandidates(proposals)
   }
 
   override async adoptDiscoveredDevice(_input: {
@@ -185,23 +197,6 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     _config: Record<string, unknown>,
   ): Promise<CreateDeviceSpec> {
     throw new Error('Homematic devices are adopted from the integration, not created manually')
-  }
-
-  private async discoverCcus(): Promise<{
-    readonly proposals: readonly HomematicDiscoveredCcu[]
-    readonly summary: string
-  }> {
-    let found: readonly HomematicDiscoveredCcu[] = []
-    try {
-      found = await browseHomematicCcus()
-    } catch (err) {
-      this.ctx.logger.warn('Homematic CCU discovery failed', { meta: { error: errMsg(err) } })
-    }
-    const proposals = proposeHomematicCcus(found, await this.knownCcuHosts())
-    this.ctx.logger.info('Homematic CCU discovery finished', {
-      meta: { found: found.length, proposed: proposals.length },
-    })
-    return { proposals, summary: homematicDiscoverySummary(found.length, proposals.length) }
   }
 
   private async knownCcuHosts(): Promise<readonly string[]> {
