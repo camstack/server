@@ -123,7 +123,21 @@ export async function readIntegrationSettings(
   // a marker becomes its "set" view, and so does a suspect plaintext.
   const out: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(stored)) {
-    out[key] = isSecretMarker(value) || suspects.has(key) ? toSecretFieldView(value) : value
+    out[key] = suspects.has(key) ? toSecretFieldView(value) : toFormView(value)
   }
   return out
+}
+
+/**
+ * A marker anywhere in a stored value becomes its "set" view: a secret inside
+ * an array row (`boards[id].encryptionKey`) is stored as a marker in the row,
+ * and the admin form must not receive the marker itself.
+ */
+function toFormView(value: unknown): unknown {
+  if (isSecretMarker(value)) return toSecretFieldView(value)
+  if (Array.isArray(value)) return value.map(toFormView)
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, toFormView(v)]))
+  }
+  return value
 }

@@ -68,12 +68,6 @@ export function collectSecretConfigKeys(schema: unknown): ReadonlySet<string> {
   return keys
 }
 
-/**
- * Every top-level config key whose value the KEYCHAIN stores (D787) —
- * {@link collectSecretConfigKeys} minus `storage: 'inline'` and minus JSON
- * blobs (see {@link isKeychainStoredField}). What a form sends as
- * `secretKeys` so the owner's door knows which values to keep out of the blob.
- */
 /** Drop fields marked `omitFromSettings` before an integration settings write. */
 export function omitTransientConfig(
   schema: unknown,
@@ -109,6 +103,14 @@ function collectOmitted(field: unknown, out: Set<string>): void {
   }
 }
 
+/**
+ * Every config key whose value the KEYCHAIN stores (D787) —
+ * {@link collectSecretConfigKeys} minus `storage: 'inline'` and minus JSON
+ * blobs (see {@link isKeychainStoredField}). What a form sends as
+ * `secretKeys` so the owner's door knows which values to keep out of the blob.
+ * A secret inside an `editable-array` row is named by its id-addressed path
+ * (`boards[id].encryptionKey`).
+ */
 export function collectKeychainStoredKeys(schema: unknown): ReadonlySet<string> {
   const keys = new Set<string>()
   for (const section of sectionsOf(schema)) {
@@ -131,6 +133,19 @@ function walkKeychainField(field: unknown, out: Set<string>): void {
     key.length > 0
   ) {
     out.add(key)
+  }
+  if (type === 'editable-array' && typeof key === 'string' && key.length > 0) {
+    // A secret inside a row is addressed by the row's id field, never by index
+    // (`boards[id].encryptionKey`), so a reorder keeps every keychain ref.
+    const idKey = typeof field['itemIdKey'] === 'string' ? field['itemIdKey'] : 'id'
+    const itemFields = field['itemFields']
+    if (!Array.isArray(itemFields)) return
+    for (const item of itemFields) {
+      const members = new Set<string>()
+      walkKeychainField(item, members)
+      for (const member of members) out.add(`${key}[${idKey}].${member}`)
+    }
+    return
   }
   if (type === 'group') {
     for (const child of fieldsOf(field)) walkKeychainField(child, out)

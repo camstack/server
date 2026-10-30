@@ -136,4 +136,35 @@ describe('integration settings keychain door', () => {
     )
     expect(reported).toEqual(['password:coerced-marker', 'password:coerced-marker'])
   })
+  it('keeps an array row secret in the keychain by row id; owner reads the value, the form a view', async () => {
+    const w = world()
+    await writeIntegrationSettings(
+      { registry: w.registry, secrets: w.secrets },
+      {
+        integrationId: 'int_1',
+        settings: { boards: [{ id: 'b1', host: 'a.local', encryptionKey: 'KEY-ONE' }] },
+        secretKeys: ['boards[id].encryptionKey'],
+      },
+    )
+    const ref = 'secret://provider-wyze/integration/int_1/boards[b1].encryptionKey'
+    expect(JSON.stringify(w.table())).not.toContain('KEY-ONE')
+    expect(w.kc.get(ref)).toBe('KEY-ONE')
+    const owner = await readIntegrationSettings(
+      { registry: w.registry, secrets: w.secrets },
+      { integrationId: 'int_1', forOwner: true },
+    )
+    expect(owner['boards']).toEqual([{ id: 'b1', host: 'a.local', encryptionKey: 'KEY-ONE' }])
+    const form = await readIntegrationSettings(
+      { registry: w.registry, secrets: null },
+      {
+        integrationId: 'int_1',
+        forOwner: false,
+        secretKeys: new Set(['boards[id].encryptionKey']),
+      },
+    )
+    expect(JSON.stringify(form)).not.toContain('KEY-ONE')
+    expect(form['boards']).toEqual([
+      { id: 'b1', host: 'a.local', encryptionKey: { $secret: ref, v: 1, set: true } },
+    ])
+  })
 })
