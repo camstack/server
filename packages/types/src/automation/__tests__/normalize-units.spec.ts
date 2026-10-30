@@ -6,13 +6,13 @@ import {
   normalizeActionUnits,
   normalizeConditionUnits,
 } from '../normalize-units.js'
-import type { AutomationCondition, AutomationConditionLeaf, AutomationCapStep } from '../recipe.js'
+import type { AutomationCapStep, AutomationWhen, DeviceIsLeaf } from '../index.js'
 
 const resolver = capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
 
-function bowlLeaf(value: AutomationConditionLeaf['value'], unit?: string): AutomationCondition {
+function bowlLeaf(value: DeviceIsLeaf['value'], unit?: string): AutomationWhen {
   return {
-    kind: 'condition',
+    kind: 'device-is',
     deviceId: 7,
     cap: 'pet-feeder',
     fieldPath: 'bowlFood',
@@ -36,8 +36,8 @@ function feedStep(
   }
 }
 
-function leafOf(result: AutomationCondition): AutomationConditionLeaf {
-  if (result.kind !== 'condition') throw new Error('expected a leaf')
+function leafOf(result: AutomationWhen): DeviceIsLeaf {
+  if (result.kind !== 'device-is') throw new Error('expected a leaf')
   return result
 }
 
@@ -81,8 +81,8 @@ describe('normalizeConditionUnits', () => {
   })
 
   it('refuses a unit on a field that is not a quantity', () => {
-    const leaf: AutomationCondition = {
-      kind: 'condition',
+    const leaf: AutomationWhen = {
+      kind: 'device-is',
       deviceId: 7,
       cap: 'pet-feeder',
       fieldPath: 'errorCode',
@@ -113,8 +113,8 @@ describe('normalizeConditionUnits', () => {
   })
 
   it('leaves a non-quantity field alone, without a warning', () => {
-    const leaf: AutomationCondition = {
-      kind: 'condition',
+    const leaf: AutomationWhen = {
+      kind: 'device-is',
       deviceId: 7,
       cap: 'pet-feeder',
       fieldPath: 'errorCode',
@@ -127,7 +127,7 @@ describe('normalizeConditionUnits', () => {
   })
 
   it('walks all / any / not', () => {
-    const tree: AutomationCondition = {
+    const tree: AutomationWhen = {
       kind: 'all',
       children: [{ kind: 'not', child: bowlLeaf({ value: 10, unit: 'g' }) }],
     }

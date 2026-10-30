@@ -51,7 +51,7 @@ describe('triggers', () => {
     const g = generateAutomationBlock({
       name: 'x',
       recipe: {
-        triggers: [{ kind: 'device-event', category: 'doorbell.on-pressed', deviceId: 101 }],
+        when: { kind: 'device-event', category: 'doorbell.on-pressed', deviceId: 101 },
         actions: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' }],
       },
     })
@@ -63,16 +63,14 @@ describe('triggers', () => {
     const g = generateAutomationBlock({
       name: 'x',
       recipe: {
-        triggers: [
-          {
-            kind: 'device-state',
-            deviceId: 1023,
-            cap: 'alarm-panel',
-            fieldPath: 'state',
-            becomes: 'armed-away',
-            edge: true,
-          },
-        ],
+        when: {
+          kind: 'device-becomes',
+          deviceId: 1023,
+          cap: 'alarm-panel',
+          fieldPath: 'state',
+          becomes: 'armed-away',
+          edge: true,
+        },
         actions: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' }],
       },
     })
@@ -85,21 +83,22 @@ describe('triggers', () => {
   })
 })
 
-describe('conditions', () => {
+describe('state leaves', () => {
   it('reads memory only at fire time — a trigger never hangs on a fallible getCapSlice', () => {
     const exec = GEN.slice(
       GEN.indexOf('async function execute'),
       GEN.indexOf('async function run('),
     )
-    expect(exec).toContain('evaluateConditionTree(CONDITIONS, mirror')
+    expect(exec).toContain('evaluateWhenTree(WHEN, mirror')
     expect(exec).not.toContain('getCapSlice')
-    expect(GEN).toContain('new ConditionMirror(collectMirrorSources(CONDITIONS))')
+    expect(GEN).toContain('new ConditionMirror(MIRROR_SOURCES)')
+    expect(GEN).toContain('collectWhenMirrorSources(WHEN)')
   })
 
   it('keeps the mirror fresh: filled at start, updated by state-changed events, reconciled', () => {
     expect(GEN).toContain('EventCategory.DeviceStateChanged')
     expect(GEN).toContain('mirror.apply(')
-    expect(GEN).toContain('setInterval(() => { void refreshMirror() }, RECONCILE_MS)')
+    expect(GEN).toContain('void refreshMirror().then(evaluateStateTree)')
     expect(GEN).toContain('await refreshMirror()')
   })
 
@@ -140,7 +139,7 @@ describe('actions', () => {
     const g = generateAutomationBlock({
       name: 'x',
       recipe: {
-        triggers: [{ kind: 'device-event', category: 'motion.on-motion-changed' }],
+        when: { kind: 'device-event', category: 'motion.on-motion-changed' },
         actions: [{ kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' }],
       },
     })
@@ -152,7 +151,7 @@ describe('actions', () => {
     const g = generateAutomationBlock({
       name: 'x',
       recipe: {
-        triggers: [{ kind: 'manual' }],
+        when: { kind: 'manual' },
         actions: [
           {
             kind: 'cap',
@@ -165,7 +164,7 @@ describe('actions', () => {
       },
     })
     expect(g).toContain('for (const deviceId of [101,102])')
-    expect(g).toContain('actuate(deviceId, "lock-control", "lock"')
+    expect(g).toContain('actuate(scope, deviceId, "lock-control", "lock"')
   })
 })
 
@@ -173,10 +172,20 @@ describe('refusals', () => {
   it('refuses to generate from an out-of-bounds recipe', () => {
     const tooDeep: AutomationRecipe = {
       ...NIGHT_CLOSE_AND_ARM,
-      conditions: {
+      when: {
         kind: 'all',
         children: [
-          { kind: 'all', children: [{ kind: 'all', children: [{ kind: 'all', children: [] }] }] },
+          {
+            kind: 'all',
+            children: [
+              {
+                kind: 'all',
+                children: [
+                  { kind: 'all', children: [{ kind: 'all', children: [{ kind: 'manual' }] }] },
+                ],
+              },
+            ],
+          },
         ],
       },
     }

@@ -10,7 +10,14 @@ import { pathToFileURL } from 'node:url'
 import { build } from 'esbuild'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateAutomationBlock } from '../codegen.js'
-import type { AutomationRecipe } from '../recipe.js'
+import {
+  type AutomationRecipe,
+  AutomationRecipeSchema,
+  type LegacyAutomationRecipe,
+} from '../recipe.js'
+
+/** What a fixture may be written as: the new tree, or the old shape the schema converts. */
+type RecipeInput = LegacyAutomationRecipe | AutomationRecipe
 import {
   appendTrace,
   type AutomationRunTrace,
@@ -55,8 +62,8 @@ type BlockFn = (ctx: unknown) => () => void
 const workDir = mkdtempSync(path.join(tmpdir(), 'camstack-generated-block-'))
 let seq = 0
 
-async function load(recipe: AutomationRecipe, name = 'Test automation'): Promise<BlockFn> {
-  const source = generateAutomationBlock({ name, recipe })
+async function load(input: RecipeInput, name = 'Test automation'): Promise<BlockFn> {
+  const source = generateAutomationBlock({ name, recipe: AutomationRecipeSchema.parse(input) })
   const bundled = await build({
     stdin: { contents: source, loader: 'ts', resolveDir: HERE, sourcefile: 'generated.ts' },
     alias: { '@camstack/types': SHIM },
@@ -84,7 +91,7 @@ interface Options {
 
 function start(block: BlockFn, options: Options = {}): Harness {
   const logs: LogLine[] = []
-  const handlers: Array<{ category: string; handler: Handler }> = []
+  const handlers: Array<{ category: string; deviceId?: number; handler: Handler }> = []
   const ledger: Ledger = options.ledger ?? { doc: EMPTY_AUTOMATION_STATE }
   const reports: Array<Record<string, unknown>> = []
   const actionRuns: Array<Record<string, unknown>> = []
@@ -96,8 +103,8 @@ function start(block: BlockFn, options: Options = {}): Harness {
   const ctx = {
     logger: { debug: log('debug'), info: log('info'), warn: log('warn'), error: log('error') },
     eventBus: {
-      subscribe: (filter: { category: string }, handler: Handler) => {
-        const entry = { category: filter.category, handler }
+      subscribe: (filter: { category: string; deviceId?: number }, handler: Handler) => {
+        const entry = { category: filter.category, deviceId: filter.deviceId, handler }
         handlers.push(entry)
         return () => {
           handlers.splice(handlers.indexOf(entry), 1)
@@ -162,7 +169,8 @@ function start(block: BlockFn, options: Options = {}): Harness {
     sliceReads,
     emit: (category, data, deviceId) => {
       for (const h of [...handlers]) {
-        if (h.category === category) h.handler({ category, deviceId, data })
+        if (h.category === category && (h.deviceId === undefined || h.deviceId === deviceId))
+          h.handler({ category, deviceId, data })
       }
     },
     traces: () => ledger.doc.traces,
@@ -287,7 +295,7 @@ describe('run modes', () => {
   })
 
   it('cooldown survives a restart: a new block reads the stamp from the hub ledger', async () => {
-    const recipe: AutomationRecipe = {
+    const recipe: RecipeInput = {
       triggers: [MOTION],
       actions: [SIREN],
       runMode: { mode: 'cooldown', minutes: 30 },
@@ -385,16 +393,21 @@ describe('run modes', () => {
 
 describe('conditions read the mirror, not the hub', () => {
   const gate: AutomationRecipe = {
-    triggers: [MOTION],
-    actions: [SIREN],
-    conditions: {
-      kind: 'condition',
-      deviceId: 3,
-      cap: 'sensor',
-      fieldPath: 'bowl',
-      operator: 'gte',
-      value: 5,
+    when: {
+      kind: 'all',
+      children: [
+        MOTION,
+        {
+          kind: 'device-is',
+          deviceId: 3,
+          cap: 'sensor',
+          fieldPath: 'bowl',
+          operator: 'gte',
+          value: 5,
+        },
+      ],
     },
+    actions: [SIREN],
   }
 
   it('unknown mirror value => false, logged with the device tag, traced with its reason', async () => {
@@ -406,8 +419,8 @@ describe('conditions read the mirror, not the hub', () => {
     await settle(5_000) // a skip waits to be coalesced before it is reported
     const t = h.traces()[0]
     expect(t).toMatchObject({ outcome: 'skipped-conditions' })
-    expect(t?.conditions[0]).toMatchObject({
-      path: 'conditions',
+    expect(t?.conditions.find((n) => n.kind === 'device-is')).toMatchObject({
+      path: 'when.1',
       outcome: 'fail',
       reason: 'bowl value unknown → fail',
       observed: null,
@@ -425,7 +438,7 @@ describe('conditions read the mirror, not the hub', () => {
     await settle()
     expect(h.mutate).not.toHaveBeenCalled()
     await settle(5_000) // a skip waits to be coalesced before it is reported
-    expect(h.traces()[0]?.conditions[0]).toMatchObject({
+    expect(h.traces()[0]?.conditions.find((n) => n.kind === 'device-is')).toMatchObject({
       outcome: 'fail',
       reason: 'bowl 0, expected ≥ 5 → fail',
     })
@@ -459,6 +472,31 @@ describe('action steps', () => {
       },
       { path: 'actions.1', outcome: 'not-run' },
     ])
+  })
+})
+
+describe('step args in the trace', () => {
+  it('a ran step records what it sent, with a secret-named parameter redacted', async () => {
+    const block = await load({
+      triggers: [MOTION],
+      actions: [
+        {
+          kind: 'cap',
+          deviceId: 616,
+          cap: 'siren',
+          method: 'on',
+          args: { level: 3, mode: 'night', password: 'hunter2' },
+        },
+      ],
+    })
+    const h = start(block)
+    await settle()
+    h.emit('motion.on-motion-changed', {})
+    await settle()
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    const step = h.traces()[0]?.steps[0]
+    expect(step?.args).toEqual({ level: 3, mode: 'night', password: '[redacted]' })
+    expect(JSON.stringify(h.traces())).not.toContain('hunter2')
   })
 })
 
@@ -560,7 +598,7 @@ describe('stationary trigger and condition', () => {
   })
 
   it('stationary-present reads the zone-analytics slice: runs when parked, skips when not', async () => {
-    const recipe: AutomationRecipe = {
+    const recipe: RecipeInput = {
       triggers: [MOTION],
       conditions: { kind: 'stationary-present', deviceId: 7, classes: ['vehicle'] },
       actions: [SIREN],
@@ -593,4 +631,158 @@ describe('stationary trigger and condition', () => {
 
 afterAll(() => {
   rmSync(workDir, { recursive: true, force: true })
+})
+
+describe('one when tree: an instant is an event, the rest is state', () => {
+  const lightOn = {
+    kind: 'device-becomes',
+    deviceId: 5,
+    cap: 'switch',
+    fieldPath: 'on',
+    becomes: true,
+  } as const
+  const doorOpenNow = {
+    kind: 'device-is',
+    deviceId: 3,
+    cap: 'contact',
+    fieldPath: 'open',
+    operator: 'eq',
+    value: true,
+  } as const
+  const doorOpens = { ...lightOn, deviceId: 3, cap: 'contact', fieldPath: 'open' } as const
+  const lightOnNow = {
+    ...doorOpenNow,
+    deviceId: 5,
+    cap: 'switch',
+    fieldPath: 'on',
+  } as const
+  const lightEvent = (h: Harness): void =>
+    h.emit('device.state-changed', { deviceId: 5, capName: 'switch', slice: { on: true } }, 5)
+  const doorEvent = (h: Harness): void =>
+    h.emit('device.state-changed', { deviceId: 3, capName: 'contact', slice: { open: true } }, 3)
+
+  it('rule 1: fires when the event occurs AND the rest of the tree is true at that instant', async () => {
+    const h = start(
+      await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
+      { slices: { '3|contact': { open: true }, '5|switch': { on: true } } },
+    )
+    await settle()
+    lightEvent(h)
+    await settle()
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    expect(h.traces()[0]).toMatchObject({ outcome: 'ran', trigger: { kind: 'device-becomes' } })
+    expect(h.traces()[0]?.trigger.vars).toMatchObject({ deviceId: 5 })
+  })
+
+  it('rule 1: the same event with the state false does not fire, and says which row failed', async () => {
+    const h = start(
+      await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
+      { slices: { '3|contact': { open: false }, '5|switch': { on: true } } },
+    )
+    await settle()
+    lightEvent(h)
+    await settle(5_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]).toMatchObject({ outcome: 'skipped-conditions' })
+  })
+
+  it('rule 1: the OTHER event is false in the instant — it does not fire an all of two events’ sibling state', async () => {
+    // "light becomes on while door open": the door opening alone must not fire it.
+    const h = start(
+      await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
+      { slices: { '3|contact': { open: false }, '5|switch': { on: true } } },
+    )
+    await settle()
+    doorEvent(h)
+    await settle(5_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+  })
+
+  it('rule 1: only the event that occurred is true — every other event leaf is false in that instant', async () => {
+    // (light becomes on AND door open) OR (door opens AND light on). The light
+    // event occurs with the door closed: the first branch fails on its state, the
+    // second must fail because the door did NOT open.
+    const h = start(
+      await load({
+        when: {
+          kind: 'any',
+          children: [
+            { kind: 'all', children: [lightOn, doorOpenNow] },
+            { kind: 'all', children: [doorOpens, lightOnNow] },
+          ],
+        },
+        actions: [SIREN],
+      }),
+      { slices: { '3|contact': { open: false }, '5|switch': { on: true } } },
+    )
+    await settle()
+    lightEvent(h)
+    await settle(5_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+  })
+
+  it('conversion equivalence: "light becomes on while door open" differs from "door opens while light already on", by the marked trace', async () => {
+    const slices = { '3|contact': { open: true }, '5|switch': { on: true } }
+    const a = start(
+      await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
+      { slices },
+    )
+    const b = start(
+      await load({ when: { kind: 'all', children: [doorOpens, lightOnNow] }, actions: [SIREN] }),
+      { slices },
+    )
+    await settle()
+    doorEvent(a)
+    doorEvent(b)
+    await settle(5_000)
+    // The door event is the instant for B, and only a state for A.
+    expect(a.mutate).not.toHaveBeenCalled()
+    expect(b.mutate).toHaveBeenCalledTimes(1)
+    expect(b.traces()[0]?.trigger.vars).toMatchObject({ deviceId: 3 })
+    lightEvent(a)
+    lightEvent(b)
+    await settle(5_000)
+    expect(a.mutate).toHaveBeenCalledTimes(1)
+    expect(a.traces().find((t) => t.outcome === 'ran')?.trigger.vars).toMatchObject({ deviceId: 5 })
+  })
+
+  const bothNow: AutomationRecipe = {
+    when: { kind: 'all', children: [doorOpenNow, lightOnNow] },
+    actions: [SIREN],
+  }
+
+  it('rule 2: a state-only tree already true at start does NOT fire (the first evaluation seeds)', async () => {
+    const h = start(await load(bothNow), {
+      slices: { '3|contact': { open: true }, '5|switch': { on: true } },
+    })
+    await settle(5_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+  })
+
+  it('rule 2: fires on false → true, once, and not again while it stays true', async () => {
+    const h = start(await load(bothNow), {
+      slices: { '3|contact': { open: false }, '5|switch': { on: true } },
+    })
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    doorEvent(h)
+    await settle()
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    doorEvent(h)
+    lightEvent(h)
+    await settle(5_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    // false again, then true again: a second fire.
+    h.emit('device.state-changed', { deviceId: 3, capName: 'contact', slice: { open: false } }, 3)
+    await settle()
+    doorEvent(h)
+    await settle()
+    expect(h.mutate).toHaveBeenCalledTimes(2)
+  })
+
+  it('rule 2: an unreadable state is unknown, not false — it neither seeds nor fires', async () => {
+    const h = start(await load(bothNow), { failSliceReads: true })
+    await settle(5_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+  })
 })

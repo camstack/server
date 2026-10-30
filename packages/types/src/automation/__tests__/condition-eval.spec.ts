@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { collectMirrorSources, ConditionMirror, evaluateConditionTree } from '../condition-eval.js'
-import type { AutomationCondition } from '../recipe.js'
+import type { LegacyCondition as AutomationCondition } from '../legacy-recipe.js'
 
 const leaf = (
   deviceId: number,
@@ -75,6 +75,7 @@ describe('the traced evaluation', () => {
   it('no condition tree passes with no nodes', () => {
     expect(evaluateConditionTree(undefined, new ConditionMirror([]), 0)).toEqual({
       pass: true,
+      unknown: false,
       nodes: [],
     })
   })

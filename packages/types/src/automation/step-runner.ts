@@ -10,7 +10,7 @@
  */
 
 import type { ActionStep } from './recipe.js'
-import type { AutomationStepTrace } from './trace.js'
+import { type AutomationStepTrace, buildStepArgsTrace } from './trace.js'
 
 /** Static facts about a step, known before it runs. */
 export interface StepMeta {
@@ -23,6 +23,8 @@ export interface StepMeta {
 /** What a running step can tell the runner (the device a fan-out is on right now). */
 export interface StepScope {
   setDeviceId(deviceId: number): void
+  /** The parameters the step is sending NOW (substituted), for its trace. */
+  setArgs(args: Readonly<Record<string, unknown>>): void
 }
 
 /** One step as the runner sees it: its meta and a closure that does the work. */
@@ -80,16 +82,23 @@ export async function runSteps(
     }
     const startedAt = options.now()
     let deviceId: number | undefined = step.meta.deviceId
+    let sent: Readonly<Record<string, unknown>> | undefined
     const scope: StepScope = {
       setDeviceId: (id) => {
         deviceId = id
       },
+      setArgs: (args) => {
+        sent = args
+      },
     }
+    const argsTrace = (): { args?: ReturnType<typeof buildStepArgsTrace> } =>
+      sent === undefined ? {} : { args: buildStepArgsTrace(sent) }
     try {
       await step.run(scope)
       traces.push({
         ...step.meta,
         ...(deviceId === undefined ? {} : { deviceId }),
+        ...argsTrace(),
         path,
         startedAt,
         endedAt: options.now(),
@@ -102,6 +111,7 @@ export async function runSteps(
       traces.push({
         ...step.meta,
         ...(deviceId === undefined ? {} : { deviceId }),
+        ...argsTrace(),
         path,
         startedAt,
         endedAt: options.now(),
@@ -225,6 +235,7 @@ export function buildActionSteps(
               : [resolveDeviceTarget(vars, step.deviceId.$var)]
         for (const deviceId of targets) {
           scope.setDeviceId(deviceId)
+          scope.setArgs(args)
           await deps.invokeCap({ deviceId, cap: step.cap, method: step.method, args })
         }
       },

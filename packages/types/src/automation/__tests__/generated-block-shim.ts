@@ -5,9 +5,9 @@
  */
 export { EventCategory } from '../../enums/event-category.js'
 export {
-  collectMirrorSources,
+  collectWhenMirrorSources,
   ConditionMirror,
-  evaluateConditionTree,
+  evaluateWhenTree,
 } from '../condition-eval.js'
 export { DetectionTriggerFilter } from '../detection-trigger.js'
 export { evaluateStationaryTrigger } from '../stationary-trigger.js'

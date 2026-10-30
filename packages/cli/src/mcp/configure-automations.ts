@@ -18,16 +18,19 @@ import {
   AutomationRecipeSchema,
   MACRO_LABELS,
   capUnitResolver,
+  convertLegacyWhen,
+  countWhenLeaves,
   generateAutomationBlock,
   isReadingQuantity,
   prepareRecipeUnits,
   unitsForQuantity,
   validateRecipeBounds,
   type AutomationAction,
-  type AutomationCondition,
   type AutomationConditionOperator,
   type AutomationRecipe,
-  type AutomationTrigger,
+  type AutomationWhen,
+  type LegacyCondition,
+  type LegacyTrigger,
   type UnitResolver,
 } from '@camstack/types'
 import type { DryRunOutcome, GatedToolSpec, HubClient } from '@camstack/develop'
@@ -232,7 +235,7 @@ function fieldChoices(fields: readonly WireableField[]): readonly Choice[] {
 }
 
 interface TriggerOutcome {
-  readonly trigger?: AutomationTrigger
+  readonly trigger?: LegacyTrigger
   readonly questions: readonly Question[]
   readonly problems: readonly Problem[]
   readonly unavailable?: string
@@ -329,7 +332,7 @@ async function detectionTrigger(
     }
   }
   const classes = t.classes ?? []
-  const trigger: AutomationTrigger = {
+  const trigger: LegacyTrigger = {
     kind: 'detection',
     classes: [...classes],
     deviceIds: [...chosen],
@@ -425,7 +428,7 @@ async function deviceStateTrigger(
     }
   }
   if (problems.length > 0) return { questions: [], problems }
-  const trigger: AutomationTrigger = {
+  const trigger: LegacyTrigger = {
     kind: 'device-state',
     deviceId: t.deviceId,
     cap: chosen.cap,
@@ -598,9 +601,9 @@ async function checkActions(
   return { problems }
 }
 
-function toCondition(leaves: readonly ConditionAnswer[]): AutomationCondition | undefined {
+function toCondition(leaves: readonly ConditionAnswer[]): LegacyCondition | undefined {
   if (leaves.length === 0) return undefined
-  const mapped: AutomationCondition[] = leaves.map((l) => ({
+  const mapped: LegacyCondition[] = leaves.map((l) => ({
     kind: 'condition',
     deviceId: l.deviceId,
     cap: l.cap,
@@ -628,8 +631,8 @@ function toActions(actions: readonly ActionAnswer[]): AutomationAction[] {
 
 function quantityNotes(recipe: AutomationRecipe): QuantityNote[] {
   const notes: QuantityNote[] = []
-  const walk = (c: AutomationCondition, path: string): void => {
-    if (c.kind === 'condition' && typeof c.value === 'number' && c.unit !== undefined) {
+  const walk = (c: AutomationWhen, path: string): void => {
+    if (c.kind === 'device-is' && typeof c.value === 'number' && c.unit !== undefined) {
       notes.push({
         where: `${path} ${c.cap}.${c.fieldPath}`,
         value: c.value,
@@ -639,7 +642,7 @@ function quantityNotes(recipe: AutomationRecipe): QuantityNote[] {
     if (c.kind === 'not') walk(c.child, path)
     if (c.kind === 'all' || c.kind === 'any') c.children.forEach((child) => walk(child, path))
   }
-  if (recipe.conditions !== undefined) walk(recipe.conditions, 'condition')
+  walk(recipe.when, 'condition')
   recipe.actions.forEach((a, i) => {
     if (a.kind !== 'cap' || a.args === undefined || a.argUnits === undefined) return
     for (const [arg, unit] of Object.entries(a.argUnits)) {
@@ -741,8 +744,7 @@ export async function interviewAutomation(
   const conditions = answers.conditions ?? []
   const actions = answers.actions ?? []
   const draft: AutomationRecipe = {
-    triggers: [outcome.trigger],
-    ...(toCondition(conditions) !== undefined ? { conditions: toCondition(conditions) } : {}),
+    when: convertLegacyWhen({ triggers: [outcome.trigger], conditions: toCondition(conditions) }),
     actions: toActions(actions),
     ...(answers.cooldownMinutes !== undefined
       ? {
@@ -867,7 +869,7 @@ export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomat
           effect: args.enabled
             ? 'it starts running as soon as it is saved'
             : 'it is saved switched off',
-          triggers: finished.recipe.triggers.length,
+          rows: countWhenLeaves(finished.recipe.when),
           steps: finished.recipe.actions.length,
           quantities: quantityNotes(finished.recipe),
           generatedBytes: code.length,
@@ -908,7 +910,7 @@ const GATE_HOW =
 export function registerAutomationTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     'configure_automation_questionnaire',
-    'Interview for a new automation (a recipe: trigger, conditions, actions). Stateless: send every answer so far in `answers`; it returns the questions still open, with choices read from the hub, or `ready` with a summary and the recipe. A number on a quantity field is { value, unit }. Writes nothing.',
+    'Interview for a new automation (a recipe: ONE `when` tree — events that start it, states that must hold — and the actions). Stateless: send every answer so far in `answers`; it returns the questions still open, with choices read from the hub, or `ready` with a summary and the recipe. A number on a quantity field is { value, unit }. Writes nothing.',
     { answers: AutomationAnswersSchema },
     async ({ answers }): Promise<ToolTextResult> =>
       text(await automationQuestionnaire(ctx, answers)),

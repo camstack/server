@@ -9,17 +9,31 @@
  * `source`, so the filter reads `data.deviceId`.
  *
  * ONE fire per `(deviceId, trackId)`: a track fires the first time it satisfies
- * the class, score and zone conditions (which may be on an `update`, once its
- * best confidence has risen), and never again. The fired set is bounded and
+ * the subject, score and zone conditions (which may be on an `update`, once its
+ * best confidence has risen, or once its face or plate has been resolved — D683
+ * decides identity late, so a leaf with a label fires on the update that
+ * carries it, never on the first detection), and never again. The fired set is bounded and
  * forgets a track on its `end` or after {@link FIRED_TTL_MS}, so a track whose
  * `end` was dropped (events are telemetry, D8) cannot pin memory.
  */
 
 import { COCO_TO_MACRO } from '../catalogs/coco-classmap.js'
 import type { TrackLifecyclePhase } from '../interfaces/event-bus.js'
-import type { AutomationTrigger } from './recipe.js'
+import {
+  type DetectionSubject,
+  anySubjectMatches,
+  subjectFromClassName,
+} from './detection-subject.js'
+import type { LegacyDetectionTrigger } from './legacy-recipe.js'
+import type { DetectionLeaf } from './when.js'
 
-export type DetectionTrigger = Extract<AutomationTrigger, { kind: 'detection' }>
+/** A detection leaf — or the old trigger a block generated before the single tree still hands over. */
+export type DetectionTrigger = DetectionLeaf | LegacyDetectionTrigger
+
+/** The subjects a trigger asks for, whichever shape it has. */
+function subjectsOf(trigger: DetectionTrigger): readonly DetectionSubject[] {
+  return 'subjects' in trigger ? trigger.subjects : trigger.classes.map(subjectFromClassName)
+}
 
 /** A track that never ended is forgotten after this long. */
 export const FIRED_TTL_MS = 15 * 60_000
@@ -32,6 +46,11 @@ export interface TrackLifecycleInput {
   readonly trackId?: unknown
   readonly phase?: unknown
   readonly bestClassName?: unknown
+  readonly classes?: unknown
+  /** The display label once resolved: an identity name, a plate text. */
+  readonly label?: unknown
+  readonly identityId?: unknown
+  readonly plateText?: unknown
   readonly bestConfidence?: unknown
   readonly zonesVisited?: unknown
 }
@@ -42,6 +61,8 @@ export interface DetectionVars {
   readonly className: string
   readonly trackId: string
   readonly score: number
+  /** The label the subject matched (`dog`, a face name, a plate); empty when the leaf names none. */
+  readonly label: string
 }
 
 export type DetectionDecision =
@@ -80,7 +101,11 @@ export class DetectionTriggerFilter {
   /** `${deviceId}|${trackId}` → fired at. Insertion-ordered, so the oldest is first. */
   private readonly fired = new Map<string, number>()
 
-  constructor(private readonly trigger: DetectionTrigger) {}
+  private readonly subjects: readonly DetectionSubject[]
+
+  constructor(private readonly trigger: DetectionTrigger) {
+    this.subjects = subjectsOf(trigger)
+  }
 
   get firedCount(): number {
     return this.fired.size
@@ -103,20 +128,24 @@ export class DetectionTriggerFilter {
 
     const className = typeof event.bestClassName === 'string' ? event.bestClassName : ''
     const score = typeof event.bestConfidence === 'number' ? event.bestConfidence : 0
-    const vars: DetectionVars = { deviceId, className, trackId, score }
+    const vars: DetectionVars = { deviceId, className, trackId, score, label: '' }
 
     if (this.fired.has(key)) {
       return { kind: 'reject', reason: `already fired for track ${trackId}`, vars }
     }
-    if (!this.trigger.classes.some((c) => detectionClassMatches(c, className))) {
-      return {
-        kind: 'reject',
-        reason: `class ${className || 'unknown'} not in [${this.trigger.classes.join(', ')}]`,
-        vars,
-      }
-    }
+    const verdict = anySubjectMatches(this.subjects, {
+      className,
+      ...(Array.isArray(event.classes)
+        ? { classes: event.classes.filter((c): c is string => typeof c === 'string') }
+        : {}),
+      ...(typeof event.label === 'string' ? { label: event.label } : {}),
+      ...(typeof event.identityId === 'string' ? { identityId: event.identityId } : {}),
+      ...(typeof event.plateText === 'string' ? { plateText: event.plateText } : {}),
+    })
+    if (!verdict.matches) return { kind: 'reject', reason: verdict.reason, vars }
+    const matched: DetectionVars = { ...vars, label: verdict.label }
     if (this.trigger.minScore !== undefined && score < this.trigger.minScore) {
-      return { kind: 'reject', reason: `score ${score} < ${this.trigger.minScore}`, vars }
+      return { kind: 'reject', reason: `score ${score} < ${this.trigger.minScore}`, vars: matched }
     }
     if (this.trigger.zones !== undefined) {
       const visited = Array.isArray(event.zonesVisited)
@@ -126,12 +155,16 @@ export class DetectionTriggerFilter {
         return {
           kind: 'reject',
           reason: `zone mismatch: visited [${visited.join(', ')}], wanted [${this.trigger.zones.join(', ')}]`,
-          vars,
+          vars: matched,
         }
       }
     }
     this.remember(key, now)
-    return { kind: 'fire', reason: `${className} ${score} on device ${deviceId}`, vars }
+    return {
+      kind: 'fire',
+      reason: `${verdict.label === '' ? className : verdict.label} ${score} on device ${deviceId}`,
+      vars: matched,
+    }
   }
 
   private remember(key: string, now: number): void {

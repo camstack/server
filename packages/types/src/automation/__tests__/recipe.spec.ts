@@ -1,73 +1,54 @@
 import { describe, expect, it } from 'vitest'
-import type { AutomationCondition, AutomationRecipe } from '../recipe.js'
+import type { AutomationRecipe } from '../recipe.js'
 import {
   AutomationRecipeSchema,
   AutomationRunModeSchema,
-  AutomationTriggerSchema,
-  conditionDepth,
-  countConditionLeaves,
   MAX_CONDITION_DEPTH,
   MAX_CONDITION_LEAVES,
   validateRecipeBounds,
 } from '../recipe.js'
+import { type AutomationWhen, AutomationWhenSchema, countWhenLeaves, whenDepth } from '../when.js'
 
-/** Build a nested ALL chain `depth` levels deep, ending in one leaf. */
-function nest(depth: number): AutomationCondition {
-  const leaf: AutomationCondition = {
-    kind: 'condition',
-    deviceId: 1023,
-    cap: 'alarm-panel',
-    fieldPath: 'state',
-    operator: 'eq',
-    value: 'armed-away',
-  }
-  let node: AutomationCondition = leaf
+const IS_ARMED = {
+  kind: 'device-is',
+  deviceId: 1023,
+  cap: 'alarm-panel',
+  fieldPath: 'state',
+  operator: 'eq',
+  value: 'armed-away',
+} as const
+
+/** A nested ALL chain `depth` levels deep, ending in one state leaf. */
+function nest(depth: number): AutomationWhen {
+  let node: AutomationWhen = IS_ARMED
   for (let i = 1; i < depth; i += 1) node = { kind: 'all', children: [node] }
   return node
 }
 
-function leaves(n: number): AutomationCondition {
+function leaves(n: number): AutomationWhen {
   return {
     kind: 'all',
-    children: Array.from({ length: n }, () => ({
-      kind: 'condition' as const,
-      deviceId: 1023,
-      cap: 'alarm-panel',
-      fieldPath: 'state',
-      operator: 'eq' as const,
-      value: 'disarmed',
-    })),
+    children: Array.from({ length: n }, () => ({ ...IS_ARMED, value: 'disarmed' })),
   }
 }
 
 /**
  * The acceptance test named by the design's mockup gate: ONE real automation
- * the operator would actually want, expressed end to end, is what validates the
- * bounds. Every device id here is live on the cluster (verified 2026-08-09):
- * 1023 `Alarm` (alarm-panel), 1453 `Tapparella hall` (cover), 1027 `doorbell`
- * (device-status), 296 `Outdoor Temperature` (numeric-sensor).
+ * the operator would actually want, end to end. Every device id here is live on
+ * the cluster (verified 2026-08-09): 1023 `Alarm` (alarm-panel), 1453 `Tapparella
+ * hall` (cover), 1027 `doorbell` (device-status), 296 `Outdoor Temperature`.
  */
 const NIGHT_CLOSE_AND_ARM: AutomationRecipe = {
-  triggers: [{ kind: 'schedule', cron: '30 23 * * *' }],
-  conditions: {
+  when: {
     kind: 'all',
     children: [
-      {
-        kind: 'not',
-        child: {
-          kind: 'condition',
-          deviceId: 1023,
-          cap: 'alarm-panel',
-          fieldPath: 'state',
-          operator: 'eq',
-          value: 'armed-away',
-        },
-      },
+      { kind: 'schedule', cron: '30 23 * * *' },
+      { kind: 'not', child: IS_ARMED },
       {
         kind: 'any',
         children: [
           {
-            kind: 'condition',
+            kind: 'device-is',
             deviceId: 1453,
             cap: 'cover',
             fieldPath: 'position',
@@ -89,7 +70,7 @@ const NIGHT_CLOSE_AND_ARM: AutomationRecipe = {
         ],
       },
       {
-        kind: 'condition',
+        kind: 'device-is',
         deviceId: 1027,
         cap: 'device-status',
         fieldPath: 'online',
@@ -105,71 +86,52 @@ const NIGHT_CLOSE_AND_ARM: AutomationRecipe = {
   ],
 }
 
-describe('condition tree shape', () => {
+describe('when tree shape', () => {
   it('measures depth with the root container counting as level 1', () => {
-    expect(conditionDepth(nest(1))).toBe(1)
-    expect(conditionDepth(nest(3))).toBe(3)
+    expect(whenDepth(nest(1))).toBe(1)
+    expect(whenDepth(nest(3))).toBe(3)
   })
 
   it('counts only leaves, not containers', () => {
-    expect(countConditionLeaves(leaves(5))).toBe(5)
-  })
-
-  it('counts a NOT as a container, not a leaf', () => {
-    expect(
-      countConditionLeaves({
-        kind: 'not',
-        child: {
-          kind: 'condition',
-          deviceId: 1,
-          cap: 'c',
-          fieldPath: 'f',
-          operator: 'eq',
-          value: true,
-        },
-      }),
-    ).toBe(1)
+    expect(countWhenLeaves(leaves(5))).toBe(5)
+    expect(countWhenLeaves({ kind: 'not', child: IS_ARMED })).toBe(1)
   })
 })
 
 describe('bounds — what the mockup gate exists to validate', () => {
   it('accepts a tree at exactly the depth limit', () => {
     expect(
-      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, conditions: nest(MAX_CONDITION_DEPTH) }),
+      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, when: nest(MAX_CONDITION_DEPTH) }),
     ).toBeNull()
   })
 
-  it('refuses one level past the depth limit, naming the bound', () => {
+  it('refuses one level past the depth limit, naming the bound and offering the De Morgan rewrite', () => {
     const err = validateRecipeBounds({
       ...NIGHT_CLOSE_AND_ARM,
-      conditions: nest(MAX_CONDITION_DEPTH + 1),
+      when: nest(MAX_CONDITION_DEPTH + 1),
     })
     expect(err).toContain('levels deep')
     expect(err).toContain(String(MAX_CONDITION_DEPTH))
-    // The refusal must offer the De Morgan rewrite, not just say no.
     expect(err).toContain('all of')
   })
 
   it('accepts exactly the leaf limit and refuses one more', () => {
     expect(
-      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, conditions: leaves(MAX_CONDITION_LEAVES) }),
+      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, when: leaves(MAX_CONDITION_LEAVES) }),
     ).toBeNull()
     expect(
-      validateRecipeBounds({
-        ...NIGHT_CLOSE_AND_ARM,
-        conditions: leaves(MAX_CONDITION_LEAVES + 1),
-      }),
-    ).toContain('leaves')
-  })
-
-  it('refuses a recipe with no trigger — the vertical axis is evaluation order', () => {
-    expect(validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, triggers: [] })).toContain('trigger')
+      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, when: leaves(MAX_CONDITION_LEAVES + 1) }),
+    ).toContain('rows')
   })
 
   it('refuses an empty container — a group is made from existing rows, never left empty', () => {
     expect(
-      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, conditions: { kind: 'any', children: [] } }),
+      validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, when: { kind: 'any', children: [] } }),
     ).toContain('empty')
+  })
+
+  it('refuses a recipe with no action', () => {
+    expect(validateRecipeBounds({ ...NIGHT_CLOSE_AND_ARM, actions: [] })).toContain('action')
   })
 })
 
@@ -180,47 +142,39 @@ describe('the real automation — Notte: chiudi e arma', () => {
 
   it('is within bounds, and reports how much of each budget it used', () => {
     expect(validateRecipeBounds(NIGHT_CLOSE_AND_ARM)).toBeNull()
-    // The finding the gate wanted: the FIRST real automation saturates the
-    // depth budget (3 of 3) while using an eighth of the leaf budget (4 of 32).
-    expect(conditionDepth(NIGHT_CLOSE_AND_ARM.conditions!)).toBe(MAX_CONDITION_DEPTH)
-    expect(countConditionLeaves(NIGHT_CLOSE_AND_ARM.conditions!)).toBe(4)
+    expect(whenDepth(NIGHT_CLOSE_AND_ARM.when)).toBe(3)
+    expect(countWhenLeaves(NIGHT_CLOSE_AND_ARM.when)).toBe(5)
   })
 
   it('rejects an expression leaf whose identifier has no binding', () => {
     const bad: AutomationRecipe = {
       ...NIGHT_CLOSE_AND_ARM,
-      conditions: { kind: 'expression', expr: 'unbound > 1', bindings: {} },
+      when: { kind: 'expression', expr: 'unbound > 1', bindings: {} },
     }
     expect(() => AutomationRecipeSchema.parse(bad)).toThrow()
   })
 })
 
-export { NIGHT_CLOSE_AND_ARM }
-
-describe('detection and interval triggers', () => {
-  it('accepts a detection trigger and refuses empty classes / devices and a score outside 0..1', () => {
+describe('detection and interval leaves', () => {
+  it('accepts a detection leaf and refuses empty subjects / devices and a score outside 0..1', () => {
     const ok = {
       kind: 'detection',
-      classes: ['animal'],
+      subjects: [{ macro: 'animal' }],
       deviceIds: [7],
       zones: ['yard'],
       minScore: 0.6,
     }
-    expect(AutomationTriggerSchema.safeParse(ok).success).toBe(true)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, classes: [] }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, deviceIds: [] }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, minScore: 1.2 }).success).toBe(false)
+    expect(AutomationWhenSchema.safeParse(ok).success).toBe(true)
+    expect(AutomationWhenSchema.safeParse({ ...ok, subjects: [] }).success).toBe(false)
+    expect(AutomationWhenSchema.safeParse({ ...ok, deviceIds: [] }).success).toBe(false)
+    expect(AutomationWhenSchema.safeParse({ ...ok, minScore: 1.2 }).success).toBe(false)
   })
 
   it('bounds an interval to 1..1440 whole minutes', () => {
-    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 1 }).success).toBe(true)
-    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 1440 }).success).toBe(
-      true,
-    )
-    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 0 }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ kind: 'interval', minutes: 1441 }).success).toBe(
-      false,
-    )
+    expect(AutomationWhenSchema.safeParse({ kind: 'interval', minutes: 1 }).success).toBe(true)
+    expect(AutomationWhenSchema.safeParse({ kind: 'interval', minutes: 1440 }).success).toBe(true)
+    expect(AutomationWhenSchema.safeParse({ kind: 'interval', minutes: 0 }).success).toBe(false)
+    expect(AutomationWhenSchema.safeParse({ kind: 'interval', minutes: 1441 }).success).toBe(false)
   })
 })
 
@@ -248,7 +202,7 @@ describe('run mode and trace retention', () => {
   })
 
   it('lives on the recipe, not on an action, and keepTraces is bounded', () => {
-    const base = { triggers: [{ kind: 'manual' }], actions: [{ kind: 'wait', seconds: 1 }] }
+    const base = { when: { kind: 'manual' }, actions: [{ kind: 'wait', seconds: 1 }] }
     expect(
       AutomationRecipeSchema.safeParse({
         ...base,
@@ -262,17 +216,22 @@ describe('run mode and trace retention', () => {
 })
 
 describe('the picked unit survives the recipe schema', () => {
-  it('keeps `unit` on a leaf and `argUnits` on a cap step', () => {
+  it('keeps `unit` on a device-is leaf and `argUnits` on a cap step', () => {
     const recipe: AutomationRecipe = {
-      triggers: [{ kind: 'manual' }],
-      conditions: {
-        kind: 'condition',
-        deviceId: 7,
-        cap: 'pet-feeder',
-        fieldPath: 'bowlFood',
-        operator: 'lt',
-        value: 0.01,
-        unit: 'g',
+      when: {
+        kind: 'all',
+        children: [
+          { kind: 'manual' },
+          {
+            kind: 'device-is',
+            deviceId: 7,
+            cap: 'pet-feeder',
+            fieldPath: 'bowlFood',
+            operator: 'lt',
+            value: 0.01,
+            unit: 'g',
+          },
+        ],
       },
       actions: [
         {
@@ -288,3 +247,5 @@ describe('the picked unit survives the recipe schema', () => {
     expect(AutomationRecipeSchema.parse(recipe)).toEqual(recipe)
   })
 })
+
+export { NIGHT_CLOSE_AND_ARM }

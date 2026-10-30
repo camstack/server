@@ -629,9 +629,12 @@ enough). The viewer overlay follows that category; a 15 s poll is not the
 mechanism. The payload also carries `zones` — the ids of the camera's zones the
 parked box is in, from `computeStationaryEntryZones` (the one membership rule,
 with the camera's `zoneMembershipMinOverlap`), empty when none apply. It feeds
-the automation `stationary` trigger; the `stationary-present` condition reads
+the automation `stationary` event leaf; the `stationary-present` state leaf reads
 the registry through the `zone-analytics` snapshot instead, never this event
-(D956).
+(D956). Both are leaves of the automation's one `when` tree (D980): an event
+leaf is an instant and a state leaf is a fact, and the event carries a class and
+zones only, so a parked-object leaf takes a macro class with a sub-class label
+at most — never a face or a plate.
 
 ### A promotion ends the track (D683)
 

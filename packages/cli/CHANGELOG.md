@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - MCP: new configure_oidc tool connects an OpenID Connect provider (authentik, pocket-id, keycloak, google and more) with a preview, a discovery check and the redirect URI to paste; the client secret is typed in the admin UI
+- The automation interview and save tools write the single 'when' tree; stored recipes in the old triggers/conditions shape are still accepted.
 
 ## [1.2.212] - 2026-10-30
 

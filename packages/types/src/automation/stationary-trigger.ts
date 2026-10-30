@@ -14,10 +14,16 @@
  */
 
 import type { PipelineAnalyticsStationaryChangedPayload } from '../interfaces/event-bus.js'
-import { detectionClassMatches } from './detection-trigger.js'
-import type { AutomationTrigger } from './recipe.js'
+import { anySubjectMatches, subjectFromClassName } from './detection-subject.js'
+import type { LegacyStationaryTrigger } from './legacy-recipe.js'
+import type { StationaryLeaf } from './when.js'
 
-export type StationaryTrigger = Extract<AutomationTrigger, { kind: 'stationary' }>
+/** A stationary leaf — or the old trigger a block generated before the single tree still hands over. */
+export type StationaryTrigger = StationaryLeaf | LegacyStationaryTrigger
+
+function isLegacyStationary(trigger: StationaryTrigger): trigger is LegacyStationaryTrigger {
+  return 'classes' in trigger
+}
 
 /** The fields of a stationary-changed event the trigger reads (all `unknown`: off the bus). */
 export interface StationaryChangedInput {
@@ -66,15 +72,12 @@ export function evaluateStationaryTrigger(
     : []
   const vars: StationaryVars = { deviceId, className, zones, phase, entryId }
 
-  if (
-    trigger.classes !== undefined &&
-    !trigger.classes.some((c) => detectionClassMatches(c, className))
-  ) {
-    return {
-      kind: 'reject',
-      reason: `class ${className || 'unknown'} not in [${trigger.classes.join(', ')}]`,
-      vars,
-    }
+  const subjects = isLegacyStationary(trigger)
+    ? trigger.classes?.map(subjectFromClassName)
+    : trigger.subjects
+  if (subjects !== undefined) {
+    const verdict = anySubjectMatches(subjects, { className })
+    if (!verdict.matches) return { kind: 'reject', reason: verdict.reason, vars }
   }
   if (trigger.zones !== undefined && !trigger.zones.some((z) => zones.includes(z))) {
     return {

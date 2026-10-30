@@ -19,8 +19,10 @@ export type {
 } from './condition-eval.js'
 export {
   collectMirrorSources,
+  collectWhenMirrorSources,
   ConditionMirror,
   evaluateConditionTree,
+  evaluateWhenTree,
 } from './condition-eval.js'
 export type {
   DetectionDecision,
@@ -65,8 +67,12 @@ export {
   AutomationStepTraceSchema,
   AutomationTriggerTraceSchema,
   appendTrace,
+  buildStepArgsTrace,
   buildTriggerTrace,
   isSkippedTrace,
+  MAX_TRACE_ARG_LENGTH,
+  MAX_TRACE_ARGS,
+  REDACTED_ARG,
   skipSignature,
   TraceNodeOutcomeSchema,
   TraceValueSchema,
@@ -75,36 +81,84 @@ export type {
   ActionStep,
   AutomationAction,
   AutomationCapStep,
-  AutomationCondition,
-  AutomationConditionAll,
-  AutomationConditionAny,
-  AutomationConditionExpression,
-  AutomationConditionLeaf,
-  AutomationConditionNot,
-  AutomationConditionOperator,
-  AutomationConditionStationaryPresent,
   AutomationRecipe,
   AutomationRunMode,
-  AutomationTrigger,
+  LegacyAutomationRecipe,
 } from './recipe.js'
 export {
   ActionStepSchema,
   AutomationActionSchema,
   AutomationCapStepSchema,
   AutomationWaitStepSchema,
-  AutomationConditionOperatorSchema,
-  AutomationConditionSchema,
   AutomationRecipeSchema,
   AutomationRunModeSchema,
-  AutomationTriggerSchema,
-  conditionDepth,
-  countConditionLeaves,
+  CurrentAutomationRecipeSchema,
+  convertLegacyRecipe,
   DEFAULT_TRACE_KEEP,
+  LegacyAutomationRecipeSchema,
   MAX_TRACE_KEEP,
   MAX_CONDITION_DEPTH,
   MAX_CONDITION_LEAVES,
   validateRecipeBounds,
 } from './recipe.js'
+export type {
+  AutomationAll,
+  AutomationAny,
+  AutomationConditionOperator,
+  AutomationEventLeaf,
+  AutomationLeaf,
+  AutomationNot,
+  AutomationStateLeaf,
+  AutomationWhen,
+  DetectionLeaf,
+  DeviceBecomesLeaf,
+  DeviceIsLeaf,
+  ExpressionLeaf,
+  StationaryLeaf,
+  StationaryPresentLeaf,
+} from './when.js'
+export {
+  AutomationConditionOperatorSchema,
+  AutomationWhenSchema,
+  countWhenLeaves,
+  forEachLeaf,
+  hasEventLeaves,
+  isEventLeaf,
+  isLeaf,
+  MAX_WHEN_DEPTH,
+  MAX_WHEN_LEAVES,
+  validateWhenTree,
+  whenDepth,
+} from './when.js'
+export type {
+  LegacyCondition,
+  LegacyTrigger,
+} from './legacy-recipe.js'
+export {
+  convertLegacyCondition,
+  convertLegacyWhen,
+  LegacyConditionSchema,
+  LegacyTriggerSchema,
+} from './legacy-recipe.js'
+export type {
+  DetectionLabelSource,
+  DetectionSubject,
+  IdentityLabel,
+  PlateLabel,
+  SubClassLabel,
+  SubjectObservation,
+  SubjectVerdict,
+} from './detection-subject.js'
+export {
+  anySubjectMatches,
+  DETECTION_LABEL_SOURCES,
+  DetectionSubjectSchema,
+  describeSubject,
+  StationarySubjectSchema,
+  subClassesOf,
+  subjectFromClassName,
+  subjectMatches,
+} from './detection-subject.js'
 export * from './action.js'
 export * from './step-runner.js'
 export {

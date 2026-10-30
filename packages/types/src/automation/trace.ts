@@ -2,11 +2,12 @@
  * Run traces — what an automation (or, later, an Action run) DID, node by node,
  * so the editor can paint every block green or red with its reason.
  *
- * A trace is data, not a log: it covers the WHOLE tree — the trigger stage,
- * every condition node (containers and leaves, including the ones a
- * short-circuit never reached), the run-mode verdict and every action step —
- * each addressed by a stable path (`conditions.0.1`, `actions.2`, or `steps.N`
- * for an Action run). Skipped
+ * A trace is data, not a log: it covers the WHOLE tree — the event leaf that
+ * fired, every node of the `when` tree (containers and leaves, including the
+ * ones a short-circuit never reached), the run-mode verdict and every action
+ * step — each addressed by a stable path (`when.0.1`, `actions.2`, or `steps.N`
+ * for an Action run). Traces written before the single tree carry
+ * `conditions.*` paths and still parse. Skipped
  * evaluations are traced too, and identical consecutive skips collapse into a
  * repeat count so a trigger that fails every 5 minutes cannot flush real runs.
  *
@@ -15,6 +16,7 @@
  */
 
 import { z } from 'zod'
+import { isSecretMarkerLike } from '../keychain/secret-marker.js'
 import { AutomationRunModeSchema } from './recipe.js'
 
 /** A value a trace may show: JSON primitives and short lists, nothing deeper. */
@@ -44,6 +46,8 @@ export type TraceNodeOutcome = z.infer<typeof TraceNodeOutcomeSchema>
 
 export const AutomationTriggerTraceSchema = z.object({
   kind: z.string().min(1),
+  /** The event leaf that fired (`when`, `when.0.1`); absent on traces written before the single tree. */
+  path: z.string().min(1).optional(),
   outcome: z.enum(['pass', 'fail']),
   /** Why an event was rejected ("class person not in [dog]") or what fired. */
   reason: z.string(),
@@ -53,9 +57,26 @@ export const AutomationTriggerTraceSchema = z.object({
 export type AutomationTriggerTrace = z.infer<typeof AutomationTriggerTraceSchema>
 
 export const AutomationConditionTraceNodeSchema = z.object({
-  /** `conditions` for the root, `conditions.<i>` for its i-th child, … */
+  /** `when` for the root, `when.<i>` for its i-th child, … (`conditions…` on an old trace). */
   path: z.string().min(1),
-  kind: z.enum(['all', 'any', 'not', 'condition', 'expression', 'stationary-present']),
+  kind: z.enum([
+    'all',
+    'any',
+    'not',
+    // state leaves ("is"); `condition` is its name on an old trace
+    'condition',
+    'device-is',
+    'expression',
+    'stationary-present',
+    // event leaves
+    'device-becomes',
+    'device-event',
+    'schedule',
+    'interval',
+    'manual',
+    'detection',
+    'stationary',
+  ]),
   outcome: TraceNodeOutcomeSchema,
   reason: z.string(),
   deviceId: z.number().int().optional(),
@@ -85,6 +106,12 @@ export const AutomationStepTraceSchema = z.object({
   deviceId: z.number().int().optional(),
   startedAt: z.number().optional(),
   endedAt: z.number().optional(),
+  /**
+   * The parameters the step SENT, after `{{vars.x}}` substitution — what the
+   * device was actually asked. Bounded like trigger `vars`; a secret parameter
+   * is shown as {@link REDACTED_ARG}. Absent on traces written before it existed.
+   */
+  args: z.record(z.string(), TraceValueSchema).optional(),
   outcome: z.enum(['ok', 'error', 'not-run']),
   message: z.string().optional(),
 })
@@ -193,10 +220,58 @@ export function appendTrace(
   return next
 }
 
+/** What a secret parameter is shown as in a trace. */
+export const REDACTED_ARG = '[redacted]'
+/** Parameters kept per step trace; the rest are counted in `…`. */
+export const MAX_TRACE_ARGS = 32
+/** A string value is cut here. */
+export const MAX_TRACE_ARG_LENGTH = 200
+
+/** A parameter whose NAME says it is a credential. */
+const SECRET_ARG_NAME = /pass(word|phrase|code)?|secret|token|api[-_]?key|credential|\bpin\b|auth/i
+
+function isSecretArg(name: string, value: unknown): boolean {
+  return SECRET_ARG_NAME.test(name) || isSecretMarkerLike(value)
+}
+
+/**
+ * The parameters a step sent, as a trace may show them: primitives and short
+ * lists of them (anything deeper is its JSON text, cut), at most
+ * {@link MAX_TRACE_ARGS} of them. No cap method declares a parameter secret, so
+ * a parameter is redacted by what it is called or by being a keychain marker,
+ * and `secretKeys` names the ones a caller knows about.
+ */
+export function buildStepArgsTrace(
+  args: Readonly<Record<string, unknown>>,
+  secretKeys: readonly string[] = [],
+): Record<string, TraceValue> {
+  const out: Record<string, TraceValue> = {}
+  for (const [key, value] of Object.entries(args).slice(0, MAX_TRACE_ARGS)) {
+    if (secretKeys.includes(key) || isSecretArg(key, value)) {
+      out[key] = REDACTED_ARG
+    } else if (typeof value === 'string') {
+      out[key] =
+        value.length > MAX_TRACE_ARG_LENGTH ? `${value.slice(0, MAX_TRACE_ARG_LENGTH)}…` : value
+    } else if (typeof value === 'number' || typeof value === 'boolean' || value === null) {
+      out[key] = value
+    } else if (
+      Array.isArray(value) &&
+      value.every((v) => typeof v === 'string' || typeof v === 'number')
+    ) {
+      out[key] = value
+    } else if (value !== undefined) {
+      const text = JSON.stringify(value) ?? ''
+      out[key] =
+        text.length > MAX_TRACE_ARG_LENGTH ? `${text.slice(0, MAX_TRACE_ARG_LENGTH)}…` : text
+    }
+  }
+  return out
+}
+
 /**
  * The trigger stage of a trace from the bag a trigger handed to `run()`:
  * primitives and short lists of them (a device-state `to` that is an object is left out), minus the
- * bookkeeping keys `kind` and `at`.
+ * bookkeeping keys `kind`, `at` and `leaf` (the fired leaf's path, which moves to `path`).
  */
 export function buildTriggerTrace(
   trigger: Readonly<Record<string, unknown>>,
@@ -205,7 +280,7 @@ export function buildTriggerTrace(
 ): AutomationTriggerTrace {
   const vars: Record<string, TraceValue> = {}
   for (const [key, value] of Object.entries(trigger)) {
-    if (key === 'kind' || key === 'at') continue
+    if (key === 'kind' || key === 'at' || key === 'leaf') continue
     if (
       typeof value === 'string' ||
       typeof value === 'number' ||
@@ -221,5 +296,6 @@ export function buildTriggerTrace(
     }
   }
   const kind = typeof trigger['kind'] === 'string' ? trigger['kind'] : 'unknown'
-  return { kind, outcome, reason, vars }
+  const path = typeof trigger['leaf'] === 'string' ? trigger['leaf'] : undefined
+  return { kind, ...(path === undefined ? {} : { path }), outcome, reason, vars }
 }

@@ -37,12 +37,8 @@ import {
 import type { ReadingQuantity } from '../units/quantity.js'
 import { baseUnitForQuantity, unitsForQuantity } from '../units/quantity-units.js'
 import { z } from 'zod'
-import type {
-  AutomationAction,
-  AutomationCapStep,
-  AutomationCondition,
-  AutomationRecipe,
-} from './recipe.js'
+import type { AutomationAction, AutomationCapStep, AutomationRecipe } from './recipe.js'
+import type { AutomationWhen, DeviceIsLeaf } from './when.js'
 
 /** What the boundary needs to know about caps. */
 export interface UnitResolver {
@@ -125,7 +121,7 @@ interface LeafOutcome {
   readonly leaf: AutomationConditionLeafLike
   readonly warnings: readonly UnitWarning[]
 }
-type AutomationConditionLeafLike = Extract<AutomationCondition, { kind: 'condition' }>
+type AutomationConditionLeafLike = DeviceIsLeaf
 
 function normalizeLeaf(
   leaf: AutomationConditionLeafLike,
@@ -177,12 +173,12 @@ function normalizeLeaf(
 
 /** Normalise every leaf of a condition tree. Throws {@link QuantityUnitError}. */
 export function normalizeConditionUnits(
-  condition: AutomationCondition,
+  condition: AutomationWhen,
   resolver: UnitResolver,
-  path = 'conditions',
-): UnitsNormalized<AutomationCondition> {
+  path = 'when',
+): UnitsNormalized<AutomationWhen> {
   switch (condition.kind) {
-    case 'condition': {
+    case 'device-is': {
       const { leaf, warnings } = normalizeLeaf(condition, resolver, path)
       return { value: leaf, warnings }
     }
@@ -280,22 +276,19 @@ export function normalizeActionUnits<A extends AutomationAction>(
   return { value: out, warnings }
 }
 
-/** Normalise a whole recipe: its condition tree and its actions. */
+/** Normalise a whole recipe: its `when` tree and its actions. */
 export function normalizeRecipeUnits(
   recipe: AutomationRecipe,
   resolver: UnitResolver,
 ): UnitsNormalized<AutomationRecipe> {
-  const conditions =
-    recipe.conditions === undefined
-      ? undefined
-      : normalizeConditionUnits(recipe.conditions, resolver, 'conditions')
+  const when = normalizeConditionUnits(recipe.when, resolver, 'when')
   const actions = normalizeActionUnits(recipe.actions, resolver, 'actions')
   return {
     value: {
       ...recipe,
-      ...(conditions === undefined ? {} : { conditions: conditions.value }),
+      when: when.value,
       actions: actions.value,
     },
-    warnings: [...(conditions?.warnings ?? []), ...actions.warnings],
+    warnings: [...when.warnings, ...actions.warnings],
   }
 }

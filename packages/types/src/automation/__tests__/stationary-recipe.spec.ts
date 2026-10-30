@@ -1,76 +1,96 @@
 import { describe, expect, it } from 'vitest'
-import type { AutomationCondition, AutomationRecipe } from '../recipe.js'
+import type { AutomationRecipe, AutomationWhen } from '../index.js'
 import {
   AutomationRecipeSchema,
-  AutomationTriggerSchema,
-  conditionDepth,
-  countConditionLeaves,
-  MAX_CONDITION_LEAVES,
+  AutomationWhenSchema,
+  countWhenLeaves,
+  MAX_WHEN_LEAVES,
   validateRecipeBounds,
-} from '../recipe.js'
+  whenDepth,
+} from '../index.js'
 
-describe('stationary trigger', () => {
+describe('stationary leaf', () => {
   const ok = { kind: 'stationary', deviceIds: [7], phase: 'appeared' }
+  const parses = (leaf: object): boolean => AutomationWhenSchema.safeParse(leaf).success
 
-  it('accepts the trigger and refuses no device, an unknown phase and empty filters', () => {
-    expect(AutomationTriggerSchema.safeParse(ok).success).toBe(true)
+  it('accepts the leaf and refuses no device, an unknown phase and empty filters', () => {
+    expect(parses(ok)).toBe(true)
     expect(
-      AutomationTriggerSchema.safeParse({
+      parses({
         ...ok,
         phase: 'departed',
-        classes: ['vehicle'],
+        subjects: [{ macro: 'vehicle' }],
         zones: ['drive'],
-      }).success,
+      }),
     ).toBe(true)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, deviceIds: [] }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, phase: 'moved' }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, phase: undefined }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, classes: [] }).success).toBe(false)
-    expect(AutomationTriggerSchema.safeParse({ ...ok, zones: [] }).success).toBe(false)
+    expect(parses({ ...ok, deviceIds: [] })).toBe(false)
+    expect(parses({ ...ok, phase: 'moved' })).toBe(false)
+    expect(parses({ ...ok, phase: undefined })).toBe(false)
+    expect(parses({ ...ok, subjects: [] })).toBe(false)
+    expect(parses({ ...ok, zones: [] })).toBe(false)
+  })
+
+  it('refuses a face or plate label: a parked object carries neither', () => {
+    expect(
+      parses({
+        ...ok,
+        subjects: [{ macro: 'vehicle', label: { kind: 'plate', text: 'AB123CD' } }],
+      }),
+    ).toBe(false)
+    expect(
+      parses({
+        ...ok,
+        subjects: [{ macro: 'person', label: { kind: 'identity', identityId: 'i1', name: 'Ann' } }],
+      }),
+    ).toBe(false)
+    expect(
+      parses({
+        ...ok,
+        subjects: [{ macro: 'vehicle', label: { kind: 'sub-class', className: 'truck' } }],
+      }),
+    ).toBe(true)
   })
 })
 
-describe('stationary-present condition', () => {
-  const present: AutomationCondition = {
+describe('stationary-present leaf', () => {
+  const present: AutomationWhen = {
     kind: 'stationary-present',
     deviceId: 7,
-    classes: ['vehicle'],
+    subjects: [{ macro: 'vehicle' }],
     zones: ['drive'],
   }
-  const wrap = (conditions: AutomationCondition): AutomationRecipe => ({
-    triggers: [{ kind: 'manual' }],
-    conditions,
+  const wrap = (when: AutomationWhen): AutomationRecipe => ({
+    when,
     actions: [{ kind: 'wait', seconds: 1 }],
   })
 
   it('is accepted by the recipe schema, counted as one leaf and one level', () => {
     const recipe = wrap({ kind: 'all', children: [present, present] })
     expect(AutomationRecipeSchema.safeParse(recipe).success).toBe(true)
-    expect(countConditionLeaves(present)).toBe(1)
-    expect(countConditionLeaves({ kind: 'all', children: [present, present] })).toBe(2)
-    expect(conditionDepth(present)).toBe(1)
-    expect(conditionDepth({ kind: 'not', child: present })).toBe(2)
+    expect(countWhenLeaves(present)).toBe(1)
+    expect(countWhenLeaves({ kind: 'all', children: [present, present] })).toBe(2)
+    expect(whenDepth(present)).toBe(1)
+    expect(whenDepth({ kind: 'not', child: present })).toBe(2)
     expect(validateRecipeBounds(recipe)).toBeNull()
   })
 
   it('shares the leaf budget with the other leaves', () => {
-    const many: AutomationCondition = {
+    const many: AutomationWhen = {
       kind: 'all',
-      children: Array.from({ length: MAX_CONDITION_LEAVES + 1 }, () => present),
+      children: Array.from({ length: MAX_WHEN_LEAVES + 1 }, () => present),
     }
-    expect(validateRecipeBounds(wrap(many))).toContain('leaves')
+    expect(validateRecipeBounds(wrap(many))).toContain('rows')
   })
 
   it('refuses a leaf with no device or an empty filter', () => {
     const parses = (leaf: object): boolean =>
       AutomationRecipeSchema.safeParse({
-        triggers: [{ kind: 'manual' }],
-        conditions: { kind: 'stationary-present', ...leaf },
+        when: { kind: 'stationary-present', ...leaf },
         actions: [{ kind: 'wait', seconds: 1 }],
       }).success
     expect(parses({ deviceId: 7 })).toBe(true)
     expect(parses({})).toBe(false)
-    expect(parses({ deviceId: 7, classes: [] })).toBe(false)
+    expect(parses({ deviceId: 7, subjects: [] })).toBe(false)
     expect(parses({ deviceId: 7, zones: [] })).toBe(false)
   })
 })

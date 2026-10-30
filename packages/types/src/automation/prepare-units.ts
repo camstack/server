@@ -17,18 +17,16 @@
 import { QuantityUnitError } from '../units/quantity-input.js'
 import { baseUnitForQuantity, unitsForQuantity } from '../units/quantity-units.js'
 import { type UnitResolver, normalizeRecipeUnits } from './normalize-units.js'
-import type { AutomationAction, AutomationCondition, AutomationRecipe } from './recipe.js'
+import type { AutomationAction, AutomationRecipe } from './recipe.js'
+import type { AutomationWhen } from './when.js'
 
 export type PreparedRecipe =
   | { readonly ok: true; readonly recipe: AutomationRecipe }
   | { readonly ok: false; readonly error: string }
 
-function stampCondition(
-  condition: AutomationCondition,
-  resolver: UnitResolver,
-): AutomationCondition {
+function stampCondition(condition: AutomationWhen, resolver: UnitResolver): AutomationWhen {
   switch (condition.kind) {
-    case 'condition': {
+    case 'device-is': {
       if (typeof condition.value !== 'number' || condition.unit !== undefined) return condition
       const quantity = resolver.fieldQuantity(condition.cap, condition.fieldPath)
       if (quantity === undefined || unitsForQuantity(quantity).length < 2) return condition
@@ -70,9 +68,7 @@ export function prepareRecipeUnits(
 ): PreparedRecipe {
   const stamped: AutomationRecipe = {
     ...recipe,
-    ...(recipe.conditions === undefined
-      ? {}
-      : { conditions: stampCondition(recipe.conditions, resolver) }),
+    when: stampCondition(recipe.when, resolver),
     actions: recipe.actions.map((action) => stampAction(action, resolver)),
   }
   try {

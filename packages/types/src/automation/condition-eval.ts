@@ -15,12 +15,15 @@
 
 import { isQuantityValue } from '../units/quantity-input.js'
 import { evaluateExpressionSource, toExpressionValue } from '../expression/expression-source.js'
-import { detectionClassMatches } from './detection-trigger.js'
-import type {
-  AutomationCondition,
-  AutomationConditionOperator,
-  AutomationConditionStationaryPresent,
-} from './recipe.js'
+import { anySubjectMatches } from './detection-subject.js'
+import { type LegacyCondition, convertLegacyCondition } from './legacy-recipe.js'
+import {
+  type AutomationConditionOperator,
+  type AutomationEventLeaf,
+  type AutomationWhen,
+  type StationaryPresentLeaf,
+  isEventLeaf,
+} from './when.js'
 import type { AutomationConditionTraceNode, TraceValue } from './trace.js'
 
 // ── The mirror ────────────────────────────────────────────────────────────
@@ -33,7 +36,7 @@ export type MirrorSource =
 /** The cap whose runtime-state slice IS the occupancy snapshot, parked objects included. */
 const ZONE_ANALYTICS_CAP = 'zone-analytics'
 
-function collectInto(cond: AutomationCondition, out: MirrorSource[]): void {
+function collectInto(cond: AutomationWhen, out: MirrorSource[]): void {
   switch (cond.kind) {
     case 'all':
     case 'any':
@@ -42,7 +45,7 @@ function collectInto(cond: AutomationCondition, out: MirrorSource[]): void {
     case 'not':
       collectInto(cond.child, out)
       return
-    case 'condition':
+    case 'device-is':
       out.push({ kind: 'device', deviceId: cond.deviceId, cap: cond.cap })
       return
     case 'stationary-present':
@@ -55,11 +58,14 @@ function collectInto(cond: AutomationCondition, out: MirrorSource[]): void {
         }
       }
       return
+    default:
+      // an event leaf reads nothing off the mirror — it is not a state
+      return
   }
 }
 
-/** Every (device, cap) a tree reads, deduplicated. */
-export function collectMirrorSources(cond: AutomationCondition | undefined): MirrorSource[] {
+/** Every (device, cap) a `when` tree's STATE leaves read, deduplicated. */
+export function collectWhenMirrorSources(cond: AutomationWhen | undefined): MirrorSource[] {
   if (cond === undefined) return []
   const all: MirrorSource[] = []
   collectInto(cond, all)
@@ -70,6 +76,11 @@ export function collectMirrorSources(cond: AutomationCondition | undefined): Mir
     seen.add(key)
     return true
   })
+}
+
+/** Legacy name, for blocks generated before the single tree: an old condition tree. */
+export function collectMirrorSources(cond: LegacyCondition | undefined): MirrorSource[] {
+  return collectWhenMirrorSources(cond === undefined ? undefined : convertLegacyCondition(cond))
 }
 
 export interface ConditionReader {
@@ -237,12 +248,15 @@ function show(value: unknown): string {
 
 export interface ConditionEvaluation {
   readonly pass: boolean
+  /** A state leaf could not be read (the mirror held nothing for it). A false
+   *  that comes with this is "not known", and a `not` over it is not to be trusted. */
+  readonly unknown: boolean
   /** Pre-order: a container, then its children. */
   readonly nodes: readonly AutomationConditionTraceNode[]
 }
 
 function markSkipped(
-  cond: AutomationCondition,
+  cond: AutomationWhen,
   path: string,
   why: string,
   out: AutomationConditionTraceNode[],
@@ -299,12 +313,12 @@ function zonesOfParked(zones: unknown, parkedId: string): readonly string[] {
  * empty list).
  */
 function judgeStationaryPresent(
-  cond: AutomationConditionStationaryPresent,
+  cond: StationaryPresentLeaf,
   reader: ConditionReader,
-): { readonly pass: boolean; readonly why: string } {
+): { readonly pass: boolean; readonly why: string; readonly unknown?: true } {
   const frame = reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'frame')
   if (frame === undefined) {
-    return { pass: false, why: `device ${cond.deviceId} occupancy snapshot unknown` }
+    return { pass: false, why: `device ${cond.deviceId} occupancy snapshot unknown`, unknown: true }
   }
   const parked = parkedObjectsOf(
     reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'stationaryObjects'),
@@ -315,8 +329,8 @@ function judgeStationaryPresent(
   const zones = reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'zones')
   for (const obj of parked) {
     if (
-      cond.classes !== undefined &&
-      !cond.classes.some((c) => detectionClassMatches(c, obj.className))
+      cond.subjects !== undefined &&
+      !anySubjectMatches(cond.subjects, { className: obj.className }).matches
     ) {
       continue
     }
@@ -332,15 +346,41 @@ function judgeStationaryPresent(
   }
 }
 
+interface EvalState {
+  /** The path of the event leaf that occurred; every other event leaf is false. */
+  readonly firedPath: string | undefined
+  unknown: boolean
+}
+
+function evalEventLeaf(
+  cond: AutomationEventLeaf,
+  path: string,
+  state: EvalState,
+  out: AutomationConditionTraceNode[],
+): boolean {
+  const occurred = state.firedPath === path
+  out.push({
+    path,
+    kind: cond.kind,
+    outcome: occurred ? 'pass' : 'fail',
+    reason: occurred
+      ? `${cond.kind} occurred → pass`
+      : `${cond.kind} is an instant and did not occur now → fail`,
+  })
+  return occurred
+}
+
 function evalNode(
-  cond: AutomationCondition,
+  cond: AutomationWhen,
   path: string,
   reader: ConditionReader,
   now: number,
   out: AutomationConditionTraceNode[],
+  state: EvalState,
 ): boolean {
+  if (isEventLeaf(cond)) return evalEventLeaf(cond, path, state, out)
   switch (cond.kind) {
-    case 'condition': {
+    case 'device-is': {
       const observed = reader.read(cond.deviceId, cond.cap, cond.fieldPath)
       const base = {
         path,
@@ -361,6 +401,7 @@ function evalNode(
         return false
       }
       if (observed === undefined) {
+        state.unknown = true
         out.push({ ...base, outcome: 'fail', reason: `${cond.fieldPath} value unknown → fail` })
         return false
       }
@@ -374,6 +415,7 @@ function evalNode(
     }
     case 'stationary-present': {
       const verdict = judgeStationaryPresent(cond, reader)
+      if (verdict.unknown === true) state.unknown = true
       out.push({
         path,
         kind: cond.kind,
@@ -402,6 +444,7 @@ function evalNode(
             outcome: 'fail',
             reason: `${alias} value unknown → fail`,
           })
+          state.unknown = true
           return false
         }
         values[alias] = toExpressionValue(raw) ?? null
@@ -428,7 +471,7 @@ function evalNode(
     case 'not': {
       const at = out.length
       out.push({ path, kind: 'not', outcome: 'not-evaluated', reason: '' })
-      const inner = evalNode(cond.child, `${path}.0`, reader, now, out)
+      const inner = evalNode(cond.child, `${path}.0`, reader, now, out, state)
       const ok = !inner
       out.splice(at, 1, {
         path,
@@ -451,7 +494,7 @@ function evalNode(
           markSkipped(child, `${path}.${i}`, `short-circuited by ${path}.${decided}`, out)
           continue
         }
-        const ok = evalNode(child, `${path}.${i}`, reader, now, out)
+        const ok = evalNode(child, `${path}.${i}`, reader, now, out, state)
         if (isAll ? !ok : ok) decided = i
       }
       const ok = isAll ? decided === null : decided !== null
@@ -468,14 +511,33 @@ function evalNode(
   }
 }
 
-/** No condition tree is a pass with no nodes. */
+/** Options of one evaluation of a `when` tree. */
+export interface WhenEvaluationOptions {
+  /** The path of the event leaf that occurred (`when.0`); absent for a state-only tree. */
+  readonly firedPath?: string
+  /** The root path (default `when`; the legacy wrapper keeps `conditions`). */
+  readonly rootPath?: string
+}
+
+/** Evaluate a `when` tree: the fired event leaf is true, every other event leaf false. */
+export function evaluateWhenTree(
+  when: AutomationWhen,
+  reader: ConditionReader,
+  now: number,
+  options: WhenEvaluationOptions = {},
+): ConditionEvaluation {
+  const nodes: AutomationConditionTraceNode[] = []
+  const state: EvalState = { firedPath: options.firedPath, unknown: false }
+  const pass = evalNode(when, options.rootPath ?? 'when', reader, now, nodes, state)
+  return { pass, unknown: state.unknown, nodes }
+}
+
+/** Legacy name, for blocks generated before the single tree. No tree is a pass with no nodes. */
 export function evaluateConditionTree(
-  cond: AutomationCondition | undefined,
+  cond: LegacyCondition | undefined,
   reader: ConditionReader,
   now: number,
 ): ConditionEvaluation {
-  if (cond === undefined) return { pass: true, nodes: [] }
-  const nodes: AutomationConditionTraceNode[] = []
-  const pass = evalNode(cond, 'conditions', reader, now, nodes)
-  return { pass, nodes }
+  if (cond === undefined) return { pass: true, unknown: false, nodes: [] }
+  return evaluateWhenTree(convertLegacyCondition(cond), reader, now, { rootPath: 'conditions' })
 }

@@ -24,8 +24,9 @@
  * repo-wide.
  */
 
-import type { AutomationAction, AutomationRecipe, AutomationTrigger } from './recipe.js'
+import type { AutomationAction, AutomationRecipe } from './recipe.js'
 import { DEFAULT_TRACE_KEEP, validateRecipeBounds } from './recipe.js'
+import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
 
 export interface GenerateAutomationBlockInput {
   /** The block's name — the ONE name for the artefact (§2.1). */
@@ -67,10 +68,11 @@ function j(value: unknown): string {
   return JSON.stringify(value)
 }
 
-function emitTrigger(trigger: AutomationTrigger, index: number): string {
+function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
+  const at = j(path)
   switch (trigger.kind) {
     case 'schedule':
-      return `  // trigger ${index}: schedule — armed to the next minute boundary and
+      return `  // event leaf ${path}: schedule — armed to the next minute boundary and
   // RE-ARMED from the wall clock every tick, so it cannot drift the way a
   // setInterval(24h) does. No cron library: a block cannot resolve one.
   {
@@ -78,7 +80,7 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
     const arm = (): void => {
       timer = setTimeout(() => {
         if (cronMatches(${j(trigger.cron)}, new Date())) {
-          void run({ kind: 'schedule', at: Date.now() })
+          void run({ kind: 'schedule', leaf: ${at}, at: Date.now() })
         }
         arm()
       }, nextMinuteBoundary())
@@ -87,7 +89,7 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
     disposers.push(() => { if (timer !== undefined) clearTimeout(timer) })
   }`
     case 'device-event':
-      return `  // trigger ${index}: device event
+      return `  // event leaf ${path}: device event
   disposers.push(
     ctx.eventBus.subscribe(
       { category: ${j(trigger.category)}${
@@ -96,6 +98,7 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
       (event) => {
         void run({
           kind: 'device-event',
+          leaf: ${at},
           at: Date.now(),
           deviceId: event.deviceId,
           category: ${j(trigger.category)},
@@ -103,9 +106,9 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
       },
     ),
   )`
-    case 'device-state': {
+    case 'device-becomes': {
       const becomes = trigger.becomes === undefined ? 'undefined' : j(trigger.becomes)
-      return `  // trigger ${index}: device state — the mirror is the authority, the
+      return `  // event leaf ${path}: device state — the mirror is the authority, the
   // event only WAKES the evaluation, so a dropped event delays and never loses.
   {
     let previous: unknown = undefined
@@ -128,7 +131,8 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
       }
       heldSince = undefined
       void run({
-        kind: 'device-state',
+        kind: 'device-becomes',
+        leaf: ${at},
         at: Date.now(),
         deviceId: ${j(trigger.deviceId)},
         cap: ${j(trigger.cap)},
@@ -150,17 +154,17 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
   }`
     }
     case 'manual':
-      return `  // trigger ${index}: manual — fired by automation-control.trigger
+      return `  // event leaf ${path}: manual — fired by automation-control.trigger
   // ("Run actions"), which runs the THEN half with an EMPTY vars bag. A manual
   // run bypasses only the cooldown wait, never the single/queued limits.`
     case 'interval':
-      return `  // trigger ${index}: interval — every ${trigger.minutes} min, first run jittered so
+      return `  // event leaf ${path}: interval — every ${trigger.minutes} min, first run jittered so
   // blocks restarted together do not all fire on the same second.
   {
     let interval: ReturnType<typeof setInterval> | undefined
     const first = setTimeout(() => {
-      void run({ kind: 'interval', at: Date.now() })
-      interval = setInterval(() => { void run({ kind: 'interval', at: Date.now() }) }, ${j(
+      void run({ kind: 'interval', leaf: ${at}, at: Date.now() })
+      interval = setInterval(() => { void run({ kind: 'interval', leaf: ${at}, at: Date.now() }) }, ${j(
         trigger.minutes * 60_000,
       )})
     }, Math.floor(Math.random() * Math.min(${j(trigger.minutes * 60_000)}, 30_000)) + 1)
@@ -170,7 +174,7 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
     })
   }`
     case 'detection':
-      return `  // trigger ${index}: detection — ONE fire per (device, track); a rejected event is
+      return `  // event leaf ${path}: detection — ONE fire per (device, track); a rejected event is
   // traced with its reason and never fires.
   {
     const filter = new DetectionTriggerFilter(${j(trigger)})
@@ -187,7 +191,7 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
             })
           }
           void run(
-            { kind: 'detection', at: Date.now(), ...decision.vars },
+            { kind: 'detection', leaf: ${at}, at: Date.now(), ...decision.vars },
             decision.reason,
             decision.kind === 'fire',
           )
@@ -196,9 +200,9 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
     )
   }`
     case 'stationary':
-      return `  // trigger ${index}: stationary — a parked object appeared / departed. Stateless:
+      return `  // event leaf ${path}: stationary — a parked object appeared / departed. Stateless:
   // the registry emits one event per transition. A dropped event only misses a fire;
-  // the stationary-present CONDITION reads the registry, not this event.
+  // the stationary-present STATE leaf reads the registry, not this event.
   {
     const trigger = ${j(trigger)} as const
     disposers.push(
@@ -214,7 +218,7 @@ function emitTrigger(trigger: AutomationTrigger, index: number): string {
             })
           }
           void run(
-            { kind: 'stationary', at: Date.now(), ...decision.vars },
+            { kind: 'stationary', leaf: ${at}, at: Date.now(), ...decision.vars },
             decision.reason,
             decision.kind === 'fire',
           )
@@ -239,7 +243,7 @@ ${body}
       if (Array.isArray(action.deviceId)) {
         return step(`        for (const deviceId of ${j(action.deviceId)}) {
           scope.setDeviceId(deviceId)
-          await actuate(deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
+          await actuate(scope, deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
             action.args ?? {},
           )}, vars)
         }`)
@@ -250,7 +254,7 @@ ${body}
           : `resolveTarget(vars, ${j(action.deviceId.$var)})`
       return step(`        const deviceId = ${target}
         scope.setDeviceId(deviceId)
-        await actuate(deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
+        await actuate(scope, deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
           action.args ?? {},
         )}, vars)`)
     }
@@ -291,6 +295,10 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const { name, recipe } = input
   const runMode = recipe.runMode ?? { mode: 'single' }
   const stepMeta = recipe.actions.map(stepMetaOf)
+  const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
+  forEachLeaf(recipe.when, (leaf, path) => {
+    if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
+  })
 
   return `import type {
   AddonContext,
@@ -299,6 +307,7 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   AutomationRunVerdict,
   AutomationStepTrace,
   RunnableStep,
+  StepScope,
 } from '@camstack/types'
 import {
   ConditionMirror,
@@ -306,9 +315,9 @@ import {
   EventCategory,
   RunGate,
   buildTriggerTrace,
-  collectMirrorSources,
+  collectWhenMirrorSources,
   coreBlockIdFromAddonId,
-  evaluateConditionTree,
+  evaluateWhenTree,
   evaluateStationaryTrigger,
   isSkippedTrace,
   mergeSkipTraces,
@@ -336,7 +345,11 @@ const RUN_MODE = ${j(runMode)} as const
 /** Run traces kept (a ring, held in the hub's runs ledger). */
 const KEEP_TRACES = ${recipe.keepTraces ?? DEFAULT_TRACE_KEEP}
 
-const CONDITIONS = ${recipe.conditions === undefined ? 'undefined' : 'AUTOMATION_RECIPE.conditions'}
+/** The ONE tree: event leaves (instants) and state leaves (durations). */
+const WHEN = AUTOMATION_RECIPE.when
+
+/** No event leaf: the automation fires when the tree goes false → true, never because it was already true. */
+const STATE_ONLY = ${!hasEventLeaves(recipe.when)}
 
 /** Skips that repeat are folded into one trace; it goes to the hub after this. */
 const SKIP_FLUSH_MS = 5_000
@@ -395,7 +408,8 @@ function matchField(field: string, value: number): boolean {
 export default function block(ctx: AddonContext) {
   const disposers: Array<() => void> = []
   const gate = new RunGate(RUN_MODE)
-  const mirror = new ConditionMirror(collectMirrorSources(CONDITIONS))
+  const MIRROR_SOURCES = collectWhenMirrorSources(WHEN)
+  const mirror = new ConditionMirror(MIRROR_SOURCES)
   const BLOCK_ID = coreBlockIdFromAddonId(ctx.id)
   /** The cooldown stamp: memory is the authority at fire time (D49); the hub ledger is read once at start. */
   let lastRunStartedAt: number | null = null
@@ -561,6 +575,7 @@ export default function block(ctx: AddonContext) {
   }
 
   async function actuate(
+    scope: StepScope,
     deviceId: number,
     cap: string,
     method: string,
@@ -570,6 +585,7 @@ export default function block(ctx: AddonContext) {
     const substituted = substitute(args, vars)
     const resolved: Record<string, unknown> =
       substituted !== null && typeof substituted === 'object' ? { ...substituted } : {}
+    scope.setArgs(resolved)
     // Forked-addon ctx.api namespaces are tRPC Proxies over a noop function
     // (typeof === 'function'), not plain objects — reject only null/undefined.
     const client: unknown = Reflect.get(ctx.api, capToRouterKey(cap))
@@ -658,10 +674,13 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     let nodes: AutomationConditionTraceNode[] = []
     let steps: AutomationStepTrace[] = []
     try {
-      const evaluation = evaluateConditionTree(CONDITIONS, mirror, Date.now())
+      const firedLeaf = trigger['leaf']
+      const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), {
+        ...(typeof firedLeaf === 'string' ? { firedPath: firedLeaf } : {}),
+      })
       nodes = [...evaluation.nodes]
       for (const node of nodes) {
-        if (node.kind === 'condition' && node.observed === null && node.deviceId !== undefined) {
+        if (node.kind === 'device-is' && node.observed === null && node.deviceId !== undefined) {
           ctx.logger.warn('condition leaf value unknown — treated as false', {
             tags: { deviceId: node.deviceId },
             path: node.path,
@@ -672,7 +691,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
       }
       if (!evaluation.pass) {
         outcome = 'skipped-conditions'
-        ctx.logger.debug('automation did not run — conditions were false', { trigger, ...deviceTags(trigger) })
+        ctx.logger.debug('automation did not run — the rule tree was false at that instant', { trigger, ...deviceTags(trigger) })
         return
       }
       const letThrough = stampUnknown && RUN_MODE.mode === 'cooldown'
@@ -771,9 +790,30 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
   const ready: Promise<void> = (async () => {
     await loadState()
     await refreshMirror()
+    stateWatching = true
+    evaluateStateTree()
   })()
 
-  if (CONDITIONS !== undefined) {
+  /**
+   * Rule 2 — a tree of states only. It fires when the tree goes false → true.
+   * The FIRST evaluation only seeds \`treeWasTrue\` (a tree that is already true
+   * when the hub or runner starts must not fire), and an evaluation that read an
+   * unknown value neither seeds nor moves it: unknown is not false.
+   */
+  let treeWasTrue: boolean | undefined
+  let stateWatching = false
+  function evaluateStateTree(): void {
+    if (!STATE_ONLY || !stateWatching || stopped) return
+    const evaluation = evaluateWhenTree(WHEN, mirror, Date.now())
+    if (evaluation.unknown) return
+    const was = treeWasTrue
+    treeWasTrue = evaluation.pass
+    if (was === false && evaluation.pass) {
+      void run({ kind: 'state', leaf: 'when', at: Date.now() }, 'the rules became true', true)
+    }
+  }
+
+  if (MIRROR_SOURCES.length > 0) {
     disposers.push(
       ctx.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
         const data = event.data
@@ -781,14 +821,17 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         const capName = data['capName']
         if (typeof deviceId === 'number' && typeof capName === 'string') {
           mirror.apply(deviceId, capName, data['slice'])
+          evaluateStateTree()
         }
       }),
     )
-    const mirrorReconcile = setInterval(() => { void refreshMirror() }, RECONCILE_MS)
+    const mirrorReconcile = setInterval(() => {
+      void refreshMirror().then(evaluateStateTree)
+    }, RECONCILE_MS)
     disposers.push(() => clearInterval(mirrorReconcile))
   }
 
-${recipe.triggers.map((t, i) => emitTrigger(t, i)).join('\n\n')}
+${eventLeaves.map(({ leaf, path }) => emitLeaf(leaf, path)).join('\n\n')}
 
   return () => {
     stopped = true

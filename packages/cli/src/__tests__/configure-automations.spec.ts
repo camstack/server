@@ -92,9 +92,10 @@ describe('configure_automation_questionnaire', () => {
       actions: [{ kind: 'wait', seconds: 1 }],
     })
     if (ready.status !== 'ready') throw new Error(JSON.stringify(ready))
-    expect(ready.recipe.triggers[0]).toMatchObject({
+    expect(ready.recipe.when).toMatchObject({
       kind: 'detection',
       zones: [ZONE_ID],
+      subjects: [{ macro: 'person' }],
     })
   })
 
@@ -123,7 +124,10 @@ describe('configure_automation_questionnaire', () => {
       ],
     })
     if (ready.status !== 'ready') throw new Error(JSON.stringify(ready))
-    expect(ready.recipe.conditions).toMatchObject({ value: 0.05, unit: 'kg' })
+    expect(ready.recipe.when).toMatchObject({
+      kind: 'all',
+      children: [{ kind: 'schedule' }, { kind: 'device-is', value: 0.05, unit: 'kg' }],
+    })
     expect(ready.quantities).toContainEqual(expect.objectContaining({ value: 0.05, unit: 'kg' }))
   })
 
@@ -150,7 +154,7 @@ describe('configure_automation_questionnaire', () => {
 
 describe('configure_automation_save', () => {
   const recipe = {
-    triggers: [{ kind: 'schedule' as const, cron: '30 7 * * *' }],
+    when: { kind: 'schedule' as const, cron: '30 7 * * *' },
     actions: [{ kind: 'wait' as const, seconds: 1 }],
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { collectMirrorSources, ConditionMirror, evaluateConditionTree } from '../condition-eval.js'
-import type { AutomationCondition } from '../recipe.js'
+import type { LegacyCondition as AutomationCondition } from '../legacy-recipe.js'
 
 const ZONE_CAP = 'zone-analytics'
 

@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7520 source files · 1221 file(s) in no subsystem.**
+**31 subsystems · 7523 source files · 1221 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -46,14 +46,14 @@ commits. A generated page may not.
 | Update, release, OTA and agent delivery | 67 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, +32 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 301 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +49 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 56 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +17 more | 2026-10-21 | ⚠️ |
-| Automations, blocks and declared devices | 148 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +30 more, 1 ADR | 2026-10-26 | ⚠️ |
+| Automations, blocks and declared devices | 151 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `architecture/device-model.md`, +31 more, 1 ADR | 2026-10-26 | ⚠️ |
 | Alerts, liveness and system health | 54 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, `architecture/load-ledger.md` _(covers)_, +41 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 35 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-10-04-logs-history-beyond-the-ring.md` _(covers)_, +8 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 50 | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1344 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-0946-one-device-name.md`, +154 more, 15 ADRs | 2026-10-27 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 158 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +15 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 675 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +161 more, 14 ADRs | 2026-10-27 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 675 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +162 more, 14 ADRs | 2026-10-27 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -270,7 +270,7 @@ The operator-authored logic layer — expression blocks, recipes and the devices
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/core-blocks/**`, `packages/system/src/builtins/composer/**`, `packages/types/src/expression/**`, `packages/types/src/automation/**`, `packages/types/src/composition/**`
-- **Files**: 148 (148 claimed by some document)
+- **Files**: 151 (151 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Alerts, liveness and system health
