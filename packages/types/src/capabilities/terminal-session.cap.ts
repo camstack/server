@@ -54,6 +54,12 @@ const TerminalInstanceInfoSchema = z.object({
   instanceId: z.string(),
   cameraStableId: z.string(),
   nodeId: z.string(),
+  /**
+   * False while the node the instance is bound to is not in the cluster
+   * topology (forgotten, renamed, re-paired). The instance is kept; the
+   * operator re-points it with `updateInstance({ targetNodeId })`.
+   */
+  nodeInCluster: z.boolean(),
   profileId: z.string(),
   profileLabel: z.string(),
   name: z.string(),
@@ -129,6 +135,8 @@ export const terminalSessionCapability = {
     updateInstance: method(
       z.object({
         instanceId: z.string().min(1),
+        /** Re-point the instance to another node; the profile must exist there. */
+        targetNodeId: z.string().min(1).max(256).optional(),
         name: z.string().trim().min(1).max(160).optional(),
         executable: z.string().max(1024).optional(),
         args: z.array(z.string().max(2048)).max(64).optional(),

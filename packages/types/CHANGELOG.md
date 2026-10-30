@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The vendor login proxy can keep a sign-in's vendor cookies server-side (serverCookieJar)
 - Hub: a stale-data audit finds record kinds and settings keys an addon no longer declares, read-only, with an operator-triggered cleanup
 - Automations are one 'when' tree: an event starts a run, states must hold at that instant, and a detection is a macro class with an optional label (dog, a known face, a plate); stored recipes convert on read, and step traces now show the arguments they sent.
+- Terminal instances report nodeInCluster and updateInstance accepts targetNodeId to re-point an instance.
 
 ## [1.2.451] - 2026-10-30
 

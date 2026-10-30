@@ -100,7 +100,15 @@ export class TerminalCameraRelay {
   constructor(
     private readonly api: TerminalCameraApi,
     private readonly logger: IScopedLogger,
+    /** The numeric device id of an instance's camera, once it is declared. */
+    private readonly deviceIdFor: (instanceId: string) => number | undefined = () => undefined,
   ) {}
+
+  /** `tags: { deviceId }` when the camera device is known — a line is groupable per camera. */
+  private tagsFor(instanceId: string): { tags: { deviceId: number } } | Record<string, never> {
+    const deviceId = this.deviceIdFor(instanceId)
+    return deviceId === undefined ? {} : { tags: { deviceId } }
+  }
 
   async start(): Promise<void> {
     if (this.server) return
@@ -261,6 +269,7 @@ export class TerminalCameraRelay {
             })
             .catch((closeError: unknown) => {
               this.logger.warn('terminal camera session cleanup after output failure failed', {
+                ...this.tagsFor(state.instanceId),
                 meta: {
                   nodeId: state.nodeId,
                   sessionId,
@@ -354,6 +363,7 @@ export class TerminalCameraRelay {
       }
     } catch (error) {
       this.logger.warn('terminal camera stream failed', {
+        ...this.tagsFor(instanceId),
         meta: {
           nodeId,
           profileId,
@@ -420,6 +430,7 @@ export class TerminalCameraRelay {
       } catch (error) {
         state.closeAttempts += 1
         this.logger.warn('terminal camera session close failed', {
+          ...this.tagsFor(state.instanceId),
           meta: {
             nodeId: state.nodeId,
             sessionId,

@@ -6653,6 +6653,7 @@ Enum: `"jwt-signing-key"`
 - `instanceId`: `string`
 - `cameraStableId`: `string`
 - `nodeId`: `string`
+- `nodeInCluster`: `boolean`
 - `profileId`: `string`
 - `profileLabel`: `string`
 - `name`: `string`

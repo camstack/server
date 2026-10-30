@@ -6596,7 +6596,12 @@
       "liveSessions": "Sessioni live",
       "noSessionsRunningOpenOne": "Nessuna sessione in esecuzione. Aprine una qui sopra per iniziare.",
       "attached": "Collegata",
-      "attach": "Collega"
+      "attach": "Collega",
+      "instancesUnknown": "Impossibile leggere le istanze Terminal.",
+      "instancesLoading": "Caricamento delle istanze Terminal…",
+      "nodeNotInCluster": "Nodo non nel cluster",
+      "nodeNotInClusterHint": "Questa istanza punta a un nodo che non è più nel cluster. Modificala per scegliere un altro nodo.",
+      "node": "Nodo"
     },
     "deletedDevices": {
       "intro": "Dati che appartengono ancora a dispositivi eliminati prima che le eliminazioni venissero registrate: registrazioni, eventi, storico e impostazioni degli addon. La scansione non elimina nulla; l'eliminazione chiede conferma e mostra cosa verrà rimosso.",

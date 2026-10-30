@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { sanitizeProfileSettings } from './profile-settings.js'
 
 const TerminalInstanceSchema = z.object({
   id: z.string().uuid(),
@@ -198,9 +199,9 @@ export class TerminalInstanceReconcileCoordinator {
   }
 }
 
-export interface ForgottenNodeOutcome {
+export interface AbsentNodeOutcome {
   /** Instances whose node was absent on THIS read and the previous one. */
-  readonly remove: readonly TerminalInstance[]
+  readonly confirmed: readonly TerminalInstance[]
   /** Instance ids whose node is absent on this read — the streak to carry. */
   readonly absentNow: ReadonlySet<string>
 }
@@ -208,24 +209,61 @@ export interface ForgottenNodeOutcome {
 /**
  * Instances bound to a node the cluster no longer lists at all.
  *
- * An OFFLINE node is still in the topology; a FORGOTTEN one
- * (`clusterNodes.forgetNode`) is not. An instance bound to a forgotten node
- * warned every minute ("terminal profiles unavailable … node hub-test is
- * offline", 2026-09-05) and could never come back, so it is removed — but
- * only when two consecutive reads agree (D49): a topology answer that lost a
- * node once must not destroy an operator's configuration on its own.
+ * An OFFLINE node is still in the topology; a FORGOTTEN or renamed one is not.
+ * Such an instance is NEVER removed on its own: it is the operator's
+ * configuration, and the node may have come back under another id. It is
+ * reported (alert, `nodeInCluster: false`) once two consecutive reads agree
+ * (D49), and stays until the operator re-points or deletes it.
  */
-export function instancesOnForgottenNodes(
+export function instancesOnAbsentNodes(
   instances: readonly TerminalInstance[],
   knownNodeIds: ReadonlySet<string>,
   absentBefore: ReadonlySet<string>,
-): ForgottenNodeOutcome {
+): AbsentNodeOutcome {
   const absentNow = new Set<string>()
-  const remove: TerminalInstance[] = []
+  const confirmed: TerminalInstance[] = []
   for (const instance of instances) {
     if (knownNodeIds.has(instance.nodeId)) continue
     absentNow.add(instance.id)
-    if (absentBefore.has(instance.id)) remove.push(instance)
+    if (absentBefore.has(instance.id)) confirmed.push(instance)
   }
-  return { remove, absentNow }
+  return { confirmed, absentNow }
+}
+
+export interface TerminalInstancePatch {
+  readonly instanceId: string
+  readonly targetNodeId?: string
+  readonly name?: string
+  readonly executable?: string
+  readonly args?: readonly string[]
+  readonly cwd?: string
+  readonly environment?: readonly string[]
+  readonly profileSettings?: Readonly<Record<string, unknown>>
+}
+
+/** The profile on the node an instance is re-pointed to. */
+export interface TerminalInstanceTarget {
+  readonly profileLabel: string
+}
+
+/** Pure merge of an operator edit; re-pointing needs the target's profile. */
+export function applyTerminalInstancePatch(
+  instance: TerminalInstance,
+  patch: TerminalInstancePatch,
+  target?: TerminalInstanceTarget,
+): TerminalInstance {
+  return {
+    ...instance,
+    ...(patch.targetNodeId !== undefined && target !== undefined
+      ? { nodeId: patch.targetNodeId, profileLabel: target.profileLabel }
+      : {}),
+    ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+    ...(patch.executable !== undefined ? { executable: patch.executable.trim() } : {}),
+    ...(patch.args !== undefined ? { args: [...patch.args] } : {}),
+    ...(patch.cwd !== undefined ? { cwd: patch.cwd.trim() } : {}),
+    ...(patch.environment !== undefined ? { environment: [...patch.environment] } : {}),
+    ...(patch.profileSettings !== undefined
+      ? { profileSettings: sanitizeProfileSettings(instance.profileId, patch.profileSettings) }
+      : {}),
+  }
 }

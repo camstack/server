@@ -29,6 +29,28 @@ function sessionInfo(): TerminalSessionInfo {
 }
 
 describe('TerminalCameraRelay', () => {
+  it('tags a stream failure with the numeric deviceId of the instance camera', async () => {
+    const warn = vi.fn()
+    const taggedLogger: IScopedLogger = { ...logger, warn }
+    const api: TerminalCameraApi = {
+      listProfiles: async () => [{ profileId: 'monitor', label: 'System Monitor' }],
+      openSession: async () => sessionInfo(),
+      pullOutput: async () => {
+        throw new Error('node unreachable')
+      },
+      closeSession: async () => {},
+    }
+    const relay = new TerminalCameraRelay(api, taggedLogger, (instanceId) =>
+      instanceId === 'instance-a' ? 3219 : undefined,
+    )
+    await relay.start()
+    const response = await fetch(relay.streamUrl('instance-a', 'agent-a', 'monitor'))
+    expect(response.status).toBe(502)
+    const failure = warn.mock.calls.find(([message]) => message === 'terminal camera stream failed')
+    expect(failure?.[1]).toMatchObject({ tags: { deviceId: 3219 } })
+    await relay.dispose()
+  })
+
   it('serves a remote terminal session as an MJPEG stream and closes it on dispose', async () => {
     const closeSession = vi.fn(async () => {})
     const api: TerminalCameraApi = {

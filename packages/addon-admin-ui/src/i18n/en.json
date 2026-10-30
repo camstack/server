@@ -6521,7 +6521,12 @@
       "liveSessions": "Live sessions",
       "noSessionsRunningOpenOne": "No sessions running. Open one above to begin.",
       "attached": "Attached",
-      "attach": "Attach"
+      "attach": "Attach",
+      "instancesUnknown": "Could not read the Terminal instances.",
+      "instancesLoading": "Loading Terminal instances…",
+      "nodeNotInCluster": "Node not in cluster",
+      "nodeNotInClusterHint": "This instance targets a node that is no longer in the cluster. Edit it to pick another node.",
+      "node": "Node"
     },
     "deletedDevices": {
       "intro": "Data that still belongs to devices that were deleted before deletions were recorded: footage, events, history and per-addon settings. Scanning deletes nothing; deleting asks first and shows what goes.",

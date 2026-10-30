@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  instancesOnForgottenNodes,
+  instancesOnAbsentNodes,
+  applyTerminalInstancePatch,
   listLegacyTerminalCameraCandidates,
   readTerminalInstances,
   TerminalInstanceMutationQueue,
@@ -153,7 +154,7 @@ describe('readTerminalInstances', () => {
   })
 })
 
-describe('instancesOnForgottenNodes', () => {
+describe('instancesOnAbsentNodes', () => {
   const on = (id: string, nodeId: string) => ({
     id,
     cameraStableId: `terminal-camera-instance-${id}`,
@@ -171,26 +172,60 @@ describe('instancesOnForgottenNodes', () => {
   const A = '018f5846-3ae2-7cb7-9a13-0800200c9a66'
   const B = '018f5846-3ae2-7cb7-9a13-0800200c9a67'
 
-  // A node the cluster has FORGOTTEN (`clusterNodes.forgetNode`) is not in the
-  // topology at all — an offline node still is. An instance bound to a
-  // forgotten node warned every minute ("terminal profiles unavailable …
-  // node hub-test is offline") and could never come back. It is removed, but
-  // only when two consecutive reads agree (D49): the topology read has
-  // answered without a node once and with it the next time.
-  it('names an instance for removal only when its node is absent on two consecutive reads', () => {
+  // A node the cluster has FORGOTTEN is not in the topology at all. The
+  // instance is KEPT (the operator re-points it); it is only reported, and
+  // only when two consecutive reads agree (D49) so one lossy topology answer
+  // does not raise an alert.
+  it('confirms an absent node only on two consecutive reads, and never names a removal', () => {
     const instances = [on(A, 'hub'), on(B, 'hub-test')]
     const known = new Set(['hub', 'agent-a'])
-    const first = instancesOnForgottenNodes(instances, known, new Set())
-    expect(first.remove).toEqual([])
+    const first = instancesOnAbsentNodes(instances, known, new Set())
+    expect(first.confirmed).toEqual([])
     expect([...first.absentNow]).toEqual([B])
-    const second = instancesOnForgottenNodes(instances, known, first.absentNow)
-    expect(second.remove.map((i) => i.id)).toEqual([B])
+    const second = instancesOnAbsentNodes(instances, known, first.absentNow)
+    expect(second.confirmed.map((i) => i.id)).toEqual([B])
+    expect('remove' in second).toBe(false)
   })
 
   it('a node that reappears clears the streak', () => {
     const instances = [on(B, 'hub-test')]
-    const back = instancesOnForgottenNodes(instances, new Set(['hub', 'hub-test']), new Set([B]))
-    expect(back.remove).toEqual([])
+    const back = instancesOnAbsentNodes(instances, new Set(['hub', 'hub-test']), new Set([B]))
+    expect(back.confirmed).toEqual([])
     expect(back.absentNow.size).toBe(0)
+  })
+})
+
+describe('applyTerminalInstancePatch', () => {
+  const base = {
+    id: '018f5846-3ae2-7cb7-9a13-0800200c9a66',
+    cameraStableId: 'terminal-camera-instance-x',
+    nodeId: 'MinidiGianluca.localdomain',
+    profileId: 'monitor',
+    profileLabel: 'BTM',
+    name: 'Glances macmini',
+    enabled: true,
+    executable: '',
+    args: [],
+    cwd: '',
+    environment: [],
+    profileSettings: {},
+  }
+
+  it('re-points the instance to another node and takes that node profile label', () => {
+    const next = applyTerminalInstancePatch(
+      base,
+      { instanceId: base.id, targetNodeId: 'agent-bbce9dde' },
+      { profileLabel: 'Monitor' },
+    )
+    expect(next.nodeId).toBe('agent-bbce9dde')
+    expect(next.profileLabel).toBe('Monitor')
+    expect(next.name).toBe('Glances macmini')
+    expect(next.cameraStableId).toBe(base.cameraStableId)
+  })
+
+  it('leaves the node alone when no target is given', () => {
+    const next = applyTerminalInstancePatch(base, { instanceId: base.id, name: ' x ' })
+    expect(next.nodeId).toBe(base.nodeId)
+    expect(next.name).toBe('x')
   })
 })

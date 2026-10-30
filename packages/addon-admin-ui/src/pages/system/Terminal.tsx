@@ -222,6 +222,8 @@ export function TerminalPage() {
 
   const profiles = profilesQuery.data ?? []
   const listedSessions = sessionsQuery.data ?? []
+  const instances = instancesQuery.data
+  const legacyCameras = legacyCamerasQuery.data
   // Distinguish "still loading" from "this node genuinely has none" — a
   // loading spinner must not flash the configuration open.
   const hasNoProfiles = !profilesQuery.isLoading && !profilesQuery.isError && profiles.length === 0
@@ -235,6 +237,7 @@ export function TerminalPage() {
   const [draftProfileSettings, setDraftProfileSettings] = useState<Record<string, unknown>>({})
   const [editingInstanceId, setEditingInstanceId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
+  const [editNodeId, setEditNodeId] = useState('')
   const [editExecutable, setEditExecutable] = useState('')
   const [editArgs, setEditArgs] = useState('')
   const [editCwd, setEditCwd] = useState('')
@@ -365,10 +368,12 @@ export function TerminalPage() {
 
   const handleSaveInstance = async (instanceId: string) => {
     setActionError(null)
+    const currentNodeId = instances?.find((row) => row.instanceId === instanceId)?.nodeId
     try {
       await updateInstance.mutateAsync({
         nodeId: 'hub',
         instanceId,
+        ...(editNodeId !== '' && editNodeId !== currentNodeId ? { targetNodeId: editNodeId } : {}),
         name: editName.trim(),
         executable: editExecutable.trim(),
         args: splitLines(editArgs),
@@ -461,7 +466,7 @@ export function TerminalPage() {
         {showConfig && (
           <div className="border-t border-border p-3">
             {hasNoProfiles && (
-              <p className="mb-3 text-[11px] text-amber-600">
+              <p className="mb-3 text-[11px] text-warning">
                 {t(
                   'systemPage.terminal.thisNodeOffersNoTerminal',
                   'This node offers no terminal profile. Enable BTM, Top or Glances below, or add a custom profile.',
@@ -592,7 +597,13 @@ export function TerminalPage() {
             )}
           </p>
         </div>
-        {(instancesQuery.data ?? []).length === 0 ? (
+        {instances === undefined ? (
+          <p className="px-3 py-4 text-xs text-foreground-subtle">
+            {instancesQuery.isError
+              ? t('systemPage.terminal.instancesUnknown', 'Could not read the Terminal instances.')
+              : t('systemPage.terminal.instancesLoading', 'Loading Terminal instances…')}
+          </p>
+        ) : instances.length === 0 ? (
           <p className="px-3 py-4 text-xs text-foreground-subtle">
             {t(
               'systemPage.terminal.noTerminalCamerasHaveBeen',
@@ -601,7 +612,7 @@ export function TerminalPage() {
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {(instancesQuery.data ?? []).map((instance) => {
+            {instances.map((instance) => {
               const instanceSettingsSchema = profileSettingsSchema(
                 profiles.find((profile) => profile.profileId === instance.profileId)
                   ?.settingsSchema,
@@ -612,14 +623,26 @@ export function TerminalPage() {
                     <div className="min-w-0">
                       <div className="font-medium text-foreground">{instance.name}</div>
                       <div className="font-mono text-foreground-subtle truncate">
-                        {instance.nodeId} · {instance.profileLabel} · {instance.cameraStableId}
+                        {instance.nodeInCluster
+                          ? instance.nodeId
+                          : t('systemPage.terminal.nodeNotInCluster', 'Node not in cluster')}{' '}
+                        · {instance.profileLabel} · {instance.cameraStableId}
                       </div>
+                      {!instance.nodeInCluster && (
+                        <div className="text-warning">
+                          {t(
+                            'systemPage.terminal.nodeNotInClusterHint',
+                            'This instance targets a node that is no longer in the cluster. Edit it to pick another node.',
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button
                         onClick={() => {
                           setEditingInstanceId(instance.instanceId)
                           setEditName(instance.name)
+                          setEditNodeId(instance.nodeId)
                           setEditExecutable(instance.executable ?? '')
                           setEditArgs(joinLines(instance.args))
                           setEditCwd(instance.cwd ?? '')
@@ -679,6 +702,16 @@ export function TerminalPage() {
                           className="rounded-md border border-border bg-surface px-2 py-1.5 text-[12px]"
                         />
                       </label>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] uppercase tracking-wide text-foreground-subtle">
+                          {t('systemPage.terminal.node', 'Node')}
+                        </span>
+                        <NodePicker
+                          selectedNodeId={editNodeId}
+                          onSelect={setEditNodeId}
+                          alwaysShow
+                        />
+                      </div>
                       <SpawnFields
                         executable={editExecutable}
                         args={editArgs}
@@ -720,8 +753,8 @@ export function TerminalPage() {
         )}
       </section>
 
-      {(legacyCamerasQuery.data ?? []).length > 0 && (
-        <section className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+      {legacyCameras !== undefined && legacyCameras.length > 0 && (
+        <section className="rounded-lg border border-warning/30 bg-warning/5 p-3">
           <div className="text-xs font-medium text-foreground">
             {t('systemPage.terminal.legacyAutomaticCameras', 'Legacy automatic cameras')}
           </div>
@@ -731,8 +764,8 @@ export function TerminalPage() {
               'These cameras predate explicit Terminal instances. They are intentionally untouched: confirm each migration before deleting one. Only BTM cameras can retain their legacy identity by being adopted below; create new instances for Top or Glances first.',
             )}
           </p>
-          <ul className="mt-2 divide-y divide-amber-500/20">
-            {(legacyCamerasQuery.data ?? []).map((camera) => (
+          <ul className="mt-2 divide-y divide-warning/20">
+            {legacyCameras.map((camera) => (
               <li key={camera.stableId} className="flex items-center justify-between gap-2 py-1.5">
                 <span className="min-w-0 truncate text-[11px] text-foreground-subtle">
                   {camera.name} · {camera.nodeId} · {camera.profileLabel}
@@ -741,7 +774,7 @@ export function TerminalPage() {
                   <button
                     onClick={() => void handleAdoptLegacyMonitor(camera.stableId)}
                     disabled={adoptLegacyMonitor.isPending}
-                    className="shrink-0 rounded-md border border-amber-500/40 px-2.5 py-1 text-[11px] font-medium text-amber-600 hover:bg-amber-500/10 disabled:opacity-50"
+                    className="shrink-0 rounded-md border border-warning/40 px-2.5 py-1 text-[11px] font-medium text-warning hover:bg-warning/10 disabled:opacity-50"
                   >
                     {t('systemPage.terminal.adoptBtm', 'Adopt BTM')}
                   </button>

@@ -4589,7 +4589,7 @@
 
 ### `terminal-session` → `terminalSession.*`
 
-- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:102`
+- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:108`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ITerminalSessionProvider`
@@ -4599,7 +4599,7 @@
 | listProfiles | `terminalSession.listProfiles` | query | admin | `void` | `TerminalProfileInfoSchema[]` |
 | listInstances | `terminalSession.listInstances` | query | admin | `void` | `TerminalInstanceInfoSchema[]` |
 | createInstance | `terminalSession.createInstance` | mutation | admin | `{ targetNodeId: string; profileId: string; name?: string; executable?: string; args?: string[]; cwd?: string; environment?: string[]; profileSettings?: Record<string, unknown> }` | `TerminalInstanceInfoSchema` |
-| updateInstance | `terminalSession.updateInstance` | mutation | admin | `{ instanceId: string; name?: string; executable?: string; args?: string[]; cwd?: string; environment?: string[]; profileSettings?: Record<string, unknown> }` | `TerminalInstanceInfoSchema` |
+| updateInstance | `terminalSession.updateInstance` | mutation | admin | `{ instanceId: string; targetNodeId?: string; name?: string; executable?: string; args?: string[]; cwd?: string; environment?: string[]; profileSettings?: Record<string, unknown> }` | `TerminalInstanceInfoSchema` |
 | deleteInstance | `terminalSession.deleteInstance` | mutation | admin | `{ instanceId: string }` | `void` |
 | setInstanceEnabled | `terminalSession.setInstanceEnabled` | mutation | admin | `{ instanceId: string; enabled: boolean }` | `TerminalInstanceInfoSchema` |
 | listLegacyCameras | `terminalSession.listLegacyCameras` | query | admin | `void` | `TerminalLegacyCameraSchema[]` |

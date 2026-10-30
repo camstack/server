@@ -120,6 +120,7 @@ describe('TerminalSessionManager', () => {
     const created = {
       instanceId: 'instance-a',
       cameraStableId: 'terminal-camera-instance-a',
+      nodeInCluster: true,
       nodeId: 'hub',
       profileId: 'monitor',
       profileLabel: 'BTM',

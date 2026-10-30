@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7526 source files · 1221 file(s) in no subsystem.**
+**31 subsystems · 7527 source files · 1221 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -51,7 +51,7 @@ commits. A generated page may not.
 | Logging and log shipping | 35 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-10-04-logs-history-beyond-the-ring.md` _(covers)_, +8 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 50 | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1345 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-0946-one-device-name.md`, +154 more, 15 ADRs | 2026-10-27 | ✅ |
-| Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
+| Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 158 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +15 more, 2 ADRs | 2026-10-14 | ✅ |
 | Benchmarks, model studio and developer tooling | 677 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +162 more, 14 ADRs | 2026-10-27 | ⚠️ |
 
@@ -315,7 +315,7 @@ Small addons and builtins that act ON a device rather than describing it.
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/camera-grid/**`, `packages/system/src/builtins/autotrack/**`, `packages/addon-osd-manager/**`, `packages/addon-terminal/**`, `packages/system/src/builtins/snapshot/**`, `packages/system/src/builtins/shared/**`, `packages/system/src/builtins/addon-pages-aggregator/**`, `packages/system/src/builtins/addon-widgets-aggregator/**`
-- **Files**: 110 (110 claimed by some document)
+- **Files**: 111 (111 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Cloud training

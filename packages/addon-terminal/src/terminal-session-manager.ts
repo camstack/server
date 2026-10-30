@@ -64,6 +64,7 @@ export interface TerminalInstanceControl {
   }): Promise<TerminalInstanceInfo>
   updateInstance(input: {
     readonly instanceId: string
+    readonly targetNodeId?: string
     readonly name?: string
     readonly executable?: string
     readonly args?: readonly string[]
@@ -249,6 +250,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
 
   async updateInstance(input: {
     readonly instanceId: string
+    readonly targetNodeId?: string
     readonly name?: string
     readonly executable?: string
     readonly args?: readonly string[]

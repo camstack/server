@@ -42,12 +42,16 @@ import { createTerminalDataPlaneHandler } from './terminal-data-plane.js'
 import {
   listLegacyTerminalCameraCandidates,
   newTerminalCameraStableId,
-  instancesOnForgottenNodes,
+  instancesOnAbsentNodes,
+  applyTerminalInstancePatch,
+  type TerminalInstancePatch,
+  type TerminalInstanceTarget,
   readTerminalInstances,
   type TerminalInstance,
   TerminalInstanceMutationQueue,
   TerminalInstanceReconcileCoordinator,
 } from './terminal-instances.js'
+import { AbsentNodeAlerts, type AbsentNodeEntry } from './terminal-absent-nodes.js'
 import { type TerminalInstanceControl, TerminalSessionManager } from './terminal-session-manager.js'
 import { createXtermScreen } from './xterm-screen.js'
 
@@ -142,6 +146,19 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
   private readonly terminalCameraTombstones = new Set<string>()
   /** Instance ids whose node was absent from the last topology read (D49 streak). */
   private instancesOnAbsentNodes: ReadonlySet<string> = new Set()
+  private deviceIdByInstance: ReadonlyMap<string, number> = new Map()
+  private readonly absentNodeAlerts = new AbsentNodeAlerts({
+    raise: async (alert) => {
+      await this.ctx.api.alerts.emit.mutate(alert)
+    },
+    clear: async (alertId) => {
+      await this.ctx.api.alerts.update.mutate({
+        alertId,
+        patch: { status: 'completed', updatedAt: Date.now() },
+      })
+    },
+    log: (message, options) => this.ctx.logger.warn(message, options),
+  })
   private readonly instanceMutationQueue = new TerminalInstanceMutationQueue()
   private readonly terminalReconcileCoordinator = new TerminalInstanceReconcileCoordinator(
     this.instanceMutationQueue,
@@ -248,6 +265,7 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
           },
         },
         this.ctx.logger.child('camera'),
+        (instanceId) => this.deviceIdByInstance.get(instanceId),
       )
       await cameraRelay.start()
       this.cameraRelay = cameraRelay
@@ -389,20 +407,16 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
     for (const cachedNodeId of this.cameraProfilesByNode.keys()) {
       if (!nodeIds.has(cachedNodeId)) this.cameraProfilesByNode.delete(cachedNodeId)
     }
-    // An instance bound to a node the cluster has FORGOTTEN is removed, on
-    // the second consecutive read that says so (see `instancesOnForgottenNodes`).
-    const forgotten = instancesOnForgottenNodes(
+    // An instance bound to a node the cluster no longer lists is KEPT and
+    // reported (see `instancesOnAbsentNodes`). Nothing here may call
+    // `instanceMutationQueue.run`: this pass already holds it.
+    const absent = instancesOnAbsentNodes(
       this.terminalInstances(),
       nodeIds,
       this.instancesOnAbsentNodes,
     )
-    this.instancesOnAbsentNodes = forgotten.absentNow
-    for (const instance of forgotten.remove) {
-      this.ctx.logger.info('terminal instance removed — its node is no longer in the cluster', {
-        meta: { instanceId: instance.id, nodeId: instance.nodeId, name: instance.name },
-      })
-      await this.instanceMutationQueue.run(() => this.deleteTerminalInstanceUnlocked(instance.id))
-    }
+    this.instancesOnAbsentNodes = absent.absentNow
+    const confirmedAbsentIds = new Set(absent.confirmed.map((instance) => instance.id))
     const unavailableNodeIds = new Set<string>()
     await Promise.all(
       nodes.map(async (node) => {
@@ -505,6 +519,29 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
         outcome.device.setNodeOnline((onlineByNode.get(nodeId) ?? false) && profileAvailable)
       }
     }
+    const instanceByStableId = new Map(
+      this.terminalInstances().map((instance) => [instance.cameraStableId, instance] as const),
+    )
+    const absentEntries: AbsentNodeEntry[] = []
+    for (const outcome of result.devices) {
+      const instance = instanceByStableId.get(outcome.stableId)
+      if (!instance) continue
+      absentEntries.push({
+        instanceId: instance.id,
+        instanceName: instance.name,
+        nodeId: instance.nodeId,
+        deviceId: outcome.device.id,
+        absent: confirmedAbsentIds.has(instance.id),
+      })
+    }
+    this.deviceIdByInstance = new Map(
+      absentEntries.map((row) => [row.instanceId, row.deviceId] as const),
+    )
+    await this.absentNodeAlerts.sync(absentEntries).catch((error: unknown) => {
+      this.ctx.logger.warn('could not sync the Terminal node-missing alerts', {
+        meta: { error: error instanceof Error ? error.message : String(error) },
+      })
+    })
   }
 
   /**
@@ -548,6 +585,7 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       instanceId: instance.id,
       cameraStableId: instance.cameraStableId,
       nodeId: instance.nodeId,
+      nodeInCluster: !this.instancesOnAbsentNodes.has(instance.id),
       profileId: instance.profileId,
       profileLabel: instance.profileLabel,
       name: instance.name,
@@ -631,46 +669,52 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
     return this.instanceInfo(instance)
   }
 
-  private async updateTerminalInstance(input: {
-    readonly instanceId: string
-    readonly name?: string
-    readonly executable?: string
-    readonly args?: readonly string[]
-    readonly cwd?: string
-    readonly environment?: readonly string[]
-    readonly profileSettings?: Readonly<Record<string, unknown>>
-  }): Promise<TerminalInstanceInfo> {
+  private async updateTerminalInstance(
+    input: TerminalInstancePatch,
+  ): Promise<TerminalInstanceInfo> {
+    const target = await this.resolveRepointTarget(input)
     const updated = await this.instanceMutationQueue.run(() =>
-      this.updateTerminalInstanceUnlocked(input),
+      this.updateTerminalInstanceUnlocked(input, target),
     )
     await this.cameraRelay?.closeInstance(updated.instanceId)
     await this.reconcileTerminalCameras()
     return updated
   }
 
-  private async updateTerminalInstanceUnlocked(input: {
-    readonly instanceId: string
-    readonly name?: string
-    readonly executable?: string
-    readonly args?: readonly string[]
-    readonly cwd?: string
-    readonly environment?: readonly string[]
-    readonly profileSettings?: Readonly<Record<string, unknown>>
-  }): Promise<TerminalInstanceInfo> {
+  /** Validates a re-point BEFORE the queue is taken: it talks to another node. */
+  private async resolveRepointTarget(
+    input: TerminalInstancePatch,
+  ): Promise<TerminalInstanceTarget | undefined> {
+    if (input.targetNodeId === undefined) return undefined
     const instance = this.terminalInstances().find((candidate) => candidate.id === input.instanceId)
     if (!instance) throw new Error(`No such Terminal instance: ${input.instanceId}`)
-    const updated: TerminalInstance = {
-      ...instance,
-      ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-      ...(input.executable !== undefined ? { executable: input.executable.trim() } : {}),
-      ...(input.args !== undefined ? { args: [...input.args] } : {}),
-      ...(input.cwd !== undefined ? { cwd: input.cwd.trim() } : {}),
-      ...(input.environment !== undefined ? { environment: [...input.environment] } : {}),
-      ...(input.profileSettings !== undefined
-        ? {
-            profileSettings: sanitizeProfileSettings(instance.profileId, input.profileSettings),
-          }
-        : {}),
+    const relay = this.cameraRelay
+    if (!relay) throw new Error('Terminal instances are managed on the hub')
+    const topology = await this.ctx.api.nodes.topology.query()
+    if (!topology.some((node) => node.id === input.targetNodeId)) {
+      throw new Error(`Terminal node '${input.targetNodeId}' is not in the cluster`)
+    }
+    const profiles = await relay.listProfiles(input.targetNodeId)
+    const profile = profiles.find((candidate) => candidate.profileId === instance.profileId)
+    if (!profile) {
+      throw new Error(
+        `Terminal profile '${instance.profileId}' is not available on ${input.targetNodeId}`,
+      )
+    }
+    return { profileLabel: profile.label }
+  }
+
+  private async updateTerminalInstanceUnlocked(
+    input: TerminalInstancePatch,
+    target?: TerminalInstanceTarget,
+  ): Promise<TerminalInstanceInfo> {
+    const instance = this.terminalInstances().find((candidate) => candidate.id === input.instanceId)
+    if (!instance) throw new Error(`No such Terminal instance: ${input.instanceId}`)
+    const updated = applyTerminalInstancePatch(instance, input, target)
+    if (updated.nodeId !== instance.nodeId) {
+      const remaining = new Set(this.instancesOnAbsentNodes)
+      remaining.delete(instance.id)
+      this.instancesOnAbsentNodes = remaining
     }
     await this.updateGlobalSettings({
       terminalInstances: this.config.terminalInstances.map((candidate) =>
@@ -688,6 +732,14 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
   private async deleteTerminalInstanceUnlocked(instanceId: string): Promise<void> {
     const instance = this.terminalInstances().find((candidate) => candidate.id === instanceId)
     if (!instance) return
+    await this.absentNodeAlerts.release(instance.id).catch((error: unknown) => {
+      this.ctx.logger.warn('could not clear the Terminal node-missing alert', {
+        meta: {
+          instanceId: instance.id,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    })
     this.terminalCameraTombstones.add(instance.cameraStableId)
     await this.cameraRelay?.closeInstance(instance.id)
     await this.updateGlobalSettings({
