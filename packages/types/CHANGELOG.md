@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Built-in remote components show icons on rocker, D-pad and media keys, and colour keys carry only their colour
+
 ## [1.2.448] - 2026-10-29
 
 ### Changed
