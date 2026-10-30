@@ -2561,12 +2561,13 @@ filter uses) instead of this narrower, caps-scoped read.
 
 ## Notifier credentials — who can reach them ([D634](../decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md), 2026-09-25; hydrate 2026-10-04)
 
-The Targets page offers **Find devices** whenever a kind declares
-`supportsDiscovery`: it calls `discoverTargets` for each such kind and
-proposes the candidates that no saved target of that kind covers, compared
-on the kind's `destinationKeys`. A kind may also build its form options live
-in `listTargetKinds` (the Alexa kind lists the account's Echoes in a select);
-`iconUrl` on the descriptor is the brand mark the picker and the list show.
+A target's form discovers its own options ([D981](../decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md)).
+A broker kind declares a `broker-select` field (existing brokers plus "Create
+new...") and a `select` with `discoverOptions: { kind, dependsOn }`; the form
+calls `discoverTargets` only once every `dependsOn` field has a value, and
+falls back to free text with a loading, empty or error line. There is no
+page-wide "Find devices". `iconUrl` on the descriptor is the brand mark the
+picker and the list show.
 
 A target's `config` holds its secrets (bot tokens, API keys, ntfy passwords,
 webhook header values, the webhook `url` itself). The rules that keep them

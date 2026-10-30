@@ -56,11 +56,9 @@ Each delivery is recorded on the provider (`spoken`, `announced`, `collapsed`,
 
 The Alexa kind (`alexa-echo`, brand mark served at
 `/addon/import-alexa/icons/alexa-echo`) builds its form from the accounts'
-own Echo lists on every request: an account select (only when more than one
-account is linked) and an Echo select labelled name, room, family. Saving
-pins the account on the target. Targets page, Find devices, asks every kind
-that declares `supportsDiscovery` and proposes the devices no saved target
-covers.
+own Echo lists: a broker select (the Amazon account) and an Echo select
+discovered from that broker, labelled name, room, family. Saving pins the
+account on the target.
 
 A sign-in the broker has not made shows as a failed probe. The old standalone
 login (password, one-time code), its migration and the Speak on Echo page are
