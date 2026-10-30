@@ -4,6 +4,12 @@
  * (`--fixtures remote,customize`): the first area answering a path wins, and
  * the device reads fall through to the customize area for any other device.
  */
+import {
+  BUILTIN_REMOTE_COMPONENTS,
+  builtinRemoteComponent,
+  insertComponent,
+  type RemoteLayoutPayload,
+} from '@camstack/types'
 import customizeArea from './customize'
 import { defineFixtures } from './_define'
 
@@ -74,7 +80,38 @@ const TV_LAYOUT = {
   ],
 }
 
+/** A remote composed from palette components: a divider, a D-pad, rockers and a keypad. */
+function composedLayout(): RemoteLayoutPayload {
+  let layout: RemoteLayoutPayload = { columns: 6, rows: 11, buttons: [] }
+  const put = (id: string, row: number, col: number, scale?: { cols: number }): void => {
+    const result = insertComponent(
+      layout,
+      builtinRemoteComponent(id),
+      { row, col },
+      scale ? { scale } : {},
+    )
+    if (!result.ok) throw new Error(`fixture: ${id} refused (${result.reason})`)
+    layout = result.layout
+  }
+  put('core:power', 0, 0)
+  put('core:section-divider', 1, 0, { cols: 6 })
+  put('core:dpad', 2, 0)
+  put('core:rocker-volume-v', 2, 4)
+  put('core:rocker-channel-v', 2, 5)
+  put('core:keypad', 6, 0)
+  put('core:colour-keys', 10, 0)
+  return layout
+}
+
 const TEMPLATES = [
+  {
+    id: 'tpl-composed',
+    kind: 'remote',
+    name: 'Composed remote',
+    payload: composedLayout(),
+    createdAt: 1_700_000_000_000,
+    updatedAt: 1_700_000_300_000,
+  },
   {
     id: 'tpl-tv',
     kind: 'remote',
@@ -129,6 +166,7 @@ export default defineFixtures({
   area: 'remote',
   description: 'Templates page and the Remote Customize extension on a media player',
   handlers: {
+    'remoteLayoutComponents.listComponents': BUILTIN_REMOTE_COMPONENTS,
     'template.list': TEMPLATES,
     'template.get': (i: { id: string }) => TEMPLATES.find((t) => t.id === i.id) ?? null,
     'mut:template.create': (i: { kind: string; name: string; payload: unknown }) => ({

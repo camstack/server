@@ -1,11 +1,20 @@
 /**
- * The remote layout editor (D964): a grid of columns × rows with a live
- * preview, and for the selected button its role, face (icon or label),
- * position and size. Every edit goes through `layout-model`, so an overlap or a
- * button leaving the grid is refused with a sentence and the grid stays as it
- * was. Taps and steppers only — nothing needs a drag, so it works at 390 wide.
+ * The remote layout editor (D964, D973): a grid of columns × rows with a live
+ * preview, an "Add component" palette, and for the selected button or group its
+ * role, face, look, position and size. Buttons and groups move by dragging
+ * (the grid's cells light up and the landing footprint shows green or red) or
+ * with the arrow keys of the focused item; the arrows and steppers of the
+ * inspector stay, so nothing needs a pointer drag. Every edit goes through
+ * `layout-model`, so an overlap or a button leaving the grid is refused with a
+ * sentence and the grid stays as it was.
  */
-import { customRole, type RemoteLayoutPayload } from '@camstack/types'
+import {
+  customRole,
+  REMOTE_BUTTON_SHAPES,
+  REMOTE_BUTTON_TONES,
+  type RemoteLayoutComponent,
+  type RemoteLayoutPayload,
+} from '@camstack/types'
 import {
   iconCategoryLabel,
   type IconCategoryId,
@@ -24,24 +33,42 @@ import {
   Select,
   Stepper,
 } from '@camstack/ui-library'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Plus, Shapes, Trash2 } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Plus,
+  Shapes,
+  Trash2,
+  Unlink,
+} from 'lucide-react'
+import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_BRANDS, appIconKey, resolveAppBrand } from './app-brand-icons'
+import { ComponentPalette } from './ComponentPalette'
+import { placeComponent } from './layout-components'
+import { arrowStep, type DragItem, nudgeItem } from './layout-drag'
 import {
   addButton,
+  deleteGroup,
+  groupById,
   humanRole,
   isCustomRole,
   knownRolesOfGroup,
   type LayoutResult,
+  membersOf,
   removeButton,
   resizeButton,
   resizeGrid,
   ROLE_GROUP_ORDER,
   setButtonFace,
+  setButtonLook,
+  setGroupTitle,
   shiftButton,
 } from './layout-model'
 import { RemoteGrid } from './RemoteGrid'
+import { useGridDrag } from './useGridDrag'
 
 const CUSTOM_CHOICE = '__custom__'
 
@@ -52,9 +79,14 @@ export interface RemoteLayoutEditorProps {
 
 export function RemoteLayoutEditor({ value, onChange }: RemoteLayoutEditorProps): ReactNode {
   const { t } = useTranslation()
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selection, setSelection] = useState<DragItem | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const gridRef = useRef<HTMLDivElement | null>(null)
+  const selectedId = selection?.kind === 'button' ? selection.id : null
+  const selectedGroupId = selection?.kind === 'group' ? selection.id : null
   const selected = value.buttons.find((b) => b.id === selectedId) ?? null
+  const selectedGroup = selectedGroupId === null ? undefined : groupById(value, selectedGroupId)
 
   const apply = (result: LayoutResult, then?: (grid: RemoteLayoutPayload) => void): void => {
     if (result.status === 'ok') {
@@ -66,8 +98,41 @@ export function RemoteLayoutEditor({ value, onChange }: RemoteLayoutEditorProps)
     setRefusal(t(`remote.layout.refusal.${result.reason}`))
   }
 
+  const dragState = useGridDrag(value, gridRef, (result) => apply(result))
+
   const add = (): void =>
-    apply(addButton(value, 'ok'), (grid) => setSelectedId(grid.buttons.at(-1)?.id ?? null))
+    apply(addButton(value, 'ok'), (grid) => {
+      const last = grid.buttons.at(-1)
+      setSelection(last === undefined ? null : { kind: 'button', id: last.id })
+    })
+
+  const addComponent = (
+    component: RemoteLayoutComponent,
+    options: { fillWidth: boolean },
+  ): void => {
+    const placed = placeComponent(value, component, options)
+    if (!placed.ok) {
+      setRefusal(t(`remote.layout.refusal.${placed.reason}`))
+      return
+    }
+    setRefusal(null)
+    onChange(placed.layout)
+    const first = placed.buttonIds[0]
+    setSelection(
+      placed.groupId !== null
+        ? { kind: 'group', id: placed.groupId }
+        : first === undefined
+          ? null
+          : { kind: 'button', id: first },
+    )
+  }
+
+  const onItemKeyDown = (item: DragItem, event: KeyboardEvent<HTMLElement>): void => {
+    const step = arrowStep(event.key)
+    if (step === null) return
+    event.preventDefault()
+    apply(nudgeItem(value, item, step.dRow, step.dCol))
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
@@ -90,13 +155,37 @@ export function RemoteLayoutEditor({ value, onChange }: RemoteLayoutEditorProps)
           grid={value}
           label={t('remote.layout.previewLabel')}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          selectedGroupId={selectedGroupId}
+          onSelect={(id) => {
+            if (dragState.consumeDragClick()) return
+            setSelection({ kind: 'button', id })
+          }}
+          onSelectGroup={(id) => {
+            if (dragState.consumeDragClick()) return
+            setSelection({ kind: 'group', id })
+          }}
           showEmptyCells
+          gridRef={gridRef}
+          drag={dragState.drag}
+          onItemPointerDown={dragState.onItemPointerDown}
+          onItemKeyDown={onItemKeyDown}
         />
-        <Button variant="outline" size="sm" onClick={add} data-testid="remote-add-button">
-          <Plus className="h-3.5 w-3.5" aria-hidden />
-          {t('remote.layout.addButton')}
-        </Button>
+        <p className="text-xs text-foreground-subtle">{t('remote.layout.dragHint')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPaletteOpen(true)}
+            data-testid="remote-add-component"
+          >
+            <Shapes className="h-3.5 w-3.5" aria-hidden />
+            {t('remote.layout.addComponent')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={add} data-testid="remote-add-button">
+            <Plus className="h-3.5 w-3.5" aria-hidden />
+            {t('remote.layout.addButton')}
+          </Button>
+        </div>
         {refusal !== null && (
           <p role="alert" className="text-xs text-warning" data-testid="remote-layout-refusal">
             {refusal}
@@ -104,21 +193,34 @@ export function RemoteLayoutEditor({ value, onChange }: RemoteLayoutEditorProps)
         )}
       </div>
       <div className="min-w-0">
-        {selected === null ? (
-          <p className="text-xs text-foreground-subtle">{t('remote.layout.selectHint')}</p>
-        ) : (
+        {selected !== null ? (
           <ButtonInspector
             grid={value}
             buttonId={selected.id}
             apply={apply}
             onRemove={() => {
               onChange(removeButton(value, selected.id))
-              setSelectedId(null)
+              setSelection(null)
               setRefusal(null)
             }}
           />
+        ) : selectedGroup !== undefined ? (
+          <GroupInspector
+            grid={value}
+            groupId={selectedGroup.id}
+            apply={apply}
+            onGone={() => setSelection(null)}
+          />
+        ) : (
+          <p className="text-xs text-foreground-subtle">{t('remote.layout.selectHint')}</p>
         )}
       </div>
+      <ComponentPalette
+        open={paletteOpen}
+        grid={value}
+        onOpenChange={setPaletteOpen}
+        onPick={addComponent}
+      />
     </div>
   )
 }
@@ -247,6 +349,42 @@ function ButtonInspector({ grid, buttonId, apply, onRemove }: InspectorProps): R
         />
       </FormField>
       <div className="grid grid-cols-2 gap-3">
+        <FormField label={t('remote.layout.shape')}>
+          <Select
+            value={button.shape ?? ''}
+            options={[
+              { value: '', label: t('remote.layout.lookDefault') },
+              ...REMOTE_BUTTON_SHAPES.map((v) => ({
+                value: v,
+                label: t(`remote.layout.shapes.${v}`),
+              })),
+            ]}
+            onChange={(e) => {
+              const next = REMOTE_BUTTON_SHAPES.find((v) => v === e.target.value)
+              apply(setButtonLook(grid, button.id, { shape: next ?? null }))
+            }}
+            data-testid="remote-shape"
+          />
+        </FormField>
+        <FormField label={t('remote.layout.tone')}>
+          <Select
+            value={button.tone ?? ''}
+            options={[
+              { value: '', label: t('remote.layout.lookDefault') },
+              ...REMOTE_BUTTON_TONES.map((v) => ({
+                value: v,
+                label: t(`remote.layout.tones.${v}`),
+              })),
+            ]}
+            onChange={(e) => {
+              const next = REMOTE_BUTTON_TONES.find((v) => v === e.target.value)
+              apply(setButtonLook(grid, button.id, { tone: next ?? null }))
+            }}
+            data-testid="remote-tone"
+          />
+        </FormField>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <FormField label={t('remote.layout.move')}>
           <div className="flex items-center gap-1">
             <IconButton
@@ -308,6 +446,70 @@ function ButtonInspector({ grid, buttonId, apply, onRemove }: InspectorProps): R
         <Trash2 className="h-3.5 w-3.5" aria-hidden />
         {t('remote.layout.removeButton')}
       </Button>
+    </div>
+  )
+}
+
+interface GroupInspectorProps {
+  readonly grid: RemoteLayoutPayload
+  readonly groupId: string
+  readonly apply: (result: LayoutResult) => void
+  readonly onGone: () => void
+}
+
+/** The selected group: its title, how many keys it holds, and how to take it apart. */
+function GroupInspector({ grid, groupId, apply, onGone }: GroupInspectorProps): ReactNode {
+  const { t } = useTranslation()
+  const group = groupById(grid, groupId)
+  if (group === undefined) return null
+  const members = membersOf(grid, groupId).length
+  return (
+    <div
+      className="space-y-3 rounded-lg border border-border bg-surface p-3"
+      data-testid="remote-group-inspector"
+    >
+      <p className="text-xs text-foreground-muted">
+        {t('remote.layout.groupSummary', {
+          frame: t(`remote.layout.frames.${group.frame}`, group.frame),
+          count: members,
+          row: group.row + 1,
+          col: group.col + 1,
+        })}
+      </p>
+      <FormField label={t('remote.layout.groupTitle')}>
+        <Input
+          value={group.title ?? ''}
+          maxLength={40}
+          onChange={(e) => apply(setGroupTitle(grid, group.id, e.target.value))}
+          data-testid="remote-group-title"
+        />
+      </FormField>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          data-testid="remote-group-ungroup"
+          onClick={() => {
+            apply(deleteGroup(grid, group.id, true))
+            onGone()
+          }}
+        >
+          <Unlink className="h-3.5 w-3.5" aria-hidden />
+          {t('remote.layout.ungroup')}
+        </Button>
+        <Button
+          variant="danger"
+          size="sm"
+          data-testid="remote-group-delete"
+          onClick={() => {
+            apply(deleteGroup(grid, group.id, false))
+            onGone()
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+          {t('remote.layout.deleteGroup')}
+        </Button>
+      </div>
     </div>
   )
 }

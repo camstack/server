@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The built-in Samsung classic and Hisense remote presets are rebuilt from the new components, with section dividers
+- Remote templates: add ready-made components (power, D-pad with OK, rockers, keypad, colour keys) from a palette, drag keys and groups on the grid, and see button shapes, colours and group frames; app icons use their brand colour.
 
 ## [1.2.522] - 2026-10-29
 

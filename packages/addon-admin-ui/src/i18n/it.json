@@ -10694,7 +10694,9 @@
         "outside": "Uscirebbe dalla griglia, oppure non c'è una cella libera.",
         "would-drop-buttons": "Un tasto si trova nella parte che stai togliendo. Spostalo o eliminalo prima.",
         "unknown-button": "Quel tasto non esiste più.",
-        "invalid-size": "Questa dimensione non è ammessa."
+        "invalid-size": "Questa dimensione non è ammessa.",
+        "unknown-group": "Quel gruppo non esiste più.",
+        "too-many": "Il telecomando non può contenere altri tasti o gruppi."
       },
       "role": "Ruolo",
       "customRole": "Tasto personalizzato",
@@ -10716,7 +10718,41 @@
       "width": "Larghezza",
       "removeButton": "Rimuovi tasto",
       "appIcon": "Icona app",
-      "noApp": "Nessuna app"
+      "noApp": "Nessuna app",
+      "addComponent": "Aggiungi componente",
+      "dragHint": "Trascina un tasto o un gruppo per spostarlo, oppure selezionalo e usa le frecce.",
+      "groupHandle": "Sposta il gruppo {{name}}",
+      "shape": "Forma",
+      "tone": "Colore",
+      "lookDefault": "Predefinito",
+      "shapes": {
+        "rect": "Quadrato",
+        "rounded": "Arrotondato",
+        "round": "Tondo",
+        "pill": "Pillola"
+      },
+      "tones": {
+        "neutral": "Neutro",
+        "accent": "Evidenziato",
+        "danger": "Pericolo",
+        "red": "Rosso",
+        "green": "Verde",
+        "yellow": "Giallo",
+        "blue": "Blu"
+      },
+      "groupTitle": "Titolo del gruppo",
+      "groupSummary": "{{frame}} · {{count}} tasti · riga {{row}}, colonna {{col}}",
+      "ungroup": "Separa (mantieni i tasti)",
+      "deleteGroup": "Elimina gruppo e tasti",
+      "frames": {
+        "none": "Senza cornice",
+        "panel": "Pannello",
+        "divider": "Separatore",
+        "dpad": "Croce direzionale",
+        "rocker-v": "Bilanciere verticale",
+        "rocker-h": "Bilanciere orizzontale",
+        "keypad": "Tastierino"
+      }
     },
     "roleGroup": {
       "power": "Alimentazione",
@@ -10827,6 +10863,25 @@
         "not-smartir": "Non è un file dispositivo SmartIR."
       },
       "skipped_one": "{{count}} comando non utilizzabile:"
+    },
+    "palette": {
+      "title": "Aggiungi componente",
+      "search": "Cerca componenti",
+      "fillWidth": "Estendi a tutta la larghezza del telecomando",
+      "emptyTitle": "Nessun componente corrisponde",
+      "emptyDescription": "Prova con un'altra parola.",
+      "errorTitle": "Impossibile caricare i componenti",
+      "size": "{{cols}} × {{rows}}",
+      "category": {
+        "power": "Accensione",
+        "navigation": "Navigazione",
+        "volume": "Volume e canali",
+        "numbers": "Numeri",
+        "media": "Riproduzione",
+        "colour": "Tasti colorati",
+        "apps": "App",
+        "layout": "Struttura"
+      }
     }
   },
   "commands": {

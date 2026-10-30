@@ -10672,7 +10672,9 @@
         "outside": "That would leave the grid, or the grid has no free cell.",
         "would-drop-buttons": "A button sits in the part you are removing. Move or delete it first.",
         "unknown-button": "That button no longer exists.",
-        "invalid-size": "That size is not allowed."
+        "invalid-size": "That size is not allowed.",
+        "unknown-group": "That group no longer exists.",
+        "too-many": "The remote cannot hold more keys or groups."
       },
       "role": "Role",
       "customRole": "Custom button",
@@ -10694,7 +10696,41 @@
       "width": "Width",
       "removeButton": "Remove button",
       "appIcon": "App icon",
-      "noApp": "No app"
+      "noApp": "No app",
+      "addComponent": "Add component",
+      "dragHint": "Drag a key or a group to move it, or focus it and use the arrow keys.",
+      "groupHandle": "Move group {{name}}",
+      "shape": "Shape",
+      "tone": "Colour",
+      "lookDefault": "Default",
+      "shapes": {
+        "rect": "Square",
+        "rounded": "Rounded",
+        "round": "Round",
+        "pill": "Pill"
+      },
+      "tones": {
+        "neutral": "Neutral",
+        "accent": "Accent",
+        "danger": "Danger",
+        "red": "Red",
+        "green": "Green",
+        "yellow": "Yellow",
+        "blue": "Blue"
+      },
+      "groupTitle": "Group title",
+      "groupSummary": "{{frame}} · {{count}} keys · row {{row}}, column {{col}}",
+      "ungroup": "Ungroup (keep keys)",
+      "deleteGroup": "Delete group and keys",
+      "frames": {
+        "none": "No frame",
+        "panel": "Panel",
+        "divider": "Divider",
+        "dpad": "D-pad",
+        "rocker-v": "Vertical rocker",
+        "rocker-h": "Horizontal rocker",
+        "keypad": "Keypad"
+      }
     },
     "roleGroup": {
       "power": "Power",
@@ -10805,6 +10841,25 @@
         "not-smartir": "That is not a SmartIR device file."
       },
       "skipped_one": "{{count}} command could not be used:"
+    },
+    "palette": {
+      "title": "Add component",
+      "search": "Search components",
+      "fillWidth": "Stretch to the full width of the remote",
+      "emptyTitle": "No component matches",
+      "emptyDescription": "Try another word.",
+      "errorTitle": "Could not load the components",
+      "size": "{{cols}} × {{rows}}",
+      "category": {
+        "power": "Power",
+        "navigation": "Navigation",
+        "volume": "Volume and channels",
+        "numbers": "Numbers",
+        "media": "Playback",
+        "colour": "Colour keys",
+        "apps": "Apps",
+        "layout": "Layout"
+      }
     }
   },
   "commands": {

@@ -8,11 +8,18 @@
 import {
   customKeyOfRole,
   isRemoteKnownRole,
+  type LayoutEditRefusal,
   MAX_LAYOUT_SPAN,
+  moveGroup as moveGroupOp,
   REMOTE_KNOWN_ROLES,
+  type RemoteButtonShape,
+  type RemoteButtonTone,
   type RemoteLayoutButton,
+  type RemoteLayoutGroup,
   type RemoteLayoutPayload,
   RemoteLayoutPayloadSchema,
+  rectsOverlap,
+  removeGroup as removeGroupOp,
 } from '@camstack/types'
 
 export const DEFAULT_LAYOUT_COLUMNS = 3
@@ -24,6 +31,7 @@ export type LayoutRefusal =
   | 'would-drop-buttons'
   | 'unknown-button'
   | 'invalid-size'
+  | LayoutEditRefusal
 
 export type LayoutResult =
   | { readonly status: 'ok'; readonly grid: RemoteLayoutPayload }
@@ -46,19 +54,65 @@ const ok = (grid: RemoteLayoutPayload): LayoutResult => ({
   grid,
 })
 
-function inGrid(grid: Pick<RemoteLayoutPayload, 'columns' | 'rows'>, b: RemoteLayoutButton) {
+function inGrid(grid: Pick<RemoteLayoutPayload, 'columns' | 'rows'>, b: LayoutBox) {
   return (
     b.row >= 0 && b.col >= 0 && b.row + b.rowSpan <= grid.rows && b.col + b.colSpan <= grid.columns
   )
 }
 
-function overlaps(a: RemoteLayoutButton, b: RemoteLayoutButton): boolean {
+const overlaps = rectsOverlap
+
+/** What a placement check needs of a button or a group: its rectangle. */
+type LayoutBox = Pick<RemoteLayoutButton, 'row' | 'col' | 'rowSpan' | 'colSpan'>
+
+function contains(outer: LayoutBox, inner: LayoutBox): boolean {
   return (
-    a.row < b.row + b.rowSpan &&
-    b.row < a.row + a.rowSpan &&
-    a.col < b.col + b.colSpan &&
-    b.col < a.col + a.colSpan
+    inner.row >= outer.row &&
+    inner.col >= outer.col &&
+    inner.row + inner.rowSpan <= outer.row + outer.rowSpan &&
+    inner.col + inner.colSpan <= outer.col + outer.colSpan
   )
+}
+
+export function groupsOf(grid: RemoteLayoutPayload): readonly RemoteLayoutGroup[] {
+  return grid.groups ?? []
+}
+
+export function groupById(grid: RemoteLayoutPayload, id: string): RemoteLayoutGroup | undefined {
+  return groupsOf(grid).find((g) => g.id === id)
+}
+
+/** The members of a group, in layout order. */
+export function membersOf(grid: RemoteLayoutPayload, groupId: string): RemoteLayoutButton[] {
+  return grid.buttons.filter((b) => b.groupId === groupId)
+}
+
+function withGroupList(
+  grid: RemoteLayoutPayload,
+  groups: readonly RemoteLayoutGroup[],
+): RemoteLayoutPayload {
+  const { groups: _previous, ...rest } = grid
+  return groups.length === 0 ? rest : { ...rest, groups: [...groups] }
+}
+
+/**
+ * Settle which group `candidate` belongs to once it sits at its new place. A
+ * button entirely inside a group's rectangle joins it (a divider holds no
+ * buttons, so it refuses); one that touches a group's edge is refused; one
+ * clear of every group is loose. The schema refuses any other combination, so
+ * every button this returns is one the store accepts.
+ */
+function settleGroup(
+  grid: RemoteLayoutPayload,
+  candidate: RemoteLayoutButton,
+): RemoteLayoutButton | LayoutRefusal {
+  const { groupId: _was, ...loose } = candidate
+  for (const group of groupsOf(grid)) {
+    if (!overlaps(group, candidate)) continue
+    if (group.frame === 'divider' || !contains(group, candidate)) return 'overlap'
+    return { ...loose, groupId: group.id }
+  }
+  return loose
 }
 
 /** Why `candidate` cannot sit on `grid` (ignoring the button `ignoreId`), or null when it fits. */
@@ -70,15 +124,19 @@ export function placementRefusal(
   if (candidate.rowSpan < 1 || candidate.colSpan < 1) return 'invalid-size'
   if (!inGrid(grid, candidate)) return 'outside'
   const clash = grid.buttons.some((other) => other.id !== ignoreId && overlaps(other, candidate))
-  return clash ? 'overlap' : null
+  if (clash) return 'overlap'
+  const settled = settleGroup(grid, candidate)
+  return typeof settled === 'string' ? settled : null
 }
 
 function withButton(grid: RemoteLayoutPayload, next: RemoteLayoutButton): LayoutResult {
   const reason = placementRefusal(grid, next, next.id)
   if (reason !== null) return refused(reason)
+  const settled = settleGroup(grid, next)
+  if (typeof settled === 'string') return refused(settled)
   return ok({
     ...grid,
-    buttons: grid.buttons.map((b) => (b.id === next.id ? next : b)),
+    buttons: grid.buttons.map((b) => (b.id === next.id ? settled : b)),
   })
 }
 
@@ -93,7 +151,7 @@ export function nextButtonId(grid: RemoteLayoutPayload): string {
   }
 }
 
-/** The first free 1×1 cell, reading left to right and top to bottom. */
+/** The first free 1×1 cell outside every group, reading left to right and top to bottom. */
 export function firstFreeCell(grid: RemoteLayoutPayload): { row: number; col: number } | null {
   for (let row = 0; row < grid.rows; row += 1) {
     for (let col = 0; col < grid.columns; col += 1) {
@@ -105,7 +163,9 @@ export function firstFreeCell(grid: RemoteLayoutPayload): { row: number; col: nu
         colSpan: 1,
         role: 'power',
       }
-      if (placementRefusal(grid, probe, null) === null) return { row, col }
+      // A key added without a place never lands inside a group's frame.
+      const inGroup = groupsOf(grid).some((g) => overlaps(g, probe))
+      if (!inGroup && placementRefusal(grid, probe, null) === null) return { row, col }
     }
   }
   return null
@@ -124,7 +184,9 @@ export function addButton(grid: RemoteLayoutPayload, role: string): LayoutResult
     colSpan: 1,
     role,
   }
-  return ok({ ...grid, buttons: [...grid.buttons, button] })
+  const settled = settleGroup(grid, button)
+  if (typeof settled === 'string') return refused(settled)
+  return ok({ ...grid, buttons: [...grid.buttons, settled] })
 }
 
 export function moveButton(
@@ -179,12 +241,9 @@ export function setButtonFace(
   const icon = face.icon === undefined ? button.icon : (face.icon ?? undefined)
   const rawLabel = face.label === undefined ? button.label : (face.label ?? undefined)
   const label = rawLabel === undefined || rawLabel.trim() === '' ? undefined : rawLabel
+  const { icon: _icon, label: _label, ...kept } = button
   const next: RemoteLayoutButton = {
-    id: button.id,
-    row: button.row,
-    col: button.col,
-    rowSpan: button.rowSpan,
-    colSpan: button.colSpan,
+    ...kept,
     role: face.role ?? button.role,
     ...(icon === undefined ? {} : { icon }),
     ...(label === undefined ? {} : { label }),
@@ -195,8 +254,74 @@ export function setButtonFace(
   })
 }
 
+export interface ButtonLook {
+  /** `null` clears the shape back to the plain look. */
+  readonly shape?: RemoteButtonShape | null
+  readonly tone?: RemoteButtonTone | null
+}
+
+/** Shape and tone of a button — drawing only, it never moves anything. */
+export function setButtonLook(
+  grid: RemoteLayoutPayload,
+  id: string,
+  look: ButtonLook,
+): LayoutResult {
+  const button = find(grid, id)
+  if (button === undefined) return refused('unknown-button')
+  const { shape: _shape, tone: _tone, ...kept } = button
+  const shape = look.shape === undefined ? button.shape : (look.shape ?? undefined)
+  const tone = look.tone === undefined ? button.tone : (look.tone ?? undefined)
+  const next: RemoteLayoutButton = {
+    ...kept,
+    ...(shape === undefined ? {} : { shape }),
+    ...(tone === undefined ? {} : { tone }),
+  }
+  return ok({ ...grid, buttons: grid.buttons.map((b) => (b.id === id ? next : b)) })
+}
+
 export function removeButton(grid: RemoteLayoutPayload, id: string): RemoteLayoutPayload {
   return { ...grid, buttons: grid.buttons.filter((b) => b.id !== id) }
+}
+
+const fromEdit = (result: ReturnType<typeof moveGroupOp>): LayoutResult =>
+  result.ok ? ok(result.layout) : refused(result.reason)
+
+/** Move a group and all its buttons as one. */
+export function moveGroup(
+  grid: RemoteLayoutPayload,
+  groupId: string,
+  row: number,
+  col: number,
+): LayoutResult {
+  return fromEdit(moveGroupOp(grid, groupId, { row, col }))
+}
+
+/** Delete a group; its buttons stay as loose keys or go with it. */
+export function deleteGroup(
+  grid: RemoteLayoutPayload,
+  groupId: string,
+  keepButtons: boolean,
+): LayoutResult {
+  return fromEdit(removeGroupOp(grid, groupId, { keepButtons }))
+}
+
+/** A group's frame title; blank clears it. */
+export function setGroupTitle(
+  grid: RemoteLayoutPayload,
+  groupId: string,
+  title: string,
+): LayoutResult {
+  const group = groupById(grid, groupId)
+  if (group === undefined) return refused('unknown-group')
+  const { title: _old, ...rest } = group
+  const trimmed = title.trim()
+  const next: RemoteLayoutGroup = trimmed === '' ? rest : { ...rest, title: title.slice(0, 40) }
+  return ok(
+    withGroupList(
+      grid,
+      groupsOf(grid).map((g) => (g.id === groupId ? next : g)),
+    ),
+  )
 }
 
 /** New grid size; refused when a button would be left outside it. */
@@ -204,7 +329,9 @@ export function resizeGrid(grid: RemoteLayoutPayload, columns: number, rows: num
   const bad = (n: number) => !Number.isInteger(n) || n < 1 || n > MAX_LAYOUT_SPAN
   if (bad(columns) || bad(rows)) return refused('invalid-size')
   const next = { ...grid, columns, rows }
-  if (grid.buttons.some((b) => !inGrid(next, b))) return refused('would-drop-buttons')
+  if (grid.buttons.some((b) => !inGrid(next, b)) || groupsOf(grid).some((g) => !inGrid(next, g))) {
+    return refused('would-drop-buttons')
+  }
   return ok(next)
 }
 
