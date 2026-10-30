@@ -25,8 +25,9 @@ vi.mock('@camstack/ui-library', () => ({
     hoisted.canvasProps.current = props
     return null
   },
-  useSystem: () => ({ trpcClient: {} }),
-  useDeviceProxy: () => ({ zones: { addZone: hoisted.addZone }, state: { zones: {} } }),
+  useSystem: () => ({ trpcClient: { zones: { addZone: { mutate: hoisted.addZone } } } }),
+  // A cluster singleton has no per-device binding entry, so the proxy carries no `zones`.
+  useDeviceProxy: () => ({ state: { zones: {} } }),
   useDeviceStateSlice: () => ({ zones: [] }),
   useZoneEditing: () => ({
     drawingKind: 'polygon',
@@ -70,7 +71,7 @@ describe('ZoneOverlay draw completion', () => {
     vi.unstubAllGlobals()
   })
 
-  it('adds the drawn polygon as a zone', async () => {
+  it('adds the drawn polygon as a zone when the device proxy has no zones entry', async () => {
     render(<ZoneOverlay deviceId={1} />)
     await finishShape()
     expect(hoisted.addZone).toHaveBeenCalledTimes(1)

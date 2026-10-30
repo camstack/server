@@ -21,7 +21,7 @@
  * those still need vertical space (tables of motion / detection rules
  * per zone × per class).
  */
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { Zone as CapZone, DeviceProxy } from '@camstack/types'
 import {
   useDeviceProxy,
@@ -78,6 +78,7 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
   const capZones = useMemo(() => zonesSlice?.zones ?? [], [zonesSlice])
   const zones = useMemo(() => capZones.map(capToCanvas), [capZones])
 
+  const [actionError, setActionError] = useState<string | null>(null)
   const editingCtx = useZoneEditing()
   const drawingKind = editingCtx?.drawingKind ?? null
   const selectedZoneId = editingCtx?.selectedZoneId ?? null
@@ -130,7 +131,8 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
     const draft = editingCtx?.editingDraft
     if (!draft) return
     try {
-      await dev?.zones?.updateZone({
+      await system.trpcClient.zones.updateZone.mutate({
+        deviceId,
         zone: canvasToCap({
           id: draft.id,
           kind: draft.kind,
@@ -141,13 +143,14 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
       })
     } catch (err: unknown) {
       console.error('zones.updateZone failed', err)
+      setActionError(err instanceof Error ? err.message : String(err))
     }
     // Save + Discard both clear the selection so the form doesn't
     // linger in a read-only "third" state. Two modes only: not
     // selected (no form) → selected (editable form).
     editingCtx?.discardDraft()
     editingCtx?.setSelectedZoneId(null)
-  }, [dev, editingCtx])
+  }, [system, deviceId, editingCtx])
 
   const handleDiscardDraft = useCallback(() => {
     editingCtx?.discardDraft()
@@ -157,14 +160,15 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
   const handleDeleteZone = useCallback(
     async (id: string) => {
       try {
-        await dev?.zones?.removeZone({ zoneId: id })
+        await system.trpcClient.zones.removeZone.mutate({ deviceId, zoneId: id })
       } catch (err: unknown) {
         console.error('zones.removeZone failed', err)
+        setActionError(err instanceof Error ? err.message : String(err))
       }
       if (editingCtx?.selectedZoneId === id) editingCtx.setSelectedZoneId(null)
       if (editingCtx?.editingDraft?.id === id) editingCtx.discardDraft()
     },
-    [dev, editingCtx],
+    [system, deviceId, editingCtx],
   )
 
   // List-side "Add polygon / Add tripwire" buttons drive the same
@@ -223,6 +227,12 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
             onStartDraw={handleStartDraw}
             onCancelDraw={handleCancelDraw}
           />
+
+          {actionError !== null && (
+            <p role="alert" className="text-xs text-danger">
+              {actionError}
+            </p>
+          )}
 
           {selectedZone && (
             <>

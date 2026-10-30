@@ -138,7 +138,7 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
       }
       setSaveError(null)
       try {
-        await dev?.zones?.addZone({ zone: canvasToCap(zone) })
+        await system.trpcClient.zones.addZone.mutate({ deviceId, zone: canvasToCap(zone) })
         editingCtx?.setSelectedZoneId(zone.id)
       } catch (err: unknown) {
         console.error('zones.addZone failed', err)
@@ -146,7 +146,7 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
       }
       editingCtx?.setDrawingKind(null)
     },
-    [dev, zones, editingCtx],
+    [system, deviceId, zones, editingCtx],
   )
 
   const handleZonePointsChange = useCallback(
@@ -162,12 +162,16 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
       const existing = zones.find((z) => z.id === id)
       if (!existing) return
       try {
-        await dev?.zones?.updateZone({ zone: canvasToCap({ ...existing, points: next }) })
+        await system.trpcClient.zones.updateZone.mutate({
+          deviceId,
+          zone: canvasToCap({ ...existing, points: next }),
+        })
       } catch (err: unknown) {
         console.error('zones.updateZone failed', err)
+        setSaveError(err instanceof Error ? err.message : String(err))
       }
     },
-    [dev, zones, editingDraft, editingCtx],
+    [system, deviceId, zones, editingDraft, editingCtx],
   )
 
   // Every edit from the shared canvas arrives as `onShapeChange(id,
