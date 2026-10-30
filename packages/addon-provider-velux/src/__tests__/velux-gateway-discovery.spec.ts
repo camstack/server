@@ -1,92 +1,55 @@
+import { DeviceType, type DiscoveryHit } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
-  browseVeluxGateways,
   isVeluxGatewayName,
-  mdnsPtrQuery,
   proposeVeluxGateways,
-  VELUX_SETUP_INTEGRATION_KEY,
+  VELUX_DISCOVERY_MODES,
   veluxDiscoveryCandidates,
   veluxDiscoverySummary,
-  veluxGatewaysFromDnsMessage,
+  veluxGatewaysFromHits,
 } from '../velux-gateway-discovery.js'
 
-const PTR = 12
-const A = 1
-const TXT = 16
-const SRV = 33
-
-function encodeName(name: string): Buffer {
-  const parts = name.split('.').filter((part) => part.length > 0)
-  return Buffer.concat([
-    ...parts.map((part) => Buffer.concat([Buffer.from([part.length]), Buffer.from(part)])),
-    Buffer.from([0]),
-  ])
+function mdnsHit(instance: string, host: string, serviceHost: string): DiscoveryHit {
+  return {
+    modeIndex: 0,
+    host,
+    port: 80,
+    mdns: { instance, host: serviceHost, port: 80, txt: {} },
+  }
 }
 
-function record(name: string, type: number, data: Buffer): Buffer {
-  const head = Buffer.alloc(10)
-  head.writeUInt16BE(type, 0)
-  head.writeUInt16BE(0x8001, 2)
-  head.writeUInt32BE(120, 4)
-  head.writeUInt16BE(data.length, 8)
-  return Buffer.concat([encodeName(name), head, data])
-}
+const KLF = mdnsHit('VELUX_KLF_1A2B._http._tcp.local', '192.0.2.8', 'VELUX_KLF_1A2B.local')
 
-function srvData(target: string): Buffer {
-  const head = Buffer.alloc(6)
-  head.writeUInt16BE(0, 0)
-  head.writeUInt16BE(0, 2)
-  head.writeUInt16BE(80, 4)
-  return Buffer.concat([head, encodeName(target)])
-}
+describe('declared modes', () => {
+  it('browses _http._tcp and filters on the KLF instance name', () => {
+    expect(VELUX_DISCOVERY_MODES).toEqual([
+      {
+        kind: 'mdns',
+        serviceType: '_http._tcp',
+        instancePattern: '^VELUX_KLF',
+      },
+    ])
+  })
+})
 
-/** An mDNS response: answers in the answer section, the rest as additionals (as a responder sends them). */
-function response(answers: readonly Buffer[], additionals: readonly Buffer[]): Buffer {
-  const header = Buffer.alloc(12)
-  header.writeUInt16BE(0x8400, 2)
-  header.writeUInt16BE(answers.length, 6)
-  header.writeUInt16BE(additionals.length, 10)
-  return Buffer.concat([header, ...answers, ...additionals])
-}
-
-const INSTANCE = 'VELUX_KLF_1A2B._http._tcp.local'
-
-/** What a KLF-200 answers to a `_http._tcp.local` PTR query. */
-function klfAnswer(ip: readonly number[]): Buffer {
-  return response(
-    [record('_http._tcp.local', PTR, encodeName(INSTANCE))],
-    [
-      record(INSTANCE, SRV, srvData('VELUX_KLF_1A2B.local')),
-      record(INSTANCE, TXT, Buffer.from([0])),
-      record('VELUX_KLF_1A2B.local', A, Buffer.from(ip)),
-    ],
-  )
-}
-
-describe('veluxGatewaysFromDnsMessage', () => {
-  it('reads a KLF-200 answer: its address from the A record behind the SRV target', () => {
-    expect(veluxGatewaysFromDnsMessage(klfAnswer([192, 168, 20, 65]))).toEqual([
-      { host: '192.168.20.65', name: 'VELUX_KLF_1A2B', id: 'velux_klf_1a2b' },
+describe('veluxGatewaysFromHits', () => {
+  it('turns a KLF-200 mDNS hit into a gateway keyed on its SRV host', () => {
+    expect(veluxGatewaysFromHits([KLF])).toEqual([
+      { host: '192.0.2.8', name: 'VELUX_KLF_1A2B', id: 'velux_klf_1a2b' },
     ])
   })
 
-  it('drops other _http._tcp services on the network', () => {
-    const packet = response(
-      [
-        record('_http._tcp.local', PTR, encodeName('Office Printer._http._tcp.local')),
-        record('_http._tcp.local', PTR, encodeName('Bosch SHC._http._tcp.local')),
-      ],
-      [
-        record('Office Printer._http._tcp.local', A, Buffer.from([10, 0, 0, 4])),
-        record('Bosch SHC._http._tcp.local', A, Buffer.from([10, 0, 0, 5])),
-      ],
-    )
-    expect(veluxGatewaysFromDnsMessage(packet)).toEqual([])
+  it('drops other _http._tcp services and a hit without an mDNS record', () => {
+    expect(
+      veluxGatewaysFromHits([
+        mdnsHit('Office Printer._http._tcp.local', '192.0.2.4', 'printer.local'),
+        { modeIndex: 0, host: '192.0.2.5', port: 80 },
+      ]),
+    ).toEqual([])
   })
 
-  it('answers nothing for a truncated packet', () => {
-    expect(veluxGatewaysFromDnsMessage(klfAnswer([10, 0, 0, 9]).subarray(0, 40))).toEqual([])
-    expect(veluxGatewaysFromDnsMessage(Buffer.alloc(3))).toEqual([])
+  it('lists each host once', () => {
+    expect(veluxGatewaysFromHits([KLF, KLF])).toHaveLength(1)
   })
 })
 
@@ -98,48 +61,28 @@ describe('isVeluxGatewayName', () => {
   })
 })
 
-describe('browseVeluxGateways', () => {
-  it('asks for _http._tcp and returns each gateway once', async () => {
-    const queries: Buffer[] = []
-    const packet = klfAnswer([10, 0, 0, 8])
-    const hosts = await browseVeluxGateways(async (query) => {
-      queries.push(query)
-      return [packet, packet]
-    })
-    expect(hosts).toEqual([{ host: '10.0.0.8', name: 'VELUX_KLF_1A2B', id: 'velux_klf_1a2b' }])
-    expect(queries[0]).toEqual(mdnsPtrQuery('_http._tcp.local'))
-  })
-
-  it('finds nothing, without throwing, when the exchange fails', async () => {
-    expect(
-      await browseVeluxGateways(async () => {
-        throw new Error('socket closed')
-      }),
-    ).toEqual([])
-  })
-})
-
 describe('proposals', () => {
-  const found = [{ host: '10.0.0.8', name: 'VELUX_KLF_1A2B', id: 'velux_klf_1a2b' }]
+  const found = [{ host: '192.0.2.8', name: 'VELUX_KLF_1A2B', id: 'velux_klf_1a2b' }]
 
   it('skips a gateway whose host or id an integration already stores', () => {
-    expect(proposeVeluxGateways(found, ['10.0.0.8'])).toEqual([])
+    expect(proposeVeluxGateways(found, ['192.0.2.8'])).toEqual([])
     expect(proposeVeluxGateways(found, ['velux_klf_1a2b.local'])).toEqual([])
-    expect(proposeVeluxGateways(found, ['10.0.0.9'])).toEqual(found)
+    expect(proposeVeluxGateways(found, ['192.0.2.9'])).toEqual(found)
   })
 
-  it('opens the integration form with the host pre-filled', () => {
+  it('offers an integration to set up with the host pre-filled', () => {
     expect(veluxDiscoveryCandidates(found)).toEqual([
       {
         stableId: 'velux:velux_klf_1a2b',
+        type: DeviceType.Gateway,
         suggestedName: 'VELUX_KLF_1A2B',
-        prefilledConfig: { host: '10.0.0.8', [VELUX_SETUP_INTEGRATION_KEY]: true },
+        prefilledConfig: { host: '192.0.2.8' },
+        setupIntegration: true,
       },
     ])
-    expect(VELUX_SETUP_INTEGRATION_KEY).toBe('setupIntegration')
   })
 
-  it('summarises what was found', () => {
+  it('summarises the outcome', () => {
     expect(veluxDiscoverySummary(0, 0)).toBe('No gateway found on the network.')
     expect(veluxDiscoverySummary(1, 0)).toBe('Gateway already added.')
     expect(veluxDiscoverySummary(2, 2)).toBe('Found 2 gateways.')

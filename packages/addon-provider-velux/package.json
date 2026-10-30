@@ -41,7 +41,7 @@
         "version": "0.1.0",
         "description": "Adopt a Velux KLF-200 gateway, its windows with rain sensor and its roller shutters, from an integration over the local network",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.png",
+        "icon": "assets/icon.svg",
         "color": "#00457c",
         "instanceMode": "multiple",
         "mode": "account",

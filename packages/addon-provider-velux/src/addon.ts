@@ -8,6 +8,8 @@ import {
   type DeviceSummary,
   DeviceType,
   type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
@@ -29,11 +31,11 @@ import { buildVeluxConnectionTestProvider } from './velux-connection-test.js'
 import { cascadeRemoveDevicesForIntegration } from './velux-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './velux-integration-offline.js'
 import {
-  browseVeluxGateways,
   proposeVeluxGateways,
-  type VeluxDiscoveredGateway,
+  VELUX_DISCOVERY_MODES,
   veluxDiscoveryCandidates,
   veluxDiscoverySummary,
+  veluxGatewaysFromHits,
 } from './velux-gateway-discovery.js'
 import { veluxGateways } from './velux-node-resolver.js'
 
@@ -86,16 +88,29 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
-        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: connectionTestCapability,
+          provider: this.buildConnectionTestProvider(),
+        },
       ],
       customActions: veluxActions,
       actionHandlers: {
         discoverGateway: async () => {
-          const { proposals, summary } = await this.discoverGateways()
+          const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
+            addonId: this.ctx.id,
+          })
+          const hosts = candidates.map((candidate) => ({
+            host: String(candidate.prefilledConfig['host'] ?? ''),
+            name: candidate.suggestedName,
+            id: candidate.stableId.replace(/^velux:/, ''),
+          }))
           return {
-            hosts: proposals.map((found) => ({ host: found.host, name: found.name, id: found.id })),
-            summary,
+            hosts,
+            summary: veluxDiscoverySummary(hosts.length, hosts.length),
           }
         },
       },
@@ -106,7 +121,9 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Velux: shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Velux: shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
     setKlfLibraryLogSink(null)
@@ -121,22 +138,27 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     return false
   }
 
-  /**
-   * LAN mDNS probe for a KLF-200. This addon is hub-only, so the socket is the
-   * hub's. The probe asks for a unicast reply and does not bind 5353.
-   */
+  /** A KLF-200 is found by the scan engine's mDNS browse; this addon only classifies the hits. */
   override async supportsDiscovery(): Promise<boolean> {
     return true
   }
 
-  override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
-    const { proposals } = await this.discoverGateways()
-    return veluxDiscoveryCandidates(proposals).map((candidate) => ({
-      stableId: candidate.stableId,
-      type: DeviceType.Gateway,
-      suggestedName: candidate.suggestedName,
-      prefilledConfig: { ...candidate.prefilledConfig },
-    }))
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return VELUX_DISCOVERY_MODES
+  }
+
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    const found = veluxGatewaysFromHits(input.hits)
+    const proposals = proposeVeluxGateways(found, await this.knownGatewayHosts())
+    if (found.length > proposals.length) {
+      this.ctx.logger.info('Velux discovery skipped gateways already added', {
+        meta: { found: found.length, proposed: proposals.length },
+      })
+    }
+    return veluxDiscoveryCandidates(proposals)
   }
 
   override async adoptDiscoveredDevice(_input: {
@@ -165,25 +187,6 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     return `velux:${nativeId}`
   }
 
-  private async discoverGateways(): Promise<{
-    readonly proposals: readonly VeluxDiscoveredGateway[]
-    readonly summary: string
-  }> {
-    let found: readonly VeluxDiscoveredGateway[] = []
-    try {
-      found = await browseVeluxGateways()
-    } catch (err) {
-      this.ctx.logger.warn('Velux gateway discovery failed', { meta: { error: errMsg(err) } })
-    }
-    const proposals = proposeVeluxGateways(found, await this.knownGatewayHosts())
-    if (found.length > proposals.length) {
-      this.ctx.logger.info('Velux discovery skipped gateways already added', {
-        meta: { found: found.length, proposed: proposals.length },
-      })
-    }
-    return { proposals, summary: veluxDiscoverySummary(found.length, proposals.length) }
-  }
-
   private async knownGatewayHosts(): Promise<readonly string[]> {
     try {
       const all = await this.ctx.api.integrations.list.query()
@@ -191,7 +194,9 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       for (const integration of all) {
         if (integration.addonId !== this.ctx.id) continue
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+          const settings = await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          })
           const connection = connectionFromSettings(settings)
           if (connection) hosts.push(connection.host)
         } catch (err) {
@@ -223,7 +228,9 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       const surviving = new Set<string>()
       for (const integration of mine) {
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+          const settings = await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          })
           const connection = connectionFromSettings(settings)
           if (!connection) {
             this.ctx.logger.warn('Velux reconcile: host or password missing, no session opened', {
