@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.150] - 2026-10-30
+
 ### Changed
 
 - Fix the Velux addon failing to talk to the gateway when deployed: the bundled output now carries every KLF-200 frame decoder instead of looking for files beside it

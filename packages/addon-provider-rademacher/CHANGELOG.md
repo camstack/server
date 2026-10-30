@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.149] - 2026-10-30
+
 ### Changed
 
 - Rademacher is now an integration: add it from Integrations (the hub on your network is offered automatically), test the login, and adopt the Gateway (web link, firmware) and the covers. The old standalone Rademacher hub device is removed; add the hub again.

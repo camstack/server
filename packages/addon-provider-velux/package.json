@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-velux",
-  "version": "0.2.149",
+  "version": "0.2.150",
   "description": "Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt)",
   "keywords": [
     "camstack",
