@@ -14,12 +14,24 @@
  * or equivalent) and supply the values + mutations they want the form to
  * drive. This file is the render layer — no data fetching here.
  */
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import type { ConfigSectionWithValues, ConfigUISchemaWithValues } from '../../types/config-ui'
 import { FormBuilder } from './FormBuilder'
 import { FormSaveBar } from './FormSaveBar'
 import { SchemaTabBar } from './SchemaTabBar'
 import { StableTabPanel } from '../StableTabPanel'
+
+/**
+ * A tab that renders caller-supplied content instead of schema sections. It
+ * sits in the SAME bar as the schema tabs (ahead of them), so a surface with
+ * a custom first tab and a settings form has one tab level, not two. The
+ * save bar still sits below the panel and keeps counting pending edits.
+ */
+export interface LeadingSettingsTab {
+  readonly id: string
+  readonly label: string
+  readonly content: ReactNode
+}
 
 interface TabbedSettingsFormProps {
   readonly schema: ConfigUISchemaWithValues
@@ -59,6 +71,8 @@ interface TabbedSettingsFormProps {
    * set, this form keeps the pending edits and does not draw its own bar.
    */
   readonly hideSaveBar?: boolean
+  /** Custom-content tabs rendered first in the bar; the first one is the default. */
+  readonly leadingTabs?: readonly LeadingSettingsTab[]
 }
 
 export function TabbedSettingsForm({
@@ -75,6 +89,7 @@ export function TabbedSettingsForm({
   flattenTabs = false,
   visibilityContext,
   hideSaveBar = false,
+  leadingTabs = [],
 }: TabbedSettingsFormProps) {
   const tabs = schema.tabs ?? []
 
@@ -91,6 +106,7 @@ export function TabbedSettingsForm({
 
   const declaredIds = new Set(tabs.map((t) => t.id))
   const orderedTabs = [
+    ...leadingTabs.map((t) => ({ id: t.id, label: t.label })),
     ...tabs,
     ...[...sectionsByTab.keys()]
       .filter((id) => !declaredIds.has(id))
@@ -148,6 +164,7 @@ export function TabbedSettingsForm({
     if (isControlled) onSubTabChange(id)
     else setInternalActiveTabId(id)
   }
+  const activeLeading = leadingTabs.find((t) => t.id === activeTabId)
   const activeSections = sectionsByTab.get(activeTabId) ?? []
 
   // Merge sections within a tab when all have empty titles — one unified
@@ -179,7 +196,7 @@ export function TabbedSettingsForm({
     />
   )
 
-  if (flattenTabs || orderedTabs.length <= 1) {
+  if (leadingTabs.length === 0 && (flattenTabs || orderedTabs.length <= 1)) {
     return (
       <div className="flex flex-col gap-3">
         <FormBuilder
@@ -231,14 +248,18 @@ export function TabbedSettingsForm({
           container to the top. StableTabPanel holds the outgoing height until the
           new form has caught up. */}
       <StableTabPanel tabKey={activeTabId}>
-        <FormBuilder
-          schema={activeSchema}
-          values={values}
-          onChange={onChange}
-          onAction={onAction}
-          disabled={disabled}
-          visibilityContext={visibilityContext}
-        />
+        {activeLeading !== undefined ? (
+          activeLeading.content
+        ) : (
+          <FormBuilder
+            schema={activeSchema}
+            values={values}
+            onChange={onChange}
+            onAction={onAction}
+            disabled={disabled}
+            visibilityContext={visibilityContext}
+          />
+        )}
       </StableTabPanel>
       {saveBar}
     </div>

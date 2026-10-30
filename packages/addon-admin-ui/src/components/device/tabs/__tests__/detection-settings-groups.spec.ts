@@ -10,9 +10,7 @@ describe('detection settings sub-tab grouping', () => {
     const expected: Record<string, string> = {
       'pipeline-object-detection': 'object-detection',
       'detection-sensitivity': 'object-detection',
-      'onboard-object-detection': 'object-detection',
       tracking: 'tracking',
-      'tracking-core': 'tracking',
       'motion-tuning': 'motion',
       'stationary-objects': 'stationary',
       occupancy: 'stationary',
@@ -24,6 +22,18 @@ describe('detection settings sub-tab grouping', () => {
     for (const [sectionId, group] of Object.entries(expected)) {
       expect(groupOfSettingsSection(sectionId)).toBe(group)
     }
+  })
+
+  it('orders the bar Zones, Object detection, Tracking, Motion, Stationary, Audio, Cluster', () => {
+    expect(SETTINGS_GROUP_TABS.map((t) => t.id)).toEqual([
+      'zones',
+      'object-detection',
+      'tracking',
+      'motion',
+      'stationary',
+      'audio',
+      'cluster',
+    ])
   })
 
   it('routes an unmapped section id to the default group so nothing disappears', () => {

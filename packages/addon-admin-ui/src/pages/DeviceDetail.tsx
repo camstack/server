@@ -570,7 +570,9 @@ export function DeviceDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
       navigate(
-        integration?.id ? integrationDetailUrl(integration.addonId, integration.id) : '/integrations',
+        integration?.id
+          ? integrationDetailUrl(integration.addonId, integration.id)
+          : '/integrations',
       )
     },
   })
@@ -719,12 +721,11 @@ export function DeviceDetailPage() {
           />
         )
       case 'detection-pipeline':
-        // Consolidated detection tab — Steps (#33 gating + provisioning) and
-        // Settings (contributed detector / tracking / motion / stationary /
-        // zones panels) as two sub-tabs. The addon-contributed
-        // `detection-pipeline` / `zones` top-tab sections are rendered INSIDE
-        // the Settings sub-tab, so this structural case fully supersedes the
-        // old default-branch aggregate render for this tab id.
+        // One tab bar: Steps, then the contributed settings groups (zones /
+        // detector / tracking / motion / stationary / audio / cluster). The
+        // addon-contributed `detection-pipeline` / `zones` top-tab sections
+        // render inside it, so this case supersedes the default branch below
+        // for this tab id.
         return (
           <DetectionPipelineTab
             deviceId={deviceId}
@@ -775,15 +776,7 @@ export function DeviceDetailPage() {
         const section = (
           <DeviceAggregateSection
             deviceId={targetDeviceId}
-            sectionFilter={(s) =>
-              s.location === 'top-tab' &&
-              // 'zones' sections are folded into the 'detection-pipeline' tab.
-              (s.tab === tabId || (tabId === 'detection-pipeline' && s.tab === 'zones'))
-            }
-            // The Detection Pipeline tab renders its zones + pipeline
-            // sections as one flat list — no inner sub-tab bar. Other
-            // addon top-tabs keep their per-`tab` sub-tab grouping.
-            flattenSubTabs={tabId === 'detection-pipeline'}
+            sectionFilter={(s) => s.location === 'top-tab' && s.tab === tabId}
             activeSubTab={desiredSub}
             onSubTabChange={handleSubTabChange}
           />
@@ -911,7 +904,8 @@ export function DeviceDetailPage() {
               integration !== null
                 ? {
                     label: integrationBreadcrumbLabel,
-                    onClick: () => navigate(integrationDetailUrl(integration.addonId, integration.id)),
+                    onClick: () =>
+                      navigate(integrationDetailUrl(integration.addonId, integration.id)),
                   }
                 : { label: integrationBreadcrumbLabel },
               { label: name },

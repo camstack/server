@@ -178,3 +178,55 @@ describe('TabbedSettingsForm — flattenTabs', () => {
     })
   })
 })
+
+describe('TabbedSettingsForm leadingTabs', () => {
+  const leading = [{ id: 'steps', label: 'Steps', content: <div data-testid="leading" /> }]
+
+  function renderWithLeading(activeSubTab: string | null, onSubTabChange = noop) {
+    return render(
+      <TabbedSettingsForm
+        schema={twoTabSchema()}
+        values={{}}
+        pendingKeys={['a']}
+        onChange={noop}
+        onSave={noop}
+        onDiscard={noop}
+        disabled={false}
+        leadingTabs={leading}
+        activeSubTab={activeSubTab}
+        onSubTabChange={onSubTabChange}
+      />,
+    )
+  }
+
+  it('puts the leading tab first in the same bar and shows it by default', () => {
+    renderWithLeading(null)
+    const labels = screen.getAllByRole('button').map((b) => b.textContent ?? '')
+    expect(labels[0]).toContain('Steps')
+    expect(screen.getByTestId('leading')).toBeTruthy()
+    expect(screen.queryByTestId('form-builder')).toBeNull()
+    expect(screen.getByTestId('save-bar')).toBeTruthy()
+  })
+
+  it('shows the schema tab when it is the active one', () => {
+    renderWithLeading('zones')
+    expect(screen.queryByTestId('leading')).toBeNull()
+    expect(screen.getByTestId('form-builder')).toBeTruthy()
+  })
+
+  it('still renders the bar when the schema has no sections', () => {
+    render(
+      <TabbedSettingsForm
+        schema={{ sections: [] }}
+        values={{}}
+        pendingKeys={[]}
+        onChange={noop}
+        onSave={noop}
+        onDiscard={noop}
+        disabled={false}
+        leadingTabs={leading}
+      />,
+    )
+    expect(screen.getByTestId('leading')).toBeTruthy()
+  })
+})

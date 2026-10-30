@@ -20,7 +20,7 @@ import type {
   ConfigSectionWithValues,
   ConfigUISchemaWithValues,
 } from '../../../types/config-ui'
-import { TabbedSettingsForm } from '../../form-builder/TabbedSettingsForm'
+import { TabbedSettingsForm, type LeadingSettingsTab } from '../../form-builder/TabbedSettingsForm'
 import { useQuickDetailSave } from '../quick-detail-save'
 import { isDeviceExportSection } from './device-export-tab'
 import { isConfigTabSection } from './config-tab-sections'
@@ -247,9 +247,7 @@ interface DeviceAggregateSectionProps {
   readonly onSubTabChange?: (id: string) => void
   /**
    * When true, the rendered form collapses every contributed section into
-   * ONE flat list with no inner sub-tab bar. The device-detail "Detection
-   * Pipeline" top tab uses this to fold the former "Detection" (zones) and
-   * "Detection pipeline" sub-tabs into a single flat surface.
+   * ONE flat list with no inner sub-tab bar.
    */
   readonly flattenSubTabs?: boolean
   /**
@@ -269,7 +267,15 @@ interface DeviceAggregateSectionProps {
       readonly icon: string
     }>
   }
+  /**
+   * Custom-content tabs placed first in the same bar as the grouped settings
+   * tabs (e.g. a step inspector ahead of the settings groups). The form stays
+   * mounted while one is active, so unsaved edits keep accumulating.
+   */
+  readonly leadingTabs?: readonly LeadingSettingsTab[]
 }
+
+const EMPTY_SCHEMA: ConfigUISchemaWithValues = { sections: [] }
 
 export function DeviceAggregateSection({
   deviceId,
@@ -278,6 +284,7 @@ export function DeviceAggregateSection({
   onSubTabChange,
   flattenSubTabs,
   subTabGrouping,
+  leadingTabs,
 }: DeviceAggregateSectionProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -498,7 +505,8 @@ export function DeviceAggregateSection({
     })
   }, [exportRegister, pendingKeyList, batchMutationTrpc.isPending, exportError])
 
-  if (isSettingsLoading) {
+  const hasLeadingTabs = leadingTabs !== undefined && leadingTabs.length > 0
+  if (isSettingsLoading && !hasLeadingTabs) {
     return (
       <div className="flex items-center justify-center py-12 text-foreground-subtle">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -509,7 +517,7 @@ export function DeviceAggregateSection({
     )
   }
 
-  if (!enforced || enforced.sections.length === 0) {
+  if (!hasLeadingTabs && (!enforced || enforced.sections.length === 0)) {
     return (
       <div className="text-xs text-foreground-subtle italic py-4 text-center">
         {t(
@@ -596,7 +604,7 @@ export function DeviceAggregateSection({
 
   return (
     <TabbedSettingsForm
-      schema={enforced}
+      schema={enforced ?? EMPTY_SCHEMA}
       values={effectiveValues}
       pendingKeys={pendingKeys}
       onChange={handleChange}
@@ -608,6 +616,7 @@ export function DeviceAggregateSection({
       activeSubTab={activeSubTab}
       onSubTabChange={onSubTabChange}
       flattenTabs={flattenSubTabs}
+      leadingTabs={leadingTabs}
       visibilityContext={visibilityContext}
     />
   )

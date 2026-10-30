@@ -1,5 +1,6 @@
 /**
- * Grouping map for the device "Detection pipeline → Settings" sub-tab.
+ * Grouping map for the settings tabs of the device "Detection pipeline" tab
+ * (the bar is Steps, then these groups).
  *
  * The Settings surface aggregates MANY contributed sections (object
  * detection, tracking, motion, stationary, zones, audio, cluster
@@ -37,11 +38,11 @@ export const SETTINGS_GROUP_TABS: ReadonlyArray<{
   readonly label: string
   readonly icon: string
 }> = [
+  groupTab('zones', 'helpers.detectionSettingsGroups.zones', 'shapes'),
   groupTab('object-detection', 'helpers.detectionSettingsGroups.objectDetection', 'scan-search'),
   groupTab('tracking', 'helpers.detectionSettingsGroups.tracking', 'route'),
   groupTab('motion', 'helpers.detectionSettingsGroups.motion', 'activity'),
   groupTab('stationary', 'helpers.detectionSettingsGroups.stationary', 'square-parking'),
-  groupTab('zones', 'helpers.detectionSettingsGroups.zones', 'shapes'),
   groupTab('audio', 'helpers.detectionSettingsGroups.audio', 'volume-2'),
   groupTab('cluster', 'helpers.detectionSettingsGroups.cluster', 'server'),
 ]
@@ -54,19 +55,16 @@ export const DEFAULT_SETTINGS_GROUP = 'object-detection'
  * contributions:
  *   - orchestrator (`settings-ui-schemas.ts` + `device-config-contributions.ts`):
  *     `pipeline-object-detection`, `pipeline-audio`, `motion-tuning`,
- *     `occupancy`, `cluster-assignment`, `zones`, `onboard-object-detection`,
- *     `orchestrator-live`.
+ *     `occupancy`, `cluster-assignment`, `zones`, `orchestrator-live`.
  *   - post-analysis (`pipeline-analytics`): `detection-sensitivity`,
- *     `tracking`, `tracking-core`, `stationary-objects`.
+ *     `tracking`, `stationary-objects`.
  */
 const SECTION_TO_GROUP: Readonly<Record<string, string>> = {
-  // Object detection — when/how the detector runs + confidence/NMS + onboard AI.
+  // Object detection — when/how the detector runs + confidence/NMS.
   'pipeline-object-detection': 'object-detection',
   'detection-sensitivity': 'object-detection',
-  'onboard-object-detection': 'object-detection',
-  // Tracking — tracker core + the false-positive dedup/voting/confirm knobs.
+  // Tracking — the tracker + the false-positive dedup/voting/confirm knobs.
   tracking: 'tracking',
-  'tracking-core': 'tracking',
   // Motion — analyzer tuning (sources, stream, fps, cooldown).
   'motion-tuning': 'motion',
   // Stationary — parked-object promotion + occupancy re-sampling.
