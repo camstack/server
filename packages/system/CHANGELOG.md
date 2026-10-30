@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.522] - 2026-10-29
+
 ### Changed
 
 - The remote template editor's component palette is served by core-blocks through the new remote-layout-components capability
