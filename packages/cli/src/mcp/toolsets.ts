@@ -4,15 +4,17 @@
  *  - `setup`     hub-less: needs no credentials (versions, supported hosts).
  *  - `ops`       read-only questions to a hub, through the CLI's own session.
  *  - `configure` writes, every one two-step through the mutation gate.
+ *  - `support`   benchmarks, accelerator and camera diagnosis, issue and PR drafts;
+ *                the benchmark run and the drafts go through the mutation gate.
  *  - `develop`   addon-author tools, registered by `@camstack/mcp-develop`.
  */
 
-export const TOOLSET_NAMES = ['setup', 'ops', 'configure', 'develop'] as const
+export const TOOLSET_NAMES = ['setup', 'ops', 'configure', 'support', 'develop'] as const
 
 export type Toolset = (typeof TOOLSET_NAMES)[number]
 
 /** What a bare `camstack mcp` serves. `develop` is opt-in: it reads a checkout. */
-export const DEFAULT_TOOLSETS: readonly Toolset[] = ['setup', 'ops', 'configure']
+export const DEFAULT_TOOLSETS: readonly Toolset[] = ['setup', 'ops', 'configure', 'support']
 
 export type ToolsetParse =
   | { readonly ok: true; readonly toolsets: readonly Toolset[] }

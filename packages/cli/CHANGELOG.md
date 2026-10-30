@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- camstack mcp: the support toolset (benchmark run and status, accelerator and camera diagnosis, gated issue and pull-request drafts through your own gh)
+
 ## [1.2.210] - 2026-10-30
 
 ### Changed

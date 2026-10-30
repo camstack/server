@@ -9,6 +9,7 @@ import type { FetchFn, HubProvider, McpContext } from './context.js'
 import { registerConfigureTools } from './configure-tools.js'
 import { registerOpsTools } from './ops-tools.js'
 import { registerSetupTools } from './setup-tools.js'
+import { registerSupportTools } from './support-tools.js'
 import type { Toolset } from './toolsets.js'
 
 export interface PublicServerOptions {
@@ -25,6 +26,7 @@ export function createPublicServer(options: PublicServerOptions): McpServer {
   if (toolsets.includes('setup')) registerSetupTools(server, context)
   if (toolsets.includes('ops')) registerOpsTools(server, context)
   if (toolsets.includes('configure')) registerConfigureTools(server, context)
+  if (toolsets.includes('support')) registerSupportTools(server, context)
   if (toolsets.includes('develop') && options.registerDevelop) options.registerDevelop(server)
   return server
 }

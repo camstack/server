@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7454 source files · 208 units claimed by at least one document (7416 files).**
+**220 units · 7461 source files · 208 units claimed by at least one document (7423 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -47,9 +47,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/device` | 51 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md`, +24 more, 1 ADR | 2026-10-26 |
 | `packages/addon-ai` | 50 | `ai` | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 |
 | `packages/addon-pipeline/src/session-decode` | 49 | `decode-and-data-planes` | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +13 more, 4 ADRs | 2026-08-29 |
+| `packages/cli` | 49 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +1 more | — |
 | `packages/addon-import-alexa` | 47 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md`, `decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md`, +3 more | — |
 | `packages/addon-export-hap/src/mappers` | 42 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +5 more, 9 ADRs | 2026-09-29 |
-| `packages/cli` | 42 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +1 more | — |
 | `packages/mcp-dev` | 41 | — | `decisions/adr-0836-a-cluster-mutation-from-the-developer-mcp-exists-only-behind-allow-mutations-and-a-dry-run-whose-one-shot-token-is-bound-to-the-exact-arguments.md`, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, +1 more | — |
 | `packages/desktop` | 40 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +8 more | 2026-10-27 |
 | `server/backend/src/agent` | 40 | `update-and-release` | `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, `architecture/transport.md`, `decisions/adr-0840-an-agent-updates-an-addon-by-asking-the-hub-to-bring-it-to-the-hubs-version.md`, +14 more, 3 ADRs | 2026-10-16 |

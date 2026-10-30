@@ -115,8 +115,8 @@ const OPS_TOOLS = [
 describe('camstack mcp — toolset selection', () => {
   const ctx = context(NO_SESSION)
 
-  it('serves setup, ops and configure by default, and no develop tools', async () => {
-    const client = await connect(['setup', 'ops', 'configure'], ctx, () => {
+  it('serves setup, ops, configure and support by default, and no develop tools', async () => {
+    const client = await connect(['setup', 'ops', 'configure', 'support'], ctx, () => {
       throw new Error('develop must not register')
     })
     expect(await toolNames(client)).toEqual([
@@ -138,6 +138,12 @@ describe('camstack mcp — toolset selection', () => {
       'setup_connect',
       'setup_discover_hubs',
       'setup_install_guide',
+      'support_benchmark_run',
+      'support_benchmark_status',
+      'support_diagnose_accelerator',
+      'support_diagnose_camera',
+      'support_draft_issue',
+      'support_draft_pr',
     ])
   })
 
