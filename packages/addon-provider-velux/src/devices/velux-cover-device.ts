@@ -23,12 +23,12 @@ const COLD_START: CoverStatus = {
 
 /**
  * One Velux KLF-200 actuator (window or roller shutter) as a CamStack
- * {@link DeviceType.Cover} device. A CHILD of the gateway Hub device (standalone
- * mode). Registers ONE cap (`cover`) with the positional lifecycle surface
+ * {@link DeviceType.Cover} device: a top-level device of its integration, or the
+ * cover inside a window container. Registers ONE cap (`cover`) with the positional lifecycle surface
  * (open/close/stop/setPosition). Velux actuators are positional with NO tilt, so
  * `setTiltPosition` is intentionally omitted and `CoverTilt` is never advertised.
  *
- * The slice is fed from the live gateway node handle on each poll tick (and
+ * The slice is fed from the live gateway node on each push (and
  * seeded cold on activate). Commands are driven through the live client resolved
  * from {@link veluxGateways}.
  */
@@ -37,7 +37,7 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
 
   private readonly nodeId: number
   private readonly serial: string
-  private readonly gatewayId: string
+  private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
 
@@ -46,15 +46,15 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
     super(ctx, veluxCoverSchema, { type: DeviceType.Cover })
     this.nodeId = cfg.nodeId
     this.serial = cfg.serial
-    this.gatewayId = cfg.gatewayId
+    this.integrationId = cfg.integrationId
     this.online = this.liveNode()?.online ?? false
     this.registerCoverCap()
     this.runtimeState.setCapState('cover', COLD_START)
     void this.updateSourceInfo({
       id:
         this.serial.length > 0
-          ? `${this.gatewayId}:${this.serial}`
-          : `${this.gatewayId}:${this.nodeId}`,
+          ? `${this.integrationId}:${this.serial}`
+          : `${this.integrationId}:${this.nodeId}`,
       system: 'velux',
     })
   }
@@ -77,7 +77,7 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
     await super.removeDevice()
   }
 
-  /** Subscribe to per-gateway poll ticks. Works even before the manager exists —
+  /** Subscribe to the integration's change ticks. Works even before the manager exists —
    *  `recomputeSlice` no-ops on a missing node and replays once it appears. */
   private attachSnapshotListener(): void {
     const onSnapshot = (): void => {
@@ -90,7 +90,7 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
         })
       }
     }
-    this.snapshotUnsub = veluxGateways.onSnapshot(this.gatewayId, onSnapshot)
+    this.snapshotUnsub = veluxGateways.onSnapshot(this.integrationId, onSnapshot)
   }
 
   /** Recompute + write this cover's `cover` cap slice from the live node. */
@@ -106,7 +106,7 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
   }
 
   private liveNode(): VeluxNode | null {
-    return veluxGateways.findNode(this.gatewayId, {
+    return veluxGateways.findNode(this.integrationId, {
       serial: this.serial,
       nodeId: this.nodeId,
     })
@@ -118,10 +118,10 @@ export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
   }
 
   private resolveClient(): VeluxGatewayClient {
-    const client = veluxGateways.getManager(this.gatewayId)?.client ?? null
+    const client = veluxGateways.getManager(this.integrationId)?.client ?? null
     if (client === null) {
       throw new Error(
-        `Velux cover ${this.nodeId}: gateway ${this.gatewayId} client is not available`,
+        `Velux cover ${this.nodeId}: integration ${this.integrationId} has no live gateway session`,
       )
     }
     return client

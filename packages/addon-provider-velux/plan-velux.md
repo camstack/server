@@ -14,10 +14,10 @@ the certificate, the cover mapping) is in [README.md](./README.md).
 | Connection lifecycle: bounded-backoff reconnect, offline-on-drop, push fan-out | `src/velux-integration-manager.ts` |
 | Manager/snapshot sharing between the gateway and its children | `src/velux-node-resolver.ts` |
 | Discovery candidates, native ids (serial-keyed) | `src/velux-discovery.ts` |
-| Gateway `Hub`, `Cover` and rain `Sensor` devices | `src/devices/*` |
+| Gateway (`DeviceType.Gateway`), window `Container`, `Cover` and rain `Sensor` devices | `src/devices/*` |
 | Scripted TLS gateway used by the specs | `src/__tests__/fake-klf-gateway.ts` |
 
-Existing caps only: `device-discovery` (gateway), `cover` (actuators), `flood` (rain sensor, role leak sensor).
+Existing caps only: `device-provider` + `device-adoption` + `connection-test` (integration), `reboot` + `device-admin-link` (gateway), `cover` (actuators), `flood` (rain sensor, role leak sensor).
 
 ## Library decision
 

@@ -194,4 +194,26 @@ describe('KlfGatewayClient against a scripted gateway', () => {
     await c.connect()
     expect(gateway.accepted).toBe(1)
   })
+
+  describe('gateway actions', () => {
+    it('reads the firmware version the gateway reports', async () => {
+      const c = await startGateway()
+      gateway.firmware = [0, 2, 0, 0, 71, 0]
+      await c.connect()
+      expect(await c.readVersion()).toBe('0.2.0.0.71.0')
+    })
+
+    it('sends GW_REBOOT_REQ to the gateway on reboot', async () => {
+      const c = await startGateway()
+      await c.connect()
+      await c.reboot()
+      expect(gateway.reboots).toBe(1)
+    })
+
+    it('refuses version and reboot while no session is up', async () => {
+      const c = await startGateway()
+      await expect(c.reboot()).rejects.toThrow(/session is down/)
+      await expect(c.readVersion()).rejects.toThrow(/session is down/)
+    })
+  })
 })

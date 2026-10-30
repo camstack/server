@@ -2,15 +2,17 @@ import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { VeluxNode } from '../velux-client-contract.js'
 import {
-  buildNodeCandidates,
-  findNodeByNativeId,
+  buildVeluxCandidates,
+  gatewayNativeId,
   nodeNativeId,
   rainNativeId,
+  resolveNativeId,
+  windowCoverNativeId,
 } from '../velux-discovery.js'
-import { VeluxNodeResolver } from '../velux-node-resolver.js'
+import { VeluxNodeResolver, type VeluxNodeSource } from '../velux-node-resolver.js'
 import { nodeToCoverStatus, nodeToFloodStatus } from '../velux-protocol.js'
 
-const GW = 'velux:192-168-20-65'
+const INT = 'int-7f3a'
 
 function node(overrides: Partial<VeluxNode>): VeluxNode {
   return {
@@ -28,64 +30,111 @@ function node(overrides: Partial<VeluxNode>): VeluxNode {
   }
 }
 
+const WINDOW_RAIN = node({ nodeId: 0, serial: 'aa00000000000001' })
+const WINDOW_PLAIN = node({
+  nodeId: 1,
+  serial: 'bb00000000000002',
+  name: 'Finestra cucina',
+  rainSensor: false,
+})
+const SHUTTER = node({
+  nodeId: 2,
+  serial: 'cc00000000000003',
+  name: 'Tapparella',
+  coverClass: 'shutter',
+  rainSensor: false,
+})
+
 describe('native ids', () => {
-  it('key on the serial so a renumbered node keeps its device', () => {
-    expect(nodeNativeId(GW, node({ nodeId: 0 }))).toBe(nodeNativeId(GW, node({ nodeId: 7 })))
-    expect(nodeNativeId(GW, node({ serial: '' }))).toBe(`${GW}:node:0`)
+  it('key on the serial so a renumbered node keeps its device, and carry the integration', () => {
+    expect(nodeNativeId(INT, node({ nodeId: 0 }))).toBe(nodeNativeId(INT, node({ nodeId: 7 })))
+    expect(nodeNativeId(INT, node({ serial: '' }))).toBe(`${INT}:node:0`)
+    expect(nodeNativeId('other', WINDOW_RAIN)).not.toBe(nodeNativeId(INT, WINDOW_RAIN))
+    expect(gatewayNativeId(INT)).toBe(`${INT}:gateway`)
   })
 
-  it('finds the node and the kind behind a native id', () => {
-    const a = node({ nodeId: 0, serial: 'aa00000000000001' })
-    const b = node({
-      nodeId: 1,
-      serial: 'bb00000000000002',
-      name: 'Roller',
-      rainSensor: false,
+  it('resolves a native id to the gateway, a window with rain or a plain cover', () => {
+    const nodes = [WINDOW_RAIN, WINDOW_PLAIN, SHUTTER]
+    expect(resolveNativeId(INT, nodes, gatewayNativeId(INT))).toEqual({ kind: 'gateway' })
+    expect(resolveNativeId(INT, nodes, nodeNativeId(INT, WINDOW_RAIN))).toEqual({
+      kind: 'window',
+      node: WINDOW_RAIN,
     })
-    expect(findNodeByNativeId(GW, [a, b], nodeNativeId(GW, b))).toEqual({
+    expect(resolveNativeId(INT, nodes, nodeNativeId(INT, WINDOW_PLAIN))).toEqual({
       kind: 'cover',
-      node: b,
+      node: WINDOW_PLAIN,
     })
-    expect(findNodeByNativeId(GW, [a, b], rainNativeId(GW, a))).toEqual({
-      kind: 'rain',
-      node: a,
+    expect(resolveNativeId(INT, nodes, nodeNativeId(INT, SHUTTER))).toEqual({
+      kind: 'cover',
+      node: SHUTTER,
     })
-    expect(findNodeByNativeId(GW, [a, b], `${GW}:serial:cc`)).toBeNull()
+    expect(resolveNativeId(INT, nodes, `${INT}:serial:ff`)).toBeNull()
+    // the pieces of a window are not adoptable alone
+    expect(resolveNativeId(INT, nodes, rainNativeId(INT, WINDOW_RAIN))).toBeNull()
+    expect(resolveNativeId(INT, nodes, windowCoverNativeId(INT, WINDOW_RAIN))).toBeNull()
   })
 })
 
-describe('buildNodeCandidates', () => {
-  it('offers one cover per node and a rain sensor only for a window that has one', () => {
-    const window = node({ nodeId: 0 })
-    const shutter = node({
-      nodeId: 1,
-      serial: 'bb00000000000002',
-      name: 'Roller',
-      coverClass: 'shutter',
-      rainSensor: false,
-    })
-    const candidates = buildNodeCandidates({
-      gatewayId: GW,
-      gatewayName: 'KLF',
-      nodes: [window, shutter],
-      adoptedDeviceIdByNativeId: { [nodeNativeId(GW, window)]: 51 },
-    })
+describe('buildVeluxCandidates', () => {
+  const candidates = buildVeluxCandidates({
+    integrationId: INT,
+    integrationName: 'Casa KLF',
+    online: true,
+    nodes: [WINDOW_RAIN, WINDOW_PLAIN, SHUTTER],
+    adopted: new Map([[nodeNativeId(INT, SHUTTER), 51]]),
+  })
+
+  it('offers the gateway first, a container for a window with rain, a plain cover for the rest', () => {
     expect(candidates.map((c) => [c.childNativeId, c.type, c.alreadyAdopted])).toEqual([
-      [nodeNativeId(GW, window), DeviceType.Cover, true],
-      [rainNativeId(GW, window), DeviceType.Sensor, false],
-      [nodeNativeId(GW, shutter), DeviceType.Cover, false],
+      [gatewayNativeId(INT), DeviceType.Gateway, false],
+      [nodeNativeId(INT, WINDOW_RAIN), DeviceType.Container, false],
+      [nodeNativeId(INT, WINDOW_PLAIN), DeviceType.Cover, false],
+      [nodeNativeId(INT, SHUTTER), DeviceType.Cover, true],
     ])
-    expect(candidates[0]?.adoptedDeviceId).toBe(51)
-    expect(candidates[1]?.capabilities).toEqual(['flood'])
-    expect(candidates[1]?.name).toBe('Finestra bagno camera rain')
+    expect(candidates[3]?.adoptedDeviceId).toBe(51)
+  })
+
+  it('gives the window container its cover and its rain sensor as children', () => {
+    const container = candidates[1]
+    expect(container?.name).toBe('Finestra bagno camera')
+    expect(
+      container?.children?.map((c) => [c.childNativeId, c.type, c.capabilities, c.name]),
+    ).toEqual([
+      [windowCoverNativeId(INT, WINDOW_RAIN), DeviceType.Cover, ['cover'], 'Finestra bagno camera'],
+      [rainNativeId(INT, WINDOW_RAIN), DeviceType.Sensor, ['flood'], 'Finestra bagno camera rain'],
+    ])
+    // a plain window or shutter has no children at all
+    expect(candidates[2]?.children).toBeUndefined()
+    expect(candidates[3]?.children).toBeUndefined()
+  })
+
+  it('describes the gateway by the actions it really supports', () => {
+    const gateway = candidates[0]
+    expect(gateway?.name).toBe('Casa KLF')
+    expect(gateway?.status).toBe('online')
+    expect(gateway?.capabilities).toEqual(['reboot', 'device-admin-link'])
+    expect(gateway?.metadata.model).toBe('KLF-200')
+  })
+
+  it('still offers the gateway while the session is down, with the nodes as last known', () => {
+    const down = buildVeluxCandidates({
+      integrationId: INT,
+      integrationName: 'Casa KLF',
+      online: false,
+      nodes: [],
+      adopted: new Map(),
+    })
+    expect(down.map((c) => c.type)).toEqual([DeviceType.Gateway])
+    expect(down[0]?.status).toBe('offline')
   })
 
   it('marks an unreachable node offline and names an unnamed node after its class', () => {
-    const [candidate] = buildNodeCandidates({
-      gatewayId: GW,
-      gatewayName: 'KLF',
+    const [, candidate] = buildVeluxCandidates({
+      integrationId: INT,
+      integrationName: 'KLF',
+      online: true,
       nodes: [node({ name: '', online: false, rainSensor: false })],
-      adoptedDeviceIdByNativeId: {},
+      adopted: new Map(),
     })
     expect(candidate?.status).toBe('offline')
     expect(candidate?.name).toBe('KLF — window 0')
@@ -147,14 +196,18 @@ describe('VeluxNodeResolver.findNode', () => {
     const resolver = new VeluxNodeResolver()
     const moved = node({ nodeId: 7, serial: 'aa00000000000001' })
     const bare = node({ nodeId: 9, serial: '', name: 'No serial' })
-    resolver.set(GW, {
+    const source: VeluxNodeSource = {
       getNodes: () => [moved, bare],
       getNode: () => null,
+      getConnection: () => ({ host: '10.0.0.5', password: 'x' }),
+      status: 'connected',
+      firmware: null,
       client: null,
-    })
-    expect(resolver.findNode(GW, { serial: 'aa00000000000001', nodeId: 0 })).toBe(moved)
-    expect(resolver.findNode(GW, { serial: '', nodeId: 9 })).toBe(bare)
+    }
+    resolver.set(INT, source)
+    expect(resolver.findNode(INT, { serial: 'aa00000000000001', nodeId: 0 })).toBe(moved)
+    expect(resolver.findNode(INT, { serial: '', nodeId: 9 })).toBe(bare)
     // a serial-less ref never grabs a node that has a serial
-    expect(resolver.findNode(GW, { serial: '', nodeId: 7 })).toBeNull()
+    expect(resolver.findNode(INT, { serial: '', nodeId: 7 })).toBeNull()
   })
 })

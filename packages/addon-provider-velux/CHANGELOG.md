@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fix the Velux addon failing to talk to the gateway when deployed: the bundled output now carries every KLF-200 frame decoder instead of looking for files beside it
+- Velux is now an integration: add it from Integrations (the KLF-200 on your network is offered automatically), test the login, and adopt the Gateway (reboot, firmware, web link), windows with a rain sensor, and covers. The old standalone Velux device is removed; add the gateway again.
 
 ## [0.2.149] - 2026-10-29
 

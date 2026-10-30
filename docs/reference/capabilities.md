@@ -146,13 +146,13 @@ Singleton or collection providers, addressed without a device.
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
-| `connection-test` | 2 | — | — | — | — | `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-petkit` `provider-rtsp` `provider-tuya` `provider-wyze` |
+| `connection-test` | 2 | — | — | — | — | `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-petkit` `provider-rtsp` `provider-tuya` `provider-velux` `provider-wyze` |
 | `core-blocks` | 22 | — | — | — | — | `core-blocks` |
 | `custom-model-registry` | 2 | — | — | — | ✓ | `model-studio` |
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |
 | `decoder` | 2 | — | — | — | — | `decoder-nodeav` |
-| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-tuya` `provider-wyze` |
+| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-tuya` `provider-velux` `provider-wyze` |
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 12 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |

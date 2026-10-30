@@ -1,9 +1,18 @@
+import type { VeluxConnectionConfig } from './config.js'
 import type { VeluxGatewayClient, VeluxNode } from './velux-client-contract.js'
+
+/** Status of one gateway session. */
+export type VeluxGatewayStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
 /** What the resolver needs from a gateway manager. */
 export type VeluxNodeSource = {
   getNodes(): readonly VeluxNode[]
   getNode(nodeId: number): VeluxNode | null
+  /** The connection the manager runs on (the gateway device reads the host from it). */
+  getConnection(): VeluxConnectionConfig
+  readonly status: VeluxGatewayStatus
+  /** Firmware the gateway reported on its last connect, or null while unknown. */
+  readonly firmware: string | null
   readonly client: VeluxGatewayClient | null
 }
 
@@ -14,47 +23,46 @@ export interface VeluxNodeRef {
 }
 
 /**
- * Per-gateway registry that device classes use to reach the live
- * {@link VeluxIntegrationManager} (and its node handles) for a given gateway.
- * Keyed on the gateway {@link import('@camstack/types').DeviceType.Hub} device's
- * `stableId` (standalone mode — the connection lives on the gateway device, not a
- * broker). Mirrors the Rademacher `RademacherHubResolver`.
+ * Per-integration registry that device classes use to reach the live
+ * {@link VeluxIntegrationManager} (and its node handles). Keyed on the
+ * INTEGRATION id: the connection lives on the integration, and every device of a
+ * gateway (the gateway box, covers, rain sensors) carries that id in its config.
  *
- * The gateway device recreates the manager on reconnect / settings change and
- * re-publishes it here; cover children always read through the resolver, so they
- * transparently pick up the new manager.
+ * The client registry publishes a manager here when an integration starts and
+ * removes it when the integration goes; devices always read through the
+ * resolver, so they transparently pick up a replaced manager.
  */
 export class VeluxNodeResolver {
   readonly #managers: Map<string, VeluxNodeSource> = new Map()
   /**
-   * Per-gateway poll-tick fan-out. Cover children subscribe here instead of
-   * attaching a listener per child — the gateway device pumps this bus once per
-   * poll cycle. A plain `Set` of callbacks has no listener limit.
+   * Per-integration change fan-out. Devices subscribe here instead of attaching a
+   * listener per device — the manager pumps this bus on every node push,
+   * (re)connect and drop. A plain `Set` of callbacks has no listener limit.
    */
   readonly #snapshotSubs: Map<string, Set<() => void>> = new Map()
 
-  /** Publish or remove the manager for a gateway id. `null` removes the entry. */
-  set(gatewayId: string, manager: VeluxNodeSource | null): void {
+  /** Publish or remove the manager for an integration id. `null` removes the entry. */
+  set(integrationId: string, manager: VeluxNodeSource | null): void {
     if (manager === null) {
-      this.#managers.delete(gatewayId)
+      this.#managers.delete(integrationId)
       return
     }
-    this.#managers.set(gatewayId, manager)
+    this.#managers.set(integrationId, manager)
   }
 
-  /** The live manager for a gateway id, or null when unknown / stopped. */
-  getManager(gatewayId: string): VeluxNodeSource | null {
-    return this.#managers.get(gatewayId) ?? null
+  /** The live manager for an integration id, or null when unknown / stopped. */
+  getManager(integrationId: string): VeluxNodeSource | null {
+    return this.#managers.get(integrationId) ?? null
   }
 
-  /** All node handles for a gateway id, or [] when unknown. */
-  getNodes(gatewayId: string): readonly VeluxNode[] {
-    return this.#managers.get(gatewayId)?.getNodes() ?? []
+  /** All node handles for an integration id, or [] when unknown. */
+  getNodes(integrationId: string): readonly VeluxNode[] {
+    return this.#managers.get(integrationId)?.getNodes() ?? []
   }
 
-  /** Resolve a single node handle by node id for a gateway, or null. */
-  getNode(gatewayId: string, nodeId: number): VeluxNode | null {
-    return this.#managers.get(gatewayId)?.getNode(nodeId) ?? null
+  /** Resolve a single node handle by node id for an integration, or null. */
+  getNode(integrationId: string, nodeId: number): VeluxNode | null {
+    return this.#managers.get(integrationId)?.getNode(nodeId) ?? null
   }
 
   /**
@@ -62,30 +70,30 @@ export class VeluxNodeResolver {
    * index), so a renumbered node is still found; the node id only serves nodes
    * the gateway reported no serial for.
    */
-  findNode(gatewayId: string, ref: VeluxNodeRef): VeluxNode | null {
-    const nodes = this.getNodes(gatewayId)
+  findNode(integrationId: string, ref: VeluxNodeRef): VeluxNode | null {
+    const nodes = this.getNodes(integrationId)
     if (ref.serial.length > 0) return nodes.find((n) => n.serial === ref.serial) ?? null
     return nodes.find((n) => n.serial.length === 0 && n.nodeId === ref.nodeId) ?? null
   }
 
-  /** Subscribe a child to per-gateway poll ticks. Returns an unsubscribe fn. */
-  onSnapshot(gatewayId: string, cb: () => void): () => void {
-    let set = this.#snapshotSubs.get(gatewayId)
+  /** Subscribe a child to the integration's change ticks. Returns an unsubscribe fn. */
+  onSnapshot(integrationId: string, cb: () => void): () => void {
+    let set = this.#snapshotSubs.get(integrationId)
     if (!set) {
       set = new Set()
-      this.#snapshotSubs.set(gatewayId, set)
+      this.#snapshotSubs.set(integrationId, set)
     }
     set.add(cb)
     return () => {
-      const current = this.#snapshotSubs.get(gatewayId)
+      const current = this.#snapshotSubs.get(integrationId)
       current?.delete(cb)
-      if (current && current.size === 0) this.#snapshotSubs.delete(gatewayId)
+      if (current && current.size === 0) this.#snapshotSubs.delete(integrationId)
     }
   }
 
-  /** Fan a single poll tick out to every subscribed child for a gateway. */
-  emitSnapshot(gatewayId: string): void {
-    const set = this.#snapshotSubs.get(gatewayId)
+  /** Fan a change tick out to every subscribed device of an integration. */
+  emitSnapshot(integrationId: string): void {
+    const set = this.#snapshotSubs.get(integrationId)
     if (!set) return
     for (const cb of set) {
       try {
@@ -103,6 +111,5 @@ export class VeluxNodeResolver {
   }
 }
 
-/** The single in-process per-gateway manager resolver shared between the gateway
- *  device and its cover children. */
+/** The single in-process per-integration manager resolver shared by the devices of a gateway. */
 export const veluxGateways = new VeluxNodeResolver()

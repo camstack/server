@@ -32,6 +32,9 @@ class ScriptedClient implements VeluxGatewayClient {
   nodes: VeluxNode[] = [NODE]
   connectError: Error | null = null
   disconnected = 0
+  firmware = '0.2.0.0.71.0'
+  versionError: Error | null = null
+  rebooted = 0
   readonly nodeListeners = new Set<(n: VeluxNode) => void>()
   readonly dropListeners = new Set<(e: VeluxDisconnect) => void>()
   async connect(): Promise<void> {
@@ -42,6 +45,13 @@ class ScriptedClient implements VeluxGatewayClient {
   }
   listNodes(): readonly VeluxNode[] {
     return this.nodes
+  }
+  async readVersion(): Promise<string> {
+    if (this.versionError !== null) throw this.versionError
+    return this.firmware
+  }
+  async reboot(): Promise<void> {
+    this.rebooted += 1
   }
   async open(): Promise<void> {}
   async close(): Promise<void> {}
@@ -82,7 +92,7 @@ function rig(script: (client: ScriptedClient, index: number) => void = () => und
     return client
   })
   const manager = new VeluxIntegrationManager({
-    id: 'velux:192-168-20-65',
+    id: 'int-7f3a',
     name: 'KLF',
     connection: { host: '192.168.20.65', password: 'pw' },
     logger,
@@ -91,7 +101,6 @@ function rig(script: (client: ScriptedClient, index: number) => void = () => und
     onNodesChanged: () => events.push('nodes'),
     makeClient,
   })
-  manager.bindDevice(42)
   return { manager, clients, logger, events, makeClient }
 }
 
@@ -121,10 +130,30 @@ describe('VeluxIntegrationManager', () => {
     await r.manager.start()
     expect(r.manager.status).toBe('connected')
     expect(r.manager.getNode(3)?.name).toBe('Roof window')
-    expect(r.events).toEqual(['connected', 'nodes'])
+    expect(r.events).toEqual(['connected', 'nodes', 'nodes'])
     await vi.advanceTimersByTimeAsync(60 * 60 * 1000)
     expect(r.makeClient).toHaveBeenCalledTimes(1)
     expect(r.clients[0]?.nodes).toHaveLength(1)
+  })
+
+  it('reads the firmware after connecting and tells the devices', async () => {
+    const r = rig()
+    expect(r.manager.firmware).toBeNull()
+    await r.manager.start()
+    expect(r.manager.firmware).toBe('0.2.0.0.71.0')
+    expect(r.events).toEqual(['connected', 'nodes', 'nodes'])
+  })
+
+  it('stays connected, and says why, when the gateway will not report a version', async () => {
+    const r = rig((client) => {
+      client.versionError = new Error('no answer to GW_GET_VERSION_REQ')
+    })
+    await r.manager.start()
+    expect(r.manager.status).toBe('connected')
+    expect(r.manager.firmware).toBeNull()
+    const line = r.logger.lines.find((l) => l.message.includes('firmware version read failed'))
+    expect(line?.level).toBe('warn')
+    expect(line?.tags['integrationId']).toBe('int-7f3a')
   })
 
   it('applies a pushed node change and fans it out', async () => {
@@ -148,13 +177,13 @@ describe('VeluxIntegrationManager', () => {
     const line = r.logger.lines.find((l) => l.message.includes('session ended'))
     expect(line?.level).toBe('warn')
     expect(JSON.stringify(line?.extras)).toContain('idle timeout')
-    expect(line?.tags['deviceId']).toBe(42)
+    expect(line?.tags['integrationId']).toBe('int-7f3a')
 
     await vi.advanceTimersByTimeAsync(RECONNECT_BASE_MS)
     expect(r.makeClient).toHaveBeenCalledTimes(2)
     expect(r.manager.status).toBe('connected')
     expect(r.manager.getNode(3)?.online).toBe(true)
-    expect(r.events.at(-2)).toBe('connected')
+    expect(r.events.at(-3)).toBe('connected')
   })
 
   it('keeps retrying a failing connect with growing delays, then recovers', async () => {
@@ -175,7 +204,7 @@ describe('VeluxIntegrationManager', () => {
     expect(r.manager.status).toBe('connected')
     const failures = r.logger.lines.filter((l) => l.message.includes('connect failed'))
     expect(failures).toHaveLength(3)
-    expect(failures.every((l) => l.tags['deviceId'] === 42)).toBe(true)
+    expect(failures.every((l) => l.tags['integrationId'] === 'int-7f3a')).toBe(true)
   })
 
   it('backs off at the cap after a refused password and surfaces the error', async () => {

@@ -41,13 +41,16 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
    Home Assistant's VELUX integration is connected to the same gateway, that is fine for one session each, but
    if anything else (a phone app session, ioBroker, a second hub) is also connected, close it before adding the
    gateway here.
-2. In CamStack: Devices, add a device, choose **Velux**, enter a name, the gateway **host / IP** and the gateway
-   **password**.
+2. In CamStack: Integrations, add **Velux**. Pick the gateway found on your network (a KLF-200 announces itself
+   as `VELUX_KLF_…`) or type its **host / IP**, then enter the gateway **password**. **Test** checks the login
+   and closes its session at once.
 3. The password is the **WiFi / web password printed on the back of the unit**, not the WiFi network password of
    your router. It is stored in the CamStack keychain; it is never put in an environment variable, a command
    line or a log line.
-4. Open the new gateway device, then its discovery panel. Every window, shutter, blind and awning appears; adopt
-   the ones you want. A window with a rain sensor offers a second candidate, "<name> rain".
+4. Open the integration's discovery. The KLF-200 appears as one **Gateway** device (reboot, firmware, link to its
+   web page); every window, shutter, blind and awning appears as a cover. A window with a rain sensor appears as
+   one container holding the cover and the rain sensor. Adopt the ones you want. Firmware update is not offered:
+   the gateway API cannot do it.
 
 You do **not** have to disable Home Assistant's integration: one session from each of two clients fits inside the
 gateway's limit. Do disable it (or reload it) if the gateway starts refusing logins, and see the limit below.

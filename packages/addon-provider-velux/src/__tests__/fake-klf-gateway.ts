@@ -14,6 +14,10 @@ import { createServer, type TLSSocket, type Server as TlsServer } from 'node:tls
 
 /** Command ids from the KLF-200 API specification. */
 export const CMD = {
+  REBOOT_REQ: 0x0001,
+  REBOOT_CFM: 0x0002,
+  GET_VERSION_REQ: 0x0008,
+  GET_VERSION_CFM: 0x0009,
   GET_STATE_REQ: 0x000c,
   GET_STATE_CFM: 0x000d,
   GET_ALL_NODES_INFORMATION_REQ: 0x0202,
@@ -138,6 +142,10 @@ export class FakeKlfGateway {
   readonly moves: ReceivedMove[] = []
   readonly stateRequests: number[] = []
   readonly limitationQueries: number[] = []
+  /** How many GW_REBOOT_REQ the gateway accepted. */
+  reboots = 0
+  /** Software version GW_GET_VERSION answers: [command, main, sub, branch, build, micro]. */
+  firmware: readonly [number, number, number, number, number, number] = [0, 2, 0, 0, 71, 0]
   /** Every connection ever accepted (open or since closed). */
   accepted = 0
   /** Refuse logins with this password check. */
@@ -253,6 +261,13 @@ export class FakeKlfGateway {
         send(CMD.PASSWORD_ENTER_CFM, Buffer.from([given === this.password ? 0 : 1]))
         return
       }
+      case CMD.GET_VERSION_REQ:
+        send(CMD.GET_VERSION_CFM, Buffer.from([...this.firmware, 0, 14, 3]))
+        return
+      case CMD.REBOOT_REQ:
+        this.reboots += 1
+        send(CMD.REBOOT_CFM, Buffer.alloc(0))
+        return
       case CMD.GET_STATE_REQ:
         this.stateRequests.push(Date.now())
         send(CMD.GET_STATE_CFM, Buffer.from([2, 0, 0, 0, 0, 0]))

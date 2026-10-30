@@ -2,106 +2,185 @@ import {
   coverCapability,
   DeviceType,
   type DiscoveredChildDevice,
+  deviceAdminLinkCapability,
   floodCapability,
+  rebootCapability,
 } from '@camstack/types'
 import type { VeluxNode } from './velux-client-contract.js'
 import { nodeNativeKey } from './velux-protocol.js'
 
 const RAIN_SUFFIX = ':rain'
+const COVER_SUFFIX = '#cover'
+const GATEWAY_SUFFIX = ':gateway'
+
+/** The `childNativeId` of the gateway box itself, one per integration. */
+export function gatewayNativeId(integrationId: string): string {
+  return `${integrationId}${GATEWAY_SUFFIX}`
+}
 
 /**
- * The `childNativeId` of a node's cover candidate. It is the node's serial when
+ * The `childNativeId` of a node's top-level candidate: a plain cover, or the
+ * container of a window that carries a rain sensor. It is the node's serial when
  * the gateway reports one (a node id is only an index into the gateway's system
- * table and can be reused after a node is removed), namespaced under the gateway
- * stableId so two gateways never collide. It is also the cover device's stableId.
+ * table and can be reused after a node is removed), namespaced under the
+ * integration so two gateways never collide.
  */
 export function nodeNativeId(
-  gatewayId: string,
+  integrationId: string,
   node: { readonly serial: string; readonly nodeId: number },
 ): string {
-  return nodeNativeKey(gatewayId, node)
+  return nodeNativeKey(integrationId, node)
 }
 
-/** The `childNativeId` of the rain sensor of a window that carries one. */
+/** The `childNativeId` of the cover inside a window container. */
+export function windowCoverNativeId(
+  integrationId: string,
+  node: { readonly serial: string; readonly nodeId: number },
+): string {
+  return `${nodeNativeKey(integrationId, node)}${COVER_SUFFIX}`
+}
+
+/** The `childNativeId` of the rain sensor inside a window container. */
 export function rainNativeId(
-  gatewayId: string,
+  integrationId: string,
   node: { readonly serial: string; readonly nodeId: number },
 ): string {
-  return `${nodeNativeKey(gatewayId, node)}${RAIN_SUFFIX}`
+  return `${nodeNativeKey(integrationId, node)}${RAIN_SUFFIX}`
 }
 
-/** What a native id points at on the gateway. */
-export interface ResolvedNativeId {
-  readonly kind: 'cover' | 'rain'
-  readonly node: VeluxNode
-}
+/** What a top-level native id points at on the integration. */
+export type ResolvedNativeId =
+  | { readonly kind: 'gateway' }
+  /** A window with a rain sensor: adopted as a container of a cover and a rain sensor. */
+  | { readonly kind: 'window'; readonly node: VeluxNode }
+  /** A single-function product: roller shutter, blind, awning, window without rain. */
+  | { readonly kind: 'cover'; readonly node: VeluxNode }
 
-/** Resolve a native id against the gateway's current nodes, or null when none matches. */
-export function findNodeByNativeId(
-  gatewayId: string,
+/**
+ * Resolve an adoptable native id against the integration's current nodes, or
+ * null when none matches. The pieces inside a window container are not
+ * adoptable on their own, so their ids resolve to nothing.
+ */
+export function resolveNativeId(
+  integrationId: string,
   nodes: readonly VeluxNode[],
   childNativeId: string,
 ): ResolvedNativeId | null {
+  if (childNativeId === gatewayNativeId(integrationId)) return { kind: 'gateway' }
   for (const node of nodes) {
-    if (childNativeId === nodeNativeId(gatewayId, node)) return { kind: 'cover', node }
-    if (node.rainSensor && childNativeId === rainNativeId(gatewayId, node)) {
-      return { kind: 'rain', node }
-    }
+    if (childNativeId !== nodeNativeId(integrationId, node)) continue
+    return node.rainSensor ? { kind: 'window', node } : { kind: 'cover', node }
   }
   return null
 }
 
-/** Inputs for {@link buildNodeCandidates}. */
-export interface BuildNodeCandidatesInput {
-  readonly gatewayId: string
-  readonly gatewayName: string
+/** Inputs for {@link buildVeluxCandidates}. */
+export interface BuildVeluxCandidatesInput {
+  readonly integrationId: string
+  readonly integrationName: string
+  /** Whether the gateway session is up (drives the gateway candidate's status). */
+  readonly online: boolean
   readonly nodes: readonly VeluxNode[]
-  /** Adopted CamStack device id PER native id, or null when not adopted. */
-  readonly adoptedDeviceIdByNativeId: Readonly<Record<string, number | null>>
+  /** Native id → adopted CamStack device id, for the top-level devices already adopted. */
+  readonly adopted: ReadonlyMap<string, number>
 }
 
-/**
- * One {@link DeviceType.Cover} adoption candidate per actuator node, plus a
- * {@link DeviceType.Sensor} rain candidate for each window with an integrated
- * rain sensor. Pure — no I/O.
- */
-export function buildNodeCandidates(
-  input: BuildNodeCandidatesInput,
-): readonly DiscoveredChildDevice[] {
-  const out: DiscoveredChildDevice[] = []
-  for (const node of input.nodes) {
-    const name =
-      node.name.length > 0 ? node.name : `${input.gatewayName} — ${node.coverClass} ${node.nodeId}`
-    const status = node.online ? 'online' : 'offline'
+function nodeName(input: BuildVeluxCandidatesInput, node: VeluxNode): string {
+  return node.name.length > 0
+    ? node.name
+    : `${input.integrationName} — ${node.coverClass} ${node.nodeId}`
+}
 
-    const coverId = nodeNativeId(input.gatewayId, node)
-    const adoptedCover = input.adoptedDeviceIdByNativeId[coverId] ?? null
-    out.push({
-      childNativeId: coverId,
-      name,
-      type: DeviceType.Cover,
-      status,
-      // The authoritative class is re-read from the live node on adopt.
-      metadata: { model: node.coverClass },
-      alreadyAdopted: adoptedCover !== null,
-      adoptedDeviceId: adoptedCover,
-      capabilities: [coverCapability.name],
-    })
-
-    if (node.rainSensor) {
-      const rainId = rainNativeId(input.gatewayId, node)
-      const adoptedRain = input.adoptedDeviceIdByNativeId[rainId] ?? null
-      out.push({
-        childNativeId: rainId,
+function windowCandidate(
+  input: BuildVeluxCandidatesInput,
+  node: VeluxNode,
+  adoptedId: number | null,
+): DiscoveredChildDevice {
+  const name = nodeName(input, node)
+  const status = node.online ? 'online' : 'offline'
+  const metadata = {
+    manufacturer: 'Velux',
+    model: node.coverClass,
+    ...(node.serial.length > 0 ? { serialNumber: node.serial } : {}),
+  }
+  return {
+    childNativeId: nodeNativeId(input.integrationId, node),
+    name,
+    type: DeviceType.Container,
+    status,
+    metadata,
+    alreadyAdopted: adoptedId !== null,
+    adoptedDeviceId: adoptedId,
+    capabilities: [],
+    children: [
+      {
+        childNativeId: windowCoverNativeId(input.integrationId, node),
+        name,
+        type: DeviceType.Cover,
+        status,
+        metadata,
+        alreadyAdopted: false,
+        adoptedDeviceId: null,
+        capabilities: [coverCapability.name],
+      },
+      {
+        childNativeId: rainNativeId(input.integrationId, node),
         name: `${name} rain`,
         type: DeviceType.Sensor,
         status,
-        metadata: { model: 'rain sensor' },
-        alreadyAdopted: adoptedRain !== null,
-        adoptedDeviceId: adoptedRain,
+        metadata: { manufacturer: 'Velux', model: 'rain sensor' },
+        alreadyAdopted: false,
+        adoptedDeviceId: null,
         capabilities: [floodCapability.name],
-      })
+      },
+    ],
+  }
+}
+
+/**
+ * The adoption candidates of one integration, pure and in a fixed order:
+ * the gateway box ({@link DeviceType.Gateway}), then per actuator node either a
+ * {@link DeviceType.Container} (a window with a rain sensor: cover + rain
+ * sensor) or a plain {@link DeviceType.Cover}.
+ */
+export function buildVeluxCandidates(
+  input: BuildVeluxCandidatesInput,
+): readonly DiscoveredChildDevice[] {
+  const gatewayId = gatewayNativeId(input.integrationId)
+  const gatewayAdopted = input.adopted.get(gatewayId) ?? null
+  const out: DiscoveredChildDevice[] = [
+    {
+      childNativeId: gatewayId,
+      name: input.integrationName,
+      type: DeviceType.Gateway,
+      status: input.online ? 'online' : 'offline',
+      metadata: { manufacturer: 'Velux', model: 'KLF-200' },
+      alreadyAdopted: gatewayAdopted !== null,
+      adoptedDeviceId: gatewayAdopted,
+      // Only what the gateway really supports: the firmware cannot be updated over this API.
+      capabilities: [rebootCapability.name, deviceAdminLinkCapability.name],
+    },
+  ]
+  for (const node of input.nodes) {
+    const adoptedId = input.adopted.get(nodeNativeId(input.integrationId, node)) ?? null
+    if (node.rainSensor) {
+      out.push(windowCandidate(input, node, adoptedId))
+      continue
     }
+    out.push({
+      childNativeId: nodeNativeId(input.integrationId, node),
+      name: nodeName(input, node),
+      type: DeviceType.Cover,
+      status: node.online ? 'online' : 'offline',
+      metadata: {
+        manufacturer: 'Velux',
+        model: node.coverClass,
+        ...(node.serial.length > 0 ? { serialNumber: node.serial } : {}),
+      },
+      alreadyAdopted: adoptedId !== null,
+      adoptedDeviceId: adoptedId,
+      capabilities: [coverCapability.name],
+    })
   }
   return out
 }

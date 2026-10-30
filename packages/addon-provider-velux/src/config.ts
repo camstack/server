@@ -3,34 +3,37 @@ import { z } from 'zod'
 
 /**
  * Operator-supplied connection to ONE Velux KLF-200 gateway on the local
- * network. The addon runs in `standalone` mode (the Reolink / Ecowitt /
- * Rademacher pattern): the CONNECTION lives on the gateway DEVICE config, not a
- * broker registry. The KLF-200 PUSHES node changes over its socket
+ * network. It is the settings of an INTEGRATION (`mode: account`): the password
+ * is a schema `password` field kept in the keychain, never in env, argv or logs.
+ * The KLF-200 PUSHES node changes over its socket
  * (`GW_NODE_STATE_POSITION_CHANGED_NTF`), so there is no poll interval.
  */
 export const veluxConnectionSchema = z.object({
   host: z.string().min(1).describe('KLF-200 host name or IP address'),
   password: z
     .string()
-    .default('')
+    .min(1)
     .describe('KLF-200 WiFi/web password (printed on the back of the unit)')
     .meta({ secret: true }),
 })
 
 export type VeluxConnectionConfig = z.infer<typeof veluxConnectionSchema>
 
-/**
- * Persisted config for a Velux gateway {@link import('@camstack/types').DeviceType.Hub}
- * device. The gateway owns exactly one live client keyed on its own `stableId`;
- * adopted cover children reference it via their `gatewayId` config field.
- */
-export const veluxGatewaySchema = z.object({
-  connection: veluxConnectionSchema,
-  /** Provenance marker used to scope offline / cascade helpers. */
-  system: z.literal('velux-gateway').optional(),
-})
+/** Parse an integration's stored settings, or null while host or password is missing. */
+export function connectionFromSettings(
+  settings: Record<string, unknown>,
+): VeluxConnectionConfig | null {
+  const parsed = veluxConnectionSchema.safeParse(settings)
+  return parsed.success ? parsed.data : null
+}
 
-export type VeluxGatewayConfig = z.infer<typeof veluxGatewaySchema>
+export function sameVeluxConnection(
+  a: VeluxConnectionConfig | null,
+  b: VeluxConnectionConfig | null,
+): boolean {
+  if (a === null || b === null) return false
+  return a.host === b.host && a.password === b.password
+}
 
 /** HA-oriented cover device class (`device_class`) of a KLF-200 actuator. */
 export const VeluxCoverClassSchema = z.enum([
@@ -44,103 +47,95 @@ export const VeluxCoverClassSchema = z.enum([
 export type VeluxCoverClass = z.infer<typeof VeluxCoverClassSchema>
 
 /**
- * Persisted config every Velux cover child carries. `nodeId` resolves the live
- * node from the gateway's client; `gatewayId` selects the parent gateway (its
- * Hub `stableId`). `coverClass` records whether the actuator is a window or a
- * roller shutter (drives the cover `device_class` / icon). Velux actuators are
- * positional with no tilt, so there is no tilt gate here.
+ * What every Velux device carries so the integration's cascade and offline
+ * helpers find it: the provenance marker and the integration it belongs to.
  */
-export const veluxCoverSchema = z.object({
+const veluxDeviceBase = z.object({
+  integrationId: z.string().min(1).describe('Integration (gateway session) the device belongs to'),
+  system: z.literal('velux'),
+})
+
+/** The gateway box itself ({@link import('@camstack/types').DeviceType.Gateway}). */
+export const veluxGatewayDeviceSchema = veluxDeviceBase.extend({
+  /** The adoption candidate id (`<integration>:gateway`). */
+  nativeId: z.string().min(1),
+})
+export type VeluxGatewayDeviceConfig = z.infer<typeof veluxGatewayDeviceSchema>
+
+/** Identity of one actuator node: its serial is the stable key, the node id only a fallback. */
+const veluxNodeFields = {
   nodeId: z.number().int().nonnegative().describe('KLF-200 actuator node id'),
   /** Hex serial of the actuator — the stable identity; '' when the gateway reported none. */
   serial: z.string().default(''),
-  gatewayId: z.string().min(1).describe('Parent gateway stableId'),
-  coverClass: VeluxCoverClassSchema.default('window'),
-  system: z.literal('velux').optional(),
-})
-
-export type VeluxCoverConfig = z.infer<typeof veluxCoverSchema>
+}
 
 /**
- * Persisted config of the rain-sensor child a window with an integrated rain
- * sensor spawns. It follows the same node as the window cover.
+ * A window with an integrated rain sensor: a
+ * {@link import('@camstack/types').DeviceType.Container} whose accessory children
+ * are its cover and its rain sensor.
  */
-export const veluxRainSensorSchema = z.object({
-  nodeId: z.number().int().nonnegative(),
-  serial: z.string().default(''),
-  gatewayId: z.string().min(1),
-  system: z.literal('velux').optional(),
+export const veluxWindowSchema = veluxDeviceBase.extend({
+  ...veluxNodeFields,
+  nativeId: z.string().min(1),
+  coverClass: VeluxCoverClassSchema.default('window'),
 })
+export type VeluxWindowConfig = z.infer<typeof veluxWindowSchema>
 
+/**
+ * Persisted config of a Velux cover: a plain adopted product (it then also has
+ * `nativeId`) or the cover inside a window container. `nodeId`/`serial` resolve
+ * the live node from the integration's session. Velux actuators are positional
+ * with no tilt.
+ */
+export const veluxCoverSchema = veluxDeviceBase.extend({
+  ...veluxNodeFields,
+  nativeId: z.string().min(1).optional(),
+  coverClass: VeluxCoverClassSchema.default('window'),
+})
+export type VeluxCoverConfig = z.infer<typeof veluxCoverSchema>
+
+/** Persisted config of the rain-sensor child of a window container. It follows the window's node. */
+export const veluxRainSensorSchema = veluxDeviceBase.extend({
+  ...veluxNodeFields,
+})
 export type VeluxRainSensorConfig = z.infer<typeof veluxRainSensorSchema>
 
 /**
- * Narrow an `unknown` value to a shallow-cloned plain object record, or an empty
- * record when it is not a plain object. Mirrors the Rademacher / Ecowitt
- * `toRecord` helper — a cast-free boundary narrowing.
- */
-function toRecord(value: unknown): Record<string, unknown> {
-  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    return Object.fromEntries(Object.entries(value))
-  }
-  return {}
-}
-
-/** Coerce a loose settings blob through the connection schema, applying defaults. */
-export function settingsToConnection(settings: unknown): VeluxConnectionConfig {
-  return veluxConnectionSchema.parse(toRecord(settings))
-}
-
-/**
- * Slugify a host into a readable, stable row-key fragment. Exported so the
- * discovery candidate's `stableId` matches exactly what `generateStableId`
- * derives on adopt.
- */
-export function slugifyHost(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-/**
- * Hand-written connection form for the gateway device-creation UI (standalone
- * mode — Reolink / Rademacher pattern). The connection lives on the gateway
- * DEVICE config, not in a broker registry. A `name` field lets the operator name
- * the gateway at creation time.
+ * The integration form: a discovered-gateway picker (filled by the LAN scan),
+ * the host and the password. The password is a `password` field, so it lands in
+ * the keychain.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
       {
-        id: 'identity',
-        title: 'Gateway',
-        titleKey: 'provider-velux:connection.s_identity.title',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'name',
-            label: 'Name',
-            labelKey: 'provider-velux:connection.s_identity.name.label',
-            required: true,
-            placeholder: 'Velux KLF-200',
-          },
-        ],
-      },
-      {
         id: 'connection',
-        title: 'Connection',
+        title: 'KLF-200 gateway',
         titleKey: 'provider-velux:connection.s_connection.title',
         description: 'The password is the WiFi/web password printed on the back of the unit.',
         descriptionKey: 'provider-velux:connection.s_connection.description',
-        columns: 2,
+        columns: 1,
         fields: [
+          {
+            type: 'addon-action-select',
+            addonId: 'provider-velux',
+            key: '__velux-discovered',
+            writesKey: 'host',
+            omitFromSettings: true,
+            label: 'Gateway',
+            labelKey: 'provider-velux:connection.s_connection.__velux-discovered.label',
+            action: 'discoverGateway',
+            mapOption: { value: 'host', label: 'name' },
+            hideWhenFewerThan: 2,
+            emptyResultsMessage: 'No gateway found on the network.',
+          },
           {
             type: 'text',
             key: 'host',
             label: 'Gateway host / IP',
             labelKey: 'provider-velux:connection.s_connection.host.label',
+            description: 'Filled when one gateway is found. Type the address if it is not.',
+            descriptionKey: 'provider-velux:connection.s_connection.host.description',
             required: true,
             placeholder: '192.168.20.65',
           },
@@ -149,6 +144,7 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             key: 'password',
             label: 'Password',
             labelKey: 'provider-velux:connection.s_connection.password.label',
+            required: true,
             showToggle: true,
           },
         ],

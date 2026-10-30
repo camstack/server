@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-provider-velux",
   "version": "0.2.149",
-  "description": "Velux KLF-200 device-provider addon for CamStack — local-gateway window + shutter covers (positional, no tilt)",
+  "description": "Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt)",
   "keywords": [
     "camstack",
     "addon",
@@ -39,18 +39,24 @@
         "category": "providers",
         "name": "Velux",
         "version": "0.1.0",
-        "description": "Adopt a Velux KLF-200 gateway over the local network and its windows / roller shutters (positional cover)",
+        "description": "Adopt a Velux KLF-200 gateway, its windows with rain sensor and its roller shutters, from an integration over the local network",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.svg",
+        "icon": "assets/icon.png",
         "color": "#00457c",
         "instanceMode": "multiple",
-        "mode": "standalone",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "connection-test"
           }
         ]
       }

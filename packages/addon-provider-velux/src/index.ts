@@ -3,23 +3,26 @@ export type {
   VeluxConnectionConfig,
   VeluxCoverClass,
   VeluxCoverConfig,
-  VeluxGatewayConfig,
+  VeluxGatewayDeviceConfig,
   VeluxRainSensorConfig,
+  VeluxWindowConfig,
 } from './config.js'
 export {
   buildConnectionFormSchema,
-  settingsToConnection,
-  slugifyHost,
+  connectionFromSettings,
   VeluxCoverClassSchema,
   veluxConnectionSchema,
   veluxCoverSchema,
-  veluxGatewaySchema,
+  veluxGatewayDeviceSchema,
   veluxRainSensorSchema,
+  veluxWindowSchema,
 } from './config.js'
 export { VeluxCoverDevice } from './devices/velux-cover-device.js'
 export { VeluxGatewayDevice } from './devices/velux-gateway-device.js'
 export { VeluxRainSensorDevice } from './devices/velux-rain-sensor-device.js'
+export { VeluxWindowDevice } from './devices/velux-window-device.js'
 export { KlfGatewayClient } from './klf-gateway-client.js'
+export { type KlfLibraryLogSink, setKlfLibraryLogSink } from './klf-library-log.js'
 export type {
   VeluxDisconnect,
   VeluxGatewayClient,
@@ -27,10 +30,12 @@ export type {
   VeluxNode,
 } from './velux-client-contract.js'
 export {
-  buildNodeCandidates,
-  findNodeByNativeId,
+  buildVeluxCandidates,
+  gatewayNativeId,
   nodeNativeId,
   rainNativeId,
+  resolveNativeId,
+  windowCoverNativeId,
 } from './velux-discovery.js'
 export {
   defaultVeluxClientFactory,

@@ -60,6 +60,10 @@ export interface VeluxGatewayClient {
   stop(nodeId: number): Promise<void>
   /** Drive a node to an intermediate position (0 closed .. 100 open). */
   setPosition(nodeId: number, position: number): Promise<void>
+  /** Firmware (software) version the gateway reports, dotted (`0.2.0.0.71.0`). */
+  readVersion(): Promise<string>
+  /** Ask the gateway to reboot itself (GW_REBOOT_REQ). The session ends right after. */
+  reboot(): Promise<void>
   /** Subscribe to node changes pushed by the gateway. Returns the unsubscribe. */
   onNodeChanged(listener: (node: VeluxNode) => void): () => void
   /** Subscribe to the end of an ESTABLISHED session (idle drop, reset, error). Returns the unsubscribe. */

@@ -1,5 +1,6 @@
 import { readdirSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { Plugin } from 'vite'
 import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 
@@ -61,6 +62,26 @@ export class FrameRcvFactory {
   },
 }
 
+/**
+ * The library's login and socket handlers write `console.error` / `console.warn`.
+ * Left alone they reach the runner's raw output with no integration tag; this
+ * points them at `src/klf-library-log.ts`, which forwards to the addon logger.
+ */
+const LIBRARY_LOG_SINK = fileURLToPath(new URL('./src/klf-library-log.ts', import.meta.url))
+const LIBRARY_CONNECTION_PATH = /klf-200-api\/dist\/connection\.js$/
+
+const libraryDiagnostics: Plugin = {
+  name: 'velux-library-diagnostics',
+  enforce: 'pre',
+  transform(code, id) {
+    const path = id.split('?', 1)[0] ?? id
+    if (!LIBRARY_CONNECTION_PATH.test(path)) return null
+    const routed = code.replace(/\bconsole\.(error|warn)\(/g, 'klfLibraryLog.$1(')
+    if (routed === code) return null
+    return `import { klfLibraryLog } from ${JSON.stringify(LIBRARY_LOG_SINK)}\n${routed}`
+  },
+}
+
 const base = buildLibPreset({
   entries: {
     index: 'src/index.ts',
@@ -73,5 +94,5 @@ const base = buildLibPreset({
 
 export default {
   ...base,
-  plugins: [nativeDisposables, staticFrameModules, ...(base.plugins ?? [])],
+  plugins: [nativeDisposables, staticFrameModules, libraryDiagnostics, ...(base.plugins ?? [])],
 }

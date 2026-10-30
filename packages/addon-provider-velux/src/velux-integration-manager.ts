@@ -1,6 +1,7 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { VeluxConnectionConfig } from './config.js'
 import { KlfGatewayClient } from './klf-gateway-client.js'
+import type { VeluxGatewayStatus, VeluxNodeSource } from './velux-node-resolver.js'
 import {
   type VeluxGatewayClient,
   type VeluxGatewayClientFactory,
@@ -8,8 +9,7 @@ import {
   type VeluxNode,
 } from './velux-client-contract.js'
 
-/** Status of a single Velux gateway connection. */
-export type VeluxGatewayStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
+export type { VeluxGatewayStatus }
 
 /** First reconnect delay; every further failed attempt doubles it. */
 export const RECONNECT_BASE_MS = 2_000
@@ -44,11 +44,11 @@ export interface VeluxIntegrationManagerOptions {
   readonly name: string
   readonly connection: VeluxConnectionConfig
   readonly logger: IScopedLogger
-  readonly onConnected: (gatewayId: string) => void
-  readonly onDisconnected: (gatewayId: string) => void
+  readonly onConnected: (integrationId: string) => void
+  readonly onDisconnected: (integrationId: string) => void
   /** Fired when the node set changed (a push, a (re)connect, or a drop) so the
-   *  gateway device fans the fresh snapshot out to its children. */
-  readonly onNodesChanged: (gatewayId: string) => void
+   *  devices of this gateway re-read their node. */
+  readonly onNodesChanged: (integrationId: string) => void
   /** Factory seam — defaults to the real KLF-200 client. */
   readonly makeClient?: VeluxGatewayClientFactory
 }
@@ -62,14 +62,13 @@ export interface VeluxIntegrationManagerOptions {
  * with bounded exponential backoff (a FRESH client every time), and while the
  * session is down every node reads as offline instead of showing stale state.
  */
-export class VeluxIntegrationManager {
+export class VeluxIntegrationManager implements VeluxNodeSource {
   readonly #id: string
-  readonly #baseLogger: IScopedLogger
-  #logger: IScopedLogger
+  readonly #logger: IScopedLogger
   #connection: VeluxConnectionConfig
-  readonly #onConnected: (gatewayId: string) => void
-  readonly #onDisconnected: (gatewayId: string) => void
-  readonly #onNodesChanged: (gatewayId: string) => void
+  readonly #onConnected: (integrationId: string) => void
+  readonly #onDisconnected: (integrationId: string) => void
+  readonly #onNodesChanged: (integrationId: string) => void
   readonly #makeClient: VeluxGatewayClientFactory
 
   #client: VeluxGatewayClient | null = null
@@ -77,6 +76,7 @@ export class VeluxIntegrationManager {
   #nodes: Map<number, VeluxNode> = new Map()
   #status: VeluxGatewayStatus = 'disconnected'
   #error: string | null = null
+  #firmware: string | null = null
   #wanted = false
   #attempt = 0
   #retryTimer: ReturnType<typeof setTimeout> | null = null
@@ -86,15 +86,14 @@ export class VeluxIntegrationManager {
   constructor(options: VeluxIntegrationManagerOptions) {
     this.#id = options.id
     this.#connection = options.connection
-    this.#baseLogger = options.logger
-    this.#logger = options.logger
+    this.#logger = options.logger.withTags({ integrationId: options.id })
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
     this.#onNodesChanged = options.onNodesChanged
     this.#makeClient = options.makeClient ?? defaultVeluxClientFactory
   }
 
-  /** The gateway id (= Hub device stableId). */
+  /** The integration id this session belongs to. */
   get id(): string {
     return this.#id
   }
@@ -109,9 +108,9 @@ export class VeluxIntegrationManager {
     return this.#error
   }
 
-  /** From now on every log line carries the gateway device's numeric id. */
-  bindDevice(deviceId: number): void {
-    this.#logger = this.#baseLogger.withTags({ deviceId })
+  /** Firmware the gateway reported on the last connect, or null while unknown. */
+  get firmware(): string | null {
+    return this.#firmware
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -142,7 +141,7 @@ export class VeluxIntegrationManager {
   async start(): Promise<void> {
     if (this.#wanted) {
       this.#logger.warn('velux: start() called while running — stop first', {
-        meta: { gatewayId: this.#id },
+        meta: {},
       })
       return
     }
@@ -166,7 +165,7 @@ export class VeluxIntegrationManager {
         await client.disconnect()
       } catch (err) {
         this.#logger.warn('velux: disconnect failed', {
-          meta: { gatewayId: this.#id, error: errMsg(err) },
+          meta: { error: errMsg(err) },
         })
       }
     }
@@ -215,9 +214,24 @@ export class VeluxIntegrationManager {
     this.#attempt = 0
     this.#onConnected(this.#id)
     this.#onNodesChanged(this.#id)
+    await this.#readFirmware(client, generation)
     this.#logger.info('velux: connected', {
-      meta: { gatewayId: this.#id, nodeCount: this.#nodes.size },
+      meta: { nodeCount: this.#nodes.size, firmware: this.#firmware },
     })
+  }
+
+  /** Best effort: a gateway that logged us in but will not say its version is still usable. */
+  async #readFirmware(client: VeluxGatewayClient, generation: number): Promise<void> {
+    try {
+      const firmware = await client.readVersion()
+      if (generation !== this.#generation) return
+      this.#firmware = firmware
+      this.#onNodesChanged(this.#id)
+    } catch (err) {
+      this.#logger.warn('velux: firmware version read failed', {
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   #failed(err: unknown): void {
@@ -228,7 +242,6 @@ export class VeluxIntegrationManager {
     this.#attempt += 1
     this.#logger.warn('velux: connect failed', {
       meta: {
-        gatewayId: this.#id,
         error: this.#error,
         retryInMs: delay,
         attempt: this.#attempt,
@@ -241,7 +254,7 @@ export class VeluxIntegrationManager {
   #lost(reason: string): void {
     if (!this.#wanted) return
     this.#logger.warn('velux: session ended', {
-      meta: { gatewayId: this.#id, reason },
+      meta: { reason },
     })
     this.#detach()
     this.#error = reason

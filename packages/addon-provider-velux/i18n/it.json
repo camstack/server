@@ -1,8 +1,8 @@
 {
-  "connection.s_identity.title": "Gateway",
-  "connection.s_identity.name.label": "Nome",
-  "connection.s_connection.title": "Connessione",
+  "connection.s_connection.title": "Gateway KLF-200",
   "connection.s_connection.description": "La password è quella WiFi/web stampata sul retro del dispositivo.",
+  "connection.s_connection.__velux-discovered.label": "Gateway",
   "connection.s_connection.host.label": "Host / IP del gateway",
+  "connection.s_connection.host.description": "Compilato quando viene trovato un solo gateway. Inserisci l'indirizzo se non viene trovato.",
   "connection.s_connection.password.label": "Password"
 }

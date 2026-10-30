@@ -2,6 +2,7 @@ import type { ConnectionOptions } from 'node:tls'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import {
   Connection,
+  Gateway,
   GW_HOUSE_STATUS_MONITOR_ENABLE_REQ,
   LimitationType,
   NodeOperatingState,
@@ -149,6 +150,15 @@ export class KlfGatewayClient implements VeluxGatewayClient {
     await this.#product(nodeId).setTargetPositionRawAsync(openPercentToRaw(position))
   }
 
+  async readVersion(): Promise<string> {
+    const { SoftwareVersion } = await this.#gateway().getVersionAsync()
+    return SoftwareVersion.toString()
+  }
+
+  async reboot(): Promise<void> {
+    await this.#gateway().rebootAsync()
+  }
+
   onNodeChanged(listener: (node: VeluxNode) => void): () => void {
     this.#nodeListeners.add(listener)
     return () => {
@@ -164,6 +174,11 @@ export class KlfGatewayClient implements VeluxGatewayClient {
   }
 
   // ── internals ────────────────────────────────────────────────────────────
+
+  #gateway(): Gateway {
+    if (this.#connection === null) throw new Error('KLF-200 gateway session is down')
+    return new Gateway(this.#connection)
+  }
 
   #product(nodeId: number): Product {
     const product = this.#products?.Products[nodeId]
@@ -319,7 +334,7 @@ async function settle(promise: Promise<unknown>): Promise<void> {
 }
 
 /** Never echoes the password: only the library's cause text is passed on. */
-function loginFailure(err: unknown): Error {
+export function loginFailure(err: unknown): Error {
   const message = errMsg(err)
   if (message === LOGIN_REFUSED) return new VeluxLoginRefusedError()
   return new Error(`KLF-200 login failed: ${message}`)

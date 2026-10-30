@@ -20,7 +20,7 @@ const DRY: FloodStatus = { flooded: false, lastChangedAt: 0 }
  * The rain sensor built into a VELUX roof window, as a CamStack
  * {@link DeviceType.Sensor} with the {@link DeviceRole.LeakSensor} role and the
  * existing `flood` cap (the same shape a moisture binary sensor takes elsewhere).
- * A CHILD of the gateway Hub device, following the window's node.
+ * The child of a window container, following the window's node.
  *
  * The gateway reports rain as an opening limitation on the window, which it does
  * not push; the gateway client re-reads it when the window stops and on a slow
@@ -32,7 +32,7 @@ export class VeluxRainSensorDevice extends BaseDevice<typeof veluxRainSensorSche
 
   private readonly nodeId: number
   private readonly serial: string
-  private readonly gatewayId: string
+  private readonly integrationId: string
   private snapshotUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
@@ -43,7 +43,7 @@ export class VeluxRainSensorDevice extends BaseDevice<typeof veluxRainSensorSche
     })
     this.nodeId = cfg.nodeId
     this.serial = cfg.serial
-    this.gatewayId = cfg.gatewayId
+    this.integrationId = cfg.integrationId
     this.online = this.liveNode()?.online ?? false
     const provider: InferNativeProvider<typeof floodCapability> = {
       getStatus: async () => this.runtimeState.getCapState<FloodStatus>('flood') ?? DRY,
@@ -55,14 +55,14 @@ export class VeluxRainSensorDevice extends BaseDevice<typeof veluxRainSensorSche
       this.runtimeState.getCapState<FloodStatus>('flood') ?? DRY,
     )
     void this.updateSourceInfo({
-      id: `${this.gatewayId}:${this.serial.length > 0 ? this.serial : this.nodeId}:rain`,
+      id: `${this.integrationId}:${this.serial.length > 0 ? this.serial : this.nodeId}:rain`,
       system: 'velux',
     })
   }
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
-    this.snapshotUnsub = veluxGateways.onSnapshot(this.gatewayId, () => {
+    this.snapshotUnsub = veluxGateways.onSnapshot(this.integrationId, () => {
       try {
         this.recomputeSlice()
       } catch (err) {
@@ -82,7 +82,7 @@ export class VeluxRainSensorDevice extends BaseDevice<typeof veluxRainSensorSche
   }
 
   private liveNode(): VeluxNode | null {
-    return veluxGateways.findNode(this.gatewayId, {
+    return veluxGateways.findNode(this.integrationId, {
       serial: this.serial,
       nodeId: this.nodeId,
     })
