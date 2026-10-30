@@ -30,6 +30,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useDeviceManagerAdoptDevice: () => ({ mutateAsync: adopt, isPending: false }),
+    useLocalNetworkGetScanSubnets: () => ({ data: { subnets: [] }, refetch: vi.fn() }),
+    useLocalNetworkSetScanSubnets: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
     useDeviceManagerDiscoverAllProviders: () => ({
       mutate: vi.fn(),
@@ -83,8 +85,7 @@ describe('Scan network SHC proposal', () => {
     expect(screen.getByText('Bosch SHC [lab]')).toBeTruthy()
     expect(screen.getByText('192.0.2.20')).toBeTruthy()
 
-    const row = screen.getByText('Bosch SHC [lab]').closest('div')
-    const add = row?.parentElement?.querySelector('button')
+    const add = screen.getByTestId('scan-row-bosch-shc:shc0123').querySelector('button')
     expect(add).toBeTruthy()
     if (!add) return
     fireEvent.click(add)
@@ -100,8 +101,7 @@ describe('Scan network SHC proposal', () => {
   it('still adopts a camera candidate in one click', () => {
     adopt.mockClear()
     render(renderModal(vi.fn()))
-    const row = screen.getByText('Lobby').closest('div')
-    const add = row?.parentElement?.querySelector('button')
+    const add = screen.getByTestId('scan-row-onvif-192-0-2-30').querySelector('button')
     expect(add).toBeTruthy()
     if (!add) return
     fireEvent.click(add)

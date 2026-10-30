@@ -1,5 +1,6 @@
 import { collectKeychainStoredKeys, omitTransientConfig } from '@camstack/types'
-import { useAddonsCustom, useIntegrationsTestConnection } from '@camstack/ui-library'
+import { Button, useAddonsCustom, useIntegrationsTestConnection } from '@camstack/ui-library'
+import { Radar } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ConfigUISchema } from '../../types/config-ui'
@@ -73,6 +74,8 @@ interface ProviderConfigFormProps {
   hideName?: boolean
   /** `secretKeys`: the keys the schema declares secret by type — the hub keeps
    *  their values in the keychain, not the integration's settings (D787). */
+  /** Opens a network scan scoped to this integration; shown only when set. */
+  onScan?: () => void
   onSave: (config: {
     name: string
     config: Record<string, unknown>
@@ -89,6 +92,7 @@ export function ProviderConfigForm({
   initialConfig,
   submitLabel,
   hideName = false,
+  onScan,
   onSave,
   onBack,
 }: ProviderConfigFormProps) {
@@ -216,9 +220,18 @@ export function ProviderConfigForm({
           {t('integrations.back')}
         </button>
         <div className="flex items-center gap-2">
+          {onScan && (
+            <Button variant="outline" size="sm" onClick={onScan} data-testid="integration-scan">
+              <Radar className="h-3.5 w-3.5" />
+              {t('integrations.scanFromForm', 'Scan the network')}
+            </Button>
+          )}
           <button
             onClick={() =>
-              testMutation.mutate({ addonId, settings: omitTransientConfig(configSchema, config) })
+              testMutation.mutate({
+                addonId,
+                settings: omitTransientConfig(configSchema, config),
+              })
             }
             disabled={testMutation.isPending || !canTest}
             title={

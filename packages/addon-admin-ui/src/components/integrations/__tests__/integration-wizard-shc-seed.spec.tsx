@@ -59,6 +59,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       data: undefined,
     }),
     useIntegrationsCreate: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+    useDeviceManagerDiscoveryProviders: () => ({ data: { providers: [] } }),
     useIntegrationsGetAvailableTypes: () => ({
       data: [
         {

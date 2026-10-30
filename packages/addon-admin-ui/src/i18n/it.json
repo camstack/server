@@ -1641,7 +1641,23 @@
       "found_one": "Trovato {{count}} dispositivo sulla rete.",
       "found_other": "Trovati {{count}} dispositivi sulla rete.",
       "foundShort_one": "Trovato {{count}} dispositivo.",
-      "foundShort_other": "Trovati {{count}} dispositivi."
+      "foundShort_other": "Trovati {{count}} dispositivi.",
+      "title": "Cerca dispositivi in rete",
+      "titleScoped": "Cerca in rete — {{label}}",
+      "addSelected": "Aggiungi selezionati ({{count}})",
+      "select": "Seleziona {{name}}",
+      "setUp": "Configura",
+      "use": "Usa",
+      "subnets": {
+        "title": "Reti aggiuntive da scansionare",
+        "none": "Viene scansionata solo la rete di questo hub.",
+        "hint": "Ogni scansione copre le reti di questo hub e queste.",
+        "add": "Aggiungi rete",
+        "errorFormat": "Inserisci una rete come 192.0.2.0/24.",
+        "errorPrefix": "Una rete più grande di una /22 non può essere scansionata.",
+        "errorDuplicate": "Già nell'elenco.",
+        "saveFailed": "Impossibile salvare l'elenco delle reti."
+      }
     },
     "snapshotPopover": {
       "disabled": "Disabilitato"
@@ -1737,7 +1753,8 @@
     "sections": {
       "providers": "Fornitori",
       "system": "Sistema"
-    }
+    },
+    "scanFromForm": "Cerca in rete"
   },
   "serverManagement": {
     "title": "Gestione server",

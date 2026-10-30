@@ -2,17 +2,45 @@ import { describe, expect, it } from 'vitest'
 import { integrationSetupSeed, readIntegrationSeed } from '../integration-setup-seed'
 
 describe('integrationSetupSeed', () => {
-  it('keeps only the host for the add form', () => {
+  it('carries the whole prefilled config, minus the legacy marker', () => {
     expect(
       integrationSetupSeed('bosch-shc', {
         suggestedName: 'Bosch SHC [lab]',
-        prefilledConfig: { host: ' 192.0.2.20 ', setupIntegration: true, port: 8443 },
+        setupIntegration: true,
+        prefilledConfig: { host: ' 192.0.2.20 ', port: 8443, label: 'lab' },
       }),
     ).toEqual({
       addonId: 'bosch-shc',
       name: 'Bosch SHC [lab]',
-      config: { host: '192.0.2.20' },
+      config: { host: '192.0.2.20', port: 8443, label: 'lab' },
     })
+  })
+
+  it('still reads the legacy prefilledConfig marker and strips it', () => {
+    expect(
+      integrationSetupSeed('bosch-shc', {
+        suggestedName: 'Bosch SHC [lab]',
+        prefilledConfig: {
+          host: '192.0.2.20',
+          setupIntegration: true,
+          port: 8443,
+        },
+      }),
+    ).toEqual({
+      addonId: 'bosch-shc',
+      name: 'Bosch SHC [lab]',
+      config: { host: '192.0.2.20', port: 8443 },
+    })
+  })
+
+  it('seeds a candidate that has no host', () => {
+    expect(
+      integrationSetupSeed('esphome', {
+        suggestedName: 'Hub',
+        setupIntegration: true,
+        prefilledConfig: { mdnsName: 'hub.local' },
+      })?.config,
+    ).toEqual({ mdnsName: 'hub.local' })
   })
 
   it('leaves a normal device candidate to one-click adopt', () => {

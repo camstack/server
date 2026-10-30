@@ -1641,7 +1641,23 @@
       "found_one": "Found {{count}} device on the network.",
       "found_other": "Found {{count}} devices on the network.",
       "foundShort_one": "Found {{count}} device.",
-      "foundShort_other": "Found {{count}} devices."
+      "foundShort_other": "Found {{count}} devices.",
+      "title": "Scan network for devices",
+      "titleScoped": "Scan network — {{label}}",
+      "addSelected": "Add selected ({{count}})",
+      "select": "Select {{name}}",
+      "setUp": "Set up",
+      "use": "Use",
+      "subnets": {
+        "title": "Extra networks to scan",
+        "none": "Only this hub's own networks are scanned.",
+        "hint": "Every scan covers this hub's own networks and these.",
+        "add": "Add network",
+        "errorFormat": "Enter a network like 192.0.2.0/24.",
+        "errorPrefix": "A network larger than a /22 cannot be scanned.",
+        "errorDuplicate": "Already in the list.",
+        "saveFailed": "The network list could not be saved."
+      }
     },
     "snapshotPopover": {
       "disabled": "Disabled"
@@ -1737,7 +1753,8 @@
     "sections": {
       "providers": "Providers",
       "system": "System"
-    }
+    },
+    "scanFromForm": "Scan the network"
   },
   "ai": {
     "addProfile": "Add profile",

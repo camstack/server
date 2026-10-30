@@ -2,8 +2,9 @@
  * A discovery candidate that must be finished in the integration form
  * (pairing, credentials) instead of one-click device adoption.
  *
- * The flag lives on `prefilledConfig` under {@link SETUP_INTEGRATION_KEY}.
- * The same string is `SHC_SETUP_INTEGRATION_KEY` in addon-provider-bosch.
+ * The flag is the typed `setupIntegration` field of the candidate. The older
+ * `prefilledConfig.setupIntegration` marker ({@link SETUP_INTEGRATION_KEY}) is
+ * still read for one release, and never copied into the form.
  */
 export const SETUP_INTEGRATION_KEY = 'setupIntegration'
 
@@ -15,21 +16,35 @@ export interface IntegrationFormSeed {
 
 export interface DiscoveryProposal {
   readonly suggestedName: string
+  readonly setupIntegration?: boolean | undefined
   readonly prefilledConfig: Readonly<Record<string, unknown>>
+}
+
+/** True when picking the candidate opens the integration form, not an adoption. */
+export function needsIntegrationSetup(candidate: DiscoveryProposal): boolean {
+  return (
+    candidate.setupIntegration === true || candidate.prefilledConfig[SETUP_INTEGRATION_KEY] === true
+  )
+}
+
+/** The form seed a candidate carries: its whole prefilled config, minus the legacy marker. */
+export function seedFromCandidate(
+  addonId: string,
+  candidate: DiscoveryProposal,
+): IntegrationFormSeed {
+  const config: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(candidate.prefilledConfig)) {
+    if (key === SETUP_INTEGRATION_KEY) continue
+    config[key] = typeof value === 'string' && key === 'host' ? value.trim() : value
+  }
+  return { addonId, name: candidate.suggestedName, config }
 }
 
 export function integrationSetupSeed(
   addonId: string,
   candidate: DiscoveryProposal,
 ): IntegrationFormSeed | null {
-  if (candidate.prefilledConfig[SETUP_INTEGRATION_KEY] !== true) return null
-  const host = candidate.prefilledConfig['host']
-  if (typeof host !== 'string' || host.trim().length === 0) return null
-  return {
-    addonId,
-    name: candidate.suggestedName,
-    config: { host: host.trim() },
-  }
+  return needsIntegrationSetup(candidate) ? seedFromCandidate(addonId, candidate) : null
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {

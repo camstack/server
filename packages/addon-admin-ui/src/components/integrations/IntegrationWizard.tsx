@@ -8,6 +8,7 @@ import {
   useAddonSettingsGetGlobalSettings,
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverDevices,
+  useDeviceManagerDiscoveryProviders,
   useIntegrationsCreate,
   useIntegrationsGetAvailableTypes,
 } from '@camstack/ui-library'
@@ -24,6 +25,7 @@ import { DeviceDiscoveryStep } from './DeviceDiscoveryStep'
 import { ProviderConfigForm } from './ProviderConfigForm'
 import type { IntegrationFormSeed } from './integration-setup-seed'
 import { ProviderPicker } from './ProviderPicker'
+import { ScanNetworkModal } from './ScanNetworkModal'
 
 /**
  * Convert a `ConfigUISchemaWithValues` (Phase 5 endpoint output) into
@@ -102,6 +104,19 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   const [canTest, setCanTest] = useState<boolean>(false)
   const [formSeed, setFormSeed] = useState<Readonly<Record<string, unknown>>>({})
   const [appliedSeed, setAppliedSeed] = useState('')
+  // The config step's own Scan: a pick refills the form it was opened from.
+  const [scanOpen, setScanOpen] = useState(false)
+  const [scanFills, setScanFills] = useState(0)
+  const [scanLabel, setScanLabel] = useState('')
+  const discoveryProviders = useDeviceManagerDiscoveryProviders(
+    {},
+    {
+      enabled: open && step === 'config',
+    },
+  )
+  const canScan =
+    selectedAddonId !== null &&
+    (discoveryProviders.data?.providers ?? []).some((p) => p.addonId === selectedAddonId)
 
   const seedHost = seed?.config['host']
   const seedIdentity =
@@ -399,12 +414,22 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
           )}
           {step === 'config' && selectedAddonId && (
             <ProviderConfigForm
-              key={seedIdentity.length > 0 ? seedIdentity : selectedAddonId}
+              key={`${seedIdentity.length > 0 ? seedIdentity : selectedAddonId}:${scanFills}`}
               addonId={selectedAddonId}
               configSchema={(configSchema ?? null) as ConfigUISchema | null}
               canTest={canTest}
-              initialName={typeof formSeed['host'] === 'string' ? pendingName : undefined}
+              initialName={
+                pendingName.length > 0 && Object.keys(formSeed).length > 0 ? pendingName : undefined
+              }
               initialConfig={{ ...formSeed }}
+              onScan={
+                canScan
+                  ? () => {
+                      setScanLabel(pendingName.length > 0 ? pendingName : selectedAddonId)
+                      setScanOpen(true)
+                    }
+                  : undefined
+              }
               onSave={handleConfigSave}
               onBack={() => {
                 setFormSeed({})
@@ -466,6 +491,19 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
           </div>
         )}
       </div>
+      {scanOpen && selectedAddonId !== null && (
+        <ScanNetworkModal
+          open={scanOpen}
+          scope={{ addonId: selectedAddonId, label: scanLabel }}
+          pickMode="fill"
+          onClose={() => setScanOpen(false)}
+          onSetupIntegration={(picked) => {
+            setPendingName(picked.name)
+            setFormSeed({ ...picked.config })
+            setScanFills((n) => n + 1)
+          }}
+        />
+      )}
     </div>
   )
 }

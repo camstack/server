@@ -3,29 +3,52 @@
  *
  * - GENERIC (no `scope`): fans `deviceManager.discoverAllProviders` across every
  *   device-provider that reports `supportsDiscovery` and shows ONE combined
- *   "scan → quick add" view. Providers that returned NO candidates are hidden.
+ *   "scan → quick add" view, one section per integration. Providers that
+ *   returned NO candidates are hidden.
  *
  * - PER-INTEGRATION (`scope` set): scans just that provider via
  *   `deviceManager.discoverProvider`, and first renders the provider's optional
  *   extra-param form (`providerDiscoveryParamsSchema`) — e.g. a broadcast
  *   address so Gree can find ACs on a DIFFERENT subnet than the addon node's.
  *
- * A picked candidate is adopted via the existing `deviceManager.adoptDevice`
- * (addonId-routed). Per-provider errors surface inline without failing the scan.
+ * A device found behind a gateway (`parentStableId`) is nested under it. Rows
+ * that can be adopted as they are carry a checkbox, so several boards go in
+ * with one click; a candidate flagged `setupIntegration`, or any pick in
+ * `pickMode="fill"`, hands its prefilled config to `onSetupIntegration`.
  */
 import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  TEXT_SECTION_LABEL,
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverAllProviders,
   useDeviceManagerDiscoverProvider,
   useDeviceManagerListAll,
   useDeviceManagerProviderDiscoveryParamsSchema,
 } from '@camstack/ui-library'
-import { AlertTriangle, Check, Download, Loader2, Radar, RefreshCw, X } from 'lucide-react'
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, Check, Download, Loader2, Radar, RefreshCw } from 'lucide-react'
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
-import { useTranslation } from 'react-i18next'
-import { integrationSetupSeed, type IntegrationFormSeed } from './integration-setup-seed'
+import { ProviderIcon } from '../shared/ProviderIcon'
+import {
+  integrationSetupSeed,
+  needsIntegrationSetup,
+  seedFromCandidate,
+  type IntegrationFormSeed,
+} from './integration-setup-seed'
+import {
+  buildCandidateTree,
+  flattenCandidateNodes,
+  type CandidateNode,
+} from './scan-candidate-tree'
+import { ScanSubnetEditor } from './ScanSubnetEditor'
 
 interface ScanScope {
   readonly addonId: string
@@ -39,27 +62,44 @@ interface ScanNetworkModalProps {
   readonly scope?: ScanScope
   /**
    * A candidate flagged `setupIntegration` opens the add-integration form
-   * (host prefilled) instead of adopting a device. Pairing stays on that form.
+   * (config prefilled) instead of adopting a device. Pairing stays on that form.
    */
   readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
+  /**
+   * `fill`: every pick hands its config to `onSetupIntegration` (the wizard's
+   * Scan button fills the form it is open on). Default `adopt`.
+   */
+  readonly pickMode?: 'adopt' | 'fill'
 }
 
 type AllScanData = NonNullable<ReturnType<typeof useDeviceManagerDiscoverAllProviders>['data']>
 type Group = AllScanData['groups'][number]
 type Candidate = Group['candidates'][number]
 
+interface BulkEntry {
+  readonly addonId: string
+  readonly candidate: Candidate
+}
+
+interface ScanSelection {
+  readonly selected: ReadonlySet<string>
+  readonly toggle: (stableId: string) => void
+}
+
 export function ScanNetworkModal({
   open,
   onClose,
   scope,
   onSetupIntegration,
-}: ScanNetworkModalProps) {
+  pickMode = 'adopt',
+}: ScanNetworkModalProps): ReactElement {
   const { t } = useTranslation()
   const adopt = useDeviceManagerAdoptDevice()
   const [adopted, setAdopted] = useState<ReadonlySet<string>>(new Set())
   // A SET (not a single id) so concurrent adopts each keep their own spinner —
   // clicking a second row must not clear the first row's in-flight state.
   const [adopting, setAdopting] = useState<ReadonlySet<string>>(new Set())
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
 
   // Candidates whose stableId already exists as a device are shown as
   // "Already added" (not offered for re-adoption) instead of a live Add
@@ -73,18 +113,17 @@ export function ScanNetworkModal({
     [allDevices],
   )
 
-  const handleAdopt = useCallback(
+  const adoptOne = useCallback(
     async (addonId: string, candidate: Candidate) => {
-      const seed = integrationSetupSeed(addonId, candidate)
-      if (seed !== null) {
-        onSetupIntegration?.(seed)
-        onClose()
-        return
-      }
       setAdopting((prev) => new Set(prev).add(candidate.stableId))
       try {
         await adopt.mutateAsync({ addonId, candidate })
         setAdopted((prev) => new Set(prev).add(candidate.stableId))
+        setSelected((prev) => {
+          const next = new Set(prev)
+          next.delete(candidate.stableId)
+          return next
+        })
       } catch {
         // surfaced via the row staying actionable
       } finally {
@@ -95,91 +134,232 @@ export function ScanNetworkModal({
         })
       }
     },
-    [adopt, onClose, onSetupIntegration],
+    [adopt],
   )
 
-  const renderCandidate = useCallback(
-    (addonId: string, candidate: Candidate) => {
-      const address =
-        typeof candidate.prefilledConfig['host'] === 'string'
-          ? (candidate.prefilledConfig['host'] as string)
-          : null
-      const alreadyExists = existingStableIds.has(candidate.stableId)
-      const isAdopted = adopted.has(candidate.stableId) || alreadyExists
-      const isBusy = adopting.has(candidate.stableId)
-      return (
-        <div
-          key={candidate.stableId}
-          className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2"
-        >
-          <div className="min-w-0">
-            <p className="truncate text-xs font-medium text-foreground">
-              {candidate.suggestedName}
-            </p>
-            {address && (
-              <p className="truncate text-[10px] font-mono text-foreground-subtle">{address}</p>
-            )}
-          </div>
-          {isAdopted ? (
-            <span className="flex items-center gap-1 text-[11px] text-foreground-subtle">
-              <Check className="h-3.5 w-3.5" />{' '}
-              {alreadyExists
-                ? t('integrations.scanNetworkModal.alreadyAdded', 'Already added')
-                : t('integrations.scanNetworkModal.added', 'Added')}
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void handleAdopt(addonId, candidate)}
-              disabled={isBusy}
-              className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {isBusy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              {t('common.add', 'Add')}
-            </button>
-          )}
-        </div>
-      )
+  const handlePick = useCallback(
+    async (addonId: string, candidate: Candidate) => {
+      const seed =
+        pickMode === 'fill'
+          ? seedFromCandidate(addonId, candidate)
+          : integrationSetupSeed(addonId, candidate)
+      if (seed !== null) {
+        onSetupIntegration?.(seed)
+        onClose()
+        return
+      }
+      await adoptOne(addonId, candidate)
     },
-    [adopted, adopting, existingStableIds, handleAdopt, t],
+    [adoptOne, onClose, onSetupIntegration, pickMode],
   )
 
-  if (!open) return null
+  const toggle = useCallback((stableId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(stableId)) next.delete(stableId)
+      else next.add(stableId)
+      return next
+    })
+  }, [])
 
-  const title = scope ? `Scan network — ${scope.label}` : 'Scan network for devices'
+  const reset = useCallback(() => {
+    setAdopted(new Set())
+    setSelected(new Set())
+  }, [])
+
+  const rowContext = useMemo<RowContext>(
+    () => ({
+      existingStableIds,
+      adopted,
+      adopting,
+      selection: { selected, toggle },
+      pick: handlePick,
+      adoptOne,
+      fill: pickMode === 'fill',
+    }),
+    [existingStableIds, adopted, adopting, selected, toggle, handlePick, pickMode],
+  )
+
+  const title = scope
+    ? t('integrations.scanNetworkModal.titleScoped', 'Scan network — {{label}}', {
+        label: scope.label,
+      })
+    : t('integrations.scanNetworkModal.title', 'Scan network for devices')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 flex w-full max-w-2xl flex-col max-h-[calc(90dvh-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] rounded-xl border border-border bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <Radar className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent width="lg" placement="sheet-on-mobile" scroll="body">
+        <DialogHeader>
+          <DialogTitle>
+            <span className="flex items-center gap-2">
+              <Radar className="h-4 w-4 text-primary" />
+              {title}
+            </span>
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody className="space-y-4">
+          <ScanSubnetEditor />
+          {scope ? (
+            <ScopedScan scope={scope} row={rowContext} onReset={reset} />
+          ) : (
+            <GenericScan row={rowContext} onReset={reset} />
+          )}
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-        {scope ? (
-          <ScopedScan
-            scope={scope}
-            onAdopt={renderCandidate}
-            onReset={() => setAdopted(new Set())}
-          />
-        ) : (
-          <GenericScan onAdopt={renderCandidate} onReset={() => setAdopted(new Set())} />
+// ---------------------------------------------------------------------------
+// Rows
+// ---------------------------------------------------------------------------
+
+interface RowContext {
+  readonly existingStableIds: ReadonlySet<string>
+  readonly adopted: ReadonlySet<string>
+  readonly adopting: ReadonlySet<string>
+  readonly selection: ScanSelection
+  readonly pick: (addonId: string, candidate: Candidate) => Promise<void>
+  readonly adoptOne: (addonId: string, candidate: Candidate) => Promise<void>
+  readonly fill: boolean
+}
+
+/** Whether a row can be ticked and added in bulk. */
+function isBulkSelectable(candidate: Candidate, fill: boolean): boolean {
+  return !fill && candidate.selectable !== false && !needsIntegrationSetup(candidate)
+}
+
+function CandidateRows({
+  addonId,
+  nodes,
+  row,
+  depth,
+}: {
+  readonly addonId: string
+  readonly nodes: readonly CandidateNode<Candidate>[]
+  readonly row: RowContext
+  readonly depth: number
+}): ReactElement {
+  return (
+    <div
+      className={depth === 0 ? 'space-y-1.5' : 'ml-4 space-y-1.5 border-l border-border pl-3'}
+      data-testid={depth === 0 ? undefined : 'scan-children'}
+    >
+      {nodes.map((node) => (
+        <div key={node.candidate.stableId} className="space-y-1.5">
+          <CandidateRow addonId={addonId} candidate={node.candidate} row={row} />
+          {node.children.length > 0 && (
+            <CandidateRows addonId={addonId} nodes={node.children} row={row} depth={depth + 1} />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CandidateRow({
+  addonId,
+  candidate,
+  row,
+}: {
+  readonly addonId: string
+  readonly candidate: Candidate
+  readonly row: RowContext
+}): ReactElement {
+  const { t } = useTranslation()
+  const host = candidate.prefilledConfig['host']
+  const address = typeof host === 'string' ? host : null
+  const alreadyExists = row.existingStableIds.has(candidate.stableId)
+  const isAdopted = row.adopted.has(candidate.stableId) || alreadyExists
+  const isBusy = row.adopting.has(candidate.stableId)
+  const setup = row.fill || needsIntegrationSetup(candidate)
+  const actionable = !isAdopted && (setup || candidate.selectable !== false)
+  const bulk = actionable && isBulkSelectable(candidate, row.fill)
+
+  return (
+    <div
+      className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2"
+      data-testid={`scan-row-${candidate.stableId}`}
+    >
+      {bulk && (
+        <Checkbox
+          checked={row.selection.selected.has(candidate.stableId)}
+          onChange={() => row.selection.toggle(candidate.stableId)}
+          disabled={isBusy}
+          aria-label={t('integrations.scanNetworkModal.select', 'Select {{name}}', {
+            name: candidate.suggestedName,
+          })}
+        />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium text-foreground">{candidate.suggestedName}</p>
+        {address && (
+          <p className="truncate font-mono text-[10px] text-foreground-subtle">{address}</p>
         )}
       </div>
+      {isAdopted ? (
+        <span className="flex items-center gap-1 text-[11px] text-foreground-subtle">
+          <Check className="h-3.5 w-3.5" />{' '}
+          {alreadyExists
+            ? t('integrations.scanNetworkModal.alreadyAdded', 'Already added')
+            : t('integrations.scanNetworkModal.added', 'Added')}
+        </span>
+      ) : actionable ? (
+        <Button
+          size="sm"
+          variant={setup ? 'outline' : 'primary'}
+          onClick={() => void row.pick(addonId, candidate)}
+          disabled={isBusy}
+        >
+          {isBusy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : setup ? null : (
+            <Download className="h-3.5 w-3.5" />
+          )}
+          {setup
+            ? row.fill
+              ? t('integrations.scanNetworkModal.use', 'Use')
+              : t('integrations.scanNetworkModal.setUp', 'Set up')
+            : t('common.add', 'Add')}
+        </Button>
+      ) : null}
     </div>
+  )
+}
+
+function IntegrationGroup({
+  addonId,
+  label,
+  candidates,
+  row,
+}: {
+  readonly addonId: string
+  readonly label: string
+  readonly candidates: readonly Candidate[]
+  readonly row: RowContext
+}): ReactElement {
+  const nodes = useMemo(() => buildCandidateTree(candidates), [candidates])
+  return (
+    <section className="space-y-2" data-testid={`scan-group-${addonId}`}>
+      <h3 className="flex items-center gap-2">
+        <ProviderIcon type={addonId} size="sm" />
+        <span className={TEXT_SECTION_LABEL}>{label}</span>
+        <span className="text-[10px] text-foreground-subtle">({candidates.length})</span>
+      </h3>
+      <CandidateRows addonId={addonId} nodes={nodes} row={row} depth={0} />
+    </section>
+  )
+}
+
+/** Candidates of a group the footer can add in bulk, in tree order. */
+function bulkCandidates(
+  groups: readonly { addonId: string; candidates: readonly Candidate[] }[],
+  fill: boolean,
+): readonly BulkEntry[] {
+  return groups.flatMap((g) =>
+    flattenCandidateNodes(buildCandidateTree(g.candidates))
+      .filter((c) => isBulkSelectable(c, fill))
+      .map((candidate) => ({ addonId: g.addonId, candidate })),
   )
 }
 
@@ -188,12 +368,12 @@ export function ScanNetworkModal({
 // ---------------------------------------------------------------------------
 
 function GenericScan({
-  onAdopt,
+  row,
   onReset,
 }: {
-  readonly onAdopt: (addonId: string, c: Candidate) => ReactNode
+  readonly row: RowContext
   readonly onReset: () => void
-}) {
+}): ReactElement {
   const { t } = useTranslation()
   const scan = useDeviceManagerDiscoverAllProviders()
   const runScan = useCallback(() => {
@@ -214,55 +394,45 @@ function GenericScan({
   )
   const totalFound = useMemo(() => groups.reduce((n, g) => n + g.candidates.length, 0), [groups])
 
+  const bulk = useMemo(() => bulkCandidates(groups, row.fill), [groups, row.fill])
+
   return (
-    <>
-      <div className="flex items-center justify-end gap-2 border-b border-border px-5 py-2 shrink-0">
-        <button
-          onClick={runScan}
-          disabled={scan.isPending}
-          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${scan.isPending ? 'animate-spin' : ''}`} />
-          {t('integrations.scanNetworkModal.reScan', 'Re-scan')}
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-foreground-subtle">
+          {!scan.isPending && groups.length > 0
+            ? t('integrations.scanNetworkModal.found', { count: totalFound })
+            : null}
+        </p>
+        <div className="flex items-center gap-2">
+          <AddSelectedButton entries={bulk} row={row} />
+          <Button variant="outline" size="sm" onClick={runScan} disabled={scan.isPending}>
+            <RefreshCw className={`h-3.5 w-3.5 ${scan.isPending ? 'animate-spin' : ''}`} />
+            {t('integrations.scanNetworkModal.reScan', 'Re-scan')}
+          </Button>
+        </div>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-        {scan.isPending && (
-          <Spinner
-            label={t(
-              'integrations.scanNetworkModal.scanningTheLocalNetwork',
-              'Scanning the local network…',
-            )}
+      {scan.isPending && (
+        <Spinner
+          label={t(
+            'integrations.scanNetworkModal.scanningTheLocalNetwork',
+            'Scanning the local network…',
+          )}
+        />
+      )}
+      {!scan.isPending && scan.isError && <ScanError />}
+      {!scan.isPending && scan.data && groups.length === 0 && <NothingFound />}
+      {!scan.isPending &&
+        groups.map((group) => (
+          <IntegrationGroup
+            key={group.addonId}
+            addonId={group.addonId}
+            label={group.label}
+            candidates={group.candidates}
+            row={row}
           />
-        )}
-        {!scan.isPending && scan.isError && <ScanError />}
-        {!scan.isPending && scan.data && groups.length === 0 && (
-          <p className="py-8 text-center text-xs text-foreground-subtle">
-            {t(
-              'integrations.scanNetworkModal.noDevicesRespondedToThe',
-              'No devices responded to the scan.',
-            )}
-          </p>
-        )}
-        {!scan.isPending && groups.length > 0 && (
-          <p className="text-xs text-foreground-subtle">
-            {t('integrations.scanNetworkModal.found', { count: totalFound })}
-          </p>
-        )}
-        {!scan.isPending &&
-          groups.map((group) => (
-            <div key={group.addonId} className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-foreground">{group.label}</span>
-                <span className="text-[10px] text-foreground-subtle">
-                  ({group.candidates.length})
-                </span>
-              </div>
-              {group.candidates.map((c: Candidate) => onAdopt(group.addonId, c))}
-            </div>
-          ))}
-      </div>
-    </>
+        ))}
+    </div>
   )
 }
 
@@ -272,13 +442,13 @@ function GenericScan({
 
 function ScopedScan({
   scope,
-  onAdopt,
+  row,
   onReset,
 }: {
   readonly scope: ScanScope
-  readonly onAdopt: (addonId: string, c: Candidate) => ReactNode
+  readonly row: RowContext
   readonly onReset: () => void
-}) {
+}): ReactElement {
   const { t } = useTranslation()
   const paramsSchemaQuery = useDeviceManagerProviderDiscoveryParamsSchema({
     addonId: scope.addonId,
@@ -292,51 +462,88 @@ function ScopedScan({
     scan.mutate({ addonId: scope.addonId, params })
   }, [scan, scope.addonId, params, onReset])
 
-  const candidates = scan.data?.candidates ?? []
+  const candidates = useMemo(() => scan.data?.candidates ?? [], [scan.data])
+
+  const bulk = useMemo(
+    () => bulkCandidates([{ addonId: scope.addonId, candidates }], row.fill),
+    [scope.addonId, candidates, row.fill],
+  )
 
   return (
-    <>
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-        {paramsSchema && <FormBuilder schema={paramsSchema} values={params} onChange={setParams} />}
+    <div className="space-y-4">
+      {paramsSchema && <FormBuilder schema={paramsSchema} values={params} onChange={setParams} />}
 
-        <button
-          onClick={runScan}
-          disabled={scan.isPending}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-        >
-          {scan.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Radar className="h-3.5 w-3.5" />
-          )}
-          {scan.isPending
-            ? t('integrations.scanNetworkModal.scanning', 'Scanning…')
-            : t('integrations.scanNetworkModal.scan', 'Scan')}
-        </button>
+      <Button onClick={runScan} disabled={scan.isPending}>
+        {scan.isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Radar className="h-3.5 w-3.5" />
+        )}
+        {scan.isPending
+          ? t('integrations.scanNetworkModal.scanning', 'Scanning…')
+          : t('integrations.scanNetworkModal.scan', 'Scan')}
+      </Button>
 
-        {scan.isError && <ScanError />}
-        {!scan.isPending && scan.data && candidates.length === 0 && (
-          <p className="py-6 text-center text-xs text-foreground-subtle">
-            {t(
-              'integrations.scanNetworkModal.noDevicesRespondedToThe',
-              'No devices responded to the scan.',
-            )}
+      <AddSelectedButton entries={bulk} row={row} />
+
+      {scan.isError && <ScanError />}
+      {!scan.isPending && scan.data && candidates.length === 0 && <NothingFound />}
+      {!scan.isPending && candidates.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-foreground-subtle">
+            {t('integrations.scanNetworkModal.foundShort', {
+              count: candidates.length,
+            })}
           </p>
-        )}
-        {!scan.isPending && candidates.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-xs text-foreground-subtle">
-              {t('integrations.scanNetworkModal.foundShort', { count: candidates.length })}
-            </p>
-            {candidates.map((c: Candidate) => onAdopt(scope.addonId, c))}
-          </div>
-        )}
-      </div>
-    </>
+          <IntegrationGroup
+            addonId={scope.addonId}
+            label={scope.label}
+            candidates={candidates}
+            row={row}
+          />
+        </div>
+      )}
+    </div>
   )
 }
 
-function Spinner({ label }: { readonly label: string }) {
+/** Adds every ticked row of the section in one go; hidden until something is ticked. */
+function AddSelectedButton({
+  entries,
+  row,
+}: {
+  readonly entries: readonly BulkEntry[]
+  readonly row: RowContext
+}): ReactElement | null {
+  const { t } = useTranslation()
+  const picked = entries.filter((e) => row.selection.selected.has(e.candidate.stableId))
+  if (picked.length === 0) return null
+  const addAll = async (): Promise<void> => {
+    for (const e of picked) await row.adoptOne(e.addonId, e.candidate)
+  }
+  return (
+    <Button size="sm" onClick={() => void addAll()} data-testid="scan-add-selected">
+      <Download className="h-3.5 w-3.5" />
+      {t('integrations.scanNetworkModal.addSelected', 'Add selected ({{count}})', {
+        count: picked.length,
+      })}
+    </Button>
+  )
+}
+
+function NothingFound(): ReactElement {
+  const { t } = useTranslation()
+  return (
+    <p className="py-6 text-center text-xs text-foreground-subtle">
+      {t(
+        'integrations.scanNetworkModal.noDevicesRespondedToThe',
+        'No devices responded to the scan.',
+      )}
+    </p>
+  )
+}
+
+function Spinner({ label }: { readonly label: string }): ReactElement {
   return (
     <div className="flex flex-col items-center py-12">
       <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -345,12 +552,12 @@ function Spinner({ label }: { readonly label: string }) {
   )
 }
 
-function ScanError() {
+function ScanError(): ReactElement {
   const { t } = useTranslation()
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
-      <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-      <p className="text-xs text-destructive">
+    <div className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+      <p className="text-xs text-danger">
         {t('integrations.scanNetworkModal.theScanFailedTryAgain', 'The scan failed. Try again.')}
       </p>
     </div>
