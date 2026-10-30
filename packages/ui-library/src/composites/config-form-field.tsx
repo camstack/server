@@ -26,6 +26,7 @@ import type {
   ConfigNumberField,
   ConfigBooleanField,
   ConfigSelectField,
+  ConfigBrokerSelectField,
   ConfigTimezoneField,
   ConfigDateTimeField,
   ConfigColorField,
@@ -75,6 +76,8 @@ import { WidgetSlot } from './widget-slot'
 import { QrCode } from './qr-code'
 import { TimezoneSelector } from './timezone-selector'
 import { OptionSelect, type OptionSelectOption } from './option-select'
+import { ConfigBrokerSelectControl } from './config-broker-select-field'
+import { ConfigDiscoveredSelectControl } from './config-discovered-select-field'
 
 /** Probe state for a single field — exported for callers that need to track probe lifecycle externally. */
 export interface ProbeState {
@@ -436,12 +439,14 @@ function BooleanField({
 
 function SelectField({
   field,
+  values,
   value,
   onChange,
   disabled,
   translationFn,
 }: {
   field: ConfigSelectField
+  values: Record<string, unknown>
   value: unknown
   onChange: (v: unknown) => void
   disabled?: boolean
@@ -469,12 +474,55 @@ function SelectField({
       htmlFor={controlId}
       translationFn={translationFn}
     >
-      <Select
-        id={controlId}
-        options={options}
-        value={value === undefined || value === null ? '' : String(value)}
-        disabled={disabled || field.disabled}
-        onChange={(e) => onChange(e.target.value)}
+      {field.discoverOptions !== undefined ? (
+        <ConfigDiscoveredSelectControl
+          field={field}
+          values={values}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          controlId={controlId}
+        />
+      ) : (
+        <Select
+          id={controlId}
+          options={options}
+          value={value === undefined || value === null ? '' : String(value)}
+          disabled={disabled || field.disabled}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </FieldWrapper>
+  )
+}
+
+function BrokerSelectField({
+  field,
+  value,
+  onChange,
+  disabled,
+  translationFn,
+}: {
+  field: ConfigBrokerSelectField
+  value: unknown
+  onChange: (v: unknown) => void
+  disabled?: boolean
+  translationFn?: TranslationFn
+}) {
+  return (
+    <FieldWrapper
+      label={field.label}
+      description={field.description}
+      required={field.required}
+      span={field.span}
+      translationFn={translationFn}
+    >
+      <ConfigBrokerSelectControl
+        field={field}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        controlId={`config-broker-select-${field.key}`}
       />
     </FieldWrapper>
   )
@@ -2824,10 +2872,21 @@ export function FormField({
           translationFn={translationFn}
         />
       )
+    case 'broker-select':
+      return (
+        <BrokerSelectField
+          field={field}
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          translationFn={translationFn}
+        />
+      )
     case 'select':
       return (
         <SelectField
           field={field}
+          values={values}
           value={value}
           onChange={handleChange}
           disabled={disabled}

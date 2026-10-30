@@ -1559,6 +1559,13 @@
       "summary": ""
     },
     {
+      "name": "BrokerPickerSlotProvider",
+      "kind": "component",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/broker-picker-slot.tsx",
+      "summary": "The broker picker a host mounts for `broker-select` fields."
+    },
+    {
       "name": "BTN_COMPACT",
       "kind": "constant",
       "area": "lib",
@@ -12400,6 +12407,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/widget-registry.tsx",
       "summary": "Returns every contributed widget — host pickers (dashboard add-widget modal, settings UI palette) consume this to enumerate the registry. Filter on the call site by `metadata.hosts.includes()`."
+    },
+    {
+      "name": "useBrokerPickerSlot",
+      "kind": "hook",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/broker-picker-slot.tsx",
+      "summary": "The broker picker a host mounts for `broker-select` fields."
     },
     {
       "name": "useCapabilityPresence",

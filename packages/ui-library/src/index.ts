@@ -1,6 +1,7 @@
 export * from './composites'
 export * from './hotkeys'
 export * from './contexts/custom-field-renderers'
+export * from './contexts/broker-picker-slot'
 export * from './contexts/device-context'
 export * from './contexts/device-quick-detail'
 export * from './contexts/player-overlays'
