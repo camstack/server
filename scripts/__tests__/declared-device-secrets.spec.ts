@@ -10,7 +10,7 @@ import { amcrestCameraSchema } from '../../packages/addon-provider-amcrest/src/s
 import { dreameChildSchema } from '../../packages/addon-provider-dreame/src/devices/dreame-child-device.ts'
 import { ecowittGatewaySchema } from '../../packages/addon-provider-ecowitt/src/config.ts'
 import { hikvisionCameraSchema } from '../../packages/addon-provider-hikvision/src/schema.ts'
-import { rademacherHubSchema } from '../../packages/addon-provider-rademacher/src/config.ts'
+import { rademacherConnectionSchema } from '../../packages/addon-provider-rademacher/src/config.ts'
 import {
   reolinkCameraSchema,
   reolinkHubSchema,
@@ -18,14 +18,14 @@ import {
 import { tuyaDeviceConfigSchema } from '../../packages/addon-provider-tuya/src/devices/tuya-base-device.ts'
 import { unifiControllerSchema } from '../../packages/addon-provider-unifi/src/config.ts'
 import { unraidHubSchema } from '../../packages/addon-provider-unraid/src/config.ts'
-import { veluxGatewaySchema } from '../../packages/addon-provider-velux/src/config.ts'
+import { veluxConnectionSchema } from '../../packages/addon-provider-velux/src/config.ts'
 import { vesyncAccountSchema } from '../../packages/addon-provider-vesync/src/config.ts'
 
 const cases: ReadonlyArray<readonly [string, z.ZodType, readonly string[]]> = [
   ['unifi controller', unifiControllerSchema, ['connection.apiKey', 'connection.password']],
   ['vesync account', vesyncAccountSchema, ['connection.password']],
-  ['velux gateway', veluxGatewaySchema, ['connection.password']],
-  ['rademacher hub', rademacherHubSchema, ['connection.password']],
+  ['velux integration', veluxConnectionSchema, ['password']],
+  ['rademacher integration', rademacherConnectionSchema, ['password']],
   ['ecowitt gateway (union transport)', ecowittGatewaySchema, ['connection.password']],
   ['unraid hub', unraidHubSchema, ['connection.apiKey']],
   ['tuya device', tuyaDeviceConfigSchema, ['localKey']],
