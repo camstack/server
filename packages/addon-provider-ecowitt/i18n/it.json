@@ -13,9 +13,5 @@
   "connection.s_local.pollIntervalMs.label": "Intervallo di lettura (ms)",
   "connection.s_listener.title": "Impostazioni del listener push",
   "connection.s_listener.listenPort.label": "Porta di ascolto",
-  "connection.s_listener.listenHost.label": "Host di ascolto (facoltativo)",
-  "discoveryParams.s_scan.title": "Opzioni di scansione",
-  "discoveryParams.s_scan.description": "Lascia vuoto per scansionare la subnet locale; altrimenti elenca indirizzi broadcast, IP dei gateway o CIDR, separati da virgola o a capo.",
-  "discoveryParams.s_scan.broadcastAddress.label": "Indirizzi di broadcast / IP dei gateway / CIDR",
-  "discoveryParams.s_scan.timeoutMs.label": "Timeout UDP (ms)"
+  "connection.s_listener.listenHost.label": "Host di ascolto (facoltativo)"
 }

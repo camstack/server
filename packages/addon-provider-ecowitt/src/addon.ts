@@ -8,18 +8,22 @@ import {
   type DeviceConstructor,
   type DeviceSummary,
   type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   type IDevice,
 } from '@camstack/types'
-import { Ecowitt } from '@apocaliss92/nodewitt'
 import {
   buildConnectionFormSchema,
-  buildDiscoveryParamsFormSchema,
   settingsToEcowittConfig,
   slugifyHost,
   type EcowittConfig,
 } from './config.js'
 import { EcowittIntegrationManager } from './ecowitt-integration-manager.js'
-import { parseBroadcastTargets, scanEcowittGateways } from './ecowitt-network-scan.js'
+import {
+  ECOWITT_DISCOVERY_MODES,
+  ecowittCandidates,
+  ecowittGatewaysFromHits,
+} from './ecowitt-lan-discovery.js'
 import { ecowittFacades } from './ecowitt-gateway.js'
 import { EcowittGatewayDevice } from './devices/ecowitt-gateway-device.js'
 import { EcowittContainerDevice } from './devices/ecowitt-container-device.js'
@@ -49,59 +53,23 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     super({})
   }
 
-  // ── Discovery: GW1000 UDP broadcast scan ───────────────────────────────
+  // ── Discovery: the scan engine broadcasts, this addon classifies the replies ──
 
   override async supportsDiscovery(): Promise<boolean> {
     return true
   }
 
-  override async getDiscoveryParamsSchema(): Promise<ConfigUISchema | null> {
-    return buildDiscoveryParamsFormSchema()
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return ECOWITT_DISCOVERY_MODES
   }
 
-  override async discoverDevices(input?: {
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
-    const rawTargets =
-      typeof input?.params?.['broadcastAddress'] === 'string'
-        ? input.params['broadcastAddress']
-        : ''
-    const timeoutMs =
-      typeof input?.params?.['timeoutMs'] === 'number' ? input.params['timeoutMs'] : undefined
-    // Cross-subnet scan: the operator field accepts a comma / newline separated list of directed
-    // broadcast addresses, gateway IPs, or CIDRs. Each is swept independently and the responders are
-    // merged + de-duped by MAC. Blank input keeps the previous behaviour (one local-subnet sweep).
-    const targets = parseBroadcastTargets(rawTargets)
-    const gateways = await scanEcowittGateways({
-      discover: (opts) => Ecowitt.discover(opts),
-      targets,
-      ...(timeoutMs !== undefined ? { timeoutMs } : {}),
-      onError: (target, error) => {
-        this.ctx.logger.warn('Ecowitt subnet sweep failed — skipping', {
-          meta: { target, error: errMsg(error) },
-        })
-      },
-    })
-    this.ctx.logger.info('Ecowitt discovery complete', {
-      meta: {
-        count: gateways.length,
-        subnets: targets.length > 0 ? targets : 'local',
-      },
-    })
-    return gateways.map((g) => {
-      const displayName = g.model ?? g.name
-      return {
-        // Match generateStableId (local transport → `ecowitt:<slug(host)>`) so a re-scan of an
-        // already-added gateway is detected as adopted and re-adding reuses its persisted row.
-        stableId: `ecowitt:${slugifyHost(g.ip)}`,
-        type: DeviceType.Hub,
-        suggestedName: displayName,
-        prefilledConfig: {
-          name: displayName,
-          connection: { transport: 'local', host: g.ip },
-        },
-      }
-    })
+    const gateways = ecowittGatewaysFromHits(input.hits)
+    this.ctx.logger.info('Ecowitt discovery complete', { meta: { count: gateways.length } })
+    return ecowittCandidates(gateways)
   }
 
   override async adoptDiscoveredDevice(input: {

@@ -13,9 +13,5 @@
   "connection.s_local.pollIntervalMs.label": "Poll interval (ms)",
   "connection.s_listener.title": "Push listener settings",
   "connection.s_listener.listenPort.label": "Listen port",
-  "connection.s_listener.listenHost.label": "Bind host (optional)",
-  "discoveryParams.s_scan.title": "Scan options",
-  "discoveryParams.s_scan.description": "Leave empty to scan the local subnet; otherwise list broadcast addresses, gateway IPs or CIDRs, comma or newline separated.",
-  "discoveryParams.s_scan.broadcastAddress.label": "Broadcast addresses / gateway IPs / CIDRs",
-  "discoveryParams.s_scan.timeoutMs.label": "UDP timeout (ms)"
+  "connection.s_listener.listenHost.label": "Bind host (optional)"
 }

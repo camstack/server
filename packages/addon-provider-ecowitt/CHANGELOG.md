@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Ecowitt gateways are found by the shared network scan (one UDP broadcast for every subnet); the per-scan broadcast address form is gone
+
 ## [0.2.150] - 2026-10-28
 
 ### Changed
