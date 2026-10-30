@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adding a non-camera device no longer makes every stream broker log a failed stream-catalog pull.
+
 ## [1.2.634] - 2026-10-29
 
 ### Changed

@@ -613,7 +613,13 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
 
     this.subscribe({ category: EventCategory.DeviceRegistered }, (event) => {
       const deviceId = event.data.deviceId
-      if (typeof deviceId === 'number') reconcileDevice(deviceId, 'device-registered')
+      if (typeof deviceId !== 'number') return
+      void this.brokerManager?.reconcileRegisteredDevice(deviceId).catch((err: unknown) => {
+        this.ctx.logger.warn('device catalog reconcile failed', {
+          tags: { deviceId },
+          meta: { reason: 'device-registered', error: errMsg(err) },
+        })
+      })
     })
     subscribeDeviceRemoval(
       (filter, handler) => this.subscribe(filter, handler),

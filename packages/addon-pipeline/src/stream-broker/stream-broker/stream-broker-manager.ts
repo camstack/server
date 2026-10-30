@@ -866,6 +866,17 @@ function parseBrokerId(brokerId: string): { deviceId: number; camStreamId: strin
   return { deviceId, camStreamId }
 }
 
+/** Minimal device shape the camera predicate reads. */
+interface CameraCandidate {
+  readonly isCamera: boolean
+  readonly type: string
+}
+
+/** The one "is this a camera" predicate for catalog reconciles (poll and event). */
+function isCameraDevice(d: CameraCandidate): boolean {
+  return d.isCamera || d.type === DeviceType.Camera
+}
+
 export class StreamBrokerManager {
   /**
    * brokers keyed by brokerId = `${deviceId}/${camStreamId}`.
@@ -3386,6 +3397,38 @@ export class StreamBrokerManager {
     )
   }
 
+  /**
+   * The `DeviceRegistered` entry point: reconcile the device's catalog ONLY
+   * when it is a camera — the same predicate the poll applies
+   * ({@link isCameraDevice}). A non-camera (a gateway, a sensor hub) has no
+   * `stream-catalog` provider, so pulling it logged a failure and armed a
+   * backoff entry for nothing. When the lookup fails or does not know the
+   * device the camera question is unanswered, so we reconcile as before
+   * rather than silently drop a camera (D49).
+   */
+  async reconcileRegisteredDevice(deviceId: number): Promise<void> {
+    if (!this.api) return
+    try {
+      const rows = await this.api.deviceManager.listAll.query({
+        projection: 'slim',
+        deviceIds: [deviceId],
+      })
+      const row = rows.find((d) => d.id === deviceId)
+      if (row && !isCameraDevice(row)) {
+        this.logger.debug('reconcileRegisteredDevice: skipped — not a camera', {
+          tags: { deviceId },
+        })
+        return
+      }
+    } catch (err) {
+      this.logger.debug('reconcileRegisteredDevice: device lookup failed — reconciling anyway', {
+        tags: { deviceId },
+        meta: { error: errMsg(err) },
+      })
+    }
+    await this.reconcileDeviceCatalog(deviceId)
+  }
+
   private async reconcileDeviceCatalogNow(
     deviceId: number,
     trigger: CatalogReconcileTrigger,
@@ -3589,7 +3632,7 @@ export class StreamBrokerManager {
       return
     }
     await this.sweepDepartedDevices(devices)
-    const cameras = devices.filter((d) => d.isCamera || d.type === DeviceType.Camera)
+    const cameras = devices.filter(isCameraDevice)
     // Disabled-camera lifecycle (2026-07-23, dev614 reconnect storm): a
     // DISABLED camera must hold NO live broker — before this, the prebuffer
     // warm-hold + always-on audio subscription kept dialing an unreachable
@@ -3878,7 +3921,7 @@ export class StreamBrokerManager {
       return false
     }
     for (const d of devices) {
-      if ((d.isCamera || d.type === DeviceType.Camera) && !d.disabled) {
+      if (isCameraDevice(d) && !d.disabled) {
         const streams = this.cameraStreams.get(d.id)
         if (!streams || streams.size === 0) return true
       }

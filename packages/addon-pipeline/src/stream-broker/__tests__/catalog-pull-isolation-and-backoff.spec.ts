@@ -269,3 +269,60 @@ describe('catalog reconcile — recovery is announced', () => {
     expect((recovery[0]?.[1] as { tags?: unknown } | undefined)?.tags).toEqual({ deviceId: 3629 })
   })
 })
+
+describe('catalog reconcile — a DeviceRegistered for a non-camera pulls nothing', () => {
+  function makeMixedApi(): CatalogFixture {
+    const getCatalog = vi.fn(async (input: { deviceId: number }) => {
+      if (input.deviceId === 5348) throw new Error('no provider registered for device 5348')
+      return [MAIN_DESCRIPTOR]
+    })
+    const rows = [
+      { id: 5348, type: 'hub', isCamera: false, disabled: false },
+      { id: 101, type: 'camera', isCamera: true, disabled: false },
+    ]
+    const api = {
+      deviceManager: {
+        listAll: {
+          query: vi.fn(async (input: { deviceIds?: number[] }) =>
+            rows.filter((r) => !input.deviceIds || input.deviceIds.includes(r.id)),
+          ),
+        },
+      },
+      streamCatalog: { getCatalog: { query: getCatalog } },
+    } as unknown as AddonApi
+    return { api, getCatalog }
+  }
+
+  it('skips a non-camera: no pull, no warn, no backoff entry', async () => {
+    const { api, getCatalog } = makeMixedApi()
+    const { manager, log } = makeHarness(api)
+
+    await manager.reconcileRegisteredDevice(5348)
+
+    expect(getCatalog).not.toHaveBeenCalled()
+    expect(warnTagsFor(log, 'stream-catalog pull failed')).toEqual([])
+    const failures = (manager as unknown as { catalogPullFailures: Map<number, unknown> })
+      .catalogPullFailures
+    expect(failures.size).toBe(0)
+  })
+
+  it('still reconciles a camera', async () => {
+    const { api, getCatalog } = makeMixedApi()
+    const { manager } = makeHarness(api)
+
+    await manager.reconcileRegisteredDevice(101)
+
+    expect(getCatalog).toHaveBeenCalledTimes(1)
+    expect(manager.getCameraStreamsForDevice(101).length).toBe(1)
+  })
+
+  it('reconciles anyway when the device lookup fails (never drops a camera)', async () => {
+    const { api, getCatalog } = makeMixedApi()
+    vi.mocked(api.deviceManager.listAll.query).mockRejectedValue(new Error('down'))
+    const { manager } = makeHarness(api)
+
+    await manager.reconcileRegisteredDevice(101)
+
+    expect(getCatalog).toHaveBeenCalledTimes(1)
+  })
+})
