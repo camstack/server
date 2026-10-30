@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notification targets pick a broker and list their options inside the add/edit form; the page-wide Find devices dialog is gone
+
 ## [1.2.357] - 2026-10-30
 
 ### Added
@@ -20,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collapsible section headers (settings sections, groups, device-picker groups, response log) use a larger chevron and are real buttons with keyboard support
 - DialogContent accepts the native dialog attributes such as onCancel, so a caller can refuse Escape while work is in flight
 - Renaming a node updates its name on the Cluster page immediately instead of after a reload
-- Notification targets pick a broker and list their options inside the add/edit form; the page-wide Find devices dialog is gone
 
 ## [1.2.356] - 2026-10-30
 

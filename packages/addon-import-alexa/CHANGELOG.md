@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notification targets pick a broker and list their options inside the add/edit form; the page-wide Find devices dialog is gone
+
 ## [0.2.170] - 2026-10-30
 
 ### Changed
 
 - Alexa accounts now connect after a device-code sign-in (the broker no longer errors with getAuthenticationDetails), and the Amazon login offers only the device-code sign-in
-- Notification targets pick a broker and list their options inside the add/edit form; the page-wide Find devices dialog is gone
 
 ## [0.2.169] - 2026-10-30
 
