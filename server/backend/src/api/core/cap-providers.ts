@@ -1552,6 +1552,21 @@ export function buildIntegrationsProvider(
         },
       )
 
+      // Only the integration's own addon may skip the respawn: it reconciles
+      // the change in-process, so an unrelated caller cannot leave an addon
+      // running on settings it never reloaded.
+      const callerAddon: unknown = Reflect.get(input, 'callerAddonId')
+      if (
+        input.skipRestart === true &&
+        typeof callerAddon === 'string' &&
+        (callerAddon === integration.addonId || ar.runnerIdFor(integration.addonId) === callerAddon)
+      ) {
+        logger.info('persisted — the owner applies it in-process, no restart', {
+          tags: { addonId: integration.addonId },
+          meta: { phase: 'setSettings' },
+        })
+        return { success: true }
+      }
       logger.info('persisted — restarting addon', {
         tags: { addonId: integration.addonId },
         meta: { phase: 'setSettings' },

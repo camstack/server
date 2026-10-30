@@ -2853,7 +2853,7 @@
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getSettings | `integrations.getSettings` | query | admin | `{ id: string }` | `Record<string, unknown>` |
-| setSettings | `integrations.setSettings` | mutation | admin | `{ id: string; settings: Record<string, unknown>; secretKeys?: string[] }` | `{ success: boolean }` |
+| setSettings | `integrations.setSettings` | mutation | admin | `{ id: string; settings: Record<string, unknown>; secretKeys?: string[]; skipRestart?: boolean }` | `{ success: boolean }` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |
 | testConnection | `integrations.testConnection` | mutation | admin | `{ addonId: string; settings: Record<string, unknown> }` | `TestConnectionResultSchema` |
 

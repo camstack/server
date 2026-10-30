@@ -176,6 +176,8 @@ export const integrationsCapability = {
         settings: z.record(z.string(), z.unknown()),
         /** Keys the form's schema declares secret (by type) — keychain-stored (D787). */
         secretKeys: z.array(z.string()).optional(),
+        /** The integration's own addon applies the change in-process and asks the hub not to respawn it. */
+        skipRestart: z.boolean().optional(),
       }),
       z.object({ success: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
