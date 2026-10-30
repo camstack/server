@@ -77,7 +77,7 @@
     "publish:npm": "npm publish --access public"
   },
   "dependencies": {
-    "nodehomematic": "^0.4.4"
+    "nodehomematic": "^0.5.1"
   },
   "peerDependencies": {
     "@camstack/types": "*",

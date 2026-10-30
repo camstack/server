@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Uses nodehomematic 0.5.1.
+
 ## [1.2.164] - 2026-10-30
 
 ### Changed
