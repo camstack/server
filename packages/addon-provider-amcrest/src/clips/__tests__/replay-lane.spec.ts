@@ -4,8 +4,9 @@
  * by a tile (2026-09-25, 3836: seventeen `replay-busy` in six hours, each one a
  * tile coming back into the same chain).
  */
-import { describe, expect, it, vi } from 'vitest'
+
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createReplayLane, type ReplayLease } from '../replay-lane.js'
 

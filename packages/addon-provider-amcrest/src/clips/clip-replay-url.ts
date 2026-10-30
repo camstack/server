@@ -27,7 +27,7 @@
  * logged. {@link describeReplayUrl} is what a log line is given instead, and
  * every line in this addon uses it.
  */
-import { toCameraWallClock, type AmcrestCameraClock } from './clip-clock.js'
+import { type AmcrestCameraClock, toCameraWallClock } from './clip-clock.js'
 
 /** The camera's RTSP port. Fixed on this family; a device schema field would
  *  be a second authority for a number nothing has ever varied. */

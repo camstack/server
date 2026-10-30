@@ -66,7 +66,7 @@ import {
 import { AMCREST_ADDON_ID } from '../schema.js'
 import { CLIP_SOURCE_ONBOARD, clipKeyOf, mintClipId, parseClipId } from './clip-identity.js'
 import type { AmcrestClipRow } from './clip-search.js'
-import { chooseClipQuality, ClipUpgradeNotes } from './clip-twins.js'
+import { ClipUpgradeNotes, chooseClipQuality } from './clip-twins.js'
 import { narrowClipsToWindow } from './clip-window.js'
 
 /** Everything the clip path needs to know about one camera, with no secrets in

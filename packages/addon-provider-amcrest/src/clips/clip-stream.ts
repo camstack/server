@@ -68,17 +68,17 @@ import { resolvePinnedFfmpegSpawner } from '@camstack/types/node'
 import { describeReplayUrl } from './clip-replay-url.js'
 import {
   buildClipStreamMuxArgs,
-  clipStreamContentTypeFor,
   CLIP_STREAM_PROGRESS_FD,
-  parseClipStreamProgress,
   type ClipStreamAudioAsk,
   type ClipStreamProgress,
+  clipStreamContentTypeFor,
+  parseClipStreamProgress,
 } from './clip-stream-mux.js'
 import {
+  type ClipDurationVerdict,
   describeTruncation,
   judgeClipDuration,
   truncationReasonCode,
-  type ClipDurationVerdict,
 } from './clip-truncation.js'
 import type { ReplayLane } from './replay-lane.js'
 

@@ -35,7 +35,7 @@ import {
   type IScopedLogger,
 } from '@camstack/types'
 
-import { refuseStill, type MintRefusal, type MintResult } from './clip-still-refusal.js'
+import { type MintRefusal, type MintResult, refuseStill } from './clip-still-refusal.js'
 
 export type { MintRefusal, MintResult }
 

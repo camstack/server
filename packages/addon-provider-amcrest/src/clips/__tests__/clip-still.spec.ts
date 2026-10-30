@@ -6,19 +6,19 @@
  * halving several windows, the probe discipline by the ORDER of the argument
  * list, and every refusal by driving a fake ffmpeg into it.
  */
+
+import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { Readable } from 'node:stream'
-import type { ChildProcess } from 'node:child_process'
-import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
-
+import { describe, expect, it, vi } from 'vitest'
+import type { AmcrestClipRow } from '../clip-search.js'
 import {
   buildClipStillArgs,
+  CLIP_STILL_WIDTH,
   clipStillWindow,
   cutClipStill,
-  CLIP_STILL_WIDTH,
 } from '../clip-still.js'
-import type { AmcrestClipRow } from '../clip-search.js'
 
 const START_MS = Date.UTC(2026, 8, 23, 17, 4, 59)
 const END_MS = Date.UTC(2026, 8, 23, 17, 8, 24)

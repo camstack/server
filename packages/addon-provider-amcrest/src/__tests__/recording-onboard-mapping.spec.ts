@@ -7,9 +7,9 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import type { RecordingOnboardStatus, RecordWindow } from '@camstack/types'
 import { describeOnboardRefusal } from '@camstack/types'
-import type { RecordWindow, RecordingOnboardStatus } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import { AmcrestCgiClient } from '../amcrest-cgi-client.js'
 import {
   AMCREST_NO_LIMITS_REASON,

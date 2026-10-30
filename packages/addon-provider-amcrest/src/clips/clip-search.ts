@@ -34,7 +34,7 @@
  * check that compares the delivered media against the ROW naively would fire
  * on every clip this camera makes.
  */
-import { fromCameraWallClock, type AmcrestCameraClock } from './clip-clock.js'
+import { type AmcrestCameraClock, fromCameraWallClock } from './clip-clock.js'
 import { clipKeyFor } from './clip-identity.js'
 
 /**

@@ -1,10 +1,11 @@
-import { userError } from '@camstack/types'
 import type {
   ConfigUISchema,
   CreateDeviceSpec,
   DeviceConstructor,
   DeviceSummary,
   DiscoveryCandidate,
+  DiscoveryHit,
+  DiscoveryMode,
   FieldProbeResult,
   IDevice,
   ProviderRegistration,
@@ -14,20 +15,22 @@ import {
   clipEventLabelDepsFromApi,
   DeviceType,
   memoizePinnedFfmpeg,
+  userError,
   videoclipsCapability,
   widenDeviceConstructor,
   withClipEventLabels,
 } from '@camstack/types'
 import { AmcrestCamera } from './amcrest-camera.js'
-import { amcrestCameraSchema, AMCREST_ADDON_ID } from './schema.js'
-import { createClipService, type ClipService } from './clips/clip-service.js'
 import { AmcrestCgiClient } from './amcrest-cgi-client.js'
 import {
-  discoverAmcrestCameras,
-  discoverAmcrestViaHttpScan,
-  slugifyAmcrestHost,
+  AMCREST_DISCOVERY_MODES,
+  amcrestFromHttpHits,
+  amcrestFromWsdHits,
   type DiscoveredAmcrestCamera,
+  slugifyAmcrestHost,
 } from './amcrest-discovery.js'
+import { type ClipService, createClipService } from './clips/clip-service.js'
+import { AMCREST_ADDON_ID, amcrestCameraSchema } from './schema.js'
 
 function getString(obj: Record<string, unknown>, key: string): string {
   const v = obj[key]
@@ -164,34 +167,6 @@ function buildDiscoveryParamsFormSchema(): ConfigUISchema {
             labelKey: 'provider-amcrest:discoveryParams.s_credentials.password.label',
             required: true,
             showToggle: true,
-          },
-        ],
-      },
-      {
-        id: 'scan',
-        title: 'Scan options',
-        titleKey: 'provider-amcrest:discoveryParams.s_scan.title',
-        description:
-          "Leave blank to scan the hub's own subnet; enter the CIDR if the cameras are on another one (e.g. 192.168.60.0/24).",
-        descriptionKey: 'provider-amcrest:discoveryParams.s_scan.description',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'networkCidr',
-            label: 'Network (CIDR) — required if cameras are on a different subnet than the hub',
-            labelKey: 'provider-amcrest:discoveryParams.s_scan.networkCidr.label',
-            required: false,
-            placeholder: '192.168.60.0/24',
-          },
-          {
-            type: 'number',
-            key: 'timeoutMs',
-            label: 'WS-Discovery timeout (ms)',
-            labelKey: 'provider-amcrest:discoveryParams.s_scan.timeoutMs.label',
-            min: 1_000,
-            max: 30_000,
-            default: 5_000,
           },
         ],
       },
@@ -380,35 +355,33 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
     return buildDiscoveryParamsFormSchema()
   }
 
-  override async discoverDevices(input?: {
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return AMCREST_DISCOVERY_MODES
+  }
+
+  /**
+   * WS-Discovery answers name the vendor; CGI answers are confirmed with the scan-form
+   * credentials, which exist only here (never in the engine's probe).
+   */
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
-    const p = input?.params ?? {}
+    const p = input.params ?? {}
     const rawUser = typeof p['username'] === 'string' ? p['username'].trim() : ''
     const username = rawUser.length > 0 ? rawUser : 'admin'
     const password = typeof p['password'] === 'string' ? p['password'] : ''
-    const networkCidr = typeof p['networkCidr'] === 'string' ? p['networkCidr'].trim() : ''
-    const timeoutMs = typeof p['timeoutMs'] === 'number' ? p['timeoutMs'] : 5_000
 
-    const results = await Promise.all([
-      discoverAmcrestCameras(timeoutMs).catch(() => [] as readonly DiscoveredAmcrestCamera[]),
-      password
-        ? discoverAmcrestViaHttpScan({
-            username,
-            password,
-            ...(networkCidr ? { networkCidr } : {}),
-          }).catch(() => [] as readonly DiscoveredAmcrestCamera[])
-        : Promise.resolve([] as readonly DiscoveredAmcrestCamera[]),
-    ])
+    const ws = amcrestFromWsdHits(input.hits)
+    const http = await amcrestFromHttpHits(
+      input.hits,
+      password.length > 0 ? { username, password } : null,
+    )
     const byHost = new Map<string, DiscoveredAmcrestCamera>()
-    for (const cam of results.flat()) if (!byHost.has(cam.host)) byHost.set(cam.host, cam)
+    for (const cam of [...ws, ...http]) if (!byHost.has(cam.host)) byHost.set(cam.host, cam)
     const cameras = [...byHost.values()]
-    this.ctx.logger.info('Amcrest discovery complete', {
-      meta: {
-        count: cameras.length,
-        ws: results[0].length,
-        httpScan: results[1].length,
-      },
+    this.ctx.logger.info('Amcrest discovery classified', {
+      meta: { count: cameras.length, ws: ws.length, httpConfirmed: http.length },
     })
 
     return cameras.map((c) => {

@@ -1,6 +1,6 @@
 import { request as httpRequest, type IncomingMessage } from 'node:http'
 import { request as httpsRequest } from 'node:https'
-import { buildAuthHeader, parseChallenge, type DigestState } from './digest-auth.js'
+import { buildAuthHeader, type DigestState, parseChallenge } from './digest-auth.js'
 import { pumpEventStream } from './event-stream-parts.js'
 
 /** Connection parameters for a single camera's CGI surface. */

@@ -10,17 +10,18 @@
  *   in four seconds, which is a branch that accepts work and produces nothing
  *   wearing a success code (D391).
  */
-import { EventEmitter } from 'node:events'
+
 import type { ChildProcess } from 'node:child_process'
-import { describe, expect, it, vi } from 'vitest'
+import { EventEmitter } from 'node:events'
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
+  type ClipStreamOutcome,
+  type ClipStreamSink,
   classifyMuxFailure,
   createClipStreamProducer,
   describeCameraRefusal,
-  type ClipStreamOutcome,
-  type ClipStreamSink,
 } from '../clip-stream.js'
 import { buildClipStreamMuxArgs, parseClipStreamProgress } from '../clip-stream-mux.js'
 import { createReplayLane } from '../replay-lane.js'

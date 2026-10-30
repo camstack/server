@@ -44,9 +44,8 @@ import {
   clipReasonHeaderValue,
   type IScopedLogger,
 } from '@camstack/types'
-
-import type { ClipStreamAudioAsk } from './clip-stream-mux.js'
 import type { ClipStreamOutcome, ClipStreamRefusalCode, ClipStreamSink } from './clip-stream.js'
+import type { ClipStreamAudioAsk } from './clip-stream-mux.js'
 
 /** Long enough for the broker's dial→open hop, short enough that a leaked
  *  URL is worth nothing. */

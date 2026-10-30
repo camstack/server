@@ -6,12 +6,12 @@
  * whether the camera was dialled, whether the lane was held and given back,
  * which code came back. None asserts that a constant exists.
  */
-import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
 
-import { mintClipStill, type MintClipStillDeps } from '../clip-still-mint.js'
+import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 import type { AmcrestClipRow } from '../clip-search.js'
-import { createClipStillGuard, type ClipStillGuard } from '../clip-still-guard.js'
+import { type ClipStillGuard, createClipStillGuard } from '../clip-still-guard.js'
+import { type MintClipStillDeps, mintClipStill } from '../clip-still-mint.js'
 import { createReplayLane, type ReplayLane } from '../replay-lane.js'
 
 const DEVICE_ID = 3836

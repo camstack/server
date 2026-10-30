@@ -3,19 +3,18 @@
  * in a header that survives being one.
  */
 import { get as httpGet } from 'node:http'
-import { describe, expect, it, vi } from 'vitest'
 import {
   CLIP_STILL_REASON_CODE_HEADER,
   CLIP_STILL_REASON_HEADER,
   type IScopedLogger,
 } from '@camstack/types'
-
+import { describe, expect, it, vi } from 'vitest'
+import { type ClipStreamOutcome, clipStreamTrailersFor } from '../clip-stream.js'
 import {
   CLIP_STREAM_REASON_CODE_HEADER,
   createClipStreamDial,
   streamRefusalStatus,
 } from '../clip-stream-dial.js'
-import { clipStreamTrailersFor, type ClipStreamOutcome } from '../clip-stream.js'
 
 /** A logger fake — the documented type boundary a test double needs. */
 function makeLogger(): IScopedLogger {

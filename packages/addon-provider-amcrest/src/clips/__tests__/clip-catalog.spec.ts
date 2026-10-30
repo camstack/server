@@ -2,8 +2,9 @@
  * The `mediaFileFind` walk, against a fake camera that reproduces every trap
  * the real one was measured to have.
  */
-import { describe, expect, it, vi } from 'vitest'
+
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { AmcrestRpc2Client, AmcrestRpc2Result } from '../amcrest-rpc2-client.js'
 import { CLIP_CONTROL_WINDOW, readClipRows } from '../clip-catalog.js'

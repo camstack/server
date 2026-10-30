@@ -41,11 +41,11 @@
 import type {
   OnboardStorage,
   OnboardStorageVolume,
+  RecordingOnboardOptions,
+  RecordingOnboardPatch,
+  RecordingOnboardStatus,
   RecordTrigger,
   RecordWindow,
-  RecordingOnboardOptions,
-  RecordingOnboardStatus,
-  RecordingOnboardPatch,
 } from '@camstack/types'
 import { DAY_NAMES, MINUTES_PER_DAY } from '@camstack/types'
 

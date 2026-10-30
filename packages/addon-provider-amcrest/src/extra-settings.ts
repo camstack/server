@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import type { ConfigSection } from '@camstack/types'
+import { z } from 'zod'
 
 /**
  * Driver-authored device-settings sections for the camera facts that no

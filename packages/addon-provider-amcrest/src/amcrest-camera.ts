@@ -1,4 +1,3 @@
-import { userError } from '@camstack/types'
 import type {
   CamStreamDescriptor,
   ClipSourceAvailability,
@@ -19,6 +18,7 @@ import type {
   PrivacyMaskRegion,
   PrivacyMaskShape,
   PrivacyMaskStatus,
+  PtzHomePreset,
   RecordingOnboardOptions,
   RecordingOnboardStatus,
   StreamParamsOptions,
@@ -31,15 +31,16 @@ import {
   BaseDevice,
   buildDeviceAdminUrl,
   buildStreamParamsConfigSchema,
-  deviceAdminLinkCapability,
   createRuntimeStateBridge,
   DeviceFeature,
   DeviceType,
   dayNightCapability,
+  describeOnboardRefusal,
+  deviceAdminLinkCapability,
+  hubMotionNativeProvider,
   hydrateSchema,
   imageSettingsCapability,
   motionCapability,
-  hubMotionNativeProvider,
   motionZonesCapability,
   OPERATOR_WRITTEN_STALE_MS,
   osdCapability,
@@ -47,19 +48,21 @@ import {
   providerMotionEvent,
   ptzCapability,
   type ReachabilityPollHandle,
-  describeOnboardRefusal,
   recordingOnboardCapability,
   snapshotCapability,
   startReachabilityPoll,
   streamCatalogCapability,
   streamParamsCapability,
   summarisePrivacyAudio,
+  userError,
 } from '@camstack/types'
 import {
   AmcrestCgiClient,
   type AmcrestEvent,
   subscribeAmcrestEvents,
 } from './amcrest-cgi-client.js'
+import { availabilityFromStorage } from './clips/clip-availability.js'
+import type { AmcrestClipCamera } from './clips/clip-service.js'
 import {
   amcrestBacklightToCap,
   amcrestDayNightModeToCap,
@@ -75,8 +78,12 @@ import {
   dayNightSensitivityToPercent,
   percentToDayNightSensitivity,
 } from './dahua-mappings.js'
-import { availabilityFromStorage } from './clips/clip-availability.js'
-import type { AmcrestClipCamera } from './clips/clip-service.js'
+import {
+  AMCREST_EXTRAS_CONFIG_NAMES,
+  buildExtrasSections,
+  extrasPatchToCgiParams,
+  parseExtrasSnapshot,
+} from './extra-settings.js'
 import {
   type AmcrestOnboardReads,
   type AmcrestRecordLimits,
@@ -89,14 +96,7 @@ import {
   parseRecordLimits,
   readPostRecordSec,
 } from './recording-onboard-mapping.js'
-import {
-  AMCREST_EXTRAS_CONFIG_NAMES,
-  buildExtrasSections,
-  extrasPatchToCgiParams,
-  parseExtrasSnapshot,
-} from './extra-settings.js'
 import { AMCREST_ADDON_ID, amcrestCameraSchema } from './schema.js'
-import type { PtzHomePreset } from '@camstack/types'
 
 /**
  * Amcrest/Dahua camera device — CGI control channel (snapshot, PTZ,

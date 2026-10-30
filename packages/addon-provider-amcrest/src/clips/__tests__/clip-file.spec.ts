@@ -2,21 +2,22 @@
  * The re-index pass, and the two things about it that only the real binary
  * could teach.
  */
-import { describe, expect, it, vi } from 'vitest'
-import { EventEmitter } from 'node:events'
+
 import type { ChildProcess } from 'node:child_process'
+import { EventEmitter } from 'node:events'
 import { mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { AmcrestCgiClient } from '../../amcrest-cgi-client.js'
 import { ClipArtifactStore } from '../clip-artifact-store.js'
 import {
   buildClipFaststartArgs,
+  type ClipFileOutcome,
   parseFfmpegDurationMs,
   prepareClipFile,
-  type ClipFileOutcome,
 } from '../clip-file.js'
 
 /** A logger fake — the documented type boundary a test double needs. */

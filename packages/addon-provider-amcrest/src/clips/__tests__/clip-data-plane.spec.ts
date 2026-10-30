@@ -1,19 +1,19 @@
 /**
  * The media route: what reaches the filesystem, and what `Range` answers.
  */
-import { describe, expect, it, vi } from 'vitest'
+
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { IScopedLogger } from '@camstack/types'
-
+import { CLIP_STILL_REASON_HEADER } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 import { ClipArtifactStore } from '../clip-artifact-store.js'
 import {
   CLIP_FILE_REASON_CODE_HEADER,
+  type ClipFileRefusal,
   clipFileRefusalStatus,
   createClipPlaybackHandler,
   parseRange,
-  type ClipFileRefusal,
 } from '../clip-data-plane.js'
-import { CLIP_STILL_REASON_HEADER } from '@camstack/types'
 
 /** A logger fake — the documented type boundary a test double needs. */
 function makeLogger(): IScopedLogger {

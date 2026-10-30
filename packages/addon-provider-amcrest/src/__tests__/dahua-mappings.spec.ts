@@ -1,19 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  DAY_NIGHT_SENSITIVITY_NATIVE_MAX,
-  DAY_NIGHT_DELAY_MIN_SEC,
-  DAY_NIGHT_DELAY_MAX_SEC,
+  amcrestBacklightToCap,
   amcrestDayNightModeToCap,
+  amcrestExposureModeToCap,
+  amcrestRotateToCap,
+  capBacklightToAmcrest,
   capDayNightModeToAmcrest,
+  capExposureModeToAmcrest,
+  capRotateToAmcrest,
+  clampDayNightDelaySec,
+  DAY_NIGHT_DELAY_MAX_SEC,
+  DAY_NIGHT_DELAY_MIN_SEC,
+  DAY_NIGHT_SENSITIVITY_NATIVE_MAX,
   dayNightSensitivityToPercent,
   percentToDayNightSensitivity,
-  clampDayNightDelaySec,
-  amcrestRotateToCap,
-  capRotateToAmcrest,
-  amcrestBacklightToCap,
-  capBacklightToAmcrest,
-  amcrestExposureModeToCap,
-  capExposureModeToAmcrest,
 } from '../dahua-mappings.js'
 
 /**

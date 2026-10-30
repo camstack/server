@@ -1,8 +1,7 @@
-import { networkInterfaces } from 'node:os'
-import { Discovery } from 'onvif'
+import type { DiscoveryHit, DiscoveryMode } from '@camstack/types'
 import { AmcrestCgiClient } from './amcrest-cgi-client.js'
 
-/** An Amcrest/Dahua camera found on the LAN (via WS-Discovery and/or a CGI subnet scan). */
+/** A Amcrest or Dahua camera found on the LAN (via WS-Discovery and/or a CGI probe). */
 export interface DiscoveredAmcrestCamera {
   readonly host: string
   readonly port: number
@@ -10,138 +9,112 @@ export interface DiscoveredAmcrestCamera {
   readonly model?: string
 }
 
-/** Shape emitted by the `onvif` Discovery 'device' event (untyped JS library). */
-interface OnvifDiscoveryDevice {
-  readonly hostname: string
-  readonly port?: number
-  readonly name?: string
-  readonly manufacturer?: string
-  readonly model?: string
-  readonly scopes?: readonly string[]
-}
+const CGI_PORT = 80
 
 /**
- * True when a WS-Discovery responder is an Amcrest / Dahua (or Dahua-OEM)
- * device — matched on manufacturer, name, or any ONVIF scope. Amcrest is
- * a Dahua OEM brand, so both needles are accepted. Case-insensitive.
+ * How the scan engine finds a Amcrest camera: a WS-Discovery probe (matched on the
+ * vendor name in the answer) and a unicast CGI probe. The engine only reports who
+ * answers the CGI path; credentials never leave classification.
  */
-function isAmcrestOrDahua(cam: OnvifDiscoveryDevice): boolean {
-  const needles = ['amcrest', 'dahua']
-  const haystacks = [
-    (cam.manufacturer ?? '').toLowerCase(),
-    (cam.name ?? '').toLowerCase(),
-    ...(cam.scopes ?? []).map((s) => s.toLowerCase()),
-  ]
-  return haystacks.some((h) => needles.some((n) => h.includes(n)))
+export const AMCREST_DISCOVERY_MODES: readonly DiscoveryMode[] = [
+  { kind: 'ws-discovery', types: ['dn:NetworkVideoTransmitter'] },
+  {
+    kind: 'http-probe',
+    port: CGI_PORT,
+    path: '/cgi-bin/magicBox.cgi?action=getSystemInfo',
+    method: 'GET',
+    tls: false,
+    acceptStatus: [200, 401],
+  },
+]
+
+/** Amcrest is a Dahua OEM brand: both names identify the vendor. */
+const VENDOR_NEEDLES = ['amcrest', 'dahua']
+
+function scopeValue(scopes: readonly string[], key: string): string | undefined {
+  const marker = `onvif://www.onvif.org/${key}/`
+  const scope = scopes.find((s) => s.startsWith(marker))
+  if (scope === undefined) return undefined
+  try {
+    return decodeURIComponent(scope.slice(marker.length))
+  } catch {
+    return scope.slice(marker.length)
+  }
 }
 
-/**
- * Discover Amcrest/Dahua cameras via ONVIF WS-Discovery (multicast probe on
- * 239.255.255.250:3702). Works only when the runner can receive multicast —
- * a hub on a macvlan/br0 network often CANNOT, so {@link discoverAmcrestViaHttpScan}
- * is the reliable path.
- */
-export async function discoverAmcrestCameras(
-  timeout: number = 5000,
-): Promise<readonly DiscoveredAmcrestCamera[]> {
-  return new Promise((resolve) => {
-    const byHost = new Map<string, DiscoveredAmcrestCamera>()
-    Discovery.on('device', (rawCam: unknown) => {
-      const cam = rawCam as OnvifDiscoveryDevice
-      if (typeof cam.hostname !== 'string' || cam.hostname.length === 0) return
-      if (!isAmcrestOrDahua(cam)) return
-      if (byHost.has(cam.hostname)) return
-      byHost.set(cam.hostname, {
-        host: cam.hostname,
-        port: cam.port ?? 80,
-        ...(cam.name !== undefined ? { name: cam.name } : {}),
-        ...(cam.model !== undefined ? { model: cam.model } : {}),
-      })
+function portOfXaddr(xaddrs: readonly string[]): number {
+  for (const xaddr of xaddrs) {
+    try {
+      const url = new URL(xaddr)
+      return url.port.length > 0 ? Number(url.port) : CGI_PORT
+    } catch {
+      // try the next address
+    }
+  }
+  return CGI_PORT
+}
+
+/** Amcrest cameras among the WS-Discovery hits (vendor named in a scope), one per host. */
+export function amcrestFromWsdHits(
+  hits: readonly DiscoveryHit[],
+): readonly DiscoveredAmcrestCamera[] {
+  const out = new Map<string, DiscoveredAmcrestCamera>()
+  for (const hit of hits) {
+    const wsd = hit.wsd
+    if (wsd === undefined || out.has(hit.host)) continue
+    const named = [...wsd.scopes, scopeValue(wsd.scopes, 'name') ?? ''].map((t) => t.toLowerCase())
+    if (!named.some((t) => VENDOR_NEEDLES.some((n) => t.includes(n)))) continue
+    const name = scopeValue(wsd.scopes, 'name')
+    const model = scopeValue(wsd.scopes, 'hardware')
+    out.set(hit.host, {
+      host: hit.host,
+      port: portOfXaddr(wsd.xaddrs),
+      ...(name !== undefined ? { name } : {}),
+      ...(model !== undefined ? { model } : {}),
     })
-    Discovery.probe({ timeout })
-    setTimeout(() => {
-      Discovery.removeAllListeners('device')
-      resolve([...byHost.values()])
-    }, timeout + 500)
-  })
+  }
+  return [...out.values()]
 }
 
-export interface HttpScanOptions {
-  /** IPv4 CIDR to scan (e.g. `192.168.10.0/24`). Omit to auto-detect the node's local /24. */
-  readonly networkCidr?: string
+export interface IsapiCredentials {
   readonly username: string
   readonly password: string
-  /** Per-host CGI probe timeout (ms). Default 1500. */
-  readonly probeTimeoutMs?: number
-  /** Max concurrent probes. Default 40. */
-  readonly concurrency?: number
 }
 
 /**
- * Discover Amcrest/Dahua cameras by probing every host in a subnet for the
- * `magicBox.cgi?action=getSystemInfo` endpoint (digest-auth). Unicast HTTP —
- * reliable from a macvlan/br0 container where multicast WS-Discovery is not
- * received. A host that returns a valid `deviceType` + `serialNumber` is kept
- * (so a NAS/router that answers some 200 is not offered as a camera).
+ * Hosts that answered the CGI probe, confirmed with the operator's credentials: only a
+ * REAL `getSystemInfo` answer (deviceType and serial) counts, so a NAS answering 401 is not
+ * offered as a camera. Without a password nothing is confirmed. One follow-up call per hit
+ * host, never a sweep.
  */
-export async function discoverAmcrestViaHttpScan(
-  opts: HttpScanOptions,
+export async function amcrestFromHttpHits(
+  hits: readonly DiscoveryHit[],
+  credentials: IsapiCredentials | null,
+  probeTimeoutMs = 1_500,
 ): Promise<readonly DiscoveredAmcrestCamera[]> {
-  const hosts = enumerateHosts(opts.networkCidr ?? detectLocalCidr())
-  const probeTimeoutMs = opts.probeTimeoutMs ?? 1500
-  const concurrency = opts.concurrency ?? 40
+  if (credentials === null) return []
+  const hosts = [...new Set(hits.filter((h) => h.http !== undefined).map((h) => h.host))]
   const found: DiscoveredAmcrestCamera[] = []
-
-  let cursor = 0
-  const worker = async (): Promise<void> => {
-    while (cursor < hosts.length) {
-      const host = hosts[cursor++]
-      if (host === undefined) return
+  await Promise.all(
+    hosts.map(async (host) => {
       const client = new AmcrestCgiClient({
         host,
-        port: 80,
+        port: CGI_PORT,
         https: false,
-        username: opts.username,
-        password: opts.password,
+        username: credentials.username,
+        password: credentials.password,
         defaultTimeoutMs: probeTimeoutMs,
       })
       try {
         const info = await client.getDeviceInfo()
-        if (info.deviceType === null || info.serialNumber === null) continue
-        found.push({ host, port: 80, name: info.deviceType, model: info.deviceType })
+        if (info.deviceType === null || info.serialNumber === null) return
+        found.push({ host, port: CGI_PORT, name: info.deviceType, model: info.deviceType })
       } catch {
-        // not a reachable Dahua CGI host (unreachable / 401 bad creds / non-Dahua) — skip
+        // unreachable, bad credentials or not CGI: not a camera we can offer
       }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(concurrency, hosts.length) }, () => worker()))
+    }),
+  )
   return found
-}
-
-/** Enumerate the usable host addresses of an IPv4 `a.b.c.d/nn` (only /24-and-narrower supported). */
-function enumerateHosts(cidr: string): string[] {
-  const [base, bitsRaw] = cidr.split('/')
-  const bits = Number.parseInt(bitsRaw ?? '24', 10)
-  const octets = (base ?? '').split('.').map((o) => Number.parseInt(o, 10))
-  if (octets.length !== 4 || octets.some((o) => !Number.isFinite(o))) return []
-  if (bits < 24) return [] // guard against scanning huge ranges
-  const [a, b, c] = octets
-  const out: string[] = []
-  for (let d = 1; d <= 254; d += 1) out.push(`${a}.${b}.${c}.${d}`)
-  return out
-}
-
-/** Best-effort local /24 from the first non-internal IPv4 interface (e.g. `192.168.10.0/24`). */
-function detectLocalCidr(): string {
-  for (const addrs of Object.values(networkInterfaces())) {
-    for (const addr of addrs ?? []) {
-      if (addr.family === 'IPv4' && !addr.internal) {
-        const [a, b, c] = addr.address.split('.')
-        return `${a}.${b}.${c}.0/24`
-      }
-    }
-  }
-  return '192.168.10.0/24'
 }
 
 /** Flatten a host into a flat row-key slug — must match `generateStableId`'s host fallback so a

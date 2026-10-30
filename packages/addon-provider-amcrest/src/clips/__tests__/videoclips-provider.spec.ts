@@ -2,15 +2,16 @@
  * The provider surface: what a SOURCE says about itself, what an empty window
  * means, and what `served` answers.
  */
-import { describe, expect, it, vi } from 'vitest'
+
 import type { CamProfile, ClipSourceAvailability, IScopedLogger } from '@camstack/types'
 import { CLIP_PLAYBACK_OPTIONS, VIDEOCLIPS_MAX_OFFER_BYTES } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AMCREST_ADDON_ID } from '../../schema.js'
 import {
+  type AmcrestVideoclipsDeps,
   clipFileLabel,
   createAmcrestVideoclipsProvider,
-  type AmcrestVideoclipsDeps,
   type PrepareStreamDialOutcome,
   type ReadCatalogOutcome,
 } from '../amcrest-videoclips-provider.js'

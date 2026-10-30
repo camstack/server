@@ -8,18 +8,18 @@
  * eight-file bound throws it away and the media route offers it as
  * `video/mp4`. It reaches the real `createClipService` and needs no camera.
  */
-import { mkdtemp, mkdir, rm, writeFile, readdir } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
-  ClipArtifactStore,
   CLIP_SCRATCH_MAX_FILES_PER_DEVICE,
   CLIP_THUMB_EXTENSION,
   CLIP_THUMB_KIND,
+  ClipArtifactStore,
   THUMB_MAX_FILES_PER_DEVICE,
 } from '../clip-artifact-store.js'
 import { createClipService } from '../clip-service.js'

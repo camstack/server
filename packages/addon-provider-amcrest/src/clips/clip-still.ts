@@ -67,10 +67,9 @@ import type { ChildProcess } from 'node:child_process'
 
 import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
 import { type PinnedFfmpegSpawnAnswer, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
-
+import type { AmcrestClipRow } from './clip-search.js'
 import { classifyMuxFailure, describeCameraRefusal } from './clip-stream.js'
 import { CLIP_MUX_PROBE_BYTES } from './clip-stream-mux.js'
-import type { AmcrestClipRow } from './clip-search.js'
 
 /**
  * The long edge of a still.

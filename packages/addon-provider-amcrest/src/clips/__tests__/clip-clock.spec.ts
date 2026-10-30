@@ -5,15 +5,15 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  type AmcrestCameraClock,
+  CAMERA_CLOCK_STALE_MS,
   cameraClockDisagrees,
   cameraClockIsFresh,
-  CAMERA_CLOCK_STALE_MS,
   deriveCameraClock,
   fromCameraWallClock,
   parseCurrentTimeBody,
   parseWallClockAsUtcMs,
   toCameraWallClock,
-  type AmcrestCameraClock,
 } from '../clip-clock.js'
 
 /** The measurement, verbatim: the camera said 11:29:27 at host UTC 09:29:27.711. */

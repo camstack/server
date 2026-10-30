@@ -2,7 +2,7 @@
  * The still ROUTE: what a tile is handed, and what it is told when there is
  * no picture.
  */
-import { describe, expect, it, vi } from 'vitest'
+
 import { EventEmitter } from 'node:events'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import {
@@ -11,9 +11,10 @@ import {
   CLIP_STILL_REASON_HEADER,
   type IScopedLogger,
 } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createClipThumbHandler } from '../clip-data-plane.js'
-import { deferStill, refuseStill, type MintResult } from '../clip-still-refusal.js'
+import { deferStill, type MintResult, refuseStill } from '../clip-still-refusal.js'
 
 const DEVICE_ID = 3836
 const CLIP_KEY = '1790168287-1790168435'

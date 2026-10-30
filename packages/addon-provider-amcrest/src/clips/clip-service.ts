@@ -15,6 +15,9 @@
  * here and cached per device, because `mediaFileFind` is the only thing in
  * this addon that needs it.
  */
+
+import { readFile } from 'node:fs/promises'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import type {
   AddonPeerBytes,
   ClipSourceAvailability,
@@ -22,25 +25,28 @@ import type {
   IVideoclipsProvider,
   PinnedFfmpegResolver,
 } from '@camstack/types'
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { readFile } from 'node:fs/promises'
 
 import type { AmcrestCgiClient } from '../amcrest-cgi-client.js'
+import { AMCREST_ADDON_ID } from '../schema.js'
 import { AmcrestRpc2Client } from './amcrest-rpc2-client.js'
 import {
-  ClipArtifactStore,
+  type ClipDeviceRef,
+  createAmcrestVideoclipsProvider,
+} from './amcrest-videoclips-provider.js'
+import {
   CLIP_THUMB_EXTENSION,
   CLIP_THUMB_KIND,
+  ClipArtifactStore,
   THUMB_MAX_BYTES_PER_DEVICE,
   THUMB_MAX_FILES_PER_DEVICE,
 } from './clip-artifact-store.js'
 import { availabilityFromClock } from './clip-availability.js'
 import { readClipRows } from './clip-catalog.js'
 import {
+  type AmcrestCameraClock,
   cameraClockDisagrees,
   cameraClockIsFresh,
   deriveCameraClock,
-  type AmcrestCameraClock,
 } from './clip-clock.js'
 import {
   CLIP_MEDIA_PREFIX,
@@ -51,18 +57,13 @@ import {
 } from './clip-data-plane.js'
 import { prepareClipFile } from './clip-file.js'
 import { buildReplayUrl } from './clip-replay-url.js'
-import { createClipStreamDial } from './clip-stream-dial.js'
-import { createClipStreamProducer } from './clip-stream.js'
+import type { AmcrestClipRow } from './clip-search.js'
 import { cutClipStill } from './clip-still.js'
 import { createClipStillGuard } from './clip-still-guard.js'
 import { mintClipStill } from './clip-still-mint.js'
+import { createClipStreamProducer } from './clip-stream.js'
+import { createClipStreamDial } from './clip-stream-dial.js'
 import { createReplayLane } from './replay-lane.js'
-import type { AmcrestClipRow } from './clip-search.js'
-import {
-  createAmcrestVideoclipsProvider,
-  type ClipDeviceRef,
-} from './amcrest-videoclips-provider.js'
-import { AMCREST_ADDON_ID } from '../schema.js'
 
 /** What the addon hands this service for one camera it owns. */
 export interface AmcrestClipCamera {

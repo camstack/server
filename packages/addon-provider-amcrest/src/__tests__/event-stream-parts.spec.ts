@@ -1,12 +1,12 @@
 import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { eventStreamPath, type AmcrestEvent } from '../amcrest-cgi-client.js'
+import { type AmcrestEvent, eventStreamPath } from '../amcrest-cgi-client.js'
 import {
   EVENT_STREAM_BUFFER_RETAIN_BYTES,
   EVENT_STREAM_MAX_BUFFER_BYTES,
+  type MultipartItem,
   pumpEventStream,
   readCompleteParts,
-  type MultipartItem,
 } from '../event-stream-parts.js'
 
 const BOUNDARY = 'myboundary'

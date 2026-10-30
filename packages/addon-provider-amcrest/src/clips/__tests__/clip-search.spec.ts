@@ -5,10 +5,11 @@
  * `dav` is a `Types: ["dav"]` search, `unfiltered` is the same window with no
  * type filter — which is how the JPEG rows get in.
  */
-import { describe, expect, it } from 'vitest'
+
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-
+import { describe, expect, it } from 'vitest'
+import type { AmcrestCameraClock } from '../clip-clock.js'
 import {
   buildFindCondition,
   CLIP_FIND_FLAGS,
@@ -17,7 +18,6 @@ import {
   findWalkIsComplete,
   parseClipRow,
 } from '../clip-search.js'
-import type { AmcrestCameraClock } from '../clip-clock.js'
 
 interface RowFixture {
   readonly dav: readonly unknown[]
