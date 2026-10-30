@@ -623,29 +623,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
             },
           ],
         },
-        {
-          id: 'alexa-proxy-login',
-          title: 'Interactive login (proxy)',
-          titleKey: 'import-alexa:globalSettings.s_alexa-proxy-login.title',
-          description:
-            'The "Sign in" button in onboarding opens the real Amazon login page through this hub ' +
-            '(same address and HTTPS as this page) and captures the cookie after you complete ' +
-            'it (incl. 2FA). The port below is only used on the hub itself and is never exposed.',
-          descriptionKey: 'import-alexa:globalSettings.s_alexa-proxy-login.description',
-          columns: 2,
-          fields: [
-            {
-              type: 'number' as const,
-              key: 'proxyLogin.proxyPort',
-              label: 'Internal login port (loopback)',
-              labelKey:
-                'import-alexa:globalSettings.s_alexa-proxy-login.proxyLogin_proxyPort.label',
-              min: 1,
-              max: 65535,
-              default: 3456,
-            },
-          ],
-        },
       ],
     })
   }

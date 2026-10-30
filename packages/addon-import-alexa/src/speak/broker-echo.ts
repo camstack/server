@@ -73,6 +73,15 @@ export class BrokerEcho {
     try {
       const seed = await this.deps.readSeed()
       const stored = await sessions.get(brokerId)
+      logger.info('alexa speak: broker sign-in material', {
+        ...tags,
+        meta: {
+          seedFound: seed !== null,
+          hasRefreshToken: seed !== null && seed.refreshToken.length > 0,
+          hasDeviceAppName: seed !== null && seed.deviceAppName.length > 0,
+          hasStoredSession: stored.length > 0,
+        },
+      })
       if (seed === null && stored.length === 0) {
         this.currentState = 'broker-not-signed-in'
         this.currentError = null

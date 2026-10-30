@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa accounts now connect after a device-code sign-in (the broker no longer errors with getAuthenticationDetails), and the Amazon login offers only the device-code sign-in
+
 ## [0.2.169] - 2026-10-30
 
 ### Changed

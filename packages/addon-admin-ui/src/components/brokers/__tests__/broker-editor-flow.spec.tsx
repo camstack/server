@@ -201,7 +201,7 @@ describe('BrokerEditorDialog — a kind that declares an interactive sign-in', (
           {
             kind: 'account',
             label: 'Account Import',
-            signIn: { basePath: SIGN_IN },
+            signIn: { basePath: SIGN_IN, methods: ['proxy'] },
           },
         ],
       },

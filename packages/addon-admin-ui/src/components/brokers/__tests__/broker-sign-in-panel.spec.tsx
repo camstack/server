@@ -51,10 +51,15 @@ afterEach(() => {
 })
 
 describe('BrokerSignInPanel', () => {
-  it('shows no selector for a single method (absent = proxy only)', () => {
+  it('shows no selector and the device-code flow when no method is declared', () => {
     render(<BrokerSignInPanel {...props} />)
     expect(screen.queryByRole('tab')).toBeNull()
-    expect(screen.queryByTestId('device-code')).toBeNull()
+    expect(screen.getByRole('button', { name: /get a code/i })).toBeTruthy()
+  })
+
+  it('shows no selector for a single advertised method', () => {
+    render(<BrokerSignInPanel {...props} methods={['device-code']} />)
+    expect(screen.queryByRole('tab')).toBeNull()
   })
 
   it('shows a selector for two methods and defaults to the first', () => {

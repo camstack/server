@@ -126,15 +126,9 @@ export class AlexaRemoteClient implements AlexaClient {
       throw err
     }
 
-    // A successful init still may not be authenticated — verify.
-    const auth = remote.getAuthenticationDetails()
-    if (auth.authenticated !== true) {
-      this.#connected = false
-      throw new AlexaAuthError(
-        'account not authenticated (cookie/refresh token rejected or expired)',
-      )
-    }
-
+    // alexa-remote2's `init` already verifies authentication (checkAuthentication)
+    // and re-initialises or errors when the session is rejected, so success here
+    // means authenticated.
     this.#connected = true
     await this.#persistSession(remote)
   }

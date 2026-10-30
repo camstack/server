@@ -14,12 +14,12 @@ import type { BrokerSignInMethod } from '../../lib/broker-sign-in'
 import { BrokerDeviceCodeSignIn } from './BrokerDeviceCodeSignIn'
 import { BrokerProxySignIn } from './BrokerProxySignIn'
 
-const DEFAULT_METHODS: readonly BrokerSignInMethod[] = ['proxy']
+const DEFAULT_METHODS: readonly BrokerSignInMethod[] = ['device-code']
 
 export interface BrokerSignInPanelProps {
   /** The kind's `signIn.basePath`. */
   readonly basePath: string
-  /** The kind's `signIn.methods`; absent means the guided proxy only. */
+  /** The kind's `signIn.methods`; absent means the device-code flow only. */
   readonly methods?: readonly BrokerSignInMethod[]
   /** Name for a NEW broker; ignored when `brokerId` re-links an existing one. */
   readonly name: string
@@ -35,7 +35,8 @@ export function BrokerSignInPanel({ methods, ...flow }: BrokerSignInPanelProps) 
   const { t } = useTranslation()
   const available = methods !== undefined && methods.length > 0 ? methods : DEFAULT_METHODS
   const [picked, setPicked] = useState<BrokerSignInMethod | null>(null)
-  const method = picked !== null && available.includes(picked) ? picked : (available[0] ?? 'proxy')
+  const method =
+    picked !== null && available.includes(picked) ? picked : (available[0] ?? 'device-code')
 
   return (
     <div className="space-y-2">

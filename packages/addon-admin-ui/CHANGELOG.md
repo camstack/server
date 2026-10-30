@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Scan network lists each integration's devices with gateway children nested, lets you tick several devices to add at once, and edits the extra networks to scan; the integration form gets a Scan button that fills it.
+- A failed integration create no longer shows its error in the next provider you pick, the network scan shows devices the provider already matched as Already added, and the broker sign-in defaults to the device code
 
 ## [1.2.526] - 2026-10-30
 

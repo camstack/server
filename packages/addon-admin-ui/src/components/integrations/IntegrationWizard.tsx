@@ -195,6 +195,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     setDiscoveryMode(providerDiscoveryMode)
     setPendingName(displayName)
     setPickerError(null)
+    addProviderMutation.reset()
 
     // Route by `mode` (LOCKED MODEL), never by addon name:
     //   - broker     → shared-bus/session broker step (HA/MQTT). The operator
@@ -337,6 +338,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     setPendingName('')
     setCreatedIntegrationId(null)
     setPickerError(null)
+    addProviderMutation.reset()
     setCanTest(false)
     setFormSeed({})
     setAppliedSeed('')

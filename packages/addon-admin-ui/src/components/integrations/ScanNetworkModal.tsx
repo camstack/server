@@ -269,7 +269,13 @@ function CandidateRow({
   const { t } = useTranslation()
   const host = candidate.prefilledConfig['host']
   const address = typeof host === 'string' ? host : null
-  const alreadyExists = row.existingStableIds.has(candidate.stableId)
+  // The provider matches a candidate to a stored device by more than the scan key
+  // (Reolink scans `host-<ip>`, stores `mac-<mac>`), so its verdict counts too:
+  // re-adding would overwrite the stored settings.
+  const alreadyExists =
+    row.existingStableIds.has(candidate.stableId) ||
+    candidate.alreadyOnboarded === true ||
+    candidate.onboardedDeviceId !== undefined
   const isAdopted = row.adopted.has(candidate.stableId) || alreadyExists
   const isBusy = row.adopting.has(candidate.stableId)
   const setup = row.fill || needsIntegrationSetup(candidate)
@@ -295,6 +301,9 @@ function CandidateRow({
         <p className="truncate text-xs font-medium text-foreground">{candidate.suggestedName}</p>
         {address && (
           <p className="truncate font-mono text-[10px] text-foreground-subtle">{address}</p>
+        )}
+        {alreadyExists && candidate.onboardedName !== undefined && (
+          <p className="truncate text-[10px] text-foreground-subtle">{candidate.onboardedName}</p>
         )}
       </div>
       {isAdopted ? (
