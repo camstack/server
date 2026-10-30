@@ -23,6 +23,8 @@ const SNAPSHOT_SETTLE_MAX_PULLS = 20
 const CLOSE_RETRY_BASE_MS = 50
 const CLOSE_RETRY_MAX_MS = 1_000
 const CLOSE_ATTEMPTS_PER_PASS = 3
+/** How long a delete/edit waits for a node to acknowledge a camera close. */
+const CLOSE_INSTANCE_MAX_WAIT_MS = 5_000
 
 interface RelayState {
   readonly instanceId: string
@@ -496,18 +498,40 @@ export class TerminalCameraRelay {
     }
   }
 
-  /** Stop a withdrawn/offline camera's relay, including active HTTP readers. */
-  async closeInstance(instanceId: string): Promise<void> {
+  /**
+   * Stop a withdrawn/offline camera's relay, including active HTTP readers.
+   *
+   * The remote close/open is addressed to the instance's node. A node that
+   * left the cluster never answers, so the wait is bounded: the retrying
+   * cleanup keeps running in the background, but a caller (a delete, an edit)
+   * is never held hostage by a node that cannot reply.
+   */
+  async closeInstance(instanceId: string, maxWaitMs = CLOSE_INSTANCE_MAX_WAIT_MS): Promise<void> {
     const state = this.states.get(relayKey(instanceId))
     if (!state) return
     for (const response of state.responses) response.destroy()
     state.responses.clear()
     state.clients = 0
     state.leases = 0
-    await this.closeState(state)
-    if (state.openPromise) {
-      await state.openPromise.catch(() => {})
+    const closing = (async () => {
       await this.closeState(state)
+      if (state.openPromise) {
+        await state.openPromise.catch(() => {})
+        await this.closeState(state)
+      }
+    })()
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const bound = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), maxWaitMs)
+    })
+    const outcome = await Promise.race([closing.then(() => 'closed' as const), bound])
+    if (timer) clearTimeout(timer)
+    if (outcome === 'timeout') {
+      closing.catch(() => {})
+      this.logger.warn('terminal camera close still pending — node did not answer; continuing', {
+        ...this.tagsFor(instanceId),
+        meta: { nodeId: state.nodeId, waitedMs: maxWaitMs },
+      })
     }
   }
 

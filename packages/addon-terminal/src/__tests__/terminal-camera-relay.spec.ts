@@ -354,6 +354,54 @@ describe('TerminalCameraRelay', () => {
   })
 
   /**
+   * Deleting an instance whose node left the cluster. The remote close (or a
+   * still-pending open) is addressed to a node that cannot answer, so it
+   * never settles; `closeInstance` used to await it, and the delete behind it
+   * never reached the point where the instance is removed from the config.
+   */
+  it('closeInstance returns within its bound when the node never answers the close', async () => {
+    const closeSession = vi.fn(() => new Promise<void>(() => {}))
+    const api: TerminalCameraApi = {
+      listProfiles: async () => [{ profileId: 'monitor', label: 'System Monitor' }],
+      openSession: async () => sessionInfo(),
+      pullOutput: async () => ({ cursor: 1, reset: true, snapshot: 'READY', events: [] }),
+      closeSession,
+    }
+    const relay = new TerminalCameraRelay(api, logger)
+    await relay.start()
+    const controller = new AbortController()
+    const response = await fetch(relay.streamUrl('instance-a', 'gone-node', 'monitor'), {
+      signal: controller.signal,
+    })
+    await response.body!.getReader().read()
+
+    const started = Date.now()
+    await relay.closeInstance('instance-a', 100)
+
+    expect(Date.now() - started).toBeLessThan(2_000)
+    expect(closeSession).toHaveBeenCalledWith('gone-node', 'camera-session')
+    controller.abort()
+  }, 5_000)
+
+  it('closeInstance returns within its bound when the node never answers the open', async () => {
+    const api: TerminalCameraApi = {
+      listProfiles: async () => [{ profileId: 'monitor', label: 'System Monitor' }],
+      openSession: () => new Promise<TerminalSessionInfo>(() => {}),
+      pullOutput: async () => ({ cursor: 1, reset: true, snapshot: 'READY', events: [] }),
+      closeSession: async () => {},
+    }
+    const relay = new TerminalCameraRelay(api, logger)
+    await relay.start()
+    void relay.snapshot('instance-a', 'gone-node', 'monitor').catch(() => {})
+    await Promise.resolve()
+
+    const started = Date.now()
+    await relay.closeInstance('instance-a', 100)
+
+    expect(Date.now() - started).toBeLessThan(2_000)
+  }, 5_000)
+
+  /**
    * The path the STREAM BROKER actually takes when it stops pulling.
    *
    * A terminal camera is a `pull-http` broker source: the broker's ffmpeg

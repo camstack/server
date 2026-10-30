@@ -741,7 +741,9 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       })
     })
     this.terminalCameraTombstones.add(instance.cameraStableId)
-    await this.cameraRelay?.closeInstance(instance.id)
+    // The operator's intent is persisted FIRST. Closing the relay session
+    // talks to the instance's node, which may be gone from the cluster; that
+    // I/O is bounded and must never decide whether the delete happens.
     await this.updateGlobalSettings({
       terminalInstances: this.config.terminalInstances.filter(
         (candidate) => candidate.id !== instanceId,
@@ -749,6 +751,15 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       terminalCameraTombstones: [
         ...new Set([...this.config.terminalCameraTombstones, instance.cameraStableId]),
       ],
+    })
+    await this.cameraRelay?.closeInstance(instance.id).catch((error: unknown) => {
+      this.ctx.logger.warn('could not close the deleted Terminal instance session', {
+        meta: {
+          instanceId: instance.id,
+          nodeId: instance.nodeId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
     })
   }
 
