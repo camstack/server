@@ -35,7 +35,7 @@ import {
 } from '@camstack/ui-library'
 import type { DataColumn } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Bell, Copy, Loader2, Plus, Search, Send, Trash2 } from 'lucide-react'
+import { Bell, Copy, Loader2, Plus, Send, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AdminPage } from '../../components/AdminPage'
 import { NotificationTestPanel } from './NotificationTestPanel'
@@ -60,9 +60,7 @@ import {
   withRequiredSecrets,
   withStoredSecretPlaceholders,
 } from './notification-targets.helpers'
-import { discoverableKinds } from './notification-target-discovery'
 import { TARGET_KIND_PARAM, TARGET_NEW } from './notification-targets-url'
-import { TargetDiscoveryDialog } from './TargetDiscoveryDialog'
 import { KindIcon, type TargetKindWithIcon } from './target-kind-icon'
 import { TargetSecretNotice } from './target-secret-notice'
 import { useTranslation } from 'react-i18next'
@@ -256,7 +254,6 @@ export function NotificationTargetsPage({
   const [kindParam, setKindParam] = useUrlQueryParam(TARGET_KIND_PARAM)
   const [editor, setEditor] = useState<EditorState>({ mode: 'closed' })
   const [testTarget, setTestTarget] = useState<Target | null>(null)
-  const [discoverOpen, setDiscoverOpen] = useState(false)
   const restoredTargetRef = useRef<string | null>(null)
 
   const targetsQuery = useQuery({
@@ -281,7 +278,6 @@ export function NotificationTargetsPage({
   })
 
   const kinds = useMemo(() => kindsQuery.data ?? [], [kindsQuery.data])
-  const discoverable = useMemo(() => discoverableKinds(kinds), [kinds])
   const kindByKey = useMemo(() => {
     const m = new Map<string, TargetKindWithIcon>()
     for (const k of kinds) m.set(k.kind, k)
@@ -407,20 +403,12 @@ export function NotificationTargetsPage({
         "Deliver notifications to ntfy, Pushover, Telegram, Home Assistant and more. Each target's kind declares its capabilities; the test panel shows exactly what a message degrades to.",
       )}
     >
-      {!headerOwnsCreate || discoverable.length > 0 ? (
+      {!headerOwnsCreate ? (
         <div className="mb-3 flex justify-end gap-2">
-          {discoverable.length > 0 ? (
-            <Button size="sm" variant="outline" type="button" onClick={() => setDiscoverOpen(true)}>
-              <Search className="h-3.5 w-3.5" />
-              {t('system.notificationTargets.findDevices', 'Find devices')}
-            </Button>
-          ) : null}
-          {!headerOwnsCreate ? (
-            <Button size="sm" type="button" onClick={openPickKind}>
-              <Plus className="h-3.5 w-3.5" />
-              {t('system.notificationTargets.addTarget', 'Add target')}
-            </Button>
-          ) : null}
+          <Button size="sm" type="button" onClick={openPickKind}>
+            <Plus className="h-3.5 w-3.5" />
+            {t('system.notificationTargets.addTarget', 'Add target')}
+          </Button>
         </div>
       ) : null}
       {targetsQuery.isLoading && <NcListLoading />}
@@ -486,18 +474,6 @@ export function NotificationTargetsPage({
           onCancel={closeEditor}
           onSaved={() => {
             closeEditor()
-            void targetsQuery.refetch()
-          }}
-        />
-      )}
-
-      {discoverOpen && (
-        <TargetDiscoveryDialog
-          kinds={discoverable}
-          targets={targetsQuery.data ?? []}
-          onClose={() => setDiscoverOpen(false)}
-          onAdded={() => {
-            setDiscoverOpen(false)
             void targetsQuery.refetch()
           }}
         />

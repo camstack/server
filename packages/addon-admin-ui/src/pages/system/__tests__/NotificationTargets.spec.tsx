@@ -400,91 +400,22 @@ describe('NotificationTargets page', () => {
     expect(arg.target.config.serverUrl).toBe('https://ntfy.sh')
     expect(arg.target.config.token).toBe(LIVE_TOKEN)
   })
-  describe('Find devices', () => {
-    function echoKind(): TargetKind {
-      return {
-        ...ntfyKind('import-alexa'),
-        kind: 'alexa-echo',
-        label: 'Alexa',
-        supportsDiscovery: true,
-        destinationKeys: ['brokerId', 'echoId'],
-      }
-    }
-
-    function echoTarget(): Target {
-      return {
-        id: 'echo-1',
-        name: 'Kitchen',
-        kind: 'alexa-echo',
-        addonId: 'import-alexa',
-        enabled: true,
-        config: { brokerId: 'b1', echoId: 'e1' },
-      }
-    }
-
-    it('is not offered when no kind can be searched', async () => {
-      mockKinds = [ntfyKind()]
+  describe("discovery lives inside one kind's form, not on the page", () => {
+    it('offers no mass "Find devices" and searches nothing on load', async () => {
+      mockKinds = [
+        ntfyKind(),
+        {
+          ...ntfyKind('import-alexa'),
+          kind: 'alexa-echo',
+          label: 'Alexa',
+          supportsDiscovery: true,
+          destinationKeys: ['brokerId', 'echoId'],
+        },
+      ]
       renderPage()
       await waitFor(() => expect(screen.getByText('Add target')).toBeTruthy())
       expect(screen.queryByText('Find devices')).toBeNull()
-    })
-
-    it('asks only the kinds that declare discovery, through their own addon', async () => {
-      mockKinds = [ntfyKind(), echoKind()]
-      renderPage()
-      fireEvent.click(await screen.findByText('Find devices'))
-      await waitFor(() => expect(mockDiscover).toHaveBeenCalledTimes(1))
-      expect(mockDiscover).toHaveBeenCalledWith({ addonId: 'import-alexa', kind: 'alexa-echo' })
-    })
-
-    it('proposes the devices that have no target yet and adds the ticked ones', async () => {
-      mockKinds = [echoKind()]
-      mockTargets = [echoTarget()]
-      mockDiscover.mockResolvedValue([
-        { kind: 'alexa-echo', suggestedName: 'Kitchen', config: { brokerId: 'b1', echoId: 'e1' } },
-        { kind: 'alexa-echo', suggestedName: 'Hall', config: { brokerId: 'b1', echoId: 'e2' } },
-        { kind: 'alexa-echo', suggestedName: 'Office', config: { brokerId: 'b1', echoId: 'e3' } },
-      ])
-      renderPage()
-      fireEvent.click(await screen.findByText('Find devices'))
-      const dialog = await screen.findByTestId('target-discovery-dialog')
-      await waitFor(() => expect(within(dialog).getByText('Hall')).toBeTruthy())
-      expect(within(dialog).queryByText('Kitchen')).toBeNull()
-      fireEvent.click(within(dialog).getByLabelText('Add Office'))
-      fireEvent.click(within(dialog).getByText('Add selected (1)'))
-      await waitFor(() => expect(mockUpsert).toHaveBeenCalledTimes(1))
-      const arg = mockUpsert.mock.calls[0]![0] as { addonId: string; target: Target }
-      expect(arg.addonId).toBe('import-alexa')
-      expect(arg.target).toMatchObject({
-        name: 'Hall',
-        kind: 'alexa-echo',
-        addonId: 'import-alexa',
-        enabled: true,
-        config: { brokerId: 'b1', echoId: 'e2' },
-      })
-    })
-
-    it('says so when every device found already has a target', async () => {
-      mockKinds = [echoKind()]
-      mockTargets = [echoTarget()]
-      mockDiscover.mockResolvedValue([
-        { kind: 'alexa-echo', suggestedName: 'Kitchen', config: { brokerId: 'b1', echoId: 'e1' } },
-      ])
-      renderPage()
-      fireEvent.click(await screen.findByText('Find devices'))
-      await waitFor(() =>
-        expect(screen.getByText('Every device that was found already has a target.')).toBeTruthy(),
-      )
-    })
-
-    it('names a provider that could not be searched without hiding the others', async () => {
-      mockKinds = [echoKind()]
-      mockDiscover.mockRejectedValue(new Error('not signed in'))
-      renderPage()
-      fireEvent.click(await screen.findByText('Find devices'))
-      await waitFor(() =>
-        expect(screen.getByText('Could not look for Alexa: not signed in')).toBeTruthy(),
-      )
+      expect(mockDiscover).not.toHaveBeenCalled()
     })
   })
 })

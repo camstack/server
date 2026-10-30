@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collapsible headers in forms and the script/automation log toggles use the shared larger chevron
 - Add integration, Adopt devices and Add device dialogs are now standard dialogs: Escape closes them and they follow the shared sizing
 - Terminal page: node picker on instance edit, a clear 'node not in cluster' state, and loading/unknown states instead of 'no instances'.
+- Notification targets pick a broker and list their options inside the add/edit form; the page-wide Find devices dialog is gone
 
 ## [1.2.526] - 2026-10-30
 
