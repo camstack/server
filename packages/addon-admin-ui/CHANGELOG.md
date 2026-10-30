@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Terminal page: one table of every terminal across nodes with a New terminal dialog; nodes without Terminal show as not installed
+- The adoption list now nests devices under their gateway and shows the model and device id next to same-named rows.
 
 ## [1.2.528] - 2026-10-30
 

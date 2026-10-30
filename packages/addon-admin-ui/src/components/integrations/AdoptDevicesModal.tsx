@@ -29,9 +29,10 @@ import {
   RotateCw,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AdoptJobProgress } from './AdoptJobProgress'
+import { candidateDistinguisher, orderCandidatesAsTree } from './adopt-candidate-rows'
 import { candidateSearchText } from './adopt-candidate-search'
 
 // The reserved, universal default granularity. A provider that declares no
@@ -187,6 +188,12 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
       : null
 
   const candidates: readonly DiscoveredChildDevice[] = listQuery.data?.candidates ?? []
+  // Children (`parentStableId`) nest under their parent, in tree order.
+  const treeRows = useMemo(() => orderCandidatesAsTree(candidates), [candidates])
+  const depthById = useMemo(
+    () => new Map(treeRows.map((r) => [r.candidate.childNativeId, r.depth])),
+    [treeRows],
+  )
 
   // A failed candidate fetch falls back to `[]`; without this the empty
   // state would mask the fetch failure. Carry the error so the body renders
@@ -401,7 +408,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
           <div className="flex-1 min-h-0">
             <DeviceList
               mode="generic"
-              items={candidates}
+              items={treeRows.map((r) => r.candidate)}
               pageSize={CLIENT_PAGE_SIZE}
               getKey={(c) => c.childNativeId}
               getSearchText={candidateSearchText}
@@ -446,6 +453,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                   cell: (c) => (
                     <CandidateNameCell
                       candidate={c}
+                      depth={depthById.get(c.childNativeId) ?? 0}
                       // Flat granularities (e.g. entities) have no children to
                       // expand — render a plain selectable row, no chevron.
                       expandable={!isFlatFilter}
@@ -614,6 +622,8 @@ function FilterSelector({ filters, activeFilter, onSelect }: FilterSelectorProps
 
 interface CandidateNameCellProps {
   candidate: DiscoveredChildDevice
+  // Nesting level under a parent candidate (0 = top level).
+  depth: number
   // Whether the current granularity supports an expansion tree. Flat
   // granularities (entities) never render the chevron.
   expandable: boolean
@@ -631,6 +641,7 @@ interface CandidateNameCellProps {
  */
 function CandidateNameCell({
   candidate,
+  depth,
   expandable,
   expanded,
   onToggleExpand,
@@ -638,8 +649,9 @@ function CandidateNameCell({
 }: CandidateNameCellProps) {
   const { t } = useTranslation()
   const count = (candidate.children ?? []).length
+  const distinguisher = candidateDistinguisher(candidate)
   return (
-    <div className="flex items-center gap-2.5 min-w-0">
+    <div className={`flex items-center gap-2.5 min-w-0 ${depth > 0 ? 'pl-5' : ''}`}>
       {expandable && count > 0 ? (
         <button
           type="button"
@@ -665,6 +677,9 @@ function CandidateNameCell({
         </span>
       )}
       <span className="truncate text-xs font-medium text-foreground">{candidate.name}</span>
+      {distinguisher.length > 0 && (
+        <span className="truncate text-[10px] text-foreground-subtle">{distinguisher}</span>
+      )}
       {candidate.alreadyAdopted && (
         <span className="rounded-full bg-success/10 px-2 py-0.5 text-[9px] font-medium text-success shrink-0">
           {adoptedLabel}

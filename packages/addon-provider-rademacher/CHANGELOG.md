@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shutters are offered for adoption nested under the hub.
+
 ## [0.2.150] - 2026-10-30
 
 ### Changed
