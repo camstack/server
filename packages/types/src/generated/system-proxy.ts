@@ -15,6 +15,7 @@ import type { alertsCapability } from '../capabilities/alerts.cap.js'
 import type { audioAnalyzerCapability } from '../capabilities/audio-analyzer.cap.js'
 import type { audioCodecCapability } from '../capabilities/audio-codec.cap.js'
 import type { backupCapability } from '../capabilities/backup.cap.js'
+import type { brokerCapability } from '../capabilities/broker.cap.js'
 import type { calendarsCapability } from '../capabilities/calendars.cap.js'
 import type { connectionTestCapability } from '../capabilities/connection-test.cap.js'
 import type { coreBlocksCapability } from '../capabilities/core-blocks.cap.js'
@@ -46,6 +47,7 @@ import type { pipelineExecutorCapability } from '../capabilities/pipeline-execut
 import type { pipelineOrchestratorCapability } from '../capabilities/pipeline-orchestrator.cap.js'
 import type { pipelineRunnerCapability } from '../capabilities/pipeline-runner.cap.js'
 import type { plateGalleryCapability } from '../capabilities/plate-gallery.cap.js'
+import type { platformProbeCapability } from '../capabilities/platform-probe.cap.js'
 import type { recordEntriesCapability } from '../capabilities/record-entries.cap.js'
 import type { recordingArchiveCapability } from '../capabilities/recording-archive.cap.js'
 import type { recordingExportCapability } from '../capabilities/recording-export.cap.js'
@@ -83,6 +85,7 @@ export interface SystemProxy {
   readonly audioAnalyzer: Pick<InferProvider<typeof audioAnalyzerCapability>, 'analyseChunk' | 'classify' | 'attachDevice' | 'isReady' | 'dispose' | 'reprobeAudioEngine'>
   readonly audioCodec: Pick<InferProvider<typeof audioCodecCapability>, 'listSupportedCodecs' | 'canHandle' | 'createDecodeSession' | 'createEncodeSession' | 'closeSession' | 'pushEncodedFrame' | 'pullPcm' | 'pushPcm' | 'pullEncoded' | 'flushEncode' | 'listActiveSessions'>
   readonly backup: Pick<InferProvider<typeof backupCapability>, 'listDestinations' | 'trigger' | 'listRuns' | 'cancel' | 'list' | 'listLocations' | 'getEntries' | 'restore' | 'getEncryption' | 'setupEncryption' | 'disableEncryption' | 'checkBackupKey' | 'delete' | 'listArchives' | 'upsertDestinationPolicy' | 'previewSchedule' | 'listSchedules' | 'listAvailableDatabases' | 'upsertSchedule' | 'deleteSchedule'>
+  readonly broker: Pick<InferProvider<typeof brokerCapability>, 'list' | 'get' | 'listProviders' | 'add' | 'remove' | 'testConnection' | 'getSettings' | 'setSettings' | 'getBrokerConfig' | 'getSettingsSchema' | 'testSettings' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
   readonly connectionTest: Pick<InferProvider<typeof connectionTestCapability>, 'testSettings' | 'describeTest'>
   readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
@@ -114,6 +117,7 @@ export interface SystemProxy {
   readonly pipelineOrchestrator: Pick<InferProvider<typeof pipelineOrchestratorCapability>, 'requestOccupancyLook' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'rebalance' | 'getPipelineAssignments' | 'getAgentLoad' | 'getClusterModelChoice' | 'getGlobalMetrics' | 'getCapabilityBindings' | 'setCapabilityBinding' | 'getIngestOwner' | 'getAudioNodeLoad' | 'getAudioAssignments' | 'getAgentSettings' | 'listAgentSettings' | 'removeAgentSettings' | 'setAgentMaxCameras' | 'setAgentCapabilities' | 'setAgentDecodeLimits' | 'setAgentReachableHost' | 'setAgentInferenceDevices' | 'setNodeStepSettings' | 'getNodeInferenceDevices' | 'forgetInferenceDevice' | 'resetNodePipelineDefaults' | 'planAutoTune' | 'applyAutoTune' | 'setLoadBalancingShares' | 'getPlacementStats' | 'suggestShares' | 'getEffectiveShares' | 'setShareSource' | 'getNodeBenchmarkPreflight' | 'startNodeBenchmark' | 'getNodeBenchmarkStatus' | 'abortNodeBenchmark' | 'getNodeBenchmarkCandidates' | 'listNodeBenchmarkResults' | 'deleteNodeBenchmarkResult' | 'getCameraStatuses' | 'setCameraSensors' | 'reconcileFromDisk' | 'getReconcileFromDiskStatus'>
   readonly pipelineRunner: Pick<InferProvider<typeof pipelineRunnerCapability>, 'attachCamera' | 'reportMotion' | 'getLocalLoad' | 'getLocalMetrics' | 'getAllCameraMetrics' | 'getLocalCameras' | 'getNativeCrop' | 'runStatelessStep' | 'startNodeBench' | 'getNodeBenchStatus' | 'abortNodeBench'>
   readonly plateGallery: Pick<InferProvider<typeof plateGalleryCapability>, 'getPlateMedia' | 'searchPlates' | 'suggestPlateClusters' | 'correctPlateText' | 'deletePlate' | 'listVehicles' | 'createVehicle' | 'renameVehicle' | 'deleteVehicle' | 'listVehicleSamples' | 'removeVehicleSample' | 'assignPlate' | 'unassignPlate' | 'assignPlates' | 'unassignPlates'>
+  readonly platformProbe: Pick<InferProvider<typeof platformProbeCapability>, 'getCapabilities' | 'getHardware' | 'resolveInferenceConfig' | 'resolveHwAccel' | 'rescanAccelerators'>
   readonly recordEntries: Pick<InferProvider<typeof recordEntriesCapability>, 'listEntryKinds' | 'listEntries' | 'putEntry' | 'deleteEntry'>
   readonly recordingArchive: Pick<InferProvider<typeof recordingArchiveCapability>, 'getAvailabilityBatch' | 'getDaysWithRecordingsBatch' | 'getStorageUsage' | 'listOpsLog' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'refreshStorageLocationsForMigration' | 'startStorageMigrationMove' | 'getStorageMigrationMoveStatus' | 'cancelStorageMigrationMove' | 'relocateFootage' | 'listRelocateJobs' | 'getRelocateResidue' | 'reconcileLedgerAgainstDisk' | 'cancelRelocateJob' | 'planStorageRebalance' | 'startStorageRebalance' | 'getPlacement' | 'setDevicePlacement'>
   readonly recordingExport: Pick<InferProvider<typeof recordingExportCapability>, 'createExport' | 'getExport' | 'cancelExport' | 'deleteExport' | 'getDownloadUrl' | 'readExportBytes'>
@@ -271,6 +275,25 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listAvailableDatabases: (input?: unknown) => dispatch('backup', 'listAvailableDatabases', 'query', input),
     upsertSchedule: (input?: unknown) => dispatch('backup', 'upsertSchedule', 'mutation', input),
     deleteSchedule: (input?: unknown) => dispatch('backup', 'deleteSchedule', 'mutation', input),
+  }
+
+  const brokerInterface = {
+    list: (input?: unknown) => dispatch('broker', 'list', 'query', input),
+    get: (input?: unknown) => dispatch('broker', 'get', 'query', input),
+    listProviders: (input?: unknown) => dispatch('broker', 'listProviders', 'query', input),
+    add: (input?: unknown) => dispatch('broker', 'add', 'mutation', input),
+    remove: (input?: unknown) => dispatch('broker', 'remove', 'mutation', input),
+    testConnection: (input?: unknown) => dispatch('broker', 'testConnection', 'mutation', input),
+    getSettings: (input?: unknown) => dispatch('broker', 'getSettings', 'query', input),
+    setSettings: (input?: unknown) => dispatch('broker', 'setSettings', 'mutation', input),
+    getBrokerConfig: (input?: unknown) => dispatch('broker', 'getBrokerConfig', 'query', input),
+    getSettingsSchema: (input?: unknown) => dispatch('broker', 'getSettingsSchema', 'query', input),
+    testSettings: (input?: unknown) => dispatch('broker', 'testSettings', 'mutation', input),
+    publish: (input?: unknown) => dispatch('broker', 'publish', 'mutation', input),
+    subscribe: (input?: unknown) => dispatch('broker', 'subscribe', 'mutation', input),
+    unsubscribe: (input?: unknown) => dispatch('broker', 'unsubscribe', 'mutation', input),
+    getState: (input?: unknown) => dispatch('broker', 'getState', 'query', input),
+    getStatus: (input?: unknown) => dispatch('broker', 'getStatus', 'query', input),
   }
 
   const calendarsInterface = {
@@ -775,6 +798,14 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     unassignPlates: (input?: unknown) => dispatch('plateGallery', 'unassignPlates', 'mutation', input),
   }
 
+  const platformProbeInterface = {
+    getCapabilities: (input?: unknown) => dispatch('platformProbe', 'getCapabilities', 'query', input),
+    getHardware: (input?: unknown) => dispatch('platformProbe', 'getHardware', 'query', input),
+    resolveInferenceConfig: (input?: unknown) => dispatch('platformProbe', 'resolveInferenceConfig', 'query', input),
+    resolveHwAccel: (input?: unknown) => dispatch('platformProbe', 'resolveHwAccel', 'query', input),
+    rescanAccelerators: (input?: unknown) => dispatch('platformProbe', 'rescanAccelerators', 'mutation', input),
+  }
+
   const recordEntriesInterface = {
     listEntryKinds: (input?: unknown) => dispatch('recordEntries', 'listEntryKinds', 'query', input),
     listEntries: (input?: unknown) => dispatch('recordEntries', 'listEntries', 'query', input),
@@ -1026,6 +1057,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     audioAnalyzer: audioAnalyzerInterface,
     audioCodec: audioCodecInterface,
     backup: backupInterface,
+    broker: brokerInterface,
     calendars: calendarsInterface,
     connectionTest: connectionTestInterface,
     coreBlocks: coreBlocksInterface,
@@ -1057,6 +1089,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     pipelineOrchestrator: pipelineOrchestratorInterface,
     pipelineRunner: pipelineRunnerInterface,
     plateGallery: plateGalleryInterface,
+    platformProbe: platformProbeInterface,
     recordEntries: recordEntriesInterface,
     recordingArchive: recordingArchiveInterface,
     recordingExport: recordingExportInterface,

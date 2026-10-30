@@ -140,7 +140,11 @@ export function parseCapFile(capsDir: string, file: string): CapInfo | null {
   // Verified: codegen output is byte-identical across all 159 caps with and
   // without this change, so it fixes a landmine rather than moving anything.
   const scanned = src.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, (m) => m.replace(/[^\n]/g, ' '))
-  const methodsIdx = scanned.indexOf('methods:')
+  // The block is `methods: {` — a schema FIELD named `methods` (e.g.
+  // `signIn.methods: z.array(...)` in broker.cap.ts) is not it, and matching
+  // the bare key made the walk start there and the cap parse as zero methods.
+  const methodsMatch = /\bmethods\s*:\s*\{/.exec(scanned)
+  const methodsIdx = methodsMatch ? methodsMatch.index : -1
   if (methodsIdx !== -1) {
     const braceIdx = src.indexOf('{', methodsIdx)
     if (braceIdx !== -1) {

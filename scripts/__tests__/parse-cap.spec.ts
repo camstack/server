@@ -73,3 +73,44 @@ describe('parseCapFile — device-bound detection', () => {
     })
   })
 })
+
+const CAP_WITH_METHODS_FIELD = `
+import { z } from 'zod'
+import { method, type CapabilityDefinition } from '../capability.js'
+
+/** A schema FIELD named methods, declared before the methods block. */
+const InfoSchema = z.object({
+  methods: z.array(z.enum(['device-code', 'proxy'])).optional(),
+})
+const NameSchema = z.object({ name: z.string() })
+
+export const probeCapability = {
+  name: 'probe-thing',
+  scope: 'system',
+  methods: {
+    list: method(z.void(), z.array(InfoSchema)),
+    add: method(NameSchema, z.void(), { kind: 'mutation' }),
+  },
+} as const satisfies CapabilityDefinition
+`
+
+describe('parseCapFile — the methods block', () => {
+  let dir = ''
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'parse-cap-'))
+    fs.writeFileSync(path.join(dir, 'probe.cap.ts'), CAP_WITH_METHODS_FIELD)
+  })
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('a schema field named `methods` is not the methods block', () => {
+    const info = parseCapFile(dir, 'probe.cap.ts')
+    expect((info?.methods ?? []).map((m) => `${m.name}:${m.kind}`)).toEqual([
+      'list:query',
+      'add:mutation',
+    ])
+  })
+})
