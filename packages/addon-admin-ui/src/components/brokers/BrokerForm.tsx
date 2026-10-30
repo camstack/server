@@ -41,6 +41,7 @@ import {
   countryOfLocale,
   hasBase,
 } from './broker-schema-arrange'
+import type { BrokerSignInMethod } from '../../lib/broker-sign-in'
 import { BrokerSignInPanel } from './BrokerSignInPanel'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -78,6 +79,8 @@ export interface BrokerFormProps {
     readonly name: string
     /** Re-link this broker rather than create one. */
     readonly brokerId?: string
+    /** The kind's sign-in methods, preference order. */
+    readonly methods?: readonly BrokerSignInMethod[]
     readonly onSignedIn: (brokerId: string) => void
   }
 }
@@ -220,6 +223,7 @@ export function BrokerForm({
       {signIn !== undefined && (
         <BrokerSignInPanel
           basePath={signIn.basePath}
+          {...(signIn.methods !== undefined ? { methods: signIn.methods } : {})}
           name={signIn.name}
           {...(signIn.brokerId !== undefined ? { brokerId: signIn.brokerId } : {})}
           getSettings={signInSettings}

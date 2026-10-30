@@ -8,6 +8,7 @@
  */
 import { useMemo } from 'react'
 import { useBrokerList, useBrokerListProviders } from '@camstack/ui-library'
+import type { BrokerSignInMethod } from '../../lib/broker-sign-in'
 import type { BrokerProviderInfo, UnifiedBrokerInfo } from '@camstack/types'
 
 /** A kind the operator can create, with the provider that serves it. */
@@ -20,6 +21,8 @@ export interface BrokerKindOption {
   readonly interactiveDisconnectPath?: string
   /** Hub-relative base of the kind's interactive sign-in routes (see `broker.cap.ts`). */
   readonly signInBasePath?: string
+  /** Sign-in methods in preference order; absent means the guided proxy only. */
+  readonly signInMethods?: readonly BrokerSignInMethod[]
 }
 
 /** `addonId::kind`: a kind served by two providers stays two options. */
@@ -76,6 +79,9 @@ export function buildKindOptions(input: BuildKindOptionsInput): readonly BrokerK
         ...(connect !== undefined ? { interactiveConnectPath: connect } : {}),
         ...(disconnect !== undefined ? { interactiveDisconnectPath: disconnect } : {}),
         ...(signIn !== undefined ? { signInBasePath: signIn } : {}),
+        ...(signIn !== undefined && k.signIn?.methods !== undefined && k.signIn.methods.length > 0
+          ? { signInMethods: k.signIn.methods }
+          : {}),
       })
     }
   }

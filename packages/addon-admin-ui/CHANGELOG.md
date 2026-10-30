@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Gateway device type label translations
+- Broker sign-in offers a choice between device code (recommended) and guided login when the broker kind supports both
 
 ## [1.2.525] - 2026-10-30
 

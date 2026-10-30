@@ -5375,7 +5375,19 @@
       "waitingForProxy": "Waiting for the sign-in page to be ready…",
       "waitingForLogin": "Waiting for you to sign in…",
       "cancel": "Cancel sign-in",
-      "proxyError": "The sign-in service returned an error"
+      "proxyError": "The sign-in service returned an error",
+      "method": "Sign-in method",
+      "methodDeviceCode": "Device code (recommended)",
+      "methodProxy": "Guided login (proxy)",
+      "codeIntro": "Get a one-time code, then enter it on the account's own page.",
+      "getCode": "Get a code",
+      "newCode": "New code",
+      "codeExpired": "The code expired.",
+      "codeInstructions": "Sign in on the account page and enter this code.",
+      "copyCode": "Copy the code",
+      "openCodePage": "Open {{host}}",
+      "waitingForCode": "Waiting for the code to be entered…",
+      "codeExpiresIn": "Expires in {{time}}"
     },
     "editor": {
       "createTitle": "Add broker",

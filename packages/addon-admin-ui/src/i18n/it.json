@@ -5450,7 +5450,19 @@
       "waitingForProxy": "In attesa che la pagina di accesso sia pronta…",
       "waitingForLogin": "In attesa del tuo accesso…",
       "cancel": "Annulla l'accesso",
-      "proxyError": "Il servizio di accesso ha restituito un errore"
+      "proxyError": "Il servizio di accesso ha restituito un errore",
+      "method": "Metodo di accesso",
+      "methodDeviceCode": "Codice dispositivo (consigliato)",
+      "methodProxy": "Login guidato (proxy)",
+      "codeIntro": "Ottieni un codice monouso, poi inseriscilo nella pagina dell'account.",
+      "getCode": "Ottieni un codice",
+      "newCode": "Nuovo codice",
+      "codeExpired": "Il codice è scaduto.",
+      "codeInstructions": "Accedi nella pagina dell'account e inserisci questo codice.",
+      "copyCode": "Copia il codice",
+      "openCodePage": "Apri {{host}}",
+      "waitingForCode": "In attesa dell'inserimento del codice…",
+      "codeExpiresIn": "Scade tra {{time}}"
     },
     "editor": {
       "createTitle": "Aggiungi broker",

@@ -17,7 +17,7 @@ const PROVIDER = {
     {
       kind: 'alexa',
       label: 'Alexa',
-      signIn: { basePath: '/addon/import-alexa/login' },
+      signIn: { basePath: '/addon/import-alexa/login', methods: ['device-code', 'proxy'] },
     },
   ],
 }
@@ -72,3 +72,11 @@ export default defineFixtures({
     'mut:broker.add': { id: 'alexa_001' },
   },
 })
+
+/**
+ * The sign-in routes are plain `fetch` calls, not tRPC, so a shot that needs
+ * the device code stubs them in the page first:
+ *   --step "js:$(...)" with this expression, then click "Get a code".
+ */
+export const DEVICE_CODE_FETCH_STUB =
+  "(window.__realFetch = window.fetch.bind(window), window.fetch = (url, init) => String(url).includes('/addon/import-alexa/login') ? Promise.resolve(new Response(JSON.stringify({ sessionId: 's1', userCode: 'KQ7X-4M2P', verificationUrl: 'https://www.amazon.example/code', expiresAt: Date.now() + 9 * 60000, phase: 'awaiting-code', error: null }), { status: 200, headers: { 'Content-Type': 'application/json' } })) : window.__realFetch(url, init), 'stubbed')"

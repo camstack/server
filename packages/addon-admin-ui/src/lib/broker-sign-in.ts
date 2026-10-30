@@ -9,6 +9,9 @@
  */
 import { hubPath } from './mount'
 
+/** A way to sign a broker kind in; the kind lists the ones it serves in preference order. */
+export type BrokerSignInMethod = 'device-code' | 'proxy'
+
 export type BrokerSignInPhase = 'starting' | 'awaiting-login' | 'captured' | 'error' | 'cancelled'
 
 const PHASES: readonly string[] = ['starting', 'awaiting-login', 'captured', 'error', 'cancelled']
@@ -16,6 +19,33 @@ const PHASES: readonly string[] = ['starting', 'awaiting-login', 'captured', 'er
 export interface BrokerSignInStarted {
   readonly sessionId: string
   readonly loginUrl: string
+}
+
+export interface DeviceCodeStarted {
+  readonly sessionId: string
+  readonly userCode: string
+  readonly verificationUrl: string
+  /** Epoch ms. */
+  readonly expiresAt: number
+}
+
+export type DeviceCodePhase = 'awaiting-code' | 'captured' | 'expired' | 'error' | 'cancelled'
+
+const DEVICE_CODE_PHASES: readonly string[] = [
+  'awaiting-code',
+  'captured',
+  'expired',
+  'error',
+  'cancelled',
+]
+
+export interface DeviceCodeStatus {
+  readonly sessionId: string
+  readonly phase: DeviceCodePhase
+  readonly userCode: string
+  readonly verificationUrl: string
+  readonly expiresAt: number
+  readonly error: string | null
 }
 
 export interface BrokerSignInStatus {
@@ -43,6 +73,25 @@ function isStatus(value: unknown): value is BrokerSignInStatus {
     typeof value['sessionId'] === 'string' &&
     typeof value['phase'] === 'string' &&
     PHASES.includes(value['phase'])
+  )
+}
+
+function isDeviceCodeStarted(value: unknown): value is DeviceCodeStarted {
+  return (
+    isRecord(value) &&
+    typeof value['sessionId'] === 'string' &&
+    typeof value['userCode'] === 'string' &&
+    typeof value['verificationUrl'] === 'string' &&
+    typeof value['expiresAt'] === 'number'
+  )
+}
+
+function isDeviceCodeStatus(value: unknown): value is DeviceCodeStatus {
+  return (
+    isDeviceCodeStarted(value) &&
+    isRecord(value) &&
+    typeof value['phase'] === 'string' &&
+    DEVICE_CODE_PHASES.includes(value['phase'])
   )
 }
 
@@ -95,6 +144,28 @@ export function startBrokerSignIn(
   settings: Record<string, unknown>,
 ): Promise<BrokerSignInStarted> {
   return post(`${basePath}/start`, settings, isStarted)
+}
+
+/** Start a device-code session: the answer carries the code the operator types on the account's own page. */
+export function startDeviceCodeSignIn(
+  basePath: string,
+  settings: Record<string, unknown>,
+): Promise<DeviceCodeStarted> {
+  return post(`${basePath}/code/start`, settings, isDeviceCodeStarted)
+}
+
+export async function getDeviceCodeStatus(
+  basePath: string,
+  sessionId: string,
+): Promise<DeviceCodeStatus> {
+  const params = new URLSearchParams({ sessionId })
+  const res = await fetch(hubPath(`${basePath}/status?${params.toString()}`), {
+    headers: { Authorization: headers()['Authorization'] ?? '' },
+  })
+  const json: unknown = await readJson(res, 'Sign-in status')
+  if (!res.ok) throw failure(json)
+  if (!isDeviceCodeStatus(json)) throw new Error('Unexpected status response from server')
+  return json
 }
 
 export async function getBrokerSignInStatus(

@@ -227,6 +227,9 @@ function CreateBroker({ kind, addonId, onClose, onSaved }: BrokerEditorDialogPro
               ? {
                   signIn: {
                     basePath: selected.signInBasePath,
+                    ...(selected.signInMethods !== undefined
+                      ? { methods: selected.signInMethods }
+                      : {}),
                     name,
                     onSignedIn: done,
                   },
@@ -252,7 +255,8 @@ function EditBroker({
     addonId: broker.addonId,
     kind: broker.kind,
   })
-  const signInBasePath = options.find((o) => o.kind === broker.kind)?.signInBasePath
+  const signInOption = options.find((o) => o.kind === broker.kind)
+  const signInBasePath = signInOption?.signInBasePath
 
   // id-keyed reads and writes go to the OWNING provider through the addonId selector.
   const settingsQuery = useBrokerGetSettings({
@@ -339,6 +343,9 @@ function EditBroker({
               ? {
                   signIn: {
                     basePath: signInBasePath,
+                    ...(signInOption?.signInMethods !== undefined
+                      ? { methods: signInOption.signInMethods }
+                      : {}),
                     name: broker.name,
                     brokerId: broker.id,
                     onSignedIn: (id: string) => {
