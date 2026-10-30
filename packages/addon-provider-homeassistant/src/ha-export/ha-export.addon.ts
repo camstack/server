@@ -97,6 +97,7 @@ import {
 import { footageForNode, shouldReadPackageStatus } from './node-reads.js'
 import { HOME_ASSISTANT_OAUTH_INTEGRATION } from './oauth-integration.js'
 import { PushClient } from './push-client.js'
+import { postToHomeAssistant, PUSH_PATH } from './push-failure.js'
 import { ReachabilityReconciler } from './reachability-reconcile.js'
 import { shouldSkipAnnounce, structureFingerprint } from './reconcile-fingerprint.js'
 import {
@@ -157,9 +158,6 @@ import type {
 } from './types.js'
 
 const ADDON_ID = 'homeassistant-export'
-
-/** Where the custom component registers its push view inside HA. */
-const PUSH_PATH = '/api/camstack/push'
 
 const MEDIA_ROUTE_PREFIX = `/addon/${ADDON_ID}/ha-media`
 
@@ -504,6 +502,9 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   }
 
   protected async onConfigChanged(): Promise<void> {
+    // The operator changed something (a token, an address, the component):
+    // a parked link probes again now rather than after its recheck window.
+    for (const link of this.links.values()) link.client.resetBackoff()
     await this.reconcile('config-changed')
     this.startTimer()
   }
@@ -1335,7 +1336,14 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       }
       // A push that did not land leaves the receiver behind the fingerprint
       // we just stored: the next pass, whatever its reason, announces in full.
-      if (!delivered || [...this.links.values()].some((link) => !link.client.healthy)) {
+      // A link parked on a missing component is neither a gap to resync nor
+      // news: it was logged when it parked, and the link coming back
+      // re-announces by itself (`onLinkRestored`).
+      const failing = [...this.links.values()].filter(
+        (link) => !link.client.healthy && !link.client.suspended,
+      )
+      const anyLive = [...this.links.values()].some((link) => !link.client.suspended)
+      if (failing.length > 0 || (!delivered && anyLive)) {
         this.resync.markGap('push-not-delivered')
         this.lastStructureFingerprint = undefined
         this.ctx.logger.warn('ha-export: a push was not delivered, the next pass is a full resync')
@@ -2973,7 +2981,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
           titleKey: 'provider-homeassistant:globalSettings.s_ha-export-brokers.title',
           description:
             brokerFields.length > 0
-              ? 'An instance that is off receives nothing; its exported devices resume when it is turned back on.'
+              ? 'An instance that is off receives nothing; its exported devices resume when it is turned back on. Export needs the CamStack custom component installed in Home Assistant (HACS).'
               : 'No Home Assistant broker is registered yet.',
           columns: 1,
           fields:
@@ -3148,17 +3156,29 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   } {
     const enabled = this.enabledBrokerIds()
     const healthy = [...this.links.values()].filter((link) => link.client.healthy).length
+    const failures = [...this.links.values()]
+      .map((link) => link.client.failure)
+      .filter((failure) => failure !== null)
+    const linkFailure = failures[0]?.text
     const linkState =
       enabled.length === 0 ? 'unlinked' : healthy === this.links.size ? 'linked' : 'error'
     return {
       linkState,
       exposedDeviceCount: exposedDeviceIds(this.config.membership, enabled).length,
-      ...(this.lastError !== undefined ? { error: this.lastError } : {}),
+      ...(linkFailure !== undefined
+        ? { error: linkFailure }
+        : this.lastError !== undefined
+          ? { error: this.lastError }
+          : {}),
       setup: {
         fields: [
           {
             label: 'Home Assistant instances',
             value: `${healthy} / ${this.links.size} reachable`,
+          },
+          {
+            label: 'Last push failure',
+            value: linkFailure ?? 'none',
           },
           { label: 'Entities pushed', value: String(this.entityCount) },
           { label: 'Push endpoint', value: PUSH_PATH },
@@ -3191,33 +3211,6 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
  * CAPABILITIES, not its type, and restricting the picker by type is what
  * confined the previous exporter to cameras.
  */
-/**
- * POST one message to Home Assistant's push view.
- *
- * Authenticated with the broker's OWN long-lived token: the component
- * registers its view behind HA auth, so there is no second shared secret
- * to configure or rotate. A non-2xx throws, which is how the push client
- * learns the instance is unreachable.
- */
-async function postToHomeAssistant(
-  baseUrl: string,
-  token: string,
-  message: unknown,
-): Promise<void> {
-  const response = await fetch(`${baseUrl.replace(/\/+$/, '')}${PUSH_PATH}`, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${token}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(message),
-    signal: AbortSignal.timeout(10_000),
-  })
-  if (!response.ok) {
-    throw new Error(`Home Assistant answered ${response.status}`)
-  }
-}
-
 function randomSecret(): string {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)

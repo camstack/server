@@ -27,6 +27,7 @@
  * `ReachabilityReconciler`.
  */
 import type { IScopedLogger } from '@camstack/types'
+import { describePushFailure, type PushFailure, PushHttpError } from './push-failure.js'
 import type { HaCmps, HaDeviceBlock, PushMessage, StateUpdateMessage } from './types.js'
 
 /** How long state updates accumulate before one POST carries them all. */
@@ -71,6 +72,13 @@ export interface PushClientOptions {
   readonly onLinkRestored?: (brokerId: string) => void
 }
 
+/**
+ * How long a permanent failure (a missing component) is left alone before the
+ * next probe. A 404 does not heal by retrying; it heals when the operator
+ * installs the component, which the settings-change reset picks up at once.
+ */
+export const COMPONENT_RECHECK_MS = 10 * 60_000
+
 /** Rate limit for the "HA is not answering" warning. */
 const DROP_LOG_INTERVAL_MS = 30_000
 
@@ -89,6 +97,8 @@ export class PushClient {
   private dropped = 0
   private droppedLoggedAt = 0
   private disposed = false
+  private lastFailure: PushFailure | null = null
+  private suspendedUntil = 0
 
   constructor(options: PushClientOptions) {
     this.transport = options.transport
@@ -100,6 +110,21 @@ export class PushClient {
   /** `false` once a POST has failed, `true` again on the next success. */
   get healthy(): boolean {
     return this.available
+  }
+
+  /** Why the last push failed; `null` while the link is healthy. */
+  get failure(): PushFailure | null {
+    return this.lastFailure
+  }
+
+  /** A permanent failure is being left alone until the next probe. */
+  get suspended(): boolean {
+    return this.suspendedUntil > Date.now()
+  }
+
+  /** Probe again at once — the operator changed something. */
+  resetBackoff(): void {
+    this.suspendedUntil = 0
   }
 
   /** Messages discarded because HA did not answer. Never silent. */
@@ -180,11 +205,26 @@ export class PushClient {
 
   /** `true` when Home Assistant took the message. */
   private async send(message: PushMessage): Promise<boolean> {
+    if (this.suspended) {
+      this.dropped += message.type === 'batch' ? message.items.length : 1
+      return false
+    }
     try {
       await this.transport(message)
       this.onReachable()
       return true
     } catch (err) {
+      if (err instanceof PushHttpError && err.status === 413 && message.type === 'batch') {
+        const half = Math.ceil(message.items.length / 2)
+        if (message.items.length > 1) {
+          // Too large as one body: halve it until each part lands. Bounded —
+          // every level halves, and a single item that is still refused is
+          // dropped like any other failure.
+          const first = await this.send({ type: 'batch', items: message.items.slice(0, half) })
+          const second = await this.send({ type: 'batch', items: message.items.slice(half) })
+          return first && second
+        }
+      }
       this.onUnreachable(message, err)
       return false
     }
@@ -193,6 +233,8 @@ export class PushClient {
   private onReachable(): void {
     if (this.available) return
     this.available = true
+    this.lastFailure = null
+    this.suspendedUntil = 0
     /**
      * The link came back. Drop the dedup cache so the reconcile that
      * follows re-pushes every value: HA may have restarted and lost its
@@ -229,17 +271,24 @@ export class PushClient {
    */
   private onUnreachable(message: PushMessage, err: unknown): void {
     this.available = false
+    const failure = describePushFailure(err)
+    this.lastFailure = failure
+    if (failure.permanent) this.suspendedUntil = Date.now() + COMPONENT_RECHECK_MS
     this.dropped += message.type === 'batch' ? message.items.length : 1
     const now = Date.now()
     if (now - this.droppedLoggedAt < DROP_LOG_INTERVAL_MS) return
     this.droppedLoggedAt = now
-    this.logger.warn('ha-export: push to Home Assistant failed, messages dropped', {
-      meta: {
-        brokerId: this.brokerId,
-        dropped: this.dropped,
-        messageType: message.type,
-        error: err instanceof Error ? err.message : String(err),
+    this.logger.warn(
+      `ha-export: push to Home Assistant failed (${failure.text}), messages dropped`,
+      {
+        meta: {
+          brokerId: this.brokerId,
+          dropped: this.dropped,
+          messageType: message.type,
+          failureKind: failure.kind,
+          error: err instanceof Error ? err.message : String(err),
+        },
       },
-    })
+    )
   }
 }

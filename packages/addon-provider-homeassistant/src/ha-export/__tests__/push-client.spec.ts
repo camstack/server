@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   BATCH_FLUSH_MS,
+  COMPONENT_RECHECK_MS,
   HEARTBEAT_INTERVAL_MS,
   IMAGE_SIGNAL_PREFIX,
   MAX_VALUE_CHARS,
   PushClient,
   type PushTransport,
 } from '../push-client.js'
+import { PushHttpError } from '../push-failure.js'
 import type { HaCmps, HaDeviceBlock, PushMessage } from '../types.js'
 
 const DEV: HaDeviceBlock = { ids: ['camstack-a'], name: 'A', mf: 'CamStack', mdl: 'camera' }
@@ -241,6 +243,86 @@ describe('PushClient', () => {
       expect(await client.publishEntityChange('camstack-a', CMPS, DEV)).toBe(true)
       rec.fail = true
       expect(await client.publishEntityChange('camstack-a', CMPS, DEV)).toBe(false)
+    })
+  })
+
+  describe('failure reasons', () => {
+    it('puts the reason in the message text, keeping meta', async () => {
+      const warn = vi.fn()
+      const client = new PushClient({
+        transport: async () => {
+          throw new PushHttpError(404, 'Not Found')
+        },
+        logger: { debug: vi.fn(), info: vi.fn(), warn },
+        brokerId: 'b1',
+      })
+      client.publishState('t', 'v')
+      await client.flush()
+      const call = warn.mock.calls[0]
+      expect(call).toBeDefined()
+      const [text, opts] = call ?? []
+      expect(text).toContain('HTTP 404')
+      expect(text).toContain('messages dropped')
+      expect(opts?.meta.error).toContain('404')
+      expect(client.failure?.kind).toBe('component-missing')
+    })
+
+    it('a 404 stops hitting the network until the recheck window or a reset', async () => {
+      vi.useFakeTimers()
+      let calls = 0
+      const client = new PushClient({
+        transport: async () => {
+          calls += 1
+          throw new PushHttpError(404, '')
+        },
+        logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+        brokerId: 'b1',
+      })
+      await client.publishEntityChange('d', CMPS, DEV)
+      expect(calls).toBe(1)
+      await client.publishEntityChange('d', CMPS, DEV)
+      await client.publishEntityChange('d', CMPS, DEV)
+      expect(calls).toBe(1)
+      expect(client.suspended).toBe(true)
+      client.resetBackoff()
+      await client.publishEntityChange('d', CMPS, DEV)
+      expect(calls).toBe(2)
+      vi.advanceTimersByTime(COMPONENT_RECHECK_MS + 1)
+      await client.publishEntityChange('d', CMPS, DEV)
+      expect(calls).toBe(3)
+      vi.useRealTimers()
+    })
+
+    it('a 413 batch is split in halves until it lands; nothing is dropped', async () => {
+      const sizes: number[] = []
+      const client = new PushClient({
+        transport: async (m: PushMessage) => {
+          if (m.type !== 'batch') return
+          sizes.push(m.items.length)
+          if (m.items.length > 2) throw new PushHttpError(413, '')
+        },
+        logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+        brokerId: 'b1',
+      })
+      for (let i = 0; i < 8; i += 1) client.publishState(`t${i}`, 'v')
+      await client.flush()
+      expect(sizes).toEqual([8, 4, 2, 2, 4, 2, 2])
+      expect(client.healthy).toBe(true)
+      expect(client.droppedCount).toBe(0)
+    })
+
+    it('a single item that is still too large is dropped, bounded', async () => {
+      const client = new PushClient({
+        transport: async () => {
+          throw new PushHttpError(413, '')
+        },
+        logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+        brokerId: 'b1',
+      })
+      for (let i = 0; i < 4; i += 1) client.publishState(`t${i}`, 'v')
+      await client.flush()
+      expect(client.healthy).toBe(false)
+      expect(client.droppedCount).toBe(4)
     })
   })
 })
