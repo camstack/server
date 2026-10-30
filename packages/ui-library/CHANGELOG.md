@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - DevicePicker: fillHeight stretches the list to its container and scrolls the rows inside
+- Dialog text now wraps when a dialog is opened from a table row action instead of scrolling sideways
 
 ## [1.2.356] - 2026-10-30
 

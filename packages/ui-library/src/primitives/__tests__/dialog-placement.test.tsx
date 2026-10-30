@@ -83,7 +83,7 @@ function getDialog(): HTMLDialogElement {
  * This literal moved in the same commit as that change, per the note above.
  */
 const CENTER_CLASSES =
-  'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 w-[calc(100vw-2rem)] bg-background-elevated text-foreground border border-border rounded-lg p-4 backdrop:bg-black/50 backdrop:backdrop-blur-sm max-h-[calc(100dvh-2rem-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] [&:not([open])]:hidden max-w-md overflow-y-auto overscroll-contain'
+  'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 w-[calc(100vw-2rem)] whitespace-normal bg-background-elevated text-foreground border border-border rounded-lg p-4 backdrop:bg-black/50 backdrop:backdrop-blur-sm max-h-[calc(100dvh-2rem-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] [&:not([open])]:hidden max-w-md overflow-y-auto overscroll-contain'
 
 describe('DialogContent placement', () => {
   it('defaults to center and emits the exact center class set', () => {
@@ -365,5 +365,22 @@ describe('DialogContent scroll', () => {
     for (const expected of ['flex-1', 'min-h-0', 'overflow-y-auto']) {
       expect(classes).toContain(expected)
     }
+  })
+})
+
+describe('DialogContent inherited white-space', () => {
+  it('resets white-space so a dialog opened inside a nowrap table cell wraps its text', () => {
+    render(
+      <div className="whitespace-nowrap">
+        <Dialog open>
+          <DialogContent>
+            <DialogBody>
+              A long confirm sentence that must wrap instead of scrolling sideways.
+            </DialogBody>
+          </DialogContent>
+        </Dialog>
+      </div>,
+    )
+    expect(hasUnconditionalClass(getDialog().className, 'whitespace-normal')).toBe(true)
   })
 })

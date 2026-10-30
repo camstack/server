@@ -104,7 +104,7 @@ const contentVariants = cva(
   // background MUST set the matching foreground, or its subtree inherits from
   // outside the dialog (a `<dialog>` is top-layer) and any child without an
   // explicit colour renders invisible on one of the two themes.
-  'relative fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 w-[calc(100vw-2rem)] bg-background-elevated text-foreground border border-border rounded-lg p-4 backdrop:bg-black/50 backdrop:backdrop-blur-sm max-h-[calc(100dvh-2rem-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] [&:not([open])]:hidden',
+  'relative fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 w-[calc(100vw-2rem)] whitespace-normal bg-background-elevated text-foreground border border-border rounded-lg p-4 backdrop:bg-black/50 backdrop:backdrop-blur-sm max-h-[calc(100dvh-2rem-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] [&:not([open])]:hidden',
   {
     variants: {
       width: {
