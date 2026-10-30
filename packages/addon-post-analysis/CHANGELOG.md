@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.653] - 2026-10-30
+
 ### Changed
 
 - A node that announced an update is no longer reported offline for 10 minutes; if it comes back nothing is sent, otherwise the offline says it went down while updating
