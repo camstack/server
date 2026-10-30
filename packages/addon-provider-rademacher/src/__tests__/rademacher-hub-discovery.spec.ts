@@ -68,7 +68,7 @@ describe('Rademacher LAN discovery', () => {
   it('rejects a hit that is not a salt answer, or whose host fails the identity check', async () => {
     expect(
       await hubsFromHits(
-        [hit('192.168.10.60', 404), { modeIndex: 0, host: '192.168.10.61', port: 80 }],
+        [hit('192.168.10.50', 404), { modeIndex: 0, host: '192.168.10.61', port: 80 }],
         PROBE,
       ),
     ).toEqual([])
