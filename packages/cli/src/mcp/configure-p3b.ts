@@ -8,6 +8,7 @@ import { registerCalibrateTools } from './configure-calibrate.js'
 import { registerZonesAlarmTools } from './configure-zones-alarm.js'
 import { registerNetworkTools } from './configure-network.js'
 import { registerExportTools } from './configure-exports.js'
+import { registerOidcTools } from './configure-oidc.js'
 import { registerNcRuleTools } from './configure-nc-rules.js'
 import type { McpContext } from './context.js'
 
@@ -17,5 +18,6 @@ export function registerConfigureP3bTools(server: McpServer, ctx: McpContext): v
   registerCalibrateTools(server, ctx)
   registerExportTools(server, ctx)
   registerNetworkTools(server, ctx)
+  registerOidcTools(server, ctx)
   registerZonesAlarmTools(server, ctx)
 }

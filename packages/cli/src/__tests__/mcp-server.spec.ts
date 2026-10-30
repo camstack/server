@@ -144,6 +144,7 @@ describe('camstack mcp — toolset selection', () => {
       'configure_notification_target_upsert',
       'configure_notification_targets',
       'configure_notifiers',
+      'configure_oidc',
       'configure_remote_access',
       'configure_remote_access_set',
       'configure_rename_device',
