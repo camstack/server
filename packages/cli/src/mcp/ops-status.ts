@@ -16,7 +16,7 @@ import {
   type Read,
 } from './ops-hub.js'
 
-const TopologyNodeSchema = z.looseObject({
+export const TopologyNodeSchema = z.looseObject({
   id: z.string(),
   name: z.string().optional(),
   platform: z.string().optional(),
@@ -26,7 +26,7 @@ const TopologyNodeSchema = z.looseObject({
   /** Agents report it; the hub does not. Absent means "not claimed". */
   capabilitiesRegistered: z.boolean().optional(),
 })
-const TopologySchema = z.array(TopologyNodeSchema)
+export const TopologySchema = z.array(TopologyNodeSchema)
 
 const ServerStatusSchema = z.looseObject({
   runningVersion: z.string(),
@@ -100,13 +100,13 @@ export interface OpsStatusResult {
   readonly unavailable: { readonly [part: string]: string }
 }
 
-function distinctCaps(node: z.infer<typeof TopologyNodeSchema>): number {
+export function distinctCaps(node: z.infer<typeof TopologyNodeSchema>): number {
   const names = new Set<string>()
   for (const addon of node.addons ?? []) for (const c of addon.capabilities) names.add(c)
   return names.size
 }
 
-function isCapless(node: z.infer<typeof TopologyNodeSchema>, count: number): boolean {
+export function isCapless(node: z.infer<typeof TopologyNodeSchema>, count: number): boolean {
   if (!node.isOnline) return false
   return (
     node.capabilitiesRegistered === false ||

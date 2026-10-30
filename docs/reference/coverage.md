@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7497 source files · 208 units claimed by at least one document (7459 files).**
+**224 units · 7501 source files · 211 units claimed by at least one document (7461 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -39,7 +39,6 @@ it never describes how the thing works, and it is never re-verified.
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
 | `packages/addon-pipeline/src/detection-pipeline` | 61 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `architecture/inference-devices.md`, +50 more, 5 ADRs | 2026-10-24 |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +4 more, 1 ADR | 2026-10-14 |
-| `packages/cli` | 58 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +2 more | — |
 | `packages/addon-pipeline/src/pipeline-runner` | 57 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-provider-reolink` | 56 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +22 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-admin-ui/src/lib` | 55 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-10-27 |
@@ -52,6 +51,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap/src/mappers` | 42 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +5 more, 9 ADRs | 2026-09-29 |
 | `packages/desktop` | 41 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +8 more | 2026-10-27 |
 | `packages/mcp-dev` | 41 | — | `decisions/adr-0836-a-cluster-mutation-from-the-developer-mcp-exists-only-behind-allow-mutations-and-a-dry-run-whose-one-shot-token-is-bound-to-the-exact-arguments.md`, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, +1 more | — |
+| `packages/cli/src/mcp` | 40 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_ | — |
 | `server/backend/src/agent` | 40 | `update-and-release` | `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, `architecture/transport.md`, `decisions/adr-0840-an-agent-updates-an-addon-by-asking-the-hub-to-bring-it-to-the-hubs-version.md`, +14 more, 3 ADRs | 2026-10-16 |
 | `packages/addon-provider-bosch/src/home-connect` | 38 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
 | `packages/develop` | 36 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +2 more | — |
@@ -99,6 +99,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/embedding-encoder` | 16 | `recognition` | `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more | 2026-10-01 |
 | `packages/addon-remote-storage` | 16 | `storage` | `decisions/adr-0384-never-ran-must-never-look-like-ran.md`, `decisions/adr-0298-a-storage-kind-declares-how-it-reaches-its-bytes-and-a-provider-that-cannot-is-refused.md` | — |
 | `packages/addon-terminal` | 16 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `design/2026-07-26-terminal-session-design.md`, `decisions/adr-0321-a-polled-fleet-read-joins-the-shared-slim-key-and-a-config-bearing-read-can-never-be-slim.md`, 2 ADRs | 2026-10-03 |
+| `packages/cli/src/commands` | 16 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0825-dev-server-uploads-reach-agents-through-hub-propagate-not-host-copy.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +1 more | — |
 | `packages/addon-provider-petkit` | 15 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-training/src/orchestrator` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md`, `decisions/adr-0824-a-training-job-selects-frames-live-and-addresses-a-provider-by-entry-id.md`, +2 more | 2026-10-14 |
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-22-lan-tls-zero-touch.md` _(covers)_, +4 more | — |
@@ -191,6 +192,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/load-balancing` | 2 | — | `architecture/inference-devices.md`, `decisions/adr-0750-shares-are-automatic-by-default-held-by-placement-and-respected-by-failover.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +1 more, 1 ADR | 2026-10-23 |
 | `packages/addon-smtp-nodemailer` | 2 | `notification-center` | — | — |
 | `packages/addon-static-turn` | 2 | `stream-broker` | — | — |
+| `packages/cli` | 2 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
+| `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |
+| `packages/cli/src/http` | 2 | `tooling` | — | — |
 | `packages/system/src/events` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/system/src/i18n` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md` | — |
 | `packages/system/src/notification` | 2 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |

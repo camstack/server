@@ -109,6 +109,8 @@ const OPS_TOOLS = [
   'ops_status',
   'ops_track',
   'ops_unhealthy_devices',
+  'ops_update_apply',
+  'ops_update_check',
   'ops_whoami',
 ]
 

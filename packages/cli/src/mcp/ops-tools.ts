@@ -13,6 +13,8 @@ import { opsDevice, opsUnhealthyDevices } from './ops-device.js'
 import { opsEvents, opsTrack } from './ops-events.js'
 import { opsLogs } from './ops-logs.js'
 import { opsStatus } from './ops-status.js'
+import { opsUpdateApply, UPDATE_APPLY_TOOL } from './ops-update-apply.js'
+import { opsUpdateCheck } from './ops-update-check.js'
 
 export { noSessionResult, type NoSessionResult }
 
@@ -145,5 +147,35 @@ export function registerOpsTools(server: McpServer, ctx: McpContext): void {
     'Per node: the inference devices it has, the Auto-tune hardware class the node maps to, and whether the measured detector-latency table has a row for that class and accelerator. A node that could not be read is null with a reason, never "no accelerator". Needs an admin `camstack login`.',
     {},
     async (): Promise<ToolTextResult> => text(await opsAccelerators(ctx)),
+  )
+
+  server.tool(
+    'ops_update_check',
+    'Read-only update report for the whole cluster. Every node from the topology: running vs installed vs latest @camstack/server, restartRequired / updateState / rolledBack, the wrapper (Docker image / desktop app) verdict, and whether its addon versions match the hub; the hub\'s addon updates; the viewer (not exposed by any API, said so); and this CLI/MCP against npm. A node that cannot be read is null with a reason, never "up to date". Needs an admin `camstack login`.',
+    {},
+    async (): Promise<ToolTextResult> => text(await opsUpdateCheck(ctx)),
+  )
+
+  server.tool(
+    UPDATE_APPLY_TOOL,
+    'Bring the cluster up to date, verified step by step: hub server closure, wait until the hub runs it, then each online agent, then addons (agents follow by reconciliation, verified), then this CLI last. Two steps: call without confirm_token for a preview (order, versions, wrapper instructions, timeouts) and a one-shot token, then again with the SAME arguments and that token. A failed step stops the chain and names the node. Wrapper (image/app) updates are only reported with instructions. Needs an admin `camstack login`.',
+    {
+      version: z.string().min(1).optional().describe("Server target; default = the hub's latest."),
+      addons: z.boolean().optional().describe('Update addons too (default true).'),
+      cli: z.boolean().optional().describe('Update this CLI last (default true).'),
+      confirm_token: z.string().optional(),
+    },
+    async ({ version, addons, cli, confirm_token }): Promise<ToolTextResult> =>
+      text(
+        await opsUpdateApply(
+          ctx,
+          {
+            ...(version !== undefined ? { version } : {}),
+            ...(addons !== undefined ? { addons } : {}),
+            ...(cli !== undefined ? { cli } : {}),
+          },
+          confirm_token,
+        ),
+      ),
   )
 }
