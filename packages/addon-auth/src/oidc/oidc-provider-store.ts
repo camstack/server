@@ -48,6 +48,11 @@ export class OidcProviderStore {
     return out
   }
 
+  /** Delete one provider record; no other row (nor its secrets) is touched. */
+  async remove(id: string): Promise<void> {
+    await this.kind.delete(id)
+  }
+
   async replaceAll(providers: readonly OidcProviderRow[]): Promise<void> {
     const page = await this.kind.query({ limit: 1000 })
     const nextIds = new Set(providers.map((p) => p.id))

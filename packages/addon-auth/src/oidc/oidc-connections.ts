@@ -50,8 +50,8 @@ export function findOidcProvider(config: OidcProvidersConfig, id: string): OidcP
 }
 
 export function connectionConfigured(row: OidcProviderRow): boolean {
-  const secret = typeof row.clientSecret === 'string' ? row.clientSecret.trim() : ''
-  return row.clientId.trim() !== '' && secret !== ''
+  // A public client (PKCE, no secret) is configured with a client id alone.
+  return row.clientId.trim() !== ''
 }
 
 export function clientSecretView(

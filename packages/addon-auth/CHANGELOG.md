@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Editing, deleting or adding an OIDC connection no longer fails with a foreign secret marker error, and a connection without a client secret (public client) is accepted
+
 ## [1.2.170] - 2026-10-27
 
 ### Changed

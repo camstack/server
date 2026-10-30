@@ -58,6 +58,7 @@ import {
   resolveIconKey,
   type IAddonHttpRoute,
   type IAuthProvider,
+  isSecretMarker,
   type ILoginMethodProvider,
   type LoginMethodContribution,
   loginMethodCapability,
@@ -65,7 +66,6 @@ import {
   parseAppFlowRequest,
   parseAppPageLang,
   type ProviderRegistration,
-  SECRET_CLEAR,
   SSO_STATE_COOKIE,
   SSO_STATE_COOKIE_MAX_AGE_SEC,
 } from '@camstack/types'
@@ -251,7 +251,7 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
       this.config.providers.length > 0
     ) {
       try {
-        await this.providerStore.replaceAll(this.config.providers)
+        await this.providerStore.replaceAll(await this.adoptSecrets(this.config.providers))
         this.activeProviders = await this.loadPersistedProviders()
       } catch (err: unknown) {
         // Config holds keychain markers bound to settings-array paths; records
@@ -384,7 +384,7 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
         if (!result.ok) throw new Error(`Unknown OIDC connection "${input.id}"`)
         if (result.clearClientSecret) {
           const cleared = result.config.providers.map((p) =>
-            p.id === input.id ? { ...p, clientSecret: SECRET_CLEAR } : p,
+            p.id === input.id ? { ...p, clientSecret: '' } : p,
           )
           await this.persistProviders(cleared)
         } else {
@@ -396,13 +396,11 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
       deleteConnection: async (input) => {
         const existing = findOidcProvider(this.providersConfig(), input.id)
         if (existing === null) throw new Error(`Unknown OIDC connection "${input.id}"`)
-        const cleared = this.activeProviders.map((p) =>
-          p.id === input.id ? { ...p, clientSecret: SECRET_CLEAR } : p,
-        )
-        await this.persistProviders(cleared)
         const result = deleteOidcConnection(this.providersConfig(), input.id)
         if (!result.ok) throw new Error(`Unknown OIDC connection "${input.id}"`)
-        await this.persistProviders(result.config.providers)
+        // Removing a row never re-validates the secret fields of the row it removes
+        // (nor of its siblings); the store deletes that one record.
+        await this.removeProvider(input.id, result.config.providers)
         this.rebuildInstances()
         return { ok: true as const }
       },
@@ -465,13 +463,67 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
   }
 
   private async persistProviders(providers: readonly OidcProviderRow[]): Promise<void> {
-    this.activeProviders = [...providers]
+    const adopted = await this.adoptSecrets(providers)
+    this.activeProviders = [...adopted]
     const store = this.providerStore
     if (store !== null) {
-      await store.replaceAll(providers)
+      await store.replaceAll(adopted)
       return
     }
-    await this.updateGlobalSettings({ providers: [...providers] })
+    await this.updateGlobalSettings({ providers: [...adopted] })
+  }
+
+  private async removeProvider(id: string, remaining: readonly OidcProviderRow[]): Promise<void> {
+    this.activeProviders = [...remaining]
+    const store = this.providerStore
+    if (store !== null) {
+      await store.remove(id)
+      return
+    }
+    await this.updateGlobalSettings({ providers: [...remaining] })
+  }
+
+  /**
+   * A row can still carry a keychain marker bound to the old settings array
+   * (`providers[<id>].clientSecret`, owner auth-oidc) — config rows that never
+   * moved into records. Records refuse a marker that is not the row's own ref, so
+   * every such row is resolved to its value here (re-bound to the record's own ref
+   * on write); a marker that no longer resolves becomes an empty secret the
+   * operator can retype. The value is never logged.
+   */
+  private async adoptSecrets(
+    providers: readonly OidcProviderRow[],
+  ): Promise<readonly OidcProviderRow[]> {
+    const out: OidcProviderRow[] = []
+    for (const row of providers) {
+      const secret: unknown = row.clientSecret
+      if (typeof secret === 'string') {
+        out.push(row)
+        continue
+      }
+      if (!isSecretMarker(secret)) {
+        // Absent (an unresolvable marker is dropped on read) or malformed: empty.
+        out.push({ ...row, clientSecret: '' })
+        continue
+      }
+      let plain = ''
+      const secrets = this.ctx.secrets
+      if (secrets !== undefined) {
+        try {
+          const entry = (await secrets.resolve([secret.$secret]))[secret.$secret]
+          if (entry?.kind === 'value') plain = entry.value
+        } catch {
+          // keychain unavailable: fall through to an empty secret
+        }
+      }
+      if (plain === '') {
+        this.ctx.logger.warn(
+          `OIDC: the client secret of connection "${row.id}" could not be read from the keychain; retype it in its settings`,
+        )
+      }
+      out.push({ ...row, clientSecret: plain })
+    }
+    return out
   }
 
   private rebuildInstances(): void {
@@ -749,7 +801,8 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
 
     const doc = await this.getDiscovery(providerId)
     const clientSecret = inst.config.clientSecret
-    if (typeof clientSecret !== 'string' || clientSecret.length === 0) {
+    // A public client (PKCE, no secret) is a valid configuration: send no secret.
+    if (typeof clientSecret !== 'string') {
       throw new Error(`OIDC: client secret for "${providerId}" is unavailable`)
     }
     const tokenRes = await fetch(doc.token_endpoint, {
@@ -763,7 +816,7 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
         code,
         redirect_uri: pending.redirectUri,
         client_id: inst.config.clientId,
-        client_secret: clientSecret,
+        ...(clientSecret.length > 0 ? { client_secret: clientSecret } : {}),
         code_verifier: pending.codeVerifier,
       }),
     })
