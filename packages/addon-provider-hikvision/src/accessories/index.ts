@@ -5,28 +5,28 @@
  * concrete class implements each kind.
  */
 
-import type { DeviceContext, IDevice, AccessoryKindValue } from '@camstack/types'
+import type { AccessoryKindValue, DeviceContext, IDevice } from '@camstack/types'
 import { AccessoryKind } from '@camstack/types'
 import { HikvisionLightAccessory, type HikvisionLightHost } from './light.js'
 import { HikvisionSirenAccessory, type HikvisionSirenHost } from './siren.js'
 
 export {
+  type HikvisionAccessoryHost,
+  hikvisionAccessoryBaseSchema,
+  isHikvisionSupportedAccessoryKind,
+} from './base.js'
+export {
   HikvisionLightAccessory,
-  lightAccessorySchema,
-  type LightAccessoryConfig,
   type HikvisionLightHost,
+  type LightAccessoryConfig,
+  lightAccessorySchema,
 } from './light.js'
 export {
   HikvisionSirenAccessory,
-  sirenAccessorySchema,
-  type SirenAccessoryConfig,
   type HikvisionSirenHost,
+  type SirenAccessoryConfig,
+  sirenAccessorySchema,
 } from './siren.js'
-export {
-  hikvisionAccessoryBaseSchema,
-  isHikvisionSupportedAccessoryKind,
-  type HikvisionAccessoryHost,
-} from './base.js'
 
 /**
  * Factory — pick the right concrete class for an `AccessoryKindValue`

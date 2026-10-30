@@ -12,16 +12,15 @@
  * defect is a timer rule over a socket, and it survived fourteen green unit
  * tests until a live clip hit it.
  */
-import { createServer, type Server, type Socket } from 'node:net'
+
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import type { AddressInfo } from 'node:net'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-
+import { createServer, type Server, type Socket } from 'node:net'
+import { join } from 'node:path'
 import type { IScopedLogger } from '@camstack/types'
-
-import { openRtspReplay, type RtspReplayEnd } from '../rtsp/rtsp-replay-session.js'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VideoAccessUnit } from '../rtsp/rtp-depacketize.js'
+import { openRtspReplay, type RtspReplayEnd } from '../rtsp/rtsp-replay-session.js'
 
 const FIXTURES = join(import.meta.dirname, 'fixtures')
 const sdpBody = readFileSync(join(FIXTURES, 'replay-3833.sdp'), 'utf8')

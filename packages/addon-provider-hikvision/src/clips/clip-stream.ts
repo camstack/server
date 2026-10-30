@@ -57,23 +57,22 @@ import type { ChildProcess } from 'node:child_process'
 
 import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
 import { type PinnedFfmpegSpawnAnswer, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
-
-import { estimateReplayFps, replayFpsIsExact } from './clip-replay-rate.js'
 import type { HikvisionClipRow } from './clip-catalog.js'
+import { estimateReplayFps, replayFpsIsExact } from './clip-replay-rate.js'
 import {
   buildClipStreamMuxArgs,
-  clipStreamContentTypeFor,
   CLIP_STREAM_AUDIO_FD,
   CLIP_STREAM_DRAIN_TIMEOUT_MS,
   CLIP_STREAM_MUX_FLUSH_TIMEOUT_MS,
-  createDrainGate,
-  writableStdio,
   type ClipStreamAudioCodec,
   type ClipStreamHop,
+  clipStreamContentTypeFor,
+  createDrainGate,
   type DrainGate,
+  writableStdio,
 } from './clip-stream-mux.js'
-import { openRtspReplay, type RtspReplaySession } from './rtsp/rtsp-replay-session.js'
 import type { VideoAccessUnit } from './rtsp/rtp-depacketize.js'
+import { openRtspReplay, type RtspReplaySession } from './rtsp/rtsp-replay-session.js'
 
 /**
  * Access units held back before ffmpeg is spawned, so `-r` can be measured.

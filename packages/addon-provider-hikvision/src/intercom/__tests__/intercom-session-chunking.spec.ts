@@ -1,15 +1,15 @@
-import { describe, it, expect } from 'vitest'
 import type { IncomingMessage } from 'node:http'
 import type { IScopedLogger, LogExtras } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import type {
-  AudioDataStream,
   AudioDataCloseInfo,
+  AudioDataStream,
   HikvisionTwoWayAudioChannel,
 } from '../../hikvision-isapi-client.js'
 import {
-  HikvisionIntercomSession,
   AUDIO_DATA_CHUNK_BYTES,
   type HikvisionIntercomClient,
+  HikvisionIntercomSession,
 } from '../hikvision-intercom-session.js'
 
 /**

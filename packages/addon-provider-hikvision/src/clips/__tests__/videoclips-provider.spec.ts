@@ -2,19 +2,18 @@
  * The cap surface: what a camera's clips look like, and what every refusal is
  * called.
  */
-import { describe, expect, it, vi } from 'vitest'
 
-import type { IScopedLogger } from '@camstack/types'
+import type { ClipSourceAvailability, IScopedLogger } from '@camstack/types'
 
 import { clipExportFailure, VIDEOCLIPS_MAX_READ_BYTES } from '@camstack/types'
-import type { ClipSourceAvailability } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { HikvisionClipRow } from '../clip-catalog.js'
 import { CLIP_SOURCE_ONBOARD, clipKeyFor, mintClipId, parseClipId } from '../clip-identity.js'
 import { chooseClipQuality } from '../clip-twins.js'
 import {
-  createHikvisionVideoclipsProvider,
   type ClipDeviceRef,
+  createHikvisionVideoclipsProvider,
   type HikvisionVideoclipsDeps,
 } from '../hikvision-videoclips-provider.js'
 

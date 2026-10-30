@@ -23,7 +23,7 @@ import {
   parseRtpPacket,
   type VideoAccessUnit,
 } from '../rtsp/rtp-depacketize.js'
-import { parseRtspSdp, resolveControlUrl, type RtspVideoTrack } from '../rtsp/rtsp-sdp.js'
+import { parseRtspSdp, type RtspVideoTrack, resolveControlUrl } from '../rtsp/rtsp-sdp.js'
 import { createRtspWireReader, type RtspWireEvent } from '../rtsp/rtsp-wire.js'
 
 const FIXTURES = join(import.meta.dirname, 'fixtures')

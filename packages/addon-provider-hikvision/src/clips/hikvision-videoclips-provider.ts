@@ -60,9 +60,9 @@ import {
 import { HIKVISION_ADDON_ID } from '../schema.js'
 import type { HikvisionClipRow } from './clip-catalog.js'
 import { CLIP_SOURCE_ONBOARD, clipKeyFor, mintClipId, parseClipId } from './clip-identity.js'
+import type { ClipStreamAudioAsk } from './clip-stream.js'
 import { chooseClipQuality } from './clip-twins.js'
 import { narrowClipsToWindow } from './clip-window.js'
-import type { ClipStreamAudioAsk } from './clip-stream.js'
 
 /** Everything the clip path needs to know about one camera. */
 export interface ClipDeviceRef {

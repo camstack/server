@@ -6,12 +6,11 @@
  * would have proved the map, which is not the part that can be wrong.
  */
 import { get, request } from 'node:http'
+import type { IScopedLogger } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { IScopedLogger } from '@camstack/types'
-
 import type { ClipStreamRouteOutcome, ClipStreamTarget } from '../clip-data-plane.js'
-import { createClipStreamDial, type ClipStreamDial } from '../clip-stream-dial.js'
+import { type ClipStreamDial, createClipStreamDial } from '../clip-stream-dial.js'
 
 const logger: IScopedLogger = {
   info: vi.fn(),

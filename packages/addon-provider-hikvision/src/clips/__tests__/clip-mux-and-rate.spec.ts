@@ -6,8 +6,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   estimateReplayFps,
-  replayFpsIsExact,
   REPLAY_RATE_EXACT_SPANS,
+  replayFpsIsExact,
 } from '../clip-replay-rate.js'
 import {
   buildClipFileMuxArgs,

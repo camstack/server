@@ -2,12 +2,12 @@
  * The still: where inside the clip it is cut, and what happens when no frame
  * comes back.
  */
+
+import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { PassThrough } from 'node:stream'
-import type { ChildProcess } from 'node:child_process'
-import { describe, expect, it, vi } from 'vitest'
-
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import { buildClipStillArgs, clipStillSeekSeconds, cutClipStill } from '../clip-still.js'
 

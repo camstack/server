@@ -13,35 +13,35 @@
  * is proved apart, against a clock, in `clip-mux-and-rate.spec.ts` — including
  * the case that matters most, a gate armed at EOF that can never be disarmed.
  */
+
+import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PassThrough, Writable } from 'node:stream'
-import type { ChildProcess } from 'node:child_process'
+import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { IScopedLogger } from '@camstack/types'
-
 import type { HikvisionClipRow } from '../clip-catalog.js'
-import { CLIP_STREAM_DRAIN_TIMEOUT_MS } from '../clip-stream-mux.js'
 import {
   CLIP_STREAM_INIT_ONLY_BYTES,
   CLIP_STREAM_NO_MEDIA_ACCESS_UNITS,
-  createClipStreamProducer,
   type ClipStreamSink,
+  createClipStreamProducer,
 } from '../clip-stream.js'
+import { CLIP_STREAM_DRAIN_TIMEOUT_MS } from '../clip-stream-mux.js'
 import {
   createRtpVideoDepacketizer,
   parseRtpPacket,
   type VideoAccessUnit,
 } from '../rtsp/rtp-depacketize.js'
-import { parseRtspSdp, type RtspVideoTrack } from '../rtsp/rtsp-sdp.js'
-import { createRtspWireReader } from '../rtsp/rtsp-wire.js'
 import type {
   RtspReplayEnd,
   RtspReplayHandlers,
   RtspReplaySession,
 } from '../rtsp/rtsp-replay-session.js'
+import { parseRtspSdp, type RtspVideoTrack } from '../rtsp/rtsp-sdp.js'
+import { createRtspWireReader } from '../rtsp/rtsp-wire.js'
 
 const FIXTURES = join(import.meta.dirname, 'fixtures')
 

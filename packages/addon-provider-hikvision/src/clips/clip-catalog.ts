@@ -28,16 +28,17 @@
  * 12.55. The field is parsed into nothing. The rate a clip is muxed at is
  * measured from the replay's own RTP timestamps (`clip-replay-rate.ts`).
  */
-import type { IScopedLogger } from '@camstack/types'
+
 import { randomBytes } from 'node:crypto'
+import type { IScopedLogger } from '@camstack/types'
 
 import type { HikvisionIsapiClient } from '../hikvision-isapi-client.js'
 import { clipKeyFor } from './clip-identity.js'
 import {
   buildClipSearchBody,
+  type ClipSearchItem,
   clipSearchIsComplete,
   parseClipSearchPage,
-  type ClipSearchItem,
 } from './clip-search.js'
 
 /** How many rows one `search` page asks for. The camera caps its own page —

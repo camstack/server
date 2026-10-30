@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest'
 import type { IScopedLogger, LogExtras } from '@camstack/types'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  IntercomOrchestrator,
-  type IntercomAudioCodecApi,
-  type IntercomWebrtcPeer,
   type IIntercomTalkSession,
+  type IntercomAudioCodecApi,
   type IntercomCloseInfo,
   type IntercomCloseReason,
+  IntercomOrchestrator,
+  type IntercomWebrtcPeer,
 } from '../intercom-orchestrator.js'
 
 /**

@@ -45,8 +45,8 @@ import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
 import { type PinnedFfmpegSpawnAnswer, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
 
 import { CLIP_MUX_PROBE_BYTES } from './clip-stream-mux.js'
-import type { RtspVideoCodec } from './rtsp/rtsp-sdp.js'
 import type { VideoAccessUnit } from './rtsp/rtp-depacketize.js'
+import type { RtspVideoCodec } from './rtsp/rtsp-sdp.js'
 
 /**
  * The long edge of a still.

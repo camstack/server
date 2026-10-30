@@ -1,10 +1,11 @@
-import { userError } from '@camstack/types'
 import type {
   ConfigUISchema,
   CreateDeviceSpec,
   DeviceConstructor,
   DeviceSummary,
   DiscoveryCandidate,
+  DiscoveryHit,
+  DiscoveryMode,
   FieldProbeResult,
   IDevice,
   ProviderRegistration,
@@ -15,20 +16,22 @@ import {
   DeviceType,
   failureContributionCapability,
   memoizePinnedFfmpeg,
+  userError,
   videoclipsCapability,
   widenDeviceConstructor,
   withClipEventLabels,
 } from '@camstack/types'
-import { createClipService, type ClipService } from './clips/clip-service.js'
-import { HikvisionCamera, hikvisionCameraSchema, HIKVISION_ADDON_ID } from './hikvision-camera.js'
+import { type ClipService, createClipService } from './clips/clip-service.js'
+import { HIKVISION_ADDON_ID, HikvisionCamera, hikvisionCameraSchema } from './hikvision-camera.js'
+import {
+  type DiscoveredHikvisionCamera,
+  HIKVISION_DISCOVERY_MODES,
+  hikvisionFromHttpHits,
+  hikvisionFromWsdHits,
+  slugifyHikvisionHost,
+} from './hikvision-discovery.js'
 import { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 import { intercomFailureReport } from './intercom/intercom-failure-report.js'
-import {
-  discoverHikvisionCameras,
-  discoverHikvisionViaHttpScan,
-  slugifyHikvisionHost,
-  type DiscoveredHikvisionCamera,
-} from './hikvision-discovery.js'
 
 function getString(obj: Record<string, unknown>, key: string): string {
   const v = obj[key]
@@ -166,34 +169,6 @@ function buildDiscoveryParamsFormSchema(): ConfigUISchema {
             labelKey: 'provider-hikvision:discoveryParams.s_credentials.password.label',
             required: true,
             showToggle: true,
-          },
-        ],
-      },
-      {
-        id: 'scan',
-        title: 'Scan options',
-        titleKey: 'provider-hikvision:discoveryParams.s_scan.title',
-        description:
-          "Leave blank to scan the hub's own subnet; enter the CIDR if the cameras are on another one (e.g. 192.168.60.0/24).",
-        descriptionKey: 'provider-hikvision:discoveryParams.s_scan.description',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'networkCidr',
-            label: 'Network (CIDR) — required if cameras are on a different subnet than the hub',
-            labelKey: 'provider-hikvision:discoveryParams.s_scan.networkCidr.label',
-            required: false,
-            placeholder: '192.168.60.0/24',
-          },
-          {
-            type: 'number',
-            key: 'timeoutMs',
-            label: 'WS-Discovery timeout (ms)',
-            labelKey: 'provider-hikvision:discoveryParams.s_scan.timeoutMs.label',
-            min: 1_000,
-            max: 30_000,
-            default: 5_000,
           },
         ],
       },
@@ -413,7 +388,7 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
     await super.onShutdown()
   }
 
-  // ── Discovery: ONVIF WS-Discovery filtered to Hikvision devices ────
+  // ── Discovery: declared modes, classified here ────
 
   override async supportsDiscovery(): Promise<boolean> {
     return true
@@ -423,38 +398,34 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
     return buildDiscoveryParamsFormSchema()
   }
 
-  override async discoverDevices(input?: {
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return HIKVISION_DISCOVERY_MODES
+  }
+
+  /**
+   * WS-Discovery answers name the vendor; ISAPI answers are confirmed with the scan-form
+   * credentials, which exist only here (never in the engine's probe).
+   */
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
-    const p = input?.params ?? {}
-    // Username defaults to `admin` (the Hikvision default) — the scan form shows `admin` as a field
-    // default, but a FormBuilder default is NOT written into params unless the operator edits the
-    // field, so relying on the passed value would skip the HTTP scan whenever they only typed the
-    // password. Gate the HTTP scan on the PASSWORD only.
+    const p = input.params ?? {}
+    // Username defaults to `admin`: a form default is NOT written into params unless edited.
     const rawUser = typeof p['username'] === 'string' ? p['username'].trim() : ''
     const username = rawUser.length > 0 ? rawUser : 'admin'
     const password = typeof p['password'] === 'string' ? p['password'] : ''
-    const networkCidr = typeof p['networkCidr'] === 'string' ? p['networkCidr'].trim() : ''
-    const timeoutMs = typeof p['timeoutMs'] === 'number' ? p['timeoutMs'] : 5_000
 
-    // Two mechanisms, merged by host: WS-Discovery (multicast — works only where the runner receives
-    // multicast, NOT on a macvlan/br0 hub) and an ISAPI subnet scan (unicast — reliable from any
-    // network, but needs a password). Run the HTTP scan whenever a password is supplied.
-    const results = await Promise.all([
-      discoverHikvisionCameras(timeoutMs).catch(() => [] as readonly DiscoveredHikvisionCamera[]),
-      password
-        ? discoverHikvisionViaHttpScan({
-            username,
-            password,
-            ...(networkCidr ? { networkCidr } : {}),
-          }).catch(() => [] as readonly DiscoveredHikvisionCamera[])
-        : Promise.resolve([] as readonly DiscoveredHikvisionCamera[]),
-    ])
+    const ws = hikvisionFromWsdHits(input.hits)
+    const http = await hikvisionFromHttpHits(
+      input.hits,
+      password.length > 0 ? { username, password } : null,
+    )
     const byHost = new Map<string, DiscoveredHikvisionCamera>()
-    for (const cam of results.flat()) if (!byHost.has(cam.host)) byHost.set(cam.host, cam)
+    for (const cam of [...ws, ...http]) if (!byHost.has(cam.host)) byHost.set(cam.host, cam)
     const cameras = [...byHost.values()]
-    this.ctx.logger.info('Hikvision discovery complete', {
-      meta: { count: cameras.length, ws: results[0].length, httpScan: results[1].length },
+    this.ctx.logger.info('Hikvision discovery classified', {
+      meta: { count: cameras.length, ws: ws.length, httpConfirmed: http.length },
     })
 
     return cameras.map((c) => {

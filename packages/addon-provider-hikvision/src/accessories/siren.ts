@@ -23,21 +23,21 @@
  * (camera-side linkage, panel toggle) surface in the UI.
  */
 
-import { z } from 'zod'
-import {
-  BaseDevice,
-  DeviceType,
-  hydrateSchema,
-  switchCapability,
-  type SwitchStatus,
-} from '@camstack/types'
 import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceContext,
   InferNativeProvider,
 } from '@camstack/types'
-import { hikvisionAccessoryBaseSchema, type HikvisionAccessoryHost, AccessoryKind } from './base.js'
+import {
+  BaseDevice,
+  DeviceType,
+  hydrateSchema,
+  type SwitchStatus,
+  switchCapability,
+} from '@camstack/types'
+import { z } from 'zod'
+import { AccessoryKind, type HikvisionAccessoryHost, hikvisionAccessoryBaseSchema } from './base.js'
 
 export const sirenAccessorySchema = hikvisionAccessoryBaseSchema.extend({
   kind: z.literal(AccessoryKind.Siren),

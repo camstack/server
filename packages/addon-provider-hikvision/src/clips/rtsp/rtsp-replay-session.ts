@@ -47,13 +47,13 @@ import { connect, type Socket } from 'node:net'
 
 import type { IScopedLogger } from '@camstack/types'
 
-import { buildAuthHeader, parseChallenge, type DigestState } from '../../digest-auth.js'
+import { buildAuthHeader, type DigestState, parseChallenge } from '../../digest-auth.js'
 import {
   createRtpVideoDepacketizer,
   parseRtpPacket,
   type VideoAccessUnit,
 } from './rtp-depacketize.js'
-import { parseRtspSdp, resolveControlUrl, type RtspVideoTrack } from './rtsp-sdp.js'
+import { parseRtspSdp, type RtspVideoTrack, resolveControlUrl } from './rtsp-sdp.js'
 import { createRtspWireReader, encodeRtspRequest, type RtspResponse } from './rtsp-wire.js'
 
 /** RTSP's own port. The ISAPI port is a different, unrelated number. */

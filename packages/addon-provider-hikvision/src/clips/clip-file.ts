@@ -31,14 +31,13 @@ import { rm, stat } from 'node:fs/promises'
 
 import type { IScopedLogger, PinnedFfmpegResolver } from '@camstack/types'
 import { type PinnedFfmpegSpawnAnswer, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
-
-import { estimateReplayFps } from './clip-replay-rate.js'
 import type { ClipArtifactStore } from './clip-artifact-store.js'
 import type { HikvisionClipRow } from './clip-catalog.js'
-import { buildClipFileMuxArgs, CLIP_STREAM_AUDIO_FD, writableStdio } from './clip-stream-mux.js'
+import { estimateReplayFps } from './clip-replay-rate.js'
 import type { ClipStreamCamera } from './clip-stream.js'
-import { openRtspReplay } from './rtsp/rtsp-replay-session.js'
+import { buildClipFileMuxArgs, CLIP_STREAM_AUDIO_FD, writableStdio } from './clip-stream-mux.js'
 import type { VideoAccessUnit } from './rtsp/rtp-depacketize.js'
+import { openRtspReplay } from './rtsp/rtsp-replay-session.js'
 
 /**
  * A ceiling on the RAW media one file fetch may accumulate.

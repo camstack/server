@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   encodePcm16,
-  encodePcm16ToUlaw,
   encodePcm16ToAlaw,
+  encodePcm16ToUlaw,
   resolveHikvisionAudioCodec,
 } from '../g711-encoder.js'
 

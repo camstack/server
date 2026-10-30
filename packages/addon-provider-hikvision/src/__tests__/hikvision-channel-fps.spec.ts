@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import type { HikvisionDeviceCache } from '../schema.js'
+import { describe, expect, it } from 'vitest'
 import { resolveProbedFps } from '../hikvision-channel-fps.js'
+import type { HikvisionDeviceCache } from '../schema.js'
 
 /**
  * Pure helper that surfaces the camera's per-channel `maxFrameRate`

@@ -44,9 +44,9 @@ import type { IScopedLogger } from '@camstack/types'
 
 import type { HikvisionClipRow } from './clip-catalog.js'
 import type { ClipStreamCamera } from './clip-stream.js'
+import type { VideoAccessUnit } from './rtsp/rtp-depacketize.js'
 import { openRtspReplay } from './rtsp/rtsp-replay-session.js'
 import type { RtspVideoCodec } from './rtsp/rtsp-sdp.js'
-import type { VideoAccessUnit } from './rtsp/rtp-depacketize.js'
 
 /**
  * How many access units are kept before the session is torn down.

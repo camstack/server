@@ -2,9 +2,9 @@
  * The camera's one playback slot, held by the provider rather than discovered
  * from a 500.
  */
-import { describe, expect, it, vi } from 'vitest'
 
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createReplayLane, REPLAY_LANE_WAIT_MS } from '../replay-lane.js'
 

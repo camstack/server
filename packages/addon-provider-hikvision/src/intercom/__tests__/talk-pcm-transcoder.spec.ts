@@ -11,8 +11,9 @@
  * Disarm check: revert `feedResampled`'s conversion branch to `return REASON…`
  * and the first three tests go red on the transport assertion, not on a spy.
  */
-import { describe, it, expect } from 'vitest'
+
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import type { IntercomAudioCodecApi } from '../intercom-orchestrator.js'
 import {
   REASON_PCM_CLOSED,

@@ -1,4 +1,3 @@
-import { userError } from '@camstack/types'
 import type {
   CamStreamDescriptor,
   ConfigUISchema,
@@ -6,6 +5,7 @@ import type {
   DeviceContext,
   ICameraDevice,
   InferNativeProvider,
+  PtzHomePreset,
   RawStateResult,
   RecordingOnboardOptions,
   RecordingOnboardStatus,
@@ -20,6 +20,7 @@ import {
   type AccessoryKindValue,
   type BacklightMode,
   BaseDevice,
+  buildDeviceAdminUrl,
   buildStreamParamsConfigSchema,
   createEvent,
   createRuntimeStateBridge,
@@ -29,28 +30,25 @@ import {
   DeviceFeature,
   DeviceType,
   dayNightCapability,
-  buildDeviceAdminUrl,
-  deviceAdminLinkCapability,
   describeOnboardClamp,
   describeOnboardRefusal,
-  recordingOnboardCapability,
+  deviceAdminLinkCapability,
   deviceCustomAction,
   EventCategory,
   findTimezone,
+  hubMotionNativeProvider,
   hydrateSchema,
   type ImageSettingsOptions,
   type ImageSettingsStatus,
-  imageSettingsCapability,
   type IntercomAbility,
+  imageSettingsCapability,
   intercomCapability,
   type MaskPoint,
   type MotionZoneOptions,
   type MotionZoneStatus,
   motionCapability,
-  hubMotionNativeProvider,
   motionZonesCapability,
   OPERATOR_WRITTEN_STALE_MS,
-  RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
   type OsdOverlay,
   type OsdStatus,
   osdCapability,
@@ -62,21 +60,24 @@ import {
   type PtzAutotrackSettings,
   type PtzAutotrackStatus,
   privacyMaskCapability,
+  providerMotionEvent,
   ptzAutotrackCapability,
   ptzCapability,
   type ReachabilityPollHandle,
+  RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
   rebootCapability,
+  recordingOnboardCapability,
   type StreamParamsOptions,
   type StreamParamsStatus,
   type StreamProfile,
   type StreamProfilePatch,
-  providerMotionEvent,
   snapshotCapability,
   startReachabilityPoll,
   streamCatalogCapability,
   streamParamsCapability,
   summarisePrivacyAudio,
   TIMEZONES,
+  userError,
 } from '@camstack/types'
 import { z } from 'zod'
 import {
@@ -84,6 +85,7 @@ import {
   type HikvisionLightHost,
   type HikvisionSirenHost,
 } from './accessories/index.js'
+import { findFreePresetSlot, HOME_PRESET_NAME } from './free-preset-slot.js'
 import { type AlarmIngressLog, createAlarmIngressLog } from './hikvision-alarm-ingress-log.js'
 import { type AlarmTypeTally, createAlarmTypeTally } from './hikvision-alarm-tally.js'
 import { resolveProbedFps } from './hikvision-channel-fps.js'
@@ -120,16 +122,14 @@ import {
 } from './intercom/intercom-orchestrator.js'
 import { TalkPcmTranscoder } from './intercom/talk-pcm-transcoder.js'
 import { WeriftIntercomPeer } from './intercom/werift-intercom-peer.js'
-import { populateHikvisionMetadata } from './metadata-populator.js'
-import { buildRawState } from './raw-state.js'
 import { isapiSpeedFor, PTZ_MOVE_IMPULSE_MS } from './isapi-ptz-speed.js'
-import { findFreePresetSlot, HOME_PRESET_NAME } from './free-preset-slot.js'
+import { populateHikvisionMetadata } from './metadata-populator.js'
 import {
   assertPresetWritable,
   isPresetWritable,
   presetFunctionFor,
 } from './ptz-preset-functions.js'
-import type { PtzHomePreset } from '@camstack/types'
+import { buildRawState } from './raw-state.js'
 import {
   applyOnboardPatchToTrackXml,
   buildOnboardOptions,

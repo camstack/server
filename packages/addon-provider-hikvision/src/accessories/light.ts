@@ -23,23 +23,23 @@
  *                            cap caller doesn't specify one.
  */
 
-import { z } from 'zod'
-import {
-  BaseDevice,
-  DeviceType,
-  hydrateSchema,
-  switchCapability,
-  brightnessCapability,
-  type SwitchStatus,
-  type BrightnessStatus,
-} from '@camstack/types'
 import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceContext,
   InferNativeProvider,
 } from '@camstack/types'
-import { hikvisionAccessoryBaseSchema, type HikvisionAccessoryHost, AccessoryKind } from './base.js'
+import {
+  BaseDevice,
+  type BrightnessStatus,
+  brightnessCapability,
+  DeviceType,
+  hydrateSchema,
+  type SwitchStatus,
+  switchCapability,
+} from '@camstack/types'
+import { z } from 'zod'
+import { AccessoryKind, type HikvisionAccessoryHost, hikvisionAccessoryBaseSchema } from './base.js'
 
 export const lightAccessorySchema = hikvisionAccessoryBaseSchema.extend({
   kind: z.literal(AccessoryKind.Floodlight),

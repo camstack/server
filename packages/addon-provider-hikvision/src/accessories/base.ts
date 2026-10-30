@@ -17,8 +17,8 @@
  *     factory case, no edits to existing kinds.
  */
 
-import { z } from 'zod'
 import { AccessoryKind, type AccessoryKindValue } from '@camstack/types'
+import { z } from 'zod'
 import type { HikvisionIsapiClient } from '../hikvision-isapi-client.js'
 
 /**

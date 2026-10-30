@@ -27,12 +27,12 @@
 
 import type { IntercomAbility, IScopedLogger } from '@camstack/types'
 import type { AudioDataStream, HikvisionTwoWayAudioChannel } from '../hikvision-isapi-client.js'
-import type { IntercomCloseReason } from './intercom-orchestrator.js'
 import {
   encodePcm16,
-  resolveHikvisionAudioCodec,
   type HikvisionAudioCodec,
+  resolveHikvisionAudioCodec,
 } from './g711-encoder.js'
+import type { IntercomCloseReason } from './intercom-orchestrator.js'
 
 /** Notification a camera-initiated teardown surfaces to subscribers. */
 export interface HikvisionIntercomCloseInfo {

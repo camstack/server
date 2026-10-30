@@ -35,12 +35,12 @@ import {
   CLIP_STILL_DISPOSITION_HEADER,
   CLIP_STILL_REASON_CODE_HEADER,
   CLIP_STILL_REASON_HEADER,
-  clipReasonHeaderValue,
   CLIP_STREAM_TRANSPORT_HEADER,
+  clipReasonHeaderValue,
   type IScopedLogger,
 } from '@camstack/types'
 
-import { refuseStill, type MintRefusal, type MintResult } from './clip-still-refusal.js'
+import { type MintRefusal, type MintResult, refuseStill } from './clip-still-refusal.js'
 import type { ClipStreamAudioAsk } from './clip-stream.js'
 
 export type { MintRefusal, MintResult }

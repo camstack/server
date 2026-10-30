@@ -14,21 +14,20 @@
  *
  * The catalog module is mocked because the ROW is all these paths need.
  */
+
+import type { ChildProcess } from 'node:child_process'
+import { EventEmitter } from 'node:events'
 import { mkdtemp } from 'node:fs/promises'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { EventEmitter } from 'node:events'
 import { PassThrough } from 'node:stream'
-import type { ChildProcess } from 'node:child_process'
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { describe, expect, it, vi } from 'vitest'
-
 import type { IScopedLogger } from '@camstack/types'
-
+import { describe, expect, it, vi } from 'vitest'
+import { ClipArtifactStore } from '../clip-artifact-store.js'
 import type { HikvisionClipRow } from '../clip-catalog.js'
 import { clipKeyFor } from '../clip-identity.js'
 import type { HikvisionClipCamera } from '../clip-service.js'
-import { ClipArtifactStore } from '../clip-artifact-store.js'
 import { createReplayLane } from '../replay-lane.js'
 import type {
   RtspReplayEnd,

@@ -27,10 +27,10 @@ import type {
   OnboardRecordTrack,
   OnboardStorage,
   OnboardStorageVolume,
-  RecordTrigger,
-  RecordWindow,
   RecordingOnboardOptions,
   RecordingOnboardStatus,
+  RecordTrigger,
+  RecordWindow,
 } from '@camstack/types'
 import {
   DAY_NAMES,
