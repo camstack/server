@@ -482,7 +482,7 @@ export class AddonPackageService {
     // Refresh registry + emit a synthetic 'updated' lifecycle event
     // (the version went BACK, but downstream consumers care about the
     // version change itself, not the direction).
-    this.addonRegistry.refreshPackageVersion(name, rolledBackTo)
+    await this.refreshRegistryManifest(name, rolledBackTo)
     this.addonRegistry.emitUpdateEvent(name, previousVersion, rolledBackTo)
 
     try {
@@ -1304,7 +1304,7 @@ export class AddonPackageService {
         updatedVersion = result.version
 
         // Update version in registry so UI reflects the change immediately
-        this.addonRegistry.refreshPackageVersion(name, updatedVersion)
+        await this.refreshRegistryManifest(name, updatedVersion)
 
         // Emit addon.updated lifecycle event
         this.addonRegistry.emitUpdateEvent(name, previousVersion, updatedVersion)
@@ -1400,7 +1400,7 @@ export class AddonPackageService {
       const updatedVersion = r.version
 
       // Update version in registry so UI reflects the change immediately
-      this.addonRegistry.refreshPackageVersion(name, updatedVersion)
+      await this.refreshRegistryManifest(name, updatedVersion)
 
       // Emit addon.updated lifecycle event
       this.addonRegistry.emitUpdateEvent(name, previousVersion, updatedVersion)
@@ -2286,6 +2286,22 @@ export class AddonPackageService {
       meta: { packageName },
     })
     return null
+  }
+
+  /**
+   * After a swap on disk, make `addons.list` serve the NEW manifest (icon, name,
+   * capabilities), not just the new version. A failed re-read falls back to the
+   * version-only refresh and is logged with the package name.
+   */
+  private async refreshRegistryManifest(name: string, version: string): Promise<void> {
+    try {
+      await this.addonRegistry.refreshPackageFromDisk(name)
+    } catch (error: unknown) {
+      this.logger.warn('Manifest refresh from disk failed; only the version was updated', {
+        meta: { name, error: errMsg(error) },
+      })
+      this.addonRegistry.refreshPackageVersion(name, version)
+    }
   }
 
   /** Only allow @camstack/* scoped packages */

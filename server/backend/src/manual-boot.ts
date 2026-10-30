@@ -6,6 +6,7 @@
  * dependency graph.
  */
 
+import { applyStagedOrThrow } from './core/addon/staged-update-applier.js'
 import { randomUUID } from 'node:crypto'
 import * as path from 'node:path'
 import {
@@ -364,7 +365,11 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
       addonPackageService.fetchAddonTarball(name, version, signal),
     extract: (tgz, destDir) => addonPackageService.extractTarball(tgz, destDir),
     applyAddonUpdate: async ({ name, version, stagedPath }) => {
-      await addonPackageService.applyStagedAddonUpdate(name, version, stagedPath)
+      await applyStagedOrThrow(addonPackageService, {
+        name,
+        version,
+        stagedPath,
+      })
     },
     emit: (kind, job, entry) => {
       if (kind === 'progress') {

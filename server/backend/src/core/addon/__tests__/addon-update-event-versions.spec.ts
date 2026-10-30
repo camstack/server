@@ -57,6 +57,7 @@ interface UpdateEventCall {
 
 interface Harness {
   readonly service: AddonPackageService
+  readonly manifestRefreshes: string[]
   readonly updateEvents: UpdateEventCall[]
   readonly addonsDir: string
   readonly stagedPath: string
@@ -120,11 +121,15 @@ function makeHarness(installedVersion: string | null): Harness {
   writePackage(stagedPath, '0.1.51')
 
   const updateEvents: UpdateEventCall[] = []
+  const manifestRefreshes: string[] = []
   const loggingService = { createLogger: () => fakeLogger() }
   const eventBus = { emit: () => undefined }
   const config = { get: () => root }
   const addonRegistry = {
     refreshPackageVersion: () => undefined,
+    refreshPackageFromDisk: async (packageName: string) => {
+      manifestRefreshes.push(packageName)
+    },
     emitUpdateEvent: (packageName: string, fromVersion: string | null, toVersion: string) => {
       updateEvents.push({ packageName, fromVersion, toVersion })
     },
@@ -141,7 +146,7 @@ function makeHarness(installedVersion: string | null): Harness {
     notificationService as never,
     toastService as never,
   )
-  return { service, updateEvents, addonsDir, stagedPath }
+  return { service, updateEvents, manifestRefreshes, addonsDir, stagedPath }
 }
 
 beforeEach(() => {
@@ -185,6 +190,17 @@ describe('applyStagedAddonUpdate emits the versions that happened', () => {
 
     expect(h.updateEvents[0]?.fromVersion).toBeNull()
     expect(h.updateEvents[0]?.toVersion).toBe('0.1.51')
+  })
+})
+
+describe('applyStagedAddonUpdate refreshes the registry manifest', () => {
+  it('re-reads the package from disk after the swap, not only its version', async () => {
+    const h = makeHarness('0.1.47')
+    seedManifest(h.addonsDir, '0.1.47')
+
+    await h.service.applyStagedAddonUpdate(PACKAGE, '0.1.51', h.stagedPath)
+
+    expect(h.manifestRefreshes).toEqual([PACKAGE])
   })
 })
 

@@ -2116,6 +2116,53 @@ export class AddonRegistryService {
   }
 
   /**
+   * Copy the freshly scanned package metadata (version, name, bundle, the
+   * declaration `listAddons()` overlays, and the declared capabilities) onto an
+   * already-registered entry. The live `entry.addon` instance and
+   * `entry.initialized` stay untouched so `restartAddon` still shuts the old
+   * instance down cleanly.
+   */
+  private applyDiskMetadata(
+    existing: AddonEntry,
+    registered: ReturnType<AddonLoader['listAddons']>[number],
+  ): void {
+    existing.packageVersion = registered.packageVersion
+    existing.packageName = registered.packageName
+    existing.packageDisplayName = registered.packageDisplayName
+    if (registered.bundle !== undefined) {
+      existing.bundle = registered.bundle
+    }
+    existing.declaration = registered.declaration
+    existing.declaredCapabilities = (registered.declaration.capabilities ?? []).map(
+      (c: string | CapabilityDeclaration) =>
+        typeof c === 'string' ? { name: c, mode: 'singleton' as const } : c,
+    )
+  }
+
+  /**
+   * Re-read ONE installed package from `<addonsDir>/<packageName>` and refresh
+   * the metadata of its registered addons (declaration incl. icon/name,
+   * version, bundle, capabilities). Called after an update or rollback swapped
+   * the package on disk: without it `listAddons()` keeps serving the manifest
+   * captured at boot. Never registers a new addon (that is `loadNewAddons`).
+   */
+  async refreshPackageFromDisk(packageName: string): Promise<void> {
+    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
+    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    const freshLoader = new AddonLoader(this.loggingService.createLogger('AddonLoader'))
+    await freshLoader.loadFromAddonDir(path.join(addonsDir, packageName))
+    for (const registered of freshLoader.listAddons()) {
+      const existing = this.addonEntries.get(registered.declaration.id)
+      if (!existing || existing.packageName !== packageName) continue
+      this.applyDiskMetadata(existing, registered)
+      this.logger.info('Refreshed addon manifest from disk', {
+        tags: { addonId: registered.declaration.id },
+        meta: { packageName, version: registered.packageVersion },
+      })
+    }
+  }
+
+  /**
    * Refresh the package version for all addons from a given package.
    * Call this after an update to ensure the UI shows the new version.
    */
@@ -2844,17 +2891,7 @@ export class AddonRegistryService {
         continue
       }
       if (existing) {
-        existing.packageVersion = registered.packageVersion
-        existing.packageName = registered.packageName
-        existing.packageDisplayName = registered.packageDisplayName
-        if (registered.bundle !== undefined) {
-          existing.bundle = registered.bundle
-        }
-        existing.declaration = registered.declaration
-        existing.declaredCapabilities = (registered.declaration.capabilities ?? []).map(
-          (c: string | CapabilityDeclaration) =>
-            typeof c === 'string' ? { name: c, mode: 'singleton' as const } : c,
-        )
+        this.applyDiskMetadata(existing, registered)
         continue
       }
 
