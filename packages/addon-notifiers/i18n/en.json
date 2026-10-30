@@ -4,7 +4,7 @@
   "descriptor.s_telegram.botToken.label": "Bot Token",
   "descriptor.s_telegram.botToken.description": "The token from @BotFather (e.g. 123456:ABC-DEF…).",
   "descriptor.s_telegram.chatId.label": "Chat ID",
-  "descriptor.s_telegram.chatId.description": "Numeric chat/user id, or @channelusername. DM the bot first, then use Discover.",
+  "descriptor.s_telegram.chatId.description": "Numeric chat/user id, or @channelusername. DM the bot first, then pick the chat from the list once the token is set.",
   "descriptor.s_telegram.defaultParseMode.label": "Parse Mode",
   "descriptor.s_telegram.defaultParseMode.description": "HTML avoids the MarkdownV2 escaping pitfalls; it is the only supported mode.",
   "descriptor.s_telegram.defaultParseMode.o_HTML.label": "HTML",

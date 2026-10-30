@@ -46,6 +46,7 @@ import {
   type TargetKind,
   TargetSchema,
 } from '@camstack/types'
+import { HA_BROKER_KIND } from './ha-broker-source.js'
 import { haRecordKinds, type HaTargetBody } from './record-kinds.js'
 
 /** The single kind this provider contributes to the shared catalog. */
@@ -65,23 +66,26 @@ function haConfigSchema(): ConfigUISchema {
         titleKey: 'provider-homeassistant:haConfig.s_connection.title',
         fields: [
           {
-            type: 'text',
+            type: 'broker-select',
+            key: 'brokerId',
+            label: 'Broker',
+            labelKey: 'provider-homeassistant:haConfig.s_connection.brokerId.label',
+            description: 'The Home Assistant connection the notification goes through.',
+            descriptionKey: 'provider-homeassistant:haConfig.s_connection.brokerId.description',
+            brokerKind: HA_BROKER_KIND,
+          },
+          {
+            type: 'select',
             key: 'service',
             label: 'Notify service',
             labelKey: 'provider-homeassistant:haConfig.s_connection.service.label',
             required: true,
+            options: [],
             placeholder: 'mobile_app_pixel_7',
             description:
-              'The part after `notify.` (e.g. `mobile_app_pixel_7`); use Discover to list them.',
+              'Loaded from the broker once it is picked. If the list does not load, type the part after `notify.`.',
             descriptionKey: 'provider-homeassistant:haConfig.s_connection.service.description',
-          },
-          {
-            type: 'text',
-            key: 'brokerId',
-            label: 'Broker',
-            labelKey: 'provider-homeassistant:haConfig.s_connection.brokerId.label',
-            description: 'Optional; blank uses the only configured broker.',
-            descriptionKey: 'provider-homeassistant:haConfig.s_connection.brokerId.description',
+            discoverOptions: { kind: HA_NOTIFICATION_KIND, dependsOn: ['brokerId'] },
           },
         ],
       },
@@ -269,22 +273,91 @@ export function buildNotifyServiceData(prepared: PreparedNotification): NotifySe
  * `get_services` returns `{ [domain]: { [service]: {...} } }`; we read the
  * `notify` domain. mobile_app_* services (rich push features) sort first.
  */
-export function parseNotifyServices(result: unknown, brokerId?: string): DiscoveredTarget[] {
+export function parseNotifyServices(
+  result: unknown,
+  brokerId?: string,
+  deviceNames?: ReadonlyMap<string, string>,
+): DiscoveredTarget[] {
   if (typeof result !== 'object' || result === null) return []
   const notify = (result as Record<string, unknown>)['notify']
   if (typeof notify !== 'object' || notify === null) return []
-  const services = Object.keys(notify as Record<string, unknown>)
-  const sorted = [...services].sort((a, b) => {
+  const entries = Object.entries(notify as Record<string, unknown>)
+  const sorted = [...entries].sort(([a], [b]) => {
     const am = a.startsWith('mobile_app_') ? 0 : 1
     const bm = b.startsWith('mobile_app_') ? 0 : 1
     if (am !== bm) return am - bm
     return a.localeCompare(b)
   })
-  return sorted.map((service) => ({
+  return sorted.map(([service, definition]) => ({
     kind: HA_NOTIFICATION_KIND,
-    suggestedName: `notify.${service}`,
+    suggestedName: friendlyServiceName(service, definition, deviceNames),
     config: { service, ...(brokerId !== undefined ? { brokerId } : {}) },
   }))
+}
+
+function nonEmptyText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined
+}
+
+/** `alexa_media_echo` -> `Alexa Media Echo`. */
+function prettifyServiceId(service: string): string {
+  return service
+    .split('_')
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+/**
+ * The name an operator recognises: the device name for a mobile app, else the
+ * service's own `name`, else its `description`, else the prettified id.
+ */
+function friendlyServiceName(
+  service: string,
+  definition: unknown,
+  deviceNames: ReadonlyMap<string, string> | undefined,
+): string {
+  const device = deviceNames?.get(service)
+  if (device !== undefined) return device
+  if (typeof definition === 'object' && definition !== null) {
+    const fields: Record<string, unknown> = { ...definition }
+    const name = nonEmptyText(fields['name'])
+    if (name !== undefined) return name
+    const description = nonEmptyText(fields['description'])
+    if (description !== undefined) return description
+  }
+  return prettifyServiceId(service)
+}
+
+/** HA's slug of a device name, as it appears in `mobile_app_<slug>`. */
+function slugifyDeviceName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
+
+/**
+ * `mobile_app_<slug>` -> device name, read from a `config/device_registry/list`
+ * reply. Only devices of the mobile_app integration count; the name the user
+ * gave wins over the one the app reported.
+ */
+export function mobileAppDeviceNames(registry: unknown): Map<string, string> {
+  const names = new Map<string, string>()
+  if (!Array.isArray(registry)) return names
+  for (const entry of registry) {
+    if (typeof entry !== 'object' || entry === null) continue
+    const device: Record<string, unknown> = { ...entry }
+    const identifiers = device['identifiers']
+    const isMobileApp =
+      Array.isArray(identifiers) &&
+      identifiers.some((pair) => Array.isArray(pair) && pair[0] === 'mobile_app')
+    if (!isMobileApp) continue
+    const name = nonEmptyText(device['name_by_user']) ?? nonEmptyText(device['name'])
+    if (name === undefined) continue
+    names.set(`mobile_app_${slugifyDeviceName(name)}`, name)
+  }
+  return names
 }
 
 // ── Target persistence (records, local copy) ─────────────────────────
@@ -378,6 +451,8 @@ export interface HaNotificationOutputDeps {
   ) => Promise<void>
   /** Issue a `get_services` WS message on a broker. */
   readonly getServices: (brokerId: string) => Promise<unknown>
+  /** `config/device_registry/list` on a broker — names mobile apps. Optional. */
+  readonly listDevices?: (brokerId: string) => Promise<unknown>
   /** Live broker ids — used to resolve the default broker + fan discovery. */
   readonly listBrokerIds: () => readonly string[]
   readonly logger?: IScopedLogger
@@ -483,13 +558,25 @@ export function createHaNotificationOutputProvider(
 
     discoverTargets: async ({ kind, config }): Promise<DiscoveredTarget[]> => {
       if (kind !== HA_NOTIFICATION_KIND) return []
+      // The registry only improves labels: a failed read must not hide the services.
+      const deviceNamesOf = async (brokerId: string): Promise<Map<string, string>> => {
+        if (deps.listDevices === undefined) return new Map()
+        try {
+          return mobileAppDeviceNames(await deps.listDevices(brokerId))
+        } catch (err) {
+          logger?.warn('ha device registry read failed; naming services from their ids', {
+            meta: { brokerId, error: errMsg(err) },
+          })
+          return new Map()
+        }
+      }
       const explicit = config ? readBrokerId(config) : undefined
       const brokerIds = explicit ? [explicit] : [...deps.listBrokerIds()]
       const out: DiscoveredTarget[] = []
       for (const brokerId of brokerIds) {
         try {
           const result = await deps.getServices(brokerId)
-          out.push(...parseNotifyServices(result, brokerId))
+          out.push(...parseNotifyServices(result, brokerId, await deviceNamesOf(brokerId)))
         } catch (err) {
           logger?.warn('ha get_services discovery failed', {
             meta: { brokerId, error: errMsg(err) },

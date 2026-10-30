@@ -281,6 +281,11 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         if (!manager) throw new Error(`ha-broker '${brokerId}' not found`)
         return manager.sendMessage({ type: 'get_services' })
       },
+      listDevices: async (brokerId: string) => {
+        const manager = this.requireRegistry().getManager(brokerId)
+        if (!manager) throw new Error(`ha-broker '${brokerId}' not found`)
+        return manager.sendMessage({ type: 'config/device_registry/list' })
+      },
       listBrokerIds: () => this.activeBrokers.map((b) => b.id),
       logger: this.ctx.logger.child('notification-output'),
     })

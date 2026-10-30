@@ -142,12 +142,14 @@ function descriptor(): TargetKind {
               showToggle: true,
             },
             {
-              type: 'text',
+              type: 'select',
               key: 'device',
               label: 'Device (optional)',
               labelKey: 'notifiers:descriptor.s_pushover.device.label',
               description: 'Restrict delivery to one device by name. Blank = all devices.',
               descriptionKey: 'notifiers:descriptor.s_pushover.device.description',
+              options: [],
+              discoverOptions: { kind: 'pushover', dependsOn: ['appToken', 'userOrGroupKey'] },
             },
             {
               type: 'text',

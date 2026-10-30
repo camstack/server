@@ -85,7 +85,7 @@ describe('zentik descriptor', () => {
     expect(byKey.get('authMode')?.type).toBe('select')
     expect(byKey.get('accessToken')?.type).toBe('password')
     expect(byKey.get('magicCode')?.type).toBe('password')
-    expect(byKey.get('bucketId')?.type).toBe('text')
+    expect(byKey.get('bucketId')?.type).toBe('select')
     expect(byKey.get('userIds')?.type).toBe('text')
     expect(showWhenOf('accessToken')).toEqual({ field: 'authMode', equals: 'accessToken' })
     expect(showWhenOf('magicCode')).toEqual({ field: 'authMode', equals: 'magicCode' })

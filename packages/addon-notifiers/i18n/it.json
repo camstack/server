@@ -4,7 +4,7 @@
   "descriptor.s_telegram.botToken.label": "Token del bot",
   "descriptor.s_telegram.botToken.description": "Il token ricevuto da @BotFather (es. 123456:ABC-DEF…).",
   "descriptor.s_telegram.chatId.label": "ID chat",
-  "descriptor.s_telegram.chatId.description": "ID numerico della chat/utente, oppure @nomecanale. Scrivi prima al bot, poi usa Rileva.",
+  "descriptor.s_telegram.chatId.description": "ID numerico della chat/utente, oppure @nomecanale. Scrivi prima al bot, poi scegli la chat dall'elenco una volta inserito il token.",
   "descriptor.s_telegram.defaultParseMode.label": "Modalità di formattazione",
   "descriptor.s_telegram.defaultParseMode.description": "HTML evita le insidie di escape di MarkdownV2; è l'unica modalità supportata.",
   "descriptor.s_telegram.defaultParseMode.o_HTML.label": "HTML",

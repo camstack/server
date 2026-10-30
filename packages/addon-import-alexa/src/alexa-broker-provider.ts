@@ -2,8 +2,7 @@ import { errMsg, type IBrokerProvider, type IScopedLogger } from '@camstack/type
 import { buildConnectionFormSchema, settingsToAlexaConnection } from './config.js'
 import type { AlexaBrokerEntry } from './config.js'
 import type { AlexaBrokerRegistry } from './alexa-broker-registry.js'
-
-const ALEXA_KIND = 'alexa'
+import { ALEXA_BROKER_KIND } from './speak/constants.js'
 
 export interface AlexaBrokerProviderDeps {
   readonly ownerAddonId: string
@@ -37,7 +36,7 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
 
   return {
     list: async ({ kind }) => {
-      if (kind && kind !== ALEXA_KIND) return []
+      if (kind && kind !== ALEXA_BROKER_KIND) return []
       return registry.list().map((info) => ({ ...info, addonId: ownerAddonId }))
     },
 
@@ -51,7 +50,7 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
         addonId: ownerAddonId,
         kinds: [
           {
-            kind: ALEXA_KIND,
+            kind: ALEXA_BROKER_KIND,
             label: 'Alexa',
             signIn: { basePath: '/addon/import-alexa/login', methods: ['device-code'] },
           },
@@ -60,8 +59,10 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
     ],
 
     add: async ({ kind, name, settings }) => {
-      if (kind !== ALEXA_KIND) {
-        throw new Error(`import-alexa: only kind '${ALEXA_KIND}' is handled here (got '${kind}')`)
+      if (kind !== ALEXA_BROKER_KIND) {
+        throw new Error(
+          `import-alexa: only kind '${ALEXA_BROKER_KIND}' is handled here (got '${kind}')`,
+        )
       }
       const entry = await registry.createEntry(name, settingsToAlexaConnection(settings))
       await persistBrokers([...getBrokers(), entry])
@@ -122,12 +123,12 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
     },
 
     getSettingsSchema: async ({ kind }) => {
-      if (kind !== ALEXA_KIND) return null
+      if (kind !== ALEXA_BROKER_KIND) return null
       return buildConnectionFormSchema()
     },
 
     testSettings: async ({ kind, settings }) => {
-      if (kind !== ALEXA_KIND) return { ok: false, error: `unsupported kind: ${kind}` }
+      if (kind !== ALEXA_BROKER_KIND) return { ok: false, error: `unsupported kind: ${kind}` }
       try {
         settingsToAlexaConnection(settings)
         return { ok: true }

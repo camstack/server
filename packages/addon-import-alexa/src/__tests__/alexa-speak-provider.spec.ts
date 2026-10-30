@@ -170,7 +170,7 @@ describe('alexa notification provider', () => {
 
 describe('Alexa delivery parameters (declared on the kind, set by a rule)', () => {
   it('declares mode and volume on the kind', () => {
-    const declared = alexaTargetKind([]).deliveryParams ?? []
+    const declared = alexaTargetKind().deliveryParams ?? []
     expect(declared.map((p) => [p.key, p.type])).toEqual([
       ['mode', 'enum'],
       ['volume', 'number'],
@@ -206,8 +206,8 @@ describe('Alexa delivery parameters (declared on the kind, set by a rule)', () =
 })
 
 describe('the Alexa target kind', () => {
-  const fieldsOf = (brokers: readonly SpeakBrokerView[]) =>
-    alexaTargetKind(brokers).configSchema.sections.flatMap((section) => section.fields)
+  const fieldsOf = () =>
+    alexaTargetKind().configSchema.sections.flatMap((section) => section.fields)
 
   it('carries the official brand icon', async () => {
     const [kind] = await createAlexaNotificationProvider(ports()).listTargetKinds({})
@@ -215,40 +215,40 @@ describe('the Alexa target kind', () => {
     expect(kind?.iconMediaType).toBe('image/svg+xml')
   })
 
-  it('offers the account Echoes as a select, with room and family, and no account field for one account', () => {
-    const fields = fieldsOf([
-      broker('b1', 'Home', [
-        echo({ room: 'Living room' }),
-        echo({ id: 'grp', name: 'Downstairs', kind: 'group', family: 'WHA' }),
-      ]),
-    ])
-    const echoField = fields.find((field) => 'key' in field && field.key === 'echoId')
-    expect(echoField?.type).toBe('select')
-    expect(echoField && 'options' in echoField ? echoField.options : []).toEqual([
-      { value: 'echo-1', label: 'Kitchen · Living room · ECHO' },
-      { value: 'grp', label: 'Downstairs · Group' },
-    ])
-    expect(fields.some((field) => 'key' in field && field.key === 'brokerId')).toBe(false)
+  it('picks the Amazon account with a broker-select, whatever the number of accounts', () => {
+    const account = fieldsOf().find((field) => 'key' in field && field.key === 'brokerId')
+    expect(account).toMatchObject({ type: 'broker-select', brokerKind: 'alexa' })
   })
 
-  it('asks for the account first when there are several, and shows the Echoes of the chosen one', () => {
-    const fields = fieldsOf([
-      broker('b1', 'Home', [echo({ id: 'home-echo', name: 'Home echo' })]),
-      broker('b2', 'Office', [echo({ id: 'office-echo', name: 'Office echo' })]),
+  it('loads the Echoes from the chosen account instead of a baked-in list', () => {
+    const echoes = fieldsOf().filter((field) => 'key' in field && field.key === 'echoId')
+    expect(echoes).toHaveLength(1)
+    expect(echoes[0]).toMatchObject({
+      type: 'select',
+      discoverOptions: { kind: ALEXA_SPEAK_KIND, dependsOn: ['brokerId'] },
+    })
+  })
+
+  it('answers the Echoes of the account the form names, with room and family, taken or not', async () => {
+    const provider = createAlexaNotificationProvider({
+      ...ports(),
+      brokers: () => [
+        broker('b1', 'Home', [
+          echo({ room: 'Living room' }),
+          echo({ id: 'grp', name: 'Downstairs', kind: 'group', family: 'WHA' }),
+        ]),
+        broker('b2', 'Office', [echo({ id: 'office-echo', name: 'Office echo' })]),
+      ],
+      loadTargets: () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
+    })
+    const found = await provider.discoverTargets({
+      kind: ALEXA_SPEAK_KIND,
+      config: { brokerId: 'b1' },
+    })
+    expect(found.map((row) => [row.config['echoId'], row.suggestedName])).toEqual([
+      ['echo-1', 'Kitchen · Living room · ECHO'],
+      ['grp', 'Downstairs · Group'],
     ])
-    const account = fields.find((field) => 'key' in field && field.key === 'brokerId')
-    expect(account && 'options' in account ? account.options.map((o) => o.value) : []).toEqual([
-      'b1',
-      'b2',
-    ])
-    const echoes = fields.filter((field) => 'key' in field && field.key === 'echoId')
-    expect(echoes.map((field) => ('showWhen' in field ? field.showWhen : undefined))).toEqual([
-      { field: 'brokerId', equals: 'b1' },
-      { field: 'brokerId', equals: 'b2' },
-    ])
-    expect(
-      echoes.map((field) => ('options' in field ? field.options.map((o) => o.value) : [])),
-    ).toEqual([['home-echo'], ['office-echo']])
   })
 
   it('pins the account on save, so a second account added later does not move the target', async () => {

@@ -7,7 +7,6 @@
  */
 import {
   type ConfigField,
-  type ConfigSelectField,
   type ConfigUISchema,
   type DeliveryParam,
   type DiscoveredTarget,
@@ -20,6 +19,7 @@ import {
   type TargetKind,
 } from '@camstack/types'
 import {
+  ALEXA_BROKER_KIND,
   ALEXA_SPEAK_ADDON_ID,
   ALEXA_SPEAK_ICON_URL,
   ALEXA_SPEAK_KIND,
@@ -150,52 +150,32 @@ export function echoOptionLabel(device: EchoDevice): string {
   return parts.join(' · ')
 }
 
-function echoField(
-  devices: readonly EchoDevice[],
-  showWhen?: ConfigSelectField['showWhen'],
-): ConfigSelectField {
-  return {
-    type: 'select',
-    key: 'echoId',
-    label: 'Echo',
-    labelKey: 'import-alexa:echoTarget.s_echo.echoId.label',
-    description:
-      devices.length === 0
-        ? 'No Echo found yet. Sign the Amazon account in on Integrations, Alexa.'
-        : undefined,
-    descriptionKey:
-      devices.length === 0 ? 'import-alexa:echoTarget.s_echo.echoId.empty' : undefined,
-    options: devices.map((device) => ({ value: device.id, label: echoOptionLabel(device) })),
-    ...(showWhen === undefined ? {} : { showWhen }),
-  }
-}
-
 /**
  * The two pickers are not `required`: a required select shows its first option
  * while the form still holds no value, so a save would drop the choice. Left
  * optional they open on "Select", and `upsertTarget` refuses an empty pick.
  *
- * The Echo picker is built from the accounts' own device lists on every call,
- * so a new Echo shows up without a deploy. With one account there is no account
- * field; with several, each account's Echoes appear when that account is chosen.
+ * The account is a broker pick (existing, or created in place); the Echo list
+ * is fetched from that account, so a new Echo shows up without a deploy.
  */
-function configSchema(brokers: readonly SpeakBrokerView[]): ConfigUISchema {
-  const first = brokers[0]
-  const accountFields: ConfigField[] =
-    brokers.length > 1
-      ? [
-          {
-            type: 'select',
-            key: 'brokerId',
-            label: 'Amazon account',
-            labelKey: 'import-alexa:echoTarget.s_echo.brokerId.label',
-            options: brokers.map((broker) => ({ value: broker.id, label: broker.name })),
-          },
-          ...brokers.map((broker) =>
-            echoField(broker.devices, { field: 'brokerId', equals: broker.id }),
-          ),
-        ]
-      : [echoField(first?.devices ?? [])]
+function configSchema(): ConfigUISchema {
+  const accountFields: ConfigField[] = [
+    {
+      type: 'broker-select',
+      key: 'brokerId',
+      label: 'Amazon account',
+      labelKey: 'import-alexa:echoTarget.s_echo.brokerId.label',
+      brokerKind: ALEXA_BROKER_KIND,
+    },
+    {
+      type: 'select',
+      key: 'echoId',
+      label: 'Echo',
+      labelKey: 'import-alexa:echoTarget.s_echo.echoId.label',
+      options: [],
+      discoverOptions: { kind: ALEXA_SPEAK_KIND, dependsOn: ['brokerId'] },
+    },
+  ]
   return {
     sections: [
       {
@@ -237,8 +217,8 @@ function configSchema(brokers: readonly SpeakBrokerView[]): ConfigUISchema {
   }
 }
 
-/** The Alexa target kind as the Add target form sees it, for the accounts as they are now. */
-export function alexaTargetKind(brokers: readonly SpeakBrokerView[]): TargetKind {
+/** The Alexa target kind as the Add target form sees it. */
+export function alexaTargetKind(): TargetKind {
   return {
     kind: ALEXA_SPEAK_KIND,
     label: 'Alexa',
@@ -248,7 +228,7 @@ export function alexaTargetKind(brokers: readonly SpeakBrokerView[]): TargetKind
     addonId: ALEXA_SPEAK_ADDON_ID,
     supportsDiscovery: true,
     destinationKeys: ['brokerId', 'echoId'],
-    configSchema: configSchema(brokers),
+    configSchema: configSchema(),
     deliveryParams: DELIVERY_PARAMS,
     caps: {
       attachments: { mediaTypes: [], mode: 'url', max: 0 },
@@ -408,7 +388,7 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return deliveries
     },
     async listTargetKinds() {
-      return [alexaTargetKind(ports.brokers())]
+      return [alexaTargetKind()]
     },
     async listTargets() {
       return [...targets]
@@ -418,8 +398,17 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       if (found === undefined) throw new Error(`target not found: ${input.targetId}`)
       return found
     },
-    async discoverTargets() {
-      // One proposal per Echo that no saved target already speaks on.
+    async discoverTargets(input) {
+      // The form names an account: every Echo of it, labelled to tell two apart.
+      const named = readString(input.config ?? {}, 'brokerId')
+      if (named.length > 0) {
+        const owner = ports.brokers().find((broker) => broker.id === named)
+        return (owner?.devices ?? []).map((device) => ({
+          ...discoveredFrom(owner ?? { id: named, name: named, ready: false, devices: [] }, device),
+          suggestedName: echoOptionLabel(device),
+        }))
+      }
+      // Otherwise one proposal per Echo that no saved target already speaks on.
       const taken = new Set(
         targets.flatMap((row) => {
           const owner = brokerFor(row.config)

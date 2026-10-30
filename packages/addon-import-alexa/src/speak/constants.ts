@@ -2,6 +2,8 @@
 
 export const ALEXA_SPEAK_ADDON_ID = 'import-alexa'
 export const ALEXA_SPEAK_KIND = 'alexa-echo'
+/** The kind of the Amazon-account broker the Echoes are read from. */
+export const ALEXA_BROKER_KIND = 'alexa'
 
 /** What an Echo will read in one turn. Longer text is cut, and the cut is reported. */
 export const SPEECH_MAX_CHARS = 450

@@ -143,7 +143,7 @@ describe('parseNotifyServices', () => {
     ])
     expect(candidates[0]).toEqual({
       kind: HA_NOTIFICATION_KIND,
-      suggestedName: 'notify.mobile_app_pixel_7',
+      suggestedName: 'Mobile App Pixel 7',
       config: { service: 'mobile_app_pixel_7', brokerId: 'broker-1' },
     })
   })

@@ -22,7 +22,7 @@
   "contribution.s_ha-export.title": "Home Assistant",
   "haConfig.s_connection.title": "Notifica Home Assistant",
   "haConfig.s_connection.service.label": "Servizio di notifica",
-  "haConfig.s_connection.service.description": "La parte dopo `notify.` (es. `mobile_app_pixel_7`); usa Discover per elencarli.",
+  "haConfig.s_connection.service.description": "Caricato dal broker una volta scelto. Se l'elenco non si carica, scrivi la parte dopo `notify.`.",
   "haConfig.s_connection.brokerId.label": "Broker",
-  "haConfig.s_connection.brokerId.description": "Facoltativo; se vuoto usa l'unico broker configurato."
+  "haConfig.s_connection.brokerId.description": "La connessione Home Assistant attraverso cui passa la notifica."
 }

@@ -335,11 +335,17 @@ async function fetchGreenApiJsonList(
   }
 }
 
+function hasText(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
 /**
  * Load contacts + chats for the Discover picker. Requires a live, authorized
  * instance — `notAuthorized` fails with a clear message rather than an empty list.
  */
 export async function discoverGreenApi(config: TargetConfig): Promise<readonly DiscoveredTarget[]> {
+  // Without credentials there is nothing to search: answer empty, not an error.
+  if (!hasText(config['idInstance']) || !hasText(config['apiTokenInstance'])) return []
   const apiUrl = resolveGreenApiUrl(config)
   const idInstance = requireString(config, 'idInstance')
   const token = requireString(config, 'apiTokenInstance')
@@ -468,7 +474,7 @@ function configSchema(): ConfigUISchema {
             required: true,
           },
           {
-            type: 'text',
+            type: 'select',
             key: 'chatId',
             label: 'Chat ID / phone number',
             labelKey: 'notifiers:config.s_whatsapp.chatId.label',
@@ -477,6 +483,8 @@ function configSchema(): ConfigUISchema {
             description:
               'Recipient in international format without "+", or a full WhatsApp id (…@c.us / …@g.us). Instance must be authorized in the Green API console.',
             descriptionKey: 'notifiers:config.s_whatsapp.chatId.description',
+            options: [],
+            discoverOptions: { kind: 'whatsapp', dependsOn: ['idInstance', 'apiTokenInstance'] },
           },
           {
             type: 'boolean',

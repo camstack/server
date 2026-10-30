@@ -73,14 +73,16 @@ const descriptor: TargetKind = {
             showToggle: true,
           },
           {
-            type: 'text',
+            type: 'select',
             key: 'chatId',
             label: 'Chat ID',
             labelKey: 'notifiers:descriptor.s_telegram.chatId.label',
             description:
-              'Numeric chat/user id, or @channelusername. DM the bot first, then use Discover.',
+              'Numeric chat/user id, or @channelusername. DM the bot first, then pick the chat from the list once the token is set.',
             descriptionKey: 'notifiers:descriptor.s_telegram.chatId.description',
             required: true,
+            options: [],
+            discoverOptions: { kind: 'telegram', dependsOn: ['botToken'] },
           },
           {
             type: 'select',

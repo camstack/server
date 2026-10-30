@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Home Assistant export: a failed push now states the reason in the log (missing CamStack component, rejected token, unreachable, too large), a missing component is no longer retried every tick, the integration status shows the last failure, and an oversized batch is split instead of dropped.
+- Notification targets pick a broker and list their options inside the add/edit form; the page-wide Find devices dialog is gone
 
 ## [1.2.639] - 2026-10-29
 

@@ -352,13 +352,15 @@ function zentikConfigSchema(): ConfigUISchema {
             showWhen: { field: 'authMode', equals: 'accessToken' },
           },
           {
-            type: 'text',
+            type: 'select',
             key: 'bucketId',
             label: 'Bucket ID or name',
             labelKey: 'notifiers:zentikConfig.s_connection.bucketId.label',
             description: 'Target bucket. Accepts a bucket id or its name.',
             descriptionKey: 'notifiers:zentikConfig.s_connection.bucketId.description',
             showWhen: { field: 'authMode', equals: 'accessToken' },
+            options: [],
+            discoverOptions: { kind: 'zentik', dependsOn: ['accessToken'] },
           },
           {
             type: 'password',
