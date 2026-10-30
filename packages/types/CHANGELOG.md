@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An editable-array config field can now hold keychain secrets per row
+- A discovered child device can name the gateway it sits behind (parentStableId)
 
 ## [1.2.451] - 2026-10-30
 

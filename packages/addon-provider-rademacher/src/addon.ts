@@ -9,6 +9,8 @@ import {
   type DeviceSummary,
   DeviceType,
   type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
@@ -28,9 +30,9 @@ import { buildRademacherConnectionTestProvider } from './rademacher-connection-t
 import { cascadeRemoveDevicesForIntegration } from './rademacher-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './rademacher-integration-offline.js'
 import {
-  browseRademacherHubs,
+  hubsFromHits,
   proposeRademacherHubs,
-  type RademacherDiscoveredHub,
+  RADEMACHER_DISCOVERY_MODES,
   rademacherDiscoveryCandidates,
   rademacherDiscoverySummary,
 } from './rademacher-hub-discovery.js'
@@ -83,11 +85,15 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
       customActions: rademacherActions,
       actionHandlers: {
         discoverHub: async () => {
-          const { proposals, summary } = await this.discoverHubs()
-          return {
-            hosts: proposals.map((found) => ({ host: found.host, name: found.name, id: found.id })),
-            summary,
-          }
+          const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
+            addonId: this.ctx.id,
+          })
+          const hosts = candidates.map((candidate) => ({
+            host: String(candidate.prefilledConfig['host'] ?? ''),
+            name: candidate.suggestedName,
+            id: candidate.stableId.replace(/^rademacher:/, ''),
+          }))
+          return { hosts, summary: rademacherDiscoverySummary(hosts.length, hosts.length) }
         },
       },
     }
@@ -111,22 +117,27 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
     return false
   }
 
-  /**
-   * LAN scan for HomePilot / Start2Smart hubs: the library's HTTP probe over the
-   * local /24 networks of this (hub-only) addon's host.
-   */
+  /** A hub is found by the scan engine's http-probe; this addon classifies the hits. */
   override async supportsDiscovery(): Promise<boolean> {
     return true
   }
 
-  override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
-    const { proposals } = await this.discoverHubs()
-    return rademacherDiscoveryCandidates(proposals).map((candidate) => ({
-      stableId: candidate.stableId,
-      type: DeviceType.Gateway,
-      suggestedName: candidate.suggestedName,
-      prefilledConfig: { ...candidate.prefilledConfig },
-    }))
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return RADEMACHER_DISCOVERY_MODES
+  }
+
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    const found = await hubsFromHits(input.hits)
+    const proposals = proposeRademacherHubs(found, await this.knownHubHosts())
+    if (found.length > proposals.length) {
+      this.ctx.logger.info('Rademacher discovery skipped hubs already added', {
+        meta: { found: found.length, proposed: proposals.length },
+      })
+    }
+    return rademacherDiscoveryCandidates(proposals)
   }
 
   override async adoptDiscoveredDevice(_input: {
@@ -153,25 +164,6 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-rademacher generateStableId: nativeId required')
     }
     return `rademacher:${nativeId}`
-  }
-
-  private async discoverHubs(): Promise<{
-    readonly proposals: readonly RademacherDiscoveredHub[]
-    readonly summary: string
-  }> {
-    let found: readonly RademacherDiscoveredHub[] = []
-    try {
-      found = await browseRademacherHubs()
-    } catch (err) {
-      this.ctx.logger.warn('Rademacher hub discovery failed', { meta: { error: errMsg(err) } })
-    }
-    const proposals = proposeRademacherHubs(found, await this.knownHubHosts())
-    if (found.length > proposals.length) {
-      this.ctx.logger.info('Rademacher discovery skipped hubs already added', {
-        meta: { found: found.length, proposed: proposals.length },
-      })
-    }
-    return { proposals, summary: rademacherDiscoverySummary(found.length, proposals.length) }
   }
 
   private async knownHubHosts(): Promise<readonly string[]> {

@@ -70,6 +70,8 @@ export type DiscoveredChildDevice = {
   features?: readonly string[]
   sourceInfo?: SourceInfo
   children?: readonly DiscoveredChildDevice[]
+  /** `childNativeId` of the gateway candidate (in the same list) this device sits behind. */
+  parentStableId?: string
 }
 
 export const DiscoveredChildDeviceSchema: z.ZodType<DiscoveredChildDevice> = z.lazy(() =>
@@ -118,6 +120,8 @@ export const DiscoveredChildDeviceSchema: z.ZodType<DiscoveredChildDevice> = z.l
     sourceInfo: SourceInfoSchema.optional(),
     /** Nested entity-children for accordion preview — integrations populate, Hubs omit. */
     children: z.array(DiscoveredChildDeviceSchema).readonly().optional(),
+    /** `childNativeId` of the gateway candidate in the same list this device sits behind. */
+    parentStableId: z.string().optional(),
   }),
 )
 

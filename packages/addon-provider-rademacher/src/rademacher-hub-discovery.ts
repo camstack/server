@@ -1,5 +1,11 @@
 import type { HubIdentity } from '@apocaliss92/noderademacher'
-import { Rademacher } from '@apocaliss92/noderademacher'
+import { probeHub } from '@apocaliss92/noderademacher'
+import {
+  DeviceType,
+  type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
+} from '@camstack/types'
 import { slugifyHost } from './rademacher-slug.js'
 
 /** One hub found on the LAN. */
@@ -13,8 +19,32 @@ export interface RademacherDiscoveredHub {
   readonly basePath: string
 }
 
-/** `prefilledConfig` flag: the scan opens the integration form instead of adopting a device. */
-export const RADEMACHER_SETUP_INTEGRATION_KEY = 'setupIntegration'
+/**
+ * The request the library's probe opens with: a POST on the password-salt
+ * endpoint, which a HomePilot / Start2Smart hub answers 200 (protected) or 500
+ * (open). The api base path is `''` on v1 and `/hp` on v2, so there are two modes.
+ */
+const SALT_PATH = '/authentication/password_salt'
+const SALT_STATUSES: readonly number[] = [200, 500]
+
+export const RADEMACHER_DISCOVERY_MODES: readonly DiscoveryMode[] = [
+  {
+    kind: 'http-probe',
+    port: 80,
+    path: SALT_PATH,
+    method: 'POST',
+    tls: false,
+    acceptStatus: [...SALT_STATUSES],
+  },
+  {
+    kind: 'http-probe',
+    port: 80,
+    path: `/hp${SALT_PATH}`,
+    method: 'POST',
+    tls: false,
+    acceptStatus: [...SALT_STATUSES],
+  },
+]
 
 /** Project the library's probe result onto the shape the form and the candidates share. */
 export function hubFromIdentity(identity: Readonly<HubIdentity>): RademacherDiscoveredHub {
@@ -29,16 +59,45 @@ export function hubFromIdentity(identity: Readonly<HubIdentity>): RademacherDisc
   }
 }
 
-/** Sweep the local /24 networks for HomePilot / Start2Smart hubs (the library's HTTP probe). */
-export async function browseRademacherHubs(
-  discover: () => Promise<readonly HubIdentity[]> = () => Rademacher.discover(),
+/** The library's identity probe for one host; the fetch seam is the library's own. */
+export type RademacherProbe = (host: string) => Promise<Readonly<HubIdentity> | null>
+
+type ProbeFetch = Parameters<typeof probeHub>[0]
+
+const probeFetch: ProbeFetch = async (url, options) => {
+  const res = await fetch(url, {
+    method: options?.method ?? 'GET',
+    ...(options?.body !== undefined ? { body: options.body } : {}),
+    ...(options?.headers !== undefined ? { headers: { ...options.headers } } : {}),
+    signal: AbortSignal.timeout(options?.timeoutMs ?? 1_500),
+  })
+  return {
+    statusCode: res.status,
+    headers: Object.fromEntries(res.headers.entries()),
+    json: () => res.json(),
+    text: () => res.text(),
+  }
+}
+
+export const probeRademacherHost: RademacherProbe = (host) => probeHub(probeFetch, host)
+
+/**
+ * Hubs among the engine's http-probe hits. A hit only says the salt endpoint
+ * answered; the library's identity check (a unicast follow-up to that host)
+ * decides whether it really is a hub and reads its name, model and MAC.
+ */
+export async function hubsFromHits(
+  hits: readonly DiscoveryHit[],
+  probe: RademacherProbe = probeRademacherHost,
 ): Promise<readonly RademacherDiscoveredHub[]> {
-  const seen = new Set<string>()
   const out: RademacherDiscoveredHub[] = []
-  for (const identity of await discover()) {
-    if (seen.has(identity.host)) continue
-    seen.add(identity.host)
-    out.push(hubFromIdentity(identity))
+  const seen = new Set<string>()
+  for (const hit of hits) {
+    if (hit.http === undefined || !SALT_STATUSES.includes(hit.http.status)) continue
+    if (seen.has(hit.host)) continue
+    seen.add(hit.host)
+    const identity = await probe(hit.host).catch(() => null)
+    if (identity !== null) out.push(hubFromIdentity(identity))
   }
   return out
 }
@@ -58,23 +117,18 @@ export function proposeRademacherHubs(
   return found.filter((item) => !identityKeys(item).some((key) => known.has(key)))
 }
 
-export interface RademacherDiscoveryCandidateShape {
-  readonly stableId: string
-  readonly suggestedName: string
-  readonly prefilledConfig: Readonly<Record<string, unknown>>
-}
-
 export function rademacherDiscoveryCandidates(
   proposals: readonly RademacherDiscoveredHub[],
-): readonly RademacherDiscoveryCandidateShape[] {
+): readonly DiscoveryCandidate[] {
   return proposals.map((found) => ({
     stableId: `rademacher:${found.id}`,
+    type: DeviceType.Gateway,
     suggestedName: found.name,
     prefilledConfig: {
       host: found.host,
       ...(found.basePath.length > 0 ? { basePath: found.basePath } : {}),
-      [RADEMACHER_SETUP_INTEGRATION_KEY]: true,
     },
+    setupIntegration: true,
   }))
 }
 

@@ -103,6 +103,7 @@ export function buildRademacherCandidates(
       alreadyAdopted: adoptedId !== null,
       adoptedDeviceId: adoptedId,
       capabilities: [coverCapability.name],
+      parentStableId: gatewayId,
     })
   }
   return out
