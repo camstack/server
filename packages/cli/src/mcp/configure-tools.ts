@@ -14,6 +14,7 @@ import {
   type HubClient,
 } from '@camstack/develop'
 import { z } from 'zod'
+import { registerConfigureP3bTools } from './configure-p3b.js'
 import type { McpContext, ToolTextResult } from './context.js'
 import { registerAddonTools } from './configure-addons.js'
 import { registerCameraTools } from './configure-cameras.js'
@@ -106,4 +107,5 @@ export function registerConfigureTools(server: McpServer, ctx: McpContext): void
   registerAddonTools(server, ctx)
   registerCameraTools(server, ctx)
   registerNotifierTools(server, ctx)
+  registerConfigureP3bTools(server, ctx)
 }

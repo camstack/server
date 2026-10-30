@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - camstack mcp configure toolset adds addon store search/install/update/uninstall, camera provider listing/discovery/add and notification target management; secrets are never accepted as tool arguments and are pointed to the admin UI
+- camstack mcp configure toolset: automation and notification-rule interviews with gated saves, camera calibration report and apply, zones, alarm, remote access (secrets are never tool arguments), exports and the Home Assistant guide
 - camstack mcp: the support toolset (benchmark run and status, accelerator and camera diagnosis, gated issue and pull-request drafts through your own gh)
 
 ## [1.2.210] - 2026-10-30
