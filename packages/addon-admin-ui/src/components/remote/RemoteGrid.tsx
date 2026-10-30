@@ -54,33 +54,38 @@ function occupied(grid: RemoteLayoutPayload): ReadonlySet<string> {
   return cells
 }
 
-/** A glyph-only app key has no visible text, so it carries the brand's name. */
-function appButtonName(button: RemoteLayoutButton): { 'aria-label'?: string } {
-  const brand = resolveAppBrand(button.icon)
-  return brand === undefined ? {} : { 'aria-label': button.label ?? brand.label }
+/** The tones that ARE the content of a key (a colour key): no text on them. */
+const COLOUR_TONES: ReadonlySet<string> = new Set(['red', 'green', 'yellow', 'blue'])
+
+/** What a key is called to a screen reader and in a tooltip: its label, else its role's name. */
+function keyName(button: RemoteLayoutButton, roleName: string): string {
+  return button.label ?? resolveAppBrand(button.icon)?.label ?? roleName
+}
+
+/** A key shows an icon, or a colour, or text: text only when nothing else says what it is. */
+function showsWords(button: RemoteLayoutButton, hasIcon: boolean): boolean {
+  if (hasIcon || resolveAppBrand(button.icon) !== undefined) return false
+  return button.tone === undefined || !COLOUR_TONES.has(button.tone)
 }
 
 function Face({
   button,
+  name,
   compact,
 }: {
   readonly button: RemoteLayoutButton
+  readonly name: string
   readonly compact: boolean
 }): ReactNode {
-  const { t } = useTranslation()
   const resolve = useDisplayIconResolver()
   const brand = resolveAppBrand(button.icon)
   const Icon = button.icon === undefined || brand !== undefined ? undefined : resolve(button.icon)
-  const words =
-    button.label ??
-    (Icon === undefined && brand === undefined
-      ? t(`remote.role.${button.role}`, humanRole(button.role))
-      : null)
+  const words = showsWords(button, Icon !== undefined) ? name : undefined
   return (
     <span className="flex flex-col items-center justify-center gap-0.5 leading-none">
       {brand !== undefined && <AppBrandGlyph brand={brand} />}
       {Icon !== undefined && <Icon className="h-4 w-4" aria-hidden />}
-      {words !== null && !compact && (
+      {words !== undefined && !compact && (
         <span className="max-w-full truncate text-[11px]">{words}</span>
       )}
     </span>
@@ -184,6 +189,7 @@ export function RemoteGrid({
   onItemKeyDown,
   drag = null,
 }: RemoteGridProps): ReactNode {
+  const { t } = useTranslation()
   const editable = onItemPointerDown !== undefined
   const dragging = drag !== null
   const taken = occupied(grid)
@@ -249,6 +255,7 @@ export function RemoteGrid({
         const bound = boundRoles === undefined || boundRoles.has(button.role)
         const held = drag?.item.kind === 'button' && drag.item.id === button.id
         const item: DragItem = { kind: 'button', id: button.id }
+        const name = keyName(button, t(`remote.role.${button.role}`, humanRole(button.role)))
         return (
           <Button
             key={button.id}
@@ -256,7 +263,8 @@ export function RemoteGrid({
             size="sm"
             variant={bound ? 'secondary' : 'outline'}
             aria-pressed={onSelect === undefined ? undefined : selected}
-            {...appButtonName(button)}
+            aria-label={name}
+            title={name}
             data-testid={`remote-grid-button-${button.id}`}
             data-shape={button.shape}
             data-tone={button.tone}
@@ -281,7 +289,7 @@ export function RemoteGrid({
               onItemKeyDown === undefined ? undefined : (event) => onItemKeyDown(item, event)
             }
           >
-            <Face button={button} compact={compact} />
+            <Face button={button} name={name} compact={compact} />
           </Button>
         )
       })}

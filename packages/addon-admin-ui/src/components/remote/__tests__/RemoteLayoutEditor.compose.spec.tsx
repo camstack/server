@@ -218,3 +218,35 @@ describe('moving on the grid', () => {
     expect(latest.buttons).toHaveLength(6)
   })
 })
+
+describe('what a key shows', () => {
+  it('an icon key and a colour key carry no visible text, but keep their name', () => {
+    const layout: RemoteLayoutPayload = {
+      columns: 3,
+      rows: 1,
+      buttons: [
+        { id: 'v', row: 0, col: 0, rowSpan: 1, colSpan: 1, role: 'volume_up', icon: 'power' },
+        {
+          id: 'r',
+          row: 0,
+          col: 1,
+          rowSpan: 1,
+          colSpan: 1,
+          role: 'custom:color_red',
+          label: 'Red',
+          tone: 'red',
+        },
+        { id: 'o', row: 0, col: 2, rowSpan: 1, colSpan: 1, role: 'ok' },
+      ],
+    }
+    render(<Harness start={layout} onGrid={() => undefined} />)
+    const icon = screen.getByTestId('remote-grid-button-v')
+    expect(icon.getAttribute('aria-label')).toBe('Volume up')
+    expect(icon.textContent).toBe('')
+    const colour = screen.getByTestId('remote-grid-button-r')
+    expect(colour.getAttribute('aria-label')).toBe('Red')
+    expect(colour.textContent).toBe('')
+    // No icon, no colour: the text stays.
+    expect(screen.getByTestId('remote-grid-button-o').textContent).not.toBe('')
+  })
+})
