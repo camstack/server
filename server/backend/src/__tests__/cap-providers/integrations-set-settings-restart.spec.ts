@@ -59,25 +59,32 @@ describe('integrations.setSettings skipRestart', () => {
 
   it('does not respawn when the OWNER asks, and still persists', async () => {
     const h = harness()
-    await h.provider.setSettings({
+    // The transport stamps callerAddonId into the call; it is not in the input schema.
+    const stamped = {
       id: 'int_0001',
       settings: { a: 1 },
       skipRestart: true,
       callerAddonId: ADDON_ID,
-    })
+    }
+    await h.provider.setSettings(stamped)
     expect(h.registry.setIntegrationSettings).toHaveBeenCalledTimes(1)
     expect(h.restartAddon).not.toHaveBeenCalled()
   })
 
   it('respawns when a caller that is not the owner asks to skip', async () => {
     const h = harness()
-    await h.provider.setSettings({ id: 'int_0001', settings: { a: 1 }, skipRestart: true })
     await h.provider.setSettings({
       id: 'int_0001',
       settings: { a: 1 },
       skipRestart: true,
-      callerAddonId: 'provider-someone-else',
     })
+    const stamped = {
+      id: 'int_0001',
+      settings: { a: 1 },
+      skipRestart: true,
+      callerAddonId: 'provider-someone-else',
+    }
+    await h.provider.setSettings(stamped)
     expect(h.restartAddon).toHaveBeenCalledTimes(2)
   })
 })
