@@ -19,6 +19,7 @@ import {
   type DeviceDisplayOverride,
   type QuantityValue,
   type ReadingQuantity,
+  unitsForQuantity,
 } from '@camstack/types'
 import {
   Input,
@@ -161,6 +162,18 @@ export function toList(value: ConditionValue): readonly (string | number)[] {
   if (isList(value)) return value
   if (typeof value === 'boolean') return []
   return [value]
+}
+
+/**
+ * The quantity a field DECLARES, when its number is entered in a unit the
+ * person picks (D972). A polymorphic field (`device`) has none here: the save
+ * boundary takes no unit for it, so it keeps the display bridge below.
+ */
+export function declaredQuantity(field: WireableField | undefined): ReadingQuantity | undefined {
+  const quantity = field?.quantity
+  if (field?.kind !== 'number' || quantity === undefined) return undefined
+  if (!isReadingQuantity(quantity) || quantity === 'none' || quantity === 'device') return undefined
+  return unitsForQuantity(quantity).length > 0 ? quantity : undefined
 }
 
 function concreteQuantity(

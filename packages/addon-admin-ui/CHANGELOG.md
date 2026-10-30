@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remote templates: add ready-made components (power, D-pad with OK, rockers, keypad, colour keys) from a palette, drag keys and groups on the grid, and see button shapes, colours and group frames; app icons use their brand colour.
+- Automation conditions and action quantities (a bowl weight, a feed portion) are now typed in a unit you pick, such as grams or ounces, and saved with that unit
 
 ## [1.2.523] - 2026-10-29
 

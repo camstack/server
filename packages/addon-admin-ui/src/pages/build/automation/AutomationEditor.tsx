@@ -35,6 +35,7 @@ import { useAutomationDevices } from './automation-data'
 import { ConditionTree } from './ConditionTree'
 import { GeneratedCodePanel } from './GeneratedCodePanel'
 import { normalizeRecipe } from './recipe-ops'
+import { prepareRecipeUnits } from './recipe-units'
 import { withActions, withTriggers } from './recipe-parts'
 import { TriggerEditor } from './TriggerEditor'
 import { RunModeSelector, runModeOf, withRunMode } from './RunModeSelector'
@@ -305,8 +306,10 @@ function firstSchemaError(recipe: AutomationRecipe): string | null {
 }
 
 function generate(name: string, recipe: AutomationRecipe): GeneratedSource {
+  const prepared = prepareRecipeUnits(recipe)
+  if (!prepared.ok) return { code: null, error: prepared.error }
   try {
-    return { code: generateAutomationBlock({ name, recipe }), error: null }
+    return { code: generateAutomationBlock({ name, recipe: prepared.recipe }), error: null }
   } catch (error: unknown) {
     return {
       code: null,

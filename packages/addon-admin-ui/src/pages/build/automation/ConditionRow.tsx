@@ -12,11 +12,12 @@
  */
 
 import type { AutomationCondition, AutomationConditionLeaf } from '@camstack/types'
-import { Select } from '@camstack/ui-library'
+import { baseUnitForQuantity } from '@camstack/types'
+import { QuantityValueInput, Select, typedToStored } from '@camstack/ui-library'
 import type { AutomationDevice } from './automation-data'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
 import { type OperatorChoice, operatorChoices } from './recipe-parts'
-import { ListValueInput, ScalarValueInput, toList, toScalar } from './ValueInput'
+import { declaredQuantity, ListValueInput, ScalarValueInput, toList, toScalar } from './ValueInput'
 import { useTranslation } from 'react-i18next'
 
 export interface ConditionLeafRowProps {
@@ -35,15 +36,20 @@ export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowPr
   const descriptor = useFieldDescriptor(selection)
   const choices = operatorChoices(descriptor?.kind)
   const isList = leaf.operator === 'in'
+  const quantity = declaredQuantity(descriptor)
+  const base = quantity === undefined ? undefined : baseUnitForQuantity(quantity)
 
   const withSelection = (next: FieldSelection): void => {
-    onChange({ ...leaf, deviceId: next.deviceId, cap: next.cap, fieldPath: next.fieldPath })
+    // The picked unit belongs to the field it was picked for.
+    const { unit: _unit, ...rest } = leaf
+    onChange({ ...rest, deviceId: next.deviceId, cap: next.cap, fieldPath: next.fieldPath })
   }
 
   const withOperator = (raw: string): void => {
     const operator = asOperator(raw, choices)
+    const { unit: _unit, ...withoutUnit } = leaf
     onChange({
-      ...leaf,
+      ...(operator === 'in' ? withoutUnit : leaf),
       operator,
       value: operator === 'in' ? toList(leaf.value) : toScalar(leaf.value),
     })
@@ -71,6 +77,18 @@ export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowPr
             deviceId={leaf.deviceId}
             cap={leaf.cap}
             onChange={(value) => onChange({ ...leaf, value })}
+          />
+        ) : quantity !== undefined && base !== undefined ? (
+          <QuantityValueInput
+            quantity={quantity}
+            storedUnit={base}
+            value={typeof leaf.value === 'number' ? leaf.value : undefined}
+            unit={leaf.unit}
+            aria-label={t('automation.conditionRow.value', 'Value')}
+            onChange={(typed) => {
+              const stored = typedToStored(typed, base)
+              onChange({ ...leaf, value: stored.value, unit: stored.unit })
+            }}
           />
         ) : (
           <ScalarValueInput

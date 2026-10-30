@@ -39,9 +39,32 @@ describe('command-vocab', () => {
     }
     const match = matchVocabCommand(ACTIONS, step)
     expect(match?.action.id).toBe('petFeeder.feed')
-    expect(match?.values).toEqual({ grams: { kind: 'fixed', value: 45 } })
+    // A saved bare number reads in the unit the method stores it in, and saves saying so.
+    expect(match?.values).toEqual({ grams: { kind: 'fixed', value: 45, unit: 'g' } })
+    if (match === null) return
+    expect(buildCapStep(match.action, 201, match.values)).toEqual({
+      ...step,
+      argUnits: { grams: 'g' },
+    })
+  })
+
+  it('keeps the unit the person picked for a quantity arg through the round trip', () => {
+    const step: CapStep = {
+      kind: 'cap',
+      deviceId: 201,
+      cap: 'pet-feeder',
+      method: 'feed',
+      args: { grams: 56.699 },
+      argUnits: { grams: 'oz' },
+    }
+    const match = matchVocabCommand(ACTIONS, step)
+    expect(match?.values).toEqual({ grams: { kind: 'fixed', value: 56.699, unit: 'oz' } })
     if (match === null) return
     expect(buildCapStep(match.action, 201, match.values)).toEqual(step)
+  })
+
+  it('a fresh quantity arg starts in the unit the method stores, never bare', () => {
+    expect(defaultArgValues(action('petFeeder.feed'))['grams']).toMatchObject({ unit: 'g' })
   })
 
   it('keeps a variable reference through the round trip', () => {

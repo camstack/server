@@ -18,6 +18,7 @@ import type {
   AutomationAction,
   LooseVocabOffer,
   LooseVocabOpenArg,
+  ReadingQuantity,
   ResolvedVocabAction,
   VocabLocale,
 } from '@camstack/types'
@@ -26,7 +27,12 @@ export type CapStep = Extract<AutomationAction, { kind: 'cap' }>
 
 /** One argument as the operator holds it: a typed value or a variable. */
 export type StepArgValue =
-  | { readonly kind: 'fixed'; readonly value: string | number | boolean }
+  | {
+      readonly kind: 'fixed'
+      readonly value: string | number | boolean
+      /** A quantity number: the unit the person picked (`argUnits`); `value` is in the offer's unit. */
+      readonly unit?: string
+    }
   | { readonly kind: 'var'; readonly name: string }
 
 export type StepArgValues = Readonly<Record<string, StepArgValue>>
@@ -76,7 +82,11 @@ export function defaultArgValue(arg: LooseVocabOpenArg): StepArgValue {
   const offer = arg.offer
   switch (offer.kind) {
     case 'number':
-      return { kind: 'fixed', value: offer.min ?? 0 }
+      return {
+        kind: 'fixed',
+        value: offer.min ?? 0,
+        ...(offer.quantity === undefined || offer.unit === undefined ? {} : { unit: offer.unit }),
+      }
     case 'enum': {
       const first = offer.values[0]
       return { kind: 'fixed', value: first === undefined ? '' : first.value }
@@ -92,12 +102,37 @@ export function defaultArgValues(action: ResolvedVocabAction): StepArgValues {
   return Object.fromEntries(action.openArgs.map((a) => [a.key, defaultArgValue(a)]))
 }
 
-function readArgValue(raw: unknown, arg: LooseVocabOpenArg): StepArgValue {
+function readArgValue(
+  raw: unknown,
+  arg: LooseVocabOpenArg,
+  pickedUnit: string | undefined,
+): StepArgValue {
   if (isVarRef(raw)) return { kind: 'var', name: raw.$var }
+  const quantity = quantityOffer(arg)
+  if (typeof raw === 'number' && quantity !== undefined) {
+    return { kind: 'fixed', value: raw, unit: pickedUnit ?? quantity.unit }
+  }
   if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') {
     return { kind: 'fixed', value: raw }
   }
   return defaultArgValue(arg)
+}
+
+/** The quantity and the stored unit of a number arg, when its offer names both (D972). */
+export interface QuantityArgOffer {
+  readonly quantity: ReadingQuantity
+  /** The unit the method stores the number in. */
+  readonly unit: string
+  readonly min?: number
+  readonly max?: number
+}
+
+export function quantityOffer(arg: LooseVocabOpenArg): QuantityArgOffer | undefined {
+  const offer = arg.offer
+  if (offer.kind !== 'number' || offer.quantity === undefined || offer.unit === undefined) {
+    return undefined
+  }
+  return { quantity: offer.quantity, unit: offer.unit, min: offer.min, max: offer.max }
 }
 
 function sameValue(a: unknown, b: unknown): boolean {
@@ -127,7 +162,9 @@ export function matchVocabCommand(
     }
   }
   if (best === null) return null
-  const values = Object.fromEntries(best.openArgs.map((a) => [a.key, readArgValue(args[a.key], a)]))
+  const values = Object.fromEntries(
+    best.openArgs.map((a) => [a.key, readArgValue(args[a.key], a, step.argUnits?.[a.key])]),
+  )
   return { action: best, values }
 }
 
@@ -146,10 +183,14 @@ export function buildCapStep(
   values: StepArgValues,
 ): CapStep {
   const open: Record<string, unknown> = {}
+  const argUnits: Record<string, string> = {}
   for (const arg of action.openArgs) {
     const value = values[arg.key] ?? defaultArgValue(arg)
     if (arg.optional === true && isBlank(value)) continue
     open[arg.key] = rawOf(value)
+    if (value.kind === 'fixed' && value.unit !== undefined && quantityOffer(arg) !== undefined) {
+      argUnits[arg.key] = value.unit
+    }
   }
   const args = { ...action.args, ...open }
   return {
@@ -158,6 +199,7 @@ export function buildCapStep(
     cap: action.cap,
     method: action.method,
     ...(Object.keys(args).length === 0 ? {} : { args }),
+    ...(Object.keys(argUnits).length === 0 ? {} : { argUnits }),
   }
 }
 

@@ -586,6 +586,12 @@
       "notes": ""
     },
     {
+      "need": "Enter a number tied to a physical quantity (a threshold, a portion)",
+      "admin": "`QuantityValueInput` (stored number plus the unit the person picks; emits `{ value, unit }`)",
+      "viewer": "—",
+      "notes": "A bare `Input type=\"number\"` on a quantity field is the bug it exists to prevent"
+    },
+    {
       "need": "Live camera video",
       "admin": "`CameraStreamPlayer`, `StreamPanel`",
       "viewer": "the embed player (`embed/`)",
@@ -1510,6 +1516,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "boundsInPicked",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "Bounds declared in the stored unit, expressed in the picked unit."
     },
     {
       "name": "Breadcrumb",
@@ -6592,6 +6605,13 @@
       "summary": "A field only the accelerator that runs the model may set (D927): a model id, a `<key>ModelId` binding, a `minConfidence*` floor, or any field the schema marks as bound to its model. A camera never renders one as an in…"
     },
     {
+      "name": "isPickableUnit",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "Is `unit` one the person can pick for `quantity`?"
+    },
+    {
       "name": "isRedactedSecret",
       "kind": "function",
       "area": "composites",
@@ -7761,6 +7781,13 @@
       "summary": "The label a picker gives a selected id its drawn list does not contain."
     },
     {
+      "name": "outsideBounds",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "Is a stored number outside the bounds (both in the stored unit)?"
+    },
+    {
       "name": "overrideEntityIdFromLink",
       "kind": "function",
       "area": "composites",
@@ -8795,6 +8822,101 @@
           "type": "string",
           "optional": true,
           "doc": "Accessible label for the generated QR."
+        }
+      ]
+    },
+    {
+      "name": "quantityStoredUnit",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "The unit a quantity's readings are stored in."
+    },
+    {
+      "name": "quantityUnitChoices",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "The units a person may pick for `quantity`, stored base first."
+    },
+    {
+      "name": "QuantityValueInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/QuantityValueInput.tsx",
+      "summary": "A number tied to a physical quantity: a number field and a unit picker (D972). The person picks the unit; the component emits `{ value, unit }`: \"this number is in this unit\". The caller stores it (`typedToStored`).",
+      "props": [
+        {
+          "name": "quantity",
+          "type": "ReadingQuantity",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "number | undefined",
+          "optional": false,
+          "doc": "The stored number, in `storedUnit`."
+        },
+        {
+          "name": "storedUnit",
+          "type": "string",
+          "optional": true,
+          "doc": "The unit `value` is stored in. Default: the quantity's base unit."
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "optional": true,
+          "doc": "The unit the person picked for it. Default: `storedUnit`."
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": true,
+          "doc": "Bounds in `storedUnit`."
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: QuantityValue) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onBrace",
+          "type": "() => void",
+          "optional": true,
+          "doc": "Called when the typed text contains \"{\" (a variable menu opens)."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "'aria-label'",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },
@@ -11080,6 +11202,13 @@
       ]
     },
     {
+      "name": "storedToPicked",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "A stored number shown in the unit the person picked. A unit that cannot be converted to (unknown, another dimension) shows the number as stored."
+    },
+    {
       "name": "StreamBrokerSelector",
       "kind": "component",
       "area": "composites",
@@ -12065,6 +12194,13 @@
       "area": "root",
       "file": "packages/ui-library/src/trpc-react.ts",
       "summary": "Shared typed React Query proxy for the backend AppRouter."
+    },
+    {
+      "name": "typedToStored",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/quantity-value-input/quantity-value.ts",
+      "summary": "What a person typed (`{ value, unit }`), brought to the stored unit. Throws `QuantityUnitError`."
     },
     {
       "name": "typeLabel",

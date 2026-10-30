@@ -64,6 +64,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A device's name | `DeviceName` (`compact` in lists, pickers, history, export and alarms; `full` on the page title, breadcrumb, hero and confirms; `nested` under a parent row; `with-location` when the room is not already on the line) | `formatDeviceName` in `src/data/device-name.ts` (not yet on screens) | One rule. The stored name stays in search and in the identity editor. Parent names come from one slim fleet list |
 | Pick the device and value that feed a Customize extension, or the members of a group helper | `SourceSelector` (`components/device/customize/source-selector/SourceSelector.tsx`) | — | Left column = ui-library `DevicePicker`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944) |
 | Pick a timezone / icon / unit / model | `TimezoneSelector`, `IconPicker`, `UnitPicker`, `ModelPicker` | — | |
+| Enter a number tied to a physical quantity (a threshold, a portion) | `QuantityValueInput` (stored number plus the unit the person picks; emits `{ value, unit }`) | — | A bare `Input type="number"` on a quantity field is the bug it exists to prevent |
 | Live camera video | `CameraStreamPlayer`, `StreamPanel` | the embed player (`embed/`) | WebRTC only |
 | A live log or event tail | `LogStream`, `EventStream` | — | |
 | A bottom sheet / side drawer on mobile | `BottomSheet`, `MobileDrawer` | `SheetModal` | |

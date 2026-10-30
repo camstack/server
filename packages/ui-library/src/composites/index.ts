@@ -524,6 +524,7 @@ export {
 // --- Device picker (shared with admin-ui + addon MFEs; D636) ---
 export * from './device-picker/index.js'
 export * from './unit-picker/index.js'
+export * from './quantity-value-input/index.js'
 export * from './placeholder-field/index.js'
 export {
   type RetrainReviewBadgeKind,

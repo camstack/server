@@ -7,6 +7,9 @@
 
 import type { LooseVocabOpenArg, VocabLocale } from '@camstack/types'
 import {
+  QuantityValueInput,
+  boundsInPicked,
+  typedToStored,
   Dropdown,
   DropdownContent,
   DropdownItem,
@@ -18,7 +21,13 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from './DraftNumberInput'
 import { FixedSelect } from './FixedSelect'
-import { type ArgIssue, argIssue, defaultArgValue, type StepArgValue } from './command-vocab'
+import {
+  type ArgIssue,
+  argIssue,
+  defaultArgValue,
+  quantityOffer,
+  type StepArgValue,
+} from './command-vocab'
 
 /** A value an argument may name instead of a typed one. */
 export interface ScopeVariable {
@@ -125,6 +134,25 @@ function FixedInput({ arg, locale, value, onChange, onBrace }: FixedInputProps) 
       />
     )
   }
+  const quantity = quantityOffer(arg)
+  if (quantity !== undefined) {
+    return (
+      <QuantityValueInput
+        quantity={quantity.quantity}
+        storedUnit={quantity.unit}
+        value={typeof value.value === 'number' ? value.value : undefined}
+        unit={value.unit}
+        min={quantity.min}
+        max={quantity.max}
+        aria-label={label}
+        onBrace={onBrace}
+        onChange={(typed) => {
+          const stored = typedToStored(typed, quantity.unit)
+          onChange({ kind: 'fixed', value: stored.value, unit: stored.unit })
+        }}
+      />
+    )
+  }
   if (offer.kind === 'number') {
     return (
       <NumberInput
@@ -187,22 +215,31 @@ function ArgHint({ arg, value, issue }: ArgHintProps) {
   const offer = arg.offer
   if (value.kind !== 'fixed' || offer.kind !== 'number') return null
   if (offer.min === undefined && offer.max === undefined) return null
+  const quantity = quantityOffer(arg)
+  const shownUnit = quantity === undefined ? offer.unit : (value.unit ?? quantity.unit)
+  const shown =
+    quantity === undefined
+      ? { min: offer.min, max: offer.max }
+      : boundsInPicked(
+          { min: offer.min, max: offer.max },
+          quantity.unit,
+          shownUnit ?? quantity.unit,
+        )
+  const unitText = shownUnit ?? ''
+  // A converted bound is a hint, not a measurement: 4 significant digits read cleanly.
+  const round = (n: number | undefined): number | undefined =>
+    n === undefined || quantity === undefined ? n : Number(n.toPrecision(4))
+  const bounds = { min: round(shown.min), max: round(shown.max) }
   const range =
-    offer.min !== undefined && offer.max !== undefined
+    bounds.min !== undefined && bounds.max !== undefined
       ? t('flow.arg.range', '{{min}} to {{max}} {{unit}}', {
-          min: offer.min,
-          max: offer.max,
-          unit: offer.unit ?? '',
+          min: bounds.min,
+          max: bounds.max,
+          unit: unitText,
         })
-      : offer.min !== undefined
-        ? t('flow.arg.atLeast', 'at least {{min}} {{unit}}', {
-            min: offer.min,
-            unit: offer.unit ?? '',
-          })
-        : t('flow.arg.atMost', 'at most {{max}} {{unit}}', {
-            max: offer.max,
-            unit: offer.unit ?? '',
-          })
+      : bounds.min !== undefined
+        ? t('flow.arg.atLeast', 'at least {{min}} {{unit}}', { min: bounds.min, unit: unitText })
+        : t('flow.arg.atMost', 'at most {{max}} {{unit}}', { max: bounds.max, unit: unitText })
   return (
     <span
       className={`text-[11px] ${issue === null ? 'text-foreground-subtle' : 'text-danger'}`}
