@@ -134,6 +134,12 @@ export interface DevicePickerProps<Id extends PickerId = number> {
    */
   readonly showAll?: boolean
   /**
+   * Stretch to the height of a flex parent and scroll the rows inside the
+   * panel, instead of capping the list at a fixed height. Needs a parent with
+   * a definite height (a `fill` dialog column).
+   */
+  readonly fillHeight?: boolean
+  /**
    * Devices that are ALREADY part of the thing being edited (linked to the
    * camera, assigned to the room): drawn checked and disabled with
    * `lockedNote`, never part of `value`, never emitted by `onChange`.
@@ -279,6 +285,7 @@ export function DevicePicker<Id extends PickerId = number>({
   disabled = false,
   testId,
   showAll = false,
+  fillHeight = false,
   lockedIds,
   lockedNote: lockedNoteProp,
 }: DevicePickerProps<Id>): JSX.Element {
@@ -322,7 +329,10 @@ export function DevicePicker<Id extends PickerId = number>({
   }
 
   return (
-    <div className="mt-1 space-y-1.5" data-testid={testId}>
+    <div
+      className={fillHeight ? 'mt-1 flex min-h-0 flex-1 flex-col gap-1.5' : 'mt-1 space-y-1.5'}
+      data-testid={testId}
+    >
       {listState === 'pending' && <DevicesLoadingLine noun={plural} />}
       {listState === 'failed' && (
         <DevicesFailedLine noun={noun === 'camera' ? 'devices' : plural} />
@@ -410,6 +420,7 @@ export function DevicePicker<Id extends PickerId = number>({
             noun={noun}
             disabled={disabled}
             showAll={showAll}
+            fillHeight={fillHeight}
             selection={selection}
             {...(pinnedGroupBy !== undefined ? { pinnedGroupBy } : {})}
           />
@@ -425,6 +436,7 @@ export function DevicePicker<Id extends PickerId = number>({
             noun={noun}
             disabled={disabled}
             showAll={showAll}
+            fillHeight={fillHeight}
             selection={selection}
           />
         ))}
@@ -445,6 +457,7 @@ interface PickerPanelProps<Id extends PickerId> {
   readonly lockedNote: string
   /** Every row, every group open by default — see `DevicePickerProps.showAll`. */
   readonly showAll: boolean
+  readonly fillHeight: boolean
   readonly selection: DevicePickerSelection
   /** This instance's group-by. Absent: the remembered choice. */
   readonly pinnedGroupBy?: PickerGroupBy
@@ -510,6 +523,7 @@ function PickerPanel<Id extends PickerId>({
   locked,
   lockedNote,
   showAll,
+  fillHeight,
   selection,
   grouping,
   providers = NO_PROVIDERS,
@@ -568,7 +582,11 @@ function PickerPanel<Id extends PickerId>({
 
   return (
     <div
-      className="rounded-md border border-border bg-surface p-2"
+      className={
+        fillHeight
+          ? 'flex min-h-0 flex-1 flex-col rounded-md border border-border bg-surface p-2'
+          : 'rounded-md border border-border bg-surface p-2'
+      }
       data-testid="device-picker-panel"
     >
       <DeviceFilterBar
@@ -626,7 +644,13 @@ function PickerPanel<Id extends PickerId>({
         </p>
       ) : (
         <div
-          className={showAll ? 'mt-1' : 'mt-1 max-h-72 overflow-y-auto'}
+          className={
+            fillHeight
+              ? 'mt-1 min-h-0 flex-1 overflow-y-auto'
+              : showAll
+                ? 'mt-1'
+                : 'mt-1 max-h-72 overflow-y-auto'
+          }
           data-testid="device-picker-rows"
         >
           {page.rows.map((row) => (

@@ -90,20 +90,6 @@ export function BuildPage() {
     )
   }
 
-  const setAutomationsBlock = (blockId: string | null): void => {
-    setParams(
-      (prev) => {
-        const copy = new URLSearchParams(prev)
-        copy.set('tab', 'automations')
-        copy.delete('create')
-        if (blockId === null) copy.delete('block')
-        else copy.set('block', blockId)
-        return copy
-      },
-      { replace: true },
-    )
-  }
-
   const setScriptsBlock = (blockId: string | null): void => {
     setParams(
       (prev) => {
@@ -203,10 +189,6 @@ export function BuildPage() {
           content: (
             <AutomationsTab
               onOpenScripts={openScripts}
-              initialBlockId={
-                tab === 'automations' ? (params.get('block') ?? undefined) : undefined
-              }
-              onBlockIdChange={setAutomationsBlock}
               createRequested={tab === 'automations' && createRequested}
               onCreateConsumed={clearCreate}
             />

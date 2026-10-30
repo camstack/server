@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Generated hooks for the new network scan and saved scan subnets calls
 
+### Changed
+
+- DevicePicker: fillHeight stretches the list to its container and scrolls the rows inside
+
 ## [1.2.356] - 2026-10-30
 
 ### Changed

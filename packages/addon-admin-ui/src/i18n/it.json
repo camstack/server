@@ -5790,7 +5790,13 @@
       "loadingAutomations": "Caricamento automazioni…",
       "noAutomationsYet": "Nessuna automazione.",
       "edit": "Modifica {{name}}",
-      "newAutomation": "Nuova automazione"
+      "newAutomation": "Nuova automazione",
+      "saved": "Automazione salvata",
+      "trigger": "Trigger",
+      "triggerNotSortable": "Letto dalla ricetta",
+      "lastRun": "Ultima esecuzione",
+      "lastRunNotSortable": "Letto per automazione",
+      "enabled": "Attiva"
     },
     "blockEditor": {
       "loadExample": "Carica esempio",
@@ -5918,7 +5924,6 @@
       "kindAction": "Esegui un'azione"
     },
     "automationEditor": {
-      "runsOnTheHub": "eseguito sull'hub",
       "name": "Nome",
       "whatThisAutomationDoes": "Cosa fa questa automazione",
       "when": "Quando",
@@ -5935,12 +5940,17 @@
       "deleteThisAutomation": "Eliminare questa automazione?",
       "thisBlockCannotBeOpened": "Questo blocco non può essere aperto in modo visuale",
       "runActions": "Esegui azioni",
-      "runningAnAutomationByHand": "Eseguire un'automazione a mano richiede l'autorità automation-control, non ancora collegata. Volutamente non esiste un secondo modo per eseguirla.",
       "logs": "Log",
       "noAutomationsYet": "Nessuna automazione.",
-      "anAutomationIsATrigger": "Un'automazione è un trigger, un insieme di condizioni e un elenco di azioni. Viene compilata in un normale blocco ed eseguita nel proprio processo supervisionato — non esiste un motore separato, quindi qualsiasi problema compare qui con un motivo.",
       "newAutomation": "Nuova automazione",
-      "deleteMessage": "{{name}} verrà eliminata. L'operazione non può essere annullata."
+      "deleteMessage": "{{name}} verrà eliminata. L'operazione non può essere annullata.",
+      "noTrigger": "Nessun trigger",
+      "lastRunUnknown": "Sconosciuta",
+      "neverRan": "Mai eseguita",
+      "lastRunFailed": "Fallita",
+      "disableNamed": "Disattiva {{name}}",
+      "enableNamed": "Attiva {{name}}",
+      "runNotAvailable": "Non ancora disponibile"
     },
     "conditionRow": {
       "comparison": "Confronto",
@@ -10597,7 +10607,19 @@
       "outcomeSkippedCooldown": "Saltata dall'attesa",
       "outcomeSkippedOverlap": "Saltata dalla modalità di esecuzione",
       "outcomeSkippedTrigger": "Evento non soddisfatto",
-      "title": "Esecuzioni"
+      "title": "Esecuzioni",
+      "unknownValue": "sconosciuto",
+      "expected": "Atteso",
+      "observed": "Rilevato",
+      "nodePass": "Superata",
+      "nodeFail": "Fallita",
+      "nodeNotEvaluated": "Non valutata",
+      "triggerValues": "Trigger",
+      "conditionValues": "Condizioni",
+      "stepValues": "Passi",
+      "stepOk": "OK",
+      "stepError": "Errore",
+      "stepNotRun": "Non eseguito"
     },
     "scope": {
       "className": "cosa ha visto",

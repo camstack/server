@@ -11,26 +11,31 @@
  *
  * **"Run actions" is rendered and refused.** The authority that fires an
  * automation by hand — `automation-control.trigger` — is not wired yet, and this
- * surface does not get to invent a second way to execute one. A button that is
- * present and honestly disabled says the feature exists and is not ready; a
- * button that quietly did something else would be the worst outcome available.
+ * surface does not get to invent a second way to execute one. The menu item is
+ * present and honestly disabled; it never does anything else.
  */
 
-import { type CoreBlock, coreBlockAddonId } from '@camstack/types'
+import { type AutomationRecipe, type CoreBlock, coreBlockAddonId } from '@camstack/types'
 import {
   Badge,
   Button,
-  Card,
+  EmptyState,
   formatLastSeen,
+  KebabMenu,
   LogStream,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+  Skeleton,
+  Switch,
+  useCoreBlocksGetTraces,
   useUiText,
 } from '@camstack/ui-library'
-import { Pencil, Play, ScrollText, Trash2 } from 'lucide-react'
-import { badgeVariantForTone, describeBlockStatus } from '../core-block-status'
+import { Pencil, Play, Plus, ScrollText, Trash2, Workflow } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
+import { formatRelativeTime } from '../../../components/device/hero/format'
+import { badgeVariantForTone, describeBlockStatus } from '../core-block-status'
+import { triggerKindLabel } from './recipe-parts'
+
+/** A last-run column asks once per visible row; slow enough that a page of rows is not a load. */
+const LAST_RUN_POLL_MS = 30_000
 
 export interface AutomationSummaryProps {
   readonly block: CoreBlock
@@ -58,10 +63,12 @@ export function AutomationSummary({ block, logsOpen, unreadable }: AutomationSum
           </span>
         )}
       </div>
-      {/* Never conditional — `describeBlockStatus` guarantees a line for
-          every state, and an automation that is not running with no reason
-          given is the failure this page exists to prevent. */}
-      <p className="mt-0.5 text-xs text-foreground-subtle">{status.detail}</p>
+      {/* A healthy or switched-off automation needs no sentence; one that is
+          not running always says why — an automation that is not running with
+          no reason given is the failure this page exists to prevent. */}
+      {(status.tone === 'error' || status.tone === 'pending') && (
+        <p className="mt-0.5 text-xs text-foreground-subtle">{status.detail}</p>
+      )}
       {unreadable !== null && (
         <p className="mt-0.5 text-xs text-warning">
           {t('automation.editor.listUnreadable', { reason: unreadable })}
@@ -87,99 +94,171 @@ export function AutomationSummary({ block, logsOpen, unreadable }: AutomationSum
   )
 }
 
-export interface AutomationActionsProps {
+const TRIGGER_SUMMARY_LIMIT = 2
+
+/** What starts the automation: the distinct trigger kinds, in recipe order. */
+export function triggerSummaryOf(recipe: AutomationRecipe): string {
+  const labels = recipe.triggers.map((trigger) => triggerKindLabel(trigger.kind))
+  const distinct = [...new Set(labels)]
+  const shown = distinct.slice(0, TRIGGER_SUMMARY_LIMIT).join(', ')
+  const rest = distinct.length - TRIGGER_SUMMARY_LIMIT
+  return rest > 0 ? `${shown} +${rest}` : shown
+}
+
+export interface AutomationTriggerCellProps {
+  /** Null when the embedded recipe could not be read. */
+  readonly recipe: AutomationRecipe | null
+}
+
+export function AutomationTriggerCell({ recipe }: AutomationTriggerCellProps) {
+  const { t } = useTranslation()
+  if (recipe === null) return <span className="text-foreground-subtle">{'-'}</span>
+  const summary = triggerSummaryOf(recipe)
+  if (summary === '') {
+    return (
+      <span className="text-foreground-subtle">
+        {t('automation.automationList.noTrigger', 'No trigger')}
+      </span>
+    )
+  }
+  return <span>{summary}</span>
+}
+
+/**
+ * When the automation last RAN — a run that started the actions, not a skipped
+ * evaluation. Unanswered, unknown and "never" are three different things.
+ */
+export function AutomationLastRunCell({ blockId }: { readonly blockId: string }) {
+  const { t } = useTranslation()
+  const traces = useCoreBlocksGetTraces({ blockId }, { refetchInterval: LAST_RUN_POLL_MS })
+  if (traces.data === undefined) {
+    return traces.error === null || traces.error === undefined ? (
+      <Skeleton className="h-4 w-16" />
+    ) : (
+      <span className="text-foreground-subtle">
+        {t('automation.automationList.lastRunUnknown', 'Unknown')}
+      </span>
+    )
+  }
+  const lastRun = traces.data.traces.findLast((trace) => !trace.outcome.startsWith('skipped-'))
+  if (lastRun === undefined) {
+    return (
+      <span className="text-foreground-subtle">
+        {t('automation.automationList.neverRan', 'Never ran')}
+      </span>
+    )
+  }
+  const failed = lastRun.outcome === 'failed' || lastRun.outcome === 'aborted'
+  return (
+    <span className="inline-flex items-center gap-2">
+      {formatRelativeTime(lastRun.lastAt)}
+      {failed && (
+        <Badge variant="danger">{t('automation.automationList.lastRunFailed', 'Failed')}</Badge>
+      )}
+    </span>
+  )
+}
+
+export interface AutomationEnabledSwitchProps {
   readonly block: CoreBlock
-  readonly busy: boolean
+  readonly disabled: boolean
+  readonly onToggle: (enabled: boolean) => void
+}
+
+/** Enable / disable in the row. The row opens the editor on click, so the
+ *  switch keeps its own clicks to itself. */
+export function AutomationEnabledSwitch({
+  block,
+  disabled,
+  onToggle,
+}: AutomationEnabledSwitchProps) {
+  const { t } = useTranslation()
+  return (
+    <span
+      className="inline-flex"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <Switch
+        checked={block.enabled}
+        disabled={disabled}
+        onCheckedChange={onToggle}
+        aria-label={
+          block.enabled
+            ? t('automation.automationList.disableNamed', 'Disable {{name}}', {
+                name: block.name,
+              })
+            : t('automation.automationList.enableNamed', 'Enable {{name}}', {
+                name: block.name,
+              })
+        }
+      />
+    </span>
+  )
+}
+
+export interface AutomationActionsProps {
   readonly unreadable: string | null
   readonly onEdit: () => void
-  readonly onToggle: (enabled: boolean) => void
   readonly onToggleLogs: () => void
   readonly onDelete: () => void
 }
 
-/** The actions cell, its own nowrap column so a phone scrolls the table
- *  sideways instead of squeezing the buttons. */
+/** The row-actions menu. Its trigger swallows the row click. */
 export function AutomationActions({
-  block,
-  busy,
   unreadable,
   onEdit,
-  onToggle,
   onToggleLogs,
   onDelete,
 }: AutomationActionsProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex justify-end gap-1">
-      <Button
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation()
-          onEdit()
-        }}
-        disabled={unreadable !== null}
-        title={
-          unreadable === null
-            ? t('common.edit', 'Edit')
-            : t(
-                'automation.automationList.thisBlockCannotBeOpened',
-                'This block cannot be opened visually',
-              )
-        }
-      >
-        <Pencil className="h-4 w-4" />
-      </Button>
-
-      <Tooltip>
-        <TooltipTrigger>
-          <Button
-            variant="ghost"
-            disabled
-            title={t('automation.automationList.runActions', 'Run actions')}
-          >
-            <Play className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {t(
-            'automation.automationList.runningAnAutomationByHand',
-            'Running an automation by hand needs the automation-control authority, which is not wired up yet. There is deliberately no second way to execute one.',
-          )}
-        </TooltipContent>
-      </Tooltip>
-
-      <Button
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleLogs()
-        }}
-        title={t('automation.automationList.logs', 'Logs')}
-      >
-        <ScrollText className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggle(!block.enabled)
-        }}
-        disabled={busy}
-        title={block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-      >
-        {block.enabled ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete()
-        }}
-        title={t('common.delete', 'Delete')}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    </div>
+    <span
+      className="inline-flex justify-end"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <KebabMenu
+        items={[
+          {
+            id: 'edit',
+            label: t('common.edit', 'Edit'),
+            icon: Pencil,
+            disabled: unreadable !== null,
+            description:
+              unreadable === null
+                ? undefined
+                : t(
+                    'automation.automationList.thisBlockCannotBeOpened',
+                    'This block cannot be opened visually',
+                  ),
+            onClick: onEdit,
+          },
+          {
+            id: 'run',
+            label: t('automation.automationList.runActions', 'Run actions'),
+            icon: Play,
+            disabled: true,
+            description: t('automation.automationList.runNotAvailable', 'Not available yet'),
+            onClick: () => undefined,
+          },
+          {
+            id: 'logs',
+            label: t('automation.automationList.logs', 'Logs'),
+            icon: ScrollText,
+            onClick: onToggleLogs,
+          },
+          {
+            id: 'delete',
+            label: t('common.delete', 'Delete'),
+            icon: Trash2,
+            danger: true,
+            separatorBefore: true,
+            onClick: onDelete,
+          },
+        ]}
+      />
+    </span>
   )
 }
 
@@ -187,26 +266,19 @@ export interface AutomationEmptyStateProps {
   readonly onCreate: () => void
 }
 
-/** Says only what is true: there are none. The tab used to explain that
- *  automations did not exist; repeating any of that now would be a lie. */
+/** Says only what is true: there are none. */
 export function AutomationEmptyState({ onCreate }: AutomationEmptyStateProps) {
   const { t } = useTranslation()
   return (
-    <Card>
-      <div className="space-y-2 p-4">
-        <p className="text-sm text-foreground">
-          {t('automation.automationList.noAutomationsYet', 'No automations yet.')}
-        </p>
-        <p className="max-w-2xl text-xs text-foreground-subtle">
-          {t(
-            'automation.automationList.anAutomationIsATrigger',
-            'An automation is a trigger, a set of conditions and a list of actions. It compiles to an ordinary block and runs in its own supervised process — there is no separate engine, so anything that goes wrong shows up here with a reason.',
-          )}
-        </p>
-        <Button onClick={onCreate}>
+    <EmptyState
+      icon={Workflow}
+      title={t('automation.automationList.noAutomationsYet', 'No automations yet.')}
+      action={
+        <Button onClick={onCreate} data-testid="automation-empty-new">
+          <Plus className="h-4 w-4" />{' '}
           {t('automation.automationList.newAutomation', 'New automation')}
         </Button>
-      </div>
-    </Card>
+      }
+    />
   )
 }

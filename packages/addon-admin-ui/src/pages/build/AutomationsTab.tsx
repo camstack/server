@@ -1,7 +1,10 @@
 /**
  * Automations — a visual editor over the SAME runtime as Scripts.
  *
- * List is DataTable + ItemFormDialog (same contract as Scripts / NC Rules).
+ * The list is a DataTable; the editor REPLACES it inline (same as Actions).
+ * Selection lives in the URL (`?block=`, `?new=1`) and `useItemFormUrl` is its
+ * ONLY writer: a second writer holding a stale copy of the query string drops
+ * `?new` and the editor closes the moment it opens.
  * An automation IS a core block with an AUTOMATION_RECIPE literal.
  */
 
@@ -10,6 +13,7 @@ import {
   DataTable,
   ErrorBox,
   TABLE_SCROLL_MAX_H,
+  Skeleton,
   useConfirm,
   useItemFormUrl,
   useSystem,
@@ -17,12 +21,15 @@ import {
 } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Workflow } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AutomationEditor } from './automation/AutomationEditor'
 import {
   AutomationActions,
   AutomationEmptyState,
+  AutomationEnabledSwitch,
+  AutomationLastRunCell,
   AutomationSummary,
+  AutomationTriggerCell,
 } from './automation/AutomationList'
 import {
   ejectRecipeFromCode,
@@ -32,6 +39,7 @@ import {
 import { EMPTY_RECIPE } from './automation/recipe-parts'
 import { freshest, sortBlocksForDisplay, summariseBlocks } from './core-block-status'
 import { useTranslation } from 'react-i18next'
+import { pushToast } from '../../components/ui/toast-bus'
 
 const BLOCKS_KEY = ['coreBlocks', 'list'] as const
 const POLL_MS = 5_000
@@ -41,13 +49,6 @@ export interface AutomationsTabProps {
    *  Scripts editor opens on the code the operator just took ownership of —
    *  landing on a list and having to find it again reads as a failed eject. */
   readonly onOpenScripts: (blockId?: string) => void
-  /**
-   * A block to open on arrival (`?block=`). Applied at most once per id so a
-   * stale param cannot keep re-opening the editor.
-   */
-  readonly initialBlockId?: string
-  /** Keep `?block=` in sync with the open editor (null when closed / new). */
-  readonly onBlockIdChange?: (blockId: string | null) => void
   /** Header "New automation" from Build page — open the editor once, then clear. */
   readonly createRequested?: boolean
   readonly onCreateConsumed?: () => void
@@ -59,8 +60,6 @@ function errorMessage(error: unknown): string {
 
 export function AutomationsTab({
   onOpenScripts,
-  initialBlockId,
-  onBlockIdChange,
   createRequested = false,
   onCreateConsumed,
 }: AutomationsTabProps) {
@@ -72,20 +71,16 @@ export function AutomationsTab({
     openEdit,
     close: closeForm,
   } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
-  const [savedBlock, setSavedBlock] = useState<CoreBlock | null>(null)
   const confirm = useConfirm()
   const [logsFor, setLogsFor] = useState<string | null>(null)
-  const openedFor = useRef<string | null>(null)
 
   const editingOpen = formState.mode !== 'closed'
 
   useEffect(() => {
     if (!createRequested) return
-    setSavedBlock(null)
     openNew()
-    onBlockIdChange?.(null)
     onCreateConsumed?.()
-  }, [createRequested, onCreateConsumed, onBlockIdChange, openNew])
+  }, [createRequested, onCreateConsumed, openNew])
 
   const blocksQuery = useQuery({
     queryKey: BLOCKS_KEY,
@@ -100,34 +95,25 @@ export function AutomationsTab({
     void blocksQuery.refetch()
   }
 
-  const listed = blocksQuery.data
-  useEffect(() => {
-    if (initialBlockId === undefined || openedFor.current === initialBlockId) return
-    const target = listed?.find((b) => b.id === initialBlockId && looksLikeAutomation(b.code))
-    if (target === undefined) return
-    openedFor.current = initialBlockId
-    openEdit(initialBlockId)
-    onBlockIdChange?.(initialBlockId)
-  }, [initialBlockId, listed, openEdit, onBlockIdChange])
+  /** Save closes the editor and says so; a failed save keeps it open (the error is inline). */
+  const saved = (block: CoreBlock): void => {
+    closeForm()
+    refresh()
+    pushToast({
+      title: t('build.automationsTab.saved', 'Automation saved'),
+      message: block.name,
+      severity: 'info',
+    })
+  }
 
   const create = useMutation({
     mutationFn: (block: CoreBlockInput) => system.trpcClient.coreBlocks.create.mutate({ block }),
-    onSuccess: (result) => {
-      setSavedBlock(result.block)
-      openEdit(result.block.id)
-      onBlockIdChange?.(result.block.id)
-      refresh()
-    },
+    onSuccess: (result) => saved(result.block),
   })
   const update = useMutation({
     mutationFn: (input: { blockId: string; block: CoreBlockInput }) =>
       system.trpcClient.coreBlocks.update.mutate(input),
-    onSuccess: (result) => {
-      setSavedBlock(result.block)
-      openEdit(result.block.id)
-      onBlockIdChange?.(result.block.id)
-      refresh()
-    },
+    onSuccess: (result) => saved(result.block),
   })
   const remove = useMutation({
     mutationFn: (blockId: string) => system.trpcClient.coreBlocks.delete.mutate({ blockId }),
@@ -152,7 +138,6 @@ export function AutomationsTab({
       }),
     onSuccess: (result) => {
       closeForm()
-      setSavedBlock(null)
       refresh()
       onOpenScripts(result.block.id)
     },
@@ -162,17 +147,13 @@ export function AutomationsTab({
   const automations = sortBlocksForDisplay((all ?? []).filter((b) => looksLikeAutomation(b.code)))
   const knowsThereAreNone = all !== undefined && automations.length === 0
 
-  const editingFromUrl =
-    formState.mode === 'edit'
-      ? (automations.find((b) => b.id === formState.id) ??
-        (savedBlock !== null && savedBlock.id === formState.id ? savedBlock : null))
-      : null
   const editing =
-    formState.mode === 'new'
-      ? null
-      : editingFromUrl !== null
-        ? freshest(automations, editingFromUrl)
-        : null
+    formState.mode === 'edit' ? (automations.find((b) => b.id === formState.id) ?? null) : null
+  /** `?block=` names something not in the answered list: nothing to edit. */
+  const editTargetMissing = formState.mode === 'edit' && all !== undefined && editing === null
+  useEffect(() => {
+    if (editTargetMissing) closeForm()
+  }, [editTargetMissing, closeForm])
   const parsed = editing === null ? null : parseRecipeFromCode(editing.code)
   const saveError =
     create.error !== null
@@ -202,6 +183,33 @@ export function AutomationsTab({
         sortValue: (block) => block.name,
       },
       {
+        key: 'trigger',
+        header: t('build.automationsTab.trigger', 'Trigger'),
+        render: (block) => {
+          const recipe = parseRecipeFromCode(block.code)
+          return <AutomationTriggerCell recipe={recipe.ok ? recipe.recipe : null} />
+        },
+        notSortableReason: t('build.automationsTab.triggerNotSortable', 'Read from the recipe'),
+      },
+      {
+        key: 'lastRun',
+        header: t('build.automationsTab.lastRun', 'Last run'),
+        render: (block) => <AutomationLastRunCell blockId={block.id} />,
+        notSortableReason: t('build.automationsTab.lastRunNotSortable', 'Read per automation'),
+      },
+      {
+        key: 'enabled',
+        header: t('build.automationsTab.enabled', 'Enabled'),
+        render: (block) => (
+          <AutomationEnabledSwitch
+            block={block}
+            disabled={setEnabled.isPending}
+            onToggle={(enabled) => setEnabled.mutate({ blockId: block.id, enabled })}
+          />
+        ),
+        sortValue: (block) => (block.enabled ? 1 : 0),
+      },
+      {
         key: 'actions',
         header: '',
         align: 'right',
@@ -210,15 +218,8 @@ export function AutomationsTab({
           const recipe = parseRecipeFromCode(block.code)
           return (
             <AutomationActions
-              block={block}
-              busy={setEnabled.isPending || remove.isPending}
               unreadable={recipe.ok ? null : recipe.reason}
-              onEdit={() => {
-                setSavedBlock(block)
-                openEdit(block.id)
-                onBlockIdChange?.(block.id)
-              }}
-              onToggle={(enabled) => setEnabled.mutate({ blockId: block.id, enabled })}
+              onEdit={() => openEdit(block.id)}
               onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
               onDelete={() => {
                 void confirm({
@@ -242,10 +243,11 @@ export function AutomationsTab({
         },
       },
     ],
-    [confirm, logsFor, onBlockIdChange, openEdit, remove, setEnabled, t],
+    [confirm, logsFor, openEdit, remove, setEnabled, t],
   )
 
   if (editingOpen) {
+    if (formState.mode === 'edit' && editing === null) return <Skeleton className="h-24 w-full" />
     return (
       <div className="space-y-3" data-testid="automation-editor-panel">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -274,9 +276,7 @@ export function AutomationsTab({
             create.reset()
             update.reset()
             eject.reset()
-            setSavedBlock(null)
             closeForm()
-            onBlockIdChange?.(null)
           }}
         />
         {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
@@ -302,13 +302,7 @@ export function AutomationsTab({
       )}
 
       {knowsThereAreNone ? (
-        <AutomationEmptyState
-          onCreate={() => {
-            setSavedBlock(null)
-            openNew()
-            onBlockIdChange?.(null)
-          }}
-        />
+        <AutomationEmptyState onCreate={openNew} />
       ) : (
         <DataTable
           columns={columns}
@@ -321,11 +315,7 @@ export function AutomationsTab({
               ? t('build.automationsTab.loadingAutomations', 'Loading automations…')
               : t('build.automationsTab.noAutomationsYet', 'No automations yet.')
           }
-          onRowClick={(block) => {
-            setSavedBlock(block)
-            openEdit(block.id)
-            onBlockIdChange?.(block.id)
-          }}
+          onRowClick={(block) => openEdit(block.id)}
         />
       )}
 

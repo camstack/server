@@ -45,9 +45,7 @@ import { stepToneAt, traceView } from '../flow/trace-view'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
 
-/** Blocks run on the hub only. The Scripts editor offers a node picker and then
- *  explains that anything else is stored-but-failed; an automation does not
- *  offer the choice at all, which is the same statement without the trap. */
+/** Blocks run on the hub only: an automation offers no placement choice. */
 const HUB = 'hub'
 const TRACES_POLL_MS = 5_000
 
@@ -119,12 +117,6 @@ export function AutomationEditor({
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-testid="automation-editor">
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="info">
-            {t('automation.automationEditor.runsOnTheHub', 'runs on the hub')}
-          </Badge>
-        </div>
-
         <label className="block max-w-md text-sm">
           <span className="text-foreground-subtle">
             {t('automation.automationEditor.name', 'Name')}

@@ -5715,7 +5715,13 @@
       "loadingAutomations": "Loading automations…",
       "noAutomationsYet": "No automations yet.",
       "edit": "Edit {{name}}",
-      "newAutomation": "New automation"
+      "newAutomation": "New automation",
+      "saved": "Automation saved",
+      "trigger": "Trigger",
+      "triggerNotSortable": "Read from the recipe",
+      "lastRun": "Last run",
+      "lastRunNotSortable": "Read per automation",
+      "enabled": "Enabled"
     },
     "blockEditor": {
       "loadExample": "Load example",
@@ -5843,7 +5849,6 @@
       "kindAction": "Run an action"
     },
     "automationEditor": {
-      "runsOnTheHub": "runs on the hub",
       "name": "Name",
       "whatThisAutomationDoes": "What this automation does",
       "when": "When",
@@ -5860,12 +5865,17 @@
       "deleteThisAutomation": "Delete this automation?",
       "thisBlockCannotBeOpened": "This block cannot be opened visually",
       "runActions": "Run actions",
-      "runningAnAutomationByHand": "Running an automation by hand needs the automation-control authority, which is not wired up yet. There is deliberately no second way to execute one.",
       "logs": "Logs",
       "noAutomationsYet": "No automations yet.",
-      "anAutomationIsATrigger": "An automation is a trigger, a set of conditions and a list of actions. It compiles to an ordinary block and runs in its own supervised process — there is no separate engine, so anything that goes wrong shows up here with a reason.",
       "newAutomation": "New automation",
-      "deleteMessage": "{{name}} will be deleted. This cannot be undone."
+      "deleteMessage": "{{name}} will be deleted. This cannot be undone.",
+      "noTrigger": "No trigger",
+      "lastRunUnknown": "Unknown",
+      "neverRan": "Never ran",
+      "lastRunFailed": "Failed",
+      "disableNamed": "Disable {{name}}",
+      "enableNamed": "Enable {{name}}",
+      "runNotAvailable": "Not available yet"
     },
     "conditionRow": {
       "comparison": "Comparison",
@@ -10575,7 +10585,19 @@
       "outcomeSkippedCooldown": "Skipped by cooldown",
       "outcomeSkippedOverlap": "Skipped by run mode",
       "outcomeSkippedTrigger": "Trigger not met",
-      "title": "Runs"
+      "title": "Runs",
+      "unknownValue": "unknown",
+      "expected": "Expected",
+      "observed": "Observed",
+      "nodePass": "Passed",
+      "nodeFail": "Failed",
+      "nodeNotEvaluated": "Not evaluated",
+      "triggerValues": "Trigger",
+      "conditionValues": "Conditions",
+      "stepValues": "Steps",
+      "stepOk": "OK",
+      "stepError": "Error",
+      "stepNotRun": "Not run"
     },
     "scope": {
       "className": "what it saw",

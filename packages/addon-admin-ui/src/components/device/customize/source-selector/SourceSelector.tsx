@@ -108,6 +108,8 @@ export interface SourceSelectorFormulaProps {
   readonly onFieldChange: (field: SourceFieldPick | null) => void
   /** A surface's own validity rule on the device list (keep it referentially stable). */
   readonly deviceFilter?: (device: PickerDevice) => boolean
+  /** The host gives a definite height (a fill dialog): both columns take it and scroll on their own. */
+  readonly fillHeight?: boolean
 }
 
 export interface SourceSelectorEventProps {
@@ -290,8 +292,15 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     if (next !== null) eventBinding.onPickedChange(next)
   }, [eventBinding, declared])
   const compatibleDeviceItems = useMemo(() => compatiblePickerItems(compatible), [compatible])
+  const fillHeight = props.kind === 'formula' && props.fillHeight === true
   const deviceColumn = (
-    <div className="flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]">
+    <div
+      className={
+        fillHeight
+          ? 'flex min-h-0 flex-1 flex-col gap-2'
+          : 'flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]'
+      }
+    >
       <h3 className="text-[11px] font-medium text-foreground-muted">
         {t('customize.sourceSelector.pickDevice', {
           title: props.destination.title,
@@ -326,6 +335,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
             onChange={pickDevice}
             noun="device"
             showAll
+            fillHeight={fillHeight}
             testId={devicePickerTestId}
           />
         </>
@@ -574,6 +584,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       onBack={() => setStep(stepAfterBack())}
       done={null}
       onDone={() => undefined}
+      fillHeight={fillHeight}
     />
   )
 }

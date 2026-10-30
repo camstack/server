@@ -1,6 +1,6 @@
 import type { AutomationRunTrace } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { stepToneAt, traceView } from '../trace-view'
+import { stepToneAt, traceDetails, traceView } from '../trace-view'
 
 const BASE: AutomationRunTrace = {
   runId: 'r1',
@@ -76,5 +76,73 @@ describe('traceView', () => {
     expect(view.when.tone).toBe('fail')
     expect(view.condition).toEqual({ tone: 'idle', reason: null })
     expect(view.thenBlock.tone).toBe('idle')
+  })
+})
+
+describe('traceDetails', () => {
+  it('carries the trigger vars, expected against observed, and the step outcomes', () => {
+    const details = traceDetails({
+      ...BASE,
+      trigger: {
+        kind: 'detection',
+        outcome: 'pass',
+        reason: 'animal seen',
+        vars: { deviceId: 101, className: 'animal', zones: ['bowl', 'door'], armed: false },
+      },
+      conditions: [
+        { path: 'conditions', kind: 'all', outcome: 'pass', reason: 'all hold' },
+        {
+          path: 'conditions.0',
+          kind: 'condition',
+          outcome: 'pass',
+          reason: '',
+          cap: 'pet-feeder',
+          fieldPath: 'hopperLevel',
+          operator: 'gt',
+          deviceId: 201,
+          expected: 10,
+          observed: 64,
+        },
+      ],
+      steps: [{ path: 'actions.0', kind: 'action', outcome: 'error', message: 'Feeder offline' }],
+    })
+    expect(details.vars).toEqual([
+      { name: 'deviceId', value: { kind: 'value', text: '101' } },
+      { name: 'className', value: { kind: 'value', text: 'animal' } },
+      { name: 'zones', value: { kind: 'value', text: 'bowl, door' } },
+      { name: 'armed', value: { kind: 'value', text: 'false' } },
+    ])
+    expect(details.conditions[0]?.expected).toBeNull()
+    expect(details.conditions[1]).toMatchObject({
+      depth: 1,
+      subject: 'pet-feeder.hopperLevel',
+      operator: 'gt',
+      expected: { kind: 'value', text: '10' },
+      observed: { kind: 'value', text: '64' },
+    })
+    expect(details.steps).toEqual([
+      { index: 0, kind: 'action', tone: 'fail', message: 'Feeder offline' },
+    ])
+  })
+
+  it('shows a reading the mirror never held as unknown, never as 0 or empty', () => {
+    const details = traceDetails({
+      ...BASE,
+      conditions: [
+        {
+          path: 'conditions.0',
+          kind: 'condition',
+          outcome: 'fail',
+          reason: 'unknown',
+          expected: 0,
+          observed: null,
+        },
+        { path: 'conditions.1', kind: 'condition', outcome: 'not-evaluated', reason: '' },
+      ],
+    })
+    expect(details.conditions[0]?.observed).toEqual({ kind: 'unknown' })
+    expect(details.conditions[0]?.expected).toEqual({ kind: 'value', text: '0' })
+    // Not recorded is a different thing from unknown.
+    expect(details.conditions[1]?.observed).toBeNull()
   })
 })

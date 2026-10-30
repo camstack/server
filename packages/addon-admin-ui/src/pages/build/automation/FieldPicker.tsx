@@ -15,15 +15,7 @@
  * forever without ever looking broken.
  */
 
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  useDeviceManagerListAll,
-} from '@camstack/ui-library'
+import { Button, ItemFormDialog, useDeviceManagerListAll } from '@camstack/ui-library'
 import { ChevronDown } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -138,28 +130,15 @@ function FieldPickerDialog({
   }
   const title = t('automation.fieldPicker.title', 'Device value')
   return (
-    <Dialog open onOpenChange={(next) => !next && onCancel()}>
-      <DialogContent width="xl">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <SourceSelector
-          kind="formula"
-          enabled
-          hostId={-1}
-          destination={{
-            cap: 'automation',
-            targetId: 'field',
-            title,
-            pickerTargetKind: null,
-          }}
-          device={picked}
-          field={field}
-          deviceFilter={deviceFilter}
-          onDeviceChange={setPicked}
-          onFieldChange={setField}
-        />
-        <DialogFooter className="flex flex-wrap gap-2">
+    <ItemFormDialog
+      open
+      onClose={onCancel}
+      title={title}
+      width="xl"
+      fill
+      testId="field-picker-dialog"
+      footer={
+        <>
           <Button variant="ghost" onClick={onCancel}>
             {t('common.cancel', 'Cancel')}
           </Button>
@@ -177,8 +156,26 @@ function FieldPickerDialog({
           >
             {t('automation.fieldPicker.use', 'Use this value')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <SourceSelector
+        kind="formula"
+        enabled
+        fillHeight
+        hostId={-1}
+        destination={{
+          cap: 'automation',
+          targetId: 'field',
+          title,
+          pickerTargetKind: null,
+        }}
+        device={picked}
+        field={field}
+        deviceFilter={deviceFilter}
+        onDeviceChange={setPicked}
+        onFieldChange={setField}
+      />
+    </ItemFormDialog>
   )
 }

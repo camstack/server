@@ -4160,6 +4160,12 @@
           "doc": "List EVERYTHING, always open: no Edit/Done toggle, no \"+N more\" chips, no \"Show N more\" rows, every group open until the operator folds one."
         },
         {
+          "name": "fillHeight",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Stretch to the height of a flex parent and scroll the rows inside the panel, instead of capping the list at a fixed height. Needs a parent w"
+        },
+        {
           "name": "lockedIds",
           "type": "readonly Id[]",
           "optional": true,

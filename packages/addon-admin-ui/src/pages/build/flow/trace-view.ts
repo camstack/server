@@ -9,7 +9,7 @@
  *          the failure, or a run the mode refused)
  */
 
-import type { AutomationRunTrace } from '@camstack/types'
+import type { AutomationRunTrace, TraceNodeOutcome, TraceValue } from '@camstack/types'
 
 export type BlockTone = 'pass' | 'fail' | 'idle'
 
@@ -88,4 +88,85 @@ export function traceView(trace: AutomationRunTrace): TraceView {
 export function stepToneAt(view: TraceView | null, index: number): BlockTone | null {
   if (view === null) return null
   return view.steps.find((s) => s.index === index)?.tone ?? 'idle'
+}
+
+/**
+ * A value a trace carries, as the Runs panel shows it. `unknown` is its own
+ * case: the mirror held nothing, which is not 0, not false and not empty.
+ */
+export type ValueView =
+  | { readonly kind: 'unknown' }
+  | { readonly kind: 'value'; readonly text: string }
+
+export function valueView(value: TraceValue): ValueView {
+  if (value === null) return { kind: 'unknown' }
+  return { kind: 'value', text: Array.isArray(value) ? value.join(', ') : String(value) }
+}
+
+export interface TriggerVarView {
+  readonly name: string
+  readonly value: ValueView
+}
+
+export interface ConditionNodeView {
+  readonly path: string
+  /** Nesting level under the root, for indentation. */
+  readonly depth: number
+  readonly kind: AutomationRunTrace['conditions'][number]['kind']
+  readonly outcome: TraceNodeOutcome
+  readonly reason: string | null
+  /** `cap.fieldPath`, when the node reads a device field. */
+  readonly subject: string | null
+  readonly operator: string | null
+  readonly deviceId: number | null
+  /** null: the trace did not record one (a container, or a node never reached). */
+  readonly expected: ValueView | null
+  readonly observed: ValueView | null
+}
+
+export interface StepDetailView {
+  readonly index: number
+  readonly kind: string
+  readonly tone: BlockTone
+  readonly message: string | null
+}
+
+export interface TraceDetails {
+  readonly vars: readonly TriggerVarView[]
+  readonly conditions: readonly ConditionNodeView[]
+  readonly steps: readonly StepDetailView[]
+}
+
+function subjectOf(cap: string | undefined, fieldPath: string | undefined): string | null {
+  if (fieldPath === undefined) return null
+  return cap === undefined ? fieldPath : `${cap}.${fieldPath}`
+}
+
+/** Every VALUE the trace already holds, in evaluation order: the trigger's vars,
+ *  each condition node's expected against observed, each step's outcome. */
+export function traceDetails(trace: AutomationRunTrace): TraceDetails {
+  return {
+    vars: Object.entries(trace.trigger.vars).map(([name, value]) => ({
+      name,
+      value: valueView(value),
+    })),
+    conditions: trace.conditions.map((node) => ({
+      path: node.path,
+      depth: node.path.split('.').length - 1,
+      kind: node.kind,
+      outcome: node.outcome,
+      reason: nonEmpty(node.reason),
+      subject: subjectOf(node.cap, node.fieldPath),
+      operator: node.operator ?? null,
+      deviceId: node.deviceId ?? null,
+      expected: node.expected === undefined ? null : valueView(node.expected),
+      observed: node.observed === undefined ? null : valueView(node.observed),
+    })),
+    steps: trace.steps.map((step) => ({
+      index: stepIndex(step.path),
+      kind: step.kind,
+      tone: step.outcome === 'ok' ? 'pass' : step.outcome === 'error' ? 'fail' : 'idle',
+      message: nonEmpty(step.message),
+    })),
+  }
 }

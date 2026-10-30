@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, Info, AlertTriangle, AlertCircle } from 'lucide-react'
 import type { Toast } from '@camstack/types'
 import { useToastOnToast } from '@camstack/ui-library'
+import { subscribeToasts } from './toast-bus'
 
 interface ToastItem {
   id: string
@@ -56,13 +57,16 @@ export function ToastContainer() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
+  const add = useCallback((toast: Omit<ToastItem, 'id' | 'timestamp'>) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    setToasts((prev) => [...prev, { ...toast, id, timestamp: Date.now() }])
+  }, [])
+
   useToastOnToast(undefined, {
-    onData: (value: unknown) => {
-      const toast = value as Toast
-      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      setToasts((prev) => [...prev, { ...toast, id, timestamp: Date.now() }])
-    },
+    onData: (value: unknown) => add(value as Toast),
   })
+
+  useEffect(() => subscribeToasts(add), [add])
 
   if (toasts.length === 0) return null
 
