@@ -5,10 +5,15 @@
  * - Installs on app restart (or on-demand via `installAndRestart`).
  */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-import { app, dialog } from 'electron'
+import { app, autoUpdater as nativeAutoUpdater, dialog } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import type { DesktopProduct } from './product/desktop-product'
+import { createNativeStagingWatch, type NativeStagingWatch } from './native-staging-watch'
 import { updateChannelForProduct } from './product/update-channel'
+
+/** How long Squirrel.Mac gets to fetch a downloaded update before it is asked again. */
+const NATIVE_STAGING_RETRY_MS = 30_000
+const NATIVE_STAGING_MAX_RETRIES = 3
 
 /** Update lifecycle snapshot shared with the tray menu + agent UI. */
 export interface UpdateState {
@@ -97,6 +102,18 @@ export function initAutoUpdater(
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
 
+  // macOS: "downloaded" (electron-updater) is not "installable" (staged by the
+  // native updater). See native-staging-watch.ts.
+  const nativeWatch: NativeStagingWatch | null =
+    process.platform === 'darwin'
+      ? createNativeStagingWatch({
+          native: nativeAutoUpdater,
+          log: console,
+          retryDelayMs: NATIVE_STAGING_RETRY_MS,
+          maxRetries: NATIVE_STAGING_MAX_RETRIES,
+        })
+      : null
+
   let state: UpdateState = IDLE_STATE
   const setState = (patch: Partial<UpdateState>): void => {
     state = { ...state, ...patch }
@@ -119,6 +136,7 @@ export function initAutoUpdater(
 
   autoUpdater.on('update-downloaded', (info: { version?: string }) => {
     setState({ available: true, downloaded: true, checking: false, version: info.version ?? null })
+    nativeWatch?.expectStaging()
     callbacks.onUpdateDownloaded?.(info.version ?? 'unknown')
   })
 
@@ -144,6 +162,10 @@ export function initAutoUpdater(
   return {
     checkForUpdates: check,
     installAndRestart: () => {
+      console.log(
+        `[updater] install and restart requested (downloaded=${state.downloaded}, nativeStaged=${nativeWatch?.isStaged() ?? 'n/a'})`,
+      )
+      nativeWatch?.nudgeIfNotStaged('install and restart')
       autoUpdater.quitAndInstall(false, true)
     },
     getState: () => state,

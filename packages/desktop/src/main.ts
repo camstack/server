@@ -198,8 +198,18 @@ function publishDesktopState(): void {
   }
 }
 
+let installRequestRefusalLogged = false
+
 function handleDesktopInstallRequests(): void {
-  if (appQuitting) return
+  if (appQuitting) {
+    // Not consumed on purpose: the app is already on its way out. Said once per
+    // process so a stuck quit is not a silent one.
+    if (!installRequestRefusalLogged) {
+      installRequestRefusalLogged = true
+      console.warn('[main] desktop install requests are not read: the app is already quitting')
+    }
+    return
+  }
   for (const dir of desktopChannelDirs()) {
     const outcome = takeInstallRequest(dir, updateState.downloaded)
     if (outcome.kind === 'none') continue
@@ -1118,6 +1128,7 @@ void app.whenReady().then(async () => {
   publishDesktopState()
   setInterval(publishDesktopState, DESKTOP_STATE_HEARTBEAT_MS).unref()
   watchInstallRequests({ dataDir: nodeDataDir(), onTick: handleDesktopInstallRequests })
+  console.log(`[main] desktop install-request watcher armed under ${nodeDataDir()}`)
 
   // macOS: closing the window hides it (tray keeps the app alive), so
   // getAllWindows() is never empty — Dock click must still show/focus.
