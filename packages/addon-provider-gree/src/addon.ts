@@ -7,17 +7,14 @@ import {
   type DeviceSummary,
   DeviceType,
   type DiscoveryCandidate,
+  type DiscoveryMode,
   errMsg,
   type IDevice,
 } from '@camstack/types'
-import {
-  buildConnectionFormSchema,
-  buildDiscoveryParamsFormSchema,
-  type GreeConfig,
-  settingsToGreeConfig,
-} from './config.js'
+import { buildConnectionFormSchema, type GreeConfig, settingsToGreeConfig } from './config.js'
 import { GreeContainerDevice } from './devices/gree-container-device.js'
 import { greeConnections, macKey } from './gree-gateway.js'
+import { GREE_DISCOVERY_MODES, scanGreeSubnets } from './gree-subnet-scan.js'
 import {
   bindOnce,
   discoverGreeDevices,
@@ -54,31 +51,34 @@ export class GreeProviderAddon extends BaseDeviceProvider {
     super({})
   }
 
-  // ── Discovery: LAN UDP broadcast scan ──────────────────────────────────
+  // ── Discovery: the library's encrypted UDP scan, run per covered subnet ─────
 
   override async supportsDiscovery(): Promise<boolean> {
     return true
   }
 
-  override async getDiscoveryParamsSchema(): Promise<ConfigUISchema | null> {
-    return buildDiscoveryParamsFormSchema()
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return GREE_DISCOVERY_MODES
   }
 
   override async discoverDevices(input?: {
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
-    const broadcastAddress =
-      typeof input?.params?.['broadcastAddress'] === 'string'
-        ? input.params['broadcastAddress'].trim()
-        : undefined
-    const timeoutMs =
-      typeof input?.params?.['timeoutMs'] === 'number' ? input.params['timeoutMs'] : undefined
-    const responders = await discoverGreeDevices({
-      ...(broadcastAddress ? { broadcastAddress } : {}),
-      ...(timeoutMs ? { timeoutMs } : {}),
+    const rawSubnets = input?.params?.['subnets']
+    const subnets = Array.isArray(rawSubnets)
+      ? rawSubnets.filter((s): s is string => typeof s === 'string')
+      : []
+    const responders = await scanGreeSubnets({
+      subnets,
+      sweep: (broadcastAddress) => discoverGreeDevices({ broadcastAddress }),
+      onError: (target, error) => {
+        this.ctx.logger.warn('Gree subnet sweep failed — skipping', {
+          meta: { target, error: errMsg(error) },
+        })
+      },
     })
     this.ctx.logger.info('Gree discovery complete', {
-      meta: { count: responders.length, broadcastAddress: broadcastAddress ?? 'local' },
+      meta: { count: responders.length, subnets: subnets.length },
     })
     return responders.map((d) => {
       const displayName = d.name.length > 0 ? d.name : d.mac
