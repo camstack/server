@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - One network scan for all providers: the local-network engine runs every provider's discovery once, and extra subnets can be saved to scan other VLANs
 
+### Changed
+
+- Network scan resends the multicast query three times over about 4.5 s and logs hits per subnet, so Wi-Fi boards that miss one query are found
+
 ## [1.2.524] - 2026-10-30
 
 ### Changed

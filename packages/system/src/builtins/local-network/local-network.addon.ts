@@ -37,8 +37,8 @@ import {
   BaseAddon,
   CAMSTACK_APP_LINK_ORIGIN,
   checkRoleAddress,
-  errMsg,
   EventCategory,
+  errMsg,
   isAppLinkBase,
   isDefaultAppConnectionEndpoint,
   localNetworkCapability,
@@ -49,9 +49,6 @@ import {
   shortHostname,
   validateCustomAddress,
 } from '@camstack/types'
-import { runScan } from './scan/scan-engine.js'
-import { nodeScanIo } from './scan/scan-io-node.js'
-import { validateSavedSubnets } from './scan/subnets.js'
 import { applyLanHttp, DEFAULT_LAN_HTTP_PORT, readLanHttpState } from '../../http/lan-http-bind.js'
 import {
   applyCertificateToListener,
@@ -74,22 +71,25 @@ import {
   buildListenerOrigins,
   type CustomAddress,
   normalizeAddressBook,
+  withAppConnectionCustomEndpoints,
   withCustomAddress,
+  withLanHttpsCounterparts,
   withoutCustomAddress,
   withRoleAutomatic,
   withRoleFlag,
-  withAppConnectionCustomEndpoints,
-  withLanHttpsCounterparts,
 } from './address-book.js'
+import { HubMdnsAdvertiser, internalUrlOf } from './hub-mdns.js'
+import { createCiaoPublisher } from './hub-mdns-ciao.js'
 import {
   ipv6AllowlistMatches,
   ipv6ToHex32,
   parseProcIfInet6,
   shouldAdvertiseIpv6,
 } from './ipv6-lan.js'
-import { HubMdnsAdvertiser, internalUrlOf } from './hub-mdns.js'
-import { createCiaoPublisher } from './hub-mdns-ciao.js'
 import { parseLocalHostname } from './local-hostname.js'
+import { runScan } from './scan/scan-engine.js'
+import { nodeScanIo } from './scan/scan-io-node.js'
+import { validateSavedSubnets } from './scan/subnets.js'
 
 /** What a change to the address book may consult. */
 interface AddressChangeContext {

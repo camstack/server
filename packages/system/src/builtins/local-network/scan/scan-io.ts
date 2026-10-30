@@ -17,7 +17,9 @@ export interface UdpExchangeRequest {
   /** Fixed source port: devices that answer to a port other than the sender's. */
   readonly bindPort?: number
   readonly broadcast?: boolean
-  /** How long to keep listening after the burst. */
+  /** Offsets (ms after the first burst) at which the same burst is sent again. */
+  readonly resendAtMs?: readonly number[]
+  /** How long to keep listening after the first burst. */
   readonly listenMs: number
 }
 

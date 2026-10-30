@@ -7,8 +7,8 @@ import type { HubAddressBook, IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildHubAnnouncement,
-  type HubMdnsAnnouncement,
   HubMdnsAdvertiser,
+  type HubMdnsAnnouncement,
   type HubMdnsPublisher,
   internalUrlOf,
 } from '../hub-mdns.js'

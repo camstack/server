@@ -39,11 +39,16 @@ function udpExchange(request: UdpExchangeRequest): Promise<readonly UdpReply[]> 
         finish(err instanceof Error ? err : new Error(String(err)))
         return
       }
-      for (const target of request.targets) {
-        socket.send(request.payload, target.port, target.host, () => {
-          // A single unreachable target is not a failed scan.
-        })
+      const burst = (): void => {
+        if (settled) return
+        for (const target of request.targets) {
+          socket.send(request.payload, target.port, target.host, () => {
+            // A single unreachable target is not a failed scan.
+          })
+        }
       }
+      burst()
+      for (const offset of request.resendAtMs ?? []) setTimeout(burst, offset)
       setTimeout(() => finish(null), request.listenMs)
     })
   })

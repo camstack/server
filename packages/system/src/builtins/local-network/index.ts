@@ -1,2 +1,6 @@
-export { LocalNetworkAddon, classifyKind, prefixLen } from './local-network.addon.js'
-export { LocalNetworkAddon as default } from './local-network.addon.js'
+export {
+  classifyKind,
+  LocalNetworkAddon,
+  LocalNetworkAddon as default,
+  prefixLen,
+} from './local-network.addon.js'

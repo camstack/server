@@ -8,8 +8,9 @@
  * These tests pin the correction: the port comes from the hub, the caller's
  * value is only a fallback hint, and the answer says which of the two it was.
  */
-import { describe, it, expect, vi } from 'vitest'
-import type { AddonContext, IScopedLogger, ILocalNetworkProvider } from '@camstack/types'
+
+import type { AddonContext, ILocalNetworkProvider, IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 import { LocalNetworkAddon, resolveAdvertisedPort } from '../local-network.addon.js'
 
 // The addon would start a real mDNS responder on the host; specs never do.

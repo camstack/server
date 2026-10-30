@@ -11,9 +11,9 @@ import type {
 } from '../scan-io.js'
 import {
   MAX_SCAN_HOSTS,
-  ScanSubnetError,
   parseCidr,
   resolveScanSubnets,
+  ScanSubnetError,
   validateSavedSubnets,
 } from '../subnets.js'
 
@@ -236,6 +236,29 @@ describe('scan engine batching', () => {
     expect(result.hits.map((h) => h.providerId).sort()).toEqual(['esphome', 'other'])
     expect(result.hits[0]?.hit.mdns).toMatchObject({ instance: 'board1', port: 6053 })
     expect(result.hits[0]?.hit.host).toBe('192.168.10.50')
+  })
+
+  it('finds a board that answers only the second query, and reports it once', async () => {
+    const io = new FakeIo()
+    const answer = {
+      host: '192.168.10.50',
+      port: 5353,
+      data: ptrAnswer('_esphomelib._tcp', 'board1', 6053, '192.168.10.50'),
+    }
+    // The responder misses the first burst: it is heard only when the query is resent,
+    // and then it answers every resend it gets.
+    io.udpReplies = (req) =>
+      req.targets[0]?.host === '224.0.0.251'
+        ? Array.from({ length: req.resendAtMs?.length ?? 0 }, () => answer)
+        : []
+    const result = await runScan(deps(io), {
+      requests: [
+        { providerId: 'esphome', modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp' }] },
+      ],
+    })
+    expect(io.udp[0]?.resendAtMs).toEqual([1_200, 2_500])
+    expect(io.udp[0]?.listenMs).toBeGreaterThanOrEqual(4_500)
+    expect(result.hits).toHaveLength(1)
   })
 
   it('asks every host of an extra subnet directly, since multicast does not cross', async () => {

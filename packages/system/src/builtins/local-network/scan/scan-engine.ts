@@ -30,7 +30,7 @@ import {
   normalizeServiceType,
   parseMdnsMessage,
 } from './dns-wire.js'
-import { MAX_HIT_BODY_BYTES, type HttpProbeRequest, type ScanIo, type UdpReply } from './scan-io.js'
+import { type HttpProbeRequest, MAX_HIT_BODY_BYTES, type ScanIo, type UdpReply } from './scan-io.js'
 import {
   broadcastOf,
   containsAddress,
@@ -41,8 +41,12 @@ import {
 
 export const SCAN_CONCURRENCY = 64
 export const SCAN_REQUEST_TIMEOUT_MS = 1_200
-const MULTICAST_LISTEN_MS = 2_000
-const UNICAST_LISTEN_MS = 1_200
+/** Wi-Fi boards drop or late-answer one multicast query: send it three times, listen to the end. */
+const MULTICAST_RESEND_AT_MS: readonly number[] = [1_200, 2_500]
+const MULTICAST_LISTEN_MS = 4_500
+/** Unicast DNS-SD probes to extra subnets get one retry. */
+const UNICAST_RESEND_AT_MS: readonly number[] = [900]
+const UNICAST_LISTEN_MS = 2_000
 const WSD_GROUP = '239.255.255.250'
 const WSD_PORT = 3702
 const SSDP_PORT = 1900
@@ -131,6 +135,31 @@ async function pool<T>(
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
 }
 
+/** Hits per scanned CIDR, so "5 of 20 boards" is visible without a packet capture. */
+function hitsBySubnet(
+  subnets: ResolvedSubnets,
+  hits: readonly { readonly hit: { readonly host: string } }[],
+): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const subnet of subnets.all) {
+    out[subnet.cidr] = hits.filter((h) => containsAddress(subnet, h.hit.host)).length
+  }
+  return out
+}
+
+/** A resent query is answered more than once: one hit per distinct reply. */
+function dedupeReplies(replies: readonly UdpReply[]): readonly UdpReply[] {
+  const seen = new Set<string>()
+  const out: UdpReply[] = []
+  for (const reply of replies) {
+    const key = `${reply.host}:${reply.port}:${reply.data.toString('hex')}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(reply)
+  }
+  return out
+}
+
 function hubLinks(interfaces: readonly LocalInterface[]): readonly LocalInterface[] {
   return interfaces.filter(isScannableLink)
 }
@@ -159,6 +188,7 @@ async function runMdns(
         payload: query,
         targets: [{ host: MDNS_GROUP, port: MDNS_PORT }],
         localAddress: link.address,
+        resendAtMs: MULTICAST_RESEND_AT_MS,
         listenMs: MULTICAST_LISTEN_MS,
       })),
     )
@@ -170,11 +200,12 @@ async function runMdns(
       ...(await deps.io.udpExchange({
         payload: query,
         targets: extraHosts.map((host) => ({ host, port: MDNS_PORT })),
+        resendAtMs: UNICAST_RESEND_AT_MS,
         listenMs: UNICAST_LISTEN_MS,
       })),
     )
   }
-  for (const reply of replies) {
+  for (const reply of dedupeReplies(replies)) {
     for (const service of parseMdnsMessage(reply.data)) {
       for (const entry of entries) {
         if (normalizeServiceType(entry.mode.serviceType) !== service.serviceType) continue
@@ -242,6 +273,7 @@ async function exchangeEverywhere(
         payload,
         targets: [multicast],
         localAddress: link.address,
+        resendAtMs: MULTICAST_RESEND_AT_MS,
         listenMs: MULTICAST_LISTEN_MS,
       })),
     )
@@ -253,11 +285,12 @@ async function exchangeEverywhere(
       ...(await deps.io.udpExchange({
         payload,
         targets: extraHosts.map((host) => ({ host, port: unicastPort })),
+        resendAtMs: UNICAST_RESEND_AT_MS,
         listenMs: UNICAST_LISTEN_MS,
       })),
     )
   }
-  return replies
+  return dedupeReplies(replies)
 }
 
 async function runWsDiscovery(
@@ -394,6 +427,7 @@ async function runUdpBroadcast(
           ...(send.localAddress !== undefined ? { localAddress: send.localAddress } : {}),
           ...(listenPort !== undefined ? { bindPort: listenPort } : {}),
           broadcast: true,
+          resendAtMs: UNICAST_RESEND_AT_MS,
           listenMs: UNICAST_LISTEN_MS,
         })),
       )
@@ -517,6 +551,7 @@ export async function runScan(deps: ScanEngineDeps, input: ScanInput): Promise<S
       timeouts: stats.timeouts,
       errors: c.errors.length,
       byMode,
+      hitsBySubnet: hitsBySubnet(subnets, c.hits),
       ms: Date.now() - startedAt,
     },
   })
