@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.527] - 2026-10-30
+
 ### Changed
 
 - Scan network lists each integration's devices with gateway children nested, lets you tick several devices to add at once, and edits the extra networks to scan; the integration form gets a Scan button that fills it.

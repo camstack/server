@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.146] - 2026-10-30
+
 ### Changed
 
 - Gree ACs are searched on every subnet the network scan covers; the per-scan broadcast address form is gone

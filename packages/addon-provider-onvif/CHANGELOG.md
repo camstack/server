@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.151] - 2026-10-30
+
 ### Changed
 
 - Cameras are found by the shared network scan (WS-Discovery); the discovery timeout setting is gone

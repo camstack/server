@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.179] - 2026-10-30
+
 ### Changed
 
 - Cameras are found by the shared network scan (WS-Discovery and an ISAPI probe confirmed with the scan credentials); the scan-options subnet field is gone

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.151] - 2026-10-30
+
 ### Changed
 
 - A Velux gateway is now found by the shared network scan, including on other subnets

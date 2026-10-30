@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.164] - 2026-10-30
+
 ### Changed
 
 - The Homematic CCU is found by the shared network scan, including on other subnets

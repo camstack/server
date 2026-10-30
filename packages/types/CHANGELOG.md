@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.452] - 2026-10-30
+
 ### Added
 
 - Discovery modes: a device provider can declare how it is found on the network and classify the hits the scan engine returns; candidates can say they set up an integration or sit behind a gateway

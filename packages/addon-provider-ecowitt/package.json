@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-ecowitt",
-  "version": "0.2.150",
+  "version": "0.2.151",
   "description": "Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client",
   "keywords": [
     "camstack",

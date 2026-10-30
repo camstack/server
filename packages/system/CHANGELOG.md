@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.525] - 2026-10-30
+
 ### Added
 
 - One network scan for all providers: the local-network engine runs every provider's discovery once, and extra subnets can be saved to scan other VLANs
