@@ -8,19 +8,17 @@ describe('OidcProviderStore', () => {
     const world = makeInMemoryRecords('auth')
     await world.records.declare({ 'oidc-provider': oidcProviderEntryKind })
     const store = OidcProviderStore.of(world.records)
-    await store.replaceAll([
-      {
-        id: 'acme',
-        displayName: 'Acme IdP',
-        icon: 'shield-check',
-        issuerUrl: 'https://idp.example',
-        clientId: 'cid',
-        clientSecret: 'sec',
-        redirectUri: '',
-        scopes: 'openid profile email',
-        usernameClaim: 'preferred_username',
-      },
-    ])
+    await store.create({
+      id: 'acme',
+      displayName: 'Acme IdP',
+      icon: 'shield-check',
+      issuerUrl: 'https://idp.example',
+      clientId: 'cid',
+      clientSecret: 'sec',
+      redirectUri: '',
+      scopes: 'openid profile email',
+      usernameClaim: 'preferred_username',
+    })
     const listed = await store.listResolved()
     expect(listed).toHaveLength(1)
     expect(listed[0]?.id).toBe('acme')
@@ -28,7 +26,7 @@ describe('OidcProviderStore', () => {
     expect(listed[0]?.clientSecret).toBe('sec')
   })
 
-  it('replaceAll drops providers removed from the snapshot', async () => {
+  it('remove drops one row and leaves the others', async () => {
     const world = makeInMemoryRecords('auth')
     await world.records.declare({ 'oidc-provider': oidcProviderEntryKind })
     const store = OidcProviderStore.of(world.records)
@@ -43,8 +41,9 @@ describe('OidcProviderStore', () => {
       scopes: 'openid',
       usernameClaim: 'sub' as const,
     }
-    await store.replaceAll([row, { ...row, id: 'b', displayName: 'B' }])
-    await store.replaceAll([{ ...row, id: 'b', displayName: 'B' }])
+    await store.create(row)
+    await store.create({ ...row, id: 'b', displayName: 'B' })
+    await store.remove('a')
     expect((await store.listResolved()).map((p) => p.id)).toEqual(['b'])
   })
 })

@@ -23,12 +23,11 @@ import {
   type ConnectionEndpoint,
   type IScopedLogger,
   resolveHubAddressRoles,
+  recordSecretRef,
   type SecretsAccess,
-  globalSecretScope,
-  arrayItemFieldPath,
 } from '@camstack/types'
 // Import AFTER the mock declaration so the addon picks up our stub.
-import { makeInMemoryRecords, buildSecretRef, type SecretScope } from '@camstack/types'
+import { makeInMemoryRecords } from '@camstack/types'
 import { AuthOidcAddon } from '../auth-oidc.addon.js'
 import { oidcProviderEntryKind } from '../oidc-provider-record-kinds.js'
 
@@ -230,6 +229,20 @@ function makeFetchMock(): ReturnType<typeof vi.fn> {
   })
 }
 
+/** Records are the only store: seed the fixture providers as stored rows. */
+async function seedProviders(
+  world: ReturnType<typeof makeInMemoryRecords>,
+  config: TestCtxOptions['config'],
+): Promise<void> {
+  const rows = (config?.['providers'] ?? []) as ReadonlyArray<Record<string, unknown>>
+  if (rows.length === 0) return
+  await world.records.declare({ 'oidc-provider': oidcProviderEntryKind })
+  const kind = world.records.kind(oidcProviderEntryKind)
+  for (const { id, defaultRole: _role, ...body } of rows) {
+    await kind.put({ id: String(id), data: oidcProviderEntryKind.schema.parse(body) })
+  }
+}
+
 async function bootAddon(opts: TestCtxOptions = {}): Promise<{
   addon: AuthOidcAddon
   ctx: AddonContext
@@ -237,7 +250,9 @@ async function bootAddon(opts: TestCtxOptions = {}): Promise<{
   registrations: ReadonlyArray<{ capability: { name: string }; provider: unknown }>
 }> {
   const ssoBridge = opts.ssoBridge ?? makeSsoBridgeMock()
-  const ctx = makeCtx({ ...opts, ssoBridge })
+  const recordsWorld = opts.recordsWorld ?? makeInMemoryRecords('auth')
+  await seedProviders(recordsWorld, opts.config)
+  const ctx = makeCtx({ ...opts, recordsWorld, ssoBridge })
   const addon = new AuthOidcAddon()
   const result = await addon.initialize(ctx)
   const list = Array.isArray(result) ? result : (result?.providers ?? [])
@@ -1319,7 +1334,9 @@ describe('AuthOidcAddon — route handlers', () => {
     ssoBridge.signBridgeToken.mockRejectedValue(
       new Error('Capability "sso-bridge" is not registered on any node'),
     )
-    const ctx = makeCtx({ config: VIEWER_CONFIG, ssoBridge })
+    const recordsWorld = makeInMemoryRecords('auth')
+    await seedProviders(recordsWorld, VIEWER_CONFIG)
+    const ctx = makeCtx({ config: VIEWER_CONFIG, ssoBridge, recordsWorld })
 
     const addon = new AuthOidcAddon()
     const result = await addon.initialize(ctx)
@@ -2029,104 +2046,79 @@ describe('AuthOidcAddon — step-up freshness and bounded pending states (D858)'
 // A connection whose secret marker is bound to the settings path (issue #4)
 // ---------------------------------------------------------------------------
 
-function makeSpecKeychain(owner: string): { readonly access: SecretsAccess } {
-  const values = new Map<string, string>()
-  const access: SecretsAccess = {
-    owner,
-    ref: (scope: SecretScope, fieldPath: string) => buildSecretRef({ owner, scope, fieldPath }),
-    resolve: async (refs) =>
-      Object.fromEntries(
-        refs.map((ref) => {
-          const value = values.get(ref)
-          return [
-            ref,
-            value === undefined
-              ? { kind: 'missing' as const }
-              : { kind: 'value' as const, value, version: 1 },
-          ]
-        }),
-      ),
-    put: async (ref, value) => {
-      values.set(ref, value)
-      return 1
-    },
-    delete: async (refs) => refs.filter((r) => values.delete(r)).length,
-    state: async () => ({ state: 'ready' }),
-    onChange: () => () => undefined,
-    forOwner: null,
-  }
-  return { access }
-}
-
-describe('auth-oidc connections with a settings-bound secret marker', () => {
+describe('auth-oidc connection writes touch only their own row', () => {
   interface ConnectionsApi {
     listConnections(): Promise<ReadonlyArray<{ id: string }>>
     createConnection(i: { id: string; displayName: string }): Promise<{ id: string }>
-    updateConnection(i: { id: string; displayName: string; clientId?: string }): Promise<unknown>
+    updateConnection(i: {
+      id: string
+      displayName: string
+      clientId?: string
+      clientSecret?: string
+    }): Promise<unknown>
     deleteConnection(i: { id: string }): Promise<unknown>
   }
 
-  async function bootStuck(opts: { readonly keychainHasValue?: boolean } = {}) {
-    const keychain = makeSpecKeychain('auth')
-    const settingsRef = keychain.access.ref(
-      globalSecretScope(),
-      arrayItemFieldPath('providers', 'prod01', 'clientSecret'),
-    )
-    if (opts.keychainHasValue !== false) await keychain.access.put(settingsRef, 'real-secret')
+  async function bootWithRow() {
     const recordsWorld = makeInMemoryRecords('auth')
-    const config = {
-      providers: [
-        {
-          ...VIEWER_PROVIDER,
-          id: 'prod01',
-          clientSecret: { $secret: settingsRef, v: 1 },
-        },
-      ],
-    }
-    const { registrations, ctx } = await bootAddon({
-      config,
-      secrets: keychain.access,
+    const { registrations } = await bootAddon({
+      config: { providers: [{ ...VIEWER_PROVIDER, id: 'prod01', clientSecret: 'real-secret' }] },
       recordsWorld,
     })
     const api = registrations.find((r) => r.capability.name === 'oidc-connections')!
       .provider as ConnectionsApi
-    return { api, ctx, recordsWorld }
+    return { api, kind: recordsWorld.records.kind(oidcProviderEntryKind), recordsWorld }
   }
 
-  it('edits the row without retyping the secret and keeps the stored secret', async () => {
-    const { api, recordsWorld } = await bootStuck()
+  it('creates a connection with a secret next to an existing one', async () => {
+    const { api, kind, recordsWorld } = await bootWithRow()
+    await api.createConnection({ id: 'zztest', displayName: 'Zz' })
+    await api.updateConnection({ id: 'zztest', displayName: 'Zz', clientSecret: 'zz-secret' })
+    expect((await api.listConnections()).map((c) => c.id).sort()).toEqual(['prod01', 'zztest'])
+    expect((await kind.getResolved('zztest'))?.data.clientSecret).toBe('zz-secret')
+    expect((await kind.getResolved('prod01'))?.data.clientSecret).toBe('real-secret')
+    const own = recordSecretRef('auth', 'oidc-provider', 'zztest', 'clientSecret')
+    expect(JSON.stringify(recordsWorld.tables.get('oidc-provider')?.get('zztest')?.data)).toContain(
+      own,
+    )
+  })
+
+  it('an edit without a secret keeps the stored secret', async () => {
+    const { api, kind } = await bootWithRow()
     await api.updateConnection({ id: 'prod01', displayName: 'Renamed', clientId: 'new-id' })
-    const row = await recordsWorld.records.kind(oidcProviderEntryKind).getResolved('prod01')
+    const row = await kind.getResolved('prod01')
     expect(row?.data.displayName).toBe('Renamed')
     expect(row?.data.clientSecret).toBe('real-secret')
   })
 
-  it('deletes the row', async () => {
-    const { api, recordsWorld } = await bootStuck()
+  it('a write never re-puts a sibling row', async () => {
+    const { api, recordsWorld } = await bootWithRow()
+    const before = recordsWorld.tables.get('oidc-provider')?.get('prod01')?.rev
+    await api.createConnection({ id: 'second', displayName: 'Second' })
+    await api.deleteConnection({ id: 'second' })
+    expect(recordsWorld.tables.get('oidc-provider')?.get('prod01')?.rev).toBe(before)
+  })
+
+  it('deletes only the named row', async () => {
+    const { api, kind } = await bootWithRow()
     await api.deleteConnection({ id: 'prod01' })
     expect(await api.listConnections()).toEqual([])
-    expect(
-      (await recordsWorld.records.kind(oidcProviderEntryKind).query({ limit: 10 })).records,
-    ).toHaveLength(0)
+    expect((await kind.query({ limit: 10 })).records).toHaveLength(0)
   })
 
-  it('creates a connection with another slug next to the stuck one', async () => {
-    const { api, recordsWorld } = await bootStuck()
-    await api.createConnection({ id: 'second', displayName: 'Second' })
-    expect((await api.listConnections()).map((c) => c.id).sort()).toEqual(['prod01', 'second'])
-    const kept = await recordsWorld.records.kind(oidcProviderEntryKind).getResolved('prod01')
-    expect(kept?.data.clientSecret).toBe('real-secret')
-  })
-
-  it('edits and creates next to a row whose settings-bound secret no longer resolves', async () => {
-    const { api } = await bootStuck({ keychainHasValue: false })
-    await api.updateConnection({ id: 'prod01', displayName: 'Renamed' })
-    await api.createConnection({ id: 'second', displayName: 'Second' })
-    expect((await api.listConnections()).map((c) => c.id).sort()).toEqual(['prod01', 'second'])
+  it('a refused write leaves the listed connections unchanged', async () => {
+    const { api, recordsWorld } = await bootWithRow()
+    const before = await api.listConnections()
+    recordsWorld.failWrites(true)
+    await expect(api.createConnection({ id: 'zztest', displayName: 'Zz' })).rejects.toThrow()
+    await expect(api.updateConnection({ id: 'prod01', displayName: 'Renamed' })).rejects.toThrow()
+    await expect(api.deleteConnection({ id: 'prod01' })).rejects.toThrow()
+    recordsWorld.failWrites(false)
+    expect(await api.listConnections()).toEqual(before)
   })
 
   it('a public client (no secret) is a valid connection', async () => {
-    const { api } = await bootStuck()
+    const { api } = await bootWithRow()
     await api.createConnection({ id: 'pub', displayName: 'Public' })
     await api.updateConnection({ id: 'pub', displayName: 'Public', clientId: 'pub-client' })
     const listed = await (

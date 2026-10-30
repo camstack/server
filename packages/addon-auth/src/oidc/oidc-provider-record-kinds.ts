@@ -11,7 +11,8 @@ export const OidcProviderBodySchema = z.object({
   icon: z.string(),
   issuerUrl: z.string(),
   clientId: z.string(),
-  clientSecret: z.string().meta({ secret: true }),
+  // Absent for a public client (PKCE, no secret) or after the operator cleared it.
+  clientSecret: z.string().optional().meta({ secret: true }),
   redirectUri: z.string(),
   scopes: z.string(),
   usernameClaim: usernameClaimSchema,
