@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.453] - 2026-10-30
+
 ### Changed
 
 - Terminal instances report nodeInCluster and updateInstance accepts targetNodeId to re-point an instance.

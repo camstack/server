@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.640] - 2026-10-30
+
 ### Changed
 
 - Home Assistant export: a failed push now states the reason in the log (missing CamStack component, rejected token, unreachable, too large), a missing component is no longer retried every tick, the integration status shows the last failure, and an oversized batch is split instead of dropped.

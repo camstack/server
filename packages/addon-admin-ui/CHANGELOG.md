@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.528] - 2026-10-30
+
 ### Changed
 
 - Terminal page: node picker on instance edit, a clear 'node not in cluster' state, and loading/unknown states instead of 'no instances'.
