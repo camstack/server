@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.698 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.699 | the update itself | — |
 
 ## Framework (5)
 
@@ -22,7 +22,7 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/develop` | `packages/develop` | 0.1.39 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
+| `@camstack/develop` | `packages/develop` | 0.1.40 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.154 | `@camstack/server` closure | — |
 | `@camstack/system` | `packages/system` | 1.2.523 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
 | `@camstack/types` | `packages/types` | 1.2.449 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
@@ -91,10 +91,10 @@ Build, dev and CLI packages. Not loaded at runtime.
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `camstack` | `packages/cli` | 1.2.209 | npm, standalone tool | CLI tool for managing and running CamStack server |
+| `camstack` | `packages/cli` | 1.2.210 | npm, standalone tool | CLI tool for managing and running CamStack server |
 | `@camstack/desktop` | `packages/desktop` | _private_ | not published (private) | CamStack — single desktop app (hub or agent, chosen at first run) |
 | `@camstack/mcp-dev` | `packages/mcp-dev` | _private_ | not published (private) | Private CamStack operator MCP (camstack-dev / camstack-ops). Not published — for developing CamStack itself. |
-| `@camstack/mcp-develop` | `packages/mcp-develop` | 0.1.27 | npm, standalone tool | Deprecated alias of `camstack mcp --toolsets develop`. MCP server for CamStack plugin authors: catalogue, scaffold, validate, find_example, track review (wraps @camstack/develop). |
+| `@camstack/mcp-develop` | `packages/mcp-develop` | 0.1.28 | npm, standalone tool | Deprecated alias of `camstack mcp --toolsets develop`. MCP server for CamStack plugin authors: catalogue, scaffold, validate, find_example, track review (wraps @camstack/develop). |
 | `@camstack/node-root` | `packages/node-root` | _private_ | not published (private) | CamStack shared node-root boot core — zero-dep starter machinery (state schema/IO, boot plan, semver compare, workspace detect, root update service) bundled INTO each node starter at build time. Never published; never a runtime dependency. |
 | `@camstack/nx-plugin` | `packages/nx-plugin` | 1.1.34 | npm, standalone tool | Nx plugin for CamStack addon authors — `deploy` executor and `addon` generator. Drop into any Nx workspace to package + push addons to a running CamStack hub from the CLI. |
 | `@camstack/werift-turn-fix` | `packages/werift-turn-fix` | _private_ | not published (private) | Automated acceptance test scaffold for verifying the werift TURN/NAT relay bug and its patch |

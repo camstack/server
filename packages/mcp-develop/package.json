@@ -1,6 +1,6 @@
 {
   "name": "@camstack/mcp-develop",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "description": "Deprecated alias of `camstack mcp --toolsets develop`. MCP server for CamStack plugin authors: catalogue, scaffold, validate, find_example, track review (wraps @camstack/develop).",
   "keywords": [
     "camstack",
