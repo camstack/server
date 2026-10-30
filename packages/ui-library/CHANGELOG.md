@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.355] - 2026-10-30
+
 ### Changed
 
 - New QuantityValueInput: a number field with a unit picker for a physical quantity, showing a stored number in the unit it was picked in
