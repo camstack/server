@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.212] - 2026-10-30
+
 ### Changed
 
 - The MCP gains ops_update_check (cluster-wide server, wrapper, addon and CLI update report) and ops_update_apply (ordered, verified, confirm-gated cluster update; wrapper updates are reported with instructions)
