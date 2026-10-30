@@ -8,18 +8,15 @@
  * or discovery would hand every camera an empty password.
  */
 import {
-  createSecretsAccess,
-  isSecretMarker,
-  makeSecretMarker,
   type AddonContext,
+  createSecretsAccess,
+  type DiscoveryHit,
+  isSecretMarker,
   type KeychainResolveResult,
   type KeychainTransport,
+  makeSecretMarker,
 } from '@camstack/types'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-
-vi.mock('../onvif-discovery.js', () => ({
-  discoverOnvifCameras: async () => [{ host: '192.168.10.10', port: 80, name: 'Cam' }],
-}))
+import { afterEach, describe, expect, it } from 'vitest'
 
 const { OnvifProviderAddon } = await import('../addon.js')
 
@@ -102,6 +99,17 @@ async function boot(w: World) {
   return addon
 }
 
+const CAMERA_HIT: DiscoveryHit = {
+  host: '192.0.2.10',
+  port: 3702,
+  modeIndex: 0,
+  wsd: {
+    xaddrs: ['http://192.0.2.10/onvif/device_service'],
+    types: ['dn:NetworkVideoTransmitter'],
+    scopes: [],
+  },
+}
+
 describe('ONVIF defaultPassword through the keychain', () => {
   it('an operator write stores a marker, never the plaintext', async () => {
     const w: World = { store: {}, kc: new Map() }
@@ -119,7 +127,7 @@ describe('ONVIF defaultPassword through the keychain', () => {
     const a = await boot(w)
     await a.updateGlobalSettingsAsOperator({ defaultUsername: 'admin', defaultPassword: PLAIN })
 
-    const [candidate] = await a.discoverDevices()
+    const [candidate] = await a.classifyDiscoveryHits({ hits: [CAMERA_HIT] })
 
     expect(candidate?.prefilledConfig['username']).toBe('admin')
     expect(candidate?.prefilledConfig['password']).toBe(PLAIN)
@@ -132,7 +140,7 @@ describe('ONVIF defaultPassword through the keychain', () => {
     }
     const a = await boot(w)
 
-    const [candidate] = await a.discoverDevices()
+    const [candidate] = await a.classifyDiscoveryHits({ hits: [CAMERA_HIT] })
 
     expect(candidate?.prefilledConfig['password']).toBe(PLAIN)
   })

@@ -1,10 +1,6 @@
 export interface OnvifProviderConfig {
   readonly id: string
   readonly name: string
-  /** Discovery settings. A scan runs only when an operator asks for one. */
-  readonly discovery?: {
-    readonly timeout: number // WS-Discovery listen window in ms (default: 5000)
-  }
   /** Manually added cameras (in addition to discovered) */
   readonly cameras?: readonly OnvifCameraConfig[]
   /** Default credentials for discovered cameras */

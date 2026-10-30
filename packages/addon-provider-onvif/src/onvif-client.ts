@@ -1,5 +1,5 @@
-import { Cam } from 'onvif'
 import type { IScopedLogger } from '@camstack/types'
+import { Cam } from 'onvif'
 
 /**
  * How long one ONVIF `ContinuousMove` runs before the camera stops itself, ms.

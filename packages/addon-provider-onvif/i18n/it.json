@@ -5,7 +5,6 @@
   "onGetCreation.s_connection.port.label": "Porta",
   "onGetCreation.s_connection.username.label": "Nome utente",
   "onGetCreation.s_connection.password.label": "Password",
-  "globalSettings.s_discovery.title": "Rilevamento ONVIF",
   "globalSettings.s_credentials.title": "Credenziali predefinite",
   "globalSettings.s_credentials.defaultUsername.label": "Nome utente predefinito",
   "globalSettings.s_credentials.defaultPassword.label": "Password predefinita"

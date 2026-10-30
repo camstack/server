@@ -1,25 +1,25 @@
-import { z } from 'zod'
-import {
-  DeviceType,
-  DeviceFeature,
-  DeviceConfig,
-  buildDeviceAdminUrl,
-  deviceAdminLinkCapability,
-  snapshotCapability,
-  ptzCapability,
-  startReachabilityPoll,
-} from '@camstack/types'
 import type {
   ConfigUISchemaWithValues,
-  IDevice,
   DeviceContext,
-  INativeSnapshot,
   ICameraDevice,
-  ReachabilityPollHandle,
-  StreamSourceEntry,
+  IDevice,
+  INativeSnapshot,
   InferNativeProvider,
   InferProvider,
+  ReachabilityPollHandle,
+  StreamSourceEntry,
 } from '@camstack/types'
+import {
+  buildDeviceAdminUrl,
+  DeviceConfig,
+  DeviceFeature,
+  DeviceType,
+  deviceAdminLinkCapability,
+  ptzCapability,
+  snapshotCapability,
+  startReachabilityPoll,
+} from '@camstack/types'
+import { z } from 'zod'
 import type { OnvifClient } from './onvif-client.js'
 import { ONVIF_PTZ_TIMEOUT_MS } from './onvif-client.js'
 

@@ -10,12 +10,13 @@
  * Equivalence tests encode the CURRENT behavior and must pass before
  * AND after the accessor swap.
  */
-import { describe, it, expect, afterEach } from 'vitest'
+
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { EventCategory } from '@camstack/types'
+import { fileURLToPath } from 'node:url'
 import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import { EventCategory } from '@camstack/types'
+import { afterEach, describe, expect, it } from 'vitest'
 import { OnvifProviderAddon } from '../addon.js'
 
 function makeSilentLogger(): IScopedLogger {
@@ -102,14 +103,13 @@ describe('OnvifProviderAddon — settings accessor migration', () => {
   })
 
   it('getGlobalSettings hydrates the seeded store values (equivalence)', async () => {
-    const { ctx } = makeCtx({ 'discovery.timeout': 9000, defaultUsername: 'admin' })
+    const { ctx } = makeCtx({ defaultUsername: 'admin' })
     addon = new OnvifProviderAddon()
     await addon.initialize(ctx)
 
     const hydrated = await addon.getGlobalSettings()
     expect(hydrated).not.toBeNull()
     const fields = collectFields(hydrated!.sections)
-    expect(fields.find((f) => f.key === 'discovery.timeout')?.value).toBe(9000)
     expect(fields.find((f) => f.key === 'defaultUsername')?.value).toBe('admin')
   })
 

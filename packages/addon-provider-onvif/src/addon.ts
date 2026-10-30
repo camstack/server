@@ -2,20 +2,21 @@ import type {
   ConfigUISchema,
   CreateDeviceSpec,
   DeviceContext,
-  SavedDevice,
+  DeviceSummary,
+  DiscoveryCandidate,
+  DiscoveryHit,
+  DiscoveryMode,
   IDevice,
+  SavedDevice,
 } from '@camstack/types'
 import { BaseDeviceProvider, DeviceType, errMsg } from '@camstack/types'
-import type { DeviceSummary, DiscoveryCandidate } from '@camstack/types'
 import { OnvifCamera, onvifCameraSchema } from './onvif-camera.js'
 import { OnvifClient } from './onvif-client.js'
-import { discoverOnvifCameras } from './onvif-discovery.js'
-import type { OnvifProviderConfig, DiscoveredOnvifCamera } from './onvif-types.js'
+import { ONVIF_DISCOVERY_MODES, onvifCamerasFromHits } from './onvif-discovery.js'
+import type { DiscoveredOnvifCamera, OnvifProviderConfig } from './onvif-types.js'
 
 const ADDON_ID = 'provider-onvif'
 /** Stored flat, under its dotted schema key — the store is not nested. */
-const DISCOVERY_TIMEOUT_KEY = 'discovery.timeout'
-const DEFAULT_DISCOVERY_TIMEOUT_MS = 5000
 
 /**
  * The global keys `BaseAddon` resolves into `this.config`. `defaultPassword`
@@ -44,12 +45,17 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
     return true
   }
 
-  override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
-    const config = await this._getAddonConfig()
-    const timeout = config.discovery?.timeout ?? DEFAULT_DISCOVERY_TIMEOUT_MS
-    this.ctx.logger.info('Starting ONVIF discovery', { meta: { timeoutMs: timeout } })
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return ONVIF_DISCOVERY_MODES
+  }
 
-    const cameras = await discoverOnvifCameras(timeout)
+  /** The engine's WS-Discovery probe finds the cameras; the default credentials are attached here only. */
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    const config = await this._getAddonConfig()
+    const cameras = onvifCamerasFromHits(input.hits)
     this.lastDiscovered = cameras
     this.ctx.logger.info('ONVIF discovery complete', { meta: { cameraCount: cameras.length } })
 
@@ -229,27 +235,6 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
     return {
       sections: [
         {
-          id: 'discovery',
-          title: 'ONVIF Discovery',
-          titleKey: 'provider-onvif:globalSettings.s_discovery.title',
-          columns: 2,
-          // No on/off switch: a scan runs only when an operator asks for one
-          // (Add device, or the discovery modal), and that request is the one
-          // control (D777).
-          fields: [
-            {
-              type: 'number',
-              key: DISCOVERY_TIMEOUT_KEY,
-              label: 'Discovery Timeout',
-              unit: 'ms',
-              min: 1000,
-              max: 30000,
-              step: 1000,
-              default: DEFAULT_DISCOVERY_TIMEOUT_MS,
-            },
-          ],
-        },
-        {
           id: 'credentials',
           title: 'Default Credentials',
           titleKey: 'provider-onvif:globalSettings.s_credentials.title',
@@ -282,16 +267,9 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
     // keychain (a raw read would see the marker object, not the password).
     const raw = await this.resolveGlobalStore()
     const { defaultUsername, defaultPassword } = this.config
-    const storedTimeout = raw[DISCOVERY_TIMEOUT_KEY]
     return {
       id: typeof raw['id'] === 'string' ? raw['id'] : 'onvif-default',
       name: typeof raw['name'] === 'string' ? raw['name'] : 'ONVIF Cameras',
-      discovery: {
-        timeout:
-          typeof storedTimeout === 'number' && Number.isFinite(storedTimeout) && storedTimeout > 0
-            ? storedTimeout
-            : DEFAULT_DISCOVERY_TIMEOUT_MS,
-      },
       cameras: raw['cameras'] as OnvifProviderConfig['cameras'],
       defaultUsername: defaultUsername !== '' ? defaultUsername : undefined,
       defaultPassword: defaultPassword !== '' ? defaultPassword : undefined,
