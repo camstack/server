@@ -146,10 +146,6 @@ export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([
     'packages/addon-provider-bosch/src/shc/custom-actions.ts#systemPassword',
     'custom-action INPUT (the SHC system password typed into the form, used for one pairing call, never persisted); the form field itself is `type: password`',
   ],
-  [
-    'packages/addon-provider-bosch/src/shc/custom-actions.ts#token',
-    'custom-action OUTPUT of the pairing, assigned into the form; the stored copy is the `token` password field of the connection form',
-  ],
   // ── Record kinds (D881): one-way digests and public identifiers ──
   [
     'packages/system/src/builtins/local-auth/record-kinds.ts#tokenHash',
