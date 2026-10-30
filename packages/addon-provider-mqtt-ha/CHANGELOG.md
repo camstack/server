@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The integration now shows the MQTT logo instead of a placeholder circle.
+
 ## [0.1.30] - 2026-10-28
 
 ### Changed
