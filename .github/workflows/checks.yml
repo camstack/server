@@ -318,6 +318,7 @@ jobs:
             scripts/check-no-legacy-tracker.ts \
             scripts/check-no-camera-model-layer.ts \
             scripts/check-no-hub-address-env.ts \
+            scripts/check-no-private-lan-scan.ts \
             scripts/check-addon-calls-super.ts \
             scripts/check-no-token-file-lookup.ts \
             scripts/check-no-legacy-token-prefix.ts \
