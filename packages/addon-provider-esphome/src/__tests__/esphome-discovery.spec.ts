@@ -6,7 +6,6 @@ import {
   mdnsPtrQuery,
   proposeBoards,
 } from '../esphome-discovery.js'
-import { computeBrokerCleanup, linkBrokersToIntegrations } from '../esphome-reconciler.js'
 import { setBrokerDevicesOnline, type OfflineTarget } from '../esphome-broker-devices.js'
 
 function encodeName(name: string): Buffer {
@@ -77,25 +76,6 @@ describe('ESPHome mDNS discovery', () => {
     ]
     expect(proposeBoards(found, ['10.0.0.1']).map((b) => b.id)).toEqual(['b'])
     expect(proposeBoards(found, ['B.local']).map((b) => b.id)).toEqual(['a'])
-  })
-})
-
-describe('integration reconcile', () => {
-  it('collects only boards whose integration is gone', () => {
-    const brokers = [
-      { id: 'a', integrationId: 'i1' },
-      { id: 'b', integrationId: 'i2' },
-      { id: 'c' },
-    ]
-    expect(computeBrokerCleanup(brokers, new Set(['i1']))).toEqual(['b'])
-  })
-
-  it('stamps the FK and keeps untouched entries by reference', () => {
-    const a = { id: 'a' }
-    const b = { id: 'b' }
-    const out = linkBrokersToIntegrations([a, b], [{ id: 'i1', brokerId: 'a' }])
-    expect(out[0]).toEqual({ id: 'a', integrationId: 'i1' })
-    expect(out[1]).toBe(b)
   })
 })
 

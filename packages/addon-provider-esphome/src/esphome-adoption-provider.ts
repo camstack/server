@@ -47,7 +47,8 @@ interface AdoptedRow {
 
 export interface EspAdoptionProviderDeps {
   readonly registry: EspAdoptionRegistry
-  readonly getBrokerIdForIntegration: (integrationId: string) => Promise<string>
+  /** The boards of one integration, each its own candidate. */
+  readonly getBoardIdsForIntegration: (integrationId: string) => Promise<readonly string[]>
   /** Top-level devices of this addon with their persisted config. */
   readonly listAdopted: () => Promise<readonly AdoptedRow[]>
   readonly adoptDevice: (input: {
@@ -88,7 +89,7 @@ function adoptedIdOf(rows: readonly AdoptedRow[], brokerId: string): number | nu
  * unknown board is never shown as an empty one.
  */
 export function buildEspAdoptionProvider(deps: EspAdoptionProviderDeps): IDeviceAdoptionProvider {
-  const { registry, getBrokerIdForIntegration, listAdopted, adoptDevice, logger } = deps
+  const { registry, getBoardIdsForIntegration, listAdopted, adoptDevice, logger } = deps
 
   async function candidateFor(brokerId: string): Promise<DiscoveredChildDevice | null> {
     const info = registry.get(brokerId)
@@ -134,10 +135,13 @@ export function buildEspAdoptionProvider(deps: EspAdoptionProviderDeps): IDevice
     listCandidateFilters: async () => ({ filters: [BOARD_FILTER] }),
 
     listCandidates: async ({ integrationId, page, pageSize, filterText }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-      const one = await candidateFor(brokerId)
+      const boardIds = await getBoardIdsForIntegration(integrationId)
       const needle = filterText?.search?.trim().toLowerCase() ?? ''
-      const all = one !== null && one.name.toLowerCase().includes(needle) ? [one] : []
+      const all: DiscoveredChildDevice[] = []
+      for (const boardId of boardIds) {
+        const one = await candidateFor(boardId)
+        if (one !== null && one.name.toLowerCase().includes(needle)) all.push(one)
+      }
       const start = (page - 1) * pageSize
       return {
         candidates: all.slice(start, start + pageSize),
@@ -148,19 +152,16 @@ export function buildEspAdoptionProvider(deps: EspAdoptionProviderDeps): IDevice
     },
 
     getCandidate: async ({ integrationId, childNativeId }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-      return childNativeId === brokerId ? candidateFor(brokerId) : null
+      const boardIds = await getBoardIdsForIntegration(integrationId)
+      return boardIds.includes(childNativeId) ? candidateFor(childNativeId) : null
     },
 
     getStatus: async () => statusFor(registry.list().map((b) => b.id)),
 
-    refresh: async ({ integrationId }) =>
-      statusFor([await getBrokerIdForIntegration(integrationId)]),
+    refresh: async ({ integrationId }) => statusFor(await getBoardIdsForIntegration(integrationId)),
 
     adopt: async ({ integrationId, childNativeIds, perCandidate }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-      const link = registry.getLink(brokerId)
-      if (link === null) throw new Error(`esphome adopt: board ${brokerId} is not connected`)
+      const boardIds = await getBoardIdsForIntegration(integrationId)
       const adopted: {
         readonly childNativeId: string
         readonly parentDeviceId: number
@@ -168,24 +169,28 @@ export function buildEspAdoptionProvider(deps: EspAdoptionProviderDeps): IDevice
       }[] = []
       let failures = 0
       for (const childNativeId of childNativeIds) {
-        if (childNativeId !== brokerId) {
+        const link = boardIds.includes(childNativeId) ? registry.getLink(childNativeId) : null
+        if (link === null) {
           failures += 1
+          logger.warn('esphome adopt: board is not connected or not in this integration', {
+            meta: { integrationId, boardId: childNativeId },
+          })
           continue
         }
         try {
           const boardName = link.info().name
           const name = perCandidate?.[childNativeId]?.name ?? boardName
           const { deviceId, accessoryDeviceIds } = await adoptDevice({
-            brokerId,
+            brokerId: childNativeId,
             integrationId,
-            name: name.length > 0 ? name : brokerId,
+            name: name.length > 0 ? name : childNativeId,
             boardName,
           })
           adopted.push({ childNativeId, parentDeviceId: deviceId, accessoryDeviceIds })
         } catch (err: unknown) {
           failures += 1
           logger.warn('esphome adopt: failed to adopt board', {
-            meta: { brokerId, error: errMsg(err) },
+            meta: { boardId: childNativeId, error: errMsg(err) },
           })
         }
       }

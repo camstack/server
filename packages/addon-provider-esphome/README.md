@@ -4,9 +4,9 @@ ESPHome device-provider addon for CamStack. It speaks the board's native API (No
 
 ## What it does
 
-- **ESPHome** (`provider-esphome`): one broker per board (host, port 6053, encryption key, optional legacy password), a LAN scan that proposes boards, and adoption of a connected board.
+- **ESPHome** (`provider-esphome`): one integration holding several boards (each: host, port 6053, encryption key, optional legacy password), a LAN scan that proposes boards, and adoption of a connected board.
   - Node placement: `hub-only`.
-  - Capabilities: `device-provider`, `broker`, `device-adoption`.
+  - Capabilities: `device-provider`, `device-adoption`.
 
 ## Mapping
 
@@ -30,14 +30,14 @@ Entities the board marks diagnostic or disabled by default, and its status binar
 ## Behaviour
 
 - Live state arrives by subscription; there is no polling.
-- A lost connection is retried with a bounded backoff (1 s doubling to 60 s, with jitter). A key or password the board refuses is not retried: the broker shows `auth-failed` until the operator edits it.
+- A lost connection is retried with a bounded backoff (1 s doubling to 60 s, with jitter). A key or password the board refuses is not retried: the board shows `auth-failed` until the operator edits it.
 - An unreachable board is offline, never zero: its children keep the last reading and the container goes offline.
 - The encryption key and the legacy password are keychain secrets. They are never returned by a read, never logged, and a save that leaves the field empty keeps the stored value.
 - The addon only reads state and sends the commands an operator triggers on an adopted device. It never guesses or tries keys.
 
 ## Where to find the key
 
-In the board's ESPHome YAML under `api: encryption: key:`. In the ESPHome dashboard open the device and choose Edit; in Home Assistant it is stored in the ESPHome integration entry for that device. Paste it into the broker dialog's "Encryption key" field.
+In the board's ESPHome YAML under `api: encryption: key:`. In the ESPHome dashboard open the device and choose Edit; in Home Assistant it is stored in the ESPHome integration entry for that device. Paste it into the board row's "Encryption key" field.
 
 ## Known limits
 
@@ -59,7 +59,7 @@ Package `@camstack/addon-provider-esphome` on npm.
 ## What it provides
 
 - **ESPHome** (`provider-esphome`): Connect to an ESPHome board over its native API and adopt its switches, lights, covers, buttons, sensors, numbers and selects. Category: providers.
-  - Capabilities: `device-provider`, `broker`, `device-adoption`.
+  - Capabilities: `device-provider`, `device-adoption`.
 
 ## Requirements
 

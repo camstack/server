@@ -46,6 +46,11 @@ export class EspBrokerStore {
     return out
   }
 
+  /** Delete exactly these rows; any other row (even one that cannot be read) stays. */
+  async remove(ids: readonly string[]): Promise<void> {
+    for (const id of ids) await this.kind.delete(id)
+  }
+
   async replaceAll(entries: readonly EspBrokerEntry[]): Promise<void> {
     const page = await this.kind.query({ limit: 1000 })
     const nextIds = new Set(entries.map((e) => e.id))

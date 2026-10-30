@@ -1,30 +1,29 @@
 {
   "connection": {
-    "s_connection": {
-      "title": "Scheda",
+    "s_boards": {
+      "title": "Schede",
+      "description": "Tutte le schede ESPHome di questa integrazione. La chiave di cifratura è quella nello YAML della scheda sotto api: encryption: key:. Lasciala vuota per una scheda non cifrata.",
+      "boards": {
+        "label": "Schede"
+      },
       "host": {
         "label": "Host / IP"
       },
       "port": {
         "label": "Porta API"
-      }
-    },
-    "s_security": {
-      "title": "Sicurezza API",
-      "noisePsk": {
+      },
+      "name": {
+        "label": "Nome"
+      },
+      "encryptionKey": {
         "label": "Chiave di cifratura"
       },
       "password": {
-        "label": "Password API (legacy)"
+        "label": "Password API legacy"
       },
-      "description": "La chiave di cifratura e quella nello YAML della scheda sotto api: encryption: key:. Lascia entrambi i campi vuoti per una scheda non cifrata."
-    }
-  },
-  "globalSettings": {
-    "s_esp-broker": {
-      "title": "Scheda ESPHome",
-      "brokerHelp": {
-        "label": "Le schede sono gestite separatamente"
+      "id": {
+        "label": "ID scheda",
+        "description": "Lascia vuoto: viene generato al salvataggio della scheda."
       }
     }
   }

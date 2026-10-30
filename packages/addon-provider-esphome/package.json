@@ -38,21 +38,18 @@
         "category": "providers",
         "name": "ESPHome",
         "version": "0.1.0",
-        "description": "Connect to an ESPHome board over its native API and adopt its switches, lights, covers, buttons, sensors, numbers and selects",
+        "description": "Connect to the ESPHome boards of an integration over their native API and adopt each board with its switches, lights, covers, buttons, sensors, numbers and selects",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#000000",
         "instanceMode": "multiple",
-        "brokerKind": "esphome",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
-          },
-          {
-            "name": "broker"
           },
           {
             "name": "device-adoption"

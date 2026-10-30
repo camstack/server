@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Discovery modes: a device provider can declare how it is found on the network and classify the hits the scan engine returns; candidates can say they set up an integration or sit behind a gateway
 
+### Changed
+
+- An editable-array config field can now hold keychain secrets per row
+
 ## [1.2.451] - 2026-10-30
 
 ### Changed

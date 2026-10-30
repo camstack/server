@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The hub exposes the network scan engine, saved scan subnets and discovery-mode classification calls
 
+### Changed
+
+- Integration settings accept an owner-only skipRestart so an addon can save its own settings without a respawn
+
 ## [1.2.702] - 2026-10-30
 
 ### Changed

@@ -74,7 +74,7 @@ this column exists to stop.
 | `provider-dreo` | `@camstack/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
 | `provider-ecowitt` | `@camstack/addon-provider-ecowitt` | providers | own runner | `hub-only` | — | multiple | `device-provider` |
 | `provider-enpal` | `@camstack/addon-provider-enpal` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
-| `provider-esphome` | `@camstack/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `broker` `device-adoption` `device-provider` |
+| `provider-esphome` | `@camstack/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
 | `provider-gree` | `@camstack/addon-provider-gree` | providers | own runner | `hub-only` | — | multiple | `device-provider` |
 | `provider-hikvision` | `@camstack/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-homeassistant` | `@camstack/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `broker` `calendar-source` `device-adoption` `humidifier` `image` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
