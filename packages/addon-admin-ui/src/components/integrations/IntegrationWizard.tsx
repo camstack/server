@@ -5,6 +5,11 @@ import type {
   ConfigUISchemaWithValues,
 } from '@camstack/types'
 import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   useAddonSettingsGetGlobalSettings,
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverDevices,
@@ -13,7 +18,7 @@ import {
   useIntegrationsGetAvailableTypes,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { Loader2, X } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -379,120 +384,126 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   const lockModal = isCreating && !createOverdue
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={lockModal ? undefined : handleClose} />
-      <div
-        className={`relative z-10 w-full ${step === 'picker' ? 'max-w-5xl' : 'max-w-lg'} max-h-[calc(85dvh-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] rounded-xl border border-border bg-background shadow-2xl flex flex-col overflow-hidden`}
+    <>
+      <Dialog
+        open
+        onOpenChange={(next) => {
+          if (!next && !lockModal) handleClose()
+        }}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 flex-shrink-0">
-          <h2 className="text-sm font-semibold text-foreground">{titles[step]}</h2>
-          <button
-            onClick={handleClose}
-            disabled={lockModal}
-            className="rounded-md p-1 text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="px-5 py-4 flex-1 overflow-y-auto overscroll-contain">
-          {createError && !isCreating && (
-            <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {createError instanceof Error ? createError.message : String(createError)}
-            </div>
-          )}
-          {step === 'picker' && (
-            <>
-              {pickerError && (
-                <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                  {pickerError}
-                </div>
-              )}
-              <ProviderPicker
-                onSelect={handlePickerSelect}
-                onClose={handleClose}
-                pendingAddonId={pendingAddonId}
-              />
-            </>
-          )}
-          {step === 'config' && selectedAddonId && (
-            <ProviderConfigForm
-              key={`${seedIdentity.length > 0 ? seedIdentity : selectedAddonId}:${scanFills}`}
-              addonId={selectedAddonId}
-              configSchema={(configSchema ?? null) as ConfigUISchema | null}
-              canTest={canTest}
-              initialName={
-                pendingName.length > 0 && Object.keys(formSeed).length > 0 ? pendingName : undefined
-              }
-              initialConfig={{ ...formSeed }}
-              onScan={
-                canScan
-                  ? () => {
-                      setScanLabel(pendingName.length > 0 ? pendingName : selectedAddonId)
-                      setScanOpen(true)
-                    }
-                  : undefined
-              }
-              onSave={handleConfigSave}
-              onBack={() => {
-                setFormSeed({})
-                setStep('picker')
-              }}
-            />
-          )}
-          {step === 'broker' && brokerKind && (
-            <BrokerStep
-              kind={brokerKind}
-              onResolved={(brokerId) => {
-                void handleBrokerResolved(brokerId)
-              }}
-              onBack={() => setStep('picker')}
-            />
-          )}
-          {step === 'discovery' && createdProviderId && (
-            <DeviceDiscoveryStep
-              providerId={createdProviderId}
-              onImport={handleImport}
-              onSkip={finish}
-            />
-          )}
-        </div>
-        {/* Creating overlay: anchored to the fixed-size modal box (NOT the
-            scrollable content), so it always covers the visible viewport
-            regardless of how far the form is scrolled. */}
-        {isCreating && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-sm px-6 text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-xs font-medium text-foreground">
-              {t('integrations.creating', {
-                defaultValue: 'Creating integration…',
-              })}
-            </p>
-            {!createOverdue && (
-              <p className="text-[10px] text-foreground-subtle">
-                {t('integrations.creatingHint', {
-                  defaultValue: 'Waiting for the addon to restart and register',
-                })}
-              </p>
+        <DialogContent
+          width={step === 'picker' ? 'xl' : 'lg'}
+          scroll="body"
+          // Escape is the native `cancel` event; refuse it while a create is in flight.
+          onCancel={(event) => {
+            if (lockModal) event.preventDefault()
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>{titles[step]}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            {createError && !isCreating && (
+              <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {createError instanceof Error ? createError.message : String(createError)}
+              </div>
             )}
-            {createOverdue && (
+            {step === 'picker' && (
               <>
-                <p className="text-[10px] text-foreground-subtle max-w-xs">
-                  {t('integrations.creatingOverdue', {
-                    defaultValue:
-                      'This is taking longer than expected. The integration may already have been created — close this dialog and refresh to check.',
-                  })}
-                </p>
-                <button
-                  onClick={handleClose}
-                  className="mt-1 rounded-md border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-surface-hover transition-colors"
-                >
-                  {t('integrations.closeAndRefresh', { defaultValue: 'Close' })}
-                </button>
+                {pickerError && (
+                  <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    {pickerError}
+                  </div>
+                )}
+                <ProviderPicker
+                  onSelect={handlePickerSelect}
+                  onClose={handleClose}
+                  pendingAddonId={pendingAddonId}
+                />
               </>
             )}
-          </div>
-        )}
-      </div>
+            {step === 'config' && selectedAddonId && (
+              <ProviderConfigForm
+                key={`${seedIdentity.length > 0 ? seedIdentity : selectedAddonId}:${scanFills}`}
+                addonId={selectedAddonId}
+                configSchema={(configSchema ?? null) as ConfigUISchema | null}
+                canTest={canTest}
+                initialName={
+                  pendingName.length > 0 && Object.keys(formSeed).length > 0
+                    ? pendingName
+                    : undefined
+                }
+                initialConfig={{ ...formSeed }}
+                onScan={
+                  canScan
+                    ? () => {
+                        setScanLabel(pendingName.length > 0 ? pendingName : selectedAddonId)
+                        setScanOpen(true)
+                      }
+                    : undefined
+                }
+                onSave={handleConfigSave}
+                onBack={() => {
+                  setFormSeed({})
+                  setStep('picker')
+                }}
+              />
+            )}
+            {step === 'broker' && brokerKind && (
+              <BrokerStep
+                kind={brokerKind}
+                onResolved={(brokerId) => {
+                  void handleBrokerResolved(brokerId)
+                }}
+                onBack={() => setStep('picker')}
+              />
+            )}
+            {step === 'discovery' && createdProviderId && (
+              <DeviceDiscoveryStep
+                providerId={createdProviderId}
+                onImport={handleImport}
+                onSkip={finish}
+              />
+            )}
+          </DialogBody>
+          {/* Creating overlay: anchored to the fixed-size modal box (NOT the
+            scrollable content), so it always covers the visible viewport
+            regardless of how far the form is scrolled. */}
+          {isCreating && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-lg bg-background/85 backdrop-blur-sm px-6 text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-xs font-medium text-foreground">
+                {t('integrations.creating', {
+                  defaultValue: 'Creating integration…',
+                })}
+              </p>
+              {!createOverdue && (
+                <p className="text-[10px] text-foreground-subtle">
+                  {t('integrations.creatingHint', {
+                    defaultValue: 'Waiting for the addon to restart and register',
+                  })}
+                </p>
+              )}
+              {createOverdue && (
+                <>
+                  <p className="text-[10px] text-foreground-subtle max-w-xs">
+                    {t('integrations.creatingOverdue', {
+                      defaultValue:
+                        'This is taking longer than expected. The integration may already have been created — close this dialog and refresh to check.',
+                    })}
+                  </p>
+                  <button
+                    onClick={handleClose}
+                    className="mt-1 rounded-md border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-surface-hover transition-colors"
+                  >
+                    {t('integrations.closeAndRefresh', { defaultValue: 'Close' })}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       {scanOpen && selectedAddonId !== null && (
         <ScanNetworkModal
           open={scanOpen}
@@ -506,6 +517,6 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
           }}
         />
       )}
-    </div>
+    </>
   )
 }

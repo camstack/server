@@ -1,6 +1,7 @@
 import { useUiText } from '../contexts/ui-text'
 import {
   type JSX,
+  type DialogHTMLAttributes,
   type HTMLAttributes,
   type ReactNode,
   createContext,
@@ -231,7 +232,7 @@ const contentVariants = cva(
   },
 )
 
-export interface DialogContentProps extends HTMLAttributes<HTMLDialogElement> {
+export interface DialogContentProps extends DialogHTMLAttributes<HTMLDialogElement> {
   width?: 'sm' | 'md' | 'lg' | 'xl'
   scroll?: 'content' | 'body'
   placement?: 'center' | 'sheet-on-mobile'

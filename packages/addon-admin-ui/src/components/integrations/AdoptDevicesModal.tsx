@@ -2,7 +2,14 @@ import type { TFunction } from 'i18next'
 import type { AdoptionFilter, DiscoveredChildDevice } from '@camstack/types'
 import {
   allDeviceTypeFilterOptions,
+  Button,
   DeviceList,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   deviceTypeMetaOf,
   useDeviceManagerAdoptionListCandidateFilters,
   useDeviceManagerAdoptionListCandidates,
@@ -20,7 +27,6 @@ import {
   EyeOff,
   Loader2,
   RotateCw,
-  X,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -330,52 +336,44 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
   const adoptionDone = jobId !== null && selectedCount === 0 && !adoptMutation.isPending
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      {/* Fixed height (not max-h) so the dialog never resizes between the
-          loading / list / empty / error states — the body scrolls instead of
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      {/* Fixed height (not max-h) on desktop so the dialog never resizes between
+          the loading / list / empty / error states — the body scrolls instead of
           the whole modal bouncing. */}
-      <div className="relative z-10 flex w-full max-w-3xl flex-col h-[85vh] rounded-xl border border-border bg-background shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">
-              {t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })}
-            </h2>
-            <p className="text-[11px] text-foreground-subtle mt-0.5">
-              {t('integrations.adoptDevicesHint', {
-                defaultValue: 'Preview the candidate devices and add the ones you want.',
+      <DialogContent width="xl" scroll="body" className="md:h-[85vh]">
+        <DialogHeader>
+          <DialogTitle>
+            {t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })}
+          </DialogTitle>
+          <DialogDescription>
+            {t('integrations.adoptDevicesHint', {
+              defaultValue: 'Preview the candidate devices and add the ones you want.',
+            })}
+          </DialogDescription>
+          {supportsLocationImport && (
+            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
+              <input
+                type="checkbox"
+                checked={importLocations}
+                onChange={(e) => setImportLocations(e.target.checked)}
+                className="accent-primary"
+              />
+              {t('integrations.importLocations', {
+                defaultValue: 'Import locations from the integration',
               })}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {supportsLocationImport && (
-              <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
-                <input
-                  type="checkbox"
-                  checked={importLocations}
-                  onChange={(e) => setImportLocations(e.target.checked)}
-                  className="accent-primary"
-                />
-                {t('integrations.importLocations', {
-                  defaultValue: 'Import locations from the integration',
-                })}
-              </label>
-            )}
-            <button
-              onClick={onClose}
-              className="rounded-md p-1 text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
-              aria-label={t('common.close', 'Close')}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+            </label>
+          )}
+        </DialogHeader>
 
         {/* Body — the shared <DeviceList> in generic mode owns search +
             pagination (client-side); the Refresh action sits in its toolbar.
             Selection + per-row controls live in CandidateRow (renderItem). */}
-        <div className="flex-1 min-h-0 px-5 py-3 flex flex-col gap-2 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
           {(warmError ?? listError ?? refreshStatusError) && candidates.length === 0 && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 shrink-0">
               <div className="flex items-start gap-2">
@@ -532,7 +530,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
 
         {/* Error banner */}
         {submitError && (
-          <div className="border-t border-destructive/30 bg-destructive/5 px-5 py-2 shrink-0">
+          <div className="border-t border-destructive/30 bg-destructive/5 px-3 py-2 shrink-0">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
               <p className="text-[11px] text-destructive">{submitError}</p>
@@ -549,31 +547,25 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
           />
         )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border px-5 py-3 shrink-0">
-          <div />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
-            >
-              {t('integrations.cancel', { defaultValue: 'Cancel' })}
-            </button>
-            <button
-              onClick={adoptionDone ? onClose : handleAdopt}
-              disabled={!adoptionDone && (selectedCount === 0 || adoptMutation.isPending)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {adoptMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {adoptionDone
-                ? t('integrations.close', { defaultValue: 'Close' })
-                : t('integrations.addSelected', { defaultValue: 'Add selected' })}
-              {!adoptionDone && selectedCount > 0 ? ` (${selectedCount})` : ''}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose}>
+            {t('integrations.cancel', { defaultValue: 'Cancel' })}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={adoptionDone ? onClose : handleAdopt}
+            disabled={!adoptionDone && (selectedCount === 0 || adoptMutation.isPending)}
+          >
+            {adoptMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {adoptionDone
+              ? t('integrations.close', { defaultValue: 'Close' })
+              : t('integrations.addSelected', { defaultValue: 'Add selected' })}
+            {!adoptionDone && selectedCount > 0 ? ` (${selectedCount})` : ''}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

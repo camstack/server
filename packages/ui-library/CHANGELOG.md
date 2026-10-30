@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevicePicker: fillHeight stretches the list to its container and scrolls the rows inside
 - Dialog text now wraps when a dialog is opened from a table row action instead of scrolling sideways
 - Collapsible section headers (settings sections, groups, device-picker groups, response log) use a larger chevron and are real buttons with keyboard support
+- DialogContent accepts the native dialog attributes such as onCancel, so a caller can refuse Escape while work is in flight
 
 ## [1.2.356] - 2026-10-30
 

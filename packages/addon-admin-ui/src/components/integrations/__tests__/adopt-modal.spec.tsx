@@ -543,4 +543,28 @@ describe('AdoptDevicesModal', () => {
     const payload = adopt.mock.calls[0][0]
     expect('importLocations' in payload).toBe(false)
   })
+
+  it('is a native modal <dialog> that closes through the dialog close path (Escape), not a fixed overlay', () => {
+    const proto = HTMLDialogElement.prototype
+    if (!proto.showModal) {
+      proto.showModal = function showModal(this: HTMLDialogElement) {
+        this.setAttribute('open', '')
+      }
+    }
+    if (!proto.close) {
+      proto.close = function close(this: HTMLDialogElement) {
+        this.removeAttribute('open')
+      }
+    }
+    const onClose = vi.fn()
+    const { container } = renderModal(
+      <AdoptDevicesModal addonId="ha" integrationId="ha_001" onClose={onClose} />,
+    )
+    const dialog = document.querySelector('dialog')
+    expect(dialog).not.toBeNull()
+    expect(container.querySelector('.fixed.inset-0')).toBeNull()
+    // The browser fires `close` after Escape; the primitive maps it to onOpenChange(false).
+    fireEvent(dialog as HTMLDialogElement, new Event('close'))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })

@@ -228,6 +228,7 @@ jobs:
             scripts/check-ffmpeg-primitive.ts \
             scripts/check-no-bare-ffmpeg.ts \
             scripts/check-no-glyph-chevrons.ts \
+            scripts/check-no-hand-rolled-modal.ts \
             scripts/check-addon-id-comparison.ts \
             scripts/check-addon-root-is-the-only-load-path.ts \
             scripts/check-fleet-query-defaults.ts \

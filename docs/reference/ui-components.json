@@ -4487,7 +4487,7 @@
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/dialog.tsx",
       "summary": "",
-      "propsExtends": ["HTMLAttributes<HTMLDialogElement>"],
+      "propsExtends": ["DialogHTMLAttributes<HTMLDialogElement>"],
       "props": [
         {
           "name": "width",

@@ -1,5 +1,11 @@
 import { DeviceType } from '@camstack/types'
 import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   LogStream,
   useDeviceManagerCreateDevice,
   useDeviceManagerGetCreationSchema,
@@ -7,7 +13,7 @@ import {
   useDeviceManagerTestCreationField,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, ChevronDown, Loader2, ScrollText, Wifi, X } from 'lucide-react'
+import { AlertTriangle, ChevronDown, Loader2, ScrollText, Wifi } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import type { ConfigField, ConfigUISchema, FieldProbeResult } from '../../types/config-ui'
@@ -222,20 +228,18 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
     (schemaQuery.isSuccess && schema === null)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 flex w-full max-w-2xl flex-col max-h-[calc(90dvh-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] rounded-xl border border-border bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-          <h2 className="text-sm font-semibold text-foreground">{t('integrations.addDevice')}</h2>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      <DialogContent width="lg" scroll="body">
+        <DialogHeader>
+          <DialogTitle>{t('integrations.addDevice')}</DialogTitle>
+        </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3">
+        <DialogBody className="space-y-3">
           {isBusy ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -266,7 +270,7 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
               onClearProbe={clearProbeResult}
             />
           )}
-        </div>
+        </DialogBody>
 
         {/* Live test logs — collapsed by default, auto-opens on first
             test click. Filtered on (addonId, requestId) so it shows
@@ -278,7 +282,7 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
             <button
               type="button"
               onClick={() => setShowLogs((v) => !v)}
-              className="flex w-full items-center justify-between px-5 py-2 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
+              className="flex w-full items-center justify-between px-3 py-2 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
             >
               <span className="flex items-center gap-2">
                 <ScrollText className="h-3.5 w-3.5" />
@@ -311,7 +315,7 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
             so a missing-required field or a server-side reject (e.g.
             `Password is required`) is impossible to miss. */}
         {!hasError && !isBusy && (submitError || missingRequired.length > 0) && (
-          <div className="border-t border-destructive/30 bg-destructive/5 px-5 py-2 shrink-0">
+          <div className="border-t border-destructive/30 bg-destructive/5 px-3 py-2 shrink-0">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
               <p className="text-[11px] text-destructive">
@@ -326,7 +330,7 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border px-5 py-3 shrink-0">
+        <DialogFooter className="justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
@@ -366,8 +370,8 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
               {createMutation.isPending ? t('integrations.saving') : t('integrations.save')}
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
