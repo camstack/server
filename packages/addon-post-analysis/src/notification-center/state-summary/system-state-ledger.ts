@@ -254,6 +254,18 @@ export class NcSystemStateLedger {
     )
   }
 
+  /**
+   * Is this device switched off RIGHT NOW (an open `device-disabled` row)?
+   * D62: the switch outranks the device's liveness and its streams — a device
+   * somebody turned off is reported off, never as offline. `false` while the
+   * store has never answered (unknown is never "disabled").
+   */
+  isDeviceDisabled(deviceId: number): boolean {
+    return (this.openRows() ?? []).some(
+      (row) => row.kind === 'device-disabled' && row.deviceId === deviceId,
+    )
+  }
+
   /** The open rows, or `null` while the store has never answered. */
   openRows(): readonly NcSystemStateRow[] | null {
     return this.deps.rows.answered() ? this.deps.rows.all() : null

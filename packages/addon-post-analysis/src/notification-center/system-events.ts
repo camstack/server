@@ -261,6 +261,7 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
       return
     }
     if (isDeviceLivenessKind(observation.kind)) {
+      if (dropSwitchedOff(host, system)) return
       holdoff.arm(observation.subject, incoming)
       return
     }
@@ -272,8 +273,29 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
     // see {@link lastSystemLiveness}.
     if (host.lastSystemLiveness.get(system.subject) === system.kind) return
     host.lastSystemLiveness.set(system.subject, system.kind)
+    if (dropSwitchedOff(host, system)) return
   }
   host.consumeEvent(incoming)
+}
+
+/**
+ * D62: a device the operator switched off is reported off, never offline. Its
+ * `device-offline` / `stream-offline` is dropped (and said) while an open
+ * `device-disabled` row exists — the broker of a disabled device stopping is
+ * the switch working, not an outage. The memory of the flip is already kept.
+ */
+function dropSwitchedOff(
+  host: SystemEventsHost,
+  system: NcSystemEventSubject | undefined,
+): boolean {
+  if (system === undefined || system.deviceId === undefined) return false
+  if (system.kind !== 'device-offline' && system.kind !== 'stream-offline') return false
+  if (!host.stateSummary.ledger.isDeviceDisabled(system.deviceId)) return false
+  host.logger.debug('offline not notified — the device is switched off (D62)', {
+    tags: { deviceId: system.deviceId },
+    meta: { kind: system.kind, subject: system.subject },
+  })
+  return true
 }
 /**
  * Arm a node liveness flip. An OFFLINE of a node that announced an update is
@@ -437,10 +459,14 @@ export async function reloadRules(host: SystemEventsHost): Promise<void> {
   // tick sends it. RAM reads only; single-flight; never awaited here.
   if (host.evaluationActive) {
     void host.stateSummary.tick().catch((err: unknown) => {
-      host.logger.warn('state summary tick failed', { meta: { error: String(err) } })
+      host.logger.warn('state summary tick failed', {
+        meta: { error: String(err) },
+      })
     })
     void host.calendarEventsProducer?.tick().catch((err: unknown) => {
-      host.logger.warn('calendar-events tick failed', { meta: { error: String(err) } })
+      host.logger.warn('calendar-events tick failed', {
+        meta: { error: String(err) },
+      })
     })
   }
   // The timelapse set rides the same tick: CRUD served on one node becomes
@@ -518,7 +544,11 @@ export function announceRuleHealth(host: SystemEventsHost): void {
       if (first === undefined) continue
       const offendingIds = [...new Set(edge.reasons.flatMap((r) => r.ids))]
       host.logger.warn('notification rule cannot work — announced', {
-        meta: { ruleId: edge.ruleId, rule: edge.ruleName, reasons: edge.reasons },
+        meta: {
+          ruleId: edge.ruleId,
+          rule: edge.ruleName,
+          reasons: edge.reasons,
+        },
       })
       host.deps.emitBusEvent?.(
         createEvent(EventCategory.NotificationRuleBroken, source, {

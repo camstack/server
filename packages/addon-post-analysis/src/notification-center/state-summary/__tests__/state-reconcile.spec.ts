@@ -85,7 +85,11 @@ describe('I3 — an update.available list REPLACES the rows of its node', () => 
       1,
     )
     ledger.observeUpdateList(
-      { target: 'addon', nodeIds: ['hub'], rows: [{ ...notifiers, nodeId: 'hub' }] },
+      {
+        target: 'addon',
+        nodeIds: ['hub'],
+        rows: [{ ...notifiers, nodeId: 'hub' }],
+      },
       2,
     )
     expect(keys(ledger)).toEqual(
@@ -103,7 +107,11 @@ describe('I3 — an update.available list REPLACES the rows of its node', () => 
       nodeId: 'hub',
       packages: [{ ...notifiers, packageName: '@camstack/server' }],
     })
-    const empty = updateListOf({ target: 'server', nodeId: 'hub', packages: [] })
+    const empty = updateListOf({
+      target: 'server',
+      nodeId: 'hub',
+      packages: [],
+    })
     if (full === null || empty === null) throw new Error('not parsed')
     ledger.observeUpdateList(full, 1)
     expect(keys(ledger)).toHaveLength(1)
@@ -198,8 +206,20 @@ describe('I5 — what revives a crash-looped runner or a node that could not inf
 // ── I2 — the reconcile ─────────────────────────────────────────────────
 
 const DEVICES: Readonly<Record<number, NcDeviceIdentity>> = {
-  20: { deviceId: 20, type: DeviceType.Camera, name: 'Front door', isCamera: true, online: false },
-  21: { deviceId: 21, type: DeviceType.Camera, name: 'Garage', isCamera: true, online: true },
+  20: {
+    deviceId: 20,
+    type: DeviceType.Camera,
+    name: 'Front door',
+    isCamera: true,
+    online: false,
+  },
+  21: {
+    deviceId: 21,
+    type: DeviceType.Camera,
+    name: 'Garage',
+    isCamera: true,
+    online: true,
+  },
   22: {
     deviceId: 22,
     type: DeviceType.Sensor,
@@ -266,7 +286,9 @@ function listed(r: NcRuleInput, p: NcStateSourcePorts): readonly string[] {
 
 describe('I2 — a ledger row is listed only while the directory agrees', () => {
   it('a device that no longer exists, an accessory, or one the device manager calls online is not listed', () => {
-    const p = ports({ liveness: () => [offline(20), offline(21), offline(22), offline(99)] })
+    const p = ports({
+      liveness: () => [offline(20), offline(21), offline(22), offline(99)],
+    })
     expect(listed(rule(['device-offline']), p)).toEqual(['device:20'])
   })
 
@@ -309,9 +331,17 @@ describe('I2 — a ledger row is listed only while the directory agrees', () => 
       since: NOW,
       nodeId,
       packageName: 'p',
-      params: { packageName: 'p', currentVersion: '1', latestVersion: '2', nodeId },
+      params: {
+        packageName: 'p',
+        currentVersion: '1',
+        latestVersion: '2',
+        nodeId,
+      },
     })
-    const p = ports({ state: () => [row('hub'), row('gone')], nodes: view({ hub: true }) })
+    const p = ports({
+      state: () => [row('hub'), row('gone')],
+      nodes: view({ hub: true }),
+    })
     expect(listed(rule(['addon-update-available']), p)).toEqual([
       updateStateKey('addon', 'hub', 'p'),
     ])
@@ -336,5 +366,44 @@ describe('I2 — a ledger row is listed only while the directory agrees', () => 
     expect(
       listed(rule(['stream-offline']), ports({ state: () => ledger.openRows() ?? [] })),
     ).toEqual([])
+  })
+})
+
+describe('D62 — a switched-off device is listed as off, never also as offline', () => {
+  const disabledRow = (deviceId: number): NcSystemStateRow => ({
+    key: `device-switch:${deviceId}`,
+    kind: 'device-disabled',
+    since: NOW,
+    deviceId,
+    params: {},
+  })
+
+  it('a device with an open device-disabled row drops its device-offline item', () => {
+    const p = ports({
+      liveness: () => [offline(20)],
+      state: () => [disabledRow(20)],
+    })
+    const r = rule(['device-offline', 'device-disabled'])
+    expect(listed(r, p)).toEqual(['device-switch:20'])
+  })
+
+  it('a device-offline of another, enabled device is still listed', () => {
+    const p = ports({
+      liveness: () => [offline(20)],
+      state: () => [disabledRow(21)],
+    })
+    expect(listed(rule(['device-offline', 'device-disabled']), p)).toContain('device:20')
+  })
+
+  it('its open stream-offline row is dropped too', () => {
+    const stream: NcSystemStateRow = {
+      key: 'stream:20',
+      kind: 'stream-offline',
+      since: NOW,
+      deviceId: 20,
+      params: {},
+    }
+    const p = ports({ state: () => [disabledRow(20), stream] })
+    expect(listed(rule(['stream-offline']), p)).toEqual([])
   })
 })

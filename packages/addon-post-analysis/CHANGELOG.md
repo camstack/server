@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A camera you switched off is no longer listed as offline in the state summary and no longer sends an offline notification
+
 ## [1.2.653] - 2026-10-30
 
 ### Changed

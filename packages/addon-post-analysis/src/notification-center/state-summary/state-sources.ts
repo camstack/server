@@ -85,7 +85,10 @@ function deviceParams(
   identity: NcDeviceIdentity | undefined,
 ): Readonly<Record<string, string>> {
   const name = identity?.name ?? ''
-  return { deviceId: String(deviceId), deviceName: name.length > 0 ? name : String(deviceId) }
+  return {
+    deviceId: String(deviceId),
+    deviceName: name.length > 0 ? name : String(deviceId),
+  }
 }
 
 function consumableSummaryLineKey(
@@ -193,7 +196,10 @@ function stateLine(row: NcSystemStateRow): {
 } {
   switch (row.kind) {
     case 'device-disabled':
-      return { section: 'device-state', lineKey: 'summary.line.device-disabled' }
+      return {
+        section: 'device-state',
+        lineKey: 'summary.line.device-disabled',
+      }
     case 'stream-offline':
       return {
         section: 'streams',
@@ -203,9 +209,15 @@ function stateLine(row: NcSystemStateRow): {
             : 'summary.line.stream-offline',
       }
     case 'detection-blind':
-      return { section: 'detection-blind', lineKey: 'summary.line.detection-blind' }
+      return {
+        section: 'detection-blind',
+        lineKey: 'summary.line.detection-blind',
+      }
     case 'node-inference-unavailable':
-      return { section: 'nodes', lineKey: 'summary.line.node-inference-unavailable' }
+      return {
+        section: 'nodes',
+        lineKey: 'summary.line.node-inference-unavailable',
+      }
     case 'addon-crash-loop':
       return { section: 'addons', lineKey: 'summary.line.addon-crash-loop' }
     case 'wrapper-update-available':
@@ -312,7 +324,10 @@ function readSection(
   if (blocked !== null) return { answered: false, reason: blocked }
   const read = readRaw(section, ports, nowMs)
   if (!read.answered) return read
-  return { answered: true, items: read.items.filter((item) => stillTrue(item, ports)) }
+  return {
+    answered: true,
+    items: read.items.filter((item) => stillTrue(item, ports)),
+  }
 }
 
 /** Which ports a section needs, and why each one is unavailable. */
@@ -336,16 +351,32 @@ function readRaw(
   const state = ports.state()
   if (state === null) return { answered: false, reason: UNREAD_STATE }
   const items: NcStateItem[] = []
+  // D62: a device's switch outranks its liveness and its streams — an open
+  // `device-disabled` row is the ONLY line that device gets.
+  const switchedOff = new Set(
+    state.flatMap((row) =>
+      row.kind === 'device-disabled' && row.deviceId !== undefined ? [row.deviceId] : [],
+    ),
+  )
   if (section === 'device-state' || section === 'nodes') {
     const liveness = ports.liveness()
     if (liveness === null) return { answered: false, reason: UNREAD_LIVENESS }
     for (const row of liveness) {
       if (row.state !== 'offline' || nowMs - row.updatedAt < ports.livenessHoldoffMs) continue
       const item = livenessItem(row, ports.lookup)
-      if (item !== null && item.section === section) items.push(item)
+      if (item === null || item.section !== section) continue
+      const id = item.subject.deviceId
+      if (id !== undefined && switchedOff.has(id)) continue
+      items.push(item)
     }
   }
   for (const row of state) {
+    if (
+      row.kind === 'stream-offline' &&
+      row.deviceId !== undefined &&
+      switchedOff.has(row.deviceId)
+    )
+      continue
     const item = stateItem(row, ports.lookup, ports.nodes)
     if (item.section === section) items.push(item)
   }
