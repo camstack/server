@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Finishing a zone on the camera frame now adds it on a hub served over plain http, and a rejected save is shown on the frame instead of being dropped
+
 ## [1.2.640] - 2026-10-29
 
 ### Changed

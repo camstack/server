@@ -18,7 +18,7 @@
  * Selection round-trips through context — clicking a zone on the
  * frame highlights its row in the Detection tab list, and vice versa.
  */
-import { memo, useCallback, useMemo, Suspense } from 'react'
+import { memo, useCallback, useMemo, useState, Suspense } from 'react'
 import type { Zone as CapZone } from '@camstack/types'
 import {
   MaskShapeCanvas,
@@ -33,6 +33,7 @@ import {
   type Zone as CanvasZone,
   zoneToItem,
   shapeKindToZoneKind,
+  newZoneId,
   zoneKindToDrawingKind,
 } from './types'
 
@@ -119,6 +120,8 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
   // `polygon` ⇒ `polygon` (see `zoneToItem`).
   const items = useMemo<MaskShapeItem[]>(() => zones.map(zoneToItem), [zones])
 
+  const [saveError, setSaveError] = useState<string | null>(null)
+
   const handleZoneComplete = useCallback(
     async (shape: MaskShape) => {
       // A freshly-drawn shape is always one of the supported point
@@ -127,18 +130,20 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
       // never-reached `rect` / `grid` arms.
       if (shape.kind !== 'polygon' && shape.kind !== 'line') return
       const zone: CanvasZone = {
-        id: crypto.randomUUID(),
+        id: newZoneId(),
         name: '',
         kind: shapeKindToZoneKind(shape.kind),
         color: pickUnusedZoneColor(zones),
         points: [...shape.points],
       }
+      setSaveError(null)
       try {
         await dev?.zones?.addZone({ zone: canvasToCap(zone) })
+        editingCtx?.setSelectedZoneId(zone.id)
       } catch (err: unknown) {
         console.error('zones.addZone failed', err)
+        setSaveError(err instanceof Error ? err.message : String(err))
       }
-      editingCtx?.setSelectedZoneId(zone.id)
       editingCtx?.setDrawingKind(null)
     },
     [dev, zones, editingCtx],
@@ -213,7 +218,7 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
   // Render only when there's something to show — existing zones to
   // edit, or an active draw started from the Detection tab. With no
   // zones AND no draw in progress, the player frame stays untouched.
-  if (zones.length === 0 && drawingKind === null) return null
+  if (zones.length === 0 && drawingKind === null && saveError === null) return null
 
   // MaskShapeCanvas is exported as a React.lazy component from
   // @camstack/ui-library (keeps ~300 KB konva bundle off first paint).
@@ -232,6 +237,14 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
         }}
         drawingKind={drawingKind === null ? null : zoneKindToDrawingKind(drawingKind)}
       />
+      {saveError !== null && (
+        <p
+          role="alert"
+          className="absolute inset-x-2 bottom-2 rounded-md border border-danger/40 bg-background-elevated px-2 py-1 text-xs text-danger"
+        >
+          {saveError}
+        </p>
+      )}
     </Suspense>
   )
 }
