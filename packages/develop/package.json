@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@camstack/types": "*",
-    "multicast-dns": "^7.2.5"
+    "multicast-dns": "^7.2.5",
+    "zod": "^4.3.6"
   }
 }

@@ -141,7 +141,12 @@ export type {
 // operator MCP.
 export { scrubSecrets, scrubValue } from './mcp/scrub.js'
 export { text, textError } from './mcp/text.js'
-export { REDACTED, redactDeclaredSecrets, toToolOutput, truncateOutput } from './mcp/redact.js'
+export {
+  REDACTED,
+  redactDeclaredSecrets,
+  toToolOutput,
+  truncateOutput,
+} from './mcp/redact.js'
 export {
   CORE_QUERY_METHODS,
   loadApiIndex,
@@ -159,7 +164,11 @@ export {
   type HubConnection,
   type NoSessionOutcome,
 } from './mcp/hub-connection.js'
-export { gateQuery, isSecretBearing, type GateDecision } from './mcp/query-gate.js'
+export {
+  gateQuery,
+  isSecretBearing,
+  type GateDecision,
+} from './mcp/query-gate.js'
 export {
   CONFIRM_TTL_MS,
   MAX_OUTSTANDING_TOKENS,
@@ -179,3 +188,7 @@ export {
   type IssuedToken,
   type MutationGateOptions,
 } from './mcp/mutation-gate.js'
+// Hub payload slices and the per-track audit rules, shared by `camstack mcp`
+// (ops toolset) and the private operator MCP.
+export * from './mcp/ops/wire.js'
+export * from './mcp/ops/track-findings.js'

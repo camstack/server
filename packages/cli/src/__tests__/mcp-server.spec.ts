@@ -101,6 +101,17 @@ function firstText(result: Awaited<ReturnType<Client['callTool']>>): string {
   return first && first.type === 'text' ? first.text : ''
 }
 
+const OPS_TOOLS = [
+  'ops_accelerators',
+  'ops_device',
+  'ops_events',
+  'ops_logs',
+  'ops_status',
+  'ops_track',
+  'ops_unhealthy_devices',
+  'ops_whoami',
+]
+
 describe('camstack mcp — toolset selection', () => {
   const ctx = context(NO_SESSION)
 
@@ -110,7 +121,7 @@ describe('camstack mcp — toolset selection', () => {
     })
     expect(await toolNames(client)).toEqual([
       'configure_rename_device',
-      'ops_whoami',
+      ...OPS_TOOLS,
       'setup_about',
       'setup_add_node',
       'setup_connect',
@@ -121,7 +132,7 @@ describe('camstack mcp — toolset selection', () => {
 
   it('serves only the named toolset', async () => {
     expect(await toolNames(await connect(['setup'], ctx))).toContain('setup_about')
-    expect(await toolNames(await connect(['ops'], ctx))).toEqual(['ops_whoami'])
+    expect(await toolNames(await connect(['ops'], ctx))).toEqual(OPS_TOOLS)
   })
 
   it('develop registers through the injected shared registration', async () => {
