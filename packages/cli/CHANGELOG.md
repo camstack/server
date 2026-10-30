@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.211] - 2026-10-30
+
 ### Changed
 
 - camstack mcp configure toolset adds addon store search/install/update/uninstall, camera provider listing/discovery/add and notification target management; secrets are never accepted as tool arguments and are pointed to the admin UI
