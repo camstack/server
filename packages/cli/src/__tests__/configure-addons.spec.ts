@@ -40,6 +40,9 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
         id: 'provider-reolink',
         packageName: '@camstack/addon-provider-reolink',
         packageVersion: '1.2.200',
+        // The live hub answers null, not absent, for an unflagged manifest.
+        protected: null,
+        removable: null,
       },
     },
     {
@@ -227,6 +230,14 @@ describe('configure_addon_uninstall', () => {
     )
     const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/system' }, undefined)
     expect(JSON.stringify(out)).toContain('protected / removable:false')
+    expect(dryRunOf(out).token).toBeUndefined()
+    expect(writes(hub.calls)).toHaveLength(0)
+  })
+
+  it('refuses when the protection flags cannot be read (fail closed), and never writes', async () => {
+    const hub = gatedHub(answers({ 'addons.list': new Error('hub down') }), packument)
+    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/system' }, undefined)
+    expect(JSON.stringify(out)).toContain('could not read whether')
     expect(dryRunOf(out).token).toBeUndefined()
     expect(writes(hub.calls)).toHaveLength(0)
   })

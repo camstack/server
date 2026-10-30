@@ -50,8 +50,9 @@ const ListedAddonShape = z.looseObject({
     id: z.string(),
     packageName: z.string(),
     packageVersion: z.string(),
-    protected: z.boolean().optional(),
-    removable: z.boolean().optional(),
+    // The hub answers null, not absent, for a manifest without the flag.
+    protected: z.boolean().nullish(),
+    removable: z.boolean().nullish(),
   }),
 })
 
@@ -116,6 +117,10 @@ async function readProtection(client: HubClient, packageName: string): Promise<P
 
 const PROTECTED_REASON = (name: string): string =>
   `${name} is a protected package (manifest protected / removable:false): the kernel needs it, so it is never installed over, updated or removed here`
+
+/** Fail closed: a package whose flags could not be read is never touched. */
+const UNREADABLE_PROTECTION_REASON = (name: string): string =>
+  `could not read whether ${name} is protected (addons.list did not answer with the expected shape); nothing is changed until it does`
 
 // ---------------------------------------------------------------------------
 // compatibility, read from the published manifest
@@ -361,7 +366,13 @@ export function installAddonSpec(client: HubClient, fetchFn: FetchFn): GatedTool
         }
       }
       const protection = await readProtection(client, args.packageName)
-      if (protection?.protected === true) {
+      if (protection === null) {
+        return {
+          confirmable: false,
+          describe: { problem: UNREADABLE_PROTECTION_REASON(args.packageName) },
+        }
+      }
+      if (protection.protected) {
         return {
           confirmable: false,
           describe: { problem: PROTECTED_REASON(args.packageName) },
@@ -441,7 +452,13 @@ export function updateAddonSpec(client: HubClient): GatedToolSpec<UpdateArgs> {
     tool: UPDATE_TOOL,
     async dryRun(args): Promise<DryRunOutcome> {
       const protection = await readProtection(client, args.packageName)
-      if (protection?.protected === true) {
+      if (protection === null) {
+        return {
+          confirmable: false,
+          describe: { problem: UNREADABLE_PROTECTION_REASON(args.packageName) },
+        }
+      }
+      if (protection.protected) {
         return {
           confirmable: false,
           describe: { problem: PROTECTED_REASON(args.packageName) },
@@ -514,7 +531,13 @@ export function uninstallAddonSpec(client: HubClient): GatedToolSpec<UninstallAr
     tool: UNINSTALL_TOOL,
     async dryRun(args): Promise<DryRunOutcome> {
       const protection = await readProtection(client, args.packageName)
-      if (protection?.protected === true) {
+      if (protection === null) {
+        return {
+          confirmable: false,
+          describe: { problem: UNREADABLE_PROTECTION_REASON(args.packageName) },
+        }
+      }
+      if (protection.protected) {
         return {
           confirmable: false,
           describe: { problem: PROTECTED_REASON(args.packageName) },
