@@ -16,8 +16,8 @@
  *    never derived from the other.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { joinEventsToFiles, listEventRows } from '../clips/clip-event-catalog.js'
 import type { ReolinkClipRow } from '../clips/clip-catalog.js'
+import { joinEventsToFiles, listEventRows } from '../clips/clip-event-catalog.js'
 
 const UID = '9527000HUBCHILD0'
 

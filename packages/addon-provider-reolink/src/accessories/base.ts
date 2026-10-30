@@ -21,8 +21,8 @@
  *     new file + one factory case, no edits to existing kinds.
  */
 
-import { z } from 'zod'
 import { AccessoryKind, type AccessoryKindValue } from '@camstack/types'
+import { z } from 'zod'
 
 /**
  * Shared base fields every accessory subclass extends with its own

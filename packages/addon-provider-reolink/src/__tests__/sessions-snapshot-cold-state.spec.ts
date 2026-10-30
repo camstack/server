@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import type { ConfigUISchema } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import { buildSessionsTabSections, type SessionsSnapshot } from '../sessions-snapshot.js'
 
 /**

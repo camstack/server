@@ -22,16 +22,15 @@
  *    the FIRST refusal and names it; the scheduler turns that into a quiet
  *    period (`clip-prefetch-is-wired.spec.ts`).
  */
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
-import { createClipService, type ClipService } from '../clips/clip-service.js'
 import { PREFETCH_BATCH } from '../clips/clip-prefetch.js'
+import { type ClipService, createClipService } from '../clips/clip-service.js'
 import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
-import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
 
 const DAY = '2026-09-16'
 const SINCE = Date.parse(`${DAY}T00:00:00Z`)

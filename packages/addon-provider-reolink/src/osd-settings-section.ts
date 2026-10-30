@@ -1,4 +1,11 @@
 import {
+  formatOsdCoords,
+  OSD_CORNER_LABELS,
+  OSD_CORNERS,
+  type OsdPositionReading,
+  readOsdPosition,
+} from '@apocaliss92/nodelink-js'
+import {
   type ConfigBooleanField,
   type ConfigField,
   type ConfigInfoField,
@@ -6,13 +13,6 @@ import {
   type ConfigSelectField,
   OPERATOR_WRITTEN_STALE_MS,
 } from '@camstack/types'
-import {
-  formatOsdCoords,
-  OSD_CORNER_LABELS,
-  OSD_CORNERS,
-  type OsdPositionReading,
-  readOsdPosition,
-} from '@apocaliss92/nodelink-js'
 import type { ReolinkCameraConfig } from './schema.js'
 
 /**

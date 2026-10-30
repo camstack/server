@@ -23,10 +23,11 @@
  * The invariants here are structural — *is the session dropped, is the retry
  * bounded, are hub children excluded* — and they survive refactors.
  */
-import { describe, it, expect } from 'vitest'
+
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cameraSource = readFileSync(resolve(here, '../reolink-camera.ts'), 'utf8')

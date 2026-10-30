@@ -9,16 +9,17 @@
  * `packages/types/__tests__/base-addon-integration-settings.test.ts`. The UI
  * half is in `addon-admin-ui/src/components/settings/__tests__/`.
  */
-import { describe, it, expect } from 'vitest'
+
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { ConfigField, ConfigSection } from '@camstack/types'
-import { buildEmailPushSettingsSchema, EMAIL_PUSH_SECTION_IDS } from '../email-push-schema.js'
+import { describe, expect, it } from 'vitest'
 import {
-  buildBaichuanWebhookSettingsSchema,
   BAICHUAN_WEBHOOK_SECTION_IDS,
+  buildBaichuanWebhookSettingsSchema,
 } from '../baichuan-webhook-schema.js'
+import { buildEmailPushSettingsSchema, EMAIL_PUSH_SECTION_IDS } from '../email-push-schema.js'
 
 const INTEGRATION_SECTION_IDS = [...EMAIL_PUSH_SECTION_IDS, ...BAICHUAN_WEBHOOK_SECTION_IDS]
 

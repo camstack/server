@@ -21,8 +21,7 @@ import type { ConfigUISchema } from '@camstack/types'
  * Extra per-scan inputs for Reolink network discovery. Unlike Gree/Ecowitt, a Reolink camera needs
  * CREDENTIALS to be created — so the scan form collects them: the library uses them to enrich the
  * probe (model/UID via the authenticated API) and they are baked into each candidate so a one-click
- * adopt yields a working camera. `networkCidr` reaches cameras on another subnet (auto-detects the
- * local subnet when blank); ONVIF WS-Discovery is on by default since most Reolink cameras support it.
+ * adopt yields a working camera. The subnets scanned are the engine's (`params.subnets`); ONVIF WS-Discovery is on by default since most Reolink cameras support it.
  */
 export function buildDiscoveryParamsFormSchema(): ConfigUISchema {
   return {
@@ -57,19 +56,10 @@ export function buildDiscoveryParamsFormSchema(): ConfigUISchema {
         id: 'scan',
         title: 'Scan options',
         titleKey: 'provider-reolink:discoveryParams.s_scan.title',
-        description:
-          'Leave blank to scan the local subnet; for another subnet enter its CIDR (e.g. 192.168.20.0/24).',
+        description: 'The networks scanned are set on the Network page.',
         descriptionKey: 'provider-reolink:discoveryParams.s_scan.description',
         columns: 1,
         fields: [
-          {
-            type: 'text',
-            key: 'networkCidr',
-            label: 'Network (CIDR)',
-            labelKey: 'provider-reolink:discoveryParams.s_scan.networkCidr.label',
-            required: false,
-            placeholder: '192.168.20.0/24',
-          },
           {
             type: 'boolean',
             key: 'enableOnvif',

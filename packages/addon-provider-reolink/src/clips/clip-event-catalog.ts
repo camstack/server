@@ -74,8 +74,9 @@
  * sends `chnbits`, and never derives one from the other. With one child named,
  * foreign rows in the reply were 0; the uid filter below is belt and braces.
  */
-import { clipKeyFor } from './clip-identity.js'
+
 import type { ReolinkClipRow } from './clip-catalog.js'
+import { clipKeyFor } from './clip-identity.js'
 
 /** The narrow slice of the library this module uses. */
 export interface EventLogEntryLike {

@@ -1,8 +1,8 @@
 import type { CgiChannelStatusEntry, ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 import type { BatteryStatus, IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
-import { resolveSnapshotAge, type SnapshotAge } from './snapshot-freshness.js'
 import type { ReolinkCameraConfig } from './schema.js'
+import { resolveSnapshotAge, type SnapshotAge } from './snapshot-freshness.js'
 
 /**
  * Raw-read debug surface (D346): "what does the camera actually report,

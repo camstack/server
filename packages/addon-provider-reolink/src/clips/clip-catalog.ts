@@ -33,11 +33,12 @@
  * provider can say `index-empty` — never "no clips", which would be a lie
  * about a card that is full of them (D549 18).
  */
-import type { ClipDownloadResult } from './clip-mux.js'
+
 import { clipKeyFor } from './clip-identity.js'
+import type { ClipDownloadResult } from './clip-mux.js'
 import { parseNativeTypes } from './clip-native-types.js'
 import { pairTwins, type TwinCandidate } from './clip-twins.js'
-import { dayBounds, wallClockDayKey, type WallClockDay } from './clip-wall-clock.js'
+import { dayBounds, type WallClockDay, wallClockDayKey } from './clip-wall-clock.js'
 
 // ── The narrow slice of the library this module uses ──────────────────────
 //

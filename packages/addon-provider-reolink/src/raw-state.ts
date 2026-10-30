@@ -1,4 +1,4 @@
-import type { RawStateResult, IDeviceRuntimeState } from '@camstack/types'
+import type { IDeviceRuntimeState, RawStateResult } from '@camstack/types'
 
 /** Frozen cap-keyed snapshot shape — exactly what `IDeviceRuntimeState.snapshot()` returns. */
 export type RuntimeStateSnapshot = ReturnType<IDeviceRuntimeState['snapshot']>

@@ -21,17 +21,18 @@
  * honest-state spec on this surface has at some point passed while the wire
  * lied, by warming the state before asking.
  */
-import { resolveCameraUid } from '../clips/clip-addressing.js'
+
 import { readFile } from 'node:fs/promises'
 import { describe, expect, it, vi } from 'vitest'
+import { resolveCameraUid } from '../clips/clip-addressing.js'
+import type { ReolinkClipRow } from '../clips/clip-catalog.js'
+import { ClipCatalogCache } from '../clips/clip-catalog-cache.js'
 import {
   createReolinkVideoclipsProvider,
   type ReolinkVideoclipsDeps,
 } from '../clips/reolink-videoclips-provider.js'
-import { ClipCatalogCache } from '../clips/clip-catalog-cache.js'
-import type { ReolinkClipRow } from '../clips/clip-catalog.js'
-import { createRecordingLogger } from './clip-test-logger.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { createRecordingLogger } from './clip-test-logger.js'
 
 const NOW = Date.parse('2026-09-16T12:00:00Z')
 const SINCE = Date.parse('2026-09-16T00:00:00Z')

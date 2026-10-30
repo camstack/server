@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest'
 import {
   coordsForOsdCorner,
   formatOsdCoords,
@@ -7,6 +6,7 @@ import {
   OSD_POSITION_MAX,
   readOsdPosition,
 } from '@apocaliss92/nodelink-js'
+import { describe, expect, it } from 'vitest'
 
 /**
  * The overlay-position vocabulary, pinned to what real cameras reported.

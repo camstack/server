@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  BatteryHourlyRefresh,
   BATTERY_REFRESH_TICK_MS,
+  BatteryHourlyRefresh,
+  type BatteryRefreshOutcome,
+  decideBatteryRefresh,
   MAX_ATTEMPTS_PER_WINDOW,
   RETRY_BACKOFF_MS,
-  decideBatteryRefresh,
   resolveBatteryRefreshIntervalMs,
   staggerOffsetMs,
   wakeLeadMs,
   windowIndex,
-  type BatteryRefreshOutcome,
 } from '../battery-hourly-refresh.js'
 import { createRecordingLogger } from './clip-test-logger.js'
 

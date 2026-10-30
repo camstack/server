@@ -1,4 +1,9 @@
-import { userError } from '@camstack/types'
+import {
+  type AutoDetectResult,
+  autoDetectDeviceType,
+  type DiscoveryOptions,
+  discoverReolinkDevices,
+} from '@apocaliss92/nodelink-js'
 import type {
   AddonContext,
   AddonInitResult,
@@ -7,6 +12,7 @@ import type {
   DeviceConstructor,
   DeviceSummary,
   DiscoveryCandidate,
+  DiscoveryMode,
   DurableState,
   FieldProbeResult,
   IDevice,
@@ -23,53 +29,53 @@ import {
   EventCategory,
   failureContributionCapability,
   logChannelsCapability,
-  videoclipsCapability,
   memoizePinnedFfmpeg,
+  userError,
+  videoclipsCapability,
   withClipEventLabels,
 } from '@camstack/types'
 import { z } from 'zod'
 import {
-  autoDetectDeviceType,
-  discoverReolinkDevices,
-  type AutoDetectResult,
-  type DiscoveryOptions,
-} from '@apocaliss92/nodelink-js'
-import { createClipService, type ClipService } from './clips/clip-service.js'
-import {
   CLIP_CATALOG_REFRESH_MINUTES_KEY,
   CLIP_CATALOG_REFRESH_MINUTES_MIN,
   ClipCatalogRefreshScheduler,
+  type ClipRefreshTarget,
   resolveClipCatalogForcedWake,
   resolveClipCatalogRefreshMinutes,
-  type ClipRefreshTarget,
 } from './clips/clip-refresh.js'
 import { buildClipRefreshSettingsSchema } from './clips/clip-refresh-settings.js'
+import { type ClipService, createClipService } from './clips/clip-service.js'
+import { type ReolinkDebugActions, reolinkDebugActions } from './debug-actions.js'
 import { intercomFailureReport } from './intercom-failure-report.js'
-import { reolinkDebugActions, type ReolinkDebugActions } from './debug-actions.js'
 import type { RawReadInput, RawReadResult } from './raw-read.js'
-import { ReolinkCamera, reolinkCameraSchema, REOLINK_ADDON_ID } from './reolink-camera.js'
+import { REOLINK_ADDON_ID, ReolinkCamera, reolinkCameraSchema } from './reolink-camera.js'
 import { ReolinkHub } from './reolink-hub.js'
 // Importing the module is what RUNS the declarations. Never drop it as an
 // "unused import": the channels vanish from the cluster if you do.
 import './log-channels.js'
-import { reolinkHubSchema } from './schema.js'
-import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
+import { AutodetectCache } from './autodetect-cache.js'
+import {
+  BAICHUAN_WEBHOOK_SECTION_IDS,
+  buildBaichuanWebhookSettingsSchema,
+} from './baichuan-webhook-schema.js'
+import { ReolinkBaichuanWebhookServer } from './baichuan-webhook-server.js'
 import { findParentRow, planChildConfigHeal } from './child-config-heal.js'
+import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
+import { buildEmailPushSettingsSchema, EMAIL_PUSH_SECTION_IDS } from './email-push-schema.js'
+import { ReolinkEmailPushServer } from './email-push-server.js'
+import { listLanHosts } from './email-push-shared.js'
+import { readEmailPushStore } from './email-push-store.js'
 import {
   mapReolinkDiscoveryToCandidates,
-  slugifyReolinkHost,
   type OnboardedReolinkDevice,
+  slugifyReolinkHost,
 } from './reolink-discovery-map.js'
-import { AutodetectCache } from './autodetect-cache.js'
-import { ReolinkEmailPushServer } from './email-push-server.js'
-import { readEmailPushStore } from './email-push-store.js'
-import { listLanHosts } from './email-push-shared.js'
-import { buildEmailPushSettingsSchema, EMAIL_PUSH_SECTION_IDS } from './email-push-schema.js'
-import { ReolinkBaichuanWebhookServer } from './baichuan-webhook-server.js'
 import {
-  buildBaichuanWebhookSettingsSchema,
-  BAICHUAN_WEBHOOK_SECTION_IDS,
-} from './baichuan-webhook-schema.js'
+  REOLINK_DISCOVERY_MODES,
+  scanReolinkSubnets,
+  subnetsFromParams,
+} from './reolink-subnet-scan.js'
+import { reolinkHubSchema } from './schema.js'
 
 /**
  * Adapt a camstack scoped logger to the lib's `Logger` shape (just
@@ -1100,29 +1106,47 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     return buildDiscoveryParamsFormSchema()
   }
 
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return REOLINK_DISCOVERY_MODES
+  }
+
   override async discoverDevices(input?: {
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
     const p = input?.params ?? {}
     const username = typeof p['username'] === 'string' ? p['username'].trim() : ''
     const password = typeof p['password'] === 'string' ? p['password'] : ''
-    const networkCidr = typeof p['networkCidr'] === 'string' ? p['networkCidr'].trim() : ''
+    const subnets = subnetsFromParams(p)
     const enableOnvif = p['enableOnvif'] !== false // default on
     const timeoutMs = typeof p['timeoutMs'] === 'number' ? p['timeoutMs'] : undefined
 
-    const options: DiscoveryOptions = {
+    const baseOptions: DiscoveryOptions = {
       logger: buildAutodetectLibLogger(this.ctx.logger),
       enableOnvifDiscovery: enableOnvif,
       ...(username ? { username } : {}),
       ...(password ? { password } : {}),
-      ...(networkCidr ? { networkCidr } : {}),
       ...(timeoutMs !== undefined
         ? { udpBroadcastTimeoutMs: timeoutMs, onvifDiscoveryTimeoutMs: timeoutMs }
         : {}),
     }
-    const devices = await discoverReolinkDevices(options)
+    const devices = await scanReolinkSubnets({
+      subnets,
+      scan: (networkCidr) =>
+        discoverReolinkDevices(networkCidr ? { ...baseOptions, networkCidr } : baseOptions),
+      onError: (cidr, error) =>
+        this.ctx.logger.warn('Reolink discovery: a subnet scan failed', {
+          meta: {
+            subnet: cidr ?? 'local',
+            error: error instanceof Error ? error.message : String(error),
+          },
+        }),
+    })
     this.ctx.logger.info('Reolink discovery complete', {
-      meta: { count: devices.length, networkCidr: networkCidr || 'local', enableOnvif },
+      meta: {
+        count: devices.length,
+        subnets: subnets.length > 0 ? subnets : ['local'],
+        enableOnvif,
+      },
     })
 
     // De-dupe by host + map to adoption candidates (pure — see reolink-discovery-map.ts). Credentials

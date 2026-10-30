@@ -24,7 +24,7 @@
  * answered by the filesystem every time and a zero-length file is NOT a
  * thumbnail.
  */
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 /** Per-device bounds for the thumbnail cache (D549 5/13). */

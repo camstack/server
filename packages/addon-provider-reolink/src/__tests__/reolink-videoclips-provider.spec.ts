@@ -11,17 +11,18 @@
  *  - every clip id carries its own source prefix, so the collection
  *    dispatcher's routing key and the id mint cannot drift apart.
  */
-import { resolveCameraUid } from '../clips/clip-addressing.js'
+
 import { describe, expect, it, vi } from 'vitest'
+import { resolveCameraUid } from '../clips/clip-addressing.js'
+import type { ReolinkClipRow } from '../clips/clip-catalog.js'
+import { ClipCatalogCache } from '../clips/clip-catalog-cache.js'
+import { CLIP_SOURCE_ONBOARD } from '../clips/clip-identity.js'
 import {
   createReolinkVideoclipsProvider,
   type ReolinkVideoclipsDeps,
 } from '../clips/reolink-videoclips-provider.js'
-import { CLIP_SOURCE_ONBOARD } from '../clips/clip-identity.js'
-import { ClipCatalogCache } from '../clips/clip-catalog-cache.js'
-import { createRecordingLogger } from './clip-test-logger.js'
-import type { ReolinkClipRow } from '../clips/clip-catalog.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { createRecordingLogger } from './clip-test-logger.js'
 
 const NOW = Date.parse('2026-09-16T12:00:00Z')
 const SINCE = Date.parse('2026-09-16T00:00:00Z')

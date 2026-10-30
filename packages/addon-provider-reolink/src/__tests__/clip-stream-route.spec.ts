@@ -8,25 +8,24 @@
  */
 import { PassThrough } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
-
+import type { ReolinkClipRow } from '../clips/clip-catalog.js'
 import {
   CLIP_STREAM_PREFIX,
   CLIP_STREAM_TRANSPORT_HEADER,
-  createClipStreamHandler,
-  type ClipStreamTarget,
   type ClipStreamHandlerDeps,
   type ClipStreamRouteOutcome,
   type ClipStreamRouteSink,
+  type ClipStreamTarget,
+  createClipStreamHandler,
 } from '../clips/clip-data-plane.js'
-import type { ReolinkClipRow } from '../clips/clip-catalog.js'
 import type { GateClipDeviceOutcome } from '../clips/clip-service.js'
-import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
-import { createClipStreamRoute } from '../clips/clip-stream-route.js'
 import type {
   ClipStreamInput,
   ClipStreamOutcome,
   ClipStreamProducer,
 } from '../clips/clip-stream.js'
+import { createClipStreamRoute } from '../clips/clip-stream-route.js'
+import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
 import { createRecordingLogger } from './clip-test-logger.js'
 
 interface Captured {

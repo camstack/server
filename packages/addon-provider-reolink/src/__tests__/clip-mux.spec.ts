@@ -11,10 +11,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildClipMuxArgs,
-  decideClipAudio,
-  fetchClipBytes,
   CLIP_FETCH_MAX_ATTEMPTS,
   type ClipAudioTrack,
+  decideClipAudio,
+  fetchClipBytes,
 } from '../clips/clip-mux.js'
 
 describe('buildClipMuxArgs', () => {

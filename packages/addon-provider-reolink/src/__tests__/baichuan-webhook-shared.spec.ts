@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
+import { describe, expect, it } from 'vitest'
 import {
   buildBaichuanWebhookUrl,
   resolveBatterySleepPushMethod,

@@ -1,5 +1,5 @@
 import type { ConfigUISchema } from '@camstack/types'
-import { DEFAULT_EMAIL_PUSH_PORT, DEFAULT_EMAIL_PUSH_DOMAIN } from './email-push-shared.js'
+import { DEFAULT_EMAIL_PUSH_DOMAIN, DEFAULT_EMAIL_PUSH_PORT } from './email-push-shared.js'
 
 /**
  * The ids of the sections above, in render order — the value the addon hands

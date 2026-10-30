@@ -17,22 +17,7 @@
  * surface in the UI without operator action.
  */
 
-import { z } from 'zod'
-import {
-  BaseDevice,
-  DeviceType,
-  DeviceFeature,
-  hydrateSchema,
-  switchCapability,
-  brightnessCapability,
-  motionTriggerCapability,
-  createRuntimeStateBridge,
-  type SwitchStatus,
-  type BrightnessStatus,
-  type MotionTriggerStatus,
-  type MotionTriggerRuntimeState,
-  sleep,
-} from '@camstack/types'
+import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
@@ -40,9 +25,24 @@ import type {
   InferNativeProvider,
   RawStateResult,
 } from '@camstack/types'
-import { reolinkAccessoryBaseSchema, type ReolinkAccessoryHost, AccessoryKind } from './base.js'
+import {
+  BaseDevice,
+  type BrightnessStatus,
+  brightnessCapability,
+  createRuntimeStateBridge,
+  DeviceFeature,
+  DeviceType,
+  hydrateSchema,
+  type MotionTriggerRuntimeState,
+  type MotionTriggerStatus,
+  motionTriggerCapability,
+  type SwitchStatus,
+  sleep,
+  switchCapability,
+} from '@camstack/types'
+import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
-import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
+import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 
 /**
  * Detection-class strings the Reolink Baichuan firmware accepts for

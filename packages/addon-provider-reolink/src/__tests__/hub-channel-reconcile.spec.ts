@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  planChannelReconciliation,
   type AdoptedChildChannel,
   type DiscoveredChannel,
+  planChannelReconciliation,
 } from '../hub-channel-reconcile.js'
 
 const HUB = 'mac-ec71db72bbfe'

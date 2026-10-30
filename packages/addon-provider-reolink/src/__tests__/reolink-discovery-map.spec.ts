@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest'
 import { DeviceType } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import {
   findOnboardedMatch,
   mapReolinkDiscoveryToCandidates,
-  slugifyReolinkHost,
   type OnboardedReolinkDevice,
   type ReolinkDiscoveredHost,
+  slugifyReolinkHost,
 } from '../reolink-discovery-map.js'
 
 describe('slugifyReolinkHost', () => {

@@ -9,33 +9,33 @@
  * device. See `ReolinkCamera.registerPtzAutotrackIfSupported()`.
  */
 
-import type { DeviceContext, IDevice, AccessoryKindValue } from '@camstack/types'
+import type { AccessoryKindValue, DeviceContext, IDevice } from '@camstack/types'
 import { AccessoryKind } from '@camstack/types'
 import { type ReolinkAccessoryHost } from './base.js'
-import { SirenAccessory } from './siren.js'
 import { FloodlightAccessory } from './floodlight.js'
 import { PirAccessory } from './pir.js'
+import { SirenAccessory } from './siren.js'
 
 export {
-  SirenAccessory,
-  sirenAccessorySchema,
-  type SirenAccessoryConfig,
-} from './siren.js'
+  isReolinkSupportedAccessoryKind,
+  type ReolinkAccessoryHost,
+  reolinkAccessoryBaseSchema,
+} from './base.js'
 export {
   FloodlightAccessory,
-  floodlightAccessorySchema,
   type FloodlightAccessoryConfig,
+  floodlightAccessorySchema,
 } from './floodlight.js'
 export {
   PirAccessory,
-  pirAccessorySchema,
   type PirAccessoryConfig,
+  pirAccessorySchema,
 } from './pir.js'
 export {
-  isReolinkSupportedAccessoryKind,
-  reolinkAccessoryBaseSchema,
-  type ReolinkAccessoryHost,
-} from './base.js'
+  SirenAccessory,
+  type SirenAccessoryConfig,
+  sirenAccessorySchema,
+} from './siren.js'
 
 /**
  * Factory — pick the right concrete class for an `AccessoryKindValue`

@@ -17,22 +17,21 @@
  * into a clip an operator would take for complete.
  */
 import { mkdtemp, rm } from 'node:fs/promises'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
-import type { IncomingMessage, ServerResponse } from 'node:http'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
+import { createClipService } from '../clips/clip-service.js'
 import {
   CLIP_DURATION_SHORTFALL_TOLERANCE_S,
   CLIP_IDLE_WINDOW_MS,
   CLIP_IDLE_WINDOW_RETRY_MS,
   judgeClipDuration,
 } from '../clips/clip-truncation.js'
-import { createClipService } from '../clips/clip-service.js'
 import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
-import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
 
 // ── the judge ─────────────────────────────────────────────────────────────
 

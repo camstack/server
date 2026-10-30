@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Discovery scans every subnet the network scan covers; the network CIDR field in the scan options is gone
+
 ## [1.2.213] - 2026-10-28
 
 ### Changed

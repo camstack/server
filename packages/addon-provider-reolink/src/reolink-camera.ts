@@ -1,26 +1,5 @@
-import { userError } from '@camstack/types'
 import type { EncStreamPatch } from '@apocaliss92/nodelink-js'
-import { resolveCameraUid } from './clips/clip-addressing.js'
-import type { ClipDeviceRef } from './clips/reolink-videoclips-provider.js'
-import { buildClipRefreshDeviceSection } from './clips/clip-refresh-settings.js'
-import {
-  type ReolinkRecordCfgLike,
-  type ReolinkRecordLimitsLike,
-  type ReolinkRecordScheduleLike,
-  buildOnboardOptions,
-  buildOnboardStatus,
-  buildOnboardWrites,
-  parseOnboardStorage,
-} from './recording-onboard-mapping.js'
-import { deriveChargingSource, reportsPowerSource } from './battery-charging.js'
-import { buildBatteryRefreshDeviceSection } from './battery-refresh-settings.js'
-import { refreshSnapshotCacheOnce } from './battery-snapshot-refresh.js'
-import {
-  BATTERY_REFRESH_TICK_MS,
-  BatteryHourlyRefresh,
-  type BatteryRefreshOutcome,
-  resolveBatteryRefreshIntervalMs,
-} from './battery-hourly-refresh.js'
+import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import {
   ACCESSORY_LABEL,
   AccessoryKind,
@@ -28,10 +7,8 @@ import {
   BaseDevice,
   type BatteryStatus,
   batteryCapability,
-  NETWORK_LINK_UNKNOWN,
-  networkLinkCapability,
+  buildDeviceAdminUrl,
   buildStreamParamsConfigSchema,
-  providerMotionEvent,
   createEvent,
   createRuntimeStateBridge,
   type DayNightMode,
@@ -42,38 +19,34 @@ import {
   DeviceType,
   dayNightCapability,
   describeOnboardRefusal,
-  recordingOnboardCapability,
-  type RecordingOnboardOptions,
-  type RecordingOnboardStatus,
+  deviceAdminLinkCapability,
   deviceCustomAction,
   doorbellCapability,
   EventCategory,
   type ExposureMode,
   findTimezone,
+  hubMotionNativeProvider,
   hydrateSchema,
   type ImageSettingsOptions,
   ImageSettingsOptionsSchema,
   type ImageSettingsStatus,
-  imageSettingsCapability,
   type IntercomAbility,
+  imageSettingsCapability,
   intercomCapability,
   type MotionZoneOptions,
   MotionZoneOptionsSchema,
   type MotionZoneStatus,
   motionCapability,
-  hubMotionNativeProvider,
   motionZonesCapability,
   type NativeObjectClass,
-  buildDeviceAdminUrl,
-  deviceAdminLinkCapability,
   NativeObjectClassEnum,
   type NativeObjectDetectionRuntimeState,
+  NETWORK_LINK_UNKNOWN,
   nativeObjectDetectionCapability,
-  osdCapability,
-  type OsdStatus,
-  streamSignalsCapability,
-  type StreamSignal,
+  networkLinkCapability,
   OPERATOR_WRITTEN_STALE_MS,
+  type OsdStatus,
+  osdCapability,
   type PrivacyMaskOptions,
   PrivacyMaskOptionsSchema,
   type PrivacyMaskRegion,
@@ -85,31 +58,49 @@ import {
   type PtzOptions,
   PtzOptionsSchema,
   privacyMaskCapability,
+  providerMotionEvent,
   ptzAutotrackCapability,
   ptzCapability,
   type RawStateResult,
-  rebootCapability,
+  type RecordingOnboardOptions,
+  type RecordingOnboardStatus,
   RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
+  rebootCapability,
+  recordingOnboardCapability,
   type StreamParamsOptions,
   StreamParamsOptionsSchema,
   type StreamParamsStatus,
   type StreamProfile,
   type StreamProfilePatch,
+  type StreamSignal,
   sleep,
   snapshotCapability,
   streamCatalogCapability,
   streamParamsCapability,
+  streamSignalsCapability,
   summarisePrivacyAudio,
   TIMEZONES,
+  userError,
 } from '@camstack/types'
-import { CH_BAICHUAN, CH_HANDSHAKE } from './log-channels.js'
+import type { BaichuanWebhookParamsResolver } from './baichuan-webhook-shared.js'
+import { deriveChargingSource, reportsPowerSource } from './battery-charging.js'
+import {
+  BATTERY_REFRESH_TICK_MS,
+  BatteryHourlyRefresh,
+  type BatteryRefreshOutcome,
+  resolveBatteryRefreshIntervalMs,
+} from './battery-hourly-refresh.js'
+import { buildBatteryRefreshDeviceSection } from './battery-refresh-settings.js'
+import { refreshSnapshotCacheOnce } from './battery-snapshot-refresh.js'
+import { resolveCameraUid } from './clips/clip-addressing.js'
+import { buildClipRefreshDeviceSection } from './clips/clip-refresh-settings.js'
+import type { ClipDeviceRef } from './clips/reolink-videoclips-provider.js'
 import { capDayNightModeToReolink, reolinkDayNightModeToCap } from './day-night-mapping.js'
 import { deriveReolinkCameraFeatures, type ReolinkProbeFlags } from './device-features.js'
 import type { EmailPushParamsResolver } from './email-push-shared.js'
-import type { BaichuanWebhookParamsResolver } from './baichuan-webhook-shared.js'
-import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import { reolinkExposureModeToCap } from './image-settings-mapping.js'
 import { denormalizeFromPercent, normalizeToPercent } from './image-value-normalization.js'
+import { CH_BAICHUAN, CH_HANDSHAKE } from './log-channels.js'
 import { type LiveRfc4571Endpoint, overlayLiveNativeRfc4571Sdp } from './native-sdp-overlay.js'
 import {
   buildOsdCapOverlayPatch,
@@ -119,10 +110,19 @@ import {
 } from './osd-mapping.js'
 import { buildOsdSection, isOsdSnapshotStale, resolveOsdValues } from './osd-settings-section.js'
 import { performRawRead, type RawReadResult, type RawReadSlice } from './raw-read.js'
+import { buildRawState } from './raw-state.js'
+import {
+  buildOnboardOptions,
+  buildOnboardStatus,
+  buildOnboardWrites,
+  parseOnboardStorage,
+  type ReolinkRecordCfgLike,
+  type ReolinkRecordLimitsLike,
+  type ReolinkRecordScheduleLike,
+} from './recording-onboard-mapping.js'
+import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
-import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
-import { buildRawState } from './raw-state.js'
 
 /**
  * The `<Compression>` stream blocks that can carry an audio flag, in the
@@ -307,13 +307,9 @@ function coerceNumber(value: unknown): number | null {
   return null
 }
 
+import type { PtzGuardStatus } from '@apocaliss92/nodelink-js'
+import type { PtzHomePreset } from '@camstack/types'
 import { isRecoverableBaichuanError } from './error-classifier.js'
-import {
-  resolveZoomStep,
-  ZOOM_FACTOR_SCALE,
-  ZOOM_SET_ATTEMPTS,
-  ZOOM_SET_RETRY_MS,
-} from './ptz-zoom.js'
 import {
   intercomFailureReport,
   REASON_TALK_CODEC_UNSUPPORTED,
@@ -325,14 +321,32 @@ import {
 } from './intercom-failure-report.js'
 import { type IntercomAudioCodecApi, IntercomOrchestrator } from './intercom-orchestrator.js'
 import { ReolinkIntercomSession } from './intercom-session.js'
-import { TalkPcmTranscoder } from './talk-pcm-transcoder.js'
 import { WeriftIntercomPeer } from './intercom-webrtc-peer.js'
+import {
+  createMotionSensorTracker,
+  motionSensorOnSimpleEvent,
+  type ReolinkMotionSensor,
+} from './motion-sensor-source.js'
 import {
   buildSupportedNativeClasses,
   isNativeObjectForwardingEnabled,
-  NATIVE_DETECTION_SUPPRESSED_LOG_MS,
   mapDetectionEvent,
+  NATIVE_DETECTION_SUPPRESSED_LOG_MS,
 } from './native-detection-mapping.js'
+import { DEFAULT_GUARD_TIMEOUT_SECONDS } from './ptz-guard.js'
+import {
+  resolveZoomStep,
+  ZOOM_FACTOR_SCALE,
+  ZOOM_SET_ATTEMPTS,
+  ZOOM_SET_RETRY_MS,
+} from './ptz-zoom.js'
+import {
+  isConnectivityFailure,
+  type ReachabilityOfflineInfo,
+  ReachabilityOfflineTracker,
+  type ReachabilityOnlineInfo,
+  type ReachabilityProbeResult,
+} from './reachability-offline.js'
 import {
   AI_CLASS_MAP,
   DEFAULT_CHANNEL,
@@ -355,21 +369,7 @@ import {
   streamLabel,
 } from './stream-routing.js'
 import { buildLazyRfc4571Url, buildSyntheticRfc4571Sdp } from './synthetic-sdp.js'
-import type { PtzHomePreset } from '@camstack/types'
-import type { PtzGuardStatus } from '@apocaliss92/nodelink-js'
-import {
-  createMotionSensorTracker,
-  motionSensorOnSimpleEvent,
-  type ReolinkMotionSensor,
-} from './motion-sensor-source.js'
-import { DEFAULT_GUARD_TIMEOUT_SECONDS } from './ptz-guard.js'
-import {
-  isConnectivityFailure,
-  type ReachabilityOfflineInfo,
-  ReachabilityOfflineTracker,
-  type ReachabilityOnlineInfo,
-  type ReachabilityProbeResult,
-} from './reachability-offline.js'
+import { TalkPcmTranscoder } from './talk-pcm-transcoder.js'
 
 /**
  * Baichuan's native PTZ speed scale is 1..63; `runPtz` maps the cap's

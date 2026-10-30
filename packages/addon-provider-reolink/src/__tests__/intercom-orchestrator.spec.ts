@@ -7,10 +7,10 @@
  * or the lib's Baichuan socket. The audio-codec cap is stubbed to
  * return synthetic PCM chunks on every push.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  IntercomOrchestrator,
   type IntercomAudioCodecApi,
+  IntercomOrchestrator,
   type IntercomWebrtcPeer,
 } from '../intercom-orchestrator.js'
 

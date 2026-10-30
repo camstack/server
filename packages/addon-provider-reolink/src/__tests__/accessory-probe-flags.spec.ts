@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   hasEverProbed,
-  resolveAccessoryProbeFlags,
   type ReolinkAccessoryProbeFlags,
+  resolveAccessoryProbeFlags,
 } from '../accessory-probe-flags'
 
 const LIVE_FLAGS: ReolinkAccessoryProbeFlags = {

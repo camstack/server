@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
 import type { CamStreamDescriptor } from '@camstack/types'
-import { overlayLiveNativeRfc4571Sdp, type LiveRfc4571Endpoint } from '../native-sdp-overlay.js'
+import { describe, expect, it } from 'vitest'
+import { type LiveRfc4571Endpoint, overlayLiveNativeRfc4571Sdp } from '../native-sdp-overlay.js'
 
 /**
  * Guards the decode-path regression: a Reolink native `pull-rfc4571` catalog

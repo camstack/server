@@ -10,7 +10,7 @@ import type {
   ClipStreamRouteSink,
   ClipStreamTarget,
 } from '../clips/clip-data-plane.js'
-import { createClipStreamDial, type ClipStreamDial } from '../clips/clip-stream-dial.js'
+import { type ClipStreamDial, createClipStreamDial } from '../clips/clip-stream-dial.js'
 import { createRecordingLogger } from './clip-test-logger.js'
 
 interface Exchange {

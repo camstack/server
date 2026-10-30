@@ -13,10 +13,11 @@
  * the URL: the hub's `/addon/<id>/<prefix>` proxy accepts the session cookie,
  * which is what the recorder's own plane already relies on (D549 22).
  */
-import { PassThrough } from 'node:stream'
+
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createClipPlaybackHandler, createClipThumbHandler } from '../clips/clip-data-plane.js'
 import { createRecordingLogger } from './clip-test-logger.js'

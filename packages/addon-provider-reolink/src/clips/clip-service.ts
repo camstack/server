@@ -21,9 +21,10 @@
  * constructs a `ReolinkBaichuanApi`, and that is enforced by the provider spec
  * rather than by hope.
  */
-import type { IncomingMessage } from 'node:http'
+
 import { spawn } from 'node:child_process'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import type { IncomingMessage } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -36,16 +37,16 @@ import type {
 } from '@camstack/types'
 import { NO_PINNED_FFMPEG_DETAIL, resolvePinnedFfmpegSpawner } from '@camstack/types/node'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { UID_MISSING_REASON, uidIsMissing } from './clip-addressing.js'
 import {
-  ClipArtifactStore,
   CLIP_SCRATCH_MAX_BYTES_PER_DEVICE,
   CLIP_SCRATCH_MAX_FILES_PER_DEVICE,
+  ClipArtifactStore,
   THUMB_MAX_BYTES_PER_DEVICE,
   THUMB_MAX_FILES_PER_DEVICE,
 } from './clip-artifact-store.js'
-import { uidIsMissing, UID_MISSING_REASON } from './clip-addressing.js'
-import { ClipCatalogCache } from './clip-catalog-cache.js'
 import type { ReolinkClipRow } from './clip-catalog.js'
+import { ClipCatalogCache } from './clip-catalog-cache.js'
 import {
   CLIP_MEDIA_PREFIX,
   CLIP_STREAM_PREFIX,
@@ -54,10 +55,6 @@ import {
   createClipStreamHandler,
   createClipThumbHandler,
 } from './clip-data-plane.js'
-import { createClipStreamProducer } from './clip-stream.js'
-import { createClipStreamDial } from './clip-stream-dial.js'
-import { createClipStreamRoute } from './clip-stream-route.js'
-import { type MintResult, queueRefusal, refuseStill } from './clip-still-refusal.js'
 import {
   buildClipMuxArgs,
   type ClipDownloadResult,
@@ -67,28 +64,32 @@ import {
   fetchClipBytes,
 } from './clip-mux.js'
 import {
+  type ClipPrefetchOutcome,
+  type ClipPrefetchStop,
+  PREFETCH_BATCH,
+  PREFETCH_HEADROOM_RECHECK,
+} from './clip-prefetch.js'
+import { CLIP_CATALOG_REFRESH_WINDOW_MS } from './clip-refresh.js'
+import { type MintResult, queueRefusal, refuseStill } from './clip-still-refusal.js'
+import { createClipStreamProducer } from './clip-stream.js'
+import { createClipStreamDial } from './clip-stream-dial.js'
+import { createClipStreamRoute } from './clip-stream-route.js'
+import { ClipThumbQueue, type ThumbLane } from './clip-thumb-queue.js'
+import {
   CLIP_IDLE_WINDOW_MS,
   CLIP_IDLE_WINDOW_RETRY_MS,
   type ClipDurationVerdict,
   judgeClipDuration,
 } from './clip-truncation.js'
-import { ClipThumbQueue, type ThumbLane } from './clip-thumb-queue.js'
 import {
-  PREFETCH_BATCH,
-  type ClipPrefetchOutcome,
-  type ClipPrefetchStop,
-  PREFETCH_HEADROOM_RECHECK,
-} from './clip-prefetch.js'
-import {
-  createReolinkVideoclipsProvider,
   type ClipBytesRefusalCode,
   type ClipDeviceRef,
   type ClipTwin,
+  createReolinkVideoclipsProvider,
   type PrepareClipBytesInput,
   type PrepareClipBytesOutcome,
   type PrepareClipOfferOutcome,
 } from './reolink-videoclips-provider.js'
-import { CLIP_CATALOG_REFRESH_WINDOW_MS } from './clip-refresh.js'
 
 export interface ClipServiceDeps {
   /**

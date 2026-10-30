@@ -25,18 +25,17 @@
  * (D62).
  */
 import { describe, expect, it, vi } from 'vitest'
-
 import {
-  ClipCatalogRefreshScheduler,
+  type ClipPrefetchOutcome,
+  decideClipPrefetch,
+  PREFETCH_QUIET_MAX_MS,
+  prefetchQuietMs,
+} from '../clips/clip-prefetch.js'
+import {
   type ClipCatalogRefreshDeps,
+  ClipCatalogRefreshScheduler,
   type ClipRefreshTarget,
 } from '../clips/clip-refresh.js'
-import {
-  decideClipPrefetch,
-  prefetchQuietMs,
-  PREFETCH_QUIET_MAX_MS,
-  type ClipPrefetchOutcome,
-} from '../clips/clip-prefetch.js'
 import { createRecordingLogger } from './clip-test-logger.js'
 
 const NOW = Date.parse('2026-09-21T12:00:00Z')

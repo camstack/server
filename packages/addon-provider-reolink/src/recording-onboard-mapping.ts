@@ -27,11 +27,11 @@
  */
 import type {
   OnboardStorage,
-  RecordTrigger,
-  RecordWindow,
   RecordingOnboardOptions,
   RecordingOnboardPatch,
   RecordingOnboardStatus,
+  RecordTrigger,
+  RecordWindow,
 } from '@camstack/types'
 import { WEEKLY_MASK_LENGTH, weeklyMaskToWindows, windowsToWeeklyMask } from '@camstack/types'
 

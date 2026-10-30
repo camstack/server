@@ -39,9 +39,9 @@
  * imported only by the cap registration site in `reolink-camera.ts`.
  */
 
+import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 import type { IntercomAbility, IScopedLogger } from '@camstack/types'
 import { ReolinkIntercomSession } from './intercom-session.js'
-import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 
 /**
  * Audio-codec cap façade — narrow surface the orchestrator needs.

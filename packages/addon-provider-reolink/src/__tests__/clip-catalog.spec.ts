@@ -11,7 +11,7 @@
  *    `index-empty`, never "no clips"** (618, days 6–20 September).
  */
 import { describe, expect, it, vi } from 'vitest'
-import { listDayRows, readStorageState, readDayIndex } from '../clips/clip-catalog.js'
+import { listDayRows, readDayIndex, readStorageState } from '../clips/clip-catalog.js'
 
 // ── Fakes shaped from the fixtures ────────────────────────────────────────
 

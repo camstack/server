@@ -8,16 +8,16 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
-  buildClipRefreshDeviceSection,
-  buildClipRefreshSettingsSchema,
-  CLIP_REFRESH_SECTION_ID,
-} from '../clips/clip-refresh-settings.js'
-import {
   CLIP_CATALOG_FORCED_WAKE_KEY,
   CLIP_CATALOG_REFRESH_MINUTES_DEFAULT,
   CLIP_CATALOG_REFRESH_MINUTES_KEY,
   CLIP_CATALOG_REFRESH_OFF,
 } from '../clips/clip-refresh.js'
+import {
+  buildClipRefreshDeviceSection,
+  buildClipRefreshSettingsSchema,
+  CLIP_REFRESH_SECTION_ID,
+} from '../clips/clip-refresh-settings.js'
 
 const MAINS_STANDALONE = { isHubChild: false, isBattery: false } as const
 const HUB_CHILD = { isHubChild: true, isBattery: true } as const

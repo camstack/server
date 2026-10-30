@@ -12,8 +12,8 @@
  * forty-nine others (the recorder still route's contract).
  */
 import { describe, expect, it, vi } from 'vitest'
-import { ClipThumbQueue, THUMB_QUEUE_CAPACITY } from '../clips/clip-thumb-queue.js'
 import { ThumbQueueRefusedError } from '../clips/clip-still-refusal.js'
+import { ClipThumbQueue, THUMB_QUEUE_CAPACITY } from '../clips/clip-thumb-queue.js'
 
 const deferred = () => {
   let resolve: (value: Buffer) => void = () => {}

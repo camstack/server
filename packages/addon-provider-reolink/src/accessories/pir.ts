@@ -17,15 +17,7 @@
  * doesn't expose per-field mutators.
  */
 
-import { z } from 'zod'
-import {
-  BaseDevice,
-  DeviceType,
-  hydrateSchema,
-  switchCapability,
-  type SwitchStatus,
-  sleep,
-} from '@camstack/types'
+import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
@@ -33,9 +25,17 @@ import type {
   InferNativeProvider,
   RawStateResult,
 } from '@camstack/types'
-import { reolinkAccessoryBaseSchema, type ReolinkAccessoryHost, AccessoryKind } from './base.js'
+import {
+  BaseDevice,
+  DeviceType,
+  hydrateSchema,
+  type SwitchStatus,
+  sleep,
+  switchCapability,
+} from '@camstack/types'
+import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
-import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
+import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 
 export const pirAccessorySchema = reolinkAccessoryBaseSchema.extend({
   kind: z.literal(AccessoryKind.PirSensor),

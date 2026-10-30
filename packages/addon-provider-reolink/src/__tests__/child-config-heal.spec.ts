@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { DeviceType, type SavedDevice } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import { findParentRow, planChildConfigHeal } from '../child-config-heal.js'
 
 const HUB_CONFIG = {

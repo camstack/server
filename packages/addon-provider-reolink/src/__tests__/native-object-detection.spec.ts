@@ -1,14 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { AI_CLASS_MAP } from '../schema'
-import {
-  buildSupportedNativeClasses,
-  isNativeObjectForwardingEnabled,
-} from '../native-detection-mapping'
 import {
   DeviceRuntimeState,
   NativeObjectClassEnum,
   NativeObjectDetectionRuntimeStateSchema,
 } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
+import {
+  buildSupportedNativeClasses,
+  isNativeObjectForwardingEnabled,
+} from '../native-detection-mapping'
+import { AI_CLASS_MAP } from '../schema'
 
 /**
  * The REAL builder, not a copy.

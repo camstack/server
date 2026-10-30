@@ -16,13 +16,13 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
-  REOLINK_MERGED_ROWS_REASON,
-  REOLINK_PRE_RECORD_ON_SECONDS,
   buildOnboardOptions,
   buildOnboardStatus,
   buildOnboardWrites,
   parseOnboardStorage,
   parseSchedule,
+  REOLINK_MERGED_ROWS_REASON,
+  REOLINK_PRE_RECORD_ON_SECONDS,
 } from '../recording-onboard-mapping.js'
 
 /** Verbatim `getHddInfoList()` from 592. */

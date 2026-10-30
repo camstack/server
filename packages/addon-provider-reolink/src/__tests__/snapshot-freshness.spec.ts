@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { reolinkCameraSchema } from '../schema.js'
 import {
   buildSnapshotFreshnessSection,
   formatSnapshotAge,
@@ -10,7 +11,6 @@ import {
   SNAPSHOT_GROUPS,
   stampSnapshotFreshness,
 } from '../snapshot-freshness.js'
-import { reolinkCameraSchema } from '../schema.js'
 
 /**
  * Per-snapshot freshness (D224 generalised, D346). The whole `deviceCache`

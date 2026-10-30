@@ -1,48 +1,47 @@
-import { userError } from '@camstack/types'
 import {
   ReolinkBaichuanApi,
   type ReolinkEvent,
   type ReolinkSimpleEvent,
 } from '@apocaliss92/nodelink-js'
-import { createMotionSensorTracker } from './motion-sensor-source.js'
 import {
-  buildDeviceAdminUrl,
-  deviceAdminLinkCapability,
   BaseDevice,
-  DeviceFeature,
-  DeviceType,
-  EventCategory,
-  hydrateSchema,
+  buildDeviceAdminUrl,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
   type DeviceContext,
-  type InferNativeProvider,
-  type IDevice,
-  deviceDiscoveryCapability,
-  rebootCapability,
   type DeviceDiscoveryStatus,
+  DeviceFeature,
+  DeviceType,
   type DiscoveredChildDevice,
   type DiscoveredChildStatus,
+  deviceAdminLinkCapability,
+  deviceDiscoveryCapability,
+  EventCategory,
+  hydrateSchema,
+  type IDevice,
+  type InferNativeProvider,
   type RawStateResult,
+  rebootCapability,
+  userError,
 } from '@camstack/types'
-import { buildRawState } from './raw-state.js'
-
-import { reolinkHubSchema, ReolinkSocketDebugFlagSchema } from './schema.js'
-import type { ReolinkSocketDebugFlag } from './schema.js'
-import { ReolinkCamera, type ReolinkHubLike } from './reolink-camera.js'
+import { mapHubBatteryPower, UnmappedCodeLedger } from './hub-battery-fields.js'
 import { planChannelReconciliation } from './hub-channel-reconcile.js'
+import { populateReolinkMetadata } from './metadata-populator.js'
+import { createMotionSensorTracker } from './motion-sensor-source.js'
+import { buildRawState } from './raw-state.js'
+import { ReolinkCamera, type ReolinkHubLike } from './reolink-camera.js'
+import type { ReolinkSocketDebugFlag } from './schema.js'
+import { ReolinkSocketDebugFlagSchema, reolinkHubSchema } from './schema.js'
+import {
+  buildSessionsTabSections,
+  captureSessionsSnapshot,
+  SESSIONS_SNAPSHOT_MAX_AGE_MS,
+  type SessionsSnapshot,
+} from './sessions-snapshot.js'
 import {
   asDebugSocketFlags,
   shouldTraceSimpleEventDispatch,
 } from './simple-event-dispatch-trace.js'
-import { populateReolinkMetadata } from './metadata-populator.js'
-import { mapHubBatteryPower, UnmappedCodeLedger } from './hub-battery-fields.js'
-import {
-  captureSessionsSnapshot,
-  buildSessionsTabSections,
-  SESSIONS_SNAPSHOT_MAX_AGE_MS,
-  type SessionsSnapshot,
-} from './sessions-snapshot.js'
 
 const HUB_DISCOVERY_REFRESH_TIMEOUT_MS = 8000
 /**

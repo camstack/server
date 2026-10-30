@@ -1,4 +1,4 @@
-import type { ReolinkDetectionEvent, ReolinkDetectionBox } from '@apocaliss92/nodelink-js'
+import type { ReolinkDetectionBox, ReolinkDetectionEvent } from '@apocaliss92/nodelink-js'
 import type { CameraNativeDetection, CameraNativeDetectionPayload } from '@camstack/types'
 import { AI_CLASS_MAP } from './schema'
 

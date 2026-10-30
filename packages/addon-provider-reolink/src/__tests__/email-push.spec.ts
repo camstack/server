@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  mapInferredTypeToSimpleEvents,
-  DEFAULT_EMAIL_PUSH_PORT,
   DEFAULT_EMAIL_PUSH_DOMAIN,
+  DEFAULT_EMAIL_PUSH_PORT,
+  mapInferredTypeToSimpleEvents,
 } from '../email-push-shared'
 
 /**

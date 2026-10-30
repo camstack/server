@@ -23,25 +23,24 @@
  *    `fetch-failed` with the prose verbatim (D572), so every refusal this
  *    producer can name is named here.
  */
-import { resolveCameraUid } from '../clips/clip-addressing.js'
+
 import { chmod, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-
 import {
-  clipExportFailureOf,
-  VIDEOCLIPS_MAX_READ_BYTES,
   type ClipBytes,
   type ClipExportFailure,
+  clipExportFailureOf,
   type IVideoclipsProvider,
+  VIDEOCLIPS_MAX_READ_BYTES,
 } from '@camstack/types'
-
-import { CLIP_IDLE_WINDOW_MS, CLIP_IDLE_WINDOW_RETRY_MS } from '../clips/clip-truncation.js'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { resolveCameraUid } from '../clips/clip-addressing.js'
 import { createClipService } from '../clips/clip-service.js'
+import { CLIP_IDLE_WINDOW_MS, CLIP_IDLE_WINDOW_RETRY_MS } from '../clips/clip-truncation.js'
 import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
-import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
 
 const SINCE = Date.parse('2026-09-16T00:00:00Z')
 const UNTIL = Date.parse('2026-09-16T23:59:59Z')

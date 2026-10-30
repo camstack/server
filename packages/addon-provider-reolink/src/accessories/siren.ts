@@ -15,20 +15,7 @@
  * and firmware reverts without operator action.
  */
 
-import { z } from 'zod'
-import {
-  BaseDevice,
-  DeviceType,
-  DeviceFeature,
-  hydrateSchema,
-  switchCapability,
-  motionTriggerCapability,
-  createRuntimeStateBridge,
-  type SwitchStatus,
-  type MotionTriggerStatus,
-  type MotionTriggerRuntimeState,
-  sleep,
-} from '@camstack/types'
+import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
@@ -36,10 +23,23 @@ import type {
   InferNativeProvider,
   RawStateResult,
 } from '@camstack/types'
-import { reolinkAccessoryBaseSchema, type ReolinkAccessoryHost, AccessoryKind } from './base.js'
+import {
+  BaseDevice,
+  createRuntimeStateBridge,
+  DeviceFeature,
+  DeviceType,
+  hydrateSchema,
+  type MotionTriggerRuntimeState,
+  type MotionTriggerStatus,
+  motionTriggerCapability,
+  type SwitchStatus,
+  sleep,
+  switchCapability,
+} from '@camstack/types'
+import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
+import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 import { sirenPlayDuration } from './siren-play-duration.js'
-import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 
 /** Detection-class combinations the Reolink firmware accepts for the
  *  siren-on-motion `typeScheduleList`. Mirrors `motion-floodlight`

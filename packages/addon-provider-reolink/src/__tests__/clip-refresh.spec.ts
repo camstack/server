@@ -21,16 +21,16 @@
  * cameras and never bind the cap.
  */
 import { describe, expect, it, vi } from 'vitest'
+import type { ClipPrefetchOutcome } from '../clips/clip-prefetch.js'
 import {
   CLIP_CATALOG_REFRESH_MINUTES_DEFAULT,
   CLIP_CATALOG_REFRESH_OFF,
+  type ClipCatalogRefreshDeps,
   ClipCatalogRefreshScheduler,
+  type ClipRefreshTarget,
   resolveClipCatalogRefreshMinutes,
   resolveClipRefreshMode,
-  type ClipCatalogRefreshDeps,
-  type ClipRefreshTarget,
 } from '../clips/clip-refresh.js'
-import type { ClipPrefetchOutcome } from '../clips/clip-prefetch.js'
 import { createRecordingLogger } from './clip-test-logger.js'
 
 /**

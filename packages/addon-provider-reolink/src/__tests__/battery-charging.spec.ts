@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   deriveChargingSource,
-  reportsPowerSource,
   type PowerSourceFields,
+  reportsPowerSource,
 } from '../battery-charging.js'
 
 /**

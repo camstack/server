@@ -14,9 +14,10 @@
  * Equivalence tests encode the CURRENT behavior and must pass before
  * AND after the accessor swap.
  */
-import { describe, it, expect, afterEach } from 'vitest'
-import { EventCategory } from '@camstack/types'
+
 import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
+import { EventCategory } from '@camstack/types'
+import { afterEach, describe, expect, it } from 'vitest'
 import { ReolinkProviderAddon } from '../addon.js'
 
 function makeSilentLogger(): IScopedLogger {

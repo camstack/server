@@ -42,10 +42,10 @@ import type { AddressInfo } from 'node:net'
 import type { IScopedLogger } from '@camstack/types'
 
 import {
-  createClipStreamHandler,
   type ClipStreamHandlerDeps,
   type ClipStreamTarget,
   type ClipStreamTargetResolution,
+  createClipStreamHandler,
 } from './clip-data-plane.js'
 
 /** Long enough for the broker's dial→open hop (measured well under 100 ms

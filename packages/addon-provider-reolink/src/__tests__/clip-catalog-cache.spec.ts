@@ -11,9 +11,10 @@
  * flight (D224). It is answered from the slice, empty included, because
  * "unknown" is the truth about a camera nobody reached.
  */
-import { describe, expect, it, vi } from 'vitest'
-import { ClipCatalogCache, CLOSED_DAY_TTL_MS } from '../clips/clip-catalog-cache.js'
+
 import { OPERATOR_WRITTEN_STALE_MS } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
+import { CLOSED_DAY_TTL_MS, ClipCatalogCache } from '../clips/clip-catalog-cache.js'
 
 const DAY = '2026-09-16'
 const TODAY = '2026-09-20'

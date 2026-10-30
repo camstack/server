@@ -32,8 +32,9 @@
  * incarnation marker — a respawned runner restarts from zero and says so.
  * Reading NEVER drains.
  */
-import { FailureCounters } from '@camstack/types'
+
 import type { FailureCounterSample } from '@camstack/types'
+import { FailureCounters } from '@camstack/types'
 
 /** One `pushTalkAudio` call against an open talk session. */
 export const FAMILY_INTERCOM_TALK = 'intercom-talk'

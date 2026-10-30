@@ -53,16 +53,16 @@ import {
   CLIP_STREAM_MUX_FLUSH_TIMEOUT_MS,
   CLIP_STREAM_RATE_PROBE_ACCESS_UNITS,
   CLIP_STREAM_RATE_PROBE_MAX_ACCESS_UNITS,
+  type ClipStreamAudioCodec,
+  type ClipStreamRate,
   clipStreamContentTypeFor,
   createDrainGate,
   probeClipStreamRate,
-  type ClipStreamAudioCodec,
-  type ClipStreamRate,
 } from './clip-stream-mux.js'
 import {
   CLIP_IDLE_WINDOW_MS,
-  judgeClipDuration,
   type ClipDurationVerdict,
+  judgeClipDuration,
 } from './clip-truncation.js'
 import type {
   ClipBytesRefusalCode,

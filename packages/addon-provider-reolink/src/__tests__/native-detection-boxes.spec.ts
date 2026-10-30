@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import type { ReolinkDetectionEvent, ReolinkDetectionBox } from '@apocaliss92/nodelink-js'
+import type { ReolinkDetectionBox, ReolinkDetectionEvent } from '@apocaliss92/nodelink-js'
+import { describe, expect, it } from 'vitest'
 import {
   mapDetectionBox,
   mapDetectionEvent,

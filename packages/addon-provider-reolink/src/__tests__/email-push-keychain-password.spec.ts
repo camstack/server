@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 import { ReolinkEmailPushServer } from '../email-push-server.js'
 import { readEmailPushStore } from '../email-push-store.js'
 

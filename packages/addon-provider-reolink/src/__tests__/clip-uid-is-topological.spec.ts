@@ -24,8 +24,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createClipService } from '../clips/clip-service.js'
 import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
-import { createRecordingLogger } from './clip-test-logger.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
+import { createRecordingLogger } from './clip-test-logger.js'
 
 const SINCE = Date.parse('2026-09-16T00:00:00Z')
 const UNTIL = Date.parse('2026-09-16T23:59:59Z')

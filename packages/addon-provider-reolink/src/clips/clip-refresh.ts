@@ -60,10 +60,10 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 import {
-  decideClipPrefetch,
-  prefetchQuietMs,
   type ClipPrefetchMode,
   type ClipPrefetchOutcome,
+  decideClipPrefetch,
+  prefetchQuietMs,
 } from './clip-prefetch.js'
 
 /** The settings key, global default and per-device override (D562). */

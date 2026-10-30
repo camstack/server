@@ -11,23 +11,22 @@ import { EventEmitter } from 'node:events'
 import { readFileSync } from 'node:fs'
 import { PassThrough, Writable } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
+import { resolveCameraUid } from '../clips/clip-addressing.js'
+import type { ReolinkClipRow } from '../clips/clip-catalog.js'
 import { CLIP_FETCH_MAX_ATTEMPTS } from '../clips/clip-mux.js'
 import {
-  CLIP_STREAM_RATE_PROBE_ACCESS_UNITS,
-  CLIP_STREAM_RATE_PROBE_MAX_ACCESS_UNITS,
-} from '../clips/clip-stream-mux.js'
-import {
-  createClipStreamProducer,
   type ClipStreamAccessUnit,
   type ClipStreamDecoderFactory,
   type ClipStreamInput,
   type ClipStreamMuxProcess,
   type ClipStreamSink,
+  createClipStreamProducer,
 } from '../clips/clip-stream.js'
+import {
+  CLIP_STREAM_RATE_PROBE_ACCESS_UNITS,
+  CLIP_STREAM_RATE_PROBE_MAX_ACCESS_UNITS,
+} from '../clips/clip-stream-mux.js'
 import { CLIP_IDLE_WINDOW_MS } from '../clips/clip-truncation.js'
-import { resolveCameraUid } from '../clips/clip-addressing.js'
-import type { ReolinkClipRow } from '../clips/clip-catalog.js'
 import type { ClipDeviceRef, ReolinkClipApi } from '../clips/reolink-videoclips-provider.js'
 import { createRecordingLogger } from './clip-test-logger.js'
 

@@ -1,22 +1,22 @@
 import { randomBytes } from 'node:crypto'
 import {
   createEmailPushServer,
-  onEmailPushEvent,
+  type EmailPushEvent,
   type EmailPushServerConfig,
   type EmailPushServerInstance,
-  type EmailPushEvent,
+  onEmailPushEvent,
 } from '@apocaliss92/nodelink-js'
-import { isSecretMarkerLike } from '@camstack/types'
 import type { IScopedLogger } from '@camstack/types'
-import { ReolinkCamera } from './reolink-camera.js'
+import { isSecretMarkerLike } from '@camstack/types'
 import {
+  DEFAULT_EMAIL_PUSH_DOMAIN,
   DEFAULT_EMAIL_PUSH_MAX_MESSAGE_BYTES,
   DEFAULT_EMAIL_PUSH_PORT,
-  DEFAULT_EMAIL_PUSH_DOMAIN,
+  type EmailPushManagerSetupParams,
   listLanHosts,
   mapInferredTypeToSimpleEvents,
-  type EmailPushManagerSetupParams,
 } from './email-push-shared.js'
+import { ReolinkCamera } from './reolink-camera.js'
 
 /**
  * Manager-side SMTP intake for Reolink BATTERY cameras.

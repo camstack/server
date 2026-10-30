@@ -36,12 +36,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   ALARM_SEARCH_SUB_FILE_SET,
+  type AlarmVideoApi,
+  type AlarmVideoWindowLike,
   alarmJoinKey,
   dayNeedsAlarmLabels,
   joinAlarmLabels,
   readAlarmWindows,
-  type AlarmVideoApi,
-  type AlarmVideoWindowLike,
 } from '../clips/clip-alarm-labels.js'
 import type { ReolinkClipRow } from '../clips/clip-catalog.js'
 
