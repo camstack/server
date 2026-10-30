@@ -26,6 +26,7 @@ function kind(over: Partial<StorageKind> & Pick<StorageKind, 'owner' | 'kind'>):
     database: 'settings',
     class: 'config',
     state: 'declared',
+    declaredThisBoot: true,
     rows: 1,
     bytesEstimate: 10,
     writeTrigger: 'operator',
