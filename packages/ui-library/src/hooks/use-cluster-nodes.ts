@@ -63,6 +63,7 @@ export interface ClusterTopologyResult {
 export function useClusterTopology(): ClusterTopologyResult {
   const {
     data: bootstrapTopology,
+    dataUpdatedAt,
     isLoading,
     isError,
     // Events are the source of truth — the query exists to give a late joiner
@@ -74,7 +75,18 @@ export function useClusterTopology(): ClusterTopologyResult {
     timestamp: number
   }>('cluster.topology-snapshot')
 
-  const nodes = snapshot?.nodes ?? (bootstrapTopology as readonly TopologyNode[] | undefined)
+  // When THIS client received the snapshot, on the same clock as
+  // `dataUpdatedAt`. A snapshot used to win unconditionally, so a rename (which
+  // invalidates the query and refetches a fresher answer, while no snapshot is
+  // pushed until the next heartbeat) kept showing the old name until a reload.
+  // The newer of the two answers wins; the next pushed snapshot is newer again.
+  const snapshotReceivedAt = useMemo(() => (snapshot === null ? 0 : Date.now()), [snapshot])
+  const queryIsNewer = bootstrapTopology !== undefined && dataUpdatedAt > snapshotReceivedAt
+
+  const nodes =
+    snapshot !== null && !queryIsNewer
+      ? snapshot.nodes
+      : (bootstrapTopology as readonly TopologyNode[] | undefined)
   return { nodes, isLoading, isError }
 }
 
