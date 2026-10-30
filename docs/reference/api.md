@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**193 capabilities · 1436 methods.**
+**193 capabilities · 1443 methods.**
 
 ## Method index
 
@@ -36,6 +36,8 @@
 | `addonSettings.getGlobalSettings` | query | protected | addon-settings |
 | `addonSettings.updateGlobalSettings` | mutation | admin | addon-settings |
 | `addonSettings.getIntegrationSettings` | query | protected | addon-settings |
+| `addonSettings.getDeclaredSettingsKeys` | query | admin | addon-settings |
+| `addonSettings.unsetStoredSettingsKeys` | mutation | admin | addon-settings |
 | `addonSettings.getDeviceSettings` | query | protected | addon-settings |
 | `addonSettings.updateDeviceSettings` | mutation | admin | addon-settings |
 | `addonWidgets.listWidgets` | query | protected | addon-widgets |
@@ -532,6 +534,7 @@
 | `keychain.resolve` | query | admin | keychain |
 | `keychain.delete` | mutation | admin | keychain |
 | `keychain.deleteDeviceScope` | mutation | admin | keychain |
+| `keychain.releaseRecordRefs` | mutation | admin | keychain |
 | `keychain.listMeta` | query | admin | keychain |
 | `keychain.getState` | query | admin | keychain |
 | `keychainAdmin.status` | query | admin | keychain-admin |
@@ -1212,6 +1215,10 @@
 | `storageAdmin.listTables` | query | admin | storage-admin |
 | `storageAdmin.listKinds` | query | admin | storage-admin |
 | `storageAdmin.readRecords` | query | admin | storage-admin |
+| `storageAdmin.staleDataReport` | query | admin | storage-admin |
+| `storageAdmin.scanStaleData` | mutation | admin | storage-admin |
+| `storageAdmin.dropOrphanedKind` | mutation | admin | storage-admin |
+| `storageAdmin.unsetStaleSettingsKey` | mutation | admin | storage-admin |
 | `storageEvictable.getEvictableUsage` | query | admin | storage-evictable |
 | `storageEvictable.evict` | mutation | admin | storage-evictable |
 | `storageMigration.plan` | query | admin | storage-migration |
@@ -1548,6 +1555,8 @@
 | getGlobalSettings | `addonSettings.getGlobalSettings` | query | protected | `{ addonId: string; nodeId?: string; overlay?: Record<string, unknown>; cap?: string }` | `SettingsSchemaWithValuesSchema \| null` |
 | updateGlobalSettings | `addonSettings.updateGlobalSettings` | mutation | admin | `{ addonId: string; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | getIntegrationSettings | `addonSettings.getIntegrationSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
+| getDeclaredSettingsKeys | `addonSettings.getDeclaredSettingsKeys` | query | admin | `{ addonId: string; nodeId?: string }` | `{ keys: string[] } \| null` |
+| unsetStoredSettingsKeys | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | `{ addonId: string; nodeId?: string; keys: string[] }` | `{ removed: string[]; refused: ({ key: string; reason: string })[]; secretsCleared: number }` |
 | getDeviceSettings | `addonSettings.getDeviceSettings` | query | protected | `{ addonId: string; deviceId: number; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
 | updateDeviceSettings | `addonSettings.updateDeviceSettings` | mutation | admin | `{ addonId: string; deviceId: number; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 
@@ -2901,6 +2910,7 @@
 | resolve | `keychain.resolve` | query | admin | `{ refs: string[] }` | `KeychainResolveResultSchema` |
 | delete | `keychain.delete` | mutation | admin | `{ refs: string[] }` | `{ deleted: number }` |
 | deleteDeviceScope | `keychain.deleteDeviceScope` | mutation | admin | `{ deviceId: number }` | `{ refs: string[] }` |
+| releaseRecordRefs | `keychain.releaseRecordRefs` | mutation | admin | `{ refs: string[]; onBehalfOf: string }` | `{ released: number }` |
 | listMeta | `keychain.listMeta` | query | admin | `{}` | `KeychainSecretMetaSchema[]` |
 | getState | `keychain.getState` | query | admin | `{}` | `KeychainStateSchema` |
 
@@ -4326,7 +4336,7 @@
 
 ### `storage-admin` → `storageAdmin.*`
 
-- **Source:** `packages/types/src/capabilities/storage-admin.cap.ts:56`
+- **Source:** `packages/types/src/capabilities/storage-admin.cap.ts:102`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IStorageAdminProvider`
@@ -4336,6 +4346,10 @@
 | listTables | `storageAdmin.listTables` | query | admin | `{ ownerPrefix?: string }` | `{ tables: StorageTableSchema[] }` |
 | listKinds | `storageAdmin.listKinds` | query | admin | `{ owner?: string; counts?: boolean }` | `{ kinds: StorageKindSchema[] }` |
 | readRecords | `storageAdmin.readRecords` | query | admin | `{ kind: string; deviceId?: number; atFrom?: number; atTo?: number; where?: RecordWhereSchema; order?: "at" \| "id"; desc?: boolean; limit?: number = 100; cursor?: string; owner: string }` | `RecordQueryResultSchema` |
+| staleDataReport | `storageAdmin.staleDataReport` | query | admin | `{}` | `StaleDataReportSchema` |
+| scanStaleData | `storageAdmin.scanStaleData` | mutation | admin | `{}` | `StaleDataReportSchema` |
+| dropOrphanedKind | `storageAdmin.dropOrphanedKind` | mutation | admin | `{ owner: string; kind: string }` | `{ deleted: number; secretsReleased: number }` |
+| unsetStaleSettingsKey | `storageAdmin.unsetStaleSettingsKey` | mutation | admin | `{ addonId: string; key: string }` | `{ removed: boolean; secretsCleared: number }` |
 
 ### `storage-evictable` → `storageEvictable.*`
 

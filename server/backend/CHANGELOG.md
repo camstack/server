@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration settings accept an owner-only skipRestart so an addon can save its own settings without a respawn
 - An updated addon shows its new manifest (icon, name, capabilities) without restarting the hub
 - A staged addon update that fails to swap now fails its update task instead of reporting it done
+- Hub: settings dispatch can ask an addon which keys it still declares and remove a stale one
 
 ## [1.2.702] - 2026-10-30
 

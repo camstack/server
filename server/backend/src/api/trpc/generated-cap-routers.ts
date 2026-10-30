@@ -611,6 +611,22 @@ export function createCapRouter_addonSettings(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getIntegrationSettings(input as any)
       }),
+    getDeclaredSettingsKeys: adminProcedure
+      .input(addonSettingsCapability.methods.getDeclaredSettingsKeys.input.loose())
+      .output(addonSettingsCapability.methods.getDeclaredSettingsKeys.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getDeclaredSettingsKeys(input as any)
+      }),
+    unsetStoredSettingsKeys: adminProcedure
+      .input(addonSettingsCapability.methods.unsetStoredSettingsKeys.input.loose())
+      .output(addonSettingsCapability.methods.unsetStoredSettingsKeys.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.unsetStoredSettingsKeys(input as any)
+      }),
     getDeviceSettings: protectedProcedure
       .input(addonSettingsCapability.methods.getDeviceSettings.input.loose())
       .output(addonSettingsCapability.methods.getDeviceSettings.output)
@@ -8141,6 +8157,19 @@ export function createCapRouter_keychain(
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteDeviceScope(methodInput as any)
+      }),
+    releaseRecordRefs: adminProcedure
+      .input(keychainCapability.methods.releaseRecordRefs.input.loose())
+      .output(keychainCapability.methods.releaseRecordRefs.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.releaseRecordRefs(methodInput as any)
       }),
     listMeta: adminProcedure
       .input(keychainCapability.methods.listMeta.input.loose())
@@ -17120,6 +17149,62 @@ export function createCapRouter_storageAdmin(
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readRecords(methodInput as any)
+      }),
+    staleDataReport: adminProcedure
+      .input(storageAdminCapability.methods.staleDataReport.input.loose())
+      .output(storageAdminCapability.methods.staleDataReport.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'storage-admin',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.staleDataReport(methodInput as any)
+      }),
+    scanStaleData: adminProcedure
+      .input(storageAdminCapability.methods.scanStaleData.input.loose())
+      .output(storageAdminCapability.methods.scanStaleData.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'storage-admin',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.scanStaleData(methodInput as any)
+      }),
+    dropOrphanedKind: adminProcedure
+      .input(storageAdminCapability.methods.dropOrphanedKind.input.loose())
+      .output(storageAdminCapability.methods.dropOrphanedKind.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'storage-admin',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.dropOrphanedKind(methodInput as any)
+      }),
+    unsetStaleSettingsKey: adminProcedure
+      .input(storageAdminCapability.methods.unsetStaleSettingsKey.input.loose())
+      .output(storageAdminCapability.methods.unsetStaleSettingsKey.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'storage-admin',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.unsetStaleSettingsKey(methodInput as any)
       }),
   })
 }

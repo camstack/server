@@ -134,6 +134,9 @@ export class KeychainAddon extends BaseAddon {
       deleteDeviceScope: async (input) => ({
         refs: await service.deleteDeviceScope(callerOf(input), input.deviceId),
       }),
+      releaseRecordRefs: async (input) => ({
+        released: await service.releaseRecordRefs(callerOf(input), input.refs, input.onBehalfOf),
+      }),
       listMeta: (input) => service.listMeta(callerOf(input)),
       getState: async () => service.getState(),
     }

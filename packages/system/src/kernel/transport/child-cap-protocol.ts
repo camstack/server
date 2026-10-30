@@ -264,6 +264,8 @@ export type AddonSettingsMethod =
   | 'getIntegrationSettings'
   | 'getDeviceSettings'
   | 'updateDeviceSettings'
+  | 'getDeclaredSettingsKeys'
+  | 'unsetStoredSettingsKeys'
 
 /**
  * Parent → child: invoke an ADDON-LEVEL method on a loaded addon (not a cap).

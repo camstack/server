@@ -119,6 +119,17 @@ export const keychainCapability = {
       z.object({ refs: z.array(z.string()).readonly() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /**
+     * Release the values rows of a DROPPED record kind held, whatever the kind's
+     * owner (stale-data audit). Reserved to `sqlite-settings`, the engine that
+     * just deleted the rows: only refs scoped `row/records:<kind>/...` are
+     * accepted, and the audit names the operator it acted for. Answers a count.
+     */
+    releaseRecordRefs: method(
+      z.object({ refs: RefListSchema, onBehalfOf: z.string().min(1) }),
+      z.object({ released: z.number().int() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     /** The caller's own refs, metadata only. */
     listMeta: method(z.object({}), z.array(KeychainSecretMetaSchema).readonly(), {
       auth: 'admin',

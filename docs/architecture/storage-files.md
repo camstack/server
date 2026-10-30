@@ -260,6 +260,17 @@ read of an unwritten scoped table answers absent. Modules:
 - **`pipeline-analytics:ops-log`** gets one retention row per sweep, per-device counts in
   `detail` (see `post-analysis.md`).
 
+## Stale-data audit
+
+The hub finds data an addon left behind (D979). `storage-admin` serves
+`staleDataReport`, `scanStaleData`, `dropOrphanedKind` and `unsetStaleSettingsKey`;
+the audit lives in `sqlite-storage/stale-data/`. A scan runs at `SystemAddonsReady`,
+every 24 h and on demand, reads only, and keeps its report in memory. The engine
+remembers which kinds an owner declared since it started (`declaredThisBoot`);
+a settings key is judged against `BaseAddon.getDeclaredSettingsKeys`, answered by
+the running addon. Verdicts: `orphaned` / `stale` (proof), `unknown` (never
+touched). Deletion re-checks the verdict and names the operator.
+
 ## Traps
 
 - **A worker needs its built entry.** `dist/file-host-worker.js` is a top-level

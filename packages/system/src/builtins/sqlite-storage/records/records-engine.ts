@@ -35,7 +35,13 @@ import {
   assertTransactScope,
 } from '@camstack/types'
 import { declareKind, ensureRecordsSchema, type KindRow, loadKinds } from './records-catalog.js'
-import type { OwnedInput, RecordsEngineOps, RecordsOutput } from './records-engine-types.js'
+import type {
+  DropKindResult,
+  KindRef,
+  OwnedInput,
+  RecordsEngineOps,
+  RecordsOutput,
+} from './records-engine-types.js'
 import {
   planAggregate,
   planCount,
@@ -52,7 +58,7 @@ import {
   toView,
   validateHeader,
 } from './records-rows.js'
-import { INDEX_KIND_AT, INDEX_KIND_DEVICE_AT, kindClause } from './records-sql.js'
+import { INDEX_KIND_AT, INDEX_KIND_DEVICE_AT, indexName, kindClause } from './records-sql.js'
 
 /** The row bounds of a kind whose retention is a ring, else null. */
 function ringBounds(
@@ -189,13 +195,18 @@ export class RecordsEngine implements RecordsEngineOps {
       .run(k.kindId, top + 1)
   }
 
+  /** `owner\0kind` declared since this engine started — what the stale-data audit compares against. */
+  private readonly declaredNow = new Set<string>()
+
   private schemaReady: boolean
 
   // ── catalog ────────────────────────────────────────────────────────────
 
   private kindOf(owner: string, kind: string): KindRow {
     const row = this.kinds.get(keyOf(owner, kind))
-    if (row === undefined || row.state !== 'declared') {
+    // An orphaned kind stays usable: the audit only SUSPECTS it, and a wrong
+    // suspicion must not break a running owner. Only an operator drop refuses.
+    if (row === undefined || row.state === 'dropped') {
       throw new UnknownRecordKindError(`"${owner}" declared no kind "${kind}"`)
     }
     return row
@@ -217,6 +228,7 @@ export class RecordsEngine implements RecordsEngineOps {
       const prior = this.kinds.get(keyOf(input.owner, kind))
       const outcome = declareKind(this.db, input.owner, kind, declaration, prior)
       this.kinds.set(keyOf(input.owner, kind), outcome.row)
+      this.declaredNow.add(keyOf(input.owner, kind))
       out[kind] = outcome.result
       if (outcome.result.state !== 'unchanged') {
         this.options.logger.info('records: kind reconciled', {
@@ -836,6 +848,7 @@ export class RecordsEngine implements RecordsEngineOps {
         database: k.database,
         class: k.declaration.class,
         state: k.state,
+        declaredThisBoot: this.declaredNow.has(keyOf(k.owner, k.kind)),
         rows,
         bytesEstimate,
         writeTrigger: k.declaration.writeTrigger,
@@ -845,6 +858,57 @@ export class RecordsEngine implements RecordsEngineOps {
       })
     }
     return out
+  }
+
+  /** Flag kinds the audit found unused. Only a `declared` kind moves; the rest keep their state. */
+  async markKindsOrphaned(input: {
+    readonly kinds: readonly KindRef[]
+  }): Promise<{ readonly marked: number }> {
+    let marked = 0
+    const stamp = this.db.prepare(
+      "UPDATE _record_kinds SET state = 'orphaned', orphaned_at = ? WHERE kind_id = ? AND state = 'declared'",
+    )
+    for (const target of input.kinds) {
+      const row = this.kinds.get(keyOf(target.owner, target.kind))
+      if (row === undefined || row.state !== 'declared') continue
+      if (this.declaredNow.has(keyOf(target.owner, target.kind))) continue
+      stamp.run(this.now(), row.kindId)
+      this.kinds.set(keyOf(target.owner, target.kind), { ...row, state: 'orphaned' })
+      marked += 1
+    }
+    return { marked }
+  }
+
+  /**
+   * Operator drop of an ORPHANED kind: its rows, its indexes and its sequence go,
+   * the catalog row stays as `dropped` (a later declaration revives it). Refuses
+   * a kind that is not orphaned or that an owner declared this boot.
+   */
+  async dropKind(input: KindRef): Promise<DropKindResult> {
+    const k = this.kinds.get(keyOf(input.owner, input.kind))
+    if (k === undefined || k.state !== 'orphaned') {
+      throw new UnknownRecordKindError(`"${input.owner}" kind "${input.kind}" is not orphaned`)
+    }
+    if (this.declaredNow.has(keyOf(input.owner, input.kind))) {
+      throw new UnknownRecordKindError(`"${input.owner}" declared "${input.kind}" this boot`)
+    }
+    const planned = {
+      sql: `SELECT rid FROM records INDEXED BY ${INDEX_KIND_AT} WHERE ${kindClause(k.kindId)} LIMIT ${RECORD_DELETE_BATCH}`,
+      params: [],
+    }
+    const result = await this.deleteBatched(k, planned)
+    this.db.transaction(() => {
+      for (const index of k.declaration.indexes) {
+        this.db.exec(`DROP INDEX IF EXISTS "${indexName(k.kindId, index.name)}"`)
+      }
+      this.db.prepare('DELETE FROM _record_sequences WHERE kind_id = ?').run(k.kindId)
+      this.db.prepare("UPDATE _record_kinds SET state = 'dropped' WHERE kind_id = ?").run(k.kindId)
+    })()
+    this.kinds.set(keyOf(input.owner, input.kind), { ...k, state: 'dropped' })
+    this.options.logger.info('records: kind dropped', {
+      meta: { owner: input.owner, kind: input.kind, deleted: result.deleted },
+    })
+    return result
   }
 
   private countRows(k: KindRow): number {

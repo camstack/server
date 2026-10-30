@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An editable-array config field can now hold keychain secrets per row
 - A discovered child device can name the gateway it sits behind (parentStableId)
 - The vendor login proxy can keep a sign-in's vendor cookies server-side (serverCookieJar)
+- Hub: a stale-data audit finds record kinds and settings keys an addon no longer declares, read-only, with an operator-triggered cleanup
 
 ## [1.2.451] - 2026-10-30
 

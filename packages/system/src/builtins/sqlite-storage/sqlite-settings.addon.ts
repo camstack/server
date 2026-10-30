@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import type { DataStoreDatabase, ProviderRegistration } from '@camstack/types'
+import { EventCategory, type DataStoreDatabase, type ProviderRegistration } from '@camstack/types'
 import {
   BaseAddon,
   bareAddonId,
@@ -25,6 +25,8 @@ import { DatabaseSnapshotProvider } from './database-snapshot-provider.js'
 import { PlacementRouter } from './placement-router.js'
 import { RecordsProvider } from './records/records-provider.js'
 import { StorageAdminProvider } from './storage-admin-provider.js'
+import { StaleDataAudit } from './stale-data/stale-data-audit.js'
+import { createStaleDataPorts } from './stale-data/stale-data-ports.js'
 import { purgeRetiredSettingsKeys, retiredKeyStoreOf } from './retired-settings-keys.js'
 import type { SqliteSettingsBackend } from './sqlite-settings-backend.js'
 import type { SqliteVecVectorIndex } from './vector-index-vec.js'
@@ -61,11 +63,16 @@ const DATABASE_FILE_NAMES: Readonly<Record<DataStoreDatabase, string>> = {
  * file's worker thread (sqlite-vec loaded there). The capability is what keeps
  * the backend swappable; the package never was.
  */
+/** The stale-data audit runs again every 24 h after its boot scan. */
+const STALE_DATA_SCAN_INTERVAL_MS = 24 * 60 * 60_000
+
 export class SqliteSettingsAddon extends BaseAddon {
   private settingsFile: InlineOwnedFile | null = null
   private router: PlacementRouter | null = null
   private sweepTimer: NodeJS.Timeout | null = null
   private sweepStart: NodeJS.Timeout | null = null
+  private staleTimer: NodeJS.Timeout | null = null
+  private unsubscribeAddonsReady: (() => void) | null = null
 
   constructor() {
     super({})
@@ -163,6 +170,15 @@ export class SqliteSettingsAddon extends BaseAddon {
     const records = new RecordsProvider(router, this.ctx.logger.child('Records'))
     await records.init()
     this.startRecordsSweep(records)
+    const audit = new StaleDataAudit(
+      createStaleDataPorts({
+        api: this.ctx.api,
+        backend: settings.backend,
+        records,
+        logger: this.ctx.logger.child('StaleData'),
+      }),
+    )
+    this.startStaleDataAudit(audit)
 
     this.ctx.logger.info('Initialized successfully')
     return [
@@ -179,6 +195,7 @@ export class SqliteSettingsAddon extends BaseAddon {
           settings.backend,
           this.ctx.logger.child('StorageAdmin'),
           records,
+          audit,
           async () => router.openFiles().filter((file) => file.databaseId !== 'settings'),
         ),
       },
@@ -244,7 +261,27 @@ export class SqliteSettingsAddon extends BaseAddon {
     this.sweepStart.unref()
   }
 
+  /**
+   * The stale-data scan (D905): once when the registry reports the addons
+   * started (the existing event - no readiness timer, D3), then every 24 h.
+   * Detection only; a failed scan is logged by the audit and the next retries.
+   */
+  private startStaleDataAudit(audit: StaleDataAudit): void {
+    this.unsubscribeAddonsReady = this.ctx.eventBus.subscribe(
+      { category: EventCategory.SystemAddonsReady },
+      () => {
+        void audit.scan('boot')
+      },
+    )
+    this.staleTimer = setInterval(() => void audit.scan('interval'), STALE_DATA_SCAN_INTERVAL_MS)
+    this.staleTimer.unref()
+  }
+
   protected async onShutdown(): Promise<void> {
+    this.unsubscribeAddonsReady?.()
+    this.unsubscribeAddonsReady = null
+    if (this.staleTimer !== null) clearInterval(this.staleTimer)
+    this.staleTimer = null
     if (this.sweepStart !== null) clearTimeout(this.sweepStart)
     if (this.sweepTimer !== null) clearInterval(this.sweepTimer)
     this.sweepStart = null

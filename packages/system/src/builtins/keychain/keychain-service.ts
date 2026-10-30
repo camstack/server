@@ -33,6 +33,7 @@ import {
   type KnownEventCategory,
   normalizeSecretOwner,
   parseSecretRef,
+  RECORD_SECRET_COLLECTION_PREFIX,
   type SystemHeldSecretName,
 } from '@camstack/types'
 import { defaultKeyFilePath, type KeySourceCandidate, writeDefaultKeyFile } from './key-sources.js'
@@ -58,6 +59,9 @@ import {
 
 /** The one caller that may purge a whole device scope across owners (D864). */
 export const DEVICE_SCOPE_PURGER = 'device-manager'
+
+/** The one caller that may release the secrets of a dropped record kind: the engine that deleted the rows. */
+export const RECORD_SECRET_RELEASER = 'sqlite-settings'
 
 /** `lastReadAt` is written at most this often per ref (hub I/O is the bottleneck). */
 export const LAST_READ_GRANULARITY_MS: number = 60 * 60_000
@@ -321,6 +325,50 @@ export class KeychainService {
   }
 
   // ── Owner rule ──────────────────────────────────────────────────────────
+
+  /**
+   * Delete the values rows of a dropped record kind held. The engine is the
+   * authority that the rows are gone; the usage check cannot verify a record
+   * row scope, so it is not asked. Only `row/records:*` refs are accepted.
+   *
+   * @returns how many values were removed.
+   */
+  async releaseRecordRefs(
+    caller: string | null,
+    refs: readonly string[],
+    onBehalfOf: string,
+  ): Promise<number> {
+    if (caller === null || normalizeSecretOwner(caller) !== RECORD_SECRET_RELEASER) {
+      throw new KeychainForbiddenError('records', caller)
+    }
+    const accepted: string[] = []
+    for (const ref of new Set(refs)) {
+      const parts = parseSecretRef(ref)
+      if (
+        parts === null ||
+        parts.scope.kind !== 'row' ||
+        !parts.scope.collection.startsWith(RECORD_SECRET_COLLECTION_PREFIX)
+      ) {
+        throw new KeychainForbiddenError(ref, caller)
+      }
+      accepted.push(ref)
+    }
+    if (accepted.length === 0) return 0
+    const existing = await this.deps.repo.getSecrets(accepted)
+    const present = accepted.filter((ref) => existing.has(ref))
+    if (present.length === 0) return 0
+    const deleted = await this.deps.repo.deleteSecrets(present)
+    for (const ref of present) {
+      await this.audit('delete', `user:${onBehalfOf}`, ref, 'record-kind-dropped')
+      this.deps.events.emit({
+        ref,
+        owner: parseSecretRef(ref)?.owner ?? '',
+        version: null,
+        change: 'delete',
+      })
+    }
+    return deleted
+  }
 
   /** May `caller` touch values owned by `owner`? */
   owns(caller: string | null, owner: string): boolean {

@@ -121,6 +121,24 @@ export const addonSettingsCapability = {
       SettingsSchemaWithValuesSchema.nullable(),
     ),
 
+    // ── Stale-data audit ──────────────────────────────────────────────
+    // The addon answers in ITS OWN process which stored global-settings keys it
+    // still declares; the hub keeps no copy. `null` ⇒ the addon did not answer.
+    getDeclaredSettingsKeys: method(
+      z.object({ addonId: z.string(), nodeId: z.string().optional() }),
+      z.object({ keys: z.array(z.string()) }).nullable(),
+      { auth: 'admin' },
+    ),
+    unsetStoredSettingsKeys: method(
+      z.object({ addonId: z.string(), nodeId: z.string().optional(), keys: z.array(z.string()) }),
+      z.object({
+        removed: z.array(z.string()),
+        refused: z.array(z.object({ key: z.string(), reason: z.string() })),
+        secretsCleared: z.number(),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
     // ── Device-level settings ─────────────────────────────────────────
     getDeviceSettings: method(
       z.object({ addonId: z.string(), deviceId: z.number(), nodeId: z.string().optional() }),

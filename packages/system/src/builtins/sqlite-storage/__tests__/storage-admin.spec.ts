@@ -13,6 +13,7 @@ import Database from 'better-sqlite3'
 import type { IScopedLogger } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteSettingsBackend } from '../sqlite-settings-backend.js'
+import { StaleDataAudit } from '../stale-data/stale-data-audit.js'
 import { StorageAdminProvider } from '../storage-admin-provider.js'
 
 const NO_RECORDS = {
@@ -27,6 +28,20 @@ function silentLogger(): IScopedLogger {
   return logger as unknown as IScopedLogger
 }
 
+/** The audit is not what these tests are about; its ports answer nothing. */
+const NO_AUDIT = new StaleDataAudit({
+  listAddons: async () => [],
+  listKinds: async () => [],
+  markOrphaned: async () => {},
+  dropKind: async () => ({ deleted: 0, secretRefs: [] }),
+  storedSettings: async () => ({}),
+  declaredKeys: async () => null,
+  unsetKeys: async () => ({ removed: [], refused: [], secretsCleared: 0 }),
+  releaseSecrets: async () => 0,
+  logger: silentLogger(),
+  now: () => 0,
+})
+
 describe('storage-admin and reads that never create a table', () => {
   let dir: string
   let backend: SqliteSettingsBackend
@@ -36,7 +51,7 @@ describe('storage-admin and reads that never create a table', () => {
     dir = await fs.mkdtemp(path.join(os.tmpdir(), 'storage-admin-'))
     backend = new SqliteSettingsBackend(path.join(dir, 'camstack.db'))
     await backend.initialize()
-    admin = new StorageAdminProvider(backend, silentLogger(), NO_RECORDS)
+    admin = new StorageAdminProvider(backend, silentLogger(), NO_RECORDS, NO_AUDIT)
   })
   afterEach(async () => {
     await backend.shutdown()
@@ -103,7 +118,13 @@ describe('storage-admin and reads that never create a table', () => {
       },
       stop: async () => {},
     }
-    const merged = new StorageAdminProvider(backend, silentLogger(), NO_RECORDS, async () => [peer])
+    const merged = new StorageAdminProvider(
+      backend,
+      silentLogger(),
+      NO_RECORDS,
+      NO_AUDIT,
+      async () => [peer],
+    )
     const { tables } = await merged.listTables({})
     expect(tables.find((t) => t.name === 'pipeline-analytics:motion-events')).toMatchObject({
       rows: 1,
@@ -130,7 +151,7 @@ describe('storage-admin and reads that never create a table', () => {
 
     backend = new SqliteSettingsBackend(dbPath)
     await backend.initialize()
-    admin = new StorageAdminProvider(backend, silentLogger(), NO_RECORDS)
+    admin = new StorageAdminProvider(backend, silentLogger(), NO_RECORDS, NO_AUDIT)
 
     const { tables } = await admin.listTables({})
     expect(tables.find((t) => t.name === 'countable:table')).toMatchObject({ rows: 1 })

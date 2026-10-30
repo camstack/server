@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1436 method paths across 193 capabilities.
+ * Coverage: 1443 method paths across 193 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -77,9 +77,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'addons.startJob': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addons.uninstallPackage': { capName: "addons", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'addons.updatePackage': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'addonSettings.getDeclaredSettingsKeys': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.getDeviceSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.getGlobalSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.getIntegrationSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'addonSettings.unsetStoredSettingsKeys': { capName: "addon-settings", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addonSettings.updateDeviceSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addonSettings.updateGlobalSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addonWidgets.listWidgets': { capName: "addon-widgets", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -542,6 +544,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'keychain.getState': { capName: "keychain", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'keychain.listMeta': { capName: "keychain", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'keychain.put': { capName: "keychain", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'keychain.releaseRecordRefs': { capName: "keychain", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'keychain.resolve': { capName: "keychain", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'keychainAdmin.acknowledgeReset': { capName: "keychain-admin", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'keychainAdmin.deleteOrphans': { capName: "keychain-admin", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
@@ -1218,9 +1221,13 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'storage.upsertLocation': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.write': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.writeChunk': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'storageAdmin.dropOrphanedKind': { capName: "storage-admin", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'storageAdmin.listKinds': { capName: "storage-admin", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storageAdmin.listTables': { capName: "storage-admin", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storageAdmin.readRecords': { capName: "storage-admin", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'storageAdmin.scanStaleData': { capName: "storage-admin", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'storageAdmin.staleDataReport': { capName: "storage-admin", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'storageAdmin.unsetStaleSettingsKey': { capName: "storage-admin", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storageEvictable.evict': { capName: "storage-evictable", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storageEvictable.getEvictableUsage': { capName: "storage-evictable", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storageMigration.cancel': { capName: "storage-migration", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

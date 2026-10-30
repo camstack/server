@@ -185,6 +185,12 @@ export const useAddonSettingsUpdateGlobalSettings: typeof trpc.addonSettings.upd
 /** Generated alias around `trpc.addonSettings.getIntegrationSettings.useQuery`. */
 export const useAddonSettingsGetIntegrationSettings: typeof trpc.addonSettings.getIntegrationSettings.useQuery = trpc.addonSettings.getIntegrationSettings.useQuery
 
+/** Generated alias around `trpc.addonSettings.getDeclaredSettingsKeys.useQuery`. */
+export const useAddonSettingsGetDeclaredSettingsKeys: typeof trpc.addonSettings.getDeclaredSettingsKeys.useQuery = trpc.addonSettings.getDeclaredSettingsKeys.useQuery
+
+/** Generated alias around `trpc.addonSettings.unsetStoredSettingsKeys.useMutation`. */
+export const useAddonSettingsUnsetStoredSettingsKeys: typeof trpc.addonSettings.unsetStoredSettingsKeys.useMutation = trpc.addonSettings.unsetStoredSettingsKeys.useMutation
+
 /** Generated alias around `trpc.addonSettings.getDeviceSettings.useQuery`. */
 export const useAddonSettingsGetDeviceSettings: typeof trpc.addonSettings.getDeviceSettings.useQuery = trpc.addonSettings.getDeviceSettings.useQuery
 

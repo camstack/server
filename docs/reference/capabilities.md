@@ -132,7 +132,7 @@ Singleton or collection providers, addressed without a device.
 | `addon-pages` | 1 | — | — | — | — | `addon-pages-aggregator` |
 | `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `model-studio` `osd-manager` `training` |
 | `addon-routes` | 2 | — | — | — | ✓ | `auth-oidc` `export-alexa` `export-google` `google-services` `import-alexa` `notifiers` `provider-homeassistant` `homeassistant-export` |
-| `addon-settings` | 5 | — | — | — | — | — |
+| `addon-settings` | 7 | — | — | — | — | — |
 | `addon-widgets` | 1 | — | — | — | — | `addon-widgets-aggregator` |
 | `addon-widgets-source` | 1 | — | — | — | ✓ | `auth-webauthn` `stream-broker` `pipeline-orchestrator` `pipeline-analytics` |
 | `addons` | 35 | — | — | — | — | — |
@@ -166,7 +166,7 @@ Singleton or collection providers, addressed without a device.
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
 | `integrations` | 10 | — | — | — | — | — |
-| `keychain` | 6 | — | — | — | ✓ | `keychain` |
+| `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
 | `llm` | 22 | — | — | — | — | `ai` |
 | `llm-runtime` | 11 | — | — | — | ✓ | `ai` |
@@ -206,7 +206,7 @@ Singleton or collection providers, addressed without a device.
 | `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |
 | `sso-bridge` | 2 | — | — | — | ✓ | — |
 | `storage` | 22 | — | — | — | — | `storage-orchestrator` |
-| `storage-admin` | 3 | — | — | — | ✓ | `sqlite-settings` |
+| `storage-admin` | 7 | — | — | — | ✓ | `sqlite-settings` |
 | `storage-evictable` | 2 | — | — | — | ✓ | `recorder` |
 | `storage-migration` | 12 | — | — | — | — | `storage-orchestrator` |
 | `storage-occupancy` | 1 | — | — | — | ✓ | `recorder` `pipeline-analytics` |

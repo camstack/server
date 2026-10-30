@@ -4,7 +4,7 @@
 
 # Decisions
 
-941 architecture decision records. One file per decision, never
+942 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -956,6 +956,7 @@ that rots.
 | D976 | [A physical bridge box is a Gateway device type, not a Hub, a Container or the parent of its products](adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md) | ✅ accepted | 2026-10-30 |
 | D977 | [LAN discovery is declared by providers and run once by the local-network engine](adr-0977-lan-discovery-is-declared-by-providers-and-run-once-by-the-local-network-engine.md) | ✅ accepted | 2026-10-30 |
 | D978 | [ESPHome is one integration holding several boards, each board secret keyed by its row id](adr-0978-esphome-is-one-integration-holding-several-boards-each-secret-keyed-by-board-id.md) | ✅ accepted (supersedes D952 (one broker per board)) | 2026-10-30 |
+| D979 | [Stale data is detected read-only and deleted only by an operator call that re-checks its verdict](adr-0979-stale-data-is-detected-read-only-and-deleted-only-by-an-operator-call-that-re-checks-its-verdict.md) | ✅ accepted | 2026-10-30 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

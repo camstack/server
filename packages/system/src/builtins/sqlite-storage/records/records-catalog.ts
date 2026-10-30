@@ -169,6 +169,11 @@ export function declareKind(
         db.prepare(
           'UPDATE _record_kinds SET declaration = ? WHERE kind_id = ? AND declaration <> ?',
         ).run(JSON.stringify(declaration), kindId, JSON.stringify(declaration))
+        // A declaration is proof the owner uses the kind: a kind the stale-data
+        // audit flagged (or an operator dropped) is live again.
+        db.prepare(
+          "UPDATE _record_kinds SET state = 'declared', orphaned_at = NULL WHERE kind_id = ? AND state <> 'declared'",
+        ).run(kindId)
         state = 'unchanged'
       } else {
         db.prepare(

@@ -35,7 +35,13 @@ describe('the engine with no events/history declaration', () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'sqlite-layout-neutral-'))
     tmpDirs.push(dir)
     const addon = new SqliteSettingsAddon()
-    const ctx = { id: 'sqlite-settings', dataDir: dir, logger: makeLogger() }
+    const ctx = {
+      id: 'sqlite-settings',
+      dataDir: dir,
+      logger: makeLogger(),
+      // The stale-data audit subscribes to the registry's readiness event at init.
+      eventBus: { subscribe: () => () => undefined },
+    }
     const result = await addon.initialize(ctx as unknown as AddonContext)
     const registrations =
       result && 'providers' in result && result.providers ? result.providers : []

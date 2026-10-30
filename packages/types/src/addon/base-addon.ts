@@ -28,6 +28,16 @@ import {
 } from './secret-settings-view.js'
 import { isJsonEqual } from './secret-write-back.js'
 
+export interface DeclaredSettingsKeys {
+  readonly keys: readonly string[]
+}
+
+export interface UnsetSettingsKeysOutcome {
+  readonly removed: readonly string[]
+  readonly refused: ReadonlyArray<{ readonly key: string; readonly reason: string }>
+  readonly secretsCleared: number
+}
+
 /** First retry of a secret the keychain could not serve; doubles to {@link SECRET_RETRY_MAX_MS}. */
 const SECRET_RETRY_FIRST_MS = 5_000
 const SECRET_RETRY_MAX_MS = 5 * 60_000
@@ -938,6 +948,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * a warning and falls back rather than crashing boot.
    */
   protected state<T>(key: string, schema: ZodType<T>, fallback: T): DurableState<T> {
+    this._declaredStateKeys.add(key)
     return createDurableState<T>({
       key,
       schema,
@@ -953,6 +964,85 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
           { meta: { addonId: this._ctx?.id, key: k, error: String(e) } },
         ),
     })
+  }
+
+  /** Durable-state keys this process registered through {@link state}. */
+  private readonly _declaredStateKeys = new Set<string>()
+
+  /**
+   * Stale-data audit: every global-settings key this addon still declares —
+   * constructor defaults, settings-schema fields (layout containers included),
+   * durable-state keys and the root of each `secretStatePaths` entry. Answered
+   * here, in the addon's own process, so the hub keeps no copy of it.
+   */
+  async getDeclaredSettingsKeys(): Promise<DeclaredSettingsKeys> {
+    return { keys: [...this.declaredKeySet()].toSorted() }
+  }
+
+  private declaredKeySet(): Set<string> {
+    const keys = new Set<string>(Object.keys(this.defaults))
+    const schema = this.globalSettingsSchema()
+    if (schema) {
+      for (const section of schema.sections) {
+        for (const key of collectFieldKeys(section.fields)) keys.add(key)
+      }
+    }
+    for (const key of this._declaredStateKeys) keys.add(key)
+    for (const path of this.secretStatePaths) {
+      const root = path.split(/[.[]/, 1)[0]
+      if (root) keys.add(root)
+    }
+    return keys
+  }
+
+  /**
+   * Stale-data audit: remove stored global-settings keys the addon no longer
+   * declares, and clear the keychain values their markers held — except a value
+   * a surviving key still points at. A declared or absent key is refused.
+   */
+  async unsetStoredSettingsKeys(keys: readonly string[]): Promise<UnsetSettingsKeysOutcome> {
+    const settings = this._ctx?.settings
+    const raw = this.rawSettings()
+    if (!settings || !raw) {
+      return {
+        removed: [],
+        refused: keys.map((key) => ({ key, reason: 'no settings store' })),
+        secretsCleared: 0,
+      }
+    }
+    let stored: Record<string, unknown>
+    try {
+      stored = await raw.readAddonStore()
+    } catch (error) {
+      const reason = `store unreadable: ${error instanceof Error ? error.message : 'unknown'}`
+      return { removed: [], refused: keys.map((key) => ({ key, reason })), secretsCleared: 0 }
+    }
+    const declared = this.declaredKeySet()
+    const removed: string[] = []
+    const refused: Array<{ key: string; reason: string }> = []
+    for (const key of keys) {
+      const base = key.split('@', 1)[0] ?? key
+      if (declared.has(base)) refused.push({ key, reason: 'still declared by the addon' })
+      else if (!(key in stored)) refused.push({ key, reason: 'not stored' })
+      else removed.push(key)
+    }
+    if (removed.length === 0) return { removed, refused, secretsCleared: 0 }
+
+    const kept = new Set<string>()
+    const held = new Set<string>()
+    for (const [key, value] of Object.entries(stored)) {
+      const target = removed.includes(key) ? held : kept
+      for (const ref of collectSecretMarkerRefs(value)) target.add(ref)
+    }
+    const refsToClear = [...held].filter((ref) => !kept.has(ref))
+
+    const patch: Record<string, unknown> = {}
+    for (const key of removed) patch[key] = undefined
+    await settings.writeAddonStore(patch)
+    const secretsCleared =
+      refsToClear.length > 0 && this._ctx?.secrets ? await this._ctx.secrets.delete(refsToClear) : 0
+    await this.resolveConfig()
+    return { removed, refused, secretsCleared }
   }
 
   /** Per-device variant of {@link state}, backed by the per-device store. */
@@ -1262,6 +1352,22 @@ function dropPerNodeFields(fields: readonly ConfigField[]): ConfigField[] {
     kept.push(field)
   }
   return kept
+}
+
+function collectFieldKeys(fields: readonly ConfigField[]): readonly string[] {
+  const collected: string[] = []
+  for (const field of fields) {
+    if (field.type === 'group') {
+      collected.push(...collectFieldKeys(field.fields))
+      continue
+    }
+    if (field.type === 'sub-tabs') {
+      for (const tab of field.tabs) collected.push(...collectFieldKeys(tab.fields))
+      continue
+    }
+    if ('key' in field && typeof field.key === 'string') collected.push(field.key)
+  }
+  return collected
 }
 
 function collectPerNodeFieldKeys(fields: readonly ConfigField[]): readonly string[] {

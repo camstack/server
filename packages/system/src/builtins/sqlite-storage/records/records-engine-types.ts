@@ -11,6 +11,17 @@ export type OwnedInput<M extends keyof IRecordsProvider> = Parameters<IRecordsPr
   readonly owner: string
 }
 
+/** A record kind, named by its owner. */
+export interface KindRef {
+  readonly owner: string
+  readonly kind: string
+}
+
+export interface DropKindResult {
+  readonly deleted: number
+  readonly secretRefs: readonly string[]
+}
+
 type OwnedOps = {
   readonly [M in keyof IRecordsProvider]: (
     input: OwnedInput<M>,
@@ -23,6 +34,12 @@ export interface RecordsEngineOps extends OwnedOps {
     readonly owner?: string | undefined
     readonly counts?: boolean | undefined
   }): Promise<readonly StorageKind[]>
+  /** Stale-data audit: flag declared kinds nobody declared this boot as orphaned. */
+  markKindsOrphaned(input: { readonly kinds: readonly KindRef[] }): Promise<{
+    readonly marked: number
+  }>
+  /** Operator drop of an orphaned kind: rows, indexes, sequence; returns the secret refs the rows held. */
+  dropKind(input: KindRef): Promise<DropKindResult>
   /** Delete rows past `expires_at`, in batches. */
   sweepExpired(input: { readonly batch?: number }): Promise<{ readonly deleted: number }>
 }
@@ -50,6 +67,8 @@ export const RECORDS_OPS: readonly RecordsOp[] = [
   'deleteDevice',
   'allocateId',
   'listKinds',
+  'markKindsOrphaned',
+  'dropKind',
   'sweepExpired',
 ]
 

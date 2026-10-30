@@ -29,6 +29,7 @@ import {
   UnknownRecordKindError,
 } from '@camstack/types'
 import type { OwnedSqliteFile } from '../owned-sqlite-file.js'
+import type { DropKindResult, KindRef } from './records-engine-types.js'
 import type { PlacementRouter } from '../placement-router.js'
 
 /** The caller the transport stamped, or a refusal. */
@@ -303,6 +304,22 @@ export class RecordsProvider implements IRecordsProvider, AdminRecords {
       kinds.push(...(await file.records('listKinds', input)))
     }
     return { kinds }
+  }
+
+  /** Stale-data audit: flag the kinds nobody declared this boot, in whichever file holds them. */
+  async markKindsOrphaned(kinds: readonly KindRef[]): Promise<void> {
+    for (const file of this.router.openFiles()) {
+      if (file.databaseId === 'history') continue
+      await file.records('markKindsOrphaned', { kinds })
+    }
+  }
+
+  /** Operator drop of an orphaned kind; the placement forgets it. Returns the secret refs its rows held. */
+  async dropKind(ref: KindRef): Promise<DropKindResult> {
+    const file = await this.fileOf(ref.owner, ref.kind)
+    const result = await file.records('dropKind', ref)
+    this.placement.delete(keyOf(ref.owner, ref.kind))
+    return result
   }
 
   async readRecords(

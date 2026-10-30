@@ -46,6 +46,8 @@ describe('isolated engine initialize does not wait on the door', () => {
       id: 'sqlite-settings',
       dataDir: dir,
       logger: makeLogger(),
+      // The stale-data audit subscribes to the registry's readiness event at init.
+      eventBus: { subscribe: () => () => undefined },
       settings: {
         readAddonStore: async () => {
           doorCalls += 1

@@ -1026,6 +1026,18 @@ export interface ICamstackAddon {
    */
   getIntegrationSettings?(nodeId?: string): Promise<ConfigUISchemaWithValues | null>
 
+  /**
+   * Stale-data audit: the global-settings keys this addon still declares,
+   * answered in its own process. See `BaseAddon.getDeclaredSettingsKeys`.
+   */
+  getDeclaredSettingsKeys?(): Promise<{ readonly keys: readonly string[] }>
+  /** Stale-data audit: remove stored keys the addon no longer declares. */
+  unsetStoredSettingsKeys?(keys: readonly string[]): Promise<{
+    readonly removed: readonly string[]
+    readonly refused: ReadonlyArray<{ readonly key: string; readonly reason: string }>
+    readonly secretsCleared: number
+  }>
+
   /** Level 2 — per-device settings (schema + values). Appears in
    *  Device Overrides. */
   getDeviceSettings?(deviceId: number): Promise<ConfigUISchemaWithValues>

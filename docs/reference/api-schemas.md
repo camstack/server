@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**997 shared schemas.**
+**1000 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6315,6 +6315,30 @@ Enum: `"operator-set" \| "derived-from-ip"`
 - `browserBinding?`: `string`
 - `app?`: `{ codeChallenge: string; state: string; purpose: "new-session" \| "step-up"; redirect: string; lang?: "en" \| "it" }`
 
+### `StaleDataReportSchema`
+
+- `scannedAt`: `number \| null`
+- `scanning`: `boolean`
+- `trigger`: `"boot" \| "interval" \| "manual" \| null`
+- `kinds`: `StaleKindFindingSchema[]`
+- `settingsKeys`: `StaleSettingsKeyFindingSchema[]`
+- `unknown`: `({ subject: string; reason: string })[]`
+
+### `StaleKindFindingSchema`
+
+- `owner`: `string`
+- `kind`: `string`
+- `verdict`: `"orphaned" \| "unknown"`
+- `reason`: `string`
+- `rows`: `number \| null`
+- `protected`: `boolean`
+
+### `StaleSettingsKeyFindingSchema`
+
+- `addonId`: `string`
+- `key`: `string`
+- `secretRefs`: `string[]`
+
 ### `StartEmbeddedInputSchema`
 
 - `port?`: `number = 1883`
@@ -6374,6 +6398,7 @@ Enum: `"operator-set" \| "derived-from-ip"`
 - `database`: `"settings" \| "events"`
 - `class`: `string`
 - `state`: `"declared" \| "orphaned" \| "dropped"`
+- `declaredThisBoot`: `boolean`
 - `rows`: `number \| null`
 - `bytesEstimate`: `number \| null`
 - `writeTrigger`: `string`

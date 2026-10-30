@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Network scan resends the multicast query three times over about 4.5 s and logs hits per subnet, so Wi-Fi boards that miss one query are found
+- Hub: a stale-data audit finds record kinds and settings keys an addon no longer declares, read-only, with an operator-triggered cleanup
 
 ## [1.2.524] - 2026-10-30
 

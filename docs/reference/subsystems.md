@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7518 source files · 1221 file(s) in no subsystem.**
+**31 subsystems · 7520 source files · 1221 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -25,7 +25,7 @@ commits. A generated page may not.
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 105 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +78 more, 13 ADRs | 2026-10-27 | ✅ |
 | Transport and cross-node routing | 104 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +55 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 320 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +227 more, 51 ADRs | 2026-10-26 | ✅ |
+| Capability system and codegen | 320 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +228 more, 51 ADRs | 2026-10-26 | ✅ |
 | Device model and the provider contract | 109 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +56 more, 6 ADRs | 2026-10-26 | ✅ |
 | Device providers (per vendor) | 687 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +81 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
@@ -38,7 +38,7 @@ commits. A generated page may not.
 | Stream broker, WebRTC and live delivery | 167 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
 | Audio analysis and audio delivery | 17 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
-| Storage, retention and backup | 120 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, `design/2026-08-03-db-remediation-plan.md` _(covers)_, +57 more, 11 ADRs | 2026-10-22 | ⚠️ |
+| Storage, retention and backup | 122 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, `design/2026-08-03-db-remediation-plan.md` _(covers)_, +58 more, 11 ADRs | 2026-10-22 | ⚠️ |
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +21 more, 5 ADRs | 2026-10-27 | ✅ |
 | Auth, scopes and method tiers | 96 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +28 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 162 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +103 more, 18 ADRs | 2026-10-27 | ⚠️ |
@@ -198,7 +198,7 @@ Every durable byte — the SQLite collections, where media lives, what prunes it
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/sqlite-storage/**`, `packages/system/src/builtins/storage-orchestrator/**`, `packages/system/src/builtins/backup-orchestrator/**`, `packages/system/src/builtins/system-backup/**`, `packages/system/src/storage/**`, `packages/system/src/kernel/storage-location-registry.ts`, `packages/types/src/storage/**`, `packages/addon-remote-storage/**`, `packages/addon-pipeline/src/durable/**`, `server/backend/src/core/storage/**`
-- **Files**: 120 (104 claimed by some document)
+- **Files**: 122 (106 claimed by some document)
 - **Uncovered**: `packages/addon-remote-storage/src` (6), `server/backend/src/core/storage` (3), `packages/addon-remote-storage/src/providers/s3` (2), `packages/addon-remote-storage/src/providers/sftp` (2), `packages/addon-remote-storage/src/providers/webdav` (2), `packages/addon-pipeline/src/durable` (1)
 
 ### ✅ Secrets and the keychain

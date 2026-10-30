@@ -80,6 +80,7 @@ interface SettingsArgs {
   readonly cap?: string
   readonly patch?: Record<string, unknown>
   readonly deviceId?: number
+  readonly keys?: readonly string[]
   /** The node the UI is asking about — lets an addon serving a cluster-central
    *  per-node config scope to that node rather than assuming its own. */
   readonly nodeId?: string
@@ -139,6 +140,17 @@ async function dispatchSettings(
       }
       await addon.updateDeviceSettings(args.deviceId, args.patch ?? {})
       return { success: true as const }
+    case 'getDeclaredSettingsKeys':
+      return typeof addon.getDeclaredSettingsKeys === 'function'
+        ? await addon.getDeclaredSettingsKeys()
+        : null
+    case 'unsetStoredSettingsKeys':
+      if (typeof addon.unsetStoredSettingsKeys !== 'function') {
+        throw new Error(
+          `child-addon-call: addon "${addonId}" does not implement unsetStoredSettingsKeys`,
+        )
+      }
+      return addon.unsetStoredSettingsKeys(args.keys ?? [])
     default: {
       const _exhaustive: never = method
       throw new Error(`child-addon-call: unhandled settings method "${String(_exhaustive)}"`)

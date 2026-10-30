@@ -334,6 +334,12 @@ export {
 export { CALLER_STAMPED_CAPABILITIES, withoutCallerStamp } from './caller-stamp.js'
 export {
   type IStorageAdminProvider,
+  type StaleDataReport,
+  StaleDataReportSchema,
+  type StaleKindFinding,
+  StaleKindFindingSchema,
+  type StaleSettingsKeyFinding,
+  StaleSettingsKeyFindingSchema,
   type StorageKind,
   StorageKindSchema,
   type StorageTable,

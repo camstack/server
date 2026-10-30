@@ -8,6 +8,7 @@
  * on its own Moleculer-only path here, which is why forked hub-local addons'
  * panels went empty after the UDS migration; that path is gone.
  */
+import { z } from 'zod'
 import type { ICamstackAddon, ConfigUISchemaWithValues } from '@camstack/types'
 import type { IAddonSettingsProvider } from '@camstack/types'
 import type { AddonSettingsMethod } from '@camstack/system'
@@ -45,6 +46,19 @@ interface DeviceUpdateInput {
   readonly nodeId?: string
   readonly patch: Record<string, unknown>
 }
+
+interface UnsetKeysInput {
+  readonly addonId: string
+  readonly nodeId?: string
+  readonly keys: readonly string[]
+}
+
+const DeclaredKeysAnswer = z.object({ keys: z.array(z.string()) })
+const UnsetKeysAnswer = z.object({
+  removed: z.array(z.string()),
+  refused: z.array(z.object({ key: z.string(), reason: z.string() })),
+  secretsCleared: z.number(),
+})
 
 interface SettingsUpdateResult {
   readonly success: true
@@ -204,6 +218,49 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
         { ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
         input.nodeId,
       )
+    },
+
+    async getDeclaredSettingsKeys(input: AddonIdInput) {
+      try {
+        if (gateway.isInProcess(input.addonId, input.nodeId)) {
+          const addon = getAddon(input.addonId)
+          if (!addon || typeof addon.getDeclaredSettingsKeys !== 'function') return null
+          const answer = await addon.getDeclaredSettingsKeys()
+          return { keys: [...answer.keys] }
+        }
+        const raw = await gateway.callForked(
+          input.addonId,
+          { target: 'settings', method: 'getDeclaredSettingsKeys', args: {} },
+          input.nodeId,
+        )
+        const parsed = DeclaredKeysAnswer.safeParse(raw)
+        return parsed.success ? parsed.data : null
+      } catch (err) {
+        // An addon that does not answer is `unknown` to the audit, never stale.
+        if (isServiceNotFoundError(err)) return null
+        throw err
+      }
+    },
+
+    async unsetStoredSettingsKeys(input: UnsetKeysInput) {
+      if (gateway.isInProcess(input.addonId, input.nodeId)) {
+        const addon = getAddon(input.addonId)
+        if (!addon || typeof addon.unsetStoredSettingsKeys !== 'function') {
+          throw new Error(`Addon "${input.addonId}" does not implement unsetStoredSettingsKeys`)
+        }
+        const outcome = await addon.unsetStoredSettingsKeys(input.keys)
+        return {
+          removed: [...outcome.removed],
+          refused: outcome.refused.map((r) => ({ key: r.key, reason: r.reason })),
+          secretsCleared: outcome.secretsCleared,
+        }
+      }
+      const raw = await gateway.callForked(
+        input.addonId,
+        { target: 'settings', method: 'unsetStoredSettingsKeys', args: { keys: input.keys } },
+        input.nodeId,
+      )
+      return UnsetKeysAnswer.parse(raw)
     },
 
     async getDeviceSettings(input: DeviceGetInput) {
