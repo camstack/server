@@ -1,88 +1,46 @@
+import { DeviceType, type DiscoveryHit } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
-  browseShcControllers,
-  mdnsPtrQuery,
   proposeShcControllers,
   resolveShcPairingHost,
-  SHC_SETUP_INTEGRATION_KEY,
+  SHC_DISCOVERY_MODES,
   shcDiscoveryCandidates,
   shcDiscoverySummary,
-  shcHostsFromDnsMessage,
+  shcHostsFromHits,
 } from '../shc-controller-discovery.js'
 
-function encodeName(name: string): Buffer {
-  const parts = name.split('.').filter((part) => part.length > 0)
-  return Buffer.concat([
-    ...parts.map((part) => Buffer.concat([Buffer.from([part.length]), Buffer.from(part)])),
-    Buffer.from([0]),
-  ])
+function mdnsHit(instance: string, host: string, serviceHost: string): DiscoveryHit {
+  return {
+    modeIndex: 0,
+    host,
+    port: 8446,
+    mdns: { instance, host: serviceHost, port: 8446, txt: {} },
+  }
 }
 
-function record(name: string, type: number, data: Buffer): Buffer {
-  const head = Buffer.alloc(10)
-  head.writeUInt16BE(type, 0)
-  head.writeUInt16BE(1, 2)
-  head.writeUInt32BE(120, 4)
-  head.writeUInt16BE(data.length, 8)
-  return Buffer.concat([encodeName(name), head, data])
-}
-
-function message(answers: readonly Buffer[]): Buffer {
-  const header = Buffer.alloc(12)
-  header.writeUInt16BE(answers.length, 6)
-  return Buffer.concat([header, ...answers])
-}
-
-describe('shcHostsFromDnsMessage', () => {
-  it('keeps a Bosch SHC answer and drops other names', () => {
-    const ptr = 12
-    const a = 1
-    const packet = message([
-      record('_http._tcp.local', ptr, encodeName('Bosch SHC._http._tcp.local')),
-      record('_http._tcp.local', ptr, encodeName('Other Printer._http._tcp.local')),
-      record('Bosch SHC._http._tcp.local', a, Buffer.from([192, 168, 1, 20])),
-      record('Other Printer._http._tcp.local', a, Buffer.from([192, 168, 1, 21])),
-    ])
-    expect(shcHostsFromDnsMessage(packet)).toEqual([
-      { host: '192.168.1.20', name: 'Bosch SHC', id: '192.168.1.20' },
+describe('declared modes', () => {
+  it('browses _http._tcp and filters on the controller instance name', () => {
+    expect(SHC_DISCOVERY_MODES).toEqual([
+      { kind: 'mdns', serviceType: '_http._tcp', instancePattern: '^Bosch SHC' },
     ])
   })
 })
 
-describe('browseShcControllers', () => {
-  it('returns the hosts from the exchanged packets', async () => {
-    const packet = message([
-      record('_http._tcp.local', 12, encodeName('Bosch SHC._http._tcp.local')),
-      record('Bosch SHC._http._tcp.local', 1, Buffer.from([10, 0, 0, 8])),
-    ])
-    const hosts = await browseShcControllers(async () => [packet])
-    expect(hosts).toEqual([{ host: '10.0.0.8', name: 'Bosch SHC', id: '10.0.0.8' }])
-  })
-})
-
-function srvTarget(target: string, port = 8443): Buffer {
-  const head = Buffer.alloc(6)
-  head.writeUInt16BE(0, 0)
-  head.writeUInt16BE(0, 2)
-  head.writeUInt16BE(port, 4)
-  return Buffer.concat([head, encodeName(target)])
-}
-
-describe('shcHostsFromDnsMessage proposal', () => {
-  it('maps an mDNS answer to host, name and a stable id', () => {
-    const packet = message([
-      record('_http._tcp.local', 12, encodeName('Bosch SHC [lab]._http._tcp.local')),
-      record('Bosch SHC [lab]._http._tcp.local', 33, srvTarget('shc0123.local')),
-      record('shc0123.local', 1, Buffer.from([192, 0, 2, 20])),
-    ])
-    expect(shcHostsFromDnsMessage(packet)).toEqual([
-      { host: '192.0.2.20', name: 'Bosch SHC [lab]', id: 'shc0123' },
-    ])
+describe('shcHostsFromHits', () => {
+  it('keeps a Bosch SHC hit, keyed on its SRV host, and drops other names', () => {
+    expect(
+      shcHostsFromHits([
+        mdnsHit('Bosch SHC [lab]._http._tcp.local', '192.0.2.20', 'shc0123.local'),
+        mdnsHit('Office Printer._http._tcp.local', '192.0.2.4', 'printer.local'),
+        { modeIndex: 0, host: '192.0.2.5', port: 80 },
+      ]),
+    ).toEqual([{ host: '192.0.2.20', name: 'Bosch SHC [lab]', id: 'shc0123' }])
   })
 
-  it('asks for a unicast reply so the probe does not bind port 5353', () => {
-    const query = mdnsPtrQuery('_http._tcp.local')
-    expect(query.readUInt16BE(query.length - 2)).toBe(0x8001)
+  it('falls back to the address when no SRV host is known', () => {
+    expect(shcHostsFromHits([mdnsHit('Bosch SHC', '192.0.2.21', '')])).toEqual([
+      { host: '192.0.2.21', name: 'Bosch SHC', id: '192.0.2.21' },
+    ])
   })
 })
 
@@ -110,11 +68,9 @@ describe('shcDiscoveryCandidates', () => {
     ])
     expect(candidate?.stableId).toBe('bosch-shc:shc0123')
     expect(candidate?.suggestedName).toBe('Bosch SHC [lab]')
-    expect(candidate?.prefilledConfig).toEqual({
-      host: '192.0.2.20',
-      [SHC_SETUP_INTEGRATION_KEY]: true,
-    })
-    expect(candidate?.prefilledConfig).not.toHaveProperty('port')
+    expect(candidate?.prefilledConfig).toEqual({ host: '192.0.2.20' })
+    expect(candidate?.setupIntegration).toBe(true)
+    expect(candidate?.type).toBe(DeviceType.Hub)
   })
 })
 
