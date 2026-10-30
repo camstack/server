@@ -142,7 +142,7 @@ Singleton or collection providers, addressed without a device.
 | `audio-codec` | 11 | — | — | — | — | `decoder-nodeav` |
 | `auth-provider` | 4 | — | — | — | ✓ | `auth-oidc` `local-auth` |
 | `backup` | 20 | — | — | — | — | `backup-orchestrator` |
-| `broker` | 1 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-esphome` `provider-homeassistant` `provider-homematic` |
+| `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-esphome` `provider-homeassistant` `provider-homematic` |
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
@@ -194,7 +194,7 @@ Singleton or collection providers, addressed without a device.
 | `pipeline-orchestrator` | 64 | — | — | — | — | `pipeline-orchestrator` |
 | `pipeline-runner` | 18 | — | — | — | — | `pipeline-runner` |
 | `plate-gallery` | 17 | — | — | — | — | `pipeline-analytics` |
-| `platform-probe` | 0 | — | — | — | — | `platform-probe` |
+| `platform-probe` | 5 | — | — | — | — | `platform-probe` |
 | `record-entries` | 4 | — | — | — | — | `record-entries` |
 | `recording-archive` | 34 | ✓ | — | — | — | `recorder` |
 | `recording-export` | 7 | — | — | — | — | `recorder` |
