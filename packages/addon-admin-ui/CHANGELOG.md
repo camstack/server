@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automation editor: the unit save boundary now comes from the shared prepareRecipeUnits, behaviour unchanged
+
 ## [1.2.524] - 2026-10-30
 
 ### Changed

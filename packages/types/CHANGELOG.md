@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- prepareRecipeUnits: the automation save boundary that stamps a unit on a bare quantity number, now shared by the admin editor and the public MCP
+
 ## [1.2.449] - 2026-10-30
 
 ### Changed

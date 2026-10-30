@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**220 units · 7461 source files · 208 units claimed by at least one document (7423 files).**
+**220 units · 7462 source files · 208 units claimed by at least one document (7424 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -104,6 +104,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-google-services` | 13 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
 | `packages/mcp-develop` | 13 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md` | — |
 | `packages/node-root` | 13 | `kernel` | `architecture/update-and-release.md`, `design/2026-09-10-wrapper-identity-and-update.md` _(covers)_, `decisions/adr-0187-an-update-notification-names-one-node-and-both-versions.md`, +8 more, 4 ADRs | 2026-10-27 |
+| `packages/types/src/automation` | 13 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +3 more | — |
 | `packages/addon-cloudflare` | 12 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, `decisions/adr-0860-an-install-this-addon-offer-is-answered-from-the-published-manifests-and-a-temporary-tunnel-address-is-never-an-automatic-hub-address.md` | — |
 | `packages/addon-model-studio` | 12 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, +1 more | — |
 | `packages/addon-model-studio/src/tabs` | 12 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0746-installed-lists-files-per-model-and-format-and-in-use-means-resident-in-a-pool.md` | — |
@@ -111,7 +112,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-unraid` | 12 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-velux` | 12 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-training/src/providers` | 12 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0828-training-provider-entries-are-edited-via-updateentry-not-settings-array.md`, `decisions/adr-0829-training-provider-entry-forms-use-configschema-like-notification-targets.md`, +2 more | 2026-10-14 |
-| `packages/types/src/automation` | 12 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +3 more | — |
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
 | `packages/types/src/records` | 12 | — | `architecture/records.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0881-records-are-the-third-storage-api-and-a-secret-field-is-a-feature-of-the-kind.md`, +1 more | 2026-10-22 |
 | `packages/ui-library/src/contexts` | 12 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-10-26 |

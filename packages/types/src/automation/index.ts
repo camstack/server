@@ -115,3 +115,5 @@ export {
   normalizeRecipeUnits,
 } from './normalize-units.js'
 export type { UnitResolver, UnitWarning, UnitsNormalized } from './normalize-units.js'
+export { prepareRecipeUnits } from './prepare-units.js'
+export type { PreparedRecipe } from './prepare-units.js'

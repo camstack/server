@@ -691,8 +691,14 @@ export {
   normalizeActionUnits,
   normalizeConditionUnits,
   normalizeRecipeUnits,
+  prepareRecipeUnits,
 } from './automation/index.js'
-export type { UnitResolver, UnitWarning, UnitsNormalized } from './automation/index.js'
+export type {
+  PreparedRecipe,
+  UnitResolver,
+  UnitWarning,
+  UnitsNormalized,
+} from './automation/index.js'
 export * from './automation/action.js'
 export * from './automation/step-runner.js'
 export * from './automation/export-entities.js'
