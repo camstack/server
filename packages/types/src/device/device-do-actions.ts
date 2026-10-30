@@ -212,6 +212,8 @@ export const DEVICE_TYPE_DO_CAPS: Record<DeviceType, readonly string[]> = {
   // A plug-built washer or dryer has no command cap. Running is a reading.
   [DeviceType.Washer]: [],
   [DeviceType.Dryer]: [],
+  // A gateway is a bridge box, not an actuation target (its reboot is a page action).
+  [DeviceType.Gateway]: [],
 }
 
 /**

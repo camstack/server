@@ -323,6 +323,7 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   // Weather inline = condition icon + temperature readout (readout, natural width).
   [DeviceType.Weather]: false,
   [DeviceType.Container]: false,
+  [DeviceType.Gateway]: false,
   // Image inline = small thumbnail / placeholder (readout, natural width).
   [DeviceType.Image]: false,
   // Pet feeder inline = food/battery readout + a natural-width Feed button.

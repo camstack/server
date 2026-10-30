@@ -42,6 +42,7 @@ import {
   Plug,
   Power,
   Radar,
+  Router,
   RefreshCw,
   ScrollText,
   ShieldAlert,
@@ -273,6 +274,11 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     icon: Wind,
     labelKey: 'uiLibrary.deviceMeta.type.dryer',
     labelFallback: 'Dryer',
+  },
+  [DeviceType.Gateway]: {
+    icon: Router,
+    labelKey: 'uiLibrary.deviceMeta.type.gateway',
+    labelFallback: 'Gateway',
   },
 }
 

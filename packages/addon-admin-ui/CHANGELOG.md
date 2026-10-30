@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Gateway device type label translations
+
 ## [1.2.525] - 2026-10-30
 
 ### Changed

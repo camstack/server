@@ -21,7 +21,7 @@ export const rebootCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Switch],
+  deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Switch, DeviceType.Gateway],
   methods: {
     reboot: method(
       z.object({ deviceId: z.number().int().nonnegative() }),

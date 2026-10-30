@@ -112,6 +112,8 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   // are readings on the device, not an inline control.
   [DeviceType.Washer]: 'dummy',
   [DeviceType.Dryer]: 'dummy',
+  // The bridge box has no inline control: its facts and actions live on its page.
+  [DeviceType.Gateway]: 'dummy',
 }
 
 const DEVICE_TYPE_VALUES = new Set<string>(Object.values(DeviceType))

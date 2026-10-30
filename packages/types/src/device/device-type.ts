@@ -105,6 +105,12 @@ export enum DeviceType {
   Washer = 'washer',
   /** Tumble dryer. Same plug-built running surface as {@link Washer}. */
   Dryer = 'dryer',
+  /** The physical bridge box of a vendor ecosystem (Velux KLF-200, and later
+   *  other radio-to-IP bridges). It carries the box's own facts (firmware,
+   *  address, connection state) and the actions the box really supports
+   *  (`reboot`, `device-admin-link`). Products are NOT its children — they are
+   *  adopted beside it — and its connection settings stay on the integration. */
+  Gateway = 'gateway',
 }
 
 export enum DeviceFeature {

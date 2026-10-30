@@ -8658,7 +8658,8 @@
         "dishwasher": "Lavastoviglie",
         "washer": "Lavatrice",
         "dryer": "Asciugatrice",
-        "petFountain": "Fontana per animali"
+        "petFountain": "Fontana per animali",
+        "gateway": "Gateway"
       },
       "role": {
         "siren": "Sirena",

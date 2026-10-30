@@ -8636,7 +8636,8 @@
         "dishwasher": "Dishwasher",
         "washer": "Washing machine",
         "dryer": "Dryer",
-        "petFountain": "Pet fountain"
+        "petFountain": "Pet fountain",
+        "gateway": "Gateway"
       },
       "role": {
         "siren": "Siren",
