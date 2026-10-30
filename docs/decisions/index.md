@@ -4,7 +4,7 @@
 
 # Decisions
 
-938 architecture decision records. One file per decision, never
+939 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -953,6 +953,7 @@ that rots.
 | D973 | [Remote layout components are data; the UI draws them from closed vocabularies](adr-0973-remote-layout-components-are-data-the-ui-draws-from-closed-vocabularies.md) | ✅ accepted | 2026-10-29 |
 | D974 | [The public MCP ships inside the CLI as toolsets, and every write is preview then confirm](adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md) | ✅ accepted | 2026-10-30 |
 | D975 | [The Home Assistant integration stays a custom repository, and its docs change only after the core Marketplace has shipped and a migration was tested](adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md) | ✅ accepted | 2026-10-30 |
+| D976 | [A physical bridge box is a Gateway device type, not a Hub, a Container or the parent of its products](adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md) | ✅ accepted | 2026-10-30 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

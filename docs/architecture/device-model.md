@@ -730,6 +730,15 @@ is in
 the split between settings and data is
 [D865](../decisions/adr-0865-a-deleted-device-is-a-recorded-fact-settings-are-cleared-centrally-and-device-data-is-removed-by-a-hook-driven-by-tombstones.md).
 
+## A bridge box is a Gateway (D976)
+
+`DeviceType.Gateway` is the physical box that bridges a radio or serial protocol to the LAN (the Velux KLF-200).
+It is not `Hub` (what one account exposes) and not `Container` (the functions of one piece of equipment), and its
+products are not its children: they are siblings of the same integration. A Gateway has no capability of its own;
+it offers `reboot`, `update` and `device-admin-link` when the box supports them, and nothing else. The Velux
+addon is the reference: one integration (`account`, `instanceMode: multiple`) discovers one Gateway, a window
+Container (cover plus rain sensor) per window with a rain sensor, and plain Covers.
+
 ## How a device is named
 
 A device has one stored name. What a screen paints is a different string, from one function (`formatDeviceName` in `@camstack/ui-library`, mirrored in the viewer at `camstack/src/data/device-name.ts`).
