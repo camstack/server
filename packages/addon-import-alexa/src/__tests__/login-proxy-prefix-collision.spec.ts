@@ -10,6 +10,7 @@ import type { IScopedLogger } from '@camstack/types'
 import { VENDOR_LOGIN_PROXY_PREFIX } from '@camstack/types'
 import { buildAlexaLoginRoutes } from '../alexa-login-routes.js'
 import type { AlexaLoginRouteDeps } from '../alexa-login-routes.js'
+import type { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'
 import type { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
 
 function swallowedBy(prefix: string, routePath: string): boolean {
@@ -28,7 +29,8 @@ function deps(): AlexaLoginRouteDeps {
     withTags: () => logger,
   }
   const proxyLogin = Object.create(null) as AlexaProxyLoginManager
-  return { logger, proxyLogin, commitCookie: async () => ({ brokerId: 'b' }) }
+  const deviceCode = Object.create(null) as AlexaDeviceCodeManager
+  return { logger, proxyLogin, deviceCode, commitCookie: async () => ({ brokerId: 'b' }) }
 }
 
 describe('the login proxy prefix', () => {

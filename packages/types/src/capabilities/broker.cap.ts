@@ -130,8 +130,23 @@ const BrokerProviderInfoSchema = z.object({
        * (`{ sessionId }`) drops the session. The dialog that edits a broker
        * offers it as the default path; the fields the session fills are
        * marked `filledBySignIn` in the kind's settings schema.
+       *
+       * `methods` lists the ways the session can sign in, recommended first:
+       * `'device-code'` adds `POST {basePath}/code/start` (body: the form's
+       * settings) answering `{ sessionId, userCode, verificationUrl,
+       * expiresAt }` — the operator types `userCode` at `verificationUrl` on
+       * any device, and the same `status` / `commit` / `cancel` routes follow
+       * (status then carries `method`, `userCode`, `verificationUrl`,
+       * `expiresAt` and the phases `'awaiting-code'` / `'expired'`);
+       * `'proxy'` is the `{basePath}/start` flow above. Absent means
+       * `['proxy']`.
        */
-      signIn: z.object({ basePath: z.string().min(1) }).optional(),
+      signIn: z
+        .object({
+          basePath: z.string().min(1),
+          methods: z.array(z.enum(['device-code', 'proxy'])).optional(),
+        })
+        .optional(),
     }),
   ),
 })

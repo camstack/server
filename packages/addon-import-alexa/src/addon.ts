@@ -27,6 +27,7 @@ import {
   type AlexaAddonConfig,
   type AlexaConnection,
 } from './config.js'
+import { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes } from './alexa-login-routes.js'
 import { AlexaBrokerRegistry } from './alexa-broker-registry.js'
@@ -94,6 +95,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
 
   private registry: AlexaBrokerRegistry | null = null
   private proxyLogin: AlexaProxyLoginManager | null = null
+  private deviceCodeLogin: AlexaDeviceCodeManager | null = null
   private loginPlane: AddonDataPlaneHandle | null = null
   private loginProxy: VendorLoginProxy | null = null
   private brokerStore: AlexaBrokerStore | null = null
@@ -157,6 +159,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       getLoginProxy: () => this.loginProxy,
     })
 
+    this.deviceCodeLogin = new AlexaDeviceCodeManager({ logger: this.ctx.logger })
+
     this.ctx.logger.info('Alexa: import addon initialised', {
       meta: { brokerCount: this.activeBrokers.length },
     })
@@ -168,6 +172,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       ...buildAlexaLoginRoutes({
         logger: this.ctx.logger,
         proxyLogin: this.proxyLogin,
+        deviceCode: this.deviceCodeLogin,
         commitCookie: (input) => this.commitCapturedCookie(input),
       }),
       ...speakIconRoutes(),
@@ -311,10 +316,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     alexaCommands.clear()
     try {
       await this.proxyLogin?.dispose()
+      await this.deviceCodeLogin?.dispose()
     } catch (err) {
       this.ctx.logger.warn('Alexa: proxy-login dispose error', { meta: { error: errMsg(err) } })
     }
     this.proxyLogin = null
+    this.deviceCodeLogin = null
     await this.loginPlane?.dispose().catch(() => undefined)
     this.loginPlane = null
     this.loginProxy = null

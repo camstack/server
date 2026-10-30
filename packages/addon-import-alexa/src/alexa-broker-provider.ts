@@ -53,7 +53,7 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
           {
             kind: ALEXA_KIND,
             label: 'Alexa',
-            signIn: { basePath: '/addon/import-alexa/login' },
+            signIn: { basePath: '/addon/import-alexa/login', methods: ['device-code', 'proxy'] },
           },
         ],
       },

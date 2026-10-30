@@ -57,6 +57,7 @@ describe('Alexa broker kind descriptor', () => {
     const providers = await provider.listProviders()
     expect(providers[0]?.kinds[0]?.signIn).toEqual({
       basePath: '/addon/import-alexa/login',
+      methods: ['device-code', 'proxy'],
     })
   })
 

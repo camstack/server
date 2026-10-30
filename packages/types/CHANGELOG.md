@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New Gateway device type for the physical bridge box of an integration (reboot and admin link allowed on it)
+- Broker kinds can advertise several sign-in methods (signIn.methods: device-code, proxy)
 
 ## [1.2.450] - 2026-10-30
 

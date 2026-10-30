@@ -3,6 +3,7 @@ import type { IScopedLogger } from '@camstack/types'
 import { capturedToCookieString } from '../alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes, type AlexaLoginRouteDeps } from '../alexa-login-routes.js'
 import { SECRET_LINE_RE } from '../alexa-proxy-login.js'
+import type { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'
 import type { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
 import type { AlexaProxyLoginStatus } from '../alexa-proxy-login.js'
 
@@ -75,7 +76,11 @@ describe('alexa login routes', () => {
       status: vi.fn(
         (): AlexaProxyLoginStatus => ({
           sessionId: 's1',
+          method: 'proxy',
           phase: 'awaiting-login',
+          userCode: '',
+          verificationUrl: '',
+          expiresAt: null,
           loginUrl: 'http://10.0.0.9:3456/',
           amazonDomain: 'amazon.it',
           error: null,
@@ -86,9 +91,21 @@ describe('alexa login routes', () => {
       takeCaptured: vi.fn(() => ({ cookieData: { localCookie: 'c' }, cookie: 'c' })),
       cancel: vi.fn(async () => undefined),
     } as unknown as AlexaProxyLoginManager
+    const deviceCode = {
+      start: vi.fn(async () => ({
+        sessionId: 'd1',
+        userCode: 'ABCDE',
+        verificationUrl: 'https://www.amazon.it/code',
+        expiresAt: 1234,
+      })),
+      status: vi.fn(() => null),
+      takeCaptured: vi.fn(() => null),
+      cancel: vi.fn(async () => undefined),
+    } as unknown as AlexaDeviceCodeManager
     return {
       logger: noopLogger,
       proxyLogin: manager,
+      deviceCode,
       commitCookie: vi.fn(async () => ({ brokerId: 'alexa_001' })),
       ...overrides,
     }

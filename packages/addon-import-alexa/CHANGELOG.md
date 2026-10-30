@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa: sign in with a code at amazon.<tld>/code (device code); the proxy login stays as an option
+
 ## [0.2.168] - 2026-10-29
 
 ### Changed

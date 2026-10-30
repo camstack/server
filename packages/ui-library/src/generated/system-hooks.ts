@@ -392,51 +392,6 @@ export const useBrightnessSetBrightness: typeof trpc.brightness.setBrightness.us
 /** Generated alias around `trpc.brightness.getStatus.useQuery`. */
 export const useBrightnessGetStatus: typeof trpc.brightness.getStatus.useQuery = trpc.brightness.getStatus.useQuery
 
-/** Generated alias around `trpc.broker.list.useQuery`. */
-export const useBrokerList: typeof trpc.broker.list.useQuery = trpc.broker.list.useQuery
-
-/** Generated alias around `trpc.broker.get.useQuery`. */
-export const useBrokerGet: typeof trpc.broker.get.useQuery = trpc.broker.get.useQuery
-
-/** Generated alias around `trpc.broker.listProviders.useQuery`. */
-export const useBrokerListProviders: typeof trpc.broker.listProviders.useQuery = trpc.broker.listProviders.useQuery
-
-/** Generated alias around `trpc.broker.add.useMutation`. */
-export const useBrokerAdd: typeof trpc.broker.add.useMutation = trpc.broker.add.useMutation
-
-/** Generated alias around `trpc.broker.remove.useMutation`. */
-export const useBrokerRemove: typeof trpc.broker.remove.useMutation = trpc.broker.remove.useMutation
-
-/** Generated alias around `trpc.broker.testConnection.useMutation`. */
-export const useBrokerTestConnection: typeof trpc.broker.testConnection.useMutation = trpc.broker.testConnection.useMutation
-
-/** Generated alias around `trpc.broker.getSettings.useQuery`. */
-export const useBrokerGetSettings: typeof trpc.broker.getSettings.useQuery = trpc.broker.getSettings.useQuery
-
-/** Generated alias around `trpc.broker.setSettings.useMutation`. */
-export const useBrokerSetSettings: typeof trpc.broker.setSettings.useMutation = trpc.broker.setSettings.useMutation
-
-/** Generated alias around `trpc.broker.getBrokerConfig.useQuery`. */
-export const useBrokerGetBrokerConfig: typeof trpc.broker.getBrokerConfig.useQuery = trpc.broker.getBrokerConfig.useQuery
-
-/** Generated alias around `trpc.broker.getSettingsSchema.useQuery`. */
-export const useBrokerGetSettingsSchema: typeof trpc.broker.getSettingsSchema.useQuery = trpc.broker.getSettingsSchema.useQuery
-
-/** Generated alias around `trpc.broker.testSettings.useMutation`. */
-export const useBrokerTestSettings: typeof trpc.broker.testSettings.useMutation = trpc.broker.testSettings.useMutation
-
-/** Generated alias around `trpc.broker.publish.useMutation`. */
-export const useBrokerPublish: typeof trpc.broker.publish.useMutation = trpc.broker.publish.useMutation
-
-/** Generated alias around `trpc.broker.subscribe.useMutation`. */
-export const useBrokerSubscribe: typeof trpc.broker.subscribe.useMutation = trpc.broker.subscribe.useMutation
-
-/** Generated alias around `trpc.broker.unsubscribe.useMutation`. */
-export const useBrokerUnsubscribe: typeof trpc.broker.unsubscribe.useMutation = trpc.broker.unsubscribe.useMutation
-
-/** Generated alias around `trpc.broker.getState.useQuery`. */
-export const useBrokerGetState: typeof trpc.broker.getState.useQuery = trpc.broker.getState.useQuery
-
 /** Generated alias around `trpc.broker.getStatus.useQuery`. */
 export const useBrokerGetStatus: typeof trpc.broker.getStatus.useQuery = trpc.broker.getStatus.useQuery
 

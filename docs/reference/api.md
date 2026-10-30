@@ -1848,7 +1848,7 @@
 
 ### `broker` → `broker.*`
 
-- **Source:** `packages/types/src/capabilities/broker.cap.ts:236`
+- **Source:** `packages/types/src/capabilities/broker.cap.ts:251`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `broker`
 - **Archetypes:** status(poll)
 - **Provider interface:** `IBrokerProvider`

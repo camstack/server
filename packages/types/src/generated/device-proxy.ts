@@ -108,6 +108,7 @@ import type { zonesCapability } from '../capabilities/zones.cap.js'
 import type { actionsCapability } from '../capabilities/actions.cap.js'
 import type { addonSettingsCapability } from '../capabilities/addon-settings.cap.js'
 import type { audioAnalyzerCapability } from '../capabilities/audio-analyzer.cap.js'
+import type { brokerCapability } from '../capabilities/broker.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
 import type { deviceExportCapability } from '../capabilities/device-export.cap.js'
 import type { deviceHistoryCapability } from '../capabilities/device-history.cap.js'
@@ -328,6 +329,7 @@ export interface DeviceProxy {
   readonly actions: Pick<InferDeviceProxyCap<typeof actionsCapability>, 'get' | 'run' | 'listForCamera' | 'getLinks'>
   readonly addonSettings: Pick<InferDeviceProxyCap<typeof addonSettingsCapability>, 'getDeviceSettings' | 'updateDeviceSettings'>
   readonly audioAnalyzer: Pick<InferDeviceProxyCap<typeof audioAnalyzerCapability>, 'detachDevice'>
+  readonly broker: Pick<InferDeviceProxyCap<typeof brokerCapability>, 'getStatus'>
   readonly deviceAdoption: Pick<InferDeviceProxyCap<typeof deviceAdoptionCapability>, 'getStatus'>
   readonly deviceExport: Pick<InferDeviceProxyCap<typeof deviceExportCapability>, 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
   readonly deviceHistory: Pick<InferDeviceProxyCap<typeof deviceHistoryCapability>, 'listSeries' | 'query' | 'getDeviceEnabled' | 'setDeviceEnabled'>
@@ -1147,6 +1149,10 @@ export function createDeviceProxy(
     detachDevice: (input?: unknown) => dispatchSystem('audioAnalyzer', 'detachDevice', 'mutation', input),
   }
 
+  const brokerInterface = {
+    getStatus: (input?: unknown) => dispatchSystem('broker', 'getStatus', 'query', input),
+  }
+
   const deviceAdoptionInterface = {
     getStatus: (input?: unknown) => dispatchSystem('deviceAdoption', 'getStatus', 'query', input),
   }
@@ -1505,6 +1511,7 @@ export function createDeviceProxy(
     actions: actionsInterface,
     addonSettings: addonSettingsInterface,
     audioAnalyzer: audioAnalyzerInterface,
+    broker: brokerInterface,
     deviceAdoption: deviceAdoptionInterface,
     deviceExport: deviceExportInterface,
     deviceHistory: deviceHistoryInterface,

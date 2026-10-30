@@ -7,6 +7,7 @@ import type {
   IScopedLogger,
 } from '@camstack/types'
 import type { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
+import type { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { capturedToCookieString } from './alexa-proxy-login-manager.js'
 import { AMAZON_DOMAINS } from './config.js'
 
@@ -18,6 +19,7 @@ import { AMAZON_DOMAINS } from './config.js'
  *
  * Public URLs (hub reachable as `https://<hub>`):
  *   POST /addon/import-alexa/login/start    { amazonDomain }            → { sessionId, loginUrl }
+ *   POST /addon/import-alexa/login/code/start { amazonDomain }          → { sessionId, userCode, verificationUrl, expiresAt }
  *   GET  /addon/import-alexa/login/status?sessionId=…                   → AlexaProxyLoginStatus (no secrets)
  *   POST /addon/import-alexa/login/commit    { sessionId, name, brokerId? } → { brokerId }
  *   POST /addon/import-alexa/login/cancel    { sessionId }              → { ok: true }
@@ -53,6 +55,8 @@ const CancelBodySchema = z.object({
 export interface AlexaLoginRouteDeps {
   readonly logger: IScopedLogger
   readonly proxyLogin: AlexaProxyLoginManager
+  /** The device-code sign-in; `status` / `commit` / `cancel` accept its session ids too. */
+  readonly deviceCode: AlexaDeviceCodeManager
   /**
    * Commit a captured cookie onto a broker. When `brokerId` is given the broker
    * is re-linked (credentials swapped); otherwise a new broker is created. The
@@ -86,7 +90,13 @@ function asRecord(body: unknown): Record<string, unknown> {
 }
 
 export function buildAlexaLoginRoutes(deps: AlexaLoginRouteDeps): readonly IAddonHttpRoute[] {
-  const { logger, proxyLogin, commitCookie } = deps
+  const { logger, proxyLogin, deviceCode, commitCookie } = deps
+  const statusOf = (id: string) => proxyLogin.status(id) ?? deviceCode.status(id)
+  const takeCaptured = (id: string) => proxyLogin.takeCaptured(id) ?? deviceCode.takeCaptured(id)
+  const cancelAny = async (id: string): Promise<void> => {
+    await proxyLogin.cancel(id)
+    await deviceCode.cancel(id)
+  }
 
   return [
     {
@@ -110,6 +120,26 @@ export function buildAlexaLoginRoutes(deps: AlexaLoginRouteDeps): readonly IAddo
       },
     },
     {
+      method: 'POST',
+      path: '/login/code/start',
+      access: 'admin',
+      description:
+        'Start the Amazon device-code sign-in; returns the code to type at amazon.<tld>/code',
+      handler: async (req: AddonHttpRequest, reply: AddonHttpReply) => {
+        const parsed = StartBodySchema.safeParse(asRecord(req.body))
+        if (!parsed.success) {
+          reply.code(400).send({ error: 'invalid body', detail: parsed.error.message })
+          return
+        }
+        try {
+          reply.code(200).send(await deviceCode.start(parsed.data.amazonDomain))
+        } catch (err: unknown) {
+          logger.warn('alexa login/code/start failed', { meta: { error: errMsg(err) } })
+          reply.code(500).send({ error: errMsg(err) })
+        }
+      },
+    },
+    {
       method: 'GET',
       path: '/login/status',
       access: 'admin',
@@ -120,7 +150,7 @@ export function buildAlexaLoginRoutes(deps: AlexaLoginRouteDeps): readonly IAddo
           reply.code(400).send({ error: 'missing sessionId' })
           return
         }
-        const status = proxyLogin.status(parsed.data.sessionId)
+        const status = statusOf(parsed.data.sessionId)
         if (status === null) {
           reply.code(404).send({ error: 'unknown or expired session' })
           return
@@ -140,8 +170,8 @@ export function buildAlexaLoginRoutes(deps: AlexaLoginRouteDeps): readonly IAddo
           return
         }
         const { sessionId, name, brokerId } = parsed.data
-        const status = proxyLogin.status(sessionId)
-        const captured = proxyLogin.takeCaptured(sessionId)
+        const status = statusOf(sessionId)
+        const captured = takeCaptured(sessionId)
         if (captured === null) {
           reply
             .code(409)
@@ -158,7 +188,7 @@ export function buildAlexaLoginRoutes(deps: AlexaLoginRouteDeps): readonly IAddo
             ...(brokerId !== undefined ? { brokerId } : {}),
           })
           // Free the proxy/session now that we own the cookie.
-          await proxyLogin.cancel(sessionId)
+          await cancelAny(sessionId)
           reply.code(200).send(result)
         } catch (err: unknown) {
           logger.warn('alexa login/commit failed', { meta: { error: errMsg(err) } })
@@ -177,7 +207,7 @@ export function buildAlexaLoginRoutes(deps: AlexaLoginRouteDeps): readonly IAddo
           reply.code(400).send({ error: 'missing sessionId' })
           return
         }
-        await proxyLogin.cancel(parsed.data.sessionId)
+        await cancelAny(parsed.data.sessionId)
         reply.code(200).send({ ok: true })
       },
     },
