@@ -237,6 +237,42 @@ describe('buildInstalledInventory — one row per model × format', () => {
     expect(r.removable).toBe(false)
   })
 
+  it('a cluster-scoped model is listed on the hub only, never under another node', () => {
+    const onAgent = buildInstalledInventory({
+      nodeId: 'little-unraid',
+      seeds: HUB_SEEDS,
+      stepCatalogs: STEP_CATALOGS,
+      devices: HUB_DEVICES,
+      engines: HUB_ENGINES,
+      clusterModels: { 'face-embedding': 'auraface-r100' },
+      registry: [],
+      availability: {},
+    })
+    expect(onAgent.some((r) => r.stepId === 'face-embedding')).toBe(false)
+    expect(onAgent.some((r) => r.modelId === 'yolo26n')).toBe(true)
+    expect(hubInventory().some((r) => r.stepId === 'face-embedding')).toBe(true)
+  })
+
+  it('the audio analyzer model shows the device it runs on (CPU), with or without node devices', () => {
+    for (const devices of [HUB_DEVICES, [] as readonly NodeInferenceDevice[]]) {
+      const r = row(
+        buildInstalledInventory({
+          nodeId: 'hub',
+          seeds: HUB_SEEDS,
+          stepCatalogs: STEP_CATALOGS,
+          devices,
+          engines: HUB_ENGINES,
+          clusterModels: null,
+          registry: [],
+          availability: {},
+        }),
+        'yamnet-onnx',
+        'onnx',
+      )
+      expect(r.chips.map((c) => [c.label, c.fixed])).toEqual([['CPU', true]])
+    }
+  })
+
   it('when the loaded-engine read fails, nothing an enabled device could run is called idle', () => {
     const rows = hubInventory(null)
     const ov = row(rows, 'yolo26n', 'openvino')

@@ -153,7 +153,8 @@
       "loaded": "loaded",
       "configuredNotLoaded": "configured, not loaded",
       "unknown": "load state unknown",
-      "notUsed": "not used"
+      "notUsed": "not used",
+      "fixed": "runs here, outside the device pools"
     },
     "chipLabel": "{{label}} ({{deviceKey}}): {{state}}",
     "title": "{{deviceKey}} — {{state}}",
@@ -227,7 +228,12 @@
     },
     "removeUnused": "Remove unused ({{count}})",
     "emptyNode": "No model files on {{nodeId}}.",
-    "emptyFiltered": "No files match these filters."
+    "emptyFiltered": "No files match these filters.",
+    "devicesNotice": {
+      "allDisabled": "All inference devices are disabled on this node. Enable one in the node's inference devices to run models here.",
+      "unknown": "The inference devices of this node could not be read.",
+      "none": "This node reports no inference device."
+    }
   },
   "catalog": {
     "onNode": "on {{nodeId}}",

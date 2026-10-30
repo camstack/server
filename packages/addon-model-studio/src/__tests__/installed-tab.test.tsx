@@ -53,7 +53,11 @@ interface Calls {
 }
 
 /** The live hub shape: CPU disabled (yolo26n default), GPU+NPU on yolov9m-320-int8. */
-function hubTrpc(opts?: { readonly pinYoloOnGpu?: boolean }): {
+function hubTrpc(opts?: {
+  readonly pinYoloOnGpu?: boolean
+  readonly allDevicesOff?: boolean
+  readonly devicesFail?: boolean
+}): {
   trpc: AddonPageProps['trpc']
   calls: Calls
 } {
@@ -198,7 +202,16 @@ function hubTrpc(opts?: { readonly pinYoloOnGpu?: boolean }): {
     },
     pipelineOrchestrator: {
       getNodeInferenceDevices: {
-        query: async (input: { nodeId: string }) => ({ devices: devicesOf(input.nodeId) }),
+        query: async (input: { nodeId: string }) => {
+          if (opts?.devicesFail === true) throw new Error('probe unreachable')
+          const devices = devicesOf(input.nodeId)
+          return {
+            devices:
+              opts?.allDevicesOff === true
+                ? devices.map((d) => ({ ...d, enabled: false }))
+                : devices,
+          }
+        },
       },
       setAgentInferenceDevices: {
         mutate: async (input: unknown) => {
@@ -289,9 +302,29 @@ describe('InstalledTab', () => {
     expect(rowMarker(onnx).getAttribute('data-usage')).toBe('unused')
     const cpu = within(onnx).getByLabelText('CPU (cpu): off')
     expect(cpu.getAttribute('data-state')).toBe('off')
-    expect(cpu.textContent?.trim()).toBe('')
+    expect(cpu.textContent?.trim()).toBe('CPU')
     expect(within(onnx).getByRole('button', { name: 'Remove yolo26n onnx' })).toBeTruthy()
     expect(screen.getByTestId('installed-remove-unused-bulk')).toBeTruthy()
+  })
+
+  it('a node whose every inference device is disabled says so explicitly', async () => {
+    renderInstalled(<InstalledTab trpc={hubTrpc({ allDevicesOff: true }).trpc} refreshKey={0} />)
+    const notice = await screen.findByTestId('installed-devices-notice')
+    expect(notice.getAttribute('data-kind')).toBe('all-disabled')
+    expect(notice.textContent).toContain('All inference devices are disabled on this node')
+  })
+
+  it('an unanswered device read is "unknown", never "all disabled" (D315)', async () => {
+    renderInstalled(<InstalledTab trpc={hubTrpc({ devicesFail: true }).trpc} refreshKey={0} />)
+    const notice = await screen.findByTestId('installed-devices-notice')
+    expect(notice.getAttribute('data-kind')).toBe('unknown')
+    expect(notice.textContent).not.toContain('disabled')
+  })
+
+  it('a node with an enabled device shows no devices notice', async () => {
+    renderInstalled(<InstalledTab trpc={hubTrpc().trpc} refreshKey={0} />)
+    await fileRow('yolo26n', 'onnx')
+    expect(screen.queryByTestId('installed-devices-notice')).toBeNull()
   })
 
   it('Remove unused bulk deletes every reclaimable file on the filtered view, after one confirm', async () => {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Model Studio Installed: cluster-wide models are listed on the hub only, every row names its device (CPU and YAMNet included), and a node with every inference device disabled says so
+
 ## [1.1.326] - 2026-10-30
 
 ### Changed

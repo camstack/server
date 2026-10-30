@@ -24,6 +24,7 @@ type ChipState =
   | 'configuredNotLoaded'
   | 'unknown'
   | 'notUsed'
+  | 'fixed'
 
 /** The stable English state names exposed as `data-state` (a test / automation hook, not UI text). */
 const STATE_ATTR: Readonly<Record<ChipState, string>> = {
@@ -33,9 +34,11 @@ const STATE_ATTR: Readonly<Record<ChipState, string>> = {
   configuredNotLoaded: 'configured, not loaded',
   unknown: 'load state unknown',
   notUsed: 'not used',
+  fixed: 'runs here',
 }
 
 function chipState(chip: InstalledDeviceChip): ChipState {
+  if (chip.fixed === true) return 'fixed'
   if (!chip.enabled) return 'off'
   if (chip.loaded === true) return chip.configured ? 'loadedConfigured' : 'loaded'
   if (chip.configured) return 'configuredNotLoaded'
@@ -44,7 +47,8 @@ function chipState(chip: InstalledDeviceChip): ChipState {
 }
 
 function chipTone(chip: InstalledDeviceChip): string {
-  if (!chip.enabled) return 'border-border bg-foreground-subtle/35'
+  if (chip.fixed === true) return 'border-border bg-surface text-foreground'
+  if (!chip.enabled) return 'border-border bg-surface text-foreground-disabled'
   if (chip.loaded === true) return 'border-success/40 bg-success/10 text-success'
   if (chip.configured) return 'border-primary/50 bg-primary/10 text-primary'
   return 'border-border bg-surface text-foreground-subtle'
@@ -86,12 +90,14 @@ export function DeviceChips({ chips, onChip, disabled = false }: DeviceChipsProp
           return (
             <span
               key={chip.deviceKey}
-              className={cn(CHIP_BASE, chipTone(chip), 'min-w-[1.75rem] justify-center px-1.5')}
+              className={cn(CHIP_BASE, chipTone(chip))}
               data-device-key={chip.deviceKey}
               data-state={STATE_ATTR[stateCode]}
               aria-label={chipLabel}
               title={plainTitle}
-            />
+            >
+              {chip.label}
+            </span>
           )
         }
         const interactive = onChip !== undefined && !disabled

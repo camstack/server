@@ -153,7 +153,8 @@
       "loaded": "caricato",
       "configuredNotLoaded": "configurato, non caricato",
       "unknown": "stato di caricamento sconosciuto",
-      "notUsed": "non usato"
+      "notUsed": "non usato",
+      "fixed": "gira qui, fuori dai pool dei dispositivi"
     },
     "chipLabel": "{{label}} ({{deviceKey}}): {{state}}",
     "title": "{{deviceKey}} — {{state}}",
@@ -227,7 +228,12 @@
     },
     "removeUnused": "Rimuovi inutilizzati ({{count}})",
     "emptyNode": "Nessun file di modello su {{nodeId}}.",
-    "emptyFiltered": "Nessun file corrisponde a questi filtri."
+    "emptyFiltered": "Nessun file corrisponde a questi filtri.",
+    "devicesNotice": {
+      "allDisabled": "Tutti i dispositivi di inferenza di questo nodo sono disabilitati. Abilitane uno nei dispositivi di inferenza del nodo per eseguire modelli qui.",
+      "unknown": "Impossibile leggere i dispositivi di inferenza di questo nodo.",
+      "none": "Questo nodo non riporta nessun dispositivo di inferenza."
+    }
   },
   "catalog": {
     "onNode": "su {{nodeId}}",

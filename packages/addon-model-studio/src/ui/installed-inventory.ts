@@ -62,6 +62,22 @@ export function deviceFilterOptions(
   return devices.map((d) => ({ value: d.key, label: deviceShortLabel(d), enabled: d.enabled }))
 }
 
+/**
+ * What the node's device list says about running models here — `null` when
+ * there is nothing to flag. `unknown` is an unanswered read, never folded into
+ * `none` / `all-disabled` (an answer of nothing).
+ */
+export type DevicesNoticeKind = 'unknown' | 'none' | 'all-disabled'
+
+export function devicesNoticeKind(
+  devices: readonly NodeInferenceDevice[],
+  answered: boolean,
+): DevicesNoticeKind | null {
+  if (!answered) return 'unknown'
+  if (devices.length === 0) return 'none'
+  return devices.every((d) => !d.enabled) ? 'all-disabled' : null
+}
+
 // ---------------------------------------------------------------------------
 // Resident pools
 // ---------------------------------------------------------------------------
@@ -130,6 +146,12 @@ export interface InstalledDeviceChip {
   readonly enabled: boolean
   readonly loaded: boolean | null
   readonly configured: boolean
+  /**
+   * The model is served outside the device pools (the audio analyzer's own
+   * process), so this chip names the device it is pinned to rather than a pool
+   * state: `loaded` / `configured` say nothing here.
+   */
+  readonly fixed?: true
 }
 
 export interface InstalledFileRow {
@@ -162,6 +184,32 @@ export interface InstalledFileRow {
  * about whether it is used.
  */
 const SLOTS_OUTSIDE_DEVICE_POOLS: ReadonlySet<string> = new Set(['audio-classifier'])
+
+/** The node that owns cluster-scoped models (one cluster-wide setting, listed once). */
+export const HUB_NODE_ID = 'hub'
+
+/**
+ * The audio analyzer runs its classifier in onnxruntime on the CPU provider
+ * (`yamnet_audio.py`), whatever the node's inference devices say.
+ */
+const AUDIO_ANALYZER_DEVICE: Pick<NodeInferenceDevice, 'backend' | 'device' | 'key'> = {
+  backend: 'cpu',
+  device: 'cpu',
+  key: 'cpu',
+}
+
+function outsidePoolChips(): readonly InstalledDeviceChip[] {
+  return [
+    {
+      deviceKey: AUDIO_ANALYZER_DEVICE.key,
+      label: deviceShortLabel(AUDIO_ANALYZER_DEVICE),
+      enabled: true,
+      loaded: null,
+      configured: false,
+      fixed: true,
+    },
+  ]
+}
 
 export interface InstalledInventoryInput {
   readonly nodeId: string
@@ -231,24 +279,23 @@ function usageOf(
 
 function toRow(facts: RowFacts, input: InstalledInventoryInput): InstalledFileRow {
   const configured = configuredKeys(facts, input)
-  const chips = input.devices
-    .filter((d) => d.format === facts.format)
-    .map(
-      (d): InstalledDeviceChip => ({
-        deviceKey: d.key,
-        label: deviceShortLabel(d),
-        enabled: d.enabled,
-        loaded: loadedOnDevice(input.engines, d, facts.stepId, facts.modelId),
-        configured: configured.has(d.key),
-      }),
-    )
-    .toSorted((a, b) => a.label.localeCompare(b.label))
   const slot = input.stepCatalogs[facts.stepId]?.slot
-  const usage = usageOf(
-    chips,
-    slot !== undefined && SLOTS_OUTSIDE_DEVICE_POOLS.has(slot),
-    input.engines !== null,
-  )
+  const outsidePools = slot !== undefined && SLOTS_OUTSIDE_DEVICE_POOLS.has(slot)
+  const chips = outsidePools
+    ? outsidePoolChips()
+    : input.devices
+        .filter((d) => d.format === facts.format)
+        .map(
+          (d): InstalledDeviceChip => ({
+            deviceKey: d.key,
+            label: deviceShortLabel(d),
+            enabled: d.enabled,
+            loaded: loadedOnDevice(input.engines, d, facts.stepId, facts.modelId),
+            configured: configured.has(d.key),
+          }),
+        )
+        .toSorted((a, b) => a.label.localeCompare(b.label))
+  const usage = usageOf(chips, outsidePools, input.engines !== null)
   return {
     ...facts,
     key: `${facts.stepId}::${facts.modelId}::${facts.format}`,
@@ -318,6 +365,7 @@ export function buildInstalledInventory(
   input: InstalledInventoryInput,
 ): readonly InstalledFileRow[] {
   const registryIds = new Set(input.registry.map((m) => m.entry.id))
+  const listsClusterModels = input.nodeId === HUB_NODE_ID
   const fromSeeds = input.seeds.flatMap((seed) =>
     seed.formats.flatMap((f) => {
       const facts = seedFacts(seed, f, registryIds)
@@ -327,6 +375,7 @@ export function buildInstalledInventory(
   const listed = new Set(fromSeeds.map((f) => `${f.stepId}::${f.modelId}::${f.format}`))
   const descriptions = new Map(input.registry.map((m) => [m.entry.id, m.entry.description]))
   return [...fromSeeds, ...registryFacts(input, listed)]
+    .filter((facts) => listsClusterModels || !isClusterScopedStep(facts.stepId))
     .map((facts) => ({
       ...facts,
       description: descriptions.get(facts.modelId) ?? facts.description,

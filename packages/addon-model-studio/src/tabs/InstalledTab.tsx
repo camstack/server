@@ -40,6 +40,7 @@ import { patchStepModelOnDevices } from '../ui/installed-activation.js'
 import {
   buildInstalledInventory,
   deviceFilterOptions,
+  devicesNoticeKind,
   filterInventoryRows,
   reclaimableMB,
   type InstalledDeviceChip,
@@ -94,6 +95,8 @@ interface NodeSnapshot {
   readonly seeds: readonly CatalogSeed[]
   readonly stepCatalogs: Readonly<Record<string, StepCatalogSlice>>
   readonly devices: readonly NodeInferenceDevice[]
+  /** False when the device read failed: `devices` is then empty without saying the node has none. */
+  readonly devicesAnswered: boolean
   readonly engines: readonly LoadedEngine[] | null
   readonly clusterModels: ClusterStepModels | null
 }
@@ -112,7 +115,7 @@ async function loadSnapshot(trpc: AddonPageProps['trpc'], nodeId: string): Promi
     listCustomModels(trpc),
     listAvailability(trpc),
     listPipelineCatalogBundle(trpc, nodeId),
-    listNodeInferenceDevices(trpc, nodeId).catch((): readonly NodeInferenceDevice[] => []),
+    listNodeInferenceDevices(trpc, nodeId).catch(() => null),
     listLoadedEngines(trpc, nodeId).catch(() => null),
     listClusterStepModels(trpc).catch(() => null),
   ])
@@ -121,7 +124,8 @@ async function loadSnapshot(trpc: AddonPageProps['trpc'], nodeId: string): Promi
     availability,
     seeds: catalog.seeds,
     stepCatalogs: catalog.stepCatalogs,
-    devices,
+    devices: devices ?? [],
+    devicesAnswered: devices !== null,
     engines,
     clusterModels,
   }
@@ -187,6 +191,8 @@ export function InstalledTab({ trpc, refreshKey }: InstalledTabProps) {
     [snapshot, nodeId],
   )
   const devices = snapshot?.devices ?? []
+  const devicesNotice =
+    snapshot === null ? null : devicesNoticeKind(snapshot.devices, snapshot.devicesAnswered)
   const filtered = useMemo(
     () =>
       filterInventoryRows(rows, devices, {
@@ -330,7 +336,9 @@ export function InstalledTab({ trpc, refreshKey }: InstalledTabProps) {
               {t('installed.summary.files', { count: filtered.length, nodeId })}
               {filtersActive ? ` ${t('installed.summary.ofTotal', { total: rows.length })}` : ''} ·{' '}
               {t('installed.summary.onDisk', { size: formatMB(totalMB) })} ·{' '}
-              {t('installed.summary.reclaimable', { size: formatMB(reclaimableMB(rows)) })}
+              {t('installed.summary.reclaimable', {
+                size: formatMB(reclaimableMB(rows)),
+              })}
               {snapshot?.engines === null ? ` · ${t('installed.summary.loadedUnavailable')}` : ''}
             </p>
             {unusedRemovable.length > 0 && (
@@ -344,6 +352,18 @@ export function InstalledTab({ trpc, refreshKey }: InstalledTabProps) {
               </button>
             )}
           </div>
+          {devicesNotice !== null && (
+            <p
+              role="status"
+              className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning"
+              data-testid="installed-devices-notice"
+              data-kind={devicesNotice}
+            >
+              {t(
+                `installed.devicesNotice.${devicesNotice === 'all-disabled' ? 'allDisabled' : devicesNotice}`,
+              )}
+            </p>
+          )}
           <InstalledFilesTable
             rows={filtered}
             emptyMessage={
