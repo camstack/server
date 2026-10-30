@@ -40,7 +40,7 @@
         "version": "0.1.0",
         "description": "Connect to the ESPHome boards of an integration over their native API and adopt each board with its switches, lights, covers, buttons, sensors, numbers and selects",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.svg",
+        "icon": "assets/icon.png",
         "color": "#000000",
         "instanceMode": "multiple",
         "mode": "account",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Amcrest icon is no longer distorted
+
 ## [0.2.162] - 2026-10-27
 
 ### Changed
