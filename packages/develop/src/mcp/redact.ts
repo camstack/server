@@ -9,6 +9,8 @@
  * The output layer (`text()`) then adds the name/pattern scrub on top.
  */
 
+import { scrubValue } from './scrub.js'
+
 export const REDACTED = '[SECRET]'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -91,4 +93,29 @@ export function truncateOutput(value: unknown, limits: TruncateLimits = DEFAULT_
 /** Redact then bound — the only way a hub payload becomes tool output. */
 export function toToolOutput(value: unknown, limits: TruncateLimits = DEFAULT_LIMITS): unknown {
   return truncateOutput(redactDeclaredSecrets(value), limits)
+}
+
+/** Key names that read as a credential, beyond what `scrubValue` already catches. */
+const CREDENTIAL_KEY =
+  /pass(word|wd|phrase)?|token|secret|api[_-]?key|credential|private[_-]?key|authorization|cookie/i
+
+function redactCredentialKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((v) => redactCredentialKeys(v))
+  if (!isRecord(value)) return value
+  const out: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    // `confirm_token` is the gate's own one-shot handle, bound to the arguments.
+    out[key] =
+      key !== 'confirm_token' && CREDENTIAL_KEY.test(key) ? REDACTED : redactCredentialKeys(child)
+  }
+  return out
+}
+
+/**
+ * What a tool's ARGUMENTS may become before any log line: declared secrets,
+ * credential-named keys, then the pattern scrub — the same layers the output
+ * goes through, so a secret that must not come back must not be logged either.
+ */
+export function redactToolArgs(args: unknown): unknown {
+  return scrubValue(redactCredentialKeys(redactDeclaredSecrets(args)))
 }

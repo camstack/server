@@ -15,7 +15,8 @@
  * refused ones included — is written to the audit sink.
  */
 import { createHash, randomBytes } from 'node:crypto'
-import { scrubValue } from './scrub.js'
+import { redactToolArgs } from './redact.js'
+import { scrubSecrets, scrubValue } from './scrub.js'
 
 /** How long a dry run stays confirmable. Short on purpose: the world moves. */
 export const CONFIRM_TTL_MS: number = 5 * 60_000
@@ -76,6 +77,8 @@ export interface MutationGateOptions {
   /** Injectable for tests; defaults to 128 random bits. */
   readonly newToken?: () => string
   readonly ttlMs?: number
+  /** How arguments are redacted before the audit sink sees them. Default: `redactToolArgs`. */
+  readonly redactArgs?: (args: unknown) => unknown
 }
 
 export interface IssuedToken {
@@ -92,12 +95,14 @@ export class MutationGate {
   private readonly now: () => number
   private readonly newToken: () => string
   private readonly ttlMs: number
+  private readonly redactArgs: (args: unknown) => unknown
 
   constructor(private readonly options: MutationGateOptions) {
     this.audit = options.audit ?? stderrAudit
     this.now = options.now ?? Date.now
     this.newToken = options.newToken ?? (() => `cfm_${randomBytes(16).toString('hex')}`)
     this.ttlMs = options.ttlMs ?? CONFIRM_TTL_MS
+    this.redactArgs = options.redactArgs ?? redactToolArgs
   }
 
   get enabled(): boolean {
@@ -110,8 +115,8 @@ export class MutationGate {
       tool,
       phase,
       argsDigest: digestArgs(tool, args),
-      detail,
-      args,
+      detail: scrubSecrets(detail),
+      args: this.redactArgs(args),
     })
   }
 
@@ -126,7 +131,11 @@ export class MutationGate {
     }
     const confirmToken = this.newToken()
     const expiresAt = this.now() + this.ttlMs
-    this.outstanding.set(confirmToken, { tool, digest: digestArgs(tool, args), expiresAt })
+    this.outstanding.set(confirmToken, {
+      tool,
+      digest: digestArgs(tool, args),
+      expiresAt,
+    })
     return { confirmToken, expiresAt }
   }
 
@@ -149,7 +158,10 @@ export class MutationGate {
       }
     }
     if (found.tool !== tool) {
-      return { ok: false, reason: `confirm_token was issued for ${found.tool}, not ${tool}` }
+      return {
+        ok: false,
+        reason: `confirm_token was issued for ${found.tool}, not ${tool}`,
+      }
     }
     if (found.digest !== digestArgs(tool, args)) {
       return {

@@ -144,6 +144,7 @@ export { text, textError } from './mcp/text.js'
 export {
   REDACTED,
   redactDeclaredSecrets,
+  redactToolArgs,
   toToolOutput,
   truncateOutput,
 } from './mcp/redact.js'
