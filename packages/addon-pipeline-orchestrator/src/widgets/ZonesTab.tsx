@@ -261,9 +261,9 @@ export function ZonesTab({ deviceId }: ZonesTabProps) {
           only on stationary package-class objects inside these zones —
           see docs/superpowers/specs/2026-07-17-package-zones-design.md. */}
       <div className={`grid grid-cols-1 2xl:grid-cols-2 ${GRID_GAP}`}>
-        <ZoneRulesEditor dev={dev} stage="motion" zones={capZones} />
-        <ZoneRulesEditor dev={dev} stage="detection" zones={capZones} />
-        <ZoneRulesEditor dev={dev} stage="package" zones={capZones} />
+        <ZoneRulesEditor dev={dev} deviceId={deviceId} stage="motion" zones={capZones} />
+        <ZoneRulesEditor dev={dev} deviceId={deviceId} stage="detection" zones={capZones} />
+        <ZoneRulesEditor dev={dev} deviceId={deviceId} stage="package" zones={capZones} />
       </div>
     </div>
   )

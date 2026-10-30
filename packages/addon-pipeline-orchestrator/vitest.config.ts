@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),
+      '@camstack/types': path.resolve(__dirname, '../types/src'),
     },
   },
 })

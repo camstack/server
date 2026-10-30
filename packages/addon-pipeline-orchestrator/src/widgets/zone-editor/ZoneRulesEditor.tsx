@@ -5,8 +5,9 @@
  *   - `useDeviceStateSlice(dev?.state.zoneRules)` reads the unified
  *     `{motion, detection}` runtime-state slice and re-renders on
  *     every push from the orchestrator's mirror write.
- *   - `dev?.zoneRules?.setRules(...)` for the bulk-replace mutation
- *     (the proxy auto-injects deviceId + nodeId).
+ *   - `trpcClient.zoneRules.setRules` with an explicit `deviceId` for the
+ *     bulk-replace mutation (a cluster singleton: the device proxy has no
+ *     `zoneRules` entry).
  *
  * Renders one row per rule with a name input, zone multi-select
  * sourced from the live zones[] passed in, mode toggle, comma-
@@ -21,8 +22,10 @@ import { MACRO_LABELS } from '@camstack/types'
 import { useT } from '../../i18n/index.js'
 import { zoneRuleStageTitle } from './zone-rule-stage.js'
 import { stageHasClassFilter } from './zone-rule-class-filter.js'
+import { newZoneId } from './types'
 import {
   useDeviceStateSlice,
+  useSystem,
   BTN_COMPACT,
   BTN_COMPACT_PRIMARY,
   CHIP_BASE,
@@ -43,6 +46,7 @@ const MACRO_CHIPS: readonly { id: string; label: string }[] = MACRO_LABELS.map((
 
 export interface ZoneRulesEditorProps {
   readonly dev: DeviceProxy | null
+  readonly deviceId: number
   readonly stage: ZoneRuleStage
   readonly zones: readonly Zone[]
   readonly title?: string
@@ -125,8 +129,9 @@ function PackageOption({ on, label, hint, onToggle }: PackageOptionProps) {
   )
 }
 
-export function ZoneRulesEditor({ dev, stage, zones, title }: ZoneRulesEditorProps) {
+export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRulesEditorProps) {
   const { t } = useT()
+  const system = useSystem()
   // Reactive read — re-renders on every mirror push for the unified
   // `zone-rules` slice. The slice carries both stages; we pick the
   // one this editor owns.
@@ -157,7 +162,7 @@ export function ZoneRulesEditor({ dev, stage, zones, title }: ZoneRulesEditorPro
     setDrafts((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: newZoneId(),
         name: '',
         zoneIds: zones[0] ? [zones[0].id] : [],
         mode: 'exclude',
@@ -205,11 +210,14 @@ export function ZoneRulesEditor({ dev, stage, zones, title }: ZoneRulesEditorPro
   }
 
   const onSave = async () => {
-    if (!dev?.zoneRules) return
     setSaving(true)
     setError(null)
     try {
-      await dev.zoneRules.setRules({ stage, rules: drafts.map((d) => ruleToCap(d, stage)) })
+      await system.trpcClient.zoneRules.setRules.mutate({
+        deviceId,
+        stage,
+        rules: drafts.map((d) => ruleToCap(d, stage)),
+      })
       setDirty(false)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
@@ -218,7 +226,7 @@ export function ZoneRulesEditor({ dev, stage, zones, title }: ZoneRulesEditorPro
     }
   }
 
-  const canSave = dirty && Boolean(dev?.zoneRules) && !saving
+  const canSave = dirty && !saving
 
   return (
     <div className="rounded-md border border-border bg-surface/40 p-2.5">
