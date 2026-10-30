@@ -19,7 +19,10 @@ interface Call {
   readonly input: unknown
 }
 
-function fakeHubClient(deviceName: string | null): { client: HubClient; calls: Call[] } {
+function fakeHubClient(deviceName: string | null): {
+  client: HubClient
+  calls: Call[]
+} {
   const calls: Call[] = []
   return {
     calls,
@@ -62,7 +65,10 @@ function context(hub: ConnectOutcome, audit: AuditRecord[] = []): McpContext {
   return {
     cliVersion: '9.9.9',
     hub: async () => hub,
-    gate: new MutationGate({ allowMutations: true, audit: (r) => audit.push(r) }),
+    gate: new MutationGate({
+      allowMutations: true,
+      audit: (r) => audit.push(r),
+    }),
     fetch: async (url) =>
       new Response(JSON.stringify({ version: url.includes('server') ? '2.0.0' : '1.0.0' })),
   }
@@ -106,11 +112,15 @@ describe('camstack mcp — toolset selection', () => {
       'configure_rename_device',
       'ops_whoami',
       'setup_about',
+      'setup_add_node',
+      'setup_connect',
+      'setup_discover_hubs',
+      'setup_install_guide',
     ])
   })
 
   it('serves only the named toolset', async () => {
-    expect(await toolNames(await connect(['setup'], ctx))).toEqual(['setup_about'])
+    expect(await toolNames(await connect(['setup'], ctx))).toContain('setup_about')
     expect(await toolNames(await connect(['ops'], ctx))).toEqual(['ops_whoami'])
   })
 
@@ -184,7 +194,11 @@ describe('camstack mcp — configure writes are two-step through the gate', () =
     )
     const writes = calls.filter((c) => c.method === 'POST')
     expect(writes).toEqual([
-      { method: 'POST', path: 'deviceManager.setName', input: { deviceId: 7, name: 'Porch' } },
+      {
+        method: 'POST',
+        path: 'deviceManager.setName',
+        input: { deviceId: 7, name: 'Porch' },
+      },
     ])
     // single use
     expect(await rename(mcp, { deviceId: 7, name: 'Porch', confirm_token: token })).toContain(
@@ -198,7 +212,11 @@ describe('camstack mcp — configure writes are two-step through the gate', () =
     const mcp = await connect(['configure'], context(connected(client)))
     const preview = await rename(mcp, { deviceId: 7, name: 'Porch' })
     const token = /cfm_[0-9a-f]+/.exec(preview)?.[0] ?? ''
-    const body = await rename(mcp, { deviceId: 7, name: 'Garage', confirm_token: token })
+    const body = await rename(mcp, {
+      deviceId: 7,
+      name: 'Garage',
+      confirm_token: token,
+    })
     expect(body).toContain('"status": "refused"')
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0)
   })

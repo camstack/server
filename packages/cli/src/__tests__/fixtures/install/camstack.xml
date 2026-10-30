@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  Maintained by hand in this repository (D717): the generator that used to
+  produce this file was retired.
+
+  CamStack hub — the always-on node. One per cluster.
+
+  The image serves both roles; CAMSTACK_ROLE selects which. See
+  camstack-agent.xml for a worker node.
+
+  Network: keep br0 (a dedicated container IP) or host. mDNS announcement of
+  the hub (UDP 5353 multicast) does not reach the LAN from Docker bridge mode;
+  the hub then simply is not announced and clients must be given its address.
+
+  Two host paths MUST be mapped or a container re-create loses state:
+    /data    installed addons, ML models, TLS, logs and the SQLite database
+    /config  config.yaml — bootstrap server/tls settings and the keychain key location
+
+  Image: ghcr.io/camstack/camstack:intel-latest
+
+  Required runtime flags, shown without their leading dashes because an XML
+  comment cannot contain a double hyphen. Full form in ExtraParams below.
+  Do not remove them:
+  device-cgroup-rule='c 189:* rmw'
+      Coral USB re-enumerates (1a6e:089a → 18d1:9302) when libedgetpu initialises, so the post-init device node is not the one that was passed through. The cgroup rule admits the whole USB char-device major. Pairs with the /dev/bus/usb mapping.
+  pids-limit=8192
+      A container cgroup counts THREADS, not processes. This hub was measured refusing 22 clone() calls in 45 minutes against the 2048 Docker/Unraid default — every one of them a thread some subsystem needed and silently did without, surfacing only as media that stopped. The ceiling stays (it is what makes a thread leak visible) and native-metrics reads pids.current/max/events on a heartbeat, so approaching it is now legible instead of fatal.
+-->
+<Container version="2">
+  <Name>CamStack</Name>
+  <Repository>ghcr.io/camstack/camstack:intel-latest</Repository>
+  <Registry>https://github.com/orgs/camstack/packages/container/package/camstack</Registry>
+  <Network>br0</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Restart>unless-stopped</Restart>
+  <Support>https://github.com/camstack/unraid-templates/issues</Support>
+  <Project>https://camstack.io</Project>
+  <ReadMe>https://github.com/camstack/unraid-templates#readme</ReadMe>
+  <License>MIT</License>
+  <Overview>CamStack is a self-hosted camera-management hub. ONVIF/RTSP/Reolink/Hikvision device providers, a WebRTC and RTSP restream broker, recording, and a motion + ML detection pipeline, all as addons over a typed RPC layer. Run this once; add a CamStack Agent on any other machine whose GPU/NPU you want to put to work. The admin UI is HTTPS on port 4443 with a self-signed certificate by default. Map BOTH /data and /config. The first sign-in is admin / changeme and asks you for a new password. No password, token or key goes in this template. Agents are paired from the admin UI (Cluster → Nodes → Agents found on the network); there is no cluster secret.</Overview>
+  <Category>HomeAutomation: Tools: Other:</Category>
+  <WebUI>https://[IP]:[PORT:4443]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/camstack/unraid-templates/main/templates/camstack.xml</TemplateURL>
+  <Icon>https://camstack-docs.zentik.app/icon.png</Icon>
+  <ExtraParams>--device-cgroup-rule=&apos;c 189:* rmw&apos; --pids-limit=8192</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+
+  <!-- Ports -->
+  <Config Name="WebUI (HTTPS)" Target="4443" Default="4443" Mode="tcp" Description="Admin UI and API over HTTPS. Self-signed by default." Type="Port" Display="always" Required="true" Mask="false">4443</Config>
+  <Config Name="Cluster mesh (mTLS)" Target="6443" Default="6443" Mode="tcp" Description="Mutual-TLS cluster mesh: remote agents dial the hub here. Needed only for a multi-machine cluster; keep it on your LAN and never forward it. The old clear port 6000 and the UDP discovery port 4445 are retired." Type="Port" Display="always" Required="false" Mask="false">6443</Config>
+  <Config Name="RTSP restream" Target="8554" Default="8554" Mode="tcp" Description="RTSP restream served on demand by the stream broker." Type="Port" Display="advanced" Required="false" Mask="false">8554</Config>
+
+  <!-- Storage -->
+</Container>

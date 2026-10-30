@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  Maintained by hand in this repository (D717): the generator that used to
+  produce this file was retired.
+
+  CamStack agent — a worker node. One per extra machine.
+
+  Same image as the hub; CAMSTACK_ROLE=agent selects the role. Run the hub
+  first (camstack.xml), then pair this agent from the hub (Cluster → Nodes).
+
+  Host networking is the default because an agent pulls RTSP from LAN
+  cameras and serves WebRTC — both want the real host IP. br0 with a
+  dedicated IP works too. Either way UDP 5353 (mDNS) reaches the LAN, which
+  the dashboard's hub list needs; Docker bridge mode does not.
+
+  Image: ghcr.io/camstack/camstack:intel-latest
+
+  Required runtime flags, shown without their leading dashes because an XML
+  comment cannot contain a double hyphen. Full form in ExtraParams below.
+  Do not remove them:
+  device-cgroup-rule='c 189:* rmw'
+      Coral USB re-enumerates (1a6e:089a → 18d1:9302) when libedgetpu initialises, so the post-init device node is not the one that was passed through. The cgroup rule admits the whole USB char-device major. Pairs with the /dev/bus/usb mapping.
+  pids-limit=8192
+      A container cgroup counts THREADS, not processes. This hub was measured refusing 22 clone() calls in 45 minutes against the 2048 Docker/Unraid default — every one of them a thread some subsystem needed and silently did without, surfacing only as media that stopped. The ceiling stays (it is what makes a thread leak visible) and native-metrics reads pids.current/max/events on a heartbeat, so approaching it is now legible instead of fatal.
+-->
+<Container version="2">
+  <Name>CamStack-Agent</Name>
+  <Repository>ghcr.io/camstack/camstack:intel-latest</Repository>
+  <Registry>https://github.com/orgs/camstack/packages/container/package/camstack</Registry>
+  <Network>host</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Restart>unless-stopped</Restart>
+  <Support>https://github.com/camstack/unraid-templates/issues</Support>
+  <Project>https://camstack.io</Project>
+  <ReadMe>https://github.com/camstack/unraid-templates#readme</ReadMe>
+  <License>MIT</License>
+  <Overview>A CamStack Agent is a worker node. It joins a CamStack hub and runs the heavy work on this machine instead: ML detection, hardware decode/encode, the WebRTC and RTSP broker, and recording. This is not a standalone install — run the CamStack hub first, then point this at it. The agent is paired from the hub: open Cluster → Nodes, find it under Agents found on the network (or add it by address) and confirm the same six-digit code on the hub and on the agent's own page on port 4444. There is no shared secret to copy; after pairing the agent and hub trust each other by certificate. The app version is managed by the hub; only the boot loader comes from this image.</Overview>
+  <Category>HomeAutomation: Tools: Other:</Category>
+  <WebUI>http://[IP]:[PORT:4444]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/camstack/unraid-templates/main/templates/camstack-agent.xml</TemplateURL>
+  <Icon>https://camstack-docs.zentik.app/icon.png</Icon>
+  <ExtraParams>--device-cgroup-rule=&apos;c 189:* rmw&apos; --pids-limit=8192</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>A running CamStack hub on the same network — set its address below.</Requires>
+
+  <!-- Ports -->
+  <Config Name="Status dashboard (HTTP)" Target="4444" Default="4444" Mode="tcp" Description="Agent status dashboard: hub connection, cameras handled here, logs and metrics. Also where you pick the hub to join when no hub address is set." Type="Port" Display="always" Required="true" Mask="false">4444</Config>
+  <Config Name="Cluster mesh (mTLS)" Target="6443" Default="6443" Mode="tcp" Description="Mutual-TLS listener the hub reaches this agent on once it has joined. Keep it on your LAN and never forward it. The old clear ports (6000 and the 20000-29999 range) and the UDP discovery port 4445 are retired." Type="Port" Display="advanced" Required="false" Mask="false">6443</Config>
+  <Config Name="RTSP restream" Target="8554" Default="8554" Mode="tcp" Description="RTSP restream served on demand by the stream broker." Type="Port" Display="advanced" Required="false" Mask="false">8554</Config>
+
+  <!-- Storage -->
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/camstack-agent" Mode="rw" Description="Installed addons, ML models, native dependencies, logs and this agent&apos;s identity. Use a different folder from the hub. Safe to wipe — it re-seeds from the hub on the next boot." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/camstack-agent</Config>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/camstack-agent-config" Mode="rw" Description="config.yaml. The image declares /config as a volume, so leaving it unmapped makes Docker create a fresh anonymous volume on every re-create. Map it even though an agent keeps little here." Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/camstack-agent-config</Config>
+  <Config Name="Backups" Target="/backups" Default="/mnt/user/appdata/camstack-agent-backups" Mode="rw" Description="The image declares /backups as a volume. An agent rarely runs backup destinations, but map it (or Docker makes a fresh anonymous volume on every re-create). Paired with CAMSTACK_BACKUP_ROOT." Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user/appdata/camstack-agent-backups</Config>
+</Container>
