@@ -67,7 +67,10 @@ function mediaType(contentType: string | undefined): string {
 function locationShape(location: string, base: string): { target: string; names: string[] } {
   try {
     const url = new URL(location, base)
-    return { target: `${url.host}${url.pathname}`, names: paramNames(url.search) }
+    return {
+      target: `${url.host}${url.pathname}`,
+      names: paramNames(url.search),
+    }
   } catch {
     return { target: 'unparsable', names: [] }
   }

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Bosch Smart Home Controller is now found by the shared network scan, including on other subnets
+- Bosch sign-in through the hub keeps the vendor's cookies on the server, fixing the "Browser requirements not met" page
 
 ## [0.1.32] - 2026-10-28
 

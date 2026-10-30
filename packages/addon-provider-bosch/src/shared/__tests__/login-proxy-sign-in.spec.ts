@@ -77,12 +77,19 @@ describe('the hub login proxy, end to end, for a vendor with an app-scheme redir
         res.writeHead(200, {
           'content-type': 'text/html',
           'content-security-policy': "default-src 'none'",
+          // The vendor's browser-requirements check: the walk below keeps no browser cookies.
+          'set-cookie': 'cpim-trans=T1; Path=/; Secure; HttpOnly',
         })
         res.end(`<a href="/login2?state=${state}">continue</a>`)
       } else if (url.pathname === '/login2') {
         res.writeHead(302, { location: `http://127.0.0.1:${vendorPort}/cb?state=${state}` })
         res.end()
       } else if (url.pathname === '/cb') {
+        if (!(req.headers.cookie ?? '').includes('cpim-trans=T1')) {
+          res.writeHead(200, { 'content-type': 'text/html' })
+          res.end('Browser requirements not met')
+          return
+        }
         res.writeHead(302, {
           location: `${HOME_CONNECT_REDIRECT_URI}?code=${codeToIssue}&state=${state}`,
         })

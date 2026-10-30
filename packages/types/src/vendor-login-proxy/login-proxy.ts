@@ -41,6 +41,7 @@ import {
   type LoginProxyRoute,
   type LoginProxyUpstream,
 } from './url-rewrite.js'
+import { VendorCookieJar, mergeCookieHeaders } from './cookie-jar.js'
 import { FLOW_TRACE_MAX_LINES, flowTraceMeta } from './flow-trace.js'
 
 /** What the terminal function sees of one upstream response. Never logged. */
@@ -70,6 +71,12 @@ export interface LoginProxyAttemptSpec<T> {
   ) => LoginProxyVerdict<T> | Promise<LoginProxyVerdict<T>>
   /** Finish the sign-in with the payload; the outcome picks the result page the browser lands on. */
   readonly onDone: (payload: T) => Promise<OauthLandingOutcome>
+  /**
+   * Keep the vendor's cookies on the server for this attempt and send them upstream, whatever
+   * the browser stored. For a login that refuses a flow arriving without the cookies it set
+   * earlier (a browser-requirements check page). Default off.
+   */
+  readonly serverCookieJar?: boolean
 }
 
 export interface VendorLoginProxyOptions {
@@ -87,6 +94,8 @@ type Settled =
 interface OpenAttempt {
   readonly expiresAtMs: number
   readonly upstreams: readonly LoginProxyUpstream[]
+  /** Present when the attempt keeps vendor cookies server-side. */
+  readonly jar: VendorCookieJar | null
   readonly evaluate: (view: LoginProxyResponseView) => Promise<Settled>
 }
 
@@ -247,6 +256,7 @@ export class VendorLoginProxy {
     this.#attempts.set(spec.attemptId, {
       expiresAtMs: spec.expiresAtMs,
       upstreams: spec.upstreams,
+      jar: spec.serverCookieJar === true ? new VendorCookieJar() : null,
       evaluate: async (view) => {
         const verdict = await spec.terminal(view)
         if (verdict.kind === 'continue') return verdict
@@ -291,7 +301,10 @@ export class VendorLoginProxy {
       await this.#serve(req, res)
     } catch (err: unknown) {
       this.#logger.warn('vendor login proxy: request failed', {
-        meta: { addonId: this.#addonId, error: err instanceof Error ? err.name : 'unknown' },
+        meta: {
+          addonId: this.#addonId,
+          error: err instanceof Error ? err.name : 'unknown',
+        },
       })
       if (!res.headersSent) sendPlain(res, 502, 'The sign-in page could not be reached.')
       else res.end()
@@ -312,7 +325,10 @@ export class VendorLoginProxy {
     if (attempt === undefined || this.#now() > attempt.expiresAtMs) {
       if (attempt !== undefined) this.close(parsed.attemptId)
       this.#logger.info('vendor login proxy: attempt refused', {
-        meta: { addonId: this.#addonId, reason: attempt === undefined ? 'missing' : 'expired' },
+        meta: {
+          addonId: this.#addonId,
+          reason: attempt === undefined ? 'missing' : 'expired',
+        },
       })
       this.#redirect(res, forwardedPrefix, {
         status: 'error',
@@ -349,7 +365,7 @@ export class VendorLoginProxy {
       }
     }
 
-    const headers = this.#requestHeaders(req, route, upstream)
+    const headers = this.#requestHeaders(req, route, upstream, attempt.jar, target)
     const upstreamRes = await this.#fetch(target, {
       method,
       headers,
@@ -358,6 +374,7 @@ export class VendorLoginProxy {
     })
     const location = upstreamRes.headers.get('location')
     const setCookies = upstreamRes.headers.getSetCookie()
+    attempt.jar?.store(setCookies, { host: upstream.host, pathname: target.pathname }, this.#now())
     const contentType = upstreamRes.headers.get('content-type') ?? ''
     const kind = bodyKindOf(contentType)
     const declaredLength = Number(upstreamRes.headers.get('content-length') ?? '0')
@@ -412,7 +429,10 @@ export class VendorLoginProxy {
     upstreamRes.headers.forEach((value, name) => {
       if (!DROP_RESPONSE_HEADERS.has(name.toLowerCase())) out[name] = value
     })
-    if (setCookies.length > 0) out['set-cookie'] = rewriteSetCookies(setCookies, route)
+    if (setCookies.length > 0)
+      out['set-cookie'] = rewriteSetCookies(setCookies, route, {
+        browserSafe: attempt.jar !== null,
+      })
     if (location !== null) out['location'] = rewriteLocation(location, upstream, route)
     out['cache-control'] = 'no-store'
 
@@ -440,6 +460,8 @@ export class VendorLoginProxy {
     req: IncomingMessage,
     route: LoginProxyRoute,
     upstream: LoginProxyUpstream,
+    jar: VendorCookieJar | null,
+    target: URL,
   ): Record<string, string> {
     const headers: Record<string, string> = {}
     for (const [name, value] of Object.entries(req.headers)) {
@@ -448,7 +470,17 @@ export class VendorLoginProxy {
       headers[lower] = Array.isArray(value) ? value.join(', ') : value
     }
     const cookie = filterForwardedCookies(firstHeader(req.headers['cookie']) ?? '')
-    if (cookie.length > 0) headers['cookie'] = cookie
+    const jarCookie =
+      jar?.headerFor(
+        {
+          host: upstream.host,
+          pathname: target.pathname,
+          scheme: upstream.scheme,
+        },
+        this.#now(),
+      ) ?? null
+    const merged = mergeCookieHeaders(cookie, jarCookie)
+    if (merged.length > 0) headers['cookie'] = merged
     if (req.headers['origin'] !== undefined) {
       headers['origin'] = `${upstream.scheme}://${upstream.host}`
     }

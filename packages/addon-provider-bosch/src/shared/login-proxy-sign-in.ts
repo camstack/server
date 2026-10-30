@@ -134,6 +134,8 @@ export function openSignInProxy<R>(input: OpenSignInProxyInput<R>): string {
     expiresAtMs: started + SIGN_IN_ATTEMPT_TTL_MS,
     upstreams: input.hosts.map((host) => ({ host, scheme: input.scheme ?? 'https' })),
     terminal: appSchemeTerminal(input.appScheme),
+    // The vendor's browser-requirements check refuses a flow that arrives without the cookies it set earlier.
+    serverCookieJar: true,
     onDone: async (callback) => {
       try {
         const result = await input.finish(callback)

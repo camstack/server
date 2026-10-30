@@ -81,7 +81,12 @@ export function parseProxyPath(rawUrl: string): ParsedProxyPath | null {
   const attemptId = match[1]
   const host = match[2]
   if (attemptId === undefined || host === undefined) return null
-  return { attemptId, host: host.toLowerCase(), pathname: match[3] ?? '/', search }
+  return {
+    attemptId,
+    host: host.toLowerCase(),
+    pathname: match[3] ?? '/',
+    search,
+  }
 }
 
 /** The vendor URL a proxied request targets, or null when the host would not stay `host`. */
@@ -162,13 +167,22 @@ export function rewriteBody(
 /**
  * A vendor `Set-Cookie` for the browser: no `Domain` (the cookie belongs to the hub
  * origin), `Path` narrowed to this attempt's prefix, `Secure` kept (the hub is HTTPS).
+ * `browserSafe` (the server keeps its own jar, so this copy only serves the page's script):
+ * also no `Secure` / `SameSite`, which a plain-http hub makes the browser refuse, and no
+ * `__Host-` / `__Secure-` cookie, whose rules a narrowed Path breaks.
  */
-export function rewriteSetCookie(cookie: string, route: LoginProxyRoute): string {
+export function rewriteSetCookie(
+  cookie: string,
+  route: LoginProxyRoute,
+  options: { readonly browserSafe?: boolean } = {},
+): string {
   const parts = cookie.split(';').map((part) => part.trim())
+  const dropped =
+    options.browserSafe === true ? ['domain', 'path', 'secure', 'samesite'] : ['domain', 'path']
   const kept = parts.filter((part, index) => {
     if (index === 0) return true
     const name = part.split('=')[0]?.trim().toLowerCase() ?? ''
-    return name !== 'domain' && name !== 'path'
+    return !dropped.includes(name)
   })
   kept.push(`Path=${route.basePath}/`)
   return kept.join('; ')
@@ -180,12 +194,17 @@ export function rewriteSetCookie(cookie: string, route: LoginProxyRoute): string
  * one, so a past-dated set that only deleted the other domain's copy would delete the
  * live one the same response just set: that deletion is dropped.
  */
-export function rewriteSetCookies(cookies: readonly string[], route: LoginProxyRoute): string[] {
+export function rewriteSetCookies(
+  cookies: readonly string[],
+  route: LoginProxyRoute,
+  options: { readonly browserSafe?: boolean } = {},
+): string[] {
   const now = Date.now()
   const liveNames = new Set(cookies.filter((c) => !isExpiredCookie(c, now)).map(cookieName))
   return cookies
     .filter((c) => !(isExpiredCookie(c, now) && liveNames.has(cookieName(c))))
-    .map((c) => rewriteSetCookie(c, route))
+    .filter((c) => options.browserSafe !== true || !/^__(?:host|secure)-/i.test(cookieName(c)))
+    .map((c) => rewriteSetCookie(c, route, options))
 }
 
 function cookieName(cookie: string): string {
