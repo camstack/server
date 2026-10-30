@@ -47,7 +47,8 @@ npm run changelog:add -- <package> "<operator line>" --type changed
 
 Two ways a line goes missing unseen: a changelog hunk cherry-picked across a
 publish lands under the released version instead of `[Unreleased]` (read the
-head of the file), and a bundle that changes without code (the viewer bundle
+head of the file; the gate now names a line that landed under a released
+heading), and a bundle that changes without code (the viewer bundle
 in the orchestrator — `ship-viewer.mjs` now writes that line itself).
 
 **Sync the lockfile.** The job runs `npm ci`, which fails with `EUSAGE` /
