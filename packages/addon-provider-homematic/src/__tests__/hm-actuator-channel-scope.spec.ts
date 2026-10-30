@@ -19,18 +19,18 @@ import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camst
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'
-import { homematicFacades } from '../homematic-gateway.js'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 
 // ── Live identifiers (hub: device 1445 + children 1460 / 1461) ──────────────
 
-const BROKER_ID = 'hm_001'
+const INTEGRATION_ID = 'hm_001'
 const ADDRESS = '00315F298E5A18'
 const CHANNEL_A = `${ADDRESS}:4`
 const CHANNEL_B = `${ADDRESS}:8`
 const DEVICE_ID_A = 1460
 const DEVICE_ID_B = 1461
-const STABLE_ID_A = `hm:${BROKER_ID}:${ADDRESS}-act-${CHANNEL_A}`
-const STABLE_ID_B = `hm:${BROKER_ID}:${ADDRESS}-act-${CHANNEL_B}`
+const STABLE_ID_A = `hm:${INTEGRATION_ID}:${ADDRESS}-act-${CHANNEL_A}`
+const STABLE_ID_B = `hm:${INTEGRATION_ID}:${ADDRESS}-act-${CHANNEL_B}`
 
 // ── DeviceContext stub (same shape as homematic-device.spec.ts) ─────────────
 
@@ -89,7 +89,7 @@ function makeCtx(id: number, stableId: string, channel: string): CtxHandle {
       parentDeviceId: 1445,
       metadata: null,
     },
-    persistedConfig: { address: ADDRESS, brokerId: BROKER_ID, channel, kind: 'switch' },
+    persistedConfig: { address: ADDRESS, integrationId: INTEGRATION_ID, channel, kind: 'switch' },
     initialRuntimeState: {},
     eventBus: { emit: () => {}, subscribe: () => () => {}, getRecent: () => [] },
     persistConfig: async () => {},
@@ -134,7 +134,7 @@ interface FacadeStub {
 /** The BS2 as the library reports it: STATE on BOTH relay channels. */
 function bs2Snapshot(): HmDevice {
   const state = (address: string): Record<string, unknown> => ({
-    id: `${BROKER_ID}:${address}:VALUES:STATE`,
+    id: `${INTEGRATION_ID}:${address}:VALUES:STATE`,
     parameter: 'STATE',
     type: 'BOOL',
     value: false,
@@ -145,7 +145,7 @@ function bs2Snapshot(): HmDevice {
   const device = {
     address: ADDRESS,
     type: 'HmIP-BS2',
-    interfaceId: BROKER_ID,
+    interfaceId: INTEGRATION_ID,
     channels: [
       {
         address: CHANNEL_A,
@@ -190,7 +190,7 @@ function makeFacade(): { facade: Homematic; emit: (event: ValueChangedEvent) => 
 
 function stateEvent(channel: string, value: boolean, ts: number): ValueChangedEvent {
   return {
-    dpId: `${BROKER_ID}:${channel}:VALUES:STATE`,
+    dpId: `${INTEGRATION_ID}:${channel}:VALUES:STATE`,
     device: ADDRESS,
     channel,
     parameter: 'STATE',
@@ -209,7 +209,7 @@ beforeEach(() => {
 describe('HmIP-BS2 dual relay — per-channel state isolation', () => {
   it('routes a STATE event to the relay that owns the channel, and to it only', () => {
     const { facade, emit } = makeFacade()
-    homematicFacades.set(BROKER_ID, facade)
+    homematicFacades.set(INTEGRATION_ID, facade)
 
     const relayA = makeCtx(DEVICE_ID_A, STABLE_ID_A, CHANNEL_A)
     const relayB = makeCtx(DEVICE_ID_B, STABLE_ID_B, CHANNEL_B)
@@ -225,7 +225,7 @@ describe('HmIP-BS2 dual relay — per-channel state isolation', () => {
 
   it('keeps the two relays independent when only the first is actuated', () => {
     const { facade, emit } = makeFacade()
-    homematicFacades.set(BROKER_ID, facade)
+    homematicFacades.set(INTEGRATION_ID, facade)
 
     const relayA = makeCtx(DEVICE_ID_A, STABLE_ID_A, CHANNEL_A)
     const relayB = makeCtx(DEVICE_ID_B, STABLE_ID_B, CHANNEL_B)
@@ -240,7 +240,7 @@ describe('HmIP-BS2 dual relay — per-channel state isolation', () => {
 
   it('drops a channel-less value event and logs it with the numeric deviceId', () => {
     const { facade, emit } = makeFacade()
-    homematicFacades.set(BROKER_ID, facade)
+    homematicFacades.set(INTEGRATION_ID, facade)
 
     const relayA = makeCtx(DEVICE_ID_A, STABLE_ID_A, CHANNEL_A)
     new HmActuatorDevice(relayA.ctx)

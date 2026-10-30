@@ -21,9 +21,9 @@ import { HmActuatorDevice } from '../devices/hm-actuator-device.js'
 import { HM_SEEDED_CHANGED_AT, changeStamp } from '../devices/hm-change-stamp.js'
 import { HmDiagnosticDevice } from '../devices/hm-diagnostic-device.js'
 import { HmSensorDevice } from '../devices/hm-sensor-device.js'
-import { homematicFacades } from '../homematic-gateway.js'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 
-const BROKER_ID = 'hm_001'
+const INTEGRATION_ID = 'hm_001'
 const ADDRESS = '002A1BE9A3C4F1'
 const CHANNEL = `${ADDRESS}:1`
 const DEVICE_ID = 4201
@@ -69,11 +69,11 @@ function makeCtx(overrides: CtxOverrides = {}): Harness {
   }
   const ctx = {
     id: DEVICE_ID,
-    stableId: `hm:${BROKER_ID}:${ADDRESS}-act-${CHANNEL}`,
+    stableId: `hm:${INTEGRATION_ID}:${ADDRESS}-act-${CHANNEL}`,
     parentDeviceId: 4200,
     deviceMeta: {
       id: DEVICE_ID,
-      stableId: `hm:${BROKER_ID}:${ADDRESS}-act-${CHANNEL}`,
+      stableId: `hm:${INTEGRATION_ID}:${ADDRESS}-act-${CHANNEL}`,
       addonId: 'provider-homematic',
       type: overrides.type ?? DeviceType.Lock,
       name: 'front door lock',
@@ -84,7 +84,7 @@ function makeCtx(overrides: CtxOverrides = {}): Harness {
     },
     persistedConfig: overrides.persistedConfig ?? {
       address: ADDRESS,
-      brokerId: BROKER_ID,
+      integrationId: INTEGRATION_ID,
       channel: CHANNEL,
       kind: 'lock',
     },
@@ -135,7 +135,7 @@ function makeFacade(initial: HmValue): FacadeHandle {
     const device = {
       address: ADDRESS,
       type: 'HmIP-DLD',
-      interfaceId: BROKER_ID,
+      interfaceId: INTEGRATION_ID,
       channels: [
         {
           address: CHANNEL,
@@ -143,7 +143,7 @@ function makeFacade(initial: HmValue): FacadeHandle {
           type: 'DOOR_LOCK_STATE_TRANSMITTER',
           dataPoints: [
             {
-              id: `${BROKER_ID}:${CHANNEL}:VALUES:LOCK_STATE`,
+              id: `${INTEGRATION_ID}:${CHANNEL}:VALUES:LOCK_STATE`,
               parameter: 'LOCK_STATE',
               type: 'ENUM',
               value: cached,
@@ -172,7 +172,7 @@ function makeFacade(initial: HmValue): FacadeHandle {
     customEntities: () => [],
   }
   const event = (value: HmValue, ts: number): ValueChangedEvent => ({
-    dpId: `${BROKER_ID}:${CHANNEL}:VALUES:LOCK_STATE`,
+    dpId: `${INTEGRATION_ID}:${CHANNEL}:VALUES:LOCK_STATE`,
     device: ADDRESS,
     channel: CHANNEL,
     parameter: 'LOCK_STATE',
@@ -216,7 +216,7 @@ function makeSeedFacade(spec: SeedDatapointSpec): Homematic {
   const device = {
     address: ADDRESS,
     type: 'HmIP-GENERIC',
-    interfaceId: BROKER_ID,
+    interfaceId: INTEGRATION_ID,
     channels: [
       {
         address: CHANNEL,
@@ -224,7 +224,7 @@ function makeSeedFacade(spec: SeedDatapointSpec): Homematic {
         type: spec.channelType,
         dataPoints: [
           {
-            id: `${BROKER_ID}:${CHANNEL}:VALUES:${spec.parameter}`,
+            id: `${INTEGRATION_ID}:${CHANNEL}:VALUES:${spec.parameter}`,
             parameter: spec.parameter,
             type: spec.dpType,
             value: spec.value,
@@ -274,7 +274,7 @@ describe('changeStamp', () => {
 describe('HmActuatorDevice lock — seeded values are known, never fresh', () => {
   it('a respawn replaying an UNLOCKED lock yields a reading stamped as known-but-old', () => {
     const { facade } = makeFacade('UNLOCKED')
-    homematicFacades.set(BROKER_ID, facade)
+    homematicFacades.set(INTEGRATION_ID, facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
 
@@ -283,7 +283,7 @@ describe('HmActuatorDevice lock — seeded values are known, never fresh', () =>
 
   it('a live event is stamped with its own time', () => {
     const f = makeFacade('LOCKED')
-    homematicFacades.set(BROKER_ID, f.facade)
+    homematicFacades.set(INTEGRATION_ID, f.facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
 
@@ -294,7 +294,7 @@ describe('HmActuatorDevice lock — seeded values are known, never fresh', () =>
 
   it('a reconnect replay that confirms the state keeps the real stamp', () => {
     const f = makeFacade('LOCKED')
-    homematicFacades.set(BROKER_ID, f.facade)
+    homematicFacades.set(INTEGRATION_ID, f.facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
     f.emitLive('UNLOCKED', LIVE_TS)
@@ -306,7 +306,7 @@ describe('HmActuatorDevice lock — seeded values are known, never fresh', () =>
 
   it('a reconnect replay that finds the state moved stamps it known-but-old, not now', () => {
     const f = makeFacade('LOCKED')
-    homematicFacades.set(BROKER_ID, f.facade)
+    homematicFacades.set(INTEGRATION_ID, f.facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
     f.emitLive('LOCKED', LIVE_TS)
@@ -319,7 +319,7 @@ describe('HmActuatorDevice lock — seeded values are known, never fresh', () =>
 
   it('an UNKNOWN LOCK_STATE leaves the cold placeholder a placeholder, and says so', () => {
     const { facade } = makeFacade('UNKNOWN')
-    homematicFacades.set(BROKER_ID, facade)
+    homematicFacades.set(INTEGRATION_ID, facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
 
@@ -333,7 +333,7 @@ describe('HmActuatorDevice lock — seeded values are known, never fresh', () =>
 
   it('an UNKNOWN LOCK_STATE over a real reading keeps state AND stamp', () => {
     const f = makeFacade('LOCKED')
-    homematicFacades.set(BROKER_ID, f.facade)
+    homematicFacades.set(INTEGRATION_ID, f.facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
     f.emitLive('LOCKED', LIVE_TS)
@@ -358,7 +358,12 @@ const SEED_REPLAY_CASES: readonly SeedReplayCase[] = [
   {
     name: 'cover LEVEL=1.0 replays as open, stamped known-but-old',
     type: DeviceType.Cover,
-    persistedConfig: { address: ADDRESS, brokerId: BROKER_ID, channel: CHANNEL, kind: 'cover' },
+    persistedConfig: {
+      address: ADDRESS,
+      integrationId: INTEGRATION_ID,
+      channel: CHANNEL,
+      kind: 'cover',
+    },
     datapoint: {
       channelType: 'SHUTTER_VIRTUAL_RECEIVER',
       parameter: 'LEVEL',
@@ -381,7 +386,7 @@ const SEED_REPLAY_CASES: readonly SeedReplayCase[] = [
     type: DeviceType.Sensor,
     persistedConfig: {
       address: ADDRESS,
-      brokerId: BROKER_ID,
+      integrationId: INTEGRATION_ID,
       channel: CHANNEL,
       capabilities: ['motion'],
     },
@@ -400,7 +405,12 @@ const SEED_REPLAY_CASES: readonly SeedReplayCase[] = [
   {
     name: 'switch STATE=true replays as on, stamped known-but-old',
     type: DeviceType.Switch,
-    persistedConfig: { address: ADDRESS, brokerId: BROKER_ID, channel: CHANNEL, kind: 'switch' },
+    persistedConfig: {
+      address: ADDRESS,
+      integrationId: INTEGRATION_ID,
+      channel: CHANNEL,
+      kind: 'switch',
+    },
     datapoint: { channelType: 'SWITCH_CHANNEL', parameter: 'STATE', dpType: 'BOOL', value: true },
     build: (ctx) => {
       new HmActuatorDevice(ctx)
@@ -413,7 +423,7 @@ const SEED_REPLAY_CASES: readonly SeedReplayCase[] = [
     type: DeviceType.Sensor,
     persistedConfig: {
       address: ADDRESS,
-      brokerId: BROKER_ID,
+      integrationId: INTEGRATION_ID,
       channel: CHANNEL,
       capabilities: ['binary'],
       sourceParams: ['LOWBAT'],
@@ -436,7 +446,7 @@ describe('seed replay reaches every child handler — known value, unknown chang
     capName,
     expected,
   }) => {
-    homematicFacades.set(BROKER_ID, makeSeedFacade(datapoint))
+    homematicFacades.set(INTEGRATION_ID, makeSeedFacade(datapoint))
     const h = makeCtx({ type, persistedConfig })
 
     build(h.ctx)
@@ -448,7 +458,7 @@ describe('seed replay reaches every child handler — known value, unknown chang
 describe('HmSensorDevice motion — a stored rise survives a restart', () => {
   const MOTION_CONFIG = {
     address: ADDRESS,
-    brokerId: BROKER_ID,
+    integrationId: INTEGRATION_ID,
     channel: CHANNEL,
     capabilities: ['motion'],
   }
@@ -473,7 +483,7 @@ describe('HmSensorDevice motion — a stored rise survives a restart', () => {
 
   it('a replayed MOTION=false after the restart keeps the stored rise', () => {
     homematicFacades.set(
-      BROKER_ID,
+      INTEGRATION_ID,
       makeSeedFacade({
         channelType: 'MOTION_DETECTION_TRANSMITTER',
         parameter: 'MOTION',

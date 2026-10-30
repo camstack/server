@@ -52,6 +52,24 @@ export const homematicConfigSchema = z.object({
 export type HomematicConfig = z.infer<typeof homematicConfigSchema>
 
 /**
+ * The XML-RPC interface names the operator's toggles select, in the library's
+ * order. Only the four interfaces supported by nodehomematic are included.
+ */
+export function enabledInterfaces(
+  config: Pick<
+    HomematicConfig,
+    'enableHmipRf' | 'enableBidcosRf' | 'enableGroups' | 'enableBidcosWired'
+  >,
+): string[] {
+  const interfaces: string[] = []
+  if (config.enableHmipRf) interfaces.push('HmIP-RF')
+  if (config.enableBidcosRf) interfaces.push('BidCos-RF')
+  if (config.enableGroups) interfaces.push('VirtualDevices')
+  if (config.enableBidcosWired) interfaces.push('BidCos-Wired')
+  return interfaces
+}
+
+/**
  * Build the `HomematicOptions` the wrapped library constructor expects
  * from the validated addon config. Pure: same config in → same options
  * out. Credentials are only forwarded when both fields are non-empty so
@@ -64,13 +82,7 @@ export function toHomematicOptions(config: HomematicConfig): HomematicOptions {
   const callbackHost =
     config.callbackHost.length > 0 ? config.callbackHost : (inferCallbackHost(config.host) ?? '')
 
-  // Derive the XML-RPC interface list from the per-interface boolean toggles.
-  // Only the four interfaces supported by nodehomematic are included.
-  const interfaces: string[] = []
-  if (config.enableHmipRf) interfaces.push('HmIP-RF')
-  if (config.enableBidcosRf) interfaces.push('BidCos-RF')
-  if (config.enableGroups) interfaces.push('VirtualDevices')
-  if (config.enableBidcosWired) interfaces.push('BidCos-Wired')
+  const interfaces = enabledInterfaces(config)
 
   return {
     host: config.host,
@@ -86,101 +98,63 @@ export function toHomematicOptions(config: HomematicConfig): HomematicOptions {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Multi-broker config schema
-// ---------------------------------------------------------------------------
+/**
+ * Parse an integration's stored settings, or null while the host is missing or
+ * a field is invalid. Strings are trimmed; the password arrives resolved from
+ * the keychain.
+ */
+export function connectionFromSettings(settings: unknown): HomematicConfig | null {
+  const raw = typeof settings === 'object' && settings !== null ? settings : {}
+  const parsed = homematicConfigSchema.safeParse(
+    Object.fromEntries(
+      Object.entries(raw).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]),
+    ),
+  )
+  return parsed.success ? parsed.data : null
+}
 
 /**
- * A single registered Homematic CCU hub ("broker"). One broker entry maps
- * 1-to-1 with an operator-added integration and holds the validated CCU
- * connection settings plus an optional back-reference to the spawning
- * integration (used for cascade-delete when the integration is removed).
+ * Structural equality over the fields that affect the live CCU connection. Two
+ * configs are "the same connection" when every field that would force a facade
+ * stop+start matches. A `null` argument is never equal to anything.
  */
-export const HmBrokerEntrySchema = z.object({
-  /** Stable opaque identifier — e.g. 'hm_001', 'hm_002'. */
-  id: z.string().min(1),
-  /** Human-readable label shown in the admin UI. */
-  name: z.string().min(1),
-  /** Validated CCU connection settings. */
-  connection: homematicConfigSchema,
-  /** FK to the spawning integration — auto-cleanup on integration delete. */
-  integrationId: z.string().optional(),
+export function sameConnection(a: HomematicConfig | null, b: HomematicConfig | null): boolean {
+  if (a === null || b === null) return false
+  return (
+    a.host === b.host &&
+    a.enableHmipRf === b.enableHmipRf &&
+    a.enableBidcosRf === b.enableBidcosRf &&
+    a.enableGroups === b.enableGroups &&
+    a.enableBidcosWired === b.enableBidcosWired &&
+    a.callbackHost === b.callbackHost &&
+    a.callbackPort === b.callbackPort &&
+    a.username === b.username &&
+    a.password === b.password &&
+    a.tls === b.tls
+  )
+}
+
+/**
+ * What every Homematic device carries so the integration's cascade and offline
+ * helpers find it: the provenance marker and the integration (CCU session) it
+ * belongs to.
+ */
+export const homematicGatewayDeviceSchema = z.object({
+  integrationId: z.string().min(1).describe('Integration (CCU session) the device belongs to'),
+  system: z.literal('homematic'),
+  /** The adoption candidate id the device was adopted from. */
+  nativeId: z.string().min(1),
 })
-export type HmBrokerEntry = z.infer<typeof HmBrokerEntrySchema>
 
-/**
- * Top-level addon config that replaces the old single-CCU
- * `{connection: HomematicConfig|null}` shape. Holds an ordered list of
- * broker entries; the list defaults to empty so a fresh install requires
- * no explicit initialisation.
- */
-export const homematicAddonConfigSchema = z.object({
-  brokers: z.array(HmBrokerEntrySchema).default([]),
-})
-export type HomematicAddonConfigV2 = z.infer<typeof homematicAddonConfigSchema>
-
-/**
- * Coerce a loose settings blob (e.g. from the broker `add`/`setSettings`
- * cap) through the connection schema, applying all schema defaults. Throws
- * a `ZodError` on invalid input so the caller surfaces a clear error at the
- * system boundary rather than propagating a malformed config.
- */
-export function settingsToHmConfig(settings: unknown): HomematicConfig {
-  return homematicConfigSchema.parse(settings ?? {})
-}
-
-// ---------------------------------------------------------------------------
-// Config migration
-// ---------------------------------------------------------------------------
-
-/**
- * Narrows an `unknown` value to a plain (non-array) object record. Returns an
- * empty record when the value is not a plain object so callers can safely
- * access keys without a cast.
- */
-function toRecord(v: unknown): Record<string, unknown> {
-  if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-    return Object.fromEntries(Object.entries(v))
-  }
-  return {}
-}
-
-/**
- * One-time migration from the legacy single-CCU shape
- * `{ connection: HomematicConfig | null }` to the multi-broker shape
- * `{ brokers: HmBrokerEntry[] }`. Idempotent: an already-migrated blob (one
- * that already has a `brokers` array) is parsed through and returned as-is.
- * An absent/invalid legacy connection yields an empty brokers list (the
- * operator re-adds the CCU) rather than throwing.
- */
-export function migrateLegacyConfig(raw: unknown): HomematicAddonConfigV2 {
-  const obj = toRecord(raw)
-
-  // Already in the new multi-broker shape — parse and return as-is.
-  if (Array.isArray(obj['brokers'])) {
-    return homematicAddonConfigSchema.parse(obj)
-  }
-
-  // Attempt to lift a legacy `connection` object into a single broker entry.
-  const legacy = obj['connection']
-  if (legacy !== null && legacy !== undefined) {
-    const conn = homematicConfigSchema.safeParse(legacy)
-    if (conn.success) {
-      const label = conn.data.host.length > 0 ? conn.data.host : 'Homematic CCU'
-      return { brokers: [{ id: 'hm_001', name: label, connection: conn.data }] }
-    }
-  }
-
-  // No usable connection — start with an empty broker list.
-  return { brokers: [] }
-}
+/** The CCU box itself ({@link import('@camstack/types').DeviceType.Gateway}). */
+export type HomematicGatewayDeviceConfig = z.infer<typeof homematicGatewayDeviceSchema>
 
 // ---------------------------------------------------------------------------
 
 /**
- * Hand-written connection form for the broker/integration creation UI.
- * Mirrors the Home Assistant broker-settings form shape — a flat set of
- * sections the admin UI renders into the "Add Homematic hub" modal.
+ * The integration form: a discovered-CCU picker (filled by the LAN scan), the
+ * host, the interfaces, the event callback, the WebUI credentials (the password
+ * is a `password` field, so it lands in the keychain) and TLS.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
@@ -192,10 +166,25 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         columns: 1,
         fields: [
           {
+            type: 'addon-action-select',
+            addonId: 'provider-homematic',
+            key: '__homematic-discovered',
+            writesKey: 'host',
+            omitFromSettings: true,
+            label: 'CCU',
+            labelKey: 'provider-homematic:connection.s_connection.__homematic-discovered.label',
+            action: 'discoverCcu',
+            mapOption: { value: 'host', label: 'name' },
+            hideWhenFewerThan: 2,
+            emptyResultsMessage: 'No CCU found on the network.',
+          },
+          {
             type: 'text',
             key: 'host',
             label: 'Host / IP',
             labelKey: 'provider-homematic:connection.s_connection.host.label',
+            description: 'Filled when one CCU is found. Type the address if it is not.',
+            descriptionKey: 'provider-homematic:connection.s_connection.host.description',
             required: true,
             placeholder: '192.168.10.50',
           },

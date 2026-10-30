@@ -1,13 +1,12 @@
 export { HomematicProviderAddon } from './addon.js'
-export { HomematicDevice, homematicDeviceSchema } from './homematic-device.js'
-export type { HomematicDeviceConfig } from './homematic-device.js'
 export {
   homematicConfigSchema,
-  homematicAddonConfigSchema,
+  homematicGatewayDeviceSchema,
   toHomematicOptions,
   buildConnectionFormSchema,
+  connectionFromSettings,
 } from './config.js'
-export type { HomematicConfig, HomematicAddonConfigV2 } from './config.js'
+export type { HomematicConfig, HomematicGatewayDeviceConfig } from './config.js'
 export {
   mapHmChannel,
   mapHmDeviceChannels,

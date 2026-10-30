@@ -202,15 +202,6 @@ export const RAW_UNTIL_RECORDS: readonly RawCensusRow[] = [
     covers: ['pkg:addon-provider-homeassistant#brokers'],
   },
   {
-    owner: 'provider-homematic',
-    where: 'addon-settings brokers[]',
-    field: 'connection.password',
-    phase: 3,
-    file: 'packages/addon-provider-homematic/src/addon.ts',
-    evidence: /updateGlobalSettings\(\{\s*brokers/,
-    covers: ['pkg:addon-provider-homematic#brokers'],
-  },
-  {
     owner: 'matter-broker',
     where: 'addon-settings brokers[]',
     field: 'connection.threadDataset, connection.wifiPassword',

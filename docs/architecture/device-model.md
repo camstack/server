@@ -732,12 +732,18 @@ the split between settings and data is
 
 ## A bridge box is a Gateway (D976)
 
-`DeviceType.Gateway` is the physical box that bridges a radio or serial protocol to the LAN (the Velux KLF-200).
+`DeviceType.Gateway` is the physical box that bridges a radio or serial protocol to the LAN (the Velux KLF-200, the Rademacher HomePilot, the Homematic CCU3).
 It is not `Hub` (what one account exposes) and not `Container` (the functions of one piece of equipment), and its
 products are not its children: they are siblings of the same integration. A Gateway has no capability of its own;
 it offers `reboot`, `update` and `device-admin-link` when the box supports them, and nothing else. The Velux
 addon is the reference: one integration (`account`, `instanceMode: multiple`) discovers one Gateway, a window
 Container (cover plus rain sensor) per window with a rain sensor, and plain Covers.
+
+The gateways today, and what each offers because its library really supports it: Velux (`reboot`, `update`,
+`device-admin-link`); Rademacher HomePilot (`device-admin-link` only, the hub API reports an available update but
+cannot start one or restart the box); Homematic CCU (`device-admin-link` only, the library has no CCU restart and
+its firmware call updates a radio device by address, never the box). All three are integrations with a connection
+test and a LAN scan that pre-fills the form; the old standalone path is removed, with no migration.
 
 ## How a device is named
 

@@ -1,7 +1,7 @@
 import { BaseDevice, type DeviceContext, type DeviceFeature } from '@camstack/types'
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { z } from 'zod'
-import { homematicFacades } from '../homematic-gateway.js'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 import type { HmValueOrigin } from './hm-change-stamp.js'
 
 /**
@@ -15,7 +15,10 @@ import type { HmValueOrigin } from './hm-change-stamp.js'
  */
 export const hmChildSchema = z.object({
   address: z.string().min(1).describe('CCU device address'),
-  brokerId: z.string().optional().describe('Registry broker id (primary when absent)'),
+  integrationId: z
+    .string()
+    .optional()
+    .describe('Integration (CCU session) the child belongs to; stamped by its Container'),
   /** Channel address this child owns (e.g. `0001D3C99AB001:4`). Optional for
    *  children that span multiple channels (event-emitter) or none (update). */
   channel: z.string().optional(),
@@ -32,13 +35,13 @@ export type HmValueHandler = (event: ValueChangedEvent, origin: HmValueOrigin) =
 
 /**
  * Shared base for every Homematic accessory child (actuator / sensor / event /
- * diagnostic / update). Holds the address + brokerId + channel resolved from
+ * diagnostic / update). Holds the address + integrationId + channel resolved from
  * config and the facade-resolution seam lifted VERBATIM from the (legacy) flat
  * `HomematicDevice`. Concrete subclasses register their cap(s) and (where
  * relevant) attach a `valueChanged` listener filtered by device address.
  *
  * Children are spawned by `HmContainerDevice.getAccessoryChildren()` via the
- * kernel accessory-spawn path; their cap registration + broker wiring happen in
+ * kernel accessory-spawn path; their cap registration + session wiring happen in
  * `onActivate` (mirrors `HaBaseChildDevice`) so `registerNativeCap` lands AFTER
  * the device is registered with the kernel.
  */
@@ -50,8 +53,8 @@ export abstract class HmChildDevice<
   /** CCU device address — dispatch + event-filter key. */
   protected readonly address: string
 
-  /** Registry broker id; undefined falls back to the primary broker. */
-  protected readonly brokerId: string | undefined
+  /** Integration (CCU session) id; undefined resolves no facade. */
+  protected readonly integrationId: string | undefined
 
   /** Channel address this child owns (undefined for multi/no-channel kinds). */
   protected readonly channel: string | undefined
@@ -74,14 +77,23 @@ export abstract class HmChildDevice<
     }
     super(ctx, schema, { type: ctx.deviceMeta.type })
     this.address = address
-    this.brokerId = typeof persisted.brokerId === 'string' ? persisted.brokerId : undefined
+    this.integrationId =
+      typeof persisted.integrationId === 'string' && persisted.integrationId.length > 0
+        ? persisted.integrationId
+        : undefined
+    if (this.integrationId === undefined) {
+      this.ctx.logger.warn(
+        'homematic child: no integrationId in the persisted config, it cannot reach a CCU (remove and re-adopt the device)',
+        { tags: { deviceId: this.id }, meta: { address } },
+      )
+    }
     this.channel = typeof persisted.channel === 'string' ? persisted.channel : undefined
     void this.updateSourceInfo({ id: this.address, system: 'homematic' })
   }
 
   /** The live facade for this device's CCU, or null when disconnected. */
   protected get facade(): Homematic | null {
-    return homematicFacades.get(this.brokerId ?? null)
+    return homematicFacades.get(this.integrationId)
   }
 
   /** Resolve this child's current `HmDevice` snapshot from the facade. */

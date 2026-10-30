@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { DeviceType } from '@camstack/types'
 import type { HmDataPoint } from 'nodehomematic'
-import { buildHmCandidates } from '../homematic-discovery.js'
+import {
+  buildCcuGatewayCandidate,
+  buildHmCandidates,
+  deviceNativeId,
+  entityNativeId,
+  gatewayNativeId,
+  parseNativeId,
+} from '../homematic-discovery.js'
 
 /** Build a full HmDataPoint from a minimal seed (no cast). */
 function dp(parameter: string, type: string, unit?: string): HmDataPoint {
@@ -68,13 +75,13 @@ const genericDev = {
 describe('buildHmCandidates', () => {
   it('maps a switch device to one Switch candidate with the switch cap', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [switchDev],
       adopted: new Map(),
     })
     expect(cands).toHaveLength(1)
     const [first] = cands
-    expect(first?.childNativeId).toBe('ABC0001')
+    expect(first?.childNativeId).toBe('hm_001:device:ABC0001')
     expect(first?.type).toBe(DeviceType.Switch)
     expect(first?.name).toBe('Lampada hall')
     expect(first?.capabilities).toContain('switch')
@@ -85,7 +92,7 @@ describe('buildHmCandidates', () => {
 
   it('maps a thermostat device with climate + sensor caps', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [thermoDev],
       adopted: new Map(),
     })
@@ -98,13 +105,13 @@ describe('buildHmCandidates', () => {
 
   it('maps a key/remote device to one EventEmitter candidate with the event-emitter cap', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [remoteDev],
       adopted: new Map(),
     })
     expect(cands).toHaveLength(1)
     const [first] = cands
-    expect(first?.childNativeId).toBe('ABC0003')
+    expect(first?.childNativeId).toBe('hm_001:device:ABC0003')
     expect(first?.type).toBe(DeviceType.EventEmitter)
     // Multi-key remote: the event-emitter cap is deduped to a single entry.
     expect(first?.capabilities).toEqual(['event-emitter'])
@@ -112,18 +119,18 @@ describe('buildHmCandidates', () => {
 
   it('omits devices that map to Generic (no supported channel)', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [genericDev],
       adopted: new Map(),
     })
     expect(cands).toHaveLength(0)
   })
 
-  it('reflects already-adopted state from the adopted map (address → deviceId)', () => {
+  it('reflects already-adopted state from the adopted map (native id → deviceId)', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [switchDev],
-      adopted: new Map([['ABC0001', 42]]),
+      adopted: new Map([['hm_001:device:ABC0001', 42]]),
     })
     const [first] = cands
     expect(first?.alreadyAdopted).toBe(true)
@@ -138,7 +145,11 @@ describe('buildHmCandidates', () => {
         { address: 'ABC0004:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
       ],
     }
-    const cands = buildHmCandidates({ brokerId: 'hm_001', devices: [noName], adopted: new Map() })
+    const cands = buildHmCandidates({
+      integrationId: 'hm_001',
+      devices: [noName],
+      adopted: new Map(),
+    })
     const [first] = cands
     expect(first?.name).toBe('ABC0004')
   })
@@ -153,14 +164,18 @@ describe('buildHmCandidates', () => {
         { address: 'ABC0005:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
       ],
     }
-    const cands = buildHmCandidates({ brokerId: 'hm_001', devices: [withRoom], adopted: new Map() })
+    const cands = buildHmCandidates({
+      integrationId: 'hm_001',
+      devices: [withRoom],
+      adopted: new Map(),
+    })
     const [first] = cands
     expect(first?.metadata.externalLocation).toBe('Hall')
   })
 
   it('omits metadata.externalLocation when the device has no rooms', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [switchDev],
       adopted: new Map(),
     })
@@ -199,37 +214,45 @@ describe('buildHmCandidates — per-entity children preview', () => {
   }
 
   it('populates children[] with actuator, sensor, diagnostic and update previews', () => {
-    const cands = buildHmCandidates({ brokerId: 'hm_001', devices: [richDev], adopted: new Map() })
+    const cands = buildHmCandidates({
+      integrationId: 'hm_001',
+      devices: [richDev],
+      adopted: new Map(),
+    })
     const [first] = cands
     expect(first).toBeDefined()
     const children = first?.children ?? []
     const byKey = new Map(children.map((c) => [c.childNativeId, c]))
 
     // Actuator (switch) — preview only.
-    const act = byKey.get('ABC0200#act-ABC0200:3')
+    const act = byKey.get('hm_001:entity:ABC0200#act-ABC0200:3')
     expect(act).toBeDefined()
     expect(act?.type).toBe(DeviceType.Switch)
     expect(act?.capabilities).toEqual(['switch'])
 
     // Sensor (power meter).
-    const sensor = byKey.get('ABC0200#sensor-ABC0200:6')
+    const sensor = byKey.get('hm_001:entity:ABC0200#sensor-ABC0200:6')
     expect(sensor).toBeDefined()
     expect(sensor?.type).toBe(DeviceType.Sensor)
     expect(sensor?.capabilities).toEqual(['power-meter'])
 
     // Diagnostics from MAINTENANCE.
-    expect(byKey.get('ABC0200#maint-voltage')).toBeDefined()
-    expect(byKey.get('ABC0200#maint-rssi-device')).toBeDefined()
+    expect(byKey.get('hm_001:entity:ABC0200#maint-voltage')).toBeDefined()
+    expect(byKey.get('hm_001:entity:ABC0200#maint-rssi-device')).toBeDefined()
 
     // Firmware update.
-    const update = byKey.get('ABC0200#update')
+    const update = byKey.get('hm_001:entity:ABC0200#update')
     expect(update).toBeDefined()
     expect(update?.type).toBe(DeviceType.Update)
     expect(update?.capabilities).toEqual(['update'])
   })
 
   it('marks every preview child not-yet-adopted (entity-level adoption is a separate task)', () => {
-    const cands = buildHmCandidates({ brokerId: 'hm_001', devices: [richDev], adopted: new Map() })
+    const cands = buildHmCandidates({
+      integrationId: 'hm_001',
+      devices: [richDev],
+      adopted: new Map(),
+    })
     const children = cands[0]?.children ?? []
     expect(children.length).toBeGreaterThan(0)
     expect(children.every((c) => c.alreadyAdopted === false)).toBe(true)
@@ -239,12 +262,12 @@ describe('buildHmCandidates — per-entity children preview', () => {
 
   it('emits a single events preview for a multi-key remote', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [remoteDev],
       adopted: new Map(),
     })
     const children = cands[0]?.children ?? []
-    const eventChildren = children.filter((c) => c.childNativeId === 'ABC0003#events')
+    const eventChildren = children.filter((c) => c.childNativeId === 'hm_001:entity:ABC0003#events')
     expect(eventChildren).toHaveLength(1)
     expect(eventChildren[0]?.type).toBe(DeviceType.EventEmitter)
     expect(eventChildren[0]?.capabilities).toEqual(['event-emitter'])
@@ -252,12 +275,85 @@ describe('buildHmCandidates — per-entity children preview', () => {
 
   it('emits no children for a switch with no maintenance/firmware/sensor channels (only the actuator)', () => {
     const cands = buildHmCandidates({
-      brokerId: 'hm_001',
+      integrationId: 'hm_001',
       devices: [switchDev],
       adopted: new Map(),
     })
     const children = cands[0]?.children ?? []
     expect(children).toHaveLength(1)
-    expect(children[0]?.childNativeId).toBe('ABC0001#act-ABC0001:3')
+    expect(children[0]?.childNativeId).toBe('hm_001:entity:ABC0001#act-ABC0001:3')
+  })
+})
+
+describe('native ids are namespaced under the integration', () => {
+  it('two CCUs exposing the same address never collide', () => {
+    const a = buildHmCandidates({
+      integrationId: 'int-a',
+      devices: [switchDev],
+      adopted: new Map(),
+    })
+    const b = buildHmCandidates({
+      integrationId: 'int-b',
+      devices: [switchDev],
+      adopted: new Map(),
+    })
+    expect(a[0]?.childNativeId).toBe('int-a:device:ABC0001')
+    expect(b[0]?.childNativeId).toBe('int-b:device:ABC0001')
+    // A device adopted from CCU A does not mark CCU B's same-address device adopted.
+    const mixed = buildHmCandidates({
+      integrationId: 'int-b',
+      devices: [switchDev],
+      adopted: new Map([['int-a:device:ABC0001', 7]]),
+    })
+    expect(mixed[0]?.alreadyAdopted).toBe(false)
+  })
+
+  it('parseNativeId round-trips the gateway, device and entity ids and refuses foreign or malformed ones', () => {
+    expect(parseNativeId('int-a', gatewayNativeId('int-a'))).toEqual({ kind: 'gateway' })
+    expect(parseNativeId('int-a', deviceNativeId('int-a', 'ABC1'))).toEqual({
+      kind: 'device',
+      hmAddress: 'ABC1',
+    })
+    expect(parseNativeId('int-a', entityNativeId('int-a', 'ABC1', 'act-ABC1:3'))).toEqual({
+      kind: 'entity',
+      hmAddress: 'ABC1',
+      key: 'act-ABC1:3',
+    })
+    expect(parseNativeId('int-a', deviceNativeId('int-b', 'ABC1'))).toBeNull()
+    expect(parseNativeId('int-a', 'int-a:device:')).toBeNull()
+    expect(parseNativeId('int-a', 'int-a:entity:ABC1#')).toBeNull()
+    expect(parseNativeId('int-a', 'int-a:entity:#key')).toBeNull()
+    expect(parseNativeId('int-a', 'ABC1')).toBeNull()
+  })
+})
+
+describe('buildCcuGatewayCandidate', () => {
+  it('is one Gateway candidate that offers only the WebUI link', () => {
+    const c = buildCcuGatewayCandidate({
+      integrationId: 'int-a',
+      integrationName: 'Casa CCU',
+      online: true,
+      adopted: new Map(),
+    })
+    expect(c.childNativeId).toBe('int-a:gateway')
+    expect(c.type).toBe(DeviceType.Gateway)
+    expect(c.name).toBe('Casa CCU')
+    expect(c.status).toBe('online')
+    expect(c.capabilities).toEqual(['device-admin-link'])
+    expect(c.capabilities).not.toContain('reboot')
+    expect(c.capabilities).not.toContain('update')
+    expect(c.alreadyAdopted).toBe(false)
+  })
+
+  it('reports offline and already-adopted from the live session and the adopted map', () => {
+    const c = buildCcuGatewayCandidate({
+      integrationId: 'int-a',
+      integrationName: 'Casa CCU',
+      online: false,
+      adopted: new Map([['int-a:gateway', 9]]),
+    })
+    expect(c.status).toBe('offline')
+    expect(c.alreadyAdopted).toBe(true)
+    expect(c.adoptedDeviceId).toBe(9)
   })
 })

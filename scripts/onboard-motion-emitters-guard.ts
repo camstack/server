@@ -154,10 +154,6 @@ export const MOTION_SLICE_WRITERS_ALLOWED: ReadonlySet<string> = new Set([
 /** A SENSOR device's own `motion` slice, by exact path, with the reason. */
 export const MOTION_SLICE_SENSOR_WRITERS: ReadonlyMap<string, string> = new Map([
   [
-    'packages/addon-provider-homematic/src/homematic-device.ts',
-    'a Homematic motion detector is a SENSOR device; its own motion is its fact, written from the CCU push',
-  ],
-  [
     'packages/addon-provider-homematic/src/devices/hm-sensor-device.ts',
     'a Homematic sensor device; its own motion is its fact, written from the CCU push',
   ],

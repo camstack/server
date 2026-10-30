@@ -18,7 +18,7 @@ import {
 } from '@camstack/types'
 import type { Homematic, HmCustomEntity, HmDevice } from 'nodehomematic'
 import { HmContainerDevice } from '../devices/hm-container-device.js'
-import { homematicFacades } from '../homematic-gateway.js'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 
 // ── Minimal DeviceContext stub (mirrors homematic-device.spec.ts) ──────────
 
@@ -202,9 +202,7 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
         [{ kind: 'climate', device: ADDR, channel: `${ADDR}:1` } as unknown as HmCustomEntity],
       ),
     )
-    const dev = new HmContainerDevice(
-      makeCtx({ address: ADDR, brokerId: 'hm_001', integrationId: 'int-1' }),
-    )
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     const children = dev.getAccessoryChildren()
     const suffixes = children.map((c) => c.stableIdSuffix)
 
@@ -225,12 +223,12 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
     expect(voltage?.meta.role).toBe(DeviceRole.VoltageSensor)
     expect(voltage?.meta.type).toBe(DeviceType.Sensor)
 
-    // Every child links back to the container + carries broker/integration FK.
+    // Every child links back to the container + carries the integration id.
     for (const child of children) {
       expect(child.meta.linkDeviceId).toBe(dev.id)
-      expect(child.meta.integrationId).toBe('int-1')
-      expect(child.config['brokerId']).toBe('hm_001')
-      expect(child.config['integrationId']).toBe('int-1')
+      expect(child.meta.integrationId).toBe('hm_001')
+      expect(child.config['integrationId']).toBe('hm_001')
+      expect(child.config['integrationId']).toBe('hm_001')
     }
 
     // Update child is DeviceType.Update with the update cap.
@@ -240,7 +238,7 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
 
   it('cover device → ONE cover actuator child (entity channel) + ONE power-meter sensor child', () => {
     homematicFacades.set('hm_001', makeFacade([makeCover()], [coverEntity()]))
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     const children = dev.getAccessoryChildren()
 
     const actuator = children.find((c) => c.stableIdSuffix === `act-${ADDR}:4`)
@@ -266,7 +264,7 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
 
   it('wall switch with key channels → exactly ONE event-emitter child', () => {
     homematicFacades.set('hm_001', makeFacade([makeWallSwitch()], []))
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     const children = dev.getAccessoryChildren()
 
     const eventChildren = children.filter((c) => c.meta.type === DeviceType.EventEmitter)
@@ -277,15 +275,15 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
   })
 
   it('returns no children when the device is not on the facade', () => {
-    // No facade registered for this broker.
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    // No facade registered for this integration.
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     expect(dev.getAccessoryChildren()).toEqual([])
   })
 })
 
 describe('HmContainerDevice onProbe', () => {
   it('leaves lastProbedAt at 0 when the device is not on the facade', async () => {
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     await dev.onProbe()
     const slice = dev.runtimeState.getCapState<{ lastProbedAt?: number }>('feature-probe')
     expect(slice?.lastProbedAt ?? 0).toBe(0)
@@ -293,7 +291,7 @@ describe('HmContainerDevice onProbe', () => {
 
   it('stamps lastProbedAt when the device is on the facade', async () => {
     homematicFacades.set('hm_001', makeFacade([makeCover()], [coverEntity()]))
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     await dev.onProbe()
     const slice = dev.runtimeState.getCapState<{ lastProbedAt?: number }>('feature-probe')
     expect(slice?.lastProbedAt ?? 0).toBeGreaterThan(0)
@@ -303,25 +301,25 @@ describe('HmContainerDevice onProbe', () => {
 describe('HmContainerDevice features + online', () => {
   it('advertises Resyncable + BatteryOperated when a battery diagnostic exists', () => {
     homematicFacades.set('hm_001', makeFacade([makeBatteryThermostat()], []))
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     expect(dev.features).toContain(DeviceFeature.Resyncable)
     expect(dev.features).toContain(DeviceFeature.BatteryOperated)
   })
 
   it('advertises only Resyncable for a mains-powered cover', () => {
     homematicFacades.set('hm_001', makeFacade([makeCover()], [coverEntity()]))
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     expect(dev.features).toEqual([DeviceFeature.Resyncable])
   })
 
   it('derives online=true from a reachable (UNREACH=false) device', () => {
     homematicFacades.set('hm_001', makeFacade([makeBatteryThermostat()], []))
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     expect(dev.online).toBe(true)
   })
 
   it('derives online=false when the device is absent from the facade', () => {
-    const dev = new HmContainerDevice(makeCtx({ address: ADDR, brokerId: 'hm_001' }))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     expect(dev.online).toBe(false)
   })
 })

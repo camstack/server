@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  HmBrokerEntrySchema,
-  homematicAddonConfigSchema,
-  migrateLegacyConfig,
-  settingsToHmConfig,
+  buildConnectionFormSchema,
+  connectionFromSettings,
+  sameConnection,
   toHomematicOptions,
 } from '../config.js'
 import type { HomematicConfig } from '../config.js'
@@ -22,32 +21,45 @@ const CONN: HomematicConfig = {
   tls: false,
 }
 
-describe('HmBrokerEntry schema', () => {
-  it('parses a valid broker entry', () => {
-    const entry = HmBrokerEntrySchema.parse({
-      id: 'hm_001',
-      name: 'Casa CCU',
-      connection: CONN,
-    })
-    expect(entry.id).toBe('hm_001')
-    expect(entry.connection.host).toBe('192.168.10.198')
-    expect(entry.integrationId).toBeUndefined()
-  })
-
-  it('addon config defaults to an empty brokers list', () => {
-    const cfg = homematicAddonConfigSchema.parse({})
-    expect(cfg.brokers).toEqual([])
-  })
-
-  it('settingsToHmConfig coerces a loose settings blob through the connection schema', () => {
-    const conn = settingsToHmConfig({ host: '10.0.0.5' })
-    expect(conn.host).toBe('10.0.0.5')
+describe('connectionFromSettings', () => {
+  it('coerces a loose settings blob through the connection schema and trims strings', () => {
+    const conn = connectionFromSettings({ host: '  10.0.0.5  ', username: ' admin ' })
+    expect(conn?.host).toBe('10.0.0.5')
+    expect(conn?.username).toBe('admin')
     // Schema defaults: HmIP-RF and groups ON, the rest OFF.
-    expect(conn.enableHmipRf).toBe(true)
-    expect(conn.enableBidcosRf).toBe(false)
-    expect(conn.enableGroups).toBe(true)
-    expect(conn.enableBidcosWired).toBe(false)
-    expect(conn.callbackPort).toBe(2128) // schema default
+    expect(conn?.enableHmipRf).toBe(true)
+    expect(conn?.enableBidcosRf).toBe(false)
+    expect(conn?.enableGroups).toBe(true)
+    expect(conn?.enableBidcosWired).toBe(false)
+    expect(conn?.callbackPort).toBe(2128)
+  })
+
+  it('is null while the host is missing, blank or the settings are not an object', () => {
+    expect(connectionFromSettings({})).toBeNull()
+    expect(connectionFromSettings({ host: '   ' })).toBeNull()
+    expect(connectionFromSettings(null)).toBeNull()
+  })
+
+  it('reads a blank callback port field as the default instead of rejecting the connection', () => {
+    expect(connectionFromSettings({ host: 'h', callbackPort: '' })?.callbackPort).toBe(2128)
+  })
+})
+
+describe('sameConnection', () => {
+  it('is true for the same values and false when any live-connection field differs', () => {
+    expect(sameConnection(CONN, { ...CONN })).toBe(true)
+    expect(sameConnection(CONN, { ...CONN, password: 'x' })).toBe(false)
+    expect(sameConnection(CONN, { ...CONN, tls: true })).toBe(false)
+    expect(sameConnection(CONN, { ...CONN, enableBidcosRf: true })).toBe(false)
+    expect(sameConnection(CONN, null)).toBe(false)
+  })
+})
+
+describe('buildConnectionFormSchema', () => {
+  it('offers the LAN scan picker first and keeps the password a keychain password field', () => {
+    const fields = buildConnectionFormSchema().sections.flatMap((s) => s.fields)
+    expect(fields[0]?.type).toBe('addon-action-select')
+    expect(fields.find((f) => f.key === 'password')?.type).toBe('password')
   })
 })
 
@@ -102,44 +114,5 @@ describe('toHomematicOptions', () => {
       enableBidcosWired: true,
     })
     expect(opts.interfaces).toEqual(['HmIP-RF', 'BidCos-RF', 'VirtualDevices', 'BidCos-Wired'])
-  })
-})
-
-describe('migrateLegacyConfig', () => {
-  it('migrates a legacy {connection} blob into brokers[hm_001] (applies boolean defaults)', () => {
-    // A legacy blob with the old `interfaces` field — the schema drops it and applies boolean defaults.
-    const migrated = migrateLegacyConfig({
-      connection: { host: '192.168.10.198', interfaces: ['HmIP-RF'] },
-    })
-    expect(migrated.brokers).toHaveLength(1)
-    const first = migrated.brokers[0]
-    expect(first).toBeDefined()
-    if (first === undefined) return
-    expect(first.id).toBe('hm_001')
-    expect(first.connection.host).toBe('192.168.10.198')
-    expect(first.name.length).toBeGreaterThan(0)
-    // Boolean defaults applied — legacy `interfaces` field dropped.
-    expect(first.connection.enableHmipRf).toBe(true)
-    expect(first.connection.enableGroups).toBe(true)
-    expect(first.connection.enableBidcosRf).toBe(false)
-    expect(first.connection.enableBidcosWired).toBe(false)
-  })
-
-  it('leaves an already-migrated {brokers} blob untouched', () => {
-    const already = { brokers: [{ id: 'hm_007', name: 'X', connection: CONN }] }
-    const first = migrateLegacyConfig(already).brokers[0]
-    expect(first).toBeDefined()
-    if (first === undefined) return
-    expect(first.id).toBe('hm_007')
-  })
-
-  it('migrates an empty / legacy-null blob into an empty brokers list', () => {
-    expect(migrateLegacyConfig({ connection: null }).brokers).toEqual([])
-    expect(migrateLegacyConfig({}).brokers).toEqual([])
-    expect(migrateLegacyConfig(undefined).brokers).toEqual([])
-  })
-
-  it('drops an invalid legacy connection rather than throwing', () => {
-    expect(migrateLegacyConfig({ connection: { host: 123 } }).brokers).toEqual([])
   })
 })

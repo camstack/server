@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import type { HmCustomEntity } from 'nodehomematic'
 import {
   buildHmAdoptionProvider,
+  type HmAdoptionFacade,
   type HmAdoptionProviderDeps,
 } from '../homematic-adoption-provider.js'
 
@@ -71,30 +72,19 @@ interface FakeFacade {
   customEntities(): readonly never[]
 }
 
-/** Minimal broker info shape required by registry.list(). */
-interface FakeBrokerInfo {
-  readonly id: string
+/** The registry of one running CCU integration, `int_1`, serving `facade`. */
+function registryOf(facade: HmAdoptionFacade): HmAdoptionProviderDeps['registry'] {
+  return {
+    getFacade: (id: string) => (id === 'int_1' ? facade : null),
+    list: () => ['int_1'],
+    has: (id: string) => id === 'int_1',
+    getName: (id: string) => (id === 'int_1' ? 'Casa CCU' : null),
+  }
 }
 
-function makeRegistry(
-  devices: FakeDevice[],
-): Pick<HmAdoptionProviderDeps['registry'], 'getFacade' | 'list'> {
-  const facade: FakeFacade = {
-    devices: () => devices,
-    customEntities: () => [],
-  }
-  return {
-    getFacade: (id: string) => {
-      if (id === 'hm_001')
-        return facade as Parameters<
-          HmAdoptionProviderDeps['registry']['getFacade']
-        >[0] extends string
-          ? ReturnType<HmAdoptionProviderDeps['registry']['getFacade']>
-          : never
-      return null
-    },
-    list: (): FakeBrokerInfo[] => [{ id: 'hm_001' }],
-  }
+function makeRegistry(devices: FakeDevice[]): HmAdoptionProviderDeps['registry'] {
+  const facade: FakeFacade = { devices: () => devices, customEntities: () => [] }
+  return registryOf(facade)
 }
 
 // ---------------------------------------------------------------------------
@@ -112,6 +102,7 @@ function makeDeps(
   overrides: Partial<
     Pick<
       HmAdoptionProviderDeps,
+      | 'adoptGateway'
       | 'adoptDevice'
       | 'adoptStandaloneEntity'
       | 'removeDevice'
@@ -123,8 +114,9 @@ function makeDeps(
 ): HmAdoptionProviderDeps {
   return {
     registry: makeRegistry(devices),
-    getBrokerIdForIntegration: vi.fn(async (_id: string) => 'hm_001'),
-    listAdoptedHomematic: vi.fn(async () => adopted),
+    isOnline: () => true,
+    listAdopted: vi.fn(async () => adopted),
+    adoptGateway: overrides.adoptGateway ?? vi.fn(async () => ({ deviceId: 50 })),
     adoptDevice: overrides.adoptDevice ?? vi.fn(async () => DEFAULT_ADOPT_RESULT),
     adoptStandaloneEntity:
       overrides.adoptStandaloneEntity ?? vi.fn(async () => ({ deviceId: 800 })),
@@ -166,9 +158,9 @@ describe('listCandidates', () => {
       page: 1,
       pageSize: 50,
     })
-    // switchDev and thermoDev map to supported types; genericDev is filtered by buildHmCandidates
-    expect(result.totalCount).toBe(2)
-    expect(result.candidates).toHaveLength(2)
+    // The CCU box, plus switchDev and thermoDev (genericDev is filtered by buildHmCandidates)
+    expect(result.totalCount).toBe(3)
+    expect(result.candidates).toHaveLength(3)
     expect(result.page).toBe(1)
     expect(result.pageSize).toBe(50)
   })
@@ -181,15 +173,15 @@ describe('listCandidates', () => {
       pageSize: 1,
     })
     expect(result.candidates).toHaveLength(1)
-    expect(result.totalCount).toBe(2)
+    expect(result.totalCount).toBe(3)
     expect(result.page).toBe(2)
   })
 
-  it('reflects alreadyAdopted=true when system+brokerId+hmAddress match', async () => {
+  it('reflects alreadyAdopted=true when system+integrationId+hmAddress match', async () => {
     const adopted: AdoptedEntry[] = [
       {
         id: 42,
-        config: { system: 'homematic', brokerId: 'hm_001', hmAddress: 'ABC0001' },
+        config: { system: 'homematic', integrationId: 'int_1', hmAddress: 'ABC0001' },
       },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], adopted))
@@ -198,16 +190,16 @@ describe('listCandidates', () => {
       page: 1,
       pageSize: 50,
     })
-    const found = result.candidates.find((c) => c.childNativeId === 'ABC0001')
+    const found = result.candidates.find((c) => c.childNativeId === 'int_1:device:ABC0001')
     expect(found?.alreadyAdopted).toBe(true)
     expect(found?.adoptedDeviceId).toBe(42)
   })
 
-  it('alreadyAdopted=false when brokerId does not match', async () => {
+  it('alreadyAdopted=false when the device belongs to another integration', async () => {
     const adopted: AdoptedEntry[] = [
       {
         id: 42,
-        config: { system: 'homematic', brokerId: 'hm_002', hmAddress: 'ABC0001' },
+        config: { system: 'homematic', integrationId: 'int_2', hmAddress: 'ABC0001' },
       },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], adopted))
@@ -216,7 +208,7 @@ describe('listCandidates', () => {
       page: 1,
       pageSize: 50,
     })
-    const found = result.candidates.find((c) => c.childNativeId === 'ABC0001')
+    const found = result.candidates.find((c) => c.childNativeId === 'int_1:device:ABC0001')
     expect(found?.alreadyAdopted).toBe(false)
   })
 
@@ -229,7 +221,7 @@ describe('listCandidates', () => {
       filterText: { search: 'living' },
     })
     expect(result.totalCount).toBe(1)
-    expect(result.candidates[0]?.childNativeId).toBe('ABC0001')
+    expect(result.candidates[0]?.childNativeId).toBe('int_1:device:ABC0001')
   })
 
   it('filterText.search narrows by model', async () => {
@@ -241,7 +233,7 @@ describe('listCandidates', () => {
       filterText: { search: 'WTH-2' },
     })
     expect(result.totalCount).toBe(1)
-    expect(result.candidates[0]?.childNativeId).toBe('ABC0002')
+    expect(result.candidates[0]?.childNativeId).toBe('int_1:device:ABC0002')
   })
 
   it('filterText.search narrows by childNativeId', async () => {
@@ -253,14 +245,14 @@ describe('listCandidates', () => {
       filterText: { search: 'ABC0002' },
     })
     expect(result.totalCount).toBe(1)
-    expect(result.candidates[0]?.childNativeId).toBe('ABC0002')
+    expect(result.candidates[0]?.childNativeId).toBe('int_1:device:ABC0002')
   })
 
   it('filterText.unadoptedOnly excludes adopted candidates', async () => {
     const adopted: AdoptedEntry[] = [
       {
         id: 99,
-        config: { system: 'homematic', brokerId: 'hm_001', hmAddress: 'ABC0001' },
+        config: { system: 'homematic', integrationId: 'int_1', hmAddress: 'ABC0001' },
       },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev, thermoDev], adopted))
@@ -271,14 +263,15 @@ describe('listCandidates', () => {
       filterText: { unadoptedOnly: true },
     })
     expect(result.candidates.every((c) => !c.alreadyAdopted)).toBe(true)
-    expect(result.totalCount).toBe(1)
+    // the CCU box and the thermostat
+    expect(result.totalCount).toBe(2)
   })
 
   it('filterText.adoptedOnly includes only adopted candidates', async () => {
     const adopted: AdoptedEntry[] = [
       {
         id: 99,
-        config: { system: 'homematic', brokerId: 'hm_001', hmAddress: 'ABC0001' },
+        config: { system: 'homematic', integrationId: 'int_1', hmAddress: 'ABC0001' },
       },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev, thermoDev], adopted))
@@ -296,30 +289,36 @@ describe('listCandidates', () => {
 describe('getCandidate', () => {
   it('returns the matching candidate by childNativeId', async () => {
     const provider = buildHmAdoptionProvider(makeDeps())
-    const cand = await provider.getCandidate({ integrationId: 'int_1', childNativeId: 'ABC0002' })
+    const cand = await provider.getCandidate({
+      integrationId: 'int_1',
+      childNativeId: 'int_1:device:ABC0002',
+    })
     expect(cand).not.toBeNull()
-    expect(cand?.childNativeId).toBe('ABC0002')
+    expect(cand?.childNativeId).toBe('int_1:device:ABC0002')
     expect(cand?.name).toBe('Hallway Thermostat')
   })
 
   it('returns null when childNativeId is not found', async () => {
     const provider = buildHmAdoptionProvider(makeDeps())
-    const cand = await provider.getCandidate({ integrationId: 'int_1', childNativeId: 'UNKNOWN' })
+    const cand = await provider.getCandidate({
+      integrationId: 'int_1',
+      childNativeId: 'int_1:device:UNKNOWN',
+    })
     expect(cand).toBeNull()
   })
 })
 
 describe('getStatus', () => {
-  it('aggregates candidateCount and adoptedCount across all brokers', async () => {
+  it('aggregates candidateCount and adoptedCount across all integrations', async () => {
     const adopted: AdoptedEntry[] = [
-      { id: 1, config: { system: 'homematic', brokerId: 'hm_001', hmAddress: 'ABC0001' } },
+      { id: 1, config: { system: 'homematic', integrationId: 'int_1', hmAddress: 'ABC0001' } },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev, thermoDev], adopted))
     const status = await provider.getStatus({ deviceId: 0 })
 
     expect(status).not.toBeNull()
-    // switchDev + thermoDev map to supported types; genericDev is excluded
-    expect(status?.candidateCount).toBe(2)
+    // the CCU box + switchDev + thermoDev; genericDev is excluded
+    expect(status?.candidateCount).toBe(3)
     // 1 device with system=homematic
     expect(status?.adoptedCount).toBe(1)
     expect(typeof status?.lastDiscoveryAt).toBe('number')
@@ -328,8 +327,8 @@ describe('getStatus', () => {
 
   it('excludes non-homematic entries from adoptedCount', async () => {
     const adopted: AdoptedEntry[] = [
-      { id: 1, config: { system: 'mqtt', brokerId: 'hm_001', hmAddress: 'ABC0001' } },
-      { id: 2, config: { system: 'homematic', brokerId: 'hm_001', hmAddress: 'ABC0002' } },
+      { id: 1, config: { system: 'mqtt', integrationId: 'int_1', hmAddress: 'ABC0001' } },
+      { id: 2, config: { system: 'homematic', integrationId: 'int_1', hmAddress: 'ABC0002' } },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], adopted))
     const status = await provider.getStatus({ deviceId: 0 })
@@ -338,13 +337,13 @@ describe('getStatus', () => {
 })
 
 describe('refresh', () => {
-  it('returns status scoped to the integration broker', async () => {
+  it('returns status scoped to the integration', async () => {
     const adopted: AdoptedEntry[] = [
-      { id: 1, config: { system: 'homematic', brokerId: 'hm_001', hmAddress: 'ABC0001' } },
+      { id: 1, config: { system: 'homematic', integrationId: 'int_1', hmAddress: 'ABC0001' } },
     ]
     const provider = buildHmAdoptionProvider(makeDeps([switchDev, thermoDev], adopted))
     const status = await provider.refresh({ integrationId: 'int_1' })
-    expect(status.candidateCount).toBe(2)
+    expect(status.candidateCount).toBe(3)
     expect(status.adoptedCount).toBe(1)
     expect(status.lastError).toBeNull()
     expect(typeof status.lastDiscoveryAt).toBe('number')
@@ -368,8 +367,8 @@ describe('adopt', () => {
 
     const result = await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['ABC0001', 'ABC0002'],
-      perCandidate: { ABC0001: { name: 'My Switch' } },
+      childNativeIds: ['int_1:device:ABC0001', 'int_1:device:ABC0002'],
+      perCandidate: { 'int_1:device:ABC0001': { name: 'My Switch' } },
     })
 
     expect(adoptDevice).toHaveBeenCalledTimes(2)
@@ -377,7 +376,6 @@ describe('adopt', () => {
     // First call: switch with perCandidate name override
     expect(adoptDevice).toHaveBeenNthCalledWith(1, {
       hmAddress: 'ABC0001',
-      brokerId: 'hm_001',
       integrationId: 'int_1',
       type: 'switch',
       name: 'My Switch',
@@ -386,7 +384,6 @@ describe('adopt', () => {
     // Second call: thermostat uses device.name (no override)
     expect(adoptDevice).toHaveBeenNthCalledWith(2, {
       hmAddress: 'ABC0002',
-      brokerId: 'hm_001',
       integrationId: 'int_1',
       type: 'thermostat',
       name: 'Hallway Thermostat',
@@ -394,12 +391,12 @@ describe('adopt', () => {
 
     expect(result.adopted).toHaveLength(2)
     expect(result.adopted[0]).toMatchObject({
-      childNativeId: 'ABC0001',
+      childNativeId: 'int_1:device:ABC0001',
       parentDeviceId: 101,
       accessoryDeviceIds: [],
     })
     expect(result.adopted[1]).toMatchObject({
-      childNativeId: 'ABC0002',
+      childNativeId: 'int_1:device:ABC0002',
       parentDeviceId: 102,
       accessoryDeviceIds: [],
     })
@@ -417,12 +414,12 @@ describe('adopt', () => {
 
     const result = await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['ABC0001'],
+      childNativeIds: ['int_1:device:ABC0001'],
     })
 
     expect(result.adopted).toHaveLength(1)
     expect(result.adopted[0]).toMatchObject({
-      childNativeId: 'ABC0001',
+      childNativeId: 'int_1:device:ABC0001',
       parentDeviceId: 700,
       accessoryDeviceIds: [701, 702, 703],
     })
@@ -437,12 +434,12 @@ describe('adopt', () => {
 
     const result = await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['UNKNOWN_ADDR', 'ABC0001'],
+      childNativeIds: ['int_1:device:UNKNOWN_ADDR', 'int_1:device:ABC0001'],
     })
 
     expect(adoptDevice).toHaveBeenCalledTimes(1)
     expect(result.adopted).toHaveLength(1)
-    expect(result.adopted[0]?.childNativeId).toBe('ABC0001')
+    expect(result.adopted[0]?.childNativeId).toBe('int_1:device:ABC0001')
   })
 
   it('throws when ALL addresses fail (unknown addresses)', async () => {
@@ -450,7 +447,7 @@ describe('adopt', () => {
     await expect(
       provider.adopt({
         integrationId: 'int_1',
-        childNativeIds: ['UNKNOWN_1', 'UNKNOWN_2'],
+        childNativeIds: ['int_1:device:UNKNOWN_1', 'int_1:device:UNKNOWN_2'],
       }),
     ).rejects.toThrow('homematic adopt: all 2 adopt(s) failed')
   })
@@ -461,7 +458,7 @@ describe('adopt', () => {
     })
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], [], { adoptDevice }))
     await expect(
-      provider.adopt({ integrationId: 'int_1', childNativeIds: ['ABC0001'] }),
+      provider.adopt({ integrationId: 'int_1', childNativeIds: ['int_1:device:ABC0001'] }),
     ).rejects.toThrow('homematic adopt: all 1 adopt(s) failed')
   })
 
@@ -472,7 +469,7 @@ describe('adopt', () => {
     }))
     const provider = buildHmAdoptionProvider(makeDeps([genericDev], [], { adoptDevice }))
     await expect(
-      provider.adopt({ integrationId: 'int_1', childNativeIds: ['ABC0098'] }),
+      provider.adopt({ integrationId: 'int_1', childNativeIds: ['int_1:device:ABC0098'] }),
     ).rejects.toThrow('homematic adopt: all 1 adopt(s) failed')
     expect(adoptDevice).not.toHaveBeenCalled()
   })
@@ -485,21 +482,20 @@ describe('adopt', () => {
     const provider = buildHmAdoptionProvider(makeDeps([remoteDev], [], { adoptDevice }))
     const result = await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['ABC0003'],
+      childNativeIds: ['int_1:device:ABC0003'],
     })
     expect(adoptDevice).toHaveBeenCalledTimes(1)
     expect(adoptDevice).toHaveBeenCalledWith({
       hmAddress: 'ABC0003',
-      brokerId: 'hm_001',
       integrationId: 'int_1',
       type: 'event-emitter',
       name: 'Remote',
     })
     expect(result.adopted).toHaveLength(1)
-    expect(result.adopted[0]?.childNativeId).toBe('ABC0003')
+    expect(result.adopted[0]?.childNativeId).toBe('int_1:device:ABC0003')
   })
 
-  it('throws when the broker facade is null (broker not connected)', async () => {
+  it('throws when the integration has no running session', async () => {
     const deps = makeDeps([switchDev])
     // Override registry to always return null facade
     const provider = buildHmAdoptionProvider({
@@ -507,11 +503,13 @@ describe('adopt', () => {
       registry: {
         getFacade: (_id: string) => null,
         list: () => [],
+        has: () => false,
+        getName: () => null,
       },
     })
     await expect(
-      provider.adopt({ integrationId: 'int_1', childNativeIds: ['ABC0001'] }),
-    ).rejects.toThrow('homematic adopt: broker hm_001 not connected')
+      provider.adopt({ integrationId: 'int_1', childNativeIds: ['int_1:device:ABC0001'] }),
+    ).rejects.toThrow('homematic adopt: integration int_1 is not running')
   })
 
   it('imports the device room as a location when importLocations is true', async () => {
@@ -533,7 +531,7 @@ describe('adopt', () => {
 
     await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['ABC0010'],
+      childNativeIds: ['int_1:device:ABC0010'],
       importLocations: true,
     })
 
@@ -561,7 +559,7 @@ describe('adopt', () => {
 
     await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['ABC0010'],
+      childNativeIds: ['int_1:device:ABC0010'],
     })
 
     expect(listLocations).not.toHaveBeenCalled()
@@ -587,7 +585,7 @@ describe('adopt', () => {
 
     await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: ['ABC0001'],
+      childNativeIds: ['int_1:device:ABC0001'],
       importLocations: true,
     })
 
@@ -611,7 +609,7 @@ describe('resync', () => {
   it('returns {changed:false, rebuiltChildren:0} when device + live HmDevice exist', async () => {
     const findDeviceConfig = vi.fn(async (_id: number) => ({
       system: 'homematic',
-      brokerId: 'hm_001',
+      integrationId: 'int_1',
       hmAddress: 'ABC0001',
     }))
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], [], { findDeviceConfig }))
@@ -630,7 +628,7 @@ describe('resync', () => {
   it('throws when config.system is not homematic', async () => {
     const findDeviceConfig = vi.fn(async (_id: number) => ({
       system: 'mqtt',
-      brokerId: 'hm_001',
+      integrationId: 'int_1',
       hmAddress: 'ABC0001',
     }))
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], [], { findDeviceConfig }))
@@ -639,15 +637,15 @@ describe('resync', () => {
     )
   })
 
-  it('throws when the live HmDevice is gone from the broker', async () => {
+  it('throws when the live HmDevice is gone from the CCU', async () => {
     const findDeviceConfig = vi.fn(async (_id: number) => ({
       system: 'homematic',
-      brokerId: 'hm_001',
+      integrationId: 'int_1',
       hmAddress: 'REMOVED_DEVICE',
     }))
     const provider = buildHmAdoptionProvider(makeDeps([switchDev], [], { findDeviceConfig }))
     await expect(provider.resync({ camDeviceId: 11 })).rejects.toThrow(
-      'homematic resync: device REMOVED_DEVICE no longer present on broker hm_001',
+      'homematic resync: device REMOVED_DEVICE no longer present on integration int_1',
     )
   })
 })
@@ -716,20 +714,8 @@ function switchCustomEntity(): HmCustomEntity {
 function makeEntityRegistry(
   devices: EntityFakeDevice[],
   customEntities: HmCustomEntity[],
-): Pick<HmAdoptionProviderDeps['registry'], 'getFacade' | 'list'> {
-  const facade = {
-    devices: () => devices,
-    customEntities: () => customEntities,
-  }
-  return {
-    getFacade: (id: string) =>
-      id === 'hm_001'
-        ? (facade as Parameters<HmAdoptionProviderDeps['registry']['getFacade']>[0] extends string
-            ? ReturnType<HmAdoptionProviderDeps['registry']['getFacade']>
-            : never)
-        : null,
-    list: () => [{ id: 'hm_001' }],
-  }
+): HmAdoptionProviderDeps['registry'] {
+  return registryOf({ devices: () => devices, customEntities: () => customEntities })
 }
 
 function makeEntityDeps(
@@ -740,8 +726,9 @@ function makeEntityDeps(
 ): HmAdoptionProviderDeps {
   return {
     registry: makeEntityRegistry([entityRichDevice], [switchCustomEntity()]),
-    getBrokerIdForIntegration: vi.fn(async (_id: string) => 'hm_001'),
-    listAdoptedHomematic: vi.fn(async () => adopted),
+    isOnline: () => true,
+    listAdopted: vi.fn(async () => adopted),
+    adoptGateway: vi.fn(async () => ({ deviceId: 50 })),
     adoptDevice: vi.fn(async () => DEFAULT_ADOPT_RESULT),
     adoptStandaloneEntity:
       overrides.adoptStandaloneEntity ?? vi.fn(async () => ({ deviceId: 800 })),
@@ -760,9 +747,9 @@ function makeEntityDeps(
   }
 }
 
-const ACT_NATIVE_ID = `${ENTITY_ADDR}#act-${ENTITY_ADDR}:3`
-const VOLTAGE_NATIVE_ID = `${ENTITY_ADDR}#maint-voltage`
-const UPDATE_NATIVE_ID = `${ENTITY_ADDR}#update`
+const ACT_NATIVE_ID = `int_1:entity:${ENTITY_ADDR}#act-${ENTITY_ADDR}:3`
+const VOLTAGE_NATIVE_ID = `int_1:entity:${ENTITY_ADDR}#maint-voltage`
+const UPDATE_NATIVE_ID = `int_1:entity:${ENTITY_ADDR}#update`
 
 describe('listCandidates (entities granularity)', () => {
   it('returns a FLAT per-entity candidate list — one per derived spec', async () => {
@@ -804,7 +791,7 @@ describe('listCandidates (entities granularity)', () => {
         id: 55,
         config: {
           system: 'homematic',
-          brokerId: 'hm_001',
+          integrationId: 'int_1',
           hmAddress: ENTITY_ADDR,
           hmEntityKey: 'maint-voltage',
         },
@@ -827,7 +814,7 @@ describe('listCandidates (entities granularity)', () => {
 
   it('does NOT mark an entity adopted from a Container row (no hmEntityKey)', async () => {
     const adopted: AdoptedEntry[] = [
-      { id: 9, config: { system: 'homematic', brokerId: 'hm_001', hmAddress: ENTITY_ADDR } },
+      { id: 9, config: { system: 'homematic', integrationId: 'int_1', hmAddress: ENTITY_ADDR } },
     ]
     const provider = buildHmAdoptionProvider(makeEntityDeps(adopted))
     const result = await provider.listCandidates({
@@ -846,8 +833,11 @@ describe('listCandidates (entities granularity)', () => {
       page: 1,
       pageSize: 50,
     })
-    // ONE device candidate, keyed by the bare address.
-    expect(result.candidates.map((c) => c.childNativeId)).toEqual([ENTITY_ADDR])
+    // The CCU box first, then ONE device candidate, namespaced under the integration.
+    expect(result.candidates.map((c) => c.childNativeId)).toEqual([
+      'int_1:gateway',
+      `int_1:device:${ENTITY_ADDR}`,
+    ])
   })
 })
 
@@ -871,12 +861,14 @@ describe('adopt (entities granularity)', () => {
     const firstArg = adoptStandaloneEntity.mock.calls[0]?.[0]
     expect(firstArg?.hmAddress).toBe(ENTITY_ADDR)
     expect(firstArg?.key).toBe(`act-${ENTITY_ADDR}:3`)
-    expect(firstArg?.brokerId).toBe('hm_001')
+    expect(firstArg?.integrationId).toBe('int_1')
+    expect('brokerId' in (firstArg ?? {})).toBe(false)
     expect(firstArg?.integrationId).toBe('int_1')
     expect(firstArg?.deviceType).toBe('switch')
     // Config carries the entity marker + provenance the alreadyAdopted scan reads.
     expect(firstArg?.config['system']).toBe('homematic')
-    expect(firstArg?.config['brokerId']).toBe('hm_001')
+    expect(firstArg?.config['integrationId']).toBe('int_1')
+    expect(firstArg?.config['brokerId']).toBeUndefined()
     expect(firstArg?.config['hmAddress']).toBe(ENTITY_ADDR)
     expect(firstArg?.config['hmEntityKey']).toBe(`act-${ENTITY_ADDR}:3`)
     expect(firstArg?.config['address']).toBe(ENTITY_ADDR)
@@ -894,7 +886,7 @@ describe('adopt (entities granularity)', () => {
     const provider = buildHmAdoptionProvider(makeEntityDeps([], { adoptStandaloneEntity }))
     const result = await provider.adopt({
       integrationId: 'int_1',
-      childNativeIds: [`${ENTITY_ADDR}#nope`, UPDATE_NATIVE_ID],
+      childNativeIds: [`int_1:entity:${ENTITY_ADDR}#nope`, UPDATE_NATIVE_ID],
       filter: 'entities',
     })
     expect(adoptStandaloneEntity).toHaveBeenCalledTimes(1)
@@ -907,10 +899,10 @@ describe('adopt (entities granularity)', () => {
     await expect(
       provider.adopt({
         integrationId: 'int_1',
-        childNativeIds: [`${ENTITY_ADDR}#nope`, 'MISSING#act-x'],
+        childNativeIds: [`int_1:entity:${ENTITY_ADDR}#nope`, 'int_1:entity:MISSING#act-x'],
         filter: 'entities',
       }),
-    ).rejects.toThrow('homematic adopt: all 2 entity adopt(s) failed')
+    ).rejects.toThrow('homematic adopt: all 2 adopt(s) failed')
   })
 
   it('imports the device room as a location when importLocations is true', async () => {
@@ -929,5 +921,130 @@ describe('adopt (entities granularity)', () => {
       importLocations: true,
     })
     expect(assignLocation).toHaveBeenCalledWith(902, 'Hall', [])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The CCU box (Gateway)
+// ---------------------------------------------------------------------------
+
+describe('the CCU box as a Gateway', () => {
+  it('is the first candidate, a Gateway named after the integration, offering only the WebUI link', async () => {
+    const provider = buildHmAdoptionProvider(makeDeps([switchDev]))
+    const result = await provider.listCandidates({ integrationId: 'int_1', page: 1, pageSize: 50 })
+    const [first, second] = result.candidates
+    expect(first).toMatchObject({
+      childNativeId: 'int_1:gateway',
+      type: 'gateway',
+      name: 'Casa CCU',
+      status: 'online',
+      capabilities: ['device-admin-link'],
+    })
+    expect(second?.childNativeId).toBe('int_1:device:ABC0001')
+  })
+
+  it('reports the box offline while its session is down', async () => {
+    const provider = buildHmAdoptionProvider({ ...makeDeps([switchDev]), isOnline: () => false })
+    const cand = await provider.getCandidate({
+      integrationId: 'int_1',
+      childNativeId: 'int_1:gateway',
+    })
+    expect(cand?.status).toBe('offline')
+  })
+
+  it('is marked adopted from a gateway row, and a gateway row does not mark any product adopted', async () => {
+    const adopted: AdoptedEntry[] = [
+      {
+        id: 61,
+        config: { system: 'homematic', integrationId: 'int_1', nativeId: 'int_1:gateway' },
+      },
+    ]
+    const provider = buildHmAdoptionProvider(makeDeps([switchDev], adopted))
+    const result = await provider.listCandidates({ integrationId: 'int_1', page: 1, pageSize: 50 })
+    expect(result.candidates.find((c) => c.childNativeId === 'int_1:gateway')).toMatchObject({
+      alreadyAdopted: true,
+      adoptedDeviceId: 61,
+    })
+    expect(
+      result.candidates.find((c) => c.childNativeId === 'int_1:device:ABC0001')?.alreadyAdopted,
+    ).toBe(false)
+  })
+
+  it('adopts the box through adoptGateway, as a sibling with no accessories', async () => {
+    const adoptGateway = vi.fn(
+      async (_input: Parameters<HmAdoptionProviderDeps['adoptGateway']>[0]) => ({ deviceId: 70 }),
+    )
+    const adoptDevice = vi.fn(async () => DEFAULT_ADOPT_RESULT)
+    const provider = buildHmAdoptionProvider(
+      makeDeps([switchDev], [], { adoptGateway, adoptDevice }),
+    )
+    const result = await provider.adopt({
+      integrationId: 'int_1',
+      childNativeIds: ['int_1:gateway'],
+    })
+    expect(adoptGateway).toHaveBeenCalledWith({
+      integrationId: 'int_1',
+      nativeId: 'int_1:gateway',
+      name: 'Casa CCU',
+    })
+    expect(adoptDevice).not.toHaveBeenCalled()
+    expect(result.adopted).toEqual([
+      { childNativeId: 'int_1:gateway', parentDeviceId: 70, accessoryDeviceIds: [] },
+    ])
+  })
+
+  it('adopts the box and a product in one call, both top-level', async () => {
+    const provider = buildHmAdoptionProvider(makeDeps([switchDev]))
+    const result = await provider.adopt({
+      integrationId: 'int_1',
+      childNativeIds: ['int_1:gateway', 'int_1:device:ABC0001'],
+    })
+    expect(result.adopted.map((a) => a.childNativeId)).toEqual([
+      'int_1:gateway',
+      'int_1:device:ABC0001',
+    ])
+  })
+
+  it('resync of the box has nothing to re-derive and does not look for an address', async () => {
+    const findDeviceConfig = vi.fn(async (_id: number) => ({
+      system: 'homematic',
+      integrationId: 'int_1',
+      nativeId: 'int_1:gateway',
+    }))
+    const provider = buildHmAdoptionProvider(makeDeps([], [], { findDeviceConfig }))
+    expect(await provider.resync({ camDeviceId: 70 })).toEqual({
+      changed: false,
+      rebuiltChildren: 0,
+    })
+  })
+})
+
+describe('refusals are logged', () => {
+  it('warns on a malformed or foreign native id and on a missing device', async () => {
+    const deps = makeDeps([switchDev])
+    const provider = buildHmAdoptionProvider(deps)
+    await expect(
+      provider.adopt({
+        integrationId: 'int_1',
+        childNativeIds: ['ABC0001', 'int_2:device:ABC0001', 'int_1:device:NOPE'],
+      }),
+    ).rejects.toThrow('all 3 adopt(s) failed')
+    const messages = vi.mocked(deps.logger.warn).mock.calls.map((c) => c[0])
+    expect(messages.filter((m) => m.includes('malformed or foreign'))).toHaveLength(2)
+    expect(messages.filter((m) => m.includes('device not found'))).toHaveLength(1)
+  })
+
+  it('warns when the integration is not running', async () => {
+    const deps = makeDeps([switchDev])
+    const provider = buildHmAdoptionProvider({
+      ...deps,
+      registry: { ...deps.registry, has: () => false },
+    })
+    await expect(
+      provider.adopt({ integrationId: 'int_1', childNativeIds: ['int_1:gateway'] }),
+    ).rejects.toThrow('not running')
+    expect(vi.mocked(deps.logger.warn).mock.calls.some((c) => c[0].includes('not running'))).toBe(
+      true,
+    )
   })
 })

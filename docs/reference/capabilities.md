@@ -142,11 +142,11 @@ Singleton or collection providers, addressed without a device.
 | `audio-codec` | 11 | — | — | — | — | `decoder-nodeav` |
 | `auth-provider` | 4 | — | — | — | ✓ | `auth-oidc` `local-auth` |
 | `backup` | 20 | — | — | — | — | `backup-orchestrator` |
-| `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-esphome` `provider-homeassistant` `provider-homematic` |
+| `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-esphome` `provider-homeassistant` |
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
-| `connection-test` | 2 | — | — | — | — | `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-petkit` `provider-rademacher` `provider-rtsp` `provider-tuya` `provider-velux` `provider-wyze` |
+| `connection-test` | 2 | — | — | — | — | `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-homematic` `provider-petkit` `provider-rademacher` `provider-rtsp` `provider-tuya` `provider-velux` `provider-wyze` |
 | `core-blocks` | 22 | — | — | — | — | `core-blocks` |
 | `custom-model-registry` | 2 | — | — | — | ✓ | `model-studio` |
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |

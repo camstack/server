@@ -120,3 +120,49 @@ it('getInfo reports kind homematic and the host in info', async () => {
   expect(info.id).toBe('hm_002')
   expect((info.info as { host?: string }).host).toBe('h')
 })
+
+it('tells the devices that mirror the session about every state change', async () => {
+  const facade = fakeFacade()
+  const onStateChanged = vi.fn()
+  const mgr = new HmIntegrationManager({
+    id: 'int-1',
+    name: 'Casa',
+    connection: CONN,
+    logger,
+    makeFacade: () => facade,
+    onConnected: vi.fn(),
+    onDisconnected: vi.fn(),
+    onStateChanged,
+  })
+  await mgr.start()
+  expect(onStateChanged).toHaveBeenCalledTimes(1)
+  facade.emit('connection', { interfaceId: 'HmIP-RF', state: 'DISCONNECTED' })
+  expect(mgr.getInfo().status).toBe('disconnected')
+  expect(onStateChanged).toHaveBeenCalledTimes(2)
+  facade.emit('error', new Error('ECONNRESET'))
+  expect(mgr.getInfo().status).toBe('error')
+  expect(mgr.getInfo().error).toBe('ECONNRESET')
+  expect(onStateChanged).toHaveBeenCalledTimes(3)
+  await mgr.stop()
+  expect(onStateChanged).toHaveBeenCalledTimes(4)
+})
+
+it('applyConnection rebuilds the facade from the NEW connection', async () => {
+  const seen: string[] = []
+  const mgr = new HmIntegrationManager({
+    id: 'int-1',
+    name: 'Casa',
+    connection: CONN,
+    logger,
+    makeFacade: (config) => {
+      seen.push(config.host)
+      return fakeFacade()
+    },
+    onConnected: vi.fn(),
+    onDisconnected: vi.fn(),
+  })
+  await mgr.start()
+  await mgr.applyConnection({ ...CONN, host: 'other-host' })
+  expect(seen).toEqual(['h', 'other-host'])
+  expect(mgr.getConnection().host).toBe('other-host')
+})

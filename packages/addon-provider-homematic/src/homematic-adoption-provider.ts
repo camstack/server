@@ -9,7 +9,14 @@ import type { DiscoveredChildDevice } from '@camstack/types'
 import { DeviceType } from '@camstack/types'
 import type { HmCustomEntity } from 'nodehomematic'
 import type { HmDiscoverable } from './homematic-discovery.js'
-import { buildHmCandidates } from './homematic-discovery.js'
+import {
+  buildCcuGatewayCandidate,
+  buildHmCandidates,
+  deviceNativeId,
+  entityNativeId,
+  gatewayNativeId,
+  parseNativeId,
+} from './homematic-discovery.js'
 import { inferHmDeviceType } from './homematic-mapping.js'
 import { deriveHmEntitySpecs } from './devices/hm-entity-spec.js'
 
@@ -33,56 +40,51 @@ export interface HmAdoptionFacade {
 }
 
 /**
- * Minimal broker snapshot the adoption provider needs from the registry's
- * `list()` result. The single `id` field is enough to iterate brokers and
- * look up their facades.
- */
-export interface HmAdoptionBrokerInfo {
-  readonly id: string
-}
-
-/**
  * Narrow registry surface consumed by the adoption provider. Both the real
- * {@link HmBrokerRegistry} (structurally) and lightweight test fakes satisfy
+ * {@link HmClientRegistry} (structurally) and lightweight test fakes satisfy
  * this interface without casts.
  */
 export interface HmAdoptionRegistry {
-  getFacade(id: string): HmAdoptionFacade | null
-  list(): readonly HmAdoptionBrokerInfo[]
+  getFacade(integrationId: string): HmAdoptionFacade | null
+  list(): readonly string[]
+  has(integrationId: string): boolean
+  getName(integrationId: string): string | null
 }
 
 /** All injected dependencies for {@link buildHmAdoptionProvider}. Nothing coupled to addon-ctx. */
 export interface HmAdoptionProviderDeps {
-  /** Narrow registry surface: list all brokers + resolve a raw facade by id. */
+  /** Narrow registry surface: the running CCU integrations + their raw facades. */
   readonly registry: HmAdoptionRegistry
-  /** Resolve the brokerId for a given integrationId (reads integration settings on demand). */
-  readonly getBrokerIdForIntegration: (integrationId: string) => Promise<string>
+  /** Whether the CCU session of `integrationId` is connected (drives the Gateway candidate status). */
+  readonly isOnline: (integrationId: string) => boolean
   /**
-   * Return all CamStack devices that were adopted from a Homematic source.
-   * The provider filters to those whose `config.system === 'homematic'`.
+   * Return all top-level CamStack devices that were adopted from a Homematic
+   * source (the CCU box, Containers and standalone entities). The provider
+   * filters to those whose `config.system === 'homematic'`.
    */
-  readonly listAdoptedHomematic: () => Promise<
+  readonly listAdopted: () => Promise<
     ReadonlyArray<{ readonly id: number; readonly config: Record<string, unknown> }>
   >
-  /** Create one adopted CamStack device. The addon wires this to resolve the
-   *  Device class from `type`, stamp the stableId, and call kernel.devices.create. */
+  /** Create the Gateway device of the CCU box (a top-level sibling of the products). */
+  readonly adoptGateway: (input: {
+    readonly integrationId: string
+    readonly nativeId: string
+    readonly name: string
+  }) => Promise<{ readonly deviceId: number }>
+  /** Create one adopted CamStack device (a Container parent plus its accessory children). */
   readonly adoptDevice: (input: {
     readonly hmAddress: string
-    readonly brokerId: string
     readonly integrationId: string
     readonly type: DeviceType
     readonly name: string
   }) => Promise<{ readonly deviceId: number; readonly accessoryDeviceIds: readonly number[] }>
   /**
    * Create ONE standalone top-level CamStack device for a single Homematic
-   * entity (the `'entities'` granularity). The addon wires this to mint a
-   * collision-free entity stableId and call `kernel.devices.create` with the
-   * cap-re-derive child dispatcher class. Returns the new device id.
+   * entity (the `'entities'` granularity). Returns the new device id.
    */
   readonly adoptStandaloneEntity: (input: {
     readonly hmAddress: string
     readonly key: string
-    readonly brokerId: string
     readonly integrationId: string
     readonly deviceType: DeviceType
     readonly role: DeviceRole | null
@@ -108,8 +110,8 @@ export interface HmAdoptionProviderDeps {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-/** The two granularity filters this provider advertises. `devices` adopts a
- *  whole CCU device as a Container; `entities` adopts ONE functional entity
+/** The two granularity filters this provider advertises. `devices` adopts the CCU box
+ *  (Gateway) and whole CCU devices as Containers; `entities` adopts ONE functional entity
  *  (a single channel / sensor / diagnostic / update) as a standalone device. */
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
 const ENTITIES_FILTER: AdoptionFilter = { id: 'entities', label: 'Entities' } as const
@@ -117,69 +119,34 @@ const ENTITIES_FILTER: AdoptionFilter = { id: 'entities', label: 'Entities' } as
 /** Granularity filter id selecting the per-entity (standalone) candidate set. */
 const ADOPTION_FILTER_ENTITIES = 'entities'
 
-/** Compose the entity-level `childNativeId` (`<hmAddress>#<entityKey>`). */
-function entityNativeId(hmAddress: string, key: string): string {
-  return `${hmAddress}#${key}`
-}
-
-/** Parse `<hmAddress>#<entityKey>` back into its parts. The first `#` splits;
- *  an entity `key` never contains `#`. Returns null when the shape is wrong. */
-function parseEntityNativeId(nativeId: string): { hmAddress: string; key: string } | null {
-  const hash = nativeId.indexOf('#')
-  if (hash <= 0 || hash === nativeId.length - 1) return null
-  return { hmAddress: nativeId.slice(0, hash), key: nativeId.slice(hash + 1) }
-}
-
 /**
- * Build a `hmAddress → CamStack deviceId` map for a single broker.
- * Entries whose `config.system !== 'homematic'` or whose
- * `config.brokerId !== brokerId` are excluded so the adopted-state
- * overlay is scoped to the correct CCU.
+ * Native id -> CamStack deviceId for every adopted top-level Homematic device of
+ * one integration: the Gateway, the Containers and the standalone entities. A
+ * Container carries `hmAddress` only, an entity also `hmEntityKey`, the Gateway
+ * its own `nativeId` and no address. Ids are namespaced by the integration, so
+ * two CCUs exposing the same address never share a key.
  */
-async function adoptedMapForBroker(
-  brokerId: string,
-  listAdoptedHomematic: HmAdoptionProviderDeps['listAdoptedHomematic'],
+async function adoptedMapForIntegration(
+  integrationId: string,
+  listAdopted: HmAdoptionProviderDeps['listAdopted'],
 ): Promise<ReadonlyMap<string, number>> {
-  const all = await listAdoptedHomematic()
   const map = new Map<string, number>()
-  for (const device of all) {
-    if (device.config['system'] === 'homematic' && device.config['brokerId'] === brokerId) {
-      // Skip standalone-entity rows (they carry `hmEntityKey`): this map is
-      // the DEVICES-granularity overlay and must point at Container parents
-      // only. Without this guard an entity adopted from the same physical CCU
-      // device would overwrite the Container's id (last-write-wins on the
-      // shared `hmAddress`), so the devices candidate would report the wrong
-      // `adoptedDeviceId`. Mirrors the inverse guard in adoptedEntityMapForBroker.
-      const entityKey = device.config['hmEntityKey']
-      if (typeof entityKey === 'string' && entityKey.length > 0) continue
-      const addr = String(device.config['hmAddress'])
-      map.set(addr, device.id)
-    }
-  }
-  return map
-}
-
-/**
- * Build a `<hmAddress>#<entityKey> → CamStack deviceId` map of STANDALONE entity
- * devices for a broker. A standalone entity device carries the `hmEntityKey`
- * marker (set only on the `entities` adoption path) plus `system==='homematic'`
- * and the matching `brokerId`. A Container parent (no `hmEntityKey`) does NOT
- * count — both granularities coexist for the same device.
- */
-async function adoptedEntityMapForBroker(
-  brokerId: string,
-  listAdoptedHomematic: HmAdoptionProviderDeps['listAdoptedHomematic'],
-): Promise<ReadonlyMap<string, number>> {
-  const all = await listAdoptedHomematic()
-  const map = new Map<string, number>()
-  for (const device of all) {
+  for (const device of await listAdopted()) {
     const cfg = device.config
-    if (cfg['system'] !== 'homematic') continue
-    if (cfg['brokerId'] !== brokerId) continue
-    const key = cfg['hmEntityKey']
-    if (typeof key !== 'string' || key.length === 0) continue
-    const addr = String(cfg['hmAddress'])
-    map.set(entityNativeId(addr, key), device.id)
+    if (cfg['system'] !== 'homematic' || cfg['integrationId'] !== integrationId) continue
+    const address = cfg['hmAddress']
+    if (typeof address !== 'string' || address.length === 0) {
+      if (cfg['nativeId'] === gatewayNativeId(integrationId)) {
+        map.set(gatewayNativeId(integrationId), device.id)
+      }
+      continue
+    }
+    const entityKey = cfg['hmEntityKey']
+    if (typeof entityKey === 'string' && entityKey.length > 0) {
+      map.set(entityNativeId(integrationId, address, entityKey), device.id)
+    } else {
+      map.set(deviceNativeId(integrationId, address), device.id)
+    }
   }
   return map
 }
@@ -191,9 +158,10 @@ async function adoptedEntityMapForBroker(
 /**
  * Construct the `device-adoption` cap provider for the Homematic addon.
  *
- * Implements the READ side of {@link IDeviceAdoptionProvider} fully.
- * The WRITE side (`adopt`, `release`, `resync`) is stubbed for Task 2.3
- * and throws clearly-marked errors.
+ * Per CCU integration it offers the CCU box itself (a {@link DeviceType.Gateway}
+ * candidate) and its products (Containers, or standalone entities under the
+ * `entities` granularity). The products are siblings of the Gateway, never
+ * children of it.
  *
  * Pure builder: all side-effecting deps are injected so the returned
  * object is unit-testable without a real addon context.
@@ -201,8 +169,8 @@ async function adoptedEntityMapForBroker(
 export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAdoptionProvider {
   const {
     registry,
-    getBrokerIdForIntegration,
-    listAdoptedHomematic,
+    listAdopted,
+    adoptGateway,
     adoptDevice,
     adoptStandaloneEntity,
     removeDevice,
@@ -214,31 +182,37 @@ export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAd
 
   // ── Read helpers ──────────────────────────────────────────────────────────
 
-  /** Fetch every device candidate for a broker (no paging, no text filter). */
-  async function allCandidatesForBroker(brokerId: string): Promise<DiscoveredChildDevice[]> {
-    const facade = registry.getFacade(brokerId)
-    const devices = facade?.devices() ?? []
-    const adopted = await adoptedMapForBroker(brokerId, listAdoptedHomematic)
-    return buildHmCandidates({ brokerId, devices, adopted })
+  /** The Gateway candidate first, then every device candidate of one integration. */
+  async function allCandidatesFor(integrationId: string): Promise<DiscoveredChildDevice[]> {
+    const devices = registry.getFacade(integrationId)?.devices() ?? []
+    const adopted = await adoptedMapForIntegration(integrationId, listAdopted)
+    return [
+      buildCcuGatewayCandidate({
+        integrationId,
+        integrationName: registry.getName(integrationId) ?? 'Homematic CCU',
+        online: deps.isOnline(integrationId),
+        adopted,
+      }),
+      ...buildHmCandidates({ integrationId, devices, adopted }),
+    ]
   }
 
   /**
-   * Fetch every per-ENTITY candidate for a broker (the `entities` granularity):
-   * a FLAT list — one candidate per functional entity across all the broker's
-   * devices. `childNativeId = <hmAddress>#<entityKey>`; `alreadyAdopted` is true
-   * only when a STANDALONE device for that entity already exists.
+   * Every per-ENTITY candidate of one integration (the `entities` granularity):
+   * a FLAT list, one candidate per functional entity across all its devices.
+   * `alreadyAdopted` is true only when a STANDALONE device for that entity exists.
    */
-  async function allEntityCandidatesForBroker(brokerId: string): Promise<DiscoveredChildDevice[]> {
-    const facade = registry.getFacade(brokerId)
+  async function allEntityCandidatesFor(integrationId: string): Promise<DiscoveredChildDevice[]> {
+    const facade = registry.getFacade(integrationId)
     const devices = facade?.devices() ?? []
     const customEntities = facade?.customEntities() ?? []
-    const adopted = await adoptedEntityMapForBroker(brokerId, listAdoptedHomematic)
+    const adopted = await adoptedMapForIntegration(integrationId, listAdopted)
     const out: DiscoveredChildDevice[] = []
     for (const device of devices) {
       const deviceName = device.name ?? device.address
       const entitiesForDevice = customEntities.filter((e) => e.device === device.address)
       for (const spec of deriveHmEntitySpecs(device, entitiesForDevice)) {
-        const childNativeId = entityNativeId(device.address, spec.key)
+        const childNativeId = entityNativeId(integrationId, device.address, spec.key)
         const adoptedId = adopted.get(childNativeId) ?? null
         out.push({
           childNativeId,
@@ -277,183 +251,91 @@ export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAd
     return filtered
   }
 
-  /** True when the granularity `filter` selects the per-entity candidate set. */
-  function isEntitiesFilter(filter: string | undefined): boolean {
-    return filter === ADOPTION_FILTER_ENTITIES
-  }
-
-  /** One adopted-entry shape, shared by both granularity adopt paths. */
+  /** One adopted-entry shape, shared by every adopt path. */
   type AdoptedEntry = {
     readonly childNativeId: string
     readonly parentDeviceId: number
     readonly accessoryDeviceIds: readonly number[]
   }
 
-  /**
-   * `entities` granularity adopt: import each `<hmAddress>#<entityKey>` as a
-   * STANDALONE top-level device (`parentDeviceId === <newId>`, no accessory
-   * children). For each id we resolve the live device + its custom entities,
-   * re-derive its specs, find the spec with the requested `key`, build the
-   * standalone config (spec config + provenance + entity marker), and call the
-   * injected `adoptStandaloneEntity` creator. Best-effort CCU-room location
-   * import mirrors the devices path. Partial success is allowed; all-fail throws.
-   */
-  async function adoptEntities(args: {
+  async function countsFor(integrationId: string): Promise<AdoptionStatus> {
+    const adopted = await adoptedMapForIntegration(integrationId, listAdopted)
+    return {
+      lastDiscoveryAt: Date.now(),
+      candidateCount: (await allCandidatesFor(integrationId)).length,
+      adoptedCount: adopted.size,
+      lastError: null,
+    }
+  }
+
+  /** Best-effort CCU-room location import; never fails the adopt. */
+  async function importRoom(args: {
+    importEnabled: boolean
+    known: readonly string[]
+    deviceId: number
+    room: string | undefined
+    nativeId: string
     integrationId: string
-    brokerId: string
-    facade: HmAdoptionFacade
-    childNativeIds: readonly string[]
-    perCandidate: Record<string, { name?: string }> | undefined
-    importLocations: boolean | undefined
-  }): Promise<{ adopted: AdoptedEntry[] }> {
-    const { integrationId, brokerId, facade, childNativeIds, perCandidate, importLocations } = args
-    const devices = facade.devices()
-    const customEntities = facade.customEntities()
-
-    const importEnabled =
-      importLocations === true && listLocations !== undefined && assignLocation !== undefined
-    let known: readonly string[] = importEnabled ? await listLocations() : []
-
-    const adopted: AdoptedEntry[] = []
-    let failures = 0
-
-    for (const nativeId of childNativeIds) {
-      try {
-        const parsed = parseEntityNativeId(nativeId)
-        if (parsed === null) {
-          logger.warn('homematic adopt entity: malformed childNativeId — skipping', {
-            meta: { nativeId, brokerId },
-          })
-          failures++
-          continue
-        }
-        const { hmAddress, key } = parsed
-        const dev = devices.find((d) => d.address === hmAddress)
-        if (dev === undefined) {
-          logger.warn('homematic adopt entity: device not found on broker — skipping', {
-            meta: { hmAddress, key, brokerId },
-          })
-          failures++
-          continue
-        }
-        const entitiesForDevice = customEntities.filter((e) => e.device === hmAddress)
-        const spec = deriveHmEntitySpecs(dev, entitiesForDevice).find((s) => s.key === key)
-        if (spec === undefined) {
-          logger.warn('homematic adopt entity: entity key not found on device — skipping', {
-            meta: { hmAddress, key, brokerId },
-          })
-          failures++
-          continue
-        }
-
-        const name = perCandidate?.[nativeId]?.name ?? `${dev.name ?? hmAddress} · ${spec.name}`
-        const config: Record<string, unknown> = {
-          ...spec.config,
-          system: 'homematic',
-          brokerId,
-          hmAddress,
-          hmEntityKey: spec.key,
-          address: hmAddress,
-          integrationId,
-          name,
-        }
-
-        const { deviceId } = await adoptStandaloneEntity({
-          hmAddress,
-          key: spec.key,
-          brokerId,
-          integrationId,
-          deviceType: spec.deviceType,
-          role: spec.role,
-          name,
-          config,
-        })
-
-        // Best-effort CCU-room location import (never fails the adopt).
-        const room = dev.rooms?.[0]
-        if (importEnabled && room !== undefined) {
-          try {
-            known = await assignLocation(deviceId, room, known)
-          } catch (err: unknown) {
-            logger.warn('homematic adopt entity: location import failed (non-fatal)', {
-              meta: { hmAddress, key, brokerId, deviceId, room, error: errMsg(err) },
-            })
-          }
-        }
-
-        adopted.push({ childNativeId: nativeId, parentDeviceId: deviceId, accessoryDeviceIds: [] })
-      } catch (err: unknown) {
-        logger.warn('homematic adopt entity: failed to adopt entity', {
-          meta: { nativeId, brokerId, error: errMsg(err) },
-        })
-        failures++
-      }
+  }): Promise<readonly string[]> {
+    const { importEnabled, known, deviceId, room, nativeId, integrationId } = args
+    if (!importEnabled || room === undefined || assignLocation === undefined) return known
+    try {
+      return await assignLocation(deviceId, room, known)
+    } catch (err: unknown) {
+      logger.warn('homematic adopt: location import failed (non-fatal)', {
+        tags: { deviceId },
+        meta: { nativeId, integrationId, room, error: errMsg(err) },
+      })
+      return known
     }
-
-    if (adopted.length === 0 && failures > 0) {
-      throw new Error(`homematic adopt: all ${failures} entity adopt(s) failed`)
-    }
-    return { adopted }
   }
 
   // ── Provider ──────────────────────────────────────────────────────────────
 
   return {
-    // ── Filters ──────────────────────────────────────────────────────────
-
     listCandidateFilters: async (_input) => {
       return { filters: [DEVICES_FILTER, ENTITIES_FILTER] }
     },
 
-    // ── Candidate list ────────────────────────────────────────────────────
-
     listCandidates: async ({ integrationId, page, pageSize, filter, filterText }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-      // Granularity branch: `entities` returns a flat per-entity candidate list;
-      // `devices` (or undefined) keeps the device-Container candidate path.
-      const cands = isEntitiesFilter(filter)
-        ? await allEntityCandidatesForBroker(brokerId)
-        : await allCandidatesForBroker(brokerId)
-
+      // `entities` returns a flat per-entity list; `devices` (or undefined) the
+      // CCU box followed by the device Containers.
+      const cands =
+        filter === ADOPTION_FILTER_ENTITIES
+          ? await allEntityCandidatesFor(integrationId)
+          : await allCandidatesFor(integrationId)
       const filtered = applyCandidateTextFilter(cands, filterText)
-
-      // Paginate (1-based page).
       const start = (page - 1) * pageSize
-      const slice = filtered.slice(start, start + pageSize)
-
-      return { candidates: slice, totalCount: filtered.length, page, pageSize }
+      return {
+        candidates: filtered.slice(start, start + pageSize),
+        totalCount: filtered.length,
+        page,
+        pageSize,
+      }
     },
-
-    // ── Single candidate ──────────────────────────────────────────────────
 
     getCandidate: async ({ integrationId, childNativeId }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-      // `getCandidate` carries no granularity `filter` in the cap input; resolve
-      // across BOTH the device and the entity candidate sets so an entity-level
-      // `<addr>#<key>` id and a device-level `<addr>` id both resolve.
-      const deviceCands = await allCandidatesForBroker(brokerId)
-      const deviceHit = deviceCands.find((c) => c.childNativeId === childNativeId)
-      if (deviceHit !== undefined) return deviceHit
-      const entityCands = await allEntityCandidatesForBroker(brokerId)
-      return entityCands.find((c) => c.childNativeId === childNativeId) ?? null
+      // `getCandidate` carries no granularity filter: resolve across BOTH sets.
+      const hit = (await allCandidatesFor(integrationId)).find(
+        (c) => c.childNativeId === childNativeId,
+      )
+      if (hit !== undefined) return hit
+      return (
+        (await allEntityCandidatesFor(integrationId)).find(
+          (c) => c.childNativeId === childNativeId,
+        ) ?? null
+      )
     },
-
-    // ── Status ────────────────────────────────────────────────────────────
 
     getStatus: async () => {
       try {
-        const brokers = registry.list()
         let candidateCount = 0
-        for (const broker of brokers) {
-          const facade = registry.getFacade(broker.id)
-          const devices = facade?.devices() ?? []
-          const adopted = await adoptedMapForBroker(broker.id, listAdoptedHomematic)
-          candidateCount += buildHmCandidates({ brokerId: broker.id, devices, adopted }).length
+        let adoptedCount = 0
+        for (const integrationId of registry.list()) {
+          const counts = await countsFor(integrationId)
+          candidateCount += counts.candidateCount
+          adoptedCount += counts.adoptedCount
         }
-
-        const allAdopted = await listAdoptedHomematic()
-        const adoptedCount = allAdopted.filter((d) => d.config['system'] === 'homematic').length
-
         return {
           lastDiscoveryAt: Date.now(),
           candidateCount,
@@ -471,113 +353,135 @@ export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAd
       }
     },
 
-    // ── Refresh ───────────────────────────────────────────────────────────
+    refresh: async ({ integrationId }) => countsFor(integrationId),
 
-    refresh: async ({ integrationId }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-
-      const facade = registry.getFacade(brokerId)
-      const devices = facade?.devices() ?? []
-      const adopted = await adoptedMapForBroker(brokerId, listAdoptedHomematic)
-      const candidateCount = buildHmCandidates({ brokerId, devices, adopted }).length
-
-      const allAdopted = await listAdoptedHomematic()
-      const adoptedCount = allAdopted.filter(
-        (d) => d.config['system'] === 'homematic' && d.config['brokerId'] === brokerId,
-      ).length
-
-      return {
-        lastDiscoveryAt: Date.now(),
-        candidateCount,
-        adoptedCount,
-        lastError: null,
-      } satisfies AdoptionStatus
-    },
-
-    // ── Write side ────────────────────────────────────────────────────────
-
-    adopt: async ({ integrationId, childNativeIds, filter, perCandidate, importLocations }) => {
-      const brokerId = await getBrokerIdForIntegration(integrationId)
-      const facade = registry.getFacade(brokerId)
-      if (facade === null) {
-        throw new Error(`homematic adopt: broker ${brokerId} not connected`)
-      }
-
-      // `entities` granularity: import each `<addr>#<key>` as a STANDALONE
-      // top-level device (no Container). `devices` (or undefined) keeps the
-      // Container path below.
-      if (isEntitiesFilter(filter)) {
-        return adoptEntities({
-          integrationId,
-          brokerId,
-          facade,
-          childNativeIds,
-          perCandidate,
-          importLocations,
+    adopt: async ({ integrationId, childNativeIds, perCandidate, importLocations }) => {
+      const facade = registry.getFacade(integrationId)
+      if (!registry.has(integrationId) || facade === null) {
+        logger.warn('homematic adopt: integration is not running — nothing adopted', {
+          meta: { integrationId, requested: childNativeIds.length },
         })
+        throw new Error(`homematic adopt: integration ${integrationId} is not running`)
       }
-
       const devices = facade.devices()
+      const customEntities = facade.customEntities()
+
+      // The known-locations registry is fetched ONCE per adopt call and threaded
+      // through the loop so a label created for an earlier candidate is reused.
+      const importEnabled =
+        importLocations === true && listLocations !== undefined && assignLocation !== undefined
+      let known: readonly string[] = importEnabled && listLocations ? await listLocations() : []
 
       const adopted: AdoptedEntry[] = []
       let failures = 0
 
-      // Location import is enabled only when the operator requested it AND the
-      // addon wired both location deps. The known-locations registry is fetched
-      // ONCE per adopt call and threaded through the loop so a label created for
-      // an earlier candidate is reused for a later one (no duplicate labels).
-      const importEnabled =
-        importLocations === true && listLocations !== undefined && assignLocation !== undefined
-      let known: readonly string[] = importEnabled ? await listLocations() : []
-
-      for (const hmAddress of childNativeIds) {
+      for (const nativeId of childNativeIds) {
         try {
-          const dev = devices.find((d) => d.address === hmAddress)
-          if (dev === undefined) {
-            logger.warn('homematic adopt: device not found on broker — skipping', {
-              meta: { hmAddress, brokerId },
+          const parsed = parseNativeId(integrationId, nativeId)
+          if (parsed === null) {
+            logger.warn('homematic adopt: malformed or foreign childNativeId — skipping', {
+              meta: { nativeId, integrationId },
             })
             failures++
+            continue
+          }
+
+          if (parsed.kind === 'gateway') {
+            const name =
+              perCandidate?.[nativeId]?.name ?? registry.getName(integrationId) ?? 'Homematic CCU'
+            const { deviceId } = await adoptGateway({ integrationId, nativeId, name })
+            adopted.push({
+              childNativeId: nativeId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: [],
+            })
+            continue
+          }
+
+          const { hmAddress } = parsed
+          const dev = devices.find((d) => d.address === hmAddress)
+          if (dev === undefined) {
+            logger.warn('homematic adopt: device not found on the CCU — skipping', {
+              meta: { hmAddress, integrationId, kind: parsed.kind },
+            })
+            failures++
+            continue
+          }
+
+          if (parsed.kind === 'entity') {
+            const entitiesForDevice = customEntities.filter((e) => e.device === hmAddress)
+            const spec = deriveHmEntitySpecs(dev, entitiesForDevice).find(
+              (s) => s.key === parsed.key,
+            )
+            if (spec === undefined) {
+              logger.warn('homematic adopt entity: entity key not found on device — skipping', {
+                meta: { hmAddress, key: parsed.key, integrationId },
+              })
+              failures++
+              continue
+            }
+            const name = perCandidate?.[nativeId]?.name ?? `${dev.name ?? hmAddress} · ${spec.name}`
+            const config: Record<string, unknown> = {
+              ...spec.config,
+              system: 'homematic',
+              hmAddress,
+              hmEntityKey: spec.key,
+              address: hmAddress,
+              integrationId,
+              name,
+            }
+            const { deviceId } = await adoptStandaloneEntity({
+              hmAddress,
+              key: spec.key,
+              integrationId,
+              deviceType: spec.deviceType,
+              role: spec.role,
+              name,
+              config,
+            })
+            known = await importRoom({
+              importEnabled,
+              known,
+              deviceId,
+              room: dev.rooms?.[0],
+              nativeId,
+              integrationId,
+            })
+            adopted.push({
+              childNativeId: nativeId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: [],
+            })
             continue
           }
 
           const type = inferHmDeviceType(dev)
           if (type === DeviceType.Generic) {
             logger.warn('homematic adopt: device maps to Generic type — skipping', {
-              meta: { hmAddress, brokerId, deviceType: dev.type },
+              meta: { hmAddress, integrationId, deviceType: dev.type },
             })
             failures++
             continue
           }
-
-          const name = perCandidate?.[hmAddress]?.name ?? dev.name ?? hmAddress
-
+          const name = perCandidate?.[nativeId]?.name ?? dev.name ?? hmAddress
           const { deviceId, accessoryDeviceIds } = await adoptDevice({
             hmAddress,
-            brokerId,
             integrationId,
             type,
             name,
           })
-
-          // Best-effort: import the device's first CCU room as a CamStack
-          // location. NEVER fails the adopt — a location error is logged and
-          // the known-locations registry is left unchanged.
-          const room = dev.rooms?.[0]
-          if (importEnabled && room !== undefined) {
-            try {
-              known = await assignLocation(deviceId, room, known)
-            } catch (err: unknown) {
-              logger.warn('homematic adopt: location import failed (non-fatal)', {
-                meta: { hmAddress, brokerId, deviceId, room, error: errMsg(err) },
-              })
-            }
-          }
-
-          adopted.push({ childNativeId: hmAddress, parentDeviceId: deviceId, accessoryDeviceIds })
+          known = await importRoom({
+            importEnabled,
+            known,
+            deviceId,
+            room: dev.rooms?.[0],
+            nativeId,
+            integrationId,
+          })
+          adopted.push({ childNativeId: nativeId, parentDeviceId: deviceId, accessoryDeviceIds })
         } catch (err: unknown) {
-          logger.warn('homematic adopt: failed to adopt device', {
-            meta: { hmAddress, brokerId, error: errMsg(err) },
+          logger.warn('homematic adopt: failed to adopt', {
+            meta: { nativeId, integrationId, error: errMsg(err) },
           })
           failures++
         }
@@ -586,7 +490,6 @@ export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAd
       if (adopted.length === 0 && failures > 0) {
         throw new Error(`homematic adopt: all ${failures} adopt(s) failed`)
       }
-
       return { adopted }
     },
 
@@ -602,23 +505,23 @@ export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAd
       if (cfg['system'] !== 'homematic') {
         throw new Error(`homematic resync: device ${camDeviceId} is not a Homematic device`)
       }
-
-      const brokerId = String(cfg['brokerId'])
-      const hmAddress = String(cfg['hmAddress'])
-      const facade = registry.getFacade(brokerId)
-      const dev = facade?.devices().find((d) => d.address === hmAddress)
-
+      const integrationId = String(cfg['integrationId'])
+      // The CCU box carries no address and nothing to re-derive.
+      if (typeof cfg['hmAddress'] !== 'string') {
+        return { changed: false, rebuiltChildren: 0 }
+      }
+      const hmAddress = cfg['hmAddress']
+      const dev = registry
+        .getFacade(integrationId)
+        ?.devices()
+        .find((d) => d.address === hmAddress)
       if (dev === undefined) {
         throw new Error(
-          `homematic resync: device ${hmAddress} no longer present on broker ${brokerId}`,
+          `homematic resync: device ${hmAddress} no longer present on integration ${integrationId}`,
         )
       }
-
       // The Container derives its children LIVE from the facade on each spawn,
-      // so a structural drift reconcile (re-derive + applyDerivedSpec per
-      // child, mirroring the HA reconciler) is a follow-up task. For now the
-      // resync confirms the device is still present on the broker and reports
-      // no structural change.
+      // so a structural drift reconcile is a follow-up; resync confirms presence.
       return { changed: false, rebuiltChildren: 0 }
     },
   }

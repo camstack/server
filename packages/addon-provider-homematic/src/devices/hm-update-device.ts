@@ -7,7 +7,7 @@ import {
 import type { HmDevice } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 
-/** Update child config: just the device address + broker (no channel). */
+/** Update child config: just the device address + integration (no channel). */
 export const hmUpdateSchema = hmChildSchema
 
 /** Cold-start update status before the descriptor resolves. */

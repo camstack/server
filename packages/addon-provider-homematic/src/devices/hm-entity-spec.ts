@@ -45,7 +45,7 @@ export interface HmEntitySpec {
   /**
    * Per-child config blob. Carries ONLY the entity-shaped fields (channel,
    * capabilities, role, unit, sourceParams, kind, eventTypes) — the caller
-   * stamps `system` / `brokerId` / `integrationId` / `address` (+ adoption
+   * stamps `system` / `integrationId` / `address` (+ adoption
    * markers) on top.
    */
   readonly config: Record<string, unknown>

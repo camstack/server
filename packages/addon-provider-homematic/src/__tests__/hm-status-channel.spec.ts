@@ -13,15 +13,15 @@ import { type DeviceContext, DeviceType, type IDeviceRuntimeState } from '@camst
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'
-import { homematicFacades } from '../homematic-gateway.js'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 
-const BROKER_ID = 'hm_001'
+const INTEGRATION_ID = 'hm_001'
 const ADDRESS = '00315F298E5A18'
 const COMMAND_CHANNEL = `${ADDRESS}:4`
 const STATUS_CHANNEL = `${ADDRESS}:3`
 const FOREIGN_CHANNEL = `${ADDRESS}:8`
 const DEVICE_ID = 1460
-const STABLE_ID = `hm:${BROKER_ID}:${ADDRESS}-act-${COMMAND_CHANNEL}`
+const STABLE_ID = `hm:${INTEGRATION_ID}:${ADDRESS}-act-${COMMAND_CHANNEL}`
 
 interface LogRecord {
   readonly level: 'debug' | 'info' | 'warn'
@@ -78,7 +78,7 @@ function makeCtx(records: LogRecord[]): {
     },
     persistedConfig: {
       address: ADDRESS,
-      brokerId: BROKER_ID,
+      integrationId: INTEGRATION_ID,
       channel: COMMAND_CHANNEL,
       kind: 'switch',
     },
@@ -112,7 +112,7 @@ function makeCtx(records: LogRecord[]): {
 /** STATE is carried by BOTH the command and the status channel. */
 function snapshot(): HmDevice {
   const state = (address: string): Record<string, unknown> => ({
-    id: `${BROKER_ID}:${address}:VALUES:STATE`,
+    id: `${INTEGRATION_ID}:${address}:VALUES:STATE`,
     parameter: 'STATE',
     type: 'BOOL',
     value: false,
@@ -123,7 +123,7 @@ function snapshot(): HmDevice {
   return {
     address: ADDRESS,
     type: 'HmIP-BSL',
-    interfaceId: BROKER_ID,
+    interfaceId: INTEGRATION_ID,
     channels: [
       {
         address: STATUS_CHANNEL,
@@ -170,7 +170,7 @@ function makeFacade(): { facade: Homematic; emit: Handler } {
 
 function stateEvent(channel: string, value: boolean): ValueChangedEvent {
   return {
-    dpId: `${BROKER_ID}:${channel}:VALUES:STATE`,
+    dpId: `${INTEGRATION_ID}:${channel}:VALUES:STATE`,
     device: ADDRESS,
     channel,
     parameter: 'STATE',
@@ -184,7 +184,7 @@ function setup(): { records: LogRecord[]; emit: Handler; state: () => unknown } 
   homematicFacades.clear()
   const records: LogRecord[] = []
   const { facade, emit } = makeFacade()
-  homematicFacades.set(BROKER_ID, facade)
+  homematicFacades.set(INTEGRATION_ID, facade)
   const { ctx, runtimeState } = makeCtx(records)
   new HmActuatorDevice(ctx)
   return { records, emit, state: () => runtimeState().getCapState('switch') }

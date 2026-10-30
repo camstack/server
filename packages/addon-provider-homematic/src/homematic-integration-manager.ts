@@ -6,15 +6,15 @@ import { type HomematicConfig, toHomematicOptions } from './config.js'
 // Public types
 // ---------------------------------------------------------------------------
 
-/** Status of a single CCU connection managed by {@link HmIntegrationManager}. */
-export type HmBrokerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
+/** Status of the CCU session of one integration, managed by {@link HmIntegrationManager}. */
+export type HmSessionStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
 /** Immutable snapshot returned by {@link HmIntegrationManager.getInfo}. */
-export interface HmBrokerInfo {
+export interface HmSessionInfo {
   readonly id: string
   readonly name: string
   readonly kind: 'homematic'
-  readonly status: HmBrokerStatus
+  readonly status: HmSessionStatus
   readonly info: Record<string, unknown>
   readonly lastCheckedAt: number | null
   readonly error: string | null
@@ -46,8 +46,13 @@ export interface HmIntegrationManagerOptions {
   readonly name: string
   readonly connection: HomematicConfig
   readonly logger: IScopedLogger
-  readonly onConnected: (brokerId: string) => void
-  readonly onDisconnected: (brokerId: string) => void
+  readonly onConnected: (integrationId: string) => void
+  readonly onDisconnected: (integrationId: string) => void
+  /**
+   * Called after EVERY state change (connected, disconnected, error), so the
+   * devices that mirror the session (the CCU box) follow it.
+   */
+  readonly onStateChanged?: (integrationId: string) => void
   /**
    * Factory seam for testing. When omitted the manager builds a real
    * {@link Homematic} from `connection` via {@link toHomematicOptions}.
@@ -136,12 +141,13 @@ export class HmIntegrationManager {
   readonly #name: string
   #connection: HomematicConfig
   readonly #logger: IScopedLogger
-  readonly #onConnected: (brokerId: string) => void
-  readonly #onDisconnected: (brokerId: string) => void
+  readonly #onConnected: (integrationId: string) => void
+  readonly #onDisconnected: (integrationId: string) => void
+  readonly #onStateChanged: (integrationId: string) => void
   readonly #makeFacade: (config: HomematicConfig) => HmFacadeLike
 
   #facade: HmFacadeLike | null = null
-  #status: HmBrokerStatus = 'disconnected'
+  #status: HmSessionStatus = 'disconnected'
   #deviceCount = 0
   #lastCheckedAt: number | null = null
   #error: string | null = null
@@ -156,6 +162,7 @@ export class HmIntegrationManager {
     this.#logger = options.logger
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
+    this.#onStateChanged = options.onStateChanged ?? (() => undefined)
     this.#makeFacade =
       options.makeFacade ??
       ((config: HomematicConfig): HmFacadeLike =>
@@ -194,7 +201,7 @@ export class HmIntegrationManager {
   }
 
   /** Immutable snapshot of current manager state. */
-  getInfo(): HmBrokerInfo {
+  getInfo(): HmSessionInfo {
     return {
       id: this.#id,
       name: this.#name,
@@ -202,6 +209,7 @@ export class HmIntegrationManager {
       status: this.#status,
       info: {
         host: this.#connection.host,
+        tls: this.#connection.tls,
         deviceCount: this.#deviceCount,
       },
       lastCheckedAt: this.#lastCheckedAt,
@@ -220,7 +228,7 @@ export class HmIntegrationManager {
   async start(): Promise<void> {
     if (this.#facade !== null) {
       this.#logger.warn('HmIntegrationManager: start() called while already running — stop first', {
-        tags: { brokerId: this.#id },
+        tags: { integrationId: this.#id },
       })
       return
     }
@@ -240,14 +248,15 @@ export class HmIntegrationManager {
     // offer: `nodehomematic` publishes CONNECTED on its internal bus inside
     // `Central.start()`, BEFORE it mounts the bridge to the public
     // `connection` event, and exposes no getter for the current state. The
-    // live broker sat on `connecting` for 18 minutes with 47 devices
+    // live session sat on `connecting` for 18 minutes with 47 devices
     // enumerated (2026-09-05). A later `connection` event stays the authority
     // for every transition after this one.
     this.#status = 'connected'
     this.#error = null
     this.#onConnected(this.#id)
+    this.#onStateChanged(this.#id)
     this.#logger.info('HmIntegrationManager: facade started', {
-      tags: { brokerId: this.#id },
+      tags: { integrationId: this.#id },
       meta: { host: this.#connection.host, deviceCount: this.#deviceCount },
     })
   }
@@ -261,6 +270,7 @@ export class HmIntegrationManager {
     const facade = this.#facade
     this.#facade = null
     this.#status = 'disconnected'
+    this.#onStateChanged(this.#id)
 
     if (facade) {
       try {
@@ -268,7 +278,7 @@ export class HmIntegrationManager {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
         this.#logger.warn('HmIntegrationManager: facade stop failed', {
-          tags: { brokerId: this.#id },
+          tags: { integrationId: this.#id },
           meta: { error: msg },
         })
       }
@@ -304,17 +314,19 @@ export class HmIntegrationManager {
           this.#status = 'connected'
           this.#error = null
           this.#logger.info('HmIntegrationManager: interface connected', {
-            tags: { brokerId: this.#id },
+            tags: { integrationId: this.#id },
             meta: { interfaceId: arg.interfaceId },
           })
           this.#onConnected(this.#id)
+          this.#onStateChanged(this.#id)
         } else {
           this.#status = 'disconnected'
           this.#logger.info('HmIntegrationManager: interface disconnected', {
-            tags: { brokerId: this.#id },
+            tags: { integrationId: this.#id },
             meta: { interfaceId: arg.interfaceId, state: arg.state },
           })
           this.#onDisconnected(this.#id)
+          this.#onStateChanged(this.#id)
         }
       }),
 
@@ -324,9 +336,10 @@ export class HmIntegrationManager {
         this.#error = msg
         this.#lastCheckedAt = Date.now()
         this.#logger.warn('HmIntegrationManager: facade error', {
-          tags: { brokerId: this.#id },
+          tags: { integrationId: this.#id },
           meta: { error: msg },
         })
+        this.#onStateChanged(this.#id)
       }),
     )
   }

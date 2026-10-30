@@ -7,23 +7,23 @@ import {
   type DeviceContext,
 } from '@camstack/types'
 import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
-import { homematicFacades } from '../homematic-gateway.js'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
 
 /**
  * Persisted config for a Homematic Container (the parent of one physical CCU
- * device). `address` resolves the live `HmDevice` from the facade; `brokerId`
- * selects the CCU; `integrationId` is stamped onto every child. The Container
+ * device). `address` resolves the live `HmDevice` from the facade;
+ * `integrationId` selects the CCU session (the connection lives on the
+ * integration) and is stamped onto every child. The Container
  * derives its children LIVE from the facade descriptor (mirrors
  * `HaContainerDevice` reading live config) — the lib holds the full device
  * graph, so no `entities[]` summary is persisted.
  */
 export const hmContainerSchema = z.object({
   address: z.string().min(1).describe('CCU device address'),
-  brokerId: z.string().optional(),
-  integrationId: z.string().optional(),
+  integrationId: z.string().min(1).describe('Integration (CCU session) the device belongs to'),
   /** Adoption provenance markers (kept for cascade-remove + offline filter). */
   system: z.literal('homematic').optional(),
   hmAddress: z.string().optional(),
@@ -48,8 +48,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
   readonly features: readonly DeviceFeature[]
 
   private readonly address: string
-  private readonly brokerId: string | undefined
-  private readonly integrationId: string | undefined
+  private readonly integrationId: string
 
   /** Unsubscribe for the facade `valueChanged` reachability listener. */
   private valueChangedUnsub: (() => void) | null = null
@@ -58,8 +57,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     const cfg = hmContainerSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, hmContainerSchema, { type: DeviceType.Container })
     this.address = cfg.address
-    this.brokerId = typeof cfg.brokerId === 'string' ? cfg.brokerId : undefined
-    this.integrationId = typeof cfg.integrationId === 'string' ? cfg.integrationId : undefined
+    this.integrationId = cfg.integrationId
 
     const hmDevice = this.resolveHmDevice()
     this.features = HmContainerDevice.deriveFeatures(hmDevice)
@@ -88,7 +86,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
   // ── facade resolution ──────────────────────────────────────────────────
 
   private get facade(): Homematic | null {
-    return homematicFacades.get(this.brokerId ?? null)
+    return homematicFacades.get(this.integrationId)
   }
 
   private resolveHmDevice(): HmDevice | null {
@@ -136,7 +134,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
    * orphan-prunes linked children (`device-cap-proxy` safety gate): a restore
    * that races a CCU `ECONNREFUSED` used to delete every accessory and fence
    * their identities for 5 minutes. Leaving `lastProbedAt === 0` until the
-   * device is present keeps the gate closed; `reprobe()` on broker connect
+   * device is present keeps the gate closed; `reprobe()` on session connect
    * completes the probe and spawns/reconciles children for real.
    */
   override async onProbe(): Promise<void> {
@@ -149,8 +147,8 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
   /**
    * Derive the accessory children LIVE from the facade descriptor. Each child
    * is a {@link HmEntitySpec} (the shared per-entity decomposition) wrapped into
-   * an `AccessoryChildSpec`: the `stableIdSuffix` IS the spec `key`, the broker
-   * + integration FK + the CCU `address` are stamped onto config, and the
+   * an `AccessoryChildSpec`: the `stableIdSuffix` IS the spec `key`, the
+   * integration FK + the CCU `address` are stamped onto config, and the
    * concrete child class is resolved from the spec via `hmChildFactoryForSpec`.
    */
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
@@ -181,7 +179,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
   // ── spec assembly ───────────────────────────────────────────────────────
 
   /** Wrap one {@link HmEntitySpec} into an accessory-child spec, stamping the
-   *  CCU `address` + broker + integration FK onto config and the container link
+   *  CCU `address` + integration FK onto config and the container link
    *  + integration + type/role onto meta. */
   private childSpec(spec: HmEntitySpec, nameOverride?: string): AccessoryChildSpec {
     const role = spec.role !== null ? String(spec.role) : undefined
@@ -189,14 +187,13 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
       type: spec.deviceType,
       name: nameOverride ?? spec.name,
       linkDeviceId: this.id,
-      ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
+      integrationId: this.integrationId,
       ...(role !== undefined ? { role } : {}),
     }
     const config: Record<string, unknown> = {
       ...spec.config,
       address: this.address,
-      ...(this.brokerId !== undefined ? { brokerId: this.brokerId } : {}),
-      ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
+      integrationId: this.integrationId,
     }
     return {
       stableIdSuffix: spec.key,

@@ -1,8 +1,8 @@
 {
-  "globalSettings.s_hm-broker.title": "Homematic broker",
-  "globalSettings.s_hm-broker.brokerHelp.label": "Brokers are managed separately",
   "connection.s_connection.title": "CCU connection",
+  "connection.s_connection.__homematic-discovered.label": "CCU",
   "connection.s_connection.host.label": "Host / IP",
+  "connection.s_connection.host.description": "Filled when one CCU is found. Type the address if it is not.",
   "connection.s_interfaces.title": "Interfaces",
   "connection.s_interfaces.description": "CCU-Jack and CUxD are not supported.",
   "connection.s_interfaces.enableHmipRf.label": "Enable Homematic IP",

@@ -39,12 +39,12 @@
         "category": "providers",
         "name": "Homematic",
         "version": "0.1.0",
-        "description": "Connect to a Homematic CCU3 / RaspberryMatic hub and adopt its switches, covers, lights, locks, thermostats and sensors",
+        "description": "Adopt a Homematic CCU3 / RaspberryMatic (as a Gateway device) and its switches, covers, lights, locks, thermostats and sensors, from an integration over the local network",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#e2001a",
         "instanceMode": "multiple",
-        "brokerKind": "homematic",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
@@ -53,10 +53,10 @@
             "name": "device-provider"
           },
           {
-            "name": "broker"
+            "name": "device-adoption"
           },
           {
-            "name": "device-adoption"
+            "name": "connection-test"
           }
         ]
       }
