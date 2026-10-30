@@ -1,4 +1,5 @@
 import { useUiText } from '../contexts/ui-text'
+import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { useState, type JSX } from 'react'
 
 export interface ResponseLogProps {
@@ -24,12 +25,14 @@ export function ResponseLog({
 
   return (
     <div className={`rounded-xl border border-border bg-surface overflow-hidden ${className}`}>
-      <div
-        className="px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer select-none hover:bg-surface-hover/30"
+      <button // ui-check-ok: full-width disclosure header row; Button chrome breaks the section strip
+        type="button"
+        aria-expanded={expanded}
+        className="w-full px-3 py-2 border-b border-border flex items-center justify-between text-left select-none hover:bg-surface-hover/30"
         onClick={() => setExpanded((e) => !e)}
       >
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-foreground-subtle">{expanded ? '▼' : '▶'}</span>
+          <DisclosureChevron expanded={expanded} />
           <h3 className="text-xs font-medium text-foreground">{label}</h3>
         </div>
         <span className="text-[10px] text-foreground-subtle font-mono">
@@ -39,7 +42,7 @@ export function ResponseLog({
               })
             : t('uiLibrary.responseLog.bytes', '{{count}} bytes', { count: json.length })}
         </span>
-      </div>
+      </button>
       {expanded && (
         <div className="max-h-80 overflow-y-auto overflow-x-auto">
           <pre className="p-3 text-[10px] leading-4 font-mono text-foreground-subtle whitespace-pre">

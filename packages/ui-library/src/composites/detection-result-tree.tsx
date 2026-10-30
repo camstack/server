@@ -11,6 +11,7 @@
  *   - `debug.alternateLabels` (top-N per source) when present
  */
 import { useUiText } from '../contexts/ui-text'
+import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { useState, type JSX } from 'react'
 import type { ObjectDetection, ScoredLabel } from '@camstack/types'
 import { useClassPainter } from './display-palette-context'
@@ -271,10 +272,12 @@ function AlternateLabelsSection({
   return (
     <div className="mt-1">
       <button
+        type="button"
+        aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
         className="text-[9px] text-foreground-subtle hover:text-foreground transition-colors flex items-center gap-1"
       >
-        <span className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
+        <DisclosureChevron expanded={expanded} />
         {t(
           'uiLibrary.detectionResultTree.alternates',
           { one: 'Alternates ({{count}} source)', other: 'Alternates ({{count}} sources)' },

@@ -544,6 +544,12 @@
       "notes": ""
     },
     {
+      "need": "An expand / collapse marker on a header (the header itself is a `<button type=\"button\" aria-expanded>`)",
+      "admin": "`DisclosureChevron`",
+      "viewer": "a `▸` / `▾` text glyph (`check-no-glyph-chevrons`)",
+      "notes": ""
+    },
+    {
       "need": "A key/value list",
       "admin": "`KeyValueList`",
       "viewer": "`Row`",
@@ -4537,6 +4543,27 @@
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/dialog.tsx",
       "summary": ""
+    },
+    {
+      "name": "DisclosureChevron",
+      "kind": "component",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/disclosure-chevron.tsx",
+      "summary": "DisclosureChevron — the expand / collapse marker of a disclosure header.",
+      "props": [
+        {
+          "name": "expanded",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "DiscoveryPanel",

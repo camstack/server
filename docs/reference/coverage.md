@@ -14,14 +14,14 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**224 units · 7523 source files · 211 units claimed by at least one document (7483 files).**
+**224 units · 7525 source files · 211 units claimed by at least one document (7485 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1029 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-0880-core-block-passwords-and-waste-source-credentials-are-keychain-backed-and-a-read-only-scan-finds-what-no-code-writes.md`, +1 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/components` | 574 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +75 more, 4 ADRs | 2026-10-27 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 472 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +166 more, 27 ADRs | 2026-10-14 |
-| `scripts` | 452 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +134 more, 14 ADRs | 2026-10-27 |
+| `scripts` | 453 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +134 more, 14 ADRs | 2026-10-27 |
 | `packages/system/src/builtins` | 409 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +169 more, 21 ADRs | 2026-10-26 |
 | `packages/ui-library/src/composites` | 352 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +53 more, 3 ADRs | 2026-10-27 |
 | `packages/types/src/capabilities` | 220 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +198 more, 41 ADRs | 2026-10-26 |
@@ -69,9 +69,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/handlers` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +11 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 25 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
+| `packages/ui-library/src/primitives` | 25 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +3 more | 2026-10-26 |
 | `packages/addon-notifiers` | 24 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md`, 1 ADR | 2026-10-07 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |
-| `packages/ui-library/src/primitives` | 24 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +3 more | 2026-10-26 |
 | `packages/addon-provider-velux` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md` | 2026-10-26 |
 | `packages/addon-provider-bosch/src/homecom` | 22 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
 | `packages/addon-export-alexa/src/endpoints` | 21 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +11 more, 2 ADRs | 2026-08-26 |

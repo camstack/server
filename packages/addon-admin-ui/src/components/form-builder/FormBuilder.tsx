@@ -1,5 +1,6 @@
 import {
   ConfigFormField as FormField,
+  DisclosureChevron,
   isFieldVisible,
   OptionSelect,
   type OptionSelectOption,
@@ -327,31 +328,44 @@ function SectionCard({
       style={{ containerType: 'inline-size' }}
       data-settings-section={section.id}
     >
-      {!hideHeader && (
-        <div
-          className={[
-            'flex items-center justify-between mb-2',
-            isAccordion ? 'cursor-pointer' : '',
-          ].join(' ')}
-          onClick={isAccordion ? () => setCollapsed((c) => !c) : undefined}
-        >
-          <div>
-            {section.title && (
-              <h3 className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
-                {resolveLabel(section.title, translationFn)}
-              </h3>
-            )}
-            {section.description && (
-              <p className="text-[10px] text-foreground-subtle mt-0.5">
-                {resolveLabel(section.description, translationFn)}
-              </p>
-            )}
+      {!hideHeader &&
+        (isAccordion ? (
+          <button // ui-check-ok: full-width disclosure header row; Button chrome breaks the section strip
+            type="button"
+            aria-expanded={!collapsed}
+            onClick={() => setCollapsed((c) => !c)}
+            className="flex w-full items-center justify-between mb-2 text-left"
+          >
+            <div>
+              {section.title && (
+                <h3 className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
+                  {resolveLabel(section.title, translationFn)}
+                </h3>
+              )}
+              {section.description && (
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  {resolveLabel(section.description, translationFn)}
+                </p>
+              )}
+            </div>
+            <DisclosureChevron expanded={!collapsed} className="ml-2" />
+          </button>
+        ) : (
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              {section.title && (
+                <h3 className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
+                  {resolveLabel(section.title, translationFn)}
+                </h3>
+              )}
+              {section.description && (
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  {resolveLabel(section.description, translationFn)}
+                </p>
+              )}
+            </div>
           </div>
-          {isAccordion && (
-            <span className="text-foreground-subtle text-xs ml-2">{collapsed ? '▸' : '▾'}</span>
-          )}
-        </div>
-      )}
+        ))}
 
       {/* A header-less accordion has nothing to click open: never seal it. */}
       {!(collapsed && !hideHeader) &&

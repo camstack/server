@@ -56,6 +56,7 @@ import { ConfigIconFieldControl } from './config-icon-field'
 import { sanitizeInfoHtml } from './sanitize-info-html.js'
 import { PasswordInput } from '../primitives/password-input'
 import { Select } from '../primitives/select'
+import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { isKeychainFieldValue, SecretFieldControl } from './config-secret-field'
 import { DeviceSelectField, DeviceMultiSelectField } from './device-select-field'
 import {
@@ -1292,22 +1293,25 @@ function GroupField({
         className="@container rounded-lg border border-border bg-surface/50 overflow-hidden"
         style={{ containerType: 'inline-size' }}
       >
-        <div
-          className={[
-            'px-3 py-2 flex items-center justify-between min-w-0',
-            isAccordion ? 'cursor-pointer hover:bg-surface' : '',
-          ].join(' ')}
-          onClick={isAccordion ? () => setCollapsed((c) => !c) : undefined}
-        >
-          <span className="text-xs font-semibold text-foreground min-w-0 break-words">
-            {resolveLabel(field.label, translationFn)}
-          </span>
-          {isAccordion && (
-            <span className="text-foreground-subtle text-xs shrink-0 ml-2">
-              {collapsed ? '▸' : '▾'}
+        {isAccordion ? (
+          <button // ui-check-ok: full-width disclosure header row; Button chrome breaks the section strip
+            type="button"
+            aria-expanded={!collapsed}
+            onClick={() => setCollapsed((c) => !c)}
+            className="px-3 py-2 flex w-full items-center justify-between min-w-0 text-left hover:bg-surface"
+          >
+            <span className="text-xs font-semibold text-foreground min-w-0 break-words">
+              {resolveLabel(field.label, translationFn)}
             </span>
-          )}
-        </div>
+            <DisclosureChevron expanded={!collapsed} className="ml-2" />
+          </button>
+        ) : (
+          <div className="px-3 py-2 flex items-center justify-between min-w-0">
+            <span className="text-xs font-semibold text-foreground min-w-0 break-words">
+              {resolveLabel(field.label, translationFn)}
+            </span>
+          </div>
+        )}
         {!collapsed && (
           <div className="px-3 pb-3 grid grid-cols-1 @[480px]:grid-cols-2 gap-x-4 gap-y-3">
             {field.fields.map((subField) => (

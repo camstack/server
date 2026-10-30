@@ -33,6 +33,7 @@ import {
 import {
   Badge,
   Button,
+  DisclosureChevron,
   Input,
   LogStream,
   NodePicker,
@@ -510,8 +511,10 @@ export function BlockEditor({
           onClick={() => setShowLogs(!showLogs)}
           title={t('build.blockEditor.showThisScriptSProcess', "Show this script's process logs")}
           data-testid="script-logs-toggle"
+          aria-expanded={showLogs}
         >
-          <ScrollText className="h-4 w-4" /> {t('common.logs')} {showLogs ? '▾' : '▸'}
+          <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
+          <DisclosureChevron expanded={showLogs} />
         </Button>
         <Button variant="ghost" onClick={onCancel} disabled={saving}>
           {t('common.close', 'Close')}

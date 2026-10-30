@@ -45,6 +45,7 @@ import type { PickerFleetView } from './device-fleet-view'
 import { withResolvedParentDetail } from './device-parent.js'
 import { useDeviceLabelById } from '../device-name'
 import { useDeviceProviderLabels } from './device-provider-label'
+import { DisclosureChevron } from '../../primitives/disclosure-chevron'
 import { usePickerSiteZones, useStoredGroupBy } from './device-picker-grouping'
 import {
   applyPickerFilters,
@@ -759,7 +760,7 @@ function PickerRowView<Id extends PickerId>({
           onClick={() => onToggleGroup(group, expanded)}
           className="flex min-w-0 flex-1 items-center gap-1 text-left text-[10px] font-semibold uppercase tracking-wide text-foreground-subtle"
         >
-          <span>{expanded ? '▾' : '▸'}</span>
+          <DisclosureChevron expanded={expanded} />
           <span className="truncate">{groupTitle(group)}</span>
           {!single && (
             <span className="font-normal normal-case">

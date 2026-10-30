@@ -1,6 +1,7 @@
 import { useState, type JSX } from 'react'
 import type { ConfigUISchema, ConfigSection, FieldProbeResult } from '@camstack/types'
 import { ConfigFormField } from './config-form-field'
+import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import type { ProbeState } from './config-form-field'
 
 // ---------------------------------------------------------------------------
@@ -97,28 +98,39 @@ function SectionCard({
       className="@container rounded-lg border border-border bg-surface p-3"
       style={{ containerType: 'inline-size' }}
     >
-      <div
-        className={[
-          'flex items-center justify-between mb-2',
-          isAccordion ? 'cursor-pointer' : '',
-        ].join(' ')}
-        onClick={isAccordion ? () => setCollapsed((c) => !c) : undefined}
-      >
-        <div>
-          <h3 className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
-            {resolveLabel(section.title, translationFn)}
-          </h3>
-          {section.description && (
-            <p className="text-[10px] text-foreground-subtle mt-0.5">
-              {resolveLabel(section.description, translationFn)}
-            </p>
-          )}
+      {isAccordion ? (
+        <button // ui-check-ok: full-width disclosure header row; Button chrome breaks the section strip
+          type="button"
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((c) => !c)}
+          className="flex w-full items-center justify-between mb-2 text-left"
+        >
+          <div>
+            <h3 className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
+              {resolveLabel(section.title, translationFn)}
+            </h3>
+            {section.description && (
+              <p className="text-[10px] text-foreground-subtle mt-0.5">
+                {resolveLabel(section.description, translationFn)}
+              </p>
+            )}
+          </div>
+          <DisclosureChevron expanded={!collapsed} className="ml-2" />
+        </button>
+      ) : (
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h3 className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wider">
+              {resolveLabel(section.title, translationFn)}
+            </h3>
+            {section.description && (
+              <p className="text-[10px] text-foreground-subtle mt-0.5">
+                {resolveLabel(section.description, translationFn)}
+              </p>
+            )}
+          </div>
         </div>
-        {isAccordion && (
-          <span className="text-foreground-subtle text-xs ml-2">{collapsed ? '▸' : '▾'}</span>
-        )}
-      </div>
-
+      )}
       {!collapsed && (
         <div className={`grid ${gridClass} gap-x-3 gap-y-2.5`}>
           {section.fields.map((field) => (

@@ -1,5 +1,6 @@
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
+import { Pause, Play } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
 import { cn } from '../../lib/cn.js'
@@ -126,7 +127,7 @@ export function MediaPlayerPanel({
             busy && 'opacity-40 cursor-not-allowed',
           )}
         >
-          {action === 'play' ? '▶' : '⏸'}
+          {action === 'play' ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
         </button>
       </div>
 

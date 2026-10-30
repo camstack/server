@@ -57,6 +57,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A loading placeholder | `Skeleton` | `SkeletonBox` | |
 | A tooltip | `Tooltip` + `TooltipTrigger` + `TooltipContent` | `Tooltip` | |
 | A card that collapses | `CollapsibleCard` | — | |
+| An expand / collapse marker on a header (the header itself is a `<button type="button" aria-expanded>`) | `DisclosureChevron` | a `▸` / `▾` text glyph (`check-no-glyph-chevrons`) | |
 | A key/value list | `KeyValueList` | `Row` | |
 | A single number with a label | `StatCard` (see KPI strip row above) | — | |
 | Pick a cluster node | `NodePicker` (standard), `NodeSelectField` in a form | — | Offline nodes disabled; hidden on a single-node cluster |

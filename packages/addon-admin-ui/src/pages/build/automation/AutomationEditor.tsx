@@ -28,7 +28,14 @@ import {
   generateAutomationBlock,
   validateRecipeBounds,
 } from '@camstack/types'
-import { Badge, Button, Input, LogStream, useCoreBlocksGetTraces } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  DisclosureChevron,
+  Input,
+  LogStream,
+  useCoreBlocksGetTraces,
+} from '@camstack/ui-library'
 import { Loader2, ScrollText } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
@@ -225,8 +232,10 @@ export function AutomationEditor({
                   )
             }
             data-testid="automation-logs-toggle"
+            aria-expanded={showLogs}
           >
-            <ScrollText className="h-4 w-4" /> {t('common.logs')} {showLogs ? '▾' : '▸'}
+            <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
+            <DisclosureChevron expanded={showLogs} />
           </Button>
           <Button variant="ghost" onClick={onCancel} disabled={saving}>
             {t('common.close', 'Close')}
