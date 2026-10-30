@@ -706,7 +706,7 @@ describe('recipe blocks', () => {
         code: '',
         source: {
           kind: 'recipe',
-          recipe: { triggers: [{ kind: 'manual' }], actions: [{ kind: 'wait', seconds: 1 }] },
+          recipe: { when: { kind: 'manual' }, actions: [{ kind: 'wait', seconds: 1 }] },
         },
       }),
     ])
