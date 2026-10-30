@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- PetKit shows its real logo
+
 ## [0.2.155] - 2026-10-29
 
 ### Changed

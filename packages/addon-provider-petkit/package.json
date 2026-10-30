@@ -40,7 +40,7 @@
         "version": "0.1.0",
         "description": "Adopt PetKit smart feeders via the PetKit cloud account",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.svg",
+        "icon": "assets/icon.png",
         "color": "#00b4a0",
         "mode": "account",
         "instanceMode": "multiple",
