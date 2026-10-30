@@ -53,7 +53,7 @@ commits. A generated page may not.
 | Admin UI and the shared component library | 1338 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-0946-one-device-name.md`, +154 more, 15 ADRs | 2026-10-27 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 158 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +15 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 666 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +160 more, 14 ADRs | 2026-10-27 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 666 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `architecture/benchmark.md`, +161 more, 14 ADRs | 2026-10-27 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
