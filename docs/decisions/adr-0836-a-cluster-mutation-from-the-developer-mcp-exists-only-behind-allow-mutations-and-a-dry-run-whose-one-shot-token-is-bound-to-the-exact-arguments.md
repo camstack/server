@@ -5,7 +5,7 @@ status: accepted
 date: 2026-10-13
 supersedes:
 applies-to:
-  - packages/mcp-dev/src/mutations/gate.ts
+  - packages/develop/src/mcp/mutation-gate.ts
   - packages/mcp-dev/src/ops/hub.ts
   - packages/mcp-dev/src/models/**
   - packages/mcp-dev/src/release/commands.ts
@@ -85,7 +85,7 @@ subcommands would rot the first time a new one appeared.
 
 ## Enforcement
 
-`packages/mcp-dev/src/__tests__/mutation-gate.spec.ts` (flag off, token absent,
+`packages/develop/src/mcp/__tests__/mutation-gate.spec.ts` (flag off, token absent,
 expired, mismatched, replayed, wrong tool, failed execution, audit),
 `models.spec.ts` (dry run never calls the mutator, preflight refusal gives no
 token, allow-list, admin tier), `models-mcp.spec.ts` (tools absent without the

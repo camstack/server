@@ -1,6 +1,6 @@
 /** Fakes for the gated model tools: a hub that records reads, a mutator that records writes. */
 import type { OpsHub, OpsMutator } from '../ops/hub.js'
-import type { AuditRecord } from '../mutations/gate.js'
+import type { AuditRecord } from '@camstack/develop'
 
 export interface FakeHub extends OpsHub {
   readonly queries: { path: string; input: unknown }[]

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Deprecated: use `camstack mcp --toolsets develop`; the package stays as an alias for one release
+
 ## [0.1.27] - 2026-10-27
 
 ### Added

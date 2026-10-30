@@ -11,7 +11,7 @@ applies-to:
   - packages/develop/src/hub/hub-tls.ts
   - packages/develop/src/hub/hub-client.ts
   - packages/mcp-dev/src/ops/hub.ts
-  - packages/mcp-dev/src/ops/query-gate.ts
+  - packages/develop/src/mcp/query-gate.ts
   - scripts/hub/hub.mjs
 ---
 

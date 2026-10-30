@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New `camstack mcp` command: the public MCP server (stdio) with setup, ops, configure and develop toolsets, using your `camstack login` session
+
 ## [1.2.209] - 2026-10-27
 
 ### Added

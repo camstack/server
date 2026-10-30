@@ -13,9 +13,9 @@
  */
 import { z } from 'zod'
 import type { OpsHub, OpsMutator } from '../ops/hub.js'
-import { toToolOutput } from '../ops/redact.js'
+import { toToolOutput } from '@camstack/develop'
 import { parseWire } from '../ops/wire.js'
-import { runGated, type GatedResult, type MutationGate } from '../mutations/gate.js'
+import { runGated, type GatedResult, type MutationGate } from '@camstack/develop'
 
 export interface StudioImportArgs {
   modelId: string

@@ -1,7 +1,7 @@
 /** @camstack/mcp-dev — private operator MCP library surface (also used by docs generators). */
 
 export { createServer } from './server.js'
-export { scrubSecrets, scrubValue } from './scrub.js'
+export { scrubSecrets, scrubValue } from '@camstack/develop'
 export { loadDevelopOverlay } from './config.js'
 export {
   parseToolsets,

@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { parseApiIndex } from '../ops/api-index.js'
+import { parseApiIndex } from '@camstack/develop'
 import { opsStatus, topology } from '../ops/curated.js'
 import { connectOpsHub } from '../ops/hub.js'
 

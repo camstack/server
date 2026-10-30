@@ -1,5 +1,5 @@
 /** Curated read tools: each one is a fixed, named set of gated queries. */
-import { toToolOutput } from './redact.js'
+import { toToolOutput } from '@camstack/develop'
 import type { OpsHub } from './hub.js'
 import { RecentTracksPageSchema, TrackSchema, parseWire } from './wire.js'
 

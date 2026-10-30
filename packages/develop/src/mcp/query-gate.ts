@@ -2,7 +2,7 @@
  * The gate every ops call passes before a byte leaves the machine:
  * query-only, tier-checked, and never a credential-bearing method.
  */
-import type { CredentialTier } from '@camstack/develop'
+import type { CredentialTier } from '../hub/credentials.js'
 import type { ApiIndex, ApiMethod } from './api-index.js'
 
 export type GateDecision =

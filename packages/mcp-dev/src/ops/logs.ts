@@ -9,7 +9,7 @@
  */
 import { z } from 'zod'
 import type { OpsHub } from './hub.js'
-import { toToolOutput } from './redact.js'
+import { toToolOutput } from '@camstack/develop'
 import { LogDestinationProviderSchema, parseWire } from './wire.js'
 
 export const RING_SOURCE = 'ring'

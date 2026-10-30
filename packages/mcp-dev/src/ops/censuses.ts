@@ -8,7 +8,7 @@
  */
 import { z } from 'zod'
 import type { OpsHub } from './hub.js'
-import { toToolOutput } from './redact.js'
+import { toToolOutput } from '@camstack/develop'
 import { CameraStatusSchema, MediaInfoSchema, TrackSchema, parseWire } from './wire.js'
 
 // ── model pin census (D661) ─────────────────────────────────────────────────

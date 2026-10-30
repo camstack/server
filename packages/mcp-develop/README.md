@@ -1,5 +1,9 @@
 # @camstack/mcp-develop
 
+> **Deprecated.** This package is an alias for one more release. The same tools
+> now ship inside the CLI: `npm i -g camstack`, then
+> `claude mcp add camstack -- camstack mcp --toolsets develop`.
+
 MCP server (stdio) for CamStack plugin authors. Run it with
 `npx @camstack/mcp-develop`; it wraps `@camstack/develop`.
 

@@ -17,7 +17,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { z } from 'zod'
 import { ConfinementError, confine } from '../fs-confine.js'
-import { toToolOutput } from '../ops/redact.js'
+import { toToolOutput } from '@camstack/develop'
 
 export const EVAL_TIMEOUT_MS: number = 45 * 60_000
 const SETUP_TIMEOUT_MS = 20 * 60_000

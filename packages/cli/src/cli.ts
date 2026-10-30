@@ -27,6 +27,7 @@ import { runUpdate } from './commands/update.js'
 import { runDev } from './commands/dev.js'
 import { runWatch } from './commands/watch.js'
 import { developHelp, runDevelop } from './commands/develop.js'
+import { mcpHelp, runMcp } from './commands/mcp.js'
 import { cliHubTransport } from './http/hub-transport.js'
 import { maybeNotifyUpdate } from './update-notifier.js'
 
@@ -343,6 +344,12 @@ function buildCommands(): readonly CommandSpec[] {
         'Authoring tools — catalogue, scaffold, validate, find-example, skills (same ops as MCP)',
       run: runDevelop,
       help: developHelp,
+    },
+    {
+      name: 'mcp',
+      summary: 'MCP server (stdio) — setup, ops, configure, develop toolsets',
+      run: (args) => runMcp(args, pkgVersion),
+      help: mcpHelp,
     },
     {
       name: 'update',

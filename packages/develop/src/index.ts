@@ -135,3 +135,47 @@ export type {
   HubTransportRequest,
   HubTransportResponse,
 } from './hub/hub-client.js'
+
+// MCP shared helpers: the query gate, the mutation gate (D836), the secret
+// scrubbers and the output redaction, shared by `camstack mcp` and the private
+// operator MCP.
+export { scrubSecrets, scrubValue } from './mcp/scrub.js'
+export { text, textError } from './mcp/text.js'
+export { REDACTED, redactDeclaredSecrets, toToolOutput, truncateOutput } from './mcp/redact.js'
+export {
+  CORE_QUERY_METHODS,
+  loadApiIndex,
+  parseApiIndex,
+  type ApiIndex,
+  type ApiMethod,
+  type MethodAuth,
+  type MethodKind,
+} from './mcp/api-index.js'
+export {
+  connectHub,
+  tryConnectHub,
+  type ConnectOutcome,
+  type HubConnectOptions,
+  type HubConnection,
+  type NoSessionOutcome,
+} from './mcp/hub-connection.js'
+export { gateQuery, isSecretBearing, type GateDecision } from './mcp/query-gate.js'
+export {
+  CONFIRM_TTL_MS,
+  MAX_OUTSTANDING_TOKENS,
+  MUTATIONS_DISABLED_REASON,
+  MutationGate,
+  canonicalJson,
+  digestArgs,
+  runGated,
+  stderrAudit,
+  type AuditPhase,
+  type AuditRecord,
+  type AuditSink,
+  type ConfirmDecision,
+  type DryRunOutcome,
+  type GatedResult,
+  type GatedToolSpec,
+  type IssuedToken,
+  type MutationGateOptions,
+} from './mcp/mutation-gate.js'

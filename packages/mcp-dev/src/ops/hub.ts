@@ -12,25 +12,19 @@
  * pinned or the system store — never switched off.
  */
 import {
-  adminCredentialHint,
   adminRejectedHint,
-  createHubClient,
+  connectHub,
   HubHttpError,
-  sessionLoginCommand,
   HubRpcError,
-  loadSession,
-  refreshOnUnauthorized,
-  resolveFreshCredentials,
-  resolveHubTls,
-  resolveHubUrl,
   type CredentialSource,
   type CredentialTier,
   type HubClient,
-  type HubTransport,
+  type HubConnectOptions,
+  type HubConnection,
 } from '@camstack/develop'
-import type { ApiIndex } from './api-index.js'
+import type { ApiIndex } from '@camstack/develop'
 import { createHubDownloader } from './download.js'
-import { gateQuery } from './query-gate.js'
+import { gateQuery } from '@camstack/develop'
 
 /** The gate said no. The message is safe to show and says how to proceed. */
 export class QueryRefusedError extends Error {
@@ -198,98 +192,12 @@ export function isRetrainExportPath(urlPath: string): boolean {
   return RETRAIN_EXPORT_PATH.test(urlPath)
 }
 
-export interface ConnectOptions {
-  readonly workspaceRoot: string
+export interface ConnectOptions extends HubConnectOptions {
   readonly index: ApiIndex
-  /** `--token-file` of the MCP entry. */
-  readonly tokenFile?: string
-  /** `--server` of the MCP entry. */
-  readonly server?: string
-  readonly env?: Readonly<Record<string, string | undefined>>
-  /** The session cache directory (tests); defaults to `~/.camstack`. */
-  readonly sessionDir?: string
-  readonly transport?: HubTransport
-  /** The exact `camstack login` command to show (tests); default: derived from PATH. */
-  readonly loginCommand?: string
 }
 
-/** The environment keys the ops toolset honours — addresses and PATHS, never a secret. */
-const HONOURED_ENV = ['CAMSTACK_HUB_URL', 'CAMSTACK_SERVER', 'CAMSTACK_HUB_CA_FILE'] as const
-
-function honouredEnv(
-  env: Readonly<Record<string, string | undefined>>,
-): Record<string, string | undefined> {
-  const out: Record<string, string | undefined> = {}
-  for (const key of HONOURED_ENV) out[key] = env[key]
-  return out
-}
-
-interface Connection {
-  readonly server: string
-  readonly token: string
-  readonly tier: CredentialTier
-  readonly source: CredentialSource
-  readonly tls: ReturnType<typeof resolveHubTls>
-  readonly client: HubClient
-  readonly adminHint: string | null
-  readonly loginCommand: string
-}
-
-async function connect(options: ConnectOptions): Promise<Connection> {
-  const env = honouredEnv(options.env ?? process.env)
-  const dir = options.sessionDir
-  const session = loadSession(undefined, dir)
-  const hub = resolveHubUrl({
-    ...(options.server ? { explicit: options.server } : {}),
-    env,
-    workspaceRoot: options.workspaceRoot,
-    session,
-  })
-  if (!hub) {
-    throw new Error(
-      'no hub address: pass --server, set CAMSTACK_HUB_URL, write <checkout>/scratchpad/.hub-url, or run `camstack login`',
-    )
-  }
-  const loginCommand = options.loginCommand ?? sessionLoginCommand()
-  const tls = resolveHubTls(hub.url, env, dir)
-  const credentials = await resolveFreshCredentials({
-    server: hub.url,
-    ...(options.tokenFile ? { tokenFile: options.tokenFile } : {}),
-    // No $CAMSTACK_TOKEN: a secret does not travel through the environment.
-    env: { CAMSTACK_SERVER: hub.url },
-    loadSession: (server) => loadSession(server, dir),
-    ...(dir ? { dir } : {}),
-    tls,
-    ...(options.transport ? { transport: options.transport } : {}),
-  })
-  const client = createHubClient({
-    baseUrl: hub.url,
-    token: credentials.token,
-    tls,
-    ...(options.transport ? { transport: options.transport } : {}),
-    // A 401 on a login session renews it once and retries once.
-    ...(credentials.source === 'session'
-      ? {
-          onUnauthorized: refreshOnUnauthorized({
-            server: hub.url,
-            ...(dir ? { dir } : {}),
-            tls,
-            ...(options.transport ? { transport: options.transport } : {}),
-          }),
-        }
-      : {}),
-  })
-  const adminHint = credentials.tier === 'admin' ? null : adminCredentialHint(loginCommand)
-  return {
-    server: hub.url,
-    token: credentials.token,
-    tier: credentials.tier,
-    source: credentials.source,
-    tls,
-    client,
-    adminHint,
-    loginCommand,
-  }
+async function connect(options: ConnectOptions): Promise<HubConnection> {
+  return connectHub(options)
 }
 
 export async function connectOpsHub(options: ConnectOptions): Promise<OpsHub> {

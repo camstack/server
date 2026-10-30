@@ -2,7 +2,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { ZodRawShapeCompat } from '@modelcontextprotocol/sdk/server/zod-compat.js'
 import { z } from 'zod'
-import { text, textError } from '../text.js'
+import { text, textError } from '@camstack/develop'
 import { auditTracksTool } from './track-audit.js'
 import { keyframePresence, modelPinCensus, retrainCensus } from './censuses.js'
 import { birthDecisions, eventDensity } from './density.js'
@@ -11,7 +11,7 @@ import type { OpsHub } from './hub.js'
 import { QueryRefusedError } from './hub.js'
 import { hubLogs, listLogProviders } from './logs.js'
 import { lokiQuery } from './loki.js'
-import { toToolOutput } from './redact.js'
+import { toToolOutput } from '@camstack/develop'
 
 export type RegisterTool = <Args extends ZodRawShapeCompat>(
   name: string,

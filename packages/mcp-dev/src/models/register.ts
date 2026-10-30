@@ -1,10 +1,10 @@
 /** The `models` toolset: floors, eval, export (all non-mutating) and the two gated mutations. */
 import { z } from 'zod'
-import { textError, text } from '../text.js'
+import { textError, text } from '@camstack/develop'
 import type { HubProvider, HubReady, RegisterTool, ToolResult } from '../ops/register.js'
 import type { OpsMutator } from '../ops/hub.js'
 import { QueryRefusedError } from '../ops/hub.js'
-import type { GatedResult, MutationGate } from '../mutations/gate.js'
+import type { GatedResult, MutationGate } from '@camstack/develop'
 import { BenchmarkPlanSchema, benchmarkRun, benchmarkStatus } from './benchmark.js'
 import { evalModel, EvalArgsSchema, type ProcessRunner } from './eval.js'
 import { fetchRetrainExport, FetchExportArgsSchema } from './export.js'

@@ -15,7 +15,7 @@
  * refused ones included — is written to the audit sink.
  */
 import { createHash, randomBytes } from 'node:crypto'
-import { scrubValue } from '../scrub.js'
+import { scrubValue } from './scrub.js'
 
 /** How long a dry run stays confirmable. Short on purpose: the world moves. */
 export const CONFIRM_TTL_MS: number = 5 * 60_000

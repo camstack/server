@@ -9,8 +9,8 @@ import { evalModel, type ProcessRunner } from '../models/eval.js'
 import { fetchRetrainExport } from '../models/export.js'
 import { modelFloors } from '../models/floors.js'
 import { modelStudioImport } from '../models/studio-import.js'
-import { MutationGate } from '../mutations/gate.js'
-import { parseApiIndex } from '../ops/api-index.js'
+import { MutationGate } from '@camstack/develop'
+import { parseApiIndex } from '@camstack/develop'
 import {
   createGatedHub,
   createGatedMutator,

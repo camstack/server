@@ -7,9 +7,9 @@ import {
   canonicalJson,
   runGated,
   type GatedToolSpec,
-} from '../mutations/gate.js'
+} from '../mutation-gate.js'
 import { text } from '../text.js'
-import { auditLog } from './model-fakes.js'
+import { auditLog } from './fakes.js'
 
 function harness(allowMutations = true) {
   const audit = auditLog()

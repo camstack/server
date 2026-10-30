@@ -1,7 +1,7 @@
 {
   "name": "@camstack/mcp-develop",
   "version": "0.1.27",
-  "description": "MCP server for CamStack plugin authors — catalogue, scaffold, validate, find_example, and track review (wraps @camstack/develop).",
+  "description": "Deprecated alias of `camstack mcp --toolsets develop`. MCP server for CamStack plugin authors: catalogue, scaffold, validate, find_example, track review (wraps @camstack/develop).",
   "keywords": [
     "camstack",
     "mcp",
@@ -22,7 +22,16 @@
   "bin": {
     "camstack-mcp-develop": "dist/server.js"
   },
-  "main": "./dist/server.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
     "README.md",
