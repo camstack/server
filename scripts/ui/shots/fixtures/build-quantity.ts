@@ -6,16 +6,16 @@
  */
 import { generateAutomationBlock } from '../../../../packages/types/src/automation/codegen.ts'
 import { defineFixtures } from './_define'
-import build from './build'
 import { NOW } from './_time'
+import build from './build'
 
 const RECIPE = {
-  triggers: [{ kind: 'interval' as const, minutes: 480 }],
-  conditions: {
+  when: {
     kind: 'all' as const,
     children: [
+      { kind: 'interval' as const, minutes: 480 },
       {
-        kind: 'condition' as const,
+        kind: 'device-is' as const,
         deviceId: 201,
         cap: 'pet-feeder',
         fieldPath: 'bowlFood',

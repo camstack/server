@@ -42,39 +42,52 @@ const GARAGE = device(102, 'Garage', 'cam.garage', 'camera', true, 'Garage')
 const FEEDER = device(201, 'FRESHELEMENT 3', 'feeder.dog', 'pet-feeder', false, 'Kitchen', 'int-ha')
 
 const RECIPE = {
-  triggers: [
-    {
-      kind: 'detection' as const,
-      classes: ['animal'],
-      deviceIds: [101],
-      zones: ['zone-bowl'],
-    },
-    { kind: 'interval' as const, minutes: 480 },
-    {
-      kind: 'device-state' as const,
-      deviceId: 201,
-      cap: 'pet-feeder',
-      fieldPath: 'hopperLevel',
-    },
-    { kind: 'device-event' as const, category: 'system.boot', deviceId: 101 },
-    {
-      kind: 'stationary' as const,
-      deviceIds: [101],
-      phase: 'appeared' as const,
-    },
-  ],
-  conditions: {
+  when: {
     kind: 'all' as const,
     children: [
       {
-        kind: 'condition' as const,
-        deviceId: 201,
-        cap: 'pet-feeder',
-        fieldPath: 'hopperLevel',
-        operator: 'gt' as const,
-        value: 10,
+        kind: 'any' as const,
+        children: [
+          {
+            kind: 'detection' as const,
+            subjects: [
+              { macro: 'animal' as const, label: { kind: 'sub-class' as const, className: 'dog' } },
+            ],
+            deviceIds: [101],
+            zones: ['zone-bowl'],
+          },
+          { kind: 'interval' as const, minutes: 480 },
+          {
+            kind: 'device-becomes' as const,
+            deviceId: 201,
+            cap: 'pet-feeder',
+            fieldPath: 'hopperLevel',
+          },
+          { kind: 'device-event' as const, category: 'system.boot', deviceId: 101 },
+          {
+            kind: 'stationary' as const,
+            deviceIds: [101],
+            phase: 'appeared' as const,
+          },
+        ],
       },
-      { kind: 'stationary-present' as const, deviceId: 101 },
+      {
+        kind: 'all' as const,
+        children: [
+          {
+            kind: 'device-is' as const,
+            deviceId: 201,
+            cap: 'pet-feeder',
+            fieldPath: 'hopperLevel',
+            operator: 'gt' as const,
+            value: 10,
+          },
+          {
+            kind: 'not' as const,
+            child: { kind: 'stationary-present' as const, deviceId: 101 },
+          },
+        ],
+      },
     ],
   },
   actions: [

@@ -18,21 +18,17 @@
  * different device.
  */
 
-import type {
-  AutomationCondition,
-  AutomationConditionExpression,
-  ExpressionBindingSource,
-} from '@camstack/types'
+import type { ExpressionBindingSource, ExpressionLeaf } from '@camstack/types'
 import { Button, Input, Select } from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { FieldPicker, type FieldSelection, PickerLabel } from './FieldPicker'
-import { useTranslation } from 'react-i18next'
 
 export interface ExpressionLeafRowProps {
-  readonly leaf: AutomationConditionExpression
+  readonly leaf: ExpressionLeaf
   readonly devices: readonly AutomationDevice[]
-  readonly onChange: (next: AutomationCondition) => void
+  readonly onChange: (next: ExpressionLeaf) => void
 }
 
 type BindingMap = Readonly<Record<string, ExpressionBindingSource>>

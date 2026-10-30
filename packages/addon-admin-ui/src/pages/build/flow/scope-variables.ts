@@ -2,13 +2,19 @@
  * The variables a step can name, by where the run came from.
  *
  * An action's variables are the ones it declares. An automation's are the ones
- * its triggers put in the run's bag — `DetectionVars` and `StationaryVars` in
+ * the event rows of its `when` tree put in the run's bag — `DetectionVars` and `StationaryVars` in
  * `@camstack/types`. The runtime does not export that list as data, so the
- * names are repeated here, one place; a trigger whose vars are not listed
+ * names are repeated here, one place; an event whose vars are not listed
  * offers none (the "{x}" button stays hidden rather than guess).
  */
 
-import type { ActionVariable, AutomationTrigger } from '@camstack/types'
+import {
+  type ActionVariable,
+  type AutomationEventLeaf,
+  type AutomationWhen,
+  forEachLeaf,
+  isEventLeaf,
+} from '@camstack/types'
 import type { TFunction } from 'i18next'
 import type { ScopeVariable } from './ArgField'
 
@@ -40,18 +46,25 @@ function stationaryVars(t: TFunction): readonly ScopeVariable[] {
   ]
 }
 
-/** Variables every trigger of the recipe provides (the intersection by name). */
-export function triggerScopeVariables(
-  triggers: readonly AutomationTrigger[],
-  t: TFunction,
-): readonly ScopeVariable[] {
-  if (triggers.length === 0) return []
-  const perTrigger = triggers.map((trigger): readonly ScopeVariable[] => {
-    if (trigger.kind === 'detection') return detectionVars(t)
-    if (trigger.kind === 'stationary') return stationaryVars(t)
+/** The event rows of a `when` tree, in tree order. */
+function eventLeavesOf(when: AutomationWhen): readonly AutomationEventLeaf[] {
+  const found: AutomationEventLeaf[] = []
+  forEachLeaf(when, (leaf) => {
+    if (isEventLeaf(leaf)) found.push(leaf)
+  })
+  return found
+}
+
+/** Variables every event row of the tree provides (the intersection by name). */
+export function whenScopeVariables(when: AutomationWhen, t: TFunction): readonly ScopeVariable[] {
+  const events = eventLeavesOf(when)
+  if (events.length === 0) return []
+  const perEvent = events.map((leaf): readonly ScopeVariable[] => {
+    if (leaf.kind === 'detection') return detectionVars(t)
+    if (leaf.kind === 'stationary') return stationaryVars(t)
     return []
   })
-  const [first, ...rest] = perTrigger
+  const [first, ...rest] = perEvent
   if (first === undefined) return []
   return first.filter((v) => rest.every((other) => other.some((o) => o.name === v.name)))
 }

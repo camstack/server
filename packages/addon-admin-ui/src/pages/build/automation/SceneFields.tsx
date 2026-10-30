@@ -1,35 +1,41 @@
 /**
- * The scene blocks: the detection and stationary (parked object) triggers, the
- * interval trigger, and the "an object is parked" condition.
+ * The scene rows of the `when` tree: a detection, a parked object appearing or
+ * leaving, an interval, and "an object is parked".
  *
  * Each editor builds its recipe part with the optional keys OMITTED when unset
  * (the recipe is serialised into the generated file, and the schema takes a
  * key's absence, not `undefined`, as "any").
  */
 
-import type { AutomationConditionStationaryPresent, AutomationTrigger } from '@camstack/types'
+import type {
+  AutomationLeaf,
+  DetectionLeaf,
+  DetectionSubject,
+  StationaryLeaf,
+  StationaryPresentLeaf,
+} from '@camstack/types'
 import { DeviceType } from '@camstack/types'
 import { SegmentedChoice } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
-import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { BuildDevicePicker } from '../flow/BuildDevicePicker'
-import { CameraPicker, ClassChips, FieldLabel, ZonePicker } from '../flow/scene-pickers'
+import { DraftNumberInput } from '../flow/DraftNumberInput'
+import { CameraPicker, FieldLabel, ZonePicker } from '../flow/scene-pickers'
 import type { AutomationDevice } from './automation-data'
+import { SubjectPicker } from './SubjectPicker'
 
-type DetectionTrigger = Extract<AutomationTrigger, { kind: 'detection' }>
-type StationaryTrigger = Extract<AutomationTrigger, { kind: 'stationary' }>
-type IntervalTrigger = Extract<AutomationTrigger, { kind: 'interval' }>
-type Phase = StationaryTrigger['phase']
+type IntervalLeaf = Extract<AutomationLeaf, { kind: 'interval' }>
+type Phase = StationaryLeaf['phase']
 
 const PERCENT = 100
 
 export interface DetectionFieldsProps {
-  readonly trigger: DetectionTrigger
+  readonly leaf: DetectionLeaf
   readonly devices: readonly AutomationDevice[]
-  readonly onChange: (next: DetectionTrigger) => void
+  readonly onChange: (next: DetectionLeaf) => void
 }
 
-export function DetectionFields({ trigger, devices, onChange }: DetectionFieldsProps) {
+/** "<class> detected [label] on <cameras>". */
+export function DetectionFields({ leaf: trigger, devices, onChange }: DetectionFieldsProps) {
   const { t } = useTranslation()
   const percent = Math.round((trigger.minScore ?? 0) * PERCENT)
   const setZones = (zones: readonly string[] | undefined): void => {
@@ -42,9 +48,12 @@ export function DetectionFields({ trigger, devices, onChange }: DetectionFieldsP
   }
   return (
     <div className="w-full space-y-3" data-testid="detection-fields">
-      <ClassChips
-        selected={trigger.classes}
-        onChange={(classes) => onChange({ ...trigger, classes: [...classes] })}
+      <SubjectPicker
+        subjects={trigger.subjects}
+        optional={false}
+        classLabelsOnly={false}
+        verb={t('automation.whenTree.detected', 'detected')}
+        onChange={(subjects) => onChange({ ...trigger, subjects: [...subjects] })}
       />
       <CameraPicker
         devices={devices}
@@ -80,16 +89,17 @@ export function DetectionFields({ trigger, devices, onChange }: DetectionFieldsP
 }
 
 export interface StationaryFieldsProps {
-  readonly trigger: StationaryTrigger
+  readonly leaf: StationaryLeaf
   readonly devices: readonly AutomationDevice[]
-  readonly onChange: (next: StationaryTrigger) => void
+  readonly onChange: (next: StationaryLeaf) => void
 }
 
-export function StationaryFields({ trigger, devices, onChange }: StationaryFieldsProps) {
+/** "<class> becomes parked / leaves, on <cameras>". */
+export function StationaryFields({ leaf: trigger, devices, onChange }: StationaryFieldsProps) {
   const { t } = useTranslation()
-  const setClasses = (classes: readonly string[]): void => {
-    const { classes: _dropped, ...rest } = trigger
-    onChange(classes.length === 0 ? rest : { ...rest, classes: [...classes] })
+  const setSubjects = (subjects: readonly DetectionSubject[]): void => {
+    const { subjects: _dropped, ...rest } = trigger
+    onChange(subjects.length === 0 ? rest : { ...rest, subjects: [...subjects] })
   }
   const setZones = (zones: readonly string[] | undefined): void => {
     const { zones: _dropped, ...rest } = trigger
@@ -97,14 +107,12 @@ export function StationaryFields({ trigger, devices, onChange }: StationaryField
   }
   return (
     <div className="w-full space-y-3" data-testid="stationary-fields">
-      <ClassChips
-        selected={trigger.classes ?? []}
-        onChange={setClasses}
-        hint={
-          trigger.classes === undefined
-            ? t('flow.scene.anyClass', 'None picked: any class counts.')
-            : undefined
-        }
+      <SubjectPicker
+        subjects={trigger.subjects ?? []}
+        optional
+        classLabelsOnly
+        verb={t('automation.whenTree.parked', 'object')}
+        onChange={setSubjects}
       />
       <CameraPicker
         devices={devices}
@@ -134,11 +142,11 @@ export function StationaryFields({ trigger, devices, onChange }: StationaryField
 }
 
 export interface IntervalFieldsProps {
-  readonly trigger: IntervalTrigger
-  readonly onChange: (next: IntervalTrigger) => void
+  readonly leaf: IntervalLeaf
+  readonly onChange: (next: IntervalLeaf) => void
 }
 
-export function IntervalFields({ trigger, onChange }: IntervalFieldsProps) {
+export function IntervalFields({ leaf: trigger, onChange }: IntervalFieldsProps) {
   const { t } = useTranslation()
   return (
     <div className="flex items-center gap-2" data-testid="interval-fields">
@@ -157,18 +165,18 @@ export function IntervalFields({ trigger, onChange }: IntervalFieldsProps) {
 }
 
 export interface StationaryPresentFieldsProps {
-  readonly leaf: AutomationConditionStationaryPresent
+  readonly leaf: StationaryPresentLeaf
   readonly devices: readonly AutomationDevice[]
-  readonly onChange: (next: AutomationConditionStationaryPresent) => void
+  readonly onChange: (next: StationaryPresentLeaf) => void
 }
 
 /** "On <camera>, a <class> is parked in <zones>". */
 export function StationaryPresentFields({ leaf, devices, onChange }: StationaryPresentFieldsProps) {
   const { t } = useTranslation()
   const cameras = devices.filter((d) => d.type === DeviceType.Camera)
-  const setClasses = (classes: readonly string[]): void => {
-    const { classes: _dropped, ...rest } = leaf
-    onChange(classes.length === 0 ? rest : { ...rest, classes: [...classes] })
+  const setSubjects = (subjects: readonly DetectionSubject[]): void => {
+    const { subjects: _dropped, ...rest } = leaf
+    onChange(subjects.length === 0 ? rest : { ...rest, subjects: [...subjects] })
   }
   const setZones = (zones: readonly string[] | undefined): void => {
     const { zones: _dropped, ...rest } = leaf
@@ -194,14 +202,12 @@ export function StationaryPresentFields({ leaf, devices, onChange }: StationaryP
           }}
         />
       </div>
-      <ClassChips
-        selected={leaf.classes ?? []}
-        onChange={setClasses}
-        hint={
-          leaf.classes === undefined
-            ? t('flow.scene.anyClass', 'None picked: any class counts.')
-            : undefined
-        }
+      <SubjectPicker
+        subjects={leaf.subjects ?? []}
+        optional
+        classLabelsOnly
+        verb={t('automation.whenTree.isParked', 'is parked')}
+        onChange={setSubjects}
       />
       <ZonePicker
         devices={devices}

@@ -1,10 +1,11 @@
 /**
- * The vertical flow: WHEN → AND ONLY IF → THEN.
+ * The vertical flow: WHEN → THEN.
  *
- * The order is fixed and the sections cannot be reordered, because the vertical
- * axis IS the evaluation order — a trigger fires, the conditions are asked, the
- * actions run. A screen that let those three be dragged around would be
- * describing a machine that does not exist.
+ * WHEN is one tree of ALL / ANY / NOT blocks over event and state rows; the
+ * order is fixed and the sections cannot be reordered, because the vertical
+ * axis IS the evaluation order — the tree decides, the actions run. A screen
+ * that let them be dragged around would be describing a machine that does not
+ * exist.
  *
  * **Save regenerates.** The recipe is the authored artefact; the code is
  * derived from it on every save and stored as the block's source, with the
@@ -30,20 +31,19 @@ import {
 import { Badge, Button, Input, LogStream, useCoreBlocksGetTraces } from '@camstack/ui-library'
 import { Loader2, ScrollText } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { ActionList } from './ActionList'
-import { useAutomationDevices } from './automation-data'
-import { ConditionTree } from './ConditionTree'
-import { GeneratedCodePanel } from './GeneratedCodePanel'
-import { normalizeRecipe } from './recipe-ops'
-import { prepareRecipeUnits } from './recipe-units'
-import { withActions, withTriggers } from './recipe-parts'
-import { TriggerEditor } from './TriggerEditor'
-import { RunModeSelector, runModeOf, withRunMode } from './RunModeSelector'
-import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
-import { triggerScopeVariables } from '../flow/scope-variables'
-import { stepToneAt, traceView } from '../flow/trace-view'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
+import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
+import { whenScopeVariables } from '../flow/scope-variables'
+import { stepToneAt, traceView, whenOutcomes } from '../flow/trace-view'
+import { ActionList } from './ActionList'
+import { useAutomationDevices } from './automation-data'
+import { GeneratedCodePanel } from './GeneratedCodePanel'
+import { RunModeSelector, runModeOf, withRunMode } from './RunModeSelector'
+import { withActions } from './recipe-parts'
+import { prepareRecipeUnits } from './recipe-units'
+import { WhenTree } from './WhenTree'
+import { normalizeRecipe } from './when-ops'
 
 /** Blocks run on the hub only: an automation offers no placement choice. */
 const HUB = 'hub'
@@ -88,7 +88,11 @@ export function AutomationEditor({
   )
   const selectedRun = traces.data?.traces.find((tr) => tr.runId === runId) ?? null
   const view = useMemo(() => (selectedRun === null ? null : traceView(selectedRun)), [selectedRun])
-  const scope = useMemo(() => triggerScopeVariables(recipe.triggers, t), [recipe.triggers, t])
+  const scope = useMemo(() => whenScopeVariables(recipe.when, t), [recipe.when, t])
+  const outcomes = useMemo(
+    () => (selectedRun === null ? undefined : whenOutcomes(selectedRun)),
+    [selectedRun],
+  )
 
   const devices = useAutomationDevices()
 
@@ -136,28 +140,8 @@ export function AutomationEditor({
           step="when"
           title={t('automation.automationEditor.when', 'When')}
           trace={view === null ? null : view.when}
-          hint={t(
-            'automation.automationEditor.anyOneOfTheseStarts',
-            'Any one of these starts a run.',
-          )}
         >
-          <TriggerEditor
-            triggers={recipe.triggers}
-            devices={devices}
-            onChange={(triggers) => setRecipe(withTriggers(recipe, triggers))}
-          />
-        </TraceBlock>
-
-        <TraceBlock
-          step="if"
-          title={t('automation.automationEditor.andOnlyIf', 'And only if')}
-          trace={view === null ? null : view.condition}
-          hint={t(
-            'automation.automationEditor.checkedAfterATriggerFires',
-            'Checked after a trigger fires. Nothing runs unless this is true.',
-          )}
-        >
-          <ConditionTree recipe={recipe} devices={devices} onChange={setRecipe} />
+          <WhenTree recipe={recipe} devices={devices} outcomes={outcomes} onChange={setRecipe} />
         </TraceBlock>
 
         <TraceBlock

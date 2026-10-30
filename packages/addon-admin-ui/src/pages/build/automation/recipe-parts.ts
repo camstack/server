@@ -13,10 +13,10 @@
 
 import type {
   AutomationAction,
-  AutomationCondition,
   AutomationConditionOperator,
+  AutomationLeaf,
   AutomationRecipe,
-  AutomationTrigger,
+  AutomationWhen,
   deviceManagerCapability,
 } from '@camstack/types'
 import type { z } from 'zod'
@@ -29,7 +29,7 @@ export type WireableCap = WireableFieldsOutput['caps'][number]
 export type WireableField = WireableCap['fields'][number]
 export type WireableFieldKind = WireableField['kind']
 
-export type TriggerKind = AutomationTrigger['kind']
+export type LeafKind = AutomationLeaf['kind']
 export type ActionKind = AutomationAction['kind']
 
 const ALL_OPERATORS: readonly AutomationConditionOperator[] = [
@@ -101,44 +101,77 @@ export function operatorChoices(kind: WireableFieldKind | undefined): readonly O
   return operatorsForFieldKind(kind).map((value) => ({ value, label: operatorLabel(value) }))
 }
 
-export function triggerKindLabel(kind: TriggerKind): string {
+/** Row types that HAPPEN (an instant); the rest of {@link LEAF_KINDS} hold (a fact). */
+export const EVENT_LEAF_KINDS: readonly LeafKind[] = [
+  'detection',
+  'stationary',
+  'device-becomes',
+  'device-event',
+  'schedule',
+  'interval',
+  'manual',
+]
+
+export const STATE_LEAF_KINDS: readonly LeafKind[] = [
+  'device-is',
+  'stationary-present',
+  'expression',
+]
+
+export const LEAF_KINDS: readonly LeafKind[] = [...EVENT_LEAF_KINDS, ...STATE_LEAF_KINDS]
+
+export function leafKindLabel(kind: LeafKind): string {
   switch (kind) {
-    case 'device-state':
-      return i18n.t('helpers.recipeParts.trigger_device_state')
+    case 'device-becomes':
+      return i18n.t('automation.whenTree.kind_device_becomes')
+    case 'device-is':
+      return i18n.t('automation.whenTree.kind_device_is')
     case 'device-event':
       return i18n.t('helpers.recipeParts.trigger_device_event')
     case 'schedule':
       return i18n.t('helpers.recipeParts.trigger_schedule')
     case 'stationary':
       return i18n.t('flow.trigger.stationary')
+    case 'stationary-present':
+      return i18n.t('automation.whenTree.kind_stationary_present')
     case 'detection':
       return i18n.t('flow.trigger.detection')
     case 'interval':
       return i18n.t('flow.trigger.interval')
+    case 'expression':
+      return i18n.t('automation.whenTree.kind_expression')
     default:
       return i18n.t('helpers.recipeParts.trigger_manual')
   }
 }
 
-/** A brand-new automation. Deliberately empty in both halves: a pre-seeded
- *  trigger pointing at device 0 is a decision the operator did not make, and
- *  `validateRecipeBounds` says exactly what is missing until they do. */
-export const EMPTY_RECIPE: AutomationRecipe = { triggers: [], actions: [] }
+/** A brand-new automation. Deliberately empty: a pre-seeded row pointing at
+ *  device 0 is a decision the operator did not make, and `validateRecipeBounds`
+ *  says exactly what is missing until they do. */
+export const EMPTY_RECIPE: AutomationRecipe = { when: { kind: 'all', children: [] }, actions: [] }
 
-export function newTrigger(kind: TriggerKind): AutomationTrigger {
+/** A blank row of one type. Optional keys are OMITTED, never `undefined`: the
+ *  recipe is serialised into the generated file. */
+export function newLeaf(kind: LeafKind): AutomationLeaf {
   switch (kind) {
-    case 'device-state':
+    case 'device-becomes':
       return { kind, deviceId: 0, cap: '', fieldPath: '' }
     case 'device-event':
       return { kind, category: '' }
     case 'schedule':
       return { kind, cron: '0 30 23 * * *' }
     case 'detection':
-      return { kind, classes: [], deviceIds: [] }
+      return { kind, subjects: [{ macro: 'person' }], deviceIds: [] }
     case 'stationary':
       return { kind, deviceIds: [], phase: 'appeared' }
     case 'interval':
       return { kind, minutes: 5 }
+    case 'device-is':
+      return { kind, deviceId: 0, cap: '', fieldPath: '', operator: 'eq', value: '' }
+    case 'stationary-present':
+      return { kind, deviceId: 0 }
+    case 'expression':
+      return { kind, expr: '', bindings: {} }
     default:
       return { kind: 'manual' }
   }
@@ -155,21 +188,6 @@ export function newAction(kind: ActionKind): AutomationAction {
     default:
       return { kind: 'cap', deviceId: 0, cap: '', method: '' }
   }
-}
-
-/** A fresh catalog leaf. `eq` because it is the only comparison every kind
- *  supports — whichever field is picked next, the row stays legal. */
-export function newConditionLeaf(): AutomationCondition {
-  return { kind: 'condition', deviceId: 0, cap: '', fieldPath: '', operator: 'eq', value: '' }
-}
-
-/** A parked-object condition; the camera is picked by the operator. */
-export function newStationaryLeaf(): AutomationCondition {
-  return { kind: 'stationary-present', deviceId: 0 }
-}
-
-export function newExpressionLeaf(): AutomationCondition {
-  return { kind: 'expression', expr: '', bindings: {} }
 }
 
 // ── immutable list edits ────────────────────────────────────────────────────
@@ -193,19 +211,9 @@ export function moveItem<T>(items: readonly T[], from: number, to: number): read
   return [...without.slice(0, target), item, ...without.slice(target)]
 }
 
-/**
- * The two list slots, copied on the way in.
- *
- * `AutomationRecipe` is `z.infer`red, so its arrays are mutable while every
- * edit here produces a `readonly` one. The copy is what keeps both true — and it
- * is a fresh array either way, which is the point: the caller holds the previous
- * recipe as React state and re-renders from it.
- */
-export function withTriggers(
-  recipe: AutomationRecipe,
-  triggers: readonly AutomationTrigger[],
-): AutomationRecipe {
-  return { ...recipe, triggers: [...triggers] }
+/** The recipe with its `when` tree replaced. */
+export function withWhen(recipe: AutomationRecipe, when: AutomationWhen): AutomationRecipe {
+  return { ...recipe, when }
 }
 
 export function withActions(

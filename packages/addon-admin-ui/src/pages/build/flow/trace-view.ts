@@ -1,12 +1,12 @@
 /**
  * A run trace (`AutomationRunTrace`, from the ledger) as the editor paints it:
- * one tone and one reason line per When / If / Then block, and a tone per step.
+ * one tone and one reason line per When / Then block, a tone per step, and the
+ * outcome of every node of the `when` tree.
  *
  * Pure: the screen only maps `pass | fail | idle` to token classes.
  *   pass — evaluated and true / succeeded
  *   fail — evaluated and false / errored
- *   idle — never reached (a condition a failed trigger never asked, a step after
- *          the failure, or a run the mode refused)
+ *   idle — never reached (a step after the failure, or a run the mode refused)
  */
 
 import type { AutomationRunTrace, TraceNodeOutcome, TraceValue } from '@camstack/types'
@@ -27,14 +27,13 @@ export interface StepView {
 
 export interface TraceView {
   readonly when: BlockView
-  /** null when the recipe has no conditions: the block stays untinted. */
-  readonly condition: BlockView | null
   readonly thenBlock: BlockView
   readonly steps: readonly StepView[]
 }
 
-/** `evalNode` roots the tree at this path. */
-const CONDITION_ROOT = 'conditions'
+/** `evalNode` roots the `when` tree at this path. A trace written before the
+ *  single tree rooted its conditions at `conditions` and has no `when` node. */
+const WHEN_ROOT = 'when'
 
 function nonEmpty(text: string | undefined): string | null {
   return text === undefined || text.trim() === '' ? null : text
@@ -54,12 +53,21 @@ function stepsOf(trace: AutomationRunTrace): readonly StepView[] {
   }))
 }
 
-function conditionView(trace: AutomationRunTrace): BlockView | null {
-  const root = trace.conditions.find((n) => n.path === CONDITION_ROOT)
-  if (root === undefined) return null
-  const tone: BlockTone =
-    root.outcome === 'pass' ? 'pass' : root.outcome === 'fail' ? 'fail' : 'idle'
-  return { tone, reason: nonEmpty(root.reason) }
+/**
+ * The When block: the event that fired, then the whole tree asked at that
+ * instant. A fired event inside a tree that is false is the run the tree
+ * refused, and reads red with the tree's own reason.
+ */
+function whenView(trace: AutomationRunTrace): BlockView {
+  const triggerTone: BlockTone = trace.trigger.outcome === 'pass' ? 'pass' : 'fail'
+  const triggerReason = nonEmpty(trace.trigger.reason)
+  const root = trace.conditions.find((n) => n.path === WHEN_ROOT)
+  if (triggerTone === 'fail' || root === undefined) {
+    return { tone: triggerTone, reason: triggerReason }
+  }
+  if (root.outcome === 'fail')
+    return { tone: 'fail', reason: nonEmpty(root.reason) ?? triggerReason }
+  return { tone: root.outcome === 'pass' ? 'pass' : 'idle', reason: triggerReason }
 }
 
 function thenView(trace: AutomationRunTrace, steps: readonly StepView[]): BlockView {
@@ -74,11 +82,7 @@ function thenView(trace: AutomationRunTrace, steps: readonly StepView[]): BlockV
 export function traceView(trace: AutomationRunTrace): TraceView {
   const steps = stepsOf(trace)
   return {
-    when: {
-      tone: trace.trigger.outcome === 'pass' ? 'pass' : 'fail',
-      reason: nonEmpty(trace.trigger.reason),
-    },
-    condition: conditionView(trace),
+    when: whenView(trace),
     thenBlock: thenView(trace, steps),
     steps,
   }
@@ -124,11 +128,18 @@ export interface ConditionNodeView {
   readonly observed: ValueView | null
 }
 
+export interface StepArgView {
+  readonly name: string
+  readonly value: ValueView
+}
+
 export interface StepDetailView {
   readonly index: number
   readonly kind: string
   readonly tone: BlockTone
   readonly message: string | null
+  /** What the step SENT (after `{{vars.x}}` substitution); empty on an old trace or a step with none. */
+  readonly args: readonly StepArgView[]
 }
 
 export interface TraceDetails {
@@ -167,6 +178,15 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
       kind: step.kind,
       tone: step.outcome === 'ok' ? 'pass' : step.outcome === 'error' ? 'fail' : 'idle',
       message: nonEmpty(step.message),
+      args: Object.entries(step.args ?? {}).map(([name, value]) => ({
+        name,
+        value: valueView(value),
+      })),
     })),
   }
+}
+
+/** The outcome of every `when` node, by path (`when`, `when.0.1`). */
+export function whenOutcomes(trace: AutomationRunTrace): ReadonlyMap<string, TraceNodeOutcome> {
+  return new Map(trace.conditions.map((node) => [node.path, node.outcome]))
 }

@@ -8,11 +8,11 @@
  */
 import { generateAutomationBlock } from '../../../../packages/types/src/automation/codegen.ts'
 import { defineFixtures } from './_define'
-import build from './build'
 import { MINUTE, NOW } from './_time'
+import build from './build'
 
 const RECIPE = (minutes: number) => ({
-  triggers: [{ kind: 'interval' as const, minutes }],
+  when: { kind: 'interval' as const, minutes },
   actions: [
     {
       kind: 'action' as const,
@@ -68,14 +68,14 @@ const TRACES = [
     },
     conditions: [
       {
-        path: 'conditions',
+        path: 'when',
         kind: 'all',
         outcome: 'pass',
         reason: 'all conditions hold',
       },
       {
-        path: 'conditions.0',
-        kind: 'condition',
+        path: 'when.0',
+        kind: 'device-is',
         outcome: 'pass',
         reason: 'hopperLevel > 10',
         deviceId: 201,
@@ -86,7 +86,7 @@ const TRACES = [
         observed: 64,
       },
       {
-        path: 'conditions.1',
+        path: 'when.1',
         kind: 'stationary-present',
         outcome: 'pass',
         reason: 'a stationary subject is present',
@@ -99,6 +99,7 @@ const TRACES = [
         kind: 'action',
         outcome: 'ok',
         message: 'Feed the dog finished',
+        args: { grams: 30 },
       },
     ],
     outcome: 'ran',
@@ -117,14 +118,14 @@ const TRACES = [
     },
     conditions: [
       {
-        path: 'conditions',
+        path: 'when',
         kind: 'all',
         outcome: 'fail',
         reason: '1 of 2 conditions failed',
       },
       {
-        path: 'conditions.0',
-        kind: 'condition',
+        path: 'when.0',
+        kind: 'device-is',
         outcome: 'fail',
         reason: 'hopperLevel is unknown',
         deviceId: 201,
@@ -135,7 +136,7 @@ const TRACES = [
         observed: null,
       },
       {
-        path: 'conditions.1',
+        path: 'when.1',
         kind: 'stationary-present',
         outcome: 'not-evaluated',
         reason: '',

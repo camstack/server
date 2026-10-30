@@ -15,7 +15,14 @@
  * present and honestly disabled; it never does anything else.
  */
 
-import { type AutomationRecipe, type CoreBlock, coreBlockAddonId } from '@camstack/types'
+import {
+  type AutomationRecipe,
+  type CoreBlock,
+  coreBlockAddonId,
+  countWhenLeaves,
+  forEachLeaf,
+  isEventLeaf,
+} from '@camstack/types'
 import {
   Badge,
   Button,
@@ -31,8 +38,9 @@ import {
 import { Pencil, Play, Plus, ScrollText, Trash2, Workflow } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
+import i18n from '../../../i18n/index'
 import { badgeVariantForTone, describeBlockStatus } from '../core-block-status'
-import { triggerKindLabel } from './recipe-parts'
+import { leafKindLabel } from './recipe-parts'
 
 /** A last-run column asks once per visible row; slow enough that a page of rows is not a load. */
 const LAST_RUN_POLL_MS = 30_000
@@ -96,9 +104,16 @@ export function AutomationSummary({ block, logsOpen, unreadable }: AutomationSum
 
 const TRIGGER_SUMMARY_LIMIT = 2
 
-/** What starts the automation: the distinct trigger kinds, in recipe order. */
+/** What starts the automation: the distinct event kinds of its tree, in tree
+ *  order — or, when it holds only states, that it starts on becoming true. */
 export function triggerSummaryOf(recipe: AutomationRecipe): string {
-  const labels = recipe.triggers.map((trigger) => triggerKindLabel(trigger.kind))
+  const labels: string[] = []
+  forEachLeaf(recipe.when, (leaf) => {
+    if (isEventLeaf(leaf)) labels.push(leafKindLabel(leaf.kind))
+  })
+  if (labels.length === 0) {
+    return countWhenLeaves(recipe.when) === 0 ? '' : i18n.t('automation.whenTree.stateOnly')
+  }
   const distinct = [...new Set(labels)]
   const shown = distinct.slice(0, TRIGGER_SUMMARY_LIMIT).join(', ')
   const rest = distinct.length - TRIGGER_SUMMARY_LIMIT

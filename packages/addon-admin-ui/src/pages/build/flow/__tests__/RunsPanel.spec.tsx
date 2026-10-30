@@ -11,8 +11,8 @@ const TRACE: AutomationRunTrace = {
   trigger: { kind: 'detection', outcome: 'pass', reason: 'animal seen', vars: { score: 0 } },
   conditions: [
     {
-      path: 'conditions.0',
-      kind: 'condition',
+      path: 'when.0',
+      kind: 'device-is',
       outcome: 'fail',
       reason: 'hopperLevel is unknown',
       cap: 'pet-feeder',
@@ -22,7 +22,15 @@ const TRACE: AutomationRunTrace = {
       observed: null,
     },
   ],
-  steps: [{ path: 'actions.0', kind: 'action', outcome: 'error', message: 'Feeder offline' }],
+  steps: [
+    {
+      path: 'actions.0',
+      kind: 'action',
+      outcome: 'error',
+      message: 'Feeder offline',
+      args: { grams: 30 },
+    },
+  ],
   outcome: 'failed',
   repeat: 1,
   lastAt: 2,
@@ -43,6 +51,10 @@ describe('RunsPanel', () => {
     expect(details.getByText('10')).toBeTruthy()
     expect(details.getByTestId('trace-value-unknown').textContent).toBe('unknown')
     expect(details.getByText('Feeder offline')).toBeTruthy()
+    // What the step sent sits next to it.
+    const args = within(details.getByTestId('step-args'))
+    expect(args.getByText('grams')).toBeTruthy()
+    expect(args.getByText('30')).toBeTruthy()
   })
 
   it('selecting a run calls onSelect with its id', () => {

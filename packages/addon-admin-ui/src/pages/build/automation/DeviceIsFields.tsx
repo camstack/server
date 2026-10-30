@@ -1,5 +1,5 @@
 /**
- * One catalog leaf: a device field, a comparison, a value.
+ * A state row, "<device field> is <value>": a device field, a comparison, a value.
  *
  * The comparison list is DERIVED from the field's kind rather than listed, so a
  * boolean is never offered `>` and a number is never offered `contains`. When
@@ -11,22 +11,22 @@
  * operator toggled by accident must not cost the operator the value they typed.
  */
 
-import type { AutomationCondition, AutomationConditionLeaf } from '@camstack/types'
+import type { AutomationConditionOperator, DeviceIsLeaf } from '@camstack/types'
 import { baseUnitForQuantity } from '@camstack/types'
 import { QuantityValueInput, Select, typedToStored } from '@camstack/ui-library'
+import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
 import { type OperatorChoice, operatorChoices } from './recipe-parts'
 import { declaredQuantity, ListValueInput, ScalarValueInput, toList, toScalar } from './ValueInput'
-import { useTranslation } from 'react-i18next'
 
-export interface ConditionLeafRowProps {
-  readonly leaf: AutomationConditionLeaf
+export interface DeviceIsFieldsProps {
+  readonly leaf: DeviceIsLeaf
   readonly devices: readonly AutomationDevice[]
-  readonly onChange: (next: AutomationCondition) => void
+  readonly onChange: (next: DeviceIsLeaf) => void
 }
 
-export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowProps) {
+export function DeviceIsFields({ leaf, devices, onChange }: DeviceIsFieldsProps) {
   const { t } = useTranslation()
   const selection: FieldSelection = {
     deviceId: leaf.deviceId,
@@ -51,7 +51,7 @@ export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowPr
     onChange({
       ...(operator === 'in' ? withoutUnit : leaf),
       operator,
-      value: operator === 'in' ? toList(leaf.value) : toScalar(leaf.value),
+      value: operator === 'in' ? [...toList(leaf.value)] : toScalar(leaf.value),
     })
   }
 
@@ -76,7 +76,7 @@ export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowPr
             field={descriptor}
             deviceId={leaf.deviceId}
             cap={leaf.cap}
-            onChange={(value) => onChange({ ...leaf, value })}
+            onChange={(value) => onChange({ ...leaf, value: [...value] })}
           />
         ) : quantity !== undefined && base !== undefined ? (
           <QuantityValueInput
@@ -107,10 +107,7 @@ export function ConditionLeafRow({ leaf, devices, onChange }: ConditionLeafRowPr
 /** Keep the stored operator when the incoming string is not one this field
  *  offers — a select that has just been re-populated can emit a stale value,
  *  and writing it back would put an illegal operator in the recipe. */
-function asOperator(
-  raw: string,
-  choices: readonly OperatorChoice[],
-): AutomationConditionLeaf['operator'] {
+function asOperator(raw: string, choices: readonly OperatorChoice[]): AutomationConditionOperator {
   const hit = choices.find((c) => c.value === raw)
   return hit?.value ?? 'eq'
 }

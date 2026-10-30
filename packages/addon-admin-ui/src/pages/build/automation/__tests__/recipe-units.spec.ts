@@ -3,12 +3,12 @@
  * `normalizeRecipeUnits`, with a unit on every quantity number — a bare number
  * on a quantity field is never saved silently.
  */
-import type { AutomationRecipe } from '@camstack/types'
+import type { AutomationLeaf, AutomationRecipe } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { prepareRecipeUnits } from '../recipe-units'
 
 const leaf = (extra: object) => ({
-  kind: 'condition' as const,
+  kind: 'device-is' as const,
   deviceId: 201,
   cap: 'pet-feeder',
   fieldPath: 'bowlFood',
@@ -26,18 +26,21 @@ const feed = (extra: object) => ({
   ...extra,
 })
 
-const recipe = (conditions: AutomationRecipe['conditions'], actions: AutomationRecipe['actions']) =>
-  ({
-    triggers: [{ kind: 'interval', minutes: 60 }],
-    conditions,
-    actions,
-  }) as AutomationRecipe
+const recipe = (state: AutomationLeaf, actions: AutomationRecipe['actions']): AutomationRecipe => ({
+  when: { kind: 'all', children: [{ kind: 'interval', minutes: 60 }, state] },
+  actions,
+})
+
+/** The state row of a prepared recipe: the second child of the root block. */
+function stateOf(prepared: AutomationRecipe): unknown {
+  return prepared.when.kind === 'all' ? prepared.when.children[1] : undefined
+}
 
 describe('prepareRecipeUnits', () => {
   it('stamps the base unit on a bare number that has a unit choice', () => {
     const prepared = prepareRecipeUnits(recipe(leaf({}), [feed({})]))
     if (!prepared.ok) throw new Error(prepared.error)
-    expect(prepared.recipe.conditions).toMatchObject({ value: 0.05, unit: 'kg' })
+    expect(stateOf(prepared.recipe)).toMatchObject({ value: 0.05, unit: 'kg' })
     expect(prepared.recipe.actions[0]).toMatchObject({
       args: { grams: 30 },
       argUnits: { grams: 'g' },
@@ -51,7 +54,7 @@ describe('prepareRecipeUnits', () => {
       ]),
     )
     if (!prepared.ok) throw new Error(prepared.error)
-    expect(prepared.recipe.conditions).toMatchObject({ value: 0.05, unit: 'g' })
+    expect(stateOf(prepared.recipe)).toMatchObject({ value: 0.05, unit: 'g' })
     expect(prepared.recipe.actions[0]).toMatchObject({
       args: { grams: 56.699 },
       argUnits: { grams: 'oz' },
@@ -63,7 +66,7 @@ describe('prepareRecipeUnits', () => {
       recipe(leaf({ value: { value: 50, unit: 'g' } }), [feed({})]),
     )
     if (!prepared.ok) throw new Error(prepared.error)
-    expect(prepared.recipe.conditions).toMatchObject({ value: 0.05, unit: 'g' })
+    expect(stateOf(prepared.recipe)).toMatchObject({ value: 0.05, unit: 'g' })
   })
 
   it('refuses a unit of another dimension with the reason', () => {
@@ -76,6 +79,6 @@ describe('prepareRecipeUnits', () => {
     const plain = leaf({ fieldPath: 'feeding', value: 1 })
     const prepared = prepareRecipeUnits(recipe(plain, [feed({ args: {} })]))
     if (!prepared.ok) throw new Error(prepared.error)
-    expect(prepared.recipe.conditions).not.toHaveProperty('unit')
+    expect(stateOf(prepared.recipe)).not.toHaveProperty('unit')
   })
 })

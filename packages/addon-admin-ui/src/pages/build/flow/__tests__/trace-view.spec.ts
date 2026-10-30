@@ -1,6 +1,6 @@
 import type { AutomationRunTrace } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { stepToneAt, traceDetails, traceView } from '../trace-view'
+import { stepToneAt, traceDetails, traceView, whenOutcomes } from '../trace-view'
 
 const BASE: AutomationRunTrace = {
   runId: 'r1',
@@ -15,28 +15,35 @@ const BASE: AutomationRunTrace = {
 }
 
 describe('traceView', () => {
-  it('paints a clean run green end to end and leaves a missing If untinted', () => {
+  it('paints a clean run green end to end', () => {
     const view = traceView({
       ...BASE,
       steps: [{ path: 'actions.0', kind: 'action', outcome: 'ok' }],
     })
     expect(view.when).toEqual({ tone: 'pass', reason: 'animal seen' })
-    expect(view.condition).toBeNull()
     expect(view.thenBlock.tone).toBe('pass')
     expect(stepToneAt(view, 0)).toBe('pass')
   })
 
-  it('paints the condition that stopped the run red and Then grey', () => {
+  it('paints the When block red with the tree reason when the tree refused a fired event', () => {
     const view = traceView({
       ...BASE,
       outcome: 'skipped-conditions',
       conditions: [
-        { path: 'conditions', kind: 'all', outcome: 'fail', reason: 'conditions.0 failed -> fail' },
-        { path: 'conditions.0', kind: 'condition', outcome: 'fail', reason: 'door is open' },
+        { path: 'when', kind: 'all', outcome: 'fail', reason: 'when.1 failed -> fail' },
+        { path: 'when.1', kind: 'device-is', outcome: 'fail', reason: 'door is open' },
       ],
     })
-    expect(view.condition).toEqual({ tone: 'fail', reason: 'conditions.0 failed -> fail' })
+    expect(view.when).toEqual({ tone: 'fail', reason: 'when.1 failed -> fail' })
     expect(view.thenBlock.tone).toBe('idle')
+  })
+
+  it('a legacy trace without a when node falls back to the trigger tone', () => {
+    const view = traceView({
+      ...BASE,
+      conditions: [{ path: 'conditions', kind: 'all', outcome: 'fail', reason: 'old' }],
+    })
+    expect(view.when).toEqual({ tone: 'pass', reason: 'animal seen' })
   })
 
   it('names the failing step and greys the ones after it', () => {
@@ -71,10 +78,9 @@ describe('traceView', () => {
       ...BASE,
       outcome: 'skipped-trigger',
       trigger: { kind: 'detection', outcome: 'fail', reason: 'score 0.4 below 0.6', vars: {} },
-      conditions: [{ path: 'conditions', kind: 'all', outcome: 'not-evaluated', reason: '' }],
+      conditions: [{ path: 'when', kind: 'all', outcome: 'not-evaluated', reason: '' }],
     })
     expect(view.when.tone).toBe('fail')
-    expect(view.condition).toEqual({ tone: 'idle', reason: null })
     expect(view.thenBlock.tone).toBe('idle')
   })
 })
@@ -90,10 +96,10 @@ describe('traceDetails', () => {
         vars: { deviceId: 101, className: 'animal', zones: ['bowl', 'door'], armed: false },
       },
       conditions: [
-        { path: 'conditions', kind: 'all', outcome: 'pass', reason: 'all hold' },
+        { path: 'when', kind: 'all', outcome: 'pass', reason: 'all hold' },
         {
-          path: 'conditions.0',
-          kind: 'condition',
+          path: 'when.0',
+          kind: 'device-is',
           outcome: 'pass',
           reason: '',
           cap: 'pet-feeder',
@@ -104,7 +110,15 @@ describe('traceDetails', () => {
           observed: 64,
         },
       ],
-      steps: [{ path: 'actions.0', kind: 'action', outcome: 'error', message: 'Feeder offline' }],
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'action',
+          outcome: 'error',
+          message: 'Feeder offline',
+          args: { grams: 30, label: 'dog' },
+        },
+      ],
     })
     expect(details.vars).toEqual([
       { name: 'deviceId', value: { kind: 'value', text: '101' } },
@@ -121,7 +135,16 @@ describe('traceDetails', () => {
       observed: { kind: 'value', text: '64' },
     })
     expect(details.steps).toEqual([
-      { index: 0, kind: 'action', tone: 'fail', message: 'Feeder offline' },
+      {
+        index: 0,
+        kind: 'action',
+        tone: 'fail',
+        message: 'Feeder offline',
+        args: [
+          { name: 'grams', value: { kind: 'value', text: '30' } },
+          { name: 'label', value: { kind: 'value', text: 'dog' } },
+        ],
+      },
     ])
   })
 
@@ -130,19 +153,34 @@ describe('traceDetails', () => {
       ...BASE,
       conditions: [
         {
-          path: 'conditions.0',
-          kind: 'condition',
+          path: 'when.0',
+          kind: 'device-is',
           outcome: 'fail',
           reason: 'unknown',
           expected: 0,
           observed: null,
         },
-        { path: 'conditions.1', kind: 'condition', outcome: 'not-evaluated', reason: '' },
+        { path: 'when.1', kind: 'device-is', outcome: 'not-evaluated', reason: '' },
       ],
     })
     expect(details.conditions[0]?.observed).toEqual({ kind: 'unknown' })
     expect(details.conditions[0]?.expected).toEqual({ kind: 'value', text: '0' })
     // Not recorded is a different thing from unknown.
     expect(details.conditions[1]?.observed).toBeNull()
+  })
+})
+
+describe('whenOutcomes', () => {
+  it('maps every when path to its outcome', () => {
+    const map = whenOutcomes({
+      ...BASE,
+      conditions: [
+        { path: 'when', kind: 'all', outcome: 'fail', reason: '' },
+        { path: 'when.0.1', kind: 'device-is', outcome: 'pass', reason: '' },
+      ],
+    })
+    expect(map.get('when')).toBe('fail')
+    expect(map.get('when.0.1')).toBe('pass')
+    expect(map.get('when.2')).toBeUndefined()
   })
 })

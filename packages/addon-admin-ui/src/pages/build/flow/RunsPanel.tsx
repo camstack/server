@@ -14,8 +14,8 @@ import { Badge, type BadgeVariant, EmptyState, SectionCard, Skeleton } from '@ca
 import { History } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { operatorLabel } from '../automation/recipe-parts'
 import { formatRelativeTime } from '../../../components/device/hero/format'
+import { operatorLabel } from '../automation/recipe-parts'
 import {
   type BlockTone,
   type BlockView,
@@ -261,7 +261,7 @@ export function RunDetails({ trace }: { readonly trace: AutomationRunTrace }) {
       {details.conditions.length > 0 && (
         <section>
           <h5 className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
-            {t('flow.runs.conditionValues', 'Conditions')}
+            {t('flow.runs.whenValues', 'When')}
           </h5>
           <ul className="mt-1 divide-y divide-border-subtle">
             {details.conditions.map((node) => (
@@ -301,6 +301,21 @@ export function RunDetails({ trace }: { readonly trace: AutomationRunTrace }) {
                 <span className="text-foreground-subtle">{`${String(step.index + 1)}. ${step.kind}`}</span>
                 {step.message !== null && (
                   <span className="min-w-0 break-words text-foreground">{step.message}</span>
+                )}
+                {step.args.length > 0 && (
+                  <dl
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 pl-2 text-[11px]"
+                    data-testid="step-args"
+                  >
+                    {step.args.map((arg) => (
+                      <div key={arg.name} className="contents">
+                        <dt className="text-foreground-subtle">{arg.name}</dt>
+                        <dd className="break-words">
+                          <TraceValueText value={arg.value} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
                 )}
               </li>
             ))}

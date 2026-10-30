@@ -13,43 +13,50 @@
  * paid for before.
  */
 
-import {
-  type AutomationRecipe,
-  generateAutomationBlock,
-  MAX_CONDITION_LEAVES,
-} from '@camstack/types'
+import { type AutomationRecipe, generateAutomationBlock, MAX_WHEN_LEAVES } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { ejectRecipeFromCode, looksLikeAutomation, parseRecipeFromCode } from '../recipe-from-code'
 
 const MINIMAL: AutomationRecipe = {
-  triggers: [{ kind: 'manual' }],
+  when: { kind: 'manual' },
   actions: [{ kind: 'wait', seconds: 5 }],
 }
 
 const RICH: AutomationRecipe = {
-  triggers: [
-    {
-      kind: 'device-state',
-      deviceId: 101,
-      cap: 'motion-sensor',
-      fieldPath: 'motion.detected',
-      becomes: true,
-      edge: true,
-      forMs: 30_000,
-      debounceMs: 1_500,
-    },
-    { kind: 'device-event', category: 'device.state-changed', deviceId: 102 },
-    { kind: 'schedule', cron: '0 30 23 * * *' },
-    { kind: 'manual' },
-  ],
-  conditions: {
+  when: {
     kind: 'all',
     children: [
       {
         kind: 'any',
         children: [
           {
-            kind: 'condition',
+            kind: 'device-becomes',
+            deviceId: 101,
+            cap: 'motion-sensor',
+            fieldPath: 'motion.detected',
+            becomes: true,
+            edge: true,
+            forMs: 30_000,
+            debounceMs: 1_500,
+          },
+          { kind: 'device-event', category: 'device.state-changed', deviceId: 102 },
+          { kind: 'schedule', cron: '0 30 23 * * *' },
+          { kind: 'manual' },
+          {
+            kind: 'detection',
+            subjects: [
+              { macro: 'animal', label: { kind: 'sub-class', className: 'dog' } },
+              { macro: 'person' },
+            ],
+            deviceIds: [101],
+          },
+        ],
+      },
+      {
+        kind: 'any',
+        children: [
+          {
+            kind: 'device-is',
             deviceId: 101,
             cap: 'power-switch',
             fieldPath: 'on',
@@ -57,7 +64,7 @@ const RICH: AutomationRecipe = {
             value: true,
           },
           {
-            kind: 'condition',
+            kind: 'device-is',
             deviceId: 102,
             cap: 'thermostat',
             fieldPath: 'temperature',
@@ -109,15 +116,20 @@ describe('parseRecipeFromCode', () => {
 
   it('keeps the unit the person picked, on a leaf and on a step arg', () => {
     const withUnits: AutomationRecipe = {
-      triggers: [{ kind: 'manual' }],
-      conditions: {
-        kind: 'condition',
-        deviceId: 7,
-        cap: 'pet-feeder',
-        fieldPath: 'bowlFood',
-        operator: 'lt',
-        value: 0.01,
-        unit: 'g',
+      when: {
+        kind: 'all',
+        children: [
+          { kind: 'manual' },
+          {
+            kind: 'device-is',
+            deviceId: 7,
+            cap: 'pet-feeder',
+            fieldPath: 'bowlFood',
+            operator: 'lt',
+            value: 0.01,
+            unit: 'g',
+          },
+        ],
       },
       actions: [
         {
@@ -147,7 +159,7 @@ describe('parseRecipeFromCode', () => {
     // nesting depth at that point; a matched `} … {` pair cancels out and would
     // let a broken scanner pass.
     const tricky: AutomationRecipe = {
-      triggers: [{ kind: 'manual' }],
+      when: { kind: 'manual' },
       actions: [
         {
           kind: 'cap',
@@ -165,8 +177,8 @@ describe('parseRecipeFromCode', () => {
   })
 
   it('round-trips a recipe at the leaf budget', () => {
-    const children = Array.from({ length: MAX_CONDITION_LEAVES }, (_, i) => ({
-      kind: 'condition' as const,
+    const children = Array.from({ length: MAX_WHEN_LEAVES - 1 }, (_, i) => ({
+      kind: 'device-is' as const,
       deviceId: i + 1,
       cap: 'power-switch',
       fieldPath: 'on',
@@ -174,9 +186,8 @@ describe('parseRecipeFromCode', () => {
       value: true,
     }))
     const full: AutomationRecipe = {
-      triggers: [{ kind: 'manual' }],
+      when: { kind: 'all', children: [{ kind: 'manual' }, ...children] },
       actions: [{ kind: 'wait', seconds: 1 }],
-      conditions: { kind: 'all', children },
     }
     const parsed = parseRecipeFromCode(generateAutomationBlock({ name: 'Full', recipe: full }))
     expect(parsed.ok).toBe(true)
@@ -192,7 +203,7 @@ describe('parseRecipeFromCode', () => {
   it('refuses a literal that parses but is not a recipe', () => {
     // Valid JSON, valid TypeScript, and NOT a recipe. Opening this in the editor
     // and saving would rewrite the block into whatever the form managed to show.
-    const parsed = parseRecipeFromCode('const AUTOMATION_RECIPE = {"triggers": "soon"} as const')
+    const parsed = parseRecipeFromCode('const AUTOMATION_RECIPE = {"when": "soon"} as const')
     expect(parsed.ok).toBe(false)
     if (!parsed.ok) expect(parsed.reason).toContain('recipe schema')
   })

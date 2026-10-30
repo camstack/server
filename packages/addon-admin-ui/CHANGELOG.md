@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scan network lists each integration's devices with gateway children nested, lets you tick several devices to add at once, and edits the extra networks to scan; the integration form gets a Scan button that fills it.
 - A failed integration create no longer shows its error in the next provider you pick, the network scan shows devices the provider already matched as Already added, and the broker sign-in defaults to the device code
 - Automations: the list is a table with trigger and last run, save closes the editor with a toast, New automation no longer closes itself, and each run shows its values
+- Automations: the editor has one When tree of nested all/any/not blocks mixing events and states; a detection row picks a class and an optional label (species, known face, plate); the Runs panel shows what each step sent
 
 ## [1.2.526] - 2026-10-30
 

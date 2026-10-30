@@ -1,10 +1,10 @@
 /**
- * The pickers the scene blocks share: class chips, cameras, and the zones of
- * the chosen cameras. Used by the detection and stationary triggers and by the
- * parked-object condition, so all three read and behave the same.
+ * The pickers the scene rows share: cameras, and the zones of the chosen
+ * cameras. Used by the detection and parked-object rows, so all read and behave
+ * the same.
  */
 
-import { DeviceType, MACRO_LABELS } from '@camstack/types'
+import { DeviceType } from '@camstack/types'
 import { Button, useZonesListZones } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../automation/automation-data'
@@ -18,58 +18,6 @@ export function FieldLabel({ children }: { readonly children: string }) {
 
 function toggled(selected: readonly string[], value: string): readonly string[] {
   return selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]
-}
-
-function useClassLabel(): (id: string) => string {
-  const { t } = useTranslation()
-  return (id) => {
-    switch (id) {
-      case 'person':
-        return t('flow.class.person', 'Person')
-      case 'vehicle':
-        return t('flow.class.vehicle', 'Vehicle')
-      case 'animal':
-        return t('flow.class.animal', 'Animal')
-      case 'package':
-        return t('flow.class.package', 'Package')
-      default:
-        return id
-    }
-  }
-}
-
-export interface ClassChipsProps {
-  readonly selected: readonly string[]
-  readonly onChange: (next: readonly string[]) => void
-  /** Shown under the chips; e.g. what an empty choice means. */
-  readonly hint?: string
-}
-
-/** The classes the detector can emit, plus any a recipe already names. */
-export function ClassChips({ selected, onChange, hint }: ClassChipsProps) {
-  const { t } = useTranslation()
-  const label = useClassLabel()
-  const known = MACRO_LABELS.map((l) => l.id)
-  const extra = selected.filter((c) => !known.includes(c))
-  return (
-    <div className="space-y-1">
-      <FieldLabel>{t('flow.scene.class', 'Class')}</FieldLabel>
-      <div className="flex flex-wrap gap-2">
-        {[...known, ...extra].map((c) => (
-          <Button
-            key={c}
-            size="sm"
-            variant={selected.includes(c) ? 'primary' : 'outline'}
-            aria-pressed={selected.includes(c)}
-            onClick={() => onChange(toggled(selected, c))}
-          >
-            {label(c)}
-          </Button>
-        ))}
-      </div>
-      {hint !== undefined && <p className={FIELD_LABEL}>{hint}</p>}
-    </div>
-  )
 }
 
 export interface CameraPickerProps {
