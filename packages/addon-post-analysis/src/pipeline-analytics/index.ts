@@ -893,6 +893,10 @@ import {
   isDelivererInPackageZone,
   type PackageOptionRule,
 } from './pipeline/package/package-zone-activity.js'
+import {
+  PACKAGE_LOOK_FRAME_MAX_AGE_MS,
+  promoteWithStill,
+} from './pipeline/package/package-still-capture.js'
 import { PackageDropDetector } from './pipeline/package-drop-detector.js'
 import { personOverVehicle } from './pipeline/person-over-vehicle.js'
 import { PhantomCellRegistry } from './pipeline/stationary/phantom-cells.js'
@@ -5392,6 +5396,7 @@ export default class PipelineAnalyticsAddon
       this.frameState.lastNonPackageActivityAt.delete(data.deviceId)
       this.frameState.packageCollectors.forgetDevice(data.deviceId)
       this.frameState.packageOversizeLogAt.delete(data.deviceId)
+      this.frameState.packageLookFrames.delete(data.deviceId)
       this.frameState.packageLookDropReasons.delete(data.deviceId)
       this.overlayState.clearDevice(data.deviceId)
       this.frameState.overlaySynthesisWarnAt.delete(data.deviceId)
@@ -5423,6 +5428,7 @@ export default class PipelineAnalyticsAddon
     this.frameState.lastNonPackageActivityAt.delete(deviceId)
     this.frameState.packageCollectors.forgetDevice(deviceId)
     this.frameState.packageOversizeLogAt.delete(deviceId)
+    this.frameState.packageLookFrames.delete(deviceId)
     this.frameState.packageLookDropReasons.delete(deviceId)
     this.overlayState.clearDevice(deviceId)
     this.frameState.overlaySynthesisWarnAt.delete(deviceId)
@@ -9970,6 +9976,12 @@ export default class PipelineAnalyticsAddon
   }): void {
     if (this.packageDropDetector === null) return
     const tags = { deviceId: input.deviceId }
+    if (input.frameHandle !== null) {
+      this.frameState.packageLookFrames.set(input.deviceId, {
+        handle: input.frameHandle,
+        at: input.timestamp,
+      })
+    }
     // Activity mirror — a non-package track IN A PACKAGE DROP-OFF ZONE
     // stamps the device. A walker at the far gate is not a deliverer.
     // The package-class FP itself must never vouch for its own delivery.
@@ -10217,10 +10229,25 @@ export default class PipelineAnalyticsAddon
           ...(entry.confidence !== undefined ? { confidence: entry.confidence } : {}),
         },
       })
-      void this.packageDropDetector.onStationaryChange({
-        phase: 'appeared',
+      // The parcel's own still is stored BEFORE `delivered` is emitted (D400):
+      // a raw-look box with no tracked twin owns no media at all.
+      const lookFrame = this.frameState.packageLookFrames.get(input.deviceId)
+      void promoteWithStill({
         entry,
-        timestamp: entry.becameStationaryAt,
+        handle:
+          lookFrame !== undefined && input.timestamp - lookFrame.at <= PACKAGE_LOOK_FRAME_MAX_AGE_MS
+            ? lookFrame.handle
+            : null,
+        timestamp: lookFrame?.at ?? input.timestamp,
+        query: (request) => this.queryPackageSceneCrop(request),
+        writer: this.mediaStore,
+        logger: this.ctx.logger,
+        detector: this.packageDropDetector,
+      }).catch((err: unknown) => {
+        this.ctx.logger.warn('package promotion failed', {
+          tags,
+          meta: { entryId: entry.id, error: err instanceof Error ? err.message : String(err) },
+        })
       })
     }
     for (const entry of outcome.departed) {

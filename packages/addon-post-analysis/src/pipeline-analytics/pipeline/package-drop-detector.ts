@@ -50,6 +50,8 @@ import { computeStationaryEntryZones } from './stationary/stationary-zones.js'
 
 interface PackageLlmEventFields {
   readonly packageLlmVerdict?: PackageLlmVerdict
+  /** How long the confirm took. Absent when the rule did not ask for one. */
+  readonly confirmElapsedMs?: number
 }
 
 /** The class every durable package event carries. */
@@ -204,7 +206,7 @@ export class PackageDropDetector {
     }
     if (outcome.kind === 'yes') {
       this.reportLlmSilence(this.llmSilence.noteAnswered(entry.deviceId), tags)
-      return { packageLlmVerdict: outcome.verdict }
+      return { packageLlmVerdict: outcome.verdict, confirmElapsedMs: latencyMs }
     }
     this.dropUncertain(entry, tags, outcome.reason, latencyMs)
     return null
@@ -445,10 +447,17 @@ export class PackageDropDetector {
     const llm = await this.llmFields(entry, rules, hitZones, tags)
     if (llm === null) return
 
+    // The footage window is cut around the row's timestamp and the clip ring is
+    // short (20 s with a 4 s pre-roll on 615). A vision confirm of 8-20 s used
+    // to be spent out of that window BEFORE the row existed, so the gif was
+    // dropped "expired while queued". A delivered parcel is AT REST: any moment
+    // after it settled shows it, so the row is dated when the confirm landed.
+    const { confirmElapsedMs, ...llmRowFields } = llm
+    const rowTimestamp = timestamp + (confirmElapsedMs ?? 0)
     const draft: ObjectEventDraft = {
       kind: 'object',
       deviceId: entry.deviceId,
-      timestamp,
+      timestamp: rowTimestamp,
       source: 'pipeline',
       idempotencyKey,
       // Cascade under the source track's retention prune when known.
@@ -473,7 +482,7 @@ export class PackageDropDetector {
       // The parcel crop resolves via the standard event-media plane.
       ...(entry.keyFrameMediaId !== undefined ? { mediaId: entry.keyFrameMediaId } : {}),
       importance: PACKAGE_IMPORTANCE,
-      ...llm,
+      ...llmRowFields,
     }
     // The id is the ROWID the insert assigned and there is nowhere else to
     // learn it (D474). A failed write means there IS no delivery: emitting a
@@ -504,7 +513,7 @@ export class PackageDropDetector {
         w: entry.bbox.w,
         h: entry.bbox.h,
       },
-      timestamp,
+      timestamp: rowTimestamp,
     })
     this.deps.logger.info('package delivered — all 5 gates passed', {
       tags: { deviceId: entry.deviceId },
@@ -515,6 +524,7 @@ export class PackageDropDetector {
         zoneIds: hitZones,
         dwellMs,
         areaFrac: Number(minAreaFrac.toFixed(5)),
+        ...(confirmElapsedMs !== undefined ? { footageAnchorShiftMs: confirmElapsedMs } : {}),
         ...(entry.confidence !== undefined ? { confidence: entry.confidence } : {}),
       },
     })

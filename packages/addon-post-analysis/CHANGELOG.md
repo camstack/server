@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A camera you switched off is no longer listed as offline in the state summary and no longer sends an offline notification
+- A package-delivered notification now carries a picture of the parcel and its gif, even when the parcel was spotted without a track and the AI confirm took several seconds
 
 ## [1.2.653] - 2026-10-30
 

@@ -78,23 +78,6 @@ async function startCenter(
   return center
 }
 
-/** The operator's rule: tell me when a camera goes down or comes back. */
-async function createLivenessRule(center: NotificationCenter): Promise<void> {
-  await center.buildProvider().createRule({
-    caller: { userId: 'admin', isAdmin: true },
-    rule: NcRuleInputSchema.parse({
-      name: 'Camera liveness',
-      delivery: 'system-event',
-      conditions: {
-        systemEvent: { kinds: ['device-online', 'device-offline'] },
-      },
-      targets: [{ targetId: 'target-1' }],
-      media: { attach: 'none' },
-      throttle: { cooldownSec: 0, scope: 'rule-device' },
-    }),
-  })
-}
-
 function liveness(deviceId: number, online: boolean): SystemEvent {
   return createEvent(
     online ? 'device.online' : 'device.offline',
@@ -107,7 +90,7 @@ function switchEvent(deviceId: number, disabled: boolean): SystemEvent {
   return createEvent(
     disabled ? 'device.disabled' : 'device.enabled',
     { type: 'device', id: deviceId },
-    { deviceId },
+    { deviceId, integrationId: 'reolink' },
   )
 }
 
@@ -119,6 +102,9 @@ function streamOffline(deviceId: number): SystemEvent {
       deviceId,
       camStreamId: 'native:main',
       profile: 'high',
+      brokerId: `${deviceId}/native:main`,
+      sourceType: 'rfc4571',
+      lastPacketAt: 1,
       reason: 'stale-timeout',
     },
   )

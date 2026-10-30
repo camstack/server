@@ -14,7 +14,7 @@
  */
 import { randomUUID } from 'node:crypto'
 
-import type { DetailStepAnnounce, Track } from '@camstack/types'
+import type { DetailStepAnnounce, FrameHandle, Track } from '@camstack/types'
 
 import type { AudioConfirmState } from '../audio-confirm-window.js'
 import type { AudioEpisodeState } from '../audio-episode-hysteresis.js'
@@ -214,6 +214,15 @@ export class FrameState {
    *  per 5 minutes, not one per governor round (the wedge re-sights all
    *  night; ~300 identical lines would bury the log it exists to serve). */
   readonly packageOversizeLogAt = new Map<number, number>()
+  /**
+   * The newest frame the package path held per camera — the picture a parcel
+   * promoted from a raw look is stored from (`package-still-capture.ts`). The
+   * scene path concludes without a frame of its own, so it reads this.
+   */
+  readonly packageLookFrames = new Map<
+    number,
+    { readonly handle: FrameHandle; readonly at: number }
+  >()
   /** Reasons logged on the previous package look — episode helper for drops. */
   readonly packageLookDropReasons = new Map<number, ReadonlySet<PackageLookDropReason>>()
 }
