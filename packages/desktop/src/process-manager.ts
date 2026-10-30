@@ -264,16 +264,31 @@ export class NodeProcessManager {
     return this.current
   }
 
+  /** SIGKILL a child that stopped serving; it exits unintentionally, so the exit handler relaunches it. */
+  forceKill(): void {
+    try {
+      this.current?.process.kill('SIGKILL')
+    } catch {
+      /* may already be dead */
+    }
+  }
+
+  private note(line: string): void {
+    for (const fn of this.listeners) fn(line, 'stderr')
+  }
+
   async stop(timeoutMs = 5_000): Promise<void> {
     const child = this.current
     if (!child) return
     this.intentionalShutdown = true
+    this.note(`[child] stop requested by the shell (SIGTERM, SIGKILL after ${timeoutMs}ms)`)
     if (child.process.exitCode !== null) {
       this.current = null
       return
     }
     return new Promise<void>((resolve) => {
       const timer = setTimeout(() => {
+        this.note(`[child] did not exit within ${timeoutMs}ms of SIGTERM; SIGKILL`)
         try {
           child.process.kill('SIGKILL')
         } catch {

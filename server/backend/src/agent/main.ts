@@ -94,6 +94,7 @@ import { BUILTINS_PACKAGE, planAgentAddonScan, resolveAddonPackageDirs } from '.
 import { buildAgentAddonUpdateReport } from './agent-addon-updates.js'
 import { createAgentHubRegistration } from './agent-hub-registration.js'
 import { createAgentMeshGate } from './agent-mesh-gate.js'
+import { createAgentShutdown } from './agent-shutdown.js'
 import { createLocalPairingAnnouncer } from './agent-pairing-local.js'
 import { AgentMembershipWatch } from './agent-membership-watch.js'
 import {
@@ -1266,33 +1267,54 @@ async function startAgent(configPath?: string): Promise<void> {
     agentHttpListener = listener
   })
 
-  // Graceful shutdown
-  const shutdown = async () => {
-    console.log('[Agent] Shutting down...')
-    // Abort any in-flight upward hub registration retry loop.
-    registerAbortController.abort()
-    // Dispose the UDS event bridge to remove the parent-bus subscriber and
-    // clear the child-event handler, preventing subscriber leaks on shutdown.
-    udsEventBridgeDispose?.()
-    udsEventBridgeDispose = null
-    for (const [, entry] of loadedAddons) {
-      if (entry.addon?.shutdown) {
-        try {
-          await entry.addon.shutdown()
-        } catch {
-          /* */
-        }
-      }
-    }
-    // Withdraw the mDNS advertisement, then stop accepting new HTTP/HTTPS connections before
-    // the broker goes away.
-    await agentMdns.stop().catch(() => undefined)
-    await agentHttpListener?.close().catch(() => undefined)
-    await broker.stop()
-    process.exit(0)
-  }
-  process.on('SIGTERM', shutdown)
-  process.on('SIGINT', shutdown)
+  // Graceful shutdown: bounded, re-entry guarded, and it logs what started it (agent-shutdown.ts).
+  const shutdown = createAgentShutdown({
+    logger: consoleLogger,
+    exit: (code) => process.exit(code),
+    steps: [
+      {
+        name: 'abort-registration',
+        run: async () => {
+          // Abort any in-flight upward hub registration retry loop.
+          registerAbortController.abort()
+          // Dispose the UDS event bridge to remove the parent-bus subscriber and
+          // clear the child-event handler, preventing subscriber leaks on shutdown.
+          udsEventBridgeDispose?.()
+          udsEventBridgeDispose = null
+        },
+      },
+      {
+        name: 'addons',
+        // Concurrent: one slow addon must not eat the budget of the others.
+        run: async () => {
+          const stops: Promise<void>[] = []
+          for (const [addonId, entry] of loadedAddons) {
+            if (!entry.addon?.shutdown) continue
+            const began = Date.now()
+            stops.push(
+              Promise.resolve()
+                .then(() => entry.addon?.shutdown?.())
+                .then(() => undefined)
+                .catch((err: unknown) =>
+                  consoleLogger.warn(`addon ${addonId} shutdown failed: ${errMsg(err)}`),
+                )
+                .finally(() =>
+                  consoleLogger.info(`addon ${addonId} shutdown took ${Date.now() - began}ms`),
+                ),
+            )
+          }
+          await Promise.all(stops)
+        },
+      },
+      // Withdraw the mDNS advertisement, then stop accepting new HTTP/HTTPS connections before
+      // the broker goes away.
+      { name: 'mdns', run: () => agentMdns.stop() },
+      { name: 'http-listener', run: async () => void (await agentHttpListener?.close()) },
+      { name: 'broker', run: () => broker.stop() },
+    ],
+  })
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+  process.on('SIGINT', () => void shutdown('SIGINT'))
 
   // An unpaired agent has no hub to read settings from (D857): serve pairing only and
   // relaunch after the certificate is installed (D5). See agent-boot-mode.ts.

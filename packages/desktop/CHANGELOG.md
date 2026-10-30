@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The app publishes its version and update state to its node and installs a downloaded update when the hub asks.
 - macOS: the desktop app now re-asks the native updater when a downloaded update was never staged, and logs why an install request or a quit install did nothing
 
+### Fixed
+
+- The desktop app now quits cleanly on SIGTERM/SIGINT and force-kills a node that announces shutdown but never exits, with a trail in shell.log
+
 ## [0.1.0] - 2026-10-27
 
 ### Added

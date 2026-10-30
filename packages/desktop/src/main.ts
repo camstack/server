@@ -53,6 +53,7 @@ import { resolveLaunchArgs } from './launch-args-client'
 import type { AgentConnectionInput } from './node-env'
 import { buildNodeEnv } from './node-env'
 import { handleNodeExit } from './node-exit-handler'
+import { createChildShutdownWatch } from './node-shutdown-watch'
 import { roleLabel, summarizeNodeRootStatus } from './node-supervisor'
 import { appendShellLog, formatFatal } from './shell-log'
 import { consumeRestartIntent, readNodeRootStateView } from './node-supervisor-io'
@@ -253,6 +254,14 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   appendShellLog(shellLogPath(), formatFatal('unhandledRejection', reason))
 })
+// A SIGTERM/SIGINT to the shell goes through Electron's normal quit, so `will-quit` stops the node
+// child (SIGTERM, then SIGKILL after 5 s) instead of leaving it orphaned.
+for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+  process.on(signal, () => {
+    appendShellLog(shellLogPath(), `shell received ${signal}; quitting`)
+    app.quit()
+  })
+}
 
 // ---------------------------------------------------------------------------
 // State
@@ -279,10 +288,17 @@ let updateState: UpdateState = {
   error: null,
 }
 
+const childShutdownWatch = createChildShutdownWatch({
+  log: (line) => appendShellLog(shellLogPath(), line),
+  forceKill: () => nodeManager.forceKill(),
+})
+
 nodeManager.onLog((line, stream) => {
   const writer = stream === 'stderr' ? console.error : console.log
   writer(`[node] ${line}`)
+  childShutdownWatch.onChildLine(line)
 })
+nodeManager.onExit(() => childShutdownWatch.onChildExit())
 
 // Auto-respawn on UNINTENDED exit (crash) and on the intended
 // `addons.restartServer` path (process.exit(0) inside the server). Skip respawn
