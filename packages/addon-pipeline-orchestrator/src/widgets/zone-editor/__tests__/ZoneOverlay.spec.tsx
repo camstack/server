@@ -18,6 +18,7 @@ const hoisted = vi.hoisted(() => ({
   addZone: vi.fn(),
   setSelectedZoneId: vi.fn(),
   setDrawingKind: vi.fn(),
+  enterDraft: vi.fn(),
 }))
 
 vi.mock('@camstack/ui-library', () => ({
@@ -35,7 +36,7 @@ vi.mock('@camstack/ui-library', () => ({
     editingDraft: null,
     setSelectedZoneId: hoisted.setSelectedZoneId,
     setDrawingKind: hoisted.setDrawingKind,
-    enterDraft: vi.fn(),
+    enterDraft: hoisted.enterDraft,
     discardDraft: vi.fn(),
     updateDraft: vi.fn(),
   }),
@@ -65,6 +66,7 @@ describe('ZoneOverlay draw completion', () => {
     hoisted.addZone.mockResolvedValue(undefined)
     hoisted.setSelectedZoneId.mockReset()
     hoisted.setDrawingKind.mockReset()
+    hoisted.enterDraft.mockReset()
   })
   afterEach(() => {
     cleanup()
@@ -80,6 +82,18 @@ describe('ZoneOverlay draw completion', () => {
     }
     expect(sent.zone.kind).toBe('polygon')
     expect(sent.zone.polygon).toHaveLength(3)
+  })
+
+  it('opens the saved polygon in the zone form so its name can be typed at once', async () => {
+    render(<ZoneOverlay deviceId={1} />)
+    await finishShape()
+    const sent = hoisted.addZone.mock.calls[0]?.[0] as { zone: { id: string } }
+    expect(hoisted.enterDraft).toHaveBeenCalledTimes(1)
+    expect(hoisted.enterDraft.mock.calls[0]?.[0]).toMatchObject({
+      id: sent.zone.id,
+      kind: 'polygon',
+      name: '',
+    })
   })
 
   it('still adds the zone when crypto.randomUUID is unavailable (insecure context)', async () => {

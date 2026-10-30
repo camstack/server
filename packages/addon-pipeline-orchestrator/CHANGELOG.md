@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Closing a drawn polygon opens it in the zone form with the name field focused
+
 ## [1.2.641] - 2026-10-30
 
 ### Changed

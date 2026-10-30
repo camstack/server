@@ -139,7 +139,15 @@ function ZoneOverlayImpl({ deviceId }: ZoneOverlayProps) {
       setSaveError(null)
       try {
         await system.trpcClient.zones.addZone.mutate({ deviceId, zone: canvasToCap(zone) })
-        editingCtx?.setSelectedZoneId(zone.id)
+        // Enter the draft, not just the selection: the zone form mounts as
+        // soon as the new zone reaches the list, with its name field focused.
+        editingCtx?.enterDraft({
+          id: zone.id,
+          kind: zone.kind,
+          name: zone.name,
+          color: zone.color,
+          points: zone.points,
+        })
       } catch (err: unknown) {
         console.error('zones.addZone failed', err)
         setSaveError(err instanceof Error ? err.message : String(err))
