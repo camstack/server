@@ -27,6 +27,86 @@ const DiscoveredDeviceSchema = z.object({
 })
 
 /**
+ * HOW a provider can be found on the network. The provider only DECLARES the
+ * mode; the `local-network` scan engine runs it once for every provider that
+ * asked (one multicast browse, one host sweep) and hands the raw hits back to
+ * `classifyDiscoveryHits`. A provider never opens a discovery socket itself,
+ * except through a `custom` mode.
+ */
+export const DiscoveryModeSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('mdns'),
+    /** DNS-SD service type, e.g. `_esphomelib._tcp`. */
+    serviceType: z.string().min(1),
+    /** Regular expression an instance name must match (case-insensitive). */
+    instancePattern: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('ws-discovery'),
+    /** Probe types (e.g. `dn:NetworkVideoTransmitter`); omitted = any device. */
+    types: z.array(z.string()).optional(),
+  }),
+  z.object({ kind: z.literal('ssdp'), searchTarget: z.string().min(1) }),
+  z.object({
+    kind: z.literal('udp-broadcast'),
+    port: z.number().int().min(1).max(65535),
+    payloadHex: z.string().regex(/^([0-9a-fA-F]{2})*$/),
+    /** Port replies arrive on, when the device answers somewhere other than the source port. */
+    listenPort: z.number().int().min(1).max(65535).optional(),
+  }),
+  z.object({
+    kind: z.literal('http-probe'),
+    port: z.number().int().min(1).max(65535),
+    path: z.string().startsWith('/'),
+    method: z.enum(['GET', 'POST']).default('GET'),
+    bodyText: z.string().optional(),
+    contentType: z.string().optional(),
+    tls: z.boolean().default(false),
+    /** Status codes that count as a hit. Omitted = any HTTP answer. */
+    acceptStatus: z.array(z.number().int()).optional(),
+  }),
+  z.object({
+    kind: z.literal('custom'),
+    /** Why the engine cannot do it (an allowlisted exception, e.g. a vendor UDP protocol). */
+    reason: z.string().min(1),
+  }),
+])
+export type DiscoveryMode = z.infer<typeof DiscoveryModeSchema>
+
+/** What the engine saw on the wire for ONE declared mode; the provider classifies it. */
+export const DiscoveryHitSchema = z.object({
+  /** Index into the provider's own `getDiscoveryModes()` array. */
+  modeIndex: z.number().int().min(0),
+  host: z.string(),
+  port: z.number().int(),
+  http: z
+    .object({
+      status: z.number().int(),
+      headers: z.record(z.string(), z.string()),
+      /** At most 16 KiB. */
+      bodyText: z.string(),
+    })
+    .optional(),
+  mdns: z
+    .object({
+      instance: z.string(),
+      host: z.string(),
+      port: z.number().int(),
+      txt: z.record(z.string(), z.string()),
+    })
+    .optional(),
+  udp: z.object({ payloadHex: z.string() }).optional(),
+  wsd: z
+    .object({
+      xaddrs: z.array(z.string()),
+      types: z.array(z.string()),
+      scopes: z.array(z.string()),
+    })
+    .optional(),
+})
+export type DiscoveryHit = z.infer<typeof DiscoveryHitSchema>
+
+/**
  * Candidate handed back from discovery and accepted by
  * `adoptDiscoveredDevice`. Shape mirrors the in-process
  * `DiscoveredDevice` interface used by `DeviceDiscovery`.
@@ -62,6 +142,16 @@ const DiscoveryCandidateSchema = z.object({
   onboardedDeviceId: z.number().optional(),
   /** Operator-facing name of the matched device, so the UI can say WHICH one it is. */
   onboardedName: z.string().optional(),
+  /**
+   * This candidate is an INTEGRATION to set up (a gateway, a hub, a controller),
+   * not a device to adopt. Replaces the `prefilledConfig.setupIntegration` marker,
+   * which is still read for one release.
+   */
+  setupIntegration: z.boolean().optional(),
+  /** `stableId` of the gateway candidate this device was found BEHIND. */
+  parentStableId: z.string().optional(),
+  /** `false` = shown for context but not pickable. Default true. */
+  selectable: z.boolean().optional(),
 })
 
 /**
@@ -168,6 +258,25 @@ export const deviceProviderCapability = {
      */
     discoverDevices: method(
       z.object({ params: z.record(z.string(), z.unknown()).optional() }),
+      z.array(DiscoveryCandidateSchema),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * How this provider is found on the network. `[]` = the provider has no
+     * declarative mode and keeps answering `discoverDevices` itself.
+     */
+    getDiscoveryModes: method(z.object({}), z.array(DiscoveryModeSchema)),
+    /**
+     * Turn the engine's raw hits into candidates. The provider may make
+     * follow-up UNICAST requests to a hit host (an authenticated call, an
+     * identity check) and never sweeps a subnet. `params` is the per-scan form
+     * from `getDiscoveryParamsSchema`.
+     */
+    classifyDiscoveryHits: method(
+      z.object({
+        hits: z.array(DiscoveryHitSchema),
+        params: z.record(z.string(), z.unknown()).optional(),
+      }),
       z.array(DiscoveryCandidateSchema),
       { kind: 'mutation', auth: 'admin' },
     ),

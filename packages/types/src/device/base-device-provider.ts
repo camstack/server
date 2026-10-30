@@ -1,5 +1,9 @@
 import { BaseAddon } from '../addon/base-addon.js'
-import { deviceProviderCapability } from '../capabilities/device-provider.cap.js'
+import {
+  type DiscoveryHit,
+  type DiscoveryMode,
+  deviceProviderCapability,
+} from '../capabilities/device-provider.cap.js'
 import type { AddonInitResult, ProviderRegistration } from '../interfaces/addon.js'
 import type { ConfigUISchema } from '../interfaces/config-ui.js'
 import type { IDevice } from './device.js'
@@ -36,6 +40,12 @@ export interface DiscoveryCandidate {
   readonly onboardedDeviceId?: number
   /** Operator-facing name of the matched device, so the UI can say WHICH one it is. */
   readonly onboardedName?: string
+  /** The candidate is an integration to set up, not a device to adopt. */
+  readonly setupIntegration?: boolean
+  /** `stableId` of the gateway candidate this device was found behind. */
+  readonly parentStableId?: string
+  /** `false` = shown for context, not pickable. Default true. */
+  readonly selectable?: boolean
 }
 
 export interface DeviceSummary {
@@ -250,6 +260,22 @@ export abstract class BaseDeviceProvider<
   }
 
   async discoverDevices(_input?: {
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    return []
+  }
+
+  /**
+   * How the scan engine finds this provider. Default `[]`: the provider is
+   * not migrated and keeps answering `discoverDevices` itself.
+   */
+  async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return []
+  }
+
+  /** Turn the scan engine's raw hits into candidates. Default: none. */
+  async classifyDiscoveryHits(_input: {
+    hits: readonly DiscoveryHit[]
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
     return []

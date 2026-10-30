@@ -157,7 +157,7 @@ Singleton or collection providers, addressed without a device.
 | `device-export` | 12 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
 | `device-manager` | 92 | — | — | — | — | `device-manager` |
-| `device-provider` | 14 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
+| `device-provider` | 16 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
 | `display-palette` | 3 | — | — | — | — | `pipeline-orchestrator` |
@@ -171,7 +171,7 @@ Singleton or collection providers, addressed without a device.
 | `llm` | 22 | — | — | — | — | `ai` |
 | `llm-runtime` | 11 | — | — | — | ✓ | `ai` |
 | `load-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `detection-pipeline` `stream-broker` `recorder` |
-| `local-network` | 21 | — | — | — | — | `local-network` |
+| `local-network` | 24 | — | — | — | — | `local-network` |
 | `log-channels` | 2 | — | — | — | ✓ | `stream-broker` `provider-reolink` |
 | `log-destination` | 4 | — | — | — | ✓ | `winston-logging` `console-logging` `loki-logging` `hub-forwarder` |
 | `login-method` | 1 | — | — | — | ✓ | `auth-oidc` `auth-webauthn` |

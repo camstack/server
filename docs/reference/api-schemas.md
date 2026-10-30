@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**995 shared schemas.**
+**997 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1702,6 +1702,25 @@ Enum: `"online" \| "sleeping" \| "offline" \| "unknown"`
 - `kind`: `string`
 - `suggestedName`: `string`
 - `config`: `Record<string, unknown>`
+
+### `DiscoveryHitSchema`
+
+- `modeIndex`: `number`
+- `host`: `string`
+- `port`: `number`
+- `http?`: `{ status: number; headers: Record<string, string>; bodyText: string }`
+- `mdns?`: `{ instance: string; host: string; port: number; txt: Record<string, string> }`
+- `udp?`: `{ payloadHex: string }`
+- `wsd?`: `{ xaddrs: string[]; types: string[]; scopes: string[] }`
+
+### `DiscoveryModeSchema`
+
+- `{ kind: "mdns"; serviceType: string; instancePattern?: string }`
+- `{ kind: "ws-discovery"; types?: string[] }`
+- `{ kind: "ssdp"; searchTarget: string }`
+- `{ kind: "udp-broadcast"; port: number; payloadHex: string; listenPort?: number }`
+- `{ kind: "http-probe"; port: number; path: string; method?: "GET" \| "POST" = "GET"; bodyText?: string; contentType?: string; tls?: boolean = false; acceptStatus?: number[] }`
+- `{ kind: "custom"; reason: string }`
 
 ### `DishwasherAccessSchema`
 

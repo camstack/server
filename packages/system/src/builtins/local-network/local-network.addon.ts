@@ -49,6 +49,9 @@ import {
   shortHostname,
   validateCustomAddress,
 } from '@camstack/types'
+import { runScan } from './scan/scan-engine.js'
+import { nodeScanIo } from './scan/scan-io-node.js'
+import { validateSavedSubnets } from './scan/subnets.js'
 import { applyLanHttp, DEFAULT_LAN_HTTP_PORT, readLanHttpState } from '../../http/lan-http-bind.js'
 import {
   applyCertificateToListener,
@@ -190,6 +193,11 @@ interface LocalNetworkConfig {
    * finds it. On by default; needs UDP 5353 multicast to reach the LAN.
    */
   readonly mdnsAdvertise: boolean
+  /**
+   * Extra subnets the discovery engine scans besides the hub's own links, as
+   * canonical CIDR strings. A cluster setting: every scan uses it.
+   */
+  readonly scanSubnets: readonly string[]
 }
 
 export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
@@ -224,6 +232,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       internalUrl: '',
       publicEndpointUrl: '',
       mdnsAdvertise: true,
+      scanSubnets: [],
     })
   }
 
@@ -552,6 +561,25 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
           meta: { count: cleaned.length, dropped: addresses.length - cleaned.length },
         })
         return { success: true as const }
+      },
+      scanNetwork: async (input) =>
+        runScan(
+          {
+            io: nodeScanIo,
+            interfaces: () => this.enumerate(),
+            savedSubnets: () => this.config.scanSubnets,
+            logger: this.ctx.logger,
+          },
+          input,
+        ),
+      getScanSubnets: async () => ({ subnets: [...this.config.scanSubnets] }),
+      setScanSubnets: async ({ subnets }) => {
+        const cleaned = [...validateSavedSubnets(subnets)]
+        await this.updateGlobalSettings({ scanSubnets: cleaned })
+        this.ctx.logger.info('local-network: scan subnets updated', {
+          meta: { count: cleaned.length, subnets: cleaned },
+        })
+        return { subnets: cleaned }
       },
       getTlsStatus: async () => this.snapshotTls(),
       regenerateCertificate: async (_input) => {

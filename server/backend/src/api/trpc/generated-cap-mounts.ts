@@ -940,6 +940,13 @@ export function mountAllCaps(services: MountAllCapsServices) {
         discoverDevices: concatCollection(providers, 'discoverDevices') as InferProvider<
           typeof deviceProviderCapability
         >['discoverDevices'],
+        getDiscoveryModes: concatCollection(providers, 'getDiscoveryModes') as InferProvider<
+          typeof deviceProviderCapability
+        >['getDiscoveryModes'],
+        classifyDiscoveryHits: concatCollection(
+          providers,
+          'classifyDiscoveryHits',
+        ) as InferProvider<typeof deviceProviderCapability>['classifyDiscoveryHits'],
       }
     }, remoteCapProxy),
     deviceRemovalHook: createCapRouter_deviceRemovalHook((_ctx, addonId) => {

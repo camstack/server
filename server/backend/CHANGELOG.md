@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The hub exposes the network scan engine, saved scan subnets and discovery-mode classification calls
+
 ## [1.2.702] - 2026-10-30
 
 ### Changed

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1431 method paths across 193 capabilities.
+ * Coverage: 1436 method paths across 193 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -425,10 +425,12 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceOps.runAction': { capName: "device-ops", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'deviceOps.setConfig': { capName: "device-ops", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'deviceProvider.adoptDiscoveredDevice': { capName: "device-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceProvider.classifyDiscoveryHits': { capName: "device-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceProvider.createDevice': { capName: "device-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceProvider.discoverDevices': { capName: "device-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceProvider.getChildCreationSchema': { capName: "device-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceProvider.getDevices': { capName: "device-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'deviceProvider.getDiscoveryModes': { capName: "device-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceProvider.getDiscoveryParamsSchema': { capName: "device-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceProvider.getManualCreationType': { capName: "device-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceProvider.getStatus': { capName: "device-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -600,6 +602,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'localNetwork.getHubAddresses': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'localNetwork.getNotificationEndpoint': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'localNetwork.getPreferred': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'localNetwork.getScanSubnets': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'localNetwork.getTlsStatus': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'localNetwork.getViewerEndpoints': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'localNetwork.list': { capName: "local-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -607,9 +610,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'localNetwork.removeCustomAddress': { capName: "local-network", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'localNetwork.resetAllowlistToBestMatch': { capName: "local-network", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'localNetwork.revertToGeneratedCertificate': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'localNetwork.scanNetwork': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.setAddressRole': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.setAllowedAddresses': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.setNotificationEndpoint': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'localNetwork.setScanSubnets': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.setViewerEndpoints': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.uploadCertificate': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'localNetwork.useStoredUploadedCertificate': { capName: "local-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

@@ -6583,6 +6583,40 @@ export function createCapRouter_deviceProvider(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverDevices(methodInput as any)
       }),
+    getDiscoveryModes: protectedProcedure
+      .input(deviceProviderCapability.methods.getDiscoveryModes.input.loose())
+      .output(deviceProviderCapability.methods.getDiscoveryModes.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
+        const p = resolveProvider(
+          'device-provider',
+          nodeId,
+          () => getProvider(ctx, addonId),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getDiscoveryModes(methodInput as any)
+      }),
+    classifyDiscoveryHits: adminProcedure
+      .input(deviceProviderCapability.methods.classifyDiscoveryHits.input.loose())
+      .output(deviceProviderCapability.methods.classifyDiscoveryHits.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
+        const p = resolveProvider(
+          'device-provider',
+          nodeId,
+          () => getProvider(ctx, addonId),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.classifyDiscoveryHits(methodInput as any)
+      }),
     getDiscoveryParamsSchema: protectedProcedure
       .input(deviceProviderCapability.methods.getDiscoveryParamsSchema.input.loose())
       .output(deviceProviderCapability.methods.getDiscoveryParamsSchema.output)
@@ -8983,6 +9017,46 @@ export function createCapRouter_localNetwork(
           createRemoteProxy,
         )
         return p.useStoredUploadedCertificate()
+      }),
+    scanNetwork: adminProcedure
+      .input(localNetworkCapability.methods.scanNetwork.input.loose())
+      .output(localNetworkCapability.methods.scanNetwork.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'local-network',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.scanNetwork(methodInput as any)
+      }),
+    getScanSubnets: adminProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(localNetworkCapability.methods.getScanSubnets.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'local-network',
+          input?.nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        return p.getScanSubnets()
+      }),
+    setScanSubnets: adminProcedure
+      .input(localNetworkCapability.methods.setScanSubnets.input.loose())
+      .output(localNetworkCapability.methods.setScanSubnets.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'local-network',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setScanSubnets(methodInput as any)
       }),
     revertToGeneratedCertificate: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())

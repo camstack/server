@@ -600,6 +600,10 @@ export {
 // ── Providers & Integrations ─────────────────────────────────────────
 export {
   DiscoveredDeviceSchema,
+  type DiscoveryHit,
+  DiscoveryHitSchema,
+  type DiscoveryMode,
+  DiscoveryModeSchema,
   deviceProviderCapability,
   ProviderStatusSchema,
 } from './device-provider.cap.js'
@@ -2405,6 +2409,9 @@ export {
   type LocalInterface,
   localNetworkCapability,
   type NotificationEndpoint,
+  type ScanNetworkResult,
+  type ScanRequest,
+  type ScanStats,
 } from './local-network.cap.js'
 export {
   type ILockControlProvider,

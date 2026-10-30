@@ -58,6 +58,7 @@ import {
   updateDeviceFieldsBatch,
 } from './device-aggregation.js'
 import { mergeAggregates } from './device-aggregation-merge.js'
+import { type DiscoveryOrchestratorDeps, discoverProviders } from './discovery-orchestrator.js'
 import {
   readWrapperActivation,
   setWrapperActive,
@@ -319,6 +320,22 @@ export class DeviceManagerAddon extends BaseAddon {
   private discoveryProviderLabel(addonId: string): string {
     const base = addonId.replace(/^addon-(provider-)?/, '').replace(/^provider-/, '')
     return base.length > 0 ? base.charAt(0).toUpperCase() + base.slice(1) : addonId
+  }
+
+  /** What {@link discoverProviders} needs: provider lookup, the engine, a logger. */
+  private discoveryDeps(): DiscoveryOrchestratorDeps {
+    return {
+      requireProvider: (addonId) => this.requireDeviceProvider(addonId),
+      scanNetwork: async (input) => {
+        const localNetwork = this.ctx.api?.localNetwork
+        if (!localNetwork) throw new Error('local-network is not available on this hub')
+        return localNetwork.scanNetwork.mutate({
+          requests: [...input.requests],
+          ...(input.subnets !== undefined ? { subnets: [...input.subnets] } : {}),
+        })
+      },
+      logger: this.ctx.logger,
+    }
   }
 
   /** Provider ids that report `supportsDiscovery() === true` (probed in parallel). */
@@ -886,34 +903,29 @@ export class DeviceManagerAddon extends BaseAddon {
           })),
         }
       },
-      discoverAllProviders: async () => {
+      discoverAllProviders: async (input) => {
         const ids = await this.listDiscoveryCapableProviderIds()
-        const groups = await Promise.all(
-          ids.map(async (addonId) => {
-            const label = this.discoveryProviderLabel(addonId)
-            try {
-              const provider = await this.requireDeviceProvider(addonId)
-              const candidates = await provider.discoverDevices({})
-              return { addonId, label, candidates, error: null }
-            } catch (err) {
-              this.ctx.logger.warn('discovery provider scan failed', {
-                meta: { addonId, error: err instanceof Error ? err.message : String(err) },
-              })
-              return {
-                addonId,
-                label,
-                candidates: [],
-                error: err instanceof Error ? err.message : String(err),
-              }
-            }
-          }),
-        )
-        return { groups }
+        const outcomes = await discoverProviders(this.discoveryDeps(), {
+          addonIds: ids,
+          ...(input.subnets !== undefined ? { subnets: input.subnets } : {}),
+        })
+        return {
+          groups: outcomes.map((o) => ({
+            addonId: o.addonId,
+            label: this.discoveryProviderLabel(o.addonId),
+            candidates: o.candidates,
+            error: o.error,
+          })),
+        }
       },
       discoverProvider: async (input) => {
-        const provider = await this.requireDeviceProvider(input.addonId)
-        const candidates = await provider.discoverDevices({ params: input.params })
-        return { candidates }
+        const [outcome] = await discoverProviders(this.discoveryDeps(), {
+          addonIds: [input.addonId],
+          ...(input.params !== undefined ? { params: input.params } : {}),
+          ...(input.subnets !== undefined ? { subnets: input.subnets } : {}),
+        })
+        if (outcome?.error) throw new Error(outcome.error)
+        return { candidates: outcome?.candidates ?? [] }
       },
       providerCreationType: async (input) => {
         const provider = await this.requireDeviceProvider(input.addonId)

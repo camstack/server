@@ -1646,7 +1646,8 @@ export const deviceManagerCapability = {
 
     /** Scan EVERY discovery-capable provider; returns candidates grouped by addon. */
     discoverAllProviders: method(
-      z.object({}),
+      /** `subnets`: extra CIDRs for THIS scan, on top of the hub's own and the saved list. */
+      z.object({ subnets: z.array(z.string()).optional() }),
       z.object({
         groups: z
           .array(
@@ -1665,7 +1666,11 @@ export const deviceManagerCapability = {
     /** Scan ONE provider with optional provider-specific params (subnet /
      *  broadcast addr) — the per-integration "Scan network" surface. */
     discoverProvider: method(
-      z.object({ addonId: z.string(), params: z.record(z.string(), z.unknown()).optional() }),
+      z.object({
+        addonId: z.string(),
+        params: z.record(z.string(), z.unknown()).optional(),
+        subnets: z.array(z.string()).optional(),
+      }),
       z.object({ candidates: z.array(DiscoveryCandidateSchema).readonly() }),
       { kind: 'mutation', auth: 'admin' },
     ),

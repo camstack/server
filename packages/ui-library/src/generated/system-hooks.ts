@@ -1139,6 +1139,12 @@ export const useDeviceProviderSupportsDiscovery: typeof trpc.deviceProvider.supp
 /** Generated alias around `trpc.deviceProvider.discoverDevices.useMutation`. */
 export const useDeviceProviderDiscoverDevices: typeof trpc.deviceProvider.discoverDevices.useMutation = trpc.deviceProvider.discoverDevices.useMutation
 
+/** Generated alias around `trpc.deviceProvider.getDiscoveryModes.useQuery`. */
+export const useDeviceProviderGetDiscoveryModes: typeof trpc.deviceProvider.getDiscoveryModes.useQuery = trpc.deviceProvider.getDiscoveryModes.useQuery
+
+/** Generated alias around `trpc.deviceProvider.classifyDiscoveryHits.useMutation`. */
+export const useDeviceProviderClassifyDiscoveryHits: typeof trpc.deviceProvider.classifyDiscoveryHits.useMutation = trpc.deviceProvider.classifyDiscoveryHits.useMutation
+
 /** Generated alias around `trpc.deviceProvider.getDiscoveryParamsSchema.useQuery`. */
 export const useDeviceProviderGetDiscoveryParamsSchema: typeof trpc.deviceProvider.getDiscoveryParamsSchema.useQuery = trpc.deviceProvider.getDiscoveryParamsSchema.useQuery
 
@@ -1597,6 +1603,15 @@ export const useLocalNetworkDownloadCa: typeof trpc.localNetwork.downloadCa.useQ
 
 /** Generated alias around `trpc.localNetwork.useStoredUploadedCertificate.useMutation`. */
 export const useLocalNetworkUseStoredUploadedCertificate: typeof trpc.localNetwork.useStoredUploadedCertificate.useMutation = trpc.localNetwork.useStoredUploadedCertificate.useMutation
+
+/** Generated alias around `trpc.localNetwork.scanNetwork.useMutation`. */
+export const useLocalNetworkScanNetwork: typeof trpc.localNetwork.scanNetwork.useMutation = trpc.localNetwork.scanNetwork.useMutation
+
+/** Generated alias around `trpc.localNetwork.getScanSubnets.useQuery`. */
+export const useLocalNetworkGetScanSubnets: typeof trpc.localNetwork.getScanSubnets.useQuery = trpc.localNetwork.getScanSubnets.useQuery
+
+/** Generated alias around `trpc.localNetwork.setScanSubnets.useMutation`. */
+export const useLocalNetworkSetScanSubnets: typeof trpc.localNetwork.setScanSubnets.useMutation = trpc.localNetwork.setScanSubnets.useMutation
 
 /** Generated alias around `trpc.localNetwork.revertToGeneratedCertificate.useMutation`. */
 export const useLocalNetworkRevertToGeneratedCertificate: typeof trpc.localNetwork.revertToGeneratedCertificate.useMutation = trpc.localNetwork.revertToGeneratedCertificate.useMutation

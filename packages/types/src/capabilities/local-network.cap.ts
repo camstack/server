@@ -23,6 +23,7 @@
  * Implementation in `@camstack/system/builtins/local-network/`.
  */
 import { z } from 'zod'
+import { DiscoveryHitSchema, DiscoveryModeSchema } from './device-provider.cap.js'
 import { HUB_ADDRESS_ROLES } from './hub-address.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
@@ -345,6 +346,39 @@ const TlsStatusSchema = z.object({
     .nullable(),
 })
 
+/** One provider's ask of the scan engine: the modes it declared. */
+const ScanRequestSchema = z.object({
+  providerId: z.string().min(1),
+  modes: z.array(DiscoveryModeSchema),
+})
+
+const ScanErrorSchema = z.object({
+  /** Absent for a failure that is the scan's own (a bad subnet, a socket that would not open). */
+  providerId: z.string().optional(),
+  /** The mode family that failed (`mdns`, `http-probe`, …). */
+  mode: z.string().optional(),
+  message: z.string(),
+})
+
+/** What one scan did, per mode family; the engine logs the same numbers once. */
+const ScanStatsSchema = z.object({
+  hostsProbed: z.number().int(),
+  hits: z.number().int(),
+  timeouts: z.number().int(),
+  byMode: z.record(
+    z.string(),
+    z.object({ probed: z.number().int(), hits: z.number().int(), timeouts: z.number().int() }),
+  ),
+})
+
+const ScanNetworkResultSchema = z.object({
+  hits: z.array(z.object({ providerId: z.string(), hit: DiscoveryHitSchema })),
+  /** CIDRs actually covered: the hub's own /24s, the saved list and the per-call list. */
+  subnetsScanned: z.array(z.string()),
+  errors: z.array(ScanErrorSchema),
+  stats: ScanStatsSchema,
+})
+
 export const localNetworkCapability = {
   name: 'local-network',
   scope: 'system',
@@ -594,6 +628,40 @@ export const localNetworkCapability = {
       auth: 'admin',
     }),
 
+    /**
+     * The LAN discovery engine. Every provider that declared discovery modes
+     * (`device-provider.getDiscoveryModes`) is scanned in ONE pass: a single
+     * mDNS browse for the union of service types, one WS-Discovery probe, one
+     * SSDP search per target and one sweep that visits each host once and runs
+     * every http-probe of every provider. Subnets scanned = the hub's own
+     * non-internal IPv4 /24s ∪ the saved list (`getScanSubnets`) ∪ `subnets`.
+     * A bad CIDR, or more than 4096 hosts in total, refuses the scan.
+     */
+    scanNetwork: method(
+      z.object({
+        requests: z.array(ScanRequestSchema),
+        subnets: z.array(z.string()).optional(),
+      }),
+      ScanNetworkResultSchema,
+      { kind: 'mutation', auth: 'admin', timeoutMs: 90_000 },
+    ),
+
+    /** Extra subnets every scan covers besides the hub's own, as CIDR strings. */
+    getScanSubnets: method(z.void(), z.object({ subnets: z.array(z.string()) }), {
+      auth: 'admin',
+    }),
+
+    /**
+     * Replace the saved extra subnets (a cluster setting). Each entry is IPv4
+     * CIDR, at most a /22; the list is refused when it is invalid or its hosts
+     * would exceed the scan cap.
+     */
+    setScanSubnets: method(
+      z.object({ subnets: z.array(z.string()) }),
+      z.object({ subnets: z.array(z.string()) }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
     /** Return to the generated local CA. The uploaded certificate stays stored (D873). */
     revertToGeneratedCertificate: method(z.void(), TlsStatusSchema, {
       kind: 'mutation',
@@ -603,6 +671,10 @@ export const localNetworkCapability = {
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/system` `buildCapRouters`. */
   mount: { kind: 'hub-only' },
 } as const satisfies CapabilityDefinition
+
+export type ScanNetworkResult = z.infer<typeof ScanNetworkResultSchema>
+export type ScanRequest = z.infer<typeof ScanRequestSchema>
+export type ScanStats = z.infer<typeof ScanStatsSchema>
 
 export type ILocalNetworkProvider = InferProvider<typeof localNetworkCapability>
 export type LocalInterface = z.infer<typeof LocalInterfaceSchema>

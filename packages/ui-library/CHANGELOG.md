@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Generated hooks for the new network scan and saved scan subnets calls
+
 ## [1.2.356] - 2026-10-30
 
 ### Changed
