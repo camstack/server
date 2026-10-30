@@ -237,6 +237,26 @@ describe('support_draft_issue', () => {
     expect(file !== undefined && existsSync(file)).toBe(false)
   })
 
+  it('a fact that changes between dry run and execute never files a different body', async () => {
+    let version = '1.4.2'
+    const answers = {
+      ...hubAnswers,
+      'serverManagement.getServerPackageStatus': () => ({ runningVersion: version }),
+    }
+    const { ctx } = ctxWithRegistry(
+      registryRepo('git+https://github.com/camstack/addon-x.git'),
+      answers,
+    )
+    const gh = fakeGh()
+    const dry = dryRunOf(await supportDraftIssue(ctx, gh.deps, ISSUE, undefined))
+    version = '7.7.7'
+    await supportDraftIssue(ctx, gh.deps, ISSUE, dry.token)
+    const create = gh.calls.find((c) => c.args[0] === 'issue')
+    expect(create?.body).toContain('1.4.2')
+    expect(create?.body).not.toContain('7.7.7')
+    expect(dry.describe).toMatchObject({ body: create?.body })
+  })
+
   it('gh not signed in: returns the draft and a ready command, creates nothing', async () => {
     const { ctx } = ctxWithRegistry(registryRepo('git+https://github.com/camstack/addon-x.git'))
     const gh = fakeGh(1)

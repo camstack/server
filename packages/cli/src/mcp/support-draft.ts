@@ -15,11 +15,13 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
+  digestArgs,
   runGated,
   type DryRunOutcome,
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
+  type MutationGate,
 } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
@@ -323,6 +325,30 @@ export type IssueOutcome =
       readonly saveBodyAs: string
     }
 
+/**
+ * The draft a dry run showed, kept by the gate it ran under and keyed by the
+ * digest the confirm token is bound to. Execute files THIS text, never a
+ * rebuild from facts that may have moved since the preview.
+ */
+const previewed = new WeakMap<MutationGate, Map<string, Draft>>()
+
+function keepPreview(gate: MutationGate, tool: string, args: DraftArgs, draft: Draft): void {
+  const byDigest = previewed.get(gate) ?? new Map<string, Draft>()
+  byDigest.set(digestArgs(tool, args), draft)
+  previewed.set(gate, byDigest)
+}
+
+function takePreview(gate: MutationGate, tool: string, args: DraftArgs): Draft {
+  const byDigest = previewed.get(gate)
+  const key = digestArgs(tool, args)
+  const draft = byDigest?.get(key)
+  byDigest?.delete(key)
+  if (draft === undefined) {
+    throw new Error('the previewed draft is gone — call the tool again for a fresh dry run')
+  }
+  return draft
+}
+
 export interface IssueSpecDeps {
   readonly ctx: McpContext
   readonly deps: SupportDeps
@@ -333,6 +359,7 @@ export function issueSpec({ ctx, deps }: IssueSpecDeps): GatedToolSpec<DraftArgs
     tool: DRAFT_ISSUE_TOOL,
     async dryRun(args): Promise<DryRunOutcome> {
       const draft = await issueDraft(ctx, args)
+      keepPreview(ctx.gate, DRAFT_ISSUE_TOOL, args, draft)
       const describe: IssueDryRun = {
         action: 'open a GitHub issue',
         targetRepo: draft.target.repo,
@@ -346,7 +373,7 @@ export function issueSpec({ ctx, deps }: IssueSpecDeps): GatedToolSpec<DraftArgs
       return { confirmable: true, describe }
     },
     async execute(args): Promise<IssueOutcome> {
-      const draft = await issueDraft(ctx, args)
+      const draft = takePreview(ctx.gate, DRAFT_ISSUE_TOOL, args)
       const refusal = (outcome: 'gh-unavailable' | 'gh-failed', reason: string): IssueOutcome => ({
         outcome,
         reason: scrubForPublic(reason).slice(0, 300),
@@ -470,16 +497,18 @@ function planFor(args: DraftArgs, draft: Draft): PrPlan {
 }
 
 export function prSpec(ctx: McpContext): GatedToolSpec<DraftArgs> {
-  const build = async (args: DraftArgs): Promise<PrPlan> =>
-    planFor(args, await buildDraft(ctx, args, 'What this changes'))
   return {
     tool: DRAFT_PR_TOOL,
     async dryRun(args): Promise<DryRunOutcome> {
       const problem = prProblem(args)
       if (problem !== null) return { confirmable: false, describe: { problem } }
-      return { confirmable: true, describe: await build(args) }
+      const draft = await buildDraft(ctx, args, 'What this changes')
+      keepPreview(ctx.gate, DRAFT_PR_TOOL, args, draft)
+      return { confirmable: true, describe: planFor(args, draft) }
     },
-    execute: (args) => build(args),
+    async execute(args): Promise<PrPlan> {
+      return planFor(args, takePreview(ctx.gate, DRAFT_PR_TOOL, args))
+    },
   }
 }
 
