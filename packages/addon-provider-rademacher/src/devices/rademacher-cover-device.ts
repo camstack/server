@@ -11,7 +11,7 @@ import {
 } from '@camstack/types'
 import { rademacherCoverSchema } from '../config.js'
 import { type RademacherCoverSnapshot, toCoverStatus, toLibraryPosition } from '../cover-mapping.js'
-import { rademacherHubs } from '../rademacher-hub-resolver.js'
+import { rademacherSessions } from '../rademacher-session-resolver.js'
 
 const COLD_START: CoverStatus = {
   state: 'closed',
@@ -22,10 +22,10 @@ const COLD_START: CoverStatus = {
 
 /**
  * One Rademacher HomePilot roller shutter as a CamStack {@link DeviceType.Cover}
- * device. A CHILD of the hub Hub device (standalone mode). Registers ONE cap
+ * device. A top-level device of its integration (a sibling of the gateway box, not its child). Registers ONE cap
  * (`cover`) with the full lifecycle surface (open/close/stop/setPosition +
  * setTiltPosition for slat-tilt / ventilation). The slice is fed from the live
- * hub client handle on each poll tick (and seeded cold on activate).
+ * integration's client handle on each poll tick (and seeded cold on activate).
  *
  * Position + tilt are mapped through {@link toCoverStatus}, which applies the
  * per-device inversion (`invertPosition`) for HomePilot units that report an
@@ -40,7 +40,7 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
   readonly features: readonly DeviceFeature[]
 
   private readonly did: string
-  private readonly hubId: string
+  private readonly integrationId: string
   private readonly invertPosition: boolean
   private readonly supportsTilt: boolean
 
@@ -50,7 +50,7 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
     const cfg = rademacherCoverSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, rademacherCoverSchema, { type: DeviceType.Cover })
     this.did = cfg.did
-    this.hubId = cfg.hubId
+    this.integrationId = cfg.integrationId
     this.invertPosition = cfg.invertPosition
     this.supportsTilt = cfg.supportsTilt
 
@@ -59,7 +59,7 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
     if (cfg.supportsTilt) features.push(DeviceFeature.CoverTilt)
     this.features = features
 
-    this.online = rademacherHubs.getCover(this.hubId, this.did)?.online ?? false
+    this.online = rademacherSessions.getCover(this.integrationId, this.did)?.online ?? false
     this.registerCoverCap()
     this.runtimeState.setCapState('cover', COLD_START)
     void this.updateSourceInfo({ id: this.did, system: 'rademacher' })
@@ -83,25 +83,26 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
     await super.removeDevice()
   }
 
-  /** Subscribe to per-hub poll ticks (recompute this cover's slice). Works even
+  /** Subscribe to per-integration poll ticks (recompute this cover's slice). Works even
    *  before the manager exists — `recomputeSlice` no-ops on a missing handle and
-   *  replays once the hub pumps the first snapshot. */
+   *  replays once the manager pumps the first snapshot. */
   private attachSnapshotListener(): void {
     const onSnapshot = (): void => {
       try {
         this.recomputeSlice()
       } catch (err) {
         this.ctx.logger.warn('rademacher cover: snapshot handler error', {
+          tags: { deviceId: this.id },
           meta: { did: this.did, error: errMsg(err) },
         })
       }
     }
-    this.snapshotUnsub = rademacherHubs.onSnapshot(this.hubId, onSnapshot)
+    this.snapshotUnsub = rademacherSessions.onSnapshot(this.integrationId, onSnapshot)
   }
 
   /** Recompute + write this cover's `cover` cap slice from the live handle. */
   private recomputeSlice(): void {
-    const handle = rademacherHubs.getCover(this.hubId, this.did)
+    const handle = rademacherSessions.getCover(this.integrationId, this.did)
     if (handle === null) return
     if (this.online !== handle.online) this.markOnline(handle.online)
     const snapshot = snapshotFromHandle(handle, this.supportsTilt)
@@ -110,9 +111,11 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
   }
 
   private resolveHandle(): CoverDevice {
-    const handle = rademacherHubs.getCover(this.hubId, this.did)
+    const handle = rademacherSessions.getCover(this.integrationId, this.did)
     if (handle === null) {
-      throw new Error(`Rademacher cover ${this.did}: hub ${this.hubId} client is not available`)
+      throw new Error(
+        `Rademacher cover ${this.did}: integration ${this.integrationId} client is not available`,
+      )
     }
     return handle
   }

@@ -1,15 +1,15 @@
 export { RademacherProviderAddon } from './addon.js'
 export {
   rademacherConnectionSchema,
-  rademacherHubSchema,
+  rademacherGatewayDeviceSchema,
   rademacherCoverSchema,
   buildConnectionFormSchema,
-  settingsToConnection,
-  slugifyHost,
+  connectionFromSettings,
+  sameRademacherConnection,
 } from './config.js'
 export type {
   RademacherConnectionConfig,
-  RademacherHubConfig,
+  RademacherGatewayDeviceConfig,
   RademacherCoverConfig,
 } from './config.js'
 export {
@@ -19,12 +19,18 @@ export {
   toLibraryPosition,
 } from './cover-mapping.js'
 export type { RademacherCoverSnapshot, CoverMappingOptions } from './cover-mapping.js'
-export { buildCoverCandidates, coverNativeId } from './rademacher-discovery.js'
-export type { DiscoverableCover } from './rademacher-discovery.js'
+export {
+  buildRademacherCandidates,
+  coverNativeId,
+  gatewayNativeId,
+  resolveNativeId,
+} from './rademacher-discovery.js'
+export type { AdoptableCover, ResolvedNativeId } from './rademacher-discovery.js'
 export {
   RademacherIntegrationManager,
   defaultRademacherClientFactory,
 } from './rademacher-integration-manager.js'
-export { RademacherHubResolver, rademacherHubs } from './rademacher-hub-resolver.js'
-export { RademacherHubDevice } from './devices/rademacher-hub-device.js'
+export { RademacherClientRegistry } from './rademacher-client-registry.js'
+export { RademacherSessionResolver, rademacherSessions } from './rademacher-session-resolver.js'
+export { RademacherGatewayDevice } from './devices/rademacher-gateway-device.js'
 export { RademacherCoverDevice } from './devices/rademacher-cover-device.js'

@@ -40,18 +40,24 @@
         "category": "providers",
         "name": "Rademacher",
         "version": "0.1.0",
-        "description": "Adopt a Rademacher HomePilot / Start2Smart hub over the local network and its roller shutters (positional cover)",
+        "description": "Adopt a Rademacher HomePilot / Start2Smart hub (as a Gateway device) and its roller shutters, from an integration over the local network",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#c8102e",
         "instanceMode": "multiple",
-        "mode": "standalone",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
+          },
+          {
+            "name": "connection-test"
           }
         ]
       }
