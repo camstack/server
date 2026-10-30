@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ESPHome is now one integration holding several boards: add or remove a board without touching the others, each board keeps its own device and encrypted key; existing boards migrate automatically
 - ESPHome shows its real logo
+- ESPHome boards are found by the shared network scan, including on other subnets; several scanned boards can be picked at once
 
 ## [0.1.5] - 2026-10-28
 

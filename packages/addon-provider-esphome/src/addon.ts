@@ -11,11 +11,13 @@ import {
   type DeviceConstructor,
   type DeviceSummary,
   type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
 } from '@camstack/types'
-import { buildIntegrationFormSchema, ESPHOME_DEFAULT_PORT, type EspAddonConfig } from './config.js'
+import { buildIntegrationFormSchema, type EspAddonConfig } from './config.js'
 import { espBrokersEntryKind } from './broker-record-kinds.js'
 import { EspBrokerStore } from './esphome-broker-store.js'
 import { EspBrokerRegistry } from './esphome-registry.js'
@@ -26,7 +28,7 @@ import {
   type OfflineTarget,
 } from './esphome-broker-devices.js'
 import { clientLinkFactory } from './esphome-client-link.js'
-import { browseBoards, proposeBoards } from './esphome-discovery.js'
+import { boardCandidates, ESPHOME_DISCOVERY_MODES } from './esphome-discovery.js'
 import { EspIntegrationBoards, type AddBoardInput } from './esphome-integration-boards.js'
 import { EspContainerDevice } from './devices/esp-container-device.js'
 import { EspServiceRunner } from './esphome-services.js'
@@ -234,17 +236,19 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     return true
   }
 
-  override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
-    const found = await browseBoards()
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return ESPHOME_DISCOVERY_MODES
+  }
+
+  /** Every unconfigured board is pickable: several picked are added to one integration. */
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
     const known = this.requireBoards()
       .boards()
       .map((b) => b.connection.host)
-    return proposeBoards(found, known).map((board) => ({
-      stableId: `esphome:${board.id}`,
-      type: DeviceType.Hub,
-      suggestedName: board.name,
-      prefilledConfig: { host: board.host, port: board.port || ESPHOME_DEFAULT_PORT },
-    }))
+    return boardCandidates(input.hits, known)
   }
 
   /**

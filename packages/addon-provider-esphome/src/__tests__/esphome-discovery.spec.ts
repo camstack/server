@@ -1,72 +1,49 @@
+import { DeviceType, type DiscoveryHit } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import { setBrokerDevicesOnline, type OfflineTarget } from '../esphome-broker-devices.js'
 import {
-  ESPHOME_MDNS_SERVICE,
-  boardsFromDnsMessage,
-  browseBoards,
-  mdnsPtrQuery,
+  boardCandidates,
+  boardsFromHits,
+  ESPHOME_DISCOVERY_MODES,
   proposeBoards,
 } from '../esphome-discovery.js'
-import { setBrokerDevicesOnline, type OfflineTarget } from '../esphome-broker-devices.js'
 
-function encodeName(name: string): Buffer {
-  const parts = name.split('.').map((l) => Buffer.concat([Buffer.from([l.length]), Buffer.from(l)]))
-  return Buffer.concat([...parts, Buffer.from([0])])
-}
-
-function record(name: string, type: number, data: Buffer): Buffer {
-  const head = Buffer.alloc(10)
-  head.writeUInt16BE(type, 0)
-  head.writeUInt16BE(1, 2)
-  head.writeUInt16BE(data.length, 8)
-  return Buffer.concat([encodeName(name), head, data])
-}
-
-/** One announcement: PTR + SRV + A, as a board sends it. */
-function announcement(instance: string, host: string, port: number, ip: readonly number[]): Buffer {
-  const header = Buffer.alloc(12)
-  header.writeUInt16BE(0x8400, 2)
-  header.writeUInt16BE(3, 6)
-  const full = `${instance}.${ESPHOME_MDNS_SERVICE}`
-  const srvData = Buffer.concat([
-    Buffer.alloc(4),
-    Buffer.from([port >> 8, port & 0xff]),
-    encodeName(host),
-  ])
-  return Buffer.concat([
-    header,
-    record(ESPHOME_MDNS_SERVICE, 12, encodeName(full)),
-    record(full, 33, srvData),
-    record(host, 1, Buffer.from(ip)),
-  ])
+function boardHit(host: string, instance: string, serviceHost: string, port: number): DiscoveryHit {
+  return { modeIndex: 0, host, port, mdns: { instance, host: serviceHost, port, txt: {} } }
 }
 
 describe('ESPHome mDNS discovery', () => {
-  it('asks for the esphomelib service with a unicast-reply question', () => {
-    const q = mdnsPtrQuery(ESPHOME_MDNS_SERVICE)
-    expect(q.readUInt16BE(4)).toBe(1)
-    expect(q.subarray(q.length - 4).readUInt16BE(2)).toBe(0x8001)
+  it('declares one mDNS browse for the esphomelib service', () => {
+    expect(ESPHOME_DISCOVERY_MODES).toEqual([{ kind: 'mdns', serviceType: '_esphomelib._tcp' }])
   })
 
-  it('reads a board out of an announcement', () => {
-    const boards = boardsFromDnsMessage(
-      announcement('kitchen-plug', 'kitchen-plug.local', 6053, [10, 0, 0, 7]),
-    )
-    expect(boards).toEqual([
-      { host: '10.0.0.7', port: 6053, name: 'kitchen-plug', id: 'kitchen-plug' },
+  it('reads a board out of an mDNS hit', () => {
+    expect(
+      boardsFromHits([
+        boardHit('192.0.2.30', 'kitchen._esphomelib._tcp.local', 'Kitchen.local', 6054),
+      ]),
+    ).toEqual([{ host: '192.0.2.30', port: 6054, name: 'kitchen', id: 'kitchen' }])
+  })
+
+  it('collects each host once and skips a hit without an mDNS record', () => {
+    const hit = boardHit('192.0.2.30', 'kitchen', 'kitchen.local', 6053)
+    expect(
+      boardsFromHits([hit, hit, { modeIndex: 0, host: '192.0.2.31', port: 6053 }]),
+    ).toHaveLength(1)
+  })
+
+  it('turns a hit into a pickable candidate and skips a configured host', () => {
+    const hit = boardHit('192.0.2.30', 'kitchen._esphomelib._tcp.local', 'kitchen.local', 6053)
+    expect(boardCandidates([hit], [])).toEqual([
+      {
+        stableId: 'esphome:kitchen',
+        type: DeviceType.Hub,
+        suggestedName: 'kitchen',
+        prefilledConfig: { host: '192.0.2.30', port: 6053 },
+        selectable: true,
+      },
     ])
-  })
-
-  it('collects each host once across packets and survives garbage', async () => {
-    const one = announcement('a', 'a.local', 6053, [10, 0, 0, 1])
-    const found = await browseBoards(async () => [one, one, Buffer.from([1, 2, 3])])
-    expect(found.map((b) => b.host)).toEqual(['10.0.0.1'])
-  })
-
-  it('returns nothing when the exchange fails', async () => {
-    const found = await browseBoards(async () => {
-      throw new Error('no multicast')
-    })
-    expect(found).toEqual([])
+    expect(boardCandidates([hit], ['192.0.2.30'])).toEqual([])
   })
 
   it('does not propose a board that is already configured', () => {
