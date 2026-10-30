@@ -15,6 +15,9 @@ import {
 } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpContext, ToolTextResult } from './context.js'
+import { registerAddonTools } from './configure-addons.js'
+import { registerCameraTools } from './configure-cameras.js'
+import { registerNotifierTools } from './configure-notifiers.js'
 import { noSessionResult } from './ops-tools.js'
 
 export interface RenameDeviceArgs {
@@ -32,18 +35,24 @@ export function renameDeviceSpec(client: HubClient): GatedToolSpec<RenameDeviceA
     tool: RENAME_DEVICE_TOOL,
     async dryRun(args): Promise<DryRunOutcome> {
       const current = CurrentDeviceSchema.safeParse(
-        await client.call('GET', 'deviceManager.getDevice', { deviceId: args.deviceId }),
+        await client.call('GET', 'deviceManager.getDevice', {
+          deviceId: args.deviceId,
+        }),
       )
       if (!current.success || current.data === null) {
         return {
           confirmable: false,
-          describe: { problem: `device ${args.deviceId} was not found on the hub` },
+          describe: {
+            problem: `device ${args.deviceId} was not found on the hub`,
+          },
         }
       }
       if (current.data.name === args.name) {
         return {
           confirmable: false,
-          describe: { problem: `device ${args.deviceId} is already named "${args.name}"` },
+          describe: {
+            problem: `device ${args.deviceId} is already named "${args.name}"`,
+          },
         }
       }
       return {
@@ -94,4 +103,7 @@ export function registerConfigureTools(server: McpServer, ctx: McpContext): void
     async ({ deviceId, name, confirm_token }): Promise<ToolTextResult> =>
       text(await renameDevice(ctx, { deviceId, name }, confirm_token)),
   )
+  registerAddonTools(server, ctx)
+  registerCameraTools(server, ctx)
+  registerNotifierTools(server, ctx)
 }

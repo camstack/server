@@ -120,6 +120,17 @@ describe('camstack mcp — toolset selection', () => {
       throw new Error('develop must not register')
     })
     expect(await toolNames(client)).toEqual([
+      'configure_addon_install',
+      'configure_addon_uninstall',
+      'configure_addon_update',
+      'configure_addons_search',
+      'configure_camera_add',
+      'configure_camera_discover',
+      'configure_camera_providers',
+      'configure_notification_target_test',
+      'configure_notification_target_upsert',
+      'configure_notification_targets',
+      'configure_notifiers',
       'configure_rename_device',
       ...OPS_TOOLS,
       'setup_about',
