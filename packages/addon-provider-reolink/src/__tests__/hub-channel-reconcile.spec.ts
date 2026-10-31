@@ -26,7 +26,7 @@ describe('planChannelReconciliation', () => {
       { deviceId: 3629, stableId: `${HUB}-cam-952700093ABW14UB`, channel: 1 },
       { deviceId: 3825, stableId: `${HUB}-cam-9527000MSU931AUT` },
     ]
-    expect(planChannelReconciliation(HUB, discovered, children)).toEqual([
+    expect(planChannelReconciliation(discovered, children)).toEqual([
       { deviceId: 3825, stableId: `${HUB}-cam-9527000MSU931AUT`, from: null, to: 3 },
     ])
   })
@@ -35,7 +35,7 @@ describe('planChannelReconciliation', () => {
     const children: readonly AdoptedChildChannel[] = [
       { deviceId: 3825, stableId: `${HUB}-cam-9527000MSU931AUT`, channel: 2 },
     ]
-    expect(planChannelReconciliation(HUB, discovered, children)).toEqual([
+    expect(planChannelReconciliation(discovered, children)).toEqual([
       { deviceId: 3825, stableId: `${HUB}-cam-9527000MSU931AUT`, from: 2, to: 3 },
     ])
   })
@@ -46,11 +46,11 @@ describe('planChannelReconciliation', () => {
       { deviceId: 3629, stableId: `${HUB}-cam-952700093ABW14UB`, channel: 1 },
       { deviceId: 3825, stableId: `${HUB}-cam-9527000MSU931AUT`, channel: 3 },
     ]
-    expect(planChannelReconciliation(HUB, discovered, children)).toEqual([])
+    expect(planChannelReconciliation(discovered, children)).toEqual([])
   })
 
   it('never adopts: a discovered channel with no adopted child is skipped', () => {
-    expect(planChannelReconciliation(HUB, discovered, [])).toEqual([])
+    expect(planChannelReconciliation(discovered, [])).toEqual([])
   })
 
   it('skips a discovered entry the hub could not put on a channel', () => {
@@ -58,13 +58,31 @@ describe('planChannelReconciliation', () => {
       { deviceId: 3825, stableId: `${HUB}-cam-9527000MSU931AUT`, channel: 7 },
     ]
     const noChannel: readonly DiscoveredChannel[] = [{ childNativeId: 'cam-9527000MSU931AUT' }]
-    expect(planChannelReconciliation(HUB, noChannel, children)).toEqual([])
+    expect(planChannelReconciliation(noChannel, children)).toEqual([])
   })
 
-  it('does not match a child belonging to a different hub', () => {
+  /**
+   * D985: a child migrated off a retired Hub device keeps that Hub's stableId prefix, and a
+   * child adopted afterwards carries its integration's. Identity is the camera UID the id
+   * ENDS with — the prefix is whichever hub or integration first adopted it.
+   */
+  it('matches a child by its camera identity whatever prefix its stableId carries', () => {
     const children: readonly AdoptedChildChannel[] = [
-      { deviceId: 999, stableId: `mac-other-cam-9527000MSU931AUT`, channel: 0 },
+      {
+        deviceId: 999,
+        stableId: `integration-1-cam-9527000MSU931AUT`,
+        channel: 0,
+      },
     ]
-    expect(planChannelReconciliation(HUB, discovered, children)).toEqual([])
+    expect(planChannelReconciliation(discovered, children)).toEqual([
+      { deviceId: 999, stableId: `integration-1-cam-9527000MSU931AUT`, from: 0, to: 3 },
+    ])
+  })
+
+  it('does not match a channel-N id against a different camera uid', () => {
+    const children: readonly AdoptedChildChannel[] = [
+      { deviceId: 999, stableId: `${HUB}-channel-3`, channel: 0 },
+    ]
+    expect(planChannelReconciliation(discovered, children)).toEqual([])
   })
 })

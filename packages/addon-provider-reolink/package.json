@@ -43,8 +43,8 @@
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#1ea2e9",
-        "instanceMode": "unique",
-        "mode": "standalone",
+        "instanceMode": "multiple",
+        "mode": "account",
         "execution": {
           "placement": "hub-only",
           "heapProfile": "heavy",
@@ -77,6 +77,9 @@
           },
           {
             "name": "videoclips"
+          },
+          {
+            "name": "device-adoption"
           }
         ]
       }

@@ -6,7 +6,7 @@ date: 2026-09-04
 supersedes:
 applies-to:
   - packages/addon-provider-reolink/src/reolink-discovery-map.ts
-  - packages/addon-provider-reolink/src/child-config-heal.ts
+  - packages/addon-provider-reolink/src/reolink-discovery-map.ts
   - packages/addon-provider-reolink/src/hub-channel-reconcile.ts
   - packages/types/src/capabilities/device-provider.cap.ts
 ---

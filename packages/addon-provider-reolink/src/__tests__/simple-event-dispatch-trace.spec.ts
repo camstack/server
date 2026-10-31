@@ -6,7 +6,7 @@ import { shouldTraceSimpleEventDispatch } from '../simple-event-dispatch-trace.j
 
 /**
  * Hub-child simpleEvents arrive on the parent's Baichuan socket and are
- * forwarded by `ReolinkHub.routeSimpleEvent`. The camera's own
+ * forwarded by `ReolinkHubSession.routeSimpleEvent`. The camera's own
  * `handleSimpleEvent` info line is tagged with the CHILD deviceId — so
  * filtering the Logs tab to the Hub shows nothing, and enabling debug on
  * a hub-child does not wire lib tracing (the child has no socket).
@@ -16,7 +16,7 @@ import { shouldTraceSimpleEventDispatch } from '../simple-event-dispatch-trace.j
  */
 
 const here = dirname(fileURLToPath(import.meta.url))
-const hubSource = readFileSync(resolve(here, '../reolink-hub.ts'), 'utf8')
+const hubSource = readFileSync(resolve(here, '../reolink-hub-session.ts'), 'utf8')
 
 function sliceMethodBody(source: string, methodSignature: string): string {
   const start = source.indexOf(methodSignature)
@@ -70,11 +70,11 @@ describe('shouldTraceSimpleEventDispatch', () => {
   })
 })
 
-describe('ReolinkHub.routeSimpleEvent traces before dispatch', () => {
+describe('ReolinkHubSession.routeSimpleEvent traces before dispatch', () => {
   it('logs on the hub logger before calling the child handler', () => {
-    const body = sliceMethodBody(hubSource, 'private routeSimpleEvent(')
+    const body = sliceMethodBody(hubSource, 'routeSimpleEvent(event: ReolinkSimpleEvent)')
     expect(body).toContain('shouldTraceSimpleEventDispatch')
-    const logIdx = body.indexOf('Reolink Hub: simpleEvent dispatch')
+    const logIdx = body.indexOf('Reolink hub: simpleEvent dispatch')
     const handleIdx = body.indexOf('child.handleSimpleEvent')
     expect(logIdx).toBeGreaterThan(-1)
     expect(handleIdx).toBeGreaterThan(-1)
@@ -82,17 +82,17 @@ describe('ReolinkHub.routeSimpleEvent traces before dispatch', () => {
   })
 })
 
-describe('ReolinkHub.routeSimpleEvent hands the child its motion sensor', () => {
+describe('ReolinkHubSession.routeSimpleEvent hands the child its motion sensor', () => {
   it('takes MD/PIR before the async child lookup and passes it to the child', () => {
-    const body = sliceMethodBody(hubSource, 'private routeSimpleEvent(')
-    const takeIdx = body.indexOf('this.motionSensors.take(channel)')
-    const lookupIdx = body.indexOf('this.ctx.devices')
+    const body = sliceMethodBody(hubSource, 'routeSimpleEvent(event: ReolinkSimpleEvent)')
+    const takeIdx = body.indexOf('this.#motionSensors.take(channel)')
+    const lookupIdx = body.indexOf('this.#deps.children()')
     expect(takeIdx).toBeGreaterThan(-1)
     expect(takeIdx).toBeLessThan(lookupIdx)
-    expect(body).toContain('child.handleSimpleEvent(ev, motionSensor)')
+    expect(body).toContain('child.handleSimpleEvent(event, motionSensor)')
   })
 
   it('observes the raw client event ahead of the API’s own mapping', () => {
-    expect(hubSource).toContain("api.client.prependListener('event', this.observeRawEventBound)")
+    expect(hubSource).toContain("api.client.prependListener('event', this.#rawEventBound)")
   })
 })

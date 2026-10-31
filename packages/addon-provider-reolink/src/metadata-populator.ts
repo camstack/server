@@ -1,5 +1,5 @@
 /**
- * Hardware-metadata populator shared by `ReolinkCamera` + `ReolinkHub`.
+ * Hardware-metadata populator shared by `ReolinkCamera`.
  *
  * Pulls every host-level identification probe the lib exposes:
  *   - `getInfo` (cmd 80 host / cmd 318 channel) — model, hw/fw versions,

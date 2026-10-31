@@ -129,7 +129,8 @@ export const reolinkCameraSchema = z.object({
   host: z.string().describe('Camera IP or hostname'),
   port: z.number().default(9000).describe('Baichuan port (default 9000)'),
   username: z.string().default('admin').describe('Username'),
-  password: z.string().describe('Password').meta({ secret: true }),
+  /** Empty for a camera adopted from an NVR / Home Hub: it borrows its integration's session. */
+  password: z.string().default('').describe('Password').meta({ secret: true }),
   // NOTE: `channels` removed in the architectural cleanup pass —
   // channel layout is fully determined by `deviceCache.channelCount`
   // (single-channel default 1) plus the lib's `buildVideoStreamOptions()`
@@ -158,7 +159,7 @@ export const reolinkCameraSchema = z.object({
    * Channel index for cameras that live behind a Hub / NVR. When
    * present (>= 0), the camera class:
    *   1. Skips its own Baichuan login — `ensureApi()` delegates to
-   *      the parent Hub's already-warm socket via `parent.getApi()`.
+   *      the NVR session's already-warm socket.
    *   2. Routes per-channel cmd_ids (snapshot / motion / setEnc /
    *      status / reboot / ...) at this channel index instead of
    *      the default 0. Returned by `this.getChannel()`.
@@ -170,6 +171,8 @@ export const reolinkCameraSchema = z.object({
    * fallback, matching the pre-Hub behavior verbatim.
    */
   channel: z.number().int().nonnegative().optional(),
+  /** The NVR / Home Hub integration (D985) this camera was adopted from; absent = standalone. */
+  integrationId: z.string().optional(),
   /**
    * Cached probe results: autodetect-derived class (Slice 15) +
    * abilities/streams probe (Slice 4). NOT to be confused with the
@@ -884,54 +887,3 @@ export const reolinkCameraSchema = z.object({
 })
 
 export type ReolinkCameraConfig = z.infer<typeof reolinkCameraSchema>
-
-/**
- * Hub / NVR config schema. The Hub holds the long-lived Baichuan
- * control + event channel (one socket per device, not per child) and
- * acts as the discovery source for the channels populated behind it.
- * Streaming and per-channel settings live on the child `ReolinkCamera`
- * instances; this schema only carries connection + debug + the cached
- * channels summary so we can re-render the Discovery panel offline.
- *
- * The NVR device's own settings scope and fields, just
- * adapted to the Zod conventions used elsewhere in this package.
- */
-export const reolinkHubSchema = z.object({
-  host: z.string().describe('Hub IP or hostname'),
-  port: z.number().default(9000).describe('Baichuan port (default 9000)'),
-  username: z.string().default('admin'),
-  password: z.string().meta({ secret: true }),
-  /** Hubs are TCP-only on supported firmwares — kept here for symmetry. */
-  transport: z.enum(['tcp', 'udp']).default('tcp'),
-  /** UID is unused on Hubs (no UDP discovery), but persisted for symmetry. */
-  uid: z.string().optional(),
-  /** Lib-side socket trace categories. Same flag set as the camera schema. */
-  debugGeneral: z.boolean().default(false),
-  debugSocketLogs: z.array(ReolinkSocketDebugFlagSchema).default([]),
-  /**
-   * Cached probe results. `channelCount` is authoritative for the
-   * Discovery panel's "X channels" badge; `model` is what autodetect
-   * read from `getInfo` (e.g. "Reolink Home Hub").
-   */
-  deviceCache: z
-    .object({
-      deviceType: z.literal('nvr').optional(),
-      channelCount: z.number().int().positive().optional(),
-      model: z.string().optional(),
-      /** Globally-unique Reolink serial; `getInfo` cmd 80. Stable id
-       *  fallback after uid. Hub firmware sometimes returns a sentinel
-       *  `00000000000000` — `generateStableId`'s isMeaningfulIdentifier
-       *  filters that out. */
-      serialNumber: z.string().optional(),
-      /** MAC address from `getNetworkInfo` / autodetect's
-       *  `hostNetworkInfo.mac`. Stable id fallback after serial. */
-      mac: z.string().optional(),
-      hardwareVersion: z.string().optional(),
-      firmwareVersion: z.string().optional(),
-      probedAt: z.number().optional(),
-    })
-    .loose()
-    .optional(),
-})
-
-export type ReolinkHubConfig = z.infer<typeof reolinkHubSchema>

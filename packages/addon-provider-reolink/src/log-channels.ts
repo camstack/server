@@ -20,7 +20,7 @@
  * from `CLAUDE.md` — paid for with a 22% thumbnail gap and a 3-hour media
  * blackout diagnosed by hand — finally paying out.
  *
- * The hub's own dispatch lines are a different matter: `reolink-hub.ts` puts
+ * The hub's own dispatch lines are a different matter: `reolink-hub-session.ts` puts
  * the CHILD's id in `meta` and carries the HUB's id in `tags`, so those lines
  * are not per-camera filterable. Neither channel below claims them.
  */

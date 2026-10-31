@@ -24,7 +24,8 @@ export interface ChannelRepair {
  * Match adopted children to the hub's own channel list by IDENTITY, then report the
  * ones whose persisted `channel` is missing or wrong.
  *
- * A child's stableId is `${hubStableId}-${childNativeId}`, and `childNativeId` is built
+ * A child's stableId ENDS with `-${childNativeId}` (the prefix is the integration it was
+ * adopted into, or the retired Hub's stableId for a migrated child), and `childNativeId` is built
  * from the camera's UID — so identity survives a channel move, while `channel` does not.
  * The hub is the authority on which slot a UID currently occupies.
  *
@@ -38,17 +39,13 @@ export interface ChannelRepair {
  * this repairs what exists, it never adopts.
  */
 export function planChannelReconciliation(
-  hubStableId: string,
   discovered: readonly DiscoveredChannel[],
   children: readonly AdoptedChildChannel[],
 ): readonly ChannelRepair[] {
-  const byStableId = new Map<string, AdoptedChildChannel>()
-  for (const child of children) byStableId.set(child.stableId, child)
-
   const repairs: ChannelRepair[] = []
   for (const entry of discovered) {
     if (typeof entry.rtspChannel !== 'number') continue
-    const child = byStableId.get(`${hubStableId}-${entry.childNativeId}`)
+    const child = children.find((c) => c.stableId.endsWith(`-${entry.childNativeId}`))
     if (child === undefined) continue
     if (child.channel === entry.rtspChannel) continue
     repairs.push({

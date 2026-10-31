@@ -39,7 +39,7 @@ import {
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cameraSource = readFileSync(resolve(here, '../reolink-camera.ts'), 'utf8')
-const hubSource = readFileSync(resolve(here, '../reolink-hub.ts'), 'utf8')
+const hubSource = readFileSync(resolve(here, '../reolink-hub-session.ts'), 'utf8')
 
 function sliceMethodBody(source: string, methodSignature: string): string {
   const start = source.indexOf(methodSignature)
@@ -235,35 +235,23 @@ describe('sleep-state hysteresis is asymmetric', () => {
 })
 
 describe('hub → child sleep/battery propagation', () => {
-  it('simpleEvent routing is rebuilt from the device registry, not the CGI list', () => {
-    const body = sliceMethodBody(hubSource, 'private async refreshDiscoveryFromCamera()')
-    const registryIdx = body.indexOf('this.loadAdoptedChildrenByChannel()')
-    const mapIdx = body.indexOf('this.channelToDeviceId.set(channel, deviceId)')
-    const cgiIdx = body.indexOf('api.getNvrChannelsSummary(')
-    expect(registryIdx).toBeGreaterThan(-1)
-    expect(mapIdx).toBeGreaterThan(-1)
-    // The routing map must be rebuilt BEFORE (and independently of) the
-    // CGI call: a deep-asleep battery channel drops out of the summary,
-    // and deriving the map from it erased that channel's routing —
-    // silently discarding its awake/sleeping/battery/motion pushes.
-    expect(mapIdx).toBeLessThan(cgiIdx)
-    expect(body).not.toMatch(/for \(const entry of discovered\)[\s\S]{0,200}channelToDeviceId\.set/)
-    // …and it is MERGED, never cleared (D173). Clearing first made an EMPTY
-    // registry read — which is what the registry answers while the addon is
-    // still restoring its devices — indistinguishable from "the operator
-    // un-adopted everything", and `routeSimpleEvent` then dropped every push
-    // for the hub's own battery cameras for the rest of the process's life.
-    expect(body).not.toContain('this.channelToDeviceId.clear()')
+  it('simpleEvent routing never depends on the CGI list or on a registry read', () => {
+    const body = sliceMethodBody(hubSource, 'routeSimpleEvent(event: ReolinkSimpleEvent)')
+    // A deep-asleep battery channel drops out of the summary: routing must come from the
+    // children that attached themselves, so its pushes are never silently discarded (D173).
+    expect(body).toContain('this.#deps.children()')
+    expect(body).not.toContain('getNvrChannelsSummary')
   })
 
   it('pushes the NVR-reported sleep state into adopted battery children', () => {
-    const body = sliceMethodBody(hubSource, 'private async refreshDiscoveryFromCamera()')
-    expect(body).toMatch(/this\.reconcileAdoptedChildSleepState\(discovered\)/)
-    const reconcile = sliceMethodBody(hubSource, 'private async reconcileAdoptedChildSleepState(')
+    const body = sliceMethodBody(hubSource, 'async #refresh()')
+    expect(body).toMatch(/this\.reconcileChildSleepState\(channels\)/)
+    const reconcile = sliceMethodBody(hubSource, 'private reconcileChildSleepState(')
     expect(reconcile).toMatch(/applyHubSleepState\(/)
     // `offline` / `unknown` carry no sleep information — only these two
     // statuses may drive the slice.
-    expect(reconcile).toMatch(/e\.status === 'sleeping' \|\| e\.status === 'online'/)
+    expect(reconcile).toMatch(/entry\.status === 'sleeping'/)
+    expect(reconcile).toMatch(/entry\.status !== 'sleeping' && entry\.status !== 'online'/)
   })
 })
 

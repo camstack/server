@@ -3,7 +3,7 @@ import type { ConfigUISchema, IScopedLogger } from '@camstack/types'
 
 /**
  * Shared "Sessions" diagnostic helper used by both `ReolinkCamera` and
- * `ReolinkHub`. The snapshot shape + the form-builder block are
+ * `ReolinkHubSession`. The snapshot shape + the form-builder block are
  * identical — only the api source differs (camera owns its own api;
  * hub-children borrow the parent's api). Centralising here keeps
  * future tweaks (extra columns, new lib-exposed fields) consistent

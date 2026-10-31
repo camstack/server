@@ -9,7 +9,7 @@ import type { BatteryStatus } from '@camstack/types'
  *  - `adapterStatus` — is the power CONNECTED? The firmware sends 0/1/2
  *    (none · DC adapter · solar panel) and the hub boundary
  *    translates it into `'none' | 'dc' | 'solarPanel'` (`mapHubChargeStatus` and
- *    `mapHubAdapterStatus` in `reolink-hub.ts`), because the vocabulary of the
+ *    `mapHubAdapterStatus` in `reolink-hub-session.ts`), because the vocabulary of the
  *    standalone path is already strings.
  *  - `chargeStatus` — what is the CELL doing? 0 stopped · 1 charging ·
  *    2 fully charged.

@@ -291,7 +291,7 @@ export const RAW_READ_CATALOG: Readonly<Record<RawReadSlice, RawReadCatalogEntry
    * Both vocabularies carry `adapterStatus` next to `chargeStatus`, which
    * is why this slice exists: the provider keeps only the latter, and
    * whether `adapterStatus` MOVES was previously observable exactly once
-   * per hub process (`ReolinkHub.batteryShapeLogged`). The answer is
+   * per hub process (`ReolinkHubSession`). The answer is
    * returned as the firmware gave it, under a `readVia` that names the path
    * — NOT normalised into a shared shape. The paths do not carry the same
    * fields (`voltage`/`lowPower` on the camera read, `channelsReported` and

@@ -6,7 +6,7 @@ date: 2026-08-15
 supersedes:
 applies-to:
   - packages/addon-provider-reolink/src/reolink-camera.ts
-  - packages/addon-provider-reolink/src/reolink-hub.ts
+  - packages/addon-provider-reolink/src/reolink-hub-session.ts
   - packages/addon-pipeline/src/stream-broker/battery-wake-on-play.ts
   - packages/types/src/device/battery-presence.ts
   - packages/types/src/capabilities/stream-catalog.cap.ts

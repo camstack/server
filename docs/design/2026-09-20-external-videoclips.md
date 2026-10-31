@@ -6,7 +6,7 @@ covers:
   - packages/addon-provider-reolink/src/clips/**
   - packages/addon-pipeline/src/recorder/addon/videoclips-provider.ts
   - packages/addon-provider-reolink/src/reolink-camera.ts
-  - packages/addon-provider-reolink/src/reolink-hub.ts
+  - packages/addon-provider-reolink/src/reolink-hub-session.ts
   - packages/addon-provider-reolink/src/raw-read.ts
   - packages/addon-export-hap/src/hksv/recording-delegate.ts
   - packages/addon-export-hap/src/hksv/fragment-source.ts

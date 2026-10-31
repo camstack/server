@@ -61,6 +61,47 @@ export function findOnboardedMatch(
   return onboarded.find((o) => o.host !== undefined && o.host === discovered.host)
 }
 
+/** Baichuan control port of an NVR / Home Hub (the scan only ever reports the HTTP/ONVIF one). */
+const HUB_BAICHUAN_PORT = 9000
+
+/**
+ * `true` for a model string that names an NVR or a Home Hub: a device that fronts channels
+ * rather than being one camera. Such a device is offered as an INTEGRATION to set up (D985), never
+ * as a camera to add.
+ */
+export function looksLikeReolinkHub(model: string | undefined): boolean {
+  if (model === undefined) return false
+  return /\b(nvr|rln\d*|home\s*hub|hub)\b/i.test(model)
+}
+
+/**
+ * The stableId of an NVR / Home Hub candidate. UID first (it survives a DHCP lease change), host
+ * second. The boot migration derives the SAME id for an old Hub device, so the integration it
+ * creates hides this candidate through `originStableId`.
+ */
+export function reolinkHubStableId(identity: {
+  readonly uid?: string | undefined
+  readonly host: string
+}): string {
+  const uid = identity.uid?.trim() ?? ''
+  if (uid !== '') return `reolink-hub-uid-${slugifyReolinkHost(uid)}`
+  return `reolink-hub-host-${slugifyReolinkHost(identity.host)}`
+}
+
+/** What a hub integration already names, so a scan does not offer the same NVR twice. */
+export interface HubIntegrationIdentity {
+  readonly host?: string
+  readonly uid?: string
+}
+
+function isKnownHub(d: ReolinkDiscoveredHost, known: readonly HubIntegrationIdentity[]): boolean {
+  return known.some(
+    (k) =>
+      (k.uid !== undefined && k.uid !== '' && k.uid === d.uid) ||
+      (k.host !== undefined && k.host !== '' && k.host === d.host),
+  )
+}
+
 /**
  * Map discovered Reolink hosts to adoption {@link DiscoveryCandidate}s, de-duplicated by host (the
  * same camera can answer on more than one discovery method — UDP broadcast, ONVIF, HTTP scan). The
@@ -83,6 +124,7 @@ export function mapReolinkDiscoveryToCandidates(
   devices: readonly ReolinkDiscoveredHost[],
   credentials: ReolinkDiscoveryCredentials,
   onboarded: readonly OnboardedReolinkDevice[] = [],
+  hubIntegrations: readonly HubIntegrationIdentity[] = [],
 ): readonly DiscoveryCandidate[] {
   const username = credentials.username?.trim() ?? ''
   const password = credentials.password ?? ''
@@ -90,24 +132,49 @@ export function mapReolinkDiscoveryToCandidates(
   const byHost = new Map<string, ReolinkDiscoveredHost>()
   for (const d of devices) if (!byHost.has(d.host)) byHost.set(d.host, d)
 
-  return [...byHost.values()].map((d) => {
+  return [...byHost.values()].flatMap((d): DiscoveryCandidate[] => {
     const displayName = d.name ?? d.model ?? d.host
-    const match = findOnboardedMatch(d, onboarded)
-    return {
-      stableId: `host-${slugifyReolinkHost(d.host)}`,
-      type: DeviceType.Camera,
-      suggestedName: displayName,
-      prefilledConfig: {
-        name: displayName,
-        host: d.host,
-        transport: 'auto',
-        ...(d.uid ? { uid: d.uid } : {}),
-        ...(username ? { username } : {}),
-        ...(password ? { password } : {}),
-      },
-      ...(match !== undefined
-        ? { alreadyOnboarded: true, onboardedDeviceId: match.deviceId, onboardedName: match.name }
-        : {}),
+    if (looksLikeReolinkHub(d.model)) {
+      // An NVR / Home Hub is its own integration (D985): offered as one to SET UP, with the
+      // Baichuan port prefilled (never the scan's ONVIF one), and hidden once one exists.
+      if (isKnownHub(d, hubIntegrations)) return []
+      return [
+        {
+          stableId: reolinkHubStableId(d),
+          type: DeviceType.Gateway,
+          suggestedName: displayName,
+          prefilledConfig: {
+            host: d.host,
+            port: HUB_BAICHUAN_PORT,
+            ...(d.uid ? { uid: d.uid } : {}),
+            ...(username ? { username } : {}),
+          },
+          setupIntegration: true,
+        },
+      ]
     }
+    const match = findOnboardedMatch(d, onboarded)
+    return [
+      {
+        stableId: `host-${slugifyReolinkHost(d.host)}`,
+        type: DeviceType.Camera,
+        suggestedName: displayName,
+        prefilledConfig: {
+          name: displayName,
+          host: d.host,
+          transport: 'auto',
+          ...(d.uid ? { uid: d.uid } : {}),
+          ...(username ? { username } : {}),
+          ...(password ? { password } : {}),
+        },
+        ...(match !== undefined
+          ? {
+              alreadyOnboarded: true,
+              onboardedDeviceId: match.deviceId,
+              onboardedName: match.name,
+            }
+          : {}),
+      },
+    ]
   })
 }

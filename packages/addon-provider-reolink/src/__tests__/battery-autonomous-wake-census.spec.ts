@@ -36,7 +36,7 @@ import { describe, expect, it } from 'vitest'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cameraSource = readFileSync(resolve(here, '../reolink-camera.ts'), 'utf8')
-const hubSource = readFileSync(resolve(here, '../reolink-hub.ts'), 'utf8')
+const hubSource = readFileSync(resolve(here, '../reolink-hub-session.ts'), 'utf8')
 
 function sliceMethodBody(source: string, methodSignature: string): string {
   const start = source.indexOf(methodSignature)
@@ -215,19 +215,14 @@ describe('passive contact is the only evidence of reachability we take', () => {
   })
 })
 
-describe('the hub routing map is merge-only (a quiet registry is not an un-adoption)', () => {
-  it('refreshDiscoveryFromCamera never clears the channel map', () => {
-    const body = sliceMethodBody(hubSource, 'private async refreshDiscoveryFromCamera()')
-    expect(body).not.toContain('this.channelToDeviceId.clear()')
-    expect(body).toContain('this.channelToDeviceId.set(channel, deviceId)')
+describe('the hub routes by the children that attached themselves (no registry scan to clear)', () => {
+  it('the session keeps no channel map of its own to clear on a quiet registry', () => {
+    expect(hubSource).not.toContain('channelToDeviceId')
+    expect(hubSource).not.toContain('loadAdoptedChildrenByChannel')
   })
 
-  it('alreadyAdopted is read from the merged map, not from this refresh’s registry read', () => {
-    const body = sliceMethodBody(hubSource, 'private async refreshDiscoveryFromCamera()')
-    expect(body).toContain('this.channelToDeviceId.get(d.channel)')
-  })
-
-  it('only an explicit unregistration removes a mapping', () => {
-    expect(hubSource).toContain('this.channelToDeviceId.delete(ch)')
+  it('routing reads the live children at push time', () => {
+    const body = sliceMethodBody(hubSource, 'routeSimpleEvent(event: ReolinkSimpleEvent)')
+    expect(body).toContain('this.#deps.children().find(')
   })
 })

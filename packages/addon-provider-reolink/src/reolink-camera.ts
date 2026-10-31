@@ -90,6 +90,11 @@ import {
   type BatteryRefreshOutcome,
   resolveBatteryRefreshIntervalMs,
 } from './battery-hourly-refresh.js'
+import {
+  type HubChildHandle,
+  type HubSessionHandle,
+  reolinkHubSessions,
+} from './reolink-hub-session.js'
 import { buildBatteryRefreshDeviceSection } from './battery-refresh-settings.js'
 import { refreshSnapshotCacheOnce } from './battery-snapshot-refresh.js'
 import { resolveCameraUid } from './clips/clip-addressing.js'
@@ -458,7 +463,7 @@ interface ActiveStream {
  * tab's Refresh button (`_refreshSessions` patch sentinel).
  */
 // Sessions diagnostic types + helpers live in `sessions-snapshot.ts`
-// (shared with `ReolinkHub`).
+// (shared with `ReolinkHubSession`).
 
 // `ReolinkProbeFlags` and the feature derivation live in `device-features.ts`
 // so the "which features does this camera have" rule is testable without
@@ -992,7 +997,80 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * it; standalone autodetect never touches it.
    */
   private isHubChild(): boolean {
-    return this.parentDeviceId !== null && typeof this.config.get('channel') === 'number'
+    return this.hubIntegrationId() !== null && typeof this.config.get('channel') === 'number'
+  }
+
+  /** The integration (one NVR / Home Hub, D985) this camera was adopted from, or `null`. */
+  private hubIntegrationId(): string | null {
+    const id = this.config.get('integrationId')
+    return typeof id === 'string' && id.length > 0 ? id : null
+  }
+
+  /**
+   * The live session of this camera's NVR / Home Hub integration, or `null` for a standalone
+   * camera. A synchronous registry read: the session is a fact the addon states, never a lookup
+   * of a parent device.
+   */
+  private hubSession(): HubSessionHandle | null {
+    const integrationId = this.hubIntegrationId()
+    if (integrationId === null || !this.isHubChild()) return null
+    return reolinkHubSessions.get(integrationId)
+  }
+
+  /**
+   * What the session sees of this camera: getters over the live device, so a renamed or
+   * re-channelled camera is never described by a stale copy. Attached on activation, detached
+   * on removal.
+   */
+  private readonly hubChildHandle: HubChildHandle = this.buildHubChildHandle()
+
+  private buildHubChildHandle(): HubChildHandle {
+    const camera = this
+    return {
+      get id() {
+        return camera.id
+      },
+      get stableId() {
+        return camera.stableId
+      },
+      get name() {
+        return camera.name
+      },
+      type: DeviceType.Camera,
+      get channel() {
+        const channel = camera.config.get('channel')
+        return typeof channel === 'number' ? channel : undefined
+      },
+      get online() {
+        return camera.online
+      },
+      get debugGeneral() {
+        return camera.config.get('debugGeneral') === true
+      },
+      get debugSocketFlags() {
+        return camera.config.get('debugSocketLogs') ?? []
+      },
+      markOnline: (online) => camera.markOnline(online),
+      repairChannel: async (channel) => {
+        await camera.config.setAll({ channel })
+      },
+      handleSimpleEvent: (event, motionSensor) => camera.handleSimpleEvent(event, motionSensor),
+      applyHubSleepState: (sleeping) => camera.applyHubSleepState(sleeping),
+      applyHubBatteryInfo: (info) => camera.applyHubBatteryInfo(info),
+    }
+  }
+
+  /** Tell the NVR session this camera exists, so a push for its channel is routable at once. */
+  private attachToHubSession(): void {
+    const integrationId = this.hubIntegrationId()
+    if (integrationId !== null && this.isHubChild()) {
+      reolinkHubSessions.attach(integrationId, this.hubChildHandle)
+    }
+  }
+
+  private detachFromHubSession(): void {
+    const integrationId = this.hubIntegrationId()
+    if (integrationId !== null) reolinkHubSessions.detach(integrationId, this.hubChildHandle)
   }
 
   /**
@@ -1015,22 +1093,6 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   get emailPushChannel(): number {
     return this.getChannel()
   }
-
-  /**
-   * Resolve the parent Hub via the addon's device manager. Cached
-   * lazily — the lookup is async but cheap, and the parent device
-   * doesn't change over the camera's lifetime. Returns `null` for
-   * standalone cameras.
-   */
-  private async getParentHub(): Promise<ReolinkHubLike | null> {
-    if (!this.isHubChild()) return null
-    if (this.cachedParentHub !== undefined) return this.cachedParentHub
-    const all = await this.ctx.devices.getAll()
-    const parent = all.find((d: { id: number }) => d.id === this.parentDeviceId)
-    this.cachedParentHub = isHubLike(parent) ? parent : null
-    return this.cachedParentHub
-  }
-  private cachedParentHub: ReolinkHubLike | null | undefined = undefined
 
   // ── Lifecycle ────────────────────────────────────────────────────────
 
@@ -1238,6 +1300,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * parent settings snapshot. Skipped when the device is soft-disabled.
    */
   override async onActivate(): Promise<void> {
+    this.attachToHubSession()
     if (this.disabled) {
       this.ctx.logger.info('Reolink camera disabled — skipping activation snapshot')
       return
@@ -2646,7 +2709,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       this.registerBatteryIfSupported()
       // Arm the periodic battery-cam refresh here so hub-child
       // battery cams (which never go through `adoptApi`/`login` —
-      // they borrow the parent Hub's socket) still get the same
+      // they borrow the NVR session's socket) still get the same
       // 60-minute force-refresh as standalones. Idempotent: the
       // standalone paths re-call this after login and it no-ops
       // (timer already armed).
@@ -2830,7 +2893,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           const CONFIRM_TIMEOUT_MS = 10_000
           const CONFIRM_POLL_MS = 1_000
           const confirmDeadline = Date.now() + CONFIRM_TIMEOUT_MS
-          const parent = await this.getParentHub()
+          const parent = this.hubSession()
           let confirmed = false
           // True only when the camera is OBSERVED awake — a merely reachable
           // hub child (its wake happens on the consumer's dial) must not flip
@@ -2986,7 +3049,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     //
     // Steady-state updates arrive via the firmware's `battery` simpleEvent
     // push (handled in `handleSimpleEvent`), routed for hub children by
-    // `ReolinkHub.routeSimpleEvent`, and the cold-start value comes from the
+    // `ReolinkHubSession.routeSimpleEvent`, and the cold-start value comes from the
     // restored slice — no poll, no wake.
     void this.refreshBatteryFromApi('register')
   }
@@ -3008,7 +3071,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
     // Resolve the api through `ensureApi()` rather than reading
     // `this.api` directly — hub-adopted children never own a socket
-    // (they delegate to the parent Hub's long-lived connection), so
+    // (they delegate to the NVR session's long-lived connection), so
     // `this.api` stays null for them and the previous early-return
     // silently skipped every refresh. `ensureApi()` returns the
     // parent's api in that case (no extra wake, no extra login).
@@ -3098,7 +3161,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
   /**
    * Hub-driven sleep reconcile. The NVR's `getNvrChannelsSummary`
-   * carries a per-channel `sleeping` flag that the parent Hub already
+   * carries a per-channel `sleeping` flag that the NVR session already
    * pulls on every discovery refresh — firmware truth, obtained over
    * the Hub's own mains-powered socket, costing the battery channel
    * nothing. Before this the flag died inside the Hub's
@@ -3107,7 +3170,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * transition (or whose channel dropped out of the routing map while
    * deep-asleep) kept serving a stale value indefinitely.
    *
-   * No-op for non-battery children. Called by `ReolinkHub` after each
+   * No-op for non-battery children. Called by `ReolinkHubSession` after each
    * successful discovery refresh.
    */
   applyHubSleepState(sleeping: boolean): void {
@@ -3163,7 +3226,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * leak a timer. Costs the camera nothing — the summary is the hub's own
    * mains-powered read.
    */
-  private async watchHubChildAwake(parent: ReolinkHubLike): Promise<void> {
+  private async watchHubChildAwake(parent: HubSessionHandle): Promise<void> {
     const deadline = Date.now() + 45_000
     while (Date.now() < deadline) {
       await sleep(5_000)
@@ -7167,19 +7230,14 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * the child being awake to build.
    */
   private async buildHubRelayDescriptors(): Promise<CamStreamDescriptor[]> {
-    if (!this.isHubChild()) return []
-    const parentId = this.parentDeviceId
-    if (parentId === null) return []
-    const all = await this.ctx.devices.getAll()
-    const parent = all.find((d) => d.id === parentId)
-    const cfg = parent?.config.values as
-      | { host?: string; username?: string; password?: string; port?: number }
-      | undefined
-    const host = cfg?.host
-    if (typeof host !== 'string' || host.length === 0) return []
-    const user = encodeURIComponent(String(cfg?.username ?? ''))
-    const password = encodeURIComponent(String(cfg?.password ?? ''))
-    const port = typeof cfg?.port === 'number' && cfg.port > 0 ? cfg.port : 554
+    const session = this.hubSession()
+    if (session === null) return []
+    const endpoint = session.relayEndpoint()
+    const host = endpoint.host
+    if (host.length === 0) return []
+    const user = encodeURIComponent(endpoint.username)
+    const password = encodeURIComponent(endpoint.password)
+    const port = endpoint.port
     const channel = this.getChannel()
     const channelCount = this.channelCount()
     // Reolink Hub relay scheme (probed live): h264Preview_0{channel+1}_{profile}.
@@ -7280,10 +7338,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // perform, and the re-login is the existing `ensureApi`.
       //
       // Hub children are EXCLUDED on purpose. Their session belongs to the
-      // parent Hub and is shared by every child on it — tearing it down
+      // NVR session and is shared by every child on it — tearing it down
       // because ONE child's GetEnc failed is a fleet-scale action taken on a
       // single-device signal, the exact shape this whole change exists to
-      // remove. The Hub owns its own reconnect (`ReolinkHub.scheduleReconnect`).
+      // remove. The session owns its own reconnect (`ReolinkHubSession`'s reconnect).
       //
       // No wake concern: we are past the battery-sleep gate above, so the
       // camera is awake and a second login costs it nothing.
@@ -7682,6 +7740,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   }
 
   override async removeDevice(): Promise<void> {
+    this.detachFromHubSession()
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
@@ -11007,17 +11066,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // borrow its api and inherit credentials, channel routing
     // (`this.getChannel()`), and event subscription (the Hub
     // dispatches simpleEvents into our `handleSimpleEvent` directly,
-    // see `ReolinkHub.routeSimpleEvent`). Skipping login means
+    // see `ReolinkHubSession.routeSimpleEvent`). Skipping login means
     // battery cams under a Hub never get woken by an "online" check
     // — exactly the behavior the user asked for.
     if (this.isHubChild()) {
-      const parent = await this.getParentHub()
-      if (!parent) {
+      const session = this.hubSession()
+      if (session === null) {
         throw new Error(
-          `ReolinkCamera ${this.id}: parent Hub ${this.parentDeviceId} not registered yet`,
+          `ReolinkCamera ${this.id}: NVR integration ${this.hubIntegrationId()} has no live session yet`,
         )
       }
-      return parent.getApi()
+      return session.getApi()
     }
 
     if (this.api) return this.api
@@ -11277,7 +11336,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   /**
    * Public entry point for simpleEvent dispatch. Used both by the
    * camera's own subscription (`handleSimpleEventBound`) when the
-   * camera holds its own Baichuan socket AND by `ReolinkHub.routeSimpleEvent`
+   * camera holds its own Baichuan socket AND by `ReolinkHubSession.routeSimpleEvent`
    * when the camera lives under a Hub and inherits the parent's
    * single subscription.
    */
@@ -11795,7 +11854,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // hub-adopted children, route via their channel index so
     // `getInfo cmd 318(ch=N)` returns the per-channel identity rather
     // than the hub's host data.
-    const channel = this.parentDeviceId !== null ? this.getChannel() : undefined
+    const channel = this.isHubChild() ? this.getChannel() : undefined
     await populateReolinkMetadata(api, channel, {
       id: this.id,
       ctx: this.ctx,
@@ -12009,25 +12068,6 @@ function buildEncStreamPatch(
   if (patch.width !== undefined) out.width = patch.width
   if (patch.height !== undefined) out.height = patch.height
   return out
-}
-
-// ── Hub coupling helpers ───────────────────────────────────────────────
-//
-// Structural type for the parent Hub: kept here (instead of imported
-// from `reolink-hub.ts`) to avoid the camera ↔ hub circular import.
-// The Hub class IS structurally compatible — it exposes `id`, `getApi()`,
-// and the deviceClass marker on its prototype. The duck-test below
-// catches both the live class and the Moleculer-deserialized facade.
-
-export interface ReolinkHubLike {
-  readonly id: number
-  getApi(): Promise<ReolinkBaichuanApi>
-}
-
-function isHubLike(d: unknown): d is ReolinkHubLike {
-  if (typeof d !== 'object' || d === null) return false
-  const obj = d as { getApi?: unknown; id?: unknown }
-  return typeof obj.id === 'number' && typeof obj.getApi === 'function'
 }
 
 /**

@@ -152,7 +152,7 @@ Singleton or collection providers, addressed without a device.
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |
 | `decoder` | 2 | — | — | — | — | `decoder-nodeav` |
-| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-rademacher` `provider-tuya` `provider-velux` `provider-wyze` |
+| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-tuya` `provider-velux` `provider-wyze` |
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 12 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |

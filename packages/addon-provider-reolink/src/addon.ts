@@ -10,22 +10,27 @@ import type {
   ConfigUISchema,
   CreateDeviceSpec,
   DeviceConstructor,
+  DeviceRestoreReport,
   DeviceSummary,
   DiscoveryCandidate,
   DiscoveryMode,
   DurableState,
   FieldProbeResult,
   IDevice,
+  IDeviceAdoptionProvider,
   IScopedLogger,
   LogChannelsProviderHandle,
   ProviderRegistration,
   SavedDevice,
+  SystemEvent,
 } from '@camstack/types'
 import {
   BaseDeviceProvider,
   clipEventLabelDepsFromApi,
   createLogChannelsProvider,
   DeviceType,
+  deviceAdoptionCapability,
+  errMsg,
   EventCategory,
   failureContributionCapability,
   logChannelsCapability,
@@ -49,7 +54,6 @@ import { type ReolinkDebugActions, reolinkDebugActions } from './debug-actions.j
 import { intercomFailureReport } from './intercom-failure-report.js'
 import type { RawReadInput, RawReadResult } from './raw-read.js'
 import { REOLINK_ADDON_ID, ReolinkCamera, reolinkCameraSchema } from './reolink-camera.js'
-import { ReolinkHub } from './reolink-hub.js'
 // Importing the module is what RUNS the declarations. Never drop it as an
 // "unused import": the channels vanish from the cluster if you do.
 import './log-channels.js'
@@ -59,7 +63,6 @@ import {
   buildBaichuanWebhookSettingsSchema,
 } from './baichuan-webhook-schema.js'
 import { ReolinkBaichuanWebhookServer } from './baichuan-webhook-server.js'
-import { findParentRow, planChildConfigHeal } from './child-config-heal.js'
 import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
 import { buildEmailPushSettingsSchema, EMAIL_PUSH_SECTION_IDS } from './email-push-schema.js'
 import { ReolinkEmailPushServer } from './email-push-server.js'
@@ -75,7 +78,16 @@ import {
   scanReolinkSubnets,
   subnetsFromParams,
 } from './reolink-subnet-scan.js'
-import { reolinkHubSchema } from './schema.js'
+import { buildHubConnectionSections } from './hub-connection.js'
+import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
+import { createReolinkHubManager, type ReolinkHubManager } from './reolink-hub-manager.js'
+import {
+  type HubMigrationPorts,
+  type PendingHubRetirement,
+  planHubMigration,
+  retireMigratedHubs,
+} from './reolink-hub-migration.js'
+import { reolinkHubSessions } from './reolink-hub-session.js'
 
 /**
  * Adapt a camstack scoped logger to the lib's `Logger` shape (just
@@ -314,7 +326,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   protected readonly providerName = 'Reolink'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Camera]: ReolinkCamera,
-    [DeviceType.Hub]: ReolinkHub,
   }
 
   /**
@@ -331,6 +342,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
    * the addon context is available; started/stopped with the provider
    * lifecycle and restarted on settings change.
    */
+  private hubManager: ReolinkHubManager | null = null
   private emailPushServer: ReolinkEmailPushServer | undefined
   private baichuanWebhookServer: ReolinkBaichuanWebhookServer | undefined
 
@@ -345,43 +357,12 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   /**
    * Reduce this addon's live devices to the identities a network scan can produce, so
    * {@link mapReolinkDiscoveryToCandidates} can recognise a device it already owns.
-   *
-   * Hubs are included: the incident this exists for was a Home Hub re-offered by a scan and
-   * re-added, which overwrote its Baichuan port with the ONVIF port the scan reported.
    */
-  /**
-   * Re-inherit the parent's connection fields into a hub-adopted child whose persisted
-   * blob lost them, so the child can be restored at all.
-   *
-   * `adoptDiscoveredChild` copies `host`/`port`/`username`/`password`/`transport` down
-   * from the Hub at adoption. Nothing re-applied them afterwards, so a child whose blob
-   * was emptied failed `reolinkCameraSchema` on every restore — on fields a child never
-   * dials, because a child with a parent uses `parent.api`. Only ABSENT fields are
-   * filled; a child that deliberately differs keeps what it has.
-   */
-  protected override async healSavedConfig(
-    saved: SavedDevice,
-    allSaved: readonly SavedDevice[],
-  ): Promise<void> {
-    const parent = findParentRow(saved, allSaved)
-    if (parent === undefined) return
-    const { patch, missingKeys } = planChildConfigHeal(saved.config, parent.config)
-    if (missingKeys.length === 0) return
-    await this.ctx.kernel.devices?.persistInitialConfig(saved.stableId, {
-      ...saved.config,
-      ...patch,
-    })
-    this.ctx.logger.warn('Reolink child config healed from its parent before restore', {
-      tags: { deviceId: saved.id, stableId: saved.stableId },
-      meta: { parentDeviceId: parent.id, restoredKeys: [...missingKeys] },
-    })
-  }
-
   private listOnboardedForDiscovery(): readonly OnboardedReolinkDevice[] {
     const all = this.ctx.kernel.deviceRegistry?.getAll() ?? []
     const onboarded: OnboardedReolinkDevice[] = []
     for (const d of all) {
-      if (!(d instanceof ReolinkCamera) && !(d instanceof ReolinkHub)) continue
+      if (!(d instanceof ReolinkCamera)) continue
       const values = d.config.values
       const host = typeof values.host === 'string' && values.host !== '' ? values.host : undefined
       const uid = typeof values.uid === 'string' && values.uid !== '' ? values.uid : undefined
@@ -580,7 +561,185 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     await this.baichuanWebhookServer?.stop().catch(() => {
       /* best-effort */
     })
+    await this.hubManager?.shutdown().catch((err: unknown) => {
+      this.ctx.logger.warn('Reolink NVR sessions did not close cleanly', {
+        meta: { error: errMsg(err) },
+      })
+    })
+    this.hubManager = null
+    reolinkHubSessions.clear()
     await this.autodetectCache.dispose()
+  }
+
+  // ── NVR / Home Hub integrations (D985) ───────────────────────────────
+
+  /**
+   * Make the hub sessions match the live integration list: one per enabled integration with a
+   * host. Idempotent; runs at boot, after a migration and on every lifecycle event. When any
+   * integration's settings cannot be read the whole pass is skipped — an unreadable list must
+   * never close a healthy session.
+   */
+  private async reconcileIntegrations(): Promise<void> {
+    const manager = this.hubManager
+    if (manager === null) return
+    try {
+      const all = await this.ctx.api.integrations.list.query()
+      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
+      const withSettings: {
+        id: string
+        name: string
+        settings: Record<string, unknown>
+      }[] = []
+      for (const integration of mine) {
+        const settings = await this.ctx.api.integrations.getSettings.query({
+          id: integration.id,
+        })
+        withSettings.push({
+          id: integration.id,
+          name: integration.name,
+          settings,
+        })
+      }
+      await manager.reconcile(withSettings)
+    } catch (err) {
+      this.ctx.logger.warn('Reolink integration reconcile failed — sessions left as they were', {
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
+  private subscribeIntegrationLifecycle(): void {
+    const handler = (event: SystemEvent): void => {
+      const addonId = event.data['addonId']
+      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+      void this.reconcileIntegrations()
+    }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
+  }
+
+  private buildAdoptionProvider(): IDeviceAdoptionProvider {
+    return buildReolinkAdoptionProvider({
+      getSession: (integrationId) => this.hubManager?.get(integrationId) ?? null,
+      listIntegrations: () => this.hubManager?.list() ?? [],
+      listAdopted: async () => {
+        const reg = this.ctx.kernel.deviceRegistry
+        if (!reg) return []
+        const out: { id: number; config: Record<string, unknown> }[] = []
+        for (const d of reg.getAllForAddon(this.addonId)) {
+          if (d instanceof ReolinkCamera) out.push({ id: d.id, config: { ...d.config.values } })
+        }
+        return out
+      },
+      adoptCamera: async ({ integrationId, channel, connection, name }) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) throw new Error('reolink adopt: kernel.devices unavailable')
+        const config = {
+          host: connection.host,
+          port: connection.port,
+          username: connection.username,
+          transport: connection.transport,
+          ...(channel.uid ? { uid: channel.uid } : {}),
+          channel: channel.channel,
+          integrationId,
+          deviceCache: {
+            deviceType: 'camera' as const,
+            channelCount: 1,
+            ...(channel.model ? { model: channel.model } : {}),
+            hasBattery: channel.isBattery,
+            hasDoorbell: channel.isDoorbell,
+            // NOT `probedAt`: the discovery snapshot has no hasPtz / hasIntercom / ...; setting
+            // it would stop `ensureFeaturesProbed()` from running the live probe.
+          },
+        }
+        const stableId = `${integrationId}-${channel.childNativeId}`
+        const device = await devices.create(stableId, ReolinkCamera, config, null, {
+          type: DeviceType.Camera,
+          name,
+          integrationId,
+        })
+        const children = await devices.getChildren(device.id)
+        return {
+          deviceId: device.id,
+          accessoryDeviceIds: children.map((c) => c.id),
+        }
+      },
+      removeDevice: async (id) => {
+        await this.ctx.kernel.devices?.remove(id)
+      },
+      findDeviceConfig: async (id) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) return null
+        return devices.loadConfig(id).catch((): null => null)
+      },
+      logger: this.ctx.logger,
+    })
+  }
+
+  private buildMigrationPorts(): HubMigrationPorts {
+    const devices = this.ctx.kernel.devices
+    if (!devices) throw new Error('reolink hub migration: kernel.devices unavailable')
+    return {
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      listIntegrations: async () =>
+        (await this.ctx.api.integrations.list.query()).map((i) => ({
+          id: i.id,
+          addonId: i.addonId,
+          name: i.name,
+          info: i.info,
+          ...(i.originStableId !== undefined ? { originStableId: i.originStableId } : {}),
+        })),
+      createIntegration: async (input) => {
+        const created = await this.ctx.api.integrations.create.mutate({
+          addonId: input.addonId,
+          name: input.name,
+          info: { ...input.info },
+          originStableId: input.originStableId,
+          settings: { ...input.settings },
+          secretKeys: [...input.secretKeys],
+        })
+        return { id: created.id }
+      },
+      setIntegrationId: async (deviceId, integrationId) => {
+        await this.ctx.api.deviceManager.setIntegrationId.mutate({
+          deviceId,
+          integrationId,
+        })
+      },
+      persistConfig: async (stableId, config) => {
+        await devices.persistInitialConfig(stableId, config)
+      },
+      childIdsOf: async (parentDeviceId) =>
+        (await this.ctx.api.deviceManager.getChildren.query({ parentDeviceId })).map((c) => c.id),
+      removeDevice: async (deviceId) => {
+        await this.ctx.api.deviceManager.remove.mutate({ deviceId })
+      },
+    }
+  }
+
+  /**
+   * Boot migration of the old Hub devices into integrations (D985), then the normal restore.
+   * Order matters: the integration's session must exist BEFORE its cameras restore (a camera
+   * borrows the session's socket), and the Hub device is retired only AFTER every child came back
+   * un-parented — removing a parent cascades into its children.
+   */
+  protected override async onRestoreDevices(
+    savedDevices: readonly SavedDevice[],
+  ): Promise<DeviceRestoreReport | void> {
+    let rows = savedDevices
+    let retirements: readonly PendingHubRetirement[] = []
+    if (savedDevices.some((row) => row.type === DeviceType.Hub)) {
+      const ports = this.buildMigrationPorts()
+      const plan = await planHubMigration(savedDevices, ports)
+      rows = plan.rows
+      retirements = plan.retirements
+      if (retirements.length > 0) await this.reconcileIntegrations()
+    }
+    const report = await super.onRestoreDevices(rows)
+    if (retirements.length > 0) await retireMigratedHubs(retirements, this.buildMigrationPorts())
+    return report
   }
 
   /**
@@ -622,6 +781,8 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     const recommendedHost = listLanHosts()[0] ?? '127.0.0.1'
     return {
       sections: [
+        // Only an integration that IS one NVR / Home Hub fills these in (D985).
+        ...buildHubConnectionSections().sections,
         ...buildEmailPushSettingsSchema(recommendedHost).sections,
         ...buildBaichuanWebhookSettingsSchema(recommendedHost).sections,
         // The clip-catalog refresh DEFAULT. Per-camera overrides live on the
@@ -834,6 +995,26 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // are the reliable trigger; this catches any that are already live.
     this.listReolinkCameras()
 
+    // NVR / Home Hub integrations (D985): one session per integration, rebuilt from the live
+    // integration list at boot and on every lifecycle event, and the adoption surface for the
+    // channels behind each.
+    this.hubManager = createReolinkHubManager(
+      {
+        logger: this.ctx.logger,
+        onConnectionChange: (integrationId, online) =>
+          this.ctx.logger.info(`Reolink NVR socket ${online ? 'up' : 'down'}`, {
+            meta: { integrationId },
+          }),
+      },
+      reolinkHubSessions,
+    )
+    await this.reconcileIntegrations()
+    this.subscribeIntegrationLifecycle()
+    regs.push({
+      capability: deviceAdoptionCapability,
+      provider: this.buildAdoptionProvider(),
+    })
+
     return regs
   }
 
@@ -937,9 +1118,8 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   /**
    * Every Reolink CAMERA this process owns, with its cascade resolved.
    *
-   * Cameras only — the Home Hub (639) is `type: hub` and never binds
-   * `videoclips` (`deviceTypes: [Camera]`); its catalog IS its children's and
-   * is refreshed per child, on its one session. Accessories are not cameras.
+   * Cameras only — an NVR / Home Hub is an integration, not a device; its catalog IS its
+   * children's and is refreshed per child, on its one session. Accessories are not cameras.
    */
   private clipRefreshTargets(): readonly ClipRefreshTarget[] {
     const globalMinutes = this.clipRefreshGlobalStore[CLIP_CATALOG_REFRESH_MINUTES_KEY]
@@ -1155,7 +1335,23 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // Devices this provider already owns are MARKED, not offered: a re-adopt rewrites the config
     // from scan-derived values, and that is how a Home Hub's Baichuan port became its ONVIF port.
     const onboarded = this.listOnboardedForDiscovery()
-    const candidates = mapReolinkDiscoveryToCandidates(devices, { username, password }, onboarded)
+    const knownHubs = (this.hubManager?.list() ?? []).flatMap((id) => {
+      const connection = this.hubManager?.get(id)?.connection
+      return connection === undefined
+        ? []
+        : [
+            {
+              host: connection.host,
+              ...(connection.uid ? { uid: connection.uid } : {}),
+            },
+          ]
+    })
+    const candidates = mapReolinkDiscoveryToCandidates(
+      devices,
+      { username, password },
+      onboarded,
+      knownHubs,
+    )
     const owned = candidates.filter((c) => c.alreadyOnboarded === true).length
     if (owned > 0) {
       this.ctx.logger.info('Reolink discovery: candidates already owned by this provider', {
@@ -1179,11 +1375,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   // ── Creation ─────────────────────────────────────────────────────────
 
   protected async onGetCreationSchema(type: DeviceType): Promise<ConfigUISchema | null> {
-    // Camera + Hub share the same creation form: same fields
-    // (host/port/credentials/UID/transport/debug). The autodetect
-    // probe inside `onCreateDevice` is what decides which kind we
-    // actually instantiate from the form values.
-    if (type !== DeviceType.Camera && type !== DeviceType.Hub) return null
+    if (type !== DeviceType.Camera) return null
     return buildCreationFormSchema()
   }
 
@@ -1191,7 +1383,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     type: DeviceType,
     config: Record<string, unknown>,
   ): Promise<CreateDeviceSpec> {
-    if (type !== DeviceType.Camera && type !== DeviceType.Hub) {
+    if (type !== DeviceType.Camera) {
       throw new Error(`Reolink provider does not support device type: ${type}`)
     }
 
@@ -1288,47 +1480,19 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       throw new Error('autodetect resolved the device but did not return a host address')
     }
 
-    // ── NVR / Hub branch ───────────────────────────────────────────────
-    // Autodetect saw a multi-channel device. Persist as DeviceType.Hub
-    // (ReolinkHub class) regardless of the operator's type pick — the
-    // Hub class is the only one that knows how to manage child
-    // discovery + channel routing. The form is shared so both type
-    // selections land here without UI duplication.
+    // An NVR / Home Hub is its own integration (D985), never a camera. Refuse by name instead
+    // of creating one camera locked on channel 0 and hiding the other channels.
     if (detection.type === 'nvr') {
-      const hubParsed = reolinkHubSchema.parse({
-        host: persistHost,
-        port: inputs.port,
-        username: inputs.username,
-        password: inputs.password,
-        transport,
-        ...(detectedUid ? { uid: detectedUid } : {}),
-        deviceCache: {
-          deviceType: 'nvr' as const,
-          channelCount,
-          ...(detection.deviceInfo?.type ? { model: detection.deviceInfo.type } : {}),
-          ...(detection.deviceInfo?.serialNumber
-            ? { serialNumber: detection.deviceInfo.serialNumber }
-            : {}),
-          ...(detection.deviceInfo?.firmwareVersion
-            ? { firmwareVersion: detection.deviceInfo.firmwareVersion }
-            : {}),
-          ...(detection.deviceInfo?.hardwareVersion
-            ? { hardwareVersion: detection.deviceInfo.hardwareVersion }
-            : {}),
-          ...(detection.hostNetworkInfo?.mac ? { mac: detection.hostNetworkInfo.mac } : {}),
-          probedAt: Date.now(),
-        },
-      })
-      const detectedApi = detection.api
-      return {
-        meta: { type: DeviceType.Hub, name },
-        config: hubParsed,
-        onAfterCreate: async (device: IDevice) => {
-          if (device instanceof ReolinkHub) {
-            device.adoptApi(detectedApi)
-          }
-        },
+      try {
+        await detection.api.close({ reason: 'nvr-needs-an-integration' })
+      } catch {
+        /* ignore */
       }
+      throw userError(
+        'reolink.nvr-needs-integration',
+        undefined,
+        'This is an NVR / Home Hub. Add it as its own Reolink integration; its channels are then adopted as cameras.',
+      )
     }
 
     const parsed = reolinkCameraSchema.parse({
@@ -1362,7 +1526,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         // `hasPtz` / `hasIntercom` / etc) locks out hub-children
         // forever — their `ensureApi()` short-circuits to the
         // parent's socket so the per-login probe path never fires,
-        // and the Hub's adopt flow's `ensureFeaturesProbed()` then
+        // and the NVR adopt flow's `ensureFeaturesProbed()` then
         // early-returns. Only `probeAndPersistFeatures` should
         // write `probedAt`, and only on a successful probe.
       },
@@ -1420,8 +1584,8 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   // the authoritative channel count and survives socket flap because
   // it's HTTP, not Baichuan. When the lib classified as
   // `camera` / `battery-cam` but CGI reports >1 channel, override
-  // to NVR so the device is created as a Hub with discovery instead
-  // of as a single-stream camera locked on channel 0.
+  // to NVR so it is refused (an NVR is an integration, D985) instead
+  // of being created as a single-stream camera locked on channel 0.
   //
   // Used by both `onCreateDevice` (Save path) AND `testCreationField`
   // (Test button) so the modal preview matches the Save outcome.

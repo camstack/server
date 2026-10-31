@@ -32,16 +32,39 @@ intent arrives. Only the snapshot wrapper sees `force`.
 | `resolveCapOptions` / `persistCapOptions` (`deviceCache.capOptionsSnapshot`) | a device-details page visit must read cache, not dial |
 | `sleepGatedRefresh` | a refresh that declines rather than wakes |
 | `capWarmers` / `warmCapSlicesOnWake` / `warmSnapshotOnWake` | gating reads without warming leaves every state `null` |
-| `reconcileAdoptedChildSleepState` (in `reolink-hub.ts`) | under an NVR the NVR already knows — no camera poll, no mail server |
+| `reconcileChildSleepState` (in `reolink-hub-session.ts`) | under an NVR the NVR already knows — no camera poll, no mail server |
 | the attribution log in `ensureApi` | prints the caller stack whenever a sleeping battery cam logs in; this is how the last wake was found |
 
 ## Standalone vs under an NVR
 
+An NVR or Home Hub is its **own integration** (D985), never a device. The addon is
+`instanceMode: multiple`, `mode: account`: the default integration keeps the
+standalone cameras, and each NVR integration carries `host` / `port` / `username`
+and a keychain-backed `password` (`hub-connection.ts`). One session per
+integration (`reolink-hub-session.ts`, owned by `reolink-hub-manager.ts` and
+reconciled from `ctx.api.integrations`) owns the one Baichuan socket, its backoff,
+the 60 s channel reconcile and the simpleEvent routing. A camera adopted from it
+is a TOP-LEVEL camera stamped with the `integrationId` and a `channel`; it reaches
+the session through `reolinkHubSessions` (a synchronous registry read) and
+attaches itself on activation, so routing never depends on a registry scan.
+
 A connected NVR reports sleeping and motion for every adopted child. So for
 NVR-adopted cameras: take the state from the NVR, do not poll the camera, and do
-not require an SMTP path. `channelToDeviceId` is rebuilt from
-`loadAdoptedChildrenByChannel()` **before and independently of** the CGI call, so
-reconciliation works even when CGI is unavailable.
+not require an SMTP path. A failed summary read keeps the last list and flags
+nobody offline.
+
+- **Adoption** is a `device-adoption` provider over the session's channels.
+- **Discovery** offers each NVR / Home Hub as a `setupIntegration` candidate whose
+  `stableId` is `reolinkHubStableId` (uid, else host), so `originStableId` hides it
+  once the integration exists.
+- **Migration** (`reolink-hub-migration.ts`, run from `onRestoreDevices`): an old
+  Hub device becomes an integration named after it, its secret moved through the
+  keychain; its children keep their deviceIds, are re-stamped and un-parented, and
+  the Hub is tombstoned only when the DB shows no child under it. A hub with a
+  locked or empty password is left untouched. Idempotent: the integration records
+  `migratedFromHubDeviceId`.
+- A hub-integration form also shows the addon's global sections (email, webhook,
+  clips) — the account wizard renders the whole `globalSettingsSchema`.
 
 ## Passive contact, and where a standalone camera gets none
 
