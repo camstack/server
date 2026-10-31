@@ -99,16 +99,20 @@ jobs:
           - pipeline-2
           - post-analysis-1
           - post-analysis-2
+          - post-analysis-3
           - admin-ui-1
           - admin-ui-2
           - admin-ui-3
-          - ui-library
+          - ui-library-1
+          - ui-library-2
           - server-1
           - server-2
           - server-3
           - core
           - light-a
           - light-b
+          - light-c
+          - light-d
           - static
     steps:
       - name: Checkout code
@@ -134,8 +138,14 @@ jobs:
       # the restored file onto this machine's id before nx opens it.
       # `NX_MAX_CACHE_SIZE` bounds the directory; the exact cache key is not
       # rewritten until the lockfile or nx.json changes.
+      #
+      # Restored by every job, SAVED by `static` alone (the same split as
+      # node_modules below). With the combined action all 20 jobs tarred the
+      # directory in their post step (~25 s each, on the job's wall clock) to
+      # race for one key that one of them wins.
       - name: Restore the Nx cache
-        uses: actions/cache@v4
+        id: nx-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             .nx/cache
@@ -444,9 +454,17 @@ jobs:
         if: matrix.shard == 'static'
         run: ./scripts/test-python-pool.sh
 
-      # actions/cache saves `.nx` when the key misses. An exact hit is not
-      # rewritten, so unchanged packages stay warm and a changed package
-      # rebuilds until the lockfile or nx.json changes the key.
+      # `.nx` is saved when the key misses. An exact hit is not rewritten, so
+      # unchanged packages stay warm and a changed package rebuilds until the
+      # lockfile or nx.json changes the key. Only this job saves it.
+      - name: Save the Nx cache
+        if: success() && matrix.shard == 'static' && steps.nx-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data
+          key: nx-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json', 'nx.json') }}
 
   # A red nightly used to notify nobody (2026-10-27). On a failed or cancelled
   # scheduled run this opens ONE tracking issue (or comments on the open one);

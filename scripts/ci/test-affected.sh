@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --list-shards)
-      echo "system-1 system-2 pipeline-1 pipeline-2 post-analysis-1 post-analysis-2 admin-ui-1 admin-ui-2 admin-ui-3 ui-library server-1 server-2 server-3 core light-a light-b"
+      echo "system-1 system-2 pipeline-1 pipeline-2 post-analysis-1 post-analysis-2 post-analysis-3 admin-ui-1 admin-ui-2 admin-ui-3 ui-library-1 ui-library-2 server-1 server-2 server-3 core light-a light-b light-c light-d"
       exit 0
       ;;
     --all)
@@ -87,7 +87,7 @@ const { execFileSync } = require('node:child_process')
 // therefore SPLIT with vitest's own `--shard=i/n` (files, deterministic) into n
 // jobs, which is what brings a framework-wide push (everything affected) under
 // the budget: wall clock = job setup + the slowest slice (~3 min). Every other
-// project is light and lands in one of two groups by a hash of its NAME —
+// project is light and lands in one of four groups (see LIGHT_PINS) —
 // stable whatever the affected set is, so a project can never fall between
 // shards. `vitest` is the shard `v` ("i/n") handed to the package's own test
 // script after `--`; an unsplit shard has none.
@@ -96,26 +96,47 @@ const SHARDS = {
   'system-2': { p: ['@camstack/system'], v: '2/2' },
   'pipeline-1': { p: ['@camstack/addon-pipeline'], v: '1/2' },
   'pipeline-2': { p: ['@camstack/addon-pipeline'], v: '2/2' },
-  'post-analysis-1': { p: ['@camstack/addon-post-analysis'], v: '1/2' },
-  'post-analysis-2': { p: ['@camstack/addon-post-analysis'], v: '2/2' },
+  'post-analysis-1': { p: ['@camstack/addon-post-analysis'], v: '1/3' },
+  'post-analysis-2': { p: ['@camstack/addon-post-analysis'], v: '2/3' },
+  'post-analysis-3': { p: ['@camstack/addon-post-analysis'], v: '3/3' },
   'admin-ui-1': { p: ['@camstack/addon-admin-ui'], v: '1/3' },
   'admin-ui-2': { p: ['@camstack/addon-admin-ui'], v: '2/3' },
   'admin-ui-3': { p: ['@camstack/addon-admin-ui'], v: '3/3' },
-  'ui-library': { p: ['@camstack/ui-library'] },
+  'ui-library-1': { p: ['@camstack/ui-library'], v: '1/2' },
+  'ui-library-2': { p: ['@camstack/ui-library'], v: '2/2' },
   'server-1': { p: ['@camstack/server'], v: '1/3' },
   'server-2': { p: ['@camstack/server'], v: '2/3' },
   'server-3': { p: ['@camstack/server'], v: '3/3' },
   core: { p: ['@camstack/types', '@camstack/addon-pipeline-orchestrator'] },
 }
 const HEAVY_SHARDS = Object.keys(SHARDS)
-const LIGHT_SHARDS = ['light-a', 'light-b']
+const LIGHT_SHARDS = ['light-a', 'light-b', 'light-c', 'light-d']
+// A hash of the name alone left one light shard at 352 s and the other at 130 s
+// (2026-10-31, run 41218965725): a handful of addons carry most of the time.
+// Those are placed by hand, longest first onto the least loaded shard; the
+// rest still land by hash of their NAME, so a project the table does not know
+// can never fall between shards. Weights are the vitest Duration of that run.
+const LIGHT_PINS = {
+  '@camstack/addon-export-alexa': 0,
+  '@camstack/addon-training': 1,
+  '@camstack/addon-provider-homeassistant': 2,
+  '@camstack/addon-model-studio': 3,
+  '@camstack/addon-provider-reolink': 0,
+  '@camstack/addon-export-hap': 1,
+  '@camstack/addon-ai': 2,
+  '@camstack/addon-provider-velux': 3,
+  '@camstack/addon-provider-bosch': 1,
+  '@camstack/addon-provider-dreame': 0,
+  '@camstack/addon-osd-manager': 2,
+  '@camstack/addon-provider-homematic': 3,
+}
 const heavy = new Set(Object.values(SHARDS).flatMap((s) => s.p))
 const hash = (name) => {
   let h = 0
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0
   return h
 }
-const shardsOf = (p) => (heavy.has(p) ? HEAVY_SHARDS.filter((s) => SHARDS[s].p.includes(p)) : [LIGHT_SHARDS[hash(p) % LIGHT_SHARDS.length]])
+const shardsOf = (p) => (heavy.has(p) ? HEAVY_SHARDS.filter((s) => SHARDS[s].p.includes(p)) : [LIGHT_SHARDS[p in LIGHT_PINS ? LIGHT_PINS[p] : hash(p) % LIGHT_SHARDS.length]])
 const wanted = process.env.SHARD
 if (wanted !== 'all' && !HEAVY_SHARDS.includes(wanted) && !LIGHT_SHARDS.includes(wanted)) {
   console.error(`test-affected: unknown shard "${wanted}"`)
