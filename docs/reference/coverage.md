@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**224 units · 7564 source files · 211 units claimed by at least one document (7524 files).**
+**224 units · 7565 source files · 211 units claimed by at least one document (7525 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -95,11 +95,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-mqtt-ha` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md` | 2026-10-26 |
 | `packages/addon-provider-wyze` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-terminal` | 17 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `design/2026-07-26-terminal-session-design.md`, `decisions/adr-0321-a-polled-fleet-read-joins-the-shared-slim-key-and-a-config-bearing-read-can-never-be-slim.md`, 2 ADRs | 2026-10-03 |
+| `packages/cli/src/commands` | 17 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0825-dev-server-uploads-reach-agents-through-hub-propagate-not-host-copy.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +1 more | — |
 | `packages/system/src/auth` | 17 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md`, +15 more | 2026-10-21 |
 | `packages/addon-agent-ui` | 16 | `admin-ui` | `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0841-the-agent-ui-lists-addons-and-their-runners-as-one-joined-list.md` | — |
 | `packages/addon-post-analysis/src/embedding-encoder` | 16 | `recognition` | `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more | 2026-10-01 |
 | `packages/addon-remote-storage` | 16 | `storage` | `decisions/adr-0384-never-ran-must-never-look-like-ran.md`, `decisions/adr-0298-a-storage-kind-declares-how-it-reaches-its-bytes-and-a-provider-that-cannot-is-refused.md` | — |
-| `packages/cli/src/commands` | 16 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0825-dev-server-uploads-reach-agents-through-hub-propagate-not-host-copy.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +1 more | — |
 | `packages/types/src/automation` | 16 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +4 more | — |
 | `packages/addon-provider-petkit` | 15 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-training/src/orchestrator` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md`, `decisions/adr-0824-a-training-job-selects-frames-live-and-addresses-a-provider-by-entry-id.md`, +2 more | 2026-10-14 |

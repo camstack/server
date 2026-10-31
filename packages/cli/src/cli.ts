@@ -14,6 +14,7 @@ import {
   legacyLoginFlagWarnings,
 } from './commands/login-legacy-flags.js'
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth.js'
+import { loginWithTokenFile } from './commands/login-token-file.js'
 import {
   loadSession,
   MissingCredentialsError,
@@ -152,6 +153,10 @@ function buildCommands(): readonly CommandSpec[] {
           '  <host>                 The hub, same as --server: 192.0.2.20, hub.local:4443,',
           '                         https://hub.local, [fe80::1]:4443. Port defaults to 4443, scheme is',
           '                         https (http:// is refused). Example: camstack login 192.0.2.20',
+          '',
+          '      --token-file <path>  No TTY / automation: read a token from a file readable only by you',
+          '                           (chmod 600; a looser file is refused), check it against the hub and',
+          '                           cache the session. A token is never taken from argv or the environment.',
           '',
           'Default flow (no flags): finds the hub from what the LAN announces over mDNS',
           '  plus the hubs this machine knows (saved sessions, $CAMSTACK_HUB_URL),',
@@ -420,6 +425,7 @@ async function runLogin(args: readonly string[]): Promise<void> {
       username: { type: 'string', short: 'u' },
       password: { type: 'string', short: 'p' },
       'token-name': { type: 'string' },
+      'token-file': { type: 'string' },
       // Removed (D895), still parsed so an old script does not abort: each one
       // present prints a one-line warning and the login goes on.
       ...LEGACY_LOGIN_FLAG_OPTIONS,
@@ -444,6 +450,23 @@ async function runLogin(args: readonly string[]): Promise<void> {
     console.warn('--namespace is ignored: hubs are found over mDNS, not the mesh channel.')
   }
   for (const warning of legacyLoginFlagWarnings(parsed.values)) console.warn(warning)
+  const tokenFile = stringOpt(parsed.values, 'token-file')
+  if (tokenFile !== undefined) {
+    // Non-interactive: the token comes from a 0600 file, never argv or env.
+    try {
+      const done = await loginWithTokenFile({
+        tokenFile,
+        ...(explicitServer ? { server: explicitServer } : {}),
+      })
+      console.log(
+        `[camstack] Logged in to ${done.server} as ${done.username} (${done.isAdmin ? 'admin' : 'not admin'}). Session cached at ${done.sessionFile}`,
+      )
+    } catch (err) {
+      console.error(`[camstack] ${err instanceof Error ? err.message : String(err)}`)
+      process.exitCode = 1
+    }
+    return
+  }
   // Resolution chain:
   //   --server / $CAMSTACK_SERVER   → silent, use as-is
   //   neither                       → mDNS + known hubs; one is taken, several get a picker
