@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.154] - 2026-10-31
+
 ### Changed
 
 - The adoption modal lists the HomePilot gateway beside its roller shutters instead of nesting them under it.
