@@ -11,10 +11,8 @@ import { dreameChildSchema } from '../../packages/addon-provider-dreame/src/devi
 import { ecowittGatewaySchema } from '../../packages/addon-provider-ecowitt/src/config.ts'
 import { hikvisionCameraSchema } from '../../packages/addon-provider-hikvision/src/schema.ts'
 import { rademacherConnectionSchema } from '../../packages/addon-provider-rademacher/src/config.ts'
-import {
-  reolinkCameraSchema,
-  reolinkHubSchema,
-} from '../../packages/addon-provider-reolink/src/schema.ts'
+import { reolinkHubConnectionSchema } from '../../packages/addon-provider-reolink/src/hub-connection.ts'
+import { reolinkCameraSchema } from '../../packages/addon-provider-reolink/src/schema.ts'
 import { tuyaDeviceConfigSchema } from '../../packages/addon-provider-tuya/src/devices/tuya-base-device.ts'
 import { unifiControllerSchema } from '../../packages/addon-provider-unifi/src/config.ts'
 import { unraidHubSchema } from '../../packages/addon-provider-unraid/src/config.ts'
@@ -31,7 +29,7 @@ const cases: ReadonlyArray<readonly [string, z.ZodType, readonly string[]]> = [
   ['tuya device', tuyaDeviceConfigSchema, ['localKey']],
   ['dreame child', dreameChildSchema, ['navigationAccessCode']],
   ['reolink camera', reolinkCameraSchema, ['password']],
-  ['reolink hub', reolinkHubSchema, ['password']],
+  ['reolink hub integration', reolinkHubConnectionSchema, ['password']],
   ['hikvision camera', hikvisionCameraSchema, ['password']],
   ['amcrest camera', amcrestCameraSchema, ['password']],
 ]
