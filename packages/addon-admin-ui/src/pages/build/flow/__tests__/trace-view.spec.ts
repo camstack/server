@@ -1,6 +1,13 @@
 import type { AutomationRunTrace } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { stepToneAt, traceDetails, traceView, whenOutcomes } from '../trace-view'
+import {
+  runSummary,
+  stepToneAt,
+  traceDetails,
+  traceView,
+  valueInUnit,
+  whenRunView,
+} from '../trace-view'
 
 const BASE: AutomationRunTrace = {
   runId: 'r1',
@@ -144,6 +151,7 @@ describe('traceDetails', () => {
           { name: 'grams', value: { kind: 'value', text: '30' } },
           { name: 'label', value: { kind: 'value', text: 'dog' } },
         ],
+        devices: [],
       },
     ])
   })
@@ -170,17 +178,108 @@ describe('traceDetails', () => {
   })
 })
 
-describe('whenOutcomes', () => {
-  it('maps every when path to its outcome', () => {
-    const map = whenOutcomes({
+describe('whenRunView', () => {
+  const run: AutomationRunTrace = {
+    ...BASE,
+    trigger: {
+      ...BASE.trigger,
+      path: 'when.0.0',
+      vars: { className: 'animal', score: 0.91 },
+    },
+    conditions: [
+      { path: 'when', kind: 'all', outcome: 'fail', reason: '' },
+      { path: 'when.0', kind: 'any', outcome: 'pass', reason: '' },
+      { path: 'when.0.0', kind: 'detection', outcome: 'pass', reason: 'animal seen' },
+      { path: 'when.1', kind: 'device-is', outcome: 'fail', reason: 'weight below 10 g' },
+      { path: 'when.2', kind: 'device-is', outcome: 'not-evaluated', reason: '' },
+    ],
+  }
+
+  it('joins every row AND sub-block to its own node, by path', () => {
+    const view = whenRunView(run)
+    expect(view.nodes.get('when.0')?.outcome).toBe('pass')
+    expect(view.nodes.get('when.1')?.outcome).toBe('fail')
+    expect(view.nodes.get('when.2')?.outcome).toBe('not-evaluated')
+    expect(view.nodes.get('when.9')).toBeUndefined()
+  })
+
+  it('names the row the event fired on and carries the trigger vars', () => {
+    const view = whenRunView(run)
+    expect(view.triggerPath).toBe('when.0.0')
+    expect(view.vars.map((v) => v.name)).toEqual(['className', 'score'])
+  })
+
+  it('a trace written before the single tree has no trigger row to attach to', () => {
+    const view = whenRunView({ ...run, trigger: { ...run.trigger, path: undefined } })
+    expect(view.triggerPath).toBeNull()
+  })
+})
+
+describe('valueInUnit', () => {
+  it('shows a stored base-unit number in the unit the row picked', () => {
+    // 0.01 kg stored; the row says "10 g".
+    expect(valueInUnit(0.01, 'kg', 'g')).toEqual({ kind: 'value', text: '10 g' })
+    expect(valueInUnit(0.04, 'kg', 'g')).toEqual({ kind: 'value', text: '40 g' })
+  })
+
+  it('keeps the raw number when the row picked no unit or the units cannot convert', () => {
+    expect(valueInUnit(0.04, 'kg', undefined)).toEqual({ kind: 'value', text: '0.04' })
+    expect(valueInUnit(5, 'kg', '°C')).toEqual({ kind: 'value', text: '5' })
+  })
+
+  it('an unknown reading stays unknown, never 0', () => {
+    expect(valueInUnit(null, 'kg', 'g')).toEqual({ kind: 'unknown' })
+  })
+})
+
+describe('runSummary', () => {
+  it('counts the steps that ran and names a failure', () => {
+    const summary = runSummary({
       ...BASE,
-      conditions: [
-        { path: 'when', kind: 'all', outcome: 'fail', reason: '' },
-        { path: 'when.0.1', kind: 'device-is', outcome: 'pass', reason: '' },
+      outcome: 'failed',
+      steps: [
+        { path: 'actions.0', kind: 'cap', outcome: 'ok' },
+        { path: 'actions.1', kind: 'cap', outcome: 'error', message: 'Feeder offline' },
+        { path: 'actions.2', kind: 'wait', outcome: 'not-run' },
       ],
     })
-    expect(map.get('when')).toBe('fail')
-    expect(map.get('when.0.1')).toBe('pass')
-    expect(map.get('when.2')).toBeUndefined()
+    expect(summary).toEqual({ stepsRun: 1, stepsTotal: 3, reason: 'Feeder offline' })
+  })
+
+  it('reads the verdict of a run the mode refused', () => {
+    const summary = runSummary({
+      ...BASE,
+      outcome: 'skipped-cooldown',
+      verdict: {
+        mode: { mode: 'cooldown', minutes: 60 },
+        decision: 'cooldown',
+        reason: 'ran 30 min ago',
+      },
+    })
+    expect(summary.reason).toBe('ran 30 min ago')
+    expect(summary.stepsTotal).toBe(0)
+  })
+})
+
+describe('traceDetails steps', () => {
+  it('carries the per-device outcome of a step', () => {
+    const details = traceDetails({
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'cap',
+          outcome: 'error',
+          devices: [
+            { deviceId: 1, outcome: 'ok' },
+            { deviceId: 2, outcome: 'error', message: 'offline' },
+          ],
+        },
+      ],
+    })
+    expect(details.steps[0]?.devices).toEqual([
+      { deviceId: 1, tone: 'pass', message: null },
+      { deviceId: 2, tone: 'fail', message: 'offline' },
+    ])
   })
 })

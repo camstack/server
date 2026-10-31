@@ -24,7 +24,8 @@ import { Badge, Button, Input, Select, type DeviceListState, Textarea } from '@c
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
-import type { BlockTone } from '../flow/trace-view'
+import { StepResult } from '../flow/TraceResult'
+import type { BlockTone, StepDetailView } from '../flow/trace-view'
 import type { ScopeVariable } from '../flow/ArgField'
 import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
@@ -49,6 +50,8 @@ export interface ActionListProps {
   readonly variables?: readonly ScopeVariable[]
   /** The selected run's outcome per step, by index; steps it did not reach are idle. */
   readonly stepTones?: readonly BlockTone[]
+  /** What the selected run recorded per step, by index; shown inside the card. */
+  readonly stepResults?: readonly (StepDetailView | undefined)[]
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -59,6 +62,7 @@ export function ActionList({
   allowedKinds,
   variables = [],
   stepTones,
+  stepResults,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
@@ -170,6 +174,13 @@ export function ActionList({
             <RunActionFields
               step={action}
               onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
+          {stepResults?.[index] !== undefined && (
+            <StepResult
+              step={stepResults[index]}
+              deviceName={(id) => devices.find((d) => d.id === id)?.name ?? `#${String(id)}`}
             />
           )}
         </div>

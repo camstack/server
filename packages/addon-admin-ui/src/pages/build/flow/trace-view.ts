@@ -9,7 +9,12 @@
  *   idle — never reached (a step after the failure, or a run the mode refused)
  */
 
-import type { AutomationRunTrace, TraceNodeOutcome, TraceValue } from '@camstack/types'
+import {
+  type AutomationRunTrace,
+  type TraceNodeOutcome,
+  type TraceValue,
+  tryConvertUnit,
+} from '@camstack/types'
 
 export type BlockTone = 'pass' | 'fail' | 'idle'
 
@@ -126,11 +131,20 @@ export interface ConditionNodeView {
   /** null: the trace did not record one (a container, or a node never reached). */
   readonly expected: ValueView | null
   readonly observed: ValueView | null
+  /** The numbers as the trace stored them (base unit); `undefined`: not recorded. */
+  readonly rawExpected?: TraceValue
+  readonly rawObserved?: TraceValue
 }
 
 export interface StepArgView {
   readonly name: string
   readonly value: ValueView
+}
+
+export interface StepDeviceView {
+  readonly deviceId: number
+  readonly tone: BlockTone
+  readonly message: string | null
 }
 
 export interface StepDetailView {
@@ -140,6 +154,8 @@ export interface StepDetailView {
   readonly message: string | null
   /** What the step SENT (after `{{vars.x}}` substitution); empty on an old trace or a step with none. */
   readonly args: readonly StepArgView[]
+  /** What happened per device, when the step drove several. */
+  readonly devices: readonly StepDeviceView[]
 }
 
 export interface TraceDetails {
@@ -172,6 +188,8 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
       deviceId: node.deviceId ?? null,
       expected: node.expected === undefined ? null : valueView(node.expected),
       observed: node.observed === undefined ? null : valueView(node.observed),
+      rawExpected: node.expected,
+      rawObserved: node.observed,
     })),
     steps: trace.steps.map((step) => ({
       index: stepIndex(step.path),
@@ -182,11 +200,72 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
         name,
         value: valueView(value),
       })),
+      devices: (step.devices ?? []).map((d) => ({
+        deviceId: d.deviceId,
+        tone: d.outcome === 'ok' ? 'pass' : 'fail',
+        message: nonEmpty(d.message),
+      })),
     })),
   }
 }
 
-/** The outcome of every `when` node, by path (`when`, `when.0.1`). */
-export function whenOutcomes(trace: AutomationRunTrace): ReadonlyMap<string, TraceNodeOutcome> {
-  return new Map(trace.conditions.map((node) => [node.path, node.outcome]))
+/** What the editor needs to paint the When tree with one run. */
+export interface WhenRunView {
+  /** Every node of the `when` tree the run recorded, by path (`when`, `when.0.1`). */
+  readonly nodes: ReadonlyMap<string, ConditionNodeView>
+  /** The row the event fired on; null on a trace written before the single tree. */
+  readonly triggerPath: string | null
+  readonly vars: readonly TriggerVarView[]
+}
+
+export function whenRunView(trace: AutomationRunTrace): WhenRunView {
+  const details = traceDetails(trace)
+  return {
+    nodes: new Map(details.conditions.map((node) => [node.path, node])),
+    triggerPath: trace.trigger.path ?? null,
+    vars: details.vars,
+  }
+}
+
+/** Significant digits kept when a stored number is shown in another unit. */
+const UNIT_DIGITS = 6
+
+/**
+ * A number the trace holds in the field's STORED (base) unit, shown in the unit
+ * the row picked — "10 g", not 0.01 (kg). Anything that cannot be converted
+ * (no unit picked, a unit pair of different dimensions, a non-number) is shown
+ * as the raw value, never guessed.
+ */
+export function valueInUnit(
+  value: TraceValue,
+  baseUnit: string | undefined,
+  unit: string | undefined,
+): ValueView {
+  if (typeof value !== 'number' || baseUnit === undefined || unit === undefined) {
+    return valueView(value)
+  }
+  const converted = tryConvertUnit(value, baseUnit, unit)
+  if (converted === undefined) return valueView(value)
+  return { kind: 'value', text: `${String(Number(converted.toPrecision(UNIT_DIGITS)))} ${unit}` }
+}
+
+export interface RunSummary {
+  readonly stepsRun: number
+  readonly stepsTotal: number
+  /** Why, in the server's words, or null when there is nothing to add. */
+  readonly reason: string | null
+}
+
+/** The one line the Runs panel keeps for the selected run. */
+export function runSummary(trace: AutomationRunTrace): RunSummary {
+  const failed = trace.steps.find((s) => s.outcome === 'error')
+  const reason =
+    failed !== undefined
+      ? nonEmpty(failed.message)
+      : (nonEmpty(trace.verdict?.reason) ?? nonEmpty(trace.trigger.reason))
+  return {
+    stepsRun: trace.steps.filter((s) => s.outcome === 'ok').length,
+    stepsTotal: trace.steps.length,
+    reason,
+  }
 }

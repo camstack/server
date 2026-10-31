@@ -10756,7 +10756,10 @@
       "schedulerInactive": "Non attivo",
       "schedulerMissed": "Saltato",
       "schedulerOverridden": "Cambiato a mano",
-      "schedulerSuspendedManual": "In pausa per modifica manuale"
+      "schedulerSuspendedManual": "In pausa per modifica manuale",
+      "stepsRan": "{{run}} passaggi su {{total}} eseguiti",
+      "show": "Mostra le esecuzioni",
+      "hide": "Nascondi le esecuzioni"
     },
     "scope": {
       "className": "cosa ha visto",

@@ -42,7 +42,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
 import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
 import { whenScopeVariables } from '../flow/scope-variables'
-import { stepToneAt, traceView, whenOutcomes } from '../flow/trace-view'
+import { stepToneAt, traceDetails, traceView, whenRunView } from '../flow/trace-view'
 import { ActionList } from './ActionList'
 import { useAutomationDevices } from './automation-data'
 import { GeneratedCodePanel } from './GeneratedCodePanel'
@@ -96,8 +96,12 @@ export function AutomationEditor({
   const selectedRun = traces.data?.traces.find((tr) => tr.runId === runId) ?? null
   const view = useMemo(() => (selectedRun === null ? null : traceView(selectedRun)), [selectedRun])
   const scope = useMemo(() => whenScopeVariables(recipe.when, t), [recipe.when, t])
-  const outcomes = useMemo(
-    () => (selectedRun === null ? undefined : whenOutcomes(selectedRun)),
+  const whenRun = useMemo(
+    () => (selectedRun === null ? null : whenRunView(selectedRun)),
+    [selectedRun],
+  )
+  const stepDetails = useMemo(
+    () => (selectedRun === null ? null : traceDetails(selectedRun).steps),
     [selectedRun],
   )
 
@@ -148,7 +152,7 @@ export function AutomationEditor({
           title={t('automation.automationEditor.when', 'When')}
           trace={view === null ? null : view.when}
         >
-          <WhenTree recipe={recipe} devices={devices} outcomes={outcomes} onChange={setRecipe} />
+          <WhenTree recipe={recipe} devices={devices} run={whenRun} onChange={setRecipe} />
         </TraceBlock>
 
         <TraceBlock
@@ -168,6 +172,11 @@ export function AutomationEditor({
               view === null
                 ? undefined
                 : recipe.actions.map((_, index) => stepToneAt(view, index) ?? 'idle')
+            }
+            stepResults={
+              stepDetails === null
+                ? undefined
+                : recipe.actions.map((_, index) => stepDetails.find((s) => s.index === index))
             }
             onChange={(actions) => setRecipe(withActions(recipe, actions))}
           />

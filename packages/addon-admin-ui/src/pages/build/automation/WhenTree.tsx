@@ -19,17 +19,22 @@ import type {
   AutomationLeaf,
   AutomationRecipe,
   AutomationWhen,
+  DeviceIsLeaf,
   TraceNodeOutcome,
 } from '@camstack/types'
-import { isLeaf } from '@camstack/types'
+import { baseUnitForQuantity, isLeaf } from '@camstack/types'
 import { Badge, Button, Select } from '@camstack/ui-library'
 import { Plus, Trash2, Ungroup } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toneBorderClass } from '../flow/RunsPanel'
+import { toneBorderClass, toneEdgeClass } from '../flow/RunsPanel'
+import { ConditionResult } from '../flow/TraceResult'
+import { type ConditionNodeView, valueInUnit, type WhenRunView } from '../flow/trace-view'
 import type { AutomationDevice } from './automation-data'
+import { useFieldDescriptor } from './FieldPicker'
 import { newLeaf } from './recipe-parts'
 import { WhenLeafRow } from './WhenLeafRow'
+import { declaredQuantity } from './ValueInput'
 import {
   addNode,
   type ContainerKind,
@@ -52,35 +57,47 @@ export interface WhenTreeProps {
   readonly recipe: AutomationRecipe
   readonly devices: readonly AutomationDevice[]
   readonly onChange: (next: AutomationRecipe) => void
-  /** What the selected run decided at each node, by path key (`when.0.1`). */
-  readonly outcomes?: ReadonlyMap<string, TraceNodeOutcome>
+  /** The selected run: what each node decided (by path key, `when.0.1`) and the trigger's values. */
+  readonly run?: WhenRunView | null
 }
 
 interface TreeContext {
   readonly recipe: AutomationRecipe
   readonly devices: readonly AutomationDevice[]
   readonly issues: ReadonlyMap<string, string>
-  readonly outcomes: ReadonlyMap<string, TraceNodeOutcome> | undefined
+  readonly run: WhenRunView | null
   readonly onChange: (next: AutomationRecipe) => void
 }
-
-const NO_OUTCOMES: ReadonlyMap<string, TraceNodeOutcome> = new Map()
 
 function asContainerKind(value: string): ContainerKind {
   return value === 'any' ? 'any' : 'all'
 }
 
-function toneFor(outcome: TraceNodeOutcome | undefined): string {
-  if (outcome === undefined) return 'border-border'
-  return toneBorderClass(outcome === 'pass' ? 'pass' : outcome === 'fail' ? 'fail' : 'idle')
+function toneOf(outcome: TraceNodeOutcome): 'pass' | 'fail' | 'idle' {
+  return outcome === 'pass' ? 'pass' : outcome === 'fail' ? 'fail' : 'idle'
 }
 
-export function WhenTree({ recipe, devices, onChange, outcomes = NO_OUTCOMES }: WhenTreeProps) {
+/** A row is filled; a block or NOT only draws its edge, so nested tints never stack. */
+function toneFor(
+  outcome: TraceNodeOutcome | undefined,
+  fallback: string,
+  fill: boolean = true,
+): string {
+  if (outcome === undefined) return fallback
+  return fill ? toneBorderClass(toneOf(outcome)) : toneEdgeClass(toneOf(outcome))
+}
+
+/** The run's node at `path`, when a run is selected and recorded one there. */
+function nodeAt(ctx: TreeContext, path: WhenPath): ConditionNodeView | undefined {
+  return ctx.run?.nodes.get(pathKey(path))
+}
+
+export function WhenTree({ recipe, devices, onChange, run = null }: WhenTreeProps) {
   const { t } = useTranslation()
   const root = whenRoot(recipe)
   const budget = whenBudget(recipe)
   const issues = useMemo(() => whenIssues(root), [root])
-  const ctx: TreeContext = { recipe, devices, issues, outcomes, onChange }
+  const ctx: TreeContext = { recipe, devices, issues, run, onChange }
   const empty = root.children.length === 0
   return (
     <div className="space-y-2" data-testid="when-tree">
@@ -145,16 +162,61 @@ interface LeafViewProps {
 }
 
 function LeafView({ leaf, path, ctx, underNot }: LeafViewProps) {
+  const node = nodeAt(ctx, path)
+  const vars = ctx.run !== null && ctx.run.triggerPath === pathKey(path) ? ctx.run.vars : undefined
   return (
     <WhenLeafRow
       leaf={leaf}
       devices={ctx.devices}
-      toneClass={toneFor(ctx.outcomes?.get(pathKey(path)))}
+      toneClass={toneFor(node?.outcome, 'border-border')}
+      result={node === undefined ? undefined : <LeafResult leaf={leaf} node={node} vars={vars} />}
       onNegate={underNot ? null : () => ctx.onChange(negate(ctx.recipe, path))}
       onChange={(next) => ctx.onChange(updateNode(ctx.recipe, path, next))}
       onRemove={() => ctx.onChange(removeNode(ctx.recipe, path))}
     />
   )
+}
+
+interface LeafResultProps {
+  readonly leaf: AutomationLeaf
+  readonly node: ConditionNodeView
+  readonly vars: WhenRunView['vars'] | undefined
+}
+
+/** A state row compares in the unit its row picked; every other row shows the trace as stored. */
+function LeafResult({ leaf, node, vars }: LeafResultProps) {
+  if (leaf.kind === 'device-is' && leaf.unit !== undefined) {
+    return <DeviceIsResult leaf={leaf} node={node} vars={vars} />
+  }
+  return (
+    <ConditionResult node={node} vars={vars} expected={node.expected} observed={node.observed} />
+  )
+}
+
+function DeviceIsResult({ leaf, node, vars }: LeafResultProps & { readonly leaf: DeviceIsLeaf }) {
+  const descriptor = useFieldDescriptor({
+    deviceId: leaf.deviceId,
+    cap: leaf.cap,
+    fieldPath: leaf.fieldPath,
+  })
+  const quantity = declaredQuantity(descriptor)
+  const base = quantity === undefined ? undefined : baseUnitForQuantity(quantity)
+  const inRowUnit = (raw: ConditionNodeView['rawExpected']) =>
+    raw === undefined ? null : valueInUnit(raw, base, leaf.unit)
+  return (
+    <ConditionResult
+      node={node}
+      vars={vars}
+      expected={inRowUnit(node.rawExpected)}
+      observed={inRowUnit(node.rawObserved)}
+    />
+  )
+}
+
+/** A sub-block's own verdict: outcome and the engine's reason, no values. */
+function BlockResult({ node }: { readonly node: ConditionNodeView | undefined }) {
+  if (node === undefined) return null
+  return <ConditionResult node={node} expected={null} observed={null} />
 }
 
 function IssueLine({ message }: { readonly message: string | undefined }) {
@@ -179,7 +241,10 @@ interface NotViewProps {
 function NotView({ child, path, ctx }: NotViewProps) {
   const { t } = useTranslation()
   return (
-    <div className="space-y-1.5 rounded border border-warning/40 p-2" data-testid="when-not">
+    <div
+      className={`space-y-1.5 rounded border p-2 ${toneFor(nodeAt(ctx, path)?.outcome, 'border-warning/40', false)}`}
+      data-testid="when-not"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="warning">{'NOT'}</Badge>
         <span className="text-xs text-foreground-subtle">
@@ -196,6 +261,7 @@ function NotView({ child, path, ctx }: NotViewProps) {
         </Button>
       </div>
       <IssueLine message={ctx.issues.get(pathKey(path))} />
+      <BlockResult node={nodeAt(ctx, path)} />
       <div className="pl-3">
         <NodeView node={child} path={[...path, 0]} ctx={ctx} underNot />
       </div>
@@ -226,7 +292,7 @@ function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockV
   const issue = emptyHint === null ? ctx.issues.get(pathKey(path)) : undefined
   return (
     <div
-      className="space-y-2 rounded border border-border bg-surface-subtle/40 p-2"
+      className={`space-y-2 rounded border p-2 ${toneFor(nodeAt(ctx, path)?.outcome, 'border-border', false)} bg-surface-subtle/40`}
       data-testid="when-block"
       data-kind={block.kind}
     >
@@ -276,6 +342,7 @@ function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockV
       </div>
 
       <IssueLine message={issue} />
+      <BlockResult node={nodeAt(ctx, path)} />
       {emptyHint !== null && <p className="text-xs text-warning">{emptyHint}</p>}
 
       {block.children.length > 0 && (

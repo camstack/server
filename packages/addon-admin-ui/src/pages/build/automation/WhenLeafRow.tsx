@@ -13,6 +13,7 @@ import type { AutomationLeaf } from '@camstack/types'
 import { isEventLeaf } from '@camstack/types'
 import { Badge, Button, OptionSelect, type OptionSelectOption } from '@camstack/ui-library'
 import { Trash2 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { DeviceIsFields } from './DeviceIsFields'
@@ -66,6 +67,8 @@ export interface WhenLeafRowProps {
   readonly leaf: AutomationLeaf
   readonly devices: readonly AutomationDevice[]
   readonly toneClass: string
+  /** What the selected run held at this row, shown inside it. */
+  readonly result?: ReactNode
   /** Null where a NOT is not offered (the row is already negated). */
   readonly onNegate: (() => void) | null
   readonly onChange: (next: AutomationLeaf) => void
@@ -76,6 +79,7 @@ export function WhenLeafRow({
   leaf,
   devices,
   toneClass,
+  result,
   onNegate,
   onChange,
   onRemove,
@@ -127,6 +131,7 @@ export function WhenLeafRow({
       <div className="mt-2 flex flex-wrap items-end gap-2">
         <LeafFields leaf={leaf} devices={devices} onChange={onChange} />
       </div>
+      {result !== undefined && <div className="mt-2">{result}</div>}
     </div>
   )
 }

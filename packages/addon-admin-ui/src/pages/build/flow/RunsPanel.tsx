@@ -4,33 +4,23 @@
  * colours the blocks of the editor beside it (see `trace-view.ts`).
  */
 
-import {
-  AutomationConditionOperatorSchema,
-  type AutomationRunOutcome,
-  type AutomationRunTrace,
-  type SchedulerOutcome,
-  type TraceNodeOutcome,
-} from '@camstack/types'
+import type { AutomationRunOutcome, AutomationRunTrace, SchedulerOutcome } from '@camstack/types'
 import {
   Badge,
   type BadgeVariant,
+  Button,
+  DisclosureChevron,
   EmptyState,
   SectionCard,
   Skeleton,
-  Button,
+  useIsMidWidth,
+  useIsMobile,
 } from '@camstack/ui-library'
 import { History } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
-import { operatorLabel } from '../automation/recipe-parts'
-import {
-  type BlockTone,
-  type BlockView,
-  type ConditionNodeView,
-  traceDetails,
-  type ValueView,
-} from './trace-view'
+import { type BlockView, runSummary } from './trace-view'
 
 const OUTCOME_VARIANT: Readonly<Record<AutomationRunOutcome, BadgeVariant>> = {
   ran: 'success',
@@ -122,14 +112,84 @@ export interface RunsPanelProps {
   readonly onSelect: (id: string | null) => void
 }
 
+/** The list scrolls inside itself; the editor beside it never grows with it. */
+const LIST_MAX_H = 'max-h-64'
+
+/**
+ * Below the two-column layout (`lg`) the panel stacks above the editor, so it
+ * starts folded: a long run history must not push the editor down the page.
+ */
+function useStartsCollapsed(): boolean {
+  const mobile = useIsMobile()
+  const mid = useIsMidWidth()
+  return mobile || mid
+}
+
+function RunsToggle({
+  expanded,
+  onToggle,
+}: {
+  readonly expanded: boolean
+  readonly onToggle: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <Button
+      variant="unstyled"
+      type="button"
+      aria-expanded={expanded}
+      data-testid="runs-toggle"
+      onClick={onToggle}
+      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-foreground-muted hover:bg-surface-hover"
+    >
+      <DisclosureChevron expanded={expanded} />
+      <span>{expanded ? t('flow.runs.hide', 'Hide runs') : t('flow.runs.show', 'Show runs')}</span>
+    </Button>
+  )
+}
+
+/** One line for the selected run: what it decided and how far the steps got. */
+function SelectedSummary({ run }: { readonly run: AutomationRunTrace }) {
+  const { t } = useTranslation()
+  const outcomeLabel = useOutcomeLabel()
+  const summary = runSummary(run)
+  return (
+    <p
+      className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border-subtle bg-primary/5 px-3 py-2 text-xs"
+      data-testid="run-summary"
+    >
+      <Badge variant={OUTCOME_VARIANT[run.outcome]}>{outcomeLabel(run.outcome)}</Badge>
+      {summary.reason !== null && (
+        <span className="min-w-0 break-words text-foreground">{summary.reason}</span>
+      )}
+      {summary.stepsTotal > 0 && (
+        <span className="text-foreground-subtle">
+          {t('flow.runs.stepsRan', '{{run}} of {{total}} steps ran', {
+            run: summary.stepsRun,
+            total: summary.stepsTotal,
+          })}
+        </span>
+      )}
+    </p>
+  )
+}
+
 export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
   const { t } = useTranslation()
   const outcomeLabel = useOutcomeLabel()
   const schedulerLabel = useSchedulerOutcomeLabel()
+  const startsCollapsed = useStartsCollapsed()
+  // null: the person has not chosen, so the viewport decides.
+  const [chosen, setChosen] = useState<boolean | null>(null)
+  const expanded = chosen ?? !startsCollapsed
   const newestFirst = traces === undefined ? [] : traces.toReversed()
+  const selectedRun = newestFirst.find((run) => run.runId === selectedId) ?? null
   return (
     <SectionCard headingId="runs-heading" title={t('flow.runs.title', 'Runs')} icon={History}>
-      {traces === undefined ? (
+      <RunsToggle expanded={expanded} onToggle={() => setChosen(!expanded)} />
+      {!expanded ? (
+        selectedRun !== null && <SelectedSummary run={selectedRun} />
+      ) : traces === undefined ? (
         <Skeleton className="m-3 h-16" />
       ) : newestFirst.length === 0 ? (
         <EmptyState
@@ -141,7 +201,10 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
         />
       ) : (
         <>
-          <ul className="divide-y divide-border-subtle" data-testid="runs-panel">
+          <ul
+            className={`${LIST_MAX_H} divide-y divide-border-subtle overflow-y-auto`}
+            data-testid="runs-panel"
+          >
             {newestFirst.map((run) => {
               const selected = run.runId === selectedId
               return (
@@ -176,11 +239,11 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
                     </span>
                     <span className="truncate text-sm text-foreground">{run.trigger.reason}</span>
                   </Button>
-                  {selected && <RunDetails trace={run} />}
                 </li>
               )
             })}
           </ul>
+          {selectedRun !== null && <SelectedSummary run={selectedRun} />}
           <p className="border-t border-border-subtle px-3 py-2 text-xs text-foreground-subtle">
             {t(
               'flow.runs.hint',
@@ -193,197 +256,20 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
   )
 }
 
-const NODE_VARIANT: Readonly<Record<TraceNodeOutcome, BadgeVariant>> = {
-  pass: 'success',
-  fail: 'danger',
-  'not-evaluated': 'neutral',
-}
-
-const STEP_VARIANT: Readonly<Record<BlockTone, BadgeVariant>> = {
-  pass: 'success',
-  fail: 'danger',
-  idle: 'neutral',
-}
-
-/** Nesting under the root condition, as classes (no inline spacing). */
-const DEPTH_INDENT = ['', 'pl-3', 'pl-6', 'pl-9'] as const
-
-/** A value from a trace; a reading the mirror never held says so. */
-export function TraceValueText({ value }: { readonly value: ValueView }) {
-  const { t } = useTranslation()
-  return value.kind === 'unknown' ? (
-    <span className="italic text-foreground-subtle" data-testid="trace-value-unknown">
-      {t('flow.runs.unknownValue', 'unknown')}
-    </span>
-  ) : (
-    <span className="font-mono text-foreground">{value.text}</span>
-  )
-}
-
-export interface TraceValueRowProps {
-  readonly label: string
-  readonly outcome: TraceNodeOutcome
-  readonly outcomeLabel: string
-  /** Where the node reads from (`cap.field`) and how it compares. */
-  readonly detail?: ReactNode
-  readonly expected: ValueView | null
-  readonly observed: ValueView | null
-  readonly depth?: number
-}
-
-/**
- * One evaluated condition: its outcome, then what it expected against what it
- * observed. A leaf row on its own, so the condition editor can reuse it.
- */
-export function TraceValueRow({
-  label,
-  outcome,
-  outcomeLabel,
-  detail,
-  expected,
-  observed,
-  depth = 0,
-}: TraceValueRowProps) {
-  const { t } = useTranslation()
-  return (
-    <li className={`space-y-0.5 py-1 ${DEPTH_INDENT[Math.min(depth, DEPTH_INDENT.length - 1)]}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={NODE_VARIANT[outcome]}>{outcomeLabel}</Badge>
-        <span className="min-w-0 break-words text-xs text-foreground">{label}</span>
-      </div>
-      {detail !== undefined && <div className="text-[11px] text-foreground-subtle">{detail}</div>}
-      {(expected !== null || observed !== null) && (
-        <div className="flex flex-wrap gap-x-3 text-[11px] text-foreground-subtle">
-          {expected !== null && (
-            <span>
-              {t('flow.runs.expected', 'Expected')} <TraceValueText value={expected} />
-            </span>
-          )}
-          {observed !== null && (
-            <span>
-              {t('flow.runs.observed', 'Observed')} <TraceValueText value={observed} />
-            </span>
-          )}
-        </div>
-      )}
-    </li>
-  )
-}
-
-function useNodeOutcomeLabel(): (outcome: TraceNodeOutcome) => string {
-  const { t } = useTranslation()
-  return (outcome) =>
-    outcome === 'pass'
-      ? t('flow.runs.nodePass', 'Passed')
-      : outcome === 'fail'
-        ? t('flow.runs.nodeFail', 'Failed')
-        : t('flow.runs.nodeNotEvaluated', 'Not evaluated')
-}
-
-function operatorText(operator: string): string {
-  const parsed = AutomationConditionOperatorSchema.safeParse(operator)
-  return parsed.success ? operatorLabel(parsed.data) : operator
-}
-
-function conditionLabel(node: ConditionNodeView, fallback: string): string {
-  return node.reason ?? node.subject ?? fallback
-}
-
-/** What the selected run held: trigger values, each condition, each step. */
-export function RunDetails({ trace }: { readonly trace: AutomationRunTrace }) {
-  const { t } = useTranslation()
-  const nodeLabel = useNodeOutcomeLabel()
-  const details = traceDetails(trace)
-  return (
-    <div className="space-y-3 border-t border-border-subtle px-3 py-2" data-testid="run-details">
-      {details.vars.length > 0 && (
-        <section>
-          <h5 className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
-            {t('flow.runs.triggerValues', 'Trigger')}
-          </h5>
-          <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-xs">
-            {details.vars.map((v) => (
-              <div key={v.name} className="contents">
-                <dt className="text-foreground-subtle">{v.name}</dt>
-                <dd className="break-words">
-                  <TraceValueText value={v.value} />
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
-      {details.conditions.length > 0 && (
-        <section>
-          <h5 className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
-            {t('flow.runs.whenValues', 'When')}
-          </h5>
-          <ul className="mt-1 divide-y divide-border-subtle">
-            {details.conditions.map((node) => (
-              <TraceValueRow
-                key={node.path}
-                depth={node.depth}
-                label={conditionLabel(node, node.kind)}
-                outcome={node.outcome}
-                outcomeLabel={nodeLabel(node.outcome)}
-                detail={
-                  node.subject !== null && node.reason !== null
-                    ? `${node.subject}${node.operator === null ? '' : ` ${operatorText(node.operator)}`}`
-                    : undefined
-                }
-                expected={node.expected}
-                observed={node.observed}
-              />
-            ))}
-          </ul>
-        </section>
-      )}
-      {details.steps.length > 0 && (
-        <section>
-          <h5 className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
-            {t('flow.runs.stepValues', 'Steps')}
-          </h5>
-          <ul className="mt-1 divide-y divide-border-subtle">
-            {details.steps.map((step) => (
-              <li key={step.index} className="flex flex-wrap items-center gap-2 py-1 text-xs">
-                <Badge variant={STEP_VARIANT[step.tone]}>
-                  {step.tone === 'pass'
-                    ? t('flow.runs.stepOk', 'OK')
-                    : step.tone === 'fail'
-                      ? t('flow.runs.stepError', 'Error')
-                      : t('flow.runs.stepNotRun', 'Not run')}
-                </Badge>
-                <span className="text-foreground-subtle">{`${String(step.index + 1)}. ${step.kind}`}</span>
-                {step.message !== null && (
-                  <span className="min-w-0 break-words text-foreground">{step.message}</span>
-                )}
-                {step.args.length > 0 && (
-                  <dl
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 pl-2 text-[11px]"
-                    data-testid="step-args"
-                  >
-                    {step.args.map((arg) => (
-                      <div key={arg.name} className="contents">
-                        <dt className="text-foreground-subtle">{arg.name}</dt>
-                        <dd className="break-words">
-                          <TraceValueText value={arg.value} />
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
-  )
-}
-
 /** Border and fill of an item the selected run did (or did not) reach. */
 export function toneBorderClass(tone: keyof typeof TONE_CLASS): string {
   return TONE_CLASS[tone]
+}
+
+const EDGE_CLASS = {
+  pass: 'border-success/50',
+  fail: 'border-danger/50',
+  idle: 'border-border',
+} as const
+
+/** Border only, for a container that holds toned rows: a fill would stack. */
+export function toneEdgeClass(tone: keyof typeof EDGE_CLASS): string {
+  return EDGE_CLASS[tone]
 }
 
 export interface TraceBlockProps {

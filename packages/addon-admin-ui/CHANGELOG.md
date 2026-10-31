@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device page shows the state of the linked power switch above the hero card
+- The automation editor's run history now paints every condition row, block and step with its own result, showing observed and expected values in the row's unit, trigger values and step outcomes inside them; the Runs panel keeps a list and one summary line, and starts collapsed on narrow screens.
 
 ## [1.2.539] - 2026-10-31
 

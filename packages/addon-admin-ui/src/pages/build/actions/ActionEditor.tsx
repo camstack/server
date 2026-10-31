@@ -33,7 +33,7 @@ import { ActionList } from '../automation/ActionList'
 import { useAutomationDevices } from '../automation/automation-data'
 import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
 import { actionScopeVariables } from '../flow/scope-variables'
-import { traceView } from '../flow/trace-view'
+import { stepToneAt, traceDetails, traceView } from '../flow/trace-view'
 import {
   type ActionDraft,
   checkDraft,
@@ -126,6 +126,10 @@ export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
   const selected: AutomationRunTrace | null =
     traces.data?.traces.find((tr) => tr.runId === runId) ?? null
   const view = useMemo(() => (selected === null ? null : traceView(selected)), [selected])
+  const stepDetails = useMemo(
+    () => (selected === null ? null : traceDetails(selected).steps),
+    [selected],
+  )
   const check = checkDraft(draft)
   const scope = useMemo(() => actionScopeVariables(draft.variables, t), [draft.variables, t])
   const saving = create.isPending || update.isPending
@@ -182,6 +186,16 @@ export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
                 actions={draft.steps}
                 devices={devices}
                 allowedKinds={['cap', 'wait']}
+                stepTones={
+                  view === null
+                    ? undefined
+                    : draft.steps.map((_, i) => stepToneAt(view, i) ?? 'idle')
+                }
+                stepResults={
+                  stepDetails === null
+                    ? undefined
+                    : draft.steps.map((_, i) => stepDetails.find((s) => s.index === i))
+                }
                 variables={scope}
                 onChange={(steps) => setDraft({ ...draft, steps: steps.filter(isActionStep) })}
               />

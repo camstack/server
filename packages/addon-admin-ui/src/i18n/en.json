@@ -10734,7 +10734,10 @@
       "schedulerInactive": "Not active",
       "schedulerMissed": "Missed",
       "schedulerOverridden": "Changed by hand",
-      "schedulerSuspendedManual": "Paused by hand"
+      "schedulerSuspendedManual": "Paused by hand",
+      "stepsRan": "{{run}} of {{total}} steps ran",
+      "show": "Show runs",
+      "hide": "Hide runs"
     },
     "scope": {
       "className": "what it saw",
