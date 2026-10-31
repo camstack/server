@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.642] - 2026-10-31
+
 ### Changed
 
 - A lock reporting door-open is published to Home Assistant as open.

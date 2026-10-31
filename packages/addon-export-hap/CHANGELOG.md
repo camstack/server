@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.187] - 2026-10-31
+
 ### Changed
 
 - A lock reporting door-open shows as unsecured in HomeKit.

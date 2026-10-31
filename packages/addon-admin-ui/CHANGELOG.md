@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.534] - 2026-10-31
+
 ### Changed
 
 - Setting up an integration from a scan result remembers which discovered device it came from
