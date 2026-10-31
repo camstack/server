@@ -88,7 +88,7 @@ export function shcDiscoveryCandidates(
 ): readonly DiscoveryCandidate[] {
   return proposals.map((found) => ({
     stableId: `bosch-shc:${found.id}`,
-    type: DeviceType.Hub,
+    type: DeviceType.Gateway,
     suggestedName: found.name,
     prefilledConfig: { host: found.host },
     setupIntegration: true,

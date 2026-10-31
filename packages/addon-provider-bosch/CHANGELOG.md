@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Smart Home Controller can be added as a Gateway device next to its rooms and devices, and a discovered controller is proposed as a Gateway.
+
 ## [0.1.33] - 2026-10-30
 
 ### Changed

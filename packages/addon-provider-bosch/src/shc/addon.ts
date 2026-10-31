@@ -29,6 +29,7 @@ import {
   shcDiscoverySummary,
   shcHostsFromHits,
 } from './shc-controller-discovery.js'
+import { ShcGatewayDevice } from './devices/shc-gateway-device.js'
 import { ShcClimateRoomDevice } from './devices/shc-climate-room-device.js'
 import { ShcRoomClimateDevice } from './devices/shc-room-climate-device.js'
 import { ShcSwitchDevice } from './devices/shc-switch-device.js'
@@ -50,6 +51,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
   protected readonly providerName = 'Bosch SHC'
 
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
+    [DeviceType.Gateway]: ShcGatewayDevice,
     [DeviceType.Container]: ShcClimateRoomDevice,
     [DeviceType.Climate]: ShcRoomClimateDevice,
     [DeviceType.Thermostat]: ShcTrvDevice,
@@ -79,8 +81,14 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
-        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: connectionTestCapability,
+          provider: this.buildConnectionTestProvider(),
+        },
       ],
       customActions: boschShcActions,
       actionHandlers: {
@@ -93,7 +101,10 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
             name: candidate.suggestedName,
             id: candidate.stableId.replace(/^bosch-shc:/, ''),
           }))
-          return { hosts, summary: shcDiscoverySummary(hosts.length, hosts.length) }
+          return {
+            hosts,
+            summary: shcDiscoverySummary(hosts.length, hosts.length),
+          }
         },
         registerClient: async (input) => {
           const host = resolveShcPairingHost({
@@ -119,7 +130,9 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Bosch SHC: shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Bosch SHC: shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
     await super.onShutdown()
@@ -192,7 +205,9 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       for (const integration of all) {
         if (integration.addonId !== this.ctx.id) continue
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+          const settings = await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          })
           const connection = connectionFromSettings(settings)
           if (connection) hosts.push(connection.host)
         } catch (err) {
@@ -223,7 +238,9 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       const surviving = new Set<string>()
       for (const integration of mine) {
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+          const settings = await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          })
           const connection = connectionFromSettings(settings)
           if (!connection) continue
           await reg.upsert(integration.id, integration.name, connection)
@@ -280,6 +297,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       logger: this.ctx.logger,
       hasIntegration: (integrationId) => this.requireClients().has(integrationId),
       listIntegrations: () => this.requireClients().list(),
+      integrationName: (integrationId) => this.requireClients().nameOf(integrationId),
       listAdoptedShc: async () => {
         const reg = this.ctx.kernel.deviceRegistry
         const devices = this.ctx.kernel.devices
@@ -296,9 +314,28 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('bosch-shc adopt: kernel.devices unavailable')
         const summary = shcConnections.devices(integrationId).find((d) => d.id === shcDeviceId)
-        const kind = summary ? classifyShcDevice(summary) : 'unsupported'
+        const kind =
+          type === DeviceType.Gateway
+            ? 'gateway'
+            : summary
+              ? classifyShcDevice(summary)
+              : 'unsupported'
         if (kind === 'unsupported') {
           throw new Error(`bosch-shc adopt: unsupported device ${shcDeviceId}`)
+        }
+        if (type === DeviceType.Gateway) {
+          const config = {
+            shcDeviceId,
+            brokerId: integrationId,
+            deviceModel,
+            system: 'bosch-shc' as const,
+            integrationId,
+            name,
+          }
+          const stableId = this.generateStableId(DeviceType.Gateway, config)
+          const meta = { type: DeviceType.Gateway, name, integrationId }
+          const device = await devices.create(stableId, ShcGatewayDevice, config, null, meta)
+          return { deviceId: device.id }
         }
         const baseConfig = {
           shcDeviceId,

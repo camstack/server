@@ -1,12 +1,13 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
-import type {
-  AdoptionFilter,
-  AdoptionStatus,
-  DiscoveredChildDevice,
+import {
   DeviceType,
-  IDeviceAdoptionProvider,
+  errMsg,
+  type IScopedLogger,
+  type AdoptionFilter,
+  type AdoptionStatus,
+  type DiscoveredChildDevice,
+  type IDeviceAdoptionProvider,
 } from '@camstack/types'
-import { buildShcCandidates } from './shc-discovery.js'
+import { buildShcCandidates, shcGatewayNativeId } from './shc-discovery.js'
 import { classifyShcDevice, deviceTypeForShcKind } from './shc-domain-mapping.js'
 import type { ShcDeviceSummary } from './shc-types.js'
 
@@ -19,8 +20,12 @@ export interface ShcAdoptionProviderDeps {
   readonly registry: ShcAdoptionRegistry
   readonly hasIntegration: (integrationId: string) => boolean
   readonly listIntegrations: () => readonly string[]
+  readonly integrationName: (integrationId: string) => string | null
   readonly listAdoptedShc: () => Promise<
-    ReadonlyArray<{ readonly id: number; readonly config: Record<string, unknown> }>
+    ReadonlyArray<{
+      readonly id: number
+      readonly config: Record<string, unknown>
+    }>
   >
   readonly adoptDevice: (input: {
     readonly shcDeviceId: string
@@ -34,7 +39,11 @@ export interface ShcAdoptionProviderDeps {
   readonly logger: IScopedLogger
 }
 
-const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
+const DEVICES_FILTER: AdoptionFilter = {
+  id: 'devices',
+  label: 'Devices',
+  isDefault: true,
+} as const
 
 async function adoptedMapForIntegration(
   integrationId: string,
@@ -56,6 +65,7 @@ export function buildShcAdoptionProvider(deps: ShcAdoptionProviderDeps): IDevice
     registry,
     hasIntegration,
     listIntegrations,
+    integrationName,
     listAdoptedShc,
     adoptDevice,
     removeDevice,
@@ -68,7 +78,12 @@ export function buildShcAdoptionProvider(deps: ShcAdoptionProviderDeps): IDevice
   ): Promise<DiscoveredChildDevice[]> {
     const devices = registry.devices(integrationId)
     const adopted = await adoptedMapForIntegration(integrationId, listAdoptedShc)
-    return buildShcCandidates({ devices, adopted })
+    return buildShcCandidates({
+      integrationId,
+      integrationName: integrationName(integrationId) ?? 'Bosch SHC',
+      devices,
+      adopted,
+    })
   }
 
   return {
@@ -116,7 +131,9 @@ export function buildShcAdoptionProvider(deps: ShcAdoptionProviderDeps): IDevice
           lastError: null,
         } satisfies AdoptionStatus
       } catch (err: unknown) {
-        logger.warn('bosch-shc adoption: getStatus failed', { meta: { error: errMsg(err) } })
+        logger.warn('bosch-shc adoption: getStatus failed', {
+          meta: { error: errMsg(err) },
+        })
         return {
           lastDiscoveryAt: null,
           candidateCount: 0,
@@ -151,6 +168,23 @@ export function buildShcAdoptionProvider(deps: ShcAdoptionProviderDeps): IDevice
 
       for (const shcDeviceId of childNativeIds) {
         try {
+          if (shcDeviceId === shcGatewayNativeId(integrationId)) {
+            const name =
+              perCandidate?.[shcDeviceId]?.name ?? integrationName(integrationId) ?? 'Bosch SHC'
+            const { deviceId } = await adoptDevice({
+              shcDeviceId,
+              integrationId,
+              type: DeviceType.Gateway,
+              name,
+              deviceModel: 'Smart Home Controller',
+            })
+            adopted.push({
+              childNativeId: shcDeviceId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: [],
+            })
+            continue
+          }
           const dev = devices.find((d) => d.id === shcDeviceId)
           if (dev === undefined) {
             failures++
@@ -203,7 +237,9 @@ export function buildShcAdoptionProvider(deps: ShcAdoptionProviderDeps): IDevice
       if (!hasIntegration(integrationId)) {
         throw new Error(`bosch-shc resync: integration ${integrationId} not connected`)
       }
-      const present = registry.devices(integrationId).some((d) => d.id === shcDeviceId)
+      const present =
+        shcDeviceId === shcGatewayNativeId(integrationId) ||
+        registry.devices(integrationId).some((d) => d.id === shcDeviceId)
       if (!present) {
         throw new Error(`bosch-shc resync: device ${shcDeviceId} no longer on integration`)
       }

@@ -2,7 +2,16 @@ import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
 import { capsForShcKind, classifyShcDevice, deviceTypeForShcKind } from './shc-domain-mapping.js'
 import type { ShcDeviceKind, ShcDeviceSummary } from './shc-types.js'
 
+const GATEWAY_SUFFIX = ':controller'
+
+/** The `childNativeId` (and `shcDeviceId`) of the controller box itself, one per integration. */
+export function shcGatewayNativeId(integrationId: string): string {
+  return `${integrationId}${GATEWAY_SUFFIX}`
+}
+
 export interface BuildShcCandidatesInput {
+  readonly integrationId: string
+  readonly integrationName: string
   readonly devices: readonly ShcDeviceSummary[]
   /** shcDeviceId → adopted CamStack device id. */
   readonly adopted: ReadonlyMap<string, number>
@@ -121,7 +130,22 @@ function leafCandidate(
 /** Map live SHC discovery rows to adoption candidates. Pure — no I/O. */
 export function buildShcCandidates(input: BuildShcCandidatesInput): DiscoveredChildDevice[] {
   const linkedTrvs = collectTrvsLinkedToRoomClimate(input.devices)
-  const out: DiscoveredChildDevice[] = []
+  const gatewayId = shcGatewayNativeId(input.integrationId)
+  const gatewayAdopted = input.adopted.get(gatewayId) ?? null
+  // A sibling of the rooms and devices, never their parent. The SHC API offers no
+  // reboot or update and the controller has no web page, so it carries no actions.
+  const out: DiscoveredChildDevice[] = [
+    {
+      childNativeId: gatewayId,
+      name: input.integrationName,
+      type: DeviceType.Gateway,
+      status: 'online',
+      metadata: { manufacturer: 'Bosch', model: 'Smart Home Controller' },
+      alreadyAdopted: gatewayAdopted !== null,
+      adoptedDeviceId: gatewayAdopted,
+      capabilities: [],
+    },
+  ]
   for (const device of input.devices) {
     if (shouldSkipShcDevice(device)) continue
     const kind = classifyShcDevice(device)

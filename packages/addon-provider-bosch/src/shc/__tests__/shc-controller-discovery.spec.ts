@@ -21,7 +21,11 @@ function mdnsHit(instance: string, host: string, serviceHost: string): Discovery
 describe('declared modes', () => {
   it('browses _http._tcp and filters on the controller instance name', () => {
     expect(SHC_DISCOVERY_MODES).toEqual([
-      { kind: 'mdns', serviceType: '_http._tcp', instancePattern: '^Bosch SHC' },
+      {
+        kind: 'mdns',
+        serviceType: '_http._tcp',
+        instancePattern: '^Bosch SHC',
+      },
     ])
   })
 })
@@ -70,7 +74,7 @@ describe('shcDiscoveryCandidates', () => {
     expect(candidate?.suggestedName).toBe('Bosch SHC [lab]')
     expect(candidate?.prefilledConfig).toEqual({ host: '192.0.2.20' })
     expect(candidate?.setupIntegration).toBe(true)
-    expect(candidate?.type).toBe(DeviceType.Hub)
+    expect(candidate?.type).toBe(DeviceType.Gateway)
   })
 })
 

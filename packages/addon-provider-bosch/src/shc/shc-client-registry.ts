@@ -63,6 +63,11 @@ export class ShcClientRegistry {
         }))
   }
 
+  /** The integration's display name, or null when it is not registered. */
+  nameOf(integrationId: string): string | null {
+    return this.#entries.get(integrationId)?.manager.getInfo().name ?? null
+  }
+
   setOnConnected(cb: (integrationId: string) => void): void {
     this.#onConnected = cb
   }
@@ -77,7 +82,10 @@ export class ShcClientRegistry {
       if (sameShcConnection(existing.connection, connection)) return
       try {
         await existing.manager.applyConnection(connection)
-        this.#entries.set(integrationId, { manager: existing.manager, connection })
+        this.#entries.set(integrationId, {
+          manager: existing.manager,
+          connection,
+        })
       } catch (err: unknown) {
         this.#logger.warn('ShcClientRegistry: applyConnection failed', {
           tags: { integrationId },

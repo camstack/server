@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceType } from '@camstack/types'
-import { buildShcCandidates } from '../shc-discovery.js'
+import {
+  type BuildShcCandidatesInput,
+  buildShcCandidates as buildAllShcCandidates,
+  shcGatewayNativeId,
+} from '../shc-discovery.js'
 import type { ShcDeviceSummary } from '../shc-types.js'
+
+/** The device candidates only: the controller's own Gateway candidate is covered below. */
+function buildShcCandidates(
+  input: Pick<BuildShcCandidatesInput, 'devices' | 'adopted'>,
+): ReturnType<typeof buildAllShcCandidates> {
+  return buildAllShcCandidates({
+    integrationId: 'int-1',
+    integrationName: 'SHC',
+    ...input,
+  }).filter((c) => c.type !== DeviceType.Gateway)
+}
 
 const roomClimate: ShcDeviceSummary = {
   id: 'roomClimateControl_hz_abc',
@@ -108,5 +123,38 @@ describe('buildShcCandidates', () => {
     })
     expect(candidates).toHaveLength(1)
     expect(candidates[0]?.childNativeId).toBe(plug.id)
+  })
+})
+
+describe('the controller as a Gateway candidate', () => {
+  const input = {
+    integrationId: 'int-1',
+    integrationName: 'Bosch SHC [lab]',
+    devices: [roomClimate, trv, plug],
+    adopted: new Map<string, number>(),
+  }
+
+  it('lists the controller first, typed Gateway, with no actions the SHC API lacks', () => {
+    const [first] = buildAllShcCandidates(input)
+    expect(first?.childNativeId).toBe(shcGatewayNativeId('int-1'))
+    expect(first?.type).toBe(DeviceType.Gateway)
+    expect(first?.name).toBe('Bosch SHC [lab]')
+    expect(first?.capabilities).toEqual([])
+  })
+
+  it('is a sibling: it has no children and no candidate nests it', () => {
+    const candidates = buildAllShcCandidates(input)
+    const gateway = candidates.find((c) => c.type === DeviceType.Gateway)
+    expect(gateway?.children).toBeUndefined()
+    const nested = candidates.flatMap((c) => c.children ?? [])
+    expect(nested.some((c) => c.childNativeId === shcGatewayNativeId('int-1'))).toBe(false)
+    expect(candidates.filter((c) => c.type === DeviceType.Container)).toHaveLength(1)
+  })
+
+  it('reports an already adopted controller', () => {
+    const adopted = new Map([[shcGatewayNativeId('int-1'), 42]])
+    const [first] = buildAllShcCandidates({ ...input, adopted })
+    expect(first?.alreadyAdopted).toBe(true)
+    expect(first?.adoptedDeviceId).toBe(42)
   })
 })
