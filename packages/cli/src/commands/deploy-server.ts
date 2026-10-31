@@ -164,7 +164,7 @@ function packPackage(
 /**
  * POST every tarball + the version field in ONE multipart request to
  * `/api/server-upload`. Hand-rolled multipart (same approach as the addon
- * deploy) because `hubRequest` (node:https + per-request insecure agent)
+ * deploy) because `hubRequest` (node:https + pinned-CA agent)
  * has no FormData convenience.
  */
 async function uploadClosure(args: {

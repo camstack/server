@@ -99,10 +99,8 @@ async function askSelect(
  * intermediate hop is `unknown` so we never reach for an `as any` cast.
  *
  * TLS note: camstack hubs typically serve a self-signed cert on the LAN.
- * Hub calls go through `hubRequest` (node:https + a per-request insecure
- * agent) so the cert is accepted WITHOUT disabling TLS verification
- * process-wide. The discovery flow already assumes a trusted LAN, so the
- * relaxed posture is bounded to hub traffic only.
+ * Hub calls go through `hubRequest` (node:https + the hub's pinned CA) so a self-signed
+ * hub is trusted WITHOUT disabling TLS verification.
  */
 async function callTrpcMutation<T>(
   url: string,

@@ -1,29 +1,21 @@
 /**
  * Hub HTTP transport for the CLI.
  *
- * camstack hubs serve a SELF-SIGNED cert on the LAN by default. Rather
- * than flip the process-global `NODE_TLS_REJECT_UNAUTHORIZED` env var —
- * which disables TLS verification for EVERY https client in the process
- * and trips a Node runtime warning — we route hub calls through
- * `node:https` with a per-request `https.Agent({ rejectUnauthorized:
- * false })`. TLS verification stays ON for every other https client in
- * the process (e.g. the npm-registry update check).
+ * A hub on the LAN serves a self-signed (or privately issued) certificate. The
+ * CLI never switches verification off: it trusts the PEM the operator pinned
+ * for THAT hub (`~/.camstack/<host>_<port>.ca.pem`, or `$CAMSTACK_HUB_CA_FILE`),
+ * through the same `resolveHubTls` / `createHubAgent` the MCP and `develop`
+ * use (D835). A hub with a publicly trusted certificate needs no pin.
  *
- * undici / the global `fetch` exposes no per-request `rejectUnauthorized`
- * knob, so hub traffic must use `node:https` to attach the custom agent.
- * Every call here targets the hub, so the insecure agent is always the
- * right one; non-hub HTTP (npm registry) keeps using global `fetch`.
+ * undici / the global `fetch` exposes no per-request CA, so hub traffic uses
+ * `node:https` with a per-request agent; non-hub HTTP (npm registry) keeps
+ * using global `fetch`.
  */
 import type { IncomingHttpHeaders } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import { Buffer } from 'node:buffer'
-
-/**
- * Shared agent that accepts the hub's self-signed LAN cert. Scoped to
- * hub requests only — never installed globally.
- */
-const insecureHubAgent = new https.Agent({ rejectUnauthorized: false, keepAlive: false })
+import { createHubAgent, explainTlsFailure, resolveHubTls } from '@camstack/develop'
 
 const DEFAULT_TIMEOUT_MS = 30_000
 
@@ -32,6 +24,10 @@ export interface HubRequestOptions {
   readonly headers?: Readonly<Record<string, string>>
   readonly body?: string | Buffer
   readonly timeoutMs?: number
+  /** Where pinned CAs live; defaults to `~/.camstack`. */
+  readonly sessionDir?: string
+  /** Environment for `CAMSTACK_HUB_CA_FILE`; defaults to `process.env`. */
+  readonly env?: Readonly<Record<string, string | undefined>>
 }
 
 /**
@@ -51,8 +47,8 @@ export interface HubResponse {
 
 /**
  * Issue a single request to the hub over `node:https` (or `node:http` for
- * a plain-HTTP hub URL). The self-signed-cert agent is attached only for
- * `https:` URLs — verification is never disabled process-wide.
+ * a plain-HTTP hub URL). The pinned-CA agent is attached only for
+ * `https:` URLs; verification is never disabled.
  */
 export function hubRequest(url: string, opts: HubRequestOptions = {}): Promise<HubResponse> {
   const parsed = new URL(url)
@@ -68,7 +64,9 @@ export function hubRequest(url: string, opts: HubRequestOptions = {}): Promise<H
       method: opts.method ?? 'GET',
       headers: { ...opts.headers },
       timeout: timeoutMs,
-      ...(isHttps ? { agent: insecureHubAgent } : {}),
+      ...(isHttps
+        ? { agent: createHubAgent(resolveHubTls(parsed.origin, opts.env, opts.sessionDir)) }
+        : {}),
     }
 
     const onResponse = (res: http.IncomingMessage): void => {
@@ -93,7 +91,12 @@ export function hubRequest(url: string, opts: HubRequestOptions = {}): Promise<H
       ? https.request(requestOptions, onResponse)
       : http.request(requestOptions, onResponse)
 
-    req.on('error', reject)
+    req.on('error', (err) => {
+      const explained = isHttps
+        ? explainTlsFailure(`${parsed.protocol}//${parsed.host}`, err)
+        : null
+      reject(explained === null ? err : new Error(explained, { cause: err }))
+    })
     req.on('timeout', () => {
       req.destroy(new Error(`Hub request to ${parsed.host} timed out after ${timeoutMs}ms`))
     })

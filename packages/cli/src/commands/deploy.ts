@@ -443,7 +443,7 @@ async function uploadToTarget(args: {
   const { serverUrl, token, tgzPath, nodeId, addonId } = args
   const fileBuffer = fs.readFileSync(tgzPath)
   // Hand-rolled multipart/form-data — the tarball goes through hubRequest
-  // (node:https + per-request insecure agent), which has no FormData/Blob
+  // (node:https + pinned-CA agent), which has no FormData/Blob
   // convenience, so we assemble the body + boundary ourselves.
   //
   // **The text fields come FIRST, before the file.** They used to trail it, and

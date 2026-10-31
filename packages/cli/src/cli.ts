@@ -669,12 +669,9 @@ function optionalString(
 }
 
 async function main(): Promise<void> {
-  // TLS note: camstack hubs ship a self-signed cert on the LAN. We do NOT
-  // touch the process-global `NODE_TLS_REJECT_UNAUTHORIZED` (that would
-  // disable TLS verification for every https client and trip a Node
-  // warning). Instead hub calls go through `src/http/hub-http.ts`, which
-  // attaches a per-request `https.Agent({ rejectUnauthorized: false })`
-  // scoped to the hub only — verification stays ON everywhere else.
+  // TLS note: camstack hubs ship a self-signed cert on the LAN. Verification is
+  // never switched off: hub calls go through `src/http/hub-http.ts`, which
+  // trusts only the CA pinned for that hub (`~/.camstack/<host>_<port>.ca.pem`).
 
   // Fire-and-forget update check. Reads cached state synchronously to
   // surface a banner instantly if we already know about a newer release;
