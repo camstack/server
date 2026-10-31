@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.707] - 2026-10-31
+
 ### Changed
 
 - Agents receive addon installs and updates again: the convergence dry run no longer blocks every reconcile and holds back only removals.
