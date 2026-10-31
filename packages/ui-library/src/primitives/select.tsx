@@ -13,7 +13,10 @@ export interface SelectOption {
 }
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  options: SelectOption[]
+  /** The choices. Omit it and pass `<option>` / `<optgroup>` children for a grouped or computed list. */
+  options?: SelectOption[]
+  /** Classes of the wrapper that carries the chevron (default `relative w-full`). */
+  wrapperClassName?: string
 }
 
 /**
@@ -33,37 +36,40 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
  * that generates the ticket. Guarded by `disabled-affordance.test.tsx`.
  */
 export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLSelectElement>> =
-  forwardRef<HTMLSelectElement, SelectProps>(({ className, options, disabled, ...props }, ref) => {
-    return (
-      <div className="relative w-full">
-        <select
-          ref={ref}
-          disabled={disabled}
-          className={cn(
-            'h-7 w-full px-2.5 text-xs bg-surface border border-border rounded-md text-foreground appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-primary',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            className,
-          )}
-          {...props}
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {/* The chevron travels with the field: an arrow at full strength over a
+  forwardRef<HTMLSelectElement, SelectProps>(
+    ({ className, options, wrapperClassName, disabled, children, ...props }, ref) => {
+      return (
+        <div className={cn('relative w-full', wrapperClassName)}>
+          <select
+            ref={ref}
+            disabled={disabled}
+            className={cn(
+              'h-7 w-full px-2.5 text-xs bg-surface border border-border rounded-md text-foreground appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-primary',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              className,
+            )}
+            {...props}
+          >
+            {options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+            {children}
+          </select>
+          {/* The chevron travels with the field: an arrow at full strength over a
             dimmed control reads as "this one is still clickable". */}
-        <div
-          className={cn(
-            'absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-foreground-muted',
-            disabled === true ? 'opacity-50' : '',
-          )}
-        >
-          <ChevronDown className="h-3.5 w-3.5" />
+          <div
+            className={cn(
+              'absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-foreground-muted',
+              disabled === true ? 'opacity-50' : '',
+            )}
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </div>
         </div>
-      </div>
-    )
-  })
+      )
+    },
+  )
 
 Select.displayName = 'Select'

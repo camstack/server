@@ -39,3 +39,18 @@ describe('form control primitives', () => {
     expect(cls).toBe('px-2')
   })
 })
+
+describe('Select children and wrapper', () => {
+  it('renders option children and a wrapper class', async () => {
+    const { Select } = await import('..')
+    const { container } = render(
+      <Select aria-label="sel" wrapperClassName="inline-block w-auto" defaultValue="b">
+        <option value="a">A</option>
+        <option value="b">B</option>
+      </Select>,
+    )
+    expect(screen.getAllByRole('option')).toHaveLength(2)
+    expect((container.firstChild as HTMLElement).className).toContain('inline-block')
+    expect((container.firstChild as HTMLElement).className).not.toContain('w-full')
+  })
+})

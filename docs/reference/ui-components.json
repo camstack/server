@@ -10053,8 +10053,14 @@
         {
           "name": "options",
           "type": "SelectOption[]",
-          "optional": false,
-          "doc": ""
+          "optional": true,
+          "doc": "The choices. Omit it and pass `<option>` / `<optgroup>` children for a grouped or computed list."
+        },
+        {
+          "name": "wrapperClassName",
+          "type": "string",
+          "optional": true,
+          "doc": "Classes of the wrapper that carries the chevron (default `relative w-full`)."
         }
       ]
     },
