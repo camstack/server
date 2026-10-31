@@ -45,11 +45,30 @@ function accepts(port: number): Promise<boolean> {
   })
 }
 
-/** Dial `port` with `cn`'s leaf; resolves whether the far end kept the socket open. */
+/**
+ * How long a TLS 1.3 client that already completed its own handshake waits for
+ * the far end to drop it. TLS 1.3 verifies the client certificate AFTER the
+ * client's handshake callback, so a refusal is only ever observed as a close;
+ * there is no event for "accepted". The window only has to cover loopback
+ * delivery of the server's close, never real work.
+ */
+const REFUSAL_OBSERVE_MS = 150
+
+/**
+ * Dial `port` with `cn`'s leaf; resolves whether the far end kept the socket open.
+ * Settles on EVERY exit: a handshake that dies before the connect callback
+ * (alert, reset under load) is a refusal, not a promise that never resolves
+ * and eats the 5 s test budget.
+ */
 async function tlsKeptOpen(ca: MeshCaSigner, cn: string, port: number): Promise<boolean> {
   const leaf = await issueMeshLeafForNode(ca, cn)
   return new Promise((resolve) => {
-    let closed = false
+    let observe: NodeJS.Timeout | undefined
+    const settle = (keptOpen: boolean): void => {
+      if (observe !== undefined) clearTimeout(observe)
+      socket.destroy()
+      resolve(keptOpen)
+    }
     const socket = tls.connect(
       {
         host: '127.0.0.1',
@@ -61,18 +80,11 @@ async function tlsKeptOpen(ca: MeshCaSigner, cn: string, port: number): Promise<
         checkServerIdentity: () => undefined,
       },
       () => {
-        setTimeout(() => {
-          socket.destroy()
-          resolve(!closed)
-        }, 150)
+        observe = setTimeout(() => settle(true), REFUSAL_OBSERVE_MS)
       },
     )
-    socket.on('close', () => {
-      closed = true
-    })
-    socket.on('error', () => {
-      closed = true
-    })
+    socket.once('close', () => settle(false))
+    socket.once('error', () => settle(false))
   })
 }
 
@@ -179,6 +191,18 @@ describe('enrolled agent — the hub is its only peer (D848)', () => {
   it("accepts the hub's certificate on TLS and refuses another agent's", async () => {
     expect(await tlsKeptOpen(agent.ca, 'hub', agent.tlsPort)).toBe(true)
     expect(await tlsKeptOpen(agent.ca, 'agent-b', agent.tlsPort)).toBe(false)
+  })
+
+  it('reads a peer that kills the socket before its handshake completes as a refusal', async () => {
+    const dropper = createNetServer((socket) => socket.destroy())
+    await new Promise<void>((resolve) => dropper.listen(0, '127.0.0.1', resolve))
+    const addr = dropper.address()
+    if (addr === null || typeof addr === 'string') throw new Error('no port')
+    try {
+      expect(await tlsKeptOpen(agent.ca, 'hub', addr.port)).toBe(false)
+    } finally {
+      await new Promise<void>((resolve) => dropper.close(() => resolve()))
+    }
   })
 
   it('dials nobody but the hub', async () => {
