@@ -26,6 +26,7 @@ import {
   type RunnerAlertState,
 } from './runner-alert.js'
 import { AlertStore } from './alert-store.js'
+import { planMigrationAlerts } from './migration-alerts.js'
 import { alertCenterRecordKinds } from './record-kinds.js'
 
 // ── Category → severity mapping ─────────────────────────────────────
@@ -102,6 +103,9 @@ const SILENT_TRACKED_CATEGORIES: readonly string[] = [
   'stream.online',
   // A repaired rule closes its broken-rule card (D905).
   'notification.rule-repaired',
+  // The migration ledger changed (D986): a hint to reconcile, never the truth.
+  'migration.failed',
+  'migration.applied',
 ]
 
 /** The `stream.offline` reasons that are an outage (D883) — mirrors the broker's `isStreamOutageReason`. */
@@ -288,6 +292,8 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     this.unsubscribers = unsubs
     // One-time migration of state keys (D883): cards opened per cam-stream.
     void this.dismissLegacyStreamCards(undefined)
+    // Events from before this addon subscribed are gone (D8); the ledger is not.
+    void this.reconcileMigrationAlerts()
 
     this.ctx.logger.info('Initialized', {
       meta: { trackedCategoriesCount: TRACKED_CATEGORIES.length },
@@ -440,6 +446,13 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       }
       if (category === EventCategory.StreamOnline) {
         await this.handleStreamOnline(event)
+        return
+      }
+      if (
+        category === EventCategory.MigrationFailed ||
+        category === EventCategory.MigrationApplied
+      ) {
+        await this.reconcileMigrationAlerts()
         return
       }
       if (category === EventCategory.NotificationRuleBroken) {
@@ -947,6 +960,25 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       metadata: { ruleId, ruleName, reason, offendingIds, reasons: event.data['reasons'] },
     }
     await this.emitAlert(alert)
+  }
+
+  /**
+   * One card per faulted migration, from the ledger (D986, D11): the RPC read is
+   * the authority and an event only says it may have changed. A read that fails
+   * changes nothing — it must never dismiss a card (D49).
+   */
+  private async reconcileMigrationAlerts(): Promise<void> {
+    try {
+      const { entries } = await this.ctx.api.migrations.listLedger.query({})
+      const open = await this.listAlerts()
+      const plan = planMigrationAlerts(entries, open, Date.now())
+      for (const alert of plan.raise) await this.emitAlert(alert)
+      for (const alertId of plan.dismiss) await this.dismiss(alertId)
+    } catch (err) {
+      this.ctx.logger.warn('migration alerts: reconcile skipped, the ledger could not be read', {
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   /** The rule works again — drop its broken-rule card. */
