@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.216] - 2026-10-31
+
 ### Changed
 
 - The NVR / Home Hub can be added as a Gateway device (reboot, web interface link) next to its channel cameras.
