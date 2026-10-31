@@ -8,8 +8,12 @@ import {
   type AlexaCommand,
   type AlexaStateValue,
 } from './alexa-client.js'
+import { AlexaHttpError } from './alexa-remote-client.js'
 import { alexaAccounts } from './alexa-gateway.js'
 import { connectionToCredentials, type AlexaConnection } from './config.js'
+
+/** Consecutive failed polls before the broker stops reporting 'connected'. */
+export const POLL_FAILURES_BEFORE_ERROR = 3
 
 /** Status of a single Alexa account connection. */
 export type AlexaBrokerStatus =
@@ -80,6 +84,7 @@ export class AlexaIntegrationManager {
   #client: AlexaClient | null = null
   #pollTimer: ReturnType<typeof setInterval> | null = null
   #status: AlexaBrokerStatus = 'disconnected'
+  #pollFailures = 0
   #applianceCount = 0
   #lastCheckedAt: number | null = null
   #error: string | null = null
@@ -194,13 +199,33 @@ export class AlexaIntegrationManager {
       alexaAccounts.recordStates(this.#id, values)
       this.#lastCheckedAt = Date.now()
       this.#onStatesPolled(this.#id, values)
+      this.#pollFailures = 0
+      this.#error = null
+      if (this.#status === 'error' || this.#status === 'auth-failed') {
+        this.#transition('connected')
+      }
     } catch (err: unknown) {
       this.#error = errMsg(err)
+      this.#pollFailures += 1
+      const httpStatus = err instanceof AlexaHttpError ? err.statusCode : null
       this.#logger.warn('AlexaIntegrationManager: poll failed', {
         tags: { brokerId: this.#id },
-        meta: { error: errMsg(err) },
+        meta: { error: errMsg(err), consecutiveFailures: this.#pollFailures, httpStatus },
       })
+      if (this.#pollFailures >= POLL_FAILURES_BEFORE_ERROR && this.#status !== 'disconnected') {
+        this.#transition(err instanceof AlexaAuthError ? 'auth-failed' : 'error')
+      }
     }
+  }
+
+  #transition(next: AlexaBrokerStatus): void {
+    if (this.#status === next) return
+    const previous = this.#status
+    this.#status = next
+    this.#logger.info('AlexaIntegrationManager: status changed', {
+      tags: { brokerId: this.#id },
+      meta: { from: previous, to: next, error: this.#error },
+    })
   }
 
   /** Stop the poll loop, disconnect the client (FIRST), null it. */

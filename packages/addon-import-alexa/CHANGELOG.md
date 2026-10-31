@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa shows an error instead of 'connected' when polling Amazon keeps failing, with the HTTP status in the log.
+
 ## [0.2.171] - 2026-10-30
 
 ### Changed

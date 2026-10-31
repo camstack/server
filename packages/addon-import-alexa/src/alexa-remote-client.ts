@@ -83,7 +83,24 @@ function isRateLimitError(message: string): boolean {
   )
 }
 
+/** HTTP statuses that mean Amazon rejected the session (a re-link is needed). */
+const SESSION_DEAD_STATUSES: ReadonlySet<number> = new Set([401, 403])
+
+/** The library logs `No body (code=NNN)` on a body-less non-2xx; it is the only place the status shows. */
+const NO_BODY_CODE = /No body \(code=(\d{3})\)/
+
+/** A failed Amazon call whose HTTP status is known (null when the library did not say). */
+export class AlexaHttpError extends Error {
+  readonly statusCode: number | null
+  constructor(message: string, statusCode: number | null) {
+    super(message)
+    this.name = 'AlexaHttpError'
+    this.statusCode = statusCode
+  }
+}
+
 export class AlexaRemoteClient implements AlexaClient {
+  #lastHttpStatus: number | null = null
   readonly #options: AlexaClientOptions
   readonly #logger: IScopedLogger | null
   readonly #dataDir: string | null
@@ -108,7 +125,10 @@ export class AlexaRemoteClient implements AlexaClient {
     const remote = new AlexaRemote()
     this.#remote = remote
 
-    const initOptions = await this.#buildInitOptions()
+    const initOptions: AlexaRemoteInitOptions = {
+      ...(await this.#buildInitOptions()),
+      logger: (...args: unknown[]) => this.#captureLibraryLine(args),
+    }
 
     // Persist refreshed sessions: alexa-remote2 emits `cookie` on init + refresh.
     remote.on('cookie', () => {
@@ -254,11 +274,19 @@ export class AlexaRemoteClient implements AlexaClient {
     let lastError: unknown = null
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       try {
+        this.#lastHttpStatus = null
         return await run()
       } catch (err: unknown) {
         lastError = err
         const message = errMsg(err)
         if (isAuthError(message)) throw new AlexaAuthError(message)
+        if (message.toLowerCase().includes('no body')) {
+          const status = this.#lastHttpStatus
+          if (status !== null && SESSION_DEAD_STATUSES.has(status)) {
+            throw new AlexaAuthError(`${message} (HTTP ${status})`)
+          }
+          throw new AlexaHttpError(message, status)
+        }
         if (!isRateLimitError(message) || attempt === MAX_ATTEMPTS - 1) throw err
         const delay = this.#backoffDelay(attempt)
         this.#logger?.warn('AlexaRemoteClient: rate-limited — backing off', {
@@ -268,6 +296,11 @@ export class AlexaRemoteClient implements AlexaClient {
       }
     }
     throw lastError instanceof Error ? lastError : new Error(`AlexaRemoteClient: ${op} failed`)
+  }
+
+  #captureLibraryLine(args: readonly unknown[]): void {
+    const match = NO_BODY_CODE.exec(args.map(String).join(' '))
+    if (match?.[1] !== undefined) this.#lastHttpStatus = Number(match[1])
   }
 
   #backoffDelay(attempt: number): number {
