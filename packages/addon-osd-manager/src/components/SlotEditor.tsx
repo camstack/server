@@ -9,6 +9,7 @@ import {
   TabsTrigger,
   useOsdManagerPreviewSlot,
   useOsdManagerSetSlotCameraEnabled,
+  Checkbox,
 } from '@camstack/ui-library'
 import { Loader2, RefreshCw } from 'lucide-react'
 import type {
@@ -112,8 +113,7 @@ export function SlotEditor({
         <p className="text-[11px] text-foreground-subtle">{t('slot.layerHint')}</p>
 
         <label className="flex items-center gap-2 text-xs text-foreground">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={cameraEnabled}
             disabled={busy}
             data-testid="osd-slot-camera-enabled"
@@ -130,8 +130,7 @@ export function SlotEditor({
         </label>
 
         <label className="flex items-center gap-2 text-xs text-foreground">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={draft.enabled}
             onChange={(e) => onBindingChange({ ...draft, enabled: e.target.checked })}
           />
