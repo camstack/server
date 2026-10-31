@@ -112,6 +112,6 @@ export default function HomematicCcuPage(props: AddonPageProps) {
   )
 }
 
-if (import.meta.env?.DEV && typeof document !== 'undefined' && document.getElementById('root')) {
+if (import.meta.env?.DEV && document.getElementById('root')) {
   mountAddonPage(HomematicCcuPage, { title: 'Homematic CCU' })
 }

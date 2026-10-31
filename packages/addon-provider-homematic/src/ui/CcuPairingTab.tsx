@@ -55,7 +55,7 @@ function InterfaceCard(props: {
 
   return (
     <SectionCard headingId={`hm-pairing-${iface.name}-heading`} title={iface.name} actions={status}>
-      <div className="flex flex-col gap-3" data-testid={`hm-pairing-${iface.name}`}>
+      <div className="flex flex-col gap-3 p-3" data-testid={`hm-pairing-${iface.name}`}>
         {iface.error !== null && <p className="text-xs text-danger">{iface.error}</p>}
         <div className="flex flex-wrap items-end gap-3">
           <FormField label={t('pairing.fieldSeconds')}>
@@ -196,13 +196,13 @@ export function CcuPairingTab(props: { readonly trpc: CcuTrpc; readonly integrat
       )}
       <SectionCard headingId="hm-pairing-found" title={t('pairing.foundTitle')}>
         {devices.error !== null && baseline === null ? (
-          <p className="text-xs text-danger">{devices.error}</p>
+          <p className="p-3 text-xs text-danger">{devices.error}</p>
         ) : found.length === 0 ? (
-          <p className="text-sm text-foreground-subtle" data-testid="hm-pairing-none">
+          <p className="p-3 text-sm text-foreground-subtle" data-testid="hm-pairing-none">
             {anyOpen ? t('pairing.foundWaiting') : t('pairing.foundNone')}
           </p>
         ) : (
-          <ul className="flex flex-col gap-1" data-testid="hm-pairing-found">
+          <ul className="flex flex-col gap-1 p-3" data-testid="hm-pairing-found">
             {found.map((device) => (
               <li key={device.address} className="flex items-center gap-2 text-sm text-foreground">
                 <span>{device.name ?? device.address}</span>
