@@ -115,4 +115,13 @@ describe('toHomematicOptions', () => {
     })
     expect(opts.interfaces).toEqual(['HmIP-RF', 'BidCos-RF', 'VirtualDevices', 'BidCos-Wired'])
   })
+
+  it('a username with an EMPTY password still reaches the library (CCU without WebUI auth)', () => {
+    const opts = toHomematicOptions({ ...CONN, username: 'Admin', password: '' })
+    expect(opts.credentials).toEqual({ username: 'Admin', password: '' })
+  })
+
+  it('a password without a username sends no credentials', () => {
+    expect(toHomematicOptions({ ...CONN, username: '', password: 'x' }).credentials).toBeUndefined()
+  })
 })

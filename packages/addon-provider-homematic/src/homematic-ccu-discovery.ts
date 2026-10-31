@@ -31,6 +31,12 @@ export const HOMEMATIC_DISCOVERY_MODES: readonly DiscoveryMode[] = [
   },
 ]
 
+/** A JSON-RPC reply: it echoes `version` or `id`, and carries a `result` and an `error` member. */
+function isJsonRpcEnvelope(parsed: object): boolean {
+  const echoes = Reflect.has(parsed, 'version') || Reflect.has(parsed, 'id')
+  return echoes && Reflect.has(parsed, 'result') && Reflect.has(parsed, 'error')
+}
+
 /**
  * Read the answer of `CCU.getAuthEnabled`, the question the WebUI asks before
  * it shows a login. A CCU answers a boolean; one that already requires a login
@@ -57,7 +63,11 @@ export function parseAuthEnabledAnswer(
       (typeof message === 'string' && message.toLowerCase().startsWith('access denied')) ||
       code === 401 ||
       code === -32001
-    return denied ? { authEnabled: true } : null
+    // A CCU that wants a session answers the unauthenticated probe with an
+    // error of its own ("can't read args(_session_id_)", code 200). Any
+    // well-formed JSON-RPC envelope from this endpoint proves a CCU, and one
+    // that errors without a session is one that asks for a login.
+    return denied || isJsonRpcEnvelope(parsed) ? { authEnabled: true } : null
   }
   const result: unknown = Reflect.get(parsed, 'result')
   if (result === true || result === 'true') return { authEnabled: true }

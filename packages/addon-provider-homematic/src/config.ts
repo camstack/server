@@ -72,11 +72,14 @@ export function enabledInterfaces(
 /**
  * Build the `HomematicOptions` the wrapped library constructor expects
  * from the validated addon config. Pure: same config in → same options
- * out. Credentials are only forwarded when both fields are non-empty so
- * the library skips the JSON-RPC hub layer cleanly when they're absent.
+ * out. Credentials are forwarded when a username is set (the password may be
+ * empty on a CCU without WebUI authentication); without one the library skips
+ * the JSON-RPC hub layer cleanly.
  */
 export function toHomematicOptions(config: HomematicConfig): HomematicOptions {
-  const hasCredentials = config.username.length > 0 && config.password.length > 0
+  // A CCU without WebUI authentication (auto-login) has users with NO password: a
+  // username alone is enough for the JSON-RPC session, so the password may be empty.
+  const hasCredentials = config.username.length > 0
   // When the operator leaves callbackHost blank, auto-infer the hub's LAN IPv4
   // on the same /24 as the CCU so the CCU can push value events back to us.
   const callbackHost =

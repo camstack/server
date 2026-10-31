@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The CCU network scan now finds a CCU that answers the probe with a JSON-RPC error, a WebUI username alone (empty password) now unlocks device names, and a missing-names warning is logged.
+
 ## [1.2.171] - 2026-10-31
 
 ### Changed

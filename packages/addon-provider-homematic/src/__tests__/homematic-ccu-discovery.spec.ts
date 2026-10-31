@@ -25,6 +25,29 @@ describe('parseAuthEnabledAnswer', () => {
     expect(parseAuthEnabledAnswer(200, text)).toEqual({ authEnabled: true })
   })
 
+  it('accepts the real CCU answer to an unauthenticated probe: a JSON-RPC error envelope', () => {
+    const text = JSON.stringify({
+      id: 0,
+      version: '1.1',
+      result: null,
+      error: {
+        code: 200,
+        message: 'internal error: can\'t read "args(_session_id_)": no such variable',
+      },
+    })
+    expect(parseAuthEnabledAnswer(200, text)).toEqual({ authEnabled: true })
+    expect(ccusFromHits([hit('192.168.1.198', 200, text)]).map((c) => c.host)).toEqual([
+      '192.168.1.198',
+    ])
+  })
+
+  it('is null for a JSON-RPC-looking body without an envelope, or an error that is not an object', () => {
+    expect(
+      parseAuthEnabledAnswer(200, JSON.stringify({ version: '1.1', error: 'boom' })),
+    ).toBeNull()
+    expect(parseAuthEnabledAnswer(200, JSON.stringify({ version: '1.1', id: 1 }))).toBeNull()
+  })
+
   it('is null for anything that is not the CCU JSON-RPC answer', () => {
     expect(parseAuthEnabledAnswer(200, '<html>router</html>')).toBeNull()
     expect(parseAuthEnabledAnswer(404, ok(true))).toBeNull()

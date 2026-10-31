@@ -166,3 +166,40 @@ it('applyConnection rebuilds the facade from the NEW connection', async () => {
   expect(seen).toEqual(['h', 'other-host'])
   expect(mgr.getConnection().host).toBe('other-host')
 })
+
+it('warns once, tagged with the integration, when the CCU returned no device names', async () => {
+  const facade = fakeFacade()
+  facade.devices.mockReturnValue([{ address: 'ABC123' }, { address: 'DEF456' }])
+  const warn = vi.fn()
+  const mgr = new HmIntegrationManager({
+    id: 'hm_names',
+    name: 'Casa',
+    connection: { ...CONN, username: 'Admin' },
+    logger: { ...logger, warn },
+    makeFacade: () => facade,
+    onConnected: vi.fn(),
+    onDisconnected: vi.fn(),
+  })
+  await mgr.start()
+  const call = warn.mock.calls.find((c) => String(c[0]).includes('names unavailable'))
+  expect(call?.[1]).toMatchObject({ tags: { integrationId: 'hm_names' } })
+  expect(call?.[1]?.meta).toMatchObject({ credentialsSet: true, devices: 2 })
+  expect(mgr.getInfo().info).toMatchObject({ namesAvailable: false })
+})
+
+it('does not warn when the devices carry names', async () => {
+  const facade = fakeFacade()
+  const warn = vi.fn()
+  const mgr = new HmIntegrationManager({
+    id: 'hm_named',
+    name: 'Casa',
+    connection: CONN,
+    logger: { ...logger, warn },
+    makeFacade: () => facade,
+    onConnected: vi.fn(),
+    onDisconnected: vi.fn(),
+  })
+  await mgr.start()
+  expect(warn.mock.calls.some((c) => String(c[0]).includes('names unavailable'))).toBe(false)
+  expect(mgr.getInfo().info).toMatchObject({ namesAvailable: true })
+})

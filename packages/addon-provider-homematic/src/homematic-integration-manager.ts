@@ -149,6 +149,7 @@ export class HmIntegrationManager {
   #facade: HmFacadeLike | null = null
   #status: HmSessionStatus = 'disconnected'
   #deviceCount = 0
+  #namesAvailable = true
   #lastCheckedAt: number | null = null
   #error: string | null = null
 
@@ -211,6 +212,7 @@ export class HmIntegrationManager {
         host: this.#connection.host,
         tls: this.#connection.tls,
         deviceCount: this.#deviceCount,
+        namesAvailable: this.#namesAvailable,
       },
       lastCheckedAt: this.#lastCheckedAt,
       error: this.#error,
@@ -242,7 +244,25 @@ export class HmIntegrationManager {
 
     await facade.start()
 
-    this.#deviceCount = facade.devices().length
+    const devices = facade.devices()
+    this.#deviceCount = devices.length
+    this.#namesAvailable = devices.length === 0 || devices.some((d) => (d.name ?? '').length > 0)
+    if (!this.#namesAvailable) {
+      const credentialsSet = this.#connection.username.length > 0
+      this.#logger.warn(
+        'HmIntegrationManager: device names unavailable — devices are listed by address',
+        {
+          tags: { integrationId: this.#id },
+          meta: {
+            devices: devices.length,
+            credentialsSet,
+            hint: credentialsSet
+              ? 'WebUI login set but the CCU returned no names; check the username (an empty password is valid on a CCU without WebUI authentication)'
+              : 'set a WebUI username (and password if the CCU has one) on the integration',
+          },
+        },
+      )
+    }
     this.#lastCheckedAt = Date.now()
     // A start that RESOLVED is the proof of connection, and the only one on
     // offer: `nodehomematic` publishes CONNECTED on its internal bus inside
