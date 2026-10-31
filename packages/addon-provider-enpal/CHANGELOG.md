@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Enpal box can be added as a Gateway device with a link to its local device page, next to its equipment.
+
 ## [0.1.4] - 2026-10-28
 
 ### Changed

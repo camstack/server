@@ -1,6 +1,10 @@
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { buildEnpalCandidates } from '../enpal-discovery.js'
+import {
+  type BuildEnpalCandidatesInput,
+  buildEnpalCandidates as buildAllEnpalCandidates,
+  ENPAL_BOX_ID,
+} from '../enpal-discovery.js'
 import { createSnapshot, type EnpalReading } from '../enpal-snapshot.js'
 
 function snapshotOf(...keys: string[]) {
@@ -36,6 +40,15 @@ const FULL = snapshotOf(
   'Heatpump.DomesticHotWater.Temperature',
   'Heatpump.Outside.Temperature',
 )
+
+const BOX = { name: 'Enpal box', online: true } as const
+
+/** The equipment candidates only: the box's own Gateway candidate is covered below. */
+function buildEnpalCandidates(input: Omit<BuildEnpalCandidatesInput, 'box'>) {
+  return buildAllEnpalCandidates({ box: BOX, ...input }).filter(
+    (c) => c.type !== DeviceType.Gateway,
+  )
+}
 
 const childIds = (c: { children?: readonly { childNativeId: string }[] }): string[] =>
   (c.children ?? []).map((x) => x.childNativeId)
@@ -77,7 +90,7 @@ describe('Enpal discovery: containers per equipment', () => {
     expect(childIds(out[0]!)).toEqual(['battery#battery'])
   })
 
-  it('offers nothing while the box has no snapshot', () => {
+  it('offers no equipment while the box has no snapshot', () => {
     expect(buildEnpalCandidates({ snapshot: null, adopted: new Map() })).toEqual([])
   })
 
@@ -98,5 +111,50 @@ describe('Enpal discovery: containers per equipment', () => {
     const soc = battery?.children?.find((c) => c.childNativeId === 'battery#battery')
     expect(soc?.type).toBe(DeviceType.Sensor)
     expect(soc?.capabilities).toEqual(['battery', 'power-meter'])
+  })
+})
+
+describe('Enpal discovery: the box as a Gateway', () => {
+  it('lists the box first, typed Gateway, with the admin link and no other action', () => {
+    const [box] = buildAllEnpalCandidates({ box: BOX, snapshot: FULL, adopted: new Map() })
+    expect(box).toMatchObject({
+      childNativeId: ENPAL_BOX_ID,
+      name: 'Enpal box',
+      type: DeviceType.Gateway,
+      status: 'online',
+      alreadyAdopted: false,
+    })
+    expect(box?.capabilities).toEqual(['device-admin-link'])
+  })
+
+  it('is a sibling of the equipment: no children, and no candidate nests it', () => {
+    const out = buildAllEnpalCandidates({ box: BOX, snapshot: FULL, adopted: new Map() })
+    const box = out.find((c) => c.type === DeviceType.Gateway)
+    expect(box?.children).toBeUndefined()
+    expect(out.flatMap((c) => c.children ?? []).some((c) => c.childNativeId === ENPAL_BOX_ID)).toBe(
+      false,
+    )
+    expect(out.filter((c) => c.type === DeviceType.Container)).toHaveLength(5)
+  })
+
+  it('is still offered, offline, while the box has no snapshot', () => {
+    const out = buildAllEnpalCandidates({
+      box: { name: 'Enpal box', online: false },
+      snapshot: null,
+      adopted: new Map(),
+    })
+    expect(out.map((c) => [c.childNativeId, c.type, c.status])).toEqual([
+      [ENPAL_BOX_ID, DeviceType.Gateway, 'offline'],
+    ])
+  })
+
+  it('flags an adopted box with its device id', () => {
+    const [box] = buildAllEnpalCandidates({
+      box: BOX,
+      snapshot: FULL,
+      adopted: new Map([[ENPAL_BOX_ID, 9]]),
+    })
+    expect(box?.alreadyAdopted).toBe(true)
+    expect(box?.adoptedDeviceId).toBe(9)
   })
 })

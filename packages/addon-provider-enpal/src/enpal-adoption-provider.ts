@@ -6,7 +6,7 @@ import {
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
-import { buildEnpalCandidates } from './enpal-discovery.js'
+import { buildEnpalCandidates, ENPAL_BOX_ID } from './enpal-discovery.js'
 import { ENPAL_SYSTEM } from './config.js'
 import { findEquipment } from './enpal-equipment.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
@@ -15,6 +15,8 @@ export interface EnpalAdoptionProviderDeps {
   readonly getSnapshot: (integrationId: string) => EnpalSnapshot | null
   readonly hasIntegration: (integrationId: string) => boolean
   readonly listIntegrations: () => readonly string[]
+  /** The integration's display name, or null when it is unknown. */
+  readonly integrationName: (integrationId: string) => string | null
   readonly listAdopted: () => Promise<
     ReadonlyArray<{
       readonly id: number
@@ -31,6 +33,11 @@ export interface EnpalAdoptionProviderDeps {
     readonly deviceId: number
     readonly accessoryDeviceIds: readonly number[]
   }>
+  /** Create the top-level Gateway device of the box. */
+  readonly adoptGateway: (input: {
+    readonly integrationId: string
+    readonly name: string
+  }) => Promise<{ readonly deviceId: number }>
   readonly removeDevice: (deviceId: number) => Promise<void>
   readonly findDeviceConfig: (deviceId: number) => Promise<Record<string, unknown> | null>
   readonly logger: IScopedLogger
@@ -46,6 +53,7 @@ export function buildEnpalAdoptionProvider(
   deps: EnpalAdoptionProviderDeps,
 ): IDeviceAdoptionProvider {
   const { getSnapshot, hasIntegration, listIntegrations, listAdopted, logger } = deps
+  const boxName = (integrationId: string): string => deps.integrationName(integrationId) ?? 'Enpal'
 
   async function adoptedMap(integrationId: string): Promise<ReadonlyMap<string, number>> {
     const map = new Map<string, number>()
@@ -59,8 +67,10 @@ export function buildEnpalAdoptionProvider(
   }
 
   async function candidates(integrationId: string): Promise<readonly DiscoveredChildDevice[]> {
+    const snapshot = getSnapshot(integrationId)
     return buildEnpalCandidates({
-      snapshot: getSnapshot(integrationId),
+      box: { name: boxName(integrationId), online: snapshot !== null },
+      snapshot,
       adopted: await adoptedMap(integrationId),
     })
   }
@@ -133,6 +143,18 @@ export function buildEnpalAdoptionProvider(
       let failures = 0
       for (const equipmentId of childNativeIds) {
         try {
+          if (equipmentId === ENPAL_BOX_ID) {
+            const { deviceId } = await deps.adoptGateway({
+              integrationId,
+              name: perCandidate?.[equipmentId]?.name ?? boxName(integrationId),
+            })
+            adopted.push({
+              childNativeId: equipmentId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: [],
+            })
+            continue
+          }
           const candidate = offered.find((c) => c.childNativeId === equipmentId)
           const equipment = findEquipment(equipmentId)
           if (candidate === undefined || equipment === undefined) {
