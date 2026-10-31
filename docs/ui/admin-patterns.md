@@ -633,6 +633,12 @@ scrolling to `<DialogBody>`:
 </DialogContent>
 ```
 
+A popover, dropdown menu or `OptionSelect` list opened inside a dialog needs
+no care from the page: `TopLayerPortal` mounts it inside the trigger's
+`<dialog>` and promotes it to the top layer, because a modal dialog paints
+over (and makes inert) anything portalled to `document.body`. Never portal a
+floating surface to the body yourself.
+
 Three things that are easy to get wrong here, and the first one shipped:
 
 - **A `max-height` is not a height, and the difference is invisible on

@@ -11,9 +11,9 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
-import { createPortal } from 'react-dom'
 import { Check, ChevronDown, Plus, Search } from 'lucide-react'
 import { Badge } from '../../primitives/badge'
+import { TopLayerPortal } from '../../primitives/top-layer-portal'
 import { EventKindGlyph } from '../event-kind-visuals'
 import { INPUT_SHELL, SelectedChip } from '../device-picker/SelectedChip'
 import type { OptionSelectOption } from './option-select-model'
@@ -553,60 +553,56 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
         </button>
       )}
 
-      {open &&
-        !isDisabled &&
-        coords !== null &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <div
-            ref={listboxRef}
-            id={listboxId}
-            role="listbox"
-            style={
-              {
-                position: 'fixed',
-                top: coords.top,
-                left: coords.left,
-                width: coords.width,
-                maxHeight: coords.maxHeight,
-                zIndex: 9999,
-              } satisfies CSSProperties
-            }
-            className="overflow-y-auto rounded-md border border-border bg-surface shadow-lg"
-            onMouseDown={(e) => {
-              // Prevent input blur from racing the click.
-              e.preventDefault()
-              if (blurTimer.current) clearTimeout(blurTimer.current)
-            }}
-          >
-            {dropdownBody}
-            {showAddNewFooter && (
-              <button
-                type="button"
-                className={[
-                  'flex w-full items-center gap-2 border-t border-border px-2.5 py-1.5 text-left text-xs transition-colors',
-                  footerAddNewIndex === highlight ? 'bg-primary/10' : 'hover:bg-surface-hover',
-                  'cursor-pointer text-primary',
-                ].join(' ')}
-                onMouseEnter={() => setHighlight(footerAddNewIndex)}
-                onClick={() => {
-                  const draft = draftFromQuery(query)
-                  if (draft !== null) {
-                    onCreateRequest?.(draft)
-                    setQuery('')
-                    setOpen(false)
-                    return
-                  }
-                  inputRef.current?.focus()
-                }}
-              >
-                <Plus className="h-3.5 w-3.5 shrink-0" />
-                {createLabel}
-              </button>
-            )}
-          </div>,
-          document.body,
-        )}
+      {open && !isDisabled && coords !== null && typeof document !== 'undefined' && (
+        <TopLayerPortal
+          anchor={triggerRef}
+          surfaceRef={listboxRef}
+          id={listboxId}
+          role="listbox"
+          style={
+            {
+              position: 'fixed',
+              top: coords.top,
+              left: coords.left,
+              width: coords.width,
+              maxHeight: coords.maxHeight,
+              zIndex: 9999,
+            } satisfies CSSProperties
+          }
+          className="overflow-y-auto rounded-md border border-border bg-surface shadow-lg"
+          onMouseDown={(e) => {
+            // Prevent input blur from racing the click.
+            e.preventDefault()
+            if (blurTimer.current) clearTimeout(blurTimer.current)
+          }}
+        >
+          {dropdownBody}
+          {showAddNewFooter && (
+            <button
+              type="button"
+              className={[
+                'flex w-full items-center gap-2 border-t border-border px-2.5 py-1.5 text-left text-xs transition-colors',
+                footerAddNewIndex === highlight ? 'bg-primary/10' : 'hover:bg-surface-hover',
+                'cursor-pointer text-primary',
+              ].join(' ')}
+              onMouseEnter={() => setHighlight(footerAddNewIndex)}
+              onClick={() => {
+                const draft = draftFromQuery(query)
+                if (draft !== null) {
+                  onCreateRequest?.(draft)
+                  setQuery('')
+                  setOpen(false)
+                  return
+                }
+                inputRef.current?.focus()
+              }}
+            >
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              {createLabel}
+            </button>
+          )}
+        </TopLayerPortal>
+      )}
 
       {description !== undefined && description.length > 0 && (
         <p className={DESC_CLASS}>{description}</p>

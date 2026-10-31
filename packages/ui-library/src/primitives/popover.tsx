@@ -14,10 +14,10 @@ import {
   useRef,
   useState,
 } from 'react'
-import { createPortal } from 'react-dom'
 import { cn } from '../lib/cn'
 import { useIsMobile } from '../hooks/use-is-mobile'
 import { BottomSheet } from './bottom-sheet'
+import { TopLayerPortal } from './top-layer-portal'
 
 interface PopoverContextValue {
   open: boolean
@@ -147,6 +147,7 @@ export function PopoverContent({
   const { open, setOpen, contentId, triggerId, triggerRef } = usePopoverContext()
   const isMobile = useIsMobile()
   const ref = useRef<HTMLDivElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<PopoverContentCoords | null>(null)
   const [placement, setPlacement] = useState<PopoverPlacement | null>(null)
 
@@ -205,7 +206,10 @@ export function PopoverContent({
       }
     }
     const escHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key !== 'Escape') return
+      // Closes the popover only: without this a dialog around it would close too.
+      e.preventDefault()
+      setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     document.addEventListener('keydown', escHandler)
@@ -219,9 +223,15 @@ export function PopoverContent({
 
   if (isMobile) {
     return (
-      <BottomSheet open={open} onClose={() => setOpen(false)}>
-        {children}
-      </BottomSheet>
+      <TopLayerPortal
+        anchor={triggerRef}
+        surfaceRef={sheetRef}
+        className="pointer-events-none fixed inset-0 h-dvh w-dvw max-w-none overflow-visible border-0 bg-transparent p-0 [&>*]:pointer-events-auto"
+      >
+        <BottomSheet open={open} onClose={() => setOpen(false)}>
+          {children}
+        </BottomSheet>
+      </TopLayerPortal>
     )
   }
 
@@ -236,9 +246,10 @@ export function PopoverContent({
     minWidth: coords.minWidth,
   }
 
-  return createPortal(
-    <div
-      ref={ref}
+  return (
+    <TopLayerPortal
+      anchor={triggerRef}
+      surfaceRef={ref}
       id={contentId}
       role="dialog"
       aria-labelledby={triggerId}
@@ -251,7 +262,6 @@ export function PopoverContent({
       {...props}
     >
       {children}
-    </div>,
-    document.body,
+    </TopLayerPortal>
   )
 }

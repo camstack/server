@@ -12,9 +12,9 @@ import {
   useRef,
   useState,
 } from 'react'
-import { createPortal } from 'react-dom'
 import { type LucideIcon } from 'lucide-react'
 import { cn } from '../lib/cn'
+import { TopLayerPortal } from './top-layer-portal'
 
 interface DropdownContextValue {
   open: boolean
@@ -156,7 +156,10 @@ export function DropdownContent({
       }
     }
     const escHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key !== 'Escape') return
+      // Closes the menu only: without this a dialog around it would close too.
+      e.preventDefault()
+      setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     document.addEventListener('keydown', escHandler)
@@ -175,9 +178,10 @@ export function DropdownContent({
     minWidth: coords.minWidth,
   }
 
-  return createPortal(
-    <div
-      ref={ref}
+  return (
+    <TopLayerPortal
+      anchor={triggerRef}
+      surfaceRef={ref}
       id={contentId}
       role="menu"
       aria-labelledby={triggerId}
@@ -189,8 +193,7 @@ export function DropdownContent({
       {...props}
     >
       {children}
-    </div>,
-    document.body,
+    </TopLayerPortal>
   )
 }
 
