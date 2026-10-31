@@ -151,6 +151,14 @@ describe('LockUnlock', () => {
     })
   })
 
+  it('reports a lock with an open door (D984) as not locked, not jammed', () => {
+    const row = traitsForCaps(['lock-control'])[0]
+    expect(row?.projectState({ state: 'door-open', lastChangedAt: 1 })).toEqual({
+      isLocked: false,
+      isJammed: false,
+    })
+  })
+
   it('routes lock and unlock to different cap methods', () => {
     expect(resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true })).toEqual(
       {

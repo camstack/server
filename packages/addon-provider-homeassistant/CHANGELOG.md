@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A test notification's sample image now reaches Home Assistant as an absolute public URL
+- A lock reporting door-open is published to Home Assistant as open.
 
 ## [1.2.640] - 2026-10-30
 

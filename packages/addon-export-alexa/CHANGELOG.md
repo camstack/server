@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A lock reporting door-open is reported as UNLOCKED to Alexa.
+
 ## [1.2.175] - 2026-10-29
 
 ### Changed

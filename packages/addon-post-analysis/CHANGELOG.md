@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A lock reporting door-open counts as an opening for the alarm.
+
 ## [1.2.655] - 2026-10-31
 
 ### Changed

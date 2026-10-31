@@ -421,4 +421,15 @@ describe('the lock, which is why the platform is worth having', () => {
       'lock-lock-control',
     ])
   })
+
+  it('maps door-open (D984) to the platform own `open`, never publishing it raw', () => {
+    const plan = buildDerivedPlan(
+      device({ type: 'lock', boundCaps: ['lock-control'], slices: ['lock-control'] }),
+      { platforms: NATIVE_SUPPORT },
+    )
+    const native = componentOf(plan, 'lock-lock-control')
+
+    expect(native.state_open).toBe('open')
+    expect(native.value_template).toContain("'open' if value == 'door-open'")
+  })
 })

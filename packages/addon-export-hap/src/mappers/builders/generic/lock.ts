@@ -3,7 +3,7 @@
  *
  * Not a sensor row: HomeKit models a lock as two characteristics, a CURRENT
  * state the accessory owns and a TARGET state the controller writes, and the
- * cap's five states do not map onto either one alone.
+ * cap's six states do not map onto either one alone.
  *
  * ```
  *  cap state    LockCurrentState   LockTargetState
@@ -12,6 +12,7 @@
  *  locking      UNKNOWN            SECURED      (in flight — do not claim SECURED)
  *  unlocking    UNKNOWN            UNSECURED
  *  jammed       JAMMED             unchanged    (the controller's intent stands)
+ *  door-open    UNSECURED          UNSECURED    (D984: the linked door contact reads open)
  * ```
  *
  * Reporting SECURED while the bolt is still moving is the failure worth naming:
@@ -36,7 +37,7 @@ const readLock = reader(LockControlStatusSchema.pick({ state: true }), (status) 
   const current =
     status.state === 'locked'
       ? Characteristic.LockCurrentState.SECURED
-      : status.state === 'unlocked'
+      : status.state === 'unlocked' || status.state === 'door-open'
         ? Characteristic.LockCurrentState.UNSECURED
         : status.state === 'jammed'
           ? Characteristic.LockCurrentState.JAMMED
@@ -44,7 +45,7 @@ const readLock = reader(LockControlStatusSchema.pick({ state: true }), (status) 
   const target =
     status.state === 'locked' || status.state === 'locking'
       ? Characteristic.LockTargetState.SECURED
-      : status.state === 'unlocked' || status.state === 'unlocking'
+      : status.state === 'unlocked' || status.state === 'unlocking' || status.state === 'door-open'
         ? Characteristic.LockTargetState.UNSECURED
         : null
   return [

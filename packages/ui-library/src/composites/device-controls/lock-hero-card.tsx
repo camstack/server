@@ -54,6 +54,7 @@ const LOCK_STATE_GLYPH = {
   unlocked: { colorClass: 'border-warning/30 bg-warning/10 text-warning', icon: 'open' },
   unlocking: { colorClass: 'border-warning/30 bg-warning/10 text-warning', icon: 'open' },
   jammed: { colorClass: 'border-danger/30 bg-danger/10 text-danger', icon: 'locked' },
+  'door-open': { colorClass: 'border-warning/30 bg-warning/10 text-warning', icon: 'open' },
 } satisfies Record<LockState, GlyphConfig>
 
 interface LockGlyphProps {

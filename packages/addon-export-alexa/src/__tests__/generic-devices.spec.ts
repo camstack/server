@@ -7,9 +7,17 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildGenericDeviceEndpoint } from '../endpoints/generic-device.js'
 import { buildEndpointsForExposedDevice } from '../handlers/discovery.js'
 import { genericPropertyFor } from '../handlers/generic-state.js'
-import { handleLock } from '../handlers/lock-controller.js'
+import { alexaLockStateFor, handleLock } from '../handlers/lock-controller.js'
 import { stateReportsFor } from '../state-reports/state-change-map.js'
 import { fakeBuildContext, quietLogger } from './helpers/fake-device-api.js'
+
+describe('lock state mapping (D984)', () => {
+  it('reports a lock with an open door as UNLOCKED, a jam as JAMMED', () => {
+    expect(alexaLockStateFor('door-open')).toBe('UNLOCKED')
+    expect(alexaLockStateFor('jammed')).toBe('JAMMED')
+    expect(alexaLockStateFor('locked')).toBe('LOCKED')
+  })
+})
 
 describe('generic endpoint shape', () => {
   it('a lock is a SMARTLOCK with LockController and EndpointHealth', () => {

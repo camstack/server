@@ -30,4 +30,22 @@ describe('scalarFieldFit', () => {
       }),
     ).toEqual({ ok: false, reason: 'unit-unknown' })
   })
+
+  it('takes a contact for the lock door-contact (D984) and refuses a number', () => {
+    const contact = scalarFieldFit('lock-control', 'door-contact', {
+      cap: 'contact',
+      path: 'entryOpen',
+      kind: 'boolean',
+      unit: null,
+    })
+    expect(contact.ok).toBe(true)
+    expect(
+      scalarFieldFit('lock-control', 'door-contact', {
+        cap: 'numeric-sensor',
+        path: 'value',
+        kind: 'number',
+        unit: null,
+      }).ok,
+    ).toBe(false)
+  })
 })

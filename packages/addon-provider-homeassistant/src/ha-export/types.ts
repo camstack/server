@@ -132,6 +132,9 @@ export interface HaComponent {
   readonly controls?: Readonly<Record<string, HaNativeControl>>
   /** `climate` / `water_heater`: the unit every temperature topic carries. */
   readonly temperature_unit?: string
+  /** `lock`: the payload that means a door standing open, and the template that rewrites `door-open` to it (D984). */
+  readonly state_open?: string
+  readonly value_template?: string
   /** `alarm_control_panel`: the panel demands a PIN, per `requiresCode`. */
   readonly code_arm_required?: boolean
 

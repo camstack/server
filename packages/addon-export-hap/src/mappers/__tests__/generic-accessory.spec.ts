@@ -264,6 +264,25 @@ describe('the generic accessory', () => {
     await mapper.dispose()
   })
 
+  it('shows a lock reporting door-open (D984) as unsecured, never secured', async () => {
+    const proxy = makeProxy(['lock-control'], DeviceType.Lock, {
+      lockControl: {
+        getStatus: async () => ({ state: 'door-open', lastChangedAt: 1 }),
+        lock: async () => undefined,
+        unlock: async () => undefined,
+      },
+    })
+    const mapper = await build(proxy)
+    const service = serviceOfType(mapper.accessory, Service.LockMechanism)
+    expect(service?.getCharacteristic(Characteristic.LockCurrentState).value).toBe(
+      Characteristic.LockCurrentState.UNSECURED,
+    )
+    expect(service?.getCharacteristic(Characteristic.LockTargetState).value).toBe(
+      Characteristic.LockTargetState.UNSECURED,
+    )
+    await mapper.dispose()
+  })
+
   it('publishes one service per sensor capability, each separately labelled', async () => {
     const proxy = makeProxy(['temperature-sensor', 'humidity-sensor'], DeviceType.Sensor, {
       temperatureSensor: { getStatus: async () => ({ temperature: 21.5, lastFetchedAt: 1 }) },

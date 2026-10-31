@@ -171,7 +171,7 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
   },
   /**
    * The reason this platform exists. `LockStateSchema` is
-   * `locked | unlocked | locking | unlocking | jammed`, and every one of
+   * `locked | unlocked | locking | unlocking | jammed | door-open`, and every one of
    * those is a state Home Assistant's `lock` has — including the one a
    * `switch` silently reports as "unlocked".
    *
@@ -183,6 +183,16 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
     platform: 'lock',
     primary: { from: 'state', commandFrom: null },
     controls: { open: { from: 'open', commandOnly: true } },
+    /**
+     * `door-open` (D984: the linked door contact reads open) is no state of
+     * Home Assistant's lock, but `open` is — the platform's own word for a
+     * door standing open. The enum is rewritten on the way in, so the enum
+     * sensor beside it keeps the cap's own value.
+     */
+    constants: {
+      state_open: 'open',
+      value_template: "{{ 'open' if value == 'door-open' else value }}",
+    },
   },
   /**
    * `AlarmStateSchema` IS Home Assistant's alarm vocabulary, and

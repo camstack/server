@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize offers the door contact on a lock that serves lock-control.
+
 ## [1.2.533] - 2026-10-31
 
 ### Changed

@@ -258,7 +258,7 @@ interface CardBodyProps {
   readonly sourceDeviceId: number | null
   readonly error: string | null
   readonly saving: boolean
-  readonly mode: 'add' | null
+  readonly mode: 'add' | 'replace' | null
   readonly onOpen: () => void
   readonly onRemove: () => void
   readonly handle: CustomizationHandle

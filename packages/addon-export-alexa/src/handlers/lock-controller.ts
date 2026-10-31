@@ -9,7 +9,7 @@
  * reported as a state, not an error (Amazon). Unlocking by voice is something
  * the user must enable in the Alexa app; the skill does not second-guess it.
  */
-import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger, LockState } from '@camstack/types'
 import { LockControlStatusSchema } from '@camstack/types'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
@@ -23,15 +23,14 @@ export interface LockControllerContext {
 export type AlexaLockState = 'LOCKED' | 'UNLOCKED' | 'JAMMED'
 
 /** The `lock-control` state as Alexa's `lockState`. */
-export function alexaLockStateFor(
-  state: 'locked' | 'unlocked' | 'locking' | 'unlocking' | 'jammed',
-): AlexaLockState {
+export function alexaLockStateFor(state: LockState): AlexaLockState {
   switch (state) {
     case 'locked':
     case 'locking':
       return 'LOCKED'
     case 'unlocked':
     case 'unlocking':
+    case 'door-open':
       return 'UNLOCKED'
     case 'jammed':
       return 'JAMMED'

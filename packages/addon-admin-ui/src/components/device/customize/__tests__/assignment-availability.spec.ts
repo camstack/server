@@ -45,6 +45,33 @@ const MOTION: CustomizeOffer = {
   nativeItemsReadOnly: false,
 }
 
+const DOOR_CONTACT: CustomizeOffer = {
+  cap: 'lock-control',
+  apply: 'replace',
+  authority: 'composition-claim',
+  nativeItemsReadOnly: false,
+}
+
+describe('assignmentAvailability — a declared replace (D984)', () => {
+  const LOCK: AssignmentFacts = {
+    deviceType: 'lock',
+    composable: known(new Set<string>()),
+    nativeCaps: known(new Set(['lock-control'])),
+    cameraSensors: 'absent',
+  }
+  it('is offered on a lock that serves lock-control itself', () => {
+    expect(assignmentAvailability(DOOR_CONTACT, LOCK)).toEqual({
+      kind: 'present',
+      mode: 'replace',
+    })
+  })
+  it('is absent where the device has no lock-control to override', () => {
+    expect(
+      assignmentAvailability(DOOR_CONTACT, { ...LOCK, nativeCaps: known(new Set<string>()) }),
+    ).toEqual({ kind: 'absent' })
+  })
+})
+
 describe('assignmentAvailability — four answered states (D315, D676 ruling 13)', () => {
   it('a doorbell is offered where it can be composed and the device has none of its own', () => {
     expect(assignmentAvailability(DOORBELL, CAMERA)).toEqual({ kind: 'present', mode: 'add' })

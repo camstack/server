@@ -35,7 +35,13 @@ const TOWARD_SECURE: ReadonlySet<string> = new Set(['closing', 'locking'])
 const HALTED: ReadonlySet<string> = new Set(['stopped', 'jammed'])
 
 /** Open words that ARE the opening: leaving closed / leaving locked, or a contact apart. */
-const OPENING: ReadonlySet<string> = new Set(['open', 'opening', 'unlocked', 'unlocking'])
+const OPENING: ReadonlySet<string> = new Set([
+  'open',
+  'opening',
+  'unlocked',
+  'unlocking',
+  'door-open',
+])
 
 export function sensorEdgeOf(
   kind: string,
