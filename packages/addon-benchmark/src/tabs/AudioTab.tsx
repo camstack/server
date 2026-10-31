@@ -13,6 +13,9 @@ import {
   NodePicker,
   ResponseLog,
   SectionToolbar,
+  Button,
+  Slider,
+  Select,
 } from '@camstack/ui-library'
 import { buildAudioRunInput, selectAudioDebug } from '../audio-payloads.js'
 import { Trans, useT } from '../i18n/index.js'
@@ -335,8 +338,7 @@ export function AudioTab({
           {field.description && (
             <p className="text-[10px] text-foreground-subtle/60 mb-1.5">{field.description}</p>
           )}
-          <input
-            type="range"
+          <Slider
             min={field.min}
             max={field.max}
             step={field.step ?? 0.05}
@@ -364,8 +366,7 @@ export function AudioTab({
           {field.description && (
             <p className="text-[10px] text-foreground-subtle/60 mb-1.5">{field.description}</p>
           )}
-          <input
-            type="range"
+          <Slider
             min={min}
             max={max}
             step={step}
@@ -400,7 +401,8 @@ export function AudioTab({
             {field.options.map((o) => {
               const selected = current.includes(o.value)
               return (
-                <button
+                <Button
+                  variant="unstyled"
                   key={o.value}
                   type="button"
                   onClick={() => toggle(o.value)}
@@ -411,7 +413,7 @@ export function AudioTab({
                   }`}
                 >
                   {o.label}
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -427,17 +429,17 @@ export function AudioTab({
           <label className="block text-[10px] font-medium text-foreground-subtle uppercase tracking-wide mb-1.5">
             {field.label}
           </label>
-          <select
+          <Select
             value={current}
             onChange={(e) => setSettingValue(field.key, e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary/50"
+            className="w-full"
           >
             {field.options.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       )
     }
@@ -675,7 +677,8 @@ export function AudioTab({
               </div>
               <div className="p-3 space-y-2">
                 {audioCapabilities.availableBackends.map((b) => (
-                  <button
+                  <Button
+                    variant="unstyled"
                     key={b.id}
                     onClick={() => {
                       setSelectedBackend(b.id)
@@ -689,7 +692,7 @@ export function AudioTab({
                   >
                     <div className="text-xs font-medium">{b.name}</div>
                     <div className="text-[10px] text-foreground-subtle">{b.description}</div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -738,7 +741,8 @@ export function AudioTab({
             </div>
           )}
 
-          <button
+          <Button
+            variant="unstyled"
             onClick={handleClassify}
             disabled={processing || !selectedFile}
             className={`w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-colors sticky bottom-4 ${
@@ -748,7 +752,7 @@ export function AudioTab({
             }`}
           >
             {processing ? t('audio.classifying') : t('audio.classify')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

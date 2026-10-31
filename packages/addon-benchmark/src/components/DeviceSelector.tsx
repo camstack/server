@@ -5,6 +5,7 @@
  * device (D646) and went with it.
  */
 import { useT } from '../i18n/index.js'
+import { Button } from '@camstack/ui-library'
 
 export interface DeviceOption {
   readonly key: string
@@ -61,7 +62,8 @@ export function SingleDeviceSelector({
     <div className="space-y-1">
       <span className="block text-xs font-medium text-foreground-subtle">{t('device.label')}</span>
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={disabled}
           onClick={() => onChange(null)}
@@ -73,9 +75,10 @@ export function SingleDeviceSelector({
           } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           {t('common.nodeDefault')}
-        </button>
+        </Button>
         {devices.map((d) => (
-          <button
+          <Button
+            variant="unstyled"
             key={d.key}
             type="button"
             disabled={disabled || !d.available}
@@ -96,7 +99,7 @@ export function SingleDeviceSelector({
               )}
               {d.label}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
       {devices.length === 0 && (

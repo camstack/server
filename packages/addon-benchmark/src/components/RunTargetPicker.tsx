@@ -29,6 +29,7 @@ import {
 } from '../camera-context.js'
 import { useT } from '../i18n/index.js'
 import { type DeviceOption, friendlyDeviceName, SingleDeviceSelector } from './DeviceSelector.js'
+import { Select } from '@camstack/ui-library'
 
 export interface CameraOption {
   readonly deviceId: number
@@ -234,8 +235,8 @@ export function RunTargetPicker({
 
       <label className="block text-xs">
         <span className="text-foreground-subtle">{t('runTarget.camera')}</span>
-        <select
-          className="mt-1 w-full px-2 py-2 sm:py-1 text-sm bg-background border border-border rounded"
+        <Select
+          className="mt-1 w-full sm:py-1"
           value={selectedDeviceId === null ? '' : String(selectedDeviceId)}
           onChange={(e) => handleSelect(e.target.value)}
           disabled={disabled}
@@ -246,7 +247,7 @@ export function RunTargetPicker({
               {c.name} · #{c.deviceId}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {resolveError && (

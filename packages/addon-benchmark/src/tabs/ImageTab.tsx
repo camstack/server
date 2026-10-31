@@ -11,6 +11,7 @@ import {
   SectionToolbar,
   type PipelineStepDisplayConfig,
   type Detection,
+  Button,
 } from '@camstack/ui-library'
 import type { PipelineSchema, PipelineAddonSchema } from '@camstack/types'
 import type { FrameResult } from '@camstack/types'
@@ -436,7 +437,8 @@ export function ImageTab({ trpc, nodeId, onNodeChange }: ImageTabProps) {
         {/* LEFT COLUMN: Controls + Image + Results */}
         <div className="space-y-2">
           {/* Run pipeline + Benchmark controls — left column header */}
-          <button
+          <Button
+            variant="unstyled"
             onClick={handleRunPipeline}
             disabled={!processing && !selectedRefImage && !uploadedBase64}
             className={`w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
@@ -450,7 +452,7 @@ export function ImageTab({ trpc, nodeId, onNodeChange }: ImageTabProps) {
                 ? progressMessages[progressMessages.length - 1]
                 : t('image.processing')
               : t('image.run')}
-          </button>
+          </Button>
 
           <div className="text-[10px] text-foreground-subtle font-mono">
             {t('image.target')}: {nodeId} · {deviceKey ?? t('image.nodeDefaultPool')}

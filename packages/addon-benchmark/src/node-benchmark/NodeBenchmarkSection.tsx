@@ -28,6 +28,7 @@ import {
   TEXT_FIELD_LABEL,
   TEXT_HINT,
   Select,
+  Input,
 } from '@camstack/ui-library'
 import { Activity, Cpu, Gauge, ListChecks, Play, Square, Trash2 } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
@@ -98,7 +99,7 @@ function NumberField(props: {
   return (
     <label className="flex items-center gap-2">
       <span className={TEXT_FIELD_LABEL}>{props.label}</span>
-      <input
+      <Input
         type="number"
         min={props.min}
         max={props.max}
