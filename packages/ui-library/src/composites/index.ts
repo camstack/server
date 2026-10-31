@@ -547,3 +547,15 @@ export {
   type DiscoveredOption,
   type DiscoveredOptionsState,
 } from './config-discovered-select-field'
+
+export {
+  MINUTES_PER_DAY,
+  TimelineSlider,
+  clampMinute,
+  minuteFromPointer,
+  snapMinute,
+  type TimelineBand,
+  type TimelineMarker,
+  type TimelineSliderProps,
+  type TimelineTone,
+} from './timeline-slider'

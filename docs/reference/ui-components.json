@@ -640,6 +640,12 @@
       "notes": "One unit per chart on a device surface; slots, never hex; the selected point's tooltip is built into the chart (mouse, touch, arrow keys). `Tooltip` is for a control hint. See `admin-patterns.md`"
     },
     {
+      "need": "Points on a 24 h day the operator drags (a scheduler's timeline)",
+      "admin": "`TimelineSlider`",
+      "viewer": "—",
+      "notes": "Markers move in whole steps by pointer or arrow keys (shift = one hour) and report a minute of the day; the page maps it to its data. `bands` paint a stretch such as a hold"
+    },
+    {
       "need": "A device's recorded history",
       "admin": "`DeviceHistoryView`",
       "viewer": "—",
@@ -2159,6 +2165,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-reads.ts",
       "summary": "Split into batches of at most `size`."
+    },
+    {
+      "name": "clampMinute",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/timeline-slider.tsx",
+      "summary": "Keep a minute on the day."
     },
     {
       "name": "CLASS_COLORS",
@@ -7314,6 +7327,20 @@
       "summary": "Read one metadata key as a safe display string (null when absent/empty)."
     },
     {
+      "name": "minuteFromPointer",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/timeline-slider.tsx",
+      "summary": "The minute under a pointer at `clientX` on a track spanning `left`..`left + width`."
+    },
+    {
+      "name": "MINUTES_PER_DAY",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/timeline-slider.tsx",
+      "summary": "TimelineSlider — one 24 h day as a track with draggable markers."
+    },
+    {
       "name": "MobileDrawer",
       "kind": "component",
       "area": "primitives",
@@ -10455,6 +10482,13 @@
       ]
     },
     {
+      "name": "snapMinute",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/timeline-slider.tsx",
+      "summary": "Round a minute to the nearest `step`, kept on the day."
+    },
+    {
       "name": "SNAPSHOT_MEDIA_PATH",
       "kind": "constant",
       "area": "hooks",
@@ -11939,6 +11973,57 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-data.ts",
       "summary": "Total milliseconds per state over the segments (unknown spans are not counted)."
+    },
+    {
+      "name": "TimelineSlider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/timeline-slider.tsx",
+      "summary": "TimelineSlider — one 24 h day as a track with draggable markers.",
+      "props": [
+        {
+          "name": "markers",
+          "type": "readonly TimelineMarker[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "bands",
+          "type": "readonly TimelineBand[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "selectedId",
+          "type": "string | null",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "optional": true,
+          "doc": "Minutes per drag / arrow step. Default 5."
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSelect",
+          "type": "(id: string) => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onMove",
+          "type": "(id: string, minute: number) => void",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "TimeSeriesChart",

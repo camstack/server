@@ -14,10 +14,11 @@ import { navChromeForPath } from '../lib/nav-items'
 import { looksLikeAutomation } from './build/automation/recipe-from-code'
 import { ActionsTab } from './build/actions/ActionsTab'
 import { AutomationsTab } from './build/AutomationsTab'
+import { SchedulersTab } from './build/schedulers/SchedulersTab'
 import { CustomDeviceTab } from './build/CustomDeviceTab'
 import { ScriptsTab } from './build/ScriptsTab'
 
-const TABS = ['automations', 'actions', 'scripts', 'custom-device'] as const
+const TABS = ['automations', 'actions', 'schedulers', 'scripts', 'custom-device'] as const
 type BuildTab = (typeof TABS)[number]
 
 function isTab(value: string | null): value is BuildTab {
@@ -25,9 +26,10 @@ function isTab(value: string | null): value is BuildTab {
 }
 
 const BLOCKS_KEY = ['coreBlocks', 'list', 'build-counts'] as const
+const SCHEDULERS_COUNT_KEY = ['schedulers', 'list', 'build-counts'] as const
 const ACTIONS_COUNT_KEY = ['actions', 'list', 'build-counts'] as const
 /** `new` is the composition chooser (`useItemFormUrl`). Cleared on leaving a section so it cannot reopen another tab's create dialog. */
-const EDITOR_OWNED = ['block', 'action', 'create', 'new'] as const
+const EDITOR_OWNED = ['block', 'action', 'scheduler', 'create', 'new'] as const
 
 function countScripts(blocks: readonly CoreBlock[]): number {
   return blocks.filter((b) => coreBlockSourceKind(b) === 'code').length
@@ -67,6 +69,13 @@ export function BuildPage() {
     queryFn: async () => system.trpcClient.actions.list.query({}),
   })
   const actionCount = actionsQuery.data === undefined ? null : actionsQuery.data.length
+
+  const schedulersQuery = useQuery({
+    queryKey: SCHEDULERS_COUNT_KEY,
+    refetchInterval: 10_000,
+    queryFn: async () => system.trpcClient.schedulers.list.query({}),
+  })
+  const schedulerCount = schedulersQuery.data === undefined ? null : schedulersQuery.data.length
 
   const compositionsQuery = useQuery({
     queryKey: ['coreBlocks', 'listCompositions', 'build-counts'],
@@ -148,7 +157,9 @@ export function BuildPage() {
       ? t('build.newAutomation', 'New automation')
       : tab === 'actions'
         ? t('build.newAction', 'New action')
-        : t('build.newScript', 'New script')
+        : tab === 'schedulers'
+          ? t('build.newScheduler', 'New scheduler')
+          : t('build.newScript', 'New script')
 
   const chrome = navChromeForPath('/build', { t, isAdmin: true }) ?? {
     icon: Hammer,
@@ -201,6 +212,17 @@ export function BuildPage() {
           content: (
             <ActionsTab
               createRequested={tab === 'actions' && createRequested}
+              onCreateConsumed={clearCreate}
+            />
+          ),
+        },
+        {
+          id: 'schedulers',
+          label: withCount(t('build.tabSchedulers', 'Schedulers'), schedulerCount),
+          ownedParams: EDITOR_OWNED,
+          content: (
+            <SchedulersTab
+              createRequested={tab === 'schedulers' && createRequested}
               onCreateConsumed={clearCreate}
             />
           ),

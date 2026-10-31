@@ -73,4 +73,5 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A QR code | `QrCode` | — | |
 | A paged carousel | — | `CarouselPager` | |
 | A chart over time | `TimeSeriesChart`, `StateTimeline`, `BarSeries`, `Sparkline` (D899) | — | One unit per chart on a device surface; slots, never hex; the selected point's tooltip is built into the chart (mouse, touch, arrow keys). `Tooltip` is for a control hint. See `admin-patterns.md` |
+| Points on a 24 h day the operator drags (a scheduler's timeline) | `TimelineSlider` | — | Markers move in whole steps by pointer or arrow keys (shift = one hour) and report a minute of the day; the page maps it to its data. `bands` paint a stretch such as a hold |
 | A device's recorded history | `DeviceHistoryView` | — | The device History tab and the camera Live Stats tab are the same component |

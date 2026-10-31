@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated system hooks no longer survive in every addon page bundle when unused, so a new hook stops changing every page addon's built output
+- TimelineSlider: a 24 h track with draggable, keyboard-movable markers and hold bands
 
 ## [1.2.362] - 2026-10-31
 

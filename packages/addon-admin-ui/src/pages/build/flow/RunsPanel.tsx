@@ -8,6 +8,7 @@ import {
   AutomationConditionOperatorSchema,
   type AutomationRunOutcome,
   type AutomationRunTrace,
+  type SchedulerOutcome,
   type TraceNodeOutcome,
 } from '@camstack/types'
 import { Badge, type BadgeVariant, EmptyState, SectionCard, Skeleton } from '@camstack/ui-library'
@@ -68,6 +69,45 @@ export function useOutcomeLabel(): (outcome: AutomationRunOutcome) => string {
   }
 }
 
+const SCHEDULER_VARIANT: Readonly<Record<SchedulerOutcome, BadgeVariant>> = {
+  done: 'success',
+  missed: 'warning',
+  inactive: 'neutral',
+  'condition-false': 'neutral',
+  failed: 'danger',
+  held: 'success',
+  'gave-up': 'danger',
+  overridden: 'info',
+  'suspended-manual': 'warning',
+}
+
+/** A scheduler point's own outcome, in the operator's words. */
+export function useSchedulerOutcomeLabel(): (outcome: SchedulerOutcome) => string {
+  const { t } = useTranslation()
+  return (outcome) => {
+    switch (outcome) {
+      case 'done':
+        return t('flow.runs.schedulerDone', 'Done')
+      case 'missed':
+        return t('flow.runs.schedulerMissed', 'Missed')
+      case 'inactive':
+        return t('flow.runs.schedulerInactive', 'Not active')
+      case 'condition-false':
+        return t('flow.runs.schedulerConditionFalse', 'Condition not met')
+      case 'failed':
+        return t('flow.runs.schedulerFailed', 'Failed')
+      case 'held':
+        return t('flow.runs.schedulerHeld', 'Held')
+      case 'gave-up':
+        return t('flow.runs.schedulerGaveUp', 'Gave up')
+      case 'overridden':
+        return t('flow.runs.schedulerOverridden', 'Changed by hand')
+      default:
+        return t('flow.runs.schedulerSuspendedManual', 'Paused by hand')
+    }
+  }
+}
+
 export interface RunsPanelProps {
   /** Oldest first, as the ledger keeps them; shown newest first. */
   readonly traces: readonly AutomationRunTrace[] | undefined
@@ -78,6 +118,7 @@ export interface RunsPanelProps {
 export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
   const { t } = useTranslation()
   const outcomeLabel = useOutcomeLabel()
+  const schedulerLabel = useSchedulerOutcomeLabel()
   const newestFirst = traces === undefined ? [] : traces.toReversed()
   return (
     <SectionCard headingId="runs-heading" title={t('flow.runs.title', 'Runs')} icon={History}>
@@ -107,9 +148,15 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
                     }`}
                   >
                     <span className="flex flex-wrap items-center gap-2">
-                      <Badge variant={OUTCOME_VARIANT[run.outcome]}>
-                        {outcomeLabel(run.outcome)}
-                      </Badge>
+                      {run.scheduler === undefined ? (
+                        <Badge variant={OUTCOME_VARIANT[run.outcome]}>
+                          {outcomeLabel(run.outcome)}
+                        </Badge>
+                      ) : (
+                        <Badge variant={SCHEDULER_VARIANT[run.scheduler]}>
+                          {schedulerLabel(run.scheduler)}
+                        </Badge>
+                      )}
                       {run.repeat > 1 && (
                         <Badge variant="neutral" style="outline">
                           {`x${String(run.repeat)}`}

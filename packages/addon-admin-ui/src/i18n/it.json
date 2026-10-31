@@ -5896,7 +5896,9 @@
     "tabActions": "Azioni",
     "tabAutomations": "Automazioni",
     "tabCode": "Codice",
-    "tabCustomDevice": "Dispositivo personalizzato"
+    "tabCustomDevice": "Dispositivo personalizzato",
+    "newScheduler": "Nuovo scheduler",
+    "tabSchedulers": "Scheduler"
   },
   "automation": {
     "actionList": {
@@ -10729,7 +10731,16 @@
       "stepOk": "OK",
       "stepError": "Errore",
       "stepNotRun": "Non eseguito",
-      "whenValues": "Quando"
+      "whenValues": "Quando",
+      "schedulerConditionFalse": "Condizione non soddisfatta",
+      "schedulerDone": "Eseguito",
+      "schedulerFailed": "Fallito",
+      "schedulerGaveUp": "Rinunciato",
+      "schedulerHeld": "Mantenuto",
+      "schedulerInactive": "Non attivo",
+      "schedulerMissed": "Saltato",
+      "schedulerOverridden": "Cambiato a mano",
+      "schedulerSuspendedManual": "In pausa per modifica manuale"
     },
     "scope": {
       "className": "cosa ha visto",
@@ -11130,5 +11141,103 @@
     "back": "Indietro",
     "pickTitle": "Scegli: {{slot}}",
     "pickConfirm": "Usa questa entita'"
+  },
+  "schedulers": {
+    "activeWhen": {
+      "hint": "Contano solo gli stati, ad esempio \"qualcuno è in casa\". Finché sono falsi non parte nulla e i mantenimenti restano in pausa."
+    },
+    "conflict": {
+      "message": "{{other}} vuole il dispositivo {{device}} in un altro stato dalle {{from}} alle {{to}} ({{winner}}).",
+      "mine": "vince questo",
+      "other": "vince l'altro",
+      "tie": "vince quello partito per primo"
+    },
+    "editor": {
+      "activeWhen": "Solo quando vale una condizione",
+      "deleteMessage": "{{name}} verrà eliminato e ogni mantenimento in corso si fermerà.",
+      "deleteTitle": "Eliminare questo scheduler?",
+      "enabled": "Attivo",
+      "maxLate": "Esegui un punto saltato fino a (minuti di ritardo)",
+      "name": "Nome",
+      "namePlaceholder": "Cosa fa questo scheduler",
+      "priority": "Priorità (la più alta vince un conflitto)",
+      "profiles": "Profili",
+      "settings": "Impostazioni"
+    },
+    "list": {
+      "couldNotRead": "Impossibile leggere gli scheduler",
+      "emptyDescription": "Uno scheduler accende le luci del giardino al tramonto e le spegne alle 23:00, ogni giorno o solo in certi giorni.",
+      "emptyTitle": "Nessuno scheduler",
+      "enabled": "Attivo",
+      "enabledAria": "Attiva {{name}}",
+      "hint": "Uno scheduler fa cose nell'arco della giornata: esegue qualcosa a un'ora o al tramonto, oppure tiene un dispositivo in uno stato per un periodo.",
+      "name": "Nome",
+      "new": "Nuovo scheduler",
+      "priority": "Priorità",
+      "profiles": "Profili",
+      "status": "Adesso",
+      "statusNotSortable": "Derivato dal mantenimento in corso",
+      "updated": "Aggiornato"
+    },
+    "point": {
+      "addEdge": "Evento",
+      "addHold": "Mantenimento",
+      "addRelease": "Rilascio",
+      "clock": "A un'ora",
+      "edge": "Evento: esegui una volta",
+      "grace": "Attesa (minuti)",
+      "hold": "Mantenimento: tieni vero",
+      "kind": "Tipo di punto",
+      "offset": "Scostamento (minuti, negativo = prima)",
+      "override": "Se qualcuno lo cambia a mano",
+      "reassert": "Rimetti il mantenimento dopo un po'",
+      "release": "Rilascio: termina il mantenimento",
+      "releaseHint": "Un rilascio termina il mantenimento in corso senza agire sui dispositivi.",
+      "remove": "Rimuovi punto",
+      "respect": "Lascialo stare",
+      "sun": "A un evento solare",
+      "sunComputed": "Oggi alle {{time}} ({{zone}})",
+      "sunEvent": "Evento solare",
+      "sunUnknown": "Nessun orario oggi: la posizione del sito non è impostata.",
+      "time": "Ora",
+      "when": "Quando"
+    },
+    "profile": {
+      "activeWhen": "Questo profilo solo quando vale una condizione",
+      "add": "Aggiungi profilo",
+      "days": "Giorni",
+      "daysNeeded": "Scegli almeno un giorno.",
+      "enabled": "Attivo",
+      "hint": "Ogni giorno vale il primo profilo, in questo ordine, i cui giorni e la cui condizione sono soddisfatti.",
+      "name": "Nome del profilo",
+      "newName": "Nuovo profilo",
+      "remove": "Rimuovi profilo"
+    },
+    "status": {
+      "gaveUp": "Rinunciato",
+      "holding": "In mantenimento",
+      "idle": "Inattivo",
+      "off": "Spento",
+      "paused": "In pausa"
+    },
+    "timeline": {
+      "empty": "Aggiungi un punto per collocare qualcosa nella giornata.",
+      "label": "Linea del tempo della giornata"
+    },
+    "sun": {
+      "sunrise": "alba",
+      "sunset": "tramonto",
+      "dawn": "aurora",
+      "dusk": "crepuscolo"
+    },
+    "day": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Gio",
+      "fri": "Ven",
+      "sat": "Sab",
+      "sun": "Dom"
+    }
   }
 }

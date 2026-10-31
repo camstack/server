@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Build page: a Schedulers tab to create and edit schedulers with profiles, a draggable day timeline, point editor and runs ledger
+
 ## [1.2.535] - 2026-10-31
 
 ### Changed

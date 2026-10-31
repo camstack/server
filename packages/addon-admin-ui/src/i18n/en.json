@@ -5821,7 +5821,9 @@
     "tabActions": "Actions",
     "tabAutomations": "Automations",
     "tabCode": "Code",
-    "tabCustomDevice": "Custom Device"
+    "tabCustomDevice": "Custom Device",
+    "newScheduler": "New scheduler",
+    "tabSchedulers": "Schedulers"
   },
   "automation": {
     "actionList": {
@@ -10707,7 +10709,16 @@
       "stepOk": "OK",
       "stepError": "Error",
       "stepNotRun": "Not run",
-      "whenValues": "When"
+      "whenValues": "When",
+      "schedulerConditionFalse": "Condition not met",
+      "schedulerDone": "Done",
+      "schedulerFailed": "Failed",
+      "schedulerGaveUp": "Gave up",
+      "schedulerHeld": "Held",
+      "schedulerInactive": "Not active",
+      "schedulerMissed": "Missed",
+      "schedulerOverridden": "Changed by hand",
+      "schedulerSuspendedManual": "Paused by hand"
     },
     "scope": {
       "className": "what it saw",
@@ -11108,5 +11119,103 @@
     "back": "Back",
     "pickTitle": "Choose: {{slot}}",
     "pickConfirm": "Use this entity"
+  },
+  "schedulers": {
+    "activeWhen": {
+      "hint": "Only states count here, such as \"someone is home\". While they are false, nothing runs and holds pause."
+    },
+    "conflict": {
+      "message": "{{other}} wants device {{device}} in another state from {{from}} to {{to}} ({{winner}}).",
+      "mine": "this one wins",
+      "other": "the other one wins",
+      "tie": "the one that started first wins"
+    },
+    "editor": {
+      "activeWhen": "Only when a condition holds",
+      "deleteMessage": "{{name}} will be deleted and any hold it keeps will stop.",
+      "deleteTitle": "Delete this scheduler?",
+      "enabled": "Enabled",
+      "maxLate": "Run a missed point up to (minutes late)",
+      "name": "Name",
+      "namePlaceholder": "What this scheduler does",
+      "priority": "Priority (higher wins a conflict)",
+      "profiles": "Profiles",
+      "settings": "Settings"
+    },
+    "list": {
+      "couldNotRead": "Could not read the schedulers",
+      "emptyDescription": "A scheduler turns the garden lights on at sunset and off at 23:00, every day or only on some days.",
+      "emptyTitle": "No schedulers yet",
+      "enabled": "Enabled",
+      "enabledAria": "Enable {{name}}",
+      "hint": "A scheduler does things over the day: run something at a time or at sunset, or keep a device in a state for a stretch of time.",
+      "name": "Name",
+      "new": "New scheduler",
+      "priority": "Priority",
+      "profiles": "Profiles",
+      "status": "Now",
+      "statusNotSortable": "Derived from the live hold",
+      "updated": "Updated"
+    },
+    "point": {
+      "addEdge": "Edge",
+      "addHold": "Hold",
+      "addRelease": "Release",
+      "clock": "At a time",
+      "edge": "Edge: run once",
+      "grace": "Wait (minutes)",
+      "hold": "Hold: keep true",
+      "kind": "Point type",
+      "offset": "Offset (minutes, negative = before)",
+      "override": "If someone changes it by hand",
+      "reassert": "Put the hold back after a while",
+      "release": "Release: end the hold",
+      "releaseHint": "A release ends the running hold without doing anything to the devices.",
+      "remove": "Remove point",
+      "respect": "Leave it alone",
+      "sun": "At a sun event",
+      "sunComputed": "Today at {{time}} ({{zone}})",
+      "sunEvent": "Sun event",
+      "sunUnknown": "No time today: the site location is not set.",
+      "time": "Time",
+      "when": "When"
+    },
+    "profile": {
+      "activeWhen": "This profile only when a condition holds",
+      "add": "Add profile",
+      "days": "Days",
+      "daysNeeded": "Pick at least one day.",
+      "enabled": "Enabled",
+      "hint": "Each day, the first profile in this order whose days and condition hold is the one that runs.",
+      "name": "Profile name",
+      "newName": "New profile",
+      "remove": "Remove profile"
+    },
+    "status": {
+      "gaveUp": "Gave up",
+      "holding": "Holding",
+      "idle": "Idle",
+      "off": "Off",
+      "paused": "Paused"
+    },
+    "timeline": {
+      "empty": "Add a point to place something on the day.",
+      "label": "Day timeline"
+    },
+    "sun": {
+      "sunrise": "sunrise",
+      "sunset": "sunset",
+      "dawn": "dawn",
+      "dusk": "dusk"
+    },
+    "day": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   }
 }
