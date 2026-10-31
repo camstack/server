@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.157] - 2026-10-31
+
 ### Changed
 
 - Deleting a terminal whose node left the cluster now completes instead of hanging

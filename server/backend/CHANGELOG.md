@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.705] - 2026-10-31
+
 ### Fixed
 
 - A node agent stopped by a signal now shuts down within 15 seconds and logs what started it, instead of hanging while looking alive but deregistered

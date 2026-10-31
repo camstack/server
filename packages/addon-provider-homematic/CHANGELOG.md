@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.165] - 2026-10-31
+
 ### Changed
 
 - Uses nodehomematic 0.5.1.
