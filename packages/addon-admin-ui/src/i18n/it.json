@@ -1746,7 +1746,10 @@
       "providers": "Fornitori",
       "system": "Sistema"
     },
-    "scanFromForm": "Cerca in rete"
+    "scanFromForm": "Cerca in rete",
+    "reconnecting": "Un'integrazione si sta riavviando. L'elenco si aggiornerà da solo.",
+    "saved": "Configurazione salvata",
+    "saveFailed": "Impossibile salvare la configurazione"
   },
   "serverManagement": {
     "title": "Gestione server",

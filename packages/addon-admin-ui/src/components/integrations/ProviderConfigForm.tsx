@@ -72,6 +72,8 @@ interface ProviderConfigFormProps {
    * Wizard leaves this unset.
    */
   hideName?: boolean
+  /** The save is in flight: the primary button is disabled and says so. */
+  saving?: boolean
   /** `secretKeys`: the keys the schema declares secret by type — the hub keeps
    *  their values in the keychain, not the integration's settings (D787). */
   /** Opens a network scan scoped to this integration; shown only when set. */
@@ -92,6 +94,7 @@ export function ProviderConfigForm({
   initialConfig,
   submitLabel,
   hideName = false,
+  saving = false,
   onScan,
   onSave,
   onBack,
@@ -265,10 +268,12 @@ export function ProviderConfigForm({
                   secretKeys: [...collectKeychainStoredKeys(configSchema)],
                 })
               }}
-              disabled={!canGoNext}
+              disabled={!canGoNext || saving}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50"
             >
-              {submitLabel ?? t('integrations.forward')}
+              {saving
+                ? t('integrations.saving', { defaultValue: 'Saving…' })
+                : (submitLabel ?? t('integrations.forward'))}
             </Button>
           </div>
         </div>

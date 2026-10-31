@@ -51,6 +51,7 @@ import {
 } from '../lib/integration-addon-groups'
 import { integrationDetailUrl } from '../lib/integration-instance-selection'
 import { splitIntegrationSections, systemAddonIdsOf } from '../lib/integration-sections'
+import { isTransientQueryError, transientRefetchInterval } from '../lib/transient-error'
 import { IntegrationSection } from '../components/integrations/integration-section'
 import { IntegrationGrid } from '../components/integrations/integration-grid'
 import {
@@ -169,8 +170,10 @@ export function IntegrationsPage(): ReactNode {
     data: integrations,
     isLoading: integrationsLoading,
     isError: integrationsFailed,
+    error: integrationsError,
+    errorUpdateCount: integrationsErrorCount,
     refetch: refetchIntegrations,
-  } = useIntegrationsList(undefined)
+  } = useIntegrationsList(undefined, { refetchInterval: transientRefetchInterval })
 
   // Same input as Devices.tsx / GlobalSearch — one shared cache entry for the
   // "whole fleet, slim" shape instead of three. The caching window is the
@@ -179,8 +182,10 @@ export function IntegrationsPage(): ReactNode {
     data: devices,
     isLoading: devicesLoading,
     isError: devicesFailed,
+    error: devicesError,
+    errorUpdateCount: devicesErrorCount,
     refetch: refetchDevices,
-  } = useDeviceManagerListAll({ projection: 'slim' })
+  } = useDeviceManagerListAll({ projection: 'slim' }, { refetchInterval: transientRefetchInterval })
 
   // Wire shape from `deviceManager.listAll` is structurally compatible with
   // `DeviceItemDevice` — every required field is present on `DeviceInfo`
@@ -365,11 +370,22 @@ export function IntegrationsPage(): ReactNode {
     void refetchDevices()
   }, [refetchIntegrations, refetchDevices])
 
-  const listFailed = integrationsFailed === true || devicesFailed === true
+  // A provider addon that is respawning (adoption, a settings change) answers
+  // "provider not available" for a few seconds: that is reconnecting, not an
+  // error. The queries poll while it lasts, and the rows already on screen stay.
+  const integrationsTransient =
+    integrationsFailed === true && isTransientQueryError(integrationsError, integrationsErrorCount)
+  const devicesTransient =
+    devicesFailed === true && isTransientQueryError(devicesError, devicesErrorCount)
+  const reconnecting = integrationsTransient || devicesTransient
+  const listFailed =
+    (integrationsFailed === true && !integrationsTransient) ||
+    (devicesFailed === true && !devicesTransient)
   // An unanswered list is not an empty one (D315). `?? []` above is only for
   // the row map; the empty copy waits until both queries have answered.
   const awaiting =
     !listFailed &&
+    !reconnecting &&
     (integrationsLoading || devicesLoading || integrations === undefined || devices === undefined)
   const hasIntegrations = integrationList.length > 0
   const viewOptions: readonly ViewSwitchOption<IntegrationsView>[] = [
@@ -426,6 +442,20 @@ export function IntegrationsPage(): ReactNode {
         />
       )}
 
+      {reconnecting && !listFailed && (
+        <div
+          role="status"
+          data-testid="integrations-reconnecting"
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-foreground-subtle"
+        >
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          {t(
+            'integrations.reconnecting',
+            'An integration is restarting. The list will refresh on its own.',
+          )}
+        </div>
+      )}
+
       {awaiting && (
         <div className="space-y-2" data-testid="integrations-pending">
           {[1, 2, 3].map((i) => (
@@ -437,7 +467,7 @@ export function IntegrationsPage(): ReactNode {
         </div>
       )}
 
-      {!listFailed && !awaiting && !hasIntegrations && (
+      {!listFailed && !awaiting && !reconnecting && !hasIntegrations && (
         <div className="flex flex-col items-center py-20 text-foreground-subtle">
           <p className="text-sm">
             {t('integrations.noIntegrationsConfigured', 'No integrations configured.')}

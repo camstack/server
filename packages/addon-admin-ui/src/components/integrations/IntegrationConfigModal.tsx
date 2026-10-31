@@ -15,6 +15,7 @@ import {
 } from '@camstack/ui-library'
 import type { ConfigField, ConfigUISchema, ConfigUISchemaWithValues } from '../../types/config-ui'
 
+import { pushToast } from '../ui/toast-bus'
 import { BrokerStep } from './BrokerStep'
 import { ProviderConfigForm } from './ProviderConfigForm'
 
@@ -140,7 +141,21 @@ export function IntegrationConfigModal({
       {
         onSuccess: () => {
           void queryClient.invalidateQueries()
+          pushToast({
+            title: t('integrations.saved', { defaultValue: 'Configuration saved' }),
+            message: name,
+            severity: 'info',
+          })
           onClose()
+        },
+        onError: (err) => {
+          pushToast({
+            title: t('integrations.saveFailed', {
+              defaultValue: 'Could not save the configuration',
+            }),
+            message: `${name}: ${err.message}`,
+            severity: 'critical',
+          })
         },
       },
     )
@@ -213,6 +228,7 @@ export function IntegrationConfigModal({
                 initialConfig={pickSchemaValues(configSchema, settings ?? {})}
                 submitLabel={t('integrations.save', { defaultValue: 'Save' })}
                 hideName
+                saving={setSettings.isPending}
                 onSave={({ config, secretKeys }) => persistSettings(config, secretKeys)}
                 onBack={onClose}
               />

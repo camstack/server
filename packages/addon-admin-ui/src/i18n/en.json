@@ -1746,7 +1746,10 @@
       "providers": "Providers",
       "system": "System"
     },
-    "scanFromForm": "Scan the network"
+    "scanFromForm": "Scan the network",
+    "reconnecting": "An integration is restarting. The list will refresh on its own.",
+    "saved": "Configuration saved",
+    "saveFailed": "Could not save the configuration"
   },
   "ai": {
     "addProfile": "Add profile",
