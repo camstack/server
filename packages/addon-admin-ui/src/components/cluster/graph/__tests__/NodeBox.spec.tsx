@@ -11,30 +11,42 @@ vi.mock('@xyflow/react', () => ({
   Position: { Left: 'left', Right: 'right', Top: 'top', Bottom: 'bottom' },
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useUiText: () => (_key: string, fallback: string | { other: string }) =>
-    typeof fallback === 'string' ? fallback : fallback.other,
-  FloatingLogStream: ({
-    addonId,
-    agentId,
-    onClose,
-  }: {
-    addonId?: string
-    agentId: string
-    onClose: () => void
-  }) => (
-    <div data-testid="log-stream" data-addon-id={addonId ?? ''} data-agent-id={agentId}>
-      <button onClick={onClose}>close-log</button>
-    </div>
-  ),
-  useNodesRestartAddon: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ success: true }),
-  }),
-  formatLastSeen: (ms: number | null | undefined) =>
-    ms === null || ms === undefined || ms <= 0
-      ? null
-      : `${String(Math.floor((Date.now() - ms) / 60000))}m ago`,
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useUiText: () => (_key: string, fallback: string | { other: string }) =>
+      typeof fallback === 'string' ? fallback : fallback.other,
+    FloatingLogStream: ({
+      addonId,
+      agentId,
+      onClose,
+    }: {
+      addonId?: string
+      agentId: string
+      onClose: () => void
+    }) => (
+      <div data-testid="log-stream" data-addon-id={addonId ?? ''} data-agent-id={agentId}>
+        <button onClick={onClose}>close-log</button>
+      </div>
+    ),
+    useNodesRestartAddon: () => ({
+      mutateAsync: vi.fn().mockResolvedValue({ success: true }),
+    }),
+    formatLastSeen: (ms: number | null | undefined) =>
+      ms === null || ms === undefined || ms <= 0
+        ? null
+        : `${String(Math.floor((Date.now() - ms) / 60000))}m ago`,
+  }
+})
 
 const baseNode: ClusterGraphNode = {
   nodeId: 'hub',

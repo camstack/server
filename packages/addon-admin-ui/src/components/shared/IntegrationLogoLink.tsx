@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { ProviderIcon } from './ProviderIcon'
+import { Button } from '@camstack/ui-library'
 
 /**
  * The integration logo on a device page, as the LINK it reads as. Clicking
@@ -15,10 +16,12 @@ interface IntegrationLogoLinkProps {
 
 export function IntegrationLogoLink({ provider, integrationId, name }: IntegrationLogoLinkProps) {
   const navigate = useNavigate()
-  const target = integrationId !== null ? integrationDetailUrl(provider, integrationId) : '/integrations'
+  const target =
+    integrationId !== null ? integrationDetailUrl(provider, integrationId) : '/integrations'
   const label = name !== null ? `Open integration ${name}` : 'Open integrations'
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={() => navigate(target)}
       className="shrink-0 rounded-md transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
@@ -26,6 +29,6 @@ export function IntegrationLogoLink({ provider, integrationId, name }: Integrati
       aria-label={label}
     >
       <ProviderIcon type={provider} size="lg" />
-    </button>
+    </Button>
   )
 }

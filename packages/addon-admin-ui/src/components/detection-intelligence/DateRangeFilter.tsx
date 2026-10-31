@@ -15,6 +15,7 @@ import {
   dateInputToEndMs,
 } from '../../lib/face-gallery-filters.js'
 import { useTranslation } from 'react-i18next'
+import { Button, Input } from '@camstack/ui-library'
 
 interface DateRangeFilterProps {
   readonly onChange: (next: DateRange) => void
@@ -60,7 +61,8 @@ export function DateRangeFilter({ onChange }: DateRangeFilterProps) {
     <div className="flex flex-wrap items-center gap-1.5">
       <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
         {PRESETS.map((p) => (
-          <button
+          <Button
+            variant="unstyled"
             key={p.value}
             type="button"
             onClick={() => pickPreset(p.value)}
@@ -71,11 +73,11 @@ export function DateRangeFilter({ onChange }: DateRangeFilterProps) {
             }`}
           >
             {p.labelKey !== undefined ? t(p.labelKey) : p.label}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex items-center gap-1">
-        <input
+        <Input
           type="date"
           aria-label={t('detectionIntelligence.dateRangeFilter.fromDate', 'From date')}
           value={fromStr}
@@ -84,7 +86,7 @@ export function DateRangeFilter({ onChange }: DateRangeFilterProps) {
           className={`${dateInputClass} ${selection === 'custom' && fromStr ? 'border-primary/50' : ''}`}
         />
         <span className="text-[11px] text-foreground-subtle">→</span>
-        <input
+        <Input
           type="date"
           aria-label={t('detectionIntelligence.dateRangeFilter.toDate', 'To date')}
           value={toStr}

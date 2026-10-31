@@ -48,6 +48,7 @@ import {
   useDeviceManagerListAll,
   usePipelineAnalyticsListOpsLog,
   useRecordingArchiveListOpsLog,
+  Button,
 } from '@camstack/ui-library'
 import { Activity, AlertTriangle, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -201,7 +202,8 @@ export function ActivitySection() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-1">
         {DOMAIN_FILTERS.map((f) => (
-          <button
+          <Button
+            variant="unstyled"
             key={f.value}
             onClick={() => setDomain(f.value)}
             className={`rounded px-2 py-1 text-xs font-medium ${
@@ -211,7 +213,7 @@ export function ActivitySection() {
             }`}
           >
             {t(f.labelKey)}
-          </button>
+          </Button>
         ))}
       </div>
 

@@ -19,6 +19,7 @@
 import type { ReactNode } from 'react'
 import { Save, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 export interface SettingsPanelProps {
   readonly title?: string
@@ -61,7 +62,8 @@ export function SettingsPanel({
 
         <div className="flex items-center gap-2 shrink-0">
           {onReset && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={onReset}
               disabled={!canReset || isSaving}
@@ -69,9 +71,10 @@ export function SettingsPanel({
             >
               <RotateCcw className="h-3 w-3" />
               {resetLabel}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onSave}
             disabled={!dirty || isSaving}
@@ -79,7 +82,7 @@ export function SettingsPanel({
           >
             <Save className="h-3 w-3" />
             {isSaving ? t('pipeline.settingsPanel.saving', 'Saving…') : t('common.save', 'Save')}
-          </button>
+          </Button>
         </div>
       </header>
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { useNodesRenameNode } from '@camstack/ui-library'
+import { useNodesRenameNode, Button, Input } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 interface NodeInfoTabProps {
@@ -65,7 +65,7 @@ export function NodeInfoTab(props: NodeInfoTabProps) {
       'Display Name',
       editing ? (
         <div className="flex items-center gap-1.5">
-          <input
+          <Input
             type="text"
             className="flex-1 px-2 py-0.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-primary"
             value={newName}
@@ -77,27 +77,30 @@ export function NodeInfoTab(props: NodeInfoTabProps) {
             disabled={renameMutation.isPending}
             autoFocus
           />
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => void handleRename()}
             disabled={renameMutation.isPending}
             className="p-0.5 text-success hover:bg-success/10 rounded"
             title={t('common.save', 'Save')}
           >
             <Check className="h-3.5 w-3.5" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             onClick={() => setEditing(false)}
             className="p-0.5 text-muted-foreground hover:bg-muted rounded"
             title={t('common.cancel', 'Cancel')}
           >
             <X className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">{props.name}</span>
           {!props.isHub && (
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => {
                 setNewName(props.name)
                 setEditing(true)
@@ -106,7 +109,7 @@ export function NodeInfoTab(props: NodeInfoTabProps) {
               title={t('cluster.nodeInfoTab.rename', 'Rename')}
             >
               <Pencil className="h-3 w-3" />
-            </button>
+            </Button>
           )}
         </div>
       ),

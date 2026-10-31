@@ -27,6 +27,7 @@ import {
   TabsTrigger,
   validateScopes,
   useUiText,
+  Checkbox,
 } from '@camstack/ui-library'
 import type { ConfigDeviceMultiSelectField, CredentialScope, TokenScope } from '@camstack/types'
 
@@ -322,8 +323,7 @@ export function CreateTokenModal({
             </div>
             {viewKind === 'grid-view' ? (
               <label className="flex items-start gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
+                <Checkbox
                   className="mt-0.5"
                   checked={talk}
                   onChange={(e) => setTalk(e.target.checked)}

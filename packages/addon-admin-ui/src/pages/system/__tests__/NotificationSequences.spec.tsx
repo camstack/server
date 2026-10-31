@@ -72,114 +72,130 @@ interface InputProps {
   readonly className?: string
 }
 
-vi.mock('@camstack/ui-library', () => ({
-  useDeviceManagerListAll: () => ({ data: [], isLoading: false, isError: false }),
-  useNotificationRulesListSequences: () => ({
-    data: listPending || listError !== null ? undefined : { sequences },
-    isPending: listPending,
-    error: listError,
-    refetch: mockListRefetch,
-  }),
-  useNotificationRulesCreateSequence: () => ({
-    mutateAsync: mockCreate,
-    isPending: false,
-    error: null,
-    reset: mockCreateReset,
-  }),
-  useNotificationRulesUpdateSequence: () => ({
-    mutateAsync: mockUpdate,
-    isPending: false,
-    error: null,
-    reset: mockUpdateReset,
-  }),
-  useNotificationRulesDeleteSequence: () => ({
-    mutateAsync: mockDelete,
-    isPending: false,
-    error: null,
-  }),
-  useItemFormUrl: () => {
-    const [mode, setMode] = useState<'closed' | 'new' | 'edit'>('closed')
-    const [id, setId] = useState<string | null>(null)
-    return {
-      state:
-        mode === 'closed'
-          ? { mode: 'closed' as const }
-          : mode === 'new'
-            ? { mode: 'new' as const }
-            : { mode: 'edit' as const, id: id ?? '' },
-      openNew: () => {
-        setMode('new')
-        setId(null)
-      },
-      openEdit: (next: string) => {
-        setMode('edit')
-        setId(next)
-      },
-      close: () => {
-        setMode('closed')
-        setId(null)
-      },
-    }
-  },
-  useConfirm: () => mockConfirm,
-  ConfirmDialogProvider: ({ children }: ChildrenProps) => <>{children}</>,
-  Button: ({ children, onClick, disabled, title, type = 'button' }: ButtonProps) => (
-    <button type={type} onClick={onClick} disabled={disabled} title={title}>
-      {children}
-    </button>
-  ),
-  Input: ({ value, onChange, className }: InputProps) => (
-    <input className={className} value={value} onChange={onChange} />
-  ),
-  Select: ({ value, options = [], onChange, className }: SelectProps) => (
-    <select
-      className={className}
-      value={value}
-      onChange={(e) => onChange?.({ target: { value: e.target.value } })}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  ),
-  ErrorBox: ({ title, message }: ErrorBoxProps) => (
-    <div data-testid="error-box">
-      <span>{title}</span>
-      <span>{message}</span>
-    </div>
-  ),
-  Badge: ({ children }: ChildrenProps) => <span>{children}</span>,
-  Card: ({ children }: ChildrenProps) => <div data-testid="card">{children}</div>,
-  TABLE_SCROLL_MAX_H: 'max-h-96',
-  DataTable: ({ rows, rowKey, columns, onRowClick }: DataTableProps) => (
-    <div data-testid="sequences-table">
-      <ul>
-        {rows.map((row) => (
-          <li key={rowKey(row)} onClick={() => onRowClick?.(row)}>
-            {columns.map((col) => (
-              <div key={col.key}>{col.render(row)}</div>
-            ))}
-          </li>
-        ))}
-      </ul>
-    </div>
-  ),
-  ItemFormDialog: ({ open, children, title, testId, footer }: ItemFormDialogProps) =>
-    open ? (
-      <div data-testid={testId ?? 'item-form-dialog'}>
-        <h2>{title}</h2>
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useDeviceManagerListAll: () => ({ data: [], isLoading: false, isError: false }),
+    useNotificationRulesListSequences: () => ({
+      data: listPending || listError !== null ? undefined : { sequences },
+      isPending: listPending,
+      error: listError,
+      refetch: mockListRefetch,
+    }),
+    useNotificationRulesCreateSequence: () => ({
+      mutateAsync: mockCreate,
+      isPending: false,
+      error: null,
+      reset: mockCreateReset,
+    }),
+    useNotificationRulesUpdateSequence: () => ({
+      mutateAsync: mockUpdate,
+      isPending: false,
+      error: null,
+      reset: mockUpdateReset,
+    }),
+    useNotificationRulesDeleteSequence: () => ({
+      mutateAsync: mockDelete,
+      isPending: false,
+      error: null,
+    }),
+    useItemFormUrl: () => {
+      const [mode, setMode] = useState<'closed' | 'new' | 'edit'>('closed')
+      const [id, setId] = useState<string | null>(null)
+      return {
+        state:
+          mode === 'closed'
+            ? { mode: 'closed' as const }
+            : mode === 'new'
+              ? { mode: 'new' as const }
+              : { mode: 'edit' as const, id: id ?? '' },
+        openNew: () => {
+          setMode('new')
+          setId(null)
+        },
+        openEdit: (next: string) => {
+          setMode('edit')
+          setId(next)
+        },
+        close: () => {
+          setMode('closed')
+          setId(null)
+        },
+      }
+    },
+    useConfirm: () => mockConfirm,
+    ConfirmDialogProvider: ({ children }: ChildrenProps) => <>{children}</>,
+    Button: ({
+      children,
+      onClick,
+      disabled,
+      title,
+      type = 'button',
+      'data-testid': testId,
+    }: ButtonProps & { readonly 'data-testid'?: string }) => (
+      <button type={type} onClick={onClick} disabled={disabled} title={title} data-testid={testId}>
         {children}
-        {footer}
+      </button>
+    ),
+    Input: ({ value, onChange, className }: InputProps) => (
+      <input className={className} value={value} onChange={onChange} />
+    ),
+    Select: ({ value, options = [], onChange, className }: SelectProps) => (
+      <select
+        className={className}
+        value={value}
+        onChange={(e) => onChange?.({ target: { value: e.target.value } })}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    ),
+    ErrorBox: ({ title, message }: ErrorBoxProps) => (
+      <div data-testid="error-box">
+        <span>{title}</span>
+        <span>{message}</span>
       </div>
-    ) : null,
-  fleetViewOf: () => ({
-    state: 'ready' as const,
-    byId: new Map(),
-    cameras: [],
-  }),
-}))
+    ),
+    Badge: ({ children }: ChildrenProps) => <span>{children}</span>,
+    Card: ({ children }: ChildrenProps) => <div data-testid="card">{children}</div>,
+    TABLE_SCROLL_MAX_H: 'max-h-96',
+    DataTable: ({ rows, rowKey, columns, onRowClick }: DataTableProps) => (
+      <div data-testid="sequences-table">
+        <ul>
+          {rows.map((row) => (
+            <li key={rowKey(row)} onClick={() => onRowClick?.(row)}>
+              {columns.map((col) => (
+                <div key={col.key}>{col.render(row)}</div>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
+    ItemFormDialog: ({ open, children, title, testId, footer }: ItemFormDialogProps) =>
+      open ? (
+        <div data-testid={testId ?? 'item-form-dialog'}>
+          <h2>{title}</h2>
+          {children}
+          {footer}
+        </div>
+      ) : null,
+    fleetViewOf: () => ({
+      state: 'ready' as const,
+      byId: new Map(),
+      cameras: [],
+    }),
+  }
+})
 
 vi.mock('../../../components/AdminPage', () => ({
   AdminPage: ({

@@ -124,7 +124,8 @@ export function CustomizeDevicePickerDialog({
               aria-label={t('customize.assign.filtersLabel')}
             >
               {filters.map((f) => (
-                <button
+                <Button
+                  variant="unstyled"
                   key={f.id}
                   type="button"
                   role="tab"
@@ -135,7 +136,7 @@ export function CustomizeDevicePickerDialog({
                   onClick={() => setFilterId(f.id)}
                 >
                   {t(f.labelKey)}
-                </button>
+                </Button>
               ))}
             </div>
           )}

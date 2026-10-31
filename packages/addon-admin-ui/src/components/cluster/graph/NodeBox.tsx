@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Handle, Position } from '@xyflow/react'
-import { formatLastSeen, useUiText } from '@camstack/ui-library'
+import { formatLastSeen, useUiText, Button } from '@camstack/ui-library'
 import type { ClusterGraphNode } from './build-cluster-graph'
 import { RunnerBlock } from './RunnerBlock'
 import { lastSeenToMs } from '../../../lib/last-seen'
@@ -110,14 +110,15 @@ export function NodeBox({ data }: NodeBoxProps) {
           {data.identity.mem === null ? t('cluster.memoryUnknown') : `${data.identity.mem}%`}
         </span>
         {/* Detail link button */}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           aria-label={t('graph.nodeBox.openNodeDetail', 'Open node detail')}
           onClick={() => data.onOpenNodeDetail(data.nodeId)}
           className="shrink-0 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-1"
         >
           ↗
-        </button>
+        </Button>
       </div>
 
       {/* Body: runner list */}

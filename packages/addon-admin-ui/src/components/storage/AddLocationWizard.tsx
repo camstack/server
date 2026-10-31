@@ -38,6 +38,9 @@ import {
   useStorageListProviders,
   useStorageUpsertLocation,
   useSystem,
+  Button,
+  Checkbox,
+  Input,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, Loader2 } from 'lucide-react'
@@ -186,7 +189,8 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                 </div>
               )}
               {providers.map((p) => (
-                <button
+                <Button
+                  variant="unstyled"
                   key={p.providerId}
                   onClick={() => {
                     setPicked(p)
@@ -201,7 +205,7 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-foreground-subtle flex-shrink-0" />
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -245,14 +249,16 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                 </div>
               )}
               <div className="flex items-center justify-between pt-1">
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={() => setStep('picker')}
                   className="rounded px-3 py-1.5 text-xs text-foreground-subtle border border-border hover:text-foreground"
                 >
                   {t('common.back', 'Back')}
-                </button>
+                </Button>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
+                    variant="unstyled"
                     onClick={() => {
                       void handleTest()
                     }}
@@ -262,13 +268,14 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                     {testing
                       ? t('storage.addLocationWizard.testing', 'Testing…')
                       : t('storage.addLocationWizard.testConnection', 'Test connection')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
                     onClick={() => setStep('naming')}
                     className="rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
                   >
                     {t('common.next', 'Next')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -280,7 +287,7 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                 <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                   {t('storage.addLocationWizard.displayName', 'Display name')}
                 </label>
-                <input
+                <Input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -301,7 +308,7 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                     )}
                   </span>
                 </label>
-                <input
+                <Input
                   type="text"
                   value={computedId}
                   onChange={(e) => setIdOverride(e.target.value)}
@@ -317,8 +324,7 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                 </p>
               </div>
               <label className="flex items-start gap-2 rounded border border-border bg-background px-3 py-2 cursor-pointer hover:bg-primary/5">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={enableImmediately}
                   onChange={(e) => setEnableImmediately(e.target.checked)}
                   className="accent-primary mt-0.5"
@@ -341,14 +347,16 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                 </div>
               )}
               <div className="flex items-center justify-between pt-1">
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={() => setStep('config')}
                   className="rounded px-3 py-1.5 text-xs text-foreground-subtle border border-border hover:text-foreground"
                 >
                   {t('common.back', 'Back')}
-                </button>
+                </Button>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
+                    variant="unstyled"
                     onClick={() => {
                       setType(initialType)
                       setPicked(null)
@@ -362,8 +370,9 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                     className="rounded px-3 py-1.5 text-xs text-foreground-subtle border border-border hover:text-foreground"
                   >
                     {t('common.reset', 'Reset')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
                     onClick={handleSave}
                     disabled={upsert.isPending || displayName.trim().length === 0}
                     className="inline-flex items-center gap-1.5 rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
@@ -372,7 +381,7 @@ export function AddLocationWizard({ initialType, onClose, onCreated }: AddLocati
                     {upsert.isPending
                       ? t('storage.addLocationWizard.saving', 'Saving…')
                       : t('common.save', 'Save')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

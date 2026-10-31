@@ -17,8 +17,11 @@ vi.mock('../../source-selector/SourceSelector', () => ({
   SourceSelector: () => null,
 }))
 
-vi.mock('@camstack/ui-library', () => {
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
+    Input: actual.Input,
     CollapsibleCard: ({
       header,
       children,

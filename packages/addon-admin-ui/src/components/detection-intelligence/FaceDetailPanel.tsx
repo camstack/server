@@ -268,7 +268,8 @@ export function FaceDetailPanel({
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3">
           {hasFrame && (
             <div className="flex items-center gap-1 rounded-md border border-border p-0.5 text-xs">
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setMode('frame')}
                 className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 transition-colors ${
@@ -278,8 +279,9 @@ export function FaceDetailPanel({
                 }`}
               >
                 <Scan className="h-3.5 w-3.5" /> {t('detectionIntelligence.detailPanel.fullFrame')}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setMode('crop')}
                 className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 transition-colors ${
@@ -289,7 +291,7 @@ export function FaceDetailPanel({
                 }`}
               >
                 <Crop className="h-3.5 w-3.5" /> {t('detectionIntelligence.detailPanel.crop')}
-              </button>
+              </Button>
             </div>
           )}
 

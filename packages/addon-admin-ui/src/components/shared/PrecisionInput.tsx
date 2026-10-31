@@ -3,6 +3,7 @@
  * out-of-range input is clamped so the form never writes a refused value.
  */
 import type { ChangeEvent, ReactNode } from 'react'
+import { Input } from '@camstack/ui-library'
 
 const FIELD_CLASS =
   'w-full min-w-0 px-1.5 py-0.5 text-[11px] bg-background border border-border rounded focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed'
@@ -44,7 +45,7 @@ export function PrecisionInput({
   }
 
   return (
-    <input
+    <Input
       type="number"
       min={PRECISION_MIN}
       max={PRECISION_MAX}

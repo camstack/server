@@ -13,6 +13,8 @@ import {
   useStorageMigrationCleanupCancel,
   useStorageMigrationCleanupStart,
   useStorageMigrationCleanupStatus,
+  Button,
+  Checkbox,
 } from '@camstack/ui-library'
 import { Loader2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -141,8 +143,7 @@ function CleanupPanel() {
       </p>
 
       <label className="mt-3 flex items-start gap-2 text-[11px] text-foreground">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={includeDebugMedia}
           disabled={running}
           onChange={(e) => {
@@ -159,7 +160,8 @@ function CleanupPanel() {
       </label>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={running || startCleanup.isPending}
           onClick={() => {
@@ -170,9 +172,10 @@ function CleanupPanel() {
           {(running || startCleanup.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
           <Trash2 className="h-3 w-3" />
           {t('recordings.cleanupSection.runCleanup', 'Run cleanup')}
-        </button>
+        </Button>
         {running && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               void handleCancel()
@@ -180,7 +183,7 @@ function CleanupPanel() {
             className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[10px] font-medium text-danger hover:bg-danger/10"
           >
             {t('common.cancel', 'Cancel')}
-          </button>
+          </Button>
         )}
       </div>
 

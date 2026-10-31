@@ -19,6 +19,8 @@ import {
   useConfirm,
   useIntegrationsGetAvailableTypes,
   useNodesClusterAddonStatus,
+  Button,
+  Select,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Download, Loader2, RefreshCw, Search } from 'lucide-react'
@@ -705,13 +707,14 @@ function InstalledTab({
               </div>
               <div className="text-foreground-subtle font-mono">{message}</div>
             </div>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => clearErrorFor(name)}
               className="text-foreground-subtle hover:text-foreground text-[10px]"
             >
               {t('common.dismiss')}
-            </button>
+            </Button>
           </div>
         </div>
       ))}
@@ -722,17 +725,17 @@ function InstalledTab({
           <span className="text-[10px] text-foreground-subtle">
             {t('admin.system.addons.sort', 'Sort:')}
           </span>
-          <select
+          <Select
+            wrapperClassName="inline-block w-auto"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary/50"
           >
             <option value="type">{t('admin.system.addons.bundlesFirst', 'Bundles first')}</option>
             <option value="name">{t('admin.system.addons.name', 'Name')}</option>
             <option value="source">
               {t('admin.system.addons.installSource', 'Install source')}
             </option>
-          </select>
+          </Select>
         </div>
 
         {/* View toggle: grouped (per package) vs flat (per addon) */}
@@ -742,7 +745,8 @@ function InstalledTab({
           </span>
           <div className="flex rounded-md border border-border overflow-hidden text-[10px] font-medium">
             {(['grouped', 'flat'] as const).map((mode) => (
-              <button
+              <Button
+                variant="unstyled"
                 key={mode}
                 type="button"
                 onClick={() => handleSetViewMode(mode)}
@@ -764,7 +768,7 @@ function InstalledTab({
                 }
               >
                 {mode}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -780,7 +784,8 @@ function InstalledTab({
             </span>
             <div className="flex rounded-md border border-border overflow-hidden text-[10px] font-medium">
               {(['off', 'latest', 'beta'] as const).map((ch) => (
-                <button
+                <Button
+                  variant="unstyled"
                   key={ch}
                   type="button"
                   onClick={() => setAutoUpdateMutation.mutate({ channel: ch })}
@@ -796,7 +801,7 @@ function InstalledTab({
                   } ${ch !== 'off' ? 'border-l border-border' : ''}`}
                 >
                   {ch}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -809,8 +814,9 @@ function InstalledTab({
             <span className="text-[10px] text-foreground-subtle">
               {t('admin.system.addons.checkEvery', 'Check every:')}
             </span>
-            <select
-              className="rounded-md border border-border bg-transparent px-1.5 py-1 text-[10px] font-medium text-foreground-subtle"
+            <Select
+              wrapperClassName="inline-block w-auto"
+              className="font-medium text-foreground-subtle"
               value={autoUpdateSettings?.updateCheckIntervalSeconds ?? 21600}
               disabled={setCheckIntervalMutation.isPending || autoUpdateSettings === undefined}
               onChange={(event) => {
@@ -826,13 +832,14 @@ function InstalledTab({
                   {choice.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
 
         {/* Update All button (only when real-addon updates are available) */}
         {nonSystemUpdateCount > 0 && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => void handleUpdateAll()}
             disabled={startJobMutation.isPending}
@@ -848,7 +855,7 @@ function InstalledTab({
               : t('admin.system.addons.updateAll', 'Update All ({{nonSystemUpdateCount}})', {
                   nonSystemUpdateCount,
                 })}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -897,7 +904,8 @@ function InstalledTab({
             },
           ] as const
         ).map((chip) => (
-          <button
+          <Button
+            variant="unstyled"
             key={chip.id}
             type="button"
             aria-pressed={chip.pressed}
@@ -905,7 +913,7 @@ function InstalledTab({
             className={chip.pressed ? ADDONS_FILTER_CHIP_ON : ADDONS_FILTER_CHIP_OFF}
           >
             {chip.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -981,13 +989,14 @@ function InstalledTab({
             {t('admin.system.addons.filteringByCapability', 'Filtering by capability:')}
           </span>
           <span className="font-mono text-primary font-semibold">{capabilityFilter}</span>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={clearCapabilityFilter}
             className="ml-auto text-xs text-foreground-subtle hover:text-foreground underline"
           >
             {t('admin.system.addons.clear', 'Clear')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1194,7 +1203,8 @@ export function AddonsPage() {
               })}
             </span>
           )}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => void reload()}
             disabled={reloadIsPending}
@@ -1206,7 +1216,7 @@ export function AddonsPage() {
           >
             <RefreshCw className={`w-3 h-3 ${reloadIsPending ? 'animate-spin' : ''}`} />
             {t('admin.system.addons.checkForUpdates', 'Check for updates')}
-          </button>
+          </Button>
         </div>
       </div>
 

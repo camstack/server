@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Activity } from 'lucide-react'
-import { useDeviceStateSlice } from '@camstack/ui-library'
+import { useDeviceStateSlice, Button } from '@camstack/ui-library'
 import type { DeviceProxy } from '@camstack/types'
 import { useTranslation } from 'react-i18next'
 
@@ -71,7 +71,8 @@ export function MotionTriggerToggle({
       : 'On motion: …'
 
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={() => {
         void handleToggle()
@@ -93,6 +94,6 @@ export function MotionTriggerToggle({
     >
       <Activity className="h-3 w-3" />
       <span>{label}</span>
-    </button>
+    </Button>
   )
 }

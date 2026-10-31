@@ -7,6 +7,7 @@ import {
   useDeviceManagerGetDevice,
   useDeviceManagerListBindableCapsForDeviceType,
   useDeviceManagerSetWrapperActive,
+  Button,
 } from '@camstack/ui-library'
 import type { DataColumn } from '@camstack/ui-library'
 import { useEventInvalidation } from '../../../hooks/useEventInvalidation'
@@ -287,7 +288,8 @@ function WrapperPicker({ wrappers, activeWrapperId, disabled, onPick }: WrapperP
       {wrappers.map((wrapperId) => {
         const isActive = wrapperId === activeWrapperId
         return (
-          <button
+          <Button
+            variant="unstyled"
             key={wrapperId}
             disabled={disabled}
             onClick={() => onPick(wrapperId)}
@@ -309,7 +311,7 @@ function WrapperPicker({ wrappers, activeWrapperId, disabled, onPick }: WrapperP
           >
             {isActive ? <Check className="h-3 w-3" /> : <RotateCcw className="h-3 w-3" />}
             {wrapperId}
-          </button>
+          </Button>
         )
       })}
     </div>

@@ -7,24 +7,36 @@ import { RunnerBlock } from '../RunnerBlock'
 // Shared spy so we can assert on mutateAsync calls across tests
 const mutateAsyncSpy = vi.fn().mockResolvedValue({ success: true })
 
-vi.mock('@camstack/ui-library', () => ({
-  FloatingLogStream: ({
-    addonId,
-    agentId,
-    onClose,
-  }: {
-    addonId?: string
-    agentId: string
-    onClose: () => void
-  }) => (
-    <div data-testid="log-stream" data-addon-id={addonId ?? ''} data-agent-id={agentId}>
-      <button onClick={onClose}>close-log</button>
-    </div>
-  ),
-  useNodesRestartAddon: () => ({
-    mutateAsync: mutateAsyncSpy,
-  }),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    FloatingLogStream: ({
+      addonId,
+      agentId,
+      onClose,
+    }: {
+      addonId?: string
+      agentId: string
+      onClose: () => void
+    }) => (
+      <div data-testid="log-stream" data-addon-id={addonId ?? ''} data-agent-id={agentId}>
+        <button onClick={onClose}>close-log</button>
+      </div>
+    ),
+    useNodesRestartAddon: () => ({
+      mutateAsync: mutateAsyncSpy,
+    }),
+  }
+})
 
 const baseRunner: RunnerBlockData = {
   pid: 1234,

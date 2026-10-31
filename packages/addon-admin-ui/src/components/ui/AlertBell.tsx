@@ -24,6 +24,8 @@ import {
   useAlertsMarkRead,
   useClusterNodes,
   useLiveEvent,
+  Button,
+  Checkbox,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
@@ -179,7 +181,8 @@ function AlertCard({
       </div>
       <div className="flex items-center gap-0.5 shrink-0">
         {!alert.read && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
@@ -189,10 +192,11 @@ function AlertCard({
             title={t('ui.alertBell.markAsRead', 'Mark as read')}
           >
             <Check className="h-3 w-3 text-foreground-subtle" />
-          </button>
+          </Button>
         )}
         {alert.status !== 'in-progress' && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
@@ -202,7 +206,7 @@ function AlertCard({
             title={t('ui.alertBell.dismiss', 'Dismiss')}
           >
             <X className="h-3 w-3 text-foreground-subtle" />
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -341,7 +345,8 @@ export function AlertBell({ variant = 'icon', compact = false }: AlertBellProps 
   return (
     <div>
       {variant === 'sidebar' ? (
-        <button
+        <Button
+          variant="unstyled"
           ref={buttonRef}
           type="button"
           onClick={() => setOpen(!open)}
@@ -368,9 +373,10 @@ export function AlertBell({ variant = 'icon', compact = false }: AlertBellProps 
               {unreadCount > 99 ? '99+' : String(unreadCount)}
             </span>
           )}
-        </button>
+        </Button>
       ) : (
-        <button
+        <Button
+          variant="unstyled"
           ref={buttonRef}
           type="button"
           onClick={() => setOpen(!open)}
@@ -383,7 +389,7 @@ export function AlertBell({ variant = 'icon', compact = false }: AlertBellProps 
               {unreadCount > 99 ? '99+' : String(unreadCount)}
             </span>
           )}
-        </button>
+        </Button>
       )}
 
       {open &&
@@ -401,8 +407,7 @@ export function AlertBell({ variant = 'icon', compact = false }: AlertBellProps 
               <div className="flex items-center gap-2">
                 {readCount > 0 && (
                   <label className="flex items-center gap-1 text-[10px] text-foreground-subtle cursor-pointer select-none">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={showRead}
                       onChange={(e) => setShowRead(e.target.checked)}
                       className="h-3 w-3 rounded border-border accent-primary cursor-pointer"
@@ -411,14 +416,15 @@ export function AlertBell({ variant = 'icon', compact = false }: AlertBellProps 
                   </label>
                 )}
                 {unreadCount > 0 && (
-                  <button
+                  <Button
+                    variant="unstyled"
                     type="button"
                     onClick={handleMarkAllRead}
                     className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors"
                   >
                     <CheckCheck className="h-3 w-3" />
                     {t('ui.alertBell.markAllRead', 'Mark all read')}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -440,13 +446,14 @@ export function AlertBell({ variant = 'icon', compact = false }: AlertBellProps 
                       : t('ui.alertBell.noAlerts', 'No alerts')}
                   </span>
                   {rawAlerts.length > 0 && !showRead && (
-                    <button
+                    <Button
+                      variant="unstyled"
                       type="button"
                       onClick={() => setShowRead(true)}
                       className="text-[10px] text-primary mt-1 hover:underline"
                     >
                       {t('ui.alertBell.showRead', { count: readCount })}
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}

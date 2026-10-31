@@ -70,6 +70,7 @@ import {
   useAudioAnalyzerReprobeAudioEngine,
   useDecoderReprobeHwaccel,
   useSystem,
+  Button,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 export type SettingsLevel = 'global' | 'device'
@@ -1209,7 +1210,8 @@ function TabbedAddonPanes({
           const isActive = pane.addonId === active.addonId
           const dirty = (paneStates.get(pane.addonId)?.pendingKeys.length ?? 0) > 0
           return (
-            <button
+            <Button
+              variant="unstyled"
               key={pane.addonId}
               type="button"
               onClick={() => setActiveId(pane.addonId)}
@@ -1223,7 +1225,7 @@ function TabbedAddonPanes({
               {dirty && (
                 <span className="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
               )}
-            </button>
+            </Button>
           )
         })}
       </div>

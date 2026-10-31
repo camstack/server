@@ -33,7 +33,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Fingerprint, X } from 'lucide-react'
-import { trpc, useSystem, useWidgetMetadata, WidgetSlot } from '@camstack/ui-library'
+import { trpc, useSystem, useWidgetMetadata, WidgetSlot, Button } from '@camstack/ui-library'
 import { useAuth } from '../../contexts/auth-context'
 import { passkeyUsableOnOrigin } from '../login/passkey-gate'
 import type { PasskeyLoginMethod } from '../login/PrimaryLoginMethods'
@@ -120,25 +120,28 @@ export function PasskeyEnrollmentPrompt() {
         <span className="flex-1 min-w-0">
           {t('passkeyPrompt.message', 'Save a passkey for faster sign-in?')}
         </span>
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => setEnrollOpen((v) => !v)}
           className="rounded bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90"
         >
           {t('passkeyPrompt.enrollNow', 'Enroll now')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           onClick={dismiss}
           className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover"
         >
           {t('passkeyPrompt.notNow', 'Not now')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           onClick={dismiss}
           aria-label={t('passkeyPrompt.notNow', 'Not now')}
           className="p-1 rounded text-foreground-subtle hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
       {enrollOpen && (
         <div className="px-3 pb-3">
@@ -147,12 +150,13 @@ export function PasskeyEnrollmentPrompt() {
                 WebAuthn ceremony lives in the addon widget. */}
             <WidgetSlot widgetId={ENROLLMENT_WIDGET_ID} host="dashboard" />
             <div className="mt-2 flex justify-end">
-              <button
+              <Button
+                variant="unstyled"
                 onClick={closeEnroll}
                 className="rounded border border-border px-2.5 py-1 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover"
               >
                 {t('common.close', 'Close')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

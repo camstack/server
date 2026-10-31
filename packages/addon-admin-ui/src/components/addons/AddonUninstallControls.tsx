@@ -4,6 +4,7 @@ import {
   useAddonsUninstallPackage,
   useAlert,
   useConfirm,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Globe, Trash2 } from 'lucide-react'
@@ -170,7 +171,8 @@ export function AddonUninstallControls({
   return (
     <div className="flex items-center gap-1.5">
       {hideNodeAction !== true && (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -186,10 +188,11 @@ export function AddonUninstallControls({
           {mutation.isPending
             ? t('addons.addonUninstallControls.removing', 'Removing...')
             : t('addons.addonUninstallControls.uninstall', 'Uninstall')}
-        </button>
+        </Button>
       )}
       {(holders.length > 1 || hideNodeAction === true || unreachable.length > 0) && (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -206,7 +209,7 @@ export function AddonUninstallControls({
           {holders.length > 0
             ? t('addons.uninstallControls.everywhereCount', { count: holders.length })
             : t('addons.uninstallControls.everywhere')}
-        </button>
+        </Button>
       )}
     </div>
   )

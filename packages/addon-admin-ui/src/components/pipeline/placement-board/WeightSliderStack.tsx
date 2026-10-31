@@ -50,6 +50,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Lock, Unlock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Slider } from '@camstack/ui-library'
 
 /**
  * Minimal shape the stack actually reads — `id` (stable key), `name` (row
@@ -288,13 +289,12 @@ export function WeightSliderStack({
             >
               {node.name}
             </span>
-            <input
+            <Slider
               aria-label={t(
                 'placementBoard.weightSliderStack.for',
                 '{{weightLabel}} for {{name}}',
                 { weightLabel, name: node.name },
               )}
-              type="range"
               min={0}
               max={100}
               step={1}
@@ -309,7 +309,8 @@ export function WeightSliderStack({
               {Math.round(share)}%
             </span>
             {!readOnly && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => toggleLock(node.id)}
                 disabled={pending || soleNode}
@@ -330,7 +331,7 @@ export function WeightSliderStack({
                 }`}
               >
                 {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-              </button>
+              </Button>
             )}
           </div>
         )

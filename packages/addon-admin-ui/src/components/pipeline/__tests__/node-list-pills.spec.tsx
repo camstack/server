@@ -21,32 +21,44 @@ vi.mock('../../../pages/Pipeline', () => ({
   CLUSTER_NODE_ID: '__cluster__',
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useUiText: () => (_key: string, fallback: string | { other: string }) =>
-    typeof fallback === 'string' ? fallback : fallback.other,
-  useClusterTopology: () => mockUseTopology(),
-  usePipelineOrchestratorGetPipelineAssignments: () => mockUseAssignments(),
-  usePipelineOrchestratorListAgentSettings: () => mockUseAgentSettings(),
-  formatLastSeen: (ms: number | null | undefined) =>
-    ms === null || ms === undefined || ms <= 0
-      ? null
-      : `${String(Math.floor((Date.now() - ms) / 60000))}m ago`,
-  // Minimal Badge stub surfacing variant + title + text so the spec can
-  // query pills by their `title` and assert the success/danger variant.
-  Badge: ({
-    variant,
-    title,
-    children,
-  }: {
-    variant?: string
-    title?: string
-    children?: React.ReactNode
-  }) => (
-    <span data-testid="pill" data-variant={variant} title={title}>
-      {children}
-    </span>
-  ),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useUiText: () => (_key: string, fallback: string | { other: string }) =>
+      typeof fallback === 'string' ? fallback : fallback.other,
+    useClusterTopology: () => mockUseTopology(),
+    usePipelineOrchestratorGetPipelineAssignments: () => mockUseAssignments(),
+    usePipelineOrchestratorListAgentSettings: () => mockUseAgentSettings(),
+    formatLastSeen: (ms: number | null | undefined) =>
+      ms === null || ms === undefined || ms <= 0
+        ? null
+        : `${String(Math.floor((Date.now() - ms) / 60000))}m ago`,
+    // Minimal Badge stub surfacing variant + title + text so the spec can
+    // query pills by their `title` and assert the success/danger variant.
+    Badge: ({
+      variant,
+      title,
+      children,
+    }: {
+      variant?: string
+      title?: string
+      children?: React.ReactNode
+    }) => (
+      <span data-testid="pill" data-variant={variant} title={title}>
+        {children}
+      </span>
+    ),
+  }
+})
 
 import { NodeList } from '../NodeList'
 

@@ -29,7 +29,7 @@ import {
   NC_SYSTEM_EVENT_FAMILIES,
   ruleKindSpec,
 } from '@camstack/types'
-import { Input, Select } from '@camstack/ui-library'
+import { Input, Select, Button } from '@camstack/ui-library'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -178,7 +178,8 @@ export function SystemEventField({
                   ? `${option.label} — ${t('system.notificationSystemEventField.noSnapshot', 'no state snapshot, reports nothing')}`
                   : option.label
               return (
-                <button
+                <Button
+                  variant="unstyled"
                   key={option.key}
                   type="button"
                   role="checkbox"
@@ -192,7 +193,7 @@ export function SystemEventField({
                   }
                 >
                   {label}
-                </button>
+                </Button>
               )
             })}
           </div>

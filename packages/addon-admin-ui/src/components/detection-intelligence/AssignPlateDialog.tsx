@@ -109,7 +109,8 @@ export function AssignPlateDialog({ plateIds, vehicles, onDone }: AssignPlateDia
 
         <div className="space-y-1 max-h-56 overflow-y-auto">
           {vehicles.map((vehicle) => (
-            <button
+            <Button
+              variant="unstyled"
               key={vehicle.id}
               type="button"
               onClick={() => setSelectedId(vehicle.id)}
@@ -125,7 +126,7 @@ export function AssignPlateDialog({ plateIds, vehicles, onDone }: AssignPlateDia
                   count: vehicle.sampleCount,
                 })}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -146,7 +147,8 @@ export function AssignPlateDialog({ plateIds, vehicles, onDone }: AssignPlateDia
             />
           </div>
         ) : (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               setSelectedId(null)
@@ -155,7 +157,7 @@ export function AssignPlateDialog({ plateIds, vehicles, onDone }: AssignPlateDia
             className="mt-2 w-full rounded-md border border-dashed border-border px-3 py-2 text-left text-xs text-foreground-subtle hover:border-primary hover:text-primary transition-colors"
           >
             {t('detectionIntelligence.assignPlateDialog.newVehicle', '+ New vehicle…')}
-          </button>
+          </Button>
         )}
 
         <DialogFooter>

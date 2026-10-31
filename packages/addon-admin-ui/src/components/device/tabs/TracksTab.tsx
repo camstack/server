@@ -10,7 +10,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import type { Track } from '@camstack/types'
-import { useDeviceProxy, useSystem } from '@camstack/ui-library'
+import { useDeviceProxy, useSystem, Button } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 
 /**
@@ -136,7 +136,8 @@ function HistoricalTrackRow({ track }: { readonly track: Track }) {
 
   return (
     <div>
-      <button
+      <Button
+        variant="unstyled"
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-hover/50 transition-colors text-left"
       >
@@ -161,7 +162,7 @@ function HistoricalTrackRow({ track }: { readonly track: Track }) {
           <span>{formatDistance(track.totalDistance)}</span>
           <span>{t('device.tracksTab.points', { count: track.positions.length })}</span>
         </div>
-      </button>
+      </Button>
 
       {expanded && (
         <div className="px-4 pb-3 pl-11">

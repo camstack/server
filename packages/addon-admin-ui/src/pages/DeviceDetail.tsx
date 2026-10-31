@@ -45,6 +45,7 @@ import {
   useDeviceLabel,
   useUiText,
   type DeviceNameFields,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -811,12 +812,13 @@ export function DeviceDetailPage() {
             }}
           />
         </p>
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => navigate('/integrations')}
           className="mt-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           {t('deviceDetail.backToIntegrations', 'Back to Integrations')}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -852,12 +854,13 @@ export function DeviceDetailPage() {
             }}
           />
         </p>
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => navigate('/integrations')}
           className="mt-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           {t('deviceDetail.backToIntegrations', 'Back to Integrations')}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -947,7 +950,8 @@ export function DeviceDetailPage() {
                 when the parent record hasn't loaded yet (avoid a
                 flash of an unlabeled link). */}
             {parentDeviceId !== null && parentDevice && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => navigate(`/devices/${parentDeviceId}`)}
                 className="text-[10px] text-foreground-subtle hover:text-primary transition-colors mt-0.5 inline-flex items-center gap-1"
@@ -957,7 +961,7 @@ export function DeviceDetailPage() {
               >
                 <span>↑</span>
                 <span className="truncate">{parentLabel}</span>
-              </button>
+              </Button>
             )}
             {/* Capability icons hidden on small viewports to keep the
                 title row from wrapping. The CapabilityBadges set is
@@ -979,7 +983,8 @@ export function DeviceDetailPage() {
 
           {/* ── Action toolbar ── */}
           <div className="flex items-center gap-1 shrink-0">
-            <button
+            <Button
+              variant="unstyled"
               onClick={async () => {
                 if (isEnabled) {
                   const confirmed = await confirm({
@@ -1017,7 +1022,7 @@ export function DeviceDetailPage() {
                     ? t('deviceDetail.enabled', 'Enabled')
                     : t('deviceDetail.disabled', 'Disabled')}
               </span>
-            </button>
+            </Button>
 
             <div className="hidden sm:block h-5 w-px bg-border mx-1" />
 
@@ -1266,7 +1271,8 @@ export function DeviceDetailPage() {
                           {visibleShortcuts.map(({ id, labelKey, icon: Icon }) => {
                             const active = activeShortcut === id
                             return (
-                              <button
+                              <Button
+                                variant="unstyled"
                                 key={id}
                                 onClick={() => setActiveShortcut(id)}
                                 title={t(labelKey)}
@@ -1278,7 +1284,7 @@ export function DeviceDetailPage() {
                               >
                                 <Icon className="h-3 w-3" />
                                 {t(labelKey)}
-                              </button>
+                              </Button>
                             )
                           })}
                         </div>
@@ -1334,7 +1340,8 @@ export function DeviceDetailPage() {
                         {tabs.map((tab) => {
                           const isActive = activeTab === tab.id
                           return (
-                            <button
+                            <Button
+                              variant="unstyled"
                               key={tab.id}
                               onClick={() => handleTabClick(tab.id)}
                               className={`relative flex-shrink-0 px-3 py-2 text-xs font-medium transition-colors ${
@@ -1347,7 +1354,7 @@ export function DeviceDetailPage() {
                               {isActive && (
                                 <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
                               )}
-                            </button>
+                            </Button>
                           )
                         })}
                       </div>

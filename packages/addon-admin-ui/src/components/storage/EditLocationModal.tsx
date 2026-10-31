@@ -33,6 +33,7 @@ import {
   useStorageListProviders,
   useStorageUpsertLocation,
   useSystem,
+  Input,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
@@ -167,7 +168,7 @@ export function EditLocationModal({ location, onClose, onSaved }: EditLocationMo
             <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
               {t('storage.editLocationModal.displayName', 'Display name')}
             </label>
-            <input
+            <Input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}

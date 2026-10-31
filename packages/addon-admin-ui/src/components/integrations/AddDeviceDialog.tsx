@@ -11,6 +11,7 @@ import {
   useDeviceManagerGetCreationSchema,
   useDeviceManagerProviderCreationType,
   useDeviceManagerTestCreationField,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ChevronDown, Loader2, ScrollText, Wifi } from 'lucide-react'
@@ -279,7 +280,8 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
             other providers will be added incrementally). */}
         {!hasError && !isBusy && (
           <div className="border-t border-border bg-surface/50 shrink-0">
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => setShowLogs((v) => !v)}
               className="flex w-full items-center justify-between px-3 py-2 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
@@ -294,7 +296,7 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
               <ChevronDown
                 className={`h-3.5 w-3.5 transition-transform ${showLogs ? 'rotate-180' : ''}`}
               />
-            </button>
+            </Button>
             {showLogs && (
               <div className="border-t border-border max-h-64 overflow-hidden">
                 <LogStream
@@ -332,14 +334,16 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
         {/* Footer */}
         <DialogFooter className="justify-between">
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="unstyled"
               onClick={onClose}
               className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
             >
               {t('integrations.cancel')}
-            </button>
+            </Button>
             {!hasError && hasProbeFields && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={handleTestAll}
                 disabled={testAllStatus === 'testing'}
@@ -351,24 +355,26 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
                   <Wifi className="h-3.5 w-3.5" />
                 )}
                 {t('integrations.addDeviceDialog.testAll', 'Test All')}
-              </button>
+              </Button>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => handleSave(true)}
               disabled={hasError || !isFormValid || createMutation.isPending}
               className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
             >
               {t('integrations.saveAndNew')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="unstyled"
               onClick={() => handleSave(false)}
               disabled={hasError || !isFormValid || createMutation.isPending}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50"
             >
               {createMutation.isPending ? t('integrations.saving') : t('integrations.save')}
-            </button>
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

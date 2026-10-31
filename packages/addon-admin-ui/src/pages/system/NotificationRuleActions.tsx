@@ -13,7 +13,7 @@ import type {
 } from '@camstack/types'
 import { normalizeNcCapTarget } from '@camstack/types'
 import type { ReactNode } from 'react'
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input, Select } from '@camstack/ui-library'
 import { AlertTriangle, Plus, Trash2 } from 'lucide-react'
 import {
   DeviceDoActionFields,
@@ -373,7 +373,8 @@ function HookSection({
                   <label className={LABEL}>
                     {t('system.notificationRuleActions.sequence', 'Sequence')}
                   </label>
-                  <select
+                  <Select
+                    wrapperClassName="inline-block w-auto"
                     className={FIELD}
                     value={binding.sequenceId}
                     onChange={(e) => {
@@ -387,7 +388,7 @@ function HookSection({
                         {s.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <Button
                   size="sm"
@@ -480,7 +481,8 @@ function ButtonRow({
       </div>
       <div className="min-w-0 flex-1">
         <label className={LABEL}>{t('system.notificationRuleActions.sequence', 'Sequence')}</label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           className={FIELD}
           value={button.sequenceId}
           onChange={(e) => onChange({ ...button, sequenceId: e.target.value })}
@@ -490,11 +492,12 @@ function ButtonRow({
               {s.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="w-32">
         <label className={LABEL}>{t('system.notificationRuleActions.icon', 'Icon')}</label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           className={FIELD}
           value={button.icon ?? ''}
           onChange={(e) => {
@@ -510,7 +513,7 @@ function ButtonRow({
               {o.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <Button
         size="sm"

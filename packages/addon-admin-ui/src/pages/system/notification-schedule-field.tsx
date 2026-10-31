@@ -32,6 +32,7 @@ import {
   WEEKDAY_CHOICES,
 } from './notification-system-event-delivery'
 import { useTranslation } from 'react-i18next'
+import { Button, Checkbox, Input } from '@camstack/ui-library'
 
 export type ScheduleFieldMode = 'windows' | 'times'
 
@@ -138,17 +139,17 @@ function WindowsScheduleField({
         ))
       )}
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={addWindow}
           className="flex items-center gap-1 rounded-md bg-surface-hover px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground"
         >
           <Plus className="h-3 w-3" /> {t('system.notificationScheduleField.addWindow')}
-        </button>
+        </Button>
         {windows.length > 0 && (
           <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={invert}
               onChange={(e) => commit([...windows], e.target.checked)}
               className="accent-primary"
@@ -236,14 +237,15 @@ function TimesScheduleField({
           />
         ))
       )}
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => commit([...rows, newSendTime(defaultMinute)])}
         className="flex items-center gap-1 rounded-md bg-surface-hover px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground"
         data-testid="schedule-field-add-time"
       >
         <Plus className="h-3 w-3" /> {t('system.notificationScheduleField.addTime')}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -264,28 +266,29 @@ function ScheduleWindowRow({ window: win, onChange, onRemove }: ScheduleWindowRo
   return (
     <div className="space-y-1.5 rounded-md border border-border p-2">
       <div className="flex items-center gap-2 text-xs">
-        <input
+        <Input
           type="time"
           value={minutesToHhmm(win.startMinute)}
           onChange={(e) => onChange({ ...win, startMinute: hhmmToMinutes(e.target.value) })}
           className="rounded-md border border-border bg-background px-1 py-0.5"
         />
         <span className="text-foreground-subtle">→</span>
-        <input
+        <Input
           type="time"
           value={minutesToHhmm(win.endMinute)}
           onChange={(e) => onChange({ ...win, endMinute: hhmmToMinutes(e.target.value) })}
           className="rounded-md border border-border bg-background px-1 py-0.5"
         />
         <span className="flex-1" />
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onRemove}
           aria-label={t('system.notificationScheduleField.removeWindow', 'Remove window')}
           className="text-foreground-subtle hover:text-danger"
         >
           <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
       <WeekdayToggles days={win.days} onToggle={toggleDay} />
     </div>
@@ -312,7 +315,7 @@ function SendTimeRow({ time, index, onChange, onRemove }: SendTimeRowProps) {
         <span className="text-foreground-subtle">
           {t('system.notificationScheduleField.at', 'At')}
         </span>
-        <input
+        <Input
           type="time"
           value={hhmmOf(time.minute)}
           onChange={(e) => onChange({ ...time, minute: minuteOfHhmm(e.target.value) })}
@@ -321,14 +324,15 @@ function SendTimeRow({ time, index, onChange, onRemove }: SendTimeRowProps) {
         />
         <span className="flex-1" />
         {onRemove !== undefined && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onRemove}
             aria-label={t('system.notificationScheduleField.removeTime', 'Remove time')}
             className="text-foreground-subtle hover:text-danger"
           >
             <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
       </div>
       <WeekdayToggles days={time.days} onToggle={toggleDay} />
@@ -348,14 +352,15 @@ function WeekdayToggles({
       {WEEKDAY_CHOICES.map((d) => {
         const on = days.includes(d.value)
         return (
-          <button
+          <Button
+            variant="unstyled"
             key={d.value}
             type="button"
             onClick={() => onToggle(d.value)}
             className={`rounded px-1.5 py-0.5 text-[10px] ${on ? 'bg-primary text-primary-foreground' : 'bg-surface-hover text-foreground-subtle'}`}
           >
             {d.label}
-          </button>
+          </Button>
         )
       })}
     </div>

@@ -29,6 +29,7 @@ import {
   useBackupTrigger,
   useBackupUpsertSchedule,
   useConfirm,
+  Checkbox,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -364,8 +365,7 @@ function EntryEnabledToggle({ row }: { readonly row: EntryRow }) {
 
   return (
     <label className="inline-flex cursor-pointer items-center">
-      <input
-        type="checkbox"
+      <Checkbox
         className="accent-primary"
         checked={row.enabled}
         disabled={upsert.isPending}

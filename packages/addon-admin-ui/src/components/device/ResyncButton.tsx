@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { useDeviceManagerAdoptionResync } from '@camstack/ui-library'
+import { useDeviceManagerAdoptionResync, Button } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 interface ResyncButtonProps {
@@ -49,7 +49,8 @@ export function ResyncButton({ deviceId }: ResyncButtonProps) {
             )}
           </p>
         </div>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={resync.isPending}
           onClick={() => {
@@ -62,7 +63,7 @@ export function ResyncButton({ deviceId }: ResyncButtonProps) {
           {resync.isPending
             ? t('device.resyncButton.reSyncing', 'Re-syncing…')
             : t('device.resyncButton.reSync', 'Re-sync')}
-        </button>
+        </Button>
       </div>
       {result !== null && <p className="mt-2 text-[11px] text-foreground-subtle">{result}</p>}
     </div>

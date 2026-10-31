@@ -34,25 +34,37 @@ function row(nodeId: string, isHub: boolean, isOnline = true) {
   }
 }
 
-vi.mock('@camstack/ui-library', () => ({
-  useAddonsGetAddonAutoUpdate: () => ({ data: undefined }),
-  useAddonsSetAddonAutoUpdate: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsInstallPackage: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsRestartAddon: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsRetryLoad: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsUninstallPackage: () => ({ mutateAsync, isPending: false }),
-  useAddonsGetVersions: () => ({ data: [], isLoading: false }),
-  useAddonsListInstallations: () => ({
-    data: installations,
-    refetch: async () => ({ data: installations }),
-  }),
-  useConfirm: () => confirmFn,
-  useAlert: () => alertFn,
-  useSystem: () => ({ trpcClient: {} }),
-  LogStream: () => null,
-  EventStream: () => null,
-  DeviceExportPanel: () => null,
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useAddonsGetAddonAutoUpdate: () => ({ data: undefined }),
+    useAddonsSetAddonAutoUpdate: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsInstallPackage: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsRestartAddon: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsRetryLoad: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsUninstallPackage: () => ({ mutateAsync, isPending: false }),
+    useAddonsGetVersions: () => ({ data: [], isLoading: false }),
+    useAddonsListInstallations: () => ({
+      data: installations,
+      refetch: async () => ({ data: installations }),
+    }),
+    useConfirm: () => confirmFn,
+    useAlert: () => alertFn,
+    useSystem: () => ({ trpcClient: {} }),
+    LogStream: () => null,
+    EventStream: () => null,
+    DeviceExportPanel: () => null,
+  }
+})
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =

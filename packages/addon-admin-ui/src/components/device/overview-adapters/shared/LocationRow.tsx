@@ -5,7 +5,7 @@
  */
 import { useMemo } from 'react'
 import { MapPin } from 'lucide-react'
-import { useDeviceManagerListLocations } from '@camstack/ui-library'
+import { useDeviceManagerListLocations, Input } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { InfoRow } from './overview-primitives'
 
@@ -40,7 +40,7 @@ export function LocationRow({
       layout={layout}
       value={
         <div className="relative">
-          <input
+          <Input
             type="text"
             value={bound.value}
             aria-label={label}

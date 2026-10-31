@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { FileUp } from 'lucide-react'
-import { Button } from '@camstack/ui-library'
+import { Button, FileInput, Textarea } from '@camstack/ui-library'
 import { checkPem, PEM_ACCEPT, type PemKind, readPemFile } from './pem-file'
 import { useTranslation } from 'react-i18next'
 
@@ -56,9 +56,8 @@ export function PemField({ kind, label, value, onChange, rows = 6 }: PemFieldPro
               {fileName}
             </span>
           )}
-          <input
+          <FileInput
             ref={inputRef}
-            type="file"
             accept={PEM_ACCEPT[kind]}
             onChange={(event) => void handleFile(event)}
             className="hidden"
@@ -75,7 +74,7 @@ export function PemField({ kind, label, value, onChange, rows = 6 }: PemFieldPro
           </Button>
         </div>
       </div>
-      <textarea
+      <Textarea
         id={fieldId}
         value={value}
         onChange={(event) => {

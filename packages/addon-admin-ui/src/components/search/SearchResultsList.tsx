@@ -9,6 +9,7 @@ import { Camera, Compass, Plug, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SearchDomain, SearchItem, SearchResultGroup } from '../../lib/global-search'
+import { Button } from '@camstack/ui-library'
 
 const DOMAIN_META: Record<SearchDomain, { readonly labelKey: string; readonly icon: LucideIcon }> =
   {
@@ -80,7 +81,8 @@ export function SearchResultsList({
                 const ItemIcon = item.icon ?? meta.icon
                 const active = item.key === activeKey
                 return (
-                  <button
+                  <Button
+                    variant="unstyled"
                     key={item.key}
                     type="button"
                     role="option"
@@ -105,7 +107,7 @@ export function SearchResultsList({
                         </span>
                       )}
                     </span>
-                  </button>
+                  </Button>
                 )
               })}
             </div>

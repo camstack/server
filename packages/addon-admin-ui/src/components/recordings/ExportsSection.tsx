@@ -26,6 +26,7 @@ import {
   useRecordingExportDeleteExport,
   useRecordingExportListExports,
   useSystem,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Download, Film, Loader2, Trash2, XCircle } from 'lucide-react'
@@ -282,7 +283,8 @@ export function ExportsSection() {
           return (
             <div className="flex items-center justify-end gap-1">
               {canDownload && (
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={() => {
                     void handleDownload(r)
                   }}
@@ -296,10 +298,11 @@ export function ExportsSection() {
                     <Download className="h-3 w-3" />
                   )}
                   {t('recordings.exportsSection.download', 'Download')}
-                </button>
+                </Button>
               )}
               {canCancel && (
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={() => {
                     void handleCancel(r)
                   }}
@@ -309,10 +312,11 @@ export function ExportsSection() {
                 >
                   <XCircle className="h-3 w-3" />
                   {t('common.cancel', 'Cancel')}
-                </button>
+                </Button>
               )}
               {canDelete && (
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={() => {
                     void handleDelete(r)
                   }}
@@ -321,7 +325,7 @@ export function ExportsSection() {
                   title={t('recordings.exportsSection.deleteExport', 'Delete export')}
                 >
                   <Trash2 className="h-3 w-3" />
-                </button>
+                </Button>
               )}
             </div>
           )
@@ -353,13 +357,14 @@ export function ExportsSection() {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => setCreating(true)}
           className="inline-flex items-center gap-1.5 rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
         >
           <Film className="h-3.5 w-3.5" />
           {t('recordings.exportsSection.newExport', 'New export')}
-        </button>
+        </Button>
       </div>
       {rows.length === 0 ? (
         <EmptyState

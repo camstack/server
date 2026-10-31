@@ -23,6 +23,7 @@ import {
   usePipelineOrchestratorGetCapabilityBindings,
   usePipelineOrchestratorSetCapabilityBinding,
   type DataColumn,
+  Select,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
@@ -115,13 +116,13 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
         // registers the same cap.
         const isSingleProvider = r.providers.length === 1
         return (
-          <select
+          <Select
             value={resolved}
             onChange={(e) =>
               setBindingMutation.mutate({ nodeId, capName: r.capName, addonId: e.target.value })
             }
             disabled={isSingleProvider || setBindingMutation.isPending || isBindingsLoading}
-            className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
+            className="w-full"
             title={
               isSingleProvider
                 ? t(
@@ -136,7 +137,7 @@ export function NodeDetailCapabilitiesTab({ nodeId, addons }: NodeDetailCapabili
                 {p}
               </option>
             ))}
-          </select>
+          </Select>
         )
       },
     },

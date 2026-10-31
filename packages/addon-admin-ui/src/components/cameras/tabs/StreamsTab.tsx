@@ -12,6 +12,8 @@ import {
   useStreamBrokerUnassignProfile,
   useSystem,
   useSystemNetworkAddresses,
+  Button,
+  Select,
 } from '@camstack/ui-library'
 
 import { useConfirm } from '@camstack/ui-library'
@@ -191,7 +193,8 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
           <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider">
             {t('cameras.streamsTab.streamProfiles', 'Stream Profiles')}
           </h2>
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => {
               // Sort by pixel count descending, then dispatch three
               // assignProfile mutations in sequence. The broker runs
@@ -227,7 +230,7 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
           >
             <RotateCcw className="h-3.5 w-3.5" />
             {t('cameras.streamsTab.autoAssign', 'Auto-assign')}
-          </button>
+          </Button>
         </div>
 
         {streamList.length === 0 ? (
@@ -245,8 +248,8 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
                     {label}
                   </span>
                 </div>
-                <select
-                  className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                <Select
+                  wrapperClassName="flex-1 min-w-0 w-auto"
                   value={currentProfiles[key] ?? ''}
                   onChange={(e) => handleProfileChange(key, e.target.value || undefined)}
                   disabled={assignProfileMutation.isPending || unassignProfileMutation.isPending}
@@ -260,7 +263,7 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
                       {s.resolution?.width ? ` (${s.resolution.width}×${s.resolution.height})` : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             ))}
           </div>
@@ -273,7 +276,8 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
           <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider">
             {t('cameras.streamsTab.availableStreams', 'Available Streams')}
           </h2>
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => probeMutation.mutate({ deviceId })}
             disabled={probeMutation.isPending || isFetching || streamList.length === 0}
             className="flex items-center gap-1.5 text-xs font-medium text-info hover:text-info/80 disabled:opacity-40 transition-colors"
@@ -282,7 +286,7 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
               className={`h-3.5 w-3.5 ${probeMutation.isPending || isFetching ? 'animate-spin' : ''}`}
             />
             {t('cameras.streamsTab.reProbe', 'Re-probe')}
-          </button>
+          </Button>
         </div>
 
         {streamList.length === 0 ? (
@@ -300,7 +304,8 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
                 const isActive = (selectedStream?.id ?? streamList[0]?.id) === stream.id
                 const assignedProfiles = streamProfiles.get(stream.id) ?? []
                 return (
-                  <button
+                  <Button
+                    variant="unstyled"
                     key={stream.id}
                     onClick={() => setActiveStreamTab(stream.id)}
                     className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
@@ -320,7 +325,7 @@ export function StreamsTab({ deviceId }: StreamsTabProps) {
                         {p}
                       </span>
                     ))}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
@@ -413,8 +418,9 @@ function RtspRestreamSection({
             <span className="text-[10px] text-foreground-subtle">
               {t('cameras.streamsTab.host', 'Host:')}
             </span>
-            <select
-              className="text-[11px] rounded border border-border bg-background px-2 py-0.5 text-foreground font-mono"
+            <Select
+              wrapperClassName="inline-block w-auto"
+              className="font-mono"
               value={selectedHost}
               onChange={(e) => setSelectedHost(e.target.value)}
             >
@@ -424,7 +430,7 @@ function RtspRestreamSection({
                   {a.address} ({a.name})
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
       </div>
@@ -460,7 +466,8 @@ function RtspRestreamSection({
                   </span>
                 </div>
                 {/* Enable/disable toggle */}
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={() =>
                     enabledMutation.mutate({ brokerId: entry.brokerId, enabled: !isEnabled })
                   }
@@ -485,9 +492,10 @@ function RtspRestreamSection({
                       isEnabled ? 'translate-x-3.5 ml-[-0.125rem]' : 'translate-x-0.5'
                     }`}
                   />
-                </button>
+                </Button>
                 <div className="flex-1" />
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={async () => {
                     const ok = await confirm({
                       title: t('cameras.streamsTab.regenerateRtspToken', 'Regenerate RTSP Token'),
@@ -513,7 +521,7 @@ function RtspRestreamSection({
                   <RefreshCcw
                     className={`h-3 w-3 ${regenerateMutation.isPending ? 'animate-spin' : ''}`}
                   />
-                </button>
+                </Button>
               </div>
               {/* URLs */}
               {isEnabled && (
@@ -564,7 +572,8 @@ function CopyableUrl({
       <span className="text-[10px] font-bold text-foreground-subtle uppercase w-10 flex-shrink-0">
         {label}
       </span>
-      <button
+      <Button
+        variant="unstyled"
         onClick={() => onCopy(url)}
         className="flex-1 min-w-0 flex items-center gap-2 text-[11px] font-mono text-foreground-subtle hover:text-foreground truncate transition-colors"
         title={t('cameras.streamsTab.clickToCopy', 'Click to copy: {{url}}', { url })}
@@ -575,7 +584,7 @@ function CopyableUrl({
         ) : (
           <Copy className="h-3 w-3 text-foreground-subtle/30 flex-shrink-0" />
         )}
-      </button>
+      </Button>
       {description && (
         <span className="text-[9px] text-foreground-subtle/60 flex-shrink-0">{description}</span>
       )}
@@ -674,7 +683,8 @@ function ProtocolRow({
   const isCopied = copiedUrl === url
 
   return (
-    <button
+    <Button
+      variant="unstyled"
       onClick={() => onCopy(url)}
       className="w-full flex items-center gap-2 text-xs font-mono bg-surface-hover hover:bg-border/50 rounded px-3 py-2 text-left transition-colors group"
       title={t('cameras.streamsTab.clickToCopy', 'Click to copy: {{url}}', { url })}
@@ -686,6 +696,6 @@ function ProtocolRow({
       ) : (
         <Copy className="h-3.5 w-3.5 text-foreground-subtle/30 group-hover:text-foreground-subtle flex-shrink-0 transition-colors" />
       )}
-    </button>
+    </Button>
   )
 }

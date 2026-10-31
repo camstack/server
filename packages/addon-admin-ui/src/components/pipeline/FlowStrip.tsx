@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next'
  */
 import type { ReactNode } from 'react'
 import { Video, Activity, Brain, LineChart, Bell, AudioLines, Music } from 'lucide-react'
+import { Button } from '@camstack/ui-library'
 
 export interface FlowStep {
   readonly capName: string
@@ -109,7 +110,8 @@ function FlowStepBox({ step, onClick }: FlowStepBoxProps) {
   const { t } = useTranslation()
   const bound = step.addonId !== null
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={() => onClick?.(step.capName)}
       aria-label={t('pipeline.flowStrip.stepAria', {
@@ -147,7 +149,7 @@ function FlowStepBox({ step, onClick }: FlowStepBoxProps) {
           )}
         </span>
       </span>
-    </button>
+    </Button>
   )
 }
 

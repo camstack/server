@@ -11,7 +11,14 @@ import {
   type SchedulerOutcome,
   type TraceNodeOutcome,
 } from '@camstack/types'
-import { Badge, type BadgeVariant, EmptyState, SectionCard, Skeleton } from '@camstack/ui-library'
+import {
+  Badge,
+  type BadgeVariant,
+  EmptyState,
+  SectionCard,
+  Skeleton,
+  Button,
+} from '@camstack/ui-library'
 import { History } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -139,7 +146,8 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
               const selected = run.runId === selectedId
               return (
                 <li key={run.runId}>
-                  <button
+                  <Button
+                    variant="unstyled"
                     type="button"
                     aria-pressed={selected}
                     onClick={() => onSelect(selected ? null : run.runId)}
@@ -167,7 +175,7 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
                       </span>
                     </span>
                     <span className="truncate text-sm text-foreground">{run.trigger.reason}</span>
-                  </button>
+                  </Button>
                   {selected && <RunDetails trace={run} />}
                 </li>
               )

@@ -27,7 +27,7 @@
  */
 import { Bell, ScrollText, Settings2, type LucideIcon } from 'lucide-react'
 import { useState, type ReactElement, type ReactNode } from 'react'
-import { ErrorBox, EventStream, LogStream } from '@camstack/ui-library'
+import { ErrorBox, EventStream, LogStream, Button } from '@camstack/ui-library'
 
 import { ACTIVITY_SECTION, SETTINGS_SECTION } from '../../lib/integration-hub-url'
 import { NodeAddonsSettingsPanel } from '../settings/NodeAddonsSettingsPanel'
@@ -198,7 +198,8 @@ function IntegrationActivity({ addonId }: { readonly addonId: string }): ReactEl
           className="flex items-center gap-1"
         >
           {ACTIVITY_KINDS.map(({ kind: k, labelKey, icon: Icon }) => (
-            <button
+            <Button
+              variant="unstyled"
               key={k}
               type="button"
               aria-pressed={kind === k}
@@ -211,7 +212,7 @@ function IntegrationActivity({ addonId }: { readonly addonId: string }): ReactEl
             >
               <Icon className="h-3 w-3" aria-hidden />
               {t(labelKey)}
-            </button>
+            </Button>
           ))}
         </div>
       }

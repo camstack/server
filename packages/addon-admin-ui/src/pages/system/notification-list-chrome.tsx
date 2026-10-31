@@ -9,7 +9,14 @@ import { useTranslation } from 'react-i18next'
  */
 
 import type { DataColumn } from '@camstack/ui-library'
-import { Badge, Card, DataTable, TABLE_SCROLL_MAX_H, useConfirm } from '@camstack/ui-library'
+import {
+  Badge,
+  Card,
+  DataTable,
+  TABLE_SCROLL_MAX_H,
+  useConfirm,
+  Button,
+} from '@camstack/ui-library'
 import { Loader2, Trash2 } from 'lucide-react'
 import { type MouseEvent, type ReactNode } from 'react'
 
@@ -107,14 +114,15 @@ export function NcListNameCell({ name, enabled, onOpen, badges, openTestId }: Nc
     <span className="flex flex-wrap items-center gap-2">
       {onOpen !== undefined ? (
         <NcListRowControls>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onOpen}
             className="truncate rounded text-left text-sm font-medium text-foreground hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             {...(openTestId !== undefined ? { 'data-testid': openTestId } : {})}
           >
             {name}
-          </button>
+          </Button>
         </NcListRowControls>
       ) : (
         <span className="truncate text-sm font-medium text-foreground">{name}</span>
@@ -166,7 +174,8 @@ export function NcListDeleteButton({
   }
 
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       title={confirmLabel}
       aria-label={ariaLabel}
@@ -176,6 +185,6 @@ export function NcListDeleteButton({
       {...(testId !== undefined ? { 'data-testid': testId } : {})}
     >
       <Trash2 className="h-3.5 w-3.5 text-danger" />
-    </button>
+    </Button>
   )
 }

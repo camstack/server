@@ -9,7 +9,7 @@
  * ANSWERED with nothing."
  */
 import type { NcTemplateVarContext, NcTemplateVarDescriptor } from '@camstack/types'
-import { Input } from '@camstack/ui-library'
+import { Input, Button, Textarea } from '@camstack/ui-library'
 import { AlertTriangle } from 'lucide-react'
 import { type ChangeEvent, useRef } from 'react'
 import {
@@ -89,7 +89,7 @@ export function TemplateField({
     <div className="space-y-1">
       <label className={LABEL_CLASS}>{label}</label>
       {multiline ? (
-        <textarea
+        <Textarea
           ref={areaRef}
           value={value}
           rows={2}
@@ -126,7 +126,8 @@ export function TemplateField({
                 {GROUP_LABELS[entry.group]}
               </span>
               {entry.vars.map((descriptor) => (
-                <button
+                <Button
+                  variant="unstyled"
                   key={descriptor.name}
                   type="button"
                   disabled={disabled}
@@ -142,7 +143,7 @@ export function TemplateField({
                         name: descriptor.name,
                       })
                     : descriptor.name}
-                </button>
+                </Button>
               ))}
             </div>
           ))}

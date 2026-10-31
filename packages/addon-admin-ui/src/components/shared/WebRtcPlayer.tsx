@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Volume2, VolumeX, RefreshCw, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 export interface WebRtcPlayerProps {
   serverUrl: string
@@ -190,20 +191,22 @@ export function WebRtcPlayer({
               ? errorMessage || t('shared.webRtcPlayer.connectionFailed', 'Connection failed')
               : t('shared.webRtcPlayer.streamDisconnected', 'Stream disconnected')}
           </span>
-          <button
+          <Button
+            variant="unstyled"
             onClick={handleManualReconnect}
             className="mt-1 inline-flex items-center gap-1.5 rounded px-3 py-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <RefreshCw className="h-3 w-3" />
             {t('shared.webRtcPlayer.reconnect', 'Reconnect')}
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Controls: mute button (only visible while playing) */}
       {state === 'playing' && (
         <div className="absolute bottom-2 right-2">
-          <button
+          <Button
+            variant="unstyled"
             onClick={toggleMute}
             title={
               isMuted
@@ -213,7 +216,7 @@ export function WebRtcPlayer({
             className="rounded-full p-1.5 bg-black/50 text-white hover:bg-black/70 transition-colors"
           >
             {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-          </button>
+          </Button>
         </div>
       )}
     </div>

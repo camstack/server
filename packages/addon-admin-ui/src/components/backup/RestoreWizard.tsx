@@ -36,6 +36,9 @@ import {
   useBackupListArchives,
   useBackupListDestinations,
   useBackupRestore,
+  Checkbox,
+  Input,
+  Radio,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Loader2, Lock, RotateCw } from 'lucide-react'
@@ -337,8 +340,7 @@ function Step1({
                   className={`flex items-center justify-between px-3 py-2 text-xs cursor-pointer ${checked ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
                 >
                   <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
+                    <Radio
                       name="archive"
                       checked={checked}
                       onChange={() => onPickArchive(a.id)}
@@ -445,8 +447,7 @@ function Step2({ locations, picked, onToggle, databases, snapshotsOnly }: Step2P
               key={loc}
               className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-primary/5 cursor-pointer"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={picked.has(loc)}
                 onChange={() => onToggle(loc)}
                 className="accent-primary"
@@ -537,7 +538,7 @@ function BackupKeyField({
       >
         {t('backup.restoreWizard.backupKey', 'Backup key')}
       </label>
-      <input
+      <Input
         id="restore-backup-key"
         type="password"
         autoComplete="off"

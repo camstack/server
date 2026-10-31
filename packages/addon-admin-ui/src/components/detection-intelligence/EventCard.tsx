@@ -33,6 +33,7 @@ import { rowDisplayLabel, trackSelectionKey } from './key-events-merge.js'
 import { type MediaProvenance, provenanceBadge } from './media-provenance.js'
 import type { TrackSubject } from './track-subject.js'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 /** windowMs → compact "3.2s" / "1m 05s" duration label; '' when unknown. */
 function formatDuration(windowMs: number | undefined): string {
@@ -107,7 +108,8 @@ export function EventCard<T extends TrackSubject>({
             className="h-full w-full cursor-zoom-in object-cover"
           />
         ) : (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={openDetail}
             className="flex h-full w-full flex-col items-center justify-center gap-1 bg-surface-hover text-foreground-subtle"
@@ -121,13 +123,14 @@ export function EventCard<T extends TrackSubject>({
             }
           >
             <ImageOff className="h-6 w-6 opacity-60" />
-          </button>
+          </Button>
         )}
 
         {/* Select checkbox (feed mode) — always visible + interactive;
             stopPropagation keeps a tick from also opening the detail. */}
         {onToggleSelect && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
@@ -145,7 +148,7 @@ export function EventCard<T extends TrackSubject>({
             ) : (
               <Square className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         )}
 
         {/* Semantic-match score badge (search mode) — sits where the checkbox
@@ -248,7 +251,8 @@ export function EventCard<T extends TrackSubject>({
         )}
       </div>
 
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={openDetail}
         className="min-w-0 px-2 py-1.5 text-left space-y-0.5"
@@ -270,7 +274,7 @@ export function EventCard<T extends TrackSubject>({
             <span className="text-[10px] text-foreground-subtle shrink-0">{duration}</span>
           )}
         </div>
-      </button>
+      </Button>
 
       {/* Caller-supplied tail. OUTSIDE the button: the Debug tab's findings are
           badges with their own `title`, and a title inside a button is

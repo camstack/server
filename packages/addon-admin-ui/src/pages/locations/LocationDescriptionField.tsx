@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { LOCATION_DESCRIPTION_MAX } from '@camstack/types'
-import { Label, TEXT_HINT } from '@camstack/ui-library'
+import { Label, TEXT_HINT, Textarea } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -52,7 +52,7 @@ export function LocationDescriptionField({
       <Label htmlFor={`location-description-${name}`} className="block">
         {t('locations.locationDescriptionField.whatIsThere', 'What is there')}
       </Label>
-      <textarea
+      <Textarea
         id={`location-description-${name}`}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

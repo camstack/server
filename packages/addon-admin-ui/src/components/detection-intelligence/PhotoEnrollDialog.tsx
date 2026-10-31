@@ -41,6 +41,8 @@ import {
   useFaceGalleryCreateIdentity,
   useFaceGalleryListIdentities,
   useSystem,
+  FileInput,
+  Input,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ImagePlus, Loader2, RotateCw, UserRound } from 'lucide-react'
@@ -302,7 +304,7 @@ function PhotoSection({
             <span className="w-28 shrink-0 truncate text-xs text-foreground-subtle">
               {t('detectionIntelligence.photoEnrollDialog.faceN', { n: f.faceIndex + 1 })}
             </span>
-            <input
+            <Input
               className="h-7 flex-1 rounded-md border border-border bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               placeholder={t(
                 'detectionIntelligence.photoEnrollDialog.newPersonNameTypeThe',
@@ -568,9 +570,8 @@ export function PhotoEnrollDialog({ open, onOpenChange }: PhotoEnrollDialogProps
         </div>
 
         <div className="flex items-center gap-2">
-          <input
+          <FileInput
             ref={fileRef}
-            type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
             className="hidden"

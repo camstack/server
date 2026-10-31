@@ -27,11 +27,23 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useConfirm: () => confirm,
-  usePipelineOrchestratorReconcileFromDisk: () => ({ mutateAsync: start, isPending: false }),
-  usePipelineOrchestratorGetReconcileFromDiskStatus: () => ({ data: job, refetch }),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useConfirm: () => confirm,
+    usePipelineOrchestratorReconcileFromDisk: () => ({ mutateAsync: start, isPending: false }),
+    usePipelineOrchestratorGetReconcileFromDiskStatus: () => ({ data: job, refetch }),
+  }
+})
 
 import { DiskReconcileSection } from '../DiskReconcileSection'
 

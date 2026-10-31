@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { RotateCw, ScrollText, ChevronDown, ChevronRight } from 'lucide-react'
-import { FloatingLogStream, useNodesRestartAddon } from '@camstack/ui-library'
+import { FloatingLogStream, useNodesRestartAddon, Button } from '@camstack/ui-library'
 import { formatBytes } from '../../../lib/format-size'
 import type { RunnerBlock as RunnerBlockData } from './build-cluster-graph'
 import { useTranslation } from 'react-i18next'
@@ -48,7 +48,8 @@ export function RunnerBlock({ runner, nodeId, expanded, pid, onToggleCaps }: Run
         <span className="font-medium truncate flex-1 min-w-0">{runner.name}</span>
         <span className="shrink-0 text-muted-foreground">{runner.cpu.toFixed(1)}%</span>
         <span className="shrink-0 text-muted-foreground">{formatBytes(runner.mem)}</span>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           aria-label={`caps: ${runner.caps.length}`}
           onClick={() => onToggleCaps(pid)}
@@ -60,23 +61,25 @@ export function RunnerBlock({ runner, nodeId, expanded, pid, onToggleCaps }: Run
             <ChevronRight className="h-2.5 w-2.5" aria-hidden />
           )}
           <span>caps: {runner.caps.length}</span>
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           aria-label={t('graph.runnerBlock.restartAddon', 'Restart addon')}
           onClick={handleRestart}
           className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
         >
           <RotateCw className="h-3 w-3" />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           aria-label={t('graph.runnerBlock.logs', 'Logs')}
           onClick={handleLogsClick}
           className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
         >
           <ScrollText className="h-3 w-3" />
-        </button>
+        </Button>
       </div>
 
       {/* Caps list (inline progressive disclosure) */}

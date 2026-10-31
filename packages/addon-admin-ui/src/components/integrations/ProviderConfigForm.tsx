@@ -1,5 +1,5 @@
 import { collectKeychainStoredKeys, omitTransientConfig } from '@camstack/types'
-import { Button, useAddonsCustom, useIntegrationsTestConnection } from '@camstack/ui-library'
+import { Button, useAddonsCustom, useIntegrationsTestConnection, Input } from '@camstack/ui-library'
 import { Radar } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -145,7 +145,7 @@ export function ProviderConfigForm({
           >
             {t('integrations.integrationName')}
           </label>
-          <input
+          <Input
             id="integration-name"
             type="text"
             value={name}
@@ -213,12 +213,13 @@ export function ProviderConfigForm({
       )}
 
       <div className="flex items-center justify-between pt-2">
-        <button
+        <Button
+          variant="unstyled"
           onClick={onBack}
           className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
         >
           {t('integrations.back')}
-        </button>
+        </Button>
         <div className="flex items-center gap-2">
           {onScan && (
             <Button variant="outline" size="sm" onClick={onScan} data-testid="integration-scan">
@@ -226,7 +227,8 @@ export function ProviderConfigForm({
               {t('integrations.scanFromForm', 'Scan the network')}
             </Button>
           )}
-          <button
+          <Button
+            variant="unstyled"
             onClick={() =>
               testMutation.mutate({
                 addonId,
@@ -244,7 +246,7 @@ export function ProviderConfigForm({
             className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {testMutation.isPending ? t('integrations.testing') : t('integrations.testConnection')}
-          </button>
+          </Button>
           {/* Next requires a validated connection test when the addon declares
               one. The server still re-runs the test inside `integrations.create`. */}
           <div className="flex flex-col items-end gap-1">
@@ -253,7 +255,8 @@ export function ProviderConfigForm({
                 {t('integrations.nameRequiredSubmit', 'Enter a name before continuing.')}
               </p>
             )}
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => {
                 if (nameMissing) return
                 onSave({
@@ -266,7 +269,7 @@ export function ProviderConfigForm({
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50"
             >
               {submitLabel ?? t('integrations.forward')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Network, RefreshCw, Loader2, Wifi, Moon, WifiOff, HelpCircle } from 'lu
 import {
   useDeviceDiscoveryListDiscovered,
   useDeviceDiscoveryRefreshDiscovery,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import type { DiscoveredChildDevice } from '@camstack/types'
@@ -67,7 +68,8 @@ export function HubHero({ deviceId }: HeroProps) {
           value={summary.available}
           accent={summary.available > 0 ? 'primary' : undefined}
         />
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => {
             void refreshMutation.mutateAsync({ deviceId }).catch(() => {
@@ -83,7 +85,7 @@ export function HubHero({ deviceId }: HeroProps) {
             <RefreshCw className="h-3.5 w-3.5" />
           )}
           <span className="hidden sm:inline">{t('hero.hubHero.discover', 'Discover')}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Per-status legend — wraps to a second row when the parent is

@@ -14,12 +14,24 @@ const invalidateQueries = vi.fn()
 let renameOptions: RenameOptions | undefined
 const mutateAsync = vi.fn()
 
-vi.mock('@camstack/ui-library', () => ({
-  useNodesRenameNode: (options: RenameOptions) => {
-    renameOptions = options
-    return { mutateAsync, isPending: false }
-  },
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useNodesRenameNode: (options: RenameOptions) => {
+      renameOptions = options
+      return { mutateAsync, isPending: false }
+    },
+  }
+})
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =

@@ -15,7 +15,7 @@ import type {
   StationaryPresentLeaf,
 } from '@camstack/types'
 import { DeviceType } from '@camstack/types'
-import { SegmentedChoice } from '@camstack/ui-library'
+import { SegmentedChoice, Slider } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { BuildDevicePicker } from '../flow/BuildDevicePicker'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
@@ -74,8 +74,7 @@ export function DetectionFields({ leaf: trigger, devices, onChange }: DetectionF
                 value: (percent / PERCENT).toFixed(2),
               })}
         </FieldLabel>
-        <input
-          type="range"
+        <Slider
           min={0}
           max={PERCENT}
           value={percent}

@@ -243,7 +243,8 @@ function VersionPill({
       <div className="relative inline-flex items-center gap-1 shrink-0">
         {/* Update CTA — immediately LEFT of the version selector. */}
         {onUpdate && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
@@ -255,11 +256,12 @@ function VersionPill({
           >
             <Download className="h-3 w-3" />
             {t('addons.addonCard.update', 'Update')}
-          </button>
+          </Button>
         )}
         {/* Version selector — glows while an update is available. Shows the
             current installed version and the selected target. */}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -278,7 +280,7 @@ function VersionPill({
           <span className="font-normal opacity-70">→</span>
           {target}
           <ChevronDown className="h-3 w-3" />
-        </button>
+        </Button>
         {children}
       </div>
     )
@@ -291,7 +293,8 @@ function VersionPill({
 
   return (
     <div className="relative inline-flex items-center gap-1 shrink-0">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={(e) => {
           e.stopPropagation()
@@ -310,7 +313,7 @@ function VersionPill({
       >
         {version}
         <ChevronDown className="h-3 w-3 opacity-50" />
-      </button>
+      </Button>
       {children}
     </div>
   )
@@ -355,7 +358,8 @@ function AutoUpdateSelector({ addonId }: { addonId: string }) {
   return (
     <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-medium">
       {(['inherit', 'off', 'latest', 'beta'] as const).map((ch) => (
-        <button
+        <Button
+          variant="unstyled"
           key={ch}
           type="button"
           onClick={(e) => {
@@ -376,7 +380,7 @@ function AutoUpdateSelector({ addonId }: { addonId: string }) {
           } ${ch !== 'inherit' ? 'border-l border-border' : ''}`}
         >
           {ch}
-        </button>
+        </Button>
       ))}
     </div>
   )
@@ -546,7 +550,8 @@ export function AddonCard({
               </div>
             )}
           </div>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             disabled={retryLoadMutation.isPending || health.retrying}
             onClick={(e) => {
@@ -563,7 +568,7 @@ export function AddonCard({
               className={`h-3 w-3 ${retryLoadMutation.isPending || health.retrying ? 'animate-spin' : ''}`}
             />
             {t('addons.addonCard.retryNow', 'Retry now')}
-          </button>
+          </Button>
         </div>
       )}
       {/* Runner problem — the addon's runner is failed / refused / missing
@@ -728,7 +733,8 @@ export function AddonCard({
       {!isBundle && (
         <div className="flex items-center gap-1 px-3 py-1 border-t border-border/50 bg-surface-hover/20">
           {/* Restart — no confirm */}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
@@ -739,10 +745,11 @@ export function AddonCard({
           >
             <RefreshCw className={`h-3 w-3 ${restartMutation.isPending ? 'animate-spin' : ''}`} />
             {t('addons.addonCard.restart', 'Restart')}
-          </button>
+          </Button>
 
           {/* Logs toggle */}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
@@ -756,7 +763,7 @@ export function AddonCard({
           >
             <ScrollText className="h-3 w-3" />
             {t('addons.addonCard.logs', 'Logs')}
-          </button>
+          </Button>
 
           {/* Update + Rollback moved out of the toolbar:
               - Update CTA now sits next to the version chip in the
@@ -775,7 +782,8 @@ export function AddonCard({
               addons; the dialog's NodeAddonsSettingsPanel renders a
               placeholder when the addon exposes no global settings. */}
           {!isBundle && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
@@ -789,7 +797,7 @@ export function AddonCard({
             >
               <Settings className="h-3 w-3" />
               {t('addons.addonCard.settings', 'Settings')}
-            </button>
+            </Button>
           )}
 
           {/* Spacer */}
@@ -852,7 +860,8 @@ export function AddonCard({
         <div className="border-t border-border">
           <div className="flex items-center px-3 py-0.5 bg-surface-hover/20 border-b border-border/50">
             <div className="flex rounded border border-border overflow-hidden text-[9px]">
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setConsoleTab('logs')}
                 className={`px-2 py-0.5 transition-colors ${
@@ -862,8 +871,9 @@ export function AddonCard({
                 }`}
               >
                 {t('addons.addonCard.logs', 'Logs')}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setConsoleTab('events')}
                 className={`px-2 py-0.5 border-l border-border transition-colors ${
@@ -873,10 +883,11 @@ export function AddonCard({
                 }`}
               >
                 {t('addons.addonCard.events', 'Events')}
-              </button>
+              </Button>
             </div>
             <div className="flex-1" />
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
@@ -885,7 +896,7 @@ export function AddonCard({
               className="text-foreground-subtle hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
 
           {consoleTab === 'logs' && (
@@ -900,7 +911,8 @@ export function AddonCard({
       {/* Bundle: expand tab + child addons */}
       {isBundle && (
         <>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => setExpanded((e) => !e)}
             className="w-full flex items-center justify-center border-t border-border py-1 hover:bg-surface-hover/50 transition-colors"
@@ -910,7 +922,7 @@ export function AddonCard({
             ) : (
               <ChevronDown className="h-3.5 w-3.5 text-foreground-subtle" />
             )}
-          </button>
+          </Button>
 
           {expanded && (
             <div className="border-t border-border px-2.5 py-1.5 space-y-1.5">

@@ -6,6 +6,7 @@ import {
   useIsMobile,
   useLiveEvent,
   useThemeMode,
+  Button,
 } from '@camstack/ui-library'
 import {
   DisplayPaletteGate,
@@ -305,7 +306,8 @@ export function AppLayout() {
     const active = isActive(page.path)
     const Icon = resolveAddonPageIcon(page.icon)
     return (
-      <button
+      <Button
+        variant="unstyled"
         key={`${page.addonId}::${page.id}`}
         onClick={() => {
           navigate(page.path)
@@ -316,7 +318,7 @@ export function AppLayout() {
       >
         <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-primary' : ''}`} />
         {!compact && page.label}
-      </button>
+      </Button>
     )
   }
 
@@ -337,7 +339,8 @@ export function AppLayout() {
     const isAddons = item.path === '/system/addons'
     const testId = `nav-${item.path.replace(/^\//, '').replace(/\//g, '-')}`
     return (
-      <button
+      <Button
+        variant="unstyled"
         key={item.path}
         data-testid={testId}
         onClick={() => {
@@ -368,7 +371,7 @@ export function AppLayout() {
         {compact && isAddons && updateCount > 0 && (
           <span className="absolute mt-[-14px] ml-3 h-2 w-2 rounded-full bg-primary" />
         )}
-      </button>
+      </Button>
     )
   }
 
@@ -395,7 +398,8 @@ export function AppLayout() {
           />
         )}
         {!isMobile && (
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => setSidebarCollapsed((c) => !c)}
             className={`p-1.5 rounded-md hover:bg-surface-hover text-foreground-subtle transition-colors flex-shrink-0 ${compact ? '' : 'mr-2'}`}
             aria-label={
@@ -414,7 +418,7 @@ export function AppLayout() {
             ) : (
               <ChevronLeft className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -484,7 +488,8 @@ export function AppLayout() {
 
       {/* Bottom controls */}
       <div className={`border-t border-border ${compact ? 'p-1.5' : 'p-2'} space-y-0.5`}>
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => theme?.toggleMode()}
           className={navButtonCls(false)}
           title={compact ? THEME_LABELS[themeMode] : undefined}
@@ -494,7 +499,7 @@ export function AppLayout() {
             return <ThemeIcon className="h-3.5 w-3.5 shrink-0" />
           })()}
           {!compact && <span>{THEME_LABELS[themeMode]}</span>}
-        </button>
+        </Button>
 
         {/* Alerts */}
         <AlertBell variant="sidebar" compact={compact} />
@@ -504,7 +509,8 @@ export function AppLayout() {
             asking an admin. Sits right above logout so the profile-y
             section reads top-to-bottom: theme → alerts → my-access →
             sign out. */}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => navigate('/system/my-access')}
           className={navButtonCls(isActive('/system/my-access'))}
@@ -512,9 +518,10 @@ export function AppLayout() {
         >
           <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
           {!compact && <span className="truncate">{t('system.myAccess', 'My access')}</span>}
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="unstyled"
           onClick={handleLogout}
           className={navButtonCls(false).replace('hover:text-foreground', 'hover:text-danger')}
           title={compact ? (user?.username ?? t('layouts.appLayout.logout', 'Logout')) : undefined}
@@ -525,7 +532,7 @@ export function AppLayout() {
               {user?.username ?? t('layouts.appLayout.user', 'User')}
             </span>
           )}
-        </button>
+        </Button>
 
         <ReleaseIdentityFooter placement="sidebar" compact={compact} />
       </div>
@@ -587,12 +594,13 @@ export function AppLayout() {
               })}
             </span>
             {connectionBanner.action === 'sign-in' && (
-              <button
+              <Button
+                variant="unstyled"
                 onClick={() => logout()}
                 className="ml-2 rounded border border-white/40 px-2 py-0.5 text-[11px] font-semibold hover:bg-white/10"
               >
                 {t('connection.signIn', 'Sign in')}
-              </button>
+              </Button>
             )}
             {connectionBanner.showSpinner && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           </div>
@@ -608,13 +616,14 @@ export function AppLayout() {
         {/* Mobile top bar */}
         {isMobile && (
           <header className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface/80 backdrop-blur-sm">
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => setDrawerOpen(true)}
               className="p-1.5 -ml-1.5 rounded-md hover:bg-surface-hover text-foreground-muted transition-colors"
               aria-label={t('layouts.appLayout.openMenu', 'Open menu')}
             >
               <Menu className="h-5 w-5" />
-            </button>
+            </Button>
             <div className="flex-1 flex justify-center">
               <img
                 src={

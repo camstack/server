@@ -94,27 +94,39 @@ vi.mock('react-i18next', async (importOriginal) => {
   }
 })
 
-vi.mock('@camstack/ui-library', () => ({
-  useThemeMode: () => ({ resolvedMode: 'dark' }),
-  useIconGlyphsVersion: () => 0,
-  resolveDisplayIcon: () => undefined,
-  useRemoteComponent: () => null,
-  trpc: {
-    auth: {
-      listLoginMethods: {
-        useQuery: (_input?: unknown, options?: unknown) => {
-          loginMethodsOptions.push(options)
-          return loginMethodsAnswer()
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useThemeMode: () => ({ resolvedMode: 'dark' }),
+    useIconGlyphsVersion: () => 0,
+    resolveDisplayIcon: () => undefined,
+    useRemoteComponent: () => null,
+    trpc: {
+      auth: {
+        listLoginMethods: {
+          useQuery: (_input?: unknown, options?: unknown) => {
+            loginMethodsOptions.push(options)
+            return loginMethodsAnswer()
+          },
+        },
+        getServerName: {
+          useQuery: () => ({ data: { name: 'Casa Napoli', isDefault: false } }),
         },
       },
-      getServerName: {
-        useQuery: () => ({ data: { name: 'Casa Napoli', isDefault: false } }),
-      },
     },
-  },
-  // Root-mounted in these tests: the mount resolver is the identity.
-  hubPath: (p: string) => p,
-}))
+    // Root-mounted in these tests: the mount resolver is the identity.
+    hubPath: (p: string) => p,
+  }
+})
 
 vi.mock('@simplewebauthn/browser', () => ({
   browserSupportsWebAuthn: () => false,

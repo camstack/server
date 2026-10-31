@@ -26,6 +26,7 @@ import { DevicePicker } from '../../pages/system/DevicePicker'
 import { useDeviceBoundCaps, useDevicesBoundCaps } from './use-device-bound-caps'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
+import { Input, Select } from '@camstack/ui-library'
 
 const FIELD = 'mt-1 w-full rounded border border-border bg-background px-2 py-1 text-xs'
 const LABEL = 'block text-[11px] font-medium text-foreground'
@@ -215,7 +216,8 @@ export function DeviceDoActionFields({
           <label className={LABEL}>
             {t('deviceDoAction.deviceDoActionFields.target', 'Target')}
           </label>
-          <select
+          <Select
+            wrapperClassName="inline-block w-auto"
             className={FIELD}
             data-testid={`${testId}-target`}
             value={targetsVar ? 'trigger' : 'device'}
@@ -244,7 +246,7 @@ export function DeviceDoActionFields({
                 'The device that triggered this run',
               )}
             </option>
-          </select>
+          </Select>
         </div>
       )}
 
@@ -288,7 +290,8 @@ export function DeviceDoActionFields({
 
       <div className="w-full max-w-sm">
         <label className={LABEL}>{t('deviceDoAction.deviceDoActionFields.action', 'Action')}</label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           className={FIELD}
           data-testid={`${testId}-action`}
           value={
@@ -319,7 +322,7 @@ export function DeviceDoActionFields({
               {action.label}
             </option>
           ))}
-        </select>
+        </Select>
         {bindingsError && (
           <p className="mt-1 text-[11px] text-warning">
             {t(
@@ -340,7 +343,7 @@ export function DeviceDoActionFields({
                 <label className={LABEL} htmlFor={`${testId}-${arg.key}`}>
                   {arg.label}
                 </label>
-                <input
+                <Input
                   id={`${testId}-${arg.key}`}
                   className={FIELD}
                   data-testid={`${testId}-${arg.key}`}

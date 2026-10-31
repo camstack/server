@@ -13,7 +13,7 @@
  * A link whose provider instance was removed, renamed or disabled stays
  * listed as unavailable and can still be removed.
  */
-import { trpc, useConfirm } from '@camstack/ui-library'
+import { trpc, useConfirm, Button } from '@camstack/ui-library'
 import { AlertCircle, CheckCircle, Link2, Loader2, Unlink } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { openSsoPopup, watchSsoPopup, withPopupFlag } from '../../lib/sso-popup'
@@ -189,14 +189,15 @@ export function LinkedSignInsSection() {
                       })}
                     </div>
                   </div>
-                  <button
+                  <Button
+                    variant="unstyled"
                     onClick={() => void handleUnlink(link, label)}
                     disabled={unlink.isPending}
                     className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] text-danger hover:bg-danger/10 disabled:opacity-50"
                   >
                     <Unlink className="h-3 w-3" />
                     {t('users.linkedSignInsSection.unlink', 'Unlink')}
-                  </button>
+                  </Button>
                 </li>
               )
             })}
@@ -207,7 +208,8 @@ export function LinkedSignInsSection() {
           {providers
             .filter((p) => !linkedProviders.has(p.provider))
             .map((p) => (
-              <button
+              <Button
+                variant="unstyled"
                 key={p.provider}
                 onClick={() => {
                   setError(null)
@@ -230,7 +232,7 @@ export function LinkedSignInsSection() {
                   <Link2 className="h-3 w-3" />
                 )}
                 {t('users.linkedSignIns.link', { provider: p.label })}
-              </button>
+              </Button>
             ))}
         </div>
       </div>

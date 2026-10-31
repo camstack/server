@@ -4,7 +4,7 @@
  * produces reach the config, and the operator applies them explicitly.
  */
 import type { SmartIrDraft } from '@camstack/types'
-import { Button, FormField } from '@camstack/ui-library'
+import { Button, FormField, FileInput, Textarea } from '@camstack/ui-library'
 import { FileUp } from 'lucide-react'
 import { type ChangeEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,7 +41,7 @@ export function SmartIrImportPanel({ transmitterId, onApply }: SmartIrImportPane
     <div className="space-y-2" data-testid="smartir-import">
       <p className="text-xs text-foreground-muted">{t('remote.import.hint')}</p>
       <FormField label={t('remote.import.pasteLabel')}>
-        <textarea
+        <Textarea
           value={text}
           rows={5}
           onChange={(e) => {
@@ -54,9 +54,8 @@ export function SmartIrImportPanel({ transmitterId, onApply }: SmartIrImportPane
         />
       </FormField>
       <div className="flex flex-wrap items-center gap-2">
-        <input
+        <FileInput
           ref={fileInput}
-          type="file"
           accept="application/json,.json"
           className="hidden"
           onChange={(e) => void onFile(e)}

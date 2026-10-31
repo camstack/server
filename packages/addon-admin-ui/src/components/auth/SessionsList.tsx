@@ -9,6 +9,7 @@
 import { Loader2, LogOut, Monitor } from 'lucide-react'
 import { describeClient, describeMethod, formatDateTime } from './session-client'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 export interface SessionRow {
   readonly id: string
@@ -112,14 +113,15 @@ function SessionItem({ session, revoking, onRevoke }: SessionItemProps) {
         </div>
       </div>
       {!session.current && (
-        <button
+        <Button
+          variant="unstyled"
           onClick={onRevoke}
           disabled={revoking}
           className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] text-danger hover:bg-danger/10 disabled:opacity-50"
         >
           {revoking ? <Loader2 className="h-3 w-3 animate-spin" /> : <LogOut className="h-3 w-3" />}
           {t('auth.sessionsList.signOut', 'Sign out')}
-        </button>
+        </Button>
       )}
     </li>
   )

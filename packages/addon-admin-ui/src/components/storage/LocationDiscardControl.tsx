@@ -11,7 +11,7 @@
  */
 
 import type { StorageLocation } from '@camstack/types'
-import { useAddonsCustom, useConfirm } from '@camstack/ui-library'
+import { useAddonsCustom, useConfirm, Button } from '@camstack/ui-library'
 import { Eraser, Loader2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
@@ -130,16 +130,18 @@ function ArmedDiscard({ location }: { readonly location: StorageLocation }) {
   return (
     <div className="flex flex-col gap-1 min-w-[9rem] max-w-[16rem]">
       {running ? (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void cancel()}
           className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-danger border border-danger/40 hover:bg-danger/10"
         >
           <X className="h-3 w-3" />
           {t('common.cancel', 'Cancel')}
-        </button>
+        </Button>
       ) : (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void start()}
           disabled={starting}
@@ -151,7 +153,7 @@ function ArmedDiscard({ location }: { readonly location: StorageLocation }) {
         >
           {starting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eraser className="h-3 w-3" />}
           {t('storage.locationDiscardControl.discardLeftovers', 'Discard leftovers')}
-        </button>
+        </Button>
       )}
       {showBar && status !== null && (
         <div className="space-y-0.5">

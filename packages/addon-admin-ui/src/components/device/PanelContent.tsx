@@ -15,6 +15,7 @@ import {
   useSystem,
   toStationaryOverlayBox,
   useVodPlayback,
+  Button,
 } from '@camstack/ui-library'
 
 import type { StationaryOverlayBox } from '@camstack/types'
@@ -361,7 +362,8 @@ export function RestartPanelContent({ deviceId }: RestartPanelContentProps) {
 
   return (
     <div className="flex flex-col h-full p-3 gap-2 overflow-y-auto">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => {
           void onRestartDevice()
@@ -381,8 +383,9 @@ export function RestartPanelContent({ deviceId }: RestartPanelContentProps) {
             )}
           </div>
         </span>
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => {
           void onRestartAddon()
@@ -403,8 +406,9 @@ export function RestartPanelContent({ deviceId }: RestartPanelContentProps) {
             />
           </div>
         </span>
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="unstyled"
         type="button"
         disabled
         title={t(
@@ -425,7 +429,7 @@ export function RestartPanelContent({ deviceId }: RestartPanelContentProps) {
             )}
           </div>
         </span>
-      </button>
+      </Button>
     </div>
   )
 }

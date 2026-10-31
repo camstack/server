@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Check } from 'lucide-react'
 
-import { useDeviceManagerDiscoverDevices } from '@camstack/ui-library'
+import { useDeviceManagerDiscoverDevices, Button } from '@camstack/ui-library'
 interface DeviceDiscoveryStepProps {
   providerId: string
   onImport: (externalIds: readonly string[]) => void
@@ -69,7 +69,8 @@ export function DeviceDiscoveryStep({ providerId, onImport, onSkip }: DeviceDisc
             const owned = device.alreadyOnboarded === true
 
             return (
-              <button
+              <Button
+                variant="unstyled"
                 key={id}
                 onClick={() => {
                   if (!owned) toggleDevice(id)
@@ -106,27 +107,29 @@ export function DeviceDiscoveryStep({ providerId, onImport, onSkip }: DeviceDisc
                     {t('integrations.alreadyAdded', { defaultValue: 'Already added' })}
                   </span>
                 )}
-              </button>
+              </Button>
             )
           })}
         </div>
       )}
 
       <div className="flex items-center justify-between pt-2">
-        <button
+        <Button
+          variant="unstyled"
           onClick={onSkip}
           className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
         >
           {t('integrations.skip')}
-        </button>
+        </Button>
         {devices.length > 0 && (
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => onImport(Array.from(selected))}
             disabled={selected.size === 0}
             className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50"
           >
             {t('integrations.importSelected')} ({selected.size})
-          </button>
+          </Button>
         )}
       </div>
     </div>

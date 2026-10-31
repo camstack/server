@@ -28,6 +28,7 @@ import {
   useIntegrationsList,
   useIntegrationsUpdate,
   useSystem,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -446,13 +447,14 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             })}
           </p>
         </div>
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => navigate('/integrations')}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-surface-hover transition-colors"
         >
           <ArrowLeft className="h-3 w-3" />
           {t('integrations.backToList', { defaultValue: 'Back to integrations' })}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -490,7 +492,8 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               page. Routes to the adopt surface by the addon's declared cap kind
               (see `integrationKind`); disabled until the kind resolves. */}
           {canScan && (
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => setShowScan(true)}
               className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
               title={t(
@@ -500,10 +503,11 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             >
               <Radar className="h-3.5 w-3.5" />
               {t('integrationDetail.scanNetwork', 'Scan network')}
-            </button>
+            </Button>
           )}
           {!isFixed && (
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => {
                 setAdoptAfterCommission(false)
                 setShowAddDevice(true)
@@ -514,7 +518,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             >
               <Plus className="h-3.5 w-3.5" />
               {addDeviceLabel}
-            </button>
+            </Button>
           )}
           <div
             className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
@@ -555,27 +559,29 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               settings schema or is a device-adoption (broker-backed) flow. */}
           {integrationMode !== 'standalone' &&
             (hasConfig || integrationKind === 'device-adoption') && (
-              <button
+              <Button
+                variant="unstyled"
                 onClick={() => setShowConfig(true)}
                 className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 <Settings className="h-3 w-3" />
                 {t('integrations.config')}
-              </button>
+              </Button>
             )}
           {/* Logs — addon-scoped (every device under this integration
               + addon-level chatter). When loggers carry an
               `integrationId` tag the modal narrows further; today it
               falls back to addonId because providers don't tag
               integrations yet. */}
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => setShowLogs(true)}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
             title={t('integrations.logs', { defaultValue: 'View logs' })}
           >
             <ScrollText className="h-3 w-3" />
             {t('integrations.logs', { defaultValue: 'Logs' })}
-          </button>
+          </Button>
           {/* Restart addon — canonical surface for "bounce this
               integration". Bounces every device backed by the addon, so
               the confirm wording calls that out. */}

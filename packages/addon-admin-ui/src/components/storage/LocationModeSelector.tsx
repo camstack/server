@@ -28,6 +28,7 @@ import {
   locationModeChoice,
 } from './location-mode'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 const MODE_ICON: Readonly<Record<LocationMode, typeof Power>> = {
   active: Power,
@@ -55,7 +56,8 @@ export function LocationModeTrigger({ mode, open, onToggle }: LocationModeTrigge
   const current = locationModeChoice(mode)
   const Icon = MODE_ICON[mode]
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       aria-expanded={open}
       aria-label={t('storage.locationModeSelector.locationState', 'Location state')}
@@ -66,7 +68,7 @@ export function LocationModeTrigger({ mode, open, onToggle }: LocationModeTrigge
       <Icon className="h-3 w-3" />
       {current.label}
       <ChevronDown className={`h-3 w-3 ${open ? 'rotate-180' : ''}`} />
-    </button>
+    </Button>
   )
 }
 
@@ -106,7 +108,8 @@ export function LocationModeChoices({
         <span className="text-[10px] uppercase tracking-wide text-foreground-subtle">
           {t('storage.locationModeSelector.locationState', 'Location state')}
         </span>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           aria-label={t(
             'storage.locationModeSelector.closeLocationStateChoices',
@@ -116,7 +119,7 @@ export function LocationModeChoices({
           className="text-foreground-subtle hover:text-foreground"
         >
           <X className="h-3 w-3" />
-        </button>
+        </Button>
       </div>
       {LOCATION_MODE_CHOICES.map((choice) => {
         const reason = blockedReasons[choice.mode]
@@ -124,7 +127,8 @@ export function LocationModeChoices({
         const Icon = MODE_ICON[choice.mode]
         const selected = choice.mode === mode
         return (
-          <button
+          <Button
+            variant="unstyled"
             key={choice.mode}
             type="button"
             role="radio"
@@ -155,7 +159,7 @@ export function LocationModeChoices({
               {choice.consequence}
             </span>
             {blocked && <span className="text-[10px] leading-snug text-warning">{reason}</span>}
-          </button>
+          </Button>
         )
       })}
     </div>

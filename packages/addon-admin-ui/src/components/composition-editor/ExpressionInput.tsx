@@ -1,6 +1,7 @@
 import { type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { applySuggestion, expressionSuggestions } from './expression-suggestions'
+import { Input } from '@camstack/ui-library'
 
 export interface ExpressionInputProps {
   readonly label: string
@@ -23,7 +24,7 @@ export function ExpressionInput({
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1 text-[11px]">
         {label}
-        <input
+        <Input
           ref={input}
           className="font-mono px-1.5 py-0.5 text-[11px] bg-background border border-border rounded"
           value={value}

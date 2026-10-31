@@ -27,6 +27,11 @@ import {
   DialogHeader,
   DialogTitle,
   useSystem,
+  Input,
+  Radio,
+  Slider,
+  Textarea,
+  Select,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle, Loader2, Send } from 'lucide-react'
@@ -168,7 +173,8 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 <label className={LABEL_CLASS}>
                   {t('system.notificationTestPanel.level', 'Level')}
                 </label>
-                <select
+                <Select
+                  wrapperClassName="inline-block w-auto"
                   className={FIELD_CLASS}
                   value={form.level}
                   onChange={(e) => patch({ level: e.target.value })}
@@ -187,7 +193,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                         : ` (p${lvl.ordinal})`}
                     </option>
                   ))}
-                </select>
+                </Select>
                 {/* selected level detail + flags + requires hint */}
                 {(() => {
                   const lvl = controls.levels.find((l) => l.id === form.level)
@@ -227,8 +233,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 {t('system.notificationTestPanel.priorityOrdinal', 'Priority (ordinal):')}{' '}
                 {form.priority}
               </label>
-              <input
-                type="range"
+              <Slider
                 min={1}
                 max={5}
                 step={1}
@@ -252,8 +257,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                     key={f}
                     className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer"
                   >
-                    <input
-                      type="radio"
+                    <Radio
                       name="format"
                       className="accent-primary"
                       checked={form.format === f}
@@ -271,7 +275,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
             <label className={LABEL_CLASS}>
               {t('system.notificationTestPanel.testTitle', 'Title')}
             </label>
-            <input
+            <Input
               className={FIELD_CLASS}
               value={form.title}
               onChange={(e) => patch({ title: e.target.value })}
@@ -285,7 +289,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 {overflow ? ` — ${t('system.notificationTestPanel.overflow')}` : ''})
               </span>
             </label>
-            <textarea
+            <Textarea
               className={`${FIELD_CLASS} min-h-[80px] resize-y`}
               value={form.body}
               onChange={(e) => patch({ body: e.target.value })}
@@ -314,7 +318,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 {controls.attachmentSlots.map((mt) => (
                   <div key={mt} className="flex items-center gap-2">
                     <span className="text-[10px] w-12 shrink-0 text-foreground-subtle">{mt}</span>
-                    <input
+                    <Input
                       className={FIELD_CLASS}
                       placeholder={t('system.notificationTestPanel.url', '{{mt}} URL', { mt })}
                       value={form.attachmentUrls[mt] ?? ''}
@@ -337,13 +341,13 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
               <div className="space-y-1.5">
                 {Array.from({ length: Math.min(controls.maxActions, 3) }, (_v, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <input
+                    <Input
                       className={FIELD_CLASS}
                       placeholder={t('system.notificationTestPanel.actionLabelPlaceholder')}
                       value={form.actions[i]?.label ?? ''}
                       onChange={(e) => setActionRow(i, 'label', e.target.value)}
                     />
-                    <input
+                    <Input
                       className={FIELD_CLASS}
                       placeholder={t('system.notificationTestPanel.actionUrlPlaceholder')}
                       value={form.actions[i]?.url ?? ''}
@@ -362,7 +366,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 <label className={LABEL_CLASS}>
                   {t('system.notificationTestPanel.clickUrl', 'Click URL')}
                 </label>
-                <input
+                <Input
                   className={FIELD_CLASS}
                   value={form.clickUrl}
                   onChange={(e) => patch({ clickUrl: e.target.value })}
@@ -374,7 +378,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 <label className={LABEL_CLASS}>
                   {t('system.notificationTestPanel.sound', 'Sound')}
                 </label>
-                <input
+                <Input
                   className={FIELD_CLASS}
                   value={form.sound}
                   onChange={(e) => patch({ sound: e.target.value })}
@@ -386,7 +390,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 <label className={LABEL_CLASS}>
                   {t('system.notificationTestPanel.ttlSeconds', 'TTL (seconds)')}
                 </label>
-                <input
+                <Input
                   className={FIELD_CLASS}
                   type="number"
                   value={form.ttl}
@@ -399,7 +403,7 @@ export function NotificationTestPanel({ target, kind, open, onClose }: Notificat
                 <label className={LABEL_CLASS}>
                   {t('system.notificationTestPanel.tag', 'Tag')}
                 </label>
-                <input
+                <Input
                   className={FIELD_CLASS}
                   value={form.tag}
                   onChange={(e) => patch({ tag: e.target.value })}

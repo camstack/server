@@ -2,6 +2,7 @@ import type { AdoptionJob } from '@camstack/types'
 import {
   useDeviceManagerAdoptionCancelJob,
   useDeviceManagerAdoptionListJobs,
+  Button,
 } from '@camstack/ui-library'
 import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -92,12 +93,13 @@ export function AdoptJobProgress({
         )}
         <p className="text-[11px] text-foreground">{summary}</p>
         {running && (
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => cancelMutation.mutate({ jobId })}
             className="ml-auto rounded-lg border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground transition-colors"
           >
             {t('integrations.adoptJobCancel', { defaultValue: 'Stop' })}
-          </button>
+          </Button>
         )}
       </div>
 

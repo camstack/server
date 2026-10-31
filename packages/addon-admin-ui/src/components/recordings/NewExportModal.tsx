@@ -19,6 +19,9 @@ import {
   DialogTitle,
   useDeviceManagerListAll,
   useRecordingExportCreateExport,
+  Checkbox,
+  Input,
+  Select,
 } from '@camstack/ui-library'
 import { Film } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -112,33 +115,33 @@ export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.camera', 'Camera')}
               </label>
-              <select
+              <Select
                 value={effectiveDeviceId ?? ''}
                 onChange={(e) => setDeviceId(Number(e.target.value))}
-                className="w-full rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground"
+                className="w-full"
               >
                 {cameras.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.profile', 'Profile')}
               </label>
-              <select
+              <Select
                 value={profile}
                 onChange={(e) => setProfile(e.target.value)}
-                className="w-full rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground"
+                className="w-full"
               >
                 {PROFILES.map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -146,7 +149,7 @@ export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.from', 'From')}
               </label>
-              <input
+              <Input
                 type="datetime-local"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
@@ -157,7 +160,7 @@ export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.to', 'To')}
               </label>
-              <input
+              <Input
                 type="datetime-local"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
@@ -170,23 +173,23 @@ export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.speed', 'Speed')}
               </label>
-              <select
+              <Select
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
-                className="w-full rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground"
+                className="w-full"
               >
                 {SPEEDS.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.labelKey !== null ? t(s.labelKey) : `${s.value}×`}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 {t('recordings.newExportModal.titleOptional', 'Title (optional)')}
               </label>
-              <input
+              <Input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -199,8 +202,7 @@ export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={includeAudio}
               disabled={speed !== 1}
               onChange={(e) => setIncludeAudio(e.target.checked)}

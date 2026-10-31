@@ -13,6 +13,7 @@
 import { type JSX } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 export interface GalleryPagerProps {
   readonly currentPage: number // 1-indexed
@@ -77,7 +78,8 @@ export function GalleryPager({
         })}
       </span>
       <div className="flex items-center gap-1">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           className={`${btnBase} hover:bg-surface-hover`}
           onClick={() => onPageChange(currentPage - 1)}
@@ -85,14 +87,15 @@ export function GalleryPager({
           aria-label={t('galleryPager.previousPage', 'Previous page')}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-        </button>
+        </Button>
         {buttons.map((b) =>
           b.kind === 'ellipsis' ? (
             <span key={`ellipsis-${b.side}`} className="px-1 opacity-60">
               …
             </span>
           ) : (
-            <button
+            <Button
+              variant="unstyled"
               key={b.n}
               type="button"
               className={`${btnBase} ${
@@ -104,10 +107,11 @@ export function GalleryPager({
               aria-current={b.n === currentPage ? 'page' : undefined}
             >
               {b.n}
-            </button>
+            </Button>
           ),
         )}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           className={`${btnBase} hover:bg-surface-hover`}
           onClick={() => onPageChange(currentPage + 1)}
@@ -115,7 +119,7 @@ export function GalleryPager({
           aria-label={t('galleryPager.nextPage', 'Next page')}
         >
           <ChevronRight className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
     </div>
   )

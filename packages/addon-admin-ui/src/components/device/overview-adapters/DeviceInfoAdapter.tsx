@@ -25,6 +25,7 @@ import {
   useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
   useDeviceSnapshot,
+  Button,
 } from '@camstack/ui-library'
 
 import { CapabilityBadges } from '../../shared/CapabilityBadges'
@@ -188,7 +189,8 @@ function SubTabButton({
   label: string
 }) {
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={onClick}
       className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
@@ -198,7 +200,7 @@ function SubTabButton({
       }`}
     >
       {label}
-    </button>
+    </Button>
   )
 }
 

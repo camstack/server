@@ -1,5 +1,6 @@
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Checkbox } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -180,7 +181,8 @@ function SingletonBody({ entry, actions, activeProvider, isPending }: SingletonB
         {entry.providers.map((p) => {
           const selected = p.active
           return (
-            <button
+            <Button
+              variant="unstyled"
               key={p.addonId}
               type="button"
               disabled={isPending || selected}
@@ -202,7 +204,7 @@ function SingletonBody({ entry, actions, activeProvider, isPending }: SingletonB
                   ACTIVE
                 </span>
               )}
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -243,7 +245,8 @@ function SingletonBody({ entry, actions, activeProvider, isPending }: SingletonB
                 {options.map((opt) => {
                   const isSelected = selected === opt.value
                   return (
-                    <button
+                    <Button
+                      variant="unstyled"
                       key={opt.value}
                       type="button"
                       disabled={disabled || isSelected}
@@ -265,7 +268,7 @@ function SingletonBody({ entry, actions, activeProvider, isPending }: SingletonB
                           ACTIVE
                         </span>
                       )}
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -333,8 +336,7 @@ function CollectionBody({ entry, actions, isPending }: CollectionBodyProps) {
           }`}
         >
           <span className="flex items-center gap-1.5 min-w-0">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={p.active}
               disabled={isPending}
               onChange={(e) => toggle(p.addonId, e.target.checked)}

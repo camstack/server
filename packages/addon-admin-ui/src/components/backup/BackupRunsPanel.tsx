@@ -24,7 +24,7 @@
  * distinguishes pending ("Checking…") from an answered-empty list.
  */
 import type { BackupRun } from '@camstack/types'
-import { useBackupCancel, useBackupListRuns, useConfirm } from '@camstack/ui-library'
+import { useBackupCancel, useBackupListRuns, useConfirm, Button } from '@camstack/ui-library'
 import {
   Ban,
   CheckCircle2,
@@ -308,7 +308,8 @@ function RunRow({ run, canceling, onCancelRequest, now }: RunRowProps) {
       <td className="px-3 py-2">
         <div className="flex justify-end">
           {active && (
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => onCancelRequest(run)}
               disabled={canceling}
               className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
@@ -332,7 +333,7 @@ function RunRow({ run, canceling, onCancelRequest, now }: RunRowProps) {
               {run.state === 'queued'
                 ? t('common.cancel', 'Cancel')
                 : t('backup.backupRunsPanel.stop', 'Stop')}
-            </button>
+            </Button>
           )}
         </div>
       </td>

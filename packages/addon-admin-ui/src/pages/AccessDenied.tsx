@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ShieldX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 /**
  * Rendered inside `AppLayout` (sidebar + topbar stay visible) so users
@@ -22,12 +23,13 @@ export function AccessDeniedPage() {
       <p className="mt-2 text-sm text-foreground-subtle">
         {t('accessDenied.youDonTHavePermission', "You don't have permission to access this page.")}
       </p>
-      <button
+      <Button
+        variant="unstyled"
         onClick={() => navigate('/devices')}
         className="mt-6 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"
       >
         {t('accessDenied.goToDevices', 'Go to Devices')}
-      </button>
+      </Button>
     </div>
   )
 }

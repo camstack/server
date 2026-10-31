@@ -9,7 +9,7 @@
  */
 import { useState } from 'react'
 import { Loader2, LogOut, MonitorSmartphone } from 'lucide-react'
-import { trpc, useConfirm } from '@camstack/ui-library'
+import { trpc, useConfirm, Button } from '@camstack/ui-library'
 
 import { useAuth } from '../../contexts/auth-context'
 import { describeClient } from './session-client'
@@ -101,7 +101,8 @@ export function MySessionsSection() {
           revokingId={revoke.isPending ? (revoke.variables?.id ?? null) : null}
         />
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => void handleEverywhere()}
             disabled={everywhere.isPending}
             className="inline-flex items-center gap-1.5 rounded border border-danger/40 px-2.5 py-1 text-[11px] font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
@@ -112,7 +113,7 @@ export function MySessionsSection() {
               <LogOut className="h-3 w-3" />
             )}
             {t('auth.mySessionsSection.signOutEverywhere', 'Sign out everywhere')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

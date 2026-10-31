@@ -32,6 +32,7 @@ import {
   useServerManagementCheckServerUpdate,
   useServerManagementGetServerPackageStatus,
   useServerManagementRestartServer,
+  Button,
 } from '@camstack/ui-library'
 
 import { NodeDesktopAppRow } from './NodeDesktopAppRow'
@@ -462,7 +463,8 @@ export function NodeServerManagementSection({ node }: NodeServerManagementSectio
 
       {node.isOnline && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-50"
             disabled={checkMutation.isPending || status?.updateState === 'staging'}
@@ -474,10 +476,11 @@ export function NodeServerManagementSection({ node }: NodeServerManagementSectio
               <RefreshCw className="h-3.5 w-3.5" />
             )}
             {t('serverManagement.checkForUpdate', 'Check for update')}
-          </button>
+          </Button>
 
           {canUpdate && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               className="inline-flex items-center gap-1.5 rounded bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
               onClick={() => void handleUpdate()}
@@ -490,10 +493,11 @@ export function NodeServerManagementSection({ node }: NodeServerManagementSectio
               {t('serverManagement.updateTo', 'Update to {{version}}', {
                 version: status?.latestVersion ?? '',
               })}
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-50"
             disabled={!canRestart}
@@ -505,7 +509,7 @@ export function NodeServerManagementSection({ node }: NodeServerManagementSectio
               <RotateCw className="h-3.5 w-3.5" />
             )}
             {t('serverManagement.restart', 'Restart')}
-          </button>
+          </Button>
         </div>
       )}
 

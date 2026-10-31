@@ -11,7 +11,7 @@
  * rewrites where it runs.
  */
 import type { LlmRuntimeNode } from '@camstack/types'
-import { Badge, useSystem } from '@camstack/ui-library'
+import { Badge, useSystem, Button } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -60,7 +60,8 @@ export function AppleNodePicker({ value, onChange }: AppleNodePickerProps) {
             const view = describeAppleNode(node)
             const selected = view.nodeId === value
             return (
-              <button
+              <Button
+                variant="unstyled"
                 key={view.nodeId}
                 type="button"
                 role="radio"
@@ -82,7 +83,7 @@ export function AppleNodePicker({ value, onChange }: AppleNodePickerProps) {
                   )}
                 </span>
                 <Badge variant={view.tone}>{t(view.labelKey, view.labelDefault)}</Badge>
-              </button>
+              </Button>
             )
           })}
         </div>

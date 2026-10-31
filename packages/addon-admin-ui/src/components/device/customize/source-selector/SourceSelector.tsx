@@ -14,6 +14,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
+  Radio,
 } from '@camstack/ui-library'
 import { ChevronDown } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
@@ -482,8 +483,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
                     return (
                       <li key={`${row.cap}.${row.path}`}>
                         <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
-                          <input
-                            type="radio"
+                          <Radio
                             name="source-value"
                             checked={selected}
                             data-testid={`source-value-${row.cap}.${row.path}`}

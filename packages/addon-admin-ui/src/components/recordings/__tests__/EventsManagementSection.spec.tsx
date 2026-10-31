@@ -28,61 +28,73 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useConfirm: () => confirm,
-  useDeviceManagerListAll: () => ({ data: cameras }),
-  usePipelineAnalyticsGetEventStoreFootprint: () => ({
-    data: footprint,
-    isLoading: footprint === undefined,
-  }),
-  usePipelineAnalyticsPruneEvents: () => ({ mutate: pruneMutate, isPending: false }),
-  usePipelineAnalyticsDeleteDeviceEvents: (opts?: {
-    onSuccess?: () => void
-    onError?: (err: Error) => void
-  }) => ({
-    mutate: (input: { deviceId: number }) => {
-      deleteMutate(input)
-      if (deleteError) opts?.onError?.(deleteError)
-      else opts?.onSuccess?.()
-    },
-    mutateAsync: async (input: { deviceId: number }) => {
-      deleteMutate(input)
-      if (deleteError) throw deleteError
-      return { motion: input.deviceId === 0 ? 0 : 12, object: 0, audio: 0 }
-    },
-    isPending: deletePending,
-    isError: deleteError !== null,
-    error: deleteError,
-  }),
-  DataTable: ({
-    rows,
-    columns,
-  }: {
-    rows: { deviceId: number; rows: number; bytes: number }[]
-    columns: {
-      key: string
-      render: (r: { deviceId: number; rows: number; bytes: number }) => unknown
-    }[]
-  }) => (
-    <table>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.deviceId}>
-            {columns.map((col) => (
-              <td key={col.key}>{col.render(row) as never}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ),
-  EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
-  WidgetMetricCard: ({ children, label }: { children: unknown; label: string }) => (
-    <div>
-      {label}:{String(children)}
-    </div>
-  ),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useConfirm: () => confirm,
+    useDeviceManagerListAll: () => ({ data: cameras }),
+    usePipelineAnalyticsGetEventStoreFootprint: () => ({
+      data: footprint,
+      isLoading: footprint === undefined,
+    }),
+    usePipelineAnalyticsPruneEvents: () => ({ mutate: pruneMutate, isPending: false }),
+    usePipelineAnalyticsDeleteDeviceEvents: (opts?: {
+      onSuccess?: () => void
+      onError?: (err: Error) => void
+    }) => ({
+      mutate: (input: { deviceId: number }) => {
+        deleteMutate(input)
+        if (deleteError) opts?.onError?.(deleteError)
+        else opts?.onSuccess?.()
+      },
+      mutateAsync: async (input: { deviceId: number }) => {
+        deleteMutate(input)
+        if (deleteError) throw deleteError
+        return { motion: input.deviceId === 0 ? 0 : 12, object: 0, audio: 0 }
+      },
+      isPending: deletePending,
+      isError: deleteError !== null,
+      error: deleteError,
+    }),
+    DataTable: ({
+      rows,
+      columns,
+    }: {
+      rows: { deviceId: number; rows: number; bytes: number }[]
+      columns: {
+        key: string
+        render: (r: { deviceId: number; rows: number; bytes: number }) => unknown
+      }[]
+    }) => (
+      <table>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.deviceId}>
+              {columns.map((col) => (
+                <td key={col.key}>{col.render(row) as never}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
+    WidgetMetricCard: ({ children, label }: { children: unknown; label: string }) => (
+      <div>
+        {label}:{String(children)}
+      </div>
+    ),
+  }
+})
 
 import { EventsManagementSection } from '../EventsManagementSection'
 

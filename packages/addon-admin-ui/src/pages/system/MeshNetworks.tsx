@@ -491,13 +491,14 @@ function PeersTable({
           row.magicDns ? (
             <div className="flex items-center gap-1">
               <span className="font-mono text-xs truncate">{row.magicDns}</span>
-              <button
+              <Button
+                variant="unstyled"
                 onClick={() => copy(row.magicDns)}
                 className="p-0.5 hover:bg-foreground-subtle/10 rounded"
                 aria-label={t('system.meshNetworks.copyMagicdns', 'Copy MagicDNS')}
               >
                 <Copy className="h-3 w-3 text-foreground-subtle" />
-              </button>
+              </Button>
             </div>
           ) : (
             <span className="text-foreground-subtle">—</span>
@@ -511,13 +512,14 @@ function PeersTable({
           return ip ? (
             <div className="flex items-center gap-1">
               <span className="font-mono text-xs">{ip}</span>
-              <button
+              <Button
+                variant="unstyled"
                 onClick={() => copy(ip)}
                 className="p-0.5 hover:bg-foreground-subtle/10 rounded"
                 aria-label={t('system.meshNetworks.copyIp', 'Copy IP')}
               >
                 <Copy className="h-3 w-3 text-foreground-subtle" />
-              </button>
+              </Button>
             </div>
           ) : (
             <span className="text-foreground-subtle">—</span>

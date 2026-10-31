@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useRef } from 'react'
 import { ReactFlow, Background, Controls, type Node, type Edge } from '@xyflow/react'
-import { useSearchFieldHotkey } from '@camstack/ui-library'
+import { useSearchFieldHotkey, Button, Input } from '@camstack/ui-library'
 import type { ClusterGraph } from './build-cluster-graph'
 import type { NodeBoxData } from './NodeBox'
 import { NodeBox } from './NodeBox'
@@ -139,7 +139,7 @@ export function ClusterGraphView({ graph, onOpenNodeDetail }: ClusterGraphViewPr
     <div className="flex flex-col flex-1 min-h-0">
       {/* Density controls bar */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-background shrink-0">
-        <input
+        <Input
           ref={searchFieldRef}
           type="search"
           placeholder={t(
@@ -150,21 +150,24 @@ export function ClusterGraphView({ graph, onOpenNodeDetail }: ClusterGraphViewPr
           onChange={(e) => setFilter(e.target.value)}
           className="flex-1 text-xs border border-border rounded px-2 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
         />
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={handleExpandAll}
           className="text-xs px-2 py-1 rounded border border-border hover:bg-muted"
         >
           {t('graph.clusterGraphView.expandAll', 'Expand all')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           onClick={handleCollapseAll}
           className="text-xs px-2 py-1 rounded border border-border hover:bg-muted"
         >
           {t('graph.clusterGraphView.collapseAll', 'Collapse all')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           onClick={resetLayout}
           className="text-xs px-2 py-1 rounded border border-border hover:bg-muted"
@@ -174,7 +177,7 @@ export function ClusterGraphView({ graph, onOpenNodeDetail }: ClusterGraphViewPr
           )}
         >
           {t('graph.clusterGraphView.resetLayout', 'Reset layout')}
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 min-h-0 border-t border-border overflow-hidden">

@@ -1,5 +1,5 @@
 import type { SecondFactorKind } from '@camstack/sdk'
-import { trpc, useThemeMode } from '@camstack/ui-library'
+import { trpc, useThemeMode, Button, Input } from '@camstack/ui-library'
 import { ArrowLeft, Eye, EyeOff, Smartphone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
@@ -467,12 +467,13 @@ export function LoginPage() {
                   'Could not prepare the sign-in handoff. You are logged in — retry below.',
                 )}
               </p>
-              <button
+              <Button
+                variant="unstyled"
                 onClick={() => void startAppHandoff(appHandoff.callbackBase)}
                 className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 {t('common.retry', 'Retry')}
-              </button>
+              </Button>
             </>
           ) : appHandoff.mintedUrl === null ? (
             <p className="text-xs text-foreground-subtle">
@@ -548,7 +549,7 @@ export function LoginPage() {
               <label className="text-xs font-medium text-foreground-subtle">
                 {t('login.username', 'Username')}
               </label>
-              <input
+              <Input
                 data-testid="login-username"
                 type="text"
                 placeholder={t('login.username', 'Username')}
@@ -564,7 +565,7 @@ export function LoginPage() {
                 {t('login.password', 'Password')}
               </label>
               <div className="relative">
-                <input
+                <Input
                   data-testid="login-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder={t('login.password', 'Password')}
@@ -572,18 +573,20 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-foreground-disabled focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-all"
                 />
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-subtle hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
             </div>
 
-            <button
+            <Button
+              variant="unstyled"
               data-testid="login-submit"
               type="submit"
               disabled={submitting || !username || !password}
@@ -597,7 +600,7 @@ export function LoginPage() {
               ) : (
                 t('login.logIn', 'Log in')
               )}
-            </button>
+            </Button>
           </form>
         ) : (
           <div className="space-y-4 rounded-xl border border-border bg-surface p-6 shadow-xl shadow-black/10">
@@ -688,7 +691,7 @@ export function LoginPage() {
                   <label className="text-xs font-medium text-foreground-subtle">
                     {t('login.authenticationCode', 'Authentication code')}
                   </label>
-                  <input
+                  <Input
                     data-testid="login-totp"
                     type="text"
                     inputMode="numeric"
@@ -701,7 +704,8 @@ export function LoginPage() {
                   />
                 </div>
 
-                <button
+                <Button
+                  variant="unstyled"
                   data-testid="login-totp-submit"
                   type="submit"
                   disabled={submitting || totpCode.length !== 6}
@@ -715,18 +719,19 @@ export function LoginPage() {
                   ) : (
                     t('login.verifyAndSignIn', 'Verify and sign in')
                   )}
-                </button>
+                </Button>
               </form>
             )}
 
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={handleBackToCredentials}
               className="w-full flex items-center justify-center gap-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3 w-3" />
               {t('login.backToUsernamePassword', 'Back to username + password')}
-            </button>
+            </Button>
           </div>
         )}
 

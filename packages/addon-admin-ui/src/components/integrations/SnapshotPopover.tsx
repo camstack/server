@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye } from 'lucide-react'
+import { Button } from '@camstack/ui-library'
 
 interface SnapshotPopoverProps {
   deviceName: string
@@ -30,12 +31,13 @@ export function SnapshotPopover({
       onMouseEnter={() => setShowPopover(true)}
       onMouseLeave={() => setShowPopover(false)}
     >
-      <button
+      <Button
+        variant="unstyled"
         className="flex h-6 w-6 items-center justify-center rounded text-foreground-subtle hover:bg-surface-hover hover:text-foreground transition-colors"
         title={t('integrations.preview')}
       >
         <Eye className="h-3.5 w-3.5" />
-      </button>
+      </Button>
 
       {showPopover && (
         <div className="absolute bottom-full right-0 mb-2 w-72 rounded-lg border border-border bg-surface shadow-lg shadow-black/30 z-50 overflow-hidden">

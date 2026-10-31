@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle, Copy, KeyRound, Loader2, Lock, Smartphone } from 'lucide-react'
-import { Button, useSystem, useWidgetMetadata, WidgetSlot } from '@camstack/ui-library'
+import { Button, useSystem, useWidgetMetadata, WidgetSlot, Input } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { TotpQrCode } from './TotpQrCode'
@@ -135,7 +135,7 @@ function PasswordField({
   return (
     <div className="space-y-1">
       <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">{label}</label>
-      <input
+      <Input
         type="password"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -303,7 +303,7 @@ export function TotpSection({ username }: TotpSectionProps): ReactElement {
               <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
                 6-digit code
               </label>
-              <input
+              <Input
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"

@@ -15,7 +15,7 @@
  */
 import { useCallback, useEffect, useState, type JSX } from 'react'
 import { Check, Copy } from 'lucide-react'
-import { usePrompt } from '@camstack/ui-library'
+import { usePrompt, Button } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const COPIED_RESET_MS = 1_400
@@ -68,7 +68,8 @@ function CopyChip({ label, value, title }: CopyChipProps): JSX.Element {
   }, [value, label, showPrompt, t])
 
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={onCopy}
       title={title}
@@ -87,7 +88,7 @@ function CopyChip({ label, value, title }: CopyChipProps): JSX.Element {
       <span className="truncate">
         {copied ? t('detectionIntelligence.copyUrlChips.copied', 'Copied') : label}
       </span>
-    </button>
+    </Button>
   )
 }
 

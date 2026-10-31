@@ -25,6 +25,8 @@ import {
   useDeviceManagerListAll,
   useIntegrationsList,
   useSearchFieldHotkey,
+  Button,
+  Input,
 } from '@camstack/ui-library'
 import { Search, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -190,7 +192,7 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
   const inputBlock = (
     <div className="relative">
       <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground-subtle" />
-      <input
+      <Input
         ref={inputRef}
         type="text"
         value={query}
@@ -226,7 +228,8 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
         className="w-full rounded-md border border-border bg-surface py-1.5 pl-7 pr-6 text-[12px] text-foreground placeholder:text-foreground-subtle/70 focus:outline-none focus:ring-1 focus:ring-primary/50"
       />
       {query.length > 0 && (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           aria-label={t('search.globalSearch.clearSearch', 'Clear search')}
           onClick={() => {
@@ -236,7 +239,7 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
           className="absolute right-1.5 top-1/2 -translate-y-1/2 text-foreground-subtle hover:text-foreground"
         >
           <X className="h-3 w-3" />
-        </button>
+        </Button>
       )}
       {panelVisible &&
         anchor !== null &&
@@ -315,7 +318,8 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
           {inputBlock}
         </div>
       ) : (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => setPanelOpen(true)}
           aria-label={placeholder}
@@ -323,7 +327,7 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
           className="flex w-full items-center justify-center rounded-md px-0 py-2 text-foreground-subtle hover:bg-surface-hover hover:text-foreground transition-colors"
         >
           <Search className="h-3.5 w-3.5 shrink-0" />
-        </button>
+        </Button>
       )}
     </div>
   )

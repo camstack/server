@@ -37,6 +37,7 @@ import {
   useConfirm,
   useIsMobile,
   useSearchFieldHotkey,
+  Input,
 } from '@camstack/ui-library'
 import { useStepUrlSelection } from '../../../hooks/useStepUrlSelection'
 import { filterStepTree, flattenStepTree, type InspectorAccelerator } from './step-inspector-model'
@@ -240,7 +241,7 @@ export function StepMatrixFrame({
     >
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <div className="min-w-0 basis-full sm:basis-auto">{summary}</div>
-        <input
+        <Input
           ref={searchRef}
           type="search"
           value={query}

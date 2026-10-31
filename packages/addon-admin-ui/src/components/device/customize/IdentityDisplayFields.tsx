@@ -15,6 +15,7 @@ import {
   useDeviceManagerGetRoleDisplayDefaults,
   useDeviceManagerSetRoleDisplayDefaults,
   useUiText,
+  Input,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -122,7 +123,7 @@ export function IdentityDisplayFields({
         <InfoRow
           label={t('deviceDisplay.label')}
           value={
-            <input
+            <Input
               type="text"
               className={FIELD_CLASS}
               aria-label={t('deviceDisplay.label')}

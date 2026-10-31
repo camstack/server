@@ -61,6 +61,8 @@ import {
   useRecordingArchivePruneFootage,
   useStorageListLocations,
   WidgetMetricCard,
+  Button,
+  Select,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { HardDrive, Loader2, Scissors, Trash2 } from 'lucide-react'
@@ -311,7 +313,8 @@ export function StorageSection() {
         align: 'right',
         render: (r) => (
           <div className="flex items-center justify-end gap-1">
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => {
                 void handlePrune(r)
               }}
@@ -324,8 +327,9 @@ export function StorageSection() {
             >
               <Scissors className="h-3 w-3" />
               {t('recordings.storageSection.prune2', 'Prune')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="unstyled"
               onClick={() => {
                 void handleDelete(r)
               }}
@@ -335,7 +339,7 @@ export function StorageSection() {
             >
               <Trash2 className="h-3 w-3" />
               {t('common.delete', 'Delete')}
-            </button>
+            </Button>
           </div>
         ),
       },
@@ -444,21 +448,21 @@ export function StorageSection() {
         <label htmlFor="prune-reason" className="text-foreground-subtle">
           {t('recordings.storageSection.pruneReason', 'Prune reason')}
         </label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           id="prune-reason"
           value={reason}
           onChange={(e) => {
             const next = PRUNE_REASONS.find((r) => r.value === e.target.value)
             if (next) setReason(next.value)
           }}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-foreground"
         >
           {PRUNE_REASONS.map((r) => (
             <option key={r.value} value={r.value}>
               {t(r.labelKey)}
             </option>
           ))}
-        </select>
+        </Select>
       </section>
 
       {/* Per-camera usage + actions */}

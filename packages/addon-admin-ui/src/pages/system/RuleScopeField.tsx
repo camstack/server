@@ -24,6 +24,7 @@
 
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 import {
   RULE_SCOPE_MODES,
   type RuleScopeDraft,
@@ -112,7 +113,8 @@ export function RuleScopeField<Id extends RuleScopeId>({
         {modes.map((mode) => {
           const active = mode === draft.mode
           return (
-            <button
+            <Button
+              variant="unstyled"
               key={mode}
               type="button"
               role="radio"
@@ -126,7 +128,7 @@ export function RuleScopeField<Id extends RuleScopeId>({
               }
             >
               {t(`ruleScope.mode.${mode}`, RULE_SCOPE_MODE_LABEL[mode])}
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -148,13 +150,14 @@ export function RuleScopeField<Id extends RuleScopeId>({
             'This rule also excludes {{items}} — kept when you save.',
             legacy.map(describe).join(', '),
           )}{' '}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             className="underline hover:no-underline"
             onClick={() => onChange(removeRuleScopeExclusions(draft))}
           >
             {t('ruleScope.removeExclusions', 'Remove exclusions')}
-          </button>
+          </Button>
         </p>
       )}
       {cleared.length > 0 && (

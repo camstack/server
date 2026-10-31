@@ -13,6 +13,7 @@ import {
   useConfirm,
   usePipelineOrchestratorGetReconcileFromDiskStatus,
   usePipelineOrchestratorReconcileFromDisk,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { HardDrive, Loader2 } from 'lucide-react'
@@ -77,7 +78,8 @@ export function DiskReconcileSection() {
         )}
       </p>
       <div className="mt-3 flex flex-col gap-2">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void handleReconcile()}
           disabled={busy}
@@ -89,7 +91,7 @@ export function DiskReconcileSection() {
             <HardDrive className="h-3.5 w-3.5" />
           )}
           {label}
-        </button>
+        </Button>
         {job?.state === 'done' ? (
           <p className="text-[11px] text-foreground-subtle">
             {t('recordings.diskReconcileSection.lastRun', 'Last run:')}{' '}

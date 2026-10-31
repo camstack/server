@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Bell, Footprints } from 'lucide-react'
 import { CameraEventsTab } from '../../cameras/tabs/CameraEventsTab'
 import { TracksTab } from './TracksTab'
+import { Button } from '@camstack/ui-library'
 
 interface EventsAndTrailsTabProps {
   /** Numeric device handle — passed verbatim to every downstream tab. */
@@ -28,7 +29,8 @@ export function EventsAndTrailsTab({ deviceId }: EventsAndTrailsTabProps) {
         {VIEWS.map(({ id, labelKey, icon: Icon }) => {
           const isActive = activeView === id
           return (
-            <button
+            <Button
+              variant="unstyled"
               key={id}
               onClick={() => setActiveView(id)}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors ${
@@ -39,7 +41,7 @@ export function EventsAndTrailsTab({ deviceId }: EventsAndTrailsTabProps) {
             >
               <Icon className="h-3.5 w-3.5" />
               {t(labelKey)}
-            </button>
+            </Button>
           )
         })}
       </div>

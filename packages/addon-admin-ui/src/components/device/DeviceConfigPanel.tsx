@@ -12,6 +12,7 @@ import { useDeviceConfig, useUpdateDeviceConfig } from '../../hooks/useDevice.js
 import type { ConfigUISchema } from '../../types/config-ui.js'
 import type { DeviceConfigEntry } from '../../hooks/useDevice.js'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Adapter: serialized config entries → ConfigUISchema
@@ -158,7 +159,8 @@ export function DeviceConfigPanel({
     <div className="space-y-3">
       {dirty && (
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="unstyled"
             onClick={handleSave}
             disabled={updateConfig.isPending}
             className="inline-flex items-center gap-1 rounded px-2.5 py-1 text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
@@ -167,7 +169,7 @@ export function DeviceConfigPanel({
             {updateConfig.isPending
               ? t('device.deviceConfigPanel.saving', 'Saving...')
               : t('common.save', 'Save')}
-          </button>
+          </Button>
         </div>
       )}
       <FormBuilder

@@ -43,47 +43,59 @@ interface ErrorBoxProps {
   readonly onRetry?: () => void
 }
 
-vi.mock('@camstack/ui-library', () => ({
-  useSystem: () => ({
-    trpcClient: {
-      capabilities: {
-        listCapabilities: { query: mockListCapabilities },
-        setActiveSingleton: { mutate: mockSetActiveSingleton },
-        setCollectionEnabledProviders: { mutate: mockSetCollectionEnabled },
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useSystem: () => ({
+      trpcClient: {
+        capabilities: {
+          listCapabilities: { query: mockListCapabilities },
+          setActiveSingleton: { mutate: mockSetActiveSingleton },
+          setCollectionEnabledProviders: { mutate: mockSetCollectionEnabled },
+        },
       },
-    },
-  }),
-  ErrorBox: ({ title, message, onRetry }: ErrorBoxProps) => (
-    <div data-testid="error-box">
-      <span>{title}</span>
-      <span>{message}</span>
-      {onRetry && (
-        <button type="button" onClick={onRetry}>
-          Retry
-        </button>
-      )}
-    </div>
-  ),
-  // AdminPage wraps library PageShell after the composite-patterns migration.
-  PageShell: ({
-    children,
-    title,
-    actions,
-    nav,
-  }: {
-    children: ReactNode
-    title?: string
-    actions?: ReactNode
-    nav?: ReactNode
-  }) => (
-    <div>
-      {title !== undefined && title !== '' ? <h1>{title}</h1> : null}
-      {actions}
-      {nav}
-      {children}
-    </div>
-  ),
-}))
+    }),
+    ErrorBox: ({ title, message, onRetry }: ErrorBoxProps) => (
+      <div data-testid="error-box">
+        <span>{title}</span>
+        <span>{message}</span>
+        {onRetry && (
+          <button type="button" onClick={onRetry}>
+            Retry
+          </button>
+        )}
+      </div>
+    ),
+    // AdminPage wraps library PageShell after the composite-patterns migration.
+    PageShell: ({
+      children,
+      title,
+      actions,
+      nav,
+    }: {
+      children: ReactNode
+      title?: string
+      actions?: ReactNode
+      nav?: ReactNode
+    }) => (
+      <div>
+        {title !== undefined && title !== '' ? <h1>{title}</h1> : null}
+        {actions}
+        {nav}
+        {children}
+      </div>
+    ),
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Import page AFTER mocks

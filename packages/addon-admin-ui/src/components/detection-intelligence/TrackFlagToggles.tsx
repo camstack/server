@@ -26,7 +26,7 @@
  */
 import { useState, type JSX } from 'react'
 import { GraduationCap, Bug, Star } from 'lucide-react'
-import { useAlert } from '@camstack/ui-library'
+import { useAlert, Button } from '@camstack/ui-library'
 import {
   TRACK_FLAGS_AVAILABLE,
   TRACK_FLAGS_UNAVAILABLE_TITLE,
@@ -68,7 +68,8 @@ function FlagSwitch({
   onToggle,
 }: FlagSwitchProps): JSX.Element {
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       role="switch"
       aria-checked={checked}
@@ -93,7 +94,7 @@ function FlagSwitch({
           className={`block h-3 w-3 rounded-full bg-white transition-transform ${checked ? 'translate-x-3' : ''}`}
         />
       </span>
-    </button>
+    </Button>
   )
 }
 

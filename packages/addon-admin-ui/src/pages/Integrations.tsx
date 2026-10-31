@@ -38,6 +38,7 @@ import {
   useSystem,
   ViewSwitch,
   type ViewSwitchOption,
+  Button,
 } from '@camstack/ui-library'
 import { LayoutGrid, Plug, Plus, Radar, RefreshCw, Table2 } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
@@ -389,29 +390,32 @@ export function IntegrationsPage(): ReactNode {
             options={viewOptions}
             testId="integrations-view"
           />
-          <button
+          <Button
+            variant="unstyled"
             onClick={handleRefresh}
             disabled={awaiting}
             className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw className={cn('h-3.5 w-3.5', awaiting && 'animate-spin')} />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             onClick={handleOpenScan}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
             title={t('integrations.scanTheLocalNetworkFor', 'Scan the local network for devices')}
           >
             <Radar className="h-3.5 w-3.5" />
             {t('integrations.scanNetwork', 'Scan network')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             onClick={handleOpenWizard}
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm"
           >
             <Plus className="h-3.5 w-3.5" />
             {t('integrations.newIntegration', 'New Integration')}
-          </button>
+          </Button>
         </>
       }
     >

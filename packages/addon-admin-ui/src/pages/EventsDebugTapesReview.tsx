@@ -8,7 +8,7 @@
  * hit its `limit` says so on screen — `truncatedMarksNotice` — rather than
  * silently showing fewer badges than the window actually has.
  */
-import { Badge, Button, ErrorBox, Input } from '@camstack/ui-library'
+import { Badge, Button, ErrorBox, Input, Checkbox } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { type JSX, useState } from 'react'
 import { mediaOwnerPath, useAuthedImage } from '../lib/authed-media'
@@ -209,8 +209,7 @@ function LaneRow({ lane, marks, selected, onToggle }: LaneRowProps): JSX.Element
   )
   return (
     <li className="flex items-center gap-2 text-xs">
-      <input
-        type="checkbox"
+      <Checkbox
         aria-label={t('eventsDebugTapesReview.select', 'select {{trackId}}', {
           trackId: lane.trackId,
         })}

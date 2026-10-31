@@ -2,6 +2,7 @@ import { useRef, useCallback, useState } from 'react'
 import { Upload, Loader2 } from 'lucide-react'
 import { hubPath } from '../../lib/mount'
 import { useTranslation } from 'react-i18next'
+import { Button, FileInput } from '@camstack/ui-library'
 
 interface AddonUploadZoneProps {
   onUploadSuccess: () => void
@@ -47,14 +48,14 @@ export function AddonUploadZone({ onUploadSuccess }: AddonUploadZoneProps) {
 
   return (
     <>
-      <input
+      <FileInput
         ref={fileInputRef}
-        type="file"
         accept={ACCEPT_MIME}
         onChange={handleFileSelect}
         className="hidden"
       />
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
@@ -68,7 +69,7 @@ export function AddonUploadZone({ onUploadSuccess }: AddonUploadZoneProps) {
         {uploading
           ? t('addons.addonUploadZone.uploading', 'Uploading...')
           : t('addons.addonUploadZone.upload', 'Upload')}
-      </button>
+      </Button>
     </>
   )
 }

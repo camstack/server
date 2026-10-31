@@ -125,14 +125,15 @@ export function ExternalIdentitiesModal({
                         {new Date(link.linkedAt).toLocaleDateString()}
                       </div>
                     </div>
-                    <button
+                    <Button
+                      variant="unstyled"
                       onClick={() => void handleUnlink(link, label)}
                       disabled={unlink.isPending}
                       className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] text-danger hover:bg-danger/10 disabled:opacity-50"
                     >
                       <Unlink className="h-3 w-3" />
                       {t('common.remove', 'Remove')}
-                    </button>
+                    </Button>
                   </li>
                 )
               })}

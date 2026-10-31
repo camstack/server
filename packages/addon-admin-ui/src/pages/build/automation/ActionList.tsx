@@ -20,7 +20,7 @@
  */
 
 import type { AutomationAction } from '@camstack/types'
-import { Badge, Button, Input, Select, type DeviceListState } from '@camstack/ui-library'
+import { Badge, Button, Input, Select, type DeviceListState, Textarea } from '@camstack/ui-library'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
@@ -142,7 +142,7 @@ export function ActionList({
           {action.kind === 'code' && (
             <label className="block">
               <PickerLabel>{t('automation.actionList.code', 'Code')}</PickerLabel>
-              <textarea
+              <Textarea
                 className="h-32 w-full rounded-md border border-border bg-surface p-2 font-mono text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 value={action.code}
                 spellCheck={false}

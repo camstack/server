@@ -309,7 +309,8 @@ export function PlateDetailPanel({
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3">
           {hasFrame && (
             <div className="flex items-center gap-1 rounded-md border border-border p-0.5 text-xs">
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setMode('frame')}
                 className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 transition-colors ${
@@ -319,8 +320,9 @@ export function PlateDetailPanel({
                 }`}
               >
                 <Scan className="h-3.5 w-3.5" /> {t('detectionIntelligence.detailPanel.fullFrame')}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setMode('crop')}
                 className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 transition-colors ${
@@ -330,7 +332,7 @@ export function PlateDetailPanel({
                 }`}
               >
                 <Crop className="h-3.5 w-3.5" /> {t('detectionIntelligence.detailPanel.crop')}
-              </button>
+              </Button>
             </div>
           )}
 
@@ -393,7 +395,8 @@ export function PlateDetailPanel({
                     className="h-7 max-w-[10rem] text-right font-mono text-xs uppercase"
                     autoFocus
                   />
-                  <button
+                  <Button
+                    variant="unstyled"
                     type="button"
                     onClick={saveText}
                     disabled={correctText.isPending}
@@ -408,18 +411,20 @@ export function PlateDetailPanel({
                     ) : (
                       <Check className="h-3.5 w-3.5" />
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
                     type="button"
                     onClick={() => setEditingText(false)}
                     className="text-foreground-subtle hover:text-foreground"
                     aria-label={t('common.cancel', 'Cancel')}
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={startEditText}
                   className="group flex min-w-0 items-center gap-1.5"
@@ -432,7 +437,7 @@ export function PlateDetailPanel({
                     {plate.text || '—'}
                   </span>
                   <Pencil className="h-3 w-3 shrink-0 text-foreground-subtle group-hover:text-foreground" />
-                </button>
+                </Button>
               )}
             </div>
           </div>

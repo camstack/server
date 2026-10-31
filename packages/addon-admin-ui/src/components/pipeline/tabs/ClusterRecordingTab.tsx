@@ -18,6 +18,7 @@ import {
   useClusterNodes,
   useAddonSettingsGetGlobalSettings,
   useAddonSettingsUpdateGlobalSettings,
+  Select,
 } from '@camstack/ui-library'
 import { StorageLocationsPanel } from './StorageLocationsPanel'
 import { Trans, useTranslation } from 'react-i18next'
@@ -83,7 +84,8 @@ export function ClusterRecordingTab() {
           {settingsLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-foreground-subtle" />
           ) : (
-            <select
+            <Select
+              wrapperClassName="inline-block w-auto"
               value={currentNode}
               onChange={(e) => {
                 if (e.target.value !== currentNode)
@@ -93,7 +95,6 @@ export function ClusterRecordingTab() {
                   })
               }}
               disabled={updateGlobal.isPending}
-              className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-foreground"
             >
               {nodeOptions.map((id) => (
                 <option key={id} value={id}>
@@ -102,7 +103,7 @@ export function ClusterRecordingTab() {
                     : id}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
           {updateGlobal.isPending && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
         </div>

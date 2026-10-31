@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { StatusBadge } from '@camstack/ui-library'
+import {
+  StatusBadge,
+  Button,
+  Checkbox,
+  Input,
+  Slider,
+  Textarea,
+  Select,
+} from '@camstack/ui-library'
 import { CapabilityBadges } from '../components/shared/CapabilityBadges'
 import { ProviderIcon } from '../components/shared/ProviderIcon'
 import { FormBuilder } from '../components/form-builder/FormBuilder'
@@ -156,27 +164,43 @@ export function ShowroomPage() {
       {/* ------------------------------------------------------------------ */}
       <Section title="Buttons">
         <div className="flex flex-wrap gap-3">
-          <button className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity">
+          <Button
+            variant="unstyled"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          >
             Primary
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-hover transition-colors">
+          </Button>
+          <Button
+            variant="unstyled"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-hover transition-colors"
+          >
             Secondary
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-4 py-2 text-sm font-medium text-danger hover:bg-danger/20 transition-colors">
+          </Button>
+          <Button
+            variant="unstyled"
+            className="inline-flex items-center gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-4 py-2 text-sm font-medium text-danger hover:bg-danger/20 transition-colors"
+          >
             Danger
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             disabled
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white opacity-40 cursor-not-allowed"
           >
             Disabled
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-4 py-2 text-sm font-medium text-warning hover:bg-warning/20 transition-colors">
+          </Button>
+          <Button
+            variant="unstyled"
+            className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-4 py-2 text-sm font-medium text-warning hover:bg-warning/20 transition-colors"
+          >
             Warning
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 px-4 py-2 text-sm font-medium text-success hover:bg-success/20 transition-colors">
+          </Button>
+          <Button
+            variant="unstyled"
+            className="inline-flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 px-4 py-2 text-sm font-medium text-success hover:bg-success/20 transition-colors"
+          >
             Success
-          </button>
+          </Button>
         </div>
       </Section>
 
@@ -187,7 +211,7 @@ export function ShowroomPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Text input</label>
-            <input
+            <Input
               type="text"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
               placeholder="Type something..."
@@ -195,7 +219,7 @@ export function ShowroomPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Number input</label>
-            <input
+            <Input
               type="number"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
               placeholder="0"
@@ -203,7 +227,7 @@ export function ShowroomPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Password input</label>
-            <input
+            <Input
               type="password"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
               placeholder="••••••••"
@@ -211,15 +235,15 @@ export function ShowroomPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Select</label>
-            <select className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30">
+            <Select className="w-full">
               <option>Option A</option>
               <option>Option B</option>
               <option>Option C</option>
-            </select>
+            </Select>
           </div>
           <div className="md:col-span-2">
             <label className="block text-xs font-medium text-foreground mb-1">Textarea</label>
-            <textarea
+            <Textarea
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 resize-y min-h-[60px]"
               placeholder="Enter multi-line text..."
               rows={3}
@@ -227,8 +251,7 @@ export function ShowroomPage() {
           </div>
           <div>
             <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
+              <Checkbox
                 className="h-3.5 w-3.5 rounded border-border accent-primary"
                 defaultChecked
               />
@@ -243,8 +266,7 @@ export function ShowroomPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground mb-1">Slider</label>
-            <input
-              type="range"
+            <Slider
               className="w-full h-1 accent-primary cursor-pointer"
               min={0}
               max={100}
@@ -402,7 +424,8 @@ export function ShowroomPage() {
 function ToggleDemo() {
   const [on, setOn] = useState(true)
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       role="switch"
       aria-checked={on}
@@ -418,6 +441,6 @@ function ToggleDemo() {
           on ? 'translate-x-4' : 'translate-x-0.5',
         ].join(' ')}
       />
-    </button>
+    </Button>
   )
 }

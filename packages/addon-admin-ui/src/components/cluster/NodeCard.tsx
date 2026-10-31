@@ -325,7 +325,8 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
           </span>
           <div className="flex shrink-0 items-center gap-2">
             {unpairButton}
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => void handleForget()}
               disabled={forgetting}
@@ -339,7 +340,7 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
               {forgetting
                 ? t('cluster.nodeCard.forgetting', 'Forgetting…')
                 : t('cluster.nodeCard.forgetNode', 'Forget node')}
-            </button>
+            </Button>
           </div>
         </div>
         {forgetOutcome != null && (
@@ -393,7 +394,8 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
         ))}
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground w-full sm:ml-auto sm:w-auto">
           {!node.isHub && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => void handleOpenDashboard()}
               disabled={openingDashboard}
@@ -407,7 +409,7 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
               {openingDashboard
                 ? t('cluster.nodeCard.opening', 'Opening…')
                 : t('cluster.nodeCard.openDashboard', 'Open dashboard')}
-            </button>
+            </Button>
           )}
           {unpairButton}
           <span className="flex items-center gap-1">
@@ -455,7 +457,8 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
       <div className="sticky top-0 z-20 flex border-b border-border px-4 bg-background overflow-x-auto">
         {(['info', 'forks', 'processes', 'load', 'settings', 'capabilities'] as const).map(
           (tab) => (
-            <button
+            <Button
+              variant="unstyled"
               key={tab}
               onClick={() => setActiveTab(tab)}
               // `shrink-0 whitespace-nowrap`: inside the horizontally
@@ -478,7 +481,7 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
                       : tab === 'settings'
                         ? t('cluster.nodeCard.settings', 'Settings')
                         : t('cluster.nodeCard.capabilities', 'Capabilities')}
-            </button>
+            </Button>
           ),
         )}
       </div>

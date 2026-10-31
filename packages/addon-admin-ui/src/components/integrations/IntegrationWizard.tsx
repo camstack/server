@@ -16,6 +16,7 @@ import {
   useDeviceManagerDiscoveryProviders,
   useIntegrationsCreate,
   useIntegrationsGetAvailableTypes,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
@@ -507,12 +508,13 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
                         'This is taking longer than expected. The integration may already have been created — close this dialog and refresh to check.',
                     })}
                   </p>
-                  <button
+                  <Button
+                    variant="unstyled"
                     onClick={handleClose}
                     className="mt-1 rounded-md border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-surface-hover transition-colors"
                   >
                     {t('integrations.closeAndRefresh', { defaultValue: 'Close' })}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

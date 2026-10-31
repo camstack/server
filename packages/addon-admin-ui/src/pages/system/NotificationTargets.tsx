@@ -40,6 +40,7 @@ import {
   useItemFormUrl,
   useSystem,
   useUrlQueryParam,
+  Input,
 } from '@camstack/ui-library'
 import type { DataColumn } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -811,7 +812,7 @@ function TargetForm({
           <label className="block text-[11px] font-medium text-foreground mb-1">
             {t('system.notificationTargets.name', 'Name')}
           </label>
-          <input
+          <Input
             className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none"
             value={name}
             onChange={(e) => {

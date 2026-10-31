@@ -25,6 +25,7 @@ import {
   useConfirm,
   useDeviceManagerListAll,
   usePipelineAnalyticsListEventKindsBatch,
+  Slider,
 } from '@camstack/ui-library'
 import {
   filterKeyEvents,
@@ -310,8 +311,7 @@ export function EventsSection(): JSX.Element {
         {/* Min-importance slider */}
         <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
           <span>{t('detectionIntelligence.eventsSection.minScore', 'Min score')}</span>
-          <input
-            type="range"
+          <Slider
             min={0}
             max={1}
             step={0.05}

@@ -21,6 +21,7 @@ import { sessionFromFragment, storeSession } from '../lib/admin-session'
 import { hubPath } from '../lib/mount'
 import { mountOauthLanding, oauthOutcomeOf } from './OauthLanding'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 const DONE_MESSAGE = 'Done — you can close this window.'
 /** How long a `window.close()` gets before the page says it is done instead. */
@@ -121,13 +122,14 @@ export function SsoCompletePage({
             >
               {result.message}
             </span>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               className="rounded-md border border-border px-3 py-1.5 text-foreground hover:bg-surface-hover"
               onClick={() => window.close()}
             >
               {t('ssoComplete.closeThisWindow', 'Close this window')}
-            </button>
+            </Button>
           </>
         ) : (
           <span className="flex items-center gap-3">

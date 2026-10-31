@@ -38,6 +38,8 @@ import {
   useConfirm,
   useDeviceManagerListAll,
   useDeviceManagerMigrateDevice,
+  Button,
+  Select,
 } from '@camstack/ui-library'
 
 import { buildMigrationReport, type MigrationReport } from './migrate-device-report'
@@ -150,9 +152,9 @@ export function MigrateDeviceCard({ deviceId, deviceName }: MigrateDeviceCardPro
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <select
+          <Select
+            wrapperClassName="inline-block w-auto"
             aria-label={t('deviceMigrate.pickerLabel', 'Replacement camera')}
-            className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground disabled:opacity-50"
             disabled={!answered || targets.length === 0 || migrate.isPending}
             value={targetId === null ? '' : String(targetId)}
             onChange={(event) => {
@@ -170,8 +172,9 @@ export function MigrateDeviceCard({ deviceId, deviceName }: MigrateDeviceCardPro
                 {candidate.name} (#{candidate.id})
               </option>
             ))}
-          </select>
-          <button
+          </Select>
+          <Button
+            variant="unstyled"
             type="button"
             disabled={target === null || migrate.isPending}
             onClick={() => {
@@ -183,7 +186,7 @@ export function MigrateDeviceCard({ deviceId, deviceName }: MigrateDeviceCardPro
             {migrate.isPending
               ? t('deviceMigrate.running', 'Migrating…')
               : t('deviceMigrate.action', 'Migrate')}
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -24,6 +24,7 @@ import type { ClusterNodeOption } from './use-cameras-overview'
 import { CardBlock, Chip, KVRow, StageInactive } from './card-primitives'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
+import { Select } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Placement
@@ -155,12 +156,12 @@ export function PlacementBlock({
         overridden={false}
       />
       <div className="mt-1.5">
-        <select
+        <Select
           value={pinValue}
           disabled={pinPending}
           aria-label={t('cameras.configBlocks.detectionPlacementPin', 'Detection placement pin')}
           onChange={(event) => onDetectionPinChange(event.target.value)}
-          className="w-full min-w-0 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground disabled:opacity-50"
+          className="w-full min-w-0"
         >
           <option value="auto">
             {t('cameras.configBlocks.autoLoadBalanced', 'Auto (load balanced)')}
@@ -172,7 +173,7 @@ export function PlacementBlock({
               })}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
     </CardBlock>
   )

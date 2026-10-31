@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 /**
  * FormSaveBar — sticky-bottom Save/Discard bar for any FormBuilder-based
  * surface. Callers own the save routing (per-addon, device-batch, custom);
@@ -52,22 +53,24 @@ export function FormSaveBar({
         {t('formBuilder.saveBar.unsavedChanges', { count: pendingCount })}
       </span>
       <div className="flex items-center gap-2">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onDiscard}
           disabled={saving}
           className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs text-foreground-subtle hover:bg-surface-hover disabled:opacity-50"
         >
           {discardLabel}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onSave}
           disabled={saving}
           className="inline-flex items-center rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? t('formBuilder.formSaveBar.saving', 'Saving…') : saveLabel}
-        </button>
+        </Button>
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ import {
   usePipelineOrchestratorGetPipelineAssignments,
   usePipelineOrchestratorListAgentSettings,
   useUiText,
+  Button,
 } from '@camstack/ui-library'
 import { Cpu, Globe, Server, Video } from 'lucide-react'
 import { lastSeenToMs } from '../../lib/last-seen'
@@ -60,7 +61,8 @@ export function NodeList({ selectedNodeId, onSelect, refreshToken: _refreshToken
   return (
     <div className="flex flex-col h-full">
       {/* Synthetic Cluster entry */}
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => onSelect(CLUSTER_NODE_ID)}
         className={`flex items-center gap-3 px-4 py-3 border-b border-border text-left transition-colors ${
@@ -81,7 +83,7 @@ export function NodeList({ selectedNodeId, onSelect, refreshToken: _refreshToken
             )}
           </div>
         </div>
-      </button>
+      </Button>
 
       {/* Node rows */}
       <div className="flex-1 overflow-y-auto">
@@ -97,7 +99,8 @@ export function NodeList({ selectedNodeId, onSelect, refreshToken: _refreshToken
             ? null
             : formatLastSeen(lastSeenToMs(node.lastSeen), uiText)
           return (
-            <button
+            <Button
+              variant="unstyled"
               key={node.id}
               type="button"
               onClick={() => onSelect(node.id)}
@@ -177,7 +180,7 @@ export function NodeList({ selectedNodeId, onSelect, refreshToken: _refreshToken
                   </Badge>
                 </div>
               </div>
-            </button>
+            </Button>
           )
         })}
       </div>

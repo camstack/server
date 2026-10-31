@@ -46,6 +46,9 @@ import {
   useClusterNodes,
   useSystemGetLoggingSettings,
   useSystemSetLoggingSettings,
+  Button,
+  Input,
+  Select,
 } from '@camstack/ui-library'
 import type { LoggingLevelLayer, LogLevel } from '@camstack/types'
 import { AdminPage } from '../../components/AdminPage'
@@ -120,8 +123,8 @@ export function LogLevelsPage(): ReactElement {
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-foreground-subtle">
             {t('logging.levels.scope', 'Scope')}
-            <select
-              className="rounded border border-border bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
+            <Select
+              wrapperClassName="inline-block w-auto"
               value={scope}
               // A component level is cluster-wide; offering a node alongside it
               // would imply a per-node component value that does not exist.
@@ -134,12 +137,12 @@ export function LogLevelsPage(): ReactElement {
                   {n.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="flex items-center gap-2 text-xs text-foreground-subtle">
             {t('logging.levels.component', 'Component')}
-            <select
-              className="rounded border border-border bg-surface px-2 py-1 text-xs text-foreground"
+            <Select
+              wrapperClassName="inline-block w-auto"
               value={component}
               onChange={(e) => setComponent(e.target.value)}
             >
@@ -149,7 +152,7 @@ export function LogLevelsPage(): ReactElement {
                   {c.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
       }
@@ -235,7 +238,7 @@ function OpsLogRetention({
           {t('logging.levels.opsLogRetention', 'Retention audit trail')}
         </span>
         <span className="flex items-center gap-1.5">
-          <input
+          <Input
             type="number"
             min={0}
             max={3650}
@@ -340,7 +343,8 @@ function LayerRow({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {LEVELS.map((level) => (
-          <button
+          <Button
+            variant="unstyled"
             key={level}
             type="button"
             disabled={busy}
@@ -352,16 +356,17 @@ function LayerRow({
             }`}
           >
             {level}
-          </button>
+          </Button>
         ))}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={busy || layer.level === null}
           onClick={onClear}
           className="rounded border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground disabled:opacity-40"
         >
           {t('logging.levels.clear', 'Clear')}
-        </button>
+        </Button>
       </div>
     </div>
   )

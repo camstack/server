@@ -41,18 +41,30 @@ function statusFor(_isHub: boolean) {
   }
 }
 
-vi.mock('@camstack/ui-library', () => ({
-  useServerManagementGetServerPackageStatus: (input: { nodeId?: string } | undefined) => ({
-    data: statusFor(input?.nodeId == null),
-    isLoading: false,
-    isError: false,
-  }),
-  useServerManagementCheckServerUpdate: () => ({ mutate: checkSpy, isPending: false }),
-  useServerManagementApplyServerUpdate: () => ({ mutateAsync: applySpy, isPending: false }),
-  useServerManagementRollbackServerUpdate: () => ({ mutateAsync: rollbackSpy, isPending: false }),
-  useServerManagementRestartServer: () => ({ mutateAsync: restartSpy, isPending: false }),
-  useConfirm: () => vi.fn().mockResolvedValue(true),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useServerManagementGetServerPackageStatus: (input: { nodeId?: string } | undefined) => ({
+      data: statusFor(input?.nodeId == null),
+      isLoading: false,
+      isError: false,
+    }),
+    useServerManagementCheckServerUpdate: () => ({ mutate: checkSpy, isPending: false }),
+    useServerManagementApplyServerUpdate: () => ({ mutateAsync: applySpy, isPending: false }),
+    useServerManagementRollbackServerUpdate: () => ({ mutateAsync: rollbackSpy, isPending: false }),
+    useServerManagementRestartServer: () => ({ mutateAsync: restartSpy, isPending: false }),
+    useConfirm: () => vi.fn().mockResolvedValue(true),
+  }
+})
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { X, Info, AlertTriangle, AlertCircle } from 'lucide-react'
 import type { Toast } from '@camstack/types'
-import { useToastOnToast } from '@camstack/ui-library'
+import { useToastOnToast, Button } from '@camstack/ui-library'
 import { subscribeToasts } from './toast-bus'
 
 interface ToastItem {
@@ -39,13 +39,14 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
         <div className="text-xs font-semibold text-foreground">{toast.title}</div>
         <div className="text-[11px] text-foreground-subtle mt-0.5">{toast.message}</div>
       </div>
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => onDismiss(toast.id)}
         className="shrink-0 p-0.5 rounded hover:bg-surface-hover transition-colors"
       >
         <X className="h-3.5 w-3.5 text-foreground-subtle" />
-      </button>
+      </Button>
     </div>
   )
 }

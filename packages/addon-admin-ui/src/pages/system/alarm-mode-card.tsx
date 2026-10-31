@@ -27,7 +27,7 @@ import {
   resolveModeDelays,
   resolveModeNotifyPolicy,
 } from '@camstack/types'
-import { Badge, Button, Switch } from '@camstack/ui-library'
+import { Badge, Button, Switch, Select } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { Loader2, RotateCcw } from 'lucide-react'
 import { ALARM_DELAY_META, DelayField } from './alarm-delay-field'
@@ -343,8 +343,8 @@ function ModeDelays({
               </Button>
             )}
           </label>
-          <select
-            className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-xs"
+          <Select
+            className="mt-1 w-full"
             value={resolved.postTriggeredAction}
             disabled={disabled}
             data-testid={`alarm-delay-${mode}-post`}
@@ -358,7 +358,7 @@ function ModeDelays({
                 {t(opt.labelKey)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         {showAfterSec
           ? ALARM_DELAY_META.filter((meta) => meta.field === 'triggeredDurationSec').map((meta) => {

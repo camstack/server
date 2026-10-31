@@ -13,7 +13,7 @@
  * with the live feed for attention.
  */
 
-import { useDeviceManagerListAll } from '@camstack/ui-library'
+import { useDeviceManagerListAll, Button } from '@camstack/ui-library'
 import { ChevronDown, ChevronRight, ParkingSquare } from 'lucide-react'
 import { type JSX, useMemo, useState } from 'react'
 import { mediaIdPath, useAuthedImage } from '../../lib/authed-media.js'
@@ -111,7 +111,8 @@ export function StationarySection(): JSX.Element | null {
 
   return (
     <div className="rounded-md border border-border bg-surface/40">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-2 px-3 py-2 text-left"
@@ -139,7 +140,7 @@ export function StationarySection(): JSX.Element | null {
             {t('detectionIntelligence.stationarySection.unreadable', { count: unreadableCount })}
           </span>
         ) : null}
-      </button>
+      </Button>
       {open && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 p-3 pt-0">
           {rows.map((row) => (

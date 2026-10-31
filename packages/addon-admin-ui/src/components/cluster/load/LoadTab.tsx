@@ -42,7 +42,7 @@ import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Search, X } from 'lucide-react'
 import { formatBytes } from '../../../lib/format-size'
 import { SingleLineChart, StackedCpuChart } from './LoadChart'
-import { gapThresholdMs, useSearchFieldHotkey } from '@camstack/ui-library'
+import { gapThresholdMs, useSearchFieldHotkey, Button, Input } from '@camstack/ui-library'
 import { ROOT_BUCKET_KEY, UNATTRIBUTED_BUCKET_KEY, type LoadSeries } from './load-series'
 import {
   DEFAULT_LOAD_SORT,
@@ -152,7 +152,7 @@ export function LoadTab({ nodeId, isHub }: LoadTabProps) {
           <div className="flex flex-wrap items-center gap-2">
             <label className="relative flex-1 min-w-[160px]">
               <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-foreground-subtle" />
-              <input
+              <Input
                 ref={searchFieldRef}
                 type="search"
                 value={search}
@@ -173,7 +173,8 @@ export function LoadTab({ nodeId, isHub }: LoadTabProps) {
             {series.map((s) => {
               const on = selectedKeys.has(s.key)
               return (
-                <button
+                <Button
+                  variant="unstyled"
                   key={s.key}
                   type="button"
                   aria-pressed={on}
@@ -185,18 +186,19 @@ export function LoadTab({ nodeId, isHub }: LoadTabProps) {
                   }`}
                 >
                   {labelFor(s)}
-                </button>
+                </Button>
               )
             })}
             {selectedKeys.size > 0 && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setSelectedKeys(new Set())}
                 className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] text-foreground-subtle hover:text-foreground"
               >
                 <X className="h-2.5 w-2.5" />
                 {t('clusterLoad.clearFilter', 'All runners')}
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -329,7 +331,8 @@ function SortControl({
       {options.map((option) => {
         const active = sort.key === option.key
         return (
-          <button
+          <Button
+            variant="unstyled"
             key={option.key}
             type="button"
             aria-pressed={active}
@@ -351,7 +354,7 @@ function SortControl({
           >
             {option.label}
             {active && (sort.dir === 'desc' ? ' ↓' : ' ↑')}
-          </button>
+          </Button>
         )
       })}
     </div>

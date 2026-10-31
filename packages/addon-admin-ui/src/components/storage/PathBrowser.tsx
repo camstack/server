@@ -12,7 +12,7 @@
  * we then fall back to the old chips rather than showing none.
  */
 
-import { useSystem } from '@camstack/ui-library'
+import { useSystem, Button, Input } from '@camstack/ui-library'
 import { useCallback, useEffect, useState } from 'react'
 import { derivePathChips } from './path-chips'
 import { useTranslation } from 'react-i18next'
@@ -125,19 +125,20 @@ export function PathBrowser({ nodeId, value, onChange }: PathBrowserProps) {
     <div className="space-y-2 rounded border border-border p-2">
       <div className="flex flex-wrap gap-1">
         {chips.map((r) => (
-          <button
+          <Button
+            variant="unstyled"
             key={r}
             onClick={() => void browse(r, true)}
             className="rounded border border-border px-2 py-0.5 text-[10px] font-mono hover:border-primary/40"
           >
             {r}
-          </button>
+          </Button>
         ))}
       </div>
       {/* Manual path entry — always available, and the only way to set a path
           when the node can't be browsed remotely. Committed on change so the
           stored value stays in sync. */}
-      <input
+      <Input
         value={current}
         onChange={(ev) => {
           setCurrent(ev.target.value)
@@ -156,28 +157,30 @@ export function PathBrowser({ nodeId, value, onChange }: PathBrowserProps) {
       )}
       <div className="max-h-40 space-y-0.5 overflow-y-auto">
         {result?.entries.map((e) => (
-          <button
+          <Button
+            variant="unstyled"
             key={e.path}
             onClick={() => void browse(e.path, true)}
             className="block w-full truncate rounded px-2 py-1 text-left text-xs hover:bg-primary/5"
           >
             📁 {e.name}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex gap-1">
-        <input
+        <Input
           value={newName}
           onChange={(ev) => setNewName(ev.target.value)}
           placeholder={t('storage.pathBrowser.newFolder', 'new folder')}
           className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs"
         />
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => void createFolder()}
           className="rounded border border-border px-2 py-1 text-xs hover:border-primary/40"
         >
           {t('storage.pathBrowser.create', 'Create')}
-        </button>
+        </Button>
       </div>
       {error && <div className="text-[10px] text-red-400">{error}</div>}
     </div>

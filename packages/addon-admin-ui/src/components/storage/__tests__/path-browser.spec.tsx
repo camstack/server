@@ -9,17 +9,29 @@ expect.extend(jestDomMatchers)
 const browseQuery = vi.fn()
 const listAllowedRootsQuery = vi.fn()
 
-vi.mock('@camstack/ui-library', () => ({
-  useSystem: () => ({
-    trpcClient: {
-      filesystemBrowse: {
-        browse: { query: browseQuery },
-        listAllowedRoots: { query: listAllowedRootsQuery },
-        createDir: { mutate: vi.fn() },
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useSystem: () => ({
+      trpcClient: {
+        filesystemBrowse: {
+          browse: { query: browseQuery },
+          listAllowedRoots: { query: listAllowedRootsQuery },
+          createDir: { mutate: vi.fn() },
+        },
       },
-    },
-  }),
-}))
+    }),
+  }
+})
 
 import { PathBrowser } from '../PathBrowser'
 

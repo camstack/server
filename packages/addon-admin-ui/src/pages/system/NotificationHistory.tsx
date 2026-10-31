@@ -354,13 +354,14 @@ export function NotificationHistoryPage() {
                 'The history query is not available on this hub yet. It becomes queryable after the next server update ships the notification-center history endpoint. Rules still deliver and record their outcome in the meantime.',
               )}
             </p>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => void historyQuery.refetch()}
               className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[11px] text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
             >
               <RefreshCw className="h-3 w-3" /> {t('common.retry')}
-            </button>
+            </Button>
           </div>
         </Card>
       )}

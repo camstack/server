@@ -34,6 +34,7 @@ import {
   PasswordInput,
   TABLE_SCROLL_MAX_H,
   type DataColumn,
+  Checkbox,
 } from '@camstack/ui-library'
 import { useAuth } from '../../contexts/auth-context'
 import { AdminPage } from '../../components/AdminPage'
@@ -520,8 +521,7 @@ export function UsersPage() {
               )}
             >
               <label className="inline-flex items-center gap-2 text-xs text-foreground cursor-pointer">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={draft.isAdmin}
                   onChange={(e) => setDraft({ ...draft, isAdmin: e.target.checked })}
                   className="rounded border-border focus:ring-primary"

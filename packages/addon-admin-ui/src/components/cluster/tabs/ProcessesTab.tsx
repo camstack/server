@@ -43,6 +43,7 @@ import {
   useEventStreamLatest,
   useMetricsProviderListNodeProcesses,
   type DataColumn,
+  Button,
 } from '@camstack/ui-library'
 import { formatBytes } from '../../../lib/format-size'
 import { PROCESS_CLASS_RANK, type ProcessClassification } from './process-class-rank'
@@ -204,7 +205,8 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
           read-only — that is enforced by the absence of any control, and by
           `__tests__/ProcessesTab.spec.tsx`, not by a sentence. */}
       <div className="flex items-start justify-end gap-4">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() =>
             queryClient.invalidateQueries({ queryKey: [['metricsProvider', 'listNodeProcesses']] })
@@ -212,7 +214,7 @@ export function ProcessesTab({ nodeId }: ProcessesTabProps) {
           className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-foreground hover:bg-surface-hover"
         >
           <RefreshCw className="h-3 w-3" /> {t('common.refresh')}
-        </button>
+        </Button>
       </div>
 
       {/* The standard sortable `DataTable`: an internally-scrolling body with a

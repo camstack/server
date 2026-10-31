@@ -30,6 +30,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const original = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     // The real glyph table — the login button resolves its icon through it (D780, D854).
+    Button: original.Button,
     resolveDisplayIcon: original.resolveDisplayIcon,
     useIconGlyphsVersion: original.useIconGlyphsVersion,
     loadIconGlyphs: original.loadIconGlyphs,

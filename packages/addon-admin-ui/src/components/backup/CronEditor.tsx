@@ -23,7 +23,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useBackupPreviewSchedule } from '@camstack/ui-library'
+import { useBackupPreviewSchedule, Button, Input } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 
@@ -141,7 +141,8 @@ export function CronEditor({
           {PRESETS.map((p) => {
             const isActive = !customForced && matchedPreset === p.id
             return (
-              <button
+              <Button
+                variant="unstyled"
                 key={p.id}
                 type="button"
                 onClick={() => handlePreset(p)}
@@ -159,10 +160,11 @@ export function CronEditor({
                 }
               >
                 {t(p.labelKey)}
-              </button>
+              </Button>
             )
           })}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               setCustomForced(true)
@@ -182,7 +184,7 @@ export function CronEditor({
             }
           >
             {t('backup.cronEditor.custom', 'Custom…')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -191,7 +193,7 @@ export function CronEditor({
           <div className="text-[10px] uppercase tracking-wide text-foreground-subtle">
             {t('backup.cronEditor.cronExpression5FieldPosix', 'Cron expression (5-field POSIX)')}
           </div>
-          <input
+          <Input
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}

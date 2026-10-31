@@ -51,7 +51,7 @@ import {
   patchAudio,
   toggleAudioLabel,
 } from '@camstack/types'
-import { EventKindGlyph, Input, Select } from '@camstack/ui-library'
+import { EventKindGlyph, Input, Select, Button, Slider } from '@camstack/ui-library'
 import { Activity, Search, X, type LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -153,14 +153,15 @@ export function TagListField({ value, placeholder, onChange }: TagListFieldProps
               className="inline-flex items-center gap-1 rounded bg-surface-hover px-1.5 py-0.5 text-[11px] text-foreground"
             >
               {v}
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => remove(v)}
                 aria-label={t('system.notificationConditionWidgets.remove', 'remove {{v}}', { v })}
                 className="text-foreground-subtle hover:text-danger"
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
             </span>
           ))}
         </div>
@@ -217,7 +218,8 @@ export function TaxonomyPickerField({ picker, value, onChange }: TaxonomyPickerF
       {custom.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {custom.map((v) => (
-            <button
+            <Button
+              variant="unstyled"
               key={v}
               type="button"
               onClick={() => onChange(value.filter((x) => x !== v))}
@@ -228,7 +230,7 @@ export function TaxonomyPickerField({ picker, value, onChange }: TaxonomyPickerF
               )}
             >
               {v} ×
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -241,7 +243,8 @@ export function TaxonomyPickerField({ picker, value, onChange }: TaxonomyPickerF
             {group.options.map((option) => {
               const on = selected.has(option.value)
               return (
-                <button
+                <Button
+                  variant="unstyled"
                   key={option.value}
                   type="button"
                   aria-pressed={on}
@@ -253,7 +256,7 @@ export function TaxonomyPickerField({ picker, value, onChange }: TaxonomyPickerF
                   }
                 >
                   {option.label}
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -293,8 +296,7 @@ export function NumberField({ value, min, max, step, onChange }: NumberFieldProp
         }}
       />
       {value !== undefined && max !== undefined && (
-        <input
-          type="range"
+        <Slider
           min={min}
           max={max}
           step={step}
@@ -578,13 +580,14 @@ export function OccupancyField({
           s
         </label>
         {value !== undefined ? (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => onChange(undefined)}
             className="underline hover:text-foreground"
           >
             {t('system.notificationConditionWidgets.clear', 'Clear')}
-          </button>
+          </Button>
         ) : null}
       </div>
       {deviceIds.length === 0 && (
@@ -671,7 +674,8 @@ export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
     <div className="mt-1 space-y-2">
       <div className="flex flex-wrap items-center gap-1">
         {NC_AUDIO_MODE_CHOICES.map((choice) => (
-          <button
+          <Button
+            variant="unstyled"
             key={choice.value}
             type="button"
             aria-pressed={mode === choice.value}
@@ -686,16 +690,17 @@ export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
               <choice.Icon className="h-3 w-3" />
               {t(choice.labelKey)}
             </span>
-          </button>
+          </Button>
         ))}
         {value !== undefined ? (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => onChange(undefined)}
             className="ml-1 text-xs text-foreground-subtle underline hover:text-foreground"
           >
             {t('system.notificationConditionWidgets.clear', 'Clear')}
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -710,7 +715,8 @@ export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
                   ? 'border-primary bg-primary/15 text-foreground'
                   : 'border-border text-foreground hover:bg-surface-hover'
               return (
-                <button
+                <Button
+                  variant="unstyled"
                   key={choice.value}
                   type="button"
                   aria-pressed={on}
@@ -733,7 +739,7 @@ export function AudioField({ taxonomy, value, onChange }: AudioFieldProps) {
                     <EventKindGlyph iconId={choice.iconId} size={12} />
                     {choice.label}
                   </span>
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -878,14 +884,15 @@ export function PlateMatcherField({ value, onChange }: PlateMatcherFieldProps) {
             {t('system.notificationConditionWidgets.seen', 'Seen:')}
           </span>
           {suggestions.slice(0, 12).map((t) => (
-            <button
+            <Button
+              variant="unstyled"
               key={t}
               type="button"
               onClick={() => setValues([...values, t])}
               className="rounded border border-border px-1.5 py-0.5 text-[10px] text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
             >
               {t}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -970,7 +977,8 @@ export function DeviceStateField({ gateable, value, onChange }: DeviceStateField
       {selected !== undefined && (
         <div className="flex flex-wrap gap-1.5">
           {selected.states.map((state) => (
-            <button
+            <Button
+              variant="unstyled"
               key={state}
               type="button"
               onClick={() => toggleState(state)}
@@ -981,7 +989,7 @@ export function DeviceStateField({ gateable, value, onChange }: DeviceStateField
               }
             >
               {label(state)}
-            </button>
+            </Button>
           ))}
         </div>
       )}

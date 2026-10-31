@@ -70,13 +70,14 @@ export function VersionPicker({
         <span className="text-[10px] uppercase tracking-wide text-foreground-subtle font-medium">
           {t('addons.versionPicker.versions', 'Versions')}
         </span>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onClose}
           className="text-foreground-subtle hover:text-foreground"
         >
           <X className="h-3 w-3" />
-        </button>
+        </Button>
       </div>
 
       {/* Source banner — visible only when the installed copy bypassed
@@ -167,7 +168,8 @@ export function VersionPicker({
             // the caller's Update button performs the install.
             if (onSelect) {
               return (
-                <button
+                <Button
+                  variant="unstyled"
                   key={v.version}
                   type="button"
                   aria-label={t('addons.versionPicker.select', 'Select {{version}}', {
@@ -182,7 +184,7 @@ export function VersionPicker({
                   ) : (
                     <span className="w-3 shrink-0" />
                   )}
-                </button>
+                </Button>
               )
             }
             return (
@@ -191,7 +193,8 @@ export function VersionPicker({
                 className={`flex items-center gap-2 px-3 py-2 text-[11px] ${isCurrent ? 'bg-primary/5' : 'hover:bg-surface-hover'} transition-colors`}
               >
                 {rowBody}
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={() => onInstall(v.version)}
                   className="shrink-0 rounded p-0.5 hover:bg-primary/20 text-foreground-subtle hover:text-primary transition-colors"
@@ -208,7 +211,7 @@ export function VersionPicker({
                   }
                 >
                   <Download className="h-3 w-3" />
-                </button>
+                </Button>
               </div>
             )
           })}

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useSystem } from '@camstack/ui-library'
+import { useSystem, Input } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 // ---------------------------------------------------------------------------
@@ -458,7 +458,7 @@ export function ReplTerminal({ scope, greeting, className }: ReplTerminalProps) 
         <span className="text-emerald-400 flex-shrink-0 select-none font-bold">
           {t('shared.replTerminal.text', '>')}
         </span>
-        <input
+        <Input
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}

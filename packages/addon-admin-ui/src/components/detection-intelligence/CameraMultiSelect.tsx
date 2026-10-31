@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, ChevronDown } from 'lucide-react'
 import type { CameraOption } from './types.js'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 interface CameraMultiSelectProps {
   readonly cameras: readonly CameraOption[]
@@ -54,7 +55,8 @@ export function CameraMultiSelect({ cameras, selected, onChange }: CameraMultiSe
 
   return (
     <div ref={ref} className="relative">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setOpen((o) => !o)}
         disabled={cameras.length === 0}
@@ -67,23 +69,25 @@ export function CameraMultiSelect({ cameras, selected, onChange }: CameraMultiSe
         <Camera className="h-3.5 w-3.5" />
         <span className="max-w-[10rem] truncate">{label}</span>
         <ChevronDown className="h-3 w-3 opacity-70" />
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute left-0 z-30 mt-1 max-h-64 w-[min(15rem,calc(100vw-1.5rem))] overflow-y-auto rounded-md border border-border bg-surface p-1 shadow-lg shadow-black/30">
           {count > 0 && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => onChange(new Set())}
               className="mb-1 w-full rounded px-2 py-1 text-left text-[11px] text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
             >
               {t('detectionIntelligence.cameraMultiSelect.clearSelection', 'Clear selection')}
-            </button>
+            </Button>
           )}
           {cameras.map((cam) => {
             const isSel = selected.has(cam.id)
             return (
-              <button
+              <Button
+                variant="unstyled"
                 key={cam.id}
                 type="button"
                 onClick={() => toggle(cam.id)}
@@ -99,7 +103,7 @@ export function CameraMultiSelect({ cameras, selected, onChange }: CameraMultiSe
                   {isSel && <Check className="h-2.5 w-2.5" />}
                 </span>
                 <span className="truncate">{cam.name}</span>
-              </button>
+              </Button>
             )
           })}
         </div>

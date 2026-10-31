@@ -37,20 +37,32 @@ let loginMethods: readonly FakeLoginMethod[] = [
   { kind: 'passkey', id: 'passkey-direct-login', stage: 'primary', rpId: 'localhost' },
 ]
 
-vi.mock('@camstack/ui-library', () => ({
-  useSystem: () => ({ listOwnPasskeys }),
-  useWidgetMetadata: () => widgetMeta,
-  WidgetSlot: ({ widgetId }: { widgetId: string }) => (
-    <div data-testid="widget-slot">{widgetId}</div>
-  ),
-  trpc: {
-    auth: {
-      listLoginMethods: {
-        useQuery: () => ({ data: loginMethods }),
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useSystem: () => ({ listOwnPasskeys }),
+    useWidgetMetadata: () => widgetMeta,
+    WidgetSlot: ({ widgetId }: { widgetId: string }) => (
+      <div data-testid="widget-slot">{widgetId}</div>
+    ),
+    trpc: {
+      auth: {
+        listLoginMethods: {
+          useQuery: () => ({ data: loginMethods }),
+        },
       },
     },
-  },
-}))
+  }
+})
 
 vi.mock('../../contexts/auth-context', () => ({
   useAuth: () => ({ user: authUser }),

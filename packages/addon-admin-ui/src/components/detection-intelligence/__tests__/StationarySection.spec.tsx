@@ -24,10 +24,22 @@ const listAllSpy = vi.fn((_input?: ListAllInput, _options?: ListAllOptions) => (
   data: [{ id: 1, name: 'Front Gate' }],
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useDeviceManagerListAll: (input?: ListAllInput, options?: ListAllOptions) =>
-    listAllSpy(input, options),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useDeviceManagerListAll: (input?: ListAllInput, options?: ListAllOptions) =>
+      listAllSpy(input, options),
+  }
+})
 
 vi.mock('../use-stationary-objects.js', () => ({
   useStationaryObjects: () => ({

@@ -3,6 +3,7 @@
  * the page's one Save persists them. There is no per-field save.
  */
 import { InfoRow } from './overview-primitives'
+import { Input } from '@camstack/ui-library'
 
 export function EditableNameRow({
   initialName,
@@ -24,7 +25,7 @@ export function EditableNameRow({
       label={label}
       layout={layout}
       value={
-        <input
+        <Input
           type="text"
           value={bound.value}
           aria-label={label}

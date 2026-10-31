@@ -26,6 +26,7 @@ import {
   type DeviceListState,
   type PickerItem,
   useDeviceManagerListAll,
+  Radio,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
@@ -270,8 +271,7 @@ function RoleOption({
         checked ? 'border-primary bg-primary/5' : 'border-border hover:bg-surface-hover'
       } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
     >
-      <input
-        type="radio"
+      <Radio
         name="user-role"
         value={name}
         checked={checked}

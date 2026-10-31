@@ -1,6 +1,7 @@
 import { ArrowRight, RotateCcw, Zap } from 'lucide-react'
 import type { AddonUpdateEntry } from '@camstack/types'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 export type UpdateEntry = AddonUpdateEntry
 
@@ -28,7 +29,8 @@ export function UpdatesList({
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onCheckUpdates}
           disabled={isChecking}
@@ -38,16 +40,17 @@ export function UpdatesList({
           {isChecking
             ? t('addons.updatesList.checking', 'Checking…')
             : t('addons.updatesList.checkForUpdates', 'Check for updates')}
-        </button>
+        </Button>
 
         {updates.length > 0 && (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onUpdateAll}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             {t('addons.updatesList.updateAll', { count: updates.length })}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -101,13 +104,14 @@ export function UpdatesList({
                 </div>
               </div>
 
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => onUpdate(update.name)}
                 className="flex-shrink-0 rounded-md bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 text-xs font-medium transition-colors"
               >
                 {t('addons.updatesList.update', 'Update')}
-              </button>
+              </Button>
             </div>
           ))}
         </div>

@@ -68,6 +68,8 @@ import {
   useStorageMigrationResidue,
   useStorageMigrationStart,
   useStorageMigrationStatus,
+  Button,
+  Select,
 } from '@camstack/ui-library'
 import { AlertTriangle, ArrowRightLeft, Loader2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -345,7 +347,7 @@ function StorageMigrationPanel() {
                   >
                     {t('recordings.storageMigrationSection.classFrom', { label: t(cls.labelKey) })}
                   </label>
-                  <select
+                  <Select
                     id={`migration-from-${cls.id}`}
                     value={sourceByClass[cls.id] ?? soleWriteTargetId}
                     onChange={(e) => {
@@ -353,7 +355,7 @@ function StorageMigrationPanel() {
                       setSourceByClass((prev) => ({ ...prev, [cls.id]: value }))
                     }}
                     disabled={running}
-                    className="w-full rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground disabled:opacity-50"
+                    className="w-full"
                   >
                     {options.map((loc) => (
                       <option key={loc.id} value={loc.id}>
@@ -363,7 +365,7 @@ function StorageMigrationPanel() {
                           : ''}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div className="space-y-1">
                   <label
@@ -372,7 +374,7 @@ function StorageMigrationPanel() {
                   >
                     {t('recordings.storageMigrationSection.classTo', { label: t(cls.labelKey) })}
                   </label>
-                  <select
+                  <Select
                     id={`migration-dest-${cls.id}`}
                     value={destinationByClass[cls.id] ?? ''}
                     onChange={(e) => {
@@ -380,7 +382,7 @@ function StorageMigrationPanel() {
                       setDestinationByClass((prev) => ({ ...prev, [cls.id]: value }))
                     }}
                     disabled={running}
-                    className="w-full rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground disabled:opacity-50"
+                    className="w-full"
                   >
                     <option value="">
                       {t('migration.storageMigrationSection.skip', '— skip —')}
@@ -390,7 +392,7 @@ function StorageMigrationPanel() {
                         {loc.displayName}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             )
@@ -400,7 +402,8 @@ function StorageMigrationPanel() {
         {actionError && <p className="mt-2 text-[11px] text-danger">{actionError}</p>}
 
         <div className="mt-3 flex items-center gap-2">
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               void handlePlan()
@@ -410,8 +413,9 @@ function StorageMigrationPanel() {
           >
             {planQuery.isFetching && <Loader2 className="h-3 w-3 animate-spin" />}
             {t('migration.storageMigrationSection.plan', 'Plan')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               void handleStart()
@@ -421,7 +425,7 @@ function StorageMigrationPanel() {
           >
             {startMigration.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
             {t('migration.storageMigrationSection.startMigration', 'Start migration')}
-          </button>
+          </Button>
         </div>
 
         {plan && (
@@ -453,7 +457,8 @@ function StorageMigrationPanel() {
                 {t('migration.storageMigrationSection.migrationStatus', 'Migration status')}
               </h4>
               {running && (
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={() => {
                     void handleCancel()
@@ -462,7 +467,7 @@ function StorageMigrationPanel() {
                 >
                   <X className="h-3 w-3" />
                   {t('common.cancel', 'Cancel')}
-                </button>
+                </Button>
               )}
             </div>
             <p className="mt-1 text-xs text-foreground">
@@ -652,7 +657,8 @@ function DrainSection({ running }: DrainSectionProps) {
                 })
               : t('migration.storageMigrationSection.measuredNever', 'Measured — never')}
           </span>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               void residueQuery.refetch()
@@ -666,7 +672,7 @@ function DrainSection({ running }: DrainSectionProps) {
             {residueQuery.isFetching
               ? t('migration.storageMigrationSection.counting', 'Counting…')
               : t('common.refresh', 'Refresh')}
-          </button>
+          </Button>
         </div>
       </div>
       <p className="mt-1 text-[11px] text-foreground-subtle">
@@ -692,7 +698,8 @@ function DrainSection({ running }: DrainSectionProps) {
               {entry.storageClass}: {entry.fromLocationId} → {entry.toLocationId}
               <span className="ml-2 text-foreground-subtle">{describeResidue(entry)}</span>
             </span>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => {
                 void handleDrain(entry)
@@ -701,7 +708,7 @@ function DrainSection({ running }: DrainSectionProps) {
               className="shrink-0 rounded border border-border px-2 py-1 text-[10px] font-medium text-foreground-subtle hover:bg-surface-hover hover:text-foreground disabled:opacity-50"
             >
               {t('migration.storageMigrationSection.drainRemaining2', 'Drain remaining')}
-            </button>
+            </Button>
           </div>
         ))}
       </div>

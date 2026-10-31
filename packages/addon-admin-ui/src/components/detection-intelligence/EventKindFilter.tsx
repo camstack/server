@@ -19,7 +19,14 @@ import { useMemo, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, Search, Tag as TagIcon } from 'lucide-react'
 import type { EventKindDescriptor } from '@camstack/types'
-import { resolveEventKindIcon, eventKindLabel, useClassPainter } from '@camstack/ui-library'
+import {
+  resolveEventKindIcon,
+  eventKindLabel,
+  useClassPainter,
+  Button,
+  Checkbox,
+  Input,
+} from '@camstack/ui-library'
 import type { KindGroup } from './event-kind-vocabulary.js'
 
 export interface EventKindFilterProps {
@@ -91,7 +98,8 @@ export function EventKindFilter({
 
   return (
     <div className="relative">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs transition-colors ${
@@ -107,13 +115,13 @@ export function EventKindFilter({
             })
           : t('detectionIntelligence.eventKindFilter.kinds2', 'Kinds')}
         <ChevronDown className="h-3 w-3" />
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute z-20 mt-1 max-h-80 w-64 overflow-auto rounded-md border border-border bg-surface p-2 shadow-lg">
           <div className="mb-2 flex items-center gap-1 rounded border border-border px-1.5">
             <Search className="h-3.5 w-3.5 text-foreground-subtle" />
-            <input
+            <Input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -121,13 +129,14 @@ export function EventKindFilter({
               className="w-full bg-transparent py-1 text-xs outline-none"
             />
             {count > 0 && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={clearAll}
                 className="text-[10px] text-foreground-subtle hover:text-foreground"
               >
                 {t('detectionIntelligence.eventKindFilter.clear', 'Clear')}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -155,7 +164,8 @@ export function EventKindFilter({
               <div key={g.macro.kind} className="mb-0.5">
                 <div className="flex items-center gap-1">
                   {g.subs.length > 0 ? (
-                    <button
+                    <Button
+                      variant="unstyled"
                       type="button"
                       onClick={() => toggleExpand(g.macro.kind)}
                       className="text-foreground-subtle hover:text-foreground"
@@ -166,13 +176,12 @@ export function EventKindFilter({
                       ) : (
                         <ChevronRight className="h-3 w-3" />
                       )}
-                    </button>
+                    </Button>
                   ) : (
                     <span className="w-3" />
                   )}
                   <label className="flex flex-1 cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-xs hover:bg-surface-hover">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={macroChecked}
                       onChange={() => toggleMacro(g)}
                       className="accent-primary"
@@ -193,8 +202,7 @@ export function EventKindFilter({
                         key={s.kind}
                         className="ml-5 flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-xs hover:bg-surface-hover"
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selected.has(s.kind)}
                           onChange={() => toggleSub(s.kind)}
                           className="accent-primary"

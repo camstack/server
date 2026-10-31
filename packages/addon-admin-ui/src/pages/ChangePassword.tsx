@@ -1,4 +1,4 @@
-import { useSystem, useThemeMode } from '@camstack/ui-library'
+import { useSystem, useThemeMode, Button, Input } from '@camstack/ui-library'
 import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -142,7 +142,7 @@ export function ChangePasswordPage() {
               <label className="text-xs font-medium text-foreground-subtle">
                 {t('changePassword.currentPassword', 'Current password')}
               </label>
-              <input
+              <Input
                 data-testid="change-password-current"
                 type={show ? 'text' : 'password'}
                 value={current}
@@ -159,7 +159,7 @@ export function ChangePasswordPage() {
               {t('changePassword.newPassword', 'New password')}
             </label>
             <div className="relative">
-              <input
+              <Input
                 data-testid="change-password-new"
                 type={show ? 'text' : 'password'}
                 value={next}
@@ -168,14 +168,15 @@ export function ChangePasswordPage() {
                 className="w-full rounded-lg border border-border bg-background px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-foreground-disabled focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-all"
                 autoFocus={mustChangePassword}
               />
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => setShow(!show)}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-subtle hover:text-foreground transition-colors"
                 tabIndex={-1}
               >
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -183,7 +184,7 @@ export function ChangePasswordPage() {
             <label className="text-xs font-medium text-foreground-subtle">
               {t('changePassword.confirmNewPassword', 'Confirm new password')}
             </label>
-            <input
+            <Input
               data-testid="change-password-confirm"
               type={show ? 'text' : 'password'}
               value={confirm}
@@ -193,7 +194,8 @@ export function ChangePasswordPage() {
             />
           </div>
 
-          <button
+          <Button
+            variant="unstyled"
             data-testid="change-password-submit"
             type="submit"
             disabled={pending || !next || !confirm}
@@ -202,10 +204,11 @@ export function ChangePasswordPage() {
             {pending
               ? t('changePassword.saving', 'Saving…')
               : t('changePassword.saveAndContinue', 'Save and continue')}
-          </button>
+          </Button>
 
           {mustChangePassword && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => {
                 logout()
@@ -214,7 +217,7 @@ export function ChangePasswordPage() {
               className="w-full text-xs text-foreground-subtle hover:text-foreground transition-colors"
             >
               {t('changePassword.signOutInstead', 'Sign out instead')}
-            </button>
+            </Button>
           )}
         </form>
       </div>

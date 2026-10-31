@@ -29,7 +29,12 @@
 import { useState, type ReactElement } from 'react'
 import { Activity, Camera, Loader2, TimerReset } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useSystemGetLoggingSettings, useSystemSetLoggingSettings } from '@camstack/ui-library'
+import {
+  useSystemGetLoggingSettings,
+  useSystemSetLoggingSettings,
+  Button,
+  Input,
+} from '@camstack/ui-library'
 import type { DiagnosticWindow, LogChannelDescriptor, LogChannelWindowState } from '@camstack/types'
 import { AdminPage } from '../../components/AdminPage'
 
@@ -211,7 +216,7 @@ function ChannelRow({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-1">
         {channel.perDevice && (
-          <input
+          <Input
             type="text"
             inputMode="numeric"
             value={cameras}
@@ -222,7 +227,8 @@ function ChannelRow({
           />
         )}
         {ARM_CHOICES_MS.map((ms) => (
-          <button
+          <Button
+            variant="unstyled"
             key={ms}
             type="button"
             disabled={busy}
@@ -230,16 +236,17 @@ function ChannelRow({
             className="rounded border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground disabled:opacity-50"
           >
             {formatRemaining(ms)}
-          </button>
+          </Button>
         ))}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={busy || !armed}
           onClick={() => onArm(0, null)}
           className="rounded bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-40"
         >
           {t('logging.diagnostics.disarm', 'Disarm')}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -284,7 +291,8 @@ function WindowRow({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-1">
         {ARM_CHOICES_MS.map((ms) => (
-          <button
+          <Button
+            variant="unstyled"
             key={ms}
             type="button"
             disabled={busy}
@@ -292,16 +300,17 @@ function WindowRow({
             className="rounded border border-border px-2 py-1 text-[11px] text-foreground-subtle hover:text-foreground disabled:opacity-50"
           >
             {formatRemaining(ms)}
-          </button>
+          </Button>
         ))}
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={busy || !window.armed}
           onClick={() => onArm(0)}
           className="rounded bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-40"
         >
           {t('logging.diagnostics.disarm', 'Disarm')}
-        </button>
+        </Button>
       </div>
     </div>
   )

@@ -728,14 +728,15 @@ export function EventDetailPanel({
                 const publicUrl = publicOrigin ? buildMediaUrl(publicOrigin, m.url) : null
                 return (
                   <figure key={m.mediaId} className="flex w-32 shrink-0 flex-col gap-1">
-                    <button
+                    <Button
+                      variant="unstyled"
                       type="button"
                       onClick={() => setHeroOverride(m)}
                       className="relative h-16 w-full overflow-hidden rounded border border-border hover:border-primary"
                       title={`${label} · ${formatFaceTimestampFull(m.timestamp)}`}
                     >
                       <FilmstripThumb url={m.url} label={label} />
-                    </button>
+                    </Button>
                     <figcaption className="min-w-0 px-0.5">
                       <div
                         className="truncate text-[10px] font-medium leading-tight text-foreground"

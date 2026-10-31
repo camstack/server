@@ -1,4 +1,4 @@
-import { resolveParentNames } from '@camstack/ui-library'
+import { resolveParentNames, Checkbox } from '@camstack/ui-library'
 /**
  * Notification RULES management page (slice D1 — list + CRUD shell).
  *
@@ -1705,8 +1705,7 @@ function RuleFormDialog({
                         flag anywhere else. */}
                   {zoneTrigger && form.mediaImage !== 'crop' && form.mediaImage !== 'none' && (
                     <label className="flex items-start gap-2 text-xs text-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={form.mediaShowTriggerZone}
                         onChange={(e) => patch({ mediaShowTriggerZone: e.target.checked })}
                         className="accent-primary mt-0.5"
@@ -1731,8 +1730,7 @@ function RuleFormDialog({
                         a tracked object; the hub refuses it anywhere else. */}
                   {subjectHasPath(kind) && form.mediaImage !== 'none' && (
                     <label className="flex items-start gap-2 text-xs text-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={form.mediaShowSubjectPath}
                         onChange={(e) => patch({ mediaShowSubjectPath: e.target.checked })}
                         className="accent-primary mt-0.5"
@@ -1750,8 +1748,7 @@ function RuleFormDialog({
                     </label>
                   )}
                   <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={form.mediaGif}
                       onChange={(e) => patch({ mediaGif: e.target.checked })}
                       className="accent-primary"
@@ -1762,8 +1759,7 @@ function RuleFormDialog({
                     )}
                   </label>
                   <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={form.mediaClip}
                       onChange={(e) => patch({ mediaClip: e.target.checked })}
                       className="accent-primary"

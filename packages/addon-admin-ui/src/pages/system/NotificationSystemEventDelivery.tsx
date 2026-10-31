@@ -22,7 +22,7 @@ import {
   scheduleForSendTimes,
   systemEventSummarySplitOf,
 } from '@camstack/types'
-import { Button, useSystem } from '@camstack/ui-library'
+import { Button, useSystem, Radio } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 
 import { HINT_CLASS } from './notification-condition-widgets'
@@ -54,8 +54,7 @@ export function SystemEventDeliveryField({ value, family, onChange, draft }: Pro
       </div>
       <div className="flex flex-wrap gap-3 text-xs">
         <label className="flex items-center gap-1.5">
-          <input
-            type="radio"
+          <Radio
             name="system-event-delivery"
             checked={summary === null}
             onChange={() => onChange({ mode: 'instant' })}
@@ -67,8 +66,7 @@ export function SystemEventDeliveryField({ value, family, onChange, draft }: Pro
           )}
         </label>
         <label className="flex items-center gap-1.5">
-          <input
-            type="radio"
+          <Radio
             name="system-event-delivery"
             checked={summary !== null}
             onChange={() =>
@@ -125,8 +123,7 @@ function SummarySchedule({ value, onChange, draft }: SummaryScheduleProps) {
           )}
         </legend>
         <label className="flex items-center gap-1.5">
-          <input
-            type="radio"
+          <Radio
             name="system-event-summary-split"
             checked={split === 'rule'}
             onChange={() => onChange(withSummarySplit(value, 'rule'))}
@@ -138,8 +135,7 @@ function SummarySchedule({ value, onChange, draft }: SummaryScheduleProps) {
           )}
         </label>
         <label className="flex items-center gap-1.5">
-          <input
-            type="radio"
+          <Radio
             name="system-event-summary-split"
             checked={split === 'section'}
             onChange={() => onChange(withSummarySplit(value, 'section'))}

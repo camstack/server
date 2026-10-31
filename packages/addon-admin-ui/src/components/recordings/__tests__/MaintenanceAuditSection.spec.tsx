@@ -58,14 +58,26 @@ let mediaStatus: {
   error: string | null
 }
 
-vi.mock('@camstack/ui-library', () => ({
-  useConfirm: () => confirm,
-  useAddonsCustom: () => ({ mutateAsync: custom, isPending: false }),
-  usePipelineAnalyticsReclaimDebugMedia: () => ({ mutateAsync: startMedia, isPending: false }),
-  usePipelineAnalyticsGetMediaReclaimStatus: () => ({ data: mediaStatus, refetch: refetchMedia }),
-  useStorageListLocations: () => ({ data: locations }),
-  useRecordingArchiveReconcileLedgerAgainstDisk: () => ({ mutateAsync: walk, isPending: false }),
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useConfirm: () => confirm,
+    useAddonsCustom: () => ({ mutateAsync: custom, isPending: false }),
+    usePipelineAnalyticsReclaimDebugMedia: () => ({ mutateAsync: startMedia, isPending: false }),
+    usePipelineAnalyticsGetMediaReclaimStatus: () => ({ data: mediaStatus, refetch: refetchMedia }),
+    useStorageListLocations: () => ({ data: locations }),
+    useRecordingArchiveReconcileLedgerAgainstDisk: () => ({ mutateAsync: walk, isPending: false }),
+  }
+})
 
 import { MaintenanceAuditSection } from '../MaintenanceAuditSection'
 

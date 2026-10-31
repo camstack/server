@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Info, ExternalLink, Check, Cpu } from 'lucide-react'
 import { buildModelVariantGroups } from '@camstack/types'
-import { GroupedModelSelector } from '@camstack/ui-library'
+import { GroupedModelSelector, Button, Input } from '@camstack/ui-library'
 import type { ConfigModelSelectorField, ModelCatalogEntry } from '../../types/config-ui'
 import { useTranslation } from 'react-i18next'
 
@@ -27,7 +27,8 @@ function SegmentedControl({
   return (
     <div className="flex rounded-lg border border-border bg-surface p-0.5 gap-0.5">
       {tabs.map((tab) => (
-        <button
+        <Button
+          variant="unstyled"
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
@@ -39,7 +40,7 @@ function SegmentedControl({
           ].join(' ')}
         >
           {tab.label}
-        </button>
+        </Button>
       ))}
     </div>
   )
@@ -92,7 +93,8 @@ function ModelCard({
   const formats = formatFormats(entry)
 
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={onSelect}
       disabled={disabled}
@@ -141,7 +143,7 @@ function ModelCard({
           </span>
         )}
       </div>
-    </button>
+    </Button>
   )
 }
 
@@ -232,7 +234,7 @@ export function ModelSelector({ field, value, onChange, disabled }: ModelSelecto
       {/* Custom path tab */}
       {activeTab === 'custom' && allowCustomPath && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none disabled:opacity-50"
             placeholder={t(

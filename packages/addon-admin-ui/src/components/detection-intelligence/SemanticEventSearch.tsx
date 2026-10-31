@@ -35,6 +35,7 @@ import {
   usePipelineAnalyticsListEventKindsBatch,
   usePipelineAnalyticsSearchObjectEvents,
   useSearchFieldHotkey,
+  Input,
 } from '@camstack/ui-library'
 import { Loader2, Search, X } from 'lucide-react'
 import { type JSX, useEffect, useMemo, useState, useRef } from 'react'
@@ -224,7 +225,7 @@ export function SemanticEventSearch({ onActiveChange }: SemanticEventSearchProps
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[16rem] flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle" />
-            <input
+            <Input
               ref={searchFieldRef}
               type="text"
               value={text}

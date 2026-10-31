@@ -106,7 +106,8 @@ export function AssignDialog({ faceIds, identities, onDone }: AssignDialogProps)
 
         <div className="space-y-1 max-h-56 overflow-y-auto">
           {identities.map((identity) => (
-            <button
+            <Button
+              variant="unstyled"
               key={identity.id}
               type="button"
               onClick={() => setSelectedId(identity.id)}
@@ -120,7 +121,7 @@ export function AssignDialog({ faceIds, identities, onDone }: AssignDialogProps)
               <span className="ml-2 text-foreground-subtle">
                 {t('detectionIntelligence.assignDialog.samples', { count: identity.sampleCount })}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -142,7 +143,8 @@ export function AssignDialog({ faceIds, identities, onDone }: AssignDialogProps)
               />
             </div>
           ) : (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => {
                 setSelectedId(null)
@@ -151,7 +153,7 @@ export function AssignDialog({ faceIds, identities, onDone }: AssignDialogProps)
               className="w-full rounded-md border border-dashed border-border px-3 py-2 text-left text-xs text-foreground-subtle transition-colors hover:border-primary hover:text-primary"
             >
               {t('detectionIntelligence.assignDialog.newPerson', '+ New person…')}
-            </button>
+            </Button>
           )}
         </div>
 

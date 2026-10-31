@@ -20,6 +20,7 @@ import {
   useBackupGetEncryption,
   useBackupSetupEncryption,
   useConfirm,
+  Checkbox,
 } from '@camstack/ui-library'
 import { AlertTriangle, Copy, Download, Lock, LockOpen } from 'lucide-react'
 import { useState } from 'react'
@@ -103,8 +104,7 @@ function SecretKeyDialog({
             </Button>
           </div>
           <label className="flex items-center gap-2 text-xs text-foreground">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={stored}
               onChange={(e) => setStored(e.target.checked)}
               className="accent-primary"

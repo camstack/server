@@ -19,6 +19,7 @@ import { Mic, MicOff, Loader2, AlertCircle } from 'lucide-react'
 import { useDeviceIntercom } from '../../hooks/useDeviceIntercom'
 import { Trans, useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
+import { Button } from '@camstack/ui-library'
 
 interface IntercomPanelProps {
   deviceId: number
@@ -47,7 +48,8 @@ export function IntercomPanel({ deviceId }: IntercomPanelProps) {
 
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-6 text-xs">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={handleClick}
         disabled={inProgress}
@@ -72,7 +74,7 @@ export function IntercomPanel({ deviceId }: IntercomPanelProps) {
         ) : (
           <MicOff className="h-7 w-7" />
         )}
-      </button>
+      </Button>
 
       <div className="flex flex-col items-center gap-0.5">
         <span className="text-[12px] font-semibold text-foreground">{buttonLabel}</span>

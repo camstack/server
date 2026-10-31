@@ -36,16 +36,28 @@ const state = vi.hoisted(() => ({
 const migrateMutate = vi.hoisted(() => vi.fn())
 const confirmSpy = vi.hoisted(() => vi.fn())
 
-vi.mock('@camstack/ui-library', () => ({
-  useDeviceManagerListAll: () => ({ data: state.devices, isLoading: false, error: null }),
-  useDeviceManagerMigrateDevice: () => ({
-    mutate: migrateMutate,
-    isPending: false,
-    data: state.result,
-    error: state.error,
-  }),
-  useConfirm: () => confirmSpy,
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useDeviceManagerListAll: () => ({ data: state.devices, isLoading: false, error: null }),
+    useDeviceManagerMigrateDevice: () => ({
+      mutate: migrateMutate,
+      isPending: false,
+      data: state.result,
+      error: state.error,
+    }),
+    useConfirm: () => confirmSpy,
+  }
+})
 
 import { MigrateDeviceCard } from '../MigrateDeviceCard'
 

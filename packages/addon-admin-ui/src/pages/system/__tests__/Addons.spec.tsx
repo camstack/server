@@ -116,164 +116,180 @@ let capturedUpdateOpts: UpdateMutationOpts | null = null
 // Module mocks — declared before any import of the page
 // ---------------------------------------------------------------------------
 
-vi.mock('@camstack/ui-library', () => ({
-  Input: ({ leftSlot: _l, rightSlot: _r, ...rest }: Record<string, unknown>) => <input {...rest} />,
-  // Hooks used by InstalledTab
-  useAddonsListUpdates: (input: { nodeId?: string } | undefined) => {
-    listUpdatesNodeIds.push(input?.nodeId)
-    return { data: mockUpdates, staleTime: 5 * 60_000 }
-  },
-  useAddonsStartJob: () => ({ mutateAsync: mockStartJob, isPending: false }),
-  useAddonsGetLastRestart: () => ({ data: mockLastRestart }),
-  // Hooks used by AddonsPage (outer) — nodeId keys the query (Task 7).
-  useAddonsList: (input: { nodeId?: string } | undefined) => {
-    listNodeIds.push(input?.nodeId)
-    return { data: mockAddons, isLoading: false, isError: false }
-  },
-  useAddonsListFrameworkPackages: () => ({
-    data: mockFrameworkPackages,
-    isLoading: false,
-    isError: false,
-  }),
-  useNodesClusterAddonStatus: () => ({ data: undefined }),
-  useIntegrationsGetAvailableTypes: () => ({ data: [{ addonId: 'addon-a' }] }),
-  // Uninstall controls + the "not on the hub" panel. `data: undefined` = the
-  // installations query has not answered, so the panel renders nothing.
-  useAddonsListInstallations: () => ({ data: undefined, refetch: vi.fn() }),
-  useAlert: () => vi.fn().mockResolvedValue(undefined),
-  useClusterNodes: () => ({ nodes: mockClusterNodes, isLoading: false }),
-  useAddonsForceRefresh: () => ({
-    mutateAsync: vi.fn().mockResolvedValue(undefined),
-    mutate: (input: { nodeId?: string } | undefined) => {
-      mountRefreshNodeIds.push(input?.nodeId)
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    Input: ({ leftSlot: _l, rightSlot: _r, ...rest }: Record<string, unknown>) => (
+      <input {...rest} />
+    ),
+    // Hooks used by InstalledTab
+    useAddonsListUpdates: (input: { nodeId?: string } | undefined) => {
+      listUpdatesNodeIds.push(input?.nodeId)
+      return { data: mockUpdates, staleTime: 5 * 60_000 }
     },
-    isPending: false,
-  }),
-  useAddonsReloadPackages: () => ({
-    mutateAsync: vi.fn().mockResolvedValue(undefined),
-    isPending: false,
-  }),
-  useAddonsUpdatePackage: (opts: UpdateMutationOpts | undefined) => {
-    capturedUpdateOpts = opts ?? null
-    return {
-      // Real mutation fires onMutate synchronously — mirror that so the
-      // per-package "updating" state is exercised by plain clicks.
-      mutate: (vars: { name: string }) => opts?.onMutate?.(vars),
-      mutateAsync: vi.fn().mockResolvedValue({ success: true }),
+    useAddonsStartJob: () => ({ mutateAsync: mockStartJob, isPending: false }),
+    useAddonsGetLastRestart: () => ({ data: mockLastRestart }),
+    // Hooks used by AddonsPage (outer) — nodeId keys the query (Task 7).
+    useAddonsList: (input: { nodeId?: string } | undefined) => {
+      listNodeIds.push(input?.nodeId)
+      return { data: mockAddons, isLoading: false, isError: false }
+    },
+    useAddonsListFrameworkPackages: () => ({
+      data: mockFrameworkPackages,
+      isLoading: false,
+      isError: false,
+    }),
+    useNodesClusterAddonStatus: () => ({ data: undefined }),
+    useIntegrationsGetAvailableTypes: () => ({ data: [{ addonId: 'addon-a' }] }),
+    // Uninstall controls + the "not on the hub" panel. `data: undefined` = the
+    // installations query has not answered, so the panel renders nothing.
+    useAddonsListInstallations: () => ({ data: undefined, refetch: vi.fn() }),
+    useAlert: () => vi.fn().mockResolvedValue(undefined),
+    useClusterNodes: () => ({ nodes: mockClusterNodes, isLoading: false }),
+    useAddonsForceRefresh: () => ({
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      mutate: (input: { nodeId?: string } | undefined) => {
+        mountRefreshNodeIds.push(input?.nodeId)
+      },
       isPending: false,
-    }
-  },
-  // F4 job-engine surface (AddonsJobProgress hook)
-  useAddonsListJobs: () => ({ data: mockActiveJobs }),
-  useEventStreamMap: () => ({
-    map: mockLiveJobMap,
-    values: Array.from(mockLiveJobMap.values()),
-  }),
-  // VersionPicker (opened from the version selector)
-  useAddonsGetVersions: () => ({ data: [], isLoading: false, isError: false }),
-  useAddonsGetPackageDocs: () => ({
-    data: {
-      name: '@camstack/addon-tailscale',
-      version: '1.2.3',
-      readme: { status: 'ok', markdown: '# Tailscale\n\nConnects the hub.' },
-      changelog: { status: 'missing' },
+    }),
+    useAddonsReloadPackages: () => ({
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    }),
+    useAddonsUpdatePackage: (opts: UpdateMutationOpts | undefined) => {
+      capturedUpdateOpts = opts ?? null
+      return {
+        // Real mutation fires onMutate synchronously — mirror that so the
+        // per-package "updating" state is exercised by plain clicks.
+        mutate: (vars: { name: string }) => opts?.onMutate?.(vars),
+        mutateAsync: vi.fn().mockResolvedValue({ success: true }),
+        isPending: false,
+      }
     },
-    isPending: false,
-    isError: false,
-  }),
-  Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-  DialogBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Select: () => <select aria-label="Version" />,
-  Tabs: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  TabsContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  useAddonsUpdateFrameworkPackage: () => ({
-    mutate: vi.fn(),
-    mutateAsync: vi.fn().mockResolvedValue({ restartingAt: 0 }),
-    isPending: false,
-  }),
-  useAddonsGetAutoUpdateSettings: () => ({
-    data: {
-      channel: 'off',
-      intervalSeconds: 21600,
-      updateCheckIntervalSeconds: 21600,
+    // F4 job-engine surface (AddonsJobProgress hook)
+    useAddonsListJobs: () => ({ data: mockActiveJobs }),
+    useEventStreamMap: () => ({
+      map: mockLiveJobMap,
+      values: Array.from(mockLiveJobMap.values()),
+    }),
+    // VersionPicker (opened from the version selector)
+    useAddonsGetVersions: () => ({ data: [], isLoading: false, isError: false }),
+    useAddonsGetPackageDocs: () => ({
+      data: {
+        name: '@camstack/addon-tailscale',
+        version: '1.2.3',
+        readme: { status: 'ok', markdown: '# Tailscale\n\nConnects the hub.' },
+        changelog: { status: 'missing' },
+      },
+      isPending: false,
+      isError: false,
+    }),
+    Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+    DialogBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    Select: () => <select aria-label="Version" />,
+    Tabs: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    TabsTrigger: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    TabsContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    useAddonsUpdateFrameworkPackage: () => ({
+      mutate: vi.fn(),
+      mutateAsync: vi.fn().mockResolvedValue({ restartingAt: 0 }),
+      isPending: false,
+    }),
+    useAddonsGetAutoUpdateSettings: () => ({
+      data: {
+        channel: 'off',
+        intervalSeconds: 21600,
+        updateCheckIntervalSeconds: 21600,
+      },
+    }),
+    useAddonsApplyAutoUpdateToAll: () => ({ mutate: vi.fn(), isPending: false }),
+    // Availability-poll cadence selector — runs even while the channel is 'off'.
+    useAddonsSetAutoUpdateSettings: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsSearchAvailable: (input: { capability?: string } | undefined) => {
+      if (input?.capability === undefined) return { data: undefined, isFetching: false }
+      searchAvailableInputs.push(input.capability)
+      return mockCapabilitySearch
     },
-  }),
-  useAddonsApplyAutoUpdateToAll: () => ({ mutate: vi.fn(), isPending: false }),
-  // Availability-poll cadence selector — runs even while the channel is 'off'.
-  useAddonsSetAutoUpdateSettings: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsSearchAvailable: (input: { capability?: string } | undefined) => {
-    if (input?.capability === undefined) return { data: undefined, isFetching: false }
-    searchAvailableInputs.push(input.capability)
-    return mockCapabilitySearch
-  },
-  useAddonsInstallPackage: () => ({ mutate: mockInstall, isPending: false }),
-  // AddonCard imports
-  useAddonsGetAddonAutoUpdate: () => ({ data: undefined }),
-  useAddonsSetAddonAutoUpdate: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsUninstallPackage: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsRestartAddon: () => ({ mutate: vi.fn(), isPending: false }),
-  useAddonsRetryLoad: () => ({ mutate: vi.fn(), isPending: false }),
-  useConfirm: () => vi.fn().mockResolvedValue(true),
-  // AddonCard reads `system.trpcClient` (passed through to DeviceExportPanel,
-  // which is mocked to null here) — the live hook must be stubbed so the card
-  // renders when a regular addon is present.
-  useSystem: () => ({ trpcClient: {} }),
-  Button: ({
-    children,
-    onClick,
-    disabled,
-  }: {
-    children: ReactNode
-    onClick?: () => void
-    disabled?: boolean
-  }) => (
-    <button type="button" onClick={onClick} disabled={disabled}>
-      {children}
-    </button>
-  ),
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  LogStream: () => null,
-  EventStream: () => null,
-  DeviceExportPanel: () => null,
-  NodePicker: ({
-    selectedNodeId,
-    onSelect,
-  }: {
-    selectedNodeId: string
-    onSelect: (id: string) => void
-  }) => (
-    <div data-testid="node-picker">
-      <button type="button" onClick={() => onSelect('hub')}>
-        {selectedNodeId}
+    useAddonsInstallPackage: () => ({ mutate: mockInstall, isPending: false }),
+    // AddonCard imports
+    useAddonsGetAddonAutoUpdate: () => ({ data: undefined }),
+    useAddonsSetAddonAutoUpdate: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsUninstallPackage: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsRestartAddon: () => ({ mutate: vi.fn(), isPending: false }),
+    useAddonsRetryLoad: () => ({ mutate: vi.fn(), isPending: false }),
+    useConfirm: () => vi.fn().mockResolvedValue(true),
+    // AddonCard reads `system.trpcClient` (passed through to DeviceExportPanel,
+    // which is mocked to null here) — the live hook must be stubbed so the card
+    // renders when a regular addon is present.
+    useSystem: () => ({ trpcClient: {} }),
+    Button: ({
+      children,
+      onClick,
+      disabled,
+      variant: _variant,
+      ...rest
+    }: {
+      children: ReactNode
+      onClick?: () => void
+      disabled?: boolean
+      variant?: string
+      'aria-pressed'?: boolean
+      title?: string
+    }) => (
+      <button type="button" onClick={onClick} disabled={disabled} {...rest}>
+        {children}
       </button>
-    </div>
-  ),
-  // AdminPage wraps library PageShell after the composite-patterns migration.
-  PageShell: ({
-    children,
-    title,
-    actions,
-    nav,
-  }: {
-    children: ReactNode
-    title?: string
-    actions?: ReactNode
-    nav?: ReactNode
-  }) => (
-    <div>
-      {title !== undefined && title !== '' ? <h1>{title}</h1> : null}
-      {actions}
-      {nav}
-      {children}
-    </div>
-  ),
-}))
+    ),
+    Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    LogStream: () => null,
+    EventStream: () => null,
+    DeviceExportPanel: () => null,
+    NodePicker: ({
+      selectedNodeId,
+      onSelect,
+    }: {
+      selectedNodeId: string
+      onSelect: (id: string) => void
+    }) => (
+      <div data-testid="node-picker">
+        <button type="button" onClick={() => onSelect('hub')}>
+          {selectedNodeId}
+        </button>
+      </div>
+    ),
+    // AdminPage wraps library PageShell after the composite-patterns migration.
+    PageShell: ({
+      children,
+      title,
+      actions,
+      nav,
+    }: {
+      children: ReactNode
+      title?: string
+      actions?: ReactNode
+      nav?: ReactNode
+    }) => (
+      <div>
+        {title !== undefined && title !== '' ? <h1>{title}</h1> : null}
+        {actions}
+        {nav}
+        {children}
+      </div>
+    ),
+  }
+})
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =

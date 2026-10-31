@@ -23,6 +23,9 @@ import {
   usePlateGalleryListPlates,
   usePlateGalleryListVehicles,
   useSystem,
+  Button,
+  Checkbox,
+  Input,
 } from '@camstack/ui-library'
 import { useQueries } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
@@ -223,7 +226,8 @@ export function OptionListField({
       {custom.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {custom.map((v) => (
-            <button
+            <Button
+              variant="unstyled"
               key={v}
               type="button"
               onClick={() => onChange(value.filter((x) => x !== v))}
@@ -234,7 +238,7 @@ export function OptionListField({
               )}
             >
               {v} ×
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -245,8 +249,7 @@ export function OptionListField({
               key={o.value}
               className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-foreground cursor-pointer hover:bg-surface-hover"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selected.has(o.value)}
                 onChange={() => toggle(o.value)}
                 className="accent-primary"
@@ -264,7 +267,7 @@ export function OptionListField({
         </p>
       )}
       {!noFreeText && (
-        <input
+        <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {

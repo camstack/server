@@ -125,7 +125,8 @@ export function UserSessionsModal({ userId, username, onClose }: UserSessionsMod
           />
         </DialogBody>
         <DialogFooter className="justify-between">
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => void handleEverywhere()}
             disabled={revoke.isPending || (query.data ?? []).length === 0}
             className="inline-flex items-center gap-1.5 rounded border border-danger/40 px-2.5 py-1 text-[11px] font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
@@ -136,7 +137,7 @@ export function UserSessionsModal({ userId, username, onClose }: UserSessionsMod
               <LogOut className="h-3 w-3" />
             )}
             {t('users.userSessionsModal.signOutEverywhere', 'Sign out everywhere')}
-          </button>
+          </Button>
           <Button onClick={onClose} variant="secondary">
             {t('common.close', 'Close')}
           </Button>

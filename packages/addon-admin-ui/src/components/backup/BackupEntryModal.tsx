@@ -17,6 +17,7 @@ import {
   ItemFormDialog,
   useBackupListDestinations,
   useBackupUpsertSchedule,
+  Checkbox,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Loader2 } from 'lucide-react'
@@ -164,8 +165,7 @@ export function BackupEntryModal({ entry, onClose, onSaved }: BackupEntryModalPr
                   className="flex cursor-pointer items-center justify-between px-3 py-2 text-xs hover:bg-primary/5"
                 >
                   <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selected.has(d.id)}
                       onChange={() => toggleLocation(d.id)}
                       className="accent-primary"
@@ -213,8 +213,7 @@ export function BackupEntryModal({ entry, onClose, onSaved }: BackupEntryModalPr
             )}
           >
             <label className="inline-flex cursor-pointer items-center gap-2 py-1.5 text-xs text-foreground">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={enabled}
                 onChange={(e) => setEnabled(e.target.checked)}
                 className="accent-primary"

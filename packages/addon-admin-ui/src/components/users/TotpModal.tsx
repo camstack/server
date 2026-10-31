@@ -139,7 +139,8 @@ export function TotpModal({ userId, username, onClose }: TotpModalProps) {
                 <Button onClick={onClose} variant="secondary">
                   {t('common.close', 'Close')}
                 </Button>
-                <button
+                <Button
+                  variant="unstyled"
                   onClick={handleDisable}
                   disabled={disableMutation.isPending}
                   className="rounded bg-danger px-3 py-1.5 text-xs font-medium text-white hover:bg-danger/90 disabled:opacity-50 inline-flex items-center gap-1"
@@ -150,7 +151,7 @@ export function TotpModal({ userId, username, onClose }: TotpModalProps) {
                     <X className="h-3 w-3" />
                   )}
                   {t('users.totpModal.remove2fa', 'Remove 2FA')}
-                </button>
+                </Button>
               </div>
             </>
           )}

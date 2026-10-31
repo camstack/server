@@ -1,3 +1,4 @@
+import { Button } from '@camstack/ui-library'
 /**
  * SchemaTabBar — shared tab bar for any FormBuilder-backed surface with
  * multiple tabs. Renders the button row; callers own the active state
@@ -58,7 +59,8 @@ export function SchemaTabBar({
         const count = countByTab?.get(t.id) ?? 0
         const pending = pendingByTab?.get(t.id) ?? 0
         return (
-          <button
+          <Button
+            variant="unstyled"
             key={t.id}
             type="button"
             onClick={() => onChange(t.id)}
@@ -73,7 +75,7 @@ export function SchemaTabBar({
             {pending > 0 && (
               <span className="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
             )}
-          </button>
+          </Button>
         )
       })}
     </div>

@@ -17,7 +17,7 @@
  */
 import { type ReactNode } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { StatusBadge, type DeviceListColumn } from '@camstack/ui-library'
+import { StatusBadge, type DeviceListColumn, Button } from '@camstack/ui-library'
 import { ProviderIcon } from '../shared/ProviderIcon'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
@@ -49,7 +49,8 @@ function NameCell({ integration, expanded, onToggleExpand }: NameCellProps): Rea
   const { t } = useTranslation()
   return (
     <div className="flex items-center gap-2.5">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={(e) => {
           e.stopPropagation()
@@ -68,7 +69,7 @@ function NameCell({ integration, expanded, onToggleExpand }: NameCellProps): Rea
         ) : (
           <ChevronRight className="h-3.5 w-3.5" />
         )}
-      </button>
+      </Button>
       <ProviderIcon type={integration.addonId} size="sm" />
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-xs font-semibold text-foreground">{integration.name}</span>

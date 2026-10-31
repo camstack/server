@@ -26,6 +26,7 @@ import { LocationDiscardControl } from './LocationDiscardControl'
 import { LocationModeChoices, LocationModeTrigger } from './LocationModeSelector'
 import { type LocationMode, type LocationModeReasons, resolveLocationMode } from './location-mode'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 export interface LocationCardProps {
   readonly location: StorageLocation
@@ -141,21 +142,23 @@ export function LocationCard({
             setModeOpen((open) => !open)
           }}
         />
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => onEdit(location)}
           className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-foreground-subtle border border-border hover:text-foreground hover:bg-primary/10"
         >
           <Pencil className="h-3 w-3" />
           {t('common.edit', 'Edit')}
-        </button>
+        </Button>
         {canDelete && (
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => onDelete(location)}
             className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-danger hover:bg-danger/10"
             title={t('storage.locationCard.deleteLocation', 'Delete location')}
           >
             <Trash2 className="h-3 w-3" />
-          </button>
+          </Button>
         )}
       </div>
       {modeOpen && (

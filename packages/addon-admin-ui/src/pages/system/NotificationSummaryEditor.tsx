@@ -50,6 +50,7 @@ import {
   TabsList,
   TabsTrigger,
   useSystem,
+  Textarea,
 } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Images, Loader2 } from 'lucide-react'
@@ -794,7 +795,7 @@ export function NotificationSummaryEditor({
                       'Your question (optional)',
                     )}
                   </label>
-                  <textarea
+                  <Textarea
                     value={form.aiPrompt}
                     rows={3}
                     maxLength={SUMMARY_AI_MAX_PROMPT}

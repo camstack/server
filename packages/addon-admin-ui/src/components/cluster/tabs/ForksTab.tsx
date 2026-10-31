@@ -8,6 +8,7 @@ import {
   useNodesRestartAddon,
   useNodesRestartProcess,
   useNodesSetProcessLogLevel,
+  Button,
 } from '@camstack/ui-library'
 import { EventStream } from '@camstack/ui-library'
 import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '@camstack/ui-library'
@@ -177,14 +178,15 @@ function ProcessBlock({
                 ))}
               </DropdownContent>
             </Dropdown>
-            <button
+            <Button
+              variant="unstyled"
               onClick={handleRestartProcess}
               disabled={restarting === proc.name}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
               title={t('cluster.forksTab.restartProcess', 'Restart process')}
             >
               <RotateCw className={`h-3 w-3 ${restarting === proc.name ? 'animate-spin' : ''}`} />
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -219,7 +221,8 @@ function ProcessBlock({
                 )}
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
+                  <Button
+                    variant="unstyled"
                     onClick={() => onTogglePanel(svc.addonId, 'logs')}
                     className={`p-0.5 rounded transition-colors ${
                       activePanel?.addonId === svc.addonId && activePanel.type === 'logs'
@@ -231,8 +234,9 @@ function ProcessBlock({
                     })}
                   >
                     <ScrollText className="h-3 w-3" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
                     onClick={() => onTogglePanel(svc.addonId, 'events')}
                     className={`p-0.5 rounded transition-colors ${
                       activePanel?.addonId === svc.addonId && activePanel.type === 'events'
@@ -244,8 +248,9 @@ function ProcessBlock({
                     })}
                   >
                     <Radio className="h-3 w-3" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
                     onClick={() => handleRestartAddon(svc.addonId)}
                     disabled={restarting === svc.addonId}
                     className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
@@ -256,7 +261,7 @@ function ProcessBlock({
                     <RotateCw
                       className={`h-3 w-3 ${restarting === svc.addonId ? 'animate-spin' : ''}`}
                     />
-                  </button>
+                  </Button>
                 </div>
               </div>
 

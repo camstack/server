@@ -12,6 +12,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
+  Radio,
 } from '@camstack/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -149,8 +150,7 @@ function MemberValueSection({
             return (
               <li key={`${field.cap}.${field.fieldPath}`}>
                 <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
-                  <input
-                    type="radio"
+                  <Radio
                     name={radioName}
                     checked={selectedField}
                     data-testid={`helper-value-${device.id}-${field.cap}.${field.fieldPath}`}

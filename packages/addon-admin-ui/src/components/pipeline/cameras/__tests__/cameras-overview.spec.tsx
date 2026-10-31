@@ -22,26 +22,38 @@ vi.mock('../../../../hooks/useDevice', () => ({
   useDeviceList: () => mockUseDeviceList(),
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useUiText: () => (_key: string, fallback: string | { other: string }) =>
-    typeof fallback === 'string' ? fallback : fallback.other,
-  usePipelineOrchestratorGetCameraStatuses: () => mockGetCameraStatuses(),
-  useDeviceManagerListAll: () => ({ data: undefined }),
-  useClusterNodes: () => ({ nodes: [{ id: 'hub', name: 'hub', isOnline: true }] }),
-  useLiveEvent: () => undefined,
-  useAddonSettingsGetDeviceSettings: () => ({ data: null }),
-  usePipelineOrchestratorResolvePipeline: () => ({ data: { steps: [], audio: null } }),
-  usePipelineOrchestratorAssignPipeline: () => ({ mutate: vi.fn(), isPending: false }),
-  usePipelineOrchestratorUnassignPipeline: () => ({ mutate: vi.fn(), isPending: false }),
-  getPhaseVisual: (phase: string) => ({
-    label: phase,
-    textColor: '',
-    badgeClass: '',
-    dotClass: '',
-    icon: 'Activity',
-  }),
-  PhaseIcon: () => null,
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useUiText: () => (_key: string, fallback: string | { other: string }) =>
+      typeof fallback === 'string' ? fallback : fallback.other,
+    usePipelineOrchestratorGetCameraStatuses: () => mockGetCameraStatuses(),
+    useDeviceManagerListAll: () => ({ data: undefined }),
+    useClusterNodes: () => ({ nodes: [{ id: 'hub', name: 'hub', isOnline: true }] }),
+    useLiveEvent: () => undefined,
+    useAddonSettingsGetDeviceSettings: () => ({ data: null }),
+    usePipelineOrchestratorResolvePipeline: () => ({ data: { steps: [], audio: null } }),
+    usePipelineOrchestratorAssignPipeline: () => ({ mutate: vi.fn(), isPending: false }),
+    usePipelineOrchestratorUnassignPipeline: () => ({ mutate: vi.fn(), isPending: false }),
+    getPhaseVisual: (phase: string) => ({
+      label: phase,
+      textColor: '',
+      badgeClass: '',
+      dotClass: '',
+      icon: 'Activity',
+    }),
+    PhaseIcon: () => null,
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Fixtures

@@ -20,7 +20,12 @@
  * avoid. The heading names the scope instead.
  */
 
-import { DeviceContextProvider, EmptyState, useDeviceManagerListAll } from '@camstack/ui-library'
+import {
+  DeviceContextProvider,
+  EmptyState,
+  useDeviceManagerListAll,
+  Select,
+} from '@camstack/ui-library'
 import { Camera } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { DeviceAggregateSection } from '../device/tabs/DeviceAggregateSection'
@@ -71,17 +76,17 @@ export function CameraRecordingSettingsSection() {
         <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
           {t('recordings.cameraRecordingSettingsSection.camera', 'Camera')}
         </label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           value={deviceId ?? ''}
           onChange={(e) => setSelectedId(Number(e.target.value))}
-          className="rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground"
         >
           {cameras.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       {deviceId !== null && (
         // The recording panel widget resolves its device from DeviceContext

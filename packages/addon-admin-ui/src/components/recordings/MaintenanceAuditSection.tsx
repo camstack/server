@@ -14,6 +14,7 @@ import {
   usePipelineAnalyticsReclaimDebugMedia,
   useRecordingArchiveReconcileLedgerAgainstDisk,
   useStorageListLocations,
+  Button,
 } from '@camstack/ui-library'
 import { ClipboardList, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -257,7 +258,8 @@ export function MaintenanceAuditSection() {
         )}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void runAudit()}
           disabled={busy || applying || !locationsReady}
@@ -271,7 +273,7 @@ export function MaintenanceAuditSection() {
           {busy
             ? t('recordings.maintenanceAuditSection.auditing', 'Auditing…')
             : t('recordings.maintenanceAuditSection.runAudit', 'Run audit')}
-        </button>
+        </Button>
       </div>
 
       {orphans !== null ? (
@@ -292,14 +294,15 @@ export function MaintenanceAuditSection() {
                   })}
           </p>
           {orphans.ran && orphans.totalOrphans > 0 && orphans.mode === 'report' ? (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => void reclaimOrphans()}
               disabled={busy || applying}
               className={HOUSEKEEPING_BTN}
             >
               {t('recordings.maintenanceAuditSection.reclaimOrphans', 'Reclaim orphans')}
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}
@@ -323,14 +326,15 @@ export function MaintenanceAuditSection() {
             {debugMedia.error !== null ? ` — ${debugMedia.error}` : ''}
           </p>
           {debugMedia.totalEligible > 0 ? (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => void reclaimDebug()}
               disabled={busy || applying}
               className={HOUSEKEEPING_BTN}
             >
               {t('recordings.maintenanceAuditSection.reclaimDebugMedia2', 'Reclaim debug media')}
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}
@@ -366,14 +370,15 @@ export function MaintenanceAuditSection() {
                   : ''}
               </p>
               {report.ghostSegments > 0 && !report.applied ? (
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={() => void forgetGhosts(report.locationId)}
                   disabled={busy || applying}
                   className={HOUSEKEEPING_BTN}
                 >
                   {t('recordings.maintenanceAuditSection.forgetGhosts', 'Forget ghosts')}
-                </button>
+                </Button>
               ) : null}
             </>
           )}

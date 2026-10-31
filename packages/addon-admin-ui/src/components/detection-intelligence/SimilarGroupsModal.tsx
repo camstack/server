@@ -23,6 +23,8 @@ import {
   useConfirm,
   useFaceGalleryDeleteFace,
   useFaceGallerySuggestFaceClusters,
+  Input,
+  Slider,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ImageOff, Loader2, RefreshCw, Sparkles, Trash2, Undo2, UserCheck, X } from 'lucide-react'
@@ -76,7 +78,8 @@ function RailItem({ cluster, face, active, onSelect }: RailItemProps) {
   const { t } = useTranslation()
   const cropSrc = faceCropSrc(face)
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       onClick={onSelect}
       className={`flex shrink-0 flex-col items-center gap-1.5 rounded-md border p-2 text-center transition-colors md:w-full md:flex-row md:gap-2.5 md:text-left ${
@@ -102,7 +105,7 @@ function RailItem({ cluster, face, active, onSelect }: RailItemProps) {
           percent: Math.round(cluster.cohesion * 100),
         })}
       </span>
-    </button>
+    </Button>
   )
 }
 
@@ -155,7 +158,8 @@ function GroupFaceCard({
           </div>
         )}
 
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -174,7 +178,7 @@ function GroupFaceCard({
           }
         >
           {excluded ? <Undo2 className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
-        </button>
+        </Button>
       </div>
 
       <div className="min-w-0 px-2 pt-1.5 space-y-0.5">
@@ -187,7 +191,8 @@ function GroupFaceCard({
       </div>
 
       <div className="mt-1 flex min-h-[2rem] items-center justify-end border-t border-border/60 px-1 py-0.5">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -203,7 +208,7 @@ function GroupFaceCard({
           ) : (
             <Trash2 className="h-4 w-4" />
           )}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -351,8 +356,7 @@ export function SimilarGroupsModal({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <label className="flex items-center gap-2 text-[11px] text-foreground-subtle">
               {t('detectionIntelligence.similarGroupsModal.threshold', 'Threshold')}
-              <input
-                type="range"
+              <Slider
                 min={THRESHOLD_MIN}
                 max={THRESHOLD_MAX}
                 step={THRESHOLD_STEP}
@@ -367,7 +371,7 @@ export function SimilarGroupsModal({
 
             <label className="flex items-center gap-2 text-[11px] text-foreground-subtle">
               {t('detectionIntelligence.similarGroupsModal.minSize', 'Min size')}
-              <input
+              <Input
                 type="number"
                 min={MIN_SIZE_MIN}
                 max={MIN_SIZE_MAX}

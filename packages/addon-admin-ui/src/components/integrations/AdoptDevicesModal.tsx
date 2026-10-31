@@ -17,6 +17,7 @@ import {
   useDeviceManagerAdoptionStartJob,
   useIntegrationsGetAvailableTypes,
   useUiText,
+  Checkbox,
 } from '@camstack/ui-library'
 import {
   AlertTriangle,
@@ -364,8 +365,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
           </DialogDescription>
           {supportsLocationImport && (
             <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={importLocations}
                 onChange={(e) => setImportLocations(e.target.checked)}
                 className="accent-primary"
@@ -427,7 +427,8 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                     })
               }
               toolbar={
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={doRefresh}
                   disabled={isRefreshing}
@@ -438,7 +439,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                 >
                   <RotateCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                   {t('integrations.adoptRefresh', { defaultValue: 'Refresh' })}
-                </button>
+                </Button>
               }
               columns={[
                 {
@@ -489,7 +490,8 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                   cellClassName: 'text-right',
                   cell: (c) => (
                     <div className="flex items-center justify-end">
-                      <button
+                      <Button
+                        variant="unstyled"
                         onClick={() => toggleSelect(c)}
                         disabled={c.alreadyAdopted}
                         aria-label={
@@ -506,7 +508,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                         {selected.has(c.childNativeId) && (
                           <Check className="h-3 w-3 text-primary-foreground" />
                         )}
-                      </button>
+                      </Button>
                     </div>
                   ),
                 },
@@ -600,7 +602,8 @@ function FilterSelector({ filters, activeFilter, onSelect }: FilterSelectorProps
       {filters.map((filter) => {
         const active = filter.id === activeFilter
         return (
-          <button
+          <Button
+            variant="unstyled"
             key={filter.id}
             type="button"
             role="tab"
@@ -613,7 +616,7 @@ function FilterSelector({ filters, activeFilter, onSelect }: FilterSelectorProps
             }`}
           >
             {filter.label}
-          </button>
+          </Button>
         )
       })}
     </div>
@@ -653,7 +656,8 @@ function CandidateNameCell({
   return (
     <div className={`flex items-center gap-2.5 min-w-0 ${depth > 0 ? 'pl-5' : ''}`}>
       {expandable && count > 0 ? (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onToggleExpand}
           aria-label={
@@ -670,7 +674,7 @@ function CandidateNameCell({
             <ChevronRight className="h-3.5 w-3.5" />
           )}
           {count}
-        </button>
+        </Button>
       ) : (
         <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-foreground-subtle/40">
           —
@@ -726,7 +730,8 @@ function CandidateEntities({
                 {childCaps.join(', ')}
               </span>
             )}
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => onToggleChildHidden(child.childNativeId)}
               aria-label={
                 hidden
@@ -741,7 +746,7 @@ function CandidateEntities({
               className="flex h-5 w-5 items-center justify-center rounded text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors flex-shrink-0"
             >
               {hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            </button>
+            </Button>
           </div>
         )
       })}

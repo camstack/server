@@ -16,6 +16,8 @@ import {
   useCalendarsListCalendars,
   useCalendarsListEvents,
   useCalendarsSetCalendarPreference,
+  Checkbox,
+  Input,
 } from '@camstack/ui-library'
 import {
   calendarEventLocalSpan,
@@ -256,7 +258,8 @@ function ViewToggle({
       aria-label={t('systemPage.calendars.calendarView', 'Calendar view')}
     >
       {modes.map((m) => (
-        <button
+        <Button
+          variant="unstyled"
           key={m.id}
           type="button"
           className={
@@ -269,7 +272,7 @@ function ViewToggle({
           data-testid={`calendars-view-${m.id}`}
         >
           {m.label}
-        </button>
+        </Button>
       ))}
     </div>
   )
@@ -298,8 +301,7 @@ function CalendarLegend({
             key={cal.id}
             className="flex items-start gap-2 rounded-md px-1.5 py-1.5 hover:bg-surface"
           >
-            <input
-              type="checkbox"
+            <Checkbox
               className="mt-1 h-3.5 w-3.5 shrink-0 accent-primary"
               checked={cal.visible}
               disabled={busy}
@@ -307,7 +309,7 @@ function CalendarLegend({
               aria-label={t('systemPage.calendars.show', 'Show {{name}}', { name: cal.name })}
               data-testid={`calendars-visible-${cal.id}`}
             />
-            <input
+            <Input
               type="color"
               className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0"
               value={cal.color}
@@ -348,7 +350,8 @@ function EventChip({
   readonly onSelect: (ev: CalendarEvent) => void
 }) {
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       className={
         compact
@@ -368,7 +371,7 @@ function EventChip({
           <div className="opacity-90">{formatEventTime(ev)}</div>
         </>
       )}
-    </button>
+    </Button>
   )
 }
 
@@ -538,7 +541,8 @@ function DayList({
     >
       {dayEvents.map((ev) => (
         <li key={ev.id}>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-surface"
             onClick={() => onSelectEvent(ev)}
@@ -557,7 +561,7 @@ function DayList({
                 <div className="mt-0.5 text-xs text-foreground-subtle">{ev.location}</div>
               ) : null}
             </div>
-          </button>
+          </Button>
         </li>
       ))}
     </ul>
@@ -696,7 +700,8 @@ export function CalendarsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <ViewToggle mode={mode} onChange={setMode} />
             <div className="flex items-center gap-1">
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 className={navButtonClass}
                 onClick={goPrev}
@@ -704,16 +709,18 @@ export function CalendarsPage() {
                 data-testid="calendars-prev"
               >
                 <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="unstyled"
                 type="button"
                 className={todayButtonClass}
                 onClick={goToday}
                 data-testid="calendars-today"
               >
                 {t('systemPage.calendars.today', 'Today')}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="unstyled"
                 type="button"
                 className={navButtonClass}
                 onClick={goNext}
@@ -721,7 +728,7 @@ export function CalendarsPage() {
                 data-testid="calendars-next"
               >
                 <ChevronRight className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
             <span className="text-sm font-medium text-foreground" data-testid="calendars-period">
               {periodLabel(anchor, mode)}

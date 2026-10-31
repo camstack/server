@@ -16,11 +16,12 @@ let mockVersions: Array<{
 interface MockButtonProps {
   readonly children: ReactNode
   readonly onClick?: () => void
+  readonly title?: string
 }
 
 vi.mock('@camstack/ui-library', () => ({
-  Button: ({ children, onClick }: MockButtonProps) => (
-    <button type="button" onClick={onClick}>
+  Button: ({ children, onClick, title }: MockButtonProps) => (
+    <button type="button" onClick={onClick} title={title}>
       {children}
     </button>
   ),

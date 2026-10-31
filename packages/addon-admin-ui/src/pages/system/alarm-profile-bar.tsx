@@ -5,7 +5,7 @@
  * a clone source starts at system defaults; cloning copies the selected profile.
  */
 import type { NcAlarmProfilesView } from '@camstack/types'
-import { Button, Input } from '@camstack/ui-library'
+import { Button, Input, Select } from '@camstack/ui-library'
 import { Copy, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -62,9 +62,10 @@ export function AlarmProfileBar({
         <label className="text-xs font-medium text-foreground-muted" htmlFor="alarm-profile-select">
           {t('system.alarmProfileBar.profile', 'Profile')}
         </label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           id="alarm-profile-select"
-          className="h-8 min-w-[10rem] rounded-md border border-border bg-background px-2 text-sm"
+          className="min-w-[10rem]"
           data-testid="alarm-profile-select"
           disabled={busy}
           value={profiles.activeId}
@@ -76,7 +77,7 @@ export function AlarmProfileBar({
               {p.isDefault ? ` (${t('system.alarmProfileBar.defaultSuffix')})` : ''}
             </option>
           ))}
-        </select>
+        </Select>
         {canDelete ? (
           <Button
             type="button"

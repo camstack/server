@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Build page: a Schedulers tab to create and edit schedulers with profiles, a draggable day timeline, point editor and runs ledger
+- Admin and addon pages use the library's form controls (Button, Input, Select, Textarea, Checkbox) instead of the browser's; no visible change beyond slightly tighter fields
 
 ## [1.2.535] - 2026-10-31
 

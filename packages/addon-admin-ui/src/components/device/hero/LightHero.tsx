@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Lightbulb } from 'lucide-react'
-import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
+import {
+  useDeviceProxy,
+  useDeviceStateSlice,
+  useSystem,
+  Button,
+  Slider,
+} from '@camstack/ui-library'
 import { formatRelativeTime } from './format'
 import type { HeroProps } from './HeroRegistry'
 import { MotionTriggerToggle } from './MotionTriggerToggle'
@@ -72,7 +78,8 @@ export function LightHero({ deviceId, deviceName }: HeroProps) {
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => {
           void handleToggle()
@@ -93,12 +100,11 @@ export function LightHero({ deviceId, deviceName }: HeroProps) {
         }`}
       >
         <Lightbulb className="h-9 w-9" />
-      </button>
+      </Button>
 
       {supportsBrightness ? (
         <div className="flex w-full max-w-xs flex-col items-center gap-1">
-          <input
-            type="range"
+          <Slider
             min={0}
             max={100}
             step={1}

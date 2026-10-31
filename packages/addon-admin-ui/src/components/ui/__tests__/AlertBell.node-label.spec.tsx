@@ -48,15 +48,27 @@ const { ALERT_WITH_NODE, MATCHING_NODES, state } = vi.hoisted(() => {
   }
 })
 
-vi.mock('@camstack/ui-library', () => ({
-  useClusterNodes: () => ({ nodes: state.nodes, isLoading: false, isError: false }),
-  useAlertsGetUnreadCount: () => ({ data: 1 }),
-  useAlertsList: () => ({ data: [ALERT_WITH_NODE], isLoading: false }),
-  useAlertsMarkRead: () => ({ mutate: vi.fn() }),
-  useAlertsMarkAllRead: () => ({ mutate: vi.fn() }),
-  useAlertsDismiss: () => ({ mutate: vi.fn() }),
-  useLiveEvent: () => undefined,
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useClusterNodes: () => ({ nodes: state.nodes, isLoading: false, isError: false }),
+    useAlertsGetUnreadCount: () => ({ data: 1 }),
+    useAlertsList: () => ({ data: [ALERT_WITH_NODE], isLoading: false }),
+    useAlertsMarkRead: () => ({ mutate: vi.fn() }),
+    useAlertsMarkAllRead: () => ({ mutate: vi.fn() }),
+    useAlertsDismiss: () => ({ mutate: vi.fn() }),
+    useLiveEvent: () => undefined,
+  }
+})
 
 import { AlertBell, alertNodeId } from '../AlertBell'
 

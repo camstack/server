@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Power, Bell } from 'lucide-react'
-import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
+import { useDeviceProxy, useDeviceStateSlice, useSystem, Button } from '@camstack/ui-library'
 import { formatRelativeTime } from './format'
 import type { HeroProps } from './HeroRegistry'
 import { MotionTriggerToggle } from './MotionTriggerToggle'
@@ -57,7 +57,8 @@ export function SwitchHero({
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => {
           void handleToggle()
@@ -78,7 +79,7 @@ export function SwitchHero({
         }`}
       >
         <Icon className="h-10 w-10" />
-      </button>
+      </Button>
       <MotionTriggerToggle dev={dev} busy={busy} setBusy={setBusy} />
 
       <div className="text-center">

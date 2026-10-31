@@ -40,6 +40,7 @@ import {
   useConfirm,
   useSystem,
   useThemeMode,
+  Select,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, Loader2, RotateCw, ScrollText } from 'lucide-react'
@@ -285,8 +286,8 @@ export function BlockEditor({
           <span className="text-foreground-subtle">
             {t('build.blockEditor.startFrom', 'Start from')}
           </span>
-          <select
-            className="mt-1 w-full rounded border border-border bg-surface px-2 py-1.5 text-sm"
+          <Select
+            className="mt-1 w-full"
             value={exampleId}
             onChange={(e) => void applyExample(e.target.value)}
             data-testid="script-example-select"
@@ -296,7 +297,7 @@ export function BlockEditor({
                 {ex.name} — {ex.description}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 
@@ -349,7 +350,8 @@ export function BlockEditor({
                 aria-label={t('build.blockEditor.renameFile', 'Rename file')}
               />
             ) : (
-              <button
+              <Button
+                variant="unstyled"
                 key={path}
                 type="button"
                 className={`rounded px-2 py-1 text-xs ${
@@ -364,26 +366,28 @@ export function BlockEditor({
               >
                 {path}
                 {path === entry ? ` · ${t('build.blockEditor.entry')}` : ''}
-              </button>
+              </Button>
             ),
           )}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             className="ml-1 rounded px-2 py-1 text-xs text-foreground-subtle hover:text-foreground"
             onClick={addFile}
             data-testid="script-file-add"
           >
             {t('build.blockEditor.file', '+ file')}
-          </button>
+          </Button>
           {activeFile !== entry && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               className="rounded px-2 py-1 text-xs text-foreground-subtle hover:text-foreground"
               onClick={() => setEntry(activeFile)}
               title={t('build.blockEditor.useThisFileAsThe', 'Use this file as the compile entry')}
             >
               {t('build.blockEditor.setAsEntry', 'Set as entry')}
-            </button>
+            </Button>
           )}
         </div>
         {typeDefsLoading ? (

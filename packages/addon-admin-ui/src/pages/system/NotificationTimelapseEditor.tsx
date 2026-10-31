@@ -479,7 +479,8 @@ export function NotificationTimelapseEditor({
                     {form.previewTextSet && (
                       <>
                         {' '}
-                        <button
+                        <Button
+                          variant="unstyled"
                           type="button"
                           className="underline"
                           onClick={() => patch({ previewText: '', previewTextSet: false })}
@@ -489,7 +490,7 @@ export function NotificationTimelapseEditor({
                             'system.notificationTimelapseEditor.backToTheShippedCaption',
                             'Back to the shipped caption',
                           )}
-                        </button>
+                        </Button>
                       </>
                     )}
                   </p>

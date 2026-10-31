@@ -28,6 +28,7 @@ import { startAuthentication } from '@simplewebauthn/browser'
 import { getSystem } from '../../lib/backend'
 import { isPasskeyAuthenticationOptions } from '../../lib/passkey-wire.js'
 import type { PasskeyLoginMethod } from './PrimaryLoginMethods'
+import { Button } from '@camstack/ui-library'
 
 /** Handed to the shell when a primary-stage passkey sign-in still owes
  *  a second factor (TOTP). Never produced by the second-factor stage —
@@ -126,7 +127,8 @@ export function PasskeyLoginButton({
 
   return (
     <div className="space-y-2">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         data-testid={challengeToken ? 'login-passkey' : 'login-passkey-direct'}
         onClick={() => void run()}
@@ -139,7 +141,7 @@ export function PasskeyLoginButton({
           <Fingerprint className="h-4 w-4 text-primary" />
         )}
         {method.label}
-      </button>
+      </Button>
       {error && (
         <div className="rounded-md bg-danger/10 border border-danger/20 px-3 py-2 text-xs text-danger">
           {error}

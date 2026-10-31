@@ -22,6 +22,8 @@ import {
   usePipelineAnalyticsGetEventStoreFootprint,
   usePipelineAnalyticsPruneEvents,
   WidgetMetricCard,
+  Button,
+  Select,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Database, Loader2, Scissors, Trash2 } from 'lucide-react'
@@ -155,7 +157,8 @@ export function EventsManagementSection() {
         header: '',
         align: 'right',
         render: (r) => (
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => {
               void handleDelete(r)
             }}
@@ -168,7 +171,7 @@ export function EventsManagementSection() {
           >
             <Trash2 className="h-3 w-3" />
             {t('common.delete', 'Delete')}
-          </button>
+          </Button>
         ),
       },
     ],
@@ -222,18 +225,19 @@ export function EventsManagementSection() {
         <span className="text-foreground-subtle">
           {t('recordings.eventsManagementSection.pruneEventsOlderThan', 'Prune events older than')}
         </span>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           value={ageDays}
           onChange={(e) => setAgeDays(Number(e.target.value))}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-foreground"
         >
           {PRUNE_AGES.map((a) => (
             <option key={a.days} value={a.days}>
               {t('recordings.eventsManagementSection.ageDays', { count: a.days })}
             </option>
           ))}
-        </select>
-        <button
+        </Select>
+        <Button
+          variant="unstyled"
           onClick={() => {
             void handlePrune()
           }}
@@ -246,7 +250,7 @@ export function EventsManagementSection() {
             <Scissors className="h-3 w-3" />
           )}
           {t('recordings.eventsManagementSection.pruneNow', 'Prune now')}
-        </button>
+        </Button>
       </section>
 
       {footprint.devices.length === 0 ? (

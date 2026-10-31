@@ -158,7 +158,7 @@ function SequenceFormBody({ draft, devices, fleetView, onChange }: SequenceFormB
           <label className={LABEL}>
             {t('system.notificationSequences.minDelayS', 'Min delay (s)')}
           </label>
-          <input
+          <Input
             type="number"
             min={0}
             className={FIELD}
@@ -557,7 +557,7 @@ function SequenceStepRow({
       </div>
       <div className="w-28">
         <label className={LABEL}>{t('system.notificationSequences.seconds', 'Seconds')}</label>
-        <input
+        <Input
           type="number"
           min={0}
           max={300}

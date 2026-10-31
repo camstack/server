@@ -55,6 +55,7 @@ import {
   PopoverTrigger,
   usePipelineOrchestratorGetCameraSwitches,
   usePipelineOrchestratorSetCameraSwitch,
+  Button,
 } from '@camstack/ui-library'
 import { useEventInvalidation } from '../../hooks/useEventInvalidation'
 import {
@@ -240,7 +241,8 @@ function FunctionMenuRow({ row, failure, onToggle }: FunctionMenuRowProps) {
   const note =
     failure !== null ? 'write failed' : unknown ? (row.unavailableReason ?? 'unknown') : null
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       role="switch"
       aria-label={row.label}
@@ -277,6 +279,6 @@ function FunctionMenuRow({ row, failure, onToggle }: FunctionMenuRowProps) {
       >
         {unknown ? '—' : off ? t('common.off') : t('common.on')}
       </span>
-    </button>
+    </Button>
   )
 }

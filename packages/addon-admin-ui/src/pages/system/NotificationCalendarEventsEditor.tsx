@@ -11,6 +11,7 @@ import {
   Input,
   useCalendarsListCalendars,
   useSystem,
+  Textarea,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react'
@@ -292,7 +293,7 @@ export function NotificationCalendarEventsEditor({
                 </label>
                 <label className="block text-sm">
                   {t('system.notificationCalendarEventsEditor.body', 'Body')}
-                  <textarea
+                  <Textarea
                     className="mt-1 min-h-[8rem] w-full rounded border border-border bg-background px-2 py-1 text-xs"
                     value={form.templateBody}
                     onChange={(e) => patch({ templateBody: e.target.value })}

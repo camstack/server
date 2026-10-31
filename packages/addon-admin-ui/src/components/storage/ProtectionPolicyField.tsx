@@ -25,6 +25,7 @@ import {
   writeProtectionPolicy,
 } from './location-protection'
 import { useTranslation } from 'react-i18next'
+import { Input, Select } from '@camstack/ui-library'
 
 export interface ProtectionPolicyFieldProps {
   readonly config: Readonly<Record<string, unknown>>
@@ -60,13 +61,13 @@ export function ProtectionPolicyField({
         {t('storage.protectionPolicyField.protectedFreeSpace', 'Protected free space')}
       </label>
       <div className="flex items-center gap-2">
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           aria-label={t('storage.protectionPolicyField.protectionUnit', 'Protection unit')}
           value={unit}
           onChange={(e) => {
             selectUnit(e.target.value === 'gb' ? 'gb' : 'percent')
           }}
-          className="rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="percent">
             {t('storage.protectionPolicyField.ofTheVolume', '% of the volume')}
@@ -74,8 +75,8 @@ export function ProtectionPolicyField({
           <option value="gb">
             {t('storage.protectionPolicyField.gbOfFreeSpace', 'GB of free space')}
           </option>
-        </select>
-        <input
+        </Select>
+        <Input
           type="number"
           aria-label={protectionUnitLabel(unit)}
           min={0}

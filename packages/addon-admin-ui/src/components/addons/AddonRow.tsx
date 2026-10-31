@@ -2,6 +2,7 @@ import { Lock } from 'lucide-react'
 import type { BulkUpdateItem } from '@camstack/types'
 import { AddonRowBadge } from './AddonRowBadge'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@camstack/ui-library'
 
 interface AddonRowAddon {
   readonly name: string
@@ -71,32 +72,35 @@ export function AddonRow({
       <td className="px-2 py-1.5">
         <div className="flex items-center gap-1">
           {hasUpdate && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               disabled={disabledByBulk}
               onClick={() => onUpdate(latestVersion!)}
               className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40"
             >
               {t('addons.addonRow.update', 'Update')}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             disabled={disabledByBulk}
             onClick={onRestart}
             className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-40"
           >
             {t('addons.addonRow.restart', 'Restart')}
-          </button>
+          </Button>
           {!isSystem && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               disabled={disabledByBulk}
               onClick={onUninstall}
               className="text-[10px] px-2 py-0.5 rounded bg-danger/10 text-danger hover:bg-danger/20 disabled:opacity-40"
             >
               {t('addons.addonRow.uninstall', 'Uninstall')}
-            </button>
+            </Button>
           )}
         </div>
       </td>

@@ -27,6 +27,7 @@
 import {
   useNotificationRulesListDeviceMutes,
   useNotificationRulesSetDeviceMuted,
+  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { BellOff, BellRing } from 'lucide-react'
@@ -131,7 +132,8 @@ export function DeviceNotificationMute({ deviceId, isCamera }: DeviceNotificatio
         )}
       </div>
       <div className="px-4 py-3 flex items-start gap-3">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           role="switch"
           aria-label={state.label}
@@ -172,7 +174,7 @@ export function DeviceNotificationMute({ deviceId, isCamera }: DeviceNotificatio
                 ? t('device.deviceNotificationMute.muted2', 'Muted')
                 : t('device.deviceNotificationMute.notifying', 'Notifying')}
           </span>
-        </button>
+        </Button>
         <p className="flex-1 text-[11px] leading-relaxed text-foreground-subtle">
           {failure !== null
             ? t('device.deviceNotificationMute.writeFailed', 'Write failed: {{failure}}', {
