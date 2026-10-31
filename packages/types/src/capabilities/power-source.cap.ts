@@ -90,6 +90,14 @@ const POWER_SOURCE_DEVICE_TYPES = [
   DeviceType.MediaPlayer,
   DeviceType.Vacuum,
   DeviceType.Generic,
+  DeviceType.Washer,
+  DeviceType.Dryer,
+  DeviceType.Dishwasher,
+  DeviceType.PetFountain,
+  DeviceType.Fan,
+  DeviceType.Humidifier,
+  DeviceType.Climate,
+  DeviceType.WaterHeater,
 ] as const
 
 const powerSourceCustomize = {

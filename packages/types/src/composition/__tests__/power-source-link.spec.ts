@@ -60,6 +60,22 @@ describe('the power-source declaration', () => {
     expect(target?.path).toBe('switchOn')
     expect(target?.deviceTypes).toContain(DeviceType.Gateway)
   })
+
+  it('also lets a plug-fed appliance host the link', () => {
+    const target = CAP_CUSTOMIZE_CATALOG['power-source']?.targets.find((t) => t.id === 'switch')
+    for (const type of [
+      DeviceType.Washer,
+      DeviceType.Dryer,
+      DeviceType.Dishwasher,
+      DeviceType.PetFountain,
+      DeviceType.Fan,
+      DeviceType.Humidifier,
+      DeviceType.Climate,
+      DeviceType.WaterHeater,
+    ]) {
+      expect(target?.deviceTypes).toContain(type)
+    }
+  })
 })
 
 describe('powerSourceLinkOfComposition', () => {
