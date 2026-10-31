@@ -68,8 +68,8 @@ export interface BuildRademacherCandidatesInput {
 /**
  * The adoption candidates of one integration, pure and in a fixed order: the hub
  * box ({@link DeviceType.Gateway}), then one {@link DeviceType.Cover} per roller
- * shutter. Each cover names the gateway through `parentStableId`, so the
- * adoption modal nests it under the hub.
+ * shutter. The gateway is a sibling of the covers, never their parent: no
+ * cover names a `parentStableId`.
  */
 export function buildRademacherCandidates(
   input: BuildRademacherCandidatesInput,
@@ -104,7 +104,6 @@ export function buildRademacherCandidates(
       alreadyAdopted: adoptedId !== null,
       adoptedDeviceId: adoptedId,
       capabilities: [coverCapability.name],
-      parentStableId: gatewayId,
     })
   }
   return out

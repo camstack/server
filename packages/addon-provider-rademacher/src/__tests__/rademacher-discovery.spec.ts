@@ -37,7 +37,7 @@ describe('Rademacher adoption candidates', () => {
     expect(out[2]?.status).toBe('offline')
   })
 
-  it('ties every cover to the gateway candidate it sits behind', () => {
+  it('keeps the gateway a sibling candidate: no cover names a parent', () => {
     const out = buildRademacherCandidates({
       integrationId: INT,
       integrationName: 'Casa',
@@ -46,8 +46,8 @@ describe('Rademacher adoption candidates', () => {
       covers,
       adopted: new Map(),
     })
-    expect(out[0]?.parentStableId).toBeUndefined()
-    expect(out.slice(1).map((c) => c.parentStableId)).toEqual(['int-1:gateway', 'int-1:gateway'])
+    expect(out[0]?.type).toBe(DeviceType.Gateway)
+    expect(out.map((c) => c.parentStableId)).toEqual([undefined, undefined, undefined])
   })
 
   it('advertises on the gateway only what the hub supports', () => {
