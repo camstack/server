@@ -22,7 +22,7 @@
  */
 import { useState } from 'react'
 import { Fingerprint, Loader2 } from 'lucide-react'
-import { useSystem, type WidgetProps } from '@camstack/ui-library'
+import { useSystem, type WidgetProps, Button } from '@camstack/ui-library'
 import { isPasskeySupported, runPasskeyAuthentication } from './passkey-ceremony'
 import { useT } from '../../i18n'
 
@@ -88,7 +88,8 @@ export function PasskeyLogin(props: WidgetProps) {
 
   return (
     <div className="space-y-2">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         data-testid="login-passkey"
         onClick={run}
@@ -101,7 +102,7 @@ export function PasskeyLogin(props: WidgetProps) {
           <Fingerprint className="h-4 w-4 text-primary" />
         )}
         {t('login.usePasskey')}
-      </button>
+      </Button>
       {error && (
         <div className="rounded-md bg-danger/10 border border-danger/20 px-3 py-2 text-xs text-danger">
           {error}

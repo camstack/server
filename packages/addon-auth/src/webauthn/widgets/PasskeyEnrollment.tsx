@@ -16,7 +16,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertCircle, Fingerprint, KeyRound, Loader2, Trash2 } from 'lucide-react'
-import { useSystem, type WidgetProps } from '@camstack/ui-library'
+import { useSystem, type WidgetProps, Button, Input } from '@camstack/ui-library'
 import type { PasskeySummary } from '@camstack/types'
 import { runPasskeyAuthentication, runPasskeyRegistration } from './passkey-ceremony'
 import { useT } from '../../i18n'
@@ -142,7 +142,7 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                       }
                     }}
                   >
-                    <input
+                    <Input
                       type="password"
                       autoComplete="current-password"
                       aria-label={t('enrollment.currentPassword')}
@@ -151,14 +151,16 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-36 rounded border border-border bg-background px-2 py-1 text-[11px]"
                     />
-                    <button
+                    <Button
+                      variant="unstyled"
                       type="submit"
                       disabled={password.length === 0 || removeMutation.isPending}
                       className="rounded px-2 py-1 text-[11px] text-danger hover:bg-danger/10 disabled:opacity-50"
                     >
                       {t('enrollment.remove')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="unstyled"
                       type="button"
                       disabled={removeMutation.isPending}
                       onClick={() =>
@@ -170,10 +172,11 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                       className="rounded px-2 py-1 text-[11px] text-foreground-subtle hover:bg-surface-hover disabled:opacity-50"
                     >
                       {t('enrollment.usePasskey')}
-                    </button>
+                    </Button>
                   </form>
                 ) : (
-                  <button
+                  <Button
+                    variant="unstyled"
                     onClick={() => {
                       setError(null)
                       setPassword('')
@@ -184,7 +187,7 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                   >
                     <Trash2 className="h-3 w-3" />
                     {t('enrollment.remove')}
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
@@ -203,7 +206,8 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                 {t('enrollment.secondFactorHint')}
               </div>
             </div>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               role="switch"
               aria-checked={prefEnabled}
@@ -219,7 +223,7 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                   prefEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'
                 }`}
               />
-            </button>
+            </Button>
           </div>
         )}
 
@@ -235,7 +239,7 @@ export function PasskeyEnrollment(_props: WidgetProps) {
             <label className="text-[10px] uppercase tracking-wide text-foreground-subtle">
               {t('enrollment.passkeyName')}
             </label>
-            <input
+            <Input
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
@@ -243,7 +247,8 @@ export function PasskeyEnrollment(_props: WidgetProps) {
               className="w-full rounded border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
-          <button
+          <Button
+            variant="unstyled"
             onClick={enroll}
             disabled={enrolling}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
@@ -259,7 +264,7 @@ export function PasskeyEnrollment(_props: WidgetProps) {
                 {t('enrollment.addPasskey')}
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
