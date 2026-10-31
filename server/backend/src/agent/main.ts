@@ -94,7 +94,7 @@ import { BUILTINS_PACKAGE, planAgentAddonScan, resolveAddonPackageDirs } from '.
 import { buildAgentAddonUpdateReport } from './agent-addon-updates.js'
 import { createAgentHubRegistration } from './agent-hub-registration.js'
 import { createAgentMeshGate } from './agent-mesh-gate.js'
-import { createAgentShutdown } from './agent-shutdown.js'
+import { createAgentShutdown, killSelfHard } from './agent-shutdown.js'
 import { createLocalPairingAnnouncer } from './agent-pairing-local.js'
 import { AgentMembershipWatch } from './agent-membership-watch.js'
 import {
@@ -1271,6 +1271,7 @@ async function startAgent(configPath?: string): Promise<void> {
   const shutdown = createAgentShutdown({
     logger: consoleLogger,
     exit: (code) => process.exit(code),
+    hardExit: (_code, finalLine) => killSelfHard(finalLine),
     steps: [
       {
         name: 'abort-registration',

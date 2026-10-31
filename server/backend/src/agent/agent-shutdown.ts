@@ -7,10 +7,38 @@
  * whole pass has a hard deadline that ends in a non-zero `exit`, and every step logs its elapsed time
  * next to the reason the shutdown started.
  */
+import * as fs from 'node:fs'
 import type { IScopedLogger } from '@camstack/types'
 
 export const SHUTDOWN_STEP_TIMEOUT_MS = 5_000
 export const SHUTDOWN_DEADLINE_MS = 15_000
+
+export interface KillSelfDeps {
+  readonly write?: (line: string) => void
+  readonly kill?: (pid: number, signal: NodeJS.Signals) => void
+}
+
+/**
+ * End this process WITHOUT running exit-time teardown. `process.exit` joins the threadpool and tears
+ * down workers and native addons, and on a node that is already wedged that join can itself hang
+ * (observed: a desktop agent alive for minutes after its shutdown deadline). A SIGKILL to ourselves
+ * cannot be waited on. The last line is written synchronously first, because a buffered log write
+ * would be lost.
+ */
+export function killSelfHard(finalLine: string, deps: KillSelfDeps = {}): void {
+  const write =
+    deps.write ??
+    ((line: string): void => {
+      fs.writeSync(2, `${line}\n`)
+    })
+  try {
+    write(finalLine)
+  } catch {
+    /* a closed stderr must not stop the kill */
+  }
+  const kill = deps.kill ?? ((pid, signal): void => void process.kill(pid, signal))
+  kill(process.pid, 'SIGKILL')
+}
 
 export interface ShutdownStep {
   readonly name: string
@@ -21,6 +49,8 @@ export interface AgentShutdownDeps {
   readonly steps: readonly ShutdownStep[]
   readonly logger: IScopedLogger
   readonly exit: (code: number) => void
+  /** Ends the process without exit-time teardown; used where the pass is already wedged. */
+  readonly hardExit: (code: number, finalLine: string) => void
   readonly stepTimeoutMs?: number
   readonly deadlineMs?: number
 }
@@ -55,7 +85,7 @@ export function createAgentShutdown(deps: AgentShutdownDeps): (reason: string) =
       logger.error(
         `shutdown already in progress for ${Date.now() - startedAt}ms; ${reason} forces exit`,
       )
-      deps.exit(1)
+      deps.hardExit(1, `shutdown already in progress; ${reason} forces exit`)
       return
     }
     const began = Date.now()
@@ -65,7 +95,10 @@ export function createAgentShutdown(deps: AgentShutdownDeps): (reason: string) =
       logger.error(
         `shutdown deadline of ${deadlineMs}ms exceeded (started by ${reason}); exiting 1`,
       )
-      deps.exit(1)
+      deps.hardExit(
+        1,
+        `shutdown deadline of ${deadlineMs}ms exceeded (started by ${reason}); SIGKILL`,
+      )
     }, deadlineMs)
 
     for (const step of deps.steps) {

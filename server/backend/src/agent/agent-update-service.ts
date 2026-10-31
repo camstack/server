@@ -60,6 +60,7 @@ import {
   buildNodeUpdateAnnouncement,
 } from '../core/updates/node-update-announcement.js'
 import { buildRestartMarker } from '../core/updates/restart-marker.js'
+import { killSelfHard } from './agent-shutdown.js'
 
 /**
  * The synthetic addonId the agent's OWN runtime registers infra providers
@@ -138,7 +139,10 @@ export function scheduleAgentRestart(
   })
   const grace = setTimeout(() => {
     process.kill(process.pid, 'SIGTERM')
-    const hard = setTimeout(() => process.exit(0), 15_000)
+    const hard = setTimeout(
+      () => killSelfHard('agent restart: shutdown did not finish in 15000ms; SIGKILL'),
+      15_000,
+    )
     hard.unref()
   }, AGENT_RESTART_GRACE_MS)
   grace.unref()

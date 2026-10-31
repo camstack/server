@@ -222,6 +222,21 @@ describe('scheduleAgentRestart — restart-intent marker (phase 3 supervisor)', 
     expect(typeof marker?.requestedAtMs).toBe('number')
   })
 
+  it('ends a wedged restart with SIGKILL on itself, never process.exit', () => {
+    const kill = vi.spyOn(process, 'kill').mockImplementation(() => true)
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+    try {
+      scheduleAgentRestart(makeLogger(), 'server-update: x', dataDir)
+      vi.advanceTimersByTime(60_000)
+      expect(kill).toHaveBeenCalledWith(process.pid, 'SIGTERM')
+      expect(kill).toHaveBeenCalledWith(process.pid, 'SIGKILL')
+      expect(exit).not.toHaveBeenCalled()
+    } finally {
+      kill.mockRestore()
+      exit.mockRestore()
+    }
+  })
+
   it('writes no marker when no dataDir is provided', () => {
     scheduleAgentRestart(makeLogger(), 'server-update: x')
     expect(readRestartIntentMarker(serverRootDir(dataDir))).toBeNull()

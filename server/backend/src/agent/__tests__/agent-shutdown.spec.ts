@@ -4,7 +4,7 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createAgentShutdown, type ShutdownStep } from '../agent-shutdown'
+import { createAgentShutdown, killSelfHard, type ShutdownStep } from '../agent-shutdown'
 
 interface Line {
   readonly level: 'info' | 'warn' | 'error'
@@ -38,7 +38,7 @@ describe('createAgentShutdown', () => {
       { name: 'addons', run: async () => void order.push('addons') },
       { name: 'broker', run: async () => void order.push('broker') },
     ]
-    const shutdown = createAgentShutdown({ steps, logger, exit })
+    const shutdown = createAgentShutdown({ steps, logger, exit, hardExit: vi.fn() })
     await shutdown('SIGTERM')
     expect(order).toEqual(['addons', 'broker'])
     expect(exit).toHaveBeenCalledWith(0)
@@ -54,7 +54,13 @@ describe('createAgentShutdown', () => {
       { name: 'addons', run: never },
       { name: 'broker', run: async () => void ran.push('broker') },
     ]
-    const shutdown = createAgentShutdown({ steps, logger, exit, stepTimeoutMs: 3_000 })
+    const shutdown = createAgentShutdown({
+      steps,
+      logger,
+      exit,
+      hardExit: vi.fn(),
+      stepTimeoutMs: 3_000,
+    })
     const done = shutdown('SIGTERM')
     await vi.advanceTimersByTimeAsync(3_001)
     await done
@@ -75,7 +81,7 @@ describe('createAgentShutdown', () => {
       { name: 'mdns', run: async () => Promise.reject(new Error('boom')) },
       { name: 'broker', run: async () => undefined },
     ]
-    await createAgentShutdown({ steps, logger, exit })('SIGINT')
+    await createAgentShutdown({ steps, logger, exit, hardExit: vi.fn() })('SIGINT')
     expect(lines.some((l) => l.message.includes('mdns') && l.message.includes('boom'))).toBe(true)
     expect(exit).toHaveBeenCalledWith(0)
   })
@@ -83,25 +89,29 @@ describe('createAgentShutdown', () => {
   it('a hard deadline ends in a non-zero exit even when the steps never end', async () => {
     const { logger, lines } = recorder()
     const exit = vi.fn()
+    const hardExit = vi.fn()
     const steps: ShutdownStep[] = [{ name: 'addons', run: never }]
     // step timeout longer than the deadline: only the deadline can save us
     const shutdown = createAgentShutdown({
       steps,
       logger,
       exit,
+      hardExit,
       stepTimeoutMs: 60_000,
       deadlineMs: 15_000,
     })
     void shutdown('SIGTERM')
     await vi.advanceTimersByTimeAsync(15_001)
-    expect(exit).toHaveBeenCalledTimes(1)
-    expect(exit).toHaveBeenCalledWith(1)
+    expect(exit).not.toHaveBeenCalled()
+    expect(hardExit).toHaveBeenCalledTimes(1)
+    expect(hardExit.mock.calls[0]?.[1]).toContain('deadline')
     expect(lines.some((l) => l.level === 'error' && l.message.includes('deadline'))).toBe(true)
   })
 
   it('a second signal does not start a second pass but forces exit', async () => {
     const { logger, lines } = recorder()
     const exit = vi.fn()
+    const hardExit = vi.fn()
     let runs = 0
     const steps: ShutdownStep[] = [
       {
@@ -112,14 +122,36 @@ describe('createAgentShutdown', () => {
         },
       },
     ]
-    const shutdown = createAgentShutdown({ steps, logger, exit })
+    const shutdown = createAgentShutdown({ steps, logger, exit, hardExit })
     void shutdown('SIGTERM')
     await vi.advanceTimersByTimeAsync(10)
     await shutdown('SIGINT')
     expect(runs).toBe(1)
-    expect(exit).toHaveBeenCalledWith(1)
+    expect(hardExit).toHaveBeenCalledWith(1, expect.stringContaining('SIGINT'))
     expect(lines.some((l) => l.message.includes('SIGINT') && l.message.includes('already'))).toBe(
       true,
     )
+  })
+})
+
+describe('killSelfHard', () => {
+  it('writes the final line first, then SIGKILLs its own pid (no process.exit)', () => {
+    const order: string[] = []
+    const kill = vi.fn((pid: number, signal: NodeJS.Signals) => {
+      order.push(`kill:${pid}:${signal}`)
+    })
+    killSelfHard('last words', { write: (l) => order.push(`write:${l}`), kill })
+    expect(order).toEqual(['write:last words', `kill:${process.pid}:SIGKILL`])
+  })
+
+  it('still kills when the final write throws', () => {
+    const kill = vi.fn()
+    killSelfHard('x', {
+      write: () => {
+        throw new Error('EPIPE')
+      },
+      kill,
+    })
+    expect(kill).toHaveBeenCalledWith(process.pid, 'SIGKILL')
   })
 })
