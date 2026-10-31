@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.537] - 2026-10-31
+
 ### Changed
 
 - Saving an integration's configuration now shows a pending button, a success toast and an error toast; the Integrations page shows a reconnecting notice (and polls) while a provider addon restarts instead of an error page
