@@ -3,7 +3,7 @@
  * library DataTable (cards below `sm`, so a phone never scrolls sideways).
  */
 import { useState, type ReactNode } from 'react'
-import { BTN_COMPACT_DANGER, DataTable, type DataColumn } from '@camstack/ui-library'
+import { BTN_COMPACT_DANGER, DataTable, type DataColumn, Button } from '@camstack/ui-library'
 import { Loader2 } from 'lucide-react'
 import type { InstalledDeviceChip, InstalledFileRow } from '../../ui/installed-inventory.js'
 import { formatMB } from '../../ui/model-studio-ui.js'
@@ -81,7 +81,8 @@ function RemoveCell({
   const { t } = useT()
   if (!row.removable) return null
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       className={BTN_COMPACT_DANGER}
       disabled={busy}
@@ -91,7 +92,7 @@ function RemoveCell({
     >
       {busy && <Loader2 className="h-3 w-3 animate-spin" aria-hidden />}
       {t('filesTable.remove')}
-    </button>
+    </Button>
   )
 }
 

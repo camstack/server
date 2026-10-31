@@ -15,6 +15,7 @@ import {
   useConfirm,
   useUrlQueryParam,
   type AddonPageProps,
+  Button,
 } from '@camstack/ui-library'
 import type {
   ClusterStepModels,
@@ -342,14 +343,15 @@ export function InstalledTab({ trpc, refreshKey }: InstalledTabProps) {
               {snapshot?.engines === null ? ` · ${t('installed.summary.loadedUnavailable')}` : ''}
             </p>
             {unusedRemovable.length > 0 && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 className={BTN_COMPACT_DANGER}
                 data-testid="installed-remove-unused-bulk"
                 onClick={() => void handleRemoveUnusedBulk()}
               >
                 {t('installed.removeUnused', { count: unusedRemovable.length })}
-              </button>
+              </Button>
             )}
           </div>
           {devicesNotice !== null && (

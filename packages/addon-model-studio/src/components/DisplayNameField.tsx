@@ -5,6 +5,7 @@
 import { Field } from './Form.js'
 import { useT } from '../i18n/index.js'
 import { MODEL_DISPLAY_NAME_MAX, parseDisplayName } from '../display-name.js'
+import { Input } from '@camstack/ui-library'
 
 export interface DisplayNameFieldProps {
   readonly value: string
@@ -19,7 +20,7 @@ export function DisplayNameField({ value, onChange, defaultName }: DisplayNameFi
   return (
     <div className="space-y-1">
       <Field label={t('displayName.label')}>
-        <input
+        <Input
           type="text"
           value={value}
           placeholder={defaultName}

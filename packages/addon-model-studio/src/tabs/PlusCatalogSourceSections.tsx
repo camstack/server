@@ -42,6 +42,7 @@ import {
 } from '../components/DisplayNameField.js'
 import { PlusCatalogBrowser } from './PlusCatalogBrowser.js'
 import { Trans, useT } from '../i18n/index.js'
+import { Button, Input, Select } from '@camstack/ui-library'
 
 type Trpc = AddonPageProps['trpc']
 
@@ -151,21 +152,23 @@ function PlusCatalogKeyPanel({
           <span className="rounded-md border border-success/30 bg-success/10 px-2 py-1 text-[11px] text-success">
             {t('plusCatalog.keyConfigured')}
           </span>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => setReplacingKey(true)}
             className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
           >
             {t('plusCatalog.replaceKey')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => void handleTest()}
             disabled={busy}
             className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
           >
             {t('plusCatalog.testConnection')}
-          </button>
+          </Button>
           {testResult && <span className="text-[11px] text-foreground-subtle">{testResult}</span>}
         </div>
       )}
@@ -179,7 +182,7 @@ function PlusCatalogKeyPanel({
       {showForm && (
         <div className="space-y-1">
           <Field label={t('plusCatalog.keyLabel')}>
-            <input
+            <Input
               type="password"
               value={keyDraft}
               onChange={(e) => setKeyDraft(e.target.value)}
@@ -189,16 +192,18 @@ function PlusCatalogKeyPanel({
             />
           </Field>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => void handleSaveKey()}
               disabled={keySaving || keyDraft.trim().length === 0}
               className="px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               {keySaving ? t('common.saving') : t('plusCatalog.saveKey')}
-            </button>
+            </Button>
             {status.configured && replacingKey && (
-              <button
+              <Button
+                variant="unstyled"
                 type="button"
                 onClick={() => {
                   setReplacingKey(false)
@@ -208,7 +213,7 @@ function PlusCatalogKeyPanel({
                 className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground transition-colors"
               >
                 {t('common.cancel')}
-              </button>
+              </Button>
             )}
           </div>
           {keyError && <div className="text-[11px] text-danger">{keyError}</div>}
@@ -308,14 +313,15 @@ export function PlusCatalogSection({
     <div className="space-y-3">
       <PlusCatalogKeyPanel trpc={trpc} status={status} onStatusChange={handleStatusChange} />
       <div className="flex items-center gap-2 flex-wrap">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void handleLoadModels()}
           disabled={busy}
           className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
         >
           {t('plusCatalog.refreshList')}
-        </button>
+        </Button>
       </div>
 
       {models === null && (
@@ -415,8 +421,8 @@ function FallbackCatalogCard({
             <span className="text-foreground-subtle uppercase tracking-wide text-[10px]">
               {t('common.landOn')}
             </span>
-            <select
-              className="bg-surface border border-border rounded px-2 py-0.5 text-[11px]"
+            <Select
+              wrapperClassName="inline-block w-auto"
               value={landNode}
               onChange={(e) => setLandNode(e.target.value)}
             >
@@ -425,7 +431,7 @@ function FallbackCatalogCard({
                   {n}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         )}
       {landNodeId !== undefined && (
@@ -439,7 +445,8 @@ function FallbackCatalogCard({
       )}
       <DisplayNameField value={displayName} onChange={setDisplayName} defaultName={cat.label} />
       <div className="flex items-center gap-2 flex-wrap">
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => {
             setImporting(true)
             const target = canLand ? effectiveLand : undefined
@@ -531,8 +538,9 @@ function FallbackCatalogCard({
             : canLand
               ? t('plusCatalog.importLand', { nodeId: effectiveLand })
               : t('common.register')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           onClick={() =>
             onPrefillUpload({
               sourceLabel: cat.label,
@@ -545,7 +553,7 @@ function FallbackCatalogCard({
           className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
         >
           {t('plusCatalog.prefillCustom')}
-        </button>
+        </Button>
       </div>
     </div>
   )

@@ -10,6 +10,7 @@ import { listStepOptions } from '../ui/api.js'
 import type { StepOption } from '../ui/model-studio-ui.js'
 import { Field } from './Form.js'
 import { useT } from '../i18n/index.js'
+import { Select } from '@camstack/ui-library'
 
 interface StepSelectProps {
   readonly trpc: AddonPageProps['trpc']
@@ -53,11 +54,11 @@ export function StepSelect({ trpc, label, value, onChange, slots }: StepSelectPr
 
   return (
     <Field label={label ?? t('common.step')}>
-      <select
+      <Select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={options === null || options.length === 0}
-        className="w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50 disabled:opacity-50"
+        className="w-full"
       >
         {options === null && <option value={value}>{t('stepSelect.loading')}</option>}
         {options !== null && options.length === 0 && (
@@ -68,7 +69,7 @@ export function StepSelect({ trpc, label, value, onChange, slots }: StepSelectPr
             {o.name} · {o.id}
           </option>
         ))}
-      </select>
+      </Select>
       {error && <span className="block text-[10px] text-danger pt-0.5">{error}</span>}
     </Field>
   )

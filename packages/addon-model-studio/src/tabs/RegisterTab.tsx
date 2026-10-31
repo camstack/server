@@ -24,6 +24,7 @@ import {
 } from '../components/DisplayNameField.js'
 import type { UploadPrefill } from './PlusCatalogSourceSections.js'
 import { Trans, useT } from '../i18n/index.js'
+import { Button, FileInput, Textarea, Select } from '@camstack/ui-library'
 
 interface CustomTabProps {
   readonly trpc: AddonPageProps['trpc']
@@ -248,7 +249,8 @@ export function CustomTab({
         </span>
         <div className="inline-flex rounded-md border border-border overflow-hidden">
           {SOURCE_OPTIONS.map((o) => (
-            <button
+            <Button
+              variant="unstyled"
               key={o.value}
               type="button"
               onClick={() => {
@@ -264,7 +266,7 @@ export function CustomTab({
               ].join(' ')}
             >
               {t(`register.sources.${o.value}`)}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -282,7 +284,8 @@ export function CustomTab({
       {sourceKind === 'upload' ? (
         <Field label={t('register.modelFile', { extensions: UPLOAD_EXTENSIONS.join(' / ') })}>
           <div className="flex items-center gap-3 flex-wrap">
-            <button
+            <Button
+              variant="unstyled"
               onClick={() => fileInputRef.current?.click()}
               disabled={upload.state === 'uploading'}
               className="px-4 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
@@ -290,7 +293,7 @@ export function CustomTab({
               {upload.state === 'uploading'
                 ? t('register.uploading', { pct: upload.pct })
                 : t('register.chooseFile')}
-            </button>
+            </Button>
             {upload.state === 'done' && (
               <span className="text-[11px] text-success font-mono">
                 {upload.file.filename} · {(upload.file.bytes / 1e6).toFixed(1)} MB ·{' '}
@@ -301,9 +304,8 @@ export function CustomTab({
               <span className="text-[11px] text-danger">{upload.message}</span>
             )}
           </div>
-          <input
+          <FileInput
             ref={fileInputRef}
-            type="file"
             accept={UPLOAD_EXTENSIONS.join(',')}
             className="hidden"
             onChange={(e) => {
@@ -339,13 +341,14 @@ export function CustomTab({
               min={0}
             />
           </div>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={handleProbeUrl}
             className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-hover"
           >
             {t('register.probeUrl')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -384,26 +387,26 @@ export function CustomTab({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label={t('common.format')}>
-          <select
+          <Select
             value={format}
             onChange={(e) => {
               const next = CUSTOM_FORMATS.find((f) => f === e.target.value)
               if (next !== undefined) setFormat(next)
             }}
-            className="w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50"
+            className="w-full"
           >
             {CUSTOM_FORMATS.map((f) => (
               <option key={f} value={f}>
                 {f}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
         <Field label={t('register.decode')}>
-          <select
+          <Select
             value={postprocessor}
             onChange={(e) => setPostprocessor(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50"
+            className="w-full"
           >
             <option value="">{t('register.stepDefault')}</option>
             {REGISTRABLE_POSTPROCESSORS.map((p) => (
@@ -411,7 +414,7 @@ export function CustomTab({
                 {p}
               </option>
             ))}
-          </select>
+          </Select>
           <span className="block text-[10px] text-foreground-subtle pt-1">
             {t('register.decodeWarning')}
           </span>
@@ -419,7 +422,7 @@ export function CustomTab({
       </div>
 
       <Field label={t('register.labelmap', { count: labels.length })}>
-        <textarea
+        <Textarea
           value={labelsText}
           onChange={(e) => setLabelsText(e.target.value)}
           rows={8}
@@ -429,13 +432,14 @@ export function CustomTab({
       </Field>
 
       <div className="flex items-center gap-2">
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => void handleRegister()}
           disabled={submitting || (sourceKind === 'upload' && upload.state !== 'done')}
           className="px-4 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {submitting ? t('register.registering') : t('register.registerModel')}
-        </button>
+        </Button>
       </div>
     </div>
   )

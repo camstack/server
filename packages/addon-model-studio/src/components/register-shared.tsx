@@ -7,6 +7,7 @@
  */
 import type { ReactNode } from 'react'
 import { Field } from './Form.js'
+import { Select } from '@camstack/ui-library'
 
 export const REGISTER_SELECT_CLASS =
   'w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none disabled:opacity-50'
@@ -64,7 +65,8 @@ export function FacetSelect({
 
   return (
     <Field label={label}>
-      <select
+      <Select
+        wrapperClassName="inline-block w-auto"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled || options.length === 0}
@@ -80,7 +82,7 @@ export function FacetSelect({
             {formatOption(option)}
           </option>
         ))}
-      </select>
+      </Select>
       {hint}
     </Field>
   )

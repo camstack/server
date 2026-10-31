@@ -7,6 +7,7 @@ import type { AddonPageProps } from '@camstack/ui-library'
 import { PlusCatalogSection, type UploadPrefill } from './PlusCatalogSourceSections.js'
 import { PluginCatalogTab } from './PluginCatalogTab.js'
 import { Trans, useT } from '../i18n/index.js'
+import { Button } from '@camstack/ui-library'
 
 interface SourcesTabProps {
   readonly trpc: AddonPageProps['trpc']
@@ -46,7 +47,8 @@ export function SourcesTab({ trpc, onRegistered, onPrefillUpload }: SourcesTabPr
             { value: 'scrypted', label: 'plugin catalog' },
           ] as const
         ).map((o) => (
-          <button
+          <Button
+            variant="unstyled"
             key={o.value}
             type="button"
             onClick={() => {
@@ -62,7 +64,7 @@ export function SourcesTab({ trpc, onRegistered, onPrefillUpload }: SourcesTabPr
             ].join(' ')}
           >
             {o.label}
-          </button>
+          </Button>
         ))}
       </div>
 

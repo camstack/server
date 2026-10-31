@@ -3,7 +3,12 @@
  * Same store as Pipeline → node → steps×accelerators (`AgentStepEditor`).
  */
 import { useCallback, useEffect, useState } from 'react'
-import { acceleratorLabel, AgentStepEditor, type AddonPageProps } from '@camstack/ui-library'
+import {
+  acceleratorLabel,
+  AgentStepEditor,
+  type AddonPageProps,
+  Button,
+} from '@camstack/ui-library'
 import type { DeviceStepConfig, NodeInferenceDevice, PipelineAddonSchema } from '@camstack/types'
 import { listPipelineAddon, setAgentInferenceDevices } from '../ui/api.js'
 import { applyStepSettingsOnDevice } from '../ui/installed-activation.js'
@@ -90,13 +95,14 @@ export function InstalledSettingsModal({
       <div className="w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground truncate">{title}</h2>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onClose}
             className="text-xs text-foreground-subtle hover:text-foreground px-2 py-1"
           >
             {t('common.close')}
-          </button>
+          </Button>
         </div>
 
         <div className="px-4 py-3 space-y-3">
@@ -132,21 +138,23 @@ export function InstalledSettingsModal({
         </div>
 
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onClose}
             className="px-3 py-1.5 text-xs rounded-md border border-border text-foreground-subtle hover:text-foreground"
           >
             {t('common.cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             type="button"
             disabled={busy}
             onClick={() => void handleSaveSettings()}
             className="px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {busy ? t('common.saving') : t('settingsModal.save')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

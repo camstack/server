@@ -9,6 +9,7 @@ import {
   pluginCatalogImportBlockedReason,
 } from '../plugin-catalog/plugin-catalog-catalog-selectors.js'
 import { useT } from '../i18n/index.js'
+import { Button } from '@camstack/ui-library'
 
 const FORMAT_LABEL: Readonly<Record<string, string>> = {
   onnx: 'ONNX',
@@ -90,14 +91,15 @@ export function FormatImportRow({
                     : t('formatRow.blocked')}
                 </span>
               ) : (
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   disabled={busyId === entry.id}
                   onClick={() => onImport(entry.id)}
                   className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {busyId === entry.id ? t('common.importing') : t('common.import')}
-                </button>
+                </Button>
               )}
             </div>
           )
@@ -122,14 +124,15 @@ export function FormatImportRow({
       )}
 
       {anyImported && onDistributeAll !== undefined && (
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           disabled={distributeBusy}
           onClick={onDistributeAll}
           className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50"
         >
           {distributeBusy ? t('formatRow.distributing') : t('formatRow.distributeAll')}
-        </button>
+        </Button>
       )}
     </div>
   )

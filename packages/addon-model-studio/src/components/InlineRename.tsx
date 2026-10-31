@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { MODEL_DISPLAY_NAME_MAX, parseDisplayName } from '../display-name.js'
 import { Trans, useT } from '../i18n/index.js'
+import { Button, Input } from '@camstack/ui-library'
 
 export interface InlineRenameProps {
   readonly name: string
@@ -27,7 +28,8 @@ export function InlineRename({ name, modelId, onRename, onError }: InlineRenameP
         <span className="text-sm font-medium text-foreground truncate">
           {name} <span className="text-foreground-subtle font-normal">· {modelId}</span>
         </span>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => setDraft(name)}
           className="shrink-0 p-1.5 rounded-md text-foreground-subtle hover:text-foreground hover:bg-surface-hover"
@@ -35,7 +37,7 @@ export function InlineRename({ name, modelId, onRename, onError }: InlineRenameP
           title={t('inlineRename.rename')}
         >
           <Pencil className="h-3.5 w-3.5" aria-hidden />
-        </button>
+        </Button>
       </span>
     )
   }
@@ -57,7 +59,7 @@ export function InlineRename({ name, modelId, onRename, onError }: InlineRenameP
   return (
     <div className="space-y-1 min-w-0">
       <div className="flex items-center gap-1">
-        <input
+        <Input
           type="text"
           value={draft}
           maxLength={MODEL_DISPLAY_NAME_MAX}
@@ -71,7 +73,8 @@ export function InlineRename({ name, modelId, onRename, onError }: InlineRenameP
           }}
           className="min-w-0 flex-1 px-2 py-1 text-sm rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50"
         />
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void save()}
           disabled={saving || parsed.kind === 'invalid'}
@@ -79,8 +82,9 @@ export function InlineRename({ name, modelId, onRename, onError }: InlineRenameP
           aria-label={t('inlineRename.saveName')}
         >
           <Check className="h-4 w-4" aria-hidden />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => setDraft(null)}
           disabled={saving}
@@ -88,7 +92,7 @@ export function InlineRename({ name, modelId, onRename, onError }: InlineRenameP
           aria-label={t('inlineRename.cancel')}
         >
           <X className="h-4 w-4" aria-hidden />
-        </button>
+        </Button>
       </div>
       <span className="block text-[10px] text-foreground-subtle">
         {parsed.kind === 'invalid' ? (

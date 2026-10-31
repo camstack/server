@@ -4,6 +4,7 @@
  */
 import type { ConvertProgressEvent } from '../ui/api.js'
 import { useT } from '../i18n/index.js'
+import { Button } from '@camstack/ui-library'
 
 export type ImportStepStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped'
 
@@ -65,13 +66,14 @@ export function ImportProgressModal({
             <h2 className="text-sm font-medium text-foreground truncate">{title}</h2>
           </div>
           {status !== 'running' && (
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={onClose}
               className="px-2.5 py-1 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground"
             >
               {t('common.close')}
-            </button>
+            </Button>
           )}
         </div>
 

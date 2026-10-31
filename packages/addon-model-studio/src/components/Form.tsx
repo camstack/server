@@ -4,6 +4,7 @@
  * benchmark page's inline inputs rather than the heavier TabbedSettingsForm.
  */
 import type { ReactNode } from 'react'
+import { Checkbox, Input } from '@camstack/ui-library'
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -26,7 +27,7 @@ interface TextFieldProps {
 export function TextField({ label, value, onChange, placeholder }: TextFieldProps) {
   return (
     <Field label={label}>
-      <input
+      <Input
         type="text"
         value={value}
         placeholder={placeholder}
@@ -49,7 +50,7 @@ interface NumberFieldProps {
 export function NumberField({ label, value, onChange, min, max, step }: NumberFieldProps) {
   return (
     <Field label={label}>
-      <input
+      <Input
         type="number"
         value={value}
         min={min}
@@ -74,8 +75,7 @@ interface CheckboxFieldProps {
 export function CheckboxField({ label, checked, onChange }: CheckboxFieldProps) {
   return (
     <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
-      <input
-        type="checkbox"
+      <Checkbox
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         className="accent-primary"

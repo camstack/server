@@ -36,6 +36,7 @@ import {
   isDisplayNameInvalid,
 } from '../components/DisplayNameField.js'
 import { Trans, useT } from '../i18n/index.js'
+import { Button, Select } from '@camstack/ui-library'
 
 interface PluginCatalogTabProps {
   readonly trpc: AddonPageProps['trpc']
@@ -266,13 +267,14 @@ export function PluginCatalogTab({ trpc, landNodeId, onImported }: PluginCatalog
         <div className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
           {error}
         </div>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={() => void load()}
           className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground"
         >
           {t('common.retry')}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -309,8 +311,8 @@ export function PluginCatalogTab({ trpc, landNodeId, onImported }: PluginCatalog
           <span className="text-foreground-subtle uppercase tracking-wide text-[10px]">
             {t('pluginCatalog.tfliteCoral')}
           </span>
-          <select
-            className="bg-surface border border-border rounded px-2 py-0.5 text-[11px]"
+          <Select
+            wrapperClassName="inline-block w-auto"
             value={landNode}
             onChange={(e) => setLandNode(e.target.value)}
           >
@@ -319,7 +321,7 @@ export function PluginCatalogTab({ trpc, landNodeId, onImported }: PluginCatalog
                 {n}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
       {landNodeId === undefined && tfliteNodes !== null && tfliteNodes.length === 0 && (

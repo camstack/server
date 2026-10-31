@@ -19,6 +19,7 @@ import {
   useConfirm,
   type AddonPageProps,
   type DataColumn,
+  Button,
 } from '@camstack/ui-library'
 import {
   CLUSTER_MODEL_SCOPED_STEPS,
@@ -180,14 +181,15 @@ function ClusterStepCard({
                 options={choices.map((o) => ({ value: o.id, label: o.label }))}
               />
             </span>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               className={BTN_COMPACT_PRIMARY}
               disabled={draft === current}
               onClick={() => void onChange(step.stepId, draft, labelOf(draft))}
             >
               {t('cluster.change')}
-            </button>
+            </Button>
           </span>
         )}
       </header>

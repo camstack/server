@@ -25,6 +25,7 @@ import {
   isDisplayNameInvalid,
 } from '../components/DisplayNameField.js'
 import { useT } from '../i18n/index.js'
+import { Button, Select } from '@camstack/ui-library'
 
 interface ConvertTabProps {
   readonly trpc: AddonPageProps['trpc']
@@ -195,31 +196,31 @@ export function ConvertTab({ trpc, onConverted }: ConvertTabProps) {
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t('convert.inputSize')}>
-          <select
+          <Select
             aria-label={t('convert.inputSize')}
             value={inputSize}
             onChange={(e) => setInputSize(e.target.value === '320' ? 320 : 640)}
-            className="w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50"
+            className="w-full"
           >
             <option value={320}>320 × 320</option>
             <option value={640}>640 × 640</option>
-          </select>
+          </Select>
         </Field>
         <Field label={t('convert.outputFormat')}>
-          <select
+          <Select
             value={outputFormat}
             onChange={(e) => {
               const next = OUTPUT_FORMATS.find((f) => f === e.target.value)
               if (next !== undefined) setOutputFormat(next)
             }}
-            className="w-full px-3 py-1.5 text-xs rounded-md border border-border bg-surface text-foreground focus:outline-none focus:border-primary/50"
+            className="w-full"
           >
             {OUTPUT_FORMATS.map((f) => (
               <option key={f} value={f}>
                 {f}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
       </div>
 
@@ -287,21 +288,23 @@ export function ConvertTab({ trpc, onConverted }: ConvertTabProps) {
       )}
 
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          variant="unstyled"
           onClick={() => void handleConvert()}
           disabled={running}
           className="px-4 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {running ? t('convert.converting') : t('convert.convert')}
-        </button>
+        </Button>
         {canRecommend && (
-          <button
+          <Button
+            variant="unstyled"
             onClick={() => void refreshRecommendations()}
             disabled={running}
             className="px-3 py-1.5 text-[10px] font-medium rounded-md border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-hover disabled:opacity-50 transition-colors"
           >
             {t('convert.refreshRecs')}
-          </button>
+          </Button>
         )}
       </div>
 

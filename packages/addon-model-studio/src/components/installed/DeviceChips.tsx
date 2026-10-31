@@ -6,7 +6,7 @@
  * chip pins the model as that device's base (with a confirm). A cluster-scoped
  * model is changed in the Cluster models section — its chips are read-only.
  */
-import { CHIP_BASE, cn } from '@camstack/ui-library'
+import { CHIP_BASE, cn, Button } from '@camstack/ui-library'
 import type { InstalledDeviceChip } from '../../ui/installed-inventory.js'
 import { useT } from '../../i18n/index.js'
 
@@ -109,7 +109,8 @@ export function DeviceChips({ chips, onChip, disabled = false }: DeviceChipsProp
           </>
         )
         return interactive ? (
-          <button
+          <Button
+            variant="unstyled"
             key={chip.deviceKey}
             type="button"
             className={className}
@@ -124,7 +125,7 @@ export function DeviceChips({ chips, onChip, disabled = false }: DeviceChipsProp
             }
           >
             {content}
-          </button>
+          </Button>
         ) : (
           <span
             key={chip.deviceKey}
