@@ -1248,19 +1248,21 @@ export class AgentRegistryService {
     const changes = planned.install.length + planned.update.length + planned.remove.length
     if (changes === 0 && planned.retired.length === 0) return
 
-    const dryRun = this.convergenceDryRun()
-    this.logger?.info(dryRun ? 'convergence plan (DRY RUN, nothing applied)' : 'convergence plan', {
-      tags: { nodeId: agentId },
-      meta: {
-        trigger,
-        install: planned.install.map((t) => `${t.name}@${t.version}`),
-        update: planned.update.map((t) => `${t.name} ${t.from ?? 'absent'} -> ${t.version}`),
-        remove: planned.remove.map((r) => `${r.name} (${r.reason})`),
-        retired: planned.retired,
-        observed: live.length,
+    const dryRun = this.readConvergenceDryRun(agentId)
+    this.logger?.info(
+      dryRun ? 'convergence plan (DRY RUN, removals held back)' : 'convergence plan',
+      {
+        tags: { nodeId: agentId },
+        meta: {
+          trigger,
+          install: planned.install.map((t) => `${t.name}@${t.version}`),
+          update: planned.update.map((t) => `${t.name} ${t.from ?? 'absent'} -> ${t.version}`),
+          remove: planned.remove.map((r) => `${r.name} (${r.reason})`),
+          retired: planned.retired,
+          observed: live.length,
+        },
       },
-    })
-    if (dryRun) return
+    )
 
     // GATE 1 — the trigger allowlist. A pass that must not install says so and
     // stops; silence here would read as "nothing was missing".
@@ -1286,8 +1288,27 @@ export class AgentRegistryService {
       return
     }
 
-    await this.applyRemovals(agentId, agentAddons, planned)
+    // The dry run holds back only what D982 added — removals. Installs and
+    // updates are the delivery agents always had; holding them back stopped
+    // every agent from updating.
+    if (!dryRun) await this.applyRemovals(agentId, agentAddons, planned)
     await this.applyDeliveries(agentId, live, planned, trigger, seam)
+  }
+
+  /**
+   * The dry-run switch, read fail-safe: a read that cannot be answered counts
+   * as ON (nothing is removed) and never fails the reconcile.
+   */
+  private readConvergenceDryRun(agentId: string): boolean {
+    try {
+      return this.convergenceDryRun()
+    } catch (err) {
+      this.logger?.warn('convergence: dry-run switch unreadable, treated as ON', {
+        tags: { nodeId: agentId },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+      return true
+    }
   }
 
   /**

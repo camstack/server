@@ -68,12 +68,14 @@ export const PRELOADED_SYSTEM_PREFIXES: readonly string[] = ['capabilities.']
  * Single keys loaded the same way. `auth.tokenExpiry` is read synchronously on
  * every mint by the hub's `AuthService` (`AuthManager.signToken`), and
  * `auth.trustedProxies` on every public auth request (`auth-network-policy.ts`).
+ * `addons.convergence.dryRun` is read on every agent convergence pass (D982).
  */
 export const PRELOADED_SYSTEM_KEYS: readonly string[] = [
   'auth.tokenExpiry',
   'auth.accessTokenExpiry',
   'auth.trustedProxies',
   'auth.trustedNetworks',
+  'addons.convergence.dryRun',
 ]
 
 /** Is `key` served from the boot-time mirror when the engine is isolated? */

@@ -432,7 +432,7 @@ describe('AgentRegistryService — addon back-fill', () => {
     expect(h.undeployed).toEqual(['stranger'])
   })
 
-  it('dry run logs the plan and applies nothing', async () => {
+  it('dry run still delivers installs and updates, and only holds back removals', async () => {
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
@@ -454,13 +454,44 @@ describe('AgentRegistryService — addon back-fill', () => {
 
     await h.service.reconcileAgentAddons('agent-a', 'periodic')
 
-    expect(h.deployed).toEqual([])
+    expect(h.deployed.length).toBeGreaterThan(0)
     expect(h.undeployCalls).toEqual([])
     expect(
       h.logLines.some(
-        (l) => l.includes('DRY RUN') && l.includes('addon-benchmark') && l.includes('addon-ai'),
+        (l) =>
+          l.includes('DRY RUN') &&
+          l.includes('removals held back') &&
+          l.includes('addon-benchmark'),
       ),
     ).toBe(true)
+  })
+
+  it('a dry-run switch that cannot be read counts as ON and does not fail the reconcile', async () => {
+    const h = makeHarness({
+      agentAddons: [
+        ...WIPED_AGENT,
+        { id: 'benchmark', packageName: '@camstack/addon-benchmark', version: '1.0.0' },
+      ],
+      hubRows: [
+        ...HUB_ROWS,
+        {
+          manifest: {
+            id: 'benchmark',
+            packageName: '@camstack/addon-benchmark',
+            packageVersion: '1.1.0',
+          },
+          declaration: { id: 'benchmark', execution: { placement: 'hub-only' } },
+        },
+      ],
+    })
+    h.service.setConvergenceDryRun(() => {
+      throw new Error('settings read refused (door-only)')
+    })
+
+    await h.service.reconcileAgentAddons('agent-a', 'periodic')
+
+    expect(h.deployed.length).toBeGreaterThan(0)
+    expect(h.undeployCalls).toEqual([])
   })
 
   it('does not double-install when two reconciles race', async () => {
