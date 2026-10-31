@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --list-shards)
-      echo "system pipeline post-analysis ui core light-a light-b"
+      echo "system-1 system-2 pipeline-1 pipeline-2 post-analysis-1 post-analysis-2 admin-ui-1 admin-ui-2 admin-ui-3 ui-library server-1 server-2 server-3 core light-a light-b"
       exit 0
       ;;
     --all)
@@ -79,27 +79,43 @@ PROJECT_LISTS="$(mktemp)"
 trap 'rm -f "$PROJECT_LISTS"' EXIT
 MODE="$MODE" FILES="$FILES" FILES_FROM="$FILES_FROM" SHARD="$SHARD" node > "$PROJECT_LISTS" <<'NODE'
 const { execFileSync } = require('node:child_process')
-// Heavy packages carry the bulk of the time (measured on CI: system 11 min,
-// pipeline 12, post-analysis ~20, admin-ui 9, server 9, ui-library 6) and run
-// serial inside their shard. Every other project is light and lands in one of
-// two groups by a hash of its NAME — stable whatever the affected set is, so a
-// project can never fall between shards.
+// Heavy packages carry the bulk of the time and run serial inside their shard.
+// Measured on the 2026-10-31 nightly (4 vCPU, 2 workers): admin-ui 572 s,
+// server 422, pipeline 385, post-analysis 360, system 270, ui-library 222,
+// orchestrator + types 206 — most of it module import / jsdom setup per file,
+// not test bodies, so it divides cleanly across files. A big package is
+// therefore SPLIT with vitest's own `--shard=i/n` (files, deterministic) into n
+// jobs, which is what brings a framework-wide push (everything affected) under
+// the budget: wall clock = job setup + the slowest slice (~3 min). Every other
+// project is light and lands in one of two groups by a hash of its NAME —
+// stable whatever the affected set is, so a project can never fall between
+// shards. `vitest` is the shard `v` ("i/n") handed to the package's own test
+// script after `--`; an unsplit shard has none.
 const SHARDS = {
-  system: ['@camstack/system'],
-  pipeline: ['@camstack/addon-pipeline'],
-  'post-analysis': ['@camstack/addon-post-analysis'],
-  ui: ['@camstack/addon-admin-ui', '@camstack/ui-library'],
-  core: ['@camstack/types', '@camstack/server', '@camstack/addon-pipeline-orchestrator'],
+  'system-1': { p: ['@camstack/system'], v: '1/2' },
+  'system-2': { p: ['@camstack/system'], v: '2/2' },
+  'pipeline-1': { p: ['@camstack/addon-pipeline'], v: '1/2' },
+  'pipeline-2': { p: ['@camstack/addon-pipeline'], v: '2/2' },
+  'post-analysis-1': { p: ['@camstack/addon-post-analysis'], v: '1/2' },
+  'post-analysis-2': { p: ['@camstack/addon-post-analysis'], v: '2/2' },
+  'admin-ui-1': { p: ['@camstack/addon-admin-ui'], v: '1/3' },
+  'admin-ui-2': { p: ['@camstack/addon-admin-ui'], v: '2/3' },
+  'admin-ui-3': { p: ['@camstack/addon-admin-ui'], v: '3/3' },
+  'ui-library': { p: ['@camstack/ui-library'] },
+  'server-1': { p: ['@camstack/server'], v: '1/3' },
+  'server-2': { p: ['@camstack/server'], v: '2/3' },
+  'server-3': { p: ['@camstack/server'], v: '3/3' },
+  core: { p: ['@camstack/types', '@camstack/addon-pipeline-orchestrator'] },
 }
 const HEAVY_SHARDS = Object.keys(SHARDS)
 const LIGHT_SHARDS = ['light-a', 'light-b']
-const heavy = new Set(Object.values(SHARDS).flat())
+const heavy = new Set(Object.values(SHARDS).flatMap((s) => s.p))
 const hash = (name) => {
   let h = 0
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0
   return h
 }
-const shardOf = (p) => (heavy.has(p) ? HEAVY_SHARDS.find((s) => SHARDS[s].includes(p)) : LIGHT_SHARDS[hash(p) % LIGHT_SHARDS.length])
+const shardsOf = (p) => (heavy.has(p) ? HEAVY_SHARDS.filter((s) => SHARDS[s].p.includes(p)) : [LIGHT_SHARDS[hash(p) % LIGHT_SHARDS.length]])
 const wanted = process.env.SHARD
 if (wanted !== 'all' && !HEAVY_SHARDS.includes(wanted) && !LIGHT_SHARDS.includes(wanted)) {
   console.error(`test-affected: unknown shard "${wanted}"`)
@@ -133,19 +149,22 @@ if (mode === 'files') {
 } else {
   all = nxJson([])
 }
-all = all.filter((p) => wanted === 'all' || shardOf(p) === wanted)
+all = all.filter((p) => wanted === 'all' || shardsOf(p).includes(wanted))
 const H = []
 const L = []
 for (const p of all) (heavy.has(p) ? H : L).push(p)
 const sh = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
 console.log(`HEAVY_CSV=${sh(H.join(','))}`)
 console.log(`LIGHT_CSV=${sh(L.join(','))}`)
+console.log(`VITEST_SHARD=${sh(SHARDS[wanted]?.v ?? '')}`)
 NODE
 eval "$(cat "$PROJECT_LISTS")"
 
 if [[ -n "${HEAVY_CSV}" ]]; then
   echo "test-affected: heavy (parallel=1): ${HEAVY_CSV}"
-  npx nx run-many -t test --projects="${HEAVY_CSV}" --parallel=1 --output-style stream
+  # A split shard hands vitest its slice after `--`; `all` (verify:push) runs whole.
+  npx nx run-many -t test --projects="${HEAVY_CSV}" --parallel=1 --output-style stream \
+    ${VITEST_SHARD:+-- "--shard=${VITEST_SHARD}"}
 else
   echo "test-affected: heavy lane empty"
 fi

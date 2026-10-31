@@ -80,44 +80,14 @@ SCRIPTS_RESULT="skipped"
 FOOTPRINT_RESULT="skipped"
 RC=0
 
-# Affected nx projects -> package directory basenames (what typecheck-tsgo takes).
-# Empty output = nothing affected; "ALL" = a framework package changed.
-TC_DIRS=$(
-  CHANGED="$CHANGED" node <<'NODE'
-const { execFileSync } = require('node:child_process')
-const fs = require('node:fs')
-const path = require('node:path')
-const changed = process.env.CHANGED
-const affected = JSON.parse(
-  execFileSync('npx', ['nx', 'show', 'projects', '--affected', `--files=${changed}`, '--json'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  }),
-)
-const readJson = (f) => {
-  try { return JSON.parse(fs.readFileSync(f, 'utf8')) } catch { return null }
-}
-const dirs = [
-  ...fs.readdirSync('packages').map((d) => path.join('packages', d)),
-  path.join('server', 'backend'),
-]
-const byName = new Map()
-for (const dir of dirs) {
-  const pkg = readJson(path.join(dir, 'package.json'))
-  if (!pkg) continue
-  const name = readJson(path.join(dir, 'project.json'))?.name ?? pkg.name
-  byName.set(name, path.basename(dir))
-  byName.set(pkg.name, path.basename(dir))
-}
-const out = []
-for (const p of affected) if (byName.has(p)) out.push(byName.get(p))
-const csv = affected.join(',')
-if (out.includes('types') || out.includes('system')) console.log(`ALL|${csv}`)
-else console.log(`${out.join(' ')}|${csv}`)
-NODE
-)
-AFFECTED_CSV="${TC_DIRS#*|}"
-TC_DIRS="${TC_DIRS%%|*}"
+# Affected nx projects -> package directory basenames (what typecheck-tsgo takes)
+# and the footprint / scripts flags. The SAME script CI's `static` job runs
+# (scripts/ci/affected-scope.mjs), so the two cannot grade different sets.
+# TC_DIRS: empty = nothing affected, "ALL" = a framework package changed.
+SCOPE_FILE=$(mktemp)
+trap 'rm -f "$SCOPE_FILE"' EXIT
+node scripts/ci/affected-scope.mjs --csv "$CHANGED" > "$SCOPE_FILE"
+eval "$(cat "$SCOPE_FILE")"
 
 if [[ -z "$TC_DIRS" ]]; then
   echo "verify:push: no project affected — skipping typecheck and project tests"
@@ -156,15 +126,6 @@ fi
 # for several runs because only CI ran it. The affected build above already
 # produced the dists it reads (addons depend on types and system).
 if [[ -n "$TC_DIRS" ]]; then
-  FOOTPRINT_ADDONS=""
-  FOOTPRINT_ALL=0
-  if [[ ",${CHANGED}," == *",packages/types/src/"* ]]; then
-    FOOTPRINT_ALL=1
-  else
-    FOOTPRINT_ADDONS=$(
-      echo "$CHANGED" | tr ',' '\n' | sed -n -E 's#^packages/(addon-[^/]+)/.*#\1#p' | sort -u | paste -sd, -
-    )
-  fi
   if [[ $FOOTPRINT_ALL -eq 1 || -n "$FOOTPRINT_ADDONS" ]]; then
     FP_ARGS=()
     if [[ $FOOTPRINT_ALL -eq 0 ]]; then FP_ARGS=(--addons "$FOOTPRINT_ADDONS"); fi
