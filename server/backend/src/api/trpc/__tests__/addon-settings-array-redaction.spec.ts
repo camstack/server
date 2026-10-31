@@ -7,24 +7,65 @@
  * and the array's own key (`brokers`) is not secret-named — so every row went
  * out whole. Live: `addon-mqtt-broker`'s `brokers` rows, one password each.
  *
- * Driven through the REAL mqtt-broker schema, hydrated by the REAL
- * `hydrateSchema` — the exact pair `BaseAddon.getGlobalSettings` answers with.
- * Imported as the workspace package (its built `dist`, which CI builds before
- * the tests run), not by a relative path into another package's `src`.
+ * Driven through a schema of the same SHAPE as `addon-mqtt-broker`'s global
+ * settings (an `editable-array` of broker rows with a `password` item, a URL
+ * text field with userinfo, an embedded password, client rows with a bcrypt
+ * hash in a text field), hydrated by the REAL `hydrateSchema` — the pair
+ * `BaseAddon.getGlobalSettings` answers with. The server never imports an
+ * addon, not even in a spec, so the shape is restated here.
  */
 import { type ConfigUISchema, hydrateSchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { MqttBrokerAddon } from '@camstack/addon-mqtt-broker'
 import {
   NON_ADMIN_CONFIG_REDACTED_METHODS,
   REDACTED_SECRET,
 } from '../device-config-secret-redaction.js'
 
-/** Exposes the protected schema the server hydrates — nothing else. */
-class MqttBrokerSchemaProbe extends MqttBrokerAddon {
-  settingsSchema(): ConfigUISchema {
-    return this.globalSettingsSchema()
-  }
+const BROKER_LIKE_SCHEMA: ConfigUISchema = {
+  sections: [
+    {
+      id: 'external-brokers',
+      title: 'External brokers',
+      columns: 1,
+      fields: [
+        {
+          type: 'editable-array',
+          key: 'brokers',
+          label: 'External brokers',
+          itemFields: [
+            { type: 'text', key: 'id', label: 'Id' },
+            { type: 'text', key: 'name', label: 'Name' },
+            { type: 'text', key: 'url', label: 'URL' },
+            { type: 'text', key: 'username', label: 'Username' },
+            { type: 'password', key: 'password', label: 'Password' },
+            { type: 'text', key: 'clientIdPrefix', label: 'Client id prefix' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'embedded',
+      title: 'Embedded broker',
+      columns: 1,
+      fields: [{ type: 'password', key: 'embeddedPassword', label: 'Password' }],
+    },
+    {
+      id: 'embedded-clients',
+      title: 'Embedded broker — credentials',
+      columns: 1,
+      fields: [
+        {
+          type: 'editable-array',
+          key: 'embeddedClients',
+          label: 'Clients',
+          itemFields: [
+            { type: 'text', key: 'username', label: 'Username' },
+            { type: 'text', key: 'passwordHash', label: 'bcrypt hash' },
+          ],
+        },
+      ],
+    },
+  ],
 }
 
 function redactGlobal(data: unknown): unknown {
@@ -48,9 +89,9 @@ const STORED = {
   embeddedClients: [{ username: 'shelly', passwordHash: '$2b$10$bcrypt-hash-secret' }],
 }
 
-describe('addon settings: secrets inside arrays (real mqtt-broker schema)', () => {
+describe('addon settings: secrets inside arrays (broker-shaped schema)', () => {
   // As `BaseAddon.getGlobalSettings` answers: inline secrets become views (D789).
-  const hydrated = hydrateSchema(new MqttBrokerSchemaProbe().settingsSchema(), STORED, {
+  const hydrated = hydrateSchema(BROKER_LIKE_SCHEMA, STORED, {
     inlineSecretsAsViews: true,
   })
 
