@@ -33,7 +33,7 @@ export interface UnraidIntegrationManagerOptions {
   readonly logger: IScopedLogger
   readonly onConnected: (instanceId: string) => void
   readonly onDisconnected: (instanceId: string) => void
-  /** Fired after every poll cycle so the Hub fans the fresh snapshot out. */
+  /** Fired after every poll cycle so the addon fans the fresh snapshot out. */
   readonly onPolled: (instanceId: string) => void
   /** Factory seam — defaults to the "not wired" factory above. */
   readonly makeClient?: UnraidClientFactory
@@ -48,6 +48,7 @@ export interface UnraidIntegrationManagerOptions {
  */
 export class UnraidIntegrationManager {
   readonly #id: string
+  readonly #name: string
   #connection: UnraidConnectionConfig
   readonly #logger: IScopedLogger
   readonly #onConnected: (instanceId: string) => void
@@ -63,6 +64,7 @@ export class UnraidIntegrationManager {
 
   constructor(options: UnraidIntegrationManagerOptions) {
     this.#id = options.id
+    this.#name = options.name
     this.#connection = options.connection
     this.#logger = options.logger
     this.#onConnected = options.onConnected
@@ -71,9 +73,14 @@ export class UnraidIntegrationManager {
     this.#makeClient = options.makeClient ?? defaultUnraidClientFactory
   }
 
-  /** The instance id (= Hub device stableId). */
+  /** The integration id. */
   get id(): string {
     return this.#id
+  }
+
+  /** The integration's display name. */
+  get name(): string {
+    return this.#name
   }
 
   /** Current connection status. */

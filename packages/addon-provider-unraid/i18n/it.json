@@ -1,6 +1,4 @@
 {
-  "connection.s_identity.title": "Server Unraid",
-  "connection.s_identity.name.label": "Nome",
   "connection.s_connection.title": "Connessione",
   "connection.s_connection.description": "La API key deve avere ruolo ADMIN, creata con `unraid-api apikey --create`.",
   "connection.s_connection.host.label": "Host / IP",

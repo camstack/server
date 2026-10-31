@@ -8,7 +8,7 @@
  * inferred, nothing is assumed, and the port is not a control port wearing
  * an HTTP port's name (which is the Reolink trap).
  *
- * Every device the addon owns — the Hub, the instance Container and each entity
+ * Every device the addon owns — the Gateway, the instance Container and each entity
  * child (array status, a Docker container's switch, a share's usage) — is a
  * view of the SAME server, so they all resolve to that server's WebGUI. There
  * is no per-entity deep link: the WebGUI's Docker and Shares pages exist but
@@ -28,27 +28,17 @@ import {
 import { unraidInstances } from './unraid-node-resolver.js'
 
 /**
- * How this device reaches its connection settings. The Hub HOLDS them; every
- * other device resolves them through the live manager registered under the
- * Hub's `stableId`.
+ * How this device reaches its connection settings: through the live manager registered
+ * under the integration id.
  */
-export type UnraidAdminLinkSource =
-  | { readonly kind: 'own'; readonly connection: UnraidWebGuiConnection }
-  | { readonly kind: 'instance'; readonly instanceId: string }
-
-/** The three fields of the connection this module reads. */
-export interface UnraidWebGuiConnection {
-  readonly host: string
-  readonly port: number
-  readonly https: boolean
+export interface UnraidAdminLinkSource {
+  readonly instanceId: string
 }
 
 export function registerUnraidAdminLink(
   ctx: DeviceContext,
   deviceId: number,
   source: UnraidAdminLinkSource,
-  /** Re-read on every call for the Hub, whose connection the operator edits. */
-  readOwnConnection?: () => UnraidWebGuiConnection,
 ): void {
   const provider: InferNativeProvider<typeof deviceAdminLinkCapability> = {
     getAdminLink: async (input): Promise<DeviceAdminLink | null> => {
@@ -58,22 +48,17 @@ export function registerUnraidAdminLink(
         )
       }
 
-      let connection: UnraidWebGuiConnection | null = null
-      if (source.kind === 'own') {
-        connection = readOwnConnection !== undefined ? readOwnConnection() : source.connection
-      } else {
-        const manager = unraidInstances.getManager(source.instanceId)
-        if (manager === null) {
-          // The instance is not up. Unknown, and reported as such — a child of
-          // a down server is not a child of a server with no WebGUI.
-          ctx.logger.debug('unraid admin link unavailable: no live manager', {
-            tags: { deviceId },
-            meta: { instanceId: source.instanceId },
-          })
-          return null
-        }
-        connection = manager.getConnection()
+      const manager = unraidInstances.getManager(source.instanceId)
+      if (manager === null) {
+        // The integration is not up. Unknown, and reported as such: a child of a down
+        // server is not a child of a server with no WebGUI.
+        ctx.logger.debug('unraid admin link unavailable: no live manager', {
+          tags: { deviceId },
+          meta: { instanceId: source.instanceId },
+        })
+        return null
       }
+      const connection = manager.getConnection()
 
       const built = buildDeviceAdminUrl({
         host: connection.host,

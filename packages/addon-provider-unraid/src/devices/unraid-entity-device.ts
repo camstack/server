@@ -23,6 +23,7 @@ import {
   temperatureSensorCapability,
   type TemperatureSensorStatus,
 } from '@camstack/types'
+import { UNRAID_SYSTEM } from '../config.js'
 import type { UnraidClientLike, UnraidSnapshot } from '../unraid-client-contract.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
 import {
@@ -36,19 +37,20 @@ import {
 
 /**
  * Persisted config every Unraid entity child carries. `instanceId` selects the
- * parent instance's live client (the Hub `stableId`); `entityKey` matches the
+ * integration's live client; `entityKey` matches the
  * descriptor produced by {@link buildEntityDescriptors}; `kind` + `capName`
  * decide which cap the child registers. `containerId` routes docker switches;
  * `action` routes buttons.
  */
 export const unraidEntitySchema = z.object({
-  instanceId: z.string().min(1).describe('Parent instance Hub stableId'),
+  instanceId: z.string().min(1).describe('Integration id, the key of the live client'),
   entityKey: z.string().min(1).describe('Stable entity key (matches the mapping)'),
   kind: UnraidEntityKindSchema,
   capName: z.string().min(1),
   containerId: z.string().optional(),
   action: UnraidButtonActionSchema.optional(),
-  system: z.literal('unraid').optional(),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  system: z.literal(UNRAID_SYSTEM).optional(),
 })
 
 export type UnraidEntityConfig = z.infer<typeof unraidEntitySchema>
@@ -68,7 +70,7 @@ const COLD_EVENT: EventEmitterStatus = {
 
 /**
  * One Unraid entity as a CamStack accessory child. A CHILD of the instance
- * Container (standalone mode). A single generic class keyed by a discriminated
+ * Container. A single generic class keyed by a discriminated
  * `kind` (numeric | temperature | enum | binary | switch | button | event) so
  * the whole surface stays compact + compiling. It registers EXACTLY ONE cap
  * (chosen from `kind`) and, on every instance poll tick, re-runs the pure
@@ -99,7 +101,10 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
     this.containerId = cfg.containerId
     this.action = cfg.action
     this.online = unraidInstances.getSnapshot(this.instanceId) !== null
-    void this.updateSourceInfo({ id: `${this.instanceId}:${this.entityKey}`, system: 'unraid' })
+    void this.updateSourceInfo({
+      id: `${this.instanceId}:${this.entityKey}`,
+      system: UNRAID_SYSTEM,
+    })
   }
 
   override async onActivate(): Promise<void> {
@@ -107,7 +112,7 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
     this.registerCap()
     // device-admin-link — an entity child (array status, a Docker switch, a
     // share) is configured in the same WebGUI as its server.
-    registerUnraidAdminLink(this.ctx, this.id, { kind: 'instance', instanceId: this.instanceId })
+    registerUnraidAdminLink(this.ctx, this.id, { instanceId: this.instanceId })
     this.attachSnapshotListener()
     this.recomputeSlice()
   }
@@ -125,7 +130,7 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
   }
 
   /** Subscribe to per-instance poll ticks. No-ops on a missing snapshot and
-   *  replays once the Hub pumps the first snapshot. */
+   *  replays once the addon pumps the first snapshot. */
   private attachSnapshotListener(): void {
     const onSnapshot = (): void => {
       try {

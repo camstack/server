@@ -4,19 +4,18 @@ import type { UnraidIntegrationManager } from './unraid-integration-manager.js'
 /**
  * Per-instance registry that device classes use to reach the live
  * {@link UnraidIntegrationManager} (and its latest snapshot) for a given Unraid
- * instance. Keyed on the instance {@link import('@camstack/types').DeviceType.Hub}
- * device's `stableId` (standalone mode — the connection lives on the Hub device,
- * not a broker). Mirrors the Velux `VeluxNodeResolver` / Ecowitt `ecowittFacades`.
+ * integration. Keyed on the integration id (`mode: account` — the connection lives
+ * on the integration, not on a device). Mirrors the Enpal `enpalConnections`.
  *
- * The Hub recreates the manager on reconnect / settings change and re-publishes
- * it here; entity children always read through the resolver, so they
+ * The client registry recreates the manager on reconnect / settings change and
+ * re-publishes it here; entity children always read through the resolver, so they
  * transparently pick up the new manager + fresh snapshot.
  */
 export class UnraidNodeResolver {
   readonly #managers: Map<string, UnraidIntegrationManager> = new Map()
   /**
    * Per-instance poll-tick fan-out. Entity children subscribe here instead of
-   * attaching a listener per child — the Hub pumps this bus once per poll cycle.
+   * attaching a listener per child — the addon pumps this bus once per poll cycle.
    * A plain `Set` of callbacks has no listener limit.
    */
   readonly #snapshotSubs: Map<string, Set<() => void>> = new Map()
@@ -75,6 +74,6 @@ export class UnraidNodeResolver {
   }
 }
 
-/** The single in-process per-instance manager resolver shared between the Hub
- *  device and its entity children. */
+/** The single in-process per-instance manager resolver shared between the client
+ *  registry and the devices. */
 export const unraidInstances = new UnraidNodeResolver()

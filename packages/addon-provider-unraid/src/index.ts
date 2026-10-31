@@ -1,12 +1,13 @@
 export { UnraidProviderAddon } from './addon.js'
 export {
   unraidConnectionSchema,
-  unraidHubSchema,
+  connectionFromSettings,
+  sameConnection,
+  UNRAID_SYSTEM,
   buildConnectionFormSchema,
   settingsToConnection,
-  slugifyHost,
 } from './config.js'
-export type { UnraidConnectionConfig, UnraidHubConfig } from './config.js'
+export type { UnraidConnectionConfig, UnraidConnectionRead } from './config.js'
 export type {
   UnraidClientLike,
   UnraidClientFactory,
@@ -36,8 +37,18 @@ export type {
   UnraidEntityKind,
   UnraidNumericValue,
 } from './unraid-mapping.js'
-export { buildInstanceCandidate, instanceNativeId } from './unraid-discovery.js'
-export type { BuildInstanceCandidateInput } from './unraid-discovery.js'
+export {
+  buildUnraidCandidates,
+  UNRAID_GATEWAY_ID,
+  UNRAID_INSTANCE_ID,
+  unraidStableId,
+} from './unraid-discovery.js'
+export type { BuildUnraidCandidatesInput } from './unraid-discovery.js'
+export { buildUnraidAdoptionProvider } from './unraid-adoption-provider.js'
+export type { UnraidAdoptionProviderDeps } from './unraid-adoption-provider.js'
+export { buildUnraidDeviceAdopter } from './unraid-device-adopter.js'
+export { UnraidClientRegistry } from './unraid-client-registry.js'
+export { reconcileInstanceEntities } from './unraid-entity-reconcile.js'
 export {
   UnraidIntegrationManager,
   defaultUnraidClientFactory,
@@ -47,7 +58,7 @@ export type {
   UnraidInstanceStatus,
 } from './unraid-integration-manager.js'
 export { UnraidNodeResolver, unraidInstances } from './unraid-node-resolver.js'
-export { UnraidHubDevice } from './devices/unraid-hub-device.js'
+export { UnraidGatewayDevice, unraidGatewaySchema } from './devices/unraid-gateway-device.js'
 export { UnraidInstanceDevice, unraidInstanceSchema } from './devices/unraid-instance-device.js'
 export type { UnraidInstanceConfig } from './devices/unraid-instance-device.js'
 export { UnraidEntityDevice, unraidEntitySchema } from './devices/unraid-entity-device.js'

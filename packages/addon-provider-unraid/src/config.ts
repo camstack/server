@@ -1,13 +1,21 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
+
+/** The device-registry `system` tag every Unraid device carries. */
+export const UNRAID_SYSTEM = 'unraid'
+
+/** A key the keychain could not serve reads as a marker object, not a string. */
+function markerToEmpty(value: unknown): unknown {
+  if (isSecretMarkerLike(value)) return ''
+  return value === null || value === undefined ? '' : value
+}
 
 /**
- * Operator-supplied connection to ONE Unraid server. The addon runs in
- * `standalone` mode (the Reolink / Ecowitt / Velux pattern): the CONNECTION
- * lives on the instance Hub DEVICE config, not a broker registry. The Unraid
- * GraphQL API exposes live subscriptions, but this scaffold POLLS on a fixed
- * cadence for a single, simple aggregation path — `pollIntervalMs` drives the
- * refresh.
+ * Operator-supplied connection to ONE Unraid server: the settings of the INTEGRATION
+ * (`mode: account`, broker-less), not of a device. The Unraid GraphQL API exposes live
+ * subscriptions, but this scaffold POLLS on a fixed cadence for a single, simple
+ * aggregation path — `pollIntervalMs` drives the refresh. The `apiKey` is a keychain
+ * secret, declared by type here and by the `password` field of the form.
  */
 export const unraidConnectionSchema = z.object({
   host: z.string().min(1).describe('Unraid host name or IP address'),
@@ -21,8 +29,7 @@ export const unraidConnectionSchema = z.object({
     .preprocess((v) => (v === '' || v === null ? undefined : v), z.boolean().default(true))
     .describe('Use https/wss for the WebGUI'),
   apiKey: z
-    .string()
-    .default('')
+    .preprocess(markerToEmpty, z.string().default(''))
     .describe('ADMIN-role API key (`unraid-api apikey --create`)')
     .meta({ secret: true }),
   pollIntervalMs: z
@@ -34,19 +41,6 @@ export const unraidConnectionSchema = z.object({
 })
 
 export type UnraidConnectionConfig = z.infer<typeof unraidConnectionSchema>
-
-/**
- * Persisted config for an Unraid instance {@link import('@camstack/types').DeviceType.Hub}
- * device. The Hub owns exactly one live client keyed on its own `stableId`; its
- * adopted instance Container references it via `instanceId`.
- */
-export const unraidHubSchema = z.object({
-  connection: unraidConnectionSchema,
-  /** Provenance marker used to scope offline / cascade helpers. */
-  system: z.literal('unraid-hub').optional(),
-})
-
-export type UnraidHubConfig = z.infer<typeof unraidHubSchema>
 
 /**
  * Narrow an `unknown` value to a shallow-cloned plain object record, or an empty
@@ -65,43 +59,29 @@ export function settingsToConnection(settings: unknown): UnraidConnectionConfig 
   return unraidConnectionSchema.parse(toRecord(settings))
 }
 
-/**
- * Slugify a host into a readable, stable row-key fragment. Exported so the
- * discovery candidate's `stableId` matches exactly what `generateStableId`
- * derives on adopt.
- */
-export function slugifyHost(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+/** A connection plus whether its API key is stored but unreadable right now. */
+export interface UnraidConnectionRead {
+  readonly connection: UnraidConnectionConfig
+  readonly apiKeyLocked: boolean
 }
 
-/**
- * Hand-written connection form for the instance device-creation UI (standalone
- * mode — Reolink / Velux pattern). The connection lives on the instance Hub
- * DEVICE config, not in a broker registry. A `name` field lets the operator name
- * the server at creation time.
- */
+/** Parse an integration's settings into a connection, or null while its host is missing. */
+export function connectionFromSettings(settings: unknown): UnraidConnectionRead | null {
+  const raw = toRecord(settings)
+  const parsed = unraidConnectionSchema.safeParse(raw)
+  if (!parsed.success) return null
+  return { connection: parsed.data, apiKeyLocked: isSecretMarkerLike(raw['apiKey']) }
+}
+
+/** True when two connections would poll the server the same way. */
+export function sameConnection(a: UnraidConnectionConfig, b: UnraidConnectionConfig): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/** The integration's settings form (`globalSettingsSchema`); the integration carries the name. */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
-      {
-        id: 'identity',
-        title: 'Unraid server',
-        titleKey: 'provider-unraid:connection.s_identity.title',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'name',
-            label: 'Name',
-            labelKey: 'provider-unraid:connection.s_identity.name.label',
-            required: true,
-            placeholder: 'agent-a',
-          },
-        ],
-      },
       {
         id: 'connection',
         title: 'Connection',
