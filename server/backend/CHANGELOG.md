@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A wedged agent shutdown now ends with a self-SIGKILL so exit-time teardown cannot keep the process alive after an update.
 - getSiteLocation also returns the site's IANA time zone
+- The schedulers capability is served over the API (list, create, update, delete, enable, preview, conflicts, status, traces)
 
 ## [1.2.708] - 2026-10-31
 

@@ -18,6 +18,7 @@
 import { z } from 'zod'
 import { isSecretMarkerLike } from '../keychain/secret-marker.js'
 import { AutomationRunModeSchema } from './recipe.js'
+import { SchedulerOutcomeSchema } from './scheduler.js'
 
 /** A value a trace may show: JSON primitives and short lists, nothing deeper. */
 export const TraceValueSchema = z.union([
@@ -146,6 +147,12 @@ export const AutomationRunTraceSchema = z.object({
   repeat: z.number().int().min(1),
   /** When the latest of those repeats happened. */
   lastAt: z.number(),
+  /**
+   * A scheduler point's own outcome (D983). `outcome` carries the closest
+   * automation outcome so a reader that does not know schedulers still reads
+   * the trace; this field says exactly what happened.
+   */
+  scheduler: SchedulerOutcomeSchema.optional(),
 })
 export type AutomationRunTrace = z.infer<typeof AutomationRunTraceSchema>
 
@@ -180,6 +187,7 @@ function normaliseReason(reason: string): string {
 export function skipSignature(trace: AutomationRunTrace): string {
   return JSON.stringify([
     trace.outcome,
+    trace.scheduler ?? null,
     trace.trigger.kind,
     trace.trigger.outcome,
     normaliseReason(trace.trigger.reason),

@@ -749,6 +749,7 @@ export type {
 } from './automation/index.js'
 export * from './automation/action.js'
 export * from './automation/action-target.js'
+export * from './automation/scheduler.js'
 export * from './automation/nc-action-target.js'
 export * from './automation/step-runner.js'
 export * from './automation/export-entities.js'

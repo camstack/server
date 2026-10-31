@@ -110,6 +110,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'remote-layout-components': system(
     'the palette of the remote template editor — read-only data, never actuated',
   ),
+  schedulers: system('time schedulers — authored on their own page, not device actions'),
   'server-management': system(CLUSTER),
   'settings-store': system(INTERNAL),
   'smtp-provider': system(INTERNAL),

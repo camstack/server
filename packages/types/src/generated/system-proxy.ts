@@ -53,6 +53,7 @@ import type { recordingArchiveCapability } from '../capabilities/recording-archi
 import type { recordingExportCapability } from '../capabilities/recording-export.cap.js'
 import type { remoteCapability } from '../capabilities/remote.cap.js'
 import type { remoteLayoutComponentsCapability } from '../capabilities/remote-layout-components.cap.js'
+import type { schedulersCapability } from '../capabilities/schedulers.cap.js'
 import type { serverManagementCapability } from '../capabilities/server-management.cap.js'
 import type { settingsStoreCapability } from '../capabilities/settings-store.cap.js'
 import type { storageCapability } from '../capabilities/storage.cap.js'
@@ -123,6 +124,7 @@ export interface SystemProxy {
   readonly recordingExport: Pick<InferProvider<typeof recordingExportCapability>, 'createExport' | 'getExport' | 'cancelExport' | 'deleteExport' | 'getDownloadUrl' | 'readExportBytes'>
   readonly remote: Pick<InferProvider<typeof remoteCapability>, 'getConfig' | 'setConfig' | 'listCommands' | 'sendCommand' | 'sendMediaCommand'>
   readonly remoteLayoutComponents: Pick<InferProvider<typeof remoteLayoutComponentsCapability>, 'listComponents'>
+  readonly schedulers: Pick<InferProvider<typeof schedulersCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'preview' | 'conflicts' | 'getStatus' | 'getTraces'>
   readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'installDesktopUpdate' | 'rollbackServerUpdate' | 'restartServer' | 'getLaunchOverrides' | 'setLaunchOverrides'>
   readonly settingsStore: Pick<InferProvider<typeof settingsStoreCapability>, 'get' | 'set' | 'query' | 'upsert' | 'upsertMany' | 'insert' | 'insertMany' | 'transact' | 'update' | 'delete' | 'deleteWhere' | 'updateWhere' | 'count' | 'aggregate' | 'histogram' | 'isEmpty' | 'declareCollection'>
   readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'upsertLocation' | 'deleteLocation' | 'listDrainProgress' | 'testLocation' | 'listProviders' | 'testConfig'>
@@ -863,6 +865,19 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listComponents: (input?: unknown) => dispatch('remoteLayoutComponents', 'listComponents', 'query', input),
   }
 
+  const schedulersInterface = {
+    list: (input?: unknown) => dispatch('schedulers', 'list', 'query', input),
+    get: (input?: unknown) => dispatch('schedulers', 'get', 'query', input),
+    create: (input?: unknown) => dispatch('schedulers', 'create', 'mutation', input),
+    update: (input?: unknown) => dispatch('schedulers', 'update', 'mutation', input),
+    delete: (input?: unknown) => dispatch('schedulers', 'delete', 'mutation', input),
+    setEnabled: (input?: unknown) => dispatch('schedulers', 'setEnabled', 'mutation', input),
+    preview: (input?: unknown) => dispatch('schedulers', 'preview', 'query', input),
+    conflicts: (input?: unknown) => dispatch('schedulers', 'conflicts', 'query', input),
+    getStatus: (input?: unknown) => dispatch('schedulers', 'getStatus', 'query', input),
+    getTraces: (input?: unknown) => dispatch('schedulers', 'getTraces', 'query', input),
+  }
+
   const serverManagementInterface = {
     getServerPackageStatus: (input?: unknown) => dispatch('serverManagement', 'getServerPackageStatus', 'query', input),
     checkServerUpdate: (input?: unknown) => dispatch('serverManagement', 'checkServerUpdate', 'mutation', input),
@@ -1102,6 +1117,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     recordingExport: recordingExportInterface,
     remote: remoteInterface,
     remoteLayoutComponents: remoteLayoutComponentsInterface,
+    schedulers: schedulersInterface,
     serverManagement: serverManagementInterface,
     settingsStore: settingsStoreInterface,
     storage: storageInterface,

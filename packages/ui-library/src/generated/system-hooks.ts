@@ -3119,6 +3119,36 @@ export const useSceneMonitorResetScene: typeof trpc.sceneMonitor.resetScene.useM
 /** Generated alias around `trpc.sceneMonitor.getStatus.useQuery`. */
 export const useSceneMonitorGetStatus: typeof trpc.sceneMonitor.getStatus.useQuery = trpc.sceneMonitor.getStatus.useQuery
 
+/** Generated alias around `trpc.schedulers.list.useQuery`. */
+export const useSchedulersList: typeof trpc.schedulers.list.useQuery = trpc.schedulers.list.useQuery
+
+/** Generated alias around `trpc.schedulers.get.useQuery`. */
+export const useSchedulersGet: typeof trpc.schedulers.get.useQuery = trpc.schedulers.get.useQuery
+
+/** Generated alias around `trpc.schedulers.create.useMutation`. */
+export const useSchedulersCreate: typeof trpc.schedulers.create.useMutation = trpc.schedulers.create.useMutation
+
+/** Generated alias around `trpc.schedulers.update.useMutation`. */
+export const useSchedulersUpdate: typeof trpc.schedulers.update.useMutation = trpc.schedulers.update.useMutation
+
+/** Generated alias around `trpc.schedulers.delete.useMutation`. */
+export const useSchedulersDelete: typeof trpc.schedulers.delete.useMutation = trpc.schedulers.delete.useMutation
+
+/** Generated alias around `trpc.schedulers.setEnabled.useMutation`. */
+export const useSchedulersSetEnabled: typeof trpc.schedulers.setEnabled.useMutation = trpc.schedulers.setEnabled.useMutation
+
+/** Generated alias around `trpc.schedulers.preview.useQuery`. */
+export const useSchedulersPreview: typeof trpc.schedulers.preview.useQuery = trpc.schedulers.preview.useQuery
+
+/** Generated alias around `trpc.schedulers.conflicts.useQuery`. */
+export const useSchedulersConflicts: typeof trpc.schedulers.conflicts.useQuery = trpc.schedulers.conflicts.useQuery
+
+/** Generated alias around `trpc.schedulers.getStatus.useQuery`. */
+export const useSchedulersGetStatus: typeof trpc.schedulers.getStatus.useQuery = trpc.schedulers.getStatus.useQuery
+
+/** Generated alias around `trpc.schedulers.getTraces.useQuery`. */
+export const useSchedulersGetTraces: typeof trpc.schedulers.getTraces.useQuery = trpc.schedulers.getTraces.useQuery
+
 /** Generated alias around `trpc.scriptRunner.run.useMutation`. */
 export const useScriptRunnerRun: typeof trpc.scriptRunner.run.useMutation = trpc.scriptRunner.run.useMutation
 

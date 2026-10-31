@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1443 method paths across 193 capabilities.
+ * Coverage: 1453 method paths across 194 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1156,6 +1156,16 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'sceneMonitor.recheckNow': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
   'sceneMonitor.resetScene': { capName: "scene-monitor", capScope: "device", addonId: null, access: "delete", role: "feature:scenes" } as const,
   'sceneMonitor.updateScene': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
+  'schedulers.conflicts': { capName: "schedulers", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'schedulers.create': { capName: "schedulers", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'schedulers.delete': { capName: "schedulers", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'schedulers.get': { capName: "schedulers", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'schedulers.getStatus': { capName: "schedulers", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'schedulers.getTraces': { capName: "schedulers", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'schedulers.list': { capName: "schedulers", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'schedulers.preview': { capName: "schedulers", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'schedulers.setEnabled': { capName: "schedulers", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'schedulers.update': { capName: "schedulers", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'scriptRunner.getStatus': { capName: "script-runner", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'scriptRunner.run': { capName: "script-runner", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'scriptRunner.stop': { capName: "script-runner", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
@@ -1620,6 +1630,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "remote-layout-components",
   "running-state",
   "scene-monitor",
+  "schedulers",
   "script-runner",
   "server-management",
   "settings-store",
@@ -1841,6 +1852,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "records",
   "remote",
   "remote-layout-components",
+  "schedulers",
   "server-management",
   "settings-store",
   "smtp-provider",

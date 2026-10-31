@@ -1966,6 +1966,7 @@ export {
   actionSourceCapability,
   type IActionSourceProvider,
 } from './action-source.cap.js'
+export { type ISchedulersProvider, schedulersCapability } from './schedulers.cap.js'
 export {
   type ActionLinks,
   ActionLinksSchema,
@@ -3250,6 +3251,7 @@ import type { audioMetricsCapability } from './audio-metrics.cap.js'
 import type { authProviderCapability } from './auth-provider.cap.js'
 import type { actionSourceCapability } from './action-source.cap.js'
 import type { actionsCapability } from './actions.cap.js'
+import type { schedulersCapability } from './schedulers.cap.js'
 import type { automationControlCapability } from './automation-control.cap.js'
 import type { backupCapability } from './backup.cap.js'
 import type { batteryCapability } from './battery.cap.js'
@@ -3536,6 +3538,7 @@ type AnyCapability =
   | typeof scriptRunnerCapability
   | typeof actionSourceCapability
   | typeof actionsCapability
+  | typeof schedulersCapability
   | typeof automationControlCapability
   | typeof motionTriggerCapability
   | typeof zonesCapability
