@@ -2828,6 +2828,18 @@ export const usePlatformProbeRescanAccelerators: typeof trpc.platformProbe.resca
 /** Generated alias around `trpc.powerMeter.getStatus.useQuery`. */
 export const usePowerMeterGetStatus: typeof trpc.powerMeter.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.powerMeter.getStatus.useQuery)
 
+/** Generated alias around `trpc.powerSource.getStatus.useQuery`. */
+export const usePowerSourceGetStatus: typeof trpc.powerSource.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.powerSource.getStatus.useQuery)
+
+/** Generated alias around `trpc.powerSource.powerOn.useMutation`. */
+export const usePowerSourcePowerOn: typeof trpc.powerSource.powerOn.useMutation = /*#__PURE__*/ alias(() => trpc.powerSource.powerOn.useMutation)
+
+/** Generated alias around `trpc.powerSource.powerOff.useMutation`. */
+export const usePowerSourcePowerOff: typeof trpc.powerSource.powerOff.useMutation = /*#__PURE__*/ alias(() => trpc.powerSource.powerOff.useMutation)
+
+/** Generated alias around `trpc.powerSource.forceRestart.useMutation`. */
+export const usePowerSourceForceRestart: typeof trpc.powerSource.forceRestart.useMutation = /*#__PURE__*/ alias(() => trpc.powerSource.forceRestart.useMutation)
+
 /** Generated alias around `trpc.presence.getStatus.useQuery`. */
 export const usePresenceGetStatus: typeof trpc.presence.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.presence.getStatus.useQuery)
 

@@ -26,6 +26,7 @@ type ActuatorCap =
   | 'ir-transmitter'
   | 'control'
   | 'motion-trigger'
+  | 'power-source'
 
 const OPEN_CLOSE_STATES = [
   {
@@ -597,6 +598,47 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
     ],
   },
 
+  'power-source': {
+    scope: 'device',
+    noun: t('Power source', 'Alimentazione'),
+    actions: [
+      {
+        id: 'powerSource.on',
+        method: 'powerOn',
+        label: t('Power on', 'Dai corrente'),
+        phrase: t('Power on {device}', 'Dai corrente a {device}'),
+        icon: 'power',
+      },
+      {
+        id: 'powerSource.off',
+        method: 'powerOff',
+        label: t('Power off', 'Togli corrente'),
+        phrase: t('Cut the power of {device}', 'Togli la corrente a {device}'),
+        icon: 'power-off',
+      },
+      {
+        id: 'powerSource.forceRestart',
+        method: 'forceRestart',
+        label: t('Force restart', 'Riavvio forzato'),
+        phrase: t(
+          'Force restart {device} by cutting its power',
+          'Riavvia {device} togliendo la corrente',
+        ),
+        icon: 'refresh-cw',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'switchOn',
+        label: t('Power switch on', 'Presa accesa'),
+        whenTrue: t('When the power of {device} comes on', 'Quando arriva la corrente a {device}'),
+        whenFalse: t('When the power of {device} is cut', 'Quando manca la corrente a {device}'),
+        icon: 'power',
+      },
+    ],
+  },
+
   'lock-control': {
     scope: 'device',
     noun: t('Lock', 'Serratura'),
@@ -1016,7 +1058,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         method: 'setDirection',
         label: t('Spin forward', 'Rotazione avanti'),
         phrase: t('Spin {device} forward', 'Fai girare {device} in avanti'),
-        icon: 'rotate-cw',
+        icon: 'refresh-cw',
         effect: { field: 'direction', value: 'forward' },
         args: { direction: 'forward' },
       },

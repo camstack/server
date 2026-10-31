@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**194 capabilities · 1454 methods.**
+**195 capabilities · 1458 methods.**
 
 ## Method index
 
@@ -1032,6 +1032,10 @@
 | `platformProbe.resolveHwAccel` | query | protected | platform-probe |
 | `platformProbe.rescanAccelerators` | mutation | admin | platform-probe |
 | `powerMeter.getStatus` | query | protected | power-meter (auto) |
+| `powerSource.getStatus` | query | admin | power-source |
+| `powerSource.powerOn` | mutation | admin | power-source |
+| `powerSource.powerOff` | mutation | admin | power-source |
+| `powerSource.forceRestart` | mutation | admin | power-source |
 | `presence.getStatus` | query | protected | presence (auto) |
 | `pressureSensor.getStatus` | query | protected | pressure-sensor (auto) |
 | `privacyMask.getStatus` | query | protected | privacy-mask (auto) |
@@ -3903,6 +3907,21 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `powerMeter.getStatus` | query | protected | `{ deviceId: number }` | `PowerMeterStatusSchema` |
+
+### `power-source` → `powerSource.*`
+
+- **Source:** `packages/types/src/capabilities/power-source.cap.ts:122`
+- **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, hub, camera, sensor, media-player, vacuum, generic`
+- **Archetypes:** runtimeState
+- **Provider interface:** `IPowerSourceProvider`
+- **runtimeState:** `PowerSourceStateSchema`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus | `powerSource.getStatus` | query | admin | `{ deviceId: number }` | `PowerSourceInfoSchema` |
+| powerOn | `powerSource.powerOn` | mutation | admin | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
+| powerOff | `powerSource.powerOff` | mutation | admin | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
+| forceRestart | `powerSource.forceRestart` | mutation | admin | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
 
 ### `presence` → `presence.*`
 

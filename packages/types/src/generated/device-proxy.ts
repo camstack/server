@@ -74,6 +74,7 @@ import type { petFeederCapability } from '../capabilities/pet-feeder.cap.js'
 import type { petFountainCapability } from '../capabilities/pet-fountain.cap.js'
 import type { pipelineAnalyticsCapability } from '../capabilities/pipeline-analytics.cap.js'
 import type { powerMeterCapability } from '../capabilities/power-meter.cap.js'
+import type { powerSourceCapability } from '../capabilities/power-source.cap.js'
 import type { presenceCapability } from '../capabilities/presence.cap.js'
 import type { pressureSensorCapability } from '../capabilities/pressure-sensor.cap.js'
 import type { privacyMaskCapability } from '../capabilities/privacy-mask.cap.js'
@@ -183,6 +184,7 @@ export interface DeviceProxyState {
   readonly petFeeder: SliceHandle<InferRuntimeState<typeof petFeederCapability>>
   readonly petFountain: SliceHandle<InferRuntimeState<typeof petFountainCapability>>
   readonly powerMeter: SliceHandle<InferRuntimeState<typeof powerMeterCapability>>
+  readonly powerSource: SliceHandle<InferRuntimeState<typeof powerSourceCapability>>
   readonly presence: SliceHandle<InferRuntimeState<typeof presenceCapability>>
   readonly pressureSensor: SliceHandle<InferRuntimeState<typeof pressureSensorCapability>>
   readonly privacyMask: SliceHandle<InferRuntimeState<typeof privacyMaskCapability>>
@@ -294,6 +296,7 @@ export interface DeviceProxy {
   readonly petFountain?: InferDeviceProxyCap<typeof petFountainCapability>
   readonly pipelineAnalytics?: InferDeviceProxyCap<typeof pipelineAnalyticsCapability>
   readonly powerMeter?: InferDeviceProxyCap<typeof powerMeterCapability>
+  readonly powerSource?: InferDeviceProxyCap<typeof powerSourceCapability>
   readonly presence?: InferDeviceProxyCap<typeof presenceCapability>
   readonly pressureSensor?: InferDeviceProxyCap<typeof pressureSensorCapability>
   readonly privacyMask?: InferDeviceProxyCap<typeof privacyMaskCapability>
@@ -918,6 +921,13 @@ export function createDeviceProxy(
     getStatus: (input?: unknown) => dispatch('power-meter', 'powerMeter', 'getStatus', 'query', input),
   }
 
+  const powerSourceInterface = {
+    getStatus: (input?: unknown) => dispatch('power-source', 'powerSource', 'getStatus', 'query', input),
+    powerOn: (input?: unknown) => dispatch('power-source', 'powerSource', 'powerOn', 'mutation', input),
+    powerOff: (input?: unknown) => dispatch('power-source', 'powerSource', 'powerOff', 'mutation', input),
+    forceRestart: (input?: unknown) => dispatch('power-source', 'powerSource', 'forceRestart', 'mutation', input),
+  }
+
   const presenceInterface = {
     getStatus: (input?: unknown) => dispatch('presence', 'presence', 'getStatus', 'query', input),
   }
@@ -1379,6 +1389,7 @@ export function createDeviceProxy(
       petFeeder: createSliceHandle<InferRuntimeState<typeof petFeederCapability>>(stateSource, binding.deviceId, 'pet-feeder'),
       petFountain: createSliceHandle<InferRuntimeState<typeof petFountainCapability>>(stateSource, binding.deviceId, 'pet-fountain'),
       powerMeter: createSliceHandle<InferRuntimeState<typeof powerMeterCapability>>(stateSource, binding.deviceId, 'power-meter'),
+      powerSource: createSliceHandle<InferRuntimeState<typeof powerSourceCapability>>(stateSource, binding.deviceId, 'power-source'),
       presence: createSliceHandle<InferRuntimeState<typeof presenceCapability>>(stateSource, binding.deviceId, 'presence'),
       pressureSensor: createSliceHandle<InferRuntimeState<typeof pressureSensorCapability>>(stateSource, binding.deviceId, 'pressure-sensor'),
       privacyMask: createSliceHandle<InferRuntimeState<typeof privacyMaskCapability>>(stateSource, binding.deviceId, 'privacy-mask'),
@@ -1471,6 +1482,7 @@ export function createDeviceProxy(
     ...(bound('pet-fountain') ? { petFountain: petFountainInterface } : {}),
     ...(bound('pipeline-analytics') ? { pipelineAnalytics: pipelineAnalyticsInterface } : {}),
     ...(bound('power-meter') ? { powerMeter: powerMeterInterface } : {}),
+    ...(bound('power-source') ? { powerSource: powerSourceInterface } : {}),
     ...(bound('presence') ? { presence: presenceInterface } : {}),
     ...(bound('pressure-sensor') ? { pressureSensor: pressureSensorInterface } : {}),
     ...(bound('privacy-mask') ? { privacyMask: privacyMaskInterface } : {}),

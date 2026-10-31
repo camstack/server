@@ -2435,6 +2435,21 @@ export {
   lockControlCapability,
 } from './lock-control.cap.js'
 export {
+  POWER_SOURCE_OFF_SECONDS_DEFAULT,
+  POWER_SOURCE_OFF_SECONDS_MAX,
+  POWER_SOURCE_OFF_SECONDS_MIN,
+  type IPowerSourceProvider,
+  type PowerSourceActionResult,
+  PowerSourceActionResultSchema,
+  type PowerSourceInfo,
+  PowerSourceInfoSchema,
+  type PowerSourceRefusalReason,
+  PowerSourceRefusalReasonSchema,
+  type PowerSourceState,
+  PowerSourceStateSchema,
+  powerSourceCapability,
+} from './power-source.cap.js'
+export {
   type MaskGridDims,
   MaskGridDimsSchema,
   type MaskGridShape,
@@ -3335,6 +3350,7 @@ import type { llmRuntimeCapability } from './llm-runtime.cap.js'
 import type { loadContributionCapability } from './load-contribution.cap.js'
 import type { localNetworkCapability } from './local-network.cap.js'
 import type { lockControlCapability } from './lock-control.cap.js'
+import type { powerSourceCapability } from './power-source.cap.js'
 import type { logChannelsCapability } from './log-channels.cap.js'
 import type { logDestinationCapability } from './log-destination.cap.js'
 import type { loginMethodCapability } from './login-method.cap.js'
@@ -3524,6 +3540,7 @@ type AnyCapability =
   | typeof weatherCapability
   | typeof imageCapability
   | typeof lockControlCapability
+  | typeof powerSourceCapability
   | typeof vacuumControlCapability
   | typeof petFeederCapability
   | typeof petFountainCapability

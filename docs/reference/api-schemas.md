@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1003 shared schemas.**
+**1007 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4910,6 +4910,31 @@ Enum: `"f32le" \| "s16le"`
 - `current?`: `number`
 - `apparentPower?`: `number`
 - `powerFactor?`: `number`
+- `lastFetchedAt`: `number`
+
+### `PowerSourceActionResultSchema`
+
+- `{ accepted: true }`
+- `{ accepted: false; reason: PowerSourceRefusalReasonSchema; message: string }`
+
+### `PowerSourceInfoSchema`
+
+- `linked`: `boolean`
+- `switchDeviceId`: `number \| null`
+- `switchName`: `string \| null`
+- `switchOn`: `boolean \| null`
+- `switchOnline`: `boolean \| null`
+- `restartInProgress`: `boolean`
+- `offSeconds`: `number`
+
+### `PowerSourceRefusalReasonSchema`
+
+Enum: `"no-power-source" \| "switch-missing" \| "switch-offline" \| "switch-unknown" \| "restart-in-progress" \| "switch-call-failed"`
+
+### `PowerSourceStateSchema`
+
+- `switchOn`: `boolean \| null`
+- `offSeconds`: `number`
 - `lastFetchedAt`: `number`
 
 ### `PresenceStatusSchema`

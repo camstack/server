@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1454 method paths across 194 capabilities.
+ * Coverage: 1458 method paths across 195 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1041,6 +1041,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'platformProbe.resolveHwAccel': { capName: "platform-probe", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'platformProbe.resolveInferenceConfig': { capName: "platform-probe", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'powerMeter.getStatus': { capName: "power-meter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'powerSource.forceRestart': { capName: "power-source", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'powerSource.getStatus': { capName: "power-source", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
+  'powerSource.powerOff': { capName: "power-source", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'powerSource.powerOn': { capName: "power-source", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'presence.getStatus': { capName: "presence", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'pressureSensor.getStatus': { capName: "pressure-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'privacyMask.getOptions': { capName: "privacy-mask", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1614,6 +1618,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "plate-gallery",
   "platform-probe",
   "power-meter",
+  "power-source",
   "presence",
   "pressure-sensor",
   "privacy-mask",
@@ -1744,6 +1749,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "pet-fountain",
   "pipeline-analytics",
   "power-meter",
+  "power-source",
   "presence",
   "pressure-sensor",
   "privacy-mask",

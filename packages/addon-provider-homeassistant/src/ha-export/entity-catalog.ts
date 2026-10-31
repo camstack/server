@@ -2316,6 +2316,13 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'power-source',
+    reason:
+      'A manual admin recovery action (cut the power of a device that hangs) on a ' +
+      'switch that is already exported as itself; publishing a restart button ' +
+      'beside it would hand an ecosystem the means to cut a device off by mistake.',
+  },
+  {
     cap: 'pet-fountain',
     reason:
       'A fountain is BUILT here from the loose entities Home Assistant already ' +

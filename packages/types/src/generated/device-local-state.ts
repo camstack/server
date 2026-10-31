@@ -55,6 +55,7 @@ import { numericSensorCapability } from '../capabilities/numeric-sensor.cap.js'
 import { petFeederCapability } from '../capabilities/pet-feeder.cap.js'
 import { petFountainCapability } from '../capabilities/pet-fountain.cap.js'
 import { powerMeterCapability } from '../capabilities/power-meter.cap.js'
+import { powerSourceCapability } from '../capabilities/power-source.cap.js'
 import { presenceCapability } from '../capabilities/presence.cap.js'
 import { pressureSensorCapability } from '../capabilities/pressure-sensor.cap.js'
 import { privacyMaskCapability } from '../capabilities/privacy-mask.cap.js'
@@ -145,6 +146,7 @@ export interface DeviceLocalState {
   petFeeder: InferRuntimeState<typeof petFeederCapability>
   petFountain: InferRuntimeState<typeof petFountainCapability>
   powerMeter: InferRuntimeState<typeof powerMeterCapability>
+  powerSource: InferRuntimeState<typeof powerSourceCapability>
   presence: InferRuntimeState<typeof presenceCapability>
   pressureSensor: InferRuntimeState<typeof pressureSensorCapability>
   privacyMask: InferRuntimeState<typeof privacyMaskCapability>
@@ -231,6 +233,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   petFeeder: petFeederCapability,
   petFountain: petFountainCapability,
   powerMeter: powerMeterCapability,
+  powerSource: powerSourceCapability,
   presence: presenceCapability,
   pressureSensor: pressureSensorCapability,
   privacyMask: privacyMaskCapability,
@@ -324,6 +327,7 @@ export interface CapNameToRuntimeStateMap {
   'pet-feeder': InferRuntimeState<typeof petFeederCapability>
   'pet-fountain': InferRuntimeState<typeof petFountainCapability>
   'power-meter': InferRuntimeState<typeof powerMeterCapability>
+  'power-source': InferRuntimeState<typeof powerSourceCapability>
   'presence': InferRuntimeState<typeof presenceCapability>
   'pressure-sensor': InferRuntimeState<typeof pressureSensorCapability>
   'privacy-mask': InferRuntimeState<typeof privacyMaskCapability>

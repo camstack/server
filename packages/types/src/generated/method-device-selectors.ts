@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 568 methods carry a device reference, of which
+ * Coverage: 572 methods carry a device reference, of which
  * 184 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -428,6 +428,10 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'plateGallery.getPlateByTrack': [{ name: "deviceId", form: "single", optional: false }] as const,
   'plateGallery.listPlates': [{ name: "deviceId", form: "single", optional: true }] as const,
   'powerMeter.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'powerSource.forceRestart': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'powerSource.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'powerSource.powerOff': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'powerSource.powerOn': [{ name: "deviceId", form: "single", optional: false }] as const,
   'presence.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pressureSensor.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'privacyMask.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,

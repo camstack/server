@@ -604,6 +604,21 @@ composer's claim and merged at the hub. `lock()` is refused at dispatch while th
 door is open (the D963 redirect, composed with the media-player one in
 core-blocks); `unlock()` never is.
 
+### A device powered by a smart switch (`power-source`)
+
+A device that hangs (a gateway, a camera) can name the smart switch that powers
+it. The link is a Customize `add` target of the `power-source` cap: the stored
+`power-source.switchOn` field reads the switch's `on`, and `offSeconds`
+(integer 3-120, default 10, clamped when read) sits beside it.
+`powerSourceLinkOfComposition` reads both from the STORED composition, never a
+second copy (D676). The `core-blocks` builtin serves `powerOn`, `powerOff`,
+`forceRestart` and `getStatus` as system methods taking a `deviceId`. A restart
+is switch off, wait `offSeconds`, switch on, on an injected scheduler cancelled
+on stop. Every refusal is a typed result (`switch-offline`, `switch-unknown`,
+`restart-in-progress`, ...), logged with the device tag and the switch id.
+It is MANUAL only: nothing restarts a device by itself, and it is separate from
+the native `reboot` cap, which it never replaces or wraps.
+
 ### Helpers: a group is a template, not an expression
 
 [D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md).

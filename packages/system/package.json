@@ -490,6 +490,9 @@
           },
           {
             "name": "remote-layout-components"
+          },
+          {
+            "name": "power-source"
           }
         ]
       },

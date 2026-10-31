@@ -28,6 +28,7 @@ import {
   type CoreBlockInput,
   coreBlockComposition,
   coreBlocksCapability,
+  powerSourceCapability,
   actionsCapability,
   schedulersCapability,
   hydrateSchema,
@@ -57,6 +58,11 @@ import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
+import {
+  PowerSourceService,
+  type PowerSourceDevices,
+  timeoutScheduler,
+} from './power-source-service.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
@@ -104,6 +110,8 @@ export class CoreBlocksAddon extends BaseAddon {
   /** The templates engine and the remote — needs the per-device settings store, so absent without one. */
   private remoteRuntime: RemoteRuntime | null = null
   private schedulers: SchedulersRuntime | null = null
+  /** The power-source provider; its pending switch-on timers are cancelled on shutdown. */
+  private powerSource: PowerSourceService | null = null
   private disposed = false
   /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
   private seedLockDoorGate: () => void = () => undefined
@@ -193,10 +201,50 @@ export class CoreBlocksAddon extends BaseAddon {
       { capability: coreBlocksCapability, provider: this.buildProvider() },
       { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
+      { capability: powerSourceCapability, provider: this.buildPowerSource() },
       // The built-in palette needs no store: it is served even when the remote is not.
       { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
       ...this.remoteRegistrations(),
     ]
+  }
+
+  private buildPowerSource(): PowerSourceService {
+    const service = new PowerSourceService({
+      blocks: () => this.store?.list() ?? [],
+      devices: this.powerSourceDevices(),
+      scheduler: timeoutScheduler,
+      logger: this.ctx.logger.child('power-source'),
+    })
+    this.powerSource = service
+    return service
+  }
+
+  private powerSourceDevices(): PowerSourceDevices {
+    const requireApi = (): AddonApi => {
+      const api = this.ctx.api
+      if (!api)
+        throw new Error('core-blocks: no ctx.api on this node — power-source cannot reach devices')
+      return api
+    }
+    return {
+      find: async (ref) => {
+        const rows = await requireApi().deviceManager.listAll.query({
+          addonId: ref.addonId,
+          projection: 'slim',
+        })
+        const row = rows.find((r) => r.stableId === ref.stableId)
+        return row === undefined ? null : { id: row.id, name: row.name, online: row.online }
+      },
+      readOn: async (deviceId) => {
+        const status = await requireApi().switch.getStatus.query({ deviceId })
+        const on: unknown =
+          status !== null && typeof status === 'object' ? Reflect.get(status, 'on') : undefined
+        return typeof on === 'boolean' ? on : null
+      },
+      setOn: async (deviceId, on) => {
+        await requireApi().switch.setState.mutate({ deviceId, on })
+      },
+    }
   }
 
   private buildRemote(records: NonNullable<typeof this.ctx.records>): RemoteRuntime | null {
@@ -306,6 +354,8 @@ export class CoreBlocksAddon extends BaseAddon {
   protected async onShutdown(): Promise<void> {
     this.ctx.kernel?.capabilityRegistry?.setDeviceCallRedirect(null)
     this.remoteRuntime = null
+    this.powerSource?.stop()
+    this.powerSource = null
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null

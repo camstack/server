@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The power-source capability is not exported to Home Assistant (manual admin recovery action).
+
 ## [1.2.642] - 2026-10-31
 
 ### Changed
