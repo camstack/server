@@ -8,6 +8,7 @@ import type { LockControlStatus, LockState } from '@camstack/types'
 import { DeviceFeature } from '@camstack/types'
 import type { DeviceControlProps } from './control-registry'
 import { SlideToggle } from './atoms'
+import { useLockDoorSensor, type LockDoorSensor } from '../../hooks/use-lock-door-sensor'
 
 // ── Cap type ──────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,37 @@ function StateLabel({ state }: StateLabelProps): ReactNode {
   )
 }
 
+// ── Door row ──────────────────────────────────────────────────────────────────
+
+interface DoorRowProps {
+  readonly door: LockDoorSensor
+}
+
+/** The linked door contact's own reading and name; rendered only when one is linked. */
+function DoorRow({ door }: DoorRowProps): ReactNode {
+  const t = useUiText()
+  const label =
+    door.reading === 'open'
+      ? t('uiLibrary.lockHeroCard.doorOpen', 'Door open')
+      : door.reading === 'closed'
+        ? t('uiLibrary.lockHeroCard.doorClosed', 'Door closed')
+        : t('uiLibrary.lockHeroCard.doorUnknown', 'Door state unknown')
+  return (
+    <div
+      data-testid="lock-door-row"
+      data-reading={door.reading}
+      className="flex items-center justify-center gap-1.5 text-sm text-foreground-muted"
+    >
+      <DoorOpen
+        className={cn('h-4 w-4 shrink-0', door.reading === 'open' && 'text-warning')}
+        aria-hidden="true"
+      />
+      <span className={cn('font-medium', door.reading === 'open' && 'text-warning')}>{label}</span>
+      <span className="min-w-0 truncate text-foreground-subtle">{door.name}</span>
+    </div>
+  )
+}
+
 // ── Open (unlatch) button ─────────────────────────────────────────────────────
 
 interface OpenButtonProps {
@@ -171,6 +203,8 @@ export function LockHeroCard({
   const { display, applyOptimistic } = useOptimisticSlice<LockControlStatus>(slice, {
     enabled: optimistic ?? true,
   })
+  const door = useLockDoorSensor(trpc, deviceId)
+  const t = useUiText()
 
   // Cap-gate: if the cap is not registered on this device, render nothing.
   if (cap === undefined) return null
@@ -185,8 +219,11 @@ export function LockHeroCard({
 
   const supportsOpen = features?.includes(DeviceFeature.LockOpen) === true
 
+  // The hub refuses lock() while the door is open; say so instead of offering it.
+  const doorBlocksLock = display.state === 'door-open'
+
   const handleToggle = (): void => {
-    if (busy) return
+    if (busy || doorBlocksLock) return
     if (locked) {
       applyOptimistic({ state: 'unlocking' })
       void cap.unlock({})
@@ -210,12 +247,21 @@ export function LockHeroCard({
       <div className="flex flex-col items-center gap-2">
         <LockGlyph state={display.state} />
         <StateLabel state={display.state} />
+        {door !== null && <DoorRow door={door} />}
       </div>
 
       {/* ── Safety slide: lock ↔ unlock ─────────────────────────────────────── */}
-      <div className={cn(busy && 'pointer-events-none opacity-40')}>
+      <div
+        className={cn((busy || doorBlocksLock) && 'pointer-events-none opacity-40')}
+        aria-disabled={doorBlocksLock || undefined}
+      >
         <SlideToggle on={locked} targetLabel={slideTargetLabel} onConfirm={handleToggle} />
       </div>
+      {doorBlocksLock && (
+        <p data-testid="lock-door-reason" className="text-center text-xs text-foreground-muted">
+          {t('uiLibrary.lockHeroCard.closeDoorFirst', 'Close the door first')}
+        </p>
+      )}
 
       {/* ── Open (unlatch) button: gated on DeviceFeature.LockOpen ──────────── */}
       {supportsOpen && (

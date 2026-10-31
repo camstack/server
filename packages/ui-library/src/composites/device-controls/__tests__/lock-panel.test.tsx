@@ -174,3 +174,19 @@ describe('LockPanel', () => {
     })
   })
 })
+
+describe('LockPanel door-open', () => {
+  it('disables the Lock toggle with the reason and never calls lock', () => {
+    mockResult = {
+      cap: { lock, unlock, open },
+      slice: { state: 'door-open', lastChangedAt: 0 },
+      available: true,
+    }
+    render(<LockPanel trpc={trpc} deviceId={1} features={undefined} layout="full" />)
+    const btn = screen.getByLabelText('Lock')
+    expect(btn.hasAttribute('disabled')).toBe(true)
+    expect(btn.getAttribute('title')).toBe('Close the door first')
+    fireEvent.click(btn)
+    expect(lock).not.toHaveBeenCalled()
+  })
+})

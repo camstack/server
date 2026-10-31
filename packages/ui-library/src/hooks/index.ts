@@ -21,6 +21,11 @@ export type {
   UseDeviceCapabilityResult,
 } from './use-device-capability'
 export { useDeviceCapability } from './use-device-capability'
+export {
+  useLockDoorSensor,
+  type LockDoorSensor,
+  type LockDoorReading,
+} from './use-lock-door-sensor'
 export type {
   DetectionState,
   DeviceDetections,

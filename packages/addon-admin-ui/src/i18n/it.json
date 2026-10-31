@@ -7134,7 +7134,8 @@
       "jammed": "Inceppata",
       "openDoor": "Apri la porta",
       "open": "Apri",
-      "cancel": "Annulla"
+      "cancel": "Annulla",
+      "closeDoorFirst": "Chiudi prima la porta"
     },
     "deviceItemActions": {
       "awaiting": "In attesa dello stato…",
@@ -8178,7 +8179,11 @@
     },
     "lockHeroCard": {
       "open": "Apri",
-      "openUnlatch": "Apri (sblocca il chiavistello)"
+      "openUnlatch": "Apri (sblocca il chiavistello)",
+      "doorOpen": "Porta aperta",
+      "doorClosed": "Porta chiusa",
+      "doorUnknown": "Stato della porta sconosciuto",
+      "closeDoorFirst": "Chiudi prima la porta"
     },
     "offlineBadge": {
       "unavailable": "Non disponibile",

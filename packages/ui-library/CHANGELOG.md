@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The lock hero card shows the door-open state.
+- The lock card shows the linked door contact (open, closed or unknown) with its name, and Lock is disabled with a reason while the door is open
 
 ## [1.2.360] - 2026-10-31
 

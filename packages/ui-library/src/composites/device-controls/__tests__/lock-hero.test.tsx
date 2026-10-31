@@ -19,6 +19,11 @@ vi.mock('../../../hooks/use-device-capability', () => ({
   useDeviceCapability: () => mockResult,
 }))
 
+let mockDoor: { name: string; reading: 'open' | 'closed' | 'unknown' } | null = null
+vi.mock('../../../hooks/use-lock-door-sensor', () => ({
+  useLockDoorSensor: () => mockDoor,
+}))
+
 import { LockHeroCard } from '../lock-hero-card'
 
 const trpc = {} as never
@@ -40,6 +45,7 @@ beforeEach(() => {
   unlock.mockReset()
   open.mockReset()
   mockResult = { cap: baseCap, slice: lockedSlice, available: true }
+  mockDoor = null
 })
 
 describe('LockHeroCard', () => {
@@ -214,5 +220,43 @@ describe('LockHeroCard', () => {
     render(<LockHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.LockOpen]} />)
     fireEvent.click(screen.getByRole('button', { name: /open/i }))
     expect(open).toHaveBeenCalledWith({})
+  })
+})
+
+describe('LockHeroCard door contact', () => {
+  it('shows the linked sensor state and name from the sensor reading', () => {
+    mockDoor = { name: 'Front door contact', reading: 'closed' }
+    render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    const row = screen.getByTestId('lock-door-row')
+    expect(row.textContent).toContain('Door closed')
+    expect(row.textContent).toContain('Front door contact')
+  })
+
+  it('shows Door open and unknown readings', () => {
+    mockDoor = { name: 'Sensor', reading: 'open' }
+    const { unmount } = render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    expect(screen.getByTestId('lock-door-row').textContent).toContain('Door open')
+    unmount()
+    mockDoor = { name: 'Sensor', reading: 'unknown' }
+    render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    expect(screen.getByTestId('lock-door-row').textContent).toContain('Door state unknown')
+  })
+
+  it('shows nothing extra when no sensor is linked', () => {
+    render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    expect(screen.queryByTestId('lock-door-row')).toBeNull()
+  })
+
+  it('disables Lock with the reason on door-open and never calls lock', () => {
+    mockResult = { cap: baseCap, slice: { state: 'door-open', lastChangedAt: 0 }, available: true }
+    render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    expect(screen.getByTestId('lock-door-reason').textContent).toBe('Close the door first')
+    fireEvent.click(screen.getByTestId('slide-thumb'))
+    expect(lock).not.toHaveBeenCalled()
+  })
+
+  it('does not show the reason when the door is not open', () => {
+    render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
+    expect(screen.queryByTestId('lock-door-reason')).toBeNull()
   })
 })

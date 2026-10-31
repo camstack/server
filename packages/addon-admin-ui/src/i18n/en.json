@@ -7112,7 +7112,8 @@
       "jammed": "Jammed",
       "openDoor": "Open door",
       "open": "Open",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "closeDoorFirst": "Close the door first"
     },
     "deviceItemActions": {
       "awaiting": "Awaiting state…",
@@ -8156,7 +8157,11 @@
     },
     "lockHeroCard": {
       "open": "Open",
-      "openUnlatch": "Open (unlatch)"
+      "openUnlatch": "Open (unlatch)",
+      "doorOpen": "Door open",
+      "doorClosed": "Door closed",
+      "doorUnknown": "Door state unknown",
+      "closeDoorFirst": "Close the door first"
     },
     "offlineBadge": {
       "unavailable": "Unavailable",

@@ -12766,6 +12766,13 @@
       "summary": "useLiveEvent — single-call subscription to the `live.onEvent` push stream by category."
     },
     {
+      "name": "useLockDoorSensor",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-lock-door-sensor.ts",
+      "summary": "The linked door contact with its own reading, or `null` while unknown or when none is linked."
+    },
+    {
       "name": "useNavigation",
       "kind": "hook",
       "area": "hooks",

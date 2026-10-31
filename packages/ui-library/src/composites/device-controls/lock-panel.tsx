@@ -58,6 +58,9 @@ export function LockPanel({
   if (display === undefined) return null
   const locked = display.state === 'locked' || display.state === 'locking'
   const busy = !available || display.state === 'jammed'
+  // The hub refuses lock() while the door is open; the toggle then offers Lock, so it is disabled.
+  const doorBlocksLock = display.state === 'door-open'
+  const toggleDisabled = busy || doorBlocksLock
   const supportsOpen = features?.includes(DeviceFeature.LockOpen) === true
   // The compact (row/table) inline control requires explicit confirmation for
   // security-sensitive actions; the full (detail) layout fires immediately.
@@ -78,7 +81,7 @@ export function LockPanel({
   }
 
   const toggle = (): void => {
-    if (busy) return
+    if (toggleDisabled) return
     if (!locked) {
       // Lock (secure) is always immediate.
       doLock()
@@ -155,8 +158,14 @@ export function LockPanel({
       <button
         type="button"
         aria-label={label}
-        title={display.state === 'jammed' ? t('uiLibrary.lockPanel.jammed', 'Jammed') : label}
-        disabled={busy}
+        title={
+          display.state === 'jammed'
+            ? t('uiLibrary.lockPanel.jammed', 'Jammed')
+            : doorBlocksLock
+              ? t('uiLibrary.lockPanel.closeDoorFirst', 'Close the door first')
+              : label
+        }
+        disabled={toggleDisabled}
         onClick={(e) => {
           e.stopPropagation()
           toggle()
@@ -165,7 +174,7 @@ export function LockPanel({
           'inline-flex items-center justify-center rounded transition-colors',
           layout === 'full' ? 'h-7 gap-1.5 px-2 text-xs' : 'h-5 w-5',
           locked ? 'text-success' : 'text-warning',
-          busy && 'opacity-40 cursor-not-allowed',
+          toggleDisabled && 'opacity-40 cursor-not-allowed',
           'hover:bg-surface-hover',
         )}
       >
