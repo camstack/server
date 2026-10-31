@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.712] - 2026-10-31
+
 ### Changed
 
 - Integration wizard and settings page ask the addon for the form of the instance being configured

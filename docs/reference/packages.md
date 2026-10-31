@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.711 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.712 | the update itself | — |
 
 ## Framework (5)
 
@@ -24,9 +24,9 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | --- | --- | --- | --- | --- |
 | `@camstack/develop` | `packages/develop` | 0.1.41 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.154 | `@camstack/server` closure | — |
-| `@camstack/system` | `packages/system` | 1.2.532 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
-| `@camstack/types` | `packages/types` | 1.2.457 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
-| `@camstack/ui-library` | `packages/ui-library` | 1.2.361 | `@camstack/server` closure | — |
+| `@camstack/system` | `packages/system` | 1.2.533 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
+| `@camstack/types` | `packages/types` | 1.2.458 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
+| `@camstack/ui-library` | `packages/ui-library` | 1.2.362 | `@camstack/server` closure | — |
 
 ## Addons (50)
 
@@ -34,11 +34,11 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.534 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
-| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.303 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.535 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.304 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.174 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.173 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
-| `@camstack/addon-benchmark` | `packages/addon-benchmark` | 1.2.302 | addons dir (image-seeded) | Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound |
+| `@camstack/addon-benchmark` | `packages/addon-benchmark` | 1.2.303 | addons dir (image-seeded) | Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound |
 | `@camstack/addon-cloudflare` | `packages/addon-cloudflare` | 1.2.150 | addons dir | Cloudflare bundle — Tunnel (network-access) + TURN relay (turn-provider). Multi-entry npm package shipping 2 addons under a single bundle. |
 | `@camstack/addon-decoder-nodeav` | `packages/addon-decoder-nodeav` | 1.2.144 | addons dir (image-seeded) | Standalone in-process node-av decoder addon for CamStack |
 | `@camstack/addon-export-alexa` | `packages/addon-export-alexa` | 1.2.176 | addons dir | Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint. |
@@ -47,10 +47,10 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-google-services` | `packages/addon-google-services` | 0.2.33 | addons dir | Google — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider. |
 | `@camstack/addon-import-alexa` | `packages/addon-import-alexa` | 0.2.172 | addons dir | Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter) |
 | `@camstack/addon-matter-broker` | `packages/addon-matter-broker` | 0.2.152 | addons dir | Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack |
-| `@camstack/addon-model-studio` | `packages/addon-model-studio` | 1.1.332 | addons dir | Custom detection model registry, conversion & distribution for CamStack |
+| `@camstack/addon-model-studio` | `packages/addon-model-studio` | 1.1.333 | addons dir | Custom detection model registry, conversion & distribution for CamStack |
 | `@camstack/addon-mqtt-broker` | `packages/addon-mqtt-broker` | 1.2.147 | addons dir | MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap. |
 | `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.625 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
-| `@camstack/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.306 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
+| `@camstack/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.307 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
 | `@camstack/addon-pipeline` | `packages/addon-pipeline` | 1.2.635 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
 | `@camstack/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 1.2.645 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |
 | `@camstack/addon-post-analysis` | `packages/addon-post-analysis` | 1.2.656 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
@@ -64,12 +64,12 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.146 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.179 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
 | `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.642 | addons dir | Home Assistant device provider addon for CamStack |
-| `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.169 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
+| `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.170 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
 | `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.31 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.151 | addons dir | ONVIF camera device provider addon for CamStack |
 | `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.156 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
 | `@camstack/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.2.153 | addons dir | Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
-| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.214 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
+| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.215 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
 | `@camstack/addon-provider-rtsp` | `packages/addon-provider-rtsp` | 1.2.148 | addons dir | Generic RTSP camera device provider addon for CamStack |
 | `@camstack/addon-provider-tuya` | `packages/addon-provider-tuya` | 0.2.148 | addons dir | Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities |
 | `@camstack/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.2.150 | addons dir | UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
@@ -82,7 +82,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-static-turn` | `packages/addon-static-turn` | 1.2.141 | addons dir | Static / self-hosted (coturn) TURN provider for CamStack |
 | `@camstack/addon-tailscale` | `packages/addon-tailscale` | 1.2.147 | addons dir | Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle. |
 | `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.157 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
-| `@camstack/addon-training` | `packages/addon-training` | 0.1.118 | addons dir | Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account |
+| `@camstack/addon-training` | `packages/addon-training` | 0.1.119 | addons dir | Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account |
 | `@camstack/addon-waste-collections` | `packages/addon-waste-collections` | 0.1.32 | addons dir | Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source. |
 
 ## Tooling (7)

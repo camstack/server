@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.533] - 2026-10-31
+
 ### Changed
 
 - An integration instance can have its own settings form: a Reolink NVR / Home Hub shows its connection only, the default integration keeps the full form
