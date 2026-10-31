@@ -220,6 +220,41 @@ describe('published-output normalisation', () => {
   })
 })
 
+describe('embedded @camstack/types copy', () => {
+  // A self-contained addon bundles the types it uses, and a page remote's
+  // loadShare shim lists every export of the host-provided types. A types
+  // release changes both, and every other addon is not republished for it
+  // (the framework closure supplies types at runtime), so a bundler candidate
+  // must not ship for it either (planning #332).
+  const own = 'export const own = 1\n//#endregion\n'
+  const entry = (typesBody: string, ownBody = own): string =>
+    `//#region ../types/dist/event-category-Abc12345.mjs\n${typesBody}\n//#endregion\n//#region src/own.ts\n${ownBody}`
+  const shim = (names: string): string =>
+    `//#region \\0virtual:mf:__mfe_internal__x_page__loadShare___mf_0_camstack_mf_1_types__loadShare__.js\nconst l = [${names}]\n//#endregion\n`
+  const shimPath =
+    'dist/_virtual_mf___mfe_internal__x_page__loadShare___mf_0_camstack_mf_1_types__loadShare__.js-Abc12345.mjs'
+
+  it('does not count a changed types region or types export list', () => {
+    const local = [
+      file('dist/x.addon.mjs', entry('const T = 2')),
+      file(shimPath, shim('e.A, e.B, e.NEW')),
+    ]
+    const published = [
+      file('dist/x.addon.mjs', entry('const T = 1')),
+      file(shimPath.replace('Abc12345', 'Zyx98765'), shim('e.A, e.B')),
+    ]
+    expect(compareNormalised(local, published, []).reason).toBe('bundle unchanged')
+  })
+
+  it('still counts a change in the addon own code', () => {
+    const local = [
+      file('dist/x.addon.mjs', entry('const T = 1', 'export const own = 2\n//#endregion\n')),
+    ]
+    const published = [file('dist/x.addon.mjs', entry('const T = 1'))]
+    expect(compareNormalised(local, published, []).reason).toBe('dist differs: 1 files')
+  })
+})
+
 describe('addon-agent-ui build reproducibility', () => {
   it('hashes two builds of the same tree equal, including across a version stamp', {
     timeout: 300_000,

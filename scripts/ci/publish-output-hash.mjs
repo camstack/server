@@ -183,6 +183,22 @@ export function stripHostProvidedRuntimeImport(text) {
   return text.replace(HOST_RUNTIME_IMPORT, '')
 }
 
+/**
+ * `@camstack/types` is the framework's contract: a self-contained addon
+ * bundles the part it uses, and a page remote's loadShare shim lists every
+ * export of the host-provided copy. A types release changes both, yet no other
+ * addon is republished for it (the framework closure supplies types at
+ * runtime), so a bundler candidate must not ship for it either. Only the
+ * package's OWN code and the libraries it bundles decide (planning #332).
+ */
+const TYPES_REGION = /\/\/#region [^\n]*\btypes\/dist\/[^\n]*\n[\s\S]*?\/\/#endregion[ \t]*\r?\n?/g
+const TYPES_SHIM_PATH = /_camstack_mf_\d+_types__loadShare__/
+
+export function stripEmbeddedTypes(rel, text) {
+  if (TYPES_SHIM_PATH.test(rel)) return '/* @camstack/types loadShare shim */\n'
+  return text.replace(TYPES_REGION, '')
+}
+
 export function normaliseRelPath(rel) {
   const posix = rel.replace(/\\/g, '/')
   const dir = path.posix.dirname(posix)
@@ -199,7 +215,7 @@ function normaliseBytes(rel, bytes, stamps, roots) {
   const stamped = replaceStamps(text, stamps)
   const rooted = stripAbsolutePaths(stamped, roots)
   const pathed = stripHostProvidedRuntimeImport(normaliseBuildPaths(rooted))
-  return Buffer.from(stripContentHashes(pathed))
+  return Buffer.from(stripContentHashes(stripEmbeddedTypes(rel, pathed)))
 }
 
 /**
