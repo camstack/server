@@ -63,6 +63,9 @@ function ctxOver(settings: NonNullable<AddonContext['settings']>): AddonContext 
 async function deviceManagerOver(door: ISettingsStoreProvider) {
   const cm = new ConfigManager(NO_CONFIG_FILE)
   cm.setSettingsDoor(door)
+  // The boot read of the preloaded system keys runs in the background; let it
+  // settle so its door reads never land inside a spied window.
+  await cm.whenSystemSettingsPreloaded()
   const ctx = ctxOver(cm.createSettingsView('device-manager'))
   const deps = { ctx, capabilityRegistry: undefined, withAddonStoreWriteLock: createWriteLock() }
   return { cm, ctx, deps }
