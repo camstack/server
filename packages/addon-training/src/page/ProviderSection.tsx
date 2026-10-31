@@ -145,6 +145,13 @@ export function ProviderSection({
   const [formValues, setFormValues] = useState<Record<string, unknown>>({})
   const [check, setCheck] = useState<CheckState>({ kind: 'idle' })
   const seededKey = useRef<string | null>(null)
+  /**
+   * Set between the create-request effect seeding the form and the URL state
+   * reaching `new`: the seed-sync effect also runs in that gap (mode still
+   * idle) and must not clear `seededKey`, or it re-seeds the blank form after
+   * the operator has already typed into it.
+   */
+  const openingNew = useRef(false)
 
   const descriptors = useAsync(() => trpc.trainingProvider.describe.query({}), [])
   const typesQuery = useAsync(() => trpc.trainingProvider.describeTypes.query({}), [])
@@ -193,6 +200,7 @@ export function ProviderSection({
     setName('')
     setFormValues(createValuesForType(initialType))
     seededKey.current = 'new'
+    openingNew.current = true
     formUrl.openNew()
     onCreateConsumed?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,6 +223,7 @@ export function ProviderSection({
       return
     }
     if (formUrl.state.mode === 'new') {
+      openingNew.current = false
       if (seededKey.current === 'new') return
       seededKey.current = 'new'
       const initialType = typeOptions[0]?.value ?? ''
@@ -225,6 +234,7 @@ export function ProviderSection({
       setFormValues(createValuesForType(initialType))
       return
     }
+    if (openingNew.current) return
     seededKey.current = null
   }, [editing, formUrl.state.mode, typeOptions])
 

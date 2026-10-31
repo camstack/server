@@ -5,7 +5,7 @@
  */
 import type { TrainingProviderDescriptor, TrainingProviderType } from '@camstack/types'
 import { ConfirmDialogProvider, type AddonPageProps } from '@camstack/ui-library'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MODAL_ENTRY_CONFIG_SCHEMA } from '../../providers/modal/modal-entry-schema.js'
 import { ProviderSection } from '../ProviderSection.js'
@@ -213,11 +213,23 @@ describe('ProviderSection', () => {
         />
       </ConfirmDialogProvider>,
     )
-    const dialog = await screen.findByTestId('provider-entry-editor')
-    const secret = within(dialog).getByPlaceholderText('as-…')
-    fireEvent.change(secret, { target: { value: 'as-plain' } })
+    // Type in the very first moment the form exists in the DOM — before the
+    // passive effects of that commit have run. The form must not be re-seeded
+    // blank afterwards.
+    const secret = await new Promise<HTMLInputElement>((resolve) => {
+      const observer = new MutationObserver(() => {
+        const field = document.querySelector<HTMLInputElement>('input[placeholder="as-…"]')
+        if (field === null) return
+        observer.disconnect()
+        fireEvent.change(field, { target: { value: 'as-plain' } })
+        resolve(field)
+      })
+      observer.observe(document.body, { childList: true, subtree: true })
+    })
+    await act(async () => {})
+    expect(secret.value).toBe('as-plain')
     expect((secret as HTMLInputElement).type).toBe('password')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Show password' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
     expect((secret as HTMLInputElement).type).toBe('text')
     expect((secret as HTMLInputElement).value).toBe('as-plain')
   })

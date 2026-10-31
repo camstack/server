@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Opening the Create provider form no longer re-seeds it blank after the first keystroke
+
 ## [0.1.114] - 2026-10-30
 
 ### Changed
