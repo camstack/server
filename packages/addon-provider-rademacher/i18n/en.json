@@ -1,9 +1,8 @@
 {
   "connection.s_connection.title": "HomePilot hub",
   "connection.s_connection.description": "Leave the password blank for an unprotected hub.",
-  "connection.s_connection.__rademacher-discovered.label": "Hub",
   "connection.s_connection.host.label": "Hub host / IP",
-  "connection.s_connection.host.description": "Filled when one hub is found. Type the address if it is not.",
+  "connection.s_connection.host.description": "The address of the HomePilot or Start2Smart hub on your network.",
   "connection.s_connection.password.label": "Password (optional)",
   "connection.s_connection.pollIntervalMs.label": "Poll interval (ms)",
   "connection.s_connection.basePath.label": "API base path (optional)"

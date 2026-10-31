@@ -88,8 +88,7 @@ export const rademacherCoverSchema = rademacherDeviceBase.extend({
 export type RademacherCoverConfig = z.infer<typeof rademacherCoverSchema>
 
 /**
- * The integration form: a discovered-hub picker (filled by the LAN scan), the
- * host, the password and the advanced fields. The password is a `password`
+ * The integration form: the host, the password and the advanced fields. The password is a `password`
  * field, so it lands in the keychain.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
@@ -104,24 +103,11 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         columns: 2,
         fields: [
           {
-            type: 'addon-action-select',
-            addonId: 'provider-rademacher',
-            key: '__rademacher-discovered',
-            writesKey: 'host',
-            omitFromSettings: true,
-            label: 'Hub',
-            labelKey: 'provider-rademacher:connection.s_connection.__rademacher-discovered.label',
-            action: 'discoverHub',
-            mapOption: { value: 'host', label: 'name' },
-            hideWhenFewerThan: 2,
-            emptyResultsMessage: 'No hub found on the network.',
-          },
-          {
             type: 'text',
             key: 'host',
             label: 'Hub host / IP',
             labelKey: 'provider-rademacher:connection.s_connection.host.label',
-            description: 'Filled when one hub is found. Type the address if it is not.',
+            description: 'The address of the HomePilot or Start2Smart hub on your network.',
             descriptionKey: 'provider-rademacher:connection.s_connection.host.description',
             required: true,
             placeholder: '192.168.10.50',

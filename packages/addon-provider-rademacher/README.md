@@ -35,8 +35,8 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 ## Setup
 
-1. In CamStack: Integrations, add **Rademacher**. Pick the hub found on your network (the scan probes the local
-   /24 networks for a HomePilot or Start2Smart) or type its **host / IP**. Leave the **password** blank for an
+1. In CamStack: Integrations, add **Rademacher**. Type the hub's **host / IP**; there is no network scan, because a hub answers
+   nothing that tells it apart from any other web server. Leave the **password** blank for an
    unprotected hub; it is stored in the CamStack keychain and never put in an environment variable, a command
    line or a log line. **Test** logs in and reads the hub's model and firmware.
 2. Open the integration's discovery. The hub appears as one **Gateway** device (its web page, model, firmware,

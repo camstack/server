@@ -6,11 +6,7 @@ import {
   type CreateDeviceSpec,
   connectionTestCapability,
   type DeviceConstructor,
-  type DeviceSummary,
   DeviceType,
-  type DiscoveryCandidate,
-  type DiscoveryHit,
-  type DiscoveryMode,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
@@ -20,7 +16,6 @@ import {
   type SystemEvent,
 } from '@camstack/types'
 import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
-import { rademacherActions } from './custom-actions.js'
 import { RademacherCoverDevice } from './devices/rademacher-cover-device.js'
 import { RademacherGatewayDevice } from './devices/rademacher-gateway-device.js'
 import { buildRademacherAdoptionProvider } from './rademacher-adoption-provider.js'
@@ -29,13 +24,6 @@ import { RademacherClientRegistry } from './rademacher-client-registry.js'
 import { buildRademacherConnectionTestProvider } from './rademacher-connection-test.js'
 import { cascadeRemoveDevicesForIntegration } from './rademacher-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './rademacher-integration-offline.js'
-import {
-  hubsFromHits,
-  proposeRademacherHubs,
-  RADEMACHER_DISCOVERY_MODES,
-  rademacherDiscoveryCandidates,
-  rademacherDiscoverySummary,
-} from './rademacher-hub-discovery.js'
 import { rademacherSessions } from './rademacher-session-resolver.js'
 
 /**
@@ -62,7 +50,7 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
     super({})
   }
 
-  protected override async onInitialize(): Promise<AddonInitResult<typeof rademacherActions>> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
     this.clients = new RademacherClientRegistry(this.ctx.logger)
@@ -82,20 +70,6 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
         { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
       ],
-      customActions: rademacherActions,
-      actionHandlers: {
-        discoverHub: async () => {
-          const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
-            addonId: this.ctx.id,
-          })
-          const hosts = candidates.map((candidate) => ({
-            host: String(candidate.prefilledConfig['host'] ?? ''),
-            name: candidate.suggestedName,
-            id: candidate.stableId.replace(/^rademacher:/, ''),
-          }))
-          return { hosts, summary: rademacherDiscoverySummary(hosts.length, hosts.length) }
-        },
-      },
     }
   }
 
@@ -117,35 +91,6 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
     return false
   }
 
-  /** A hub is found by the scan engine's http-probe; this addon classifies the hits. */
-  override async supportsDiscovery(): Promise<boolean> {
-    return true
-  }
-
-  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
-    return RADEMACHER_DISCOVERY_MODES
-  }
-
-  override async classifyDiscoveryHits(input: {
-    hits: readonly DiscoveryHit[]
-    params?: Record<string, unknown>
-  }): Promise<readonly DiscoveryCandidate[]> {
-    const found = await hubsFromHits(input.hits)
-    const proposals = proposeRademacherHubs(found, await this.knownHubHosts())
-    if (found.length > proposals.length) {
-      this.ctx.logger.info('Rademacher discovery skipped hubs already added', {
-        meta: { found: found.length, proposed: proposals.length },
-      })
-    }
-    return rademacherDiscoveryCandidates(proposals)
-  }
-
-  override async adoptDiscoveredDevice(_input: {
-    candidate: DiscoveryCandidate
-  }): Promise<DeviceSummary> {
-    throw new Error('A Rademacher hub is added from the integration form')
-  }
-
   protected async onGetCreationSchema(_type: DeviceType): Promise<ConfigUISchema | null> {
     return null
   }
@@ -164,32 +109,6 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-rademacher generateStableId: nativeId required')
     }
     return `rademacher:${nativeId}`
-  }
-
-  private async knownHubHosts(): Promise<readonly string[]> {
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const hosts: string[] = []
-      for (const integration of all) {
-        if (integration.addonId !== this.ctx.id) continue
-        try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const connection = connectionFromSettings(settings)
-          if (connection) hosts.push(connection.host)
-        } catch (err) {
-          this.ctx.logger.warn('Rademacher discovery: settings read failed', {
-            tags: { integrationId: integration.id },
-            meta: { error: errMsg(err) },
-          })
-        }
-      }
-      return hosts
-    } catch (err) {
-      this.ctx.logger.warn('Rademacher discovery: integration list failed', {
-        meta: { error: errMsg(err) },
-      })
-      return []
-    }
   }
 
   private requireClients(): RademacherClientRegistry {
