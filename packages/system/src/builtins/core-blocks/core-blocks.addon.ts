@@ -56,7 +56,7 @@ import {
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
-import { doorSensorOf } from './lock-door-sensor.js'
+import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
@@ -105,6 +105,9 @@ export class CoreBlocksAddon extends BaseAddon {
   private remoteRuntime: RemoteRuntime | null = null
   private schedulers: SchedulersRuntime | null = null
   private disposed = false
+  /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
+  private seedLockDoorGate: () => void = () => undefined
+  private readonly seedFailed = new Set<number>()
   /** The shared integration, or null when this node does not own it. */
   private blocksIntegrationId: string | null = null
 
@@ -228,6 +231,8 @@ export class CoreBlocksAddon extends BaseAddon {
       const data = parseDeviceStateChanged(event.data)
       if (data !== null) gate.onStateChanged(data)
     })
+    this.seedLockDoorGate = () => this.seedGate(gate)
+    this.seedLockDoorGate()
     const runtime = this.remoteRuntime
     registry.setDeviceCallRedirect(
       composeRedirects([
@@ -246,11 +251,31 @@ export class CoreBlocksAddon extends BaseAddon {
     )
   }
 
-  /** The linked door sensor's name, read from the stored customization on a refusal only. */
-  private async doorSensorOf(deviceId: number): Promise<string | null> {
+  private seedGate(gate: LockDoorGate): void {
     const api = this.ctx.api
-    if (!api) return null
-    return doorSensorOf(this.requireStore().list(), deviceId, {
+    if (!api) return
+    void seedLockDoors({
+      blocks: this.requireStore().list(),
+      names: this.deviceNames(api),
+      readState: async (deviceId) => {
+        const raw: unknown = await api.lockControl.getStatus.query({ deviceId })
+        const state =
+          raw !== null && typeof raw === 'object' ? Reflect.get(raw, 'state') : undefined
+        return typeof state === 'string' ? state : null
+      },
+      apply: (deviceId, state) =>
+        gate.onStateChanged({ deviceId, capName: 'lock-control', slice: { state } }),
+      logger: this.ctx.logger.child('lock-door'),
+      failedLogged: this.seedFailed,
+    }).catch((err: unknown) => {
+      this.ctx.logger.warn('lock: seeding the door gate failed', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    })
+  }
+
+  private deviceNames(api: AddonApi): DeviceNames {
+    return {
       find: async (ref) => {
         const rows = await api.deviceManager.listAll.query({
           addonId: ref.addonId,
@@ -259,7 +284,14 @@ export class CoreBlocksAddon extends BaseAddon {
         const row = rows.find((r) => r.stableId === ref.stableId)
         return row === undefined ? null : { id: row.id, name: row.name }
       },
-    })
+    }
+  }
+
+  /** The linked door sensor's name, read from the stored customization on a refusal only. */
+  private async doorSensorOf(deviceId: number): Promise<string | null> {
+    const api = this.ctx.api
+    if (!api) return null
+    return doorSensorOf(this.requireStore().list(), deviceId, this.deviceNames(api))
   }
 
   private remoteRegistrations(): ProviderRegistration[] {
@@ -721,7 +753,10 @@ export class CoreBlocksAddon extends BaseAddon {
       lookupCap: buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS),
       composerStates: async (blockIds) =>
         (await requireApi().composer.getStates.query({ blockIds: [...blockIds] })).states,
-      convergeSoon: () => this.convergeSoon(),
+      convergeSoon: () => {
+        this.convergeSoon()
+        this.seedLockDoorGate()
+      },
       convergeForClaims: () => {
         if (this.supervisor === null) {
           return Promise.reject(
