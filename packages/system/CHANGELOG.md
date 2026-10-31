@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.535] - 2026-10-31
+
 ### Changed
 
 - Hub databases now migrate at boot under one ledger, with a safety snapshot before the first change, a rollback on failure and an Alert Center card with a Retry button
