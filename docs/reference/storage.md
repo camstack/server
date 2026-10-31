@@ -174,6 +174,7 @@ there is".
 | `AUTH_AUDIT_COLLECTION` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `INTEGRATIONS` | `packages/system/src/builtins/sqlite-storage/integration-registry.ts` |
 | `INTEGRATION_SETTINGS` | `packages/system/src/builtins/sqlite-storage/integration-registry.ts` |
+| `${LEDGER_TABLE}` | `packages/system/src/builtins/sqlite-storage/migrations/migration-pass.ts` |
 | `${scoped}` | `packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts` |
 | `${SqliteSettingsBackend.DECLARATIONS_TABLE}` | `packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts` |
 | `${table}` | `packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts` |

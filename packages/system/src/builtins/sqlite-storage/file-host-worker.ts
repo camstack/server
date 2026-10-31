@@ -37,7 +37,9 @@ import {
   isFileHostWorkerData,
   trustInput,
 } from './file-host-protocol.js'
+import { callMigrate, migrateTargetOf, type MigrateTarget } from './migrations/migration-pass.js'
 import { serializeError } from './placement-errors.js'
+import { HUB_MIGRATIONS } from '../../migrations/hub/index.js'
 import { RecordsEngine } from './records/records-engine.js'
 import { SqliteSettingsBackend } from './sqlite-settings-backend.js'
 import { createVectorIndex, vectorProviderOf } from './vector-provider.js'
@@ -120,6 +122,9 @@ async function main(): Promise<void> {
       : new RecordsEngine(db, { databaseId: spec.databaseId, logger: logger.child('Records') })
   const vectorTarget = vectorIndex === null ? null : vectorProviderOf(vectorIndex)
   const control = controlTargetOf(backend, threadId)
+  // The hub catalogue is imported HERE, not sent: code never crosses postMessage (D986).
+  const migrateTarget: MigrateTarget | null =
+    db === null ? null : migrateTargetOf(db, spec.databaseId, HUB_MIGRATIONS)
 
   // Only a vector answer transfers its buffers; rows are cloned (see the client).
   const answer = (id: number, result: unknown, transfer = false): void =>
@@ -159,6 +164,11 @@ async function main(): Promise<void> {
       if (request.kind === 'records') {
         if (recordsEngine === null) throw new Error(`database "${spec.databaseId}" is not open`)
         answer(request.id, await callRecords(recordsEngine, request.op, trustInput(request.input)))
+        return
+      }
+      if (request.kind === 'migrate') {
+        if (migrateTarget === null) throw new Error(`database "${spec.databaseId}" is not open`)
+        answer(request.id, callMigrate(migrateTarget, request.op, trustInput(request.input)))
         return
       }
       answer(request.id, callControl(control, request.op, trustInput(request.input)))

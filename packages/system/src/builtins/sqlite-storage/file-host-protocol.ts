@@ -21,6 +21,7 @@
  */
 import type { IDataStoreProvider, IVectorStoreProvider } from '@camstack/types'
 import type { DataStoreDatabase, LogTags } from '@camstack/types'
+import { isMigrateOp, type MigrateOp } from './migrations/migration-types.js'
 import type { SerializedError } from './placement-errors.js'
 import { isRecordsOp, type RecordsOp } from './records/records-engine-types.js'
 
@@ -97,6 +98,13 @@ export type FileHostRequest =
       readonly id: number
       readonly kind: 'control'
       readonly op: ControlOp
+      readonly input: unknown
+    }
+  /** The boot-time migration engine's questions (D986); the catalogue is imported by the worker itself. */
+  | {
+      readonly id: number
+      readonly kind: 'migrate'
+      readonly op: MigrateOp
       readonly input: unknown
     }
   | { readonly id: number; readonly kind: 'stop' }
@@ -189,6 +197,7 @@ export function isFileHostRequest(value: unknown): value is FileHostRequest {
   if (value.kind === 'data') return isDataStoreOp(value.op)
   if (value.kind === 'vector') return isVectorOp(value.op)
   if (value.kind === 'control') return isControlOp(value.op)
+  if (value.kind === 'migrate') return isMigrateOp(value.op)
   if (value.kind === 'records') return isRecordsOp(value.op)
   return false
 }

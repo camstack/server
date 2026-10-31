@@ -28,6 +28,7 @@ import {
   type VectorOp,
   type VectorOutput,
 } from './file-host-protocol.js'
+import type { MigrateInput, MigrateOp, MigrateOutput } from './migrations/migration-types.js'
 import { DatabaseBusyError, rehydrateError } from './placement-errors.js'
 import type { RecordsInput, RecordsOp, RecordsOutput } from './records/records-engine-types.js'
 
@@ -159,6 +160,11 @@ export class FileHostClient {
     return this.request({ kind: 'control', op, input })
   }
 
+  /** A boot-time migration question (D986), answered by the thread that holds the connection. */
+  migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>> {
+    return this.request({ kind: 'migrate', op, input })
+  }
+
   /** Ask the thread to close its connection, then end it. */
   async stop(): Promise<void> {
     if (this.dead || this.stopping) return
@@ -206,7 +212,8 @@ export class FileHostClient {
       | { kind: 'data'; op: DataStoreOp; input: unknown }
       | { kind: 'vector'; op: VectorOp; input: unknown }
       | { kind: 'records'; op: RecordsOp; input: unknown }
-      | { kind: 'control'; op: ControlOp; input: unknown },
+      | { kind: 'control'; op: ControlOp; input: unknown }
+      | { kind: 'migrate'; op: MigrateOp; input: unknown },
   ): Promise<T> {
     if (this.dead || this.stopping) {
       return Promise.reject(new Error(`database "${this.spec.databaseId}" is not serving`))

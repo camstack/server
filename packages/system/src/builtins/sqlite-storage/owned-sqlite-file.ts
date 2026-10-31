@@ -29,6 +29,14 @@ import {
 import { RecordsEngine } from './records/records-engine.js'
 import type { RecordsInput, RecordsOp, RecordsOutput } from './records/records-engine-types.js'
 import { FileHostClient, type FileHostThreadFactory } from './file-host-client.js'
+import { callMigrate, migrateTargetOf } from './migrations/migration-pass.js'
+import type {
+  HubMigration,
+  MigrateInput,
+  MigrateOp,
+  MigrateOutput,
+} from './migrations/migration-types.js'
+import { HUB_MIGRATIONS } from '../../migrations/hub/index.js'
 import type {
   DataStoreInput,
   DataStoreOp,
@@ -74,6 +82,8 @@ export interface OwnedSqliteFile {
   servingThreadId(): Promise<number>
   /** The owner's verified copy of this file (D693). */
   snapshot(): Promise<DatabaseSnapshotResult>
+  /** A boot-time migration question (D986), answered where this file's connection lives. */
+  migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>>
   /** Checkpointer, canary, maintenance, then the connection. */
   stop(): Promise<void>
 }
@@ -106,6 +116,8 @@ export interface OwnedFileDeps {
    * for the boot-time purges, which must happen before anything can read.
    */
   readonly afterOpen?: (file: OwnedSqliteFile) => Promise<void>
+  /** The catalogue the main-thread file answers `migrate` from; specs substitute it. */
+  readonly migrationCatalogue?: readonly HubMigration[]
 }
 
 /** The loggers of one file: scope per sub-component, `tags.database` on every line. */
@@ -161,6 +173,7 @@ abstract class OwnedFileBase implements OwnedSqliteFile {
     }[]
   >
   abstract servingThreadId(): Promise<number>
+  abstract migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>>
   protected abstract stopConnection(): Promise<void>
   protected abstract stopMaintenance(): void
 
@@ -313,6 +326,17 @@ export class InlineOwnedFile extends OwnedFileBase {
     return 0
   }
 
+  async migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>> {
+    const db = this.backend.getDatabase()
+    if (db === null) throw new Error(`database "${this.databaseId}" is not open`)
+    const target = migrateTargetOf(
+      db,
+      this.databaseId,
+      this.deps.migrationCatalogue ?? HUB_MIGRATIONS,
+    )
+    return callMigrate(target, op, input)
+  }
+
   protected stopMaintenance(): void {
     this.maintenance?.stop()
     this.maintenance = null
@@ -338,6 +362,11 @@ export class WorkerOwnedFile extends OwnedFileBase {
       ...(deps.threadFactory !== undefined ? { threadFactory: deps.threadFactory } : {}),
       ...(deps.maxInFlight !== undefined ? { maxInFlight: deps.maxInFlight } : {}),
     })
+  }
+
+  /** A boot-time migration question, answered inside the worker (D986). */
+  migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>> {
+    return this.client.migrate(op, input)
   }
 
   async open(): Promise<void> {

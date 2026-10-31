@@ -35,6 +35,16 @@
  * only `stat`ed here.
  *
  * One snapshot at a time: a second `write()` while one runs joins it.
+ *
+ * ## Two purposes (D986)
+ *
+ * `backup` writes the slot above and is collected by the nightly archive.
+ * `pre-migration` is the safety copy taken before the boot-time migrations of
+ * this file run. It goes to `<db>.pre-migration/<bootId>-<firstId>.db`, passes
+ * the same space check, pinned copy and verification, keeps the last
+ * {@link PRE_MIGRATION_KEEP}, and is NEVER touched by {@link SqliteSnapshotter.sweep}
+ * — which exists to remove a backup slot nobody collected, and would otherwise
+ * delete the one copy that undoes a migration.
  */
 import { promises as fsp } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -68,6 +78,22 @@ export const SNAPSHOT_PAGES_PER_STEP = 1024
  * the caller's call does.
  */
 export const SNAPSHOT_DEADLINE_MS: number = DATABASE_SNAPSHOT_TIMEOUT_MS - 60_000
+
+/** The directory (beside the live database) that holds pre-migration snapshots. */
+export const PRE_MIGRATION_DIR_SUFFIX = '.pre-migration'
+
+/** How many pre-migration snapshots of one database are kept. */
+export const PRE_MIGRATION_KEEP = 3
+
+/** What a snapshot is for: the nightly archive, or the copy before a migration runs. */
+export type SnapshotPurpose =
+  | { readonly purpose: 'backup' }
+  | { readonly purpose: 'pre-migration'; readonly bootId: string; readonly firstId: string }
+
+/** A migration id as a file-name part: `hub/2026-10-31-x` becomes `hub_2026-10-31-x`. */
+export function snapshotLabelOf(firstId: string): string {
+  return firstId.replaceAll(/[^a-z0-9-]/gi, '_')
+}
 
 /** The least headroom left on the disk AFTER the copy, whatever the database's size. */
 export const SNAPSHOT_MIN_RESERVE_BYTES: number = 256 * 1024 * 1024
@@ -163,6 +189,7 @@ export class SqliteSnapshotter {
   private readonly spawnWorker: SnapshotWorkerFactory
   private readonly syncDirectory: (dir: string) => Promise<void>
   private inFlight: Promise<DatabaseSnapshotResult> | null = null
+  private inFlightPreMigration: Promise<DatabaseSnapshotResult> | null = null
   /**
    * Set while a thread the deadline gave up on is still being terminated. A
    * native SQLite call cannot be interrupted, so `terminate()` may take as long
@@ -204,7 +231,17 @@ export class SqliteSnapshotter {
 
   /** Write `<db>.backup-snapshot`. Joins a snapshot already running. */
   write(): Promise<DatabaseSnapshotResult> {
-    if (this.inFlight !== null) return this.inFlight
+    return this.writeFor({ purpose: 'backup' })
+  }
+
+  /** Write `<db>.pre-migration/<bootId>-<firstId>.db` (D986). Joins one already running. */
+  writePreMigration(bootId: string, firstId: string): Promise<DatabaseSnapshotResult> {
+    return this.writeFor({ purpose: 'pre-migration', bootId, firstId })
+  }
+
+  private writeFor(target: SnapshotPurpose): Promise<DatabaseSnapshotResult> {
+    const running = target.purpose === 'backup' ? this.inFlight : this.inFlightPreMigration
+    if (running !== null) return running
     if (this.draining !== null) {
       return Promise.reject(
         new Error(
@@ -212,10 +249,12 @@ export class SqliteSnapshotter {
         ),
       )
     }
-    const run = this.run().finally(() => {
-      this.inFlight = null
+    const run = this.run(target).finally(() => {
+      if (target.purpose === 'backup') this.inFlight = null
+      else this.inFlightPreMigration = null
     })
-    this.inFlight = run
+    if (target.purpose === 'backup') this.inFlight = run
+    else this.inFlightPreMigration = run
     return run
   }
 
@@ -273,11 +312,19 @@ export class SqliteSnapshotter {
     }
   }
 
-  private async run(): Promise<DatabaseSnapshotResult> {
-    const workDir = this.livePath + DATABASE_SNAPSHOT_PARTIAL_SUFFIX
-    const snapshotPath = this.livePath + DATABASE_SNAPSHOT_SUFFIX
+  private async run(target: SnapshotPurpose): Promise<DatabaseSnapshotResult> {
+    const preDir = this.livePath + PRE_MIGRATION_DIR_SUFFIX
+    const workDir =
+      target.purpose === 'backup'
+        ? this.livePath + DATABASE_SNAPSHOT_PARTIAL_SUFFIX
+        : path.join(preDir, '.partial')
+    const snapshotPath =
+      target.purpose === 'backup'
+        ? this.livePath + DATABASE_SNAPSHOT_SUFFIX
+        : path.join(preDir, `${target.bootId}-${snapshotLabelOf(target.firstId)}.db`)
     const copyPath = path.join(workDir, 'copy')
-    await this.sweep()
+    if (target.purpose === 'backup') await this.sweep()
+    else await fsp.rm(workDir, { recursive: true, force: true })
     await this.checkSpace()
     await fsp.mkdir(workDir, { recursive: true })
     try {
@@ -299,6 +346,7 @@ export class SqliteSnapshotter {
           meta: { dir: path.dirname(snapshotPath), error: errMsg(err) },
         })
       }
+      if (target.purpose === 'pre-migration') await this.prunePreMigration(preDir, snapshotPath)
       const { size } = await fsp.stat(snapshotPath)
       const { copy } = message
       const result: DatabaseSnapshotResult = {
@@ -337,6 +385,34 @@ export class SqliteSnapshotter {
       // A thread still terminating may still write into it: remove it after.
       if (this.draining !== null) void this.draining.then(removeWorkDir)
       else await removeWorkDir()
+    }
+  }
+
+  /** Keep the newest {@link PRE_MIGRATION_KEEP} snapshots; the one just written always stays. */
+  private async prunePreMigration(dir: string, justWritten: string): Promise<void> {
+    try {
+      const names = (await fsp.readdir(dir)).filter((name) => name.endsWith('.db'))
+      const dated = await Promise.all(
+        names.map(async (name) => ({
+          file: path.join(dir, name),
+          mtimeMs: (await fsp.stat(path.join(dir, name))).mtimeMs,
+        })),
+      )
+      dated.sort((a, b) => b.mtimeMs - a.mtimeMs || (a.file < b.file ? 1 : -1))
+      const keep = new Set(
+        [justWritten, ...dated.map((d) => d.file).filter((file) => file !== justWritten)].slice(
+          0,
+          PRE_MIGRATION_KEEP,
+        ),
+      )
+      for (const { file } of dated) {
+        if (!keep.has(file)) await fsp.rm(file, { force: true })
+      }
+    } catch (err) {
+      // A prune that fails costs disk, never the migration.
+      this.logger.warn('pre-migration snapshot retention failed', {
+        meta: { dir, error: errMsg(err) },
+      })
     }
   }
 

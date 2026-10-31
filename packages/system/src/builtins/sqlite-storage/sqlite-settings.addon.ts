@@ -1,7 +1,15 @@
+import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
-import { EventCategory, type DataStoreDatabase, type ProviderRegistration } from '@camstack/types'
+import {
+  type AddonInitResult,
+  EventCategory,
+  type DataStoreDatabase,
+  type ProviderRegistration,
+  migrationsCapability,
+} from '@camstack/types'
 import {
   BaseAddon,
   bareAddonId,
@@ -22,6 +30,16 @@ import {
   openOwnedSqliteFile,
 } from './owned-sqlite-file.js'
 import { DatabaseSnapshotProvider } from './database-snapshot-provider.js'
+import { MigrationEngine, type MigrationFileAccess } from './migrations/migration-engine.js'
+import {
+  migrationActions,
+  retryMigrationInput,
+  type MigrationActions,
+} from './migrations/migration-actions.js'
+import { scheduleMigrationRestore } from './migrations/migration-restore-marker.js'
+import { MigrationsProvider } from './migrations/migrations-provider.js'
+import { HUB_MIGRATIONS } from '../../migrations/hub/index.js'
+import { SqliteSnapshotter } from './sqlite-snapshotter.js'
 import { PlacementRouter } from './placement-router.js'
 import { RecordsProvider } from './records/records-provider.js'
 import { StorageAdminProvider } from './storage-admin-provider.js'
@@ -91,7 +109,7 @@ export class SqliteSettingsAddon extends BaseAddon {
     return
   }
 
-  protected async onInitialize(): Promise<ProviderRegistration[]> {
+  protected async onInitialize(): Promise<AddonInitResult<MigrationActions>> {
     const addonId = bareAddonId(this.ctx.id)
     // Boot-order constraint: sqlite-settings is the ENGINE behind `settings-store`,
     // which the storage cap's orchestrator (and every BaseAddon's `resolveConfig`)
@@ -124,13 +142,27 @@ export class SqliteSettingsAddon extends BaseAddon {
     this.ctx.logger.info('DB path resolved', { meta: { pathSource, dbPath: settingsPath } })
     this.ctx.logger.info('DB file status', { meta: { dbExists } })
 
+    const engine = new MigrationEngine({
+      logger: this.ctx.logger.child('Migrations'),
+      catalogue: HUB_MIGRATIONS,
+      codeVersion: systemPackageVersion(),
+      snapshotterFor: (livePath) =>
+        new SqliteSnapshotter({ livePath, logger: this.ctx.logger.child('PreMigrationSnapshot') }),
+      announce: (kind, ids) => this.announceMigrations(kind, ids),
+      scheduleRestore: (request) =>
+        scheduleMigrationRestore(path.resolve(dir, '..', '..'), request),
+    })
+
     const deps: OwnedFileDeps = {
       logger: this.ctx.logger,
       // A serving thread that dies fails the RUNNER; CrashSupervisor respawns
       // it (D5, D6). There is no in-process thread restart.
       onFatal: () => process.exit(1),
       runtimeDefaults: { ...RUNTIME_DEFAULTS },
-      afterOpen: (file) => this.purgeBeforeServing(file),
+      afterOpen: async (file) => {
+        await engine.runFile(migrationAccessOf(file))
+        await this.purgeBeforeServing(file)
+      },
     }
 
     // `camstack.db` first, on this thread. Vectors live in `events.db` (P5).
@@ -181,7 +213,7 @@ export class SqliteSettingsAddon extends BaseAddon {
     this.startStaleDataAudit(audit)
 
     this.ctx.logger.info('Initialized successfully')
-    return [
+    const providers: readonly ProviderRegistration[] = [
       { capability: dataStoreProviderCapability, provider: router },
       { capability: recordsCapability, provider: records },
       { capability: vectorStoreCapability, provider: vectorProvider },
@@ -199,7 +231,29 @@ export class SqliteSettingsAddon extends BaseAddon {
           async () => router.openFiles().filter((file) => file.databaseId !== 'settings'),
         ),
       },
+      { capability: migrationsCapability, provider: new MigrationsProvider(engine) },
     ]
+    return {
+      providers,
+      customActions: migrationActions,
+      actionHandlers: {
+        retryMigration: async (input: unknown) => {
+          const entries = await engine.retry(retryMigrationInput.parse(input).id)
+          return { retried: entries.map((entry) => entry.id) }
+        },
+      },
+    }
+  }
+
+  /** A hint for the Alert Center; the ledger read stays the authority (D11). */
+  private announceMigrations(kind: 'failed' | 'applied', ids: readonly string[]): void {
+    this.ctx.eventBus.emit({
+      id: randomUUID(),
+      timestamp: new Date(),
+      source: { type: 'addon', id: this.ctx.id },
+      category: kind === 'failed' ? EventCategory.MigrationFailed : EventCategory.MigrationApplied,
+      data: { ids: [...ids] },
+    })
   }
 
   /**
@@ -315,6 +369,26 @@ export class SqliteSettingsAddon extends BaseAddon {
   getVectorIndex(): SqliteVecVectorIndex | null {
     return null
   }
+}
+
+/** The engine's view of one owned file: the connection answers where it lives. */
+function migrationAccessOf(file: OwnedSqliteFile): MigrationFileAccess {
+  return {
+    databaseId: file.databaseId,
+    livePath: file.livePath,
+    call: (op, input) => file.migrate(op, input),
+  }
+}
+
+function systemPackageVersion(): string {
+  const require_ = createRequire(import.meta.url)
+  const parsed: unknown = require_('@camstack/system/package.json')
+  return typeof parsed === 'object' &&
+    parsed !== null &&
+    'version' in parsed &&
+    typeof parsed.version === 'string'
+    ? parsed.version
+    : '0.0.0'
 }
 
 /** How a non-settings file is opened: its own worker; `events` loads sqlite-vec. */

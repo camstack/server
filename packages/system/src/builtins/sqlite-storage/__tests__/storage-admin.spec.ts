@@ -113,6 +113,9 @@ describe('storage-admin and reads that never create a table', () => {
       listPhysicalTables: async (ownerPrefix?: string | undefined) =>
         eventsBackend.listTables(ownerPrefix),
       servingThreadId: async () => 1,
+      migrate: async () => {
+        throw new Error('not used')
+      },
       snapshot: async () => {
         throw new Error('not used')
       },

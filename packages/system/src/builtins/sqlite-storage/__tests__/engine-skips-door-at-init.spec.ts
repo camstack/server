@@ -67,6 +67,7 @@ describe('isolated engine initialize does not wait on the door', () => {
       'vector-store',
       'database-snapshot',
       'storage-admin',
+      'migrations',
     ])
     await addon.shutdown()
   })

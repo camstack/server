@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A device can be powered by a smart switch linked in Customize, with manual power on, power off and force restart (switch off, wait, switch on).
+### Changed
+
+- Hub databases now migrate at boot under one ledger, with a safety snapshot before the first change, a rollback on failure and an Alert Center card with a Retry button
 
 ## [1.2.533] - 2026-10-31
 
