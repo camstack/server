@@ -121,7 +121,10 @@
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "artifactName": "CamStack-${version}-${arch}.${ext}",
-      "notarize": false
+      "notarize": false,
+      "extendInfo": {
+        "CamstackTeamId": "${env.APPLE_TEAM_ID}"
+      }
     },
     "win": {
       "target": [

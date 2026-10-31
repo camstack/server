@@ -90,6 +90,12 @@ import { AGENT_LOCAL_PORT, HUB_PROD_PORT, isSupervisedRole, nodeUrl } from './ro
 import type { ViewerConnectionState } from './role/viewer-connection'
 import { connectionLabel } from './role/viewer-connection'
 import { ViewerWindowController } from './role/viewer-window'
+import {
+  answerAccountSelection,
+  createDialogChooser,
+  parseTeamIdFromInfoPlist,
+  touchIdConfigFor,
+} from './role/webauthn'
 import { parseRoleSetting } from './role-setting'
 import type { HubMode } from './setup/render-setup-html'
 import { defaultAgentName } from './setup/default-agent-name'
@@ -1101,6 +1107,48 @@ function refreshTrayMenu(): void {
 // App lifecycle
 // ---------------------------------------------------------------------------
 
+/**
+ * Platform passkeys (macOS Touch ID) for the viewer window: configure the
+ * authenticator once the app is ready, and answer the account chooser. A build
+ * that carries no signing team id (unsigned / ad-hoc) cannot hold the keychain
+ * entitlement, so it stays unconfigured and says so.
+ */
+function installWebAuthn(): void {
+  if (process.platform !== 'darwin') return
+  let infoPlist = ''
+  try {
+    infoPlist = fs.readFileSync(
+      path.join(path.dirname(process.execPath), '..', 'Info.plist'),
+      'utf8',
+    )
+  } catch {
+    infoPlist = ''
+  }
+  const touchID = touchIdConfigFor(parseTeamIdFromInfoPlist(infoPlist))
+  if (touchID === null) {
+    console.warn('[webauthn] no signing team id in this build — platform passkeys stay off')
+    return
+  }
+  app.configureWebAuthn({ touchID })
+  const choose = createDialogChooser({
+    showMessageBox: (options) => {
+      const parent = BrowserWindow.getFocusedWindow()
+      return parent === null
+        ? dialog.showMessageBox({ ...options, buttons: [...options.buttons] })
+        : dialog.showMessageBox(parent, { ...options, buttons: [...options.buttons] })
+    },
+  })
+  app.on('select-webauthn-account', (_event, details, callback) => {
+    void answerAccountSelection(
+      details.accounts,
+      details.relyingPartyId,
+      callback,
+      choose,
+      (message) => console.warn(message),
+    )
+  })
+}
+
 void app.whenReady().then(async () => {
   // electron-store v11 is ESM-only — see the note on the dynamic import above.
   // eslint-disable-next-line no-new-func
@@ -1132,6 +1180,7 @@ void app.whenReady().then(async () => {
     )
   }
 
+  installWebAuthn()
   applyOpenAtLogin(store.get('openAtLogin'))
   ensureTray()
 

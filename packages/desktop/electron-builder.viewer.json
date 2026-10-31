@@ -78,7 +78,10 @@
     "gatekeeperAssess": false,
     "entitlements": "assets/entitlements.mac.plist",
     "entitlementsInherit": "assets/entitlements.mac.plist",
-    "notarize": false
+    "notarize": false,
+    "extendInfo": {
+      "CamstackTeamId": "${env.APPLE_TEAM_ID}"
+    }
   },
   "linux": {
     "target": [

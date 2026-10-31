@@ -23,11 +23,12 @@
  * Pure logic (backoff, classification, the pages) lives in
  * `viewer-connection.ts`; certificate policy in `cert-trust.ts`.
  */
-import { BrowserWindow, nativeImage, net, session } from 'electron'
+import { BrowserWindow, nativeImage, net, session, shell } from 'electron'
 import type { CertTrustRejection } from './cert-trust'
 import { installCertificateTrust } from './cert-trust'
 import type { HubEntry } from './hub-pin-store'
 import { healthUrlForOrigin, partitionForHub, viewerUrlForOrigin } from './hub-pin-store'
+import { classifyWindowOpen } from './window-open-policy'
 import type { ProbeOutcome, ViewerConnectionState } from './viewer-connection'
 import {
   classifyProbeOutcome,
@@ -195,6 +196,33 @@ export class ViewerWindowController {
       if (url !== TRUST_ACCEPT_URL) return
       event.preventDefault()
       this.acceptPresentedCertificate()
+    })
+
+    // The SSO popup stays a child window of this session — without the preload
+    // bridge, so the IdP never sees it — and other sites open in the system
+    // browser. See `window-open-policy.ts`.
+    win.webContents.setWindowOpenHandler(({ url, frameName }) => {
+      const decision = classifyWindowOpen(url, hub.origin, frameName)
+      if (decision.action === 'external') {
+        void shell.openExternal(decision.url)
+        return { action: 'deny' }
+      }
+      if (decision.action === 'deny') {
+        this.deps.log(`[viewer] window.open refused: ${url}`)
+        return { action: 'deny' }
+      }
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            partition,
+            preload: '',
+          },
+        },
+      }
     })
 
     win.on('close', (event) => {
