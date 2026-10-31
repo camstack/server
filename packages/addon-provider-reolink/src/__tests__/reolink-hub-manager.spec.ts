@@ -25,6 +25,7 @@ function fakeApi(): HubApiPort {
     close: vi.fn(async () => undefined),
     getNvrChannelsSummary: vi.fn(async () => ({ devices: [], channels: [] })),
     getAllChannelsBatteryInfo: vi.fn(async () => ({ batteryInfoData: {} })),
+    reboot: vi.fn(async () => undefined),
     onSimpleEvent: vi.fn(async () => undefined),
     offSimpleEvent: vi.fn(async () => undefined),
     client: {

@@ -65,6 +65,8 @@ describe('ReolinkCamera under an NVR integration', () => {
 
   it('borrows the api of ITS integration session', async () => {
     reolinkHubSessions.set('int-1', {
+      isOnline: true,
+      reboot: async () => undefined,
       getApi: async () => SENTINEL_API,
       relayEndpoint: () => ({
         host: 'h',

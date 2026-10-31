@@ -64,6 +64,7 @@ function fakeApi(channels: readonly ChannelRow[] = []) {
       channels: [],
     })),
     getAllChannelsBatteryInfo: vi.fn(async () => ({ batteryInfoData: {} })),
+    reboot: vi.fn(async () => undefined),
     onSimpleEvent: vi.fn(async (handler: (event: ReolinkSimpleEvent) => void) => {
       simpleEventHandler = handler
     }),

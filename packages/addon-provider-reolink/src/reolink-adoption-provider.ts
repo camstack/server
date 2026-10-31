@@ -10,12 +10,18 @@ import type { ReolinkHubConnection } from './hub-connection.js'
 import {
   type HubChannel,
   type HubChannelSnapshot,
+  hubGatewayNativeId,
   toDiscoveredChild,
+  toDiscoveredGateway,
 } from './reolink-hub-session.js'
 
 /** What the adoption surface needs of one integration's NVR / Home Hub session. */
 export interface AdoptionSession {
   readonly connection: ReolinkHubConnection
+  /** The integration's display name: the hub's own name in the list. */
+  readonly name: string
+  /** The hub socket is up. */
+  readonly isOnline: boolean
   channelSnapshot(): HubChannelSnapshot
   /** Re-read the hub's channel list now. */
   refresh(): Promise<void>
@@ -42,6 +48,15 @@ export interface ReolinkAdoptionProviderDeps {
     readonly deviceId: number
     readonly accessoryDeviceIds: readonly number[]
   }>
+  /** The hub (Gateway) devices this addon already owns. */
+  readonly listAdoptedGateways: () => Promise<
+    readonly { readonly id: number; readonly integrationId: string }[]
+  >
+  /** Create the top-level Gateway device of `integrationId`. */
+  readonly adoptGateway: (input: {
+    readonly integrationId: string
+    readonly name: string
+  }) => Promise<{ readonly deviceId: number }>
   readonly removeDevice: (deviceId: number) => Promise<void>
   readonly findDeviceConfig: (deviceId: number) => Promise<Record<string, unknown> | null>
   readonly logger: IScopedLogger
@@ -85,11 +100,22 @@ export function buildReolinkAdoptionProvider(
     const session = getSession(integrationId)
     if (session === null) return []
     const adopted = await listAdopted()
-    return session
-      .channelSnapshot()
-      .channels.map((channel) =>
-        toDiscoveredChild(channel, findAdoptedForChannel(adopted, integrationId, channel)),
-      )
+    const gateways = await deps.listAdoptedGateways()
+    const gateway = toDiscoveredGateway({
+      integrationId,
+      name: session.name,
+      online: session.isOnline,
+      adoptedDeviceId: gateways.find((g) => g.integrationId === integrationId)?.id ?? null,
+    })
+    // The hub is a sibling of its channel cameras, listed first and never their parent.
+    return [
+      gateway,
+      ...session
+        .channelSnapshot()
+        .channels.map((channel) =>
+          toDiscoveredChild(channel, findAdoptedForChannel(adopted, integrationId, channel)),
+        ),
+    ]
   }
 
   async function status(integrationId: string): Promise<AdoptionStatus> {
@@ -165,6 +191,20 @@ export function buildReolinkAdoptionProvider(
       let failures = 0
       for (const childNativeId of childNativeIds) {
         try {
+          if (childNativeId === hubGatewayNativeId(integrationId)) {
+            const known = (await deps.listAdoptedGateways()).find(
+              (g) => g.integrationId === integrationId,
+            )
+            const { deviceId } =
+              known !== undefined
+                ? { deviceId: known.id }
+                : await deps.adoptGateway({
+                    integrationId,
+                    name: perCandidate?.[childNativeId]?.name ?? session.name,
+                  })
+            adopted.push({ childNativeId, parentDeviceId: deviceId, accessoryDeviceIds: [] })
+            continue
+          }
           const channel = session
             .channelSnapshot()
             .channels.find((c) => c.childNativeId === childNativeId)
@@ -216,7 +256,7 @@ export function buildReolinkAdoptionProvider(
     resync: async ({ camDeviceId }) => {
       const cfg = await deps.findDeviceConfig(camDeviceId)
       if (cfg === null || typeof cfg['integrationId'] !== 'string') {
-        throw new Error(`reolink resync: device ${camDeviceId} is not an NVR-adopted camera`)
+        throw new Error(`reolink resync: device ${camDeviceId} is not an NVR-adopted device`)
       }
       return { changed: false, rebuiltChildren: 0 }
     },

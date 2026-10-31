@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**225 units · 7610 source files · 212 units claimed by at least one document (7570 files).**
+**225 units · 7611 source files · 212 units claimed by at least one document (7571 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -38,7 +38,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/composition` | 65 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +13 more | 2026-10-26 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
 | `packages/addon-pipeline/src/detection-pipeline` | 61 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `architecture/inference-devices.md`, +50 more, 5 ADRs | 2026-10-24 |
-| `packages/addon-provider-reolink` | 60 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +22 more, 2 ADRs | 2026-10-26 |
+| `packages/addon-provider-reolink` | 61 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +22 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-training/src/page` | 60 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +4 more, 1 ADR | 2026-10-14 |
 | `packages/addon-admin-ui/src/lib` | 58 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-10-27 |
 | `packages/addon-pipeline/src/pipeline-runner` | 57 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |

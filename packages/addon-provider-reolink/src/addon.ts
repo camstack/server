@@ -88,7 +88,8 @@ import {
   planHubMigration,
   retireMigratedHubs,
 } from './reolink-hub-migration.js'
-import { reolinkHubSessions } from './reolink-hub-session.js'
+import { ReolinkGatewayDevice } from './reolink-gateway-device.js'
+import { hubGatewayNativeId, reolinkHubSessions } from './reolink-hub-session.js'
 
 /**
  * Adapt a camstack scoped logger to the lib's `Logger` shape (just
@@ -327,6 +328,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   protected readonly providerName = 'Reolink'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Camera]: ReolinkCamera,
+    [DeviceType.Gateway]: ReolinkGatewayDevice,
   }
 
   /**
@@ -620,6 +622,16 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 
+  /** The hub box follows its integration's socket. */
+  private markGatewaysOnline(integrationId: string, online: boolean): void {
+    const reg = this.ctx.kernel.deviceRegistry
+    if (!reg) return
+    for (const d of reg.getAllForAddon(this.addonId)) {
+      if (!(d instanceof ReolinkGatewayDevice) || d.integrationId !== integrationId) continue
+      if (d.online !== online) d.markOnline(online)
+    }
+  }
+
   private buildAdoptionProvider(): IDeviceAdoptionProvider {
     return buildReolinkAdoptionProvider({
       getSession: (integrationId) => this.hubManager?.get(integrationId) ?? null,
@@ -665,6 +677,29 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
           deviceId: device.id,
           accessoryDeviceIds: children.map((c) => c.id),
         }
+      },
+      listAdoptedGateways: async () => {
+        const reg = this.ctx.kernel.deviceRegistry
+        if (!reg) return []
+        const out: { id: number; integrationId: string }[] = []
+        for (const d of reg.getAllForAddon(this.addonId)) {
+          if (d instanceof ReolinkGatewayDevice)
+            out.push({ id: d.id, integrationId: d.integrationId })
+        }
+        return out
+      },
+      adoptGateway: async ({ integrationId, name }) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) throw new Error('reolink adopt: kernel.devices unavailable')
+        const nativeId = hubGatewayNativeId(integrationId)
+        const device = await devices.create(
+          `${integrationId}-${nativeId}`,
+          ReolinkGatewayDevice,
+          { integrationId, nativeId },
+          null,
+          { type: DeviceType.Gateway, name, integrationId },
+        )
+        return { deviceId: device.id }
       },
       removeDevice: async (id) => {
         await this.ctx.kernel.devices?.remove(id)
@@ -1029,10 +1064,12 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     this.hubManager = createReolinkHubManager(
       {
         logger: this.ctx.logger,
-        onConnectionChange: (integrationId, online) =>
+        onConnectionChange: (integrationId, online) => {
           this.ctx.logger.info(`Reolink NVR socket ${online ? 'up' : 'down'}`, {
             meta: { integrationId },
-          }),
+          })
+          this.markGatewaysOnline(integrationId, online)
+        },
       },
       reolinkHubSessions,
     )

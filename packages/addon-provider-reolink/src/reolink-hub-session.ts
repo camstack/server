@@ -9,8 +9,10 @@ import {
   type DiscoveredChildDevice,
   type DiscoveredChildStatus,
   DeviceType,
+  deviceAdminLinkCapability,
   errMsg,
   type IScopedLogger,
+  rebootCapability,
   userError,
 } from '@camstack/types'
 import { type ReolinkHubConnection, sameHubConnection } from './hub-connection.js'
@@ -61,6 +63,8 @@ export interface HubApiPort {
   getAllChannelsBatteryInfo(): Promise<{
     readonly batteryInfoData: Readonly<Record<number, BatteryInfoResponse>>
   }>
+  /** Restart the hub itself (no channel: the NVR / Home Hub, not one camera behind it). */
+  reboot: ReolinkBaichuanApi['reboot']
   onSimpleEvent: ReolinkBaichuanApi['onSimpleEvent']
   offSimpleEvent: ReolinkBaichuanApi['offSimpleEvent']
   readonly client: HubClientPort
@@ -203,6 +207,17 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
 
   get isOnline(): boolean {
     return this.#online
+  }
+
+  /** The integration's display name. */
+  get name(): string {
+    return this.#deps.name
+  }
+
+  /** Restart the hub itself (not a camera behind it). */
+  async reboot(): Promise<void> {
+    const api = await this.getApi()
+    await api.reboot()
   }
 
   /** The last channel list, for the adoption surface. */
@@ -724,11 +739,45 @@ export function toDiscoveredChild(
   }
 }
 
+const GATEWAY_SUFFIX = ':gateway'
+
+/** The `childNativeId` of the hub box itself, one per integration. */
+export function hubGatewayNativeId(integrationId: string): string {
+  return `${integrationId}${GATEWAY_SUFFIX}`
+}
+
+/**
+ * The hub (NVR / Home Hub) as an adoption candidate: a {@link DeviceType.Gateway} that is a
+ * sibling of its channel cameras, never their parent. Only what the library really exposes:
+ * `reboot` (Baichuan `Reboot`) and the unit's web page.
+ */
+export function toDiscoveredGateway(input: {
+  readonly integrationId: string
+  readonly name: string
+  readonly online: boolean
+  readonly adoptedDeviceId: number | null
+}): DiscoveredChildDevice {
+  return {
+    childNativeId: hubGatewayNativeId(input.integrationId),
+    name: input.name,
+    type: DeviceType.Gateway,
+    status: input.online ? 'online' : 'offline',
+    metadata: { manufacturer: 'Reolink' },
+    alreadyAdopted: input.adoptedDeviceId !== null,
+    adoptedDeviceId: input.adoptedDeviceId,
+    capabilities: [rebootCapability.name, deviceAdminLinkCapability.name],
+  }
+}
+
 // ── registry ───────────────────────────────────────────────────────────
 
 /** Anything a child needs from its integration's session. */
 export interface HubSessionHandle {
   getApi(): Promise<ReolinkBaichuanApi>
+  /** The hub's own socket is up. */
+  readonly isOnline: boolean
+  /** Restart the hub itself over its live session. */
+  reboot(): Promise<void>
   relayEndpoint(): HubRelayEndpoint
 }
 

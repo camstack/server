@@ -7,7 +7,7 @@ import {
   buildReolinkAdoptionProvider,
   findAdoptedForChannel,
 } from '../reolink-adoption-provider.js'
-import type { HubChannel } from '../reolink-hub-session.js'
+import { type HubChannel, hubGatewayNativeId } from '../reolink-hub-session.js'
 
 const CONNECTION: ReolinkHubConnection = {
   host: '10.0.0.5',
@@ -50,9 +50,11 @@ const CH1: HubChannel = {
   name: 'Back',
 }
 
-function setup(adopted: AdoptedReolinkCamera[] = []) {
+function setup(adopted: AdoptedReolinkCamera[] = [], adoptedGateways: number[] = []) {
   const session: AdoptionSession = {
     connection: CONNECTION,
+    name: 'Home Hub',
+    isOnline: true,
     channelSnapshot: () => ({
       channels: [CH0, CH1],
       lastRefreshAt: 1,
@@ -64,17 +66,20 @@ function setup(adopted: AdoptedReolinkCamera[] = []) {
     deviceId: 99,
     accessoryDeviceIds: [100],
   }))
+  const adoptGateway = vi.fn(async () => ({ deviceId: 55 }))
   const removeDevice = vi.fn(async () => undefined)
   const provider = buildReolinkAdoptionProvider({
     getSession: (id) => (id === 'int-1' ? session : null),
     listIntegrations: () => ['int-1'],
     listAdopted: async () => adopted,
     adoptCamera,
+    listAdoptedGateways: async () => adoptedGateways.map((id) => ({ id, integrationId: 'int-1' })),
+    adoptGateway,
     removeDevice,
     findDeviceConfig: async () => null,
     logger: logger(),
   })
-  return { provider, session, adoptCamera, removeDevice }
+  return { provider, session, adoptCamera, adoptGateway, removeDevice }
 }
 
 describe('findAdoptedForChannel', () => {
@@ -100,14 +105,14 @@ describe('reolink adoption provider', () => {
       page: 1,
       pageSize: 50,
     })
-    expect(totalCount).toBe(2)
-    expect(candidates[0]).toMatchObject({
+    expect(totalCount).toBe(3)
+    expect(candidates[1]).toMatchObject({
       childNativeId: 'cam-UID0',
       alreadyAdopted: true,
       adoptedDeviceId: 7,
     })
-    expect(candidates[0]?.type).toBe(DeviceType.Camera)
-    expect(candidates[1]).toMatchObject({
+    expect(candidates[1]?.type).toBe(DeviceType.Camera)
+    expect(candidates[2]).toMatchObject({
       childNativeId: 'channel-1',
       alreadyAdopted: false,
     })
@@ -163,5 +168,59 @@ describe('reolink adoption provider', () => {
     const { provider, removeDevice } = setup()
     await provider.release({ integrationId: 'int-1', camDeviceId: 99 })
     expect(removeDevice).toHaveBeenCalledWith(99)
+  })
+
+  describe('the hub as a Gateway candidate', () => {
+    const GATEWAY_ID = hubGatewayNativeId('int-1')
+
+    it('lists the hub first, typed Gateway, with reboot and the admin link', async () => {
+      const { provider } = setup()
+      const { candidates } = await provider.listCandidates({
+        integrationId: 'int-1',
+        page: 1,
+        pageSize: 50,
+      })
+      expect(candidates[0]).toMatchObject({
+        childNativeId: GATEWAY_ID,
+        type: DeviceType.Gateway,
+        name: 'Home Hub',
+        status: 'online',
+        alreadyAdopted: false,
+      })
+      expect(candidates[0]?.capabilities).toEqual(['reboot', 'device-admin-link'])
+    })
+
+    it('is a sibling: no channel candidate is nested under it or carries it as parent', async () => {
+      const { provider } = setup()
+      const { candidates } = await provider.listCandidates({
+        integrationId: 'int-1',
+        page: 1,
+        pageSize: 50,
+      })
+      const gateway = candidates.find((c) => c.type === DeviceType.Gateway)
+      expect(gateway?.children).toBeUndefined()
+      const cameras = candidates.filter((c) => c.type === DeviceType.Camera)
+      expect(cameras).toHaveLength(2)
+      for (const camera of cameras) expect(camera.childNativeId).not.toBe(GATEWAY_ID)
+      expect(candidates.flatMap((c) => c.children ?? [])).toEqual([])
+    })
+
+    it('marks an adopted hub and adopts it as a top-level device', async () => {
+      const adopted = setup([], [31])
+      const { candidates } = await adopted.provider.listCandidates({
+        integrationId: 'int-1',
+        page: 1,
+        pageSize: 50,
+      })
+      expect(candidates[0]).toMatchObject({ alreadyAdopted: true, adoptedDeviceId: 31 })
+
+      const { provider, adoptGateway, adoptCamera } = setup()
+      const out = await provider.adopt({ integrationId: 'int-1', childNativeIds: [GATEWAY_ID] })
+      expect(adoptGateway).toHaveBeenCalledWith({ integrationId: 'int-1', name: 'Home Hub' })
+      expect(adoptCamera).not.toHaveBeenCalled()
+      expect(out.adopted).toEqual([
+        { childNativeId: GATEWAY_ID, parentDeviceId: 55, accessoryDeviceIds: [] },
+      ])
+    })
   })
 })
