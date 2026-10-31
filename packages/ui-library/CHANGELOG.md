@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.363] - 2026-10-31
+
 ### Changed
 
 - Generated system hooks no longer survive in every addon page bundle when unused, so a new hook stops changing every page addon's built output
