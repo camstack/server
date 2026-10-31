@@ -42,6 +42,7 @@ import {
   useStreamBrokerSetDeviceAudioMute,
   useSystem,
   type WidgetProps,
+  Button,
 } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronRight, Radio, Volume2, VolumeX, X } from 'lucide-react'
@@ -317,7 +318,8 @@ export function StreamBrokerPanelInner({
           group. An unresolved source node is drawn as unknown rather than
           answered from the hub's brokers. ── */}
       <div className="border-b border-border px-4 py-2 flex items-center gap-3">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           role="switch"
           aria-label={t('audio.label')}
@@ -353,7 +355,7 @@ export function StreamBrokerPanelInner({
                 ? t('audio.stateOn')
                 : t('audio.stateMuted')}
           </span>
-        </button>
+        </Button>
         <p className="min-w-0 flex-1 text-[10px] leading-relaxed text-foreground-subtle">
           {audioFailure !== null
             ? t('audio.writeFailed', { error: audioFailure })
@@ -402,7 +404,8 @@ function UnassignedStreamsSection({
   const [open, setOpen] = useState(false)
   return (
     <div className="border-t border-border/50">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="w-full px-4 py-1.5 flex items-center justify-between bg-surface-hover/30 hover:bg-surface-hover transition-colors"
@@ -414,7 +417,7 @@ function UnassignedStreamsSection({
         <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-foreground-subtle/10 text-foreground-subtle border border-border">
           {camStreamIds.length}
         </span>
-      </button>
+      </Button>
       {open && (
         <div className="divide-y divide-border/30">
           {camStreamIds.map((camStreamId) => (
@@ -946,7 +949,8 @@ function SubscribersSection({ clients, encodedCount, onKill }: SubscribersSectio
 
   return (
     <div className="mt-1.5 border-t border-border/30 pt-1.5">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1 text-[10px] text-foreground-subtle hover:text-foreground transition-colors"
@@ -955,7 +959,7 @@ function SubscribersSection({ clients, encodedCount, onKill }: SubscribersSectio
         <span className="uppercase tracking-wider">
           {t('subscribers.heading', { count: total })}
         </span>
-      </button>
+      </Button>
       {open && (
         <div className="mt-1 divide-y divide-border/20">
           {audio.map((c, i) => (
@@ -1205,7 +1209,8 @@ function PreBufferSwitch({
 }) {
   const { t } = useT()
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       role="switch"
       aria-checked={known ? enabled : 'mixed'}
@@ -1223,14 +1228,15 @@ function PreBufferSwitch({
           enabled ? 'translate-x-3' : 'translate-x-0.5'
         }`}
       />
-    </button>
+    </Button>
   )
 }
 
 function KickButton({ onClick }: { onClick: () => void }) {
   const { t } = useT()
   return (
-    <button
+    <Button
+      variant="unstyled"
       type="button"
       title={t('subscribers.kick')}
       onClick={(e) => {
@@ -1240,7 +1246,7 @@ function KickButton({ onClick }: { onClick: () => void }) {
       className="inline-flex items-center justify-center h-4 w-4 rounded-sm border border-border/60 text-foreground-subtle hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/40 transition-colors"
     >
       <X className="h-2.5 w-2.5" />
-    </button>
+    </Button>
   )
 }
 

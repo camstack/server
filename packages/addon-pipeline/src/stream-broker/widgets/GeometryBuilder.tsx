@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useT } from '../../i18n/index.js'
+import { Button, Checkbox, Input, Select } from '@camstack/ui-library'
 
 /**
  * Pure-UI geometry/zoom helper for the derived-stream transform editor.
@@ -144,13 +145,14 @@ export function GeometryBuilder({
             {t('geometry.hint')}
           </span>
         </span>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={apply}
           className="rounded-md border border-border bg-surface-hover px-2 py-0.5 text-[10px] font-medium text-foreground hover:bg-surface-hover/70 transition-colors"
         >
           {t('geometry.apply')}
-        </button>
+        </Button>
       </div>
 
       {/* Aspect correction */}
@@ -158,7 +160,8 @@ export function GeometryBuilder({
         <label className={labelTextCls} htmlFor="geom-aspect">
           {t('geometry.aspect')}
         </label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           id="geom-aspect"
           value={targetAspect}
           onChange={(e) => setTargetAspect(e.target.value as TargetAspect | '')}
@@ -168,10 +171,11 @@ export function GeometryBuilder({
           <option value="16:9">16:9</option>
           <option value="4:3">4:3</option>
           <option value="1:1">1:1</option>
-        </select>
+        </Select>
         {targetAspect !== '' && (
           <>
-            <select
+            <Select
+              wrapperClassName="inline-block w-auto"
               aria-label={t('geometry.aspectMode')}
               value={mode}
               onChange={(e) => setMode(e.target.value as GeometryMode)}
@@ -179,8 +183,8 @@ export function GeometryBuilder({
             >
               <option value="pad">{t('geometry.pad')}</option>
               <option value="crop">{t('geometry.crop')}</option>
-            </select>
-            <input
+            </Select>
+            <Input
               type="number"
               aria-label={t('geometry.aspectWidth')}
               value={width}
@@ -188,7 +192,7 @@ export function GeometryBuilder({
               className={inputCls + ' w-20 text-right'}
             />
             <span className="text-[11px] text-foreground-subtle">×</span>
-            <input
+            <Input
               type="number"
               aria-label={t('geometry.aspectHeight')}
               value={height}
@@ -202,12 +206,12 @@ export function GeometryBuilder({
       {/* Crop / zoom rectangle */}
       <div className="flex flex-wrap items-center gap-2">
         <label className={labelTextCls + ' inline-flex items-center gap-1'}>
-          <input type="checkbox" checked={cropOn} onChange={(e) => setCropOn(e.target.checked)} />
+          <Checkbox checked={cropOn} onChange={(e) => setCropOn(e.target.checked)} />
           {t('geometry.cropZoom')}
         </label>
         {cropOn && (
           <>
-            <input
+            <Input
               type="number"
               aria-label={t('geometry.cropX')}
               value={cropX}
@@ -215,7 +219,7 @@ export function GeometryBuilder({
               className={inputCls + ' w-16 text-right'}
               placeholder="x"
             />
-            <input
+            <Input
               type="number"
               aria-label={t('geometry.cropY')}
               value={cropY}
@@ -223,7 +227,7 @@ export function GeometryBuilder({
               className={inputCls + ' w-16 text-right'}
               placeholder="y"
             />
-            <input
+            <Input
               type="number"
               aria-label={t('geometry.cropWidth')}
               value={cropW}
@@ -231,7 +235,7 @@ export function GeometryBuilder({
               className={inputCls + ' w-20 text-right'}
               placeholder="w"
             />
-            <input
+            <Input
               type="number"
               aria-label={t('geometry.cropHeight')}
               value={cropH}
@@ -248,7 +252,8 @@ export function GeometryBuilder({
         <label className={labelTextCls} htmlFor="geom-rotate">
           {t('geometry.rotate')}
         </label>
-        <select
+        <Select
+          wrapperClassName="inline-block w-auto"
           id="geom-rotate"
           value={String(rotate)}
           onChange={(e) => setRotate(Number(e.target.value) as RotateAngle)}
@@ -258,13 +263,13 @@ export function GeometryBuilder({
           <option value="90">90°</option>
           <option value="180">180°</option>
           <option value="270">270°</option>
-        </select>
+        </Select>
         <label className={labelTextCls + ' inline-flex items-center gap-1'}>
-          <input type="checkbox" checked={hflip} onChange={(e) => setHflip(e.target.checked)} />
+          <Checkbox checked={hflip} onChange={(e) => setHflip(e.target.checked)} />
           hflip
         </label>
         <label className={labelTextCls + ' inline-flex items-center gap-1'}>
-          <input type="checkbox" checked={vflip} onChange={(e) => setVflip(e.target.checked)} />
+          <Checkbox checked={vflip} onChange={(e) => setVflip(e.target.checked)} />
           vflip
         </label>
       </div>

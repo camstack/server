@@ -1,6 +1,12 @@
 import type { EncodeProfile } from '@camstack/types'
 import type { WidgetProps } from '@camstack/ui-library'
-import { useDeviceManagerUpdateDeviceField } from '@camstack/ui-library'
+import {
+  useDeviceManagerUpdateDeviceField,
+  Button,
+  Input,
+  Textarea,
+  Select,
+} from '@camstack/ui-library'
 import { AlertCircle, Check, ChevronDown, ChevronRight, Loader2, Plus } from 'lucide-react'
 import * as React from 'react'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -385,7 +391,7 @@ export function FfmpegParamsCore({
           onPick={(suggestion) => appendFlag('input', suggestion)}
         />
       </div>
-      <textarea
+      <Textarea
         id={`${config.fieldKey}-input-args`}
         value={inputArgsText}
         onChange={(e) => setInputArgsText(e.target.value)}
@@ -411,7 +417,7 @@ export function FfmpegParamsCore({
           onPick={(suggestion) => appendFlag('output', suggestion)}
         />
       </div>
-      <textarea
+      <Textarea
         id={`${config.fieldKey}-output-args`}
         value={outputArgsText}
         onChange={(e) => setOutputArgsText(e.target.value)}
@@ -471,7 +477,8 @@ export function FfmpegParamsCore({
                   <label htmlFor={`${config.fieldKey}-video-codec`} className={labelTextCls}>
                     {t('ffmpeg.codec')}
                   </label>
-                  <select
+                  <Select
+                    wrapperClassName="inline-block w-auto"
                     id={`${config.fieldKey}-video-codec`}
                     value={profile.video.codec}
                     onChange={(e) =>
@@ -482,7 +489,7 @@ export function FfmpegParamsCore({
                     <option value="h264">h264</option>
                     <option value="h265">h265</option>
                     <option value="copy">{t('ffmpeg.copyPassthrough')}</option>
-                  </select>
+                  </Select>
                 </div>
                 {profile.video.codec !== 'copy' && (
                   <>
@@ -490,7 +497,7 @@ export function FfmpegParamsCore({
                       <label htmlFor={`${config.fieldKey}-video-width`} className={labelTextCls}>
                         {t('ffmpeg.width')}
                       </label>
-                      <input
+                      <Input
                         id={`${config.fieldKey}-video-width`}
                         type="number"
                         aria-label={t('ffmpeg.width')}
@@ -503,7 +510,7 @@ export function FfmpegParamsCore({
                       <label htmlFor={`${config.fieldKey}-video-height`} className={labelTextCls}>
                         {t('ffmpeg.height')}
                       </label>
-                      <input
+                      <Input
                         id={`${config.fieldKey}-video-height`}
                         type="number"
                         value={profile.video.height ?? ''}
@@ -515,7 +522,7 @@ export function FfmpegParamsCore({
                       <label htmlFor={`${config.fieldKey}-video-fps`} className={labelTextCls}>
                         {t('ffmpeg.fps')}
                       </label>
-                      <input
+                      <Input
                         id={`${config.fieldKey}-video-fps`}
                         type="number"
                         value={profile.video.fps ?? ''}
@@ -527,7 +534,7 @@ export function FfmpegParamsCore({
                       <label htmlFor={`${config.fieldKey}-video-bitrate`} className={labelTextCls}>
                         {t('ffmpeg.bitrateKbps')}
                       </label>
-                      <input
+                      <Input
                         id={`${config.fieldKey}-video-bitrate`}
                         type="number"
                         value={profile.video.bitrateKbps ?? ''}
@@ -551,13 +558,14 @@ export function FfmpegParamsCore({
                     <span className="text-[11px] text-foreground-subtle italic">
                       {t('ffmpeg.audioPassthroughNote')}
                     </span>
-                    <button
+                    <Button
+                      variant="unstyled"
                       type="button"
                       onClick={() => setAudioCodec('opus')}
                       className="rounded-md border border-border bg-surface-hover px-2 py-1 text-[11px] text-foreground hover:bg-surface-hover/70 transition-colors"
                     >
                       {t('ffmpeg.switchToCustom')}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/30">
@@ -565,7 +573,8 @@ export function FfmpegParamsCore({
                       <label htmlFor={`${config.fieldKey}-audio-codec`} className={labelTextCls}>
                         {t('ffmpeg.codec')}
                       </label>
-                      <select
+                      <Select
+                        wrapperClassName="inline-block w-auto"
                         id={`${config.fieldKey}-audio-codec`}
                         value={profile.audio.codec}
                         onChange={(e) =>
@@ -578,13 +587,13 @@ export function FfmpegParamsCore({
                         <option value="pcmu">pcmu</option>
                         <option value="pcma">pcma</option>
                         <option value="copy">{t('ffmpeg.copyPassthrough')}</option>
-                      </select>
+                      </Select>
                     </div>
                     <div className={labelRowCls}>
                       <label htmlFor={`${config.fieldKey}-audio-bitrate`} className={labelTextCls}>
                         {t('ffmpeg.bitrateKbps')}
                       </label>
-                      <input
+                      <Input
                         id={`${config.fieldKey}-audio-bitrate`}
                         type="number"
                         value={profile.audio.bitrateKbps ?? ''}
@@ -593,13 +602,14 @@ export function FfmpegParamsCore({
                       />
                     </div>
                     <div className="pt-2">
-                      <button
+                      <Button
+                        variant="unstyled"
                         type="button"
                         onClick={setAudioPassthrough}
                         className="text-[11px] text-foreground-subtle hover:text-foreground underline-offset-2 hover:underline"
                       >
                         {t('ffmpeg.switchToPassthrough')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -630,7 +640,8 @@ export function FfmpegParamsCore({
       ) : (
         /* ── Advanced (collapsible) — full editor's raw ffmpeg args ─────── */
         <div className={sectionCardCls}>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
             className="w-full px-3 py-1.5 flex items-center justify-between bg-surface-hover/30 hover:bg-surface-hover transition-colors"
@@ -648,7 +659,7 @@ export function FfmpegParamsCore({
                 count: (profile.inputArgs?.length ?? 0) + (profile.outputArgs?.length ?? 0),
               })}
             </span>
-          </button>
+          </Button>
           {advancedOpen && (
             <div className="px-3 py-2 space-y-3 border-t border-border/50">
               {inputArgsBlock}
@@ -908,7 +919,8 @@ function FlagPicker({ id, disabled, catalogue, onPick }: FlagPickerProps): React
 
   return (
     <div className="relative">
-      <button
+      <Button
+        variant="unstyled"
         id={id}
         type="button"
         disabled={disabled}
@@ -921,7 +933,7 @@ function FlagPicker({ id, disabled, catalogue, onPick }: FlagPickerProps): React
       >
         <Plus className="h-3 w-3" />
         {t('ffmpeg.addFlag')}
-      </button>
+      </Button>
       {open && !disabled && (
         <>
           {/* Click-outside scrim */}
@@ -939,7 +951,8 @@ function FlagPicker({ id, disabled, catalogue, onPick }: FlagPickerProps): React
                   {t(groupName)}
                 </div>
                 {entries.map((s) => (
-                  <button
+                  <Button
+                    variant="unstyled"
                     key={s.label}
                     type="button"
                     onClick={() => {
@@ -954,7 +967,7 @@ function FlagPicker({ id, disabled, catalogue, onPick }: FlagPickerProps): React
                         {t(s.descriptionKey)}
                       </div>
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
             ))}
