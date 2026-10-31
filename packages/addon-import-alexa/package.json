@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-import-alexa",
-  "version": "0.2.171",
+  "version": "0.2.172",
   "description": "Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter)",
   "keywords": [
     "camstack",

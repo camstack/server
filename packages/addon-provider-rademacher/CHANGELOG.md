@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.152] - 2026-10-31
+
 ### Changed
 
 - Shows the Rademacher logo as the integration icon.
