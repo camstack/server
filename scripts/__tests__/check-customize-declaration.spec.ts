@@ -289,6 +289,7 @@ describe('customize declaration guard', () => {
       'lock-control',
       'motion',
       'power-meter',
+      'power-source',
       'remote',
       'running-state',
     ])
