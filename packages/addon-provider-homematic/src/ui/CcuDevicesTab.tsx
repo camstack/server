@@ -9,11 +9,12 @@ import {
   type DataColumn,
   type DataTableFilterConfig,
 } from '@camstack/ui-library'
-import { Trash2 } from 'lucide-react'
+import { SlidersHorizontal, Trash2 } from 'lucide-react'
 import { CcuDevicesResultSchema, OkResultSchema, type CcuDeviceRow } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { percentOrDash, textOrDash } from './format.js'
+import { ChannelConfigDialog } from './ChannelConfigDialog.js'
 import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
@@ -51,6 +52,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
   const filter = useDataTableFilter(rows, FILTER_CONFIG)
   const write = useCcuWrite(trpc)
   const [deleting, setDeleting] = useState<CcuDeviceRow | null>(null)
+  const [configuring, setConfiguring] = useState<CcuDeviceRow | null>(null)
 
   const removeDevice = async (device: CcuDeviceRow, draft: DeleteDraft): Promise<void> => {
     const done = await write({
@@ -158,6 +160,12 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
           <KebabMenu
             items={[
               {
+                id: 'configure',
+                label: t('devices.configureAction'),
+                icon: SlidersHorizontal,
+                onClick: () => setConfiguring(row),
+              },
+              {
                 id: 'delete',
                 label: t('devices.deleteAction'),
                 icon: Trash2,
@@ -226,6 +234,14 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
               : t('devices.none')
         }
       />
+      {configuring !== null && (
+        <ChannelConfigDialog
+          trpc={trpc}
+          integrationId={integrationId}
+          device={configuring}
+          onClose={() => setConfiguring(null)}
+        />
+      )}
       {deleting !== null && (
         <DeleteDeviceDialog
           device={deleting}

@@ -435,3 +435,86 @@ describe('HomematicCcuPage device delete', () => {
     })
   })
 })
+
+describe('HomematicCcuPage device configuration', () => {
+  const DEV = {
+    address: 'ABC',
+    type: 'HmIP-eTRV-2',
+    name: 'Bedroom radiator',
+    rooms: [],
+    functions: [],
+    firmware: null,
+    availableFirmware: null,
+    updatable: null,
+    rssi: null,
+    rssiPeer: null,
+    dutyCycle: null,
+    dutyCycleLimited: null,
+    lowBattery: null,
+    unreach: null,
+    configPending: null,
+    sabotage: null,
+  }
+  const CONFIG = {
+    channels: [
+      {
+        channel: 'ABC:1',
+        channelType: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
+        error: null,
+        params: [
+          {
+            parameter: 'TEMPERATURE_OFFSET',
+            type: 'FLOAT',
+            min: -3.5,
+            max: 3.5,
+            unit: '°C',
+            valueList: null,
+            writable: true,
+            value: 0.5,
+          },
+          {
+            parameter: 'FIRMWARE',
+            type: 'STRING',
+            min: null,
+            max: null,
+            unit: null,
+            valueList: null,
+            writable: false,
+            value: '1.0',
+          },
+        ],
+      },
+    ],
+  }
+
+  it('sends only the changed parameter, and only after the operator confirms', async () => {
+    window.history.replaceState(null, '', '/?tab=devices')
+    const setCfg = vi.fn().mockReturnValue({ ok: true })
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices: [DEV] }),
+      getCcuDeviceConfig: () => CONFIG,
+      setCcuChannelConfig: setCfg,
+    })
+    mountPage(fake.trpc)
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Configure' }))
+    const form = await screen.findByTestId('hm-config-dialog')
+    const save = await within(form).findByRole('button', { name: 'Save changes' })
+    expect((save as HTMLButtonElement).disabled).toBe(true)
+    const offset = await within(form).findByDisplayValue('0.5')
+    fireEvent.change(offset, { target: { value: '1.5' } })
+    expect((within(form).getByDisplayValue('1.0') as HTMLInputElement).disabled).toBe(true)
+    fireEvent.click(save)
+    expect(setCfg).not.toHaveBeenCalled()
+    const confirm = await screen.findByRole('dialog', { name: /Write device configuration/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Write configuration' }))
+    await waitFor(() => expect(setCfg).toHaveBeenCalled())
+    expect(setCfg.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      channel: 'ABC:1',
+      values: { TEMPERATURE_OFFSET: 1.5 },
+      confirmed: true,
+    })
+  })
+})

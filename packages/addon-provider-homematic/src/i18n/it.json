@@ -85,7 +85,8 @@
     "deleteTitle": "Elimina dispositivo dalla CCU",
     "deleteMessage": "{{name}} sarà rimosso dalla CCU. Programmi e collegamenti sulla CCU andranno persi.",
     "deleteMessageReset": "{{name}} sarà ripristinato di fabbrica e rimosso dalla CCU. Programmi e collegamenti sulla CCU andranno persi.",
-    "deleteConfirm": "Elimina dispositivo"
+    "deleteConfirm": "Elimina dispositivo",
+    "configureAction": "Configura"
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",
@@ -150,5 +151,18 @@
     "foundTitle": "Dispositivi trovati",
     "foundNone": "Nessun nuovo dispositivo da quando hai aperto questa scheda.",
     "foundWaiting": "In attesa di un dispositivo da associare..."
+  },
+  "config": {
+    "title": "Configura {{name}}",
+    "loadFailed": "Impossibile leggere la configurazione del dispositivo",
+    "none": "Questo dispositivo non ha parametri configurabili.",
+    "channel": "Canale",
+    "range": "Tra {{min}} e {{max}}",
+    "unknown": "Sconosciuto",
+    "valuesUnreadable": "Impossibile leggere i valori attuali: {{error}}",
+    "save": "Salva modifiche",
+    "confirmTitle": "Scrivi configurazione dispositivo",
+    "confirmMessage": "{{count}} parametro/i verranno scritti su {{channel}}: {{names}}. Un valore sbagliato può cambiare il comportamento del dispositivo.",
+    "confirmLabel": "Scrivi configurazione"
   }
 }

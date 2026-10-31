@@ -85,7 +85,8 @@
     "deleteTitle": "Delete device from the CCU",
     "deleteMessage": "{{name}} will be removed from the CCU. Its programs and links on the CCU are lost.",
     "deleteMessageReset": "{{name}} will be factory-reset and removed from the CCU. Its programs and links on the CCU are lost.",
-    "deleteConfirm": "Delete device"
+    "deleteConfirm": "Delete device",
+    "configureAction": "Configure"
   },
   "heating": {
     "loadFailed": "Could not read the heating setup",
@@ -150,5 +151,18 @@
     "foundTitle": "Devices found",
     "foundNone": "No new device since this tab opened.",
     "foundWaiting": "Waiting for a device to pair..."
+  },
+  "config": {
+    "title": "Configure {{name}}",
+    "loadFailed": "Could not read the device configuration",
+    "none": "This device has no configurable parameters.",
+    "channel": "Channel",
+    "range": "Between {{min}} and {{max}}",
+    "unknown": "Unknown",
+    "valuesUnreadable": "The current values could not be read: {{error}}",
+    "save": "Save changes",
+    "confirmTitle": "Write device configuration",
+    "confirmMessage": "{{count}} parameter(s) will be written to {{channel}}: {{names}}. A wrong value can change how the device behaves.",
+    "confirmLabel": "Write configuration"
   }
 }

@@ -228,3 +228,42 @@ export const DeleteCcuDeviceInputSchema = IntegrationRefSchema.extend({
   force: z.boolean(),
   confirmed: ConfirmedSchema,
 })
+
+// ── MASTER configuration ───────────────────────────────────────────────────
+
+export const ConfigValueSchema = z.union([z.boolean(), z.number(), z.string(), z.null()])
+export type ConfigValue = z.infer<typeof ConfigValueSchema>
+
+export const ConfigParamSchema = z.object({
+  parameter: z.string(),
+  /** `BOOL`, `INTEGER`, `FLOAT`, `ENUM`, `STRING`, ... as the CCU spells it. */
+  type: z.string(),
+  min: z.number().nullable(),
+  max: z.number().nullable(),
+  unit: z.string().nullable(),
+  valueList: z.array(z.string()).nullable(),
+  writable: z.boolean(),
+  /** The current value; `null` when the CCU did not answer for it (never a made-up default). */
+  value: ConfigValueSchema,
+})
+export type ConfigParam = z.infer<typeof ConfigParamSchema>
+
+export const ChannelConfigSchema = z.object({
+  channel: z.string(),
+  channelType: z.string().nullable(),
+  params: z.array(ConfigParamSchema),
+  /** Why the values could not be read; the parameter list is then shown without values. */
+  error: z.string().nullable(),
+})
+export type ChannelConfig = z.infer<typeof ChannelConfigSchema>
+
+export const DeviceConfigSchema = z.object({ channels: z.array(ChannelConfigSchema) })
+export type DeviceConfig = z.infer<typeof DeviceConfigSchema>
+
+export const DeviceRefSchema = IntegrationRefSchema.extend({ address: z.string().min(1) })
+
+export const SetChannelConfigInputSchema = IntegrationRefSchema.extend({
+  channel: z.string().min(1),
+  values: z.record(z.string(), ConfigValueSchema),
+  confirmed: ConfirmedSchema,
+})

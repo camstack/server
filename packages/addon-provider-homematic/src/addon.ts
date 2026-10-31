@@ -24,6 +24,7 @@ import {
 } from '@camstack/types'
 import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
+import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
 import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
 import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
@@ -115,6 +116,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         ...buildCcuDevicesHandlers(this.ccuActionDeps()),
         ...buildCcuHeatingHandlers(this.ccuActionDeps()),
         ...buildCcuPairingHandlers(this.ccuActionDeps()),
+        ...buildCcuConfigHandlers(this.ccuActionDeps()),
         discoverCcu: async () => {
           const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
             addonId: this.ctx.id,
