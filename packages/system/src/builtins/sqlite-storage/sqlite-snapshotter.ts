@@ -36,7 +36,7 @@
  *
  * One snapshot at a time: a second `write()` while one runs joins it.
  *
- * ## Two purposes (D986)
+ * ## Two purposes (D987)
  *
  * `backup` writes the slot above and is collected by the nightly archive.
  * `pre-migration` is the safety copy taken before the boot-time migrations of
@@ -234,7 +234,7 @@ export class SqliteSnapshotter {
     return this.writeFor({ purpose: 'backup' })
   }
 
-  /** Write `<db>.pre-migration/<bootId>-<firstId>.db` (D986). Joins one already running. */
+  /** Write `<db>.pre-migration/<bootId>-<firstId>.db` (D987). Joins one already running. */
   writePreMigration(bootId: string, firstId: string): Promise<DatabaseSnapshotResult> {
     return this.writeFor({ purpose: 'pre-migration', bootId, firstId })
   }

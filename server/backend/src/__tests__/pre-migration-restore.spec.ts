@@ -1,5 +1,5 @@
 /**
- * The boot-time restore of a pre-migration snapshot (D986). Real SQLite files:
+ * The boot-time restore of a pre-migration snapshot (D987). Real SQLite files:
  * the snapshot replaces the database, the stale `-wal` of the replaced database
  * is dropped, the snapshot itself stays, and the marker is consumed.
  */

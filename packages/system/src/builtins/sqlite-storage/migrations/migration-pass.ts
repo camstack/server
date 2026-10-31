@@ -1,5 +1,5 @@
 /**
- * One file's share of a boot-time migration pass (D986), synchronous over the
+ * One file's share of a boot-time migration pass (D987), synchronous over the
  * connection that owns the file. The same functions run on the engine's main
  * thread (`camstack.db`) and inside the file-host worker (`events.db`,
  * `history.db`): the catalogue is imported statically on both sides, so no

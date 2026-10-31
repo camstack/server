@@ -1,5 +1,5 @@
 /**
- * The Alert Center's view of the migration ledger (D986): a pure planner.
+ * The Alert Center's view of the migration ledger (D987): a pure planner.
  * The ledger is the authority; an event is only a hint that it changed (D11).
  * Each faulted id is one card under a stable id, so a retry that fixes it
  * dismisses exactly that card and a repeated reconcile never duplicates it.

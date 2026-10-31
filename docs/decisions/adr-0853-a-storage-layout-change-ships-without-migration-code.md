@@ -2,7 +2,7 @@
 id: D853
 title: A storage-layout change ships without migration code — the product targets the new layout, the operator's hub is converted once offline while stopped, and the release train holds that hub until then
 status: superseded
-superseded-by: D986
+superseded-by: D987
 date: 2026-10-14
 supersedes:
 applies-to:

@@ -963,7 +963,7 @@ that rots.
 | D983 | [An action is one shape everywhere — a vocabulary action on a target — and a scheduler is a timeline of edge and hold points](adr-0983-an-action-is-one-shape-everywhere-a-schedule-is-a-timeline-of-edge-and-hold-points.md) | 💭 proposed | 2026-10-31 |
 | D984 | [A cap may declare a native field overridable by a named Customize extension](adr-0984-a-cap-may-declare-a-native-field-overridable-by-a-named-customize-extension.md) | ✅ accepted | 2026-10-31 |
 | D985 | [A hub is its own integration instance](adr-0985-a-hub-is-its-own-integration-instance.md) | ✅ accepted | 2026-10-31 |
-| D986 | [A migration runs at boot under its owner — one ledger per database file, one transaction per migration, a verified snapshot first](adr-0986-a-migration-runs-at-boot-under-its-owner.md) | ✅ accepted (supersedes D853) | 2026-10-31 |
+| D987 | [A migration runs at boot under its owner — one ledger per database file, one transaction per migration, a verified snapshot first](adr-0987-a-migration-runs-at-boot-under-its-owner.md) | ✅ accepted (supersedes D853) | 2026-10-31 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

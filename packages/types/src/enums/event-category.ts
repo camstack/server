@@ -762,7 +762,7 @@ export enum EventCategory {
   /** The clear of {@link NotificationRuleBroken}: the rule loads and names nothing deleted. */
   NotificationRuleRepaired = 'notification.rule-repaired',
 
-  // Migrations (D986). A HINT: the ledger (`migrations.listLedger`) is the authority.
+  // Migrations (D987). A HINT: the ledger (`migrations.listLedger`) is the authority.
   /** A migration failed or was blocked; the Alert Center re-reads the ledger. */
   MigrationFailed = 'migration.failed',
   /** A migration applied or a failure cleared; the Alert Center re-reads the ledger. */

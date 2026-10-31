@@ -82,7 +82,7 @@ export interface OwnedSqliteFile {
   servingThreadId(): Promise<number>
   /** The owner's verified copy of this file (D693). */
   snapshot(): Promise<DatabaseSnapshotResult>
-  /** A boot-time migration question (D986), answered where this file's connection lives. */
+  /** A boot-time migration question (D987), answered where this file's connection lives. */
   migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>>
   /** Checkpointer, canary, maintenance, then the connection. */
   stop(): Promise<void>
@@ -364,7 +364,7 @@ export class WorkerOwnedFile extends OwnedFileBase {
     })
   }
 
-  /** A boot-time migration question, answered inside the worker (D986). */
+  /** A boot-time migration question, answered inside the worker (D987). */
   migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>> {
     return this.client.migrate(op, input)
   }

@@ -104,7 +104,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-method-access-map-coverage.ts` | Every tRPC cap path the routers expose must be IN `METHOD_ACCESS_MAP`. |
 | `scripts/check-method-roles.ts` | Method roles (D921): what each cap method is for a VIEWER. |
 | `scripts/check-method-tiers.ts` | GUARD: every cap method's AUTH TIER is pinned in an explicit baseline. |
-| `scripts/check-migrations-well-formed.ts` | The migration catalogue is well formed (D986). |
+| `scripts/check-migrations-well-formed.ts` | The migration catalogue is well formed (D987). |
 | `scripts/check-model-notices-shipped.ts` | Model-notice guard: every package that DOWNLOADS model weights, or carries the code that does, ships the third-party model notice, byte-identical to the root copy, and the Docker image bakes it in. |
 | `scripts/check-nc-mirrors-in-sync.ts` | The viewer (`camstack/`) keeps hand MIRRORS of notification-center shapes it cannot import, and nothing kept them equal (final review m4). This makes "they are the same" checkable instead of promised. |
 | `scripts/check-nc-one-shot.ts` | A notification is ONE message and nothing follows it (D692). |

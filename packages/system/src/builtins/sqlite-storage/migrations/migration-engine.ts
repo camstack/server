@@ -1,5 +1,5 @@
 /**
- * The boot-time migration engine of the `sqlite-settings` owner (D986).
+ * The boot-time migration engine of the `sqlite-settings` owner (D987).
  *
  * It runs from each owned file's `afterOpen` — BEFORE the engine returns a
  * single provider, so nothing can read a file whose shape is half moved — and

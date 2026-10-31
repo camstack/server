@@ -1,5 +1,5 @@
 /**
- * What a migration IS, as data (D986): its identity, its place in the order, the
+ * What a migration IS, as data (D987): its identity, its place in the order, the
  * edits a `plan` body returns, and what the ledger records about it. The code a
  * migration runs lives with its owner; this file is the part every process and the
  * guard share, so a catalogue is refused the same way everywhere.

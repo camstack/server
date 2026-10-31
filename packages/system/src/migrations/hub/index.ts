@@ -1,5 +1,5 @@
 /**
- * The hub-store migration catalogue (D986): every migration the hub applies to
+ * The hub-store migration catalogue (D987): every migration the hub applies to
  * `camstack.db`, `events.db` and `history.db` at boot, in declaration order.
  *
  * Empty on purpose in the first release of the engine: the engine ships and is

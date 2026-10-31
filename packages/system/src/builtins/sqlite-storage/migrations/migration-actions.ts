@@ -1,5 +1,5 @@
 /**
- * The custom action the Alert Center's "Retry" button invokes (D986): an alert
+ * The custom action the Alert Center's "Retry" button invokes (D987): an alert
  * carries `{ addonId, action, input }`, so a retry is an addon action, not a
  * route. `auth: 'admin'`, a mutation.
  */

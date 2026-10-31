@@ -100,7 +100,7 @@ export type FileHostRequest =
       readonly op: ControlOp
       readonly input: unknown
     }
-  /** The boot-time migration engine's questions (D986); the catalogue is imported by the worker itself. */
+  /** The boot-time migration engine's questions (D987); the catalogue is imported by the worker itself. */
   | {
       readonly id: number
       readonly kind: 'migrate'

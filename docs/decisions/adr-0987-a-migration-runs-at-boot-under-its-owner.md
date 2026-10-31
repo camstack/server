@@ -1,5 +1,5 @@
 ---
-id: D986
+id: D987
 title: A migration runs at boot under its owner — one ledger per database file, one transaction per migration, a verified snapshot first
 status: accepted
 date: 2026-10-31

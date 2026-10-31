@@ -103,7 +103,7 @@ const SILENT_TRACKED_CATEGORIES: readonly string[] = [
   'stream.online',
   // A repaired rule closes its broken-rule card (D905).
   'notification.rule-repaired',
-  // The migration ledger changed (D986): a hint to reconcile, never the truth.
+  // The migration ledger changed (D987): a hint to reconcile, never the truth.
   'migration.failed',
   'migration.applied',
 ]
@@ -963,7 +963,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
   }
 
   /**
-   * One card per faulted migration, from the ledger (D986, D11): the RPC read is
+   * One card per faulted migration, from the ledger (D987, D11): the RPC read is
    * the authority and an event only says it may have changed. A read that fails
    * changes nothing — it must never dismiss a card (D49).
    */

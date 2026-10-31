@@ -1,5 +1,5 @@
 /**
- * The vocabulary of the boot-time migration engine (D986). Pure types: the
+ * The vocabulary of the boot-time migration engine (D987). Pure types: the
  * worker bundle imports this file, so it carries no driver and no kernel.
  */
 import type {

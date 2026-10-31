@@ -9,7 +9,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 
 /**
  * migrations — the ledger and the controls of the boot-time migration engine
- * (D986). Hub-only and internal: `sqlite-settings` is the registrant, because the
+ * (D987). Hub-only and internal: `sqlite-settings` is the registrant, because the
  * ledger lives INSIDE the database files it serves (`camstack.db`, `events.db`,
  * `history.db`) and only its connection or worker may touch them (D679).
  *

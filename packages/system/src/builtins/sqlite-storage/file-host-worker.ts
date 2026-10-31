@@ -122,7 +122,7 @@ async function main(): Promise<void> {
       : new RecordsEngine(db, { databaseId: spec.databaseId, logger: logger.child('Records') })
   const vectorTarget = vectorIndex === null ? null : vectorProviderOf(vectorIndex)
   const control = controlTargetOf(backend, threadId)
-  // The hub catalogue is imported HERE, not sent: code never crosses postMessage (D986).
+  // The hub catalogue is imported HERE, not sent: code never crosses postMessage (D987).
   const migrateTarget: MigrateTarget | null =
     db === null ? null : migrateTargetOf(db, spec.databaseId, HUB_MIGRATIONS)
 

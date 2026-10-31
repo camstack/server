@@ -160,7 +160,7 @@ export class FileHostClient {
     return this.request({ kind: 'control', op, input })
   }
 
-  /** A boot-time migration question (D986), answered by the thread that holds the connection. */
+  /** A boot-time migration question (D987), answered by the thread that holds the connection. */
   migrate<K extends MigrateOp>(op: K, input: MigrateInput<K>): Promise<MigrateOutput<K>> {
     return this.request({ kind: 'migrate', op, input })
   }

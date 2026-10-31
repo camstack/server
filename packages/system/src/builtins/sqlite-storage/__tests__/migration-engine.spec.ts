@@ -1,5 +1,5 @@
 /**
- * The boot-time migration engine (D986) on REAL SQLite: the engine runs from the
+ * The boot-time migration engine (D987) on REAL SQLite: the engine runs from the
  * owned file's `afterOpen`, the pre-migration snapshot is written by the real
  * `SqliteSnapshotter` (a real worker thread, loaded through tsx), and every
  * assertion reads the database itself — not a mock of it.

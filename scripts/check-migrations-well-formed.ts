@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * The migration catalogue is well formed (D986).
+ * The migration catalogue is well formed (D987).
  *
  * ## The failure this catches
  *

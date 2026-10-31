@@ -242,7 +242,7 @@ async function launch(): Promise<void> {
   // installer + symlink step pick up — otherwise we'd install a stale
   // set and overwrite it a step later.
   await applyPendingRestore(dataDir, (line) => console.log(line))
-  // A pre-migration snapshot the operator chose to go back to (D986).
+  // A pre-migration snapshot the operator chose to go back to (D987).
   applyPendingPreMigrationRestore(dataDir, (line) => console.log(line))
 
   // @camstack/system is imported DYNAMICALLY here — AFTER the active framework

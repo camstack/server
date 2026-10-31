@@ -1,5 +1,5 @@
 /**
- * The boot-time restore of a PRE-MIGRATION snapshot (D986). The sqlite-settings
+ * The boot-time restore of a PRE-MIGRATION snapshot (D987). The sqlite-settings
  * owner writes `.pending-restore.json`'s sibling marker; the launcher promotes
  * the snapshot over the database before any runner starts, so nothing holds the
  * file open (D679). It is its own marker, not a field of the system-restore one:

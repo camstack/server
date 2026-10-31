@@ -1,5 +1,5 @@
 /**
- * A `migrate` message reaches the file-host WORKER (D986): `events.db` is
+ * A `migrate` message reaches the file-host WORKER (D987): `events.db` is
  * served off the main thread, so the ledger must be created and answered there.
  */
 import { afterEach, describe, expect, it } from 'vitest'

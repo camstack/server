@@ -1,5 +1,5 @@
 /**
- * The `migrations` provider (D986): a thin face over the {@link MigrationEngine}.
+ * The `migrations` provider (D987): a thin face over the {@link MigrationEngine}.
  * The engine is the authority; this only shapes its answers to the cap.
  */
 import type {

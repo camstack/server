@@ -1,5 +1,5 @@
 /**
- * The hold a restore of a pre-migration snapshot leaves behind (D986).
+ * The hold a restore of a pre-migration snapshot leaves behind (D987).
  *
  * The restored database has the ledger of BEFORE the migrations ran, so they
  * look pending and would simply run again — the bad one first. The operator
