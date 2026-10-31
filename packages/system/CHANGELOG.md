@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.534] - 2026-10-31
+
 ### Added
 
 - A device can be powered by a smart switch linked in Customize, with manual power on, power off and force restart (switch off, wait, switch on).

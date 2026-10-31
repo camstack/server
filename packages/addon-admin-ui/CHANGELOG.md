@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.538] - 2026-10-31
+
 ### Changed
 
 - A device with a linked power switch gets Power on, Power off and Force restart (power) in its menu
