@@ -20,7 +20,13 @@
  * addonId → the generated mount concat-fans them across every provider.
  */
 
-import type { ConfigUISchema, ProbeTargetConfigResult, Target, TargetKind } from '@camstack/types'
+import type {
+  ConfigSelectField,
+  ConfigUISchema,
+  ProbeTargetConfigResult,
+  Target,
+  TargetKind,
+} from '@camstack/types'
 import {
   Badge,
   Button,
@@ -29,6 +35,8 @@ import {
   ItemFormDialog,
   Select,
   Switch,
+  useBrokerList,
+  useDiscoveredOptions,
   useItemFormUrl,
   useSystem,
   useUrlQueryParam,
@@ -47,6 +55,9 @@ import {
   NcListTable,
 } from './notification-list-chrome'
 import {
+  defaultBrokerId,
+  nextAutoName,
+  targetFormDefaultKeys,
   collectFieldLabels,
   collectSecretKeys,
   duplicateTargetName,
@@ -272,7 +283,11 @@ export function NotificationTargetsPage({
       //    but `TargetKindSchema` omits — re-attach it from the raw row.
       return raw.map((k) => {
         const iconUrl = (k as { readonly iconUrl?: string }).iconUrl
-        return { ...k, configSchema: k.configSchema as ConfigUISchema, iconUrl }
+        return {
+          ...k,
+          configSchema: k.configSchema as ConfigUISchema,
+          iconUrl,
+        }
       })
     },
   })
@@ -550,6 +565,14 @@ function KindPicker({
   )
 }
 
+/** Stand-in when the kind has no discovered field: the hook stays idle. */
+const NO_DEVICE_FIELD: ConfigSelectField = {
+  type: 'select',
+  key: '',
+  label: '',
+  options: [],
+}
+
 // ── Add / edit form ─────────────────────────────────────────────────
 
 function TargetForm({
@@ -576,6 +599,8 @@ function TargetForm({
   /** Hub row to hydrate via unredacted `getTarget`. */
   const secretsSourceId = target?.id ?? cloneFrom?.id
 
+  const isCreate = target === null && cloneFrom === null
+  const [nameEdited, setNameEdited] = useState(false)
   const [name, setName] = useState(() =>
     cloneFrom !== null ? duplicateTargetName(cloneFrom.name) : (target?.name ?? kind.label),
   )
@@ -597,6 +622,38 @@ function TargetForm({
   const [ownerUserId, setOwnerUserId] = useState<string>(
     seedTarget ? (targetOwnerUserId(seedTarget) ?? '') : '',
   )
+
+  // New target only: first broker pre-selected, name derived from the device.
+  const defaultKeys = useMemo(() => targetFormDefaultKeys(kind.configSchema), [kind.configSchema])
+  const brokerList = useBrokerList(
+    { kind: defaultKeys.brokerKind ?? '' },
+    { enabled: isCreate && defaultKeys.brokerKind !== null },
+  )
+  const discovered = useDiscoveredOptions(defaultKeys.deviceField ?? NO_DEVICE_FIELD, values)
+
+  useEffect(() => {
+    if (!isCreate || defaultKeys.brokerKey === null || defaultKeys.brokerKind === null) return
+    const brokerId = defaultBrokerId(
+      brokerList.data,
+      defaultKeys.brokerKind,
+      values[defaultKeys.brokerKey],
+    )
+    if (brokerId === null) return
+    const key = defaultKeys.brokerKey
+    setValues((prev) =>
+      typeof prev[key] === 'string' && prev[key] !== '' ? prev : { ...prev, [key]: brokerId },
+    )
+  }, [isCreate, defaultKeys, brokerList.data, values])
+
+  const pickedDeviceId =
+    defaultKeys.deviceField === null ? undefined : values[defaultKeys.deviceField.key]
+  const pickedDeviceName =
+    discovered.found.find((option) => option.value === pickedDeviceId)?.label ?? null
+  useEffect(() => {
+    if (!isCreate) return
+    const next = nextAutoName(name, nameEdited, kind.label, pickedDeviceName)
+    if (next !== null) setName(next)
+  }, [isCreate, name, nameEdited, kind.label, pickedDeviceName])
 
   useEffect(() => {
     if (secretsSourceId === undefined) return
@@ -757,7 +814,10 @@ function TargetForm({
           <input
             className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setNameEdited(true)
+              setName(e.target.value)
+            }}
           />
         </div>
 

@@ -41,7 +41,12 @@ const SAMPLE_ECHOES = [
   },
 ]
 
-const ACCOUNT = { id: 'alexa_001', name: 'Home', ready: true, devices: SAMPLE_ECHOES }
+const ACCOUNT = {
+  id: 'alexa_001',
+  name: 'Home',
+  ready: true,
+  devices: SAMPLE_ECHOES,
+}
 
 /** The harness serves no addon route, so the brand mark travels inline. */
 const alexaKind = {
@@ -102,6 +107,26 @@ export default defineFixtures({
         family: device.family,
       },
     })),
+    'broker.list': [
+      {
+        id: 'alexa_001',
+        addonId: 'import-alexa',
+        name: 'Home',
+        kind: 'alexa',
+        status: 'connected',
+        info: {},
+        lastCheckedAt: null,
+      },
+      {
+        id: 'alexa_002',
+        addonId: 'import-alexa',
+        name: 'Office',
+        kind: 'alexa',
+        status: 'connected',
+        info: {},
+        lastCheckedAt: null,
+      },
+    ],
     'userManagement.listUsers': [],
     'auth.listLoginMethods': [],
   },

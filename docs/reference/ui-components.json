@@ -12647,6 +12647,13 @@
       "summary": ""
     },
     {
+      "name": "useDiscoveredOptions",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/config-discovered-select-field.tsx",
+      "summary": "The discovery query behind a `select` field with `discoverOptions`, asked for the form's CURRENT values. The control and the host form share one react-query entry (same key), so a host that needs the option labels (a …"
+    },
+    {
       "name": "useDisplayIconResolver",
       "kind": "hook",
       "area": "composites",

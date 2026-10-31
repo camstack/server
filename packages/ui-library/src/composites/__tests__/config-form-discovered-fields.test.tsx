@@ -135,16 +135,13 @@ describe('select with discoverOptions', () => {
   it('lists the candidates with their names after the broker is picked, storing the id', async () => {
     render(<Form />)
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'b1' } })
-    await waitFor(
-      () => expect(screen.getByRole('option', { name: 'Pixel 7' })).toBeInTheDocument(),
-      {
-        timeout: 3000,
-      },
-    )
-    expect(asked.at(-1)).toEqual({ kind: 'homeassistant', config: { brokerId: 'b1' } })
-    fireEvent.change(screen.getAllByRole('combobox')[1]!, {
-      target: { value: 'mobile_app_pixel_7' },
+    await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(2), {
+      timeout: 3000,
     })
+    expect(asked.at(-1)).toEqual({ kind: 'homeassistant', config: { brokerId: 'b1' } })
+    fireEvent.change(screen.getAllByRole('combobox')[1]!, { target: { value: 'pixel' } })
+    expect(screen.queryByTestId('config-select-service-option-smtp_relay')).toBeNull()
+    fireEvent.click(screen.getByTestId('config-select-service-option-mobile_app_pixel_7'))
     expect(screen.getByTestId('values').textContent).toContain('"service":"mobile_app_pixel_7"')
   })
 

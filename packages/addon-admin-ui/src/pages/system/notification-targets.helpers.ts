@@ -5,7 +5,7 @@
  * secret-merge diff can be unit-tested without a DOM. All functions are
  * side-effect free and return new objects (no mutation).
  */
-import type { ConfigField, ConfigUISchema, TargetKind } from '@camstack/types'
+import type { ConfigField, ConfigSelectField, ConfigUISchema, TargetKind } from '@camstack/types'
 import i18n from '../../i18n/index'
 
 /** One addon's slice of the kind catalog, in first-seen order. */
@@ -34,7 +34,10 @@ export function groupKindsByAddon<K extends TargetKind>(kinds: readonly K[]): Ki
       order.push(kind.addonId)
     }
   }
-  return order.map((addonId) => ({ addonId, kinds: byAddon.get(addonId) ?? [] }))
+  return order.map((addonId) => ({
+    addonId,
+    kinds: byAddon.get(addonId) ?? [],
+  }))
 }
 
 /**
@@ -226,7 +229,10 @@ function markRequired(fields: readonly ConfigField[], keys: ReadonlySet<string>)
     if (field.type === 'sub-tabs') {
       return {
         ...field,
-        tabs: field.tabs.map((tab) => ({ ...tab, fields: markRequired(tab.fields, keys) })),
+        tabs: field.tabs.map((tab) => ({
+          ...tab,
+          fields: markRequired(tab.fields, keys),
+        })),
       }
     }
     return field
@@ -275,7 +281,10 @@ function withPasswordPlaceholders(
       }
     }
     if (field.type === 'group') {
-      return { ...field, fields: withPasswordPlaceholders(field.fields, storedSecrets) }
+      return {
+        ...field,
+        fields: withPasswordPlaceholders(field.fields, storedSecrets),
+      }
     }
     if (field.type === 'sub-tabs') {
       return {
@@ -313,4 +322,82 @@ export function withStoredSecretPlaceholders(
       fields: withPasswordPlaceholders(section.fields, stored),
     })),
   }
+}
+
+// ── Create-form defaults: first broker, name from the picked device ─────
+
+/** The first broker/discovery field of a kind's form — what the defaults key on. */
+export interface TargetFormDefaultKeys {
+  readonly brokerKey: string | null
+  readonly brokerKind: string | null
+  readonly deviceField: ConfigSelectField | null
+}
+
+/** Walk a kind's schema for its `broker-select` and its discovered `select`. */
+export function targetFormDefaultKeys(schema: ConfigUISchema): TargetFormDefaultKeys {
+  let brokerKey: string | null = null
+  let brokerKind: string | null = null
+  let deviceField: ConfigSelectField | null = null
+  const walk = (fields: readonly ConfigField[]): void => {
+    for (const field of fields) {
+      if (field.type === 'broker-select' && brokerKey === null) {
+        brokerKey = field.key
+        brokerKind = field.brokerKind
+      } else if (
+        field.type === 'select' &&
+        field.discoverOptions !== undefined &&
+        deviceField === null
+      ) {
+        deviceField = field
+      } else if (field.type === 'group') {
+        walk(field.fields)
+      } else if (field.type === 'sub-tabs') {
+        for (const tab of field.tabs) walk(tab.fields)
+      }
+    }
+  }
+  for (const section of schema.sections) walk(section.fields)
+  return { brokerKey, brokerKind, deviceField }
+}
+
+/**
+ * The broker to pre-select on a NEW target: the first broker of the kind, and
+ * only once the list ANSWERED (`undefined` = still loading, never "no broker")
+ * and only while the operator has not chosen one.
+ */
+export function defaultBrokerId(
+  brokers: unknown,
+  brokerKind: string,
+  current: unknown,
+): string | null {
+  if (typeof current === 'string' && current.trim().length > 0) return null
+  if (!Array.isArray(brokers)) return null
+  for (const entry of brokers) {
+    if (typeof entry !== 'object' || entry === null) continue
+    const row: Record<string, unknown> = { ...entry }
+    if (row['kind'] === brokerKind && typeof row['id'] === 'string') return row['id']
+  }
+  return null
+}
+
+/** "<notifier friendly name> — <device name>"; the notifier alone with no device. */
+export function autoTargetName(notifierLabel: string, deviceName: string | null): string {
+  return deviceName === null || deviceName.trim().length === 0
+    ? notifierLabel
+    : `${notifierLabel} — ${deviceName}`
+}
+
+/**
+ * The name the form should now show, or null to leave it alone: the derived
+ * name applies only while the operator has not typed one and it differs.
+ */
+export function nextAutoName(
+  current: string,
+  operatorEdited: boolean,
+  notifierLabel: string,
+  deviceName: string | null,
+): string | null {
+  if (operatorEdited) return null
+  const next = autoTargetName(notifierLabel, deviceName)
+  return next === current ? null : next
 }

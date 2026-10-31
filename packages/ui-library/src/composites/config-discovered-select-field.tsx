@@ -14,11 +14,11 @@ import { useNotificationOutputDiscoverTargets } from '../generated/system-hooks'
 import { useUiText } from '../contexts/ui-text'
 import { useDebouncedString } from '../hooks/use-debounced-string'
 import { Input } from '../primitives/input'
-import { Select } from '../primitives/select'
+import { OptionSelect } from './option-select/OptionSelect'
 
 const TYPING_DEBOUNCE_MS = 500
 
-interface DiscoveredOption {
+export interface DiscoveredOption {
   readonly value: string
   readonly label: string
 }
@@ -60,6 +60,41 @@ function optionsFrom(
   return options
 }
 
+export interface DiscoveredOptionsState {
+  readonly ready: boolean
+  readonly settled: boolean
+  readonly query: ReturnType<typeof useNotificationOutputDiscoverTargets>
+  /** The options the provider answered with; empty until it did. */
+  readonly found: readonly DiscoveredOption[]
+}
+
+/**
+ * The discovery query behind a `select` field with `discoverOptions`, asked for
+ * the form's CURRENT values. The control and the host form share one react-query
+ * entry (same key), so a host that needs the option labels (a name derived from
+ * the picked device) pays no second request.
+ */
+export function useDiscoveredOptions(
+  field: ConfigSelectField,
+  values: Readonly<Record<string, unknown>>,
+): DiscoveredOptionsState {
+  const discover = field.discoverOptions
+  const kind = discover?.kind ?? ''
+  const dependsOn = discover?.dependsOn ?? []
+  const ready = discover !== undefined && dependsOn.every((key) => hasValue(values[key]))
+  const config = useMemo(() => discoveryConfig(values), [values])
+  // A token being typed changes on every key; ask once it settles.
+  const configKey = JSON.stringify(config)
+  const settled = configKey === useDebouncedString(configKey, TYPING_DEBOUNCE_MS)
+  const query = useNotificationOutputDiscoverTargets(
+    { kind, config },
+    { enabled: ready && settled, retry: false },
+  )
+  const found =
+    ready && settled && query.data !== undefined ? optionsFrom(query.data, field.key) : []
+  return { ready, settled, query, found }
+}
+
 export function ConfigDiscoveredSelectControl({
   field,
   values,
@@ -76,45 +111,29 @@ export function ConfigDiscoveredSelectControl({
   readonly controlId: string
 }): JSX.Element {
   const t = useUiText()
-  const discover = field.discoverOptions
-  const kind = discover?.kind ?? ''
-  const dependsOn = discover?.dependsOn ?? []
-  const ready = discover !== undefined && dependsOn.every((key) => hasValue(values[key]))
-
-  const config = useMemo(() => discoveryConfig(values), [values])
-  // A token being typed changes on every key; ask once it settles.
-  const configKey = JSON.stringify(config)
-  const settled = configKey === useDebouncedString(configKey, TYPING_DEBOUNCE_MS)
-  const query = useNotificationOutputDiscoverTargets(
-    { kind, config },
-    { enabled: ready && settled, retry: false },
-  )
+  const { ready, settled, query, found } = useDiscoveredOptions(field, values)
 
   const current = value === undefined || value === null ? '' : String(value)
-  const found =
-    ready && settled && query.data !== undefined ? optionsFrom(query.data, field.key) : []
   const disabledNow = disabled || field.disabled
 
   if (found.length > 0) {
     const known = found.some((option) => option.value === current)
     return (
-      <Select
-        id={controlId}
+      <OptionSelect
+        mode="single"
+        singleDisplay="field"
+        searchable
         disabled={disabledNow}
         value={current}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
+        placeholder={t('uiLibrary.configFormField.select', '— Select —')}
         options={[
-          {
-            value: '',
-            label: t('uiLibrary.configFormField.select', '— Select —'),
-          },
           // A stored value the list no longer offers stays selectable.
           ...(current !== '' && !known ? [{ value: current, label: current }] : []),
-          ...found.map((option) => ({
-            value: option.value,
-            label: option.label,
-          })),
+          ...found,
         ]}
+        testId={controlId}
+        optionTestIdPrefix={`${controlId}-option`}
       />
     )
   }

@@ -56,12 +56,42 @@ interface ErrorBoxProps {
   readonly onRetry?: () => void
 }
 
+let mockBrokers: unknown[] | undefined = []
+let mockDiscovered: { value: string; label: string }[] = []
+
 vi.mock('@camstack/ui-library', async () => {
   // Reuse the REAL ConfigFormBuilder so password masking is exercised
   // end-to-end (the point of the "password masked" assertion).
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...real,
+    useBrokerList: () => ({ data: mockBrokers }),
+    useDiscoveredOptions: () => ({
+      ready: true,
+      settled: true,
+      query: {},
+      found: mockDiscovered,
+    }),
+    // The broker / discovery controls need a tRPC context the spec does not
+    // mount; a kind that has them gets a stub, every other form the real builder.
+    ConfigFormBuilder: (props: React.ComponentProps<typeof real.ConfigFormBuilder>) => {
+      const hasBroker = props.schema.sections.some((section) =>
+        section.fields.some((field) => field.type === 'broker-select'),
+      )
+      return hasBroker ? (
+        <>
+          <output data-testid="stub-values">{JSON.stringify(props.values)}</output>
+          <button
+            type="button"
+            onClick={() => props.onChange({ ...props.values, service: 'mobile_app_pixel_7' })}
+          >
+            pick device
+          </button>
+        </>
+      ) : (
+        <real.ConfigFormBuilder {...props} />
+      )
+    },
     useSystem: () => ({
       trpcClient: {
         notificationOutput: {
@@ -177,6 +207,8 @@ describe('NotificationTargets page', () => {
     mockGetTarget.mockImplementation(getTargetLive)
     mockDiscover.mockReset()
     mockDiscover.mockResolvedValue([])
+    mockBrokers = []
+    mockDiscovered = []
     // useItemFormUrl / useUrlQueryParam write window.location — clear so a
     // prior edit (?target=t1) cannot reopen Edit under Duplicate.
     window.history.replaceState(null, '', '/')
@@ -416,6 +448,70 @@ describe('NotificationTargets page', () => {
       await waitFor(() => expect(screen.getByText('Add target')).toBeTruthy())
       expect(screen.queryByText('Find devices')).toBeNull()
       expect(mockDiscover).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('a new target of a kind that goes through a broker', () => {
+    const brokerKind = (): TargetKind => ({
+      ...haKind(),
+      configSchema: {
+        sections: [
+          {
+            id: 'c',
+            title: 'C',
+            fields: [
+              { type: 'broker-select', key: 'brokerId', label: 'Broker', brokerKind: 'ha' },
+              {
+                type: 'select',
+                key: 'service',
+                label: 'Notify service',
+                options: [],
+                discoverOptions: { kind: 'homeassistant', dependsOn: ['brokerId'] },
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    async function openForm(): Promise<void> {
+      mockKinds = [brokerKind()]
+      renderPage()
+      await waitFor(() => expect(screen.getByText('Add target')).toBeTruthy())
+      fireEvent.click(screen.getByText('Add target'))
+      await waitFor(() => expect(screen.getByText('Home Assistant')).toBeTruthy())
+      fireEvent.click(screen.getByText('Home Assistant'))
+      await waitFor(() => expect(screen.getByTestId('stub-values')).toBeTruthy())
+    }
+
+    it('selects the first broker once the list answered, and names the target after the device', async () => {
+      mockBrokers = [{ id: 'b-1', kind: 'ha', name: 'One' }]
+      mockDiscovered = [{ value: 'mobile_app_pixel_7', label: 'Pixel 7' }]
+      await openForm()
+      await waitFor(() =>
+        expect(screen.getByTestId('stub-values').textContent).toContain('"brokerId":"b-1"'),
+      )
+    })
+
+    const nameInput = (): HTMLInputElement =>
+      screen.getByText('Name').closest('div')?.querySelector('input') as HTMLInputElement
+
+    it('names the target "<notifier> — <device>" and stops once the operator typed a name', async () => {
+      mockBrokers = [{ id: 'b-1', kind: 'ha', name: 'One' }]
+      mockDiscovered = [{ value: 'mobile_app_pixel_7', label: 'Pixel 7' }]
+      await openForm()
+      fireEvent.click(screen.getByText('pick device'))
+      await waitFor(() => expect(nameInput().value).toBe('Home Assistant — Pixel 7'))
+      fireEvent.change(nameInput(), { target: { value: 'My phone' } })
+      mockDiscovered = [{ value: 'mobile_app_pixel_7', label: 'Pixel 7 Pro' }]
+      fireEvent.click(screen.getByText('pick device'))
+      await waitFor(() => expect(nameInput().value).toBe('My phone'))
+    })
+
+    it('leaves the broker empty while the list has not answered', async () => {
+      mockBrokers = undefined
+      await openForm()
+      expect(screen.getByTestId('stub-values').textContent).not.toContain('brokerId')
     })
   })
 })

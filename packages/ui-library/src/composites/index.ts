@@ -541,3 +541,9 @@ export * from './charts/index.js'
 
 // --- Device history views (D850, D896) ---
 export * from './device-history/index.js'
+
+export {
+  useDiscoveredOptions,
+  type DiscoveredOption,
+  type DiscoveredOptionsState,
+} from './config-discovered-select-field'

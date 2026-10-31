@@ -143,6 +143,11 @@ fi
 if git diff --cached --name-only | grep -qE '^(packages|server)/[^/]+/src/.*\.[cm]?[jt]sx?$'; then
   npx tsx scripts/check-src-imports-stay-in-package.ts || exit 1
 fi
+# A native form control in an admin or addon page: the library owns them. Pinned
+# per file in `scripts/native-form-controls-baseline.json`. <1 s.
+if git diff --cached --name-only | grep -qE '^packages/addon-[^/]+/src/.*\.tsx$|^scripts/native-form-controls-baseline\.json$'; then
+  npx tsx scripts/check-no-native-form-controls.ts || exit 1
+fi
 
 # ── No internal decision ids in text an operator reads ─────────────────────
 # Help text, labels, error messages, schema descriptions, locale files and
