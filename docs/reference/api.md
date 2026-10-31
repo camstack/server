@@ -3062,7 +3062,7 @@
 
 ### `lock-control` → `lockControl.*`
 
-- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:39`
+- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:79`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lock`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILockControlProvider`

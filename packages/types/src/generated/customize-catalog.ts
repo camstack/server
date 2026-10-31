@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 7 caps. Field keys are `runtimeState` paths. No Zod.
+ * 8 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -256,6 +256,59 @@ export const CAP_CUSTOMIZE_CATALOG = {
         counterPath: 'pressCountSinceStart',
         highWater: 'composer-advance',
         debounceMs: 2000,
+      },
+    ],
+  },
+  'lock-control': {
+    version: 1,
+    targets: [
+      {
+        id: 'door-contact',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Lock],
+        apply: 'replace',
+        vocabularyCap: 'lock-control',
+        vocabularyStateField: 'state',
+        sources: [
+          {
+            kind: 'binary',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        path: 'state',
+        override: {
+          whenSourceTrue: 'door-open',
+          unlessNative: [
+            'jammed',
+          ],
+        },
+        valueKind: 'enum',
+        nullable: false,
+        enumValues: [
+          'locked',
+          'unlocked',
+          'locking',
+          'unlocking',
+          'jammed',
+          'door-open',
+        ],
+      },
+    ],
+    overridable: [
+      {
+        path: 'state',
+        by: 'door-contact',
       },
     ],
   },

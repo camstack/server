@@ -10,12 +10,36 @@ import type { DeviceType } from '../device/device-type.js'
 
 export type CustomizeCardinality = 'scalar' | 'keyedArray' | 'event' | 'config'
 export type CustomizeValueKind = 'boolean' | 'number' | 'string' | 'enum'
-/** An extension is offered only when the device lacks the capability (D944). */
-export type CustomizeApplyMode = 'add'
+/**
+ * `add`: an extension is offered only when the device lacks the capability (D944).
+ * `replace`: the extension replaces a NATIVE field, and only a field the cap
+ * lists in `overridable` for this very target (D984) — never a free override.
+ */
+export type CustomizeApplyMode = 'add' | 'replace'
+
+/** A native field a named extension of the same cap may replace. The only door to `apply: 'replace'`. */
+export interface CustomizeOverridable {
+  /** Top-level state field of the cap's runtime slice. */
+  readonly path: string
+  /** The id of the scalar target allowed to replace it. */
+  readonly by: string
+}
 
 export interface CapabilityCustomizeSpec {
   readonly version: 1
   readonly targets: readonly CapabilityCustomizeTarget[]
+  /** Native fields an extension may replace; absent means none (D944 stays whole). */
+  readonly overridable?: readonly CustomizeOverridable[]
+}
+
+/**
+ * How a replace target derives the field from its boolean source and the
+ * NATIVE value: a native value in `unlessNative` wins, else a true source
+ * yields `value`, else the native value stays. One rule, no cap named.
+ */
+export interface CustomizeOverrideRule {
+  readonly whenSourceTrue: string
+  readonly unlessNative: readonly string[]
 }
 
 export type CapabilityCustomizeTarget =
@@ -182,6 +206,8 @@ export interface CustomizeTransitionTimeCompanion {
 export interface ScalarCustomizeTarget extends CustomizeTargetBase {
   readonly cardinality: 'scalar'
   readonly path: string
+  /** Present exactly on a `replace` target: how the source and the native value combine. */
+  readonly override?: CustomizeOverrideRule
   readonly sources: readonly CustomizeSourceSpec[]
   readonly companions?: readonly CustomizeCompanion[]
 }

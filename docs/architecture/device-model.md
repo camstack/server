@@ -593,6 +593,17 @@ scalar target per reading, sharing one stored feature (`scalar-merge.ts`). Every
 Customize source selector suggests the host's container siblings that fit
 (`siblingSuggestions`), with no extension named.
 
+### A lock reports an open door (D984)
+
+[D984](../decisions/adr-0984-a-cap-may-declare-a-native-field-overridable-by-a-named-customize-extension.md).
+A cap lists `customize.overridable: [{ path, by }]` to let one Customize target
+REPLACE a native field; nothing else may. `lock-control` lists `state` for the
+`door-contact` target: while the linked contact reads open, the lock's real
+reported state is `door-open` (a native `jammed` wins), written through the
+composer's claim and merged at the hub. `lock()` is refused at dispatch while the
+door is open (the D963 redirect, composed with the media-player one in
+core-blocks); `unlock()` never is.
+
 ### Helpers: a group is a template, not an expression
 
 [D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md).

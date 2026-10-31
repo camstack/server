@@ -94,7 +94,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'batteryLevel': { kind: 'gauge', unit: '%', deadband: 2 },
   },
   'lock-control': {
-    'state': { kind: 'enum', values: ['locked', 'unlocked', 'locking', 'unlocking', 'jammed'] },
+    'state': { kind: 'enum', values: ['locked', 'unlocked', 'locking', 'unlocking', 'jammed', 'door-open'] },
   },
   'media-player': {
     'volumeLevel': { kind: 'gauge', unit: '%', deadband: 1 },

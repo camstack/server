@@ -672,6 +672,11 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
             label: t('Jammed', 'Inceppata'),
             phrase: t('When {device} jams', 'Quando {device} si inceppa'),
           },
+          {
+            value: 'door-open',
+            label: t('Door open', 'Porta aperta'),
+            phrase: t('When the door of {device} opens', 'Quando la porta di {device} si apre'),
+          },
         ],
         icon: 'lock',
       },

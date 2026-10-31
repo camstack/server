@@ -56,6 +56,9 @@ export function projectCustomize(view: CustomizeCapView): CustomizeCatalogEntry 
   const entry = {
     version: 1 as const,
     targets: spec.targets.map((target) => projectTarget(view, target, runtime)),
+    ...(spec.overridable === undefined || spec.overridable.length === 0
+      ? {}
+      : { overridable: spec.overridable }),
   }
   assertProjectedParameters(view.capName, spec, entry)
   return entry
@@ -106,6 +109,7 @@ function projectScalar(
     ...identity(view, target),
     cardinality: 'scalar',
     path: target.path,
+    ...(target.override === undefined ? {} : { override: target.override }),
     valueKind: hit.kind,
     nullable: hit.nullable,
     ...listedEnums(hit),

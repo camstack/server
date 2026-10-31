@@ -66,6 +66,7 @@ export type CustomizeViolationRule =
   | 'event-claims-scalar'
   | 'unknown-config-method'
   | 'bad-config-method'
+  | 'bad-override'
 
 export interface CustomizeViolation {
   readonly capName: string
@@ -199,10 +200,67 @@ function judgeScalar(
   return [
     ...shared(view, target, runtime),
     ...judgeLeafPath(view, target.id, resolved),
-    ...judgeValueSources(view, target.id, resolved, target.sources),
+    ...(target.override === undefined
+      ? judgeValueSources(view, target.id, resolved, target.sources)
+      : judgeOverrideSources(view, target)),
     ...judgeCompanions(view, target.id, runtime, target.companions),
-    ...judgeAddCoverage(view, target.id, runtime, target.path, target.companions),
+    ...(target.override === undefined
+      ? judgeAddCoverage(view, target.id, runtime, target.path, target.companions)
+      : []),
+    ...judgeOverride(view, target, resolved),
   ]
+}
+
+/** An override reads ONE boolean level as is: binary sources, identity only (D984). */
+function judgeOverrideSources(
+  view: CustomizeCapView,
+  target: ScalarCustomizeTarget,
+): readonly CustomizeViolation[] {
+  const ok =
+    target.sources.length > 0 &&
+    target.sources.every(
+      (source) => source.kind === 'binary' && source.transforms.every((t) => t.kind === 'identity'),
+    )
+  return ok
+    ? []
+    : [
+        fail(
+          view,
+          target.id,
+          'bad-override',
+          'an override reads a binary source with the identity transform only',
+        ),
+      ]
+}
+
+/** A `replace` target carries its override rule, an `add` target never does; every value is one the field can hold (D984). */
+function judgeOverride(
+  view: CustomizeCapView,
+  target: ScalarCustomizeTarget,
+  resolved: CustomizePathResult,
+): readonly CustomizeViolation[] {
+  if ((target.apply === 'replace') !== (target.override !== undefined)) {
+    return [
+      fail(
+        view,
+        target.id,
+        'bad-override',
+        'a replace target declares an override rule, and only a replace target does',
+      ),
+    ]
+  }
+  if (target.override === undefined || !resolved.ok) return []
+  const allowed = resolved.hit.enumValues
+  const named = [target.override.whenSourceTrue, ...target.override.unlessNative]
+  const unknown = named.filter((value) => !allowed.includes(value))
+  return unknown.map((value) =>
+    fail(
+      view,
+      target.id,
+      'bad-override',
+      `override value \`${value}\` is not a value of the field`,
+    ),
+  )
 }
 
 function judgeKeyed(

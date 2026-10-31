@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 
 /**
@@ -23,7 +24,23 @@ import { DeviceType } from '../device/device-type.js'
  * `supported_features`.
  */
 
-export const LockStateSchema = z.enum(['locked', 'unlocked', 'locking', 'unlocking', 'jammed'])
+/**
+ * `door-open` (D984): the linked door contact reads open, so the bolt cannot be
+ * thrown. It is the lock's REAL reported state, written into the mirrored slice
+ * by the door-contact Customize extension — never a provider's own value, and
+ * never a projection a reader has to compute. Precedence: a native `jammed`
+ * wins; otherwise an open contact reports `door-open` whatever the native state
+ * says (`locked` included); a closed or unknown contact leaves the native state.
+ * A `lock()` is refused while the state is `door-open`; `unlock()` never is.
+ */
+export const LockStateSchema = z.enum([
+  'locked',
+  'unlocked',
+  'locking',
+  'unlocking',
+  'jammed',
+  'door-open',
+])
 export type LockState = z.infer<typeof LockStateSchema>
 
 export const LockControlStatusSchema = z.object({
@@ -35,6 +52,29 @@ export const LockControlStatusSchema = z.object({
 })
 
 export type LockControlStatus = z.infer<typeof LockControlStatusSchema>
+
+/**
+ * "Door contact" Customize extension (D984): the ONE extension that replaces a
+ * native field. `state` is listed in `overridable` for this target, so the
+ * validator and the guard accept it and nothing else.
+ */
+const lockControlCustomize = {
+  version: 1,
+  overridable: [{ path: 'state', by: 'door-contact' }],
+  targets: [
+    {
+      id: 'door-contact',
+      cardinality: 'scalar',
+      vocabulary: { cap: 'lock-control', stateField: 'state' },
+      deviceTypes: [DeviceType.Lock],
+      apply: 'replace',
+      path: 'state',
+      override: { whenSourceTrue: 'door-open', unlessNative: ['jammed'] },
+      sources: [{ kind: 'binary', transforms: [{ kind: 'identity' }] }],
+      sourceReport: { status: 'assignment-status' },
+    },
+  ],
+} as const satisfies CapabilityCustomizeSpec
 
 export const lockControlCapability = {
   name: 'lock-control',
@@ -86,6 +126,7 @@ export const lockControlCapability = {
    * transitions.
    */
   runtimeState: LockControlStatusSchema,
+  customize: lockControlCustomize,
 
   /**
    * Runtime-state durability: **restored** — a lock left locked must still read locked.

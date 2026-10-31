@@ -27,6 +27,18 @@ export function constantExpr(value: string | number | boolean | null): string | 
   return 'null'
 }
 
+/**
+ * Canonical text of a replace target's override (D984): the field keeps its
+ * NATIVE value (`native`) when that value is one of `unlessNative`, becomes
+ * `whenSourceTrue` while the boolean source (`x`) is true, else keeps native.
+ * A null source is falsy, so an unknown source leaves the native value.
+ */
+export function overrideExpr(whenSourceTrue: string, unlessNative: readonly string[]): string {
+  const guard = unlessNative.map((value) => `native == ${JSON.stringify(value)}`).join(' || ')
+  const inner = `(x ? ${JSON.stringify(whenSourceTrue)} : native)`
+  return guard === '' ? inner.slice(1, -1) : `${guard} ? native : ${inner}`
+}
+
 export function isIdentifier(path: string): boolean {
   return IDENT.test(path)
 }

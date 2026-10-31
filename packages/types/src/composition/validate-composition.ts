@@ -9,6 +9,8 @@
  * re-runs at apply time, where the sources are the tracker's business.
  */
 import type { CapabilityDefinition } from '../capabilities/capability-definition.js'
+import type { CustomizeCatalog } from '../capabilities/customize-catalog.js'
+import { CAP_CUSTOMIZE_CATALOG } from '../generated/customize-catalog.js'
 import type { z } from 'zod'
 import type { DeviceType } from '../device/device-type.js'
 import type { ReadingQuantity } from '../units/quantity.js'
@@ -437,13 +439,33 @@ function nativeReplaceOrBlock(
   return refused(refusal)
 }
 
+const customizeCatalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
+
+/**
+ * D984: a feature may replace a NATIVE cap only when every field it writes is
+ * one the cap lists in `overridable` — the cap's own typed allow-list, read from
+ * the catalog. No items, no commands, no field outside the list; no cap is named.
+ */
+function overridesOnlyDeclared(feature: CompositionFieldsFeature): boolean {
+  const allowed = new Set((customizeCatalog[feature.cap]?.overridable ?? []).map((o) => o.path))
+  const paths = Object.keys(feature.fields)
+  return (
+    paths.length > 0 &&
+    paths.every((path) => allowed.has(path)) &&
+    feature.items === undefined &&
+    feature.commands === undefined
+  )
+}
+
 function featureTargetOf(
   target: PlanTarget,
-  cap: string,
+  feature: CompositionFieldsFeature,
   at: string,
 ): FeatureTarget | CompositionProblem {
+  const cap = feature.cap
   if (target.kind === 'new') return { mode: 'new', deviceType: target.type }
   if (isNativeCap(target.found, cap)) {
+    if (overridesOnlyDeclared(feature)) return { mode: 'replace', deviceType: target.found.type }
     return problem(
       'native-capability-replace',
       at,
@@ -478,7 +500,7 @@ export function planComposition(
         ),
       )
     }
-    const featureTarget = featureTargetOf(planTarget, feature.cap, at)
+    const featureTarget = featureTargetOf(planTarget, feature, at)
     if (isPlanProblem(featureTarget)) {
       if (!compositionFeatureEnabled(feature) || planTarget.kind !== 'existing') {
         return { problems: [], fields: [], features: [], events: [] }

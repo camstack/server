@@ -286,6 +286,7 @@ describe('customize declaration guard', () => {
       'battery',
       'consumables',
       'doorbell',
+      'lock-control',
       'motion',
       'power-meter',
       'remote',

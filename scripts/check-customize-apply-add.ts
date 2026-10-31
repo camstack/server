@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Customize apply guard (D944). An extension target is `apply: 'add'` only.
+ * Customize apply guard (D944). An extension target is `apply: 'add'`, or a `replace` its cap lists in `overridable` (D984).
  *
  * Run: npx tsx scripts/check-customize-apply-add.ts
  */
@@ -13,11 +13,14 @@ async function main(): Promise<void> {
     caps.map((cap) => ({
       capName: cap.capName,
       targets: cap.customize?.targets ?? [],
+      overridable: cap.customize?.overridable ?? [],
     })),
   )
   if (violations.length === 0) {
     // eslint-disable-next-line no-console
-    console.log(`✔ customize apply: ${caps.length} caps, every target is add`)
+    console.log(
+      `✔ customize apply: ${caps.length} caps, every target is add or a declared override`,
+    )
     return
   }
   // eslint-disable-next-line no-console

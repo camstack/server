@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A lock can link a door contact in Customize: while the door is open the lock reports the new door-open state.
+
 ## [1.2.456] - 2026-10-31
 
 ### Changed

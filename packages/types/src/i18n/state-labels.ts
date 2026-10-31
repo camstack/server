@@ -57,6 +57,7 @@ export const STATE_LABEL_KEYS = [
   'locking',
   'unlocking',
   'jammed',
+  'door-open',
   // switch / binary
   'on',
   'off',
@@ -95,6 +96,7 @@ export const STATE_LABELS: Readonly<Record<StateLabelKey, StateLabel>> = {
   locking: { en: 'Locking', it: 'In blocco' },
   unlocking: { en: 'Unlocking', it: 'In sblocco' },
   jammed: { en: 'Jammed', it: 'Inceppata' },
+  'door-open': { en: 'Door open', it: 'Porta aperta' },
   on: { en: 'On', it: 'Acceso' },
   off: { en: 'Off', it: 'Spento' },
   home: { en: 'Home', it: 'In casa' },

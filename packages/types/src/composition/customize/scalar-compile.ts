@@ -6,7 +6,10 @@ import type {
   CustomizeCatalogSource,
   CustomizeCatalogTarget,
 } from '../../capabilities/customize-catalog.js'
-import type { CustomizeCompanion } from '../../capabilities/customize-spec.js'
+import type {
+  CustomizeCompanion,
+  CustomizeOverrideRule,
+} from '../../capabilities/customize-spec.js'
 import { CAP_CUSTOMIZE_CATALOG } from '../../generated/customize-catalog.js'
 import type { CustomizeCatalog } from '../../capabilities/customize-catalog.js'
 import type {
@@ -23,6 +26,7 @@ import {
   dwellExpr,
   isIdentifier,
   linearExpr,
+  overrideExpr,
   signedToken,
   unsignedToken,
 } from './scalar-expr.js'
@@ -55,6 +59,7 @@ export function compileScalarOverride(
     return fail('unit')
   const allowed = input.draft.transform.kind === 'number' ? 'identity' : input.draft.transform.kind
   if (!source.transformKinds.includes(allowed)) return fail('transform')
+  if (target.override !== undefined) return compileOverride(input, target.path, target.override)
   const value = compileValue(input)
   if (!value.ok) return value
   const fields = compileCompanions(input, target, value.value)
@@ -62,6 +67,30 @@ export function compileScalarOverride(
   return {
     ok: true,
     value: { kind: 'fields', cap: input.draft.cap, fields: fields.value },
+  }
+}
+
+/**
+ * A replace target (D984): ONE field, derived from the boolean source and the
+ * device's own NATIVE value, which the composer reads from the shadow. No
+ * companion — the native slice keeps its own clock.
+ */
+function compileOverride(
+  input: ScalarCompileInput,
+  path: string,
+  rule: CustomizeOverrideRule,
+): CustomizeRoundTrip<CompositionFieldsFeature> {
+  if (input.sourceValueKind !== 'boolean' || input.draft.transform.kind !== 'identity') {
+    return fail('source-kind')
+  }
+  const read = fromRead(refOf(input.draft), input.draft.source.cap, input.draft.source.fieldPath)
+  const field = expression(overrideExpr(rule.whenSourceTrue, rule.unlessNative), {
+    x: read,
+    native: fromRead(input.device, input.draft.cap, path),
+  })
+  return {
+    ok: true,
+    value: { kind: 'fields', cap: input.draft.cap, fields: { [path]: field } },
   }
 }
 

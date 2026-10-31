@@ -3110,7 +3110,7 @@ Enum: `"guardrail" \| "model"`
 
 ### `LockStateSchema`
 
-Enum: `"locked" \| "unlocked" \| "locking" \| "unlocking" \| "jammed"`
+Enum: `"locked" \| "unlocked" \| "locking" \| "unlocking" \| "jammed" \| "door-open"`
 
 ### `LogChannelApplyResultSchema`
 

@@ -10,6 +10,8 @@ import type {
   CustomizeCardinality,
   CustomizeCompanion,
   CustomizeEventEdge,
+  CustomizeOverridable,
+  CustomizeOverrideRule,
   CustomizeSourceReport,
   CustomizeValueKind,
 } from './customize-spec.js'
@@ -75,6 +77,7 @@ export interface CustomizeCatalogTarget {
   readonly cardinality: CustomizeCardinality
   readonly shape?: 'pulse' | 'span'
   readonly path?: string
+  readonly override?: CustomizeOverrideRule
   readonly valueKind?: CustomizeCatalogValueKind
   readonly nullable?: boolean
   readonly enumValues?: readonly string[]
@@ -115,6 +118,8 @@ export interface CustomizeCatalogTarget {
 export interface CustomizeCatalogEntry {
   readonly version: 1
   readonly targets: readonly CustomizeCatalogTarget[]
+  /** Native fields an extension may replace (D984); absent means none. */
+  readonly overridable?: readonly CustomizeOverridable[]
 }
 
 export type CustomizeCatalog = Readonly<Record<string, CustomizeCatalogEntry>>

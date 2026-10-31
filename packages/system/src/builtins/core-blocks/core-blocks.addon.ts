@@ -39,7 +39,9 @@ import {
   remoteCapability,
   remoteLayoutComponentsCapability,
   templateCapability,
+  EventCategory,
 } from '@camstack/types'
+import { parseDeviceStateChanged } from '../shared/device-state-changed.js'
 import {
   type BlockProcessHost,
   type BlockRunnerSnapshot,
@@ -53,6 +55,8 @@ import {
 } from './scheduler/scheduler-wiring.js'
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
+import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
+import { doorSensorOf } from './lock-door-sensor.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
@@ -150,6 +154,7 @@ export class CoreBlocksAddon extends BaseAddon {
     void this.sweepRunsLedger()
     void this.migrateActionTargets()
     this.remoteRuntime = this.buildRemote(records)
+    this.installDeviceCallRedirect()
 
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
     // failure to load it must degrade the compile gate rather than the node.
@@ -199,22 +204,62 @@ export class CoreBlocksAddon extends BaseAddon {
       )
       return null
     }
-    const runtime = buildRemoteRuntime({
+    return buildRemoteRuntime({
       records,
       settings,
       api: () => this.ctx.api,
       logger: this.ctx.logger,
     })
-    // Precedence at DISPATCH (D963): the redirect lives in the registry, so it holds for every caller.
+  }
+
+  /**
+   * Precedence at DISPATCH (D963, D984): the redirect lives in the registry, so it
+   * holds for every caller. ONE slot, so the authorities compose: the remote's
+   * media-player redirect (when the remote runs) and the lock's door gate.
+   */
+  private installDeviceCallRedirect(): void {
     const registry = this.ctx.kernel?.capabilityRegistry
-    registry?.setDeviceCallRedirect(
-      remoteCallRedirect({
-        remote: runtime.remote,
-        hasNative: (deviceId) => registry.getProviderForDevice('media-player', deviceId) !== null,
-        logger: this.ctx.logger.child('remote'),
-      }),
+    if (registry === undefined) return
+    const gate = new LockDoorGate({
+      sensorOf: (deviceId) => this.doorSensorOf(deviceId),
+      logger: this.ctx.logger.child('lock-door'),
+    })
+    this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+      const data = parseDeviceStateChanged(event.data)
+      if (data !== null) gate.onStateChanged(data)
+    })
+    const runtime = this.remoteRuntime
+    registry.setDeviceCallRedirect(
+      composeRedirects([
+        ...(runtime === null
+          ? []
+          : [
+              remoteCallRedirect({
+                remote: runtime.remote,
+                hasNative: (deviceId) =>
+                  registry.getProviderForDevice('media-player', deviceId) !== null,
+                logger: this.ctx.logger.child('remote'),
+              }),
+            ]),
+        gate.redirect(),
+      ]),
     )
-    return runtime
+  }
+
+  /** The linked door sensor's name, read from the stored customization on a refusal only. */
+  private async doorSensorOf(deviceId: number): Promise<string | null> {
+    const api = this.ctx.api
+    if (!api) return null
+    return doorSensorOf(this.requireStore().list(), deviceId, {
+      find: async (ref) => {
+        const rows = await api.deviceManager.listAll.query({
+          addonId: ref.addonId,
+          projection: 'slim',
+        })
+        const row = rows.find((r) => r.stableId === ref.stableId)
+        return row === undefined ? null : { id: row.id, name: row.name }
+      },
+    })
   }
 
   private remoteRegistrations(): ProviderRegistration[] {

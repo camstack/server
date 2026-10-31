@@ -17,7 +17,7 @@ import {
   type ScalarCompileInput,
   type ScalarValueKind,
 } from './scalar-compile.js'
-import { parseDwell, parseLinear, singleFrom } from './scalar-expr.js'
+import { overrideExpr, parseDwell, parseLinear, singleFrom } from './scalar-expr.js'
 import { sameStored } from './normalize.js'
 import { ownedSlice } from './scalar-merge.js'
 import type { CustomizeStored } from './stored.js'
@@ -43,9 +43,10 @@ export function decodeScalarOverride(input: ScalarDecodeInput): ScalarDecoded | 
   const target = catalogTarget(input.cap, input.targetId)
   if (target === null || target.cardinality !== 'scalar' || target.path === undefined) return null
   if (input.feature.cap !== input.cap || input.feature.kind !== 'fields') return null
+  const value = input.feature.fields[target.path]
+  if (target.override !== undefined) return decodeOverride(input, target.override, value)
   const outputKind = scalarOutputKind(target.valueKind)
   if (outputKind === null) return null
-  const value = input.feature.fields[target.path]
   const read = readValue(value, outputKind, input.cap, input.targetId)
   if (read === null) return null
   const apply = inferApply(target, input.feature.fields)
@@ -53,6 +54,37 @@ export function decodeScalarOverride(input: ScalarDecodeInput): ScalarDecoded | 
   const changedAtField = inferChangedAt(target, input.feature.fields, read)
   const sourceUnit = unitFor(target, read.sourceValueKind, read.draft.source.cap)
   const decoded: ScalarDecoded = { ...read, apply, changedAtField, sourceUnit }
+  return reproduces(decoded, input.device, input.feature) ? decoded : null
+}
+
+/** A replace target reads back only its own canonical text, with its one source bound to `x`. */
+function decodeOverride(
+  input: ScalarDecodeInput,
+  rule: NonNullable<CustomizeCatalogTarget['override']>,
+  field: CompositionFieldSource | undefined,
+): ScalarDecoded | null {
+  if (field?.kind !== 'expression') return null
+  if (field.expr !== overrideExpr(rule.whenSourceTrue, rule.unlessNative)) return null
+  const bound = field.bindings['x']
+  if (bound?.kind !== 'from') return null
+  const decoded: ScalarDecoded = {
+    draft: {
+      kind: 'scalar',
+      cap: input.cap,
+      targetId: input.targetId,
+      source: {
+        addonId: bound.source.addonId,
+        stableId: bound.source.stableId,
+        cap: bound.cap,
+        fieldPath: bound.fieldPath,
+      },
+      transform: { kind: 'identity' },
+    },
+    apply: 'replace',
+    sourceValueKind: 'boolean',
+    changedAtField: null,
+    sourceUnit: null,
+  }
   return reproduces(decoded, input.device, input.feature) ? decoded : null
 }
 
