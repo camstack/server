@@ -22,7 +22,11 @@ function context(hub: () => Promise<ConnectOutcome>): McpContext {
 }
 
 async function connect(ctx: McpContext): Promise<Client> {
-  const server = createPublicServer({ toolsets: ['ops'], context: ctx, versionPreflight: false })
+  const server = createPublicServer({
+    toolsets: ['ops'],
+    context: ctx,
+    versionPreflight: false,
+  })
   const [a, b] = InMemoryTransport.createLinkedPair()
   await server.connect(b)
   const client = new Client({ name: 't', version: '1' })

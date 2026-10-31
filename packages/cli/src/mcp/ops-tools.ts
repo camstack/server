@@ -16,7 +16,14 @@ import { opsLogs } from './ops-logs.js'
 import { opsStatus } from './ops-status.js'
 import { opsUpdateApply, UPDATE_APPLY_TOOL } from './ops-update-apply.js'
 import { opsUpdateCheck } from './ops-update-check.js'
-import { formatWarning, probeVersions, type VersionProbe } from './version-probe.js'
+import {
+  allCurrent,
+  formatWarning,
+  notChecked,
+  probeVersions,
+  unmeasured,
+  type VersionProbe,
+} from './version-probe.js'
 import { VERSION_CHECK_TOOL } from './version-preflight.js'
 
 export { noSessionResult, type NoSessionResult }
@@ -56,19 +63,30 @@ export async function whoami(ctx: McpContext): Promise<WhoamiResult | NoSessionR
   }
 }
 
-/** `version_check`'s answer: the probe plus its one-line summary. */
+/** `version_check`'s answer: the per-part verdicts plus an honest one-line summary. */
 export interface VersionCheckResult extends VersionProbe {
-  readonly status: 'ok' | 'unavailable'
+  /** `ok` only when every part that applies was measured; else `incomplete`. */
+  readonly status: 'ok' | 'incomplete'
   readonly summary: string
+  readonly unmeasured: readonly string[]
+  readonly notChecked: readonly string[]
 }
 
 function versionCheckResult(probe: VersionProbe): VersionCheckResult {
+  const missing = unmeasured(probe)
+  const skipped = notChecked(probe)
   const warning = formatWarning(probe)
-  const unreadable = probe.unavailable.length > 0
+  let summary: string
+  if (warning !== null) summary = warning
+  else if (allCurrent(probe)) summary = 'everything is up to date'
+  else
+    summary = `nothing known to be outdated, but not everything was checked: ${[...missing, ...skipped].join('; ')}`
   return {
     ...probe,
-    status: warning === null && unreadable ? 'unavailable' : 'ok',
-    summary: warning ?? (unreadable ? 'version check incomplete' : 'everything is up to date'),
+    status: missing.length === 0 ? 'ok' : 'incomplete',
+    summary,
+    unmeasured: missing,
+    notChecked: skipped,
   }
 }
 

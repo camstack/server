@@ -66,10 +66,9 @@ export class VersionPreflight {
       .probe()
       .catch(
         (err: unknown): VersionProbe => ({
-          server: null,
-          addons: null,
-          cli: null,
-          unavailable: [errorText(err)],
+          server: { state: 'unknown', reason: errorText(err) },
+          addons: { state: 'unknown', reason: errorText(err) },
+          cli: { state: 'unknown', reason: errorText(err) },
         }),
       )
       .then((probe) => {

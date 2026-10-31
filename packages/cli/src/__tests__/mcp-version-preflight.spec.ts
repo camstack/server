@@ -21,16 +21,23 @@ const CTX: McpContext = {
 }
 
 const CURRENT: VersionProbe = {
-  server: null,
-  addons: null,
-  cli: null,
-  unavailable: [],
+  server: { state: 'current', running: '1.2.714', latest: '1.2.714' },
+  addons: { state: 'current', count: 0, names: [] },
+  cli: { state: 'current', installed: '1.2.230', latest: '1.2.230' },
 }
 const OUTDATED: VersionProbe = {
-  server: { running: '1.2.700', latest: '1.2.714' },
-  addons: { count: 3, names: ['auth', 'reolink', 'hikvision'] },
-  cli: { installed: '1.2.212', latest: '1.2.230' },
-  unavailable: [],
+  server: { state: 'behind', running: '1.2.700', latest: '1.2.714' },
+  addons: {
+    state: 'behind',
+    count: 3,
+    names: ['auth', 'reolink', 'hikvision'],
+  },
+  cli: { state: 'behind', installed: '1.2.212', latest: '1.2.230' },
+}
+const UNKNOWN_503: VersionProbe = {
+  server: { state: 'not-checked', reason: 'no hub session' },
+  addons: { state: 'not-checked', reason: 'no hub session' },
+  cli: { state: 'unknown', reason: 'registry answered 503' },
 }
 
 interface Harness {
@@ -89,7 +96,7 @@ describe('version preflight', () => {
   it('names the first three addons and an ellipsis when there are more', async () => {
     const h = await harness(async () => ({
       ...OUTDATED,
-      addons: { count: 5, names: ['a', 'b', 'c'] },
+      addons: { state: 'behind', count: 5, names: ['a', 'b', 'c'] },
     }))
     expect(texts(await call(h))[0]).toContain('5 addons outdated (a, b, c, …)')
   })
@@ -124,12 +131,9 @@ describe('version preflight', () => {
   })
 
   it('a probe failure says so once per session, then stays silent', async () => {
-    const h = await harness(async () => ({
-      ...CURRENT,
-      unavailable: ['registry answered 503'],
-    }))
+    const h = await harness(async () => UNKNOWN_503)
     const first = texts(await call(h))
-    expect(first[0]).toBe('version check unavailable: registry answered 503')
+    expect(first[0]).toBe('version check unavailable: CLI/MCP: registry answered 503')
     expect(first[1]).toBe('real answer')
     h.clock.now += 20 * 60_000
     expect(texts(await call(h))).toEqual(['real answer'])
@@ -140,7 +144,9 @@ describe('version preflight', () => {
       throw new Error('boom')
     })
     const out = texts(await call(h))
-    expect(out[0]).toBe('version check unavailable: boom')
+    expect(out[0]).toBe(
+      'version check unavailable: hub server: boom; hub addons: boom; CLI/MCP: boom',
+    )
     expect(out[1]).toBe('real answer')
   })
 
@@ -167,6 +173,22 @@ describe('version preflight', () => {
     expect(out).toHaveLength(1)
     expect(out[0]?.startsWith('{')).toBe(true)
     expect(out[0]).toContain('1.2.714')
+  })
+
+  it('an unmeasured part is never reported as up to date', async () => {
+    const h = await harness(async () => UNKNOWN_503)
+    const body = texts(await call(h, 'version_check'))[0] ?? ''
+    expect(body).not.toContain('up to date')
+    expect(body).toContain('"status": "incomplete"')
+    expect(body).toContain('registry answered 503')
+    expect(body).toContain('no hub session')
+  })
+
+  it('only a fully measured, current probe says up to date', async () => {
+    const h = await harness(async () => CURRENT)
+    const body = texts(await call(h, 'version_check'))[0] ?? ''
+    expect(body).toContain('everything is up to date')
+    expect(body).toContain('"status": "ok"')
   })
 
   it('leaves a tool error result as it is, with the warning in front', async () => {

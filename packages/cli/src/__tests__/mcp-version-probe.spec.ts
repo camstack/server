@@ -33,12 +33,13 @@ describe('probeVersions', () => {
     const probe = await probeVersions(
       ctx({ ok: false, reason: 'no-session', message: 'm', action: 'a' }, '1.1.0'),
     )
-    expect(probe).toEqual({
-      server: null,
-      addons: null,
-      cli: { installed: '1.0.0', latest: '1.1.0' },
-      unavailable: [],
+    expect(probe.cli).toEqual({
+      state: 'behind',
+      installed: '1.0.0',
+      latest: '1.1.0',
     })
+    expect(probe.server.state).toBe('not-checked')
+    expect(probe.addons.state).toBe('not-checked')
   })
 
   it('reads the hub server behind its latest and the first three addons', async () => {
@@ -59,9 +60,17 @@ describe('probeVersions', () => {
       },
     }
     const probe = await probeVersions(ctx(connected(client), '1.0.0'))
-    expect(probe.server).toEqual({ running: '1.2.700', latest: '1.2.714' })
-    expect(probe.addons).toEqual({ count: 4, names: ['a', 'b', 'c'] })
-    expect(probe.cli).toBeNull()
+    expect(probe.server).toEqual({
+      state: 'behind',
+      running: '1.2.700',
+      latest: '1.2.714',
+    })
+    expect(probe.addons).toEqual({
+      state: 'behind',
+      count: 4,
+      names: ['a', 'b', 'c'],
+    })
+    expect(probe.cli.state).toBe('current')
     expect(calls).not.toContain('nodes.topology')
   })
 
@@ -72,7 +81,23 @@ describe('probeVersions', () => {
       },
     }
     const probe = await probeVersions(ctx(connected(client), '1.0.0'))
-    expect(probe.server).toBeNull()
-    expect(probe.unavailable.join(' ')).toContain('hub down')
+    expect(probe.server).toMatchObject({ state: 'unknown' })
+    expect(JSON.stringify(probe)).toContain('hub down')
+  })
+
+  it('when every source answers nothing, no part is current', async () => {
+    const client: HubClient = {
+      async call() {
+        return null
+      },
+    }
+    const probe = await probeVersions({
+      ...ctx(connected(client), '1.0.0'),
+      fetch: async () => new Response('{}', { status: 500 }),
+    })
+    for (const part of [probe.server, probe.addons, probe.cli]) {
+      expect(part.state).toBe('unknown')
+      expect('reason' in part && part.reason.length > 0).toBe(true)
+    }
   })
 })
