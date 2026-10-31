@@ -80,7 +80,7 @@ export interface SystemProxy {
   readonly actionSource: Pick<InferProvider<typeof actionSourceCapability>, 'listActions' | 'runAction' | 'stopAction'>
   readonly addonPages: Pick<InferProvider<typeof addonPagesCapability>, 'listPages'>
   readonly addons: Pick<InferProvider<typeof addonsCapability>, 'list' | 'getLogs' | 'listPackages' | 'installPackage' | 'installFromWorkspace' | 'isWorkspaceAvailable' | 'listWorkspacePackages' | 'uninstallPackage' | 'listInstallations' | 'reloadPackages' | 'searchAvailable' | 'listUpdates' | 'updatePackage' | 'rollbackPackage' | 'forceRefresh' | 'restartServer' | 'getLastRestart' | 'listFrameworkPackages' | 'listCapabilityProviders' | 'setCapabilityProviderEnabled' | 'getVersions' | 'getPackageDocs' | 'restartAddon' | 'retryLoad' | 'getAutoUpdateSettings' | 'setAutoUpdateSettings' | 'getAddonAutoUpdate' | 'setAddonAutoUpdate' | 'applyAutoUpdateToAll' | 'custom' | 'startJob' | 'getJob' | 'listJobs' | 'cancelJob' | 'onAddonLogs'>
-  readonly addonSettings: Pick<InferProvider<typeof addonSettingsCapability>, 'getGlobalSettings' | 'updateGlobalSettings' | 'getIntegrationSettings' | 'getDeclaredSettingsKeys' | 'unsetStoredSettingsKeys'>
+  readonly addonSettings: Pick<InferProvider<typeof addonSettingsCapability>, 'getGlobalSettings' | 'updateGlobalSettings' | 'getIntegrationSettings' | 'getIntegrationFormSchema' | 'getDeclaredSettingsKeys' | 'unsetStoredSettingsKeys'>
   readonly addonWidgets: Pick<InferProvider<typeof addonWidgetsCapability>, 'listWidgets'>
   readonly alerts: Pick<InferProvider<typeof alertsCapability>, 'emit' | 'update' | 'list' | 'getUnreadCount' | 'markRead' | 'markAllRead' | 'dismiss'>
   readonly audioAnalyzer: Pick<InferProvider<typeof audioAnalyzerCapability>, 'analyseChunk' | 'classify' | 'attachDevice' | 'isReady' | 'dispose' | 'reprobeAudioEngine'>
@@ -217,6 +217,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getGlobalSettings: (input?: unknown) => dispatch('addonSettings', 'getGlobalSettings', 'query', input),
     updateGlobalSettings: (input?: unknown) => dispatch('addonSettings', 'updateGlobalSettings', 'mutation', input),
     getIntegrationSettings: (input?: unknown) => dispatch('addonSettings', 'getIntegrationSettings', 'query', input),
+    getIntegrationFormSchema: (input?: unknown) => dispatch('addonSettings', 'getIntegrationFormSchema', 'query', input),
     getDeclaredSettingsKeys: (input?: unknown) => dispatch('addonSettings', 'getDeclaredSettingsKeys', 'query', input),
     unsetStoredSettingsKeys: (input?: unknown) => dispatch('addonSettings', 'unsetStoredSettingsKeys', 'mutation', input),
   }

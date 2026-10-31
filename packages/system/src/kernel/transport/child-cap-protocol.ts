@@ -262,6 +262,7 @@ export type AddonSettingsMethod =
   | 'getGlobalSettings'
   | 'updateGlobalSettings'
   | 'getIntegrationSettings'
+  | 'getIntegrationFormSchema'
   | 'getDeviceSettings'
   | 'updateDeviceSettings'
   | 'getDeclaredSettingsKeys'

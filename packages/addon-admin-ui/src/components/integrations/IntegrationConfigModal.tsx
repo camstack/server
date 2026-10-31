@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  useAddonSettingsGetGlobalSettings,
+  useAddonSettingsGetIntegrationFormSchema,
   useIntegrationsGetSettings,
   useIntegrationsSetSettings,
 } from '@camstack/ui-library'
@@ -121,10 +121,11 @@ export function IntegrationConfigModal({
     return typeof raw === 'string' ? raw : null
   }, [settings])
 
-  const { data: schemaWithValues, isLoading: schemaLoading } = useAddonSettingsGetGlobalSettings(
-    { addonId, nodeId: 'hub' },
-    { enabled: mode === 'account' },
-  )
+  const { data: schemaWithValues, isLoading: schemaLoading } =
+    useAddonSettingsGetIntegrationFormSchema(
+      { addonId, nodeId: 'hub', instance: { integrationId, mode } },
+      { enabled: mode === 'account' },
+    )
   const configSchema = useMemo<ConfigUISchema | null>(
     () =>
       schemaWithValues ? stripValuesFromSchema(schemaWithValues as ConfigUISchemaWithValues) : null,

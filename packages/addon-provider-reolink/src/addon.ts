@@ -23,6 +23,7 @@ import type {
   ProviderRegistration,
   SavedDevice,
   SystemEvent,
+  IntegrationInstanceRef,
 } from '@camstack/types'
 import {
   BaseDeviceProvider,
@@ -78,7 +79,7 @@ import {
   scanReolinkSubnets,
   subnetsFromParams,
 } from './reolink-subnet-scan.js'
-import { buildHubConnectionSections } from './hub-connection.js'
+import { buildHubInstanceSchema, isHubIntegration } from './hub-connection.js'
 import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
 import { createReolinkHubManager, type ReolinkHubManager } from './reolink-hub-manager.js'
 import {
@@ -781,8 +782,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     const recommendedHost = listLanHosts()[0] ?? '127.0.0.1'
     return {
       sections: [
-        // Only an integration that IS one NVR / Home Hub fills these in (D985).
-        ...buildHubConnectionSections().sections,
         ...buildEmailPushSettingsSchema(recommendedHost).sections,
         ...buildBaichuanWebhookSettingsSchema(recommendedHost).sections,
         // The clip-catalog refresh DEFAULT. Per-camera overrides live on the
@@ -790,6 +789,35 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         // `resolveClipCatalogRefreshMinutes` — reset == unset == this value.
         ...buildClipRefreshSettingsSchema().sections,
       ],
+    }
+  }
+
+  /**
+   * Per-instance form (D985): an NVR / Home Hub integration shows its connection only; the
+   * default integration keeps the full schema (`null`). A create wizard has no id yet and is
+   * always setting up a NEW instance — the default one already exists — so it gets the hub form.
+   */
+  protected override async integrationSettingsSchema(
+    instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
+    if (instance.integrationId === null) return buildHubInstanceSchema()
+    try {
+      const [integration, settings] = await Promise.all([
+        this.ctx.api.integrations.get.query({ id: instance.integrationId }),
+        this.ctx.api.integrations.getSettings.query({ id: instance.integrationId }),
+      ])
+      return isHubIntegration({
+        originStableId: integration.originStableId,
+        info: integration.info,
+        settings,
+      })
+        ? buildHubInstanceSchema()
+        : null
+    } catch (err) {
+      this.ctx.logger.warn('Reolink integration form: instance lookup failed — full schema shown', {
+        meta: { integrationId: instance.integrationId, error: errMsg(err) },
+      })
+      return null
     }
   }
 

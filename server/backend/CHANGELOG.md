@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Creating a second instance of a single-instance integration is refused with a typed conflict
+- Integration wizard and settings page ask the addon for the form of the instance being configured
 
 ## [1.2.710] - 2026-10-31
 

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { IntegrationInstanceRefSchema } from '../addon/integration-instance-ref.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 
 // ── Zod schemas for ConfigUISchemaWithValues ─────────────────────────
@@ -118,6 +119,19 @@ export const addonSettingsCapability = {
     // than documenting that nobody should call it.
     getIntegrationSettings: method(
       z.object({ addonId: z.string(), nodeId: z.string().optional() }),
+      SettingsSchemaWithValuesSchema.nullable(),
+    ),
+
+    // The form of ONE integration instance — the create wizard (`integrationId: null`) and the
+    // edit page both ask here instead of `getGlobalSettings`. An addon with a per-instance schema
+    // (`BaseAddon.integrationSettingsSchema`) answers with it; every other addon answers with its
+    // global schema, exactly as before. Read-only: the values come from `integrations.getSettings`.
+    getIntegrationFormSchema: method(
+      z.object({
+        addonId: z.string(),
+        nodeId: z.string().optional(),
+        instance: IntegrationInstanceRefSchema,
+      }),
       SettingsSchemaWithValuesSchema.nullable(),
     ),
 

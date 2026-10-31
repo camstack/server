@@ -181,3 +181,26 @@ export function buildHubConnectionSections(): ConfigUISchema {
     ],
   }
 }
+
+/** What tells a hub integration from the default one. */
+export interface HubIntegrationEvidence {
+  readonly originStableId?: string | undefined
+  readonly info: Readonly<Record<string, unknown>>
+  readonly settings: Readonly<Record<string, unknown>>
+}
+
+/**
+ * `true` for an integration that IS one NVR / Home Hub: it was set up from a hub candidate, was
+ * migrated from a Hub device, or carries a host. The default integration (standalone cameras,
+ * email push, webhook, clips) has none of the three.
+ */
+export function isHubIntegration(evidence: HubIntegrationEvidence): boolean {
+  if (evidence.originStableId?.startsWith('reolink-hub-') === true) return true
+  if (evidence.info['migratedFromHubDeviceId'] !== undefined) return true
+  return stringValue(evidence.settings['host']).length > 0
+}
+
+/** The form of a hub integration: its connection and debug sections, nothing of the addon's own. */
+export function buildHubInstanceSchema(): ConfigUISchema {
+  return buildHubConnectionSections()
+}

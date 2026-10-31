@@ -484,6 +484,7 @@ export const NON_ADMIN_CONFIG_REDACTED_METHODS: ReadonlyMap<string, ConfigRedact
   // ── Addon settings forms (D634) — hydrated with the STORED secret ──
   ['addonSettings.getGlobalSettings', redactSettingsForm],
   ['addonSettings.getIntegrationSettings', redactSettingsForm],
+  ['addonSettings.getIntegrationFormSchema', redactSettingsForm],
   ['addonSettings.getDeviceSettings', redactSettingsForm],
   ['deviceExport.getStatus', redactExportSetup],
   // ── Round-3 sweep: the per-device device-ops twins and the listings ──

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- An integration instance can have its own settings form: a Reolink NVR / Home Hub shows its connection only, the default integration keeps the full form
 - The lock hero card shows the door-open state.
 - The lock card shows the linked door contact (open, closed or unknown) with its name, and Lock is disabled with a reason while the door is open
 

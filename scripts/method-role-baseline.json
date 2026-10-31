@@ -22,6 +22,7 @@
   "addonSettings.getDeclaredSettingsKeys": "admin",
   "addonSettings.getDeviceSettings": "admin",
   "addonSettings.getGlobalSettings": "admin",
+  "addonSettings.getIntegrationFormSchema": "admin",
   "addonSettings.getIntegrationSettings": "admin",
   "addonSettings.unsetStoredSettingsKeys": "admin",
   "addonSettings.updateDeviceSettings": "admin",

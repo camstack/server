@@ -10,7 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  useAddonSettingsGetGlobalSettings,
+  useAddonSettingsGetIntegrationFormSchema,
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverDevices,
   useDeviceManagerDiscoveryProviders,
@@ -146,8 +146,20 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   // a local editing state seeded from user input. When the addon has
   // no addon-level settings we pass `null` and the form renders a
   // bare name input only.
-  const { data: configSchemaWithValues } = useAddonSettingsGetGlobalSettings(
-    { addonId: selectedAddonId ?? '', nodeId: 'hub' },
+  // The wizard always sets up a NEW instance (no id yet): the addon may answer with the form of
+  // that kind of instance (e.g. a hub's connection only), else its global schema.
+  const selectedMode =
+    availableTypes.data?.find((row) => row.addonId === selectedAddonId)?.mode ?? 'account'
+  const { data: configSchemaWithValues } = useAddonSettingsGetIntegrationFormSchema(
+    {
+      addonId: selectedAddonId ?? '',
+      nodeId: 'hub',
+      instance: {
+        integrationId: null,
+        mode: selectedMode,
+        ...(seed?.originStableId !== undefined ? { candidateStableId: seed.originStableId } : {}),
+      },
+    },
     { enabled: selectedAddonId != null },
   )
   const configSchema = useMemo<ConfigUISchema | null>(

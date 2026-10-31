@@ -132,7 +132,7 @@ Singleton or collection providers, addressed without a device.
 | `addon-pages` | 1 | — | — | — | — | `addon-pages-aggregator` |
 | `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `model-studio` `osd-manager` `provider-homematic` `training` |
 | `addon-routes` | 2 | — | — | — | ✓ | `auth-oidc` `export-alexa` `export-google` `google-services` `import-alexa` `notifiers` `provider-homeassistant` `homeassistant-export` |
-| `addon-settings` | 7 | — | — | — | — | — |
+| `addon-settings` | 8 | — | — | — | — | — |
 | `addon-widgets` | 1 | — | — | — | — | `addon-widgets-aggregator` |
 | `addon-widgets-source` | 1 | — | — | — | ✓ | `auth-webauthn` `stream-broker` `pipeline-orchestrator` `pipeline-analytics` |
 | `addons` | 35 | — | — | — | — | — |

@@ -24,6 +24,8 @@ export {
 export type { CapabilitiesAccess } from './addon/base-addon.js'
 export { BaseAddon, classifyStoreError, normalizeAddonInitResult } from './addon/base-addon.js'
 export { normalizeNodeId } from './addon/per-node-store.js'
+export { IntegrationInstanceRefSchema } from './addon/integration-instance-ref.js'
+export type { IntegrationInstanceRef } from './addon/integration-instance-ref.js'
 export type {
   AddonRouteInvokeRequest,
   AddonRouteReplyEnvelope,

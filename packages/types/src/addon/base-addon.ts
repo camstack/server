@@ -1,4 +1,5 @@
 import type { ZodType } from 'zod'
+import type { IntegrationInstanceRef } from './integration-instance-ref.js'
 import { EventCategory } from '../enums/event-category.js'
 import type {
   AddonContext,
@@ -471,6 +472,33 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    *     alternative — skip it — turns a rename into a surface that quietly
    *     empties, which looks exactly like an addon with nothing to configure.
    */
+  /**
+   * The form schema of ONE integration instance, or `null` to use {@link globalSettingsSchema}.
+   *
+   * Override it only when an `instanceMode: multiple` addon's instances differ: an NVR integration
+   * needs its connection fields, the default integration the addon's own sections. It is the
+   * SHAPE of the form only — the values live in `integrations.getSettings`, and the write path is
+   * unchanged (`integrations.setSettings` for an account integration).
+   */
+  protected async integrationSettingsSchema(
+    _instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
+    return null
+  }
+
+  /**
+   * What the create wizard and the integration edit page render for one instance: the addon's
+   * per-instance schema when it declares one, else its global schema (what they always showed).
+   */
+  async getIntegrationFormSchema(
+    instance: IntegrationInstanceRef,
+    nodeId?: string,
+  ): Promise<ConfigUISchemaWithValues | null> {
+    const scoped = await this.integrationSettingsSchema(instance)
+    if (scoped === null) return this.getGlobalSettings(undefined, undefined, nodeId)
+    return hydrateSchema(scoped, {}, { inlineSecretsAsViews: true })
+  }
+
   async getIntegrationSettings(nodeId?: string): Promise<ConfigUISchemaWithValues | null> {
     const declared = this.integrationSettingSections()
     if (declared.length === 0) return null

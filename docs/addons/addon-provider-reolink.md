@@ -67,8 +67,11 @@ nobody offline.
   `port`; a migrated hub carries its `rtspPort` if it had one, else 554.
 - Changes to an integration's connection settings apply at the next reconcile (the
   60 s pass or an integration lifecycle event); there is no settings-changed event.
-- A hub-integration form also shows the addon's global sections (email, webhook,
-  clips) — the account wizard renders the whole `globalSettingsSchema`.
+- A hub integration's form (the create wizard, and the edit page of a migrated or
+  hub-born instance) is the connection only — host, port, rtspPort, username,
+  password, plus the hub debug section — through `integrationSettingsSchema`. The
+  default integration keeps the full global schema (email, webhook, clips). An
+  instance that cannot be read falls back to the full schema.
 
 ## Passive contact, and where a standalone camera gets none
 

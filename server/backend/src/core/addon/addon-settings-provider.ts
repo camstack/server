@@ -9,7 +9,11 @@
  * panels went empty after the UDS migration; that path is gone.
  */
 import { z } from 'zod'
-import type { ICamstackAddon, ConfigUISchemaWithValues } from '@camstack/types'
+import type {
+  ICamstackAddon,
+  ConfigUISchemaWithValues,
+  IntegrationInstanceRef,
+} from '@camstack/types'
 import type { IAddonSettingsProvider } from '@camstack/types'
 import type { AddonSettingsMethod } from '@camstack/system'
 import type { AddonCallGateway } from './addon-call-gateway.js'
@@ -26,6 +30,12 @@ interface AddonIdInput {
   readonly nodeId?: string
   readonly overlay?: Record<string, unknown>
   readonly cap?: string
+}
+
+interface IntegrationFormInput {
+  readonly addonId: string
+  readonly nodeId?: string
+  readonly instance: IntegrationInstanceRef
 }
 
 interface AddonPatchInput {
@@ -216,6 +226,28 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
         input.addonId,
         'getIntegrationSettings',
         { ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
+        input.nodeId,
+      )
+    },
+
+    async getIntegrationFormSchema(input: IntegrationFormInput) {
+      if (gateway.isInProcess(input.addonId, input.nodeId)) {
+        const addon = getAddon(input.addonId)
+        if (!addon) return null
+        // The per-instance hook when the addon has one; its global schema otherwise (what the
+        // wizard and the edit page always showed).
+        const result =
+          typeof addon.getIntegrationFormSchema === 'function'
+            ? await addon.getIntegrationFormSchema(input.instance, input.nodeId)
+            : typeof addon.getGlobalSettings === 'function'
+              ? await addon.getGlobalSettings(undefined, undefined, input.nodeId)
+              : null
+        return result ? reshapeForOutput(result) : null
+      }
+      return forkedGet(
+        input.addonId,
+        'getIntegrationFormSchema',
+        { instance: input.instance, ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
         input.nodeId,
       )
     },

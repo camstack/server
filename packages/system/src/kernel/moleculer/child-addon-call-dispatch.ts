@@ -1,6 +1,10 @@
 import type { AddonCallInput, AddonSettingsMethod } from '../transport/child-cap-protocol.js'
 import type { CustomActionRegistry } from '../custom-action-registry.js'
-import type { ICamstackAddon, AddonDataPlaneEndpoint } from '@camstack/types'
+import type {
+  ICamstackAddon,
+  AddonDataPlaneEndpoint,
+  IntegrationInstanceRef,
+} from '@camstack/types'
 
 /**
  * Serializable HTTP route descriptor sent from a forked child to the hub over
@@ -84,6 +88,8 @@ interface SettingsArgs {
   /** The node the UI is asking about — lets an addon serving a cluster-central
    *  per-node config scope to that node rather than assuming its own. */
   readonly nodeId?: string
+  /** Which integration instance a form is for (`getIntegrationFormSchema`). */
+  readonly instance?: IntegrationInstanceRef
 }
 
 /**
@@ -123,6 +129,12 @@ async function dispatchSettings(
       return typeof addon.getIntegrationSettings === 'function'
         ? ((await addon.getIntegrationSettings(args.nodeId)) ?? null)
         : null
+    case 'getIntegrationFormSchema':
+      return typeof addon.getIntegrationFormSchema === 'function' && args.instance !== undefined
+        ? ((await addon.getIntegrationFormSchema(args.instance, args.nodeId)) ?? null)
+        : typeof addon.getGlobalSettings === 'function'
+          ? ((await addon.getGlobalSettings(undefined, undefined, args.nodeId)) ?? null)
+          : null
     case 'getDeviceSettings':
       return typeof addon.getDeviceSettings === 'function' && typeof args.deviceId === 'number'
         ? ((await addon.getDeviceSettings(args.deviceId)) ?? null)

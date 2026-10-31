@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- An integration instance can have its own settings form: a Reolink NVR / Home Hub shows its connection only, the default integration keeps the full form
 - A new integration remembers the discovered device it was set up from (originStableId), and the backend refuses a second instance of a single-instance addon
 - A lock can link a door contact in Customize: while the door is open the lock reports the new door-open state.
 - A lock's linked door contact is read from its stored customization by a shared helper

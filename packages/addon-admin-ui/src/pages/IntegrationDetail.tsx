@@ -14,7 +14,7 @@ import {
   LogStream,
   OptionSelect,
   Switch,
-  useAddonSettingsGetGlobalSettings,
+  useAddonSettingsGetIntegrationFormSchema,
   useAddonSettingsGetIntegrationSettings,
   useAddonsRestartAddon,
   useDeviceManagerDisable,
@@ -133,11 +133,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     { enabled: !!integrationId },
   )
 
-  const { data: configSchema } = useAddonSettingsGetGlobalSettings(
-    { addonId: integration?.addonId ?? '', nodeId: 'hub' },
-    { enabled: !!integration?.addonId },
-  )
-
   // Route the "add devices" surface by CAP, never by addon name. The
   // available-types query carries the same `kind` metadata the wizard uses
   // (`device-adoption` → broker-backed Approach A integrations like Home
@@ -240,6 +235,17 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       { replace: true },
     )
   }, [searchParams, fabReady, setSearchParams])
+
+  // The form of THIS instance: the addon's per-instance schema when it has one (a hub's
+  // connection only), else its global schema. Waits for the mode so the instance is complete.
+  const { data: configSchema } = useAddonSettingsGetIntegrationFormSchema(
+    {
+      addonId: integration?.addonId ?? '',
+      nodeId: 'hub',
+      instance: { integrationId: integration?.id ?? null, mode: integrationMode ?? 'standalone' },
+    },
+    { enabled: !!integration?.addonId && integrationMode !== null },
+  )
 
   const hasConfig =
     configSchema != null &&

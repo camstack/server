@@ -56,6 +56,7 @@
   "addonSettings.getDeclaredSettingsKeys": "admin",
   "addonSettings.getDeviceSettings": "protected",
   "addonSettings.getGlobalSettings": "protected",
+  "addonSettings.getIntegrationFormSchema": "protected",
   "addonSettings.getIntegrationSettings": "protected",
   "addonSettings.unsetStoredSettingsKeys": "admin",
   "addonSettings.updateDeviceSettings": "admin",

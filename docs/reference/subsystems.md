@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7596 source files · 1224 file(s) in no subsystem.**
+**31 subsystems · 7600 source files · 1224 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -23,7 +23,7 @@ commits. A generated page may not.
 
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
-| Kernel, addon lifecycle and boot | 105 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +78 more, 13 ADRs | 2026-10-27 | ✅ |
+| Kernel, addon lifecycle and boot | 106 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, `architecture/update-and-release.md`, +78 more, 13 ADRs | 2026-10-27 | ✅ |
 | Transport and cross-node routing | 104 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +55 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 321 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +231 more, 51 ADRs | 2026-10-26 | ✅ |
 | Device model and the provider contract | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +58 more, 6 ADRs | 2026-10-26 | ✅ |
@@ -63,7 +63,7 @@ Owns processes: loads addon manifests, forks runners, supervises crashes and dec
 
 - **Owner doc**: `docs/architecture/addon-lifecycle.md`
 - **Code**: `packages/system/src/kernel/*.ts`, `packages/system/src/kernel/lifecycle/**`, `packages/system/src/kernel/deps/**`, `packages/system/src/kernel/utils/**`, `packages/system/src/addon/**`, `packages/system/src/addon-routes/**`, `packages/system/src/lifecycle/**`, `packages/system/src/process/**`, `packages/system/src/feature/**`, `packages/system/src/*.ts`, `packages/types/src/addon/**`, `packages/types/src/lifecycle/**`, `packages/types/src/readiness/**`, `server/backend/src/boot/**`, `packages/node-root/**`
-- **Files**: 105 (102 claimed by some document)
+- **Files**: 106 (103 claimed by some document)
 - **Uncovered**: `server/backend/src/boot` (3)
 
 ### ✅ Transport and cross-node routing

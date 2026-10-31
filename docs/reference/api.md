@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**194 capabilities · 1453 methods.**
+**194 capabilities · 1454 methods.**
 
 ## Method index
 
@@ -36,6 +36,7 @@
 | `addonSettings.getGlobalSettings` | query | protected | addon-settings |
 | `addonSettings.updateGlobalSettings` | mutation | admin | addon-settings |
 | `addonSettings.getIntegrationSettings` | query | protected | addon-settings |
+| `addonSettings.getIntegrationFormSchema` | query | protected | addon-settings |
 | `addonSettings.getDeclaredSettingsKeys` | query | admin | addon-settings |
 | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | addon-settings |
 | `addonSettings.getDeviceSettings` | query | protected | addon-settings |
@@ -1555,7 +1556,7 @@
 
 ### `addon-settings` → `addonSettings.*`
 
-- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:75`
+- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:76`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonSettingsProvider`
@@ -1565,6 +1566,7 @@
 | getGlobalSettings | `addonSettings.getGlobalSettings` | query | protected | `{ addonId: string; nodeId?: string; overlay?: Record<string, unknown>; cap?: string }` | `SettingsSchemaWithValuesSchema \| null` |
 | updateGlobalSettings | `addonSettings.updateGlobalSettings` | mutation | admin | `{ addonId: string; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | getIntegrationSettings | `addonSettings.getIntegrationSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
+| getIntegrationFormSchema | `addonSettings.getIntegrationFormSchema` | query | protected | `{ addonId: string; nodeId?: string; instance: { integrationId: string \| null; mode: "standalone" \| "account" \| "broker"; candidateStableId?: string } }` | `SettingsSchemaWithValuesSchema \| null` |
 | getDeclaredSettingsKeys | `addonSettings.getDeclaredSettingsKeys` | query | admin | `{ addonId: string; nodeId?: string }` | `{ keys: string[] } \| null` |
 | unsetStoredSettingsKeys | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | `{ addonId: string; nodeId?: string; keys: string[] }` | `{ removed: string[]; refused: ({ key: string; reason: string })[]; secretsCleared: number }` |
 | getDeviceSettings | `addonSettings.getDeviceSettings` | query | protected | `{ addonId: string; deviceId: number; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |

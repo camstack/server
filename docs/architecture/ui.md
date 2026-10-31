@@ -396,6 +396,18 @@ returns `null` and no surface is offered.
 `packages/addon-provider-reolink/src/email-push-schema.ts` is the reference
 consumer, and the only one.
 
+### One form per integration instance
+
+An addon whose instances differ in kind (Reolink: the default integration versus an
+NVR / Home Hub) overrides `BaseAddon.integrationSettingsSchema(instance)` and returns
+the schema for that instance, or `null` for its global schema. `instance` is an
+`IntegrationInstanceRef` (`integrationId`, `null` in the create wizard, plus `mode`
+and an optional `candidateStableId`). `addonSettings.getIntegrationFormSchema` serves
+it, and falls back to `getGlobalSettings` for an addon without the hook; the wizard,
+the edit page and the config modal all read through it. Values still come from
+`integrations.getSettings`. Extending `getGlobalSettings` with an instance argument was
+rejected: it would have touched the four hops that serve the cluster-wide settings tab.
+
 This is a second **page**, never a second **scope**
 ([D269](../decisions/adr-0278-integration-level-settings-are-declared-in-core-not-borrowed-from-a-tab.md),
 superseding D268). The properties that make it safe are all in core, so no UI

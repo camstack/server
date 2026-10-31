@@ -185,6 +185,9 @@ export const useAddonSettingsUpdateGlobalSettings: typeof trpc.addonSettings.upd
 /** Generated alias around `trpc.addonSettings.getIntegrationSettings.useQuery`. */
 export const useAddonSettingsGetIntegrationSettings: typeof trpc.addonSettings.getIntegrationSettings.useQuery = trpc.addonSettings.getIntegrationSettings.useQuery
 
+/** Generated alias around `trpc.addonSettings.getIntegrationFormSchema.useQuery`. */
+export const useAddonSettingsGetIntegrationFormSchema: typeof trpc.addonSettings.getIntegrationFormSchema.useQuery = trpc.addonSettings.getIntegrationFormSchema.useQuery
+
 /** Generated alias around `trpc.addonSettings.getDeclaredSettingsKeys.useQuery`. */
 export const useAddonSettingsGetDeclaredSettingsKeys: typeof trpc.addonSettings.getDeclaredSettingsKeys.useQuery = trpc.addonSettings.getDeclaredSettingsKeys.useQuery
 

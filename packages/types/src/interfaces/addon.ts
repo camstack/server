@@ -7,6 +7,7 @@ import type { CoralInfo } from './platform.js'
 import type { AddonPeerBytes } from './addon-peer-bytes.js'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { RecordsAccess } from '../records/records-access.js'
+import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
 import type { CapabilityDeclaration } from './capability.js'
 import type { ConfigUISchemaWithValues, FieldProbeResult } from './config-ui.js'
 import type { IEventBus, ReadinessScope } from './event-bus.js'
@@ -1025,6 +1026,15 @@ export interface ICamstackAddon {
    * stays the one bare key. See `addon-settings.cap.ts`.
    */
   getIntegrationSettings?(nodeId?: string): Promise<ConfigUISchemaWithValues | null>
+
+  /**
+   * The form of ONE integration instance (create wizard or edit page): the addon's per-instance
+   * schema when it declares one, else its global schema. See `BaseAddon.getIntegrationFormSchema`.
+   */
+  getIntegrationFormSchema?(
+    instance: IntegrationInstanceRef,
+    nodeId?: string,
+  ): Promise<ConfigUISchemaWithValues | null>
 
   /**
    * Stale-data audit: the global-settings keys this addon still declares,
