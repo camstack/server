@@ -33,6 +33,8 @@ import {
   CHIP_INACTIVE,
   INPUT_COMPACT,
   TEXT_SECTION_LABEL,
+  Button,
+  Input,
 } from '@camstack/ui-library'
 
 // Pre-built macro class chips. The pipeline today only routes the three
@@ -233,7 +235,8 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
       <div className="flex items-center justify-between mb-2 gap-2">
         <h3 className={`${TEXT_SECTION_LABEL} truncate`}>{title ?? zoneRuleStageTitle(stage)}</h3>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onAdd}
             disabled={zones.length === 0 || !dev}
@@ -241,8 +244,9 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
             title={t('rules.add')}
           >
             <Plus className="h-2.5 w-2.5" /> {t('rules.addShort')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="unstyled"
             type="button"
             onClick={() => {
               void onSave()
@@ -252,7 +256,7 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
           >
             <Save className="h-2.5 w-2.5" />
             {saving ? '…' : t('rules.save')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -272,7 +276,8 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                   the card on narrow widths. The name input takes the
                   remaining space and shrinks instead of overflowing. */}
               <div className="grid grid-cols-[auto_1fr_auto] items-center gap-1.5">
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   role="switch"
                   aria-checked={d.enabled}
@@ -294,14 +299,15 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                         : '-translate-x-1.5 bg-foreground-subtle',
                     ].join(' ')}
                   />
-                </button>
-                <input
+                </Button>
+                <Input
                   className={`${INPUT_COMPACT} min-w-0`}
                   placeholder={t('rules.namePlaceholder')}
                   value={d.name}
                   onChange={(e) => onChange(idx, { name: e.target.value })}
                 />
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   title={t('rules.remove')}
                   aria-label={t('rules.remove')}
@@ -309,7 +315,7 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                   className="flex items-center justify-center h-6 w-6 rounded text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors flex-shrink-0"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </div>
 
               {/* Mode — pill toggle. Visually consistent with the
@@ -320,20 +326,22 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                 <span className="text-[9px] uppercase tracking-wider text-foreground-subtle w-12 sm:w-14 flex-shrink-0">
                   {t('rules.mode')}
                 </span>
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={() => onChange(idx, { mode: 'include' })}
                   className={`${CHIP_BASE} ${d.mode === 'include' ? CHIP_ACTIVE : CHIP_INACTIVE}`}
                 >
                   {t('rules.include')}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="unstyled"
                   type="button"
                   onClick={() => onChange(idx, { mode: 'exclude' })}
                   className={`${CHIP_BASE} ${d.mode === 'exclude' ? CHIP_ACTIVE : CHIP_INACTIVE}`}
                 >
                   {t('rules.exclude')}
-                </button>
+                </Button>
               </div>
 
               {/* Zone chips. Empty zoneIds means "every zone". */}
@@ -349,7 +357,8 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                   zones.map((z) => {
                     const active = d.zoneIds.includes(z.id)
                     return (
-                      <button
+                      <Button
+                        variant="unstyled"
                         key={z.id}
                         type="button"
                         onClick={() => toggleZone(idx, z.id)}
@@ -360,7 +369,7 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                           style={{ backgroundColor: z.color || '#3b82f6' }}
                         />
                         <span className="truncate max-w-[7rem]">{z.name || z.id}</span>
-                      </button>
+                      </Button>
                     )
                   })
                 )}
@@ -397,14 +406,15 @@ export function ZoneRulesEditor({ dev, deviceId, stage, zones, title }: ZoneRule
                   {MACRO_CHIPS.map((c) => {
                     const active = d.classFilter.includes(c.id)
                     return (
-                      <button
+                      <Button
+                        variant="unstyled"
                         key={c.id}
                         type="button"
                         onClick={() => toggleClass(idx, c.id)}
                         className={`${CHIP_BASE} ${active ? CHIP_ACTIVE : CHIP_INACTIVE}`}
                       >
                         {c.label}
-                      </button>
+                      </Button>
                     )
                   })}
                   {d.classFilter.length === 0 && (

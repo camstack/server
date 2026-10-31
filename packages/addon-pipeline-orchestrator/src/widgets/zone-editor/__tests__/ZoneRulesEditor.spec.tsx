@@ -13,17 +13,29 @@ const hoisted = vi.hoisted(() => ({
   slice: { motion: [], detection: [], package: [] },
 }))
 
-vi.mock('@camstack/ui-library', () => ({
-  useSystem: () => ({ trpcClient: { zoneRules: { setRules: { mutate: hoisted.setRules } } } }),
-  useDeviceStateSlice: () => hoisted.slice,
-  BTN_COMPACT: '',
-  BTN_COMPACT_PRIMARY: '',
-  CHIP_BASE: '',
-  CHIP_ACTIVE: '',
-  CHIP_INACTIVE: '',
-  INPUT_COMPACT: '',
-  TEXT_SECTION_LABEL: '',
-}))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    Button: actual.Button,
+    Input: actual.Input,
+    Select: actual.Select,
+    FileInput: actual.FileInput,
+    Textarea: actual.Textarea,
+    Checkbox: actual.Checkbox,
+    Slider: actual.Slider,
+    Radio: actual.Radio,
+    useSystem: () => ({ trpcClient: { zoneRules: { setRules: { mutate: hoisted.setRules } } } }),
+    useDeviceStateSlice: () => hoisted.slice,
+    BTN_COMPACT: '',
+    BTN_COMPACT_PRIMARY: '',
+    CHIP_BASE: '',
+    CHIP_ACTIVE: '',
+    CHIP_INACTIVE: '',
+    INPUT_COMPACT: '',
+    TEXT_SECTION_LABEL: '',
+  }
+})
 vi.mock('../../../i18n/index.js', () => ({
   useT: () => ({ t: (key: string) => key }),
   translate: (key: string) => key,

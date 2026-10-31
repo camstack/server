@@ -1,6 +1,7 @@
 import { Trash2, X, Hexagon, Minus } from 'lucide-react'
 import { useT } from '../../i18n/index.js'
 import type { Zone, ZoneKind } from './types'
+import { Button } from '@camstack/ui-library'
 
 // ---------------------------------------------------------------------------
 // Kind badge helper
@@ -48,7 +49,8 @@ export function ZoneList({
           the same row collapses into a single Cancel button. */}
       <div className="flex items-center gap-1">
         {drawingKind ? (
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             onClick={onCancelDraw}
             className="inline-flex items-center justify-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors h-8 px-3 text-[11px] font-medium"
@@ -56,10 +58,11 @@ export function ZoneList({
           >
             <X className="h-3.5 w-3.5" />
             <span>{t('zoneList.cancel')}</span>
-          </button>
+          </Button>
         ) : (
           <>
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => onStartDraw('polygon')}
               className="inline-flex items-center justify-center rounded border border-border bg-surface text-foreground-subtle hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-colors h-8 w-8"
@@ -67,8 +70,9 @@ export function ZoneList({
               aria-label={t('zoneList.addPolygon')}
             >
               <Hexagon className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="unstyled"
               type="button"
               onClick={() => onStartDraw('tripwire')}
               className="inline-flex items-center justify-center rounded border border-border bg-surface text-foreground-subtle hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-colors h-8 w-8"
@@ -76,7 +80,7 @@ export function ZoneList({
               aria-label={t('zoneList.addTripwire')}
             >
               <Minus className="h-5 w-5 stroke-[2.5]" />
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -121,7 +125,8 @@ export function ZoneList({
 
                 {/* Delete — only destructive action that needs its own
                     button (selection itself enters edit mode). */}
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   title={t('zoneList.deleteZone')}
                   className="p-0.5 text-foreground-subtle hover:text-danger rounded transition-colors flex-shrink-0"
@@ -131,7 +136,7 @@ export function ZoneList({
                   }}
                 >
                   <Trash2 className="h-3 w-3" />
-                </button>
+                </Button>
               </div>
             )
           })}
