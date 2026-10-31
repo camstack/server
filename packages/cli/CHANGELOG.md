@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Every failing MCP tool now reports isError, and hub calls trust only the CA pinned for that hub instead of skipping TLS verification
+- New `camstack mcp doctor` checks Node, hub, pinned CA, session, token scope and CLI version; `camstack login --token-file` logs in without a TTY from a 0600 file
 
 ## [1.2.213] - 2026-10-30
 

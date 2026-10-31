@@ -10,6 +10,7 @@ import { DEFAULT_TOOLSETS, parseToolsets, TOOLSET_NAMES } from '../mcp/toolsets.
 export function mcpHelp(): string {
   return [
     'Usage: camstack mcp [options]',
+    '       camstack mcp doctor',
     '',
     'Runs the CamStack MCP server on stdio. Register it with your assistant:',
     '  claude mcp add camstack -- camstack mcp',
@@ -20,6 +21,12 @@ export function mcpHelp(): string {
     '  -s, --server <host>   Hub to use instead of the cached login session',
     '      --token-file <p>  Read an explicit token from a file',
     '',
+    'Diagnose: `camstack mcp doctor` checks, read-only, Node >= 24, the hub, its pinned CA,',
+    'the session or token file, the token scope (admin or not) and the CLI version, each',
+    'ok / fail / unknown with a fix hint. It never prints a token.',
+    'No TTY (CI, a service): `camstack login <host> --token-file <path>` with a chmod 600 file.',
+    'MCP clients such as OpenCode keep the old process: restart them after `camstack mcp` updates.',
+    '',
     "Auth is the CLI's own: run `camstack login <host>` once in a terminal.",
     'The MCP never asks for or accepts a password. Every write is two-step:',
     'a preview with a one-shot token, then the same call with that token.',
@@ -27,6 +34,11 @@ export function mcpHelp(): string {
 }
 
 export async function runMcp(args: readonly string[], cliVersion: string): Promise<void> {
+  if (args[0] === 'doctor') {
+    const { runDoctorCommand } = await import('../mcp/doctor-command.js')
+    process.exitCode = await runDoctorCommand(args.slice(1), cliVersion)
+    return
+  }
   const parsed = parseArgs({
     args: [...args],
     options: {
