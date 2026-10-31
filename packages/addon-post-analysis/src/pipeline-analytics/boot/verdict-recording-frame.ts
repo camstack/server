@@ -11,7 +11,7 @@
  * again.
  */
 
-import type { IScopedLogger, RetrainCollection } from '@camstack/types'
+import type { IScopedLogger, RetrainCollection, RetrainVerdictSubject } from '@camstack/types'
 import type { NcVerdictFrameOutcome } from '../../notification-center/center-deps.js'
 
 export const VERDICT_COLLECTION_NAME = 'Notification verdicts'
@@ -29,6 +29,7 @@ export interface VerdictFrameApi {
     readonly collectionId: string
     readonly deviceId: number
     readonly epochMs: number
+    readonly verdictSubject?: RetrainVerdictSubject
   }): Promise<
     | { readonly kind: 'added' }
     | {
@@ -59,7 +60,11 @@ async function findOrCreate(api: VerdictFrameApi): Promise<string | null> {
 export async function addVerdictFrameFromRecording(
   api: VerdictFrameApi,
   logger: IScopedLogger,
-  input: { readonly deviceId: number; readonly epochMs: number },
+  input: {
+    readonly deviceId: number
+    readonly epochMs: number
+    readonly subject?: RetrainVerdictSubject
+  },
 ): Promise<NcVerdictFrameOutcome> {
   const collectionId = await findOrCreate(api)
   if (collectionId === null) {
@@ -68,7 +73,12 @@ export async function addVerdictFrameFromRecording(
     })
     return { ok: false, reason: 'failed', detail: 'collection-unavailable' }
   }
-  const result = await api.addRetrainFrameFromRecording({ collectionId, ...input })
+  const result = await api.addRetrainFrameFromRecording({
+    collectionId,
+    deviceId: input.deviceId,
+    epochMs: input.epochMs,
+    ...(input.subject !== undefined ? { verdictSubject: input.subject } : {}),
+  })
   if (result.kind === 'added') return { ok: true }
   const reason =
     result.reason === 'still-unavailable' || result.reason === 'still-busy'

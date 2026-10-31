@@ -20,6 +20,12 @@
  *    nearest one is normally the same detection; the delta is reported so a
  *    reviewer can see how far it was.
  *
+ * 0. **The subject a notification verdict froze** (a recording still landed by
+ *    a verdict whose track was already gone). It is the one subject the
+ *    operator answered about, so it comes FIRST and is the own box; the
+ *    neighbours below stay secondary. Its box is normalised against the full
+ *    frame already, so it is used as is — never re-scaled.
+ *
  * Every OTHER track alive on the camera at that instant contributes its own
  * nearest position the same way — a frame with three people is three boxes,
  * and a recording still (no track of its own) gets everything the pipeline
@@ -33,6 +39,7 @@ import {
   COCO_TO_MACRO,
   type RetrainMacroClass,
   type RetrainPipelineBox,
+  type RetrainVerdictSubject,
   type Track,
 } from '@camstack/types'
 import { isRetrainMacroClass } from './retrain-taxonomy.js'
@@ -83,6 +90,8 @@ export interface PipelineBoxInput {
   readonly ownTrack: Track | null
   /** The subject box on the copy's SOURCE media row, when one was recorded. */
   readonly ownSubjectBox: FrameSubjectBox | null
+  /** The subject a notification verdict froze on this still (a still has no track of its own). */
+  readonly verdictSubject?: RetrainVerdictSubject
   /** Tracks of the camera around the capture time. The own track may be among them. */
   readonly neighbours: readonly Track[]
   readonly toleranceMs?: number
@@ -201,6 +210,23 @@ function boxFor(
   }
 }
 
+/** The box a notification verdict froze, or `null` when the event carried none. */
+function boxOfVerdict(subject: RetrainVerdictSubject): RetrainPipelineBox | null {
+  const box = subject.bbox
+  if (box === undefined) return null
+  const clamped = normalise(box, 1, 1)
+  if (clamped === null) return null
+  const tiers = toRetrainClassTiers(subject.className, subject.label)
+  return {
+    bbox: clamped,
+    macroClass: tiers.macroClass,
+    ...(tiers.label !== undefined ? { label: tiers.label } : {}),
+    trackId: subject.trackId,
+    basis: 'verdict',
+    deltaMs: 0,
+  }
+}
+
 /** The own track's box: the recorded subject box first, the nearest position second. */
 function ownBox(input: PipelineBoxInput, tolerance: number): RetrainPipelineBox | null {
   const track = input.ownTrack
@@ -230,10 +256,15 @@ export function pipelineBoxesForFrame(input: PipelineBoxInput): readonly Retrain
   const out: RetrainPipelineBox[] = []
   const own = ownBox(input, tolerance)
   if (own !== null) out.push(own)
+  const verdictBox = input.verdictSubject !== undefined ? boxOfVerdict(input.verdictSubject) : null
+  if (verdictBox !== null) out.push(verdictBox)
   const at = input.frame.capturedAt
   if (at === undefined) return out
   const ownId = input.frame.trackId
   const seen = new Set<string>(ownId !== undefined ? [ownId] : [])
+  // The notified track is already drawn, from the frozen box: a neighbour read
+  // of the same track (it may still be alive) must not draw it twice.
+  if (input.verdictSubject !== undefined) seen.add(input.verdictSubject.trackId)
   for (const track of input.neighbours) {
     if (seen.has(track.trackId) || track.deviceId !== input.frame.deviceId) continue
     seen.add(track.trackId)

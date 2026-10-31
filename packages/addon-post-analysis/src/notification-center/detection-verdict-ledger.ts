@@ -39,7 +39,7 @@ const NC_DETECTION_VERDICTS_COLUMNS = [
 export const NcDetectionVerdictRecordSchema = z.object({
   trackId: z.string().min(1),
   deviceId: z.number().int(),
-  verdict: z.enum(['correct', 'wrong']),
+  verdict: z.enum(['correct', 'wrong', 'wrong-label']),
   /** The class the operator said it really was. Only with `wrong`. */
   suggestedClass: z.string().min(1).optional(),
   /** Whose notification it was (the token's frozen owner), NOT who tapped. */
@@ -77,6 +77,17 @@ export class NcDetectionVerdictLedger {
       kind: deps.records.kind(ncDurableRecordKinds['detection-verdicts']),
       logger: deps.logger,
     })
+  }
+
+  /** The answers recorded for these tracks (a track nobody answered is absent).
+   *  Reads the in-memory mirror: no I/O, so a listing never waits on it. */
+  forTracks(trackIds: readonly string[]): ReadonlyMap<string, NcDetectionVerdictRecord> {
+    const out = new Map<string, NcDetectionVerdictRecord>()
+    for (const id of trackIds) {
+      const row = this.ledger.get(id)
+      if (row !== undefined) out.set(id, row)
+    }
+    return out
   }
 
   /** Write-through; throws on a failed write so the tap reports it. */

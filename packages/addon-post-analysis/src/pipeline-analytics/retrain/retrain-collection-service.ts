@@ -21,7 +21,12 @@
  * track copy is reachable from its track, so a collection never deletes one.
  */
 
-import type { IScopedLogger, PreparedTransactOp, RetrainFrame as WireFrame } from '@camstack/types'
+import type {
+  IScopedLogger,
+  PreparedTransactOp,
+  RetrainFrame as WireFrame,
+  RetrainVerdictSubject,
+} from '@camstack/types'
 import type { RecoveredStill } from '../recorded-still.js'
 import type { RetrainAnnotationStore } from './retrain-annotation-store.js'
 import type {
@@ -137,6 +142,8 @@ export class RetrainCollectionService {
     collectionId: string
     deviceId: number
     epochMs: number
+    /** The subject a notification verdict froze: stored on the still as its own proposal. */
+    verdictSubject?: RetrainVerdictSubject
   }): Promise<AddFromRecordingResult> {
     const tags = { deviceId: input.deviceId }
     if ((await this.deps.collections.getById(input.collectionId)) === null) {
@@ -157,6 +164,7 @@ export class RetrainCollectionService {
       input.deviceId,
       input.epochMs,
       membershipOp === null ? [] : [membershipOp],
+      input.verdictSubject,
     )
     if (stored.kind === 'refused') {
       this.deps.logger.info('retrain collection add refused', {
@@ -171,12 +179,19 @@ export class RetrainCollectionService {
     }
     // A still that already existed wrote no row, so its membership was not part
     // of a transaction: add it now (the frame is there, nothing can dangle).
+    let storedFrame = stored.frame
     if (stored.reused) {
       await this.deps.collections.addFrame({
         collectionId: input.collectionId,
         frameId: stored.frame.frameId,
         deviceId: input.deviceId,
       })
+      // The moment was already in the dataset: the answer still belongs to it.
+      if (input.verdictSubject !== undefined) {
+        storedFrame =
+          (await this.deps.frames.setVerdictSubject(stored.frame.frameId, input.verdictSubject)) ??
+          stored.frame
+      }
     }
     this.deps.logger.info('retrain frame added to a collection from the recording', {
       tags,
@@ -187,7 +202,7 @@ export class RetrainCollectionService {
         reused: stored.reused,
       },
     })
-    const [wire] = await this.deps.retrain.toWireFrames([stored.frame])
+    const [wire] = await this.deps.retrain.toWireFrames([storedFrame])
     if (wire === undefined) throw new Error('retrain: a stored still produced no wire frame')
     return { kind: 'added', collectionId: input.collectionId, frame: wire, reused: stored.reused }
   }
@@ -244,6 +259,7 @@ export class RetrainCollectionService {
     deviceId: number,
     epochMs: number,
     withRow: readonly PreparedTransactOp[],
+    verdictSubject?: RetrainVerdictSubject,
   ): Promise<
     | { readonly kind: 'stored'; readonly frame: RetrainFrame; readonly reused: boolean }
     | {
@@ -263,7 +279,12 @@ export class RetrainCollectionService {
       return { kind: 'refused', reason: refusal.reason, detail: refusal.detail }
     }
     const stored = await this.deps.frames.storeRecordingStill(
-      { deviceId, epochMs, bytes: still.jpeg },
+      {
+        deviceId,
+        epochMs,
+        bytes: still.jpeg,
+        ...(verdictSubject !== undefined ? { verdictSubject } : {}),
+      },
       withRow,
     )
     return stored.kind === 'copied'

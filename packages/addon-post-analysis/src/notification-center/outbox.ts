@@ -38,6 +38,7 @@ import type {
   RecordKindHandle,
 } from '@camstack/types'
 import type { DurableLedgerBody } from '../durable/durable-record-body.js'
+import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
 import { collectRecordPages, RANGE_FLOOR } from '../durable/query-pages.js'
 import { ncDurableRecordKinds } from './nc-durable-record-kinds.js'
@@ -509,6 +510,15 @@ export interface NcOutboxPayload {
     readonly eventId?: string
     readonly className: string
     readonly label?: string
+    /**
+     * The subject's box, NORMALISED `[0,1]` against the full detection frame
+     * (no letterbox), frozen at enqueue — the verdict buttons carry it so a
+     * verdict tapped after the track is gone still names WHERE the subject was
+     * on the recording still it lands. Absent when the event had no box or no
+     * frame size to normalise it with, and on every row written before this
+     * field.
+     */
+    readonly bbox?: BboxRect
     /**
      * WHAT {@link label} is, when the pipeline said so — a recognised person or
      * a read plate. It picks the SENTENCE: "Alice è arrivato" and "Veicolo

@@ -309,6 +309,8 @@ export function buildEntries(
           // Fall back to the sensor kind for device events (no detection class).
           className: subject.classNames[0] ?? subject.sensorKind ?? 'event',
           ...(subject.label !== undefined ? { label: subject.label } : {}),
+          // Frozen for the verdict buttons (D948): where the subject was.
+          ...(subject.bbox !== undefined ? { bbox: subject.bbox } : {}),
           // Which SENTENCE this row gets — a recognised person and a read
           // plate are not the same phrase with a different noun in it.
           ...(subject.labelKind !== undefined ? { labelKind: subject.labelKind } : {}),

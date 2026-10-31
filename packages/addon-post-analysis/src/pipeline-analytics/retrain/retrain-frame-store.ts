@@ -38,7 +38,9 @@ import type {
   MediaFileKind,
   PreparedTransactOp,
   RetrainDismissed,
+  RetrainVerdictSubject,
 } from '@camstack/types'
+import { RetrainVerdictSubjectSchema } from '@camstack/types'
 import type { EventLedgerCollection } from '../store/event-ledger-collection.js'
 import type { MediaBlobStorage } from '../location-aware-media-storage.js'
 import type { MediaWriteGate } from '../media-write-gate.js'
@@ -104,6 +106,12 @@ const RETRAIN_PATH_PREFIX = 'retrain'
 /** Where a frame came from: a track's media, or the recording at an instant. */
 export type RetrainFrameOrigin = 'track' | 'recording'
 
+/** The stored verdict subject, validated; anything unreadable reads as absent. */
+function narrowVerdictSubject(value: unknown): { verdictSubject?: RetrainVerdictSubject } {
+  const parsed = RetrainVerdictSubjectSchema.safeParse(value)
+  return parsed.success ? { verdictSubject: parsed.data } : {}
+}
+
 /** A frame the dataset owns outright. */
 export interface RetrainFrame {
   readonly frameId: string
@@ -134,6 +142,13 @@ export interface RetrainFrame {
   readonly revision?: number
   /** Proposals the operator deleted (absent reads as none). */
   readonly dismissed?: readonly RetrainDismissed[]
+  /**
+   * A recording still landed by a notification verdict: the subject the
+   * notification reported, frozen with the answer. A PROPOSAL (it is drawn as
+   * the frame's own box, and never exported on its own) — the operator's
+   * boxes are annotation rows.
+   */
+  readonly verdictSubject?: RetrainVerdictSubject
 }
 
 /** Why a selection could not be honoured — a named cause, never a silent skip. */
@@ -281,6 +296,7 @@ export class RetrainFrameStore {
         : {}),
       revision: finiteNumber(data['revision']) ?? 0,
       dismissed: narrowDismissed(data['dismissed']),
+      ...narrowVerdictSubject(data['verdictSubject']),
     }
   }
 
@@ -602,6 +618,7 @@ export class RetrainFrameStore {
       readonly deviceId: number
       readonly epochMs: number
       readonly bytes: Buffer
+      readonly verdictSubject?: RetrainVerdictSubject
     },
     /** Ops that must land WITH the frame row (its collection membership). */
     withRow: readonly PreparedTransactOp[] = [],
@@ -634,6 +651,7 @@ export class RetrainFrameStore {
       ...(chromaSpread !== undefined ? { chromaSpread } : {}),
       complete: false,
       epochMs: input.epochMs,
+      ...(input.verdictSubject !== undefined ? { verdictSubject: input.verdictSubject } : {}),
     }
     const path = framePath(frame)
     const persist = async (): Promise<void> => {
@@ -659,6 +677,7 @@ export class RetrainFrameStore {
         complete: false,
         origin: 'recording',
         epochMs: input.epochMs,
+        ...(input.verdictSubject !== undefined ? { verdictSubject: input.verdictSubject } : {}),
       })
       await this.ledger.transact([row, ...withRow])
     }
@@ -677,6 +696,23 @@ export class RetrainFrameStore {
       meta: { frameId, epochMs: input.epochMs, width: frame.width, height: frame.height },
     })
     return { kind: 'copied', frame, reused: false }
+  }
+
+  /**
+   * Record the verdict subject on a still that already existed (the moment was
+   * in the dataset before the operator tapped). The latest answer wins, like
+   * the verdict ledger.
+   *
+   * @returns the updated frame, or `null` when no such copy exists.
+   */
+  async setVerdictSubject(
+    frameId: string,
+    verdictSubject: RetrainVerdictSubject,
+  ): Promise<RetrainFrame | null> {
+    const existing = await this.get(frameId)
+    if (existing === null) return null
+    await this.ledger.update(frameId, { verdictSubject })
+    return { ...existing, verdictSubject }
   }
 
   /**

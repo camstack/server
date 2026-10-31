@@ -76,6 +76,7 @@ import type {
   RetrainMacroClass,
   RetrainOrigin,
   RetrainTrack,
+  RetrainVerdictSubject,
   RetrainTrainingCorpusResolveResult,
   RetrainTrainingCorpusSelection,
   RetrainTransitionResult,
@@ -4725,6 +4726,7 @@ export default class PipelineAnalyticsAddon
     collectionId: string
     deviceId: number
     epochMs: number
+    verdictSubject?: RetrainVerdictSubject
   }): Promise<AddRetrainFrameFromRecordingResult> {
     return this.requireRetrainCollections().addFrameFromRecording(input)
   }

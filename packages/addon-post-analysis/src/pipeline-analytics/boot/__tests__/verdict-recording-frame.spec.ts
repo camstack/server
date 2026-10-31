@@ -15,7 +15,7 @@ const col = (id: string, name: string): RetrainCollection => ({
 })
 
 function fakeApi(collections: RetrainCollection[]) {
-  const added: { collectionId: string; deviceId: number; epochMs: number }[] = []
+  const added: Parameters<VerdictFrameApi['addRetrainFrameFromRecording']>[0][] = []
   const create = vi.fn(async (name: string) => {
     const collection = col('new-1', name)
     collections.push(collection)
@@ -42,6 +42,22 @@ describe('addVerdictFrameFromRecording', () => {
     await addVerdictFrameFromRecording(api, log, { deviceId: 5, epochMs: 20 })
     expect(create).toHaveBeenCalledTimes(1)
     expect(added.map((a) => a.collectionId)).toEqual(['new-1', 'new-1'])
+  })
+
+  it('sends the frozen subject to the still as its verdict subject', async () => {
+    const { api, added } = fakeApi([col('mine', VERDICT_COLLECTION_NAME)])
+    const subject = {
+      trackId: 'trk-dog',
+      className: 'dog',
+      bbox: { x: 0.5, y: 0.25, w: 0.1, h: 0.5 },
+      verdict: 'wrong' as const,
+    }
+    await addVerdictFrameFromRecording(api, makeSilentLogger(), {
+      deviceId: 5,
+      epochMs: 10,
+      subject,
+    })
+    expect(added[0]?.verdictSubject).toEqual(subject)
   })
 
   it('adopts an existing collection by name, case-insensitively, without creating', async () => {

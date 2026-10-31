@@ -76,6 +76,8 @@ function describeGrant(grant: NcActionGrant): string {
     case 'server-update':
       return `Server update on ${grant.nodeId}`
     case 'detection-verdict':
+      if (grant.verdict === 'wrong-label')
+        return 'Marked label wrong, class right — kept for retraining'
       return grant.verdict === 'correct'
         ? 'Marked correct — kept for retraining'
         : grant.suggestedClass === undefined
@@ -157,11 +159,13 @@ const FAILURE_COPY: Record<NcActionClaimFailure, string> = {
 function confirmPage(url: URL, grant: NcDetectionVerdictGrant): string {
   const action = `${url.pathname}?exp=${encodeURIComponent(url.searchParams.get('exp') ?? '')}&amp;sig=${encodeURIComponent(url.searchParams.get('sig') ?? '')}&amp;confirm=1`
   const what =
-    grant.verdict === 'correct'
-      ? 'Mark this detection as correct?'
-      : grant.suggestedClass === undefined
-        ? 'Mark this detection as wrong?'
-        : `Mark this detection as wrong, it was a ${grant.suggestedClass}?`
+    grant.verdict === 'wrong-label'
+      ? 'Mark the label of this detection as wrong (the class is right)?'
+      : grant.verdict === 'correct'
+        ? 'Mark this detection as correct?'
+        : grant.suggestedClass === undefined
+          ? 'Mark this detection as wrong?'
+          : `Mark this detection as wrong, it was a ${grant.suggestedClass}?`
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Confirm</title><style>body{font:16px/1.5 system-ui,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;background:#111;color:#eee}main{max-width:24rem;padding:2rem;text-align:center}h1{font-size:1.25rem;margin:0 0 1rem}button{font:inherit;padding:.6rem 1.4rem;border-radius:.5rem;border:0;background:#3b82f6;color:#fff}</style><main><h1>Confirm</h1><p>${what}</p><form method="post" action="${action}"><button type="submit">Confirm</button></form></main>`
 }
 

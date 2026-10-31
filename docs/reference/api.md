@@ -3599,7 +3599,7 @@
 
 ### `pipeline-analytics` → `pipelineAnalytics.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2660`
+- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2707`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IPipelineAnalyticsProvider`
@@ -3682,7 +3682,7 @@
 | resolveRetrainTrainingCorpus | `pipelineAnalytics.resolveRetrainTrainingCorpus` | query | admin | `RetrainTrainingCorpusSelectionSchema` | `RetrainTrainingCorpusResolveResultSchema` |
 | renameRetrainCollection | `pipelineAnalytics.renameRetrainCollection` | mutation | admin | `{ id: string; name: string }` | `RetrainCollectionRenameResultSchema` |
 | deleteRetrainCollection | `pipelineAnalytics.deleteRetrainCollection` | mutation | admin | `{ id: string }` | `{ deleted: boolean; removedFrames: number }` |
-| addRetrainFrameFromRecording | `pipelineAnalytics.addRetrainFrameFromRecording` | mutation | admin | `{ collectionId: string; deviceId: number; epochMs: number }` | `AddRetrainFrameFromRecordingResultSchema` |
+| addRetrainFrameFromRecording | `pipelineAnalytics.addRetrainFrameFromRecording` | mutation | admin | `{ collectionId: string; deviceId: number; epochMs: number; verdictSubject?: RetrainVerdictSubjectSchema }` | `AddRetrainFrameFromRecordingResultSchema` |
 | addRetrainFramesToCollection | `pipelineAnalytics.addRetrainFramesToCollection` | mutation | admin | `{ collectionId: string; frameIds: string[] }` | `{ added: number; alreadyMember: number; unknownFrameIds: string[] }` |
 | removeRetrainFrameFromCollection | `pipelineAnalytics.removeRetrainFrameFromCollection` | mutation | admin | `{ collectionId: string; frameId: string }` | `{ removed: boolean; deletedFrame: boolean }` |
 | listRetrainCollectionFrames | `pipelineAnalytics.listRetrainCollectionFrames` | query | admin | `{ collectionId: string }` | `RetrainFrameSchema[]` |

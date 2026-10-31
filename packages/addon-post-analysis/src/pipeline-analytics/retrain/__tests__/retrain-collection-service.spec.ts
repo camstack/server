@@ -3,7 +3,7 @@
  * as a trackless retrain copy in a collection — including the moment the model
  * saw nothing — or the operator is told exactly why not.
  */
-import type { MediaFileRef } from '@camstack/types'
+import type { MediaFileRef, Track } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
@@ -12,7 +12,7 @@ import { RetrainAnnotationStore } from '../retrain-annotation-store.js'
 import { RetrainCollectionService } from '../retrain-collection-service.js'
 import { RetrainCollectionStore } from '../retrain-collection-store.js'
 import { RetrainFrameStore, recordingFrameId } from '../retrain-frame-store.js'
-import { RetrainService } from '../retrain-service.js'
+import { type RetrainPipelineEvidence, RetrainService } from '../retrain-service.js'
 import { jpegOf, type MemoryBlobs, memoryBlobs } from './retrain-fixtures.js'
 
 const AT = 1_700_000_123_456
@@ -29,7 +29,7 @@ interface Harness {
   setStill(still: RecoveredStill): void
 }
 
-async function harness(): Promise<Harness> {
+async function harness(evidence?: RetrainPipelineEvidence): Promise<Harness> {
   const { ledgers } = await makeAnalyticsWorld()
   const blobs = memoryBlobs()
   let ids = 0
@@ -70,6 +70,7 @@ async function harness(): Promise<Harness> {
     },
     logger: makeSilentLogger(),
     memberships: store,
+    ...(evidence !== undefined ? { pipelineEvidence: evidence } : {}),
   })
   let still: RecoveredStill = { outcome: 'ok', jpeg: jpegOf(2560, 1440), gopStartMs: AT - 400 }
   const captured: Array<{ deviceId: number; epochMs: number }> = []
@@ -273,5 +274,127 @@ describe('RetrainCollectionService', () => {
     })
     // Deselecting the frame removes its memberships too.
     expect((await h.collections.list())[0]?.frameCount).toBe(0)
+  })
+})
+
+/** The dog the notification was about, and the walker beside it. */
+const DOG_BOX = { x: 0.5, y: 0.25, w: 0.1, h: 0.5 }
+const WALKER: Track = {
+  trackId: 'trk-walker',
+  deviceId: 615,
+  className: 'person',
+  firstSeen: AT - 60_000,
+  lastSeen: AT + 60_000,
+  positions: [{ x: 0, y: 0, timestamp: AT, bbox: { x: 100, y: 50, w: 80, h: 250 }, score: 0.9 }],
+  snapshots: [],
+  zonesVisited: [],
+  frameWidth: 640,
+  frameHeight: 360,
+  totalDistance: 0,
+  state: 'moving',
+  active: true,
+}
+
+describe('a verdict still carries the subject the notification reported', () => {
+  const evidence: RetrainPipelineEvidence = {
+    tracksAround: async () => [WALKER],
+    subjectBoxes: async () => [],
+  }
+
+  async function landDogStill(
+    verdictSubject: Parameters<
+      RetrainCollectionService['addFrameFromRecording']
+    >[0]['verdictSubject'],
+  ) {
+    const h = await harness(evidence)
+    h.setStill({ outcome: 'ok', jpeg: jpegOf(3840, 2160), gopStartMs: AT - 400 })
+    const id = await newCollection(h, 'Notification verdicts')
+    const result = await h.collections.addFrameFromRecording({
+      collectionId: id,
+      deviceId: 615,
+      epochMs: AT,
+      ...(verdictSubject !== undefined ? { verdictSubject } : {}),
+    })
+    if (result.kind !== 'added') throw new Error('expected added')
+    return { h, id, frame: result.frame }
+  }
+
+  const SUBJECT = {
+    trackId: 'trk-dog',
+    className: 'dog',
+    bbox: DOG_BOX,
+    verdict: 'wrong' as const,
+    suggestedClass: 'person',
+    at: AT + 13_000,
+  }
+
+  it("the notified box is the first (own) proposal, in the still's own frame space", async () => {
+    const { frame } = await landDogStill(SUBJECT)
+    const [own, ...rest] = frame.pipelineBoxes ?? []
+    expect(own).toMatchObject({
+      trackId: 'trk-dog',
+      basis: 'verdict',
+      macroClass: 'animal',
+      label: 'dog',
+      bbox: DOG_BOX,
+    })
+    // A 3840x2160 still reads the same normalised box as the 640x360 detection
+    // frame it was measured on: 0.5 / 0.25 / 0.1 / 0.5 of the frame.
+    const px = (v: number, extent: number): number => Math.round(v * extent)
+    expect([
+      px(own?.bbox.x ?? 0, frame.width),
+      px(own?.bbox.y ?? 0, frame.height),
+      px(own?.bbox.w ?? 0, frame.width),
+      px(own?.bbox.h ?? 0, frame.height),
+    ]).toEqual([1920, 540, 384, 1080])
+    // The neighbour (the dog walker) is still there, but second.
+    expect(rest.map((b) => b.trackId)).toEqual(['trk-walker'])
+    expect(rest[0]?.basis).toBe('position')
+  })
+
+  it('reports the verdict on the still', async () => {
+    const { frame } = await landDogStill(SUBJECT)
+    expect(frame.verdict).toEqual({
+      verdict: 'wrong',
+      suggestedClass: 'person',
+      trackId: 'trk-dog',
+      at: AT + 13_000,
+    })
+  })
+
+  it('is stored on the row: a later listing still has it', async () => {
+    const { h, id, frame } = await landDogStill(SUBJECT)
+    const listed = await h.collections.listFrames({ collectionId: id })
+    expect(listed[0]?.frameId).toBe(frame.frameId)
+    expect(listed[0]?.pipelineBoxes?.[0]?.basis).toBe('verdict')
+    expect(listed[0]?.verdict?.verdict).toBe('wrong')
+  })
+
+  it('a still with no verdict subject offers only the neighbours, as before', async () => {
+    const { frame } = await landDogStill(undefined)
+    expect((frame.pipelineBoxes ?? []).map((b) => b.trackId)).toEqual(['trk-walker'])
+    expect(frame.verdict).toBeUndefined()
+  })
+
+  it('a subject with no box still reports its verdict, and draws nothing of its own', async () => {
+    const { bbox: _omitted, ...noBox } = SUBJECT
+    const { frame } = await landDogStill(noBox)
+    expect(frame.verdict?.verdict).toBe('wrong')
+    expect((frame.pipelineBoxes ?? []).map((b) => b.basis)).toEqual(['position'])
+  })
+
+  it('the moment already in the dataset takes the verdict subject too', async () => {
+    const h = await harness(evidence)
+    const id = await newCollection(h, 'Notification verdicts')
+    await h.collections.addFrameFromRecording({ collectionId: id, deviceId: 615, epochMs: AT })
+    const again = await h.collections.addFrameFromRecording({
+      collectionId: id,
+      deviceId: 615,
+      epochMs: AT,
+      verdictSubject: SUBJECT,
+    })
+    if (again.kind !== 'added') throw new Error('expected added')
+    expect(again.reused).toBe(true)
+    expect(again.frame.pipelineBoxes?.[0]?.basis).toBe('verdict')
   })
 })

@@ -2,6 +2,7 @@
  * What the notification centre is wired with, and the alarm panel port it talks to.
  * Extracted from notification-center/index.ts. The class re-exports both.
  */
+import type { RetrainVerdictSubject } from '@camstack/types'
 import type { NcAddonUpdateOutcome } from './addon-update-apply.js'
 import type { NcExclusionReading } from './alarm/alarm-exclusions.js'
 import type { NcAlarmInputBypassRecord } from './alarm/alarm-input-bypasses.js'
@@ -378,6 +379,9 @@ export interface NotificationCenterDeps {
   readonly addVerdictFrameFromRecording?: (input: {
     readonly deviceId: number
     readonly epochMs: number
+    /** The notified subject, frozen on the grant at mint: stored on the still
+     *  as its own subject so neighbouring tracks stay secondary. */
+    readonly subject?: RetrainVerdictSubject
   }) => Promise<NcVerdictFrameOutcome>
   /**
    * The scheduled-timelapse producer's outside world (export engine, footage

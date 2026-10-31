@@ -335,6 +335,7 @@
   "button.verdict.correct": "Correct",
   "button.verdict.wrong": "Wrong",
   "button.verdict.wrongAs": "Wrong: it is {{class}}",
+  "button.verdict.wrongLabel": "Wrong label, class OK",
   "action.server-update.title": "Server update",
   "action.server-update.started": "Updating server on {{nodeId}}…",
   "action.server-update.restarting": "Server update staged on {{nodeId}} — the node is restarting. You will hear when it comes back.",

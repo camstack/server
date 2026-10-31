@@ -30,6 +30,7 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import type { AlarmArmMode } from '@camstack/types'
+import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import { ARM_ANYWAY_TTL_MS } from './alarm/alarm-arm-guard.js'
 
 /** What every grant carries, whatever it does. */
@@ -200,7 +201,8 @@ export interface NcServerUpdateGrant extends NcActionGrantBase {
  */
 export interface NcDetectionVerdictGrant extends NcActionGrantBase {
   readonly kind: 'detection-verdict'
-  readonly verdict: 'correct' | 'wrong'
+  /** `wrong-label`: the macro class was right, the label / sub-label was not. */
+  readonly verdict: NcVerdictValue
   readonly trackId: string
   readonly ruleId: string
   readonly ruleName: string
@@ -211,7 +213,32 @@ export interface NcDetectionVerdictGrant extends NcActionGrantBase {
   /** The instant the notification reported, frozen at mint: where the
    *  recording fallback looks once the track itself is gone. */
   readonly eventAtMs?: number
+  /**
+   * The subject the notification reported, FROZEN at mint from the row that
+   * triggered it. The track may be gone by the time of the tap (a short-lived
+   * moving track is deleted within seconds); the recording still the verdict
+   * then lands is annotated from this, not from whatever tracks happen to
+   * neighbour the instant. The grant lives in the registry (the URL carries
+   * only its id), so this adds nothing to the link or to the signed bytes.
+   */
+  readonly subject?: NcVerdictSubject
   readonly viaLink?: boolean
+}
+
+/** The verdict a button records. */
+export type NcVerdictValue = 'correct' | 'wrong' | 'wrong-label'
+
+/**
+ * What a verdict grant knows about the notified subject. `bbox` is
+ * NORMALISED `[0,1]` against the full detection frame — the same space the
+ * retrain annotations use, so any still of the camera reads the same numbers.
+ */
+export interface NcVerdictSubject {
+  /** The detector class as notified (`dog`, `person`). */
+  readonly className: string
+  /** The display label (a recognised name, a plate, a sub-class). */
+  readonly label?: string
+  readonly bbox?: BboxRect
 }
 
 /**

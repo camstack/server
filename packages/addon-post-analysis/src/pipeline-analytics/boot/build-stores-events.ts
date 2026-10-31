@@ -157,6 +157,12 @@ export class BuildStores extends BuildStoresBase {
           mediaStore.listSubjectBoxesByOwner('track', trackId, deviceId),
       },
       memberships: retrainCollectionStore,
+      // The operator's answers to the notification buttons, read lazily: the
+      // notification center is built after the stores.
+      verdicts: {
+        forTracks: async (trackIds) =>
+          this.notificationCenter?.detectionVerdictsOf(trackIds) ?? new Map(),
+      },
       // The pixels travel over the admin `retrain-frame` data plane, not as
       // base64 inside a cap answer (D613). Absent until the plane is served.
       frameUrl: (frameId, size) => retrainFramePath(this.ctx.id, frameId, size),

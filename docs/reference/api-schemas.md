@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1000 shared schemas.**
+**1003 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -5686,6 +5686,7 @@ Enum: `"source-missing" \| "unreadable-image" \| "write-failed"`
 - `complete`: `boolean`
 - `pipelineBoxes?`: `RetrainPipelineBoxSchema[]`
 - `collectionIds?`: `string[]`
+- `verdict?`: `RetrainVerdictSchema`
 - `revision?`: `number`
 - `dismissed?`: `RetrainDismissedSchema[]`
 - `review?`: `RetrainFrameReviewSchema`
@@ -5771,6 +5772,7 @@ Enum: `"track" \| "recording"`
 - `complete`: `boolean`
 - `pipelineBoxes?`: `RetrainPipelineBoxSchema[]`
 - `collectionIds?`: `string[]`
+- `verdict?`: `RetrainVerdictSchema`
 - `revision?`: `number`
 - `dismissed?`: `RetrainDismissedSchema[]`
 - `review?`: `RetrainFrameReviewSchema`
@@ -5834,7 +5836,7 @@ Enum: `"person" \| "vehicle" \| "animal" \| "package" \| "face" \| "plate"`
 - `score?`: `number`
 - `modelId?`: `string`
 - `trackId`: `string`
-- `basis`: `"subject-box" \| "position"`
+- `basis`: `"subject-box" \| "position" \| "verdict"`
 - `deltaMs`: `number`
 
 ### `RetrainReviewStatusSchema`
@@ -5855,6 +5857,7 @@ Enum: `"none" \| "staging" \| "trained"`
 - `lastSeen`: `number`
 - `frameCount`: `number`
 - `annotationCount`: `number`
+- `verdict?`: `RetrainVerdictSchema`
 
 ### `RetrainTrainingCorpusResolveResultSchema`
 
@@ -5872,6 +5875,27 @@ Enum: `"none" \| "staging" \| "trained"`
 - `retrainStatus`: `RetrainStatusSchema`
 - `changed`: `boolean`
 - `reason?`: `"unknown-track" \| "no-frames-copied" \| "not-staging" \| "not-trained" \| "unchanged"`
+
+### `RetrainVerdictSchema`
+
+- `verdict`: `RetrainVerdictValueSchema`
+- `suggestedClass?`: `string`
+- `trackId`: `string`
+- `at?`: `number`
+
+### `RetrainVerdictSubjectSchema`
+
+- `trackId`: `string`
+- `className`: `string`
+- `label?`: `string`
+- `bbox?`: `{ x: number; y: number; w: number; h: number }`
+- `verdict`: `RetrainVerdictValueSchema`
+- `suggestedClass?`: `string`
+- `at?`: `number`
+
+### `RetrainVerdictValueSchema`
+
+Enum: `"correct" \| "wrong" \| "wrong-label"`
 
 ### `RtpSourceSchema`
 

@@ -36,6 +36,7 @@ import {
   type RetrainStatus,
   type RetrainTrack,
   type RetrainTransitionResult,
+  type RetrainVerdict,
   type RunStatelessStepInput,
   type RunStatelessStepResult,
   type Track,
@@ -159,9 +160,17 @@ export interface RetrainServiceDeps {
   readonly logger: IScopedLogger
   readonly pipelineEvidence?: RetrainPipelineEvidence
   readonly memberships?: RetrainMembershipPort
+  /** The operator's verdicts on the notified subjects, by track. A read that
+   *  fails degrades to no verdict, never to a failed listing. */
+  readonly verdicts?: RetrainVerdictPort
   /** The admin data-plane URL of a frame's pixels (`retrain-frame-handler.ts`).
    *  Absent where no data plane is served: the wire frame then carries none. */
   readonly frameUrl?: (frameId: string, size: 'thumb' | 'full') => string
+}
+
+/** What the notification verdict ledger answers to the retrain listing. */
+export interface RetrainVerdictPort {
+  forTracks(trackIds: readonly string[]): Promise<ReadonlyMap<string, RetrainVerdict>>
 }
 
 /** A macro class that failed validation — the write is refused, never coerced. */
@@ -185,6 +194,23 @@ function toWireFrame(f: RetrainFrame): WireFrame {
     complete: f.complete,
     revision: f.revision ?? 0,
     dismissed: f.dismissed ?? [],
+  }
+}
+
+/** The answer on a frame: a track copy asks the ledger, a still carries the
+ *  subject the notification froze. */
+function verdictOfFrame(
+  copy: RetrainFrame,
+  verdicts: ReadonlyMap<string, RetrainVerdict>,
+): RetrainVerdict | undefined {
+  if (copy.origin === 'track') return verdicts.get(copy.trackId)
+  const s = copy.verdictSubject
+  if (s === undefined) return undefined
+  return {
+    verdict: s.verdict,
+    trackId: s.trackId,
+    ...(s.suggestedClass !== undefined ? { suggestedClass: s.suggestedClass } : {}),
+    ...(s.at !== undefined ? { at: s.at } : {}),
   }
 }
 
@@ -266,9 +292,10 @@ export class RetrainService {
       tracks.push(...(await this.deps.tracks.listStaging(deviceId, limit)))
     }
     const ids = tracks.map((t) => t.trackId)
-    const [frameCounts, annotationCounts] = await Promise.all([
+    const [frameCounts, annotationCounts, verdicts] = await Promise.all([
       this.deps.frames.countsByTrack(ids),
       this.deps.annotations.countsByTrack(ids),
+      this.verdictsOfTracks(ids),
     ])
     return tracks.map(
       (t): RetrainTrack => ({
@@ -280,6 +307,7 @@ export class RetrainService {
         lastSeen: t.lastSeen,
         frameCount: frameCounts.get(t.trackId) ?? 0,
         annotationCount: annotationCounts.get(t.trackId) ?? 0,
+        ...(verdicts.has(t.trackId) ? { verdict: verdicts.get(t.trackId) } : {}),
       }),
     )
   }
@@ -337,9 +365,11 @@ export class RetrainService {
     const ownTracks = new Map<string, Track | null>()
     const subjectBoxes = new Map<string, ReadonlyMap<number, FrameSubjectBox>>()
     const annotationsByFrame = await this.annotationsByFrame(copies)
+    const verdicts = await this.verdictsOf(copies)
     const out: WireFrame[] = []
     for (const copy of copies) {
-      const wire = toWireFrame(copy)
+      const verdict = verdictOfFrame(copy, verdicts)
+      const wire = { ...toWireFrame(copy), ...(verdict !== undefined ? { verdict } : {}) }
       const collectionIds = collections?.get(copy.frameId)
       const withCollections: WireFrame = {
         ...(collections !== null ? { ...wire, collectionIds: collectionIds ?? [] } : wire),
@@ -373,10 +403,32 @@ export class RetrainService {
         ownSubjectBox:
           trackId !== '' ? (subjectBoxes.get(trackId)?.get(copy.sourceMediaId) ?? null) : null,
         neighbours,
+        ...(copy.verdictSubject !== undefined ? { verdictSubject: copy.verdictSubject } : {}),
       })
       out.push({ ...withCollections, pipelineBoxes, review: reviewOf(pipelineBoxes) })
     }
     return out
+  }
+
+  /** The verdicts of the tracks these frames were copied from. */
+  private async verdictsOf(
+    copies: readonly RetrainFrame[],
+  ): Promise<ReadonlyMap<string, RetrainVerdict>> {
+    return this.verdictsOfTracks(copies.flatMap((c) => (c.origin === 'track' ? [c.trackId] : [])))
+  }
+
+  private async verdictsOfTracks(
+    trackIds: readonly string[],
+  ): Promise<ReadonlyMap<string, RetrainVerdict>> {
+    const port = this.deps.verdicts
+    const ids = [...new Set(trackIds)]
+    if (port === undefined || ids.length === 0) return new Map()
+    return port.forTracks(ids).catch((err) => {
+      this.deps.logger.warn('retrain frames: verdicts unreadable', {
+        meta: { tracks: ids.length, error: String(err) },
+      })
+      return new Map<string, RetrainVerdict>()
+    })
   }
 
   /** The URLs of a frame's pixels, when a data plane is served for them. */

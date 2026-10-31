@@ -6,7 +6,7 @@
 import type { NcAlarmButtonKind, NcAlarmBypassableInput } from './action-buttons.js'
 import { verdictButtonRefusal, verdictButtonSpecs } from './detection-verdict-buttons.js'
 import { buildActionButtons, buildAlarmButtons, buildSnoozeButtons } from './action-buttons.js'
-import type { NcActionGrant } from './action-token.js'
+import type { NcActionGrant, NcVerdictValue } from './action-token.js'
 import { NcActionTokenRegistry, actionTtlMs } from './action-token.js'
 import { addonUpdateButtonRefusal, buildAddonUpdateButtons } from './addon-update-buttons.js'
 import { intrusionDeviceOf } from './alarm/alarm-push-policy.js'
@@ -93,6 +93,13 @@ export function rowRefusalId(systemEvent: NcOutboxSystemEvent | undefined): stri
   return typeof value === 'string' && value.length > 0 ? value : undefined
 }
 
+/** The text-catalog key of each verdict button. */
+const VERDICT_LABEL_KEY: Readonly<Record<NcVerdictValue, string>> = {
+  correct: 'button.verdict.correct',
+  wrong: 'button.verdict.wrong',
+  'wrong-label': 'button.verdict.wrongLabel',
+}
+
 export interface MintButtonsHost {
   readonly actionRunner: NcRuleActionRunner | null
   readonly actionTokens: NcActionTokenRegistry
@@ -162,53 +169,60 @@ export async function mintButtons(
   const verdictButtons: NotificationAction[] =
     verdictRefusal !== null || verdictTrackId === undefined || verdictOwner === undefined
       ? []
-      : verdictButtonSpecs({ className: input.className, maxActions: input.maxActions }).map(
-          (spec) => {
-            const id = randomUUID()
-            drafts.push({
+      : verdictButtonSpecs({
+          className: input.className,
+          label: input.label,
+          maxActions: input.maxActions,
+        }).map((spec) => {
+          const id = randomUUID()
+          drafts.push({
+            id,
+            ttlMs: actionTtlMs({ kind: 'detection-verdict' }),
+            grant: (expiresAt) => ({
+              kind: 'detection-verdict',
               id,
-              ttlMs: actionTtlMs({ kind: 'detection-verdict' }),
-              grant: (expiresAt) => ({
-                kind: 'detection-verdict',
-                id,
-                verdict: spec.verdict,
-                trackId: verdictTrackId,
-                ruleId: input.ruleId,
-                ruleName: input.ruleName,
-                userId: verdictOwner,
-                ...(spec.suggestedClass !== undefined
-                  ? { suggestedClass: spec.suggestedClass }
-                  : {}),
-                // A channel with no buttons shows these as links in the body,
-                // where a preview bot will open them: confirm before claiming.
-                ...(input.maxActions === 0 ? { viaLink: true } : {}),
-                ...(input.eventAtMs !== undefined ? { eventAtMs: input.eventAtMs } : {}),
-                deviceId: input.deviceId,
-                actionId: spec.actionId,
-                targetId: input.targetId,
-                expiresAt,
-              }),
-            })
-            return {
-              id: spec.actionId,
-              label:
-                spec.suggestedClass === undefined
-                  ? host.texts.text({
-                      key:
-                        spec.verdict === 'correct'
-                          ? 'button.verdict.correct'
-                          : 'button.verdict.wrong',
-                    })
-                  : host.texts.text({
-                      key: 'button.verdict.wrongAs',
-                      vars: { class: spec.suggestedClass },
-                    }),
-              url: id,
-              // A background call: the OS shows nothing, the notification stays.
-              mode: 'background',
-            }
-          },
-        )
+              verdict: spec.verdict,
+              trackId: verdictTrackId,
+              ruleId: input.ruleId,
+              ruleName: input.ruleName,
+              userId: verdictOwner,
+              ...(spec.suggestedClass !== undefined ? { suggestedClass: spec.suggestedClass } : {}),
+              // A channel with no buttons shows these as links in the body,
+              // where a preview bot will open them: confirm before claiming.
+              ...(input.maxActions === 0 ? { viaLink: true } : {}),
+              ...(input.eventAtMs !== undefined ? { eventAtMs: input.eventAtMs } : {}),
+              // Frozen from the row that triggered the notification: the
+              // track may be gone at tap time, the recording still is then
+              // annotated with THIS subject, not its neighbours.
+              ...(input.className !== undefined
+                ? {
+                    subject: {
+                      className: input.className,
+                      ...(input.label !== undefined ? { label: input.label } : {}),
+                      ...(input.bbox !== undefined ? { bbox: input.bbox } : {}),
+                    },
+                  }
+                : {}),
+              deviceId: input.deviceId,
+              actionId: spec.actionId,
+              targetId: input.targetId,
+              expiresAt,
+            }),
+          })
+          return {
+            id: spec.actionId,
+            label:
+              spec.suggestedClass === undefined
+                ? host.texts.text({ key: VERDICT_LABEL_KEY[spec.verdict] })
+                : host.texts.text({
+                    key: 'button.verdict.wrongAs',
+                    vars: { class: spec.suggestedClass },
+                  }),
+            url: id,
+            // A background call: the OS shows nothing, the notification stays.
+            mode: 'background',
+          }
+        })
 
   // 1. The rule's own sequences. Needs an actuator — a button that would
   //    always fail is worse than an absent one.

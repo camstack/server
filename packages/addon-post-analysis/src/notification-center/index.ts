@@ -1,4 +1,5 @@
 import type {
+  RetrainVerdict,
   AlarmArmMode,
   AlarmState,
   AudioEvent,
@@ -2024,6 +2025,24 @@ export class NotificationCenter implements NcEventConsumer {
         return self.zoneOwners
       },
     }
+  }
+
+  /**
+   * What the operator answered to the "was this detection right?" buttons, for
+   * the retrain page: by track, the latest answer wins. A track nobody answered
+   * is absent.
+   */
+  detectionVerdictsOf(trackIds: readonly string[]): ReadonlyMap<string, RetrainVerdict> {
+    const out = new Map<string, RetrainVerdict>()
+    for (const [trackId, row] of this.verdicts.forTracks(trackIds)) {
+      out.set(trackId, {
+        verdict: row.verdict,
+        trackId,
+        at: row.at,
+        ...(row.suggestedClass !== undefined ? { suggestedClass: row.suggestedClass } : {}),
+      })
+    }
+    return out
   }
 
   observeOccupancy(

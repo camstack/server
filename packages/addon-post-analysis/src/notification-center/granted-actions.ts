@@ -13,6 +13,7 @@ import type {
   NcSequenceGrant,
   NcServerUpdateGrant,
   NcSnoozeGrant,
+  NcVerdictSubject,
 } from './action-token.js'
 import { NcActionRefusedError } from './action-token.js'
 import type { NcAddonUpdateOutcome, NcAddonUpdateReport } from './addon-update-apply.js'
@@ -30,7 +31,7 @@ import { NcSequenceStore } from './sequence-store.js'
 import { isSnoozeExempt } from './snooze-exempt.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { NcTextCatalog } from './text-catalog.js'
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger, RetrainVerdictSubject } from '@camstack/types'
 import { alarmPanelCapability } from '@camstack/types'
 import type { NcAlarmPanelPort, NotificationCenterDeps } from './index.js'
 
@@ -296,6 +297,23 @@ export const VERDICT_FRAME_REFUSAL_COPY: Readonly<
   failed: 'The track is gone and its frame could not be saved — nothing was changed',
 }
 
+/** The grant's frozen subject, in the shape the retrain still stores it in. */
+function verdictSubjectOf(
+  grant: NcDetectionVerdictGrant,
+  subject: NcVerdictSubject,
+  at: number,
+): RetrainVerdictSubject {
+  return {
+    trackId: grant.trackId,
+    className: subject.className,
+    ...(subject.label !== undefined ? { label: subject.label } : {}),
+    ...(subject.bbox !== undefined ? { bbox: subject.bbox } : {}),
+    verdict: grant.verdict,
+    ...(grant.suggestedClass !== undefined ? { suggestedClass: grant.suggestedClass } : {}),
+    at,
+  }
+}
+
 /**
  * The track is gone (aged out, or discarded as a still object): the camera's
  * RECORDING still covers the instant, so the verdict lands a frame there
@@ -315,7 +333,13 @@ async function landFrameFromRecording(
     })
     throw new NcActionRefusedError(VERDICT_REFUSAL_COPY['unknown-track'])
   }
-  const landed = await addFrame({ deviceId: grant.deviceId, epochMs: grant.eventAtMs })
+  const landed = await addFrame({
+    deviceId: grant.deviceId,
+    epochMs: grant.eventAtMs,
+    ...(grant.subject !== undefined
+      ? { subject: verdictSubjectOf(grant, grant.subject, host.now()) }
+      : {}),
+  })
   if (!landed.ok) {
     host.logger.warn('detection verdict dropped — the track is gone and the recording refused', {
       tags,

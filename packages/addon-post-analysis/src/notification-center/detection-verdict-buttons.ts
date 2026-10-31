@@ -25,9 +25,13 @@
  */
 
 import type { NotificationAction } from '@camstack/types'
+import { toRetrainClassTiers } from '../pipeline-analytics/retrain/retrain-pipeline-boxes.js'
+import type { NcVerdictValue } from './action-token.js'
 
 export const VERDICT_CORRECT_ID = 'detection-verdict-correct'
 export const VERDICT_WRONG_ID = 'detection-verdict-wrong'
+/** Wrong LABEL, right class — only for a subject that has a label. */
+export const VERDICT_WRONG_LABEL_ID = 'detection-verdict-wrong-label'
 /** `detection-verdict-wrong:<class>` — Wrong, and what it really was. */
 export const VERDICT_WRONG_AS_PREFIX = 'detection-verdict-wrong:'
 
@@ -55,8 +59,18 @@ export function verdictButtonRefusal(subject: VerdictButtonSubject): VerdictButt
 /** One button to mint: what it records, and the id it travels under. */
 export interface VerdictButtonSpec {
   readonly actionId: string
-  readonly verdict: 'correct' | 'wrong'
+  readonly verdict: NcVerdictValue
   readonly suggestedClass?: string
+}
+
+/**
+ * Does the notified subject carry a label below its macro class — a sub-class
+ * (`dog` under `animal`), a recognised name, a plate? The same tier split the
+ * retrain annotations use, so "has a label" means one thing in both places.
+ */
+export function subjectHasLabel(className: string | undefined, label: string | undefined): boolean {
+  if (className === undefined) return false
+  return toRetrainClassTiers(className, label).label !== undefined
 }
 
 /** The classes worth offering for a subject of `className`. */
@@ -72,12 +86,18 @@ export function verdictClassChoices(className: string | undefined): readonly str
  */
 export function verdictButtonSpecs(input: {
   readonly className: string | undefined
+  readonly label?: string | undefined
   readonly maxActions: number | undefined
 }): readonly VerdictButtonSpec[] {
-  const base: readonly VerdictButtonSpec[] = [
+  const plain: readonly VerdictButtonSpec[] = [
     { actionId: VERDICT_CORRECT_ID, verdict: 'correct' },
     { actionId: VERDICT_WRONG_ID, verdict: 'wrong' },
   ]
+  // "Wrong label, class OK" only means something when there IS a label to be
+  // wrong: omitted otherwise, and the slot goes to the class choices.
+  const base: readonly VerdictButtonSpec[] = subjectHasLabel(input.className, input.label)
+    ? [...plain, { actionId: VERDICT_WRONG_LABEL_ID, verdict: 'wrong-label' }]
+    : plain
   if (input.maxActions === undefined || input.maxActions <= 3) return base
   const room = input.maxActions - base.length
   const extra = verdictClassChoices(input.className)
@@ -94,6 +114,7 @@ export function verdictButtonSpecs(input: {
 
 /** Is this one of our buttons (so a link-only channel can lift it into the body)? */
 export function isVerdictAction(action: { readonly id: string }): boolean {
+  // The wrong-label id shares the `detection-verdict-wrong` prefix.
   return action.id === VERDICT_CORRECT_ID || action.id.startsWith(VERDICT_WRONG_ID)
 }
 

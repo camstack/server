@@ -9,7 +9,7 @@
  */
 
 import type { ServerResponse } from 'node:http'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema, type ObjectEvent, type RetrainVerdictSubject } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeTestObjectEvent } from '../../__tests__/support/events.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
@@ -70,7 +70,11 @@ async function makeHarness(options: HarnessOptions = {}) {
   ]
   const sends: NcSendInput[] = []
   const marked: { deviceId: number; trackId: string }[] = []
-  const framed: { deviceId: number; epochMs: number }[] = []
+  const framed: {
+    deviceId: number
+    epochMs: number
+    subject?: RetrainVerdictSubject
+  }[] = []
   let now = T0
   let built: NotificationCenter | null = null
   const events = [] as ReturnType<typeof makeTestObjectEvent>[]
@@ -105,7 +109,11 @@ async function makeHarness(options: HarnessOptions = {}) {
     ...(options.frame === undefined
       ? {}
       : {
-          addVerdictFrameFromRecording: async (input: { deviceId: number; epochMs: number }) => {
+          addVerdictFrameFromRecording: async (input: {
+            deviceId: number
+            epochMs: number
+            subject?: RetrainVerdictSubject
+          }) => {
             framed.push(input)
             return options.frame!
           },
@@ -120,7 +128,7 @@ async function makeHarness(options: HarnessOptions = {}) {
       name: 'person at gate',
       delivery: 'immediate',
       targets: [{ targetId: 'target-1' }],
-      conditions: { classes: ['person'] },
+      conditions: { classes: ['person', 'dog'] },
       throttle: { cooldownSec: 0, scope: 'rule-device' },
       snoozeOptions: [],
       media: { attach: 'none' },
@@ -141,8 +149,14 @@ async function makeHarness(options: HarnessOptions = {}) {
     marked,
     framed,
     plane,
-    fire: async (trackId: string) => {
-      const event = makeTestObjectEvent({ trackId, deviceId: 101, timestamp: now, zones: [] })
+    fire: async (trackId: string, overrides: Partial<ObjectEvent> = {}) => {
+      const event = makeTestObjectEvent({
+        trackId,
+        deviceId: 101,
+        timestamp: now,
+        zones: [],
+        ...overrides,
+      })
       events.push(event)
       center.onObjectEventPersisted(event)
       await vi.waitFor(() => {
@@ -275,7 +289,9 @@ describe('a verdict on a track that is gone still lands a training frame', () =>
     h.advance(30_000)
     const page = await tap(h, button(h, 'detection-verdict-wrong')!.url!)
     expect(page).toContain('Done')
-    expect(h.framed).toEqual([{ deviceId: 101, epochMs: T0 }])
+    expect(h.framed.map(({ deviceId, epochMs }) => ({ deviceId, epochMs }))).toEqual([
+      { deviceId: 101, epochMs: T0 },
+    ])
     expect(verdictRows(h)).toHaveLength(1)
     expect(JSON.stringify(verdictRows(h)[0])).toContain('"verdict":"wrong"')
   })
@@ -345,5 +361,107 @@ describe('a channel with no buttons gets a link instead', () => {
     expect(h.marked).toEqual([])
     expect(await tap(h, `${link}&confirm=1`, 'POST')).toContain('Done')
     expect(h.marked).toHaveLength(1)
+  })
+})
+
+/** A 640x360 detection frame: the box is 64x180 px at (320, 90). */
+const DETECTION_BOX = { x: 320, y: 90, w: 64, h: 180 }
+const DETECTION_FRAME = { frameWidth: 640, frameHeight: 360 }
+
+describe('the verdict freezes the subject the notification reported', () => {
+  const GONE: MarkOutcome = { ok: false, reason: 'unknown-track' }
+
+  it('the recording fallback receives the event box, normalised against the full frame', async () => {
+    const h = await makeHarness({ mark: GONE, frame: { ok: true } })
+    await h.fire('trk-dog', {
+      className: 'dog',
+      bbox: DETECTION_BOX,
+      ...DETECTION_FRAME,
+    })
+    h.advance(13_000)
+    await tap(h, button(h, 'detection-verdict-wrong')!.url!)
+    expect(h.framed).toHaveLength(1)
+    expect(h.framed[0]?.subject).toEqual({
+      trackId: 'trk-dog',
+      className: 'dog',
+      bbox: { x: 0.5, y: 0.25, w: 0.1, h: 0.5 },
+      verdict: 'wrong',
+      at: T0 + 13_000,
+    })
+  })
+
+  it('keeps the label and the class the operator named', async () => {
+    const h = await makeHarness({ mark: GONE, frame: { ok: true }, maxActions: 4 })
+    await h.fire('trk-1', {
+      label: 'Rex',
+      bbox: DETECTION_BOX,
+      ...DETECTION_FRAME,
+    })
+    const choice = (h.sends.at(-1)?.notification.actions ?? []).find((a) =>
+      a.id.startsWith('detection-verdict-wrong:'),
+    )
+    await tap(h, choice!.url!)
+    expect(h.framed[0]?.subject).toMatchObject({
+      label: 'Rex',
+      suggestedClass: choice!.id.split(':')[1],
+    })
+  })
+
+  it('an event with no frame size has no box to freeze, and the subject says so', async () => {
+    const h = await makeHarness({ mark: GONE, frame: { ok: true } })
+    await h.fire('trk-1', { bbox: DETECTION_BOX })
+    await tap(h, button(h, 'detection-verdict-correct')!.url!)
+    expect(h.framed[0]?.subject).toBeDefined()
+    expect(h.framed[0]?.subject?.bbox).toBeUndefined()
+  })
+})
+
+describe('"Wrong label, class OK" — only when the subject has a label', () => {
+  it('is offered third when the notified subject has a label', async () => {
+    const h = await makeHarness({ maxActions: 4 })
+    await h.fire('trk-1', { label: 'Rex' })
+    const ids = (h.sends.at(-1)?.notification.actions ?? []).map((a) => a.id)
+    expect(ids.slice(0, 3)).toEqual([
+      'detection-verdict-correct',
+      'detection-verdict-wrong',
+      'detection-verdict-wrong-label',
+    ])
+    expect(button(h, 'detection-verdict-wrong-label')?.label).toBe('Wrong label, class OK')
+  })
+
+  it('is offered for a sub-class className (dog) even with no label', async () => {
+    const h = await makeHarness({ maxActions: 3 })
+    await h.fire('trk-1', { className: 'dog' })
+    expect(button(h, 'detection-verdict-wrong-label')).toBeDefined()
+  })
+
+  it('is omitted for a bare macro class, and the class choices keep their slots', async () => {
+    const h = await makeHarness({ maxActions: 4 })
+    await h.fire('trk-1')
+    expect(button(h, 'detection-verdict-wrong-label')).toBeUndefined()
+    const ids = (h.sends.at(-1)?.notification.actions ?? []).map((a) => a.id)
+    expect(ids).toHaveLength(4)
+  })
+
+  it('a class choice follows it when slots remain', async () => {
+    const h = await makeHarness({ maxActions: 4 })
+    await h.fire('trk-1', { label: 'Rex' })
+    const ids = (h.sends.at(-1)?.notification.actions ?? []).map((a) => a.id)
+    expect(ids).toHaveLength(4)
+    expect(ids[3]).toMatch(/^detection-verdict-wrong:/)
+  })
+
+  it('tapping marks the track and records the verdict wrong-label', async () => {
+    const h = await makeHarness()
+    await h.fire('trk-1', { label: 'Rex' })
+    await tap(h, button(h, 'detection-verdict-wrong-label')!.url!)
+    expect(h.marked).toHaveLength(1)
+    expect(JSON.stringify(verdictRows(h)[0])).toContain('"verdict":"wrong-label"')
+  })
+
+  it('travels as a link on a channel with no buttons', async () => {
+    const h = await makeHarness({ maxActions: 0 })
+    await h.fire('trk-1', { label: 'Rex' })
+    expect(h.sends.at(-1)!.notification.body).toContain('Wrong label, class OK')
   })
 })

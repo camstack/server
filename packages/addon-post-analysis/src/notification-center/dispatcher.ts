@@ -26,6 +26,7 @@
  */
 
 import { isVerdictAction, verdictLinkLines } from './detection-verdict-buttons.js'
+import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import {
   type DeliveryParam,
   type DeliveryParamValue,
@@ -772,6 +773,10 @@ export interface NcMintButtonsInput {
   readonly className?: string
   /** The track a detection notification reports (the verdict buttons' subject). */
   readonly trackId?: string
+  /** The subject's display label (a name, a plate, a sub-class), when it has one. */
+  readonly label?: string
+  /** The subject's box, normalised against the full detection frame. */
+  readonly bbox?: BboxRect
   /** The instant the notification reports (`subject.timestamp`). */
   readonly eventAtMs?: number
   /**
@@ -1908,6 +1913,10 @@ export class NcDispatcher {
         ...(entry.payload.subject.trackId !== undefined
           ? { trackId: entry.payload.subject.trackId }
           : {}),
+        ...(entry.payload.subject.label !== undefined
+          ? { label: entry.payload.subject.label }
+          : {}),
+        ...(entry.payload.subject.bbox !== undefined ? { bbox: entry.payload.subject.bbox } : {}),
         eventAtMs: entry.payload.subject.timestamp,
         ...(target.maxActions !== undefined ? { maxActions: target.maxActions } : {}),
         ...(entry.payload.subject.systemEvent !== undefined

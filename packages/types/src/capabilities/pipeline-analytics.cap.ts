@@ -1450,6 +1450,48 @@ export const RetrainAnnotationDraftSchema = RetrainAnnotationSchema.omit({
 })
 export type RetrainAnnotationDraft = z.infer<typeof RetrainAnnotationDraftSchema>
 
+/**
+ * What the operator answered on a detection notification ("was this right?"),
+ * as the retrain review reads it. `wrong-label` = the macro class was right,
+ * the label / sub-label (a sub-class, a face name, a plate) was not. It is an
+ * INPUT of the review, never an annotation: nothing is exported or saved
+ * because of it.
+ */
+export const RetrainVerdictValueSchema = z.enum(['correct', 'wrong', 'wrong-label'])
+export type RetrainVerdictValue = z.infer<typeof RetrainVerdictValueSchema>
+
+export const RetrainVerdictSchema = z.object({
+  verdict: RetrainVerdictValueSchema,
+  /** The class the operator said it really was. Only with `wrong`. */
+  suggestedClass: z.string().optional(),
+  /** The track the notification reported (a still's track is long gone). */
+  trackId: z.string(),
+  /** When the answer was given, epoch ms. */
+  at: z.number().optional(),
+})
+export type RetrainVerdict = z.infer<typeof RetrainVerdictSchema>
+
+/**
+ * The subject a notification reported, frozen when its buttons were minted and
+ * sent along when the track is gone and the verdict lands a recording still.
+ * `bbox` is NORMALISED `[0,1]` against the FULL frame the detection ran on —
+ * no letterbox, no padding: the still (any resolution, any aspect of the same
+ * camera view) reads the same numbers. Absent when the event carried no box
+ * or no frame size to normalise it with.
+ */
+export const RetrainVerdictSubjectSchema = z.object({
+  trackId: z.string(),
+  /** The detector class as notified (`dog`, `person`). */
+  className: z.string(),
+  /** The display label (a recognised name, a plate, a sub-class). */
+  label: z.string().optional(),
+  bbox: RetrainBboxSchema.optional(),
+  verdict: RetrainVerdictValueSchema,
+  suggestedClass: z.string().optional(),
+  at: z.number().optional(),
+})
+export type RetrainVerdictSubject = z.infer<typeof RetrainVerdictSubjectSchema>
+
 /** A track sitting in `staging`, with everything the worklist needs to rank it. */
 export const RetrainTrackSchema = z.object({
   trackId: z.string(),
@@ -1463,6 +1505,8 @@ export const RetrainTrackSchema = z.object({
   /** How many subjects have been annotated on those frames. `0` with
    *  `frameCount: 0` is exactly "staging, still to work". */
   annotationCount: z.number().int(),
+  /** What the operator said on the notification about this track, if anything. */
+  verdict: RetrainVerdictSchema.optional(),
 })
 export type RetrainTrack = z.infer<typeof RetrainTrackSchema>
 
@@ -1498,7 +1542,7 @@ export const RetrainPipelineBoxSchema = z.object({
   trackId: z.string(),
   /** `subject-box`: recorded on this very frame. `position`: the track's
    *  position nearest the capture time, `deltaMs` away. */
-  basis: z.enum(['subject-box', 'position']),
+  basis: z.enum(['subject-box', 'position', 'verdict']),
   deltaMs: z.number(),
 })
 export type RetrainPipelineBox = z.infer<typeof RetrainPipelineBoxSchema>
@@ -1539,6 +1583,9 @@ export const RetrainFrameSchema = z.object({
   pipelineBoxes: z.array(RetrainPipelineBoxSchema).readonly().optional(),
   /** The named collections this frame belongs to. Present on list answers. */
   collectionIds: z.array(z.string()).readonly().optional(),
+  /** The notification verdict about this frame's subject: its track's, or — on
+   *  a recording still landed by a verdict — the one frozen with the still. */
+  verdict: RetrainVerdictSchema.optional(),
   /** Bumped by every annotation save. A save that names a stale
    *  `expectedRevision` is refused, so two surfaces cannot overwrite each other. */
   revision: z.number().int().optional(),
@@ -3758,7 +3805,14 @@ export const pipelineAnalyticsCapability = {
      * moment twice is one copy. Every refusal is named.
      */
     addRetrainFrameFromRecording: method(
-      z.object({ collectionId: z.string(), deviceId: z.number(), epochMs: z.number() }),
+      z.object({
+        collectionId: z.string(),
+        deviceId: z.number(),
+        epochMs: z.number(),
+        /** The notified subject, when a verdict landed this still: stored as
+         *  the frame's own subject proposal so neighbours stay secondary. */
+        verdictSubject: RetrainVerdictSubjectSchema.optional(),
+      }),
       AddRetrainFrameFromRecordingResultSchema,
       { role: { feature: 'retrain' }, kind: 'mutation', auth: 'admin', timeoutMs: 60_000 },
     ),

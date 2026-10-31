@@ -335,6 +335,7 @@
   "button.verdict.correct": "Corretto",
   "button.verdict.wrong": "Sbagliato",
   "button.verdict.wrongAs": "Sbagliato: è {{class}}",
+  "button.verdict.wrongLabel": "Etichetta sbagliata, classe giusta",
   "action.server-update.title": "Aggiornamento server",
   "action.server-update.started": "Aggiornamento server su {{nodeId}}…",
   "action.server-update.restarting": "Aggiornamento server predisposto su {{nodeId}} — il nodo si riavvia. Ti avviseremo quando torna.",
