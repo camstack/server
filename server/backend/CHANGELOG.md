@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.710] - 2026-10-31
+
 ### Changed
 
 - The schedulers capability is served over the API (list, create, update, delete, enable, preview, conflicts, status, traces)

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.153] - 2026-10-31
+
 ### Changed
 
 - Rademacher no longer appears in the network scan: a hub is added by typing its host, because nothing a hub answers tells it apart from other web servers

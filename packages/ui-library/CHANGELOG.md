@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.360] - 2026-10-31
+
 ### Changed
 
 - A notification target's discovered device list (Home Assistant notify service, Echo) is now a searchable picker instead of a native select

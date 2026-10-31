@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.531] - 2026-10-31
+
 ### Changed
 
 - Schedulers run in the hub: one timer for every point, holds that keep a device state true until the next point, priorities between schedulers, and every outcome on the runs ledger

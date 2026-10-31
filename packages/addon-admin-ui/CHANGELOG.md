@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.533] - 2026-10-31
+
 ### Changed
 
 - New notification targets pre-select the first broker and name themselves '<notifier> — <device>' until you type a name

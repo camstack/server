@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.625] - 2026-10-31
+
 ### Changed
 
 - A test notification's sample image now reaches the service as an absolute public URL
