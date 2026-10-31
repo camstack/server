@@ -116,6 +116,7 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
     if (this.manager !== null) return
     const mgr = new GreeIntegrationManager({
       id: this.connectionKey,
+      deviceId: this.id,
       name: this.name,
       connection: this.connection,
       logger: this.ctx.logger,

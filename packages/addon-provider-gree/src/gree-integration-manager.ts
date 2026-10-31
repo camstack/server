@@ -63,6 +63,34 @@ export interface GreeIntegrationManagerOptions {
   readonly pollIntervalMs?: number
   /** Factory seam for testing. When omitted, builds a real {@link Nodegree}. */
   readonly makeFacade?: GreeFacadeFactory
+  /** Numeric device id carried on every log line (`tags.deviceId`) when known. */
+  readonly deviceId?: number
+  /** Timer seam for the retry loop (tests inject a manual clock). */
+  readonly scheduler?: GreeRetryScheduler
+}
+
+/** Schedules one delayed callback; the returned function cancels it. */
+export interface GreeRetryScheduler {
+  after(fn: () => void, delayMs: number): () => void
+}
+
+const defaultScheduler: GreeRetryScheduler = {
+  after: (fn, delayMs) => {
+    const timer = setTimeout(fn, delayMs)
+    timer.unref()
+    return () => clearTimeout(timer)
+  },
+}
+
+const RETRY_BACKOFF_MS: readonly number[] = [5_000, 30_000]
+const RETRY_STEADY_MS = 180_000
+const DISCOVER_SENDS = 3
+const MIN_DISCOVER_SLICE_MS = 1_000
+const OFFLINE_FAILURE_LIMIT = 3
+
+/** Backoff for the Nth consecutive retry: 5 s, 30 s, then every 3 min, forever. */
+function retryDelayMs(attempt: number): number {
+  return RETRY_BACKOFF_MS[attempt] ?? RETRY_STEADY_MS
 }
 
 function defaultFacade(config: GreeConfig): GreeFacadeLike {
@@ -104,6 +132,14 @@ export class GreeIntegrationManager {
   #deviceCount = 0
   #lastCheckedAt: number | null = null
   #error: string | null = null
+  readonly #deviceId: number | undefined
+  readonly #scheduler: GreeRetryScheduler
+  #active = false
+  #generation = 0
+  #retryAttempt = 0
+  #cancelTimer: (() => void) | null = null
+  #disposers: Array<() => void> = []
+  #consecutiveFailures = 0
 
   constructor(options: GreeIntegrationManagerOptions & { readonly expectMac?: string }) {
     this.#id = options.id
@@ -115,6 +151,8 @@ export class GreeIntegrationManager {
     this.#surfaceSink = options.surfaceSink
     this.#pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS
     this.#makeFacade = options.makeFacade ?? defaultFacade
+    this.#deviceId = options.deviceId
+    this.#scheduler = options.scheduler ?? defaultScheduler
     this.#expectMac = options.expectMac !== undefined ? macKey(options.expectMac) : null
   }
 
@@ -143,16 +181,121 @@ export class GreeIntegrationManager {
   /**
    * Build the facade, run a DIRECTED bind scan (aimed at `host`), bind the
    * responder for the expected AC, and publish the connection surface. Sets
-   * `connected` on a successful bind. Surfaces a clear bind error on
-   * {@link GreeAuthError}.
+   * `connected` on a successful bind. When nothing binds, or the scan throws,
+   * a bounded retry loop (5 s, 30 s, then every 3 min) keeps trying while the
+   * manager is active; {@link stop} cancels it. A scan error is still thrown to
+   * the caller so create-time flows can report it.
    */
   async start(): Promise<void> {
     if (this.#facade !== null) {
       this.#logger.warn('GreeIntegrationManager: start() called while running — stop first', {
-        tags: { connectionKey: this.#id },
+        tags: this.#tags(),
       })
       return
     }
+    this.#active = true
+    this.#retryAttempt = 0
+    await this.#attemptBind()
+  }
+
+  /** Stop per-AC polling, close the facade, null it, set disconnected. */
+  async stop(): Promise<void> {
+    this.#active = false
+    this.#generation += 1
+    this.#cancelRetry()
+    this.#detachHandles()
+    const facade = this.#facade
+    this.#facade = null
+    this.#status = 'disconnected'
+    this.#surfaceSink.set(this.#id, null)
+    if (facade) await this.#closeFacade(facade)
+    this.#onDisconnected(this.#id)
+  }
+
+  #tags(): Record<string, string | number> {
+    return this.#deviceId !== undefined
+      ? { connectionKey: this.#id, deviceId: this.#deviceId }
+      : { connectionKey: this.#id }
+  }
+
+  async #closeFacade(facade: GreeFacadeLike): Promise<void> {
+    try {
+      await facade.close()
+    } catch (err: unknown) {
+      this.#logger.warn('GreeIntegrationManager: facade close failed', {
+        tags: this.#tags(),
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
+  /** Stop polling and unsubscribe every bound handle, and forget them. */
+  #detachHandles(): void {
+    for (const dispose of this.#disposers) dispose()
+    this.#disposers = []
+    for (const ac of this.#handles.values()) {
+      try {
+        ac.stopPolling()
+      } catch {
+        // best-effort
+      }
+    }
+    this.#handles = new Map()
+  }
+
+  #cancelRetry(): void {
+    if (this.#cancelTimer !== null) {
+      this.#cancelTimer()
+      this.#cancelTimer = null
+    }
+  }
+
+  #scheduleRetry(): void {
+    if (!this.#active) return
+    this.#cancelRetry()
+    const delayMs = retryDelayMs(this.#retryAttempt)
+    this.#retryAttempt += 1
+    this.#cancelTimer = this.#scheduler.after(() => {
+      this.#cancelTimer = null
+      void this.#retry()
+    }, delayMs)
+  }
+
+  async #retry(): Promise<void> {
+    if (!this.#active) return
+    const stale = this.#facade
+    this.#facade = null
+    if (stale) await this.#closeFacade(stale)
+    if (!this.#active || this.#facade !== null) return
+    try {
+      await this.#attemptBind()
+    } catch {
+      // already logged and rescheduled by #attemptBind
+    }
+  }
+
+  /**
+   * Send the discover datagram several times inside the configured window (a
+   * single datagram is lost often enough that one AC missed a whole boot) and
+   * return as soon as an expected responder has answered.
+   */
+  async #scan(facade: GreeFacadeLike): Promise<DiscoveredDevice[]> {
+    const opts = this.#discoverOpts()
+    const windowMs = opts.timeoutMs ?? DISCOVER_SENDS * MIN_DISCOVER_SLICE_MS
+    const sliceMs = Math.max(MIN_DISCOVER_SLICE_MS, Math.floor(windowMs / DISCOVER_SENDS))
+    const byMac = new Map<string, DiscoveredDevice>()
+    for (let i = 0; i < DISCOVER_SENDS; i += 1) {
+      for (const dev of await facade.discover({ ...opts, timeoutMs: sliceMs })) {
+        byMac.set(macKey(dev.mac), dev)
+      }
+      const all = [...byMac.values()]
+      if (this.#expectMac !== null && this.#selectResponders(all).length > 0) return all
+    }
+    return [...byMac.values()]
+  }
+
+  async #attemptBind(): Promise<void> {
+    const generation = this.#generation
     this.#status = 'connecting'
     this.#error = null
 
@@ -160,18 +303,20 @@ export class GreeIntegrationManager {
     this.#facade = facade
 
     try {
-      const discovered = await facade.discover(this.#discoverOpts())
+      const discovered = await this.#scan(facade)
+      if (generation !== this.#generation) return
       const matched = this.#selectResponders(discovered)
       const handles = new Map<string, AcDevice>()
 
       for (const dev of matched) {
         try {
           const ac = await facade.createAc({ ip: dev.ip, port: dev.port, mac: dev.mac })
+          if (generation !== this.#generation) return
           if (this.#pollIntervalMs > 0) ac.startPolling(this.#pollIntervalMs)
           handles.set(macKey(dev.mac), ac)
         } catch (err: unknown) {
           this.#logger.warn('GreeIntegrationManager: bind (createAc) failed', {
-            tags: { connectionKey: this.#id },
+            tags: this.#tags(),
             meta: { mac: dev.mac, ip: dev.ip, error: errMsg(err) },
           })
         }
@@ -186,15 +331,29 @@ export class GreeIntegrationManager {
       this.#error = handles.size > 0 ? null : 'AC not reachable — bind returned no handle'
       this.#lastCheckedAt = Date.now()
       if (handles.size > 0) {
+        this.#retryAttempt = 0
+        this.#watchHandles(handles)
         this.#onConnected(this.#id)
         this.#logger.info('GreeIntegrationManager: connected', {
-          tags: { connectionKey: this.#id },
+          tags: this.#tags(),
           meta: { discovered: discovered.length, bound: handles.size },
         })
       } else {
+        this.#logger.warn('GreeIntegrationManager: no responder bound — will retry', {
+          tags: this.#tags(),
+          meta: {
+            discovered: discovered.length,
+            matched: matched.length,
+            expectMac: this.#expectMac,
+            host: this.#connection.host,
+            nextRetryMs: retryDelayMs(this.#retryAttempt),
+          },
+        })
         this.#onDisconnected(this.#id)
+        this.#scheduleRetry()
       }
     } catch (err: unknown) {
+      if (generation !== this.#generation) return
       this.#status = 'error'
       this.#error =
         err instanceof GreeAuthError
@@ -203,39 +362,65 @@ export class GreeIntegrationManager {
       this.#lastCheckedAt = Date.now()
       this.#surfaceSink.set(this.#id, null)
       this.#onDisconnected(this.#id)
-      this.#logger.warn('GreeIntegrationManager: scan failed', {
-        tags: { connectionKey: this.#id },
-        meta: { error: this.#error },
+      this.#logger.warn('GreeIntegrationManager: scan failed — will retry', {
+        tags: this.#tags(),
+        meta: { error: this.#error, nextRetryMs: retryDelayMs(this.#retryAttempt) },
       })
+      this.#scheduleRetry()
       throw err
     }
   }
 
-  /** Stop per-AC polling, close the facade, null it, set disconnected. */
-  async stop(): Promise<void> {
-    for (const ac of this.#handles.values()) {
-      try {
-        ac.stopPolling()
-      } catch {
-        // best-effort
-      }
-    }
-    this.#handles = new Map()
-    const facade = this.#facade
-    this.#facade = null
-    this.#status = 'disconnected'
-    this.#surfaceSink.set(this.#id, null)
-    if (facade) {
-      try {
-        await facade.close()
-      } catch (err: unknown) {
-        this.#logger.warn('GreeIntegrationManager: facade close failed', {
-          tags: { connectionKey: this.#id },
-          meta: { error: errMsg(err) },
+  /** Subscribe to each bound AC's health events; an `error` listener must exist
+   *  or the library's poll `.catch` would throw an unhandled emit. */
+  #watchHandles(handles: ReadonlyMap<string, AcDevice>): void {
+    for (const [mac, ac] of handles) {
+      const onError = (err: Error): void => {
+        this.#logger.warn('GreeIntegrationManager: AC poll error', {
+          tags: this.#tags(),
+          meta: { mac, error: errMsg(err) },
         })
       }
+      const onOffline = (): void => {
+        this.#consecutiveFailures += 1
+        this.#logger.warn('GreeIntegrationManager: AC offline', {
+          tags: this.#tags(),
+          meta: { mac, consecutiveFailures: this.#consecutiveFailures },
+        })
+        if (this.#consecutiveFailures >= OFFLINE_FAILURE_LIMIT) this.#handleLost()
+      }
+      const onState = (): void => {
+        this.#consecutiveFailures = 0
+      }
+      ac.on('error', onError)
+      ac.on('offline', onOffline)
+      ac.on('stateChanged', onState)
+      this.#disposers.push(() => {
+        ac.off('error', onError)
+        ac.off('offline', onOffline)
+        ac.off('stateChanged', onState)
+      })
     }
+    this.#consecutiveFailures = 0
+  }
+
+  /** The bound AC stopped answering: drop the handle, report offline, re-bind. */
+  #handleLost(): void {
+    if (!this.#active) return
+    this.#logger.warn('GreeIntegrationManager: AC lost — dropping handle and re-binding', {
+      tags: this.#tags(),
+      meta: { expectMac: this.#expectMac, host: this.#connection.host },
+    })
+    this.#detachHandles()
+    this.#consecutiveFailures = 0
+    this.#deviceCount = 0
+    this.#status = 'error'
+    this.#error = 'AC stopped answering'
+    this.#lastCheckedAt = Date.now()
+    this.#surfaceSink.set(this.#id, null)
     this.#onDisconnected(this.#id)
+    this.#retryAttempt = 0
+    this.#scheduleRetry()
   }
 
   /** Atomically replace the connection: stop, swap config, start fresh. */

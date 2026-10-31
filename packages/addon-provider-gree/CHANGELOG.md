@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Gree AC that was unreachable at startup now keeps retrying to bind (5 s, 30 s, then every 3 min) and re-binds after the AC stops answering, instead of staying offline until the addon restarts.
+
 ## [0.2.146] - 2026-10-30
 
 ### Changed
