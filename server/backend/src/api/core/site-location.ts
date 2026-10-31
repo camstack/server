@@ -124,10 +124,19 @@ export function isUsableCoordinate(lat: unknown, lng: unknown): boolean {
   return lat !== 0 || lng !== 0
 }
 
+/** The hub's own IANA zone, `UTC` when the runtime cannot name one. */
+export function hubTimeZone(): string {
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  return typeof zone === 'string' && zone.length > 0 ? zone : 'UTC'
+}
+
 /** Project a stored row onto the wire shape. */
-export function toStatus(record: SiteLocationRecord | null): SiteLocationStatus {
+export function toStatus(
+  record: SiteLocationRecord | null,
+  timeZone: string = hubTimeZone(),
+): SiteLocationStatus {
   if (record === null) {
-    return { location: null, derivationAttemptedAt: null, derivationError: null }
+    return { location: null, timeZone, derivationAttemptedAt: null, derivationError: null }
   }
   const attempted = typeof record.derivationAttemptedAt === 'number'
   const status: SiteLocationStatus = {
@@ -143,6 +152,7 @@ export function toStatus(record: SiteLocationRecord | null): SiteLocationStatus 
           ...(record.label !== undefined ? { label: record.label } : {}),
         }
       : null,
+    timeZone,
     derivationAttemptedAt: attempted ? Number(record.derivationAttemptedAt) : null,
     derivationError: typeof record.derivationError === 'string' ? record.derivationError : null,
   }

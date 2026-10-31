@@ -26,6 +26,7 @@
 
 import type { AutomationAction, AutomationRecipe } from './recipe.js'
 import { DEFAULT_TRACE_KEEP, normalizeCapStep, validateRecipeBounds } from './recipe.js'
+import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
 import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
 
 export interface GenerateAutomationBlockInput {
@@ -74,19 +75,17 @@ function j(value: unknown): string {
   return JSON.stringify(value)
 }
 
-function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
-  const at = j(path)
-  switch (trigger.kind) {
-    case 'schedule':
-      return `  // event leaf ${path}: schedule — armed to the next minute boundary and
+/** Legacy cron: armed to the next minute boundary, re-armed from the wall clock. */
+function emitCronSchedule(cron: string, path: string): string {
+  return `  // event leaf ${path}: schedule — armed to the next minute boundary and
   // RE-ARMED from the wall clock every tick, so it cannot drift the way a
   // setInterval(24h) does. No cron library: a block cannot resolve one.
   {
     let timer: ReturnType<typeof setTimeout> | undefined
     const arm = (): void => {
       timer = setTimeout(() => {
-        if (cronMatches(${j(trigger.cron)}, new Date())) {
-          void run({ kind: 'schedule', leaf: ${at}, at: Date.now() })
+        if (cronMatches(${j(cron)}, new Date())) {
+          void run({ kind: 'schedule', leaf: ${j(path)}, at: Date.now() })
         }
         arm()
       }, nextMinuteBoundary())
@@ -94,6 +93,43 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
     arm()
     disposers.push(() => { if (timer !== undefined) clearTimeout(timer) })
   }`
+}
+
+/** A time spec: armed to the NEXT occurrence, re-read from the site each cycle. */
+function emitTimeSpecSchedule(
+  spec: TimeSpec,
+  days: readonly WeekdayKey[] | undefined,
+  path: string,
+): string {
+  return `  // event leaf ${path}: schedule — armed to the next occurrence of the time
+  // spec, re-computed from the site (location, zone) every cycle, so a DST change
+  // or a moved site is picked up and the sun's drift never accumulates.
+  {
+    const spec: TimeSpec = ${j(spec)}
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let disposed = false
+    const arm = async (): Promise<void> => {
+      const next = await nextScheduleMoment(spec, ${days === undefined ? 'undefined' : j(days)}, ${j(path)})
+      if (disposed) return
+      if (next === null) return
+      timer = setTimeout(() => {
+        if (next > Date.now()) { void arm(); return }
+        void run({ kind: 'schedule', leaf: ${j(path)}, at: Date.now() })
+        void arm()
+      }, Math.min(Math.max(next - Date.now(), 0), MAX_TIMER_MS))
+    }
+    void arm()
+    disposers.push(() => { disposed = true; if (timer !== undefined) clearTimeout(timer) })
+  }`
+}
+
+function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
+  const at = j(path)
+  switch (trigger.kind) {
+    case 'schedule':
+      return trigger.at === undefined
+        ? emitCronSchedule(trigger.cron ?? '', path)
+        : emitTimeSpecSchedule(trigger.at, trigger.days, path)
     case 'device-event':
       return `  // event leaf ${path}: device event
   disposers.push(
@@ -307,6 +343,8 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   AutomationStepTrace,
   RunnableStep,
   StepScope,
+  TimeSpec,
+  WeekdayKey,
 } from '@camstack/types'
 import {
   ACTION_TARGET_INVALIDATION_EVENTS,
@@ -322,9 +360,12 @@ import {
   evaluateStationaryTrigger,
   isSkippedTrace,
   mergeSkipTraces,
+  nextOccurrence,
   resolveStepArgs,
   runForDevices,
   runSteps,
+  validateTimeSpecForSite,
+  zoneOnlySite,
 } from '@camstack/types'
 
 /**
@@ -360,6 +401,9 @@ const STEP_META: ReadonlyArray<{ kind: string; cap?: string; method?: string; ac
 
 /** True when a step acts on a whole domain: only then does the block listen for registry changes. */
 const HAS_DOMAIN_TARGET = ${hasDomainTarget}
+
+/** setTimeout cannot arm past 2^31-1 ms; a longer wait re-arms on wake. */
+const MAX_TIMER_MS = 2_000_000_000
 
 /** A cap is named \`alarm-panel\`; \`ctx.api\` is keyed by the ROUTER name,
  *  \`alarmPanel\`. Indexing ctx.api with the cap name yields undefined and every
@@ -523,6 +567,34 @@ export default function block(ctx: AddonContext) {
     })
     if (report.kept > 0) {
       ctx.logger.debug('condition mirror kept stale values for sources it could not read', report)
+    }
+  }
+
+  /** The next moment a schedule leaf fires, from the CURRENT site. A sun spec on
+   *  a site with no location is refused ON THE RECORD and never guessed — it
+   *  does not fire, and says why. null = nothing to arm. */
+  async function nextScheduleMoment(
+    spec: TimeSpec,
+    days: readonly WeekdayKey[] | undefined,
+    leaf: string,
+  ): Promise<number | null> {
+    try {
+      const reading = await ctx.api.system.getSiteLocation.query()
+      const checked = validateTimeSpecForSite(spec, reading)
+      if (!checked.ok) {
+        ctx.logger.warn('schedule not armed: ' + checked.message, { leaf, reason: checked.reason })
+        return null
+      }
+      const site = checked.site ?? zoneOnlySite(reading.timeZone)
+      const next = nextOccurrence(spec, Date.now(), site, days === undefined ? {} : { days })
+      if (next === null) ctx.logger.info('schedule has no further occurrence', { leaf })
+      return next
+    } catch (error) {
+      ctx.logger.warn('schedule not armed: could not read the site, retrying in a minute', {
+        leaf,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return Date.now() + 60_000
     }
   }
 

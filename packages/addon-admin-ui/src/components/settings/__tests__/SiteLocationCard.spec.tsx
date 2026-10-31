@@ -39,6 +39,7 @@ describe('SiteLocationCard', () => {
     locationState.data = {
       location: { latitude: 45.1, longitude: 9.2, source: 'operator-set', label: 'Pavia' },
       derivationAttemptedAt: null,
+      timeZone: 'Europe/Rome',
       derivationError: null,
     }
     render(<SiteLocationCard />)
@@ -54,6 +55,7 @@ describe('SiteLocationCard', () => {
     locationState.data = {
       location: { latitude: 45.1, longitude: 9.2, source: 'operator-set', label: 'Pavia' },
       derivationAttemptedAt: null,
+      timeZone: 'Europe/Rome',
       derivationError: null,
     }
     render(<SiteLocationCard />)
@@ -67,6 +69,7 @@ describe('SiteLocationCard', () => {
     locationState.data = {
       location: { latitude: 45.1, longitude: 9.2, source: 'ip-derived', label: 'Milan' },
       derivationAttemptedAt: 1,
+      timeZone: 'Europe/Rome',
       derivationError: null,
     }
     render(<SiteLocationCard />)

@@ -105,6 +105,12 @@ const SiteLocationSchema = z.object({
  */
 const SiteLocationStatusSchema = z.object({
   location: SiteLocationSchema.nullable(),
+  /**
+   * The site's IANA time zone (`Europe/Rome`) — always present, with or without
+   * a location. It is the hub's own zone: a schedule's wall clock and a sun
+   * event are read in it. Never an offset, never abbreviated.
+   */
+  timeZone: z.string().min(1),
   derivationAttemptedAt: z.number().nullable(),
   /** Why the last derivation failed, for the UI to show instead of a shrug. */
   derivationError: z.string().nullable(),

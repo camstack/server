@@ -7,6 +7,7 @@ import {
   type SettingsStoreGateway,
   SITE_LOCATION_KEY,
   SiteLocationService,
+  toStatus,
 } from '../../api/core/site-location.js'
 
 /** In-memory stand-in for the settings-store cap, keyed the same way. */
@@ -248,5 +249,19 @@ describe('SiteLocationService.set / detect', () => {
 
     expect(status.location).toMatchObject({ latitude: 1.5, source: 'operator-set' })
     expect(fetchImpl).not.toHaveBeenCalled()
+  })
+})
+
+describe('toStatus — the site time zone', () => {
+  it('always names an IANA zone, with or without a location (the hub zone by default)', () => {
+    const none = toStatus(null)
+    expect(none.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone)
+    expect(none.timeZone.length).toBeGreaterThan(0)
+    const located = toStatus(
+      { latitude: 41.9, longitude: 12.5, source: 'operator-set', updatedAt: 1 },
+      'Europe/Rome',
+    )
+    expect(located.timeZone).toBe('Europe/Rome')
+    expect(located.location?.latitude).toBe(41.9)
   })
 })

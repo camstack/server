@@ -9,11 +9,11 @@
 // condition"):
 //   1. forced day-night mode (operator pinned the IR-cut) — honest, zero-cost.
 //   2. sun-times from the install coordinates — deterministic, tracks ambient
-//      lighting (the physical driver of the drift). Compact NOAA computation so
-//      the addon stays self-contained (no `suncalc` dep exists in the repo).
+//      lighting (the physical driver of the drift). The NOAA computation lives
+//      in `@camstack/types` (`time/solar.ts`), shared with the scheduler.
 //   3. coarse UTC clock split — last resort when no coordinates are configured.
 
-import type { SceneCondition } from '@camstack/types'
+import { type SceneCondition, sunTimes } from '@camstack/types'
 
 export interface Coordinates {
   readonly lat: number
@@ -39,7 +39,6 @@ const NIGHT: SceneCondition = 'night'
 const IR: SceneCondition = 'ir'
 const DAWN: SceneCondition = 'dawn'
 const DUSK: SceneCondition = 'dusk'
-const DEG = Math.PI / 180
 
 /**
  * Mean channel spread below which a frame is judged infrared.
@@ -63,42 +62,6 @@ export const IR_CHROMA_THRESHOLD = 6
  * scene reports `unknown` — the honest answer.
  */
 const TWILIGHT_BAND_MS = 40 * 60 * 1000
-
-/** Julian day number for a JS Date (UTC). */
-function toJulian(date: Date): number {
-  return date.getTime() / 86_400_000 + 2_440_587.5
-}
-
-/** Julian day → epoch ms (UTC). */
-function fromJulian(j: number): number {
-  return (j - 2_440_587.5) * 86_400_000
-}
-
-/**
- * Sunrise/sunset (UTC epoch ms) for a location and date via the standard NOAA
- * sunrise equation. Returns `null` for the polar edge cases (sun never
- * rises/sets that day) so the caller can degrade to the clock split.
- */
-function sunTimes(lat: number, lng: number, date: Date): { rise: number; set: number } | null {
-  const jDate = toJulian(date)
-  const n = Math.round(jDate - 2_451_545.0 + 0.0008)
-  const jStar = n - lng / 360
-  const m = (357.5291 + 0.985_600_28 * jStar) % 360
-  const mRad = m * DEG
-  const c = 1.9148 * Math.sin(mRad) + 0.02 * Math.sin(2 * mRad) + 0.0003 * Math.sin(3 * mRad)
-  const lambda = ((m + c + 180 + 102.9372) % 360) * DEG
-  const jTransit = 2_451_545.0 + jStar + 0.0053 * Math.sin(mRad) - 0.0069 * Math.sin(2 * lambda)
-  const declination = Math.asin(Math.sin(lambda) * Math.sin(23.44 * DEG))
-  const latRad = lat * DEG
-  const cosOmega =
-    (Math.sin(-0.833 * DEG) - Math.sin(latRad) * Math.sin(declination)) /
-    (Math.cos(latRad) * Math.cos(declination))
-  if (cosOmega > 1 || cosOmega < -1) return null // polar night / polar day
-  const omega = Math.acos(cosOmega) / DEG
-  const jRise = jTransit - omega / 360
-  const jSet = jTransit + omega / 360
-  return { rise: fromJulian(jRise), set: fromJulian(jSet) }
-}
 
 /** Coarse UTC clock split — day between 06:00 and 20:00 UTC. Deterministic
  *  last resort when no coordinates let us compute real sun-times. */

@@ -68,16 +68,19 @@ function makeProvider(): {
     getSiteLocation: async () => ({
       location: null,
       derivationAttemptedAt: null,
+      timeZone: 'Europe/Rome',
       derivationError: null,
     }),
     setSiteLocation: async () => ({
       location: null,
       derivationAttemptedAt: null,
+      timeZone: 'Europe/Rome',
       derivationError: null,
     }),
     detectSiteLocation: async () => ({
       location: null,
       derivationAttemptedAt: null,
+      timeZone: 'Europe/Rome',
       derivationError: null,
     }),
     getRequestCensus: async () => {

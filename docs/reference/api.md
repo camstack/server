@@ -4525,7 +4525,7 @@
 
 ### `system` → `system.*`
 
-- **Source:** `packages/types/src/capabilities/system.cap.ts:570`
+- **Source:** `packages/types/src/capabilities/system.cap.ts:576`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `ISystemProvider`

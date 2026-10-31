@@ -10,6 +10,7 @@ import { pathToFileURL } from 'node:url'
 import { build } from 'esbuild'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateAutomationBlock } from '../codegen.js'
+import type { TimeSpec, WeekdayKey } from '../../time/time-spec.js'
 import { DeviceType } from '../../device/device-type.js'
 import { type FakeRegistry, fakeRegistry } from './target-fixtures.js'
 import {
@@ -91,6 +92,11 @@ interface Options {
   readonly actionOutcome?: { outcome: string; message?: string }
   /** The device registry a domain target resolves against. */
   readonly registry?: FakeRegistry
+  /** What `system.getSiteLocation` answers (default: Rome, located). */
+  readonly site?: {
+    readonly location: { latitude: number; longitude: number } | null
+    readonly timeZone: string
+  }
 }
 
 function start(block: BlockFn, options: Options = {}): Harness {
@@ -169,6 +175,15 @@ function start(block: BlockFn, options: Options = {}): Harness {
         listDeviceIdsByCaps: {
           query: async (q: { capNames: string[] }) =>
             options.registry?.directory.listDeviceIdsByCaps(q.capNames) ?? [],
+        },
+      },
+      system: {
+        getSiteLocation: {
+          query: async () =>
+            options.site ?? {
+              location: { latitude: 41.9028, longitude: 12.4964 },
+              timeZone: 'Europe/Rome',
+            },
         },
       },
       siren: { on: { mutate } },
@@ -264,6 +279,61 @@ describe('detection trigger', () => {
     await settle()
     expect(h.mutate).not.toHaveBeenCalled()
     expect(h.traces()).toEqual([])
+  })
+})
+
+describe('a schedule time spec (D983)', () => {
+  const at = (spec: TimeSpec, days?: WeekdayKey[]): RecipeInput => ({
+    when: { kind: 'schedule', at: spec, ...(days === undefined ? {} : { days }) },
+    actions: [SIREN],
+  })
+
+  it('fires at the next occurrence in the site zone, then re-arms for the next day', async () => {
+    vi.setSystemTime(new Date('2026-01-15T06:29:00Z')) // 07:29 in Rome
+    const block = await load(at({ kind: 'clock', hh: 7, mm: 30 }))
+    const h = start(block)
+    await settle(30_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(31_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    await settle(24 * 3_600_000)
+    expect(h.mutate).toHaveBeenCalledTimes(2)
+    h.stop()
+  })
+
+  it('a sun spec on a site with no location does not fire and says why', async () => {
+    vi.setSystemTime(new Date('2026-06-21T00:00:00Z'))
+    const block = await load(at({ kind: 'sun', event: 'sunrise', offsetMin: 0 }))
+    const h = start(block, { site: { location: null, timeZone: 'Europe/Rome' } })
+    await settle(24 * 3_600_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.logs.find((l) => l.level === 'warn')?.meta).toMatchObject({
+      reason: 'sun-needs-site-location',
+    })
+    h.stop()
+  })
+
+  it('a sun spec fires at sunrise plus the offset', async () => {
+    vi.setSystemTime(new Date('2025-06-21T00:00:00Z'))
+    const block = await load(at({ kind: 'sun', event: 'sunrise', offsetMin: 10 }))
+    const h = start(block)
+    await settle(3 * 3_600_000 + 40 * 60_000) // 03:40Z, sunrise is 03:35Z -> +10 = 03:45Z
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(10 * 60_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    h.stop()
+  })
+
+  it('the legacy cron schedule still compiles and fires', async () => {
+    vi.setSystemTime(new Date(2026, 0, 15, 10, 29, 30)) // cron reads the host clock
+    const block = await load({
+      when: { kind: 'schedule', cron: '30 10 * * *' },
+      actions: [SIREN],
+    })
+    const h = start(block)
+    await settle(60_000)
+    expect(h.mutate.mock.calls.length).toBeGreaterThanOrEqual(1)
+    h.stop()
   })
 })
 

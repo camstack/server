@@ -19,3 +19,8 @@ export { RunGate } from '../run-gate.js'
 export { coreBlockIdFromAddonId } from '../../capabilities/core-blocks.cap.js'
 export { resolveDeviceTarget, resolveStepArgs, runForDevices, runSteps } from '../step-runner.js'
 export { buildTriggerTrace, isSkippedTrace, mergeSkipTraces } from '../trace.js'
+export {
+  nextOccurrence,
+  validateTimeSpecForSite,
+  zoneOnlySite,
+} from '../../time/time-spec.js'

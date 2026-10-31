@@ -24,6 +24,7 @@ import { z } from 'zod'
 import { ExpressionBindingSourceSchema } from '../expression/binding-source.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
+import { TimeSpecSchema, WeekdayKeySchema } from '../time/time-spec.js'
 import { QuantityValueSchema } from '../units/quantity-input.js'
 import { DetectionSubjectSchema, StationarySubjectSchema } from './detection-subject.js'
 
@@ -85,10 +86,26 @@ const DeviceEventLeafSchema = z.object({
   deviceId: z.number().int().nonnegative().optional(),
 })
 
-const ScheduleLeafSchema = z.object({
-  kind: z.literal('schedule'),
-  cron: z.string().min(1).max(120),
-})
+/**
+ * A schedule tick: a time spec (D983) — a clock time, a sun event or one date,
+ * optionally on chosen weekdays — or, legacy, a five-field cron expression.
+ * Exactly one of `at` and `cron`; the cron form stays readable and runnable so
+ * a stored automation never stops firing, and is not written by new editors.
+ */
+const ScheduleLeafSchema = z
+  .object({
+    kind: z.literal('schedule'),
+    at: TimeSpecSchema.optional(),
+    days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
+    /** @deprecated legacy cron — new schedules use `at`. */
+    cron: z.string().min(1).max(120).optional(),
+  })
+  .refine((leaf) => (leaf.at === undefined) !== (leaf.cron === undefined), {
+    message: 'a schedule names exactly one of `at` (a time spec) and `cron` (legacy)',
+  })
+  .refine((leaf) => leaf.days === undefined || leaf.at !== undefined, {
+    message: '`days` goes with `at`; a cron expression carries its own days',
+  })
 
 const ManualLeafSchema = z.object({ kind: z.literal('manual') })
 
