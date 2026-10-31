@@ -102,7 +102,10 @@ export function isCheckedFile(file: string): boolean {
   if (/(^|\/)(__tests__|__mocks__)\//.test(file) || /\.(spec|test|stories)\.[jt]sx?$/.test(file)) {
     return false
   }
-  if (/(^|\/)(node_modules|dist|build)\//.test(file)) return false
+  // Build OUTPUT only: a build/ directly under a package root, not a source dir named build.
+  if (/(^|\/)(node_modules|dist)\//.test(file) || /(^|\/)(packages|server)\/[^/]+\/build\//.test(file)) {
+    return false
+  }
   return true
 }
 

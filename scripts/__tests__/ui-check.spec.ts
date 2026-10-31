@@ -164,6 +164,12 @@ describe('local look-alikes', () => {
 })
 
 describe('scope and escape hatch', () => {
+  it('checks source in a directory named build, skips build output', () => {
+    expect(isCheckedFile('packages/addon-admin-ui/src/pages/build/X.tsx')).toBe(true)
+    expect(isCheckedFile('packages/x/dist/a.ts')).toBe(false)
+    expect(isCheckedFile('packages/x/build/a.ts')).toBe(false)
+    expect(isCheckedFile('packages/x/node_modules/y/a.ts')).toBe(false)
+  })
   it('skips specs, tests, declarations and comments', () => {
     expect(isCheckedFile('packages/addon-admin-ui/src/x/__tests__/a.spec.tsx')).toBe(false)
     expect(isCheckedFile('packages/addon-admin-ui/src/a.test.tsx')).toBe(false)
