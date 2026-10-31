@@ -5,9 +5,14 @@ import {
   CcuDevicesResultSchema,
   CcuListItemSchema,
   CcuOverviewSchema,
+  CreateGroupInputSchema,
+  DeleteGroupInputSchema,
+  HeatingGroupSchema,
+  HeatingOverviewSchema,
   IntegrationRefSchema,
   OkResultSchema,
   ServiceMessagesResultSchema,
+  UpdateGroupInputSchema,
 } from './ccu/ccu-schemas.js'
 
 /**
@@ -39,6 +44,22 @@ export const homematicActions = defineCustomActions({
   }),
   listCcuDevices: customAction(IntegrationRefSchema, CcuDevicesResultSchema, {
     kind: 'query',
+    auth: 'admin',
+  }),
+  listHeatingGroups: customAction(IntegrationRefSchema, HeatingOverviewSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  createHeatingGroup: customAction(CreateGroupInputSchema, HeatingGroupSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  updateHeatingGroup: customAction(UpdateGroupInputSchema, HeatingGroupSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  deleteHeatingGroup: customAction(DeleteGroupInputSchema, OkResultSchema, {
+    kind: 'mutation',
     auth: 'admin',
   }),
   acknowledgeServiceMessage: customAction(AcknowledgeInputSchema, OkResultSchema, {

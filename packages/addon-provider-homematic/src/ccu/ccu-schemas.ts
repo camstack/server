@@ -119,3 +119,75 @@ export const CcuDeviceRowSchema = z.object({
 export type CcuDeviceRow = z.infer<typeof CcuDeviceRowSchema>
 
 export const CcuDevicesResultSchema = z.object({ devices: z.array(CcuDeviceRowSchema) })
+
+// ── Heating groups ─────────────────────────────────────────────────────────
+
+/** The group types the CCU can create (nodehomematic `HmGroupCreate.type`). */
+export const HEATING_GROUP_TYPES = ['hmip.heating.group', 'HomeMatic.heating'] as const
+
+export const GroupMemberSchema = z.object({
+  /** Channel address, e.g. `000A9D89A7AF25:1`. */
+  address: z.string(),
+  type: z.string(),
+  /** The owning device's name, when the CCU names it. */
+  deviceName: z.string().nullable(),
+})
+
+export const HeatingGroupSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  type: z.string(),
+  typeLabel: z.string().nullable(),
+  deviceAddress: z.string().nullable(),
+  forbidSingleOperation: z.boolean(),
+  members: z.array(GroupMemberSchema),
+})
+export type HeatingGroup = z.infer<typeof HeatingGroupSchema>
+
+export const ThermostatSchema = z.object({
+  device: z.string(),
+  channel: z.string(),
+  name: z.string().nullable(),
+  currentTemperature: z.number().nullable(),
+  targetTemperature: z.number().nullable(),
+  mode: z.enum(['auto', 'heat', 'off']),
+  activity: z.enum(['heating', 'idle', 'off']),
+})
+export type Thermostat = z.infer<typeof ThermostatSchema>
+
+export const GroupCandidateSchema = z.object({
+  /** Channel address a group can take as member. */
+  address: z.string(),
+  type: z.string(),
+  deviceName: z.string().nullable(),
+})
+export type GroupCandidate = z.infer<typeof GroupCandidateSchema>
+
+export const HeatingOverviewSchema = z.object({
+  groups: z.array(HeatingGroupSchema),
+  /** Why the groups could not be read (no WebUI credentials, ...); `null` when they were. */
+  groupsError: z.string().nullable(),
+  thermostats: z.array(ThermostatSchema),
+  candidates: z.array(GroupCandidateSchema),
+})
+export type HeatingOverview = z.infer<typeof HeatingOverviewSchema>
+
+export const CreateGroupInputSchema = IntegrationRefSchema.extend({
+  name: z.string(),
+  type: z.enum(HEATING_GROUP_TYPES),
+  members: z.array(z.string()),
+  confirmed: ConfirmedSchema,
+})
+
+export const UpdateGroupInputSchema = IntegrationRefSchema.extend({
+  id: z.number(),
+  name: z.string().optional(),
+  /** The FULL new member list, not a delta. */
+  members: z.array(z.string()).optional(),
+  confirmed: ConfirmedSchema,
+})
+
+export const DeleteGroupInputSchema = IntegrationRefSchema.extend({
+  id: z.number(),
+  confirmed: ConfirmedSchema,
+})

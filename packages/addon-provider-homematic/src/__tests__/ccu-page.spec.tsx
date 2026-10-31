@@ -183,3 +183,116 @@ describe('HomematicCcuPage devices', () => {
     expect(await screen.findByText('The CCU has no devices')).toBeTruthy()
   })
 })
+
+describe('HomematicCcuPage heating', () => {
+  const GROUP = {
+    id: 7,
+    name: 'Bedroom',
+    type: 'hmip.heating.group',
+    typeLabel: 'Heating group',
+    deviceAddress: 'INT0000001',
+    forbidSingleOperation: false,
+    members: [
+      { address: 'TRV1:1', type: 'HEATING_CLIMATECONTROL_TRANSCEIVER', deviceName: 'Radiator' },
+    ],
+  }
+  const OVERVIEW_H = {
+    groups: [GROUP],
+    groupsError: null,
+    thermostats: [
+      {
+        device: 'TRV1',
+        channel: 'TRV1:1',
+        name: 'Radiator',
+        currentTemperature: 19.5,
+        targetTemperature: 21,
+        mode: 'auto',
+        activity: 'heating',
+      },
+    ],
+    candidates: [
+      { address: 'TRV1:1', type: 'HEATING_CLIMATECONTROL_TRANSCEIVER', deviceName: 'Radiator' },
+      {
+        address: 'TRV2:1',
+        type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
+        deviceName: 'Study radiator',
+      },
+    ],
+  }
+
+  function mountHeating(extra: Record<string, Handler>, overview: unknown = OVERVIEW_H) {
+    window.history.replaceState(null, '', '/?tab=heating')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listHeatingGroups: () => overview,
+      ...extra,
+    })
+    mountPage(fake.trpc)
+    return fake.calls
+  }
+
+  it('shows groups with their members and the thermostats', async () => {
+    mountHeating({})
+    expect(await screen.findByText('Bedroom')).toBeTruthy()
+    expect(screen.getAllByText('Radiator').length).toBeGreaterThan(0)
+    expect(screen.getByText('19.5 °C')).toBeTruthy()
+  })
+
+  it('explains why groups are missing and disables creating one', async () => {
+    mountHeating({}, { ...OVERVIEW_H, groups: [], groupsError: 'needs WebUI credentials' })
+    expect(await screen.findByText('needs WebUI credentials')).toBeTruthy()
+    expect((screen.getByRole('button', { name: /New group/ }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+  })
+
+  it('creates a group only after the operator confirms, sending the picked members', async () => {
+    const create = vi.fn().mockReturnValue(GROUP)
+    const calls = mountHeating({ createHeatingGroup: create })
+    const newGroup = await screen.findByRole('button', { name: /New group/ })
+    await waitFor(() => expect((newGroup as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(newGroup)
+    const form = await screen.findByTestId('hm-group-dialog')
+    fireEvent.change(within(form).getByRole('textbox'), { target: { value: 'Study' } })
+    fireEvent.click(within(form).getByLabelText(/Study radiator/))
+    fireEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    expect(create).not.toHaveBeenCalled()
+    const confirm = await screen.findByRole('dialog', { name: /Create heating group/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Create group' }))
+    await waitFor(() => expect(create).toHaveBeenCalled())
+    expect(create.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      name: 'Study',
+      type: 'hmip.heating.group',
+      members: ['TRV2:1'],
+      confirmed: true,
+    })
+    await waitFor(() =>
+      expect(calls.filter((c) => c.action === 'listHeatingGroups').length).toBe(2),
+    )
+  })
+
+  it('deletes a group only after the operator confirms', async () => {
+    const del = vi.fn().mockReturnValue({ ok: true })
+    mountHeating({ deleteHeatingGroup: del })
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    const confirm = await screen.findByRole('dialog', { name: /Delete heating group/ })
+    expect(del).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Delete group' }))
+    await waitFor(() => expect(del).toHaveBeenCalled())
+    expect(del.mock.calls[0]?.[0]).toEqual({ integrationId: 'hm_1', id: 7, confirmed: true })
+  })
+
+  it('shows the CCU refusal when a write fails', async () => {
+    const del = vi.fn().mockImplementation(() => {
+      throw new Error('GroupWriteVerificationError: still present')
+    })
+    mountHeating({ deleteHeatingGroup: del })
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    const confirm = await screen.findByRole('dialog', { name: /Delete heating group/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Delete group' }))
+    expect(await screen.findByText(/still present/)).toBeTruthy()
+  })
+})

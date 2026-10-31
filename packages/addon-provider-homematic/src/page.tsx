@@ -16,6 +16,7 @@ import { z } from 'zod'
 import { CcuListItemSchema } from './ccu/ccu-schemas.js'
 import { useT } from './i18n/index.js'
 import { CcuDevicesTab } from './ui/CcuDevicesTab.js'
+import { CcuHeatingTab } from './ui/CcuHeatingTab.js'
 import { CcuOverviewTab } from './ui/CcuOverviewTab.js'
 import type { CcuTrpc } from './ui/ccu-client.js'
 import { useCcuData } from './ui/use-ccu-data.js'
@@ -94,6 +95,11 @@ export default function HomematicCcuPage(props: AddonPageProps) {
           id: 'devices',
           label: t('page.tabDevices'),
           content: body(<CcuDevicesTab trpc={trpc} integrationId={integrationId} />),
+        },
+        {
+          id: 'heating',
+          label: t('page.tabHeating'),
+          content: body(<CcuHeatingTab trpc={trpc} integrationId={integrationId} />),
         },
       ]}
     />
