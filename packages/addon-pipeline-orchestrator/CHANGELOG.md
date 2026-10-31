@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Serves viewer 1.0.671 (hold an event to download its clip, snapshot or keyframe).
+
 ## [1.2.642] - 2026-10-31
 
 ### Changed
