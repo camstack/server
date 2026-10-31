@@ -13,6 +13,7 @@ import type {
   Target,
   TargetKind,
   TargetKindCaps,
+  PreparedAttachment,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type {
@@ -543,5 +544,48 @@ describe('discoverTargets', () => {
     const { provider } = await makeProvider([capturing])
     await provider.discoverTargets({ kind: 'cfg2' })
     expect(seen).toEqual({})
+  })
+})
+
+// ── relative attachment urls ────────────────────────────────────────
+
+describe('relative attachment urls (test-panel samples)', () => {
+  function imageAdapter(seen: PreparedAttachment[]): NotifierAdapter {
+    const base = okAdapter('imgfake')
+    return {
+      ...base,
+      descriptor: {
+        ...base.descriptor,
+        caps: { ...TEXT_CAPS, attachments: { mediaTypes: ['image'], mode: 'url', max: 1 } },
+      },
+      buildRequest: (config, prepared) => {
+        seen.push(...prepared.attachments)
+        return okAdapter().buildRequest(config, prepared)
+      },
+    }
+  }
+
+  it('hands the adapter an absolute url on the public endpoint', async () => {
+    const seen: PreparedAttachment[] = []
+    const world = await makeNotifiersRecords()
+    const store = TargetStore.of(world.records)
+    const provider = createNotificationOutputProvider({
+      store,
+      adapters: [imageAdapter(seen)],
+      httpSend: okSender,
+      readPublicEndpoint: async () => ({ kind: 'resolved', origin: 'https://hub.example.com' }),
+    })
+    await provider.upsertTarget({ target: target({ kind: 'imgfake' }) })
+    const res = await provider.testTarget({
+      targetId: 't1',
+      sample: {
+        body: 'x',
+        format: 'text',
+        priority: 3,
+        attachments: [{ mediaType: 'image', url: '/addon/notifiers/samples/image' }],
+      },
+    })
+    expect(res.success).toBe(true)
+    expect(seen[0]?.url).toBe('https://hub.example.com/addon/notifiers/samples/image')
   })
 })

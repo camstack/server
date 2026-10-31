@@ -22,6 +22,7 @@ import {
   calendarSourceCapability,
   type ProviderRegistration,
   type SavedDevice,
+  publicEndpointReaderFrom,
 } from '@camstack/types'
 import type { z } from 'zod'
 import { HaContainerDevice } from './devices/ha-container-device.js'
@@ -287,6 +288,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         return manager.sendMessage({ type: 'config/device_registry/list' })
       },
       listBrokerIds: () => this.activeBrokers.map((b) => b.id),
+      readPublicEndpoint: publicEndpointReaderFrom(this.ctx.api.localNetwork),
       logger: this.ctx.logger.child('notification-output'),
     })
   }

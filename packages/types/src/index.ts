@@ -1575,6 +1575,15 @@ export {
   prepareNotification,
   type ResolvedLevel,
 } from './notification/degrade-engine.js'
+export {
+  isRootRelativeUrl,
+  type PublicEndpointReader,
+  type PublicEndpointReading,
+  type PublicEndpointSource,
+  publicEndpointReaderFrom,
+  type ResolveAttachmentUrlsDeps,
+  resolveAttachmentUrls,
+} from './notification/attachment-url.js'
 export { deliveryParamsDeclaredBy, resolveDeliveryParams } from './notification/delivery-params.js'
 export {
   htmlToText,

@@ -1,4 +1,9 @@
-import { type Notification, prepareNotification, type Target } from '@camstack/types'
+import {
+  type Notification,
+  prepareNotification,
+  type PublicEndpointReader,
+  type Target,
+} from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildNotifyServiceData,
@@ -378,5 +383,56 @@ describe('createHaNotificationOutputProvider', () => {
     expect(target.config).toEqual({ service: 'mobile_app_x' })
     expect(target.addonId).toBe(ADDON_ID)
     await expect(provider.getTarget({ targetId: 'ghost' })).rejects.toThrow(/ghost/)
+  })
+})
+
+describe('relative attachment urls (test-panel samples)', () => {
+  async function relativeImageDispatch(
+    readPublicEndpoint: PublicEndpointReader,
+  ): Promise<NotifyServiceData['data']> {
+    const store = HaTargetStore.of((await makeHaRecords()).records)
+    const sent: NotifyServiceData[] = []
+    const provider = createHaNotificationOutputProvider({
+      addonId: ADDON_ID,
+      store,
+      publish: async (_b: string, _s: string, data: NotifyServiceData) => {
+        sent.push(data)
+      },
+      getServices: async () => ({}),
+      listBrokerIds: () => ['broker-1'],
+      readPublicEndpoint,
+    })
+    await store.upsert({
+      id: 'tr',
+      name: 'Phone',
+      kind: HA_NOTIFICATION_KIND,
+      addonId: ADDON_ID,
+      enabled: true,
+      config: { service: 'mobile_app_pixel_7' },
+    })
+    const res = await provider.testTarget({
+      targetId: 'tr',
+      sample: {
+        body: 'Test',
+        format: 'text',
+        priority: 3,
+        attachments: [{ mediaType: 'image', url: '/addon/notifiers/samples/image' }],
+      },
+    })
+    expect(res.success).toBe(true)
+    return sent[0]!.data
+  }
+
+  it('data.image is absolute on the hub public endpoint', async () => {
+    const data = await relativeImageDispatch(async () => ({
+      kind: 'resolved',
+      origin: 'https://hub.example.com',
+    }))
+    expect(data['image']).toBe('https://hub.example.com/addon/notifiers/samples/image')
+  })
+
+  it('no public endpoint: the image is dropped, the text still goes out', async () => {
+    const data = await relativeImageDispatch(async () => ({ kind: 'none' }))
+    expect(data['image']).toBeUndefined()
   })
 })

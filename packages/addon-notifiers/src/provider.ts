@@ -24,6 +24,8 @@ import {
   type PreparedNotification,
   prepareNotification,
   type ProbeTargetConfigResult,
+  type PublicEndpointReader,
+  resolveAttachmentUrls,
   type SendResult,
   type Target,
   type TargetKind,
@@ -62,6 +64,12 @@ export interface NotificationOutputProviderDeps {
   readonly addonId?: string
   readonly httpSend?: HttpSender
   readonly fetchAttachment?: AttachmentFetcher
+  /**
+   * Reads the hub's public endpoint (`local-network` palette). A root-relative
+   * attachment URL is resolved against it before the degrade engine runs —
+   * the receiving service (or our own fetch) cannot resolve a relative path.
+   */
+  readonly readPublicEndpoint?: PublicEndpointReader
   readonly logger?: IScopedLogger
   /**
    * Resolves a kind's bundled brand-icon URL (served by the addon over its
@@ -208,7 +216,7 @@ export function createNotificationOutputProvider(
   }
 
   /** The full degrade → build → send pipeline for one target. Never throws. */
-  async function dispatch(target: Target, notification: Notification): Promise<SendResult> {
+  async function dispatch(target: Target, raw: Notification): Promise<SendResult> {
     const adapter = adapterByKind.get(target.kind)
     if (!adapter) {
       return { success: false, error: `No adapter registered for kind '${target.kind}'` }
@@ -235,6 +243,14 @@ export function createNotificationOutputProvider(
     }
 
     const caps = adapter.descriptor.caps
+    const notification =
+      deps.readPublicEndpoint === undefined
+        ? raw
+        : await resolveAttachmentUrls({
+            notification: raw,
+            readPublicEndpoint: deps.readPublicEndpoint,
+            ...(logger !== undefined ? { logger } : {}),
+          })
     const prepared = prepareNotification(caps, notification)
 
     let attachments: readonly PreparedAttachment[]

@@ -38,8 +38,10 @@ import {
   type NotificationActionIcon,
   type PreparedNotification,
   prepareNotification,
+  type PublicEndpointReader,
   type RecordKindHandle,
   type RecordsAccess,
+  resolveAttachmentUrls,
   type ResolvedLevel,
   type SendResult,
   type Target,
@@ -426,6 +428,12 @@ export class HaTargetStore {
 
 /** Dependencies for the `homeassistant` notification-output provider. */
 export interface HaNotificationOutputDeps {
+  /**
+   * Reads the hub's public endpoint (`local-network` palette). A root-relative
+   * attachment URL is resolved against it before it is handed to Home
+   * Assistant, which would otherwise resolve it against its own base and 404.
+   */
+  readonly readPublicEndpoint?: PublicEndpointReader
   /** The owning HA addon id — stamped onto every kind + target for routing. */
   readonly addonId: string
   /**
@@ -496,7 +504,15 @@ export function createHaNotificationOutputProvider(
   }
 
   /** Degrade → build → publish. NEVER throws through the cap. */
-  async function dispatch(target: Target, notification: Notification): Promise<SendResult> {
+  async function dispatch(target: Target, raw: Notification): Promise<SendResult> {
+    const notification =
+      deps.readPublicEndpoint === undefined
+        ? raw
+        : await resolveAttachmentUrls({
+            notification: raw,
+            readPublicEndpoint: deps.readPublicEndpoint,
+            ...(logger !== undefined ? { logger } : {}),
+          })
     const prepared = prepareNotification(descriptor.caps, notification)
     const service = readService(target.config)
     if (!service) {

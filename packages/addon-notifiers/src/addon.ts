@@ -15,6 +15,7 @@ import {
   type AddonInitResult,
   BaseAddon,
   notificationOutputCapability,
+  publicEndpointReaderFrom,
 } from '@camstack/types'
 import type { EmailSmtpClient, SmtpProviderOption } from './adapters/email.js'
 import { buildNotifierAdapters } from './adapters/registry.js'
@@ -110,6 +111,9 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       store,
       adapters,
       logger: this.ctx.logger.child('notification-output'),
+      ...(api !== undefined
+        ? { readPublicEndpoint: publicEndpointReaderFrom(api.localNetwork) }
+        : {}),
       iconUrlFor,
       iconMediaTypeFor,
     })
