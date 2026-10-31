@@ -42,7 +42,7 @@
         "version": "0.1.0",
         "description": "Adopt a Rademacher HomePilot / Start2Smart hub (as a Gateway device) and its roller shutters, from an integration over the local network",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.svg",
+        "icon": "assets/icon.png",
         "color": "#c8102e",
         "instanceMode": "multiple",
         "mode": "account",
