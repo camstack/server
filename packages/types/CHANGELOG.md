@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.461] - 2026-10-31
+
 ### Changed
 
 - A washer, dryer, dishwasher, pet fountain, fan, humidifier, climate or water heater can now be given a power source in Customize
