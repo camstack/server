@@ -34,6 +34,7 @@ import { writeIfChanged } from './codegen-write.ts'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseAllCaps, type CapInfo } from './lib/parse-cap.js'
+import { HOOK_ALIAS_HELPER, emitHookEntry } from './lib/system-hooks-emit.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -219,10 +220,7 @@ async function main(): Promise<void> {
       // because its inferred type references the internal trpc-react
       // declaration files (`getQueryKey.d-XXX`). The annotation makes the
       // exported binding's type explicit and self-contained.
-      hookEntries.push(
-        `/** Generated alias around \`${target}\`. */
-export const ${name}: typeof ${target} = ${target}`,
-      )
+      hookEntries.push(emitHookEntry(name, target))
     }
   }
 
@@ -247,6 +245,8 @@ export const ${name}: typeof ${target} = ${target}`,
  * subscription; the two surfaces coexist by design.
  */
 import { trpc } from '../trpc-react.js'
+
+${HOOK_ALIAS_HELPER}
 
 ${hookEntries.join('\n\n')}
 `
