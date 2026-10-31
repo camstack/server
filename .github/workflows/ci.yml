@@ -66,11 +66,33 @@ env:
   NODE_VERSION: "24"
 
 jobs:
+  # One job per shard (D704 kept: still only build + test). A single serial job
+  # took ~55 min once a `packages/types` change marked every package affected;
+  # the heavy packages now run each in a job of their own and the light addons
+  # in two groups. The shard table lives in scripts/ci/test-affected.sh (the
+  # same file `npm run verify:push` runs, which executes every shard in turn).
+  #
+  # Concurrency: hosted `ubuntu-latest` runners, so the cap is the account's
+  # concurrent-job limit, not a self-hosted label. 8 jobs per run (7 shards +
+  # `static`); a burst of pushes is still cancelled by the concurrency group.
+  # Each job pays install + the Nx-cache build read on its own VM, which is the
+  # price of parallelism: wall clock is that setup plus the slowest shard.
+  #
+  # `static` carries what is not a per-project test: the typecheck, the repo
+  # scripts and the python pool, once per run instead of once per shard.
+  #
+  # The required-check names changed with this: `tests (<shard>)`.
   tests:
+    name: tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
-    # Cold: install + full build + up to 90 min of tests. Warm: the build is
-    # an actions/cache read of `.nx`. Hosted runners are 16 GB.
+    # Cold: install + full build + a shard of tests. Warm: the build is an
+    # actions/cache read of `.nx`. Hosted runners are 16 GB.
     timeout-minutes: 110
+    strategy:
+      # A red shard must not hide the verdict of the others.
+      fail-fast: false
+      matrix:
+        shard: [system, pipeline, post-analysis, ui, core, light-a, light-b, static]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -141,12 +163,14 @@ jobs:
       # addon-runner or addon-utils, and no ALL_CAPABILITY_DEFINITIONS in addon
       # server code. Pure source scan, ~1 s; names file:line and the /addon fix.
       - name: Runner and addon sources are barrel-free (D28)
+        if: matrix.shard == 'static'
         run: npx tsx scripts/check-runner-barrel-free.ts
 
       # D28: the BUILT addon-runner AND addon-utils must not carry the
       # @camstack/types schema barrel (~90-115 MB of heap in every runner). Reads
       # packages/system/dist, so it runs right after the build; ~2 s.
       - name: Runner dist is barrel-free (D28)
+        if: matrix.shard == 'static'
         run: npx tsx scripts/check-runner-dist-barrel-free.ts
 
       # D28: no BUILT addon may name ALL_CAPABILITY_DEFINITIONS or grow the
@@ -155,6 +179,7 @@ jobs:
       # runs right after the build. The runner-dist step above also probes
       # `@camstack/system/addon-utils` (seven hub runners load it).
       - name: Addon dist footprint (D28)
+        if: matrix.shard == 'static'
         run: npx tsx scripts/check-addon-dist-footprint.ts
         env:
           NODE_OPTIONS: "--max-old-space-size=2048"
@@ -164,6 +189,7 @@ jobs:
       # sequential). Peak ≈ admin-ui spec (~3 GB). Local `npm run typecheck`
       # stays tsc 6 until the Checks parity flip.
       - name: Typecheck (TypeScript 7)
+        if: matrix.shard == 'static'
         run: scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
@@ -184,12 +210,14 @@ jobs:
       # outlive the job. After the build: the script imports
       # `@camstack/types/node` from dist.
       - name: Restore the pinned ffmpeg
+        if: matrix.shard != 'static'
         uses: actions/cache@v4
         with:
           path: .camstack-ffmpeg
           key: ffmpeg-${{ runner.os }}-${{ hashFiles('packages/types/src/deps/ffmpeg-artifacts.ts') }}
 
       - name: Provision the pinned ffmpeg (the binary the product runs)
+        if: matrix.shard != 'static'
         run: npx tsx scripts/ci-provision-ffmpeg.ts "${{ github.workspace }}/.camstack-ffmpeg"
         env:
           NODE_OPTIONS: "--max-old-space-size=2048"
@@ -203,7 +231,7 @@ jobs:
       # (scripts/ci/test-affected.sh). Overlapping heavies flaked pipeline
       # timing tests (38132637960 SIGTERM grace; 38133811367 preroll settle).
       - name: Test affected packages (push/PR)
-        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        if: matrix.shard != 'static' && (github.event_name == 'push' || github.event_name == 'pull_request')
         run: |
           # The base is the last commit main was VERIFIED at, not the previous
           # push. `github.event.before` is the previous push's head, and under
@@ -242,30 +270,28 @@ jobs:
             echo "no non-lockfile changes since $BASE — nothing affected"
             exit 0
           fi
-          # A changed-file list longer than one argv string can carry (Linux
-          # MAX_ARG_STRLEN, 128 KiB) cannot be handed to nx or to the test
-          # script: a tree-wide change (a rename, a scrub) affects everything
-          # anyway, so test everything instead of failing with E2BIG.
-          if [ "${#CHANGED}" -gt 100000 ]; then
-            echo "changed-file list is ${#CHANGED} bytes — testing every project"
-            echo "### Test affected: every project (${#CHANGED}-byte change list since \`$BASE\`)" >> "$GITHUB_STEP_SUMMARY"
-            exec scripts/ci/mem-step.sh test-affected 12000 -- scripts/ci/test-affected.sh --all
-          fi
-          AFFECTED_JSON=$(npx nx show projects --affected --files="$CHANGED" --json 2>/dev/null || echo '[]')
+          # The list goes to the script through a FILE: a tree-wide change used to
+          # exceed one argv string (Linux MAX_ARG_STRLEN, 128 KiB) and fall back
+          # to `--all`, which is how a stale base turned every push into the
+          # full suite. test-affected.sh slices the list under the limit and
+          # unions the affected sets (exact: affected is monotone per file).
+          printf '%s' "$CHANGED" | tr ',' '\n' > "$RUNNER_TEMP/changed-files.txt"
           {
-            echo "### Test affected"
+            echo "### Test affected — shard \`${{ matrix.shard }}\`"
             echo "- base: \`$BASE\` (last green: \`${LAST_GREEN:-none}\`)"
             echo "- changed files (excl. lockfile): $(printf '%s' "$CHANGED" | tr ',' '\n' | grep -c . || true)"
             echo "- cascade flags: types=$(printf '%s' "$CHANGED" | grep -q 'packages/types/' && echo yes || echo no) system=$(printf '%s' "$CHANGED" | grep -q 'packages/system/' && echo yes || echo no) ui-library=$(printf '%s' "$CHANGED" | grep -q 'packages/ui-library/' && echo yes || echo no)"
-            echo "- projects: \`$AFFECTED_JSON\`"
           } >> "$GITHUB_STEP_SUMMARY"
           scripts/ci/mem-step.sh test-affected 12000 -- \
-            scripts/ci/test-affected.sh --files "$CHANGED"
+            scripts/ci/test-affected.sh --shard "${{ matrix.shard }}" --files-from "$RUNNER_TEMP/changed-files.txt"
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
           VITEST_MAX_WORKERS: "2"
           LIGHT_PARALLEL: "2"
           GITHUB_TOKEN: ${{ github.token }}
+        # Per shard now (the history below is the single serial job). 60 is far
+        # above the slowest shard (post-analysis, ~20 min) and still names a hang.
+        #
         # 55, not 40, and the job's own budget is 60 — the step could never
         # reach it. A change to `packages/types` makes nx mark EVERY package
         # affected (the cascade is correct: they all consume it), so "test
@@ -289,18 +315,18 @@ jobs:
         # timeout fed itself: the affected base is the last GREEN run, so a
         # red run leaves the next push with the same everything-affected set.
         # The nightlies of 2026-09-25, 26 and 27 timed out the same way.
-        timeout-minutes: 90
+        timeout-minutes: 60
 
       - name: Test all packages (nightly / manual)
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: scripts/ci/mem-step.sh test-all 12000 -- scripts/ci/test-affected.sh --all
+        if: matrix.shard != 'static' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        run: scripts/ci/mem-step.sh test-all 12000 -- scripts/ci/test-affected.sh --shard "${{ matrix.shard }}" --all
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
           VITEST_MAX_WORKERS: "2"
           LIGHT_PARALLEL: "2"
         # Same heavy/light split as push; nightlies of 2026-09-25/26/27 timed
         # out on N100 at full serial before the step ceiling was raised.
-        timeout-minutes: 90
+        timeout-minutes: 60
 
       # `npm run test` is `nx run-many -t test`, and nx only knows WORKSPACE
       # packages — `scripts/` is not one. So every spec under `scripts/__tests__`
@@ -308,6 +334,7 @@ jobs:
       # was written: not failing, never collected. A test nobody runs is the
       # leftover this repo keeps getting bitten by — it reads as verification.
       - name: Test repo scripts
+        if: matrix.shard == 'static'
         run: scripts/ci/mem-step.sh test-repo-scripts 8000 -- npm run test:scripts
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -318,6 +345,7 @@ jobs:
       # dynamic-batch graph from hanging an NPU-pinned node forever — is
       # defended by those tests and by nothing else.
       - name: Test the inference pool (python)
+        if: matrix.shard == 'static'
         run: ./scripts/test-python-pool.sh
 
       # actions/cache saves `.nx` when the key misses. An exact hit is not

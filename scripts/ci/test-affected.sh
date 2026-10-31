@@ -7,14 +7,23 @@
 # agent-b (38132637960 SIGTERM grace; 38133811367 preroll settle).
 # Light addons are small enough to share --parallel safely.
 #
+# Shards: CI runs one matrix job per shard (heavy package(s) alone, light addons
+# in two hash-assigned groups); the default is every shard in turn, which is what
+# `npm run verify:push` runs — the same projects, the same commands, so the local
+# gate and CI cannot grade different sets. The shard table lives HERE only.
+#
 # Usage:
-#   scripts/ci/test-affected.sh --files "$CHANGED"
-#   scripts/ci/test-affected.sh --all
+#   scripts/ci/test-affected.sh [--shard <name>] --files "$CHANGED"
+#   scripts/ci/test-affected.sh [--shard <name>] --files-from <file>   (comma or newline list)
+#   scripts/ci/test-affected.sh [--shard <name>] --all
+#   scripts/ci/test-affected.sh --list-shards
 set -euo pipefail
 
 LIGHT_PARALLEL="${LIGHT_PARALLEL:-2}"
 MODE=""
 FILES=""
+FILES_FROM=""
+SHARD="all"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -23,20 +32,39 @@ while [[ $# -gt 0 ]]; do
       FILES="${2:-}"
       shift 2
       ;;
+    --files-from)
+      MODE=files
+      FILES_FROM="${2:-}"
+      shift 2
+      ;;
+    --shard)
+      SHARD="${2:-}"
+      shift 2
+      ;;
+    --list-shards)
+      echo "system pipeline post-analysis ui core light-a light-b"
+      exit 0
+      ;;
     --all)
       MODE=all
       shift
       ;;
     *)
-      echo "usage: $0 --files <comma-separated> | --all" >&2
+      echo "usage: $0 [--shard <name>] --files <comma-separated> | --files-from <file> | --all" >&2
       exit 2
       ;;
   esac
 done
 
 if [[ -z "$MODE" ]]; then
-  echo "usage: $0 --files <comma-separated> | --all" >&2
+  echo "usage: $0 [--shard <name>] --files <comma-separated> | --files-from <file> | --all" >&2
   exit 2
+fi
+
+# A list read from a file never travels through argv or the environment (each
+# is capped near 128 KiB on Linux): node reads the file itself.
+if [[ -n "$FILES_FROM" ]]; then
+  [[ -s "$FILES_FROM" ]] && FILES="from-file"
 fi
 
 if [[ "$MODE" == files && -z "$FILES" ]]; then
@@ -49,34 +77,63 @@ fi
 # heredoc nested in a command substitution ("unexpected EOF").
 PROJECT_LISTS="$(mktemp)"
 trap 'rm -f "$PROJECT_LISTS"' EXIT
-MODE="$MODE" FILES="$FILES" node > "$PROJECT_LISTS" <<'NODE'
+MODE="$MODE" FILES="$FILES" FILES_FROM="$FILES_FROM" SHARD="$SHARD" node > "$PROJECT_LISTS" <<'NODE'
 const { execFileSync } = require('node:child_process')
-const heavy = new Set([
-  '@camstack/types',
-  '@camstack/system',
-  '@camstack/ui-library',
-  '@camstack/server',
-  '@camstack/addon-pipeline',
-  '@camstack/addon-pipeline-orchestrator',
-  '@camstack/addon-admin-ui',
-  '@camstack/addon-post-analysis',
-])
+// Heavy packages carry the bulk of the time (measured on CI: system 11 min,
+// pipeline 12, post-analysis ~20, admin-ui 9, server 9, ui-library 6) and run
+// serial inside their shard. Every other project is light and lands in one of
+// two groups by a hash of its NAME — stable whatever the affected set is, so a
+// project can never fall between shards.
+const SHARDS = {
+  system: ['@camstack/system'],
+  pipeline: ['@camstack/addon-pipeline'],
+  'post-analysis': ['@camstack/addon-post-analysis'],
+  ui: ['@camstack/addon-admin-ui', '@camstack/ui-library'],
+  core: ['@camstack/types', '@camstack/server', '@camstack/addon-pipeline-orchestrator'],
+}
+const HEAVY_SHARDS = Object.keys(SHARDS)
+const LIGHT_SHARDS = ['light-a', 'light-b']
+const heavy = new Set(Object.values(SHARDS).flat())
+const hash = (name) => {
+  let h = 0
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return h
+}
+const shardOf = (p) => (heavy.has(p) ? HEAVY_SHARDS.find((s) => SHARDS[s].includes(p)) : LIGHT_SHARDS[hash(p) % LIGHT_SHARDS.length])
+const wanted = process.env.SHARD
+if (wanted !== 'all' && !HEAVY_SHARDS.includes(wanted) && !LIGHT_SHARDS.includes(wanted)) {
+  console.error(`test-affected: unknown shard "${wanted}"`)
+  process.exit(2)
+}
 const mode = process.env.MODE
-const files = process.env.FILES || ''
+const files = process.env.FILES_FROM
+  ? require('node:fs').readFileSync(process.env.FILES_FROM, 'utf8').split(/[\n,]/).filter(Boolean).join(',')
+  : process.env.FILES || ''
+const nxJson = (args) => JSON.parse(execFileSync('npx', ['nx', 'show', 'projects', ...args, '--json'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }))
 let all
 if (mode === 'files') {
-  all = JSON.parse(
-    execFileSync(
-      'npx',
-      ['nx', 'show', 'projects', '--affected', `--files=${files}`, '--json'],
-      { encoding: 'utf8' },
-    ),
-  )
+  // Affected is monotone per file (project graph + dependent cascade), so the
+  // affected set of a list is the UNION of the affected sets of its slices:
+  // slicing under the argv limit is exact. A stale base used to push the
+  // list past it and fall back to testing every project.
+  const SLICE = 60000
+  const slices = []
+  let cur = ''
+  for (const f of files.split(',').filter(Boolean)) {
+    if (cur && cur.length + f.length + 1 > SLICE) {
+      slices.push(cur)
+      cur = ''
+    }
+    cur = cur ? `${cur},${f}` : f
+  }
+  if (cur) slices.push(cur)
+  const set = new Set()
+  for (const sl of slices) for (const p of nxJson(['--affected', `--files=${sl}`])) set.add(p)
+  all = [...set]
 } else {
-  all = JSON.parse(
-    execFileSync('npx', ['nx', 'show', 'projects', '--json'], { encoding: 'utf8' }),
-  )
+  all = nxJson([])
 }
+all = all.filter((p) => wanted === 'all' || shardOf(p) === wanted)
 const H = []
 const L = []
 for (const p of all) (heavy.has(p) ? H : L).push(p)
