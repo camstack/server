@@ -67,7 +67,7 @@ export const MOTION_EMITTERS_ALLOWED: ReadonlySet<string> = new Set([
 export const MOTION_EMITTERS_DEFERRED: ReadonlyMap<string, string> = new Map([
   [
     'packages/system/src/builtins/camera-grid/grid-activity.ts',
-    'ships inside @camstack/server (@camstack/system), which cannot assume an orchestrator at the D673 floor (the closure re-aligns it only when strictly newer); split once the minimum orchestrator carries the D673 ProviderMotion subscription',
+    'ships inside @camstack/server (@camstack/server/system), which cannot assume an orchestrator at the D673 floor (the closure re-aligns it only when strictly newer); split once the minimum orchestrator carries the D673 ProviderMotion subscription',
   ],
 ])
 

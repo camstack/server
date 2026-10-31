@@ -1,7 +1,7 @@
 /**
  * Every builtin ships its own icon, served by `/api/addon-assets/<id>/<icon>`.
  *
- * A builtin's package dir on the hub is this package (`@camstack/system`), so
+ * A builtin's package dir on the hub is this package (`@camstack/server/system`), so
  * the route resolves `assets/<id>/icon.svg` here — as long as the manifest
  * declares it, the file exists and `files` ships `assets/` (it used to ship
  * only `dist/`).
@@ -16,7 +16,7 @@ const pkg = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf8')) as {
   camstack: { addons: { id: string; icon?: string }[] }
 }
 
-describe('@camstack/system builtin icons', () => {
+describe('@camstack/server/system builtin icons', () => {
   it('ships assets/ in the tarball', () => {
     expect(pkg.files).toContain('assets')
   })

@@ -6,7 +6,7 @@
  * choice. Remove the replay from the wiring and this goes red.
  */
 import * as path from 'node:path'
-import { CapabilityRegistry, SqliteSettingsBackend } from '@camstack/system'
+import { CapabilityRegistry, SqliteSettingsBackend } from '@camstack/server/system'
 import type { IScopedLogger, ISettingsStoreProvider } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConfigService } from '../core/config/config.service.js'

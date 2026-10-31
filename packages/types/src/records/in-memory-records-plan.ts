@@ -14,7 +14,7 @@
  *   is 1/0, a missing field is NULL, NULL < numbers < text, and NULL matches
  *   no predicate.
  *
- * The contract spec in `@camstack/system`
+ * The contract spec in `@camstack/server/system`
  * (`sqlite-storage/__tests__/records-in-memory-contract.spec.ts`) runs the same
  * cases against this and the real engine, so the two cannot drift silently.
  */

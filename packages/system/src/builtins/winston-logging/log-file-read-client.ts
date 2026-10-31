@@ -33,7 +33,7 @@ export type ReaderWorkerFactory = (data: ReadWorkerData) => ReaderWorkerHandle
 /** `dist/log-file-read-worker.js` at the package root, found through its own `package.json`. */
 export function defaultReaderWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'log-file-read-worker.js')
 }
 

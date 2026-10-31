@@ -6,7 +6,7 @@
  * `AGENT_INFRA` used to be `INFRA_CAPABILITIES`, unfiltered. That list carries
  * `{ name: 'data-store-provider', required: true }`; `sqlite-settings` is the
  * only addon in the tree that declares it, and it lives inside the
- * `@camstack/system` closure the agent scans. So an agent could not boot
+ * `@camstack/server/system` closure the agent scans. So an agent could not boot
  * without opening a database of its own — not a setting, a PRECONDITION.
  *
  * Persistence belongs to the hub. Every addon FORKED on an agent already
@@ -43,7 +43,7 @@
  * in this series stay in place: commit 1 is inert whenever a local engine
  * exists, and commit 3 is documentation.
  */
-import { INFRA_CAPABILITIES, type InfraCapability } from '@camstack/system'
+import { INFRA_CAPABILITIES, type InfraCapability } from '@camstack/server/system'
 
 /**
  * The env var that puts the local engine back. Named for what it restores, not

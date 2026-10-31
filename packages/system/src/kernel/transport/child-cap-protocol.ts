@@ -40,7 +40,7 @@ export interface RegisterMessage {
    * its local `SharedBusState.handlers` map). Carried IN the register frame so
    * the parent learns the child's subscriptions race-free at boot — no separate
    * post-connect sync can be missed. OPTIONAL: a legacy child bundling an older
-   * `@camstack/system` omits it; the parent treats an absent field as
+   * `@camstack/server/system` omits it; the parent treats an absent field as
    * "undeclared" and fails OPEN (broadcast every event to that child). See
    * `EventSubUpdateMessage` for post-boot updates.
    */

@@ -14,7 +14,7 @@ import { WidgetMetadataSchema } from './addon-widgets-source.cap.js'
  * manual reload — same scheme used by `addon-pages`.
  *
  * The hub-local builtin `addon-widgets-aggregator` (see
- * `@camstack/system/builtins/addon-widgets-aggregator`) registers the
+ * `@camstack/server/system/builtins/addon-widgets-aggregator`) registers the
  * provider. Splitting the public aggregator from the raw collection
  * keeps both ends in codegen — there's no hand-written wrapper.
  */

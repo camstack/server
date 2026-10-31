@@ -26,16 +26,16 @@ function backendPackage(): ServerBootstrapManifest {
 }
 
 describe('selectHubBootstrapPackages', () => {
-  it('keeps every @camstack/addon-* dep plus @camstack/system', () => {
+  it('keeps every @camstack/addon-* dep plus @camstack/server/system', () => {
     const selected = selectHubBootstrapPackages({
       dependencies: {
         '@camstack/addon-admin-ui': '*',
-        '@camstack/system': '*',
+        '@camstack/server': '*',
         '@camstack/types': '*',
         fastify: '^5',
       },
     })
-    expect([...selected].toSorted()).toEqual(['@camstack/addon-admin-ui', '@camstack/system'])
+    expect([...selected].toSorted()).toEqual(['@camstack/addon-admin-ui', '@camstack/server'])
   })
 
   it('excludes camstack.agentOnlyBootstrapAddons — the hub must never install them', () => {
@@ -43,12 +43,12 @@ describe('selectHubBootstrapPackages', () => {
       dependencies: {
         '@camstack/addon-admin-ui': '*',
         '@camstack/addon-agent-ui': '*',
-        '@camstack/system': '*',
+        '@camstack/server': '*',
       },
       camstack: { agentOnlyBootstrapAddons: ['@camstack/addon-agent-ui'] },
     })
     expect(selected).not.toContain('@camstack/addon-agent-ui')
-    expect([...selected].toSorted()).toEqual(['@camstack/addon-admin-ui', '@camstack/system'])
+    expect([...selected].toSorted()).toEqual(['@camstack/addon-admin-ui', '@camstack/server'])
   })
 
   it('tolerates a manifest with no deps and no camstack block', () => {

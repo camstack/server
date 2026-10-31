@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- mock factories cross typed boundaries */
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthService } from '../../../core/auth/auth.service.js'
 import type { TrpcContext } from '../../trpc/trpc.context.js'

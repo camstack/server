@@ -22,7 +22,7 @@
  * `setCapabilityProviderEnabled`.
  */
 import { TRPCError } from '@trpc/server'
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { CapabilityInfo } from '@camstack/types'
 import type { ConfigService } from '../../core/config/config.service'
 import { persistCollectionDisabled } from './collection-preference'

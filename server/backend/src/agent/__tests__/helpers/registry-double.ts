@@ -5,7 +5,7 @@
  * `agent-cap-dispatch-wiring.spec.ts` so the spy shape is defined once.
  */
 import { vi } from 'vitest'
-import type { HubLocalChildDispatcher, CapCallInput } from '@camstack/system'
+import type { HubLocalChildDispatcher, CapCallInput } from '@camstack/server/system'
 
 /**
  * A minimal test double for `LocalChildRegistry` that implements

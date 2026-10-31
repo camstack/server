@@ -14,6 +14,9 @@
   "private": false,
   "files": [
     "dist",
+    "system/dist",
+    "system/assets",
+    "system/package.json",
     "scripts/closure-postinstall.mjs",
     ".env.example",
     "THIRD_PARTY_MODELS.md",
@@ -25,10 +28,23 @@
     "./main.js": "./dist/main.js",
     "./launcher.js": "./dist/launcher.js",
     "./starter.js": "./dist/starter.js",
-    "./launch-args.js": "./dist/launch-args.js"
+    "./launch-args.js": "./dist/launch-args.js",
+    "./system": {
+      "types": "./system/dist/index.d.ts",
+      "import": "./system/dist/index.mjs",
+      "require": "./system/dist/index.js"
+    },
+    "./system/addon-utils": {
+      "types": "./system/dist/addon-utils.d.ts",
+      "import": "./system/dist/addon-utils.mjs",
+      "require": "./system/dist/addon-utils.js"
+    },
+    "./system/package.json": "./system/package.json",
+    "./system/dist/*": "./system/dist/*",
+    "./system/assets/*": "./system/assets/*"
   },
   "scripts": {
-    "build": "../../scripts/tsc7 -p tsconfig.build.json && tsup && node scripts/copy-closure-patches.mjs",
+    "build": "node ../../scripts/sync-system-into-server.mjs && ../../scripts/tsc7 -p tsconfig.build.json && tsup && node scripts/copy-closure-patches.mjs",
     "postinstall": "node scripts/closure-postinstall.mjs",
     "dev": "npx concurrently -n server,ui -c blue,magenta \"CAMSTACK_RESTART_TOUCH_FILE=src/launcher.ts tsx watch --env-file=.env --ignore=./camstack-data --ignore=../../packages/core/dist --ignore=../../packages/sdk/dist --ignore=../../packages/ui-library/dist src/launcher.ts\" \"cd ../../packages/addon-admin-ui && npx vite --port 3001\"",
     "serve": "CAMSTACK_RESTART_TOUCH_FILE=src/launcher.ts tsx watch --env-file=.env --ignore=./camstack-data --ignore=../../packages/core/dist --ignore=../../packages/sdk/dist --ignore=../../packages/ui-library/dist src/launcher.ts",
@@ -61,7 +77,6 @@
     "@camstack/addon-post-analysis": "*",
     "@camstack/develop": "*",
     "@camstack/sdk": "*",
-    "@camstack/system": "*",
     "@camstack/types": "*",
     "@camstack/ui-library": "*",
     "@fastify/compress": "^9.0.0",
@@ -69,18 +84,29 @@
     "@fastify/cors": "^11.2.0",
     "@fastify/multipart": "^10.0.0",
     "@fastify/static": "^9.1.3",
+    "@msgpack/msgpack": "^3.1.3",
     "@trpc/client": "^11.16.0",
     "@trpc/server": "^11.16.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "croner": "^10.0.1",
+    "esbuild": "^0.27.7",
     "fastify": "^5",
     "js-yaml": "^4",
+    "jsonwebtoken": "^9.0.0",
     "moleculer": "0.15.0",
     "node-av": "^6.0.0",
     "node-pty": "^1.0.0",
+    "otplib": "13.4.1",
     "sharp": "^0.35.2",
+    "sqlite-vec": "^0.1.9",
     "ssh2": "^1.16.0",
     "superjson": "^2.2.6",
+    "systeminformation": "^5.0.0",
     "tar": "7.5.16",
     "undici": "^7.28.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.20.0",
     "zod": "^4.3.6"
   },
@@ -100,7 +126,8 @@
   },
   "nx": {
     "implicitDependencies": [
-      "@camstack/addon-benchmark"
+      "@camstack/addon-benchmark",
+      "@camstack/server-framework"
     ],
     "targets": {
       "build": {

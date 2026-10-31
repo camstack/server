@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ModelCatalogEntry } from '@camstack/types'
 // eslint-disable-next-line no-restricted-imports -- the revision rule is the downloader's (build-time dep, as in provider.ts)
-import { resolveFormatRevision } from '@camstack/system/addon-utils'
+import { resolveFormatRevision } from '@camstack/server/system/addon-utils'
 import * as catalogs from '../registry/model-catalogs.js'
 
 // D744 — every artefact on the CamStack mirror carries a revision (the sha256

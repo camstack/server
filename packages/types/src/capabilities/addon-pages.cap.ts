@@ -12,7 +12,7 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
  * rebuilds without manual reload.
  *
  * The hub-local builtin `addon-pages-aggregator` (see
- * `@camstack/system/builtins/addon-pages-aggregator`) registers the
+ * `@camstack/server/system/builtins/addon-pages-aggregator`) registers the
  * provider. Splitting the public aggregator from the raw collection
  * keeps both ends in codegen — there's no hand-written
  * `addon-pages.router.ts` wrapper anymore.

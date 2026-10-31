@@ -4,7 +4,7 @@
  * of `auth.router.ts` so the SSO finish asks them through the same code
  * (D782 — every primary login owes the same second factors).
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { type IUserPasskeysProvider, PasskeySummarySchema } from '@camstack/types'
 import { z } from 'zod'
 import type { MoleculerService } from '../core/moleculer/moleculer.service.js'

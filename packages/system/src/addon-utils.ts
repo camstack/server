@@ -1,7 +1,7 @@
 /**
- * Lightweight addon-facing utility surface for `@camstack/system`.
+ * Lightweight addon-facing utility surface for `@camstack/server/system`.
  *
- * Importing the root barrel (`@camstack/system`) loads the ENTIRE framework —
+ * Importing the root barrel (`@camstack/server/system`) loads the ENTIRE framework —
  * the kernel (moleculer) + every builtin addon (sqlite-storage, winston-logging,
  * device-manager, …) — ~64MB of V8 heap PER process, even when an addon only
  * needs a model-download or data-plane helper. Node has no runtime tree-shaking

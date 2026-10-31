@@ -46,7 +46,7 @@ export class WinstonDestination implements ILogDestination {
 
     // Console: canonical single-line formatter — `_rendered` already
     // carries level-based ANSI colour codes (see `formatLogLine` in
-    // `@camstack/system/logging/formatter.ts`). Using Winston's colorize
+    // `@camstack/server/system/logging/formatter.ts`). Using Winston's colorize
     // here would just decorate unused `info.level` and leave the
     // rendered line uncoloured.
     const consoleFormat = winston.format.printf((info) => {

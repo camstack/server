@@ -1,23 +1,12 @@
 {
-  "name": "@camstack/system",
+  "name": "@camstack/server-framework",
   "version": "1.2.537",
-  "description": "Core addon for CamStack — builtins, pipeline, process management, auth, logging, events",
-  "keywords": [
-    "camstack",
-    "core",
-    "addon",
-    "camera",
-    "nvr"
-  ],
+  "description": "Source of the kernel + builtins. Private workspace: its built dist ships inside the @camstack/server tarball as @camstack/server/system.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/camstack/server.git",
     "directory": "packages/system"
-  },
-  "homepage": "https://camstack-docs.zentik.app",
-  "bugs": {
-    "url": "https://github.com/camstack/server/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -545,21 +534,14 @@
       }
     ]
   },
-  "files": [
-    "dist",
-    "assets",
-    "README.md",
-    "CHANGELOG.md"
-  ],
   "scripts": {
     "copy:hook": "node -e \"const fs=require('fs'),p=require('path');const dst=p.join('dist');fs.mkdirSync(dst,{recursive:true});fs.copyFileSync(p.join('src','kernel','moleculer','framework-resolver-hook.mjs'),p.join(dst,'framework-resolver-hook.mjs'));console.log('copied framework-resolver-hook.mjs ->',dst)\"",
-    "build": "vite build && vite build -c vite.runner.config.ts && npx tsx ../../scripts/emit-isolated-dts.ts --root . --src src --out dist && npm run copy:hook",
+    "build": "vite build && vite build -c vite.runner.config.ts && npx tsx ../../scripts/emit-isolated-dts.ts --root . --src src --out dist && npm run copy:hook && node ../../scripts/sync-system-into-server.mjs",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit -p tsconfig.spec.json",
     "test": "vitest run",
     "test:cluster": "vitest run -c vitest.cluster.config.ts --reporter verbose",
-    "test:watch": "vitest",
-    "publish:npm": "npm publish --access public"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@camstack/sdk": "*",
@@ -609,5 +591,6 @@
         "parallelism": false
       }
     }
-  }
+  },
+  "private": true
 }

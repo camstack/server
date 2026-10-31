@@ -8,7 +8,7 @@ import {
   type EmitFn,
   type TarballFetcher,
   type ExtractFn,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { JobKind, LifecycleJob, TaskTarget } from '@camstack/types'
 import { SYSTEM_PACKAGE } from '../../core/addon/addon-package.service.js'
 import { lifecycleJobsDir } from '../../lifecycle-journal-path.js'

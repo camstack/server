@@ -54,7 +54,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
     {
       manifest: {
         id: 'sqlite-settings',
-        packageName: '@camstack/system',
+        packageName: '@camstack/server',
         packageVersion: '1.2.523',
         capabilities: ['storage-provider'],
       },

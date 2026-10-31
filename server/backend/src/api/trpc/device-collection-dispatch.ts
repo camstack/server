@@ -60,7 +60,7 @@
  * existed, and it is pinned by spec.
  */
 
-import { CAP_METHOD_NOT_IMPLEMENTED, type CapabilityRegistry } from '@camstack/system'
+import { CAP_METHOD_NOT_IMPLEMENTED, type CapabilityRegistry } from '@camstack/server/system'
 import {
   type CapabilityMethodSchema,
   type DeviceBindingEntry,

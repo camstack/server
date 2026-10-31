@@ -11,7 +11,7 @@
  * (stableId, type, name, online, features, parentDeviceId, config, removeDevice).
  */
 
-import { DeviceRegistry } from '@camstack/system'
+import { DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
   IDevice,

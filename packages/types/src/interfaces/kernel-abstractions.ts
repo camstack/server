@@ -1,5 +1,5 @@
 /**
- * Minimal interfaces for kernel services consumed by @camstack/system.
+ * Minimal interfaces for kernel services consumed by @camstack/server/system.
  *
  * These abstractions break the direct core -> kernel import dependency,
  * allowing core to depend only on @camstack/types while kernel provides
@@ -19,7 +19,7 @@ import type { StatusOverlay, StatusOverlayAnswer } from './status-overlay.js'
 
 /**
  * Capability registry interface exposing what core/addon consumers need.
- * The full CapabilityRegistry in @camstack/system implements this and more.
+ * The full CapabilityRegistry in @camstack/server/system implements this and more.
  */
 export interface ICapabilityRegistry {
   /** Get all active collection providers for a capability. */

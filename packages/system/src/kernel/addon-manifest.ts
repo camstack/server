@@ -85,7 +85,7 @@ const MANIFEST_VERSION = 1 as const
  * workspace source. Trusting the dirent there finds zero addons on disk, which
  * with pruning would empty a developer's manifest on the next boot.
  */
-/** `@camstack/system` → `system`: the directory a package must live in. */
+/** `@camstack/server/system` → `system`: the directory a package must live in. */
 function packageDirName(declaredName: string): string {
   const slash = declaredName.lastIndexOf('/')
   return slash === -1 ? declaredName : declaredName.slice(slash + 1)
@@ -227,8 +227,8 @@ export class AddonManifest {
    *    `updatedAt` is left alone because the correction is not an update, and
    *    stamping `now` would claim an install that never happened.
    *  - **pruned** — an entry naming a directory that does not exist. The live
-   *    hub carried three (`@camstack/system 1.2.29`, `addon-viewer-ui 1.1.39`,
-   *    `addon-agent-ui 1.2.4`); `@camstack/system` in particular is
+   *    hub carried three (`@camstack/server/system 1.2.29`, `addon-viewer-ui 1.1.39`,
+   *    `addon-agent-ui 1.2.4`); `@camstack/server/system` in particular is
    *    host-provided and deliberately NOT seeded under `addonsDir`
    *    ([D45]), so its entry advertised a copy that must not exist.
    *    An entry holding a `lastBackupDir` is NEVER pruned: that pointer is the
@@ -282,8 +282,8 @@ export class AddonManifest {
         // The DIRECTORY has to be the package, not merely contain it. A
         // renamed copy is residue — `addon-residue.ts` quarantines it — and
         // until it is moved it must not become the version this manifest
-        // reports. Measured on macmini 2026-08-08: `addons/@camstack/system`
-        // did not exist at all, yet the manifest carried `@camstack/system
+        // reports. Measured on macmini 2026-08-08: `addons/@camstack/server/system`
+        // did not exist at all, yet the manifest carried `@camstack/server/system
         // 1.2.3` with this boot's timestamp, read out of
         // `system.bak-pre-1272-1786129145` against a 1.2.61 closure. Every
         // reader of the manifest was answering with a 17-day-old backup.

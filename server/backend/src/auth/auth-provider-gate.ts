@@ -12,7 +12,7 @@
  *
  * Keep in step with `AUTH_CAPS` in the admin-ui Authentication page.
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 
 /** Capabilities whose per-provider toggle is an auth addon's enable. */
 export const AUTH_GOVERNING_CAPS = ['auth-provider', 'user-passkeys'] as const

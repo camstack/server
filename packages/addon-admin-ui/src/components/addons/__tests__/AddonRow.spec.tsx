@@ -120,7 +120,7 @@ describe('AddonRow', () => {
   it('shows a requires-restart indicator for system packages', () => {
     render(
       row({
-        addon: { name: '@camstack/system', currentVersion: '1.0.0', isSystem: true },
+        addon: { name: '@camstack/server', currentVersion: '1.0.0', isSystem: true },
       }),
     )
     expect(screen.getByText(/requires restart/i)).toBeTruthy()

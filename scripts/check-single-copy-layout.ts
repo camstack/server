@@ -4,10 +4,10 @@
  * D45 (docs/decisions/adr-0045).
  *
  * ── The bug class this prevents ────────────────────────────────────────────
- * D45: a host-provided package (`@camstack/system`, `@camstack/types`,
+ * D45: a host-provided package (`@camstack/server/system`, `@camstack/types`,
  * `@camstack/sdk`) exists exactly ONCE per node, inside the active server
  * closure, reached by ONE resolution path. It was written after an evening in
- * which one agent held four copies of `@camstack/system` — 1.2.28 under the
+ * which one agent held four copies of `@camstack/server/system` — 1.2.28 under the
  * image seed, 1.2.28 under a second seed tree, 1.2.0 in the legacy
  * `/data/framework`, 1.2.30 in the closure. Three consecutive diagnoses of
  * which one actually ran were each disproved by the next measurement, while
@@ -58,7 +58,7 @@ const LAYOUT_FILES: readonly string[] = [
   // The Electron bundle is the OTHER thing that lays a node's copies down, and
   // it had the same shape as the docker image: `extraResources` copied the whole
   // closure into `Resources/node_modules`, then re-copied six addons and
-  // `@camstack/system` one by one into `Resources/addons/<name>` — 41 MB of
+  // `@camstack/server/system` one by one into `Resources/addons/<name>` — 41 MB of
   // second copy, measured 2026-08-25. Pinned at 0 so it cannot come back.
   'packages/desktop/package.json',
 ]
@@ -314,7 +314,9 @@ function main(): void {
     for (const line of worse) console.error(`    ${line}`)
     console.error('')
     console.error('  D45: one copy of every host-provided package per node, inside the active')
-    console.error('  closure, reached by one path. Four copies of @camstack/system on one node')
+    console.error(
+      '  closure, reached by one path. Four copies of @camstack/server/system on one node',
+    )
     console.error('  cost three wrong diagnoses in an evening — see docs/decisions/adr-0045.md.')
     console.error('')
     console.error('  If this IS the intended direction, re-pin with --update and say why in')

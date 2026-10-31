@@ -1,3 +1,3 @@
-import { StorageManager } from '@camstack/system'
+import { StorageManager } from '@camstack/server/system'
 
 export class StorageService extends StorageManager {}

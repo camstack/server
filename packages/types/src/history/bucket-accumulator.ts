@@ -3,7 +3,7 @@
  *
  * PURE: no I/O, no timers, the clock is a parameter. It lives in
  * `@camstack/types` because it is bundled with every addon — an addon cannot
- * import another addon, and an import from `@camstack/system` breaks on an
+ * import another addon, and an import from `@camstack/server/system` breaks on an
  * older server. A producer that samples faster than `record` allows (once per
  * 10 s per series) aggregates here and sends CLOSED buckets with
  * `deviceHistory.recordBuckets`.

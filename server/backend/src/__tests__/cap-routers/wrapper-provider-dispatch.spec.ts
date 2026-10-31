@@ -14,7 +14,7 @@
  * device-link SYNTHESIZE branch between the two; wiring was deleted 2026-08-08.)
  */
 
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { PtzAutotrackStatus } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { requireDeviceScoped } from '../../api/trpc/cap-mount-helpers.js'

@@ -20,7 +20,7 @@ type EmbeddingEncodeOutput = Awaited<ReturnType<IEmbeddingEncoderProvider['encod
 type EmbeddingInfoOutput = Awaited<ReturnType<IEmbeddingEncoderProvider['getInfo']>>
 
 // eslint-disable-next-line no-restricted-imports -- ModelDownloadService is a build-time dep, not a runtime addon coupling
-import { ModelDownloadService } from '@camstack/system/addon-utils'
+import { ModelDownloadService } from '@camstack/server/system/addon-utils'
 import {
   CLIP_EMBEDDING_STEP_ID,
   resolveClusterModelPin,
@@ -541,7 +541,7 @@ function resolveEmbeddingPythonDir(): string {
 /**
  * HTTP status of a model-download failure, recognised by SHAPE (`name` +
  * numeric `status`), never by `instanceof` or a framework import.
- * `@camstack/system` is host-resolved (not bundled), so importing a guard it
+ * `@camstack/server/system` is host-resolved (not bundled), so importing a guard it
  * only exports from a newer server would stop this whole entry from linking
  * on a node still running the older server — a deploy-order hazard for a
  * one-line classification. `null` = not an HTTP answer (unreachable, other).

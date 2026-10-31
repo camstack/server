@@ -14,7 +14,7 @@
  * Lambda once, regenerating invalidates the old value).
  *
  * Could be unified with the stream-broker primitives into a shared
- * `@camstack/system` util — kept local for now to avoid a system-package rebuild
+ * `@camstack/server/system` util — kept local for now to avoid a system-package rebuild
  * during this batch (see the completion spec).
  */
 import * as crypto from 'node:crypto'

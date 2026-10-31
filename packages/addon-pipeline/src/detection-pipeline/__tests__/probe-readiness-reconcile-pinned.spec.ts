@@ -16,7 +16,7 @@
  * logged on an agent proved the HUB's probe had finished — not the node's.
  *
  * Cost of the false positive: on 2026-08-07 `agent-a` had no
- * `platform-probe` addon AT ALL (its `@camstack/system` package had been
+ * `platform-probe` addon AT ALL (its `@camstack/server/system` package had been
  * renamed out of `/data/addons`), and this line was the evidence that made it
  * look like a node with a lossy event path instead of a node with no probe.
  */

@@ -7,7 +7,7 @@
  *
  * Uses a minimal in-memory synchronous `IEventBus` mock so tests are
  * deterministic without fake timers — the production
- * `@camstack/system::SystemEventBus` delivers via `queueMicrotask`, but
+ * `@camstack/server/system::SystemEventBus` delivers via `queueMicrotask`, but
  * that behaviour is exercised in the integration layer (§8.2).
  *
  * Mock payloads are intentionally `any`-typed for test brevity; the

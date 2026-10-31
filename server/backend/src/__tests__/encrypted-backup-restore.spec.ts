@@ -21,7 +21,7 @@ import {
   prepareRestoreArchive,
   readBackupEncryptionHeader,
   SystemBackupService,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { applyPendingRestore } from '../pending-restore.js'
 

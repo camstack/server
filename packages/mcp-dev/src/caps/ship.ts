@@ -28,13 +28,13 @@ export function capShipPlan(
 
   if (kind === 'additive-field') {
     steps.push(
-      'Redeploy the providing addon only (no force-publish of @camstack/system required).',
+      'Redeploy the providing addon only (no force-publish of @camstack/server/system required).',
       'Verify the new field on a live node.',
     )
     notes.push('Additive fields are cheap: contract shape grows, routers stay compatible.')
   } else {
     steps.push(
-      'Publish through CI (force-publish @camstack/system when the contract changed).',
+      'Publish through CI (force-publish @camstack/server/system when the contract changed).',
       'applyServerUpdate on the hub.',
       'Deploy builtins + packages/system addon.',
       'Verify hub pid and that capabilities re-registered (Deploy ≠ capabilities re-registered).',

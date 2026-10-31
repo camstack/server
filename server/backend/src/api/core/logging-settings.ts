@@ -75,7 +75,7 @@ import {
   type LoggingSettingsState,
   type LogLevel,
 } from '@camstack/types'
-import { DEFAULT_LOG_LEVEL, type LoggingGate } from '@camstack/system'
+import { DEFAULT_LOG_LEVEL, type LoggingGate } from '@camstack/server/system'
 import type { RequestCensusService } from './request-census-settings.js'
 import type { SettingsStoreGateway } from './site-location.js'
 

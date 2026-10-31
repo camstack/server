@@ -1,5 +1,5 @@
-import { ReplEngine } from '@camstack/system'
-import type { IReplContextProvider } from '@camstack/system'
+import { ReplEngine } from '@camstack/server/system'
+import type { IReplContextProvider } from '@camstack/server/system'
 import { SystemMirror, type SystemMirrorApi, type DeviceProxy } from '@camstack/types'
 import { AddonRegistryService } from '../addon/addon-registry.service'
 import { EventBusService } from '../events/event-bus.service'

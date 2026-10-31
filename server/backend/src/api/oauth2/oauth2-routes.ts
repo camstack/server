@@ -1,4 +1,4 @@
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type {
   IOauthIntegrationProvider,
   IScopedLogger,

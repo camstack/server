@@ -18,7 +18,7 @@
  * the operator's write is ordered against the cascade rather than racing it.
  */
 
-import { DeviceRegistry } from '@camstack/system'
+import { DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
   IDeviceManagerProvider,

@@ -5,7 +5,11 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { AGENT_MAIN_HEAP_WATCH_LABEL, type HeapReclaimer, startHeapWatch } from '@camstack/system'
+import {
+  AGENT_MAIN_HEAP_WATCH_LABEL,
+  type HeapReclaimer,
+  startHeapWatch,
+} from '@camstack/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import { startAgentHeapWatch } from '../agent-heap-watch.js'
 

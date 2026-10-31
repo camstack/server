@@ -27,7 +27,7 @@ const ROWS: readonly PackageInstallation[] = [
   row('@camstack/addon-pipeline', 'mac', true),
   row('@camstack/addon-pipeline', 'hub', true, true),
   row('@camstack/addon-agent-ui', 'mac', false),
-  row('@camstack/system', 'mac', false),
+  row('@camstack/server', 'mac', false),
 ]
 
 describe('groupNodeOnlyPackages', () => {

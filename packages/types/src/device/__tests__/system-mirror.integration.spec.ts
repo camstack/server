@@ -2,7 +2,7 @@
  * Integration tests for SystemMirror — exercises the FULL stack with
  * real components instead of mocks:
  *
- *   - real `SystemEventBus` (@camstack/system) for push events
+ *   - real `SystemEventBus` (@camstack/server/system) for push events
  *   - real `applyMirrorUpdate` semantics (diff + emit, mirroring
  *     device-manager.addon.ts)
  *   - real `createDeviceProxy` cap-method dispatch via a tracking api
@@ -13,7 +13,7 @@
  * lifecycle) is exercised end-to-end here.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { SystemEventBus } from '@camstack/system'
+import { SystemEventBus } from '@camstack/server/system'
 import { EventCategory } from '../../enums/event-category.js'
 import { SystemMirror, type SystemMirrorApi } from '../system-mirror.js'
 import type { DeviceBinding } from '../device-binding.js'

@@ -159,5 +159,5 @@ describe('$hub service', () => {
 
   // Device persistence tests removed — persistence is now handled by
   // the `device-manager` capability addon, not `$hub.*` actions.
-  // See `device-manager.addon.ts` in `@camstack/system/builtins/`.
+  // See `device-manager.addon.ts` in `@camstack/server/system/builtins/`.
 })

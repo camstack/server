@@ -9,7 +9,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type { FastifyInstance } from 'fastify'
-import type { AddonDeploySource } from '@camstack/system'
+import type { AddonDeploySource } from '@camstack/server/system'
 import {
   AGENT_DEPLOY_CONTROL_TIMEOUT_MS,
   type AgentDeliveryBroker,

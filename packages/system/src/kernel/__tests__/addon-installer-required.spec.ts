@@ -107,14 +107,14 @@ describe('AddonInstaller.REQUIRED_PACKAGES coherence', () => {
     expect(missing).toEqual([])
   })
 
-  it('REQUIRED_PACKAGES is the set of @camstack/addon-* deps in server/backend/package.json plus @camstack/system', () => {
+  it('REQUIRED_PACKAGES is the set of @camstack/addon-* deps in server/backend/package.json plus @camstack/server/system', () => {
     const required = [...AddonInstaller.REQUIRED_PACKAGES].toSorted()
-    // The bootstrap set is every @camstack/addon-* dep PLUS @camstack/system —
+    // The bootstrap set is every @camstack/addon-* dep PLUS @camstack/server/system —
     // the framework core builtins the kernel installs at boot (see
     // addon-installer.ts: `deps.filter(n => n.startsWith('@camstack/addon-') ||
-    // n === '@camstack/system')`). The single source of truth is the backend's
+    // n === '@camstack/server/system')`). The single source of truth is the backend's
     // package.json deps; this guard keeps REQUIRED_PACKAGES in lockstep.
-    const expected = [...listBackendAddonDeps(), '@camstack/system'].toSorted()
+    const expected = [...listBackendAddonDeps(), '@camstack/server'].toSorted()
     expect(required).toEqual(expected)
   })
 
@@ -133,14 +133,14 @@ describe('AddonInstaller.REQUIRED_PACKAGES coherence', () => {
     expect(missing).toEqual([])
   })
 
-  it('AGENT_PACKAGES is exactly server/backend package.json camstack.agentBootstrapAddons plus @camstack/system', () => {
+  it('AGENT_PACKAGES is exactly server/backend package.json camstack.agentBootstrapAddons plus @camstack/server/system', () => {
     // Post-consolidation the agent boots the SAME `@camstack/server` closure,
     // so its bootstrap set is the backend manifest's `agentBootstrapAddons`
     // field (single source of truth — the separate agent meta-package is gone).
     const agentBootstrapAddons = backendPackage().camstack?.agentBootstrapAddons ?? []
     const agent = [...AddonInstaller.AGENT_PACKAGES].toSorted()
-    // Same bootstrap contract as the hub: the declared addons PLUS @camstack/system.
-    const expected = [...agentBootstrapAddons, '@camstack/system'].toSorted()
+    // Same bootstrap contract as the hub: the declared addons PLUS @camstack/server/system.
+    const expected = [...agentBootstrapAddons, '@camstack/server'].toSorted()
     expect(agent).toEqual(expected)
   })
 })

@@ -291,7 +291,7 @@ export const ncActions = defineCustomActions({
    * problem and nothing here fails at load. The coupling is the HUB: the cap
    * route (`notificationRules.createRule` / `updateRule`, which the admin
    * editor uses) validates input against the copy of `@camstack/types` that
-   * `@camstack/system` inlines (`bundleTypesMainEntry`), so a new key on
+   * `@camstack/server/system` inlines (`bundleTypesMainEntry`), so a new key on
    * `NcRuleInputSchema` is SILENTLY STRIPPED there until a `@camstack/server`
    * release carrying it is installed. These two validate only here, against a
    * schema that lives in the addon (`rule-ai.ts`), so a field added to it is
@@ -480,7 +480,7 @@ export const ncActions = defineCustomActions({
    * durable. See `test-event.ts` for what it does and does not do.
    *
    * A bridge action rather than a cap method, deliberately: it needs no
-   * codegen, no `@camstack/system` republish and no place on a release train,
+   * codegen, no `@camstack/server/system` republish and no place on a release train,
    * so the tester can ship and change at the speed of the addon it tests.
    *
    * `auth: 'admin'` because an injection DELIVERS: it reaches every target the

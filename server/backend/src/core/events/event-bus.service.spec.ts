@@ -6,7 +6,7 @@ import * as yaml from 'js-yaml'
 import { ServiceBroker } from 'moleculer'
 import { EventBusService } from './event-bus.service'
 import { ConfigService } from '../config/config.service'
-import type { ISettingsStore } from '@camstack/system'
+import type { ISettingsStore } from '@camstack/server/system'
 import type { SystemEvent } from '@camstack/types'
 
 /** Flush pending queueMicrotask callbacks */

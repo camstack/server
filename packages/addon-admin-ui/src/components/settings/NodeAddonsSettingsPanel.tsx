@@ -606,7 +606,7 @@ export function NodeAddonsSettingsPanel({
       // `[ADDON-DISPLAY-NAME]` — prefer the per-addon `manifest.name`
       // ("Local Backup", "Metrics Native", ...) over the bundle-wide
       // `packageDisplayName` ("Core"). Bundle packages like
-      // `@camstack/system` ship many addons under one displayName, and
+      // `@camstack/server/system` ship many addons under one displayName, and
       // using the bundle name made every pane read "Core"
       // instead of the actual addon. Fall back to `packageDisplayName`
       // when an addon hasn't set a human-readable name of its own,

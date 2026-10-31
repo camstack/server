@@ -16,7 +16,7 @@
  *
  * Why a builtin: same reasoning as `addon-pages-aggregator`. The
  * aggregator is the de-facto "addon-widgets provider" — addons own caps,
- * not the server. Living in `@camstack/system/builtins` keeps the surface
+ * not the server. Living in `@camstack/server/system/builtins` keeps the surface
  * symmetrical with `system-config`, `local-auth`, etc.
  */
 import * as path from 'node:path'

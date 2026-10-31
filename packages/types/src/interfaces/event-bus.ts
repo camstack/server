@@ -704,7 +704,7 @@ export type NodeUpdateTarget = 'server' | 'desktop-shell' | 'container-image'
  * Payload carried on `system.restarting` (when the restart is being
  * scheduled) and `system.restart-completed` (after the new process
  * boots). Mirrors the on-disk `.restart-pending` marker schema in
- * `@camstack/system` so consumers don't need a separate type.
+ * `@camstack/server/system` so consumers don't need a separate type.
  *
  * Optional fields stay optional because not every restart is a
  * framework update — operator-triggered "restart hub" flows can fire
@@ -1871,7 +1871,7 @@ export function createEvent<C extends KnownEventCategory>(
 // ---------------------------------------------------------------------------
 // System readiness protocol — low-level producer emission helper.
 // Consumers (kernel `ReadinessRegistry`) and their `awaitReady` /
-// `onReadyState` APIs live in `@camstack/system/src/readiness/`.
+// `onReadyState` APIs live in `@camstack/server/system/src/readiness/`.
 // ---------------------------------------------------------------------------
 
 /**

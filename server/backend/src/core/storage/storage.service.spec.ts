@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { StorageService } from './storage.service'
-import type { ICoreStorageProvider as IStorageProvider, IStorageLocation } from '@camstack/system'
+import type {
+  ICoreStorageProvider as IStorageProvider,
+  IStorageLocation,
+} from '@camstack/server/system'
 
 const createMockProvider = (): IStorageProvider => {
   const mockLocation: IStorageLocation = { structured: undefined, files: undefined }

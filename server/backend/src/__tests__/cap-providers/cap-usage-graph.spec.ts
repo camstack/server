@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { __resetCapUsageRegistryForTests, getCapUsageRegistry } from '@camstack/system'
+import { __resetCapUsageRegistryForTests, getCapUsageRegistry } from '@camstack/server/system'
 import { buildNodesProvider } from '../../api/core/cap-providers'
 
 describe('nodes.getCapUsageGraph provider', () => {

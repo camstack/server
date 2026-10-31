@@ -30,7 +30,7 @@
  * (`settings-door-view.ts`: `loadPrefixed` → `replacePrefixed`).
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/system'
+import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
   IDeviceManagerProvider,

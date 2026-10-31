@@ -3,7 +3,7 @@
  *
  * D45: "more than one copy of a host-provided package on a node is an error,
  * reported loudly, not a warning nobody reads." The record exists because one
- * agent held FOUR copies of `@camstack/system` (1.2.28 / 1.2.28 / 1.2.0 /
+ * agent held FOUR copies of `@camstack/server/system` (1.2.28 / 1.2.28 / 1.2.0 /
  * 1.2.30) and every one of them could be truthfully quoted as "the version",
  * while three consecutive diagnoses of which one ran were each disproved by the
  * next measurement.
@@ -161,8 +161,8 @@ describe('inventoryHostProvided', () => {
     })
     const result = inventoryHostProvided([...FLEET_ROOTS, root(STALE_FRAMEWORK, 'unexpected')], fs)
 
-    expect(result.violations).toEqual(['@camstack/system'])
-    const system = result.copies.filter((c) => c.pkg === '@camstack/system')
+    expect(result.violations).toEqual(['@camstack/server'])
+    const system = result.copies.filter((c) => c.pkg === '@camstack/server')
     expect(system).toHaveLength(4)
     expect(system.map((c) => c.version).sort()).toEqual(['1.2.0', '1.2.28', '1.2.28', '1.2.30'])
     // A version alone is what misled: every entry carries its path.
@@ -180,7 +180,7 @@ describe('inventoryHostProvided', () => {
     // Three copies, and all three are exactly where the image put them.
     expect(result.copies).toHaveLength(3)
     expect(result.violations).toEqual([])
-    const system = result.packages.find((p) => p.pkg === '@camstack/system')
+    const system = result.packages.find((p) => p.pkg === '@camstack/server')
     expect(system?.activeCandidates.map((c) => c.path)).toEqual([`${ACTIVE_ROOT}/@camstack/system`])
     expect(system?.shadowedSeeds).toHaveLength(2)
     expect(system?.unexpected).toEqual([])
@@ -195,8 +195,8 @@ describe('inventoryHostProvided', () => {
     })
     const result = inventoryHostProvided([...FLEET_ROOTS, root(STALE_FRAMEWORK, 'unexpected')], fs)
 
-    expect(result.violations).toEqual(['@camstack/system'])
-    const system = result.packages.find((p) => p.pkg === '@camstack/system')
+    expect(result.violations).toEqual(['@camstack/server'])
+    const system = result.packages.find((p) => p.pkg === '@camstack/server')
     expect(system?.unexpected.map((c) => c.path)).toEqual([`${STALE_FRAMEWORK}/@camstack/system`])
   })
 
@@ -209,8 +209,8 @@ describe('inventoryHostProvided', () => {
     })
     const result = inventoryHostProvided(FLEET_ROOTS, fs)
 
-    expect(result.violations).toEqual(['@camstack/system'])
-    const system = result.packages.find((p) => p.pkg === '@camstack/system')
+    expect(result.violations).toEqual(['@camstack/server'])
+    const system = result.packages.find((p) => p.pkg === '@camstack/server')
     expect(system?.activeCandidates).toHaveLength(2)
     expect(system?.shadowedSeeds).toEqual([])
   })
@@ -230,7 +230,7 @@ describe('inventoryHostProvided', () => {
       [root(ACTIVE_ROOT, 'active'), root('/data/addons', 'unexpected')],
       fs,
     )
-    expect(result.violations).toEqual(['@camstack/system'])
+    expect(result.violations).toEqual(['@camstack/server'])
   })
 
   it('does NOT count the same directory twice when two roots resolve to it', () => {
@@ -262,14 +262,14 @@ describe('inventoryHostProvided', () => {
       fs,
     )
     // An unreadable copy is still a copy — dropping it would under-report.
-    expect(result.violations).toEqual(['@camstack/system'])
+    expect(result.violations).toEqual(['@camstack/server'])
     expect(
       result.copies.find((c) => c.path === '/data/addons/@camstack/system')?.version,
     ).toBeNull()
   })
 
   it('covers system, types and sdk by default', () => {
-    expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/system')
+    expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/server')
     expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/types')
     expect(HOST_PROVIDED_PACKAGES).toContain('@camstack/sdk')
   })
@@ -320,7 +320,7 @@ describe('formatInventoryReport', () => {
     )
     const report = formatInventoryReport(result)
 
-    expect(report).toContain('@camstack/system')
+    expect(report).toContain('@camstack/server')
     expect(report).toContain(`${STALE_FRAMEWORK}/@camstack/system`)
     expect(report).toContain('1.2.0')
     expect(report).toContain('1.2.30')
@@ -397,7 +397,7 @@ describe('the inventory is never fatal', () => {
     const result = inventoryHostProvided(worstRoots, fakeFs(worstLayout))
     // Two packages in violation, and the whole verdict is data — there is no
     // fatal flag, no exit code and no thrown error anywhere in the surface.
-    expect(result.violations).toEqual(['@camstack/system', '@camstack/types'])
+    expect(result.violations).toEqual(['@camstack/server', '@camstack/types'])
     expect(typeof formatInventoryReport(result)).toBe('string')
     expect(formatInventoryReport(result)).not.toBe('')
   })
@@ -426,7 +426,7 @@ describe('formatShadowingNotes', () => {
     expect(notes).toHaveLength(1)
     const note = notes[0] ?? ''
     expect(note).not.toContain('\n')
-    expect(note).toContain('@camstack/system')
+    expect(note).toContain('@camstack/server')
     expect(note).toContain('seed 1.2.78 shadowed by active 1.2.100')
     // Not a violation banner: this is the documented behaviour of every release.
     expect(note).not.toMatch(/violation/i)
@@ -472,7 +472,7 @@ describe('formatShadowingNotes', () => {
       [root(ACTIVE_ROOT, 'active'), root(SEED_HUB, 'seed'), root(STALE_FRAMEWORK, 'unexpected')],
       fs,
     )
-    expect(result.violations).toEqual(['@camstack/system'])
+    expect(result.violations).toEqual(['@camstack/server'])
     expect(formatShadowingNotes(result)).toEqual([])
   })
 })

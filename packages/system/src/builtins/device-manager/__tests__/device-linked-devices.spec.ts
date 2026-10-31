@@ -25,7 +25,7 @@ import type {
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
-// Import DeviceRegistry from source (not the `@camstack/system` barrel) so the
+// Import DeviceRegistry from source (not the `@camstack/server/system` barrel) so the
 // suite runs without a built dist — the barrel transitively pulls node-only
 // deps (otplib) that vitest doesn't need for this test.
 import { DeviceRegistry } from '../../../kernel/device-registry.js'

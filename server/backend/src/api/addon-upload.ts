@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonDeploySource } from '@camstack/system'
+import type { AddonDeploySource } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import type { AddonPackageService } from '../core/addon/addon-package.service'
@@ -391,7 +391,7 @@ async function installToHub(
       })
     }
 
-    // Framework / system packages (`camstack.system: true`, e.g. @camstack/system)
+    // Framework / system packages (`camstack.system: true`, e.g. @camstack/server/system)
     // ship hub builtins (sqlite-settings, filesystem-storage, …) that CANNOT be
     // hot-reloaded in place — an in-process `restartAddon` leaves them
     // uninitialized ("SqliteSettingsBackend not initialized"), breaking auth +

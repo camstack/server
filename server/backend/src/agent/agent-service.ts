@@ -2,7 +2,11 @@ import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonDeploySource, RegisterNodeParams, RegisterNodeResult } from '@camstack/system'
+import type {
+  AddonDeploySource,
+  RegisterNodeParams,
+  RegisterNodeResult,
+} from '@camstack/server/system'
 import {
   asBrokerLike,
   isAddonDeploySource,
@@ -10,7 +14,7 @@ import {
   mapSignalsToInferenceHardware,
   probePlatform,
   resolveHwAccel,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { AgentHealth, IMetricsProvider, IScopedLogger } from '@camstack/types'
 
 /** What `$agent.status` and `$agent.health` read from the metrics provider. */
@@ -93,7 +97,7 @@ interface ProcessRestartResult {
  * otherwise. Mirrors the hub reconcile's `AGENT_BOOTSTRAP_PACKAGES`.
  */
 const DEFAULT_AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
-  '@camstack/system',
+  '@camstack/server',
   '@camstack/addon-agent-ui',
 ])
 
@@ -232,7 +236,7 @@ interface AgentServiceDeps {
    */
   readonly installBundleTgz?: (tgzPath: string) => Promise<{ name: string; version: string }>
   /**
-   * Packages this node bootstraps itself (`@camstack/system` +
+   * Packages this node bootstraps itself (`@camstack/server/system` +
    * `AddonInstaller.AGENT_PACKAGES`) — `$agent.undeploy` refuses them.
    */
   readonly bootstrapPackages?: ReadonlySet<string>

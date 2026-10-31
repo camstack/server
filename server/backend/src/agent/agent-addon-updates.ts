@@ -84,7 +84,7 @@ function readPackageIdentity(dir: string): InstalledAddonPackage | null {
  * name (not the addon declaration id — the two differ for scoped packages and
  * only the package name can be looked up in a registry).
  *
- * `@camstack/system` is deliberately INCLUDED: on an agent the addon-root copy
+ * `@camstack/server/system` is deliberately INCLUDED: on an agent the addon-root copy
  * is the only copy of the builtin infra (D87), so it is exactly the package an
  * operator needs to see the version of when a node is misaligned.
  */

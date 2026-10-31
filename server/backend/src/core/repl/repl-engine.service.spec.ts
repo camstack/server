@@ -11,8 +11,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ReplEngineService } from './repl-engine.service'
-import { SystemEventBus } from '@camstack/system'
-import type { ReplSessionContext } from '@camstack/system'
+import { SystemEventBus } from '@camstack/server/system'
+import type { ReplSessionContext } from '@camstack/server/system'
 import type { DeviceBinding } from '@camstack/types'
 import { DeviceType, EventCategory } from '@camstack/types'
 

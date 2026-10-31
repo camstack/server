@@ -24,7 +24,7 @@
  *   - log-destination — legacy provider shape (task #195)
  */
 
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { InferProvider } from '@camstack/types'
 import {
   accessoriesCapability,

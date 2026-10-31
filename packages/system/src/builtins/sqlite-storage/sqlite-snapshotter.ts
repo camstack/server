@@ -123,7 +123,7 @@ export type StatfsFn = (dir: string) => Promise<DiskSpace>
  */
 export function defaultSnapshotWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'sqlite-snapshot-worker.js')
 }
 

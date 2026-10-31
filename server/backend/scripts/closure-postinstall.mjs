@@ -6,7 +6,7 @@
  * ## Why a lifecycle script and not a bundler
  *
  * A patch under `patches/` reaches production only if the patched package is
- * BUNDLED at build time. `moleculer` is (into `@camstack/system/dist`), so its
+ * BUNDLED at build time. `moleculer` is (into `@camstack/server/system/dist`), so its
  * patch travels inside a published tarball and needs nothing here. `werift` is
  * not, on purpose: three addons resolve it at runtime from the closure so the
  * installer's dedupe (D343) links them all at ONE 5.3 MB copy, and that copy

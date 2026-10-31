@@ -202,7 +202,7 @@ describe('runNodeStarter (single-copy model)', () => {
 
 describe('isHostExternal', () => {
   it('matches exact and subpath specifiers only', () => {
-    expect(isHostExternal('@camstack/system')).toBe(true)
+    expect(isHostExternal('@camstack/server/system')).toBe(true)
     expect(isHostExternal('@camstack/system/dist/addon-runner.js')).toBe(true)
     expect(isHostExternal('zod')).toBe(true)
     expect(isHostExternal('zod-to-json-schema')).toBe(false)

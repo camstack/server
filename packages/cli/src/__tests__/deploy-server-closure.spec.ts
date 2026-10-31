@@ -73,7 +73,7 @@ const FIXTURE: readonly FixturePkg[] = [
     name: '@camstack/server',
     version: '1.2.3',
     dependencies: {
-      '@camstack/system': '*',
+      '@camstack/server': '*',
       '@camstack/shm-ring': '*',
       fastify: '^5.0.0',
     },
@@ -81,7 +81,7 @@ const FIXTURE: readonly FixturePkg[] = [
   },
   {
     relDir: 'packages/system',
-    name: '@camstack/system',
+    name: '@camstack/server',
     dependencies: { '@camstack/sdk': '*' },
     peerDependencies: { '@camstack/types': '*' },
   },
@@ -108,7 +108,7 @@ describe('discoverServerClosure', () => {
       '@camstack/sdk',
       '@camstack/server',
       '@camstack/shm-ring',
-      '@camstack/system',
+      '@camstack/server',
       '@camstack/types',
     ])
     // Unreachable workspace packages and non-workspace deps never appear.
@@ -128,7 +128,7 @@ describe('discoverServerClosure', () => {
 
     for (const set of [closure.packSet, closure.buildSet]) {
       expect(indexOf(set, '@camstack/types')).toBeLessThan(indexOf(set, '@camstack/sdk'))
-      expect(indexOf(set, '@camstack/sdk')).toBeLessThan(indexOf(set, '@camstack/system'))
+      expect(indexOf(set, '@camstack/sdk')).toBeLessThan(indexOf(set, '@camstack/server'))
       expect(indexOf(set, '@camstack/types')).toBeLessThan(indexOf(set, '@camstack/shm-ring'))
       // The root package always comes last.
       expect(indexOf(set, '@camstack/server')).toBe(set.length - 1)
@@ -148,7 +148,7 @@ describe('computeDevVersion', () => {
 })
 
 describe('withDevVersionPackageJson — temp-copy rewrite', () => {
-  const INTRA = new Set(['@camstack/types', '@camstack/system'])
+  const INTRA = new Set(['@camstack/types', '@camstack/server'])
 
   it('rewrites version + intra-set dep ranges during fn, restores bytes after', () => {
     writeFixtureWorkspace(FIXTURE)
@@ -171,7 +171,7 @@ describe('withDevVersionPackageJson — temp-copy rewrite', () => {
     const rewritten = seen!
     expect(rewritten.version).toBe('1.2.3-dev.42')
     // Intra-set dep ranges pinned to the dev version…
-    expect(rewritten.dependencies?.['@camstack/system']).toBe('1.2.3-dev.42')
+    expect(rewritten.dependencies?.['@camstack/server']).toBe('1.2.3-dev.42')
     // …non-set deps untouched (workspace member not in the set + external).
     expect(rewritten.dependencies?.['@camstack/shm-ring']).toBe('*')
     expect(rewritten.dependencies?.['fastify']).toBe('^5.0.0')

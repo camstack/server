@@ -1,7 +1,7 @@
 /**
  * The model weight formats a catalog entry can ship. Schema-free on purpose:
  * `types/models.ts` builds Zod schemas from it, but a runner-closure consumer
- * (the model downloader in `@camstack/system`) needs only the list and must
+ * (the model downloader in `@camstack/server/system`) needs only the list and must
  * reach it through `@camstack/types/addon` without building the cap schema
  * graph (D28).
  */

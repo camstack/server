@@ -14,7 +14,7 @@ import {
   type HeapReclaimer,
   type HeapWatchSink,
   startHeapWatch,
-} from '@camstack/system'
+} from '@camstack/server/system'
 
 /** The slice of a logger the heartbeat needs. */
 export interface AgentHeapWatchLogger {

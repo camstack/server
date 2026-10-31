@@ -6,7 +6,7 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
  * jitter, and observed/peak bandwidth per device + per client.
  *
  * Implementation lives in the server's `NetworkQualityService` (thin
- * wrapper over the shared `NetworkQualityTracker` from `@camstack/system`).
+ * wrapper over the shared `NetworkQualityTracker` from `@camstack/server/system`).
  * The provider is registered from `trpc.router.ts` against the existing
  * service instance — no addon owns this state.
  *
@@ -66,7 +66,7 @@ export const networkQualityCapability = {
       { role: 'viewer', kind: 'mutation' },
     ),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
 } as const satisfies CapabilityDefinition
 

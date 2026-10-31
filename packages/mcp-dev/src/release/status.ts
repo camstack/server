@@ -18,7 +18,6 @@ interface TrainPackage {
 export const TRAIN_PACKAGES: readonly TrainPackage[] = [
   { name: '@camstack/server', dir: 'server/backend' },
   { name: '@camstack/types', dir: 'packages/types' },
-  { name: '@camstack/system', dir: 'packages/system' },
   { name: '@camstack/sdk', dir: 'packages/sdk' },
   { name: '@camstack/ui-library', dir: 'packages/ui-library' },
 ]

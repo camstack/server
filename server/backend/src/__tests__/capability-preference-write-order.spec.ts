@@ -9,7 +9,7 @@
  * a store whose write fails: nothing live may change. And on success, the
  * store must have been written while the registry still held the OLD state.
  */
-import { CapabilityRegistry } from '@camstack/system'
+import { CapabilityRegistry } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCapabilitiesRouter as createCoreRouter } from '../api/core/capabilities.router.js'

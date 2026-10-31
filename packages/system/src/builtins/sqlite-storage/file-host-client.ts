@@ -46,7 +46,7 @@ export type FileHostThreadFactory = (data: FileHostWorkerData) => FileHostThread
 /** Where the built worker entry lives (`dist/file-host-worker.js`, next to the checkpoint worker). */
 export function defaultFileHostWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'file-host-worker.js')
 }
 

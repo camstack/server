@@ -18,7 +18,7 @@ import {
   MeshCrl,
   TlsTcpTransporter,
   type MeshCaSigner,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
 import { ServiceBroker, Errors } from 'moleculer'
 import { afterEach, describe, expect, it, vi } from 'vitest'

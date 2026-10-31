@@ -5,7 +5,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger, NodeRemovedInput, RecordKindHandle } from '@camstack/types'
-import type { ClusterNodeTombstoneBody } from '@camstack/system'
+import type { ClusterNodeTombstoneBody } from '@camstack/server/system'
 import {
   clearSingletonNodeOverrides,
   NodeRemovalDispatcher,

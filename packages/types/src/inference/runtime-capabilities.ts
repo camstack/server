@@ -2,10 +2,10 @@
  * Hardware-driven inference runtime capabilities — SINGLE SOURCE OF TRUTH.
  *
  * Pure module: no I/O, no subprocess, no Python import.
- * Consumed by both `platform-probe` (@camstack/system) and
+ * Consumed by both `platform-probe` (@camstack/server/system) and
  * `detection-pipeline` (@camstack/addon-pipeline).
  *
- * Do NOT import from @camstack/system or @camstack/addon-pipeline.
+ * Do NOT import from @camstack/server/system or @camstack/addon-pipeline.
  */
 
 import type { ModelFormat } from '../types/models.js'

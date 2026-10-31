@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url'
 // hooks run as raw ESM (no TS build). The host-externals.spec + this file's
 // spec both pin the list; if they drift a test fails.
 const HOST_EXTERNAL_SPECIFIERS = [
-  '@camstack/system',
+  '@camstack/server/system',
   '@camstack/types',
   '@camstack/sdk',
   'zod',
@@ -13,7 +13,7 @@ const HOST_EXTERNAL_SPECIFIERS = [
   '@trpc/client',
   // Common native deps addons genuinely import (sharp, node-av) — resolved from
   // the framework's node_modules. better-sqlite3 is intentionally excluded: no
-  // addon imports it (only @camstack/system's hub-side sqlite-storage builtin),
+  // addon imports it (only @camstack/server/system's hub-side sqlite-storage builtin),
   // so a stray addon import must fail rather than be silently redirected. Keep
   // in sync with host-externals.ts (a spec pins both).
   'sharp',

@@ -426,7 +426,7 @@ async function generate(): Promise<void> {
       : ' *   (none — every cap with a generated router is mounted)',
     ' */',
     '',
-    `import type { CapabilityRegistry } from '@camstack/system'`,
+    `import type { CapabilityRegistry } from '@camstack/server/system'`,
     `import type { InferProvider } from '@camstack/types'`,
     `import {`,
     ...requiredCapExports.map((n) => `  ${n},`),

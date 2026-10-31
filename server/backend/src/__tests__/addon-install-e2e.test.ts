@@ -22,7 +22,7 @@ describe('Addon Directory Loading', () => {
   })
 
   it('AddonInstaller initializes the addons directory', async () => {
-    const { AddonInstaller } = await import('@camstack/system')
+    const { AddonInstaller } = await import('@camstack/server/system')
 
     // Constructor creates the addons directory if it doesn't exist
     const installer = new AddonInstaller({
@@ -35,7 +35,7 @@ describe('Addon Directory Loading', () => {
   })
 
   it('AddonInstaller lists installed addon packages', async () => {
-    const { AddonInstaller } = await import('@camstack/system')
+    const { AddonInstaller } = await import('@camstack/server/system')
 
     // Create a mock addon directory
     const addonDir = path.join(TEST_ADDONS_DIR, 'addon-test')
@@ -63,7 +63,7 @@ describe('Addon Directory Loading', () => {
   })
 
   it('AddonLoader scans addons directory and loads packages', async () => {
-    const { AddonLoader } = await import('@camstack/system')
+    const { AddonLoader } = await import('@camstack/server/system')
 
     const loader = new AddonLoader()
 

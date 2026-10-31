@@ -39,10 +39,9 @@ export const NC_SERVER_PACKAGE_NAME = '@camstack/server'
  *
  * - `@camstack/server` — `server-update-available` / `server-updated`: the hub
  *   root package (`HUB_ROOT_SPEC.packageName`, `@camstack/node-root`).
- * - `@camstack/system` — `server-update-available` from the framework check,
- *   which checks `[SYSTEM_PACKAGE]` only (`AddonPackageService.listFrameworkPackages`).
- *   `@camstack/types` / `@camstack/sdk` are framework packages for upload
- *   routing but are never announced, so they are NOT here.
+ *   The kernel and builtins ship inside it, so there is no separate framework
+ *   package to announce. `@camstack/types` / `@camstack/sdk` are framework
+ *   packages for upload routing but are never announced, so they are NOT here.
  * - `camstack-wrapper` — `wrapper-update-available` (`WRAPPER_PACKAGE_NAME`,
  *   `wrapper-update-checker.ts`).
  *
@@ -50,17 +49,12 @@ export const NC_SERVER_PACKAGE_NAME = '@camstack/server'
  * `core/updates/__tests__/update-event-package-names.spec.ts` pins each literal
  * to its producer constant. This is a picker list, never a routing list.
  */
-export const NC_UPDATE_EVENT_PACKAGE_NAMES = [
-  NC_SERVER_PACKAGE_NAME,
-  '@camstack/system',
-  'camstack-wrapper',
-] as const
+export const NC_UPDATE_EVENT_PACKAGE_NAMES = [NC_SERVER_PACKAGE_NAME, 'camstack-wrapper'] as const
 
 type NcUpdateEventPackageName = (typeof NC_UPDATE_EVENT_PACKAGE_NAMES)[number]
 
 const UPDATE_EVENT_PACKAGE_TYPE: Readonly<Record<NcUpdateEventPackageName, string>> = {
   '@camstack/server': 'server',
-  '@camstack/system': 'framework',
   'camstack-wrapper': 'wrapper',
 }
 

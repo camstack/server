@@ -66,8 +66,8 @@ export interface RuntimeDefaultsShape {
  * Runtime defaults -- used by ConfigManager.get() for backward compatibility
  * until Plan B wires all runtime settings to the system_settings SQL table.
  *
- * Moved from @camstack/system/config-schema to @camstack/types so that
- * @camstack/system can reference it without a cross-package kernel import.
+ * Moved from @camstack/server/system/config-schema to @camstack/types so that
+ * @camstack/server/system can reference it without a cross-package kernel import.
  */
 export const RUNTIME_DEFAULTS: RuntimeDefaultsShape = {
   'features.streaming': true,

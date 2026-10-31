@@ -23,7 +23,7 @@ import {
   type OfferRequest,
   PAIRING_PATHS,
   PairingHttpError,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { z } from 'zod'
 
 const REQUEST_TIMEOUT_MS = 8_000

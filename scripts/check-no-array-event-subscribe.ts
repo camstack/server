@@ -19,7 +19,7 @@
  * `extractCategoryPatterns` + `registerSubscriber` register a subscriber under
  * EVERY category it names, so an array filter is correct — in THIS source
  * tree. An addon does not run against this source tree: it loads
- * `@camstack/system` from the `@camstack/server` closure INSTALLED on the node
+ * `@camstack/server/system` from the `@camstack/server` closure INSTALLED on the node
  * (`docs/architecture/update-and-release.md`). An addon deployed today onto a
  * hub whose server predates the fix gets the old one-key behaviour back, and
  * gets it silently.
@@ -108,7 +108,7 @@ if (violations.length > 0) {
       '  }\n' +
       '\n' +
       'This source tree registers an array filter under every category it names\n' +
-      '(`extractCategoryPatterns`), but an addon runs against the @camstack/system\n' +
+      '(`extractCategoryPatterns`), but an addon runs against the @camstack/server/system\n' +
       'inside the INSTALLED @camstack/server — on a host predating that fix the\n' +
       'array silently subscribes to its first element only, and a forked runner\n' +
       'then never even has the other categories forwarded to it.\n' +

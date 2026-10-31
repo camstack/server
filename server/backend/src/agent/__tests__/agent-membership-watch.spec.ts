@@ -15,7 +15,7 @@ import {
   MembershipResponder,
   MeshCertificateRegistry,
   MeshCrl,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { SettingsStoreClient } from '@camstack/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it, vi } from 'vitest'

@@ -53,7 +53,7 @@ const BUDGETS_FILE = path.join(ROOT, 'scripts/addon-dist-footprint-budgets.json'
 export const DEFAULT_MAX_GROWTH_MB = 60
 
 /**
- * Packages whose addons are not forked runners. `@camstack/system` ships the
+ * Packages whose addons are not forked runners. `@camstack/server/system` ships the
  * kernel's builtin addons (device-manager, composer, local-auth, …); they run
  * INSIDE the hub process, which holds the cap schema graph for its own routers,
  * so a second copy is not what this guard measures.

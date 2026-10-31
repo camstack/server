@@ -34,7 +34,7 @@ const WRAPPER_CAPS: Readonly<Record<string, boolean>> = {
   // OWNERS of each camera. Same policy as `videoclips`: every owner is a
   // source of every camera it applies to, derived, persisted nowhere.
   'device-extension': true,
-  // The EMULATED autotrack (`@camstack/system`'s `autotrack` builtin) drives a
+  // The EMULATED autotrack (`@camstack/server/system`'s `autotrack` builtin) drives a
   // real head with `ptz.move` pulses, so
   // it must never auto-bind onto every camera with a cap — the operator binds
   // it where they want it, then uses the cap's own switch. A camera whose

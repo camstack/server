@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createAuthRouter } from '../auth.router.js'
 import { AuthService } from '../../../core/auth/auth.service.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 
 /**
  * Passkey (WebAuthn second-factor) login + self-enrollment tests for

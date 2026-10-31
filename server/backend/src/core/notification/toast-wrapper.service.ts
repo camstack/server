@@ -1,4 +1,4 @@
-import { ToastService } from '@camstack/system'
+import { ToastService } from '@camstack/server/system'
 import type { Toast } from '@camstack/types'
 
 /**

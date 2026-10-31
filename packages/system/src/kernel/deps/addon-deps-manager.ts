@@ -18,7 +18,7 @@ import {
  * never import `@camstack/types` directly for these utilities, which
  * keeps the `no-restricted-imports` lint boundary intact.
  *
- * History note: previously these utilities lived in `@camstack/system` and
+ * History note: previously these utilities lived in `@camstack/server/system` and
  * had to be dynamically imported (kernel cannot static-import core
  * because core depends on kernel). They were lifted to `@camstack/types`
  * in 2026-05 specifically to break that cycle.

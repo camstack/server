@@ -10,7 +10,7 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { LocalPairingSecret } from '@camstack/system'
+import type { LocalPairingSecret } from '@camstack/server/system'
 import { writeOwnerOnlyFileSync } from '@camstack/types/node'
 
 export const PAIRING_PIN_FILE = 'pairing-pin.txt'

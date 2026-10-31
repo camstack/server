@@ -13,7 +13,7 @@
  * answer yet is treated as an EMPTY list: no extra proxy is trusted, and no
  * network skips a factor — both fail closed.
  */
-import { createCidrMatcher, type CidrMatcher, readCidrSetting } from '@camstack/system'
+import { createCidrMatcher, type CidrMatcher, readCidrSetting } from '@camstack/server/system'
 import { type ClientAddress, resolveClientAddress } from './client-address.js'
 
 export const TRUSTED_PROXIES_KEY = 'auth.trustedProxies'

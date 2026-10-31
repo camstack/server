@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { AuthService } from '../../core/auth/auth.service.js'
 import { SESSION_COOKIE } from '../session-cookie.js'
 import { sessionUserIdFromCookie, ssoBrowserBinding } from '../sso-finish-deps.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 
 /**
  * The link half of the SSO finish (D782) trusts ONLY a real session cookie to

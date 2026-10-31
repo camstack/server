@@ -1,3 +1,3 @@
-// Re-export from @camstack/system
-export { ScopedLogger } from '@camstack/system'
-export type { IScopedLogger } from '@camstack/system'
+// Re-export from @camstack/server/system
+export { ScopedLogger } from '@camstack/server/system'
+export type { IScopedLogger } from '@camstack/server/system'

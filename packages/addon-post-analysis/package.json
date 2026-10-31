@@ -154,7 +154,6 @@
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@camstack/system": "*",
     "@tanstack/react-query": "^5.90.0",
     "sharp": "^0.35.2",
     "zod": "^4.3.6"
@@ -168,5 +167,10 @@
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.2.4"
+  },
+  "nx": {
+    "implicitDependencies": [
+      "@camstack/server-framework"
+    ]
   }
 }

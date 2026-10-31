@@ -56,7 +56,7 @@ describe('UDS protocol — event/log/readiness message kinds', () => {
 
 describe('UDS protocol — subscription-filtered event fan-out', () => {
   it('RegisterMessage without eventPatterns stays valid (back-compat / legacy child)', () => {
-    // A legacy child bundling an older @camstack/system omits eventPatterns —
+    // A legacy child bundling an older @camstack/server/system omits eventPatterns —
     // the field is OPTIONAL so this register message is still type-valid. The
     // parent reads its absence as "undeclared" and fails open (broadcast-all).
     const legacy: RegisterMessage = {

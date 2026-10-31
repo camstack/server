@@ -15,7 +15,7 @@ import type {
   IntegrationInstanceRef,
 } from '@camstack/types'
 import type { IAddonSettingsProvider } from '@camstack/types'
-import type { AddonSettingsMethod } from '@camstack/system'
+import type { AddonSettingsMethod } from '@camstack/server/system'
 import type { AddonCallGateway } from './addon-call-gateway.js'
 
 // ── Dependency interfaces ────────────────────────────────────────────
@@ -129,7 +129,7 @@ function isServiceNotFoundError(err: unknown): boolean {
 // ── Provider factory ─────────────────────────────────────────────────
 
 interface AddonSettingsProviderDeps {
-  /** Look up a loaded IN-PROCESS addon by id (the `@camstack/system` builtins). */
+  /** Look up a loaded IN-PROCESS addon by id (the `@camstack/server/system` builtins). */
   readonly getAddon: AddonLookup
   /** Shared router for forked addon-level calls (hub-local-child / remote). */
   readonly gateway: AddonCallGateway

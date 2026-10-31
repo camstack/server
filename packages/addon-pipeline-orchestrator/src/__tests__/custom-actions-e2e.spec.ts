@@ -10,7 +10,7 @@
  * that the registry can register and resolve end-to-end.
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import { CustomActionRegistry } from '@camstack/system/addon-utils'
+import { CustomActionRegistry } from '@camstack/server/system/addon-utils'
 import PipelineOrchestratorAddon, { pipelineOrchestratorActions } from '../index.js'
 import { makeFakeBroker, makeFakeContext, enabledNodesFromBroker } from './e2e-helpers.js'
 

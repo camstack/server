@@ -217,7 +217,7 @@ jobs:
             // @camstack/server for anything in its pinned closure. Applied
             // here too so force_packages and scope=all get the same answer as
             // the affected path; a second copy of the rules in this YAML is how
-            // the closure rule covered @camstack/system and nothing else for a
+            // the closure rule covered @camstack/server/system and nothing else for a
             // month.
             //
             // NO BACKTICKS IN THIS BLOCK. It is a double-quoted shell string,

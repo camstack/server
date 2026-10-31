@@ -102,7 +102,7 @@ export function resolveSeedServerDir(resourcesPath: string | null): string | nul
  *
  * ── Why the closure scope dir and not a second `Resources/addons` tree ──────
  * The app used to ship BOTH: `extraResources` copied `.deps/node_modules` whole
- * into `Resources/node_modules`, then re-copied six addons + `@camstack/system`
+ * into `Resources/node_modules`, then re-copied six addons + `@camstack/server/system`
  * one by one into `Resources/addons/<short-name>`. Measured 2026-08-25 on the
  * mac-arm64 bundle: 285 MB of `@camstack` packages plus 41 MB of seven of those
  * SAME packages again — a second copy of everything the seed reads (D45).

@@ -10,7 +10,7 @@
 import { createTRPCClient, type TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'
 import type { AddonApi } from '@camstack/types'
-import { localProviderLink, type LocalProviderResolver } from '@camstack/system'
+import { localProviderLink, type LocalProviderResolver } from '@camstack/server/system'
 
 type CapUsageObserverOptions = NonNullable<Parameters<typeof localProviderLink>[1]>
 

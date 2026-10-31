@@ -14,7 +14,7 @@
  *                   instead of silently dropping the driver settings.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/system'
+import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
   ConfigUISchemaWithValues,

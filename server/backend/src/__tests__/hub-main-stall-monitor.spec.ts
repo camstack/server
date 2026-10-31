@@ -24,7 +24,7 @@ const MAIN = path.resolve(__dirname, '..', 'main.ts')
 describe('hub-main arms the event-loop stall monitor', () => {
   const source = fs.readFileSync(MAIN, 'utf-8')
 
-  it('imports it from @camstack/system rather than re-implementing it', () => {
+  it('imports it from @camstack/server/system rather than re-implementing it', () => {
     expect(source).toMatch(/startEventLoopStallMonitor/)
     expect(source).toMatch(/from '@camstack\/system'/)
   })

@@ -1,11 +1,11 @@
 /**
  * Server-local copy of the moleculer test-cluster helper. The original lives
- * in `@camstack/system`'s test tree for the kernel's own cluster tests; this
+ * in `@camstack/server/system`'s test tree for the kernel's own cluster tests; this
  * copy backs the agent-participant integration tests (e2e-cluster,
  * tcp-integration) that were relocated here because they need the real agent
  * service (`../../agent-service.js`), which now lives in `@camstack/server`.
  * It builds bare agent brokers and wires the hub via the PUBLIC
- * `@camstack/system` API.
+ * `@camstack/server/system` API.
  */
 import { ServiceBroker } from 'moleculer'
 import {
@@ -14,7 +14,7 @@ import {
   getBrokerEventBus,
   registerEventBusService,
   type HubServiceDeps,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { SystemEvent } from '@camstack/types'
 
 interface TestCluster {

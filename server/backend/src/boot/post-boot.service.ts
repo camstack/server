@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { EnsureTlsResult } from '@camstack/system'
-import { readPendingRestart, retirePreviousLocalCa } from '@camstack/system'
+import type { EnsureTlsResult } from '@camstack/server/system'
+import { readPendingRestart, retirePreviousLocalCa } from '@camstack/server/system'
 import type {
   IScopedLogger,
   PendingRestartMarkerPayload,

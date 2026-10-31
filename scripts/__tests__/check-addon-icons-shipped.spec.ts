@@ -44,7 +44,7 @@ describe('iconProblems', () => {
     ])
   })
 
-  it('flags an icon left out of the tarball — the shape @camstack/system had (files: ["dist"])', () => {
+  it('flags an icon left out of the tarball — the shape @camstack/server/system had (files: ["dist"])', () => {
     const pkg = { ...addon('assets/icon.svg'), files: ['dist'] }
     expect(iconProblems(pkg, has('assets/icon.svg'))[0]).toMatch(/not covered by "files"/)
   })

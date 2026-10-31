@@ -6,7 +6,7 @@
  * The engine's built-in default is a raw `execFile('npm', ...)`: on a host with
  * NO system npm on PATH — a packaged desktop app shipping a bare bundled Node —
  * that dies with ENOENT and a root update can never stage. Routing through
- * `@camstack/system`'s `runNpm` solves it uniformly: resolve a working npm
+ * `@camstack/server/system`'s `runNpm` solves it uniformly: resolve a working npm
  * (system → previously-bootstrapped copy under `cacheDir` → bootstrap from the
  * registry) and run the SAME args with it. The `cacheDir` mirrors the value
  * `AddonInstaller` uses for its own npm bootstrap (`<dataDir>/addons/.npm-bootstrap`)
@@ -15,7 +15,7 @@
  * `runNpmFn` is a module-level DI seam (defaults to the real `runNpm`) so the
  * arg/cwd/timeout mapping is unit-testable without touching the network.
  */
-import { runNpm, type RunNpmOptions } from '@camstack/system'
+import { runNpm, type RunNpmOptions } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import type { NpmExecFn } from '../../server-root/index.js'
 

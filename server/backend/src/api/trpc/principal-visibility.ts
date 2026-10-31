@@ -19,7 +19,7 @@
  * Pure module — no tRPC machinery — so the spec exercises it directly (same
  * pattern as `scope-access.ts` / `share-view-access.ts`).
  */
-import { METHOD_ACCESS_MAP } from '@camstack/system'
+import { METHOD_ACCESS_MAP } from '@camstack/server/system'
 import type { CredentialScope, DeviceMetaLike, UserScope } from '@camstack/types'
 import { capabilityScopesOf, resolveViewableDeviceIds, viewerScopeOf } from '@camstack/types'
 import { personSessionScopes } from '../../auth/person-session-scopes.js'

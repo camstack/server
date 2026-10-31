@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { CapRoute, CapCallInput } from '@camstack/system'
+import type { CapRoute, CapCallInput } from '@camstack/server/system'
 import { buildCapCallFn, type CapCallFnLocalChild, type CapCallFnResolver } from './cap-call-fn.js'
 
 /**

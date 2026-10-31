@@ -1,5 +1,5 @@
 /**
- * API-shared types — types that originated in @camstack/system, @camstack/system,
+ * API-shared types — types that originated in @camstack/server/system, @camstack/server/system,
  * or server internals and are now canonical here so the generated API type file
  * has zero external dependencies beyond @camstack/types.
  */
@@ -11,7 +11,7 @@ import type { PipelinePhaseMode } from '../device/device-profile.js'
 import type { AddonPageDeclaration } from './addon.js'
 
 // ---------------------------------------------------------------------------
-// From @camstack/system — backup
+// From @camstack/server/system — backup
 // ---------------------------------------------------------------------------
 
 export interface BackupManifest {
@@ -24,7 +24,7 @@ export interface BackupManifest {
 }
 
 // ---------------------------------------------------------------------------
-// From @camstack/system — provider
+// From @camstack/server/system — provider
 // ---------------------------------------------------------------------------
 
 export interface ProviderListItem {
@@ -37,7 +37,7 @@ export interface ProviderListItem {
 }
 
 // ---------------------------------------------------------------------------
-// From @camstack/system — addon installer
+// From @camstack/server/system — addon installer
 // ---------------------------------------------------------------------------
 
 export interface InstalledPackage {

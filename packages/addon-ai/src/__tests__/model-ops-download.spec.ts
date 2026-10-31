@@ -19,7 +19,7 @@ import * as path from 'node:path'
 import type { ModelCatalogEntry } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 // eslint-disable-next-line no-restricted-imports -- the revision rule is the shared downloader's (build-time dep, as in model-ops.ts)
-import { resolveFormatRevision } from '@camstack/system/addon-utils'
+import { resolveFormatRevision } from '@camstack/server/system/addon-utils'
 import { LLM_MODEL_CATALOG } from '../runtime/llm-model-catalog.js'
 import { createDefaultModelOps, planFiles } from '../runtime/model-ops.js'
 import type { ModelDownloadProgress } from '../runtime/runtime-provider.js'

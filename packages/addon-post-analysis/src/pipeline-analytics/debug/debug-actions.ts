@@ -2,7 +2,7 @@
  * The `debug.*` bridge — the Events → Debug tab's whole read surface.
  *
  * These are **custom actions**, not capability methods, deliberately. A cap
- * method is a cluster-wide contract: it needs codegen, a `@camstack/system`
+ * method is a cluster-wide contract: it needs codegen, a `@camstack/server/system`
  * force-publish and a release train before the UI can call it, and every node
  * carries the router whether or not it will ever answer. This tab is a hub-local
  * diagnostic over a store the hub already owns — nothing else in the cluster

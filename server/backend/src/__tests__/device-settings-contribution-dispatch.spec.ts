@@ -24,7 +24,7 @@ import {
   DeviceManagerAddon,
   DeviceRegistry,
   SqliteSettingsBackend,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type {
   AddonContext,
   ConfigUISchemaWithValues,

@@ -21,7 +21,7 @@
  *     grade check together → the share link consents (the original attack).
  */
 import cookie from '@fastify/cookie'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it, vi } from 'vitest'

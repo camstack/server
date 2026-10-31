@@ -19,7 +19,8 @@ const PACKAGES = path.join(ROOT, 'packages')
 /** Packages allowed to declare `types` without being a self-contained addon. */
 const FRAMEWORK_ALLOWLIST: ReadonlySet<string> = new Set([
   '@camstack/types',
-  '@camstack/system',
+  '@camstack/server',
+  '@camstack/server-framework',
   '@camstack/sdk',
   '@camstack/ui-library',
 ])

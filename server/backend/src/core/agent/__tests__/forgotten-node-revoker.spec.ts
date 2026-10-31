@@ -9,7 +9,7 @@ import {
   MeshCertificateRegistry,
   MeshCrl,
   type MeshPeers,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { createForgottenNodeRevoker } from '../forgotten-node-revoker'

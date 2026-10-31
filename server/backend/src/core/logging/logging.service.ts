@@ -1,4 +1,4 @@
-import { LogManager } from '@camstack/system'
+import { LogManager } from '@camstack/server/system'
 import type { ILogDestination, IScopedLogger, LogLevel, LogTags } from '@camstack/types'
 import { EventCategory } from '@camstack/types'
 import { ConfigService } from '../config/config.service'
@@ -64,7 +64,7 @@ export class LoggingService extends LogManager {
     this.tailEntries = configService.get<number>('eventBus.logTailSize') ?? HUB_LOG_TAIL_ENTRIES
     // Enriches every emitted LogEntry with `tags.deviceName` before
     // destinations / subscribers see it — works across bundled copies
-    // of `@camstack/system` (addon packages) because the mutation
+    // of `@camstack/server/system` (addon packages) because the mutation
     // happens upstream of their formatters.
     this.setDeviceNameLookup((id) => this.deviceNames.get(id) ?? null)
   }

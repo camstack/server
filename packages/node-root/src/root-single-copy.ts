@@ -5,7 +5,7 @@
  * `@camstack/*` (runtime) or any npm package.
  *
  * Replaces the legacy multi-copy model (`versions/<X>` + an N-1 rollback copy +
- * a separate `/data/framework` copy + a `/data/addons/@camstack/system` copy).
+ * a separate `/data/framework` copy + a `/data/addons/@camstack/server/system` copy).
  * There is now exactly ONE closure:
  *
  *   <dataDir>/server-root/current/                 the ONE canonical closure

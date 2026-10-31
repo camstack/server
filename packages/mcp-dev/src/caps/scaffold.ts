@@ -101,7 +101,7 @@ export function scaffoldCapability(options: {
       'npm run codegen',
       'npx tsx scripts/check-method-tiers.ts --update (review widened tiers)',
       'Append ../planning/sessions/<YYYY-MM>.md (private diary, not published); npm run docs:check',
-      'Ship: force-publish @camstack/system when the contract changes (see cap_ship_plan)',
+      'Ship: force-publish @camstack/server/system when the contract changes (see cap_ship_plan)',
     ],
   }
 }

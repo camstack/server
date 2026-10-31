@@ -11,7 +11,7 @@ import {
  * the hub's facts; the node's roster is only the observation it is diffed against.
  */
 
-const BOOTSTRAP = new Set(['@camstack/system'])
+const BOOTSTRAP = new Set(['@camstack/server'])
 
 function hub(
   entries: Record<string, { version: string | null; placements: readonly AddonPlacement[] }>,
@@ -169,11 +169,11 @@ describe('diffNodeAgainstDesired', () => {
   })
 
   it('never touches the bootstrap set', () => {
-    const p = plan([{ name: '@camstack/system', version: '0.0.1' }], {
-      tombstones: new Set(['@camstack/system']),
+    const p = plan([{ name: '@camstack/server', version: '0.0.1' }], {
+      tombstones: new Set(['@camstack/server']),
     })
     expect(p.remove).toEqual([])
-    expect(p.install.map((t) => t.name)).not.toContain('@camstack/system')
+    expect(p.install.map((t) => t.name)).not.toContain('@camstack/server')
   })
 
   it('moves a node that is AHEAD of the hub down (D942) and skips a retired pair', () => {

@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { deleteModelFromDisk, downloadFile } from '@camstack/system/addon-utils'
+import { deleteModelFromDisk, downloadFile } from '@camstack/server/system/addon-utils'
 import { buildPluginCatalogRegistryDescriptor } from './plugin-catalog/plugin-catalog-import.js'
 import type {
   AddonInitResult,

@@ -10,7 +10,7 @@
  *   2. `'*'` passes;
  *   3. the capability / addon grants decide.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/system'
+import { METHOD_ACCESS_MAP } from '@camstack/server/system'
 import type {
   CredentialScope,
   RouteAccess,

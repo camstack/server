@@ -1,5 +1,5 @@
 /**
- * Externals shared by BOTH `@camstack/system` builds (`vite.config.ts` and
+ * Externals shared by BOTH `@camstack/server/system` builds (`vite.config.ts` and
  * `vite.runner.config.ts`) — one list, so the runner can never drift from the hub.
  */
 export const SYSTEM_EXTRA_EXTERNALS: readonly (string | RegExp)[] = [

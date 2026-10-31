@@ -448,7 +448,7 @@ const HEADER = {
  * ## Why this runs BEFORE any bucket
  *
  * On 2026-08-27 this script reported `typecheck: 5 package(s) got worse` —
- * `@camstack/system` (27 errors), `addon-provider-ecowitt` (17),
+ * `@camstack/server/system` (27 errors), `addon-provider-ecowitt` (17),
  * `addon-pipeline-orchestrator` (6), `addon-smtp-nodemailer` (2), `addon-auth`
  * (1). None of them were regressions. **Four different agents each spent time
  * proving the errors were not theirs**, because a ratchet that says "you made

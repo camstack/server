@@ -1,7 +1,7 @@
 /**
  * `getStreamWithCodec` reports the SENTRY counterpart of the url it hands out.
  *
- * A composite camera (`@camstack/system`'s `camera-grid` builtin) must compose a battery
+ * A composite camera (`@camstack/server/system`'s `camera-grid` builtin) must compose a battery
  * source WITHOUT waking it, and the dial that does that is the sentry path. The
  * question "may this camera be dialled in sentry?" already has exactly one
  * authority in this repo — `sentryEligible`, asked by the broker, on facts the

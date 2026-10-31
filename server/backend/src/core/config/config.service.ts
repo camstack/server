@@ -1,3 +1,3 @@
-import { ConfigManager } from '@camstack/system'
+import { ConfigManager } from '@camstack/server/system'
 
 export class ConfigService extends ConfigManager {}

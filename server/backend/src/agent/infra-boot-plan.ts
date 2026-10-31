@@ -17,7 +17,7 @@
  * Resolution stays per-capability (the guard needs every missing required
  * cap named); initialization is deduped per ADDON, first capability wins.
  */
-import type { InfraCapability } from '@camstack/system'
+import type { InfraCapability } from '@camstack/server/system'
 import type { InfraResolution } from './infra-boot-guard.js'
 
 /** The subset of a loaded addon declaration this planner reads. */

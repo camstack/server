@@ -1,10 +1,10 @@
 /**
  * The last COMPOSED frame per grid, on disk, so it outlives the process.
  *
- * ## Why not `@camstack/system`'s SnapshotDurableStore
+ * ## Why not `@camstack/server/system`'s SnapshotDurableStore
  *
  * Because the shape is right and the reach is not: that class lives under
- * `builtins/snapshot/` and `@camstack/system` does not export it — a builtin's
+ * `builtins/snapshot/` and `@camstack/server/system` does not export it — a builtin's
  * internals are not an addon-facing module, and an addon that reached into one
  * would be importing another addon, which this repo forbids outright. What is
  * shared is the REASONING, and it is worth restating rather than linking,

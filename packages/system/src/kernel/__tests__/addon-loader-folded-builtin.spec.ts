@@ -2,7 +2,7 @@
  * A package folded into the framework must not come back from the addons dir.
  *
  * `device-history` was a standalone package (`@camstack/addon-device-history`)
- * until it was folded into `@camstack/system` (2026-10-20). Every node that had
+ * until it was folded into `@camstack/server/system` (2026-10-20). Every node that had
  * installed it still held `/data/addons/@camstack/addon-device-history@0.1.4`,
  * and the hub loads the closure's builtins FIRST and the addons dir AFTER — so
  * the stale package's `device-history` silently replaced the builtin of the
@@ -74,7 +74,7 @@ describe('an addon id folded into the framework', () => {
   it('stays the framework builtin when a stale package of another name declares it', async () => {
     const warns: Line[] = []
     const loader = new AddonLoader(recordingLogger(warns))
-    const closure = writePackage('closure-system', '@camstack/system', '1.2.459', 'builtin')
+    const closure = writePackage('closure-system', '@camstack/server', '1.2.459', 'builtin')
     const addonsDir = path.join(tmpRoot, 'addons')
     fs.mkdirSync(path.join(addonsDir, '@camstack'), { recursive: true })
     fs.renameSync(
@@ -84,10 +84,10 @@ describe('an addon id folded into the framework', () => {
 
     // The hub's boot order: closure builtins first, then the addons dir.
     await loader.loadFromAddonDir(closure)
-    await loader.loadFromDirectory(addonsDir, ['@camstack/system'])
+    await loader.loadFromDirectory(addonsDir, ['@camstack/server'])
 
     const registered = loader.listAddons().find((a) => a.declaration.id === 'device-history')
-    expect(registered?.packageName).toBe('@camstack/system')
+    expect(registered?.packageName).toBe('@camstack/server')
     expect(registered?.packageVersion).toBe('1.2.459')
     const shadow = warns.find((w) => w.message.includes('already provided by'))
     expect(shadow?.extras.tags?.['addonId']).toBe('device-history')
@@ -96,8 +96,8 @@ describe('an addon id folded into the framework', () => {
 
   it('a reload of the SAME package still replaces it', async () => {
     const loader = new AddonLoader()
-    await loader.loadFromAddonDir(writePackage('v1', '@camstack/system', '1.2.458', 'old'))
-    await loader.loadFromAddonDir(writePackage('v2', '@camstack/system', '1.2.459', 'new'))
+    await loader.loadFromAddonDir(writePackage('v1', '@camstack/server', '1.2.458', 'old'))
+    await loader.loadFromAddonDir(writePackage('v2', '@camstack/server', '1.2.459', 'new'))
     const registered = loader.listAddons().find((a) => a.declaration.id === 'device-history')
     expect(registered?.packageVersion).toBe('1.2.459')
   })

@@ -3,14 +3,14 @@
  *
  * ── The single-copy collapse, finally on the agent ─────────────────────────
  * The hub stopped loading framework builtins from a physical
- * `<addonsDir>/@camstack/system` on 2026-07-18: it loads them from the ACTIVE
+ * `<addonsDir>/@camstack/server/system` on 2026-07-18: it loads them from the ACTIVE
  * CLOSURE it is itself running (`addon-registry.service.ts`, `loadFromAddonDir`
- * on the closure dir, then `loadFromDirectory(addonsDir, ['@camstack/system'])`
+ * on the closure dir, then `loadFromDirectory(addonsDir, ['@camstack/server'])`
  * so the copy is skipped). The reason is in that file's comment — *"that copy
  * drifted because no update channel refreshed it"*.
  *
  * The agent never got the change, and drifted exactly as predicted. Measured
- * 2026-08-11: agent-a carried `@camstack/system@1.2.61` and macmini
+ * 2026-08-11: agent-a carried `@camstack/server/system@1.2.61` and macmini
  * `1.2.62` in their addon roots while both ran a `1.2.78` closure. Nothing
  * refreshed them, because `seedBuiltinsFromClosure` (now deleted) only wrote
  * the copy when it was ABSENT — a self-heal that guaranteed a copy existed and
@@ -27,16 +27,17 @@
  * ── The fallback ──────────────────────────────────────────────────────────
  * If the closure cannot be resolved, the copy is NOT skipped and the node boots
  * from it. In a running agent this is near-impossible — `agent/main.ts`
- * statically imports `@camstack/system`, so if the process exists the walk-up
+ * statically imports `@camstack/server`, so if the process exists the walk-up
  * resolves — but a node with neither source must fail through the D87 guard
  * (`assertRequiredInfraResolved`, which names every missing required cap),
  * never through a silent "no addon packages found" early return.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { LEGACY_SYSTEM_PACKAGE_NAME } from '../legacy-package-names.js'
 
 /** The framework builtins package. Loaded from the closure, never from a copy. */
-export const BUILTINS_PACKAGE = '@camstack/system'
+export const BUILTINS_PACKAGE = '@camstack/server'
 
 function isDir(p: string): boolean {
   try {
@@ -84,7 +85,7 @@ export function resolveAddonPackageDirs(
 /**
  * The ordered directory list `bootCoreAddons` loads, closure first.
  *
- * `closureSystemDir` is `resolveHubClosurePackageDir(BUILTINS_PACKAGE)` — null
+ * `closureSystemDir` is `resolveBuiltinsDir()` — null
  * only when the builtins are not resolvable from the running closure at all.
  */
 export function planAgentAddonScan(
@@ -96,5 +97,8 @@ export function planAgentAddonScan(
     // addon-root builtins, rather than booting with no infra at all.
     return resolveAddonPackageDirs(addonsDir)
   }
-  return [closureSystemDir, ...resolveAddonPackageDirs(addonsDir, [BUILTINS_PACKAGE])]
+  return [
+    closureSystemDir,
+    ...resolveAddonPackageDirs(addonsDir, [BUILTINS_PACKAGE, LEGACY_SYSTEM_PACKAGE_NAME]),
+  ]
 }

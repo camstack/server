@@ -5,7 +5,7 @@
  */
 import { X509Certificate } from 'node:crypto'
 import * as fs from 'node:fs'
-import { agentHttpsPaths, type InstalledPairing } from '@camstack/system'
+import { agentHttpsPaths, type InstalledPairing } from '@camstack/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 
 /** Keys that exist only while this agent is paired. */

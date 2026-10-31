@@ -275,7 +275,7 @@ jobs:
       # runner's heap by more than 60 MB (scripts/addon-dist-footprint-budgets.json
       # grants a reasoned exception). Reads every packages/addon-*/dist, so it
       # runs right after the build. The runner-dist step above also probes
-      # `@camstack/system/addon-utils` (seven hub runners load it).
+      # `@camstack/server/system/addon-utils` (seven hub runners load it).
       #
       # ~60 s over every addon dist, so a push runs it where an addon's built
       # output can change (verify:push does the same): the addons whose own

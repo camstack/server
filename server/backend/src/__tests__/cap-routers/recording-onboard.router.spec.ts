@@ -14,7 +14,11 @@
  *      its sentence intact — the whole point of refusing by name is that
  *      the operator reads the reason.
  */
-import { buildCapRouters, type CapRouterServices, type CapabilityRegistry } from '@camstack/system'
+import {
+  buildCapRouters,
+  type CapRouterServices,
+  type CapabilityRegistry,
+} from '@camstack/server/system'
 import {
   type RecordingOnboardOptions,
   type RecordingOnboardStatus,

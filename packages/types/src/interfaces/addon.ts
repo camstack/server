@@ -708,7 +708,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
    * `ctx.deps.ensureBinary(...)` / `ensureFfmpeg()` / `ensurePython()` to
    * materialise per-addon runtime deps under the shared `data/deps` tree.
    * Injected by the addon host so addons never import the concrete
-   * implementation from `@camstack/system` directly.
+   * implementation from `@camstack/server/system` directly.
    */
   readonly deps: IAddonDepsManager
 
@@ -1427,7 +1427,7 @@ export interface AddonPackageManifest {
    * regular addon installer.
    *
    * Mutually-exclusive with `addons[]` in concept but not in code:
-   * `@camstack/system` is both a system package AND ships builtin addons,
+   * `@camstack/server/system` is both a system package AND ships builtin addons,
    * so both fields can coexist on it.
    */
   readonly system?: boolean
@@ -1615,10 +1615,10 @@ export interface AddonExecution {
    */
   readonly rssBudgetMb?: number
   /**
-   * `@camstack/system` builtin ONLY: run this builtin in its OWN forked runner
+   * `@camstack/server/system` builtin ONLY: run this builtin in its OWN forked runner
    * instead of in-process on the hub root.
    *
-   * The hub drops `@camstack/system` builtins from the runner plan because the
+   * The hub drops `@camstack/server/system` builtins from the runner plan because the
    * infrastructure ones (storage, settings, logging, device-manager) must be
    * resident in the process every runner depends on. That is a reason to keep
    * THOSE in-process — not a property of the package. A builtin that owns
@@ -1629,7 +1629,7 @@ export interface AddonExecution {
    * it is planned, spawned, restarted and route-mounted exactly like any other
    * forked addon, and `resolveRunnerId` still owns its runner id (D2 — one
    * addon, one process). Nothing else changes: the manifest entry keeps its
-   * `entry` path inside the `@camstack/system` closure, and the runner loads it
+   * `entry` path inside the `@camstack/server/system` closure, and the runner loads it
    * from there.
    *
    * Ignored for non-system packages — they already fork.
@@ -1710,7 +1710,7 @@ export function resolveAddonPlacement(decl: Pick<AddonDeclaration, 'execution'>)
 }
 
 /**
- * True when a `@camstack/system` builtin opted out of the in-process rule and
+ * True when a `@camstack/server/system` builtin opted out of the in-process rule and
  * must be planned as a forked runner (`execution.isolate`).
  *
  * ONE predicate, because the hub asks this question in three places that must
@@ -1739,7 +1739,7 @@ export interface RunnerAddonPlacement {
  * id (the addon runs on its own dedicated runner) or a co-location
  * group name (every addon under that key shares one runner). Computed
  * by `AddonRegistryService.buildAddonGroupPlan` and fed to
- * `initializeAddonGroup`. `@camstack/system` builtins are absent — they
+ * `initializeAddonGroup`. `@camstack/server/system` builtins are absent — they
  * stay in-process on the hub.
  */
 export type RunnerPlan = ReadonlyMap<string, readonly RunnerAddonPlacement[]>

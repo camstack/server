@@ -9,7 +9,7 @@ import {
   issueMeshLeafForNode,
   issueMeshLeafFromCsr,
   type MeshCaSigner,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createAgentNodeCertificates } from '../agent-node-certificates.js'
 import type { SniffingListener } from '../agent-sniffing-listener.js'

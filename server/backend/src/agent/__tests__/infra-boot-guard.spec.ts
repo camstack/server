@@ -2,7 +2,7 @@
  * The agent must refuse to boot when a REQUIRED infrastructure capability
  * resolved to no addon at all.
  *
- * Regression: 2026-08-07. `/data/addons/@camstack/system` on `agent-a`
+ * Regression: 2026-08-07. `/data/addons/@camstack/server/system` on `agent-a`
  * was renamed away; on an agent that directory is the ONLY source of the
  * builtins, so the next boot came up with zero infra addons — no storage, no
  * settings-store, no `platform-probe`, and no `hub-forwarder` (which is what

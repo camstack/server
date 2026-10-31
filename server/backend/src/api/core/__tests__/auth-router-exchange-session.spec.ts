@@ -8,7 +8,7 @@ import { createAuthRouter, EXCHANGE_SESSION_HEADER } from '../auth.router.js'
 import { AuthService } from '../../../core/auth/auth.service.js'
 import { SESSION_COOKIE } from '../../../auth/session-cookie.js'
 import { trpcRouter } from '../../trpc/trpc.middleware.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import type { TrpcContext } from '../../trpc/trpc.context.js'
 
 /**

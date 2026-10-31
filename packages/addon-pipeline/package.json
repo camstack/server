@@ -313,7 +313,6 @@
     "werift": "0.22.9"
   },
   "dependencies": {
-    "@camstack/system": "*",
     "mp4box": "0.5.4",
     "node-av": "^6.0.0",
     "opus-decoder": "^0.7.11",
@@ -339,5 +338,10 @@
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.2.4"
+  },
+  "nx": {
+    "implicitDependencies": [
+      "@camstack/server-framework"
+    ]
   }
 }

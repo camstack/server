@@ -11,7 +11,7 @@
  *
  * - in BAKED mode (no `<dataDir>/server-root/current`) the node is running FROM
  *   the fallback tree. Deleting it there is deleting the running framework.
- * - a closure that did not resolve `@camstack/system` is the case the fallback
+ * - a closure that did not resolve `@camstack/server/system` is the case the fallback
  *   exists for. Cleaning then removes the recovery path at the exact moment it
  *   is needed.
  * - a tree still on `NODE_PATH` is a live resolution path whatever the mode
@@ -43,7 +43,7 @@ const LEGACY_FRAMEWORK: CleanupCandidate = {
 const ADDON_ROOT_SYSTEM: CleanupCandidate = {
   kind: 'addon-root-closure-copy',
   path: '/data/addons/@camstack/system',
-  pkg: '@camstack/system',
+  pkg: '@camstack/server',
   version: '1.2.78',
 }
 
@@ -121,7 +121,7 @@ describe('planSingleCopyCleanup — per-candidate refusals', () => {
     const inside: CleanupCandidate = {
       kind: 'addon-root-closure-copy',
       path: `${ACTIVE_ROOT}/node_modules/@camstack/system`,
-      pkg: '@camstack/system',
+      pkg: '@camstack/server',
       version: '1.2.84',
     }
     const plan = planSingleCopyCleanup(healthyInput({ candidates: [inside] }))
@@ -304,7 +304,7 @@ describe('discoverRedundantCopies', () => {
       '/data/addons/@camstack/ui-library',
     ])
     expect(found[0]?.kind).toBe('legacy-framework-tree')
-    expect(found[1]?.pkg).toBe('@camstack/system')
+    expect(found[1]?.pkg).toBe('@camstack/server')
   })
 
   it('never proposes a copy of a package the closure does NOT provide', () => {
@@ -331,15 +331,15 @@ describe('discoverRedundantCopies', () => {
       {
         dataDir: '/data',
         addonRoot: '/data/addons',
-        closureProvides: (pkg) => pkg === '@camstack/system',
+        closureProvides: (pkg) => pkg === '@camstack/server',
       },
-      { exists: (p) => p.includes('@camstack/system'), readVersion: () => null },
+      { exists: (p) => p.includes('@camstack/server'), readVersion: () => null },
     )
     expect(found).toEqual([
       {
         kind: 'addon-root-closure-copy',
         path: '/data/addons/@camstack/system',
-        pkg: '@camstack/system',
+        pkg: '@camstack/server',
         version: null,
       },
     ])

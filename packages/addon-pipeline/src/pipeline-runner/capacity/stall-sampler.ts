@@ -6,7 +6,7 @@
  * stalls directly instead of scraping the `event loop stalled` log line —
  * the hub's own log ring holds ~20s and Loki is a post-hoc surface, neither
  * is a per-step counter. Same lateness principle as
- * `@camstack/system`'s `event-loop-stall-monitor.ts` (a tick that
+ * `@camstack/server/system`'s `event-loop-stall-monitor.ts` (a tick that
  * arrives N ms late means the loop was blocked ~N ms), with cumulative
  * counters the driver snapshots at step boundaries and diffs.
  *
@@ -15,7 +15,7 @@
  * what a stall was.
  */
 import { type PerformanceEntry, PerformanceObserver } from 'node:perf_hooks'
-import { attributeStall } from '@camstack/system/addon-utils'
+import { attributeStall } from '@camstack/server/system/addon-utils'
 
 /** Tick period — finer than the monitor's 1s so short steps still sample. */
 export const STALL_SAMPLER_TICK_MS = 250

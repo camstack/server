@@ -27,7 +27,7 @@ import {
   MeshIdentityGate,
   registerEventBusService,
   type MeshCaSigner,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { SystemEvent } from '@camstack/types'
 import type { Middleware, ServiceBroker } from 'moleculer'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'

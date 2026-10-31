@@ -54,7 +54,7 @@
  * where the addon's `ConfigUISchema` is available.
  */
 import { TRPCError } from '@trpc/server'
-import { isSettingsReadUnavailable } from '@camstack/system'
+import { isSettingsReadUnavailable } from '@camstack/server/system'
 import { z } from 'zod'
 import type { ConfigService } from '../../core/config/config.service.js'
 import { trpcRouter, adminProcedure } from '../trpc/trpc.middleware.js'

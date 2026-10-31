@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { writePendingRestart, getRestartMarkerPath } from '@camstack/system'
+import { writePendingRestart, getRestartMarkerPath } from '@camstack/server/system'
 import type { IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
 import { PostBootService } from '../boot/post-boot.service.js'
 import { AddonRegistryService } from '../core/addon/addon-registry.service.js'
@@ -74,7 +74,7 @@ describe('PostBootService restart-completed handoff', () => {
   it('emits system.restart-completed with the marker payload when a marker is present', async () => {
     writePendingRestart(tmpDir, {
       kind: 'framework-update',
-      packageName: '@camstack/system',
+      packageName: '@camstack/server',
       fromVersion: '0.1.36',
       toVersion: '0.1.37',
       requestedBy: 'admin',
@@ -88,7 +88,7 @@ describe('PostBootService restart-completed handoff', () => {
     expect(completed).toBeDefined()
     expect(completed?.data).toMatchObject({
       kind: 'framework-update',
-      packageName: '@camstack/system',
+      packageName: '@camstack/server',
       fromVersion: '0.1.36',
       toVersion: '0.1.37',
       requestedBy: 'admin',
@@ -124,7 +124,7 @@ describe('PostBootService.getLastRestart retention window', () => {
   it('returns the marker emitted this boot, then null after the retention window', async () => {
     writePendingRestart(tmpDir, {
       kind: 'framework-update',
-      packageName: '@camstack/system',
+      packageName: '@camstack/server',
       fromVersion: '0.1.36',
       toVersion: '0.1.37',
       requestedBy: 'admin',
@@ -137,7 +137,7 @@ describe('PostBootService.getLastRestart retention window', () => {
     // Immediately after boot the marker is queryable.
     const fresh = PostBootService.getLastRestart()
     expect(fresh).not.toBeNull()
-    expect(fresh?.packageName).toBe('@camstack/system')
+    expect(fresh?.packageName).toBe('@camstack/server')
 
     // Past the retention window it auto-expires.
     vi.useFakeTimers()

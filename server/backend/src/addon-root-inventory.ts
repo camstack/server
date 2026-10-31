@@ -3,7 +3,7 @@
  * `package-inventory.ts` (D45).
  *
  * WHAT THE OTHER ONE CANNOT SEE
- * `package-inventory.ts` answers "how many copies of `@camstack/system` exist
+ * `package-inventory.ts` answers "how many copies of `@camstack/server/system` exist
  * under the roots this node resolves through". Every root it scans is derived
  * from the ACTIVE data dir, so a whole second data root — a different
  * `<dataDir>` with its own `addons/@camstack/` tree, belonging to a retired

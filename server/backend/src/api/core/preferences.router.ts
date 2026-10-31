@@ -20,8 +20,8 @@
  * The rows live in `local-auth` (it owns the users, and a user's delete wipes
  * them), reached through the hub-internal half of `user-management`.
  */
-import { getUserManagementInternal, preferencesLimitReasonOf } from '@camstack/system'
-import type { UserPreferencesInternal } from '@camstack/system'
+import { getUserManagementInternal, preferencesLimitReasonOf } from '@camstack/server/system'
+import type { UserPreferencesInternal } from '@camstack/server/system'
 import {
   PreferencesChangedSinceInputSchema,
   PreferencesChangedSinceOutputSchema,

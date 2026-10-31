@@ -124,7 +124,7 @@ export function releasePlan(paths: readonly string[], note?: string): ReleasePla
   }
   if (framework || bootstrap) {
     const forced = has('capability')
-      ? ' -f force_packages=@camstack/system,@camstack/server'
+      ? ' -f force_packages=@camstack/server/system,@camstack/server'
       : bootstrap && !framework
         ? ' -f force_packages=@camstack/server'
         : ''
@@ -137,7 +137,7 @@ export function releasePlan(paths: readonly string[], note?: string): ReleasePla
         'npm view @camstack/server@<VER> dependencies   # pins the framework versions you changed',
       ],
       has('capability')
-        ? 'A capability change must also force @camstack/system (nx-affected misses it for an edit under packages/types).'
+        ? 'A capability change must also force @camstack/server/system (nx-affected misses it for an edit under packages/types).'
         : 'The closure carries the framework and the bootstrap addons; a bootstrap-addon change needs a server publish to reach nodes.',
     )
     add(

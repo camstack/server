@@ -7,7 +7,7 @@
  * token whose scopes hold `'*'`, created, listed and revoked through
  * `auth.mintToken` / `auth.listTokens` / `auth.revokeToken`.
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { userManagementInternal } from '../../auth/hub-sessions.js'

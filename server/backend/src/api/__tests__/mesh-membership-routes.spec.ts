@@ -10,7 +10,7 @@ import {
   MeshCrl,
   signMembershipProof,
   verifyMembershipAnswer,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
 import Fastify from 'fastify'
 import { X509Certificate } from 'node:crypto'

@@ -83,7 +83,6 @@
     "@ai-sdk/google": "4.0.44",
     "@ai-sdk/openai": "4.0.41",
     "@ai-sdk/openai-compatible": "3.0.30",
-    "@camstack/system": "*",
     "ai": "7.0.65",
     "zod": "^4.3.6"
   },
@@ -92,5 +91,10 @@
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.0.0"
+  },
+  "nx": {
+    "implicitDependencies": [
+      "@camstack/server-framework"
+    ]
   }
 }

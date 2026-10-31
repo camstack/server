@@ -97,7 +97,7 @@ function renderPage(): ReactElement {
 
 const addonRows = [
   { manifest: { id: 'provider-reolink', packageName: '@camstack/addon-provider-reolink' } },
-  { manifest: { id: 'core-blocks', packageName: '@camstack/system' } },
+  { manifest: { id: 'core-blocks', packageName: '@camstack/server' } },
 ]
 
 beforeEach(() => {

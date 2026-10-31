@@ -23,7 +23,7 @@
  * `scripts/check-session-jwt-single-mint.ts` keeps `signToken(` out of every
  * other production file.
  */
-import type { LoginSessionMethod } from '@camstack/system'
+import type { LoginSessionMethod } from '@camstack/server/system'
 import type { TokenPayload, UserScope } from '@camstack/types'
 
 /** The user-record fields a session is minted from (`user-management` `UserSummary`). */

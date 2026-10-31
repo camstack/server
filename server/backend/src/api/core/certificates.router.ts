@@ -26,7 +26,7 @@ import type {
   MeshCrl,
   MeshPeers,
   MeshRegistrations,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import {
   caFingerprint,
   describeHttpsLeaf,
@@ -42,7 +42,7 @@ import {
   processMeshCrl,
   renewMeshCertificate,
   revokeMeshCertificate,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { AgentRegistryService } from '../../core/agent/agent-registry.service.js'

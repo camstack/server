@@ -68,7 +68,7 @@ export interface UdsEventBridgeDeps {
   /**
    * D2: subscribe the bridge's cluster/parent-local → children RELAY handler to
    * the parent bus WITHOUT registering it in the node's local-interest surface
-   * (`subscribePassthrough` from `@camstack/system`). The bridge is a conduit to
+   * (`subscribePassthrough` from `@camstack/server/system`). The bridge is a conduit to
    * forked children, not a terminal local consumer — counting its wildcard `*`
    * subscription would make every cross-node category appear "wanted" and defeat
    * the inbound gate. When omitted (tests / legacy callers) the bridge falls

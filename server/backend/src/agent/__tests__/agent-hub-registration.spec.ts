@@ -8,7 +8,7 @@ import {
   buildNodeManifest,
   MESH_NODE_UNAUTHENTICATED_TYPE,
   type RegisterNodeParams,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { Errors } from 'moleculer'
 import { describe, expect, it } from 'vitest'
 import { createAgentHubRegistration } from '../agent-hub-registration.js'

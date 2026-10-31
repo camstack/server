@@ -17,7 +17,7 @@ import type {
   AgentPairingTransport,
   HubPairing,
   HubPairingView,
-} from '@camstack/system'
+} from '@camstack/server/system'
 
 export interface DiscoveredAgent {
   readonly nodeId: string

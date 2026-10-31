@@ -5,7 +5,7 @@
 // BenchmarkAddon page registration, and AdminUIAddon capability provider.
 //
 
-import { CapabilityRegistry } from '@camstack/system'
+import { CapabilityRegistry } from '@camstack/server/system'
 import {
   type AddonContext,
   type IScopedLogger,

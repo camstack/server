@@ -9,7 +9,7 @@
  * else. Whether the patched behaviour exists on a live node depends entirely on
  * how the patched package travels, and this repository ships both answers:
  *
- *  - `moleculer` is INLINED by rolldown into `@camstack/system/dist`, so the
+ *  - `moleculer` is INLINED by rolldown into `@camstack/server/system/dist`, so the
  *    patch is inside the published tarball and inside the live closure. Fine —
  *    and provably so.
  *  - `werift` is NOT bundled: three addons resolve it at runtime from the

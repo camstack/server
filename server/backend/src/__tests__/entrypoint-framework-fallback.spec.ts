@@ -14,7 +14,7 @@
  * What THIS one prevents is the other half of the same decision. `/data/framework`
  * used to be re-seeded whenever it was missing, so the post-boot single-copy
  * sweep could delete 509 MB and the next restart would put it straight back —
- * a second `@camstack/system` on `NODE_PATH`, for ever. The recreation is now
+ * a second `@camstack/server/system` on `NODE_PATH`, for ever. The recreation is now
  * the explicit fallback for a closure that cannot boot, and it says so out loud.
  */
 import { execFileSync } from 'node:child_process'
@@ -77,7 +77,7 @@ describe('entrypoint framework fallback', () => {
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(
       path.join(dir, 'package.json'),
-      JSON.stringify({ name: '@camstack/system', version: '1.2.84' }),
+      JSON.stringify({ name: '@camstack/server', version: '1.2.84' }),
     )
   }
 
@@ -141,7 +141,7 @@ describe('entrypoint framework fallback', () => {
     expect(out).toContain('OBSERVED_NODE_PATH=<>')
   })
 
-  it('seeds the framework, loudly, when the active closure has no @camstack/system', () => {
+  it('seeds the framework, loudly, when the active closure has no @camstack/server/system', () => {
     const dataDir = path.join(root, 'data')
     fs.mkdirSync(dataDir, { recursive: true })
 

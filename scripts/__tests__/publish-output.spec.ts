@@ -103,7 +103,7 @@ describe('finalizePublishSet', () => {
     expect(final.publish).not.toContain('packages/system')
     expect(
       resolvePinnedVersion(
-        '@camstack/system',
+        '@camstack/server',
         { dir: 'packages/system', version: '9.9.9' },
         { publishSet: new Set(final.publish), lookup: () => '1.2.273' },
       ),

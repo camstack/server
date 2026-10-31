@@ -12,7 +12,7 @@
  *      single `current/` copy. Both are idempotent + crash-safe.
  *   3. Is the ONE canonical `current/` closure valid? → register in-process
  *      resolver hooks so the node's MAIN process resolves the host-external
- *      packages (@camstack/system, …) from `current/node_modules`, point the
+ *      packages (@camstack/server/system, …) from `current/node_modules`, point the
  *      forked-runner framework dir at the same copy, and load its entry.
  *   4. Otherwise → load the baked seed entry next to the starter.
  *
@@ -43,7 +43,7 @@ import { detectWorkspaceRoot } from './workspace-detect.js'
  * redirected to the active root; everything else resolves normally.
  */
 export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
-  '@camstack/system',
+  '@camstack/server/system',
   '@camstack/types',
   '@camstack/sdk',
   'zod',

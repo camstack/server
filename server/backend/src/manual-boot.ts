@@ -13,7 +13,7 @@ import {
   AddonDepsManager,
   ConsoleDestination,
   setHuggingFaceReachabilityObserver,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { ILocalNetworkProvider } from '@camstack/types'
 import { EventCategory, memoizePinnedFfmpeg, ServerPackageStatusSchema } from '@camstack/types'
 import type { FastifyInstance } from 'fastify'

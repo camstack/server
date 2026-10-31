@@ -17,7 +17,7 @@ import {
   MeshCrl,
   PairingHttpError,
   type PairingResult,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { MdnsAgent } from '@camstack/develop/hub-discovery'
 import { describe, expect, it } from 'vitest'
 import type { NodeCertificatesClient } from '../../../core/agent/node-certificates-client.js'

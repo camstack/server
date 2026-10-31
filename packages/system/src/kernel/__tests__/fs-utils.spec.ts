@@ -186,7 +186,7 @@ describe('stripCamstackDeps', () => {
       version: '0.1.0',
       dependencies: {
         '@camstack/types': '^0.1.0',
-        '@camstack/system': '^0.1.0',
+        '@camstack/server': '^0.1.0',
         lodash: '^4.17.21',
       },
       devDependencies: {
@@ -235,7 +235,7 @@ describe('stripCamstackDeps', () => {
       version: '0.1.0',
       dependencies: {
         '@camstack/shm-ring': '^0.1.0',
-        '@camstack/system': '^0.1.0',
+        '@camstack/server': '^0.1.0',
         lodash: '^4',
       },
       peerDependencies: {

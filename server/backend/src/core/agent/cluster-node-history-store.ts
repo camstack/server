@@ -2,7 +2,7 @@ import {
   ClusterNodeHistoryBodySchema,
   readAllRows,
   type ClusterNodeHistoryBody,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger, RecordKindHandle } from '@camstack/types'
 import { z } from 'zod'
 import { errMsg } from '@camstack/types'

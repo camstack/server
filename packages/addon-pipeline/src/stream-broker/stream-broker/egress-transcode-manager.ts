@@ -52,7 +52,7 @@
  * handed a fragment child by accident. Its consumers are HKSV's recording
  * delegate (phase 4) and a CamStack clip source (roadmap 4b half 2), both
  * in-process; a `fragmentMs` on the request schema would be a codegen run and a
- * `@camstack/system` train for a field nothing off-node can call. When one of
+ * `@camstack/server/system` train for a field nothing off-node can call. When one of
  * them lands off-node, the field goes on the schema and
  * `egressTransportFromRequest` is the single place that learns to read it.
  *

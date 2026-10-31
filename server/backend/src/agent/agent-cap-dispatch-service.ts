@@ -16,8 +16,8 @@ import type {
   CapCallInput,
   InProcessProviderLookup,
   LocalChildRegistryLogger,
-} from '@camstack/system'
-import { AGENT_CAP_FWD_SERVICE } from '@camstack/system'
+} from '@camstack/server/system'
+import { AGENT_CAP_FWD_SERVICE } from '@camstack/server/system'
 
 // ---------------------------------------------------------------------------
 // ctx.params narrowing helpers

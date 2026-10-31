@@ -1,26 +1,26 @@
 /**
  * Launcher -- entry point that ensures required addons are installed
  * before main.ts loads. This solves the chicken-and-egg problem:
- * main.ts has static imports from @camstack/system, but core lives in
+ * main.ts has static imports from @camstack/server/system, but core lives in
  * data/addons/ and may not exist on first boot.
  *
  * 1. Run AddonInstaller.ensureRequiredPackages (zero core dependencies)
- * 2. Create symlinks so @camstack/system resolves from data/addons/
- * 3. Dynamically import main.ts (which has static @camstack/system imports)
+ * 2. Create symlinks so @camstack/server/system resolves from data/addons/
+ * 3. Dynamically import main.ts (which has static @camstack/server/system imports)
  *
- * Load-order invariant: @camstack/system is imported DYNAMICALLY inside
+ * Load-order invariant: @camstack/server/system is imported DYNAMICALLY inside
  * launch() AFTER the active framework dir is resolved (the single-copy
  * collapse points CAMSTACK_FRAMEWORK_DIR at CAMSTACK_SERVER_ACTIVE_ROOT in
  * data-root mode, or the baked seed otherwise). NEVER add a top-level static
- * import of @camstack/system here — that would pin the resolver before the
+ * import of @camstack/server/system here — that would pin the resolver before the
  * framework dir + NODE_PATH are set up. Framework/cap updates ship via the
  * node-root `applyServerUpdate` flow, not an in-launcher package swap.
  */
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-// Type-only import — erased at runtime, does NOT load @camstack/system module.
-import type { bootstrapSchema as BootstrapSchemaType } from '@camstack/system'
+// Type-only import — erased at runtime, does NOT load @camstack/server/system module.
+import type { bootstrapSchema as BootstrapSchemaType } from '@camstack/server/system'
 import * as yaml from 'js-yaml'
 import { formatAddonRootReport, inventoryAddonRoots } from './addon-root-inventory.js'
 import type { ServerBootstrapManifest } from './bootstrap-packages.js'
@@ -51,7 +51,7 @@ function parseInstallSource(value: string | undefined): 'npm' | 'local' | 'symli
 /**
  * Locate + parse `config.yaml` relative to the data dir. Returns the
  * raw object on success, `null` when missing or unparseable. The
- * launcher uses this BEFORE @camstack/system is imported so it must stay
+ * launcher uses this BEFORE @camstack/server/system is imported so it must stay
  * free of core deps — just js-yaml + the kernel's bootstrapSchema for
  * shape validation by the call site.
  */
@@ -88,7 +88,7 @@ function readConfigYaml(dataDir: string): unknown {
  * containers or Electron bundles.
  *
  * `bootstrapSchema` is passed in (not imported at module top) so this
- * helper can be called after the dynamic @camstack/system import in launch().
+ * helper can be called after the dynamic @camstack/server/system import in launch().
  */
 function readBootstrapInstallSource(
   dataDir: string,
@@ -103,7 +103,7 @@ function readBootstrapInstallSource(
 
 /**
  * Derive the bootstrap package list from THIS server's own package.json — the
- * `@camstack/addon-*` deps plus `@camstack/system` (which ships the required
+ * `@camstack/addon-*` deps plus `@camstack/server/system` (which ships the required
  * infrastructure builtins), MINUS `camstack.agentOnlyBootstrapAddons`. Read by
  * absolute path (the package.json sits one level up from this launcher's dist
  * dir), so it works in the slim image where the `@camstack/*` node_modules
@@ -180,12 +180,12 @@ function readInstalledAddonVersions(
  * kernel's REQUIRED_PACKAGES constant).
  *
  * Inline YAML parse rather than going through ConfigManager: the
- * launcher runs before @camstack/system is imported and must stay free of
+ * launcher runs before @camstack/server/system is imported and must stay free of
  * core dependencies. Just yaml.load + bootstrapSchema (kernel) for
  * shape validation.
  *
  * `bootstrapSchema` is passed in (not imported at module top) so this
- * helper can be called after the dynamic @camstack/system import in launch().
+ * helper can be called after the dynamic @camstack/server/system import in launch().
  */
 function readBootstrapRequiredAddons(
   dataDir: string,
@@ -245,11 +245,11 @@ async function launch(): Promise<void> {
   // A pre-migration snapshot the operator chose to go back to (D987).
   applyPendingPreMigrationRestore(dataDir, (line) => console.log(line))
 
-  // @camstack/system is imported DYNAMICALLY here — AFTER the active framework
+  // @camstack/server/system is imported DYNAMICALLY here — AFTER the active framework
   // dir + NODE_PATH are resolved above — so the correct framework copy is what
   // gets loaded. Never import it at module top.
   const { AddonInstaller, bootstrapSchema, detectWorkspacePackagesDir, quarantineAddonResidue } =
-    await import('@camstack/system')
+    await import('@camstack/server/system')
 
   // Residue quarantine — FIRST thing that touches the addon root, before the
   // bootstrap seed writes into it and long before any loader scans it.
@@ -257,7 +257,7 @@ async function launch(): Promise<void> {
   // A directory under `addons/@camstack` whose name is not the package it
   // declares is not an archive: the loader, the agent's boot scan and the
   // install manifest all key on the `package.json` inside, so a rename
-  // INSTALLS. On 2026-08-07/08 that shipped `@camstack/system 1.2.3` as the
+  // INSTALLS. On 2026-08-07/08 that shipped `@camstack/server/system 1.2.3` as the
   // reported version on a node running a 1.2.61 closure, and kept a 17-day-old
   // `better_sqlite3.node` mapped into the live process. Moved, never deleted —
   // the cleanup that deleted one of these gutted an agent the same evening.
@@ -330,7 +330,7 @@ async function launch(): Promise<void> {
   // `require.resolve('@camstack/server/package.json')`): in the slim image the
   // `@camstack/*` workspace symlinks are stripped and NODE_PATH is only
   // extended to include `/repo/node_modules` LATER in this launcher, so that
-  // static resolves to an EMPTY list at import time — and `@camstack/system`
+  // static resolves to an EMPTY list at import time — and `@camstack/server/system`
   // (which provides the storage-provider / settings / logging infra builtins)
   // would never get installed into data/addons, aborting boot with
   // "No addon provides required infrastructure capability storage-provider".
@@ -364,12 +364,12 @@ async function launch(): Promise<void> {
       required: bootstrapRequired,
       installed: readInstalledAddonVersions(addonsDir, bootstrapRequired),
       closureVersions: readInstalledAddonVersions(closureNodeModules, bootstrapRequired),
-      // Mirrors `shouldSkipClosureProvidedSeed`: only `@camstack/system`, and
+      // Mirrors `shouldSkipClosureProvidedSeed`: only `@camstack/server/system`, and
       // only while it actually resolves.
       closureProvided: (() => {
         try {
-          require.resolve('@camstack/system/package.json')
-          return ['@camstack/system']
+          require.resolve('@camstack/server/system/package.json')
+          return ['@camstack/server']
         } catch {
           return []
         }
@@ -478,7 +478,7 @@ async function launch(): Promise<void> {
   // exist. Idempotent; safe every boot. Runs BEFORE any update can be in
   // flight, and never touches an entry holding a rollback pointer.
   //
-  // Guarded with a typeof check: the backend and @camstack/system normally
+  // Guarded with a typeof check: the backend and @camstack/server/system normally
   // ship together in one image, but a system-only framework update can
   // swap in a build that predates `reconcileManifest`. A missing method
   // must not crash boot — the manifest is already persisted from a prior
@@ -499,7 +499,7 @@ async function launch(): Promise<void> {
   // the manifest's rollback target per addon (and never the last surviving
   // copy of an addon whose install dir is missing). Runs here, before any
   // update can be in flight. Same typeof guard as reconcileManifest: an
-  // older @camstack/system must not crash boot.
+  // older @camstack/server/system must not crash boot.
   if (typeof installer.sweepBackups === 'function') {
     const swept = await installer.sweepBackups()
     if (swept.removed.length > 0) {
@@ -565,7 +565,7 @@ async function launch(): Promise<void> {
   // that can answer it, and it costs a stat call per package.
   //
   // A version number without a path is not evidence. Log both.
-  for (const pkg of ['@camstack/system', '@camstack/types']) {
+  for (const pkg of ['@camstack/server', '@camstack/types']) {
     try {
       const resolved = require.resolve(`${pkg}/package.json`)
       const version: unknown = (
@@ -583,7 +583,7 @@ async function launch(): Promise<void> {
   //
   // The line above says which copy this boot resolved. It cannot say what else
   // is lying around, and that is the half that produced three wrong diagnoses:
-  // one agent held FOUR copies of @camstack/system (1.2.28 / 1.2.28 / 1.2.0 /
+  // one agent held FOUR copies of @camstack/server/system (1.2.28 / 1.2.28 / 1.2.0 /
   // 1.2.30), so every version the node reported was true of a copy nobody was
   // running.
   //
@@ -720,7 +720,7 @@ async function launch(): Promise<void> {
   // [inventory-diagnostics-end]
 
   // Now safe to load the role's runtime entry (both have static imports from
-  // @camstack/system, resolved only after the framework dir + NODE_PATH setup
+  // @camstack/server/system, resolved only after the framework dir + NODE_PATH setup
   // above). The agent boots from THIS same @camstack/server closure — there is
   // no separate agent root package.
   if (role === 'agent') {

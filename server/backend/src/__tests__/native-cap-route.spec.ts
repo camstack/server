@@ -12,14 +12,14 @@
  */
 
 import { describe, it, expect, vi } from 'vitest'
-import { CapRouteResolver, NATIVE_PROVIDER_SERVICE_INFIX } from '@camstack/system'
+import { CapRouteResolver, NATIVE_PROVIDER_SERVICE_INFIX } from '@camstack/server/system'
 import type {
   NodeCapAuthority,
   HubLocalChildDispatcher,
   CapRouteResolverDeps,
   InProcessProviderRef,
-} from '@camstack/system'
-import { CapRouteError } from '@camstack/system'
+} from '@camstack/server/system'
+import { CapRouteError } from '@camstack/server/system'
 
 const HUB_NODE_ID = 'hub'
 

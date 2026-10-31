@@ -31,7 +31,7 @@
  * the dispatch and the merge.
  */
 
-import { CAP_METHOD_NOT_IMPLEMENTED, CapabilityRegistry } from '@camstack/system'
+import { CAP_METHOD_NOT_IMPLEMENTED, CapabilityRegistry } from '@camstack/server/system'
 import type { Clip, ClipSource, IScopedLogger } from '@camstack/types'
 import { deviceManagerCapability, videoclipsCapability } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'

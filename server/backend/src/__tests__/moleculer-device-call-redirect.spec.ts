@@ -14,8 +14,8 @@
  * provide" — a deterministic proof that routing happened.
  */
 import { describe, expect, it } from 'vitest'
-import { CapabilityRegistry } from '@camstack/system'
-import type { RegisterNodeParams } from '@camstack/system'
+import { CapabilityRegistry } from '@camstack/server/system'
+import type { RegisterNodeParams } from '@camstack/server/system'
 import {
   batteryCapability,
   type IScopedLogger,

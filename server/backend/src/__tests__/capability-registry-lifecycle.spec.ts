@@ -1,4 +1,4 @@
-import { CapabilityRegistry, isInfraCapability } from '@camstack/system'
+import { CapabilityRegistry, isInfraCapability } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 

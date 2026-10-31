@@ -6,7 +6,7 @@ import {
   MeshCertificateRegistry,
   MeshCrl,
   type MeshPeerLeaf,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { X509Certificate } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import type { NodeCertificatesClient } from '../../../core/agent/node-certificates-client.js'

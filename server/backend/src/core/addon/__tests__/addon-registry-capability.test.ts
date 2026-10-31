@@ -1,6 +1,6 @@
 // server/backend/src/core/addon/__tests__/addon-registry-capability.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CapabilityRegistry } from '@camstack/system'
+import { CapabilityRegistry } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 
 function createMockLogger(): IScopedLogger {

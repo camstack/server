@@ -9,7 +9,7 @@
  * same way `connectionTest` / `broker` do.
  */
 
-import { buildCapRouters, CapabilityRegistry } from '@camstack/system'
+import { buildCapRouters, CapabilityRegistry } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import { deviceAdoptionCapability, kebabToCamel } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'

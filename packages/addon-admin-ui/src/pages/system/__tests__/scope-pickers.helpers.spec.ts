@@ -52,7 +52,7 @@ describe('package picker state', () => {
   it('every update-event package is always offered', () => {
     expect(packageScopeState({ data: [], isError: false }).items.map((i) => i.id)).toEqual([
       '@camstack/server',
-      '@camstack/system',
+      '@camstack/server',
       'camstack-wrapper',
     ])
   })

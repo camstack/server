@@ -2,7 +2,7 @@
  * REPL router — fixed core API (not a capability).
  *
  * The REPL engine is a single NestJS-backed service in the backend
- * (`ReplEngineService` extends `ReplEngine` from `@camstack/system`).
+ * (`ReplEngineService` extends `ReplEngine` from `@camstack/server/system`).
  * Only super_admin can execute code.
  */
 import { z } from 'zod'

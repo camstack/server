@@ -27,7 +27,11 @@
  * lookup by hand and must use the camel one.
  */
 
-import { buildCapRouters, type CapabilityRegistry, type CapRouterServices } from '@camstack/system'
+import {
+  buildCapRouters,
+  type CapabilityRegistry,
+  type CapRouterServices,
+} from '@camstack/server/system'
 import { type DeviceAdminLink, deviceAdminLinkCapability, resolveCapMount } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'

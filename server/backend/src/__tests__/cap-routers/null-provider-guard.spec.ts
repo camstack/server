@@ -7,7 +7,7 @@
  * doesn't guard against a null provider, this test catches it.
  *
  * Migrated 2026-07-11 off the retired codegen `createCapRouter_*` value
- * factories onto `@camstack/system` `buildCapRouters` — the exact router
+ * factories onto `@camstack/server/system` `buildCapRouters` — the exact router
  * the running hub builds.
  *
  * NOTE: some caps have methods that require non-void input (z.object({...})).
@@ -17,7 +17,7 @@
  * does NOT succeed and return garbage data).
  */
 import { describe, it, expect } from 'vitest'
-import { buildCapRouters, type CapRouterServices } from '@camstack/system'
+import { buildCapRouters, type CapRouterServices } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { createCapRouterPrimitives } from '../../api/trpc/cap-router-runtime.js'
 import { makeCtx, invokeProcedure } from './harness.js'

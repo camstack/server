@@ -8,11 +8,11 @@ const MONOREPO_ROOT = resolve(__dirname, '../../../../../../')
 
 describe('system package identity', () => {
   it('routes the pure-JS framework packages (system, types, sdk) through the live-sync gate', () => {
-    expect(SYSTEM_PACKAGE).toBe('@camstack/system')
+    expect(SYSTEM_PACKAGE).toBe('@camstack/server')
     // Framework packages: `dist/` mirrored into the live hub closure by
     // `syncFrameworkDist`, so a capability change ships via
     // `camstack deploy packages/types` with NO image rebuild.
-    expect(isFrameworkPackage('@camstack/system')).toBe(true)
+    expect(isFrameworkPackage('@camstack/server')).toBe(true)
     expect(isFrameworkPackage('@camstack/types')).toBe(true)
     expect(isFrameworkPackage('@camstack/sdk')).toBe(true)
     // shm-ring ships a native `.node` prebuild the dist-only mirror can't
@@ -21,7 +21,7 @@ describe('system package identity', () => {
     expect(isFrameworkPackage('@camstack/addon-pipeline')).toBe(false)
   })
 
-  it('only @camstack/system declares camstack.system:true', () => {
+  it('only @camstack/server/system declares camstack.system:true', () => {
     const pkgs = ['types', 'sdk']
     for (const p of pkgs) {
       const m = JSON.parse(

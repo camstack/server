@@ -23,7 +23,11 @@
  *     production registry state.
  */
 
-import { buildCapRouters, type CapabilityRegistry, type CapRouterServices } from '@camstack/system'
+import {
+  buildCapRouters,
+  type CapabilityRegistry,
+  type CapRouterServices,
+} from '@camstack/server/system'
 import { type MotionStatus, motionCapability, resolveCapMount } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import { describe, expect, it } from 'vitest'

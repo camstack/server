@@ -24,7 +24,7 @@
  *      method's required `access` flavour.
  *   4. No matching scope → FORBIDDEN with a human-readable reason.
  */
-import { METHOD_ACCESS_MAP } from '@camstack/system'
+import { METHOD_ACCESS_MAP } from '@camstack/server/system'
 import type {
   DeviceMetaLike,
   DeviceTokenScope,

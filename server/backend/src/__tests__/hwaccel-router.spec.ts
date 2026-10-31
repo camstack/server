@@ -9,7 +9,7 @@
  * Unreachable / malformed responses degrade to an EXPLAINED empty list.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { createHwAccelRouter } from '../api/core/hwaccel.router.js'
 import type { MoleculerService } from '../core/moleculer/moleculer.service.js'
 import { makeCtx } from './cap-routers/harness.js'

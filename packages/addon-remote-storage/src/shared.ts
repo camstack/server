@@ -2,7 +2,7 @@
  * Shared helpers for remote-storage providers (SFTP, S3, WebDAV).
  *
  * Mirrors the contract used by the canonical
- * `@camstack/system` `FilesystemStorageProvider`:
+ * `@camstack/server/system` `FilesystemStorageProvider`:
  *   - path-traversal guard reused for `relativePath` resolution
  *   - chunked-upload / chunked-download session shapes (the actual
  *     fields differ per backend — provider-specific session types

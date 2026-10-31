@@ -3,7 +3,7 @@
  * shared `RootUpdateService` at both construction sites (hub + agent). It lets
  * root-package updates stage a closure on a host that has NO system `npm` on
  * PATH (a packaged desktop app shipping a bare bundled Node) by routing every
- * npm invocation through `@camstack/system`'s `runNpm` (system → bootstrapped
+ * npm invocation through `@camstack/server/system`'s `runNpm` (system → bootstrapped
  * → bootstrap), instead of the raw `execFile('npm', ...)` default that dies
  * with ENOENT there.
  *

@@ -11,7 +11,7 @@ import type { TrpcContext } from '../../trpc/trpc.context.js'
 import { trpcRouter } from '../../trpc/trpc.middleware.js'
 import { VIEWER_PWA_ORIGIN } from '../cors-policy.js'
 import { createCorsPolicy, registerCorsPolicy } from '../register-cors-policy.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 
 /**
  * D707 opens the hub to a cross-origin login page; it must not open a way

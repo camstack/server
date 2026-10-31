@@ -178,13 +178,13 @@ Spec in `server/backend/src/__tests__/cap-routers/` — the router builder does
 not re-validate OUTPUT, so the test pins the shape.
 
 **What must be published.** The hub reads `ALL_CAPABILITY_DEFINITIONS` from
-**`@camstack/system`**, which bundles the cap definitions — and nx-affected
-does NOT mark `@camstack/system` changed for an edit under `packages/types`.
+**`@camstack/server/system`**, which bundles the cap definitions — and nx-affected
+does NOT mark `@camstack/server` changed for an edit under `packages/types`.
 So a cap change always force-publishes it with the server:
 
 ```bash
 gh workflow run "Publish Packages" --ref main -f bump=patch -f scope=affected \
-  -f include_dependents=false -f force_packages=@camstack/system,@camstack/server
+  -f include_dependents=false -f force_packages=@camstack/server/system,@camstack/server
 ```
 
 Then the server-side chain — publish → `applyServerUpdate` on the hub AND every

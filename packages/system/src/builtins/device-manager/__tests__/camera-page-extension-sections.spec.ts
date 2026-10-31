@@ -10,7 +10,7 @@
  * beside the widget; the store holds a value here precisely so the section
  * WOULD appear if its contribution came back.
  */
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/system'
+import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import {
   type AddonContext,
   deviceExtensionCapability,

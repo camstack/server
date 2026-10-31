@@ -12,7 +12,7 @@ import type {
   PendingTransporter,
   RegisteredAddonManifest,
   RegisterNodeParams,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import {
   AddonInstaller,
   AddonLoader,
@@ -53,7 +53,7 @@ import {
   createCiaoPublisher,
   TlsTcpTransporter,
   NativeMetricsProvider,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { EventCategory } from '@camstack/types'
 import type {
   IEventBus,
@@ -88,7 +88,7 @@ import {
 } from '@camstack/types'
 import type { ServiceBroker } from 'moleculer'
 import { buildServerManagementProvider } from '../api/core/server-management.provider.js'
-import { resolveHubClosurePackageDir } from '../core/addon/package-dir-utils.js'
+import { resolveBuiltinsDir } from '../core/addon/package-dir-utils.js'
 import { runSingleCopyCleanup } from '../single-copy-cleanup-runner.js'
 import { BUILTINS_PACKAGE, planAgentAddonScan, resolveAddonPackageDirs } from './addon-scan.js'
 import { buildAgentAddonUpdateReport } from './agent-addon-updates.js'
@@ -152,7 +152,7 @@ import { registerAgentCapDispatch } from './register-agent-cap-dispatch.js'
 // The hub-forwarder addon registers as a destination, so all log
 // entries flow through it (console output + hub forwarding).
 // ---------------------------------------------------------------------------
-import { LogManager, systemHostFacts } from '@camstack/system'
+import { LogManager, systemHostFacts } from '@camstack/server/system'
 import { startAgentHeapWatch } from './agent-heap-watch.js'
 
 /** A reconnect (stop + rebuild + start) that takes longer than this is abandoned. */
@@ -670,8 +670,8 @@ async function startAgent(configPath?: string): Promise<void> {
     // ONE COPY PER NODE — the same sweep the hub runs, at this role's own
     // healthy-boot moment (D45, task 32). Operator, 2026-08-13: "l'agente deve
     // essere identico all'hub" [the agent must be identical to the hub]. An agent is where the redundant copies actually
-    // are: `agent-a` still holds `<dataDir>/addons/@camstack/system@1.2.78`
-    // — a copy nothing loads (both roles pass `['@camstack/system']` as the
+    // are: `agent-a` still holds `<dataDir>/addons/@camstack/server/system@1.2.78`
+    // — a copy nothing loads (both roles pass `['@camstack/server/system']` as the
     // loader's skip list) and that WINS over the closure for anything resolving
     // through it.
     void runSingleCopyCleanup({
@@ -763,7 +763,7 @@ async function startAgent(configPath?: string): Promise<void> {
     // group-runner cap proxies it removes (registered by
     // `registerGroupRunnerProviders`, ownerless — so a plain unregister owns them).
     bootstrapPackages: new Set([
-      '@camstack/system',
+      '@camstack/server',
       '@camstack/addon-agent-ui',
       ...AddonInstaller.AGENT_PACKAGES,
     ]),
@@ -1415,12 +1415,12 @@ async function bootCoreAddons(
   loggerFactory: (addonId: string) => IScopedLogger,
 ): Promise<void> {
   // Builtins come from the CLOSURE this process is running, exactly as the hub
-  // has done since 2026-07-18 — never from a `<addonsDir>/@camstack/system`
+  // has done since 2026-07-18 — never from a `<addonsDir>/@camstack/server/system`
   // copy, which nothing refreshes and which therefore drifts (both agents were
   // 17 versions behind on 2026-08-11). `planAgentAddonScan` owns the decision
   // and the fallback; see `addon-scan.ts`. Non-framework infra providers
   // (e.g. `@camstack/addon-platform-probe-native`) still come from the scan.
-  const closureSystemDir = resolveHubClosurePackageDir(BUILTINS_PACKAGE)
+  const closureSystemDir = resolveBuiltinsDir()
   if (closureSystemDir === null) {
     // Louder than the hub's warn: on an agent the builtins ARE the infra, so
     // this is pre-fatal. Boot continues to the D87 guard, which names every
@@ -1668,7 +1668,7 @@ async function loadDeployedAddons(
   // the agent MAIN thread is what wedged `$agent.reload` and dropped the node
   // from topology. A group-runner addon only needs its declaration to be
   // (re)dispatched to a subprocess, which loads the real module itself.
-  // Same skip: a `$agent.deploy` of `@camstack/system` still lands bytes in the
+  // Same skip: a `$agent.deploy` of `@camstack/server/system` still lands bytes in the
   // addon root, but a reload must not adopt them over the closure.
   const packageDirs = resolveAddonPackageDirs(addonsDir, systemSkipList())
   const groupCandidates: GroupCandidate[] = []
@@ -1851,7 +1851,7 @@ function readAgentVersion(): string {
  * copy is authoritative.
  */
 function systemSkipList(): readonly string[] {
-  return resolveHubClosurePackageDir(BUILTINS_PACKAGE) === null ? [] : [BUILTINS_PACKAGE]
+  return resolveBuiltinsDir() === null ? [] : [BUILTINS_PACKAGE]
 }
 
 // ---------------------------------------------------------------------------

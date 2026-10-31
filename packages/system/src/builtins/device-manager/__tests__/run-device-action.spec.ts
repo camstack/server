@@ -8,7 +8,7 @@
  *   3. Neither present → throws.
  */
 
-import { DeviceRegistry } from '@camstack/system'
+import { DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
   IDevice,

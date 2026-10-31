@@ -26,7 +26,7 @@
  *
  * Alexa's lives in `packages/addon-export-alexa/src/export-alexa.addon.ts` as
  * private methods, and addons never import each other. The only shared home
- * would be `@camstack/types` or `@camstack/system` — both stay host-resolved in
+ * would be `@camstack/types` or `@camstack/server/system` — both stay host-resolved in
  * an addon bundle (`tools/build/vite-lib.preset.ts`), so putting it there would
  * put this addon on the framework publish train and destroy the one property
  * that makes it attractive: `camstack deploy packages/addon-export-google` and

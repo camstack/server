@@ -14,12 +14,12 @@
  * {@link clearSingletonNodeOverrides} (the per-node singleton overrides live in
  * the hub's capability registry and settings).
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import {
   ClusterNodeTombstoneBodySchema,
   readAllRows,
   type ClusterNodeTombstoneBody,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { errMsg } from '@camstack/types'
 import type {
   INodeRemovalHookProvider,
@@ -95,7 +95,11 @@ export class NodeTombstoneStore {
       for (const row of await readAllRows(kind)) {
         const parsed = ClusterNodeTombstoneBodySchema.safeParse(row.data)
         if (parsed.success && parsed.data.pending.length > 0) {
-          out.push({ nodeId: row.id, removedAt: parsed.data.removedAt, pending: parsed.data.pending })
+          out.push({
+            nodeId: row.id,
+            removedAt: parsed.data.removedAt,
+            pending: parsed.data.pending,
+          })
         }
       }
       return out

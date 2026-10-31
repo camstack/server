@@ -6,7 +6,7 @@
  * from a spec. Same shape as `framework-nodepath.ts`.
  *
  * The selection MUST stay in lockstep with
- * `AddonInstaller.deriveBootstrapList` in `@camstack/system` — that one reads
+ * `AddonInstaller.deriveBootstrapList` in `@camstack/server/system` — that one reads
  * the same `@camstack/server` manifest through `require.resolve`, this one
  * reads the launcher's own `package.json` by absolute path (the slim image
  * strips the `@camstack/*` symlinks, so `require.resolve` yields an empty list
@@ -26,7 +26,7 @@ export interface ServerBootstrapManifest {
 
 /**
  * The packages a HUB-role node bootstrap-installs: every `@camstack/addon-*`
- * runtime dependency plus `@camstack/system` (the carrier of the required
+ * runtime dependency plus `@camstack/server/system` (the carrier of the required
  * infrastructure builtins — storage-provider / settings / logging — without
  * which boot aborts).
  *
@@ -39,6 +39,6 @@ export function selectHubBootstrapPackages(pkg: ServerBootstrapManifest): readon
   const agentOnly = new Set(pkg.camstack?.agentOnlyBootstrapAddons ?? [])
   return Object.keys(pkg.dependencies ?? {}).filter(
     (name) =>
-      !agentOnly.has(name) && (name.startsWith('@camstack/addon-') || name === '@camstack/system'),
+      !agentOnly.has(name) && (name.startsWith('@camstack/addon-') || name === '@camstack/server'),
   )
 }

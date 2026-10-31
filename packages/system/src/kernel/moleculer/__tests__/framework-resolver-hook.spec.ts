@@ -8,13 +8,13 @@ import { initialize, resolve } from '../framework-resolver-hook.mjs'
 let frameworkDir: string
 
 beforeAll(() => {
-  // Build a fake framework dir with a resolvable @camstack/system package.
+  // Build a fake framework dir with a resolvable @camstack/server/system package.
   frameworkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fw-'))
   const pkgDir = path.join(frameworkDir, 'node_modules', '@camstack', 'system')
   fs.mkdirSync(pkgDir, { recursive: true })
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/system', version: '1.0.0', exports: './index.js' }),
+    JSON.stringify({ name: '@camstack/server/system', version: '1.0.0', exports: './index.js' }),
   )
   fs.writeFileSync(path.join(pkgDir, 'index.js'), 'export const ok = true\n')
   initialize({ frameworkDir })
@@ -27,7 +27,7 @@ describe('framework-resolver-hook', () => {
       shortCircuit: true,
     })
     const result = await resolve(
-      '@camstack/system',
+      '@camstack/server/system',
       { parentURL: 'file:///data/addons/@camstack/addon-x/dist/index.js' },
       nextResolve,
     )

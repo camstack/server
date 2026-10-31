@@ -14,8 +14,8 @@
  * testing the adapters + resolver in isolation exercises the meaningful unit.
  */
 
-import type { CapRouteResolverDeps, HubLocalChildDispatcher } from '@camstack/system'
-import { CapRouteError, CapRouteResolver } from '@camstack/system'
+import type { CapRouteResolverDeps, HubLocalChildDispatcher } from '@camstack/server/system'
+import { CapRouteError, CapRouteResolver } from '@camstack/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createHubResidentProviderLookup,

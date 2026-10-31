@@ -92,8 +92,8 @@ const { execFileSync } = require('node:child_process')
 // shards. `vitest` is the shard `v` ("i/n") handed to the package's own test
 // script after `--`; an unsplit shard has none.
 const SHARDS = {
-  'system-1': { p: ['@camstack/system'], v: '1/2' },
-  'system-2': { p: ['@camstack/system'], v: '2/2' },
+  'system-1': { p: ['@camstack/server-framework'], v: '1/2' },
+  'system-2': { p: ['@camstack/server-framework'], v: '2/2' },
   'pipeline-1': { p: ['@camstack/addon-pipeline'], v: '1/2' },
   'pipeline-2': { p: ['@camstack/addon-pipeline'], v: '2/2' },
   'post-analysis-1': { p: ['@camstack/addon-post-analysis'], v: '1/3' },

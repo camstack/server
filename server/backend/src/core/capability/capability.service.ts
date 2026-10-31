@@ -5,7 +5,7 @@
  * The registry reference is set once during boot by AddonRegistryService.
  */
 
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 
 export class CapabilityService {
   private registry: CapabilityRegistry | null = null

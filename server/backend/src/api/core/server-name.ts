@@ -15,7 +15,7 @@
 import os from 'node:os'
 import type { IScopedLogger, ServerNameInfo } from '@camstack/types'
 import { errMsg, resolveServerName, SERVER_NAME_SETTING_KEY } from '@camstack/types'
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { ISettingsStoreProvider } from '@camstack/types'
 import type { SettingsStoreGateway } from './site-location.js'
 

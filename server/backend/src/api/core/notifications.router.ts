@@ -2,14 +2,14 @@
  * Notifications router — fixed core API (not a capability).
  *
  * Routes events by category to `(addonId, targetId)` notification targets.
- * The NotificationService is a singleton from @camstack/system; the targets
+ * The NotificationService is a singleton from @camstack/server/system; the targets
  * themselves are provided by addons via the `notification-output` capability
  * collection (see the notifiers addon / HA addon). Target management + the
  * test panel live on the cap surface (`api.notificationOutput.*`); this
  * legacy router only exposes category→target routing.
  */
 import { z } from 'zod'
-import type { NotificationService } from '@camstack/system'
+import type { NotificationService } from '@camstack/server/system'
 import { trpcRouter, protectedProcedure, adminProcedure } from '../trpc/trpc.middleware.js'
 
 const NotificationTargetRefSchema = z.object({

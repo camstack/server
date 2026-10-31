@@ -104,7 +104,7 @@ function readPackageJson(pkgJsonPath: string): PackageJsonView | null {
 export type InstallSource = 'npm' | 'local' | 'symlink'
 
 /** The one bootstrap package the server closure carries itself. */
-export const CLOSURE_PROVIDED_PACKAGE = '@camstack/system'
+export const CLOSURE_PROVIDED_PACKAGE = '@camstack/server'
 
 /**
  * Should the bootstrap SKIP seeding `packageName` into /data/addons?
@@ -138,7 +138,7 @@ export interface AddonInstallerConfig {
   /**
    * Override for "does the running closure already provide this package?".
    * Production leaves it unset (real `require.resolve`); a spec sets it to
-   * reach the branch that still seeds `@camstack/system`, which is otherwise
+   * reach the branch that still seeds `@camstack/server/system`, which is otherwise
    * unreachable in a process where that package always resolves.
    */
   readonly isPackageResolvable?: (packageName: string) => boolean
@@ -358,7 +358,7 @@ export class AddonInstaller {
    * Overridable via `AddonInstallerConfig.isPackageResolvable` so a spec can
    * exercise BOTH sides. That matters more than it looks: the branch that
    * still seeds is the one protecting a fresh deployment from an unbootable
-   * node, and it is unreachable in a test process where `@camstack/system`
+   * node, and it is unreachable in a test process where `@camstack/server/system`
    * always resolves.
    */
   private isResolvableFromClosure(packageName: string): boolean {
@@ -393,20 +393,20 @@ export class AddonInstaller {
     // AND listed here so this derivation excludes them, keeping the hub
     // REQUIRED_PACKAGES identical to the pre-single-root-consolidation set.
     const agentOnly = new Set(parsed.camstack?.agentOnlyBootstrapAddons ?? [])
-    // Bootstrap set = every @camstack/addon-* PLUS @camstack/system. core is the
+    // Bootstrap set = every @camstack/addon-* PLUS @camstack/server/system. core is the
     // system package that provides the REQUIRED infrastructure builtins
     // (storage-provider / settings / logging via its filesystem-storage etc.
     // addons); without it AddonRegistryService aborts boot with "No addon
     // provides required infrastructure capability storage-provider". It was
     // wrongly filtered out before (only ever present in data/addons via a
     // manual `camstack deploy core`), so a fresh deployment could never boot.
-    // The install loop already special-cases '@camstack/system' (a failed core
+    // The install loop already special-cases '@camstack/server/system' (a failed core
     // install is fatal), confirming it is meant to be in this list.
     return Object.freeze(
       deps.filter(
         (name) =>
           !agentOnly.has(name) &&
-          (name.startsWith('@camstack/addon-') || name === '@camstack/system'),
+          (name.startsWith('@camstack/addon-') || name === '@camstack/server'),
       ),
     )
   }
@@ -440,7 +440,7 @@ export class AddonInstaller {
   /**
    * Derive the agent bootstrap addon list from a meta-package's
    * `camstack.agentBootstrapAddons` manifest field, prepending
-   * `@camstack/system` (the required infrastructure builtins carrier — same
+   * `@camstack/server/system` (the required infrastructure builtins carrier — same
    * rationale as `deriveBootstrapList`). Mirrors `deriveBootstrapList`'s
    * `require.resolve` nuance: the meta-package may be absent in a deployment
    * (this field is eagerly evaluated at class-load), so a failed resolve
@@ -459,7 +459,7 @@ export class AddonInstaller {
       readonly camstack?: { readonly agentBootstrapAddons?: readonly string[] }
     }
     const addons = parsed.camstack?.agentBootstrapAddons ?? []
-    return Object.freeze(['@camstack/system', ...addons])
+    return Object.freeze(['@camstack/server', ...addons])
   }
 
   /**
@@ -475,7 +475,7 @@ export class AddonInstaller {
    * restated 2026-10-25 — D942). A copy already under the addon root is left
    * alone when this installer is not on the npm source (a workspace or a
    * bundled desktop seed) and when the package is the closure-provided
-   * `@camstack/system` (a copy there would shadow the closure). Every other
+   * `@camstack/server/system` (a copy there would shadow the closure). Every other
    * required addon already on disk is moved to registry `latest` when that
    * tag differs, higher or lower. An unreadable registry changes nothing.
    *
@@ -506,7 +506,7 @@ export class AddonInstaller {
       // An on-disk copy is not a pin. On the npm source it is moved to
       // registry `latest` when that tag differs (D942). A workspace or bundled
       // seed (`installSource` local/symlink) is the checkout itself and is
-      // left alone, as is `@camstack/system` when the closure already provides
+      // left alone, as is `@camstack/server/system` when the closure already provides
       // it — a copy under the addon root would shadow the closure (D15).
       if (fs.existsSync(path.join(addonDir, 'package.json'))) {
         if (
@@ -527,7 +527,7 @@ export class AddonInstaller {
         continue
       }
 
-      // `@camstack/system` is the exception, and the reason is that seed-only
+      // `@camstack/server/system` is the exception, and the reason is that seed-only
       // is a TRAP for it specifically. It is host-provided (D15): every node
       // resolves it from the running server closure, which `applyServerUpdate`
       // keeps current. A copy under /data/addons does not get that update —
@@ -564,7 +564,7 @@ export class AddonInstaller {
         await this.installFromNpm(packageName)
       } catch (err) {
         const msg = errMsg(err)
-        if (packageName === '@camstack/system') {
+        if (packageName === '@camstack/server') {
           throw new Error(`Required package ${packageName} failed to install: ${msg}`, {
             cause: err,
           })
@@ -660,7 +660,7 @@ export class AddonInstaller {
    * can be in flight. See `AddonManifest.reconcileFromDisk` for the rules.
    *
    * Every correction is logged by name — a manifest that silently disagreed
-   * with disk is what made "@camstack/system 1.2.29" read as installed on a
+   * with disk is what made "@camstack/server/system 1.2.29" read as installed on a
    * hub that deliberately has no copy of it.
    *
    * Returns the number of changes.
@@ -1055,7 +1055,7 @@ export class AddonInstaller {
     }
 
     // POST-INSTALL native-prebuild ENSURE. The `npm install` above RE-CREATES a
-    // traditional native (`better-sqlite3`, a runtime dep of `@camstack/system`)
+    // traditional native (`better-sqlite3`, a runtime dep of `@camstack/server/system`)
     // SOURCE-ONLY on a toolchain-less host, clobbering the good `.node` the
     // pre-install `copyBundledNativeModules` planted (Mac desktop first-boot
     // FATAL, 2026-07-21 — the copy-before-install fix was empirically

@@ -60,7 +60,7 @@ const TYPECHECK_SCRIPT =
  *  - desktop: two specs import `scripts/*.mjs`, typed by inference from the JS.
  */
 export const SPEC_CONFIG_OVERRIDES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
-  '@camstack/system': { rootDir: '.' },
+  '@camstack/server-framework': { rootDir: '.' },
   '@camstack/types': { rootDir: '.' },
   '@camstack/addon-pipeline': { rootDir: '../..' },
   '@camstack/desktop': { allowJs: true },

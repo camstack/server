@@ -13,7 +13,7 @@
  * not found`). This suite pins the per-(cap, device) semantics.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/system'
+import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import {
   type AddonContext,
   type AddonInitResult,

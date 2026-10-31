@@ -16,7 +16,7 @@
  * (`if (bearer.startsWith(…)) return legacy…(bearer)`) → that prefix's four
  * rows go green-to-red.
  */
-import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/system'
+import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/server/system'
 import Fastify from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 import { registerAuthWhoamiRoute } from '../../api/auth-whoami.js'

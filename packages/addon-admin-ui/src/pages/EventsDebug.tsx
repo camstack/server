@@ -13,7 +13,7 @@
  *
  * Two `addons.custom` actions on the `pipeline-analytics` addon — NOT capability
  * methods. The tab is a hub-local diagnostic over a store the hub already owns,
- * so it needs no codegen, no `@camstack/system` publish and no release train: it
+ * so it needs no codegen, no `@camstack/server/system` publish and no release train: it
  * ships with one `camstack deploy` of the addon and one of this bundle. That
  * property survived the 2026-08-28 rework: everything new here — the tile
  * provenance, the miss reason, the subject fields the shared card needs — rides

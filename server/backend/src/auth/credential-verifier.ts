@@ -33,7 +33,7 @@ import {
   PREFERENCES_SELF_SCOPE,
   scopesGrantAdmin,
 } from '@camstack/types'
-import type { UserManagementInternal } from '@camstack/system'
+import type { UserManagementInternal } from '@camstack/server/system'
 import type { DeviceScopeLookup } from '../api/trpc/scope-access.js'
 import { readCredentialIdentity } from '../api/trpc/trpc-error-principal.js'
 import { personSessionScopes } from './person-session-scopes.js'

@@ -139,7 +139,7 @@ export interface ClosureFileReader {
 /**
  * The closure version, read from the closure the runner was started from.
  *
- * The forked runner script is `<closure>/node_modules/@camstack/system/dist/
+ * The forked runner script is `<closure>/node_modules/@camstack/server/system/dist/
  * addon-runner.js` (hub: `/data/server-root/current/…`); the closure's own
  * `@camstack/server/package.json` sits two directories up. This is read from
  * disk rather than asked of `server-management` because that cap is

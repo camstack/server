@@ -20,7 +20,7 @@
  * second owner here is a FAKE serving a `linked-devices`-shaped row from its
  * own store — the fan-out and the prefix routing are what is under test.
  */
-import { CapabilityRegistry } from '@camstack/system'
+import { CapabilityRegistry } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import {
   createDeviceExtensionProvider,

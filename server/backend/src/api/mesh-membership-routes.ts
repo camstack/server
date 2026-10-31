@@ -15,7 +15,7 @@ import {
   MEMBERSHIP_PATHS,
   MembershipResponder,
   processMeshCrl,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import { createRateLimiter } from '../auth/auth-rate-limit'
 

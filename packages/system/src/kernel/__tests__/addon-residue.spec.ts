@@ -3,7 +3,7 @@
  *
  * Every one of these cases was measured on the live cluster on 2026-08-07/08.
  * The directory name is decoration: three independent consumers key on the
- * `package.json` inside it, so renaming `@camstack/system` to
+ * `package.json` inside it, so renaming `@camstack/server/system` to
  * `system.bak-pre-1272-…` left it loaded, scanned and REPORTED.
  */
 import * as fs from 'node:fs'
@@ -33,27 +33,27 @@ describe('classifyAddonDir', () => {
     expect(
       classifyAddonDir({
         dirName: 'system.bak-pre-1272-1786129145',
-        declaredName: '@camstack/system',
+        declaredName: '@camstack/server',
       }),
     ).toEqual({
       dirName: 'system.bak-pre-1272-1786129145',
       reason: 'backup-residue',
-      declaredName: '@camstack/system',
+      declaredName: '@camstack/server',
     })
   })
 
   it('flags a renamed directory even when the new name looks nothing like a backup', () => {
     expect(
-      classifyAddonDir({ dirName: 'system-disabled', declaredName: '@camstack/system' }),
+      classifyAddonDir({ dirName: 'system-disabled', declaredName: '@camstack/server' }),
     ).toEqual({
       dirName: 'system-disabled',
       reason: 'name-mismatch',
-      declaredName: '@camstack/system',
+      declaredName: '@camstack/server',
     })
   })
 
   it('keeps a package whose directory matches its declared name', () => {
-    expect(classifyAddonDir({ dirName: 'system', declaredName: '@camstack/system' })).toBeNull()
+    expect(classifyAddonDir({ dirName: 'system', declaredName: '@camstack/server' })).toBeNull()
     expect(
       classifyAddonDir({ dirName: 'addon-pipeline', declaredName: '@camstack/addon-pipeline' }),
     ).toBeNull()
@@ -77,7 +77,7 @@ describe('classifyAddonDir', () => {
       selectAddonResidue([
         { dirName: 'addon-pipeline', declaredName: '@camstack/addon-pipeline' },
         { dirName: 'system.bak-pre-unshadow', declaredName: null },
-        { dirName: 'system', declaredName: '@camstack/system' },
+        { dirName: 'system', declaredName: '@camstack/server' },
         { dirName: '.staging', declaredName: null },
       ]).map((v) => v.dirName),
     ).toEqual(['system.bak-pre-unshadow'])
@@ -101,8 +101,8 @@ describe('quarantineAddonResidue', () => {
 
   it('moves residue out of the scanned root, keeps the real package, and never deletes', () => {
     const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'system'), '@camstack/system', '1.2.61')
-    writePkg(path.join(scope, 'system.bak-pre-1272-1786129145'), '@camstack/system', '1.2.3')
+    writePkg(path.join(scope, 'system'), '@camstack/server', '1.2.61')
+    writePkg(path.join(scope, 'system.bak-pre-1272-1786129145'), '@camstack/server', '1.2.3')
 
     const lines: string[] = []
     const result = quarantineAddonResidue(root, (m) => lines.push(m))
@@ -118,12 +118,12 @@ describe('quarantineAddonResidue', () => {
 
     // A silent quarantine reads as "nothing happened" — every move is named.
     expect(lines.join('\n')).toContain('system.bak-pre-1272-1786129145')
-    expect(lines.join('\n')).toContain('@camstack/system')
+    expect(lines.join('\n')).toContain('@camstack/server')
   })
 
   it('the quarantine store is not itself an addon root', () => {
     const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'system.bak-old'), '@camstack/system', '1.2.3')
+    writePkg(path.join(scope, 'system.bak-old'), '@camstack/server', '1.2.3')
     quarantineAddonResidue(root, () => {})
 
     // Second pass sees nothing to do: the store is skipped, not re-scanned.
@@ -133,9 +133,9 @@ describe('quarantineAddonResidue', () => {
 
   it('does not collide when the same residue name is quarantined twice', () => {
     const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'system.bak-old'), '@camstack/system', '1.2.3')
+    writePkg(path.join(scope, 'system.bak-old'), '@camstack/server', '1.2.3')
     const first = quarantineAddonResidue(root, () => {})
-    writePkg(path.join(scope, 'system.bak-old'), '@camstack/system', '1.2.4')
+    writePkg(path.join(scope, 'system.bak-old'), '@camstack/server', '1.2.4')
     const second = quarantineAddonResidue(root, () => {})
 
     expect(first.quarantined[0]!.to).not.toEqual(second.quarantined[0]!.to)

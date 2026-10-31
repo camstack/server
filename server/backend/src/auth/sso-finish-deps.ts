@@ -4,7 +4,7 @@ import { userError } from '@camstack/types'
  * `main.ts` so the route there stays a three-line mapping.
  */
 import { createHash } from 'node:crypto'
-import { type CapabilityRegistry, getUserManagementInternal } from '@camstack/system'
+import { type CapabilityRegistry, getUserManagementInternal } from '@camstack/server/system'
 import { SSO_STATE_COOKIE } from '@camstack/types'
 import type { AuthService } from '../core/auth/auth.service.js'
 import type { MoleculerService } from '../core/moleculer/moleculer.service.js'

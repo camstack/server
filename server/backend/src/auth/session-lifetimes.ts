@@ -11,7 +11,7 @@
  * applies to the next login or refresh. A value that does not parse falls
  * back to the default — never to something longer.
  */
-import { parseTokenExpiry } from '@camstack/system'
+import { parseTokenExpiry } from '@camstack/server/system'
 
 export const ACCESS_TOKEN_EXPIRY_KEY = 'auth.accessTokenExpiry'
 export const SESSION_LIFETIME_KEY = 'auth.tokenExpiry'

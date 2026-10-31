@@ -12,17 +12,20 @@ import { computePinnedDeps, pinMetaPackage } from '../pin-meta-deps.mjs'
 describe('computePinnedDeps', () => {
   const versions = new Map<string, string>([
     ['@camstack/addon-pipeline', '0.1.19'],
-    ['@camstack/system', '0.1.43'],
+    ['@camstack/server', '0.1.43'],
     ['@camstack/kernel', '0.1.33'],
   ])
 
   it('pins @camstack/* deps to exact workspace versions', () => {
     const { deps, pinned } = computePinnedDeps(
-      { '@camstack/addon-pipeline': '*', '@camstack/system': '*' },
+      { '@camstack/addon-pipeline': '*', '@camstack/server': '*' },
       versions,
     )
-    expect(deps).toEqual({ '@camstack/addon-pipeline': '0.1.19', '@camstack/system': '0.1.43' })
-    expect(pinned.sort()).toEqual(['@camstack/addon-pipeline@0.1.19', '@camstack/system@0.1.43'])
+    expect(deps).toEqual({ '@camstack/addon-pipeline': '0.1.19', '@camstack/server': '0.1.43' })
+    expect(pinned.sort()).toEqual([
+      '@camstack/addon-pipeline@0.1.19',
+      '@camstack/server/system@0.1.43',
+    ])
   })
 
   it('leaves non-@camstack deps untouched', () => {
@@ -42,9 +45,9 @@ describe('computePinnedDeps', () => {
   })
 
   it('does not mutate the input deps object', () => {
-    const input = { '@camstack/system': '*' }
+    const input = { '@camstack/server': '*' }
     computePinnedDeps(input, versions)
-    expect(input['@camstack/system']).toBe('*')
+    expect(input['@camstack/server']).toBe('*')
   })
 
   it('handles a meta-package with no dependencies', () => {

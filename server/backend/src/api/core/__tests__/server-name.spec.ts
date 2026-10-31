@@ -1,4 +1,4 @@
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { AuthService } from '../../../core/auth/auth.service.js'

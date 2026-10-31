@@ -5,7 +5,7 @@
  * ## The problem this exists for
  *
  * An addon bundle leaves the packages in `HOST_EXTERNAL_SPECIFIERS`
- * (`@camstack/system` → `kernel/host-externals.ts`) unbundled and expects the
+ * (`@camstack/server/system` → `kernel/host-externals.ts`) unbundled and expects the
  * HOST to provide them. What provides them is a module-customization hook
  * (`framework-resolver-hook.mjs`) that `registerFrameworkResolver` installs in
  * the **addon-runner process**, re-anchoring those bare specifiers at
@@ -22,7 +22,7 @@
  * Registering the framework resolver in the child was considered and rejected:
  *
  *  - it would need the child to reach INTO another package's build output
- *    (`<frameworkDir>/node_modules/@camstack/system/dist/…/framework-resolver-hook.mjs`)
+ *    (`<frameworkDir>/node_modules/@camstack/server/system/dist/…/framework-resolver-hook.mjs`)
  *    plus an `--import` shim, i.e. a hard coupling to a layout nothing checks;
  *  - a registered hook makes **every** `import()` in that process re-enter the
  *    loader and block the main thread on `Atomics.wait` until the hooks worker

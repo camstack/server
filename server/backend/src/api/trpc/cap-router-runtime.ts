@@ -1,7 +1,7 @@
 /**
  * Server-side glue for the runtime cap-router builder (BIG PLAN 2).
  *
- * `@camstack/system` `buildCapRouters(primitives, services)` owns the
+ * `@camstack/server/system` `buildCapRouters(primitives, services)` owns the
  * per-cap router CONSTRUCTION (procedure shapes + node routing), but it
  * holds no tRPC primitives and no backend services. This module supplies
  * both:
@@ -27,7 +27,7 @@ import {
   type CapRouterServices,
   isArrayOutputSchema,
   type ProcedureBuilder,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import {
   type CapabilityDefinition,
   type CapabilityMethodSchema,
@@ -53,7 +53,7 @@ type ResolvedProvider = Readonly<Record<string, (input?: unknown) => unknown>>
 /**
  * Per-request provider factory for a `server-provided` cap. The provider is
  * composed from backend services (not the registry); the server owns the
- * factory and passes the map in so `@camstack/system` never touches a
+ * factory and passes the map in so `@camstack/server/system` never touches a
  * backend service (self-sufficiency invariant). `ctx` is forwarded so
  * caps like `toast` / `addons` can read the request context.
  */

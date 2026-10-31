@@ -27,7 +27,11 @@
  * path forgot.
  */
 
-import { ALL_CAPABILITY_DEFINITIONS, buildCapRouters, CapabilityRegistry } from '@camstack/system'
+import {
+  ALL_CAPABILITY_DEFINITIONS,
+  buildCapRouters,
+  CapabilityRegistry,
+} from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import {
   deviceExportCapability,

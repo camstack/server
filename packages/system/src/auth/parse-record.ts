@@ -31,7 +31,7 @@ export function parseRecord<T>(kind: string, schema: ZodLikeSchema<T>, data: unk
       Object.keys(data as Record<string, unknown>).length === 1 &&
       'data' in (data as Record<string, unknown>)
     const hint = looksDoubleWrapped
-      ? ' This shape is the legacy double-wrap from a stale settings-store query path. Restart the server with the latest @camstack/system build.'
+      ? ' This shape is the legacy double-wrap from a stale settings-store query path. Restart the server with the latest @camstack/server/system build.'
       : ''
     throw new Error(
       `Failed to parse ${kind} from settings store. Top-level keys=[${topKeys}].${hint} Underlying: ${detail}`,

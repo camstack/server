@@ -97,8 +97,8 @@ const ADDONS = [
   installedAddon('provider-wyze', 'Wyze', '@camstack/addon-provider-wyze'),
   installedAddon('bosch-home-connect', 'Bosch Home Connect', '@camstack/addon-bosch-home-connect'),
   installedAddon('bosch-shc', 'Bosch Smart Home Controller', '@camstack/addon-bosch-shc'),
-  installedAddon('core-blocks', 'Core Blocks', '@camstack/system'),
-  installedAddon('camera-grid', 'Camera Grid', '@camstack/system'),
+  installedAddon('core-blocks', 'Core Blocks', '@camstack/server'),
+  installedAddon('camera-grid', 'Camera Grid', '@camstack/server'),
 ]
 
 export default defineFixtures({

@@ -3,7 +3,7 @@
  * `@camstack/types` — the REAL `ctx.records` facade over an in-memory engine
  * that keeps the real engine's contract, refusals included (an unindexed
  * `where`, an `order` next to a `where`, a page that cannot be resumed). The
- * contract spec `records-in-memory-contract.spec.ts` in `@camstack/system`
+ * contract spec `records-in-memory-contract.spec.ts` in `@camstack/server/system`
  * holds it to the engine. Test-only; fabricated data.
  *
  * Every event ledger is a records kind on every node, so a spec builds its

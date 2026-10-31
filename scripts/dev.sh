@@ -199,7 +199,7 @@ esac
 # ----------------------------------------------------------------------------
 echo "[dev] Building system packages (blocking — Nx cache, ~1-2s warm)..."
 npx nx run-many -t build \
-  --projects='@camstack/types,@camstack/system,sdk,@camstack/ui-library' \
+  --projects='@camstack/types,@camstack/server/system,sdk,@camstack/ui-library' \
   --output-style=stream \
   --parallel=4 || {
     echo "[dev] FATAL: a system package failed to build — refusing to boot on stale dist." >&2

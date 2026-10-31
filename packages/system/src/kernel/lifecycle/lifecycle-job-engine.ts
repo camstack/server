@@ -151,13 +151,13 @@ export class LifecycleJobEngine {
   /**
    * Mark a framework task `skipped`.
    *
-   * Framework packages (`@camstack/system` + its lockstep companions) are NO
+   * Framework packages (`@camstack/server/system` + its lockstep companions) are NO
    * LONGER updated through this engine. The legacy `/data/framework` per-package
    * swap was removed in the single-copy framework collapse (2026-07-18) — the
    * running framework is loaded from the active server-root single copy, and
    * framework/cap updates now ship EXCLUSIVELY via `applyServerUpdate` (the
    * node-root ServerUpdateService). Any framework task that still reaches this
-   * engine (e.g. an "Update all" bulk job that swept `@camstack/system`) is
+   * engine (e.g. an "Update all" bulk job that swept `@camstack/server/system`) is
    * skipped, never applied — applying it would swap a dead dir.
    */
   private skipFrameworkTask(job: LifecycleJob, task: LifecycleTask): void {

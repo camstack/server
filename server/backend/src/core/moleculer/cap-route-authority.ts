@@ -1,9 +1,9 @@
 /**
  * Adapter factories that bridge the server-side registry/service state into the
- * narrow interfaces that CapRouteResolver (in @camstack/system) requires.
+ * narrow interfaces that CapRouteResolver (in @camstack/server/system) requires.
  *
  * Layer note: this file is in server/backend and may import server-side types.
- * The resolver itself (in @camstack/system) must NOT import from here —
+ * The resolver itself (in @camstack/server/system) must NOT import from here —
  * it depends only on the narrow interfaces (NodeCapAuthority, InProcessProviderLookup)
  * defined in the kernel. These factories are the wiring adapters.
  *
@@ -17,7 +17,7 @@ import type {
   InProcessProviderLookup,
   InProcessProviderRef,
   NodeCapAuthority,
-} from '@camstack/system'
+} from '@camstack/server/system'
 
 // ---------------------------------------------------------------------------
 // Minimal interface for the HubNodeRegistry dependency

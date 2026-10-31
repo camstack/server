@@ -1,7 +1,7 @@
 /**
  * Shared cap-router predicates — the SINGLE source for the structural Zod-shape
  * checks + naming used by BOTH the runtime cap-router builder
- * (`@camstack/system` `cap-router-builder.ts` + the server's
+ * (`@camstack/server/system` `cap-router-builder.ts` + the server's
  * `cap-router-runtime.ts`) AND the codegen scripts (`scripts/generate-cap-*.ts`).
  *
  * These used to be independently reimplemented on each side, held in sync only

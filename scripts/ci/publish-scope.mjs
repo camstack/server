@@ -17,7 +17,7 @@
  *     bundles whom is exactly the thing that goes stale.
  *
  *     A copy has two forms in this repo, and the first version of this rule
- *     knew one of them. `@camstack/system` sets `bundleTypesMainEntry: true`
+ *     knew one of them. `@camstack/server/system` sets `bundleTypesMainEntry: true`
  *     (`tools/build/vite-lib.preset.ts`) and so INLINES the bare
  *     `@camstack/types` entry — the cap definitions every tRPC router
  *     validates against — into its own dist; the hub sources them from there,
@@ -144,7 +144,7 @@ function tsupReachable(dir, pj, packages) {
  *     artifact. **authoritative**: the copy IS what the consumer runs
  *     (admin-ui's browser bundle of ui-library).
  *   - `bundleTypesMainEntry: true` — the preset inlines the bare
- *     `@camstack/types` entry. **authoritative**: `@camstack/system` builds
+ *     `@camstack/types` entry. **authoritative**: `@camstack/server/system` builds
  *     the cap routers from that copy, so it is the cluster's API surface.
  *   - `externals: 'self-contained'` / `'self-contained+ui'` — the preset
  *     inlines `@camstack/types` along with every other pure-JS dependency.
@@ -193,7 +193,7 @@ export function inlinedSources(root = process.cwd(), packages = readWorkspace(ro
           if (target !== null) record(dir, target, 'private')
         }
       }
-      if (/^tsup\.config\./.test(config)) {
+      if (config.startsWith('tsup.config.')) {
         for (const target of tsupReachable(dir, packages.get(dir), packages))
           record(dir, target, 'private')
       }
@@ -259,7 +259,7 @@ function serverClosureNames(packages) {
  * Exported separately because the workflow reaches this set two ways — from
  * changed files (the affected path) and from `force_packages` / `scope=all` —
  * and both need the same answer. A second copy of the rules in the YAML is how
- * the first version of the closure cascade ended up covering `@camstack/system`
+ * the first version of the closure cascade ended up covering `@camstack/server/system`
  * and nothing else for a month.
  */
 export function applyCascades(dirs, root = process.cwd()) {

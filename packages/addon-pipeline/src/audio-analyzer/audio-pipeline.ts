@@ -13,8 +13,8 @@ import type { IScopedLogger } from '@camstack/types'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { errMsg } from '@camstack/types'
-// eslint-disable-next-line no-restricted-imports -- `ensureModel` is a build-time dep, the same waiver detection-pipeline and the embedding encoder use for the shared model downloader in `@camstack/system`.
-import { ensureModel } from '@camstack/system/addon-utils'
+// eslint-disable-next-line no-restricted-imports -- `ensureModel` is a build-time dep, the same waiver detection-pipeline and the embedding encoder use for the shared model downloader in `@camstack/server/system`.
+import { ensureModel } from '@camstack/server/system/addon-utils'
 import { AUDIO_CLASSIFIER_MODELS } from '../detection-pipeline/registry/model-catalogs.js'
 import { AudioSubprocessChannel, parseClassifyReply } from './audio-subprocess-channel.js'
 

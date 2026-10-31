@@ -96,7 +96,6 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@camstack/system": "*",
     "@camstack/types": "*",
     "@camstack/ui-library": "*",
     "@module-federation/vite": "^1.16.9",
@@ -113,5 +112,10 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0"
+  },
+  "nx": {
+    "implicitDependencies": [
+      "@camstack/server-framework"
+    ]
   }
 }

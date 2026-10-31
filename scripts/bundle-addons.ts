@@ -28,11 +28,15 @@ const targetIdx = args.indexOf('--target')
 const targetDir =
   targetIdx >= 0 && args[targetIdx + 1] ? path.resolve(args[targetIdx + 1]) : DEFAULT_TARGET
 
-// Import REQUIRED_PACKAGES from system (kernel absorbed into @camstack/system)
+// Import REQUIRED_PACKAGES from system (kernel absorbed into @camstack/server/system)
 const { AddonInstaller } = require(
   path.join(ROOT, 'packages/system/dist/kernel/index.js'),
-) as typeof import('@camstack/system')
-const REQUIRED_PACKAGES = AddonInstaller.REQUIRED_PACKAGES
+) as typeof import('@camstack/server/system')
+// `@camstack/server` is the builtins carrier: it travels in the server closure,
+// not as an addon bundle.
+const REQUIRED_PACKAGES = AddonInstaller.REQUIRED_PACKAGES.filter(
+  (name) => name !== '@camstack/server',
+)
 
 console.log(`Bundling ${REQUIRED_PACKAGES.length} required packages → ${targetDir}\n`)
 

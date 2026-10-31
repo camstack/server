@@ -17,8 +17,8 @@ import {
   RENEWAL_ABANDONED,
   setProcessMeshCertificateRegistry,
   setProcessMeshPeerTransportLookup,
-} from '@camstack/system'
-import type { RegisterNodeParams } from '@camstack/system'
+} from '@camstack/server/system'
+import type { RegisterNodeParams } from '@camstack/server/system'
 import type { IScopedLogger, SettingsStoreClient, SystemEvent } from '@camstack/types'
 import { MoleculerService } from '../core/moleculer/moleculer.service.js'
 import type { EventBusService } from '../core/events/event-bus.service.js'

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { LocalChildRegistry, AddonCallInput } from '@camstack/system'
+import type { LocalChildRegistry, AddonCallInput } from '@camstack/server/system'
 import { AddonCallGateway, type AddonCallGatewayDeps } from '../addon-call-gateway'
 
 /**

@@ -22,7 +22,7 @@
  * (`remote-addon-update-grant.ts`): own node, the hub's recorded version, audited.
  * Any refusal reaches the UI verbatim as the update's failure, never as silence.
  */
-import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@camstack/system'
+import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@camstack/server/system'
 
 /** Hub procedures this module calls, as `$core-caps` actions. */
 export const HUB_ADDON_LIST_ACTION = '$core-caps.addons.list'

@@ -13,7 +13,7 @@
  * `{preferred, rationale}` out) — no SDK break.
  */
 import { z } from 'zod'
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { IPlatformProbeProvider } from '@camstack/types'
 import type { MoleculerService } from '../../core/moleculer/moleculer.service.js'
 import { trpcRouter, adminProcedure } from '../trpc/trpc.middleware.js'

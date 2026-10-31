@@ -2,7 +2,7 @@
  * Which dirs the agent scans — the single-copy collapse, on the agent.
  *
  * The defect these pin was measured on the live cluster 2026-08-11: both agents
- * carried `@camstack/system` in their addon root (1.2.61 / 1.2.62) while running
+ * carried `@camstack/server/system` in their addon root (1.2.61 / 1.2.62) while running
  * a 1.2.78 closure, because the old self-heal only wrote that copy when it was
  * ABSENT and nothing ever refreshed it. `bootCoreAddons` itself needs a broker
  * and real contexts, so the decision lives in `addon-scan.ts` as pure data —
@@ -58,7 +58,7 @@ describe('resolveAddonPackageDirs', () => {
     // the hub and the agent would exclude different things from one list.
     writePkg(path.join(root, '@camstack', 'system'), BUILTINS_PACKAGE)
     expect(resolveAddonPackageDirs(root, ['system'])).toHaveLength(1)
-    expect(resolveAddonPackageDirs(root, ['@camstack/system'])).toHaveLength(0)
+    expect(resolveAddonPackageDirs(root, ['@camstack/server'])).toHaveLength(0)
   })
 
   it('tolerates a missing addons dir', () => {

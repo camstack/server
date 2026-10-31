@@ -103,13 +103,13 @@ describe('readInstalledAddonPackages', () => {
   it('reads scoped package dirs by their npm package name, sorted', () => {
     const root = makeAddonsDir([
       { dir: '@camstack/addon-pipeline', name: '@camstack/addon-pipeline', version: '1.0.4' },
-      { dir: '@camstack/system', name: '@camstack/system', version: '1.2.61' },
+      { dir: '@camstack/server', name: '@camstack/server', version: '1.2.61' },
     ])
     expect(readInstalledAddonPackages(root)).toEqual([
       { packageName: '@camstack/addon-pipeline', installedVersion: '1.0.4' },
       // Included on purpose: on an agent this is the ONLY copy of the builtin
       // infra, so it is exactly what a misaligned node must be able to see.
-      { packageName: '@camstack/system', installedVersion: '1.2.61' },
+      { packageName: '@camstack/server', installedVersion: '1.2.61' },
     ])
   })
 

@@ -10,7 +10,7 @@ import {
   issueMeshLeafForNode,
   mintAgentUiUnlockTicket,
   type MeshCaSigner,
-} from '@camstack/system'
+} from '@camstack/server/system'
 
 export interface PairedFixture {
   readonly ca: MeshCaSigner

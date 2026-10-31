@@ -35,9 +35,9 @@
  * the helpers the closures delegate to.
  */
 
-import type { ChildCapDescriptor, RegisteredChild } from '@camstack/system'
-import { createLocalTransport, LocalChildRegistry } from '@camstack/system'
-import type { RegisterNodeParams } from '@camstack/system'
+import type { ChildCapDescriptor, RegisteredChild } from '@camstack/server/system'
+import { createLocalTransport, LocalChildRegistry } from '@camstack/server/system'
+import type { RegisterNodeParams } from '@camstack/server/system'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildChildUdsManifest,

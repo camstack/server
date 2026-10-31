@@ -15,9 +15,9 @@
  * credential is dead"). Every refusal is logged by the credential manager with
  * its reason; rate-limit refusals are logged here.
  */
-import type { CapabilityRegistry } from '@camstack/system'
-import { getUserManagementInternal } from '@camstack/system'
-import type { DeviceCheckRefusal } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
+import { getUserManagementInternal } from '@camstack/server/system'
+import type { DeviceCheckRefusal } from '@camstack/server/system'
 import {
   CompleteEnrollmentInputSchema,
   CompleteEnrollmentResultSchema,

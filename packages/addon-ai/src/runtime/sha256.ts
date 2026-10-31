@@ -1,6 +1,6 @@
 /**
  * File sha256 — a local copy of the private `computeSha256` at
- * model-downloader.ts (not exported from @camstack/system), streamed so it
+ * model-downloader.ts (not exported from @camstack/server/system), streamed so it
  * never buffers a multi-GB artifact.
  */
 import { createHash } from 'node:crypto'

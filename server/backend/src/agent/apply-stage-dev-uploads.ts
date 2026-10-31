@@ -3,7 +3,7 @@
  * `dev-uploads/<version>/` and write it under this node's server-root.
  */
 import { createHash } from 'node:crypto'
-import type { AddonDeploySource } from '@camstack/system'
+import type { AddonDeploySource } from '@camstack/server/system'
 import { unpackDevUploadVersionBundle } from '../api/dev-uploads-bundle.js'
 import { isDevChannelVersion, serverRootDir } from '../server-root/index.js'
 

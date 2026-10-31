@@ -259,8 +259,8 @@ tarball contains the bundle and `package.json`.
 
 `externals: 'self-contained'` (what the scaffold sets) inlines
 `@camstack/types`, `@camstack/sdk`, `zod`, and `@trpc/*`. It leaves
-`@camstack/system` and `@camstack/ui-library` out of the bundle. For that
-mode the host that actually has to resolve an import is `@camstack/system`
+`@camstack/server` and `@camstack/ui-library` out of the bundle. For that
+mode the host that actually has to resolve an import is `@camstack/server`
 (`packages/system/src/kernel/host-externals.ts`). Native modules the preset
 also keeps external are `sharp`, `node-av`, `node-pty`, and `ssh2`. Do not
 import `ALL_CAPABILITY_DEFINITIONS`. The lightweight types entry is

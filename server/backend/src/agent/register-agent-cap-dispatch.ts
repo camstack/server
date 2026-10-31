@@ -12,7 +12,7 @@ import type {
   HubLocalChildDispatcher,
   InProcessProviderLookup,
   LocalChildRegistryLogger,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { createAgentCapDispatchService } from './agent-cap-dispatch-service.js'
 
 // ---------------------------------------------------------------------------

@@ -65,7 +65,7 @@ export { DisposerChain } from './disposer-chain.js'
 // schema-free module — `constants.ts` and `utils/hf-url.ts` import nothing, and
 // `types/model-formats.ts` is split out of `types/models.ts` (which builds Zod).
 // Reached through the root barrel these dragged the whole schema graph into
-// `@camstack/system/addon-utils` (~105 MB per runner).
+// `@camstack/server/system/addon-utils` (~105 MB per runner).
 export { HF_REPO } from './constants.js'
 export { MODEL_FORMATS } from './types/model-formats.js'
 export { hfModelUrl } from './utils/hf-url.js'

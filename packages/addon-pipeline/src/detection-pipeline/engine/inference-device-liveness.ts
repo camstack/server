@@ -2,7 +2,7 @@
  * Per-`deviceKey` circuit breaker for the Python inference pools.
  *
  * This is the accelerator-level twin of the kernel's `CrashSupervisor`
- * (`@camstack/system`, D6): a bounded restart budget with exponential backoff
+ * (`@camstack/server/system`, D6): a bounded restart budget with exponential backoff
  * and a **terminal `failed` state that is reported** — never an infinite
  * respawn loop. It is written here rather than imported because
  * `CrashSupervisor` is a kernel internal with no package export, and because

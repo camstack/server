@@ -11,7 +11,7 @@ import {
   LoginSessionManager,
   staticJwtSigningKey,
   type UserManagementInternal,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { SettingsStoreClient, TokenScope } from '@camstack/types'
 import { fakeSecrets } from './device-test-kit.js'
 import { AuthService } from '../../core/auth/auth.service.js'

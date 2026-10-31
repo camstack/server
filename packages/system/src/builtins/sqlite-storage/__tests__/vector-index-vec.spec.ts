@@ -211,7 +211,7 @@ describe('SqliteVecVectorIndex', () => {
  * `resolveRowBound` guards `data-store-provider.query` — the door 24 analytics
  * call sites use. `vector-store.query` reaches the SAME database file, on the
  * same connection, in the SAME process (hub-main: `sqlite-settings` is a
- * `@camstack/system` builtin and is never handed to `$process.spawnRunner`),
+ * `@camstack/server/system` builtin and is never handed to `$process.spawnRunner`),
  * and its `topK` was `z.number().int().positive()` with no `.max()`, bound
  * straight into `k = ?` and `.all()`ed.
  *

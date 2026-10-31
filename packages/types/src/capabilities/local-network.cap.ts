@@ -20,7 +20,7 @@
  * clients — they reverse-connect to the hub. Exposing their interfaces
  * via the same surface would leak internal topology with no upside.
  *
- * Implementation in `@camstack/system/builtins/local-network/`.
+ * Implementation in `@camstack/server/system/builtins/local-network/`.
  */
 import { z } from 'zod'
 import { DiscoveryHitSchema, DiscoveryModeSchema } from './device-provider.cap.js'
@@ -668,7 +668,7 @@ export const localNetworkCapability = {
       auth: 'admin',
     }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'hub-only' },
 } as const satisfies CapabilityDefinition
 

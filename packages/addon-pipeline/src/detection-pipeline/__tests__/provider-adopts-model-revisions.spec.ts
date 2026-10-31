@@ -13,7 +13,7 @@ const adopt = vi.hoisted(() =>
     stale: [],
   })),
 )
-vi.mock('@camstack/system/addon-utils', async (importOriginal) => ({
+vi.mock('@camstack/server/system/addon-utils', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   adoptModelRevisions: adopt,
 }))

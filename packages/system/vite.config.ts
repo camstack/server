@@ -8,8 +8,8 @@ import { SYSTEM_EXTRA_EXTERNALS } from './vite.shared.ts'
  * matches tsup's prior behavior (emitting DTS for all 23 entries
  * OOM'd the TS compiler on CI runners with ~7GB heap).
  *
- * Consumers always import from `@camstack/system` (root), not
- * `@camstack/system/builtins/<x>`, so the missing builtin .d.ts files
+ * Consumers always import from `@camstack/server/system` (root), not
+ * `@camstack/server/system/builtins/<x>`, so the missing builtin .d.ts files
  * are invisible to typed callers.
  */
 const base = buildLibPreset({
@@ -107,7 +107,7 @@ const base = buildLibPreset({
   externals: 'framework',
   // Bundle the BARE `@camstack/types` entry into system's dist (subpaths stay
   // external) so the hub sources its cap-derived runtime symbols
-  // (ALL_CAPABILITY_DEFINITIONS, METHOD_ACCESS_MAP, …) from `@camstack/system`.
+  // (ALL_CAPABILITY_DEFINITIONS, METHOD_ACCESS_MAP, …) from `@camstack/server/system`.
   // `camstack deploy packages/system` then refreshes the hub's capability
   // surface with no new server image, and `@camstack/types` is never deployed
   // to the hub. See tools/build/vite-lib.preset.ts.

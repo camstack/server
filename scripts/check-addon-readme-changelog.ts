@@ -7,7 +7,7 @@
  *
  * The Addons page reads the README from the npm packument and the CHANGELOG
  * from the tarball. A package that forgets either file publishes a card with
- * nothing to read. Builtins inside `@camstack/system` are not separate
+ * nothing to read. Builtins inside `@camstack/server/system` are not separate
  * packages and are out of scope; private packages never publish and are out
  * of scope too.
  *
@@ -49,7 +49,10 @@ export function problemsFor(root: string, pkg: WorkspacePackage): readonly Probl
   }
   const files = pkg.manifest['files']
   if (!Array.isArray(files)) {
-    found.push({ pkg: pkg.name, message: 'package.json has no files array, so packing is implicit' })
+    found.push({
+      pkg: pkg.name,
+      message: 'package.json has no files array, so packing is implicit',
+    })
     return found
   }
   const listed = new Set(files.filter((entry): entry is string => typeof entry === 'string'))

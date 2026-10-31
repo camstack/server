@@ -25,8 +25,8 @@ import type {
   NodeCapAuthority,
   HubLocalChildDispatcher,
   CapRouteResolverDeps,
-} from '@camstack/system'
-import { CapRouteResolver, CapRouteError } from '@camstack/system'
+} from '@camstack/server/system'
+import { CapRouteResolver, CapRouteError } from '@camstack/server/system'
 
 // ---------------------------------------------------------------------------
 // Helper: build the consolidated native-cap fallback (the G2 implementation)

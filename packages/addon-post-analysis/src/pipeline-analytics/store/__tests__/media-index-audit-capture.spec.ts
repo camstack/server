@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import type { SettingsStoreClient } from '@camstack/types'
-import { SqliteSettingsBackend } from '@camstack/system'
+import { SqliteSettingsBackend } from '@camstack/server/system'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { makeFakeStorageProvider, makeSilentLogger } from '../../__tests__/test-helpers.js'
 import {

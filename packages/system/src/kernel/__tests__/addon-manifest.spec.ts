@@ -243,12 +243,12 @@ describe('AddonManifest', () => {
       // renamed copy is residue (quarantined elsewhere); it must never be
       // the thing a version surface answers with.
       seedPkg('@camstack/addon-pipeline', '1.0.2')
-      seedUnderDirName('@camstack/system', '1.2.3', 'system.bak-pre-1272-1786129145')
+      seedUnderDirName('@camstack/server', '1.2.3', 'system.bak-pre-1272-1786129145')
 
       const changes = manifest.reconcileFromDisk(tmpDir)
 
       expect(changes).toBe(1)
-      expect(manifest.get('@camstack/system')).toBeNull()
+      expect(manifest.get('@camstack/server')).toBeNull()
       expect(manifest.get('@camstack/addon-pipeline')!.version).toBe('1.0.2')
     })
 
@@ -278,13 +278,13 @@ describe('AddonManifest', () => {
     })
 
     it('prunes a manifest entry whose directory does not exist (phantom)', () => {
-      manifest.upsert('@camstack/system', { version: '1.2.29', source: 'npm' })
+      manifest.upsert('@camstack/server', { version: '1.2.29', source: 'npm' })
       manifest.upsert('@camstack/addon-viewer-ui', { version: '1.1.39', source: 'bundled' })
       seedPkg('@camstack/addon-pipeline', '1.2.43')
 
       const changes = manifest.reconcileFromDisk(tmpDir)
       expect(changes).toBe(3) // 2 pruned + 1 added
-      expect(manifest.get('@camstack/system')).toBeNull()
+      expect(manifest.get('@camstack/server')).toBeNull()
       expect(manifest.get('@camstack/addon-viewer-ui')).toBeNull()
       expect(manifest.get('@camstack/addon-pipeline')).not.toBeNull()
     })

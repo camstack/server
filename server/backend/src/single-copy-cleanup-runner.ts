@@ -7,7 +7,7 @@
  * neither owns a private idea of what may be deleted.
  *
  * Everything decidable lives in `single-copy-cleanup.ts` and is pure. This file
- * only reads the real world: the active-root env, where `@camstack/system`
+ * only reads the real world: the active-root env, where `@camstack/server/system`
  * actually resolved, the effective `NODE_PATH`, and the disk.
  *
  * It never throws. A sweep that fails leaves a node with an extra directory; a
@@ -98,10 +98,10 @@ export async function runSingleCopyCleanup(opts: CleanupRunnerOptions): Promise<
   }
 }
 
-/** Where this process actually resolved `@camstack/system`, or `null`. */
+/** Where this process actually resolved `@camstack/server/system`, or `null`. */
 function resolveSystemPath(): string | null {
   try {
-    return require.resolve('@camstack/system/package.json')
+    return require.resolve('@camstack/server/system/package.json')
   } catch {
     return null
   }

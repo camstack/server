@@ -5,7 +5,7 @@
 // matching the real AddonRegistryService boot flow, using mock addons.
 //
 
-import { CapabilityRegistry, INFRA_CAPABILITIES } from '@camstack/system'
+import { CapabilityRegistry, INFRA_CAPABILITIES } from '@camstack/server/system'
 import type { CapabilityDeclaration, ICamstackAddon, IScopedLogger } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MockAnalysisAddonA } from './fixtures/mock-analysis-addon-a'

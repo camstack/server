@@ -20,8 +20,8 @@ describe('systemAddonIdsOf - declared section', () => {
 
   it('a declared providers wins over a framework package', () => {
     const ids = systemAddonIdsOf([
-      { manifest: { id: 'p', packageName: '@camstack/system', integrationSection: 'providers' } },
-      addon('s', '@camstack/system'),
+      { manifest: { id: 'p', packageName: '@camstack/server', integrationSection: 'providers' } },
+      addon('s', '@camstack/server'),
     ])
     expect([...ids]).toEqual(['s'])
   })
@@ -30,8 +30,8 @@ describe('systemAddonIdsOf - declared section', () => {
 describe('systemAddonIdsOf', () => {
   it('names the addons shipped in a framework package, never by addon id', () => {
     const ids = systemAddonIdsOf([
-      addon('core-blocks', '@camstack/system'),
-      addon('camera-grid', '@camstack/system'),
+      addon('core-blocks', '@camstack/server'),
+      addon('camera-grid', '@camstack/server'),
       addon('provider-reolink', '@camstack/addon-provider-reolink'),
     ])
     expect([...ids].sort()).toEqual(['camera-grid', 'core-blocks'])

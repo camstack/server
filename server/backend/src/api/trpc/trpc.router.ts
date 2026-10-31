@@ -18,7 +18,7 @@ import * as path from 'node:path'
 //   scopedToken → `userManagement`, toast → `toast` cap, inference →
 //   `pipelineExecutor` cap, pipeline → `pipelineConfig` cap,
 //   systemEvents → kept manual.
-import type { CapabilityRegistry, NotificationService, ToastService } from '@camstack/system'
+import type { CapabilityRegistry, NotificationService, ToastService } from '@camstack/server/system'
 import type {
   BrokerConsumerAttribution,
   InferProvider,
@@ -329,7 +329,7 @@ export function wrapWebrtcSessionProviderWithRelay(
  * the request User-Agent). The runtime builder mounts the route from the live
  * def schemas and resolves the provider through this map instead of the
  * registry — keeping backend composition in `@camstack/server` (the
- * self-sufficiency invariant: `@camstack/system` never touches a backend
+ * self-sufficiency invariant: `@camstack/server/system` never touches a backend
  * service). Each factory receives the per-request tRPC `ctx`.
  */
 function buildServerProviders(
@@ -401,11 +401,11 @@ function buildServerProviders(
 /**
  * Build the AppRouter capability track (BIG PLAN 2).
  *
- * The per-cap router CONSTRUCTION now lives in `@camstack/system`
+ * The per-cap router CONSTRUCTION now lives in `@camstack/server/system`
  * (`buildCapRouters`), driven at runtime by `ALL_CAPABILITY_DEFINITIONS`
  * + the declarative `mount` hint on each cap def. A capability update
  * therefore ships via the framework plugin (`@camstack/types` +
- * `@camstack/system`) with NO `@camstack/server` rebuild — the value is
+ * `@camstack/server/system`) with NO `@camstack/server` rebuild — the value is
  * dynamic.
  *
  * The AppRouter TYPE stays codegen-derived: the dynamic value is assigned

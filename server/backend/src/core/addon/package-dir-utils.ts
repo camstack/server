@@ -14,7 +14,7 @@ import { createRequire } from 'node:module'
 
 // Resolve framework packages the same way the running hub does — from THIS
 // module's location, whose walk-up lands on the hub's own `node_modules`
-// closure (identical to the hub main's `@camstack/system` resolution).
+// closure (identical to the hub main's `@camstack/server` resolution).
 const requireFromHere = createRequire(__filename)
 
 function readJsonObjectSafe(filePath: string): Record<string, unknown> | null {
@@ -61,6 +61,16 @@ export function resolveHubClosurePackageDir(packageName: string): string | null 
     // package itself not resolvable — treat as not installed.
   }
   return null
+}
+
+/**
+ * The directory that carries the kernel + builtins: `<closure>/@camstack/server/system`.
+ * It holds the generated builtins manifest (`package.json`, name `@camstack/server`),
+ * `dist/` and `assets/` — the builtins are part of the server package, not a
+ * package of their own. Null when the running closure does not resolve it.
+ */
+export function resolveBuiltinsDir(): string | null {
+  return resolveHubClosurePackageDir('@camstack/server/system')
 }
 
 function collectJsFiles(root: string, dir: string, out: string[]): void {

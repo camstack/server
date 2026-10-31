@@ -1,7 +1,7 @@
 /**
  * Transport-agnostic reverse-proxy from the hub to an addon's `127.0.0.1`
  * data-plane listener. Operates on RAW Node http objects (`request.raw` /
- * `reply.raw`) so `@camstack/system` stays free of any HTTP-framework dependency.
+ * `reply.raw`) so `@camstack/server/system` stays free of any HTTP-framework dependency.
  *
  * The hub authenticates first (its existing scoped-token / admin / cookie logic),
  * then hands the raw request+response here. We forward method + headers (incl.

@@ -8,7 +8,7 @@
  * plain in-memory object — no SQLite, no real filesystem.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/system'
+import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import {
   type AddonContext,
   DeviceType,

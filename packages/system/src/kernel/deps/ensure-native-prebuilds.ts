@@ -29,7 +29,7 @@
  * validator should still reject, not something a prebuild re-fetch can heal.
  *
  * Injected into the update service from the construction site so the zero-dep
- * `@camstack/node-root` layer never depends on npm/@camstack/system, and the
+ * `@camstack/node-root` layer never depends on npm/@camstack/server/system, and the
  * fetch is unit-testable with a fake fetcher.
  */
 import { execFile } from 'node:child_process'

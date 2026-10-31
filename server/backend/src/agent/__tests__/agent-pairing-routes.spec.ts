@@ -3,7 +3,7 @@
  * talks to the agent's real Fastify routes on a loopback socket, with the real
  * `AgentPairing` and the real `agent.json` writer behind them.
  *
- * What it adds to the in-memory specs in `@camstack/system`: the status codes and bodies the
+ * What it adds to the in-memory specs in `@camstack/server/system`: the status codes and bodies the
  * hub parses, the network-reachable surface (a confirm or a completion needs nothing but the
  * pairing id), what lands in `agent.json` and what is erased by "forget".
  */
@@ -22,7 +22,7 @@ import {
   type LocalPairingSecret,
   type MeshCaSigner,
   PairingHttpError,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { createHttpAgentPairingTransport } from '../../core/agent/agent-pairing-http.js'
 import { createAgentHttpServer } from '../agent-http.js'
 import { forgetPairing, isAgentPaired, persistPairing } from '../agent-pairing-store.js'

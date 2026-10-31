@@ -3,7 +3,7 @@
  *
  * `AGENT_INFRA` was `INFRA_CAPABILITIES` unfiltered, and that list carries
  * `{ name: 'data-store-provider', required: true }`. `sqlite-settings` is the
- * only addon that declares it and it lives in the `@camstack/system` closure
+ * only addon that declares it and it lives in the `@camstack/server/system` closure
  * the agent scans — so opening a local database was not configuration, it was
  * a PRECONDITION OF BOOT. Persistence is the hub's; the agent's data door
  * forwards there (`hub-settings-forward.ts`).
@@ -25,7 +25,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { INFRA_CAPABILITIES } from '@camstack/system'
+import { INFRA_CAPABILITIES } from '@camstack/server/system'
 import { afterEach, describe, expect, it } from 'vitest'
 import { resolveAgentInfraCapabilities } from '../agent-infra-capabilities.js'
 import { assertRequiredInfraResolved } from '../infra-boot-guard.js'

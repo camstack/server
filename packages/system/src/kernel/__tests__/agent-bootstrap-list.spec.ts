@@ -7,7 +7,7 @@
  * from the SAME `@camstack/server` closure, so its bootstrap addon set is
  * declared alongside the hub's rather than in a second package.
  *
- * Contract: `AGENT_PACKAGES = ['@camstack/system', ...agentBootstrapAddons]`.
+ * Contract: `AGENT_PACKAGES = ['@camstack/server/system', ...agentBootstrapAddons]`.
  */
 
 import * as fs from 'node:fs'
@@ -43,13 +43,13 @@ function serverAgentOnlyBootstrapAddons(): readonly string[] {
 
 describe('AGENT_PACKAGES derivation', () => {
   it('derives from @camstack/server camstack.agentBootstrapAddons + system', () => {
-    expect(AddonInstaller.AGENT_PACKAGES).toContain('@camstack/system')
+    expect(AddonInstaller.AGENT_PACKAGES).toContain('@camstack/server')
     expect(AddonInstaller.AGENT_PACKAGES).toContain('@camstack/addon-agent-ui')
     expect(AddonInstaller.AGENT_PACKAGES).not.toContain('@camstack/addon-admin-ui')
   })
 
-  it('AGENT_PACKAGES = @camstack/system + the server manifest agentBootstrapAddons', () => {
-    const expected = ['@camstack/system', ...serverAgentBootstrapAddons()].toSorted()
+  it('AGENT_PACKAGES = @camstack/server/system + the server manifest agentBootstrapAddons', () => {
+    const expected = ['@camstack/server', ...serverAgentBootstrapAddons()].toSorted()
     expect([...AddonInstaller.AGENT_PACKAGES].toSorted()).toEqual(expected)
   })
 

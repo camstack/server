@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
  * listed here. Framework packages travel inside the server closure.
  */
 const SELF_MANAGED_PACKAGES: ReadonlySet<string> = new Set([
-  '@camstack/system',
+  '@camstack/server',
   '@camstack/types',
   '@camstack/sdk',
   '@camstack/ui-library',

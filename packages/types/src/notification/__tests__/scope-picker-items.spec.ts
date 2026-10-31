@@ -47,7 +47,7 @@ describe('scope picker items', () => {
   it('offers every package an update EVENT carries, even when listPackages omits it', () => {
     expect(packagePickerItems([])).toEqual([
       { id: '@camstack/server', name: '@camstack/server', type: 'server', location: null },
-      { id: '@camstack/system', name: '@camstack/system', type: 'framework', location: null },
+      { id: '@camstack/server', name: '@camstack/server', type: 'framework', location: null },
       { id: 'camstack-wrapper', name: 'camstack-wrapper', type: 'wrapper', location: null },
     ])
   })
@@ -59,11 +59,11 @@ describe('scope picker items', () => {
   })
 
   it('an installed update-event package is offered once, with its version', () => {
-    const items = packagePickerItems([{ name: '@camstack/system', version: '2.0.0' }])
-    expect(items.filter((i) => i.id === '@camstack/system')).toEqual([
+    const items = packagePickerItems([{ name: '@camstack/server', version: '2.0.0' }])
+    expect(items.filter((i) => i.id === '@camstack/server')).toEqual([
       {
-        id: '@camstack/system',
-        name: '@camstack/system',
+        id: '@camstack/server',
+        name: '@camstack/server',
         type: 'framework',
         location: null,
         detail: '2.0.0',
@@ -78,7 +78,7 @@ describe('scope picker items', () => {
     expect(NC_SERVER_PACKAGE_NAME).toBe('@camstack/server')
     expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual([
       '@camstack/server',
-      '@camstack/system',
+      '@camstack/server',
       'camstack-wrapper',
     ])
   })

@@ -35,7 +35,7 @@ function makeFrameworkTask(overrides: Partial<LifecycleTask> = {}): LifecycleTas
     taskId: 'task-framework',
     target: 'framework',
     nodeId: 'hub',
-    packageName: '@camstack/system',
+    packageName: '@camstack/server',
     fromVersion: '1.0.0',
     toVersion: '1.1.0',
     phase: 'queued',

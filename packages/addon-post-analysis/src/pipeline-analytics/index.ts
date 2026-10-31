@@ -1,9 +1,9 @@
-// Host-resolved (`@camstack/system` is external to every addon bundle): this
+// Host-resolved (`@camstack/server/system` is external to every addon bundle): this
 // process gets the monitor from the installed server closure, not from its own
 // dist. Deploy order is closure first, addon second. The `/addon-utils` subpath
 // and never the barrel — the barrel drags the whole kernel (~64MB of heap) into
 // a runner. See D417.
-import { startEventLoopStallMonitor } from '@camstack/system/addon-utils'
+import { startEventLoopStallMonitor } from '@camstack/server/system/addon-utils'
 import {
   createDisplayPalettePainter,
   readDisplayPalette,

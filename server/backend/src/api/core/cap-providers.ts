@@ -33,7 +33,7 @@ import type {
   MeshTransport,
   NotificationService,
   ToastService,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import {
   asBrokerLike,
   getCapUsageRegistry,
@@ -41,7 +41,7 @@ import {
   getProcessNodeMeshTransport,
   IntegrationRegistry,
   type BrokerLike,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type {
   SecretsAccess,
   AgentListItem,
@@ -1809,8 +1809,8 @@ function isHubNode(nodeId: string): boolean {
  * we keep only entries that carry both a package name and a version so
  * the hub can diff them against npm.
  *
- * `@camstack/system` is KEPT, and it is one of the most important entries here.
- * On an agent, `addons/@camstack/system` is the only copy of the builtin infra
+ * `@camstack/server/system` is KEPT, and it is one of the most important entries here.
+ * On an agent, `addons/@camstack/server/system` is the only copy of the builtin infra
  * ([D87](../../../../docs/decisions/adr-0087.md)), so a pending update on it is
  * a true, actionable signal: the node's infra is behind the closure it runs
  * against. Both agents sat 17 versions behind that way until 2026-08-11. Do not
@@ -2091,8 +2091,8 @@ export function buildAddonsProvider(
         }
         return { success: false, error: task?.error ?? 'update failed', jobId }
       }
-      // `@camstack/system` DELIBERATELY travels this way to an agent, and it is
-      // the only way it can. On the hub, `addons/@camstack/system` is a shadow
+      // `@camstack/server/system` DELIBERATELY travels this way to an agent, and it is
+      // the only way it can. On the hub, `addons/@camstack/server/system` is a shadow
       // of the closure; on an AGENT it is THE ONLY COPY of the builtin infra —
       // `bootCoreAddons` scans the addon root and nothing else, and the image
       // seed excludes the framework set on purpose ([D87](../../../../docs/decisions/adr-0087.md)).
@@ -2102,7 +2102,7 @@ export function buildAddonsProvider(
       // because the log shipper was in the same package.
       //
       // So do NOT add a framework guard here. A 2026-08-11 attempt to do so read
-      // the launcher's `resolved @camstack/system@… from <activeRoot>` line as
+      // the launcher's `resolved @camstack/server/system@… from <activeRoot>` line as
       // proof that nothing loads the addon-root copy. That line answers which
       // copy the LAUNCHER resolves for its own imports — a different consumer
       // from `bootCoreAddons`. Same trap D45 names: a version is a property of a

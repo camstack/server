@@ -9,7 +9,7 @@
  * field with `writerCapName` + `writerAddonId` for round-trip mutations.
  */
 
-import { CapabilityRegistry, DeviceRegistry } from '@camstack/system'
+import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import type {
   AddonContext,
   ConfigUISchemaWithValues,

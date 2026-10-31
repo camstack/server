@@ -8,13 +8,13 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-// eslint-disable-next-line no-restricted-imports -- model-download helpers are a build-time dep, not a runtime addon coupling. Same waiver `addon-embedding-encoder` uses for `ModelDownloadService`. The duplicate copy that lived at `./engine/model-downloader.ts` was deleted; canonical implementation lives in `@camstack/system/download/model-downloader`.
+// eslint-disable-next-line no-restricted-imports -- model-download helpers are a build-time dep, not a runtime addon coupling. Same waiver `addon-embedding-encoder` uses for `ModelDownloadService`. The duplicate copy that lived at `./engine/model-downloader.ts` was deleted; canonical implementation lives in `@camstack/server/system/download/model-downloader`.
 import {
   adoptModelRevisions,
   deleteModelFromDisk,
   ensureModel,
   isModelDownloaded,
-} from '@camstack/system/addon-utils'
+} from '@camstack/server/system/addon-utils'
 import type {
   CoralInfo,
   AddonCapabilityInfo,
@@ -1180,7 +1180,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
    * That false positive is not cosmetic. It is a readiness gate answering yes
    * on another machine's evidence, and it is exactly the log line that made a
    * node with NO platform-probe addon at all (agent-a, 2026-08-07: its
-   * `@camstack/system` package had been renamed out of `/data/addons`) look
+   * `@camstack/server/system` package had been renamed out of `/data/addons`) look
    * like a node with a lossy event path. The pin makes the answer local: an
    * inline `nodeId` is the routing pin that survives the forked-addon → parent
    * UDS hop (`parent-unowned-call.ts`), the same mechanism the orchestrator's
@@ -3684,7 +3684,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     entry: import('@camstack/types').ModelCatalogEntry,
     format: import('@camstack/types').ModelFormat,
     maxRetries: number,
-    onProgress?: import('@camstack/system').DownloadProgressCallback,
+    onProgress?: import('@camstack/server/system').DownloadProgressCallback,
   ): Promise<void> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {

@@ -1,7 +1,7 @@
 // Cap-derived runtime VALUE symbols. With `bundleTypesMainEntry` (see
 // vite.config.ts), the bare `@camstack/types` entry is inlined into system's
 // dist, so these resolve to system's OWN bundled copy — one authoritative
-// instance. The hub imports them from `@camstack/system` so a
+// instance. The hub imports them from `@camstack/server/system` so a
 // `camstack deploy packages/system` refreshes the capability surface with no
 // server image, and `@camstack/types` is never deployed to the hub.
 export {
@@ -16,7 +16,7 @@ export {
 } from '@camstack/types'
 export type { PlatformInfo } from '@camstack/types/node'
 // Infrastructure utilities live in `@camstack/types/node` since 2026-05
-// (lifted from `@camstack/system` to break the kernel ↔ core dependency
+// (lifted from `@camstack/server/system` to break the kernel ↔ core dependency
 // cycle, then moved off the root types entry so browser bundlers don't
 // traverse `node:fs`). Re-exported here for backward compatibility with
 // existing consumers (`@camstack/server`, addon dynamic imports).
@@ -473,8 +473,8 @@ export { PipelineValidator } from './pipeline/pipeline-validator.js'
 export type { PidStats } from './process/resource-monitor.js'
 // Process resource monitoring (kept — used by native-metrics and addon-registry)
 export { getPidStats, getSinglePidStats } from './process/resource-monitor.js'
-// AddonDepsManager moved to @camstack/system (was in @camstack/kernel) so addons can consume it via
-// `ctx.deps` without importing @camstack/system directly (the lint rule
+// AddonDepsManager moved to @camstack/server/system (was in @camstack/kernel) so addons can consume it via
+// `ctx.deps` without importing @camstack/server/system directly (the lint rule
 // `no-restricted-imports` blocks that boundary).
 export { PythonEnvManager } from './python/python-env-manager.js'
 export type {
@@ -591,8 +591,8 @@ export {
 } from './kernel/deps/npm-command.js'
 // Kernel surface — absorbed 2026-06-22 (was @camstack/kernel). The kernel is the
 // addon dispatcher (loader, capability registry, config manager, restart
-// coordinator, transport). It now ships inside @camstack/system; consumers import
-// these from '@camstack/system'.
+// coordinator, transport). It now ships inside @camstack/server/system; consumers import
+// these from '@camstack/server/system'.
 export * from './kernel/index.js'
 
 /** The token a CHILD uses to say "this method is declared optional and this

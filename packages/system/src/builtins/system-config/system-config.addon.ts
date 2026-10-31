@@ -84,7 +84,7 @@ import { systemConfigRecordKinds } from './record-kinds.js'
  *     surface" addon — its sole purpose is to expose the yml sections
  *     through the new three-level settings API.
  *
- * This addon is declared in `@camstack/system`'s package.json `camstack.addons[]`
+ * This addon is declared in `@camstack/server/system`'s package.json `camstack.addons[]`
  * and loaded automatically via AddonLoader like any other core built-in.
  */
 

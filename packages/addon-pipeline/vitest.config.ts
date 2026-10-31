@@ -14,7 +14,7 @@ import react from '@vitejs/plugin-react'
  * flow.
  *
  * `vitest` is pinned to `^3.2.4` in the package's own `devDependencies`
- * (mirroring `@camstack/kernel`, `@camstack/system`, ...): the repo root hoists
+ * (mirroring `@camstack/kernel`, `@camstack/server/system`, ...): the repo root hoists
  * vitest 4.x, whose ESM module-evaluator mis-resolves Node builtins like
  * `timers/promises` as package-relative paths -- that bug fails every spec
  * importing `@camstack/shm-ring/testing`. Nesting vitest 3.2.4 here keeps the

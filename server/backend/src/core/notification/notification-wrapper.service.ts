@@ -1,4 +1,4 @@
-import { NotificationService } from '@camstack/system'
+import { NotificationService } from '@camstack/server/system'
 import type { RoutedNotification } from '@camstack/types'
 import { CapabilityService } from '../capability/capability.service'
 import { LoggingService } from '../logging/logging.service'

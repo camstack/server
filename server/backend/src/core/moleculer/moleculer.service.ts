@@ -9,7 +9,7 @@ import type {
   RegisteredAddonManifest,
   RegisteredChild,
   RegisterNodeParams,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import {
   AGENT_READINESS_SERVICE_NAME,
   CapRouteError,
@@ -48,7 +48,7 @@ import {
   answerClaimedGetStatus,
   answerDeviceCallRedirect,
   type DeviceCallRedirectHook,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { CapabilityDefinition, StatusOverlayAnswer } from '@camstack/types'
 import { EventCategory, emitReadiness, errMsg, ReadinessRegistry } from '@camstack/types'
 import {
@@ -1504,7 +1504,7 @@ export class MoleculerService {
    * NOT a Moleculer action — only the hub process calls this directly
    * through the `ctx.kernel.listClusterNativeCaps` injection.
    */
-  listClusterNativeCaps(): readonly import('@camstack/system').NodeNativeCapEntry[] {
+  listClusterNativeCaps(): readonly import('@camstack/server/system').NodeNativeCapEntry[] {
     return this.nodeRegistry.listNativeCapEntries()
   }
 
@@ -1516,7 +1516,7 @@ export class MoleculerService {
    */
   listClusterNativeCapsForDevice(
     deviceId: number,
-  ): readonly import('@camstack/system').NodeNativeCapEntry[] {
+  ): readonly import('@camstack/server/system').NodeNativeCapEntry[] {
     return this.nodeRegistry.listNativeCapEntriesForDevice(deviceId)
   }
 
@@ -1564,7 +1564,7 @@ export class MoleculerService {
    * manifest (runtime-updatable node packages: version visibility), or null
    * when the node never reported one (UDS children, pre-phase-2 agents).
    */
-  getNodeRootPackage(nodeId: string): import('@camstack/system').NodeRootPackageInfo | null {
+  getNodeRootPackage(nodeId: string): import('@camstack/server/system').NodeRootPackageInfo | null {
     return this.nodeRegistry.getNodeRootPackage(nodeId)
   }
 

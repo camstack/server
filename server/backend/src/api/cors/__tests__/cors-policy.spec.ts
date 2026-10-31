@@ -1,5 +1,5 @@
 import { createServer, type Server } from 'node:http'
-import { proxyToUpstream } from '@camstack/system'
+import { proxyToUpstream } from '@camstack/server/system'
 import Fastify, { type FastifyInstance } from 'fastify'
 import { afterEach, describe, expect, it } from 'vitest'
 import WebSocket, { WebSocketServer } from 'ws'

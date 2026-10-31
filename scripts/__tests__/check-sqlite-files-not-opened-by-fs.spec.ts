@@ -15,7 +15,7 @@ import { stripComments } from '../lib/walk-sources.js'
 
 const OWNER_FILE = 'packages/system/src/builtins/sqlite-storage/wal-checkpoint-worker.ts'
 const ELSEWHERE = 'packages/system/src/builtins/system-backup/system-backup.service.ts'
-/** Same directory as the owner, but exported from `@camstack/system` and loaded by hub-main. */
+/** Same directory as the owner, but exported from `@camstack/server/system` and loaded by hub-main. */
 const OWNER_DIR_NOT_OWNER = 'packages/system/src/builtins/sqlite-storage/config-store.ts'
 
 const rules = (src: string, rel = OWNER_FILE, allowlist?: readonly SqliteGuardAllowance[]) =>

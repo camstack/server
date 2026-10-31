@@ -19,7 +19,7 @@
  * | Situation | Why cleaning would brick the node |
  * | --- | --- |
  * | BAKED mode (no `<dataDir>/server-root/current`) | the node is running FROM the fallback tree |
- * | `@camstack/system` resolved outside the active closure | the copy being deleted may be the one in memory |
+ * | `@camstack/server` resolved outside the active closure | the copy being deleted may be the one in memory |
  * | the tree is still on `NODE_PATH` | a live resolution path, whatever the mode says |
  * | boot not confirmed healthy | the copies are the recovery path, needed exactly now |
  *
@@ -35,6 +35,7 @@
  * Pure planning + an injected filesystem, so the whole thing is testable
  * against a described layout rather than a real disk.
  */
+import { LEGACY_SYSTEM_PACKAGE_NAME } from './legacy-package-names.js'
 
 /** What kind of redundant copy this is. */
 export type CleanupKind =
@@ -61,7 +62,7 @@ export interface KeptCandidate {
 export interface CleanupInput {
   /** `CAMSTACK_SERVER_ACTIVE_ROOT` — `null` in baked mode. */
   readonly activeRoot: string | null
-  /** Where `require.resolve('@camstack/system')` actually landed this boot. */
+  /** Where `require.resolve('@camstack/server')` actually landed this boot. */
   readonly closureResolvedFrom: string | null
   /** Has this boot been confirmed healthy by the role's own boot confirmation? */
   readonly bootHealthy: boolean
@@ -117,11 +118,11 @@ function nodeWideBlock(input: CleanupInput): string | null {
     return 'baked mode: there is no active closure, so the node is running FROM the fallback tree'
   }
   if (input.closureResolvedFrom === null) {
-    return 'the process resolved no @camstack/system at all — nothing here is safe to remove'
+    return 'the process resolved no @camstack/server/system at all — nothing here is safe to remove'
   }
   if (!isInside(input.closureResolvedFrom, input.activeRoot)) {
     return (
-      `@camstack/system resolved from ${input.closureResolvedFrom}, which is OUTSIDE the active ` +
+      `@camstack/server/system resolved from ${input.closureResolvedFrom}, which is OUTSIDE the active ` +
       'closure — the copy being removed could be the one in memory'
     )
   }
@@ -249,11 +250,13 @@ export function formatCleanupPlan(plan: CleanupPlan): readonly string[] {
  * The host-provided packages the closure carries. A copy of any of these under
  * the addon root WINS over the closure and is never refreshed — the shape that
  * left both agents 17 versions behind ([D107](../../../docs/decisions/adr-0107.md)),
- * and the reason `<dataDir>/addons/@camstack/system` is on the agent's disk at
+ * and the reason `<dataDir>/addons/@camstack/server/system` is on the agent's disk at
  * 1.2.78 while it runs a newer closure.
  */
 export const CLOSURE_PROVIDED_PACKAGES: readonly string[] = [
-  '@camstack/system',
+  '@camstack/server',
+  // Pre-fold residue: a copy by the old name is never legitimate again.
+  LEGACY_SYSTEM_PACKAGE_NAME,
   '@camstack/types',
   '@camstack/sdk',
   '@camstack/ui-library',
@@ -298,12 +301,14 @@ export function discoverRedundantCopies(
       kind: 'legacy-framework-tree',
       path: legacyFramework,
       pkg: null,
-      version: fs.readVersion(`${legacyFramework}/node_modules/@camstack/system`),
+      version: fs.readVersion(`${legacyFramework}/node_modules/${LEGACY_SYSTEM_PACKAGE_NAME}`),
     })
   }
 
   for (const pkg of CLOSURE_PROVIDED_PACKAGES) {
-    if (!input.closureProvides(pkg)) continue
+    // The pre-fold name is provided by no closure any more — a copy of it is
+    // residue by definition, so it is always a candidate.
+    if (pkg !== LEGACY_SYSTEM_PACKAGE_NAME && !input.closureProvides(pkg)) continue
     const dir = `${trimSlash(input.addonRoot)}/${pkg}`
     if (!fs.exists(dir)) continue
     found.push({

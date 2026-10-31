@@ -73,7 +73,7 @@ describe('ensureAddonNativePrebuilds', () => {
     scaffoldModule(addonDir, 'better-sqlite3', true)
     const fetchPrebuild = vi.fn<PrebuildFetchFn>(async () => undefined)
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/system',
+      addonName: '@camstack/server',
       logger: makeLogger(),
       target: TARGET,
       fetchPrebuild,
@@ -85,7 +85,7 @@ describe('ensureAddonNativePrebuilds', () => {
   it('skips a native that is absent from the installed addon (relies on hoist)', async () => {
     const fetchPrebuild = vi.fn<PrebuildFetchFn>(async () => undefined)
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/system',
+      addonName: '@camstack/server',
       logger: makeLogger(),
       target: TARGET,
       fetchPrebuild,
@@ -102,7 +102,7 @@ describe('ensureAddonNativePrebuilds', () => {
     const fetchPrebuild = vi.fn<PrebuildFetchFn>(async () => undefined)
 
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/system',
+      addonName: '@camstack/server',
       logger: makeLogger(),
       bundledSourceDir: bundledDir,
       target: TARGET,
@@ -135,7 +135,7 @@ describe('ensureAddonNativePrebuilds', () => {
     })
 
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/system',
+      addonName: '@camstack/server',
       logger: makeLogger(),
       bundledSourceDir: bundledDir,
       target: TARGET,
@@ -153,7 +153,7 @@ describe('ensureAddonNativePrebuilds', () => {
     })
 
     const results = await ensureAddonNativePrebuilds(addonDir, {
-      addonName: '@camstack/system',
+      addonName: '@camstack/server',
       logger: makeLogger(),
       target: TARGET,
       fetchPrebuild,
@@ -171,7 +171,7 @@ describe('ensureAddonNativePrebuilds', () => {
 
     await expect(
       ensureAddonNativePrebuilds(addonDir, {
-        addonName: '@camstack/system',
+        addonName: '@camstack/server',
         logger,
         bundledSourceDir: bundledDir,
         target: TARGET,
@@ -185,7 +185,7 @@ describe('ensureAddonNativePrebuilds', () => {
     )
     expect(errCall).toBeDefined()
     expect(errCall?.[1]).toMatchObject({
-      meta: expect.objectContaining({ addon: '@camstack/system', pkg: 'better-sqlite3' }),
+      meta: expect.objectContaining({ addon: '@camstack/server', pkg: 'better-sqlite3' }),
     })
   })
 
@@ -198,7 +198,7 @@ describe('ensureAddonNativePrebuilds', () => {
 
     await expect(
       ensureAddonNativePrebuilds(addonDir, {
-        addonName: '@camstack/system',
+        addonName: '@camstack/server',
         logger,
         target: TARGET,
         fetchPrebuild,

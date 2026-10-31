@@ -269,7 +269,7 @@ async function main(): Promise<void> {
 
   // Register the framework resolver BEFORE importing any addon: addons now live
   // in /data/addons (outside the framework node_modules), so their host-provided
-  // imports (@camstack/system, @camstack/types, …) must be redirected to
+  // imports (@camstack/server/system, @camstack/types, …) must be redirected to
   // CAMSTACK_FRAMEWORK_DIR. No-op in dev where workspace symlinks resolve them.
   registerFrameworkResolver(process.env['CAMSTACK_FRAMEWORK_DIR'])
 
@@ -299,7 +299,7 @@ async function main(): Promise<void> {
   // build a local instance per addon-runner pointed at the same data
   // root the hub uses, so paths resolve identically.
   // `FilesystemStorageProvider` lives in `@camstack/types/node` (the
-  // node-only sub-entry, lifted from `@camstack/system` in 2026-05 to break
+  // node-only sub-entry, lifted from `@camstack/server/system` in 2026-05 to break
   // the kernel ↔ core dependency cycle, then split off the root entry so
   // browser bundlers don't traverse `node:fs` / `node:path`).
   let storageProvider: import('@camstack/types').IStorageProvider | undefined

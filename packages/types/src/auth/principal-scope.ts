@@ -3,7 +3,7 @@
  * `TokenScope` set. Pure — no I/O, no registry, no logger — so the kernel,
  * `server/backend` and any ADDON can share it. It lives in `@camstack/types`
  * for exactly that reason: `scopesAllowDeviceCap` used to live in
- * `@camstack/system`, which addons may not import, so `addon-export-alexa`
+ * `@camstack/server/system`, which addons may not import, so `addon-export-alexa`
  * hand-copied it into `directive-router.ts` and said so in a comment twice.
  * One vector, one derivation.
  *

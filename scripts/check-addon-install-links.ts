@@ -7,7 +7,7 @@
  *
  * An "Add destination" button on the Logging page linked to the addon catalog
  * filtered by `log-destination`, a capability every provider of which is built
- * into `@camstack/system`: the button could never lead to anything. The Training
+ * into `@camstack/server/system`: the button could never lead to anything. The Training
  * page hand-typed the catalog URL. A dead install button reads as "no addon
  * exists" and nothing fails.
  *

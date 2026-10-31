@@ -5,7 +5,7 @@
  *
  * ── The bug class this prevents ────────────────────────────────────────────
  * `package-inventory.ts` (D45) and `addon-root-inventory.ts` exist to EXPLAIN a
- * confusing layout: which copy of `@camstack/system` runs, which rival addon
+ * confusing layout: which copy of `@camstack/server/system` runs, which rival addon
  * root is lying around. They are diagnostics. For a while both could also end
  * the process — `CAMSTACK_INVENTORY_STRICT=1` printed "refusing to boot on this
  * layout" and called `process.exit(1)`.

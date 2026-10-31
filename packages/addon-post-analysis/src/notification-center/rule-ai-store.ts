@@ -3,7 +3,7 @@
  *
  * A SIDE TABLE and not a second opinion. `NcRule` lives in `@camstack/types`;
  * the addon inlines its own copy, but the hub's cap router validates rule input
- * against the copy `@camstack/system` inlines, so a new key on it is silently
+ * against the copy `@camstack/server/system` inlines, so a new key on it is silently
  * stripped at save until a `@camstack/server` release carrying it is installed
  * (`summary/summary-rule.ts` documents the three cascaded bugs that taught
  * this). Keeping the block here makes it live on the next

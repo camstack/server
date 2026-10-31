@@ -3,7 +3,7 @@ import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 import { SYSTEM_EXTRA_EXTERNALS } from './vite.shared.ts'
 
 /**
- * Second build step of `@camstack/system`: the forked addon-runner, alone.
+ * Second build step of `@camstack/server/system`: the forked addon-runner, alone.
  * Why it is separate and the rules for it: "The forked runner has its own
  * build" in `vite.config.ts`, and docs/decisions/adr-0028.md.
  *

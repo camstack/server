@@ -13,7 +13,7 @@
  * Limited per user (10/min) and counted against the account's failure bucket
  * like a login.
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { OptionsJsonSchema, resolvePasskeyProvider } from '../../auth/passkey-provider.js'

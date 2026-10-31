@@ -1,5 +1,5 @@
 /**
- * `@camstack/system` must not be seeded into /data/addons when the running
+ * `@camstack/server/system` must not be seeded into /data/addons when the running
  * closure already provides it — and MUST still be seeded when it does not.
  *
  * Both halves matter, and they were learned in opposite directions:
@@ -15,7 +15,7 @@
  *    RESOLVABILITY rather than a blanket removal.
  *
  * The second branch is unreachable without the injection point: in a test
- * process `@camstack/system` always resolves.
+ * process `@camstack/server/system` always resolves.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
@@ -35,7 +35,7 @@ afterEach(() => {
 const isInstalled = (pkg: string): boolean =>
   fs.existsSync(path.join(addonsDir, pkg, 'package.json'))
 
-describe('bootstrap seeding of @camstack/system', () => {
+describe('bootstrap seeding of @camstack/server/system', () => {
   it('does NOT seed a copy when the closure provides it', async () => {
     const installer = new AddonInstaller({
       addonsDir,
@@ -43,24 +43,24 @@ describe('bootstrap seeding of @camstack/system', () => {
       isPackageResolvable: () => true,
     })
 
-    await installer.ensureRequiredPackages(['@camstack/system'])
+    await installer.ensureRequiredPackages(['@camstack/server'])
 
-    expect(isInstalled('@camstack/system')).toBe(false)
+    expect(isInstalled('@camstack/server')).toBe(false)
   })
 
   it('does NOT skip when the closure lacks it — the branch that keeps a fresh node bootable', () => {
     // Asserted on the decision rather than the loop: the loop would go to the
     // network, and a test that reaches npm proves nothing about the rule.
-    expect(shouldSkipClosureProvidedSeed('@camstack/system', false)).toBe(false)
+    expect(shouldSkipClosureProvidedSeed('@camstack/server', false)).toBe(false)
   })
 
   it('never skips anything other than the closure-provided package', () => {
     expect(shouldSkipClosureProvidedSeed('@camstack/addon-pipeline', true)).toBe(false)
-    expect(shouldSkipClosureProvidedSeed('@camstack/system', true)).toBe(true)
+    expect(shouldSkipClosureProvidedSeed('@camstack/server', true)).toBe(true)
   })
 
   it('leaves an EXISTING copy alone — removing a stale one is an operator action', async () => {
-    const dir = path.join(addonsDir, '@camstack/system')
+    const dir = path.join(addonsDir, '@camstack/server')
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version: '1.2.0' }))
 
@@ -69,7 +69,7 @@ describe('bootstrap seeding of @camstack/system', () => {
       installSource: 'npm',
       isPackageResolvable: () => true,
     })
-    await installer.ensureRequiredPackages(['@camstack/system'])
+    await installer.ensureRequiredPackages(['@camstack/server'])
 
     const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
     expect(raw).toEqual({ version: '1.2.0' })

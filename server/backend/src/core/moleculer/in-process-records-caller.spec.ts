@@ -4,7 +4,7 @@
  * or the child strips it and RecordsProvider refuses `records/no-caller`.
  */
 import { describe, expect, it, vi } from 'vitest'
-import type { CapCallInput, CapRoute } from '@camstack/system'
+import type { CapCallInput, CapRoute } from '@camstack/server/system'
 import { recordsCallerOf } from '../../../../../packages/system/src/builtins/sqlite-storage/records/records-provider.js'
 import { stampCallerAddonId } from '../../../../../packages/system/src/kernel/transport/cap-route-resolver.js'
 import { buildCapCallFn, type CapCallFnLocalChild, type CapCallFnResolver } from './cap-call-fn.js'

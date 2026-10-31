@@ -16,7 +16,7 @@
  * removing the package would take the shared bundle directory with it.
  */
 import type { AddonPlacement } from '@camstack/types'
-import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@camstack/system'
+import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@camstack/server/system'
 
 /**
  * Agent-only packages the hub tracks and delivers without loading them itself.
@@ -43,7 +43,7 @@ export interface DesiredSetInput {
   readonly trackedForAgents: ReadonlyMap<string, string>
   /** Packages removed on purpose from this node; they stay off. */
   readonly tombstones: ReadonlySet<string>
-  /** Packages the node bootstraps itself (`@camstack/system`); never managed. */
+  /** Packages the node bootstraps itself (`@camstack/server/system`); never managed. */
   readonly bootstrap: ReadonlySet<string>
 }
 

@@ -126,7 +126,7 @@ export interface RetiredRowPurgeResult {
  *
  * Mirrors `resolveNodeRole` (server/backend `node-role.ts`) — unset or `'hub'`
  * means hub, which is the launcher's own default. It is duplicated rather than
- * imported because `@camstack/system` is a dependency OF the backend, not the
+ * imported because `@camstack/server/system` is a dependency OF the backend, not the
  * other way round; the parse is four lines and the env var is the contract.
  *
  * Anything else answers `false`. Skipping where the purge should have run is a

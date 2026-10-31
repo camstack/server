@@ -10,7 +10,7 @@
  * is a door that throws — exactly what production does.
  */
 import * as path from 'node:path'
-import { SqliteSettingsBackend } from '@camstack/system'
+import { SqliteSettingsBackend } from '@camstack/server/system'
 import type { ISettingsStoreProvider } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAddonSettingsRouter } from '../api/core/addon-settings.router.js'

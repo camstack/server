@@ -15,7 +15,7 @@
  *
  * Why a builtin rather than a cap-providers helper:
  *   - The aggregator is conceptually the "addon-pages provider" — addons
- *     own caps, not the server. Living in `@camstack/system/builtins` keeps
+ *     own caps, not the server. Living in `@camstack/server/system/builtins` keeps
  *     the surface symmetrical with `system-config`, `local-auth`, etc.
  *   - Lets the aggregator subscribe to source readiness without piping a
  *     CapabilityRegistry handle through `RouterServices`.

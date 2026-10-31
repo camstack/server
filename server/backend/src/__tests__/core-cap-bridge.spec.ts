@@ -1,4 +1,4 @@
-import { CORE_CAP_SERVICE_NAME } from '@camstack/system'
+import { CORE_CAP_SERVICE_NAME } from '@camstack/server/system'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'

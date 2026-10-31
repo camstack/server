@@ -1,4 +1,4 @@
-import { getBrokerEventBus } from '@camstack/system'
+import { getBrokerEventBus } from '@camstack/server/system'
 import type { EventFilter, IEventBus, SystemEvent } from '@camstack/types'
 import type { ServiceBroker } from 'moleculer'
 import { ConfigService } from '../config/config.service'

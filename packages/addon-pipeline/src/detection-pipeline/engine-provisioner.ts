@@ -2,7 +2,7 @@
 // idle → installing → verifying → ready, retrying on failure with
 // incremental backoff (capped at ~5 min, retrying indefinitely at cap).
 //
-// Self-contained: no @camstack/system import. No real timers/Date.now() —
+// Self-contained: no @camstack/server/system import. No real timers/Date.now() —
 // only via injected fx.now / fx.setTimer so the unit tests use a fake clock.
 import type { RuntimeId } from './runtimes.js'
 

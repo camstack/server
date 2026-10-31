@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { AuthService } from './auth.service'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import type { ConfigService } from '../config/config.service'
 import type { TokenPayload } from '@camstack/types'
 

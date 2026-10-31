@@ -75,7 +75,7 @@ function isReservedDir(dirName: string): boolean {
   return dirName.startsWith('.') || dirName === 'node_modules'
 }
 
-/** `@camstack/system` → `system`; `foo` → `foo`. */
+/** `@camstack/server/system` → `system`; `foo` → `foo`. */
 function packageDirName(declaredName: string): string {
   const slash = declaredName.lastIndexOf('/')
   return slash === -1 ? declaredName : declaredName.slice(slash + 1)

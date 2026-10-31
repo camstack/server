@@ -15,7 +15,7 @@
  *     → the session rows are refused;
  *   - stamp a fixed owner instead of `principal.id` → B reads A's rows.
  */
-import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/system'
+import { attachUserManagementInternal, type UserManagementInternal } from '@camstack/server/system'
 import {
   createRecordsAccess,
   type CredentialTokenClaims,

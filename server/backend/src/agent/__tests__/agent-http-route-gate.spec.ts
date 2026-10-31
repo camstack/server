@@ -4,7 +4,7 @@
  * refused exactly like the plain one.
  */
 import { describe, it, expect, afterAll } from 'vitest'
-import { AgentPairing } from '@camstack/system'
+import { AgentPairing } from '@camstack/server/system'
 import { isAgentPaired } from '../agent-pairing-store.js'
 import { createAgentHttpServer } from '../agent-http.js'
 import type { ServiceBroker } from 'moleculer'

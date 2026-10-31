@@ -2,7 +2,7 @@
  * Read a child process's memory footprint for the pool memory watchdog.
  *
  * Deliberate twin of `packages/addon-pipeline/src/shared/process-memory.ts`:
- * addons must not import each other, and `@camstack/system` stays EXTERNAL in
+ * addons must not import each other, and `@camstack/server/system` stays EXTERNAL in
  * addon bundles (a symbol added there would be missing at runtime until the
  * next framework train). The pure parse (`parseProcStatus`) and the whole
  * watchdog policy live once in `@camstack/types` (inlined at build time);

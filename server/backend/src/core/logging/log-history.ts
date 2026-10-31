@@ -12,7 +12,7 @@ import {
   lineMatches,
   type CompiledLogFilter,
   type ReadableLine,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type {
   ILogDestination,
   LogEntry,

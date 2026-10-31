@@ -16,7 +16,7 @@ import {
   loadAgentHttps,
   UnlockTicketJtiStore,
   verifyAgentUiUnlockTicket,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { type SniffingListener, startSniffingListener } from './agent-sniffing-listener.js'
 import {
   isAuthorizedAgentRequest,

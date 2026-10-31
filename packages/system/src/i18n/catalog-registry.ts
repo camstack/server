@@ -26,7 +26,7 @@ import serverIt from './it.json'
 /** The core namespace: user-facing error texts and core schema labels. */
 export const SERVER_NAMESPACE = 'server'
 
-/** `@camstack/addon-provider-reolink` -> `provider-reolink`; `@camstack/system` -> `system`. */
+/** `@camstack/addon-provider-reolink` -> `provider-reolink`; `@camstack/server/system` -> `system`. */
 export function catalogNamespaceOf(packageName: string): string {
   return packageName.replace(/^@camstack\//, '').replace(/^addon-/, '')
 }

@@ -1,5 +1,5 @@
-// Guard: addons must import Node/runtime helpers from @camstack/system/addon-utils,
-// NOT the @camstack/system root barrel. The barrel re-exports the whole kernel
+// Guard: addons must import Node/runtime helpers from @camstack/server/system/addon-utils,
+// NOT the @camstack/server/system root barrel. The barrel re-exports the whole kernel
 // (moleculer) + every builtin addon, so a single value import drags ~64MB of
 // framework into the addon's forked runner AT RUNTIME (measured 2026-06-25).
 // Scope (biome.json overrides): packages/addon-*/src, EXCEPT __tests__.
@@ -10,6 +10,6 @@
 // live hub leaked 18.9 GB, and `cascade-over-real-sqlite.spec.ts` needs
 // `SqliteSettingsBackend` to close that gap (D161).
 $imp where {
-  $imp <: `import $clause from "@camstack/system"`,
-  register_diagnostic(span=$imp, message="Do NOT import from the '@camstack/system' barrel in an addon — it loads the entire framework (kernel + all builtins, ~64MB heap) into the runner at runtime. Import the helper from '@camstack/system/addon-utils' instead (downloadFile, ensureModel, isModelDownloaded, deleteModelFromDisk, ModelDownloadService, createFileDataPlaneHandler, CustomActionRegistry).")
+  $imp <: `import $clause from "@camstack/server/system"`,
+  register_diagnostic(span=$imp, message="Do NOT import from the '@camstack/server/system' barrel in an addon — it loads the entire framework (kernel + all builtins, ~64MB heap) into the runner at runtime. Import the helper from '@camstack/server/system/addon-utils' instead (downloadFile, ensureModel, isModelDownloaded, deleteModelFromDisk, ModelDownloadService, createFileDataPlaneHandler, CustomActionRegistry).")
 }

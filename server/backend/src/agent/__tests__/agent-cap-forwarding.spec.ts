@@ -18,8 +18,12 @@
  */
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { ServiceBroker } from 'moleculer'
-import { AGENT_CAP_FWD_SERVICE, AGENT_CAP_FWD_ACTION } from '@camstack/system'
-import type { CapCallInput, InProcessProviderLookup, InProcessProviderRef } from '@camstack/system'
+import { AGENT_CAP_FWD_SERVICE, AGENT_CAP_FWD_ACTION } from '@camstack/server/system'
+import type {
+  CapCallInput,
+  InProcessProviderLookup,
+  InProcessProviderRef,
+} from '@camstack/server/system'
 import { createAgentCapDispatchService } from '../agent-cap-dispatch-service.js'
 import { makeRegistryDouble } from './helpers/registry-double.js'
 

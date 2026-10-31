@@ -1,6 +1,6 @@
 /**
  * Default `RuntimeModelOps` — the ONLY place the reused object-detection model
- * mechanism is imported (the documented `@camstack/system/addon-utils`
+ * mechanism is imported (the documented `@camstack/server/system/addon-utils`
  * build-time-dep waiver that addon-post-analysis/addon-pipeline already use).
  * GGUFs ride the SHARED `downloadFile` (atomic `.downloading` + rename, HF
  * token headers, redirect following) — no bespoke fetcher (spec §4.2).
@@ -28,7 +28,7 @@ import {
   downloadFile,
   getModelFilePath,
   isModelDownloaded,
-} from '@camstack/system/addon-utils'
+} from '@camstack/server/system/addon-utils'
 import type { ModelCatalogEntry } from '@camstack/types'
 import type { RuntimeModelOps } from './runtime-provider.js'
 

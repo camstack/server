@@ -25,7 +25,7 @@ import {
   type PairingFailure,
   type PairingRequestContext,
   type PairingResult,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { authInputOf, isGenuineLoopback } from './agent-http-auth.js'
 
 export interface AgentPairingRoutesDeps {

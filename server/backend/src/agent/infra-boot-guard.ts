@@ -9,7 +9,7 @@
  *   - the addon was NOT FOUND at all                    → `console.error`, continue.
  *
  * The second branch is strictly worse than the first and it was the quiet one.
- * On `agent-a` the whole `@camstack/system` package was renamed out of
+ * On `agent-a` the whole `@camstack/server/system` package was renamed out of
  * `/data/addons/@camstack/` at 16:40 on 2026-08-07 (a builtin-shadow cleanup).
  * On an AGENT that directory is the SOLE source of the builtins — there is no
  * seed fallback — so the next boot came up with ZERO infra addons: no storage,
@@ -59,7 +59,7 @@ export function assertRequiredInfraResolved(
   if (missing.length === 0) return
   throw new Error(
     `Required infrastructure capabilities have no addon under "${addonsDir}": ` +
-      `${missing.join(', ')}. The agent's builtins package (@camstack/system) is ` +
+      `${missing.join(', ')}. The agent's builtins package (@camstack/server/system) is ` +
       `missing or unreadable — this node cannot store, configure or probe itself, ` +
       `and every hub routing decision that consults its manifest would be wrong. ` +
       `Refusing to boot degraded.`,

@@ -16,7 +16,7 @@
  * both directions, because one package declares many addons:
  * `@camstack/addon-pipeline` carries six, `@camstack/addon-provider-homeassistant`
  * two, `@camstack/addon-cloudflare` two. A package can vanish while every addon
- * id it declared lives on inside a bundle (`@camstack/core` → `@camstack/system`,
+ * id it declared lives on inside a bundle (`@camstack/core` → `@camstack/server/system`,
  * 18 ids, all still declared) — and an addon id can vanish while its package is
  * perfectly alive. Only the first of those is safe to retire on the strength of
  * the name alone.

@@ -33,7 +33,7 @@ import {
   createFileDataPlaneHandler,
   parseRangeHeader,
   startEventLoopStallMonitor,
-} from '@camstack/system/addon-utils'
+} from '@camstack/server/system/addon-utils'
 import {
   type AddonInitResult,
   BaseAddon,
@@ -458,7 +458,7 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
    * Stops the GC-attributing stall monitor armed in {@link onInitialize}.
    *
    * REUSED, never re-implemented. It used to live next door in this bundle;
-   * on 2026-09-09 it moved to `@camstack/system/addon-utils` (the subpath, never
+   * on 2026-09-09 it moved to `@camstack/server/system/addon-utils` (the subpath, never
    * the barrel — that one drags the kernel into the runner) because two more
    * processes that do NOT share this bundle needed it — `pipeline-analytics` and
    * hub-main — and a per-bundle copy is how two diagnostics end up disagreeing

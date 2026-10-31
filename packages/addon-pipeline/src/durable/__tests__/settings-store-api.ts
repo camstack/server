@@ -16,7 +16,7 @@
 import type { SettingsStoreClient } from '@camstack/types'
 // eslint-disable-next-line no-restricted-imports -- test-only: the specs mount
 // the REAL settings engine rather than a fake (see the header). The SOURCE and
-// not `@camstack/system`'s barrel: the barrel drags every builtin in (and its
+// not `@camstack/server/system`'s barrel: the barrel drags every builtin in (and its
 // ESM copy fails to resolve `@camstack/types/node` under vitest), while this is
 // one file with no addon graph behind it. Nothing under `src/` imports it.
 import { SqliteSettingsBackend } from '../../../../system/src/builtins/sqlite-storage/sqlite-settings-backend.js'

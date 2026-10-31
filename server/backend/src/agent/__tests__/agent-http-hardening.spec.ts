@@ -8,7 +8,7 @@
  *   - loopback callers (the agent's own page) are never challenged.
  */
 import { describe, it, expect, afterAll } from 'vitest'
-import { AgentPairing, generateMeshCa, mintAgentUiUnlockTicket } from '@camstack/system'
+import { AgentPairing, generateMeshCa, mintAgentUiUnlockTicket } from '@camstack/server/system'
 import { isAgentPaired } from '../agent-pairing-store.js'
 import { createAgentHttpServer } from '../agent-http.js'
 import type { AgentHttpConfig } from '../agent-http.js'

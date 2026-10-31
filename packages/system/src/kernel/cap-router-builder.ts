@@ -6,7 +6,7 @@
  * statically codegen'd `createCapRouter_<Cap>` value functions baked into
  * `@camstack/server`. Moving the CONSTRUCTION here means a capability
  * update ships via the framework plugin (`@camstack/types` +
- * `@camstack/system`, live-updated together) WITHOUT a `@camstack/server`
+ * `@camstack/server/system`, live-updated together) WITHOUT a `@camstack/server`
  * image rebuild.
  *
  * Type vs value split:
@@ -36,7 +36,7 @@
  * for the payload shape, so the hub forwards it verbatim. Input validation
  * is retained (`.input(...)`) — the hub still guards the client boundary.
  *
- * This module owns NO tRPC primitives of its own: `@camstack/system`
+ * This module owns NO tRPC primitives of its own: `@camstack/server/system`
  * cannot import the server's `TrpcContext`-bound procedures. The server
  * passes them in via {@link CapRouterPrimitives} (the `t` half of the
  * `buildCapRouters(t, services)` contract), keeping the kernel free of any

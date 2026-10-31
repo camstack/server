@@ -1,4 +1,4 @@
-import { clearPlatformKeychainKey, getPlatformKeychainKey } from '@camstack/system'
+import { clearPlatformKeychainKey, getPlatformKeychainKey } from '@camstack/server/system'
 import { afterEach, describe, expect, it } from 'vitest'
 import { keychainKeyFdFromArgv, loadPlatformKeychainKey } from '../platform-keychain-key'
 

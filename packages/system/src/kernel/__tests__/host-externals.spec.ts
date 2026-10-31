@@ -5,7 +5,7 @@ import { isHostExternal, HOST_EXTERNAL_SPECIFIERS } from '../host-externals.js'
 
 describe('isHostExternal', () => {
   it('matches exact host-provided specifiers', () => {
-    expect(isHostExternal('@camstack/system')).toBe(true)
+    expect(isHostExternal('@camstack/server/system')).toBe(true)
     expect(isHostExternal('zod')).toBe(true)
   })
 
@@ -35,7 +35,7 @@ describe('isHostExternal', () => {
   })
 
   it('exposes the canonical set', () => {
-    expect(HOST_EXTERNAL_SPECIFIERS).toContain('@camstack/system')
+    expect(HOST_EXTERNAL_SPECIFIERS).toContain('@camstack/server/system')
     // Deleted with D763 — a native host-external nothing imports.
     expect(HOST_EXTERNAL_SPECIFIERS).not.toContain('@camstack/shm-ring')
     expect(HOST_EXTERNAL_SPECIFIERS).toContain('sharp')

@@ -48,7 +48,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
     {
       manifest: {
         id: 'keychain',
-        packageName: '@camstack/system',
+        packageName: '@camstack/server',
         packageVersion: '1.2.523',
         protected: true,
         removable: false,
@@ -65,7 +65,7 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
       isSystem: false,
     },
     {
-      name: '@camstack/system',
+      name: '@camstack/server',
       currentVersion: '1.2.523',
       latestVersion: '1.2.600',
       category: 'core',
@@ -208,7 +208,7 @@ describe('configure_addon_update', () => {
       input: { name: reolink },
     })
     expect(
-      JSON.stringify(await updateAddon(hub.ctx, { packageName: '@camstack/system' }, undefined)),
+      JSON.stringify(await updateAddon(hub.ctx, { packageName: '@camstack/server' }, undefined)),
     ).toContain('protected package')
     expect(JSON.stringify(await updateAddon(hub.ctx, { packageName: PKG }, undefined))).toContain(
       'no update available',
@@ -228,7 +228,7 @@ describe('configure_addon_uninstall', () => {
       }),
       packument,
     )
-    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/system' }, undefined)
+    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/server' }, undefined)
     expect(JSON.stringify(out)).toContain('protected / removable:false')
     expect(dryRunOf(out).token).toBeUndefined()
     expect(writes(hub.calls)).toHaveLength(0)
@@ -236,7 +236,7 @@ describe('configure_addon_uninstall', () => {
 
   it('refuses when the protection flags cannot be read (fail closed), and never writes', async () => {
     const hub = gatedHub(answers({ 'addons.list': new Error('hub down') }), packument)
-    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/system' }, undefined)
+    const out = await uninstallAddon(hub.ctx, { packageName: '@camstack/server' }, undefined)
     expect(JSON.stringify(out)).toContain('could not read whether')
     expect(dryRunOf(out).token).toBeUndefined()
     expect(writes(hub.calls)).toHaveLength(0)

@@ -2,7 +2,7 @@
  * SFTP `storage-provider` cap implementation.
  *
  * Mirrors the contract of the canonical
- * `@camstack/system` `FilesystemStorageProvider`:
+ * `@camstack/server/system` `FilesystemStorageProvider`:
  *   - small-file primitives (resolve/write/read/exists/list/delete/getAvailableSpace)
  *   - chunked upload (.partial → atomic rename) + chunked download
  *   - 5-minute idle TTL on every session

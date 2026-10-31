@@ -1,5 +1,5 @@
 /**
- * `listFrameworkPackages` is the surface that SHOWS `@camstack/system` has an
+ * `listFrameworkPackages` is the surface that SHOWS `@camstack/server/system` has an
  * update — and it published nothing at all, so the operator was never told.
  * These tests pin the publish, the downgrade guard (the live hub runs a
  * `-dev.<ts>` build that is NEWER than the npm tag, and announcing that as an
@@ -124,7 +124,7 @@ describe('listFrameworkPackages → update.available', () => {
     expect(events).toHaveLength(1)
     expect(events[0]!.data).toMatchObject({
       target: 'server',
-      packageName: '@camstack/system',
+      packageName: '@camstack/server',
       latestVersion: '999.0.0',
     })
   })

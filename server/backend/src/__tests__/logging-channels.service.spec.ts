@@ -21,7 +21,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LogChannelDescriptor, LogChannelWindow } from '@camstack/types'
-import { LoggingGate } from '@camstack/system'
+import { LoggingGate } from '@camstack/server/system'
 import {
   buildLogChannelPlane,
   describeChannelWindows,

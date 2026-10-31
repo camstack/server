@@ -41,7 +41,7 @@ describe('RestartCoordinator marker round-trip', () => {
   it('writes then reads the same payload and clears the marker', () => {
     const marker: PendingRestartMarker = {
       kind: 'framework-update',
-      packageName: '@camstack/system',
+      packageName: '@camstack/server',
       fromVersion: '0.1.36',
       toVersion: '0.1.37',
       requestedBy: 'admin',

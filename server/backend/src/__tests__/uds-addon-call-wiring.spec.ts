@@ -25,8 +25,8 @@ import {
   LocalChildClient,
   CustomActionRegistry,
   createLocalTransport,
-} from '@camstack/system'
-import type { AddonCallInput } from '@camstack/system'
+} from '@camstack/server/system'
+import type { AddonCallInput } from '@camstack/server/system'
 import { buildAddonRouteProvider, customAction, defineCustomActions } from '@camstack/types'
 import type { IAddonHttpRoute, CustomActionsSpec, CustomActionCaller } from '@camstack/types'
 

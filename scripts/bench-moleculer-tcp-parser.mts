@@ -46,7 +46,7 @@ const require = createRequire(import.meta.url)
 /**
  * `moleculer`'s `exports` map does not expose `./src/**`, so the parser is
  * reached by path off the package's resolved main. This is the SAME file the
- * bundler inlines into `@camstack/system/dist/index.js` — the parser is not a
+ * bundler inlines into `@camstack/server/system/dist/index.js` — the parser is not a
  * runtime dependency on the hub, it is bundled — so patching it here patches
  * what ships.
  */

@@ -8,7 +8,7 @@
  * events, the bug is downstream in the WS adapter, not in the routing.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { SystemEventBus } from '@camstack/system'
+import { SystemEventBus } from '@camstack/server/system'
 import { createLiveEventsRouter } from '../api/core/live-events.router.js'
 import { makeCtx } from './cap-routers/harness.js'
 import type { EventBusService } from '../core/events/event-bus.service.js'

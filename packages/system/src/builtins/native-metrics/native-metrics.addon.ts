@@ -111,7 +111,7 @@ function coarsenResourcesSnapshot(snapshot: unknown): string {
 }
 
 // Shape of the ProcessInfo returned by the kernel `$process.list` Moleculer action.
-// Not imported from @camstack/system — core cannot depend on kernel. Keep the shape
+// Not imported from @camstack/server/system — core cannot depend on kernel. Keep the shape
 // minimal + narrow the state field at the boundary.
 interface KernelProcessInfo {
   readonly pid: number

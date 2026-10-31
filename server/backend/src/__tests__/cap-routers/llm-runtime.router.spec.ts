@@ -2,7 +2,7 @@
  * Codegen'd `llm-runtime` (internal, node-side) router spec (framework train).
  *
  * Same worktree caveat as `llm.router.spec.ts`: skips its body when the
- * `@camstack/system` build predates the cap; the file satisfies `_meta.spec.ts`.
+ * `@camstack/server/system` build predates the cap; the file satisfies `_meta.spec.ts`.
  */
 
 import type { ILlmRuntimeProvider } from '@camstack/types'

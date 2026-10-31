@@ -382,7 +382,7 @@ function migrationAccessOf(file: OwnedSqliteFile): MigrationFileAccess {
 
 function systemPackageVersion(): string {
   const require_ = createRequire(import.meta.url)
-  const parsed: unknown = require_('@camstack/system/package.json')
+  const parsed: unknown = require_('@camstack/server/system/package.json')
   return typeof parsed === 'object' &&
     parsed !== null &&
     'version' in parsed &&

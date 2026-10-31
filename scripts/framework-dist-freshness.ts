@@ -3,7 +3,7 @@
  *
  * `generate-api-types.ts` expands the hand-written core routers through the
  * SERVER tsconfig, and that tsconfig resolves `@camstack/types` and
- * `@camstack/system` the way Node does — through each package's
+ * `@camstack/server/system` the way Node does — through each package's
  * `dist/index.d.ts`, never through its sources. So the expansion silently
  * depends on those two packages having been BUILT:
  *
@@ -53,7 +53,7 @@ export interface FrameworkDistProblem {
  */
 export const CORE_ROUTER_FRAMEWORK_PACKAGES: readonly FrameworkPackage[] = [
   { dir: 'packages/types', name: '@camstack/types' },
-  { dir: 'packages/system', name: '@camstack/system' },
+  { dir: 'packages/system', name: '@camstack/server/system' },
 ]
 
 /**

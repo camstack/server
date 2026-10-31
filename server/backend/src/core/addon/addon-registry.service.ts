@@ -10,7 +10,7 @@ import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { DataPlaneSink, RegisteredChild } from '@camstack/system'
+import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
 import {
   AddonDepsManager,
   AddonHealthMonitor,
@@ -50,7 +50,7 @@ import {
   validateProviderRegistrations,
   waitUntilReady,
   asBrokerLike,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type {
   AddonContext,
   AddonDeclaration,
@@ -114,7 +114,8 @@ import type { NodeTombstoneStore } from '../agent/node-removal-hooks.js'
 import { coreAuthRecordKinds } from '../auth/record-kinds.js'
 import type { CredentialTokenService } from '../auth/credential-token.service.js'
 import { materializeRoutePath } from './materialize-route-path.js'
-import { resolveHubClosurePackageDir } from './package-dir-utils'
+import { resolveBuiltinsDir } from './package-dir-utils'
+import { LEGACY_SYSTEM_PACKAGE_NAME } from '../../legacy-package-names'
 import { decidePrune, prunePlacementLeftovers } from './prune-misplaced-addons.js'
 import { planRunnerConvergence, type RunnerProcessSnapshot } from './runner-convergence'
 import { createRunnerSerializer, type RunnerSerializer } from './runner-serialization'
@@ -135,8 +136,8 @@ export interface EvictionCandidate {
  * Decide whether an in-memory addon entry should be evicted because it is no
  * longer on disk (the uninstall path in `loadNewAddons`).
  *
- * A `@camstack/system` builtin is NEVER evicted here: the fresh loader scans
- * `addonsDir` only (no `['@camstack/system']` closure include), so builtins
+ * A `@camstack/server` builtin is NEVER evicted here: the fresh loader scans
+ * `addonsDir` only (no `['@camstack/server']` closure include), so builtins
  * are never in `onDiskIds`, and their lifecycle is the server closure
  * (single-copy model), not the data/addons uninstall path. Omitting this guard
  * let a deploy of an unrelated addon silently unregister loki-logging on the
@@ -148,7 +149,7 @@ export function shouldEvictMissingOnDisk(
   onDiskIds: ReadonlySet<string>,
 ): boolean {
   return (
-    entry.source === 'installed' && entry.packageName !== '@camstack/system' && !onDiskIds.has(id)
+    entry.source === 'installed' && entry.packageName !== '@camstack/server' && !onDiskIds.has(id)
   )
 }
 
@@ -215,7 +216,7 @@ interface BrokerLike {
  * Type predicate: true when an `ISettingsBackend` also satisfies the
  * sync `ISettingsStore` contract (system/addon/device key-value ops)
  * that ConfigManager expects. The default `SqliteSettingsBackend` in
- * `@camstack/system` implements both surfaces; forked addon backends may
+ * `@camstack/server` implements both surfaces; forked addon backends may
  * not, in which case we skip the ConfigService wiring.
  */
 function isSettingsStore(backend: ISettingsBackend): backend is ISettingsBackend & ISettingsStore {
@@ -579,7 +580,7 @@ export class AddonRegistryService {
   // Active capability providers (set by consumers when capabilities are wired)
   private activeStorageProvider: INewStorageProvider | null = null
   private activeSettingsBackend: ISettingsBackend | null = null
-  private integrationRegistry: import('@camstack/system').IntegrationRegistry | null = null
+  private integrationRegistry: import('@camstack/server/system').IntegrationRegistry | null = null
   private clusterNodeHistoryStore: ClusterNodeHistoryStore | null = null
   private nodeTombstoneStore: NodeTombstoneStore | null = null
   private clusterAgentRecords: RecordsAccess | null = null
@@ -808,30 +809,36 @@ export class AddonRegistryService {
     const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
 
     // Single-copy model (2026-07-18 collapse): the framework BUILTINS
-    // (`@camstack/system`: device-manager, snapshot, storage, settings, …) load
+    // (`@camstack/server`: device-manager, snapshot, storage, settings, …) load
     // from the ACTIVE CLOSURE the hub itself runs from — resolved via the same
-    // walk-up hub-main uses — NOT from a physical `/data/addons/@camstack/system`
+    // walk-up hub-main uses — NOT from a physical `/data/addons/@camstack/server/system`
     // copy. That copy drifted because no update channel refreshed it (the
     // recurring "+1 restart" / stale-builtin pain); there is now ONE copy and no
     // `syncSystemAddonsCopy` race. Non-framework addons still load from the
-    // addons dir unchanged. The addons-dir `@camstack/system` copy (if present,
+    // addons dir unchanged. The addons-dir `@camstack/server` copy (if present,
     // seeded by the image entrypoint) is SKIPPED to avoid a double-load.
-    const closureSystemDir = resolveHubClosurePackageDir('@camstack/system')
+    const closureSystemDir = resolveBuiltinsDir()
     if (closureSystemDir) {
       try {
         await this.addonLoader.loadFromAddonDir(closureSystemDir)
       } catch (err) {
-        this.logger.error('Failed to load @camstack/system builtins from the active closure', {
-          meta: { closureSystemDir, error: err instanceof Error ? err.message : String(err) },
-        })
+        this.logger.error(
+          'Failed to load @camstack/server/system builtins from the active closure',
+          {
+            meta: { closureSystemDir, error: err instanceof Error ? err.message : String(err) },
+          },
+        )
       }
     } else {
       this.logger.warn(
-        '@camstack/system not resolvable from the hub closure — builtins may be missing',
+        '@camstack/server/system not resolvable from the hub closure — builtins may be missing',
       )
     }
 
-    await this.addonLoader.loadFromDirectory(addonsDir, ['@camstack/system'])
+    await this.addonLoader.loadFromDirectory(addonsDir, [
+      '@camstack/server',
+      LEGACY_SYSTEM_PACKAGE_NAME,
+    ])
 
     // Hand pre-init load failures (broken package.json, missing
     // dist, import-time errors) to the health monitor so its retry
@@ -900,11 +907,11 @@ export class AddonRegistryService {
           packageDisplayName: registered.packageDisplayName,
           ...(registered.bundle !== undefined ? { bundle: registered.bundle } : {}),
           declaredCapabilities: declCaps,
-          // @camstack/system builtins load from the active closure (single-copy
+          // @camstack/server/system builtins load from the active closure (single-copy
           // model), not the inert addons-dir copy — point their dir there so
           // any dir-derived path (data dir, markers) resolves to the real copy.
           addonDir:
-            registered.packageName === '@camstack/system' && closureSystemDir
+            registered.packageName === '@camstack/server' && closureSystemDir
               ? closureSystemDir
               : path.join(addonsDir, registered.packageName),
           declaration: registered.declaration,
@@ -927,7 +934,7 @@ export class AddonRegistryService {
     })
     // Platform probing is no longer orchestrated by the backend. The
     // `platform-probe` capability (shipped as a core builtin under
-    // `@camstack/system/dist/builtins/platform-probe/` since Phase B of
+    // `@camstack/server/system/dist/builtins/platform-probe/` since Phase B of
     // the bundles refactor) exposes hardware + scored backends via
     // `ctx.api.platformProbe.*`; inference addons auto-configure
     // inside their own `onInitialize`.
@@ -964,7 +971,7 @@ export class AddonRegistryService {
     // genuinely has no cross-process provider and the fallback returns null — wrappers
     // cleanly fall through to their own secondary strategy.
     {
-      const { buildNativeCapProxy } = await import('@camstack/system')
+      const { buildNativeCapProxy } = await import('@camstack/server/system')
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- moleculer types unresolvable; see `broker` getter docstring
       const broker = this.moleculer.broker
       this.capabilityRegistry.setNativeFallback(
@@ -1054,7 +1061,7 @@ export class AddonRegistryService {
     // one were declared — the mechanism stays available as an explicit
     // opt-in for future co-location needs.
     //
-    // `placement: 'agent-only'` addons and `@camstack/system` builtins are
+    // `placement: 'agent-only'` addons and `@camstack/server` builtins are
     // excluded from the plan (filtered inside `buildAddonGroupPlan`) — except
     // a builtin declaring `execution.isolate`, which is spawned in two
     // waves (infra isolates BEFORE in-process builtins, consumers AFTER —
@@ -1101,7 +1108,7 @@ export class AddonRegistryService {
     const isolatedBuiltinIds = allIds.filter((id) => {
       const entry = this.addonEntries.get(id)
       return (
-        entry?.packageName === '@camstack/system' &&
+        entry?.packageName === '@camstack/server' &&
         entry.declaration !== undefined &&
         isIsolatedBuiltin(entry.declaration)
       )
@@ -1114,7 +1121,7 @@ export class AddonRegistryService {
         return entry?.declaredCapabilities ?? []
       },
     )
-    // A core builtin is identified by `packageName === "@camstack/system"`,
+    // A core builtin is identified by `packageName === "@camstack/server"`,
     // NOT by the absence of an `execution` declaration — a builtin may
     // still declare `execution` (e.g. `platform-probe`); the package
     // boundary is the selection criterion. The ONE exception is
@@ -1123,7 +1130,7 @@ export class AddonRegistryService {
     // failure surfaces as `addon.error`; quietly running the addon on the hub
     // instead would defeat the isolation on exactly the day it is needed.
     const isCoreBuiltin = (id: string): boolean =>
-      this.addonEntries.get(id)?.packageName === '@camstack/system' && !isolatedBuiltins.has(id)
+      this.addonEntries.get(id)?.packageName === '@camstack/server' && !isolatedBuiltins.has(id)
 
     // Order is load-bearing (D234): forked addons `resolveConfig()` against
     // the settings door. Spawn them before the engine is in `getCollection`
@@ -1886,10 +1893,10 @@ export class AddonRegistryService {
     // subprocess. The runner-spawn pass during initial boot already
     // spawned every eligible addon; `initializeAddon` is the per-addon
     // entry point reached by the hot-load / restart flows (and by the
-    // Pass 1/2/3 in-process boot for `@camstack/system` builtins). Fork
+    // Pass 1/2/3 in-process boot for `@camstack/server` builtins). Fork
     // only when the addon declares an `execution` block, ships an
     // on-disk `addonDir`, and is not `agent-only`; otherwise (only
-    // `@camstack/system` builtins reach the in-process path below) it
+    // `@camstack/server` builtins reach the in-process path below) it
     // boots in-process on the hub.
     if (this.isForkedAddonEntry(entry)) {
       // D5 + co-location: a forked addon ALWAYS boots in a runner — there is
@@ -2400,7 +2407,7 @@ export class AddonRegistryService {
 
       // D5: a forked addon ALWAYS restarts via `$process.restart` above
       // (process restart — no in-process hot-reload of a live forked
-      // addon). This branch is reached only by `@camstack/system` builtins
+      // addon). This branch is reached only by `@camstack/server` builtins
       // — they have no runner and legitimately reload in-process:
       // shutdown, unregister, re-initialize, re-wire.
       if (entry.initialized && entry.addon.shutdown) {
@@ -2594,7 +2601,7 @@ export class AddonRegistryService {
    * True when the entry boots in its own forked runner. This MUST mirror
    * the fork authority `buildAddonGroupPlan`, which spawns a runner for
    * every addon that ships an on-disk `addonDir` + a manifest
-   * `declaration`, is NOT a `@camstack/system` builtin, and is NOT
+   * `declaration`, is NOT a `@camstack/server` builtin, and is NOT
    * `agent-only`. The `execution` block is OPTIONAL — an addon with no
    * `execution` declaration still forks on its own dedicated runner
    * (`resolveRunnerId` falls back to the addon id). Requiring `execution`
@@ -2603,7 +2610,7 @@ export class AddonRegistryService {
    * in-process by this predicate, so its route-mount took the co-located
    * path and received the async UDS cap proxy whose `getRoutes()` returns
    * a Promise (→ `getRoutes(...).map is not a function`). Only
-   * `@camstack/system` builtins boot in-process on the hub — except one that
+   * `@camstack/server` builtins boot in-process on the hub — except one that
    * declares `execution.isolate`, which forks like anything else. Both
    * questions are answered by `runsInOwnRunner`, so the two can no longer
    * disagree. The type predicate narrows both `addonDir` and `declaration`
@@ -2959,7 +2966,7 @@ export class AddonRegistryService {
     // D5: every non-core addon lives in its own runner subprocess. The
     // uninstall consolidation is "stop the runner"; the runner exits and
     // re-handshakes the hub WITHOUT the removed addon (D3 machinery).
-    // `@camstack/system` builtins are excluded — see `shouldEvictMissingOnDisk`.
+    // `@camstack/server` builtins are excluded — see `shouldEvictMissingOnDisk`.
     const onDiskIds = new Set(
       freshLoader.listAddons().map((a: { declaration: { id: string } }) => a.declaration.id),
     )
@@ -2992,7 +2999,7 @@ export class AddonRegistryService {
           }
         } else if (entry.initialized) {
           // Defensive fallback: a non-forked installed addon (every
-          // non-`@camstack/system` addon forks, and builtins are excluded
+          // non-`@camstack/server` addon forks, and builtins are excluded
           // above, so this is not normally reached). Shut it down in-process.
           try {
             await entry.addon.shutdown()
@@ -3251,7 +3258,7 @@ export class AddonRegistryService {
     if (!routeProvider) return
 
     // ── Forked addon: fetch handler-stripped routes over UDS (F3) ──────
-    // EVERY non-`@camstack/system` addon forks (the fork authority is
+    // EVERY non-`@camstack/server` addon forks (the fork authority is
     // `buildAddonGroupPlan`, which does NOT require an `execution` block — an
     // addon like `auth-oidc` with no `execution` still runs in its own
     // runner). `isForkedAddonEntry` now mirrors that rule. For a forked addon
@@ -3286,7 +3293,7 @@ export class AddonRegistryService {
       return
     }
 
-    // ── Co-located addon (`@camstack/system` builtin): live handlers, register
+    // ── Co-located addon (`@camstack/server` builtin): live handlers, register
     // the provider directly. The route handlers run in-process against the
     // real Fastify reply, so no wire bridge is needed.
     addonRouteRegistry.registerRoutes(routeProvider.id, routeProvider)
@@ -3818,7 +3825,7 @@ export class AddonRegistryService {
    *     passes a live JS reference across a process boundary any more.
    *
    * Addons with `placement: 'agent-only'` are dropped (they don't run on
-   * the hub). `@camstack/system` builtins are dropped too — UNLESS the
+   * the hub). `@camstack/server` builtins are dropped too — UNLESS the
    * manifest entry declares `execution.isolate: true`.
    *
    * The reason builtins stay in-process is that the infrastructure ones
@@ -3862,7 +3869,7 @@ export class AddonRegistryService {
   private runsInOwnRunner(entry: AddonEntry): boolean {
     if (!entry.declaration || !entry.addonDir) return false
     if (resolveAddonPlacement(entry.declaration) === 'agent-only') return false
-    if (entry.packageName !== '@camstack/system') return true
+    if (entry.packageName !== '@camstack/server') return true
     return isIsolatedBuiltin(entry.declaration)
   }
 
@@ -3924,7 +3931,7 @@ export class AddonRegistryService {
     // Nothing about the runner is read from its bundle here (D444).
     for (const { addonId } of addons) {
       // Mark the entry initialized so the in-process core-builtin boot
-      // passes skip it (those passes only touch `@camstack/system`).
+      // passes skip it (those passes only touch `@camstack/server`).
       const entry = this.addonEntries.get(addonId)
       if (entry) {
         entry.initialized = true

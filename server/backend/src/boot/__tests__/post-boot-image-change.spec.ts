@@ -3,8 +3,8 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@camstack/system', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@camstack/system')>()
+vi.mock('@camstack/server/system', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@camstack/server/system')>()
   return {
     ...actual,
     retirePreviousLocalCa: () => false,

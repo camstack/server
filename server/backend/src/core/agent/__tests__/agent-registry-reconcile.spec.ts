@@ -7,7 +7,7 @@ import { AgentRegistryService } from '../agent-registry.service'
 
 /**
  * Regression: the hub reconcile must NEVER undeploy the agent's own
- * `@camstack/system` infrastructure builtins. They are bootstrap
+ * `@camstack/server/system` infrastructure builtins. They are bootstrap
  * infrastructure (storage/settings/metrics/logging) that runs on every
  * node and is absent from the hub's installed-addon set, so the naive
  * "not installed on hub → stale" rule wrongly flagged them and tore down
@@ -62,12 +62,12 @@ function makeService(
 }
 
 describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', () => {
-  it('does not undeploy @camstack/system builtins even though they are absent from the hub set', async () => {
+  it('does not undeploy @camstack/server/system builtins even though they are absent from the hub set', async () => {
     const { service, undeployed } = makeService([
-      { id: 'filesystem-storage', packageName: '@camstack/system' },
-      { id: 'storage-orchestrator', packageName: '@camstack/system' },
-      { id: 'sqlite-settings', packageName: '@camstack/system' },
-      { id: 'metrics-native', packageName: '@camstack/system' },
+      { id: 'filesystem-storage', packageName: '@camstack/server' },
+      { id: 'storage-orchestrator', packageName: '@camstack/server' },
+      { id: 'sqlite-settings', packageName: '@camstack/server' },
+      { id: 'metrics-native', packageName: '@camstack/server' },
       { id: 'onvif', packageName: '@camstack/addon-provider-onvif' },
     ])
 
@@ -84,7 +84,7 @@ describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', (
     // package until the circuit-breaker tripped.
     const { service, undeployed } = makeService([
       { id: 'agent-ui', packageName: '@camstack/addon-agent-ui' },
-      { id: 'sqlite-settings', packageName: '@camstack/system' },
+      { id: 'sqlite-settings', packageName: '@camstack/server' },
       { id: 'onvif', packageName: '@camstack/addon-provider-onvif' },
     ])
 
@@ -95,7 +95,7 @@ describe('AgentRegistryService.reconcileAgentAddons — system-builtin guard', (
 
   it('still undeploys a genuinely stale addon that is not installed on the hub', async () => {
     const { service, undeployed } = makeService([
-      { id: 'sqlite-settings', packageName: '@camstack/system' },
+      { id: 'sqlite-settings', packageName: '@camstack/server' },
       { id: 'ghost-addon', packageName: '@camstack/addon-ghost' },
     ])
 

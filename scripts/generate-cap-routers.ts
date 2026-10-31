@@ -438,7 +438,7 @@ async function generate(): Promise<void> {
     '/* eslint-disable */',
     '',
     "import { TRPCError } from '@trpc/server'",
-    "import { CapRouteError } from '@camstack/system'",
+    "import { CapRouteError } from '@camstack/server/system'",
     "import { z } from 'zod'",
     `import { ${middlewareImports.join(', ')}, trpcRouter } from './trpc.middleware.js'`,
     `import type { InferProvider } from '@camstack/types'`,

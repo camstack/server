@@ -282,7 +282,7 @@ export const userManagementCapability = {
       { auth: 'admin' },
     ),
     // Creating a link is NOT on the cap: it is hub-internal
-    // (`UserManagementInternal.linkExternalIdentity` in @camstack/system),
+    // (`UserManagementInternal.linkExternalIdentity` in @camstack/server/system),
     // reached only by the SSO finish in the hub process. No wire — tRPC,
     // mesh or `ctx.api` — can plant a link.
     /** Remove one link of `userId`. `success: false` when it was not linked to that user. */

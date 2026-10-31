@@ -125,7 +125,7 @@ Manifest fields worth knowing: `protected: true` blocks uninstall ·
 
 **`icon` is a promise the hub must keep.** It is an asset PATH inside the
 package (`assets/icon.svg`, or `assets/<addonId>/icon.svg` when one package ships
-several addons — `@camstack/system` does this for every builtin), and the folder
+several addons — `@camstack/server` does this for every builtin), and the folder
 must be in `files` or `npm pack` drops it. The Admin UI requests
 `/api/addon-assets/<addonId>/<icon>` only for an addon that declares one
 (`addon-admin-ui/src/lib/addon-icons.ts`); everything else draws a glyph with no

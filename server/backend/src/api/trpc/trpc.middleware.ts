@@ -1,4 +1,4 @@
-import { getCatalogRegistry } from '@camstack/system'
+import { getCatalogRegistry } from '@camstack/server/system'
 import {
   capabilityScopesOf,
   DEFAULT_CATALOG_LANG,

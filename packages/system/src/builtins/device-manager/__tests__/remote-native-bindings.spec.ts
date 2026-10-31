@@ -8,7 +8,7 @@
  * which process owns the IDevice.
  */
 
-import { DeviceRegistry } from '@camstack/system'
+import { DeviceRegistry } from '@camstack/server/system'
 import {
   type AddonContext,
   EventCategory,

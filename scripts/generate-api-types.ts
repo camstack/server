@@ -26,7 +26,7 @@
  * procedures that lost their type.
  *
  * PREREQUISITE: the core half is expanded with the SERVER tsconfig, which
- * resolves `@camstack/types` and `@camstack/system` through their
+ * resolves `@camstack/types` and `@camstack/server/system` through their
  * `dist/*.d.ts` — not their sources. On a fresh clone or worktree those
  * dists do not exist, the checker resolves the imports to error types, and
  * the guard trips on procedures that are perfectly well typed in source.
@@ -347,7 +347,7 @@ async function main(): Promise<void> {
     capEntries.push({ key, cap })
   }
 
-  // The expansion resolves `@camstack/types` / `@camstack/system` through
+  // The expansion resolves `@camstack/types` / `@camstack/server/system` through
   // their dist — an unbuilt or stale dist degrades every signature that flows
   // through it to `any`. Answer that question BEFORE spending 4s in the
   // checker and blaming the routers for it.

@@ -4,7 +4,7 @@
  * used to apply after that full load.
  */
 import Database from 'better-sqlite3'
-import { RecordsEngine } from '@camstack/system'
+import { RecordsEngine } from '@camstack/server/system'
 import {
   createRecordsAccess,
   type RecordsAccess,
@@ -360,7 +360,7 @@ function retrainLedgers(records: Pick<RecordsAccess, 'kind' | 'transact'>): Ledg
 }
 
 /**
- * Same readers as `records-explain.ts`. That file lives in `@camstack/system`,
+ * Same readers as `records-explain.ts`. That file lives in `@camstack/server/system`,
  * outside this package's `rootDir`, so the page spec carries the two functions
  * it needs to judge the statements the store actually prepared.
  */

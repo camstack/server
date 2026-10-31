@@ -393,7 +393,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
     expect(screen.queryByRole('button', { name: /update all/i })).toBeNull()
   })
 
-  // 3. Layout: framework/system packages (@camstack/system, types, sdk,
+  // 3. Layout: framework/system packages (@camstack/server/system, types, sdk,
   //    shm-ring, ui-library) are HIDDEN from the Addons page (phase 4) — they
   //    ride inside the node root package and are managed from Server
   //    management. Real addons stay listed.
@@ -439,7 +439,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
         manifest: {
           id: 'system-builtin',
           name: 'System',
-          packageName: '@camstack/system',
+          packageName: '@camstack/server',
           version: '1.0.2',
           packageVersion: '1.0.2',
           capabilities: [],
@@ -452,9 +452,9 @@ describe('Addons page — "Update all" engine job + layout', () => {
 
     // Regular addon renders…
     expect(screen.getByText('@camstack/addon-a')).toBeTruthy()
-    // …the framework package (@camstack/system) is filtered out entirely — no
+    // …the framework package (@camstack/server/system) is filtered out entirely — no
     // card, and none of the old "System" badge / restart-on-update tooltip.
-    expect(screen.queryByText((content) => content.includes('@camstack/system'))).toBeNull()
+    expect(screen.queryByText((content) => content.includes('@camstack/server'))).toBeNull()
     expect(screen.queryByTitle(/updating restarts the hub/i)).toBeNull()
   })
 

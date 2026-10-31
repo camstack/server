@@ -24,7 +24,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { customAction, defineCustomActions } from '@camstack/types'
 import type { CustomActionCaller } from '@camstack/types'
-import { CustomActionRegistry } from '@camstack/system'
+import { CustomActionRegistry } from '@camstack/server/system'
 import { dispatchCustomAction } from '../cap-providers.js'
 import { makeCtx } from '../../../__tests__/cap-routers/harness.js'
 

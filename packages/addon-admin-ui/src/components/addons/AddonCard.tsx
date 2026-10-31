@@ -424,7 +424,7 @@ interface AddonCardProps {
   /** When true, all action buttons are disabled (bulk update in progress) */
   readonly disabledByBulk?: boolean
   /**
-   * True when this card represents the `@camstack/system` framework
+   * True when this card represents the `@camstack/server/system` framework
    * package. Renders a "System" badge and signals to the parent that
    * updating it restarts the hub (the parent gates the update behind a
    * confirmation modal).

@@ -16,8 +16,8 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { ServiceBroker } from 'moleculer'
-import { AGENT_CAP_FWD_SERVICE, AGENT_CAP_FWD_ACTION } from '@camstack/system'
-import type { CapCallInput } from '@camstack/system'
+import { AGENT_CAP_FWD_SERVICE, AGENT_CAP_FWD_ACTION } from '@camstack/server/system'
+import type { CapCallInput } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import { registerAgentCapDispatch } from '../register-agent-cap-dispatch.js'
 import { makeRegistryDouble } from './helpers/registry-double.js'

@@ -57,7 +57,7 @@ function fakeSeam(
   return {
     addonsDir,
     loadedAddons,
-    bootstrapPackages: new Set(['@camstack/system', '@camstack/addon-pipeline']),
+    bootstrapPackages: new Set(['@camstack/server', '@camstack/addon-pipeline']),
     listRunnersByAddon: async (addonId) => runners.filter((r) => r.addonIds.includes(addonId)),
     stopRunner: async (name) => {
       stopped.push(name)

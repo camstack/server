@@ -15,7 +15,7 @@
  * `remote-moleculer`.
  */
 import { CALLER_STAMPED_CAPABILITIES } from '@camstack/types'
-import type { CallFn, CapRoute, CapRouteOpts, CapCallInput } from '@camstack/system'
+import type { CallFn, CapRoute, CapRouteOpts, CapCallInput } from '@camstack/server/system'
 
 /** Minimal LocalChildRegistry surface this dispatcher needs (per-child UDS). */
 export interface CapCallFnLocalChild {

@@ -29,7 +29,7 @@
  *    names a kind.
  *  - **Audited.** One `credentials-revoked` row per call: counts, ids.
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { AuthNetworkPolicy } from '../../auth/auth-network-policy.js'

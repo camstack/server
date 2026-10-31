@@ -90,7 +90,7 @@ function buildWorkspaceIndex() {
 /**
  * A pin taken from the REGISTRY must not carry a stale copy of a package this
  * run publishes. On 2026-09-19 the closure pinned `@camstack/types@1.2.231`
- * next to `@camstack/system@1.2.273 (npm — not in this publish set)`, and the
+ * next to `@camstack/server/system@1.2.273 (npm — not in this publish set)`, and the
  * `system` on the registry had inlined the previous day's `types`: every
  * `setCameraSwitch` on the fleet was refused with an eight-id enum while the
  * types package beside it carried nine (D545). The scope cascade now includes

@@ -10,7 +10,7 @@
  * it. No timer, no retry (D3). A failed read is logged at error and leaves
  * every preference UNKNOWN until the next boot.
  */
-import { type CapabilityRegistry, isInfraCapability } from '@camstack/system'
+import { type CapabilityRegistry, isInfraCapability } from '@camstack/server/system'
 import { errMsg, type IScopedLogger, type ISettingsStoreProvider } from '@camstack/types'
 import type { ConfigService } from '../config/config.service.js'
 

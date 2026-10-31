@@ -12,7 +12,7 @@ import { Server as TlsServer } from 'node:tls'
 // `npx tsx scripts/generate-capability-router-types.ts`. The previous
 // hand-curated list silently dropped caps (zones, zone-rules,
 // zone-analytics, audio-metrics — see git for the regression).
-// Sourced from `@camstack/system` (not `@camstack/types`) so the hub's
+// Sourced from `@camstack/server/system` (not `@camstack/types`) so the hub's
 // capability surface refreshes on `camstack deploy packages/system` with no new
 // server image. `@camstack/types` is never deployed to the hub.
 import {
@@ -39,7 +39,7 @@ import {
   signalAllRunnerGroups,
   startEventLoopStallMonitor,
   startHeapWatch,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { ILocalNetworkProvider } from '@camstack/types'
 import fastifyCompress from '@fastify/compress'
 import fastifyCookie from '@fastify/cookie'

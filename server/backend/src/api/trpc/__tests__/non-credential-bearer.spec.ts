@@ -42,7 +42,7 @@ import type { AddonRegistryService } from '../../../core/addon/addon-registry.se
 import { AuthService } from '../../../core/auth/auth.service.js'
 import { createAuthRouter } from '../../core/auth.router.js'
 import { createTrpcContext, type TrpcContextLogger, type TrpcRequest } from '../trpc.context.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 
 /** The grant an `oauth-code` carries — the same set the link is consented at. */
 const LINK_GRANT = [

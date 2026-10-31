@@ -25,7 +25,7 @@
  *   └───────────────────────────────────────────────────────────────┘
  *                                │
  *                                ▼
- *   4b) rebuild @camstack/types / @camstack/system when their dist is
+ *   4b) rebuild @camstack/types / @camstack/server/system when their dist is
  *       missing or older than their src — step 5 expands the core
  *       routers THROUGH that dist, so an unbuilt one degrades every
  *       signature to `any` and a stale one writes a wrong addon-api.ts
@@ -669,7 +669,7 @@ async function main(): Promise<void> {
 
   if (!skipApi) {
     // The AppRouter expansion reads the core routers through the SERVER
-    // tsconfig, which resolves `@camstack/types` / `@camstack/system` through
+    // tsconfig, which resolves `@camstack/types` / `@camstack/server/system` through
     // their `dist/*.d.ts`. Missing dist → every signature through it expands
     // to `any` and the degradation guard refuses to write; stale dist → it
     // writes a confidently WRONG addon-api.ts. Both are silent about the

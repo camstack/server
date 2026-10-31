@@ -19,7 +19,7 @@ import {
   createHubService,
   NativeMetricsProvider,
   type HubServiceDeps,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { createAgentService } from '../../agent-service.js'
 import type { AgentServiceDeps } from '../../agent-service.js'
 import {

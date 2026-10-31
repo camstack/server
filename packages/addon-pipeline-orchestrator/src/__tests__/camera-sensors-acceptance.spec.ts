@@ -31,7 +31,7 @@ import type {
   StreamSourceEntry,
   SystemEvent,
 } from '@camstack/types'
-import { createLocalTransport, LocalChildClient, LocalChildRegistry } from '@camstack/system'
+import { createLocalTransport, LocalChildClient, LocalChildRegistry } from '@camstack/server/system'
 import PipelineOrchestratorAddon from '../index.js'
 import {
   type FakeDirectoryNode,

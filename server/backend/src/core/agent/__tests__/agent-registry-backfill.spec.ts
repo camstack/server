@@ -177,13 +177,13 @@ function makeHarness(opts: HarnessOptions) {
 }
 
 const WIPED_AGENT = [
-  { id: 'sqlite-settings', packageName: '@camstack/system', version: '1.2.14' },
+  { id: 'sqlite-settings', packageName: '@camstack/server', version: '1.2.14' },
   { id: 'agent-ui', packageName: '@camstack/addon-agent-ui', version: '1.2.14' },
   { id: 'recorder', packageName: '@camstack/addon-pipeline', version: '1.2.14' },
 ]
 
 const FULL_ROSTER: readonly NodePackageEntry[] = [
-  { name: '@camstack/system', version: '1.2.14' },
+  { name: '@camstack/server', version: '1.2.14' },
   { name: '@camstack/addon-agent-ui', version: '1.2.14' },
   { name: '@camstack/addon-pipeline', version: '1.2.14' },
   { name: '@camstack/addon-ai', version: '1.2.10' },
@@ -277,7 +277,7 @@ describe('AgentRegistryService — addon back-fill', () => {
       '@camstack/addon-agent-ui',
       '@camstack/addon-ai',
       '@camstack/addon-pipeline',
-      '@camstack/system',
+      '@camstack/server',
     ])
   })
 

@@ -17,7 +17,7 @@
  * `createChildAddonCallDispatch`), a future surface can't be half-wired without
  * a compile error — the class of "missed link" is closed.
  */
-import type { AddonCallInput, LocalChildRegistry } from '@camstack/system'
+import type { AddonCallInput, LocalChildRegistry } from '@camstack/server/system'
 
 /** An addon-level call minus its `addonId` — the gateway merges that in. */
 export type AddonCallSurface = Omit<AddonCallInput, 'addonId'>
@@ -71,7 +71,7 @@ export class AddonCallGateway {
    * Classify where an addon runs. `nodeId: 'hub'` from a caller means "the hub
    * cluster", NOT "force in-process" — a forked hub-local addon is still a
    * `hub-local-child` (UDS), never the in-process path (which is only the
-   * `@camstack/system` builtins that have no forked runner).
+   * `@camstack/server/system` builtins that have no forked runner).
    */
   classify(addonId: string, explicitNodeId?: string): AddonCallDestination {
     const resolved = this.deps.resolveNode(addonId)

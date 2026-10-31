@@ -23,7 +23,7 @@ import {
 } from '@camstack/types'
 import { pickNodePlatformArch } from '../shared/node-topology-platform.js'
 import { pickBestRuntime } from './auto-pick.js'
-import { startEventLoopStallMonitor } from '@camstack/system/addon-utils'
+import { startEventLoopStallMonitor } from '@camstack/server/system/addon-utils'
 import {
   overridesEqual,
   type PoolProvisioningOverride,

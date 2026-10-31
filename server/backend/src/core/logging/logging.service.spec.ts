@@ -7,7 +7,7 @@ import { LogRingBuffer } from './log-ring-buffer'
 import { ScopedLogger } from './scoped-logger'
 import { LoggingService } from './logging.service'
 import { ConfigService } from '../config/config.service'
-import type { ISettingsStore } from '@camstack/system'
+import type { ISettingsStore } from '@camstack/server/system'
 import type { LogEntry, ILogDestination } from '@camstack/types'
 
 /**

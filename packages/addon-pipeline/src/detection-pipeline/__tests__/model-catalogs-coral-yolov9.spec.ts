@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 // eslint-disable-next-line no-restricted-imports -- the revision rule is the downloader's (build-time dep, as in provider.ts)
-import { resolveFormatRevision } from '@camstack/system/addon-utils'
+import { resolveFormatRevision } from '@camstack/server/system/addon-utils'
 import { OBJECT_DETECTION_MODELS } from '../registry/model-catalogs.js'
 import {
   getDefaultModelForFormat,

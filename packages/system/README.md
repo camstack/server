@@ -4,7 +4,7 @@ Core addon for CamStack — builtins, pipeline, process management, auth, loggin
 
 <!-- readme:generated:start (derived from the manifest; edit outside this block) -->
 
-Package `@camstack/system` on npm.
+Package `@camstack/server` on npm.
 
 ## What it provides
 

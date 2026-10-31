@@ -35,7 +35,7 @@ import {
   processMeshCrl,
   revokeMeshCertificate,
   DEFAULT_HUB_TLS_TCP_PORT,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import type { NodeCertificatesClient } from '../../core/agent/node-certificates-client.js'

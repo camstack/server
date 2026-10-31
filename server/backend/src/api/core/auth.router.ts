@@ -14,7 +14,7 @@
  * to (superseding the removed `auth.listProviders`).
  */
 
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { ILoginMethodProvider, IScopedLogger } from '@camstack/types'
 import {
   advertisedHubOrigins,

@@ -6,7 +6,7 @@ import type {
   CredentialTokenClaims,
   DeviceMetaLike,
 } from '@camstack/types'
-import { getUserManagementInternal } from '@camstack/system'
+import { getUserManagementInternal } from '@camstack/server/system'
 import { DEFAULT_AUTH_NETWORK_POLICY } from '../../auth/auth-network-policy.js'
 import {
   createCredentialVerifier,

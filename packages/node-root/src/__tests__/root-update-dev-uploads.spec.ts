@@ -150,7 +150,6 @@ describe('stageClosure — dev-uploads branch', () => {
     const uploadsDir = seedDevUploads(DEV_VERSION, {
       '@camstack/server': 'camstack-server.tgz',
       '@camstack/types': 'camstack-types.tgz',
-      '@camstack/system': 'camstack-system.tgz',
     })
     const { execNpm, calls } = makeInstallCapture(DEV_VERSION)
     const svc = makeService({ CAMSTACK_SERVER_BOOT_MODE: 'data-root' }, execNpm)
@@ -170,7 +169,6 @@ describe('stageClosure — dev-uploads branch', () => {
     })
     expect(pkgJson.overrides).toEqual({
       '@camstack/types': `file:${path.join(uploadsDir, 'camstack-types.tgz')}`,
-      '@camstack/system': `file:${path.join(uploadsDir, 'camstack-system.tgz')}`,
     })
 
     // The staged closure is armed for swap-on-restart (NOT under versions/).

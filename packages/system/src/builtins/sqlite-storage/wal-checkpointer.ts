@@ -89,7 +89,7 @@ export type WorkerFactory = (workerData: WalCheckpointWorkerData) => CheckpointW
  */
 export function defaultWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
-  const packageRoot = path.dirname(require_.resolve('@camstack/system/package.json'))
+  const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'wal-checkpoint-worker.js')
 }
 

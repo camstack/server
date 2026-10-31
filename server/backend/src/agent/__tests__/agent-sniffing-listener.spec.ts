@@ -4,7 +4,7 @@ import * as https from 'node:https'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { ensureTlsCert, regenerateCertificate } from '@camstack/system'
+import { ensureTlsCert, regenerateCertificate } from '@camstack/server/system'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { type SniffingListener, startSniffingListener } from '../agent-sniffing-listener.js'
 

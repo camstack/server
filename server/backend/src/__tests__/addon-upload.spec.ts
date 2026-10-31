@@ -360,7 +360,7 @@ describe('POST /api/addons/upload', () => {
       const restartAddon = vi.fn(async (_id: string) => ({ success: true }))
       const registry = {
         listAddons: vi.fn(() => [
-          { manifest: { id: 'sqlite-settings', packageName: '@camstack/system' } },
+          { manifest: { id: 'sqlite-settings', packageName: '@camstack/server' } },
         ]),
         loadNewAddons: vi.fn(async () => ({ loaded: [] as string[], failed: [] as string[] })),
         restartAddon,
@@ -370,7 +370,7 @@ describe('POST /api/addons/upload', () => {
 
       fastify = await makeServer({
         auth: makeAuth('admin'),
-        bridge: makeAddonBridge({ name: '@camstack/system', version: '9.9.9' }),
+        bridge: makeAddonBridge({ name: '@camstack/server', version: '9.9.9' }),
         moleculer: makeMoleculer(vi.fn()),
         addonRegistry: registry,
         addonPackageService: pkgSvc,
@@ -385,7 +385,7 @@ describe('POST /api/addons/upload', () => {
         payload: buildMultipart(TGZ_BOUNDARY, {
           file: {
             filename: 'camstack-core-9.9.9.tgz',
-            content: buildValidTarball({ name: '@camstack/system', version: '9.9.9' }),
+            content: buildValidTarball({ name: '@camstack/server', version: '9.9.9' }),
           },
         }),
       })

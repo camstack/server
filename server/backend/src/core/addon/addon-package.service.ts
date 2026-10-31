@@ -13,7 +13,7 @@ import {
   ensureDir,
   scheduleSelfRestart,
   writePendingRestart,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type {
   AutoUpdateChannel,
   InstalledPackage,
@@ -52,10 +52,12 @@ import { computeDistBuildId, resolveHubClosurePackageDir } from './package-dir-u
 const execFileAsync = promisify(execFile)
 
 /**
- * The primary host-provided framework package (kernel + core). Kept as a named
- * export because `lifecycle-job-runner` + several tests reference it directly.
+ * The package that carries the kernel and the builtins. They ship INSIDE
+ * `@camstack/server` (`@camstack/server/system`) — there is no second framework
+ * package any more. Kept as a named export because `lifecycle-job-runner` and
+ * several tests reference it directly.
  */
-export const SYSTEM_PACKAGE = '@camstack/system'
+export const SYSTEM_PACKAGE = '@camstack/server'
 
 /**
  * Packages the npm auto-updater must NEVER touch: the framework/system tier
@@ -70,7 +72,6 @@ export const AUTO_UPDATE_EXCLUDED_PACKAGES: ReadonlySet<string> = new Set([
   '@camstack/core',
   '@camstack/sdk',
   '@camstack/ui-library',
-  '@camstack/server',
 ])
 
 /**
@@ -222,7 +223,7 @@ export type RegistryLookup =
   | { readonly ok: true; readonly latestVersion: string | null }
   | { readonly ok: false; readonly error: string }
 
-type AddonLoader = import('@camstack/system').AddonLoader
+type AddonLoader = import('@camstack/server/system').AddonLoader
 
 // ---------------------------------------------------------------------------
 // Npm search types
@@ -293,12 +294,21 @@ interface NpmPackument {
 // ---------------------------------------------------------------------------
 
 /** Core packages that live in the server's own node_modules */
-const CORE_MANAGED_PACKAGES: readonly string[] = ['@camstack/system', '@camstack/types']
+const CORE_MANAGED_PACKAGES: readonly string[] = [SYSTEM_PACKAGE, '@camstack/types']
+
+/**
+ * Framework packages that get their own "System packages" status row. Empty
+ * since the fold: the kernel and builtins are part of `@camstack/server`, whose
+ * update is announced and applied by the server-update path
+ * (`serverManagement.checkServerUpdate`), so a row here would announce the same
+ * update twice.
+ */
+const FRAMEWORK_STATUS_PACKAGES: readonly string[] = []
 
 export class AddonPackageService {
   private readonly logger: IScopedLogger
 
-  /** AddonInstaller from @camstack/system (may be null if kernel unavailable) */
+  /** AddonInstaller from @camstack/server/system (may be null if kernel unavailable) */
   private installer: AddonInstaller | null = null
 
   /** AddonLoader for reloadPackages (may be null) */
@@ -737,7 +747,7 @@ export class AddonPackageService {
   listInstalled(): InstalledPackage[] {
     if (!this.installer) {
       throw new Error(
-        'AddonInstaller is not available — cannot list installed packages. Ensure @camstack/system is installed and the addons directory is accessible',
+        'AddonInstaller is not available — cannot list installed packages. Ensure @camstack/server/system is installed and the addons directory is accessible',
       )
     }
     return this.installer.listInstalled()
@@ -753,7 +763,7 @@ export class AddonPackageService {
    *
    * Fallback: if the registry hasn't loaded yet (early-boot install
    * paths, tests with stub registries), fall back to the legacy list
-   * so we don't accidentally allow uninstalling `@camstack/system` etc.
+   * so we don't accidentally allow uninstalling `@camstack/server` etc.
    * during a window where protection metadata isn't yet readable.
    */
   isProtected(name: string): boolean {
@@ -1335,7 +1345,7 @@ export class AddonPackageService {
       // hub/node_modules/@camstack/ — addons resolve everything from
       // their own inlined deps.
       const addonsDir = this.resolveAddonsDir()
-      const { installPackageFromNpm } = await import('@camstack/system')
+      const { installPackageFromNpm } = await import('@camstack/server/system')
       const dirName = name.replace(/^@camstack\//, '')
       const targetDir = path.join(addonsDir, dirName)
       const packageSpec = version ? `${name}@${version}` : name
@@ -1563,7 +1573,7 @@ export class AddonPackageService {
     const registry = process.env['CAMSTACK_NPM_REGISTRY']
 
     const rows = await Promise.all(
-      [SYSTEM_PACKAGE].map(async (packageName) => {
+      FRAMEWORK_STATUS_PACKAGES.map(async (packageName) => {
         const manifest = readResolvedPackageManifest(packageName)
         const currentVersion =
           manifest !== null && typeof manifest['version'] === 'string'
@@ -1628,7 +1638,7 @@ export class AddonPackageService {
   }
 
   /**
-   * Announce framework updates. This surface SHOWED `@camstack/system` had an
+   * Announce framework updates. This surface SHOWED `@camstack/server` had an
    * update and emitted nothing, so the operator was never told — it was the
    * only discovery path with no publish at all.
    *
@@ -1682,7 +1692,7 @@ export class AddonPackageService {
   /** Re-discover addons from the addons directory (call after install/uninstall) */
   async reloadPackages(): Promise<void> {
     try {
-      const kernel = await import('@camstack/system')
+      const kernel = await import('@camstack/server/system')
       this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
       const addonsDir = this.resolveAddonsDir()
@@ -1813,7 +1823,7 @@ export class AddonPackageService {
    * channel, then route ALL addon packages that have a newer version through ONE
    * durable engine bulk job (F3 Task 5); auto-updates survive a reboot via the
    * boot reconcile, exactly like a manual "Update all". The framework
-   * (`@camstack/system`) is NOT applied by the engine — it ships via
+   * (`@camstack/server`) is NOT applied by the engine — it ships via
    * `applyServerUpdate` (single-copy collapse), so a swept framework target is
    * skipped by the engine.
    *
@@ -2369,7 +2379,9 @@ export class AddonPackageService {
   /** Throw if installer was not initialised */
   private requireInstaller(): void {
     if (!this.installer) {
-      throw new Error('AddonInstaller is not available -- @camstack/system may not be installed')
+      throw new Error(
+        'AddonInstaller is not available -- @camstack/server/system may not be installed',
+      )
     }
   }
 

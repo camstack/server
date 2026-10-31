@@ -247,10 +247,10 @@ export class AddonLoader {
   /** Scan addons directory and load all addon packages.
    *  Supports scoped layout: addons/@scope/package-name/
    *
-   *  `skipPackages` names scoped packages (e.g. `@camstack/system`) that the
+   *  `skipPackages` names scoped packages (e.g. `@camstack/server/system`) that the
    *  caller loads from elsewhere — the single-copy model loads the framework
    *  BUILTINS from the active closure, not the (now-inert) addons-dir copy, so
-   *  the addons-dir `@camstack/system` must NOT be double-loaded here. */
+   *  the addons-dir `@camstack/server/system` must NOT be double-loaded here. */
   async loadFromDirectory(addonsDir: string, skipPackages: readonly string[] = []): Promise<void> {
     if (!fs.existsSync(addonsDir)) return
     const skip = new Set(skipPackages)
@@ -366,7 +366,7 @@ export class AddonLoader {
     // An addon id belongs to the first PACKAGE that registered it. The hub
     // loads the closure's builtins before the addons dir, so a package that was
     // later folded into the framework (`@camstack/addon-device-history` →
-    // `@camstack/system`) would otherwise replace the builtin from its stale
+    // `@camstack/server/system`) would otherwise replace the builtin from its stale
     // on-disk copy — and did, on every node that had installed it. A reload of
     // the SAME package still replaces it.
     const owner = this.addons.get(declaration.id)

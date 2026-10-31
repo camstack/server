@@ -15,7 +15,7 @@ import {
   createMeshAccessMiddleware,
   isProcessVerifiedMeshPeer,
   MeshIdentityGate,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 
 /** At most one "refused" line per node per this long. */

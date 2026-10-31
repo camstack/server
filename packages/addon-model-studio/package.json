@@ -116,7 +116,10 @@
     "vitest": "^3.0.0",
     "zod": "^4.3.6"
   },
-  "dependencies": {
-    "@camstack/system": "*"
+  "dependencies": {},
+  "nx": {
+    "implicitDependencies": [
+      "@camstack/server-framework"
+    ]
   }
 }

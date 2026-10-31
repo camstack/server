@@ -16,7 +16,7 @@
  * `system-manager.integration.spec.ts`.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { SystemEventBus } from '@camstack/system'
+import { SystemEventBus } from '@camstack/server/system'
 import { EventCategory } from '../../enums/event-category.js'
 import { SystemMirror, type SystemMirrorApi } from '../system-mirror.js'
 import type { DeviceBinding } from '../device-binding.js'

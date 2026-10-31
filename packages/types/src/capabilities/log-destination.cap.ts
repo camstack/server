@@ -134,7 +134,7 @@ export const logDestinationCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
 } as const satisfies CapabilityDefinition
 

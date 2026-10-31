@@ -15,7 +15,7 @@ import {
   type MeshCertificateRegistry,
   type MeshCrl,
   type MeshPeers,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import type { NodeCertificateRevoker } from './agent-registry.service'
 

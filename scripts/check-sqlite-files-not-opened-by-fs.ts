@@ -35,7 +35,7 @@
  *    `better-sqlite3` or `node:sqlite` (static, dynamic or `require`) in any
  *    file but the two that construct the owner's connections
  *    ({@link SQLITE_CONNECTION_FILES}). Not the whole `sqlite-storage/`
- *    directory: `@camstack/system`'s index exports modules from it, and
+ *    directory: `@camstack/server/system`'s index exports modules from it, and
  *    hub-main loads them. `import type` is fine: a type opens nothing.
  *
  * Code that legitimately handles a NON-live database (a restore that drops a

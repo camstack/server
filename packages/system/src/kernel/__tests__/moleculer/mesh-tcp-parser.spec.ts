@@ -3,7 +3,7 @@
  *
  * This is the only place in the repo that tests code we do not own. It is
  * here because `patches/moleculer+<version>.patch` changes that code, and the
- * parser is **bundled** into `@camstack/system/dist/index.js` rather than
+ * parser is **bundled** into `@camstack/server/system/dist/index.js` rather than
  * resolved at runtime on the hub — so the patch is not a development
  * convenience, it is part of the shipped artifact and it must have a guard
  * that goes red when it is missing.

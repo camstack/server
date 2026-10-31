@@ -1,4 +1,4 @@
-import { AuthManager } from '@camstack/system'
+import { AuthManager } from '@camstack/server/system'
 import type { TokenPayload } from '@camstack/types'
 
 /**

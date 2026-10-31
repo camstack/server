@@ -32,7 +32,7 @@ export const DEVICE_KEY_PREFIX = 'camstack-'
  * The rationale that used to sit here — "numeric ids are reallocated by a
  * re-sync, so a captured number would address whichever camera inherited
  * it" — was FALSE and is deleted rather than softened.
- * `allocateNextDeviceId` (`@camstack/system`,
+ * `allocateNextDeviceId` (`@camstack/server/system`,
  * `device-meta-store.ts`) is a monotonic counter: it reads
  * `nextDeviceId ?? 1` and writes `current + 1`. A freed id is never
  * re-issued. The worst case after a re-adoption is an ORPHANED entity —

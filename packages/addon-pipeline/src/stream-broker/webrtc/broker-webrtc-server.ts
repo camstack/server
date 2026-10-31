@@ -1033,7 +1033,7 @@ export class BrokerWebrtcServer {
    * The manager injects one calling its own methods directly. The call is
    * IN-PROCESS on purpose: `classifyCapRoute` would serve an unpinned cap call
    * hub-in-process anyway, and going out through tRPC would additionally depend
-   * on the installed `@camstack/system` carrying the D67 method. Without this
+   * on the installed `@camstack/server/system` carrying the D67 method. Without this
    * wiring a session that needs a transcode says so and closes — it never falls
    * back to spawning an ffmpeg of its own.
    */

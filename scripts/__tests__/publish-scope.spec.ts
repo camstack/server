@@ -60,7 +60,7 @@ describe('resolvePublishSet', () => {
     expect(bundles.get('packages/addon-provider-rtsp')).toBeUndefined()
   })
 
-  it('republishes @camstack/system with a types change — it INLINES the cap definitions', () => {
+  it('republishes @camstack/server/system with a types change — it INLINES the cap definitions', () => {
     // 2026-09-19: `event-saving` reached types@1.2.229…231 across five runs and
     // system stayed at 1.2.273 from the evening before. The hub builds every
     // cap router from the copy system inlines (`bundleTypesMainEntry: true`,

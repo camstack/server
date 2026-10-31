@@ -2,7 +2,7 @@
  * The row rules of the records engine for the in-memory world. MIRRORS
  * `packages/system/src/builtins/sqlite-storage/records/records-rows.ts`
  * (`validateHeader`, `enforceSecrets`, the `maxDataBytes` refusal); the
- * contract spec in `@camstack/system` holds the two together.
+ * contract spec in `@camstack/server/system` holds the two together.
  */
 import { REDACTED_SECRET } from '../interfaces/config-ui-secrets.js'
 import { isSecretMarker } from '../keychain/secret-marker.js'

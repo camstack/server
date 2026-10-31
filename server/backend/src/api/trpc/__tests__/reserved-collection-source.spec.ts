@@ -15,7 +15,7 @@
  * fault like this is asked per-camera or it cannot be asked at all.
  */
 
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { recordingCapability } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { requireDeviceCollection } from '../device-collection-dispatch.js'

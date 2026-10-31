@@ -1,5 +1,5 @@
 /**
- * The model downloader (inside `@camstack/system/addon-utils`) reads the hosting
+ * The model downloader (inside `@camstack/server/system/addon-utils`) reads the hosting
  * constants from `@camstack/types/addon`, never the schema barrel (D28). The
  * light entry must carry the same VALUES the barrel does.
  */

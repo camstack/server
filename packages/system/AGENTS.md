@@ -1,6 +1,6 @@
 # packages/system — the kernel
 
-`@camstack/system` is the kernel and the builtins. It absorbed the former
+`@camstack/server` is the kernel and the builtins. It absorbed the former
 `packages/kernel` and `packages/core` <!-- drift-ok: naming absorbed packages -->,
 so anything referring to those is stale.
 
@@ -53,8 +53,8 @@ Follow the skill; do not reconstruct the procedure (any agent can open the file)
   `src/builtins/device-manager/device-aggregation.ts`.
   ([D12](../../docs/decisions/adr-0012.md))
 - **`better-sqlite3` lives in this package's own `node_modules`**, which is why
-  `@camstack/system` is an addon-bundle external rather than inlined.
-- **Never install this package under `/data/addons/@camstack/system`.** A
+  `@camstack/server` is an addon-bundle external rather than inlined.
+- **Never install this package under `/data/addons/@camstack/server/system`.** A
   leftover copy there silently wins over the published closure.
 - **`deleteLocation` occupancy is the class subtree**
   (`location-occupancy.ts`, D327) — not a `readdir` of a shared recordings

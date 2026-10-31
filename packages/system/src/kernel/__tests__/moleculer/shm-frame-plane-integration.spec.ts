@@ -60,7 +60,7 @@ interface PlanAddonEntry {
 function deriveRunnerPlan(entries: readonly PlanAddonEntry[]): RunnerPlan {
   const plan = new Map<string, RunnerAddonPlacement[]>()
   for (const entry of entries) {
-    if (entry.packageName === '@camstack/system' && !isIsolatedBuiltin(entry.declaration)) continue
+    if (entry.packageName === '@camstack/server' && !isIsolatedBuiltin(entry.declaration)) continue
     if (resolveAddonPlacement(entry.declaration) === 'agent-only') continue
     const runnerId = resolveRunnerId(entry.declaration, entry.addonId)
     const bucket = plan.get(runnerId) ?? []

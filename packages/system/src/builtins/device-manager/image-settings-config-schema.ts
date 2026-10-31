@@ -1,7 +1,7 @@
 /**
  * image-settings — server-side `ConfigUISchema` builder + form-patch
  * parser. Sibling of `day-night-config-schema.ts` — see that file's
- * header for why this lives in `@camstack/system` rather than
+ * header for why this lives in `@camstack/server/system` rather than
  * `@camstack/types`.
  *
  * Field keys use the `imageSettings_<prop>` prefix so a flat form patch

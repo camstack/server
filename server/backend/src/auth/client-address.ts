@@ -22,7 +22,7 @@
  * second factor from a trusted network) refuses `viaProxy` outright, whatever
  * address the headers name.
  */
-import { createCidrMatcher, normalizeIp } from '@camstack/system'
+import { createCidrMatcher, normalizeIp } from '@camstack/server/system'
 import { isIP } from 'node:net'
 
 export interface ClientAddress {

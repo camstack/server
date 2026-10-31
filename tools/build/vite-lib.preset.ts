@@ -39,15 +39,15 @@ export type ExternalsMode = 'framework' | 'framework+ui' | 'self-contained' | 's
 const BARE_TYPES_EXTERNAL: RegExp = /^@camstack\/types(\/.*)?$/
 
 /**
- * Same contract for `@camstack/system`, for the reason already spelled out on
+ * Same contract for `@camstack/server/system`, for the reason already spelled out on
  * {@link BARE_TYPES_EXTERNAL}: a bare-string external matches the EXACT
- * specifier only, so `@camstack/system/addon-utils` was not external and
+ * specifier only, so `@camstack/server/system/addon-utils` was not external and
  * rolldown tried to bundle it. The breakage stayed invisible for as long as
  * the nx cache kept serving a dist built before that subpath existed — the
  * build only failed once an unrelated edit invalidated the cache, which is
  * why a passing `camstack deploy` was not evidence the bundle still built.
  */
-const BARE_SYSTEM_EXTERNAL: RegExp = /^@camstack\/system(\/.*)?$/
+const BARE_SYSTEM_EXTERNAL: RegExp = /^@camstack\/server\/system(\/.*)?$/
 
 /**
  * Subpath-only `@camstack/types` external. Keeps `@camstack/types/node`,
@@ -66,7 +66,7 @@ const TYPES_SUBPATH_ONLY_EXTERNAL: RegExp = /^@camstack\/types\/.+$/
  * else is fair game to inline.
  */
 const RUNTIME_EXTERNALS: readonly (string | RegExp)[] = [
-  // Electron-runtime modules. `@camstack/system`'s restart-coordinator +
+  // Electron-runtime modules. `@camstack/server/system`'s restart-coordinator +
   // native-deps loader import `electron` / `@electron/rebuild` lazily
   // (`await import(...).catch(() => null)`) and only when actually running
   // inside the Electron desktop shell. In the hub/agent server process they
@@ -139,12 +139,12 @@ const FRAMEWORK_EXTERNALS: readonly (string | RegExp)[] = [
   // causing "rebuilt types but runtime still old" bugs. The regex keeps every
   // `@camstack/types/*` import host-resolved (single source of truth).
   BARE_TYPES_EXTERNAL,
-  // @camstack/system: marked external so addon bundles don't inline the
+  // @camstack/server/system: marked external so addon bundles don't inline the
   // sqlite-storage builtin. Inlining drags `require('better-sqlite3')`
   // into the addon's shared chunk, which then fails at load time because
-  // `better-sqlite3` lives in `@camstack/system`'s own node_modules (not
+  // `better-sqlite3` lives in `@camstack/server/system`'s own node_modules (not
   // hoisted to the root). Keep it external — addons resolve it through the
-  // workspace symlink at `node_modules/@camstack/system`, which sees its
+  // workspace symlink at `node_modules/@camstack/server/system`, which sees its
   // own `node_modules/` for native deps.
   BARE_SYSTEM_EXTERNAL,
   '@camstack/sdk',
@@ -169,7 +169,7 @@ const FRAMEWORK_EXTERNALS: readonly (string | RegExp)[] = [
  * (because the cap-definition objects in the addon are a separate
  * instance from the hub's). See `BaseAddon.registerProvider`.
  *
- * `@camstack/system` + `@camstack/ui-library` stay external because they
+ * `@camstack/server/system` + `@camstack/ui-library` stay external because they
  * carry native binaries (better-sqlite3) or React (UI singleton).
  */
 const SELF_CONTAINED_EXTERNALS: readonly (string | RegExp)[] = [
@@ -276,9 +276,9 @@ export interface ViteLibPresetOptions {
   /**
    * When `true`, the BARE `@camstack/types` entry is BUNDLED into this
    * package's dist (its subpaths — `/node`, `/addon`, `/catalogs`, … — stay
-   * external). Only `@camstack/system` sets this: it lets the hub source its
+   * external). Only `@camstack/server/system` sets this: it lets the hub source its
    * cap-derived runtime value symbols (`ALL_CAPABILITY_DEFINITIONS`,
-   * `METHOD_ACCESS_MAP`, …) from `@camstack/system` so `camstack deploy
+   * `METHOD_ACCESS_MAP`, …) from `@camstack/server/system` so `camstack deploy
    * packages/system` refreshes the capability surface with no server image,
    * and `@camstack/types` is never deployed to the hub. Does NOT mutate the
    * shared `FRAMEWORK_EXTERNALS`; only this package's effective externals are

@@ -35,7 +35,7 @@ import {
   installAgentHttps,
   loadAgentHttps,
   pinnedHttpsCaFingerprint,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
 

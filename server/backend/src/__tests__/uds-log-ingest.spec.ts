@@ -10,8 +10,8 @@
  * the glue code exercises the real `onChildLog` callback path.
  */
 import { describe, it, expect, vi } from 'vitest'
-import type { ChildLogMessage } from '@camstack/system'
-import { udsChildLogToWorkerEntry } from '@camstack/system'
+import type { ChildLogMessage } from '@camstack/server/system'
+import { udsChildLogToWorkerEntry } from '@camstack/server/system'
 
 // --------------------------------------------------------------------------
 // Minimal `WriteFromWorkerEntry` shape mirrored from LoggingService signature

@@ -933,12 +933,12 @@ export interface CapabilityDefinition<
 
   /**
    * Declarative mount hint read by the runtime cap-router builder
-   * (`@camstack/system` `buildCapRouters`). It encodes HOW the hub
+   * (`@camstack/server/system` `buildCapRouters`). It encodes HOW the hub
    * resolves the provider object the cap's tRPC router calls — the same
    * decision that the codegen `generate-cap-mounts.ts` baked into
    * `generated-cap-mounts.ts` at build time, lifted onto the cap def so a
    * cap change ships via the framework plugin (`@camstack/types` +
-   * `@camstack/system`) without a `@camstack/server` rebuild (BIG PLAN 2).
+   * `@camstack/server/system`) without a `@camstack/server` rebuild (BIG PLAN 2).
    *
    * When omitted, the builder derives the mount from the cap's
    * `scope` / `mode` / `deviceNative` exactly as the codegen did
@@ -958,7 +958,7 @@ export interface CapabilityDefinition<
    *     may compose backend services (`system`, `nodes`, `integrations`,
    *     `addons`, `network-quality`, `toast`) and/or transform a registry
    *     provider (`webrtc-session` wraps the broker to inject the request
-   *     User-Agent). Keeps backend composition out of `@camstack/system`
+   *     User-Agent). Keeps backend composition out of `@camstack/server/system`
    *     (the self-sufficiency invariant) while the schema stays def-driven.
    *   - `{ kind: 'hub-only' }` — single-node cap; the remote-proxy leg is
    *     short-circuited to `null` (agents are not addressable). Used by
@@ -1049,7 +1049,7 @@ export function resolveCapMount(def: CapabilityDefinition): CapabilityMountHint 
  * to agree about what a pin looks like:
  *
  *   1. the hub's tRPC mount            (`device-collection-dispatch.ts`)
- *   2. the Moleculer transport link    (`@camstack/system` trpc-links.ts)
+ *   2. the Moleculer transport link    (`@camstack/server/system` trpc-links.ts)
  *   3. the parent's UDS route          (`cap-router-runtime.ts`)
  *
  * Each of the three has, at some point, answered a pinned call from the wrong

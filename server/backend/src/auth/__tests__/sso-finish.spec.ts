@@ -13,7 +13,7 @@ import {
   type SsoFinishOptions,
   type SsoFinishOutcome,
 } from '../sso-finish.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 
 /**
  * `/api/auth/sso/finish` mints through THE session mint (D712): the session

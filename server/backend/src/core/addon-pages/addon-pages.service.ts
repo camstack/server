@@ -12,7 +12,7 @@ import type { IAddonPageProvider } from '@camstack/types'
  *
  * The public listing surface (`addonPages.listPages` on the AppRouter)
  * has been split out of this class — it now lives in the
- * `addon-pages-aggregator` builtin (`@camstack/system/builtins/...`)
+ * `addon-pages-aggregator` builtin (`@camstack/server/system/builtins/...`)
  * which walks every `addon-pages-source` collection provider and
  * stamps versioned `bundleUrl`s. The split lets both ends flow through
  * codegen instead of relying on a hand-written wrapper.

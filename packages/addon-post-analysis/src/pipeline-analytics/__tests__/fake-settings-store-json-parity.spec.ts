@@ -12,7 +12,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { SettingsStoreClient } from '@camstack/types'
-import { SqliteSettingsBackend } from '@camstack/system'
+import { SqliteSettingsBackend } from '@camstack/server/system'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { makeFakeSettingsStore } from './test-helpers.js'
 

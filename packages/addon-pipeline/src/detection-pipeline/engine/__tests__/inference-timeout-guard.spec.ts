@@ -207,7 +207,7 @@ describe('createInferenceTimeoutGuard', () => {
 import { closureVersionFromRunnerPath } from '../inference-timeout-guard.js'
 
 describe('closureVersionFromRunnerPath', () => {
-  // The forked runner is `<closure>/node_modules/@camstack/system/dist/addon-runner.js`
+  // The forked runner is `<closure>/node_modules/@camstack/server/system/dist/addon-runner.js`
   // (hub: /data/server-root/current/…). `server-management` is a
   // server-provided cap the parent refuses to route for a forked addon
   // ("no provider registered", measured 2026-09-05 on all three nodes), so
@@ -223,7 +223,7 @@ describe('closureVersionFromRunnerPath', () => {
   it('walks up from the runner script to the closure server package', () => {
     expect(
       closureVersionFromRunnerPath(
-        '/data/server-root/current/node_modules/@camstack/system/dist/addon-runner.js',
+        '/data/server-root/current/node_modules/@camstack/server/system/dist/addon-runner.js',
         fs,
       ),
     ).toBe('server@1.2.225')

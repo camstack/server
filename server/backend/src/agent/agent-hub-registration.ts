@@ -32,7 +32,7 @@ import {
   MESH_NODE_UNAUTHENTICATED_TYPE,
   type RegisterNodeBroker,
   type RegisterNodeParams,
-} from '@camstack/system'
+} from '@camstack/server/system'
 
 export interface AgentHubRegistrationOptions {
   /** The COMPLETE manifest, built at send time. */

@@ -35,7 +35,7 @@ cd "$ROOT_DIR"
 if [ ! -d "packages/kernel/dist" ]; then
   echo "[dev-agent-ui] Building system packages..."
   npx nx run-many -t build \
-    --projects='@camstack/types,@camstack/system,sdk,@camstack/ui-library' \
+    --projects='@camstack/types,@camstack/server/system,sdk,@camstack/ui-library' \
     --parallel=4
 fi
 

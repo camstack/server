@@ -1,4 +1,4 @@
-import type { AddonDeploySource } from '@camstack/system'
+import type { AddonDeploySource } from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 
 /**

@@ -30,7 +30,7 @@ const SnapshotImageSchema = z.object({
  *     straight from the camera (HTTP snapshot URL, ONVIF action, etc.).
  *
  *   - **Wrapper** providers (kind:'wrapper'): register as a system
- *     provider (SnapshotAddon in `@camstack/system/builtins/snapshot`). The
+ *     provider (SnapshotAddon in `@camstack/server/system/builtins/snapshot`). The
  *     wrapper owns the cache and invokes the native via
  *     `ctx.getNativeProvider(snapshotCapability, deviceId)` on miss.
  *

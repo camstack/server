@@ -12,13 +12,13 @@
  *   FP32 for another (`scripts/build-camstack-models.py`), so this answers
  *   `undefined` rather than guess.
  *
- * Kept in the addon, not in `@camstack/system` / `@camstack/types`: both are
+ * Kept in the addon, not in `@camstack/server/system` / `@camstack/types`: both are
  * host-resolved at runtime, so a new value there would reach an addon only
  * with a server release, and this addon would fail to load on an older hub.
  */
 import * as fs from 'node:fs'
 // eslint-disable-next-line no-restricted-imports -- model-download helpers are a build-time dep (same waiver as provider.ts).
-import { getModelFilePath, isModelDownloaded } from '@camstack/system/addon-utils'
+import { getModelFilePath, isModelDownloaded } from '@camstack/server/system/addon-utils'
 import {
   HF_REPO,
   hfModelUrl,

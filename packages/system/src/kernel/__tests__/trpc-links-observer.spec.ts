@@ -414,7 +414,7 @@ describe('an unresolved provider does not erase the caller', () => {
     recordCapUsage(
       {
         callerAddonId: '@camstack/addon-pipeline',
-        providerAddonIdForCap: () => '@camstack/system',
+        providerAddonIdForCap: () => '@camstack/server',
         observer: (obs) => {
           seen.push(obs)
         },
@@ -423,6 +423,6 @@ describe('an unresolved provider does not erase the caller', () => {
       'query',
     )
 
-    expect(seen[0]?.providerAddonId).toBe('@camstack/system')
+    expect(seen[0]?.providerAddonId).toBe('@camstack/server')
   })
 })

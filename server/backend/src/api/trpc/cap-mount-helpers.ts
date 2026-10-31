@@ -16,7 +16,7 @@
  * they have app-specific routing logic that belongs in the mount.
  */
 
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import type { CapabilityProviderMap } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 

@@ -7,7 +7,7 @@
  *
  * ## The failure this catches
  *
- * `@camstack/system` inlines the bare `@camstack/types` entry — the cap
+ * `@camstack/server/system` inlines the bare `@camstack/types` entry — the cap
  * definitions every tRPC router validates against — through a preset flag
  * (`bundleTypesMainEntry: true`), not through the `'../types/src'` alias the
  * resolver was written to read. So on 2026-09-19 `event-saving` reached

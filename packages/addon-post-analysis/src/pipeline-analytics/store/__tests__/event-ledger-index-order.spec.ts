@@ -13,7 +13,7 @@
  * so every `where {assigned:false}` page of faces threw on the hub.
  */
 import Database from 'better-sqlite3'
-import { RecordsEngine } from '@camstack/system'
+import { RecordsEngine } from '@camstack/server/system'
 import {
   createRecordsAccess,
   type RecordKindHandle,

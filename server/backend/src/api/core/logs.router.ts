@@ -2,7 +2,7 @@
  * Logs router — fixed core API (not a capability).
  *
  * Queries and streams log entries via `LoggingService` (thin NestJS DI
- * wrapper over `LogManager` from `@camstack/system`). Admin can read
+ * wrapper over `LogManager` from `@camstack/server/system`). Admin can read
  * everything; viewers/protected users only see entries matching their
  * allowed providers scope (filtered in `query`).
  */
@@ -10,7 +10,7 @@ import { z } from 'zod'
 import type { LoggingService } from '../../core/logging/logging.service.js'
 import { trpcRouter, adminProcedure, iterableSubscription } from '../trpc/trpc.middleware.js'
 import { randomUUID } from 'node:crypto'
-import { lineContainsText } from '@camstack/system'
+import { lineContainsText } from '@camstack/server/system'
 import type { ILogDestination, LogEntry, LogReadEntry, LogReadQuery } from '@camstack/types'
 import {
   DEFAULT_LOG_SOURCE,

@@ -24,7 +24,7 @@ import {
   renderCourtesyJpeg,
   renderCourtesyOverlayJpeg,
   type CourtesyReason,
-} from '@camstack/system/addon-utils'
+} from '@camstack/server/system/addon-utils'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 
 /** Which of the two the picture came from. Logged per camera, per wake. */

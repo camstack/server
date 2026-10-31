@@ -17,7 +17,11 @@
  * routes the call exactly like any addon-provided cap.
  */
 
-import { type CoreCapAction, type CoreCapCallOrigin, createCoreCapService } from '@camstack/system'
+import {
+  type CoreCapAction,
+  type CoreCapCallOrigin,
+  createCoreCapService,
+} from '@camstack/server/system'
 import type { IScopedLogger } from '@camstack/types'
 import { Errors, type ServiceSchema } from 'moleculer'
 import {

@@ -23,8 +23,8 @@
 import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { RegisteredAddonManifest } from '@camstack/system'
-import { readPendingRestart, writePendingRestart } from '@camstack/system'
+import type { RegisteredAddonManifest } from '@camstack/server/system'
+import { readPendingRestart, writePendingRestart } from '@camstack/server/system'
 import type {
   IEventBus,
   IScopedLogger,

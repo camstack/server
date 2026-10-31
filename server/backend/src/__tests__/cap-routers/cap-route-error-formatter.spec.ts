@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { TRPCError } from '@trpc/server'
-import { CapRouteError } from '@camstack/system'
+import { CapRouteError } from '@camstack/server/system'
 import { formatTrpcError } from '../../api/trpc/cap-route-error-formatter.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@
  * `NcRule` lives in `@camstack/types`. The addon builds self-contained and
  * INLINES that package, so its own copy is never stale — but the hub's cap
  * router (`notificationRules.createRule` / `updateRule`) validates rule input
- * against the copy `@camstack/system` inlines (`bundleTypesMainEntry`). A new
+ * against the copy `@camstack/server/system` inlines (`bundleTypesMainEntry`). A new
  * key on `NcRuleInputSchema` is therefore *silently stripped at save* on every
  * hub until a `@camstack/server` release carrying it is installed — the
  * failure `summary/summary-rule.ts` documents and the timelapse rule paid for

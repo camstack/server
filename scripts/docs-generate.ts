@@ -81,7 +81,7 @@ interface AddonManifest {
   readonly group: string | null
   readonly instanceMode: string | null
   readonly capabilities: readonly string[]
-  /** `@camstack/system` builtin that opted out of running in hub-main. */
+  /** `@camstack/server/system` builtin that opted out of running in hub-main. */
   readonly isolate: boolean
   /** The package the manifest came from — decides in-process vs own runner. */
   readonly packageName: string
@@ -298,11 +298,11 @@ function renderPackages(pkgs: readonly PackageInfo[]): string {
 }
 
 /**
- * Where the addon's code actually executes. A `@camstack/system` builtin is
+ * Where the addon's code actually executes. A `@camstack/server/system` builtin is
  * in-process on hub-main by default; `execution.isolate` opts it out.
  */
 function addonProcess(addon: AddonManifest): string {
-  if (addon.packageName !== '@camstack/system') return 'own runner'
+  if (addon.packageName !== '@camstack/server') return 'own runner'
   return addon.isolate ? 'own runner (`isolate`)' : 'hub-main'
 }
 
@@ -327,7 +327,7 @@ function renderAddons(pkgs: readonly PackageInfo[]): string {
     'collapses its members into ONE process so their cap calls resolve in-process',
     '— that is the only reason to use it.',
     '',
-    '`Process` says WHERE the addon actually runs. `@camstack/system` builtins are',
+    '`Process` says WHERE the addon actually runs. `@camstack/server` builtins are',
     'resident in hub-main — they hold the storage/settings/logging every runner',
     'depends on — unless the manifest declares `execution.isolate`, which forks the',
     'builtin like any other addon. Reading "system package" as "in hub-main" is what',

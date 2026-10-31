@@ -1,7 +1,7 @@
 // Node-only utilities — kept off the root `@camstack/types` entry so
 // browser bundlers (e.g. Vite widget builds) never traverse `node:fs`,
-// `node:path`, etc. Consumers that run on Node (`@camstack/system`,
-// `@camstack/system`) import from `@camstack/types/node`.
+// `node:path`, etc. Consumers that run on Node (`@camstack/server/system`,
+// `@camstack/server/system`) import from `@camstack/types/node`.
 
 export type { PlatformInfo } from './deps/binary-downloader.js'
 export {

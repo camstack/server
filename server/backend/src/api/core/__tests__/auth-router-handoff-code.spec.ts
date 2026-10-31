@@ -7,7 +7,7 @@ import {
   HANDOFF_CODE_PREFIX,
   HANDOFF_CODE_TTL_MS,
 } from '../../../core/auth/handoff-code.service.js'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import type { AuthenticatedAgent, TrpcContext } from '../../trpc/trpc.context.js'
 
 /**

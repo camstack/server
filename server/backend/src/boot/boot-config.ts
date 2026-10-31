@@ -7,7 +7,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { EnsureTlsResult } from '@camstack/system'
+import type { EnsureTlsResult } from '@camstack/server/system'
 import { asJsonObject, shortHostname } from '@camstack/types'
 import * as yaml from 'js-yaml'
 import type { BootstrapConfig } from '../core/config/config.schema'
@@ -302,10 +302,10 @@ export async function setupInfra(
   let tlsCert: EnsureTlsResult | undefined
 
   if (config.tls.enabled) {
-    // Use require() instead of import() — the ESM build of @camstack/system has
+    // Use require() instead of import() — the ESM build of @camstack/server/system has
     // broken chunks with require("fs") when leaked .js files exist in core/src/.
     // CJS build works correctly and tsx supports require().
-    const core = require('@camstack/system') as typeof import('@camstack/system')
+    const core = require('@camstack/server/system') as typeof import('@camstack/server/system')
     // The certificate comes only from the admin UI (D726): the generated
     // local CA → leaf (D227), or an operator upload served verbatim.
     const extraSans = [...core.readExtraSans(dataPath)]

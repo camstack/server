@@ -76,23 +76,23 @@ describe('planFirstBootAddons', () => {
 
   it('never seeds a package the closure already provides', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/system', '@camstack/addon-auth'],
+      required: ['@camstack/server', '@camstack/addon-auth'],
       installed: {},
-      closureVersions: { '@camstack/system': '1.2.84' },
-      closureProvided: ['@camstack/system'],
+      closureVersions: { '@camstack/server': '1.2.84' },
+      closureProvided: ['@camstack/server'],
     })
-    expect(decisionFor(plan.decisions, '@camstack/system').action).toBe('skip-closure-provided')
+    expect(decisionFor(plan.decisions, '@camstack/server').action).toBe('skip-closure-provided')
     expect(decisionFor(plan.decisions, '@camstack/addon-auth').action).toBe('install-npm')
   })
 
   it('installs a closure-provided package that is NOT resolvable — the unbootable-node case', () => {
     const plan = planFirstBootAddons({
-      required: ['@camstack/system'],
+      required: ['@camstack/server'],
       installed: {},
       closureVersions: {},
       closureProvided: [],
     })
-    expect(decisionFor(plan.decisions, '@camstack/system').action).toBe('install-npm')
+    expect(decisionFor(plan.decisions, '@camstack/server').action).toBe('install-npm')
   })
 
   it('treats an unreadable installed package.json as absent, and says so', () => {

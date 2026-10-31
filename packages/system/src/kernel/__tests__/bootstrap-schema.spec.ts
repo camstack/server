@@ -23,13 +23,13 @@ describe('bootstrapSchema — bootstrap.* defaults', () => {
     const parsed = bootstrapSchema.parse({
       bootstrap: {
         settingsStoreAddon: '@camstack/addon-postgres-storage',
-        requiredAddons: ['@camstack/system', '@camstack/addon-pipeline'],
+        requiredAddons: ['@camstack/server', '@camstack/addon-pipeline'],
         forceDisable: ['@camstack/addon-broken'],
       },
     })
     expect(parsed.bootstrap.settingsStoreAddon).toBe('@camstack/addon-postgres-storage')
     expect(parsed.bootstrap.requiredAddons).toEqual([
-      '@camstack/system',
+      '@camstack/server',
       '@camstack/addon-pipeline',
     ])
     expect(parsed.bootstrap.forceDisable).toEqual(['@camstack/addon-broken'])

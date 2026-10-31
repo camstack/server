@@ -14,11 +14,11 @@ describe('shouldEvictMissingOnDisk', () => {
     expect(shouldEvictMissingOnDisk(entry, 'ai', onDisk('ai'))).toBe(false)
   })
 
-  it('NEVER evicts a @camstack/system builtin, even when absent from onDiskIds', () => {
+  it('NEVER evicts a @camstack/server/system builtin, even when absent from onDiskIds', () => {
     // freshLoader scans addonsDir only, so builtins are never in onDiskIds.
     // This is the loki-logging regression: a deploy of an unrelated addon
     // must not unregister a builtin.
-    const loki: EvictionCandidate = { source: 'installed', packageName: '@camstack/system' }
+    const loki: EvictionCandidate = { source: 'installed', packageName: '@camstack/server' }
     expect(shouldEvictMissingOnDisk(loki, 'loki-logging', onDisk('ai', 'device-manager'))).toBe(
       false,
     )

@@ -1,7 +1,7 @@
 /**
  * AddonInstaller.installFromTgz — `@camstack/*` dependency stripping.
  *
- * Regression guard: a deployed addon (e.g. `@camstack/system`) must NOT get
+ * Regression guard: a deployed addon (e.g. `@camstack/server/system`) must NOT get
  * its OWN `node_modules/@camstack/types` planted by the post-extract
  * `npm install`. Those are host-provided system packages — a local copy
  * inside the addon dir SHADOWS the host's fresh one, so a freshly-added

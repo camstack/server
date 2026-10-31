@@ -1,6 +1,6 @@
 /**
  * Per-runtime crash circuit-breaker — copied verbatim from
- * `@camstack/system/src/kernel/moleculer/crash-supervisor.ts` (the class is NOT
+ * `@camstack/server/system/src/kernel/moleculer/crash-supervisor.ts` (the class is NOT
  * re-exported from the package index, so the ~60-line discipline is duplicated
  * here per the plan). Respawn with exponential backoff while the crash count in
  * a sliding window stays under `maxCrashes`; once the window fills the breaker

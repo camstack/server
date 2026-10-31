@@ -14,7 +14,11 @@ import type { AddonContext, IScopedLogger, IEventBus, SavedDevice } from '@camst
 import { DeviceType, streamCatalogCapability } from '@camstack/types'
 import type { DeviceManagerApi, InferNativeProvider } from '@camstack/types'
 
-import { DeviceRegistry, CapabilityRegistry, createBrokerDeviceManagerApi } from '@camstack/system'
+import {
+  DeviceRegistry,
+  CapabilityRegistry,
+  createBrokerDeviceManagerApi,
+} from '@camstack/server/system'
 
 import { RtspProviderAddon } from '../addon.js'
 import { RtspCamera } from '../rtsp-camera.js'

@@ -9,7 +9,7 @@
  * of the same user and is inherited by every addon runner the hub forks.
  */
 import * as fs from 'node:fs'
-import { setPlatformKeychainKey } from '@camstack/system'
+import { setPlatformKeychainKey } from '@camstack/server/system'
 
 const FD_ARG = '--keychain-key-fd='
 const KEY_BYTES = 32

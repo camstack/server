@@ -10,7 +10,7 @@
  * a stale `ifRev`, a unique index, a body over `maxDataBytes`, a plaintext
  * secret. A store that would fail on the engine fails here.
  *
- * `records-in-memory-contract.spec.ts` (in `@camstack/system`) runs the same
+ * `records-in-memory-contract.spec.ts` (in `@camstack/server/system`) runs the same
  * cases against this world and the real engine so the two cannot drift.
  */
 import type { DeclareKindResult, RecordView } from '../capabilities/records.cap.js'

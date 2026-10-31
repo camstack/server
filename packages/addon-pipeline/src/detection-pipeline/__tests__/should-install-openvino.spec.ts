@@ -1,7 +1,7 @@
 /**
  * Unit tests for the `shouldInstallOpenvino` hardware gate.
  *
- * The helper is addon-local (addons are self-contained; no @camstack/system
+ * The helper is addon-local (addons are self-contained; no @camstack/server/system
  * imports allowed) and is a pure function with no side effects, making it
  * trivially unit-testable. Three cases cover the gate semantics:
  *

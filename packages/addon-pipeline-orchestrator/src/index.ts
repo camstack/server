@@ -2343,7 +2343,7 @@ export default class PipelineOrchestratorAddon
         nodeId === this.localNodeId
           ? await api.platformProbe.getCapabilities.query()
           : await api.platformProbe.getCapabilities.query({ nodeId })
-      // A version-skewed node (older @camstack/system) returns a capabilities
+      // A version-skewed node (older @camstack/server/system) returns a capabilities
       // payload WITHOUT the `devices` enumeration → `caps.devices` is undefined.
       // Degrade to an empty device set (reachable, "no devices reported") rather
       // than crashing the whole board with `undefined.map`. The node still needs

@@ -2,7 +2,7 @@
  * `native-staging.mjs` — the pure DMG-build helpers that plant hoisted native
  * prebuilds into each bundled addon copy and VERIFY every referenced native
  * carries its `.node`. Regression guard for the fresh CamStack.app first-boot
- * FATAL (better-sqlite3 hoisted away from the `@camstack/system` copy).
+ * FATAL (better-sqlite3 hoisted away from the `@camstack/server/system` copy).
  */
 
 import * as fs from 'node:fs'
@@ -115,7 +115,7 @@ describe('bundledAddonSourceDirs', () => {
     // carry their natives are the closure's own package dirs.
     const scope = path.join(tmp, 'node_modules', '@camstack')
     pkg(scope, 'addon-pipeline', '@camstack/addon-pipeline')
-    pkg(scope, 'system', '@camstack/system')
+    pkg(scope, 'system', '@camstack/server')
     pkg(scope, 'addon-decoder-nodeav', '@camstack/addon-decoder-nodeav')
     expect(
       bundledAddonSourceDirs(path.join(tmp, 'node_modules')).map((d) => path.basename(d)),
@@ -124,7 +124,7 @@ describe('bundledAddonSourceDirs', () => {
 
   it('skips a dir with no package.json — a stray, not a package', () => {
     const scope = path.join(tmp, 'node_modules', '@camstack')
-    pkg(scope, 'system', '@camstack/system')
+    pkg(scope, 'system', '@camstack/server')
     fs.mkdirSync(path.join(scope, '.bin'), { recursive: true })
     expect(
       bundledAddonSourceDirs(path.join(tmp, 'node_modules')).map((d) => path.basename(d)),

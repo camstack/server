@@ -704,7 +704,7 @@ export const systemCapability = {
       auth: 'admin',
     }),
   },
-  /** BIG PLAN 2: declarative mount hint — read by `@camstack/system` `buildCapRouters`. */
+  /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
 } as const satisfies CapabilityDefinition
 

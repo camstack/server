@@ -4,9 +4,9 @@ import { errMsg } from '@camstack/types'
 import { LoggingService } from '../logging/logging.service'
 
 // Dynamically imported to tolerate missing / unbuilt packages at startup
-type AddonLoader = import('@camstack/system').AddonLoader
-type AddonInstaller = import('@camstack/system').AddonInstaller
-type RegisteredAddon = import('@camstack/system').RegisteredAddon
+type AddonLoader = import('@camstack/server/system').AddonLoader
+type AddonInstaller = import('@camstack/server/system').AddonInstaller
+type RegisteredAddon = import('@camstack/server/system').RegisteredAddon
 
 /**
  * AddonBridgeService — slim package-management surface.
@@ -43,7 +43,7 @@ export class AddonBridgeService {
     // Initialize installer eagerly in constructor (no async needed).
     // This ensures install/uninstall works even before onModuleInit completes.
     try {
-      const kernel = require('@camstack/system') as typeof import('@camstack/system')
+      const kernel = require('@camstack/server/system') as typeof import('@camstack/server/system')
       const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'
       const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
       const workspacePackagesDir = kernel.detectWorkspacePackagesDir(__dirname)
@@ -62,7 +62,7 @@ export class AddonBridgeService {
     this.logger.info('Initializing addon bridge (package management only)...')
 
     try {
-      const kernel = await import('@camstack/system')
+      const kernel = await import('@camstack/server/system')
 
       this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
@@ -118,7 +118,7 @@ export class AddonBridgeService {
       return
     }
 
-    const kernel = await import('@camstack/system')
+    const kernel = await import('@camstack/server/system')
     this.loader = new kernel.AddonLoader(this.logger.child('AddonLoader'))
 
     const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'

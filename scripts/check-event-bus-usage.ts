@@ -69,7 +69,7 @@ const ROOT = path.resolve(import.meta.dirname ?? __dirname, '..')
 // ---------------------------------------------------------------------------
 const EXEMPT_DIRS: readonly string[] = []
 const EXEMPT_FILES: readonly string[] = [
-  // Kernel sources moved into @camstack/system (Task A1/A3 refactor)
+  // Kernel sources moved into @camstack/server/system (Task A1/A3 refactor)
   path.join(ROOT, 'packages/system/src/kernel/moleculer/event-bus.ts'),
   path.join(ROOT, 'packages/system/src/kernel/moleculer/addon-context-factory.ts'),
   path.join(ROOT, 'packages/system/src/kernel/index.ts'),

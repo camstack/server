@@ -4,7 +4,7 @@
  *
  * D45 requires exactly ONE copy of every host-provided package per node, inside
  * the active server closure. The record exists because that was not true: one
- * agent held four copies of `@camstack/system` — 1.2.28 under the image seed,
+ * agent held four copies of `@camstack/server` — 1.2.28 under the image seed,
  * 1.2.28 under a second seed tree, 1.2.0 in the legacy `/data/framework`, and
  * 1.2.30 in the closure — and each could be truthfully quoted as "the version".
  * Three consecutive diagnoses of which one actually ran were each disproved by
@@ -29,6 +29,7 @@
  * real disk.
  */
 import * as path from 'node:path'
+import { LEGACY_SYSTEM_PACKAGE_NAME } from './legacy-package-names.js'
 
 /**
  * Packages the closure provides to everything on the node. Addons never bundle
@@ -36,7 +37,9 @@ import * as path from 'node:path'
  * a resolution race waiting for a boot order to change.
  */
 export const HOST_PROVIDED_PACKAGES: readonly string[] = [
-  '@camstack/system',
+  '@camstack/server',
+  // Pre-fold residue: a copy by the old name is never legitimate again.
+  LEGACY_SYSTEM_PACKAGE_NAME,
   '@camstack/types',
   '@camstack/sdk',
 ]
@@ -123,7 +126,7 @@ export interface SearchRootsInput {
   readonly serverNodeModules: string
   /**
    * The closure `node_modules` the launcher puts on NODE_PATH — where
-   * `@camstack/system`, `types` and `sdk` actually resolve from. Active, like
+   * `@camstack/server`, `types` and `sdk` actually resolve from. Active, like
    * {@link SearchRootsInput.serverNodeModules}: leaving it out made the guard
    * call the copies that RUN "unexpected". Optional so a caller that has no
    * framework dir (a workspace run) behaves exactly as before.
@@ -141,7 +144,7 @@ export interface SearchRootsInput {
  * copy has actually turned up, each named in D45, and a bounded list keeps this
  * to a handful of stat calls at boot. `/data/addons` is a root in its own right
  * because the bootstrap-install layout puts the package DIRECTLY there
- * (`/data/addons/@camstack/system`), not under a `node_modules`.
+ * (`/data/addons/@camstack/server/system`), not under a `node_modules`.
  *
  * A `NODE_PATH` entry is classified by WHICH directory it names, not by being
  * on `NODE_PATH`: the launcher puts the deposit and the seeds there itself, so

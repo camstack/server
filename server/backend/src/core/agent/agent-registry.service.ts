@@ -4,7 +4,7 @@ import {
   callWithServiceDiscovery,
   getProcessAgentHttpsNames,
   localSupportedPythonRuntimes,
-} from '@camstack/system'
+} from '@camstack/server/system'
 import type {
   AgentCapability,
   AgentListItem,
@@ -160,7 +160,7 @@ export const AGENT_BACKFILL_RPC_TIMEOUT_MS = 300_000
 
 /**
  * Package name of the system/infrastructure builtins. Addons shipped in
- * `@camstack/system` (filesystem-storage, storage-orchestrator,
+ * `@camstack/server/system` (filesystem-storage, storage-orchestrator,
  * sqlite-settings, hub-forwarder, metrics-native, console-logging, …) are
  * bootstrap infrastructure that EVERY node — hub and agent alike — runs
  * in-process. They are never `$agent.deploy`-pushed and must NEVER be
@@ -174,7 +174,7 @@ export const AGENT_BACKFILL_RPC_TIMEOUT_MS = 300_000
  * `AGENT_PACKAGES` bootstrap, NEVER hub-managed deploy targets, so the
  * reconcile must never undeploy them (they are absent from the hub's
  * installed-addon set and would otherwise look "stale"):
- *   - `@camstack/system`        — storage/settings/metrics/logging builtins.
+ *   - `@camstack/server/system`        — storage/settings/metrics/logging builtins.
  *   - `@camstack/addon-agent-ui` — the agent's own status dashboard
  *     (placement: agent-only; the hub never installs it, so it is missing
  *     from `hubPlacements`). The hub's deploy planner already SKIPS
@@ -186,7 +186,7 @@ export const AGENT_BACKFILL_RPC_TIMEOUT_MS = 300_000
  * skip them, so a small local set keeps the two concerns decoupled.
  */
 const AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
-  '@camstack/system',
+  '@camstack/server',
   '@camstack/addon-agent-ui',
 ])
 
@@ -196,7 +196,7 @@ const AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
  * and keeps it at the hub's version — though the stale sweep above still never
  * undeploys it as "not installed on the hub".
  */
-const CONVERGENCE_BOOTSTRAP: ReadonlySet<string> = new Set(['@camstack/system'])
+const CONVERGENCE_BOOTSTRAP: ReadonlySet<string> = new Set(['@camstack/server'])
 
 /** The fixed schedule of the convergence round over every online node (D982). */
 export const ADDON_CONVERGENCE_INTERVAL_MS = 10 * 60_000
@@ -1094,7 +1094,7 @@ export class AgentRegistryService {
       const stale = agentAddons.filter((addon) => {
         if (!sweepsStale) return false
         // Agent bootstrap infrastructure (storage/settings/metrics/logging from
-        // `@camstack/system`, plus the agent-only `addon-agent-ui` dashboard)
+        // `@camstack/server/system`, plus the agent-only `addon-agent-ui` dashboard)
         // runs on every node as bootstrap infrastructure — never hub-managed
         // deploy targets, must never be undeployed. Without this guard the
         // reconcile tears down the agent's own builtins (they aren't in the

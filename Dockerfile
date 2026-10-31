@@ -279,18 +279,18 @@ RECORDED_VERSION="$(cat "$DATA_DIR/.camstack-seed-version" 2>/dev/null || echo n
 # `/data/framework` used to be re-seeded whenever it was missing, which made it
 # impossible to remove: the post-boot single-copy sweep deleted it and the next
 # container restart put all 509 MB straight back, on the module search path — a
-# second answer to "which @camstack/system is this node running". Operator,
+# second answer to "which @camstack/server/system is this node running". Operator,
 # 2026-08-13: one version of everything per node, and the recreation is only the
 # explicit fallback path for a broken closure — logged loudly.
 #
-# So the ONE condition is: the active closure has no @camstack/system. That is
+# So the ONE condition is: the active closure has no @camstack/server/system. That is
 # a genuinely fresh /data (before the first applyServerUpdate) or a closure that
 # did not survive an update — exactly the two boots that would otherwise fail.
 # In steady state this block does nothing and `/data/framework` stays gone.
 #
 # The bootstrap ADDON seed is gone entirely: every non-system addon is installed
 # from npm at first boot, single-copy, by the launcher.
-DATA_ROOT_SYSTEM="$DATA_DIR/server-root/current/node_modules/@camstack/system/package.json"
+DATA_ROOT_SYSTEM="$DATA_DIR/server-root/current/node_modules/@camstack/server/system/package.json"
 NEED_FRAMEWORK=0
 if [ ! -e "$DATA_ROOT_SYSTEM" ]; then
   NEED_FRAMEWORK=1

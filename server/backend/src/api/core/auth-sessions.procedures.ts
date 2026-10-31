@@ -4,7 +4,7 @@
  * `local-auth`'s (`login-session-manager.ts`), reached through its
  * hub-internal surface; the mint is `auth/session-mint.ts`.
  */
-import type { CapabilityRegistry } from '@camstack/system'
+import type { CapabilityRegistry } from '@camstack/server/system'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { DEVICE_REFRESH_REFUSAL_PREFIX, type DeviceRefusalReason } from '@camstack/types'

@@ -34,7 +34,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
-import { SqliteSettingsBackend } from '@camstack/system'
+import { SqliteSettingsBackend } from '@camstack/server/system'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RECORDING_SEGMENT_HOURS_COLLECTION, SegmentHourLedger } from '../segment-hour-ledger.js'
 

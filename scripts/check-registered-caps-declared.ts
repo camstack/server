@@ -41,7 +41,7 @@
  * strictly weaker (it cannot catch a cap declared on the WRONG addon inside one
  * package) and has no false positives, which is the property that decides
  * whether a guard survives. It catches the real bug: the miss above is invisible
- * to every manifest in `@camstack/system`.
+ * to every manifest in `@camstack/server/system`.
  *
  * Usage: tsx scripts/check-registered-caps-declared.ts
  */

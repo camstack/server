@@ -4,7 +4,7 @@
  * ## Why a spec over `node_modules`
  *
  * Nothing in `packages/system` owns this file — it is `moleculer`'s, it is
- * bundled verbatim into `@camstack/system/dist/index.js`, and the only way this
+ * bundled verbatim into `@camstack/server/system/dist/index.js`, and the only way this
  * repository changes it is `patches/moleculer+0.15.0.patch` applied by
  * `patch-package` on `postinstall`. A spec over our own re-implementation would
  * pass while the bundle stayed quadratic, so this one requires the installed

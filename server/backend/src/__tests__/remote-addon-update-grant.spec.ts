@@ -3,7 +3,7 @@
  * OWN node, to the version the hub itself has installed, and every decision is
  * audited. Two real brokers share a fake transporter; the router is synthetic.
  */
-import { CORE_CAP_SERVICE_NAME } from '@camstack/system'
+import { CORE_CAP_SERVICE_NAME } from '@camstack/server/system'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
