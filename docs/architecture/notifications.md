@@ -3363,13 +3363,26 @@ the optional class named, WHO WAS ASKED (the token's frozen addressee, never the
 tapper) and when (`detection-verdicts` ledger). A retrain refusal (`trained`,
 `budget`, `unknown-track`) is shown by name and records nothing.
 
+A subject that carries a label (a dog, a postman) also gets **Wrong label, class
+OK** (`detection-verdict-wrong-label`, verdict `wrong-label`), third after Correct
+and Wrong. The grant freezes the subject at mint time (class, label, and its box
+normalised `[0,1]` against the full detection frame, the space the event's box is
+already in). When the track is gone at tap time, the recording-frame fallback
+stores the still with that subject as its own `verdict` proposal (never an
+annotation row: a "wrong" answer must not teach a wrong class), so the retrain
+page draws it as the subject box and the neighbours stay secondary. The retrain
+frames and staging worklist carry the answer (`verdict`), and the Frames editor
+opens the box as confirmed (correct), a pending reclassification (wrong plus a
+class), or flagged (wrong, wrong label); the operator saves to confirm, nothing
+is exported on its own.
+
 Buttons by notifier kind, from the kind's own `caps.actions`:
 
 | notifier | buttons | what the operator sees |
 | --- | --- | --- |
 | ntfy (3) | Correct, Wrong | buttons |
 | Telegram (3) | Correct, Wrong | inline buttons |
-| Zentik (4), webhook (99) | Correct, Wrong, up to two "Wrong: it is X" | buttons |
+| Zentik (4), webhook (99) | Correct, Wrong, Wrong label (labelled subjects), up to two "Wrong: it is X" | buttons |
 | email, Pushover, Gotify, WhatsApp, Discord (0) | none | the same two choices as links in the body; a GET shows a confirm page and only its POST claims the token, so a link preview cannot spend it |
 
 A destination nobody owns, or a row with no track, gets none and says why at INFO.

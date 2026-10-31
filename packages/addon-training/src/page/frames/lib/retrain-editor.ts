@@ -41,8 +41,10 @@ import type {
   RetrainMacroClass,
   RetrainOrigin,
   RetrainPipelineBox,
+  RetrainVerdict,
 } from '@camstack/types'
 import type { NormBox } from './retrain-boxes.js'
+import { applyVerdictToDraft } from './retrain-verdict-review.js'
 
 /** What a verifier said about a box (the LLM assist's flag). */
 export interface EditorFlag {
@@ -166,7 +168,9 @@ export function pipelineDrafts(boxes: readonly RetrainPipelineBox[]): readonly E
       note:
         p.basis === 'subject-box'
           ? translate('editorNote.subjectBox')
-          : translate('editorNote.trackPosition', { ms: Math.round(p.deltaMs) }),
+          : p.basis === 'verdict'
+            ? translate('editorNote.verdictBox')
+            : translate('editorNote.trackPosition', { ms: Math.round(p.deltaMs) }),
     }),
   )
 }
@@ -186,6 +190,7 @@ export function seedEditor(
   saved: readonly RetrainAnnotation[],
   pipeline: readonly RetrainPipelineBox[],
   dismissed: readonly RetrainDismissed[] = [],
+  verdict?: RetrainVerdict,
 ): EditorState {
   const accepted = withKeys(EMPTY, saved.map(fromSaved))
   const keptRefs = new Set(
@@ -201,10 +206,17 @@ export function seedEditor(
   }
   // A saved box at the same place still settles a pipeline box too — rows
   // saved before origins existed carry no ref to match on.
-  return addDrafts(
+  const seeded = addDrafts(
     base,
     pipelineDrafts(pipeline.filter((p) => !decided.has(pipelineOriginRef(p.trackId)))),
   ).state
+  if (verdict === undefined) return seeded
+  // After the drafts are on screen: `addDrafts` makes everything a draft, and
+  // a pre-confirmed box is exactly the one that is not.
+  return {
+    ...seeded,
+    boxes: seeded.boxes.map((b) => ({ ...applyVerdictToDraft(b, verdict), key: b.key })),
+  }
 }
 
 /** Add machine proposals as drafts, skipping duplicates of boxes on screen. */

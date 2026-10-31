@@ -150,6 +150,15 @@ const FRAMES: readonly RetrainCorpusPageFrame[] = Array.from({ length: 8 }, (_, 
       revision: 3,
       pipelineBoxes: OPEN_PIPELINE,
       dismissed: OPEN_DISMISSED,
+      // The operator answered "wrong: it is a neighbour" on the notification of
+      // the second pipeline box: it opens as a pending reclassification.
+      verdict: {
+        verdict: 'wrong' as const,
+        trackId: 't6',
+        suggestedClass: 'neighbour',
+        suggestedMacroClass: 'person' as const,
+        suggestedLabel: 'neighbour',
+      },
       review: reviewOf(),
     }
   }

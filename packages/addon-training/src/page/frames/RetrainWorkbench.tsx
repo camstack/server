@@ -153,14 +153,18 @@ export function RetrainWorkbench({
   seedInputs.current = { stored: storedAnnotations.data, copy: activeCopy }
   const baseline = useRef(editorSignature(seedEditor([], [])))
   const dirty = isEditorDirty(editor, baseline.current)
-  const dirtyRef = useRef(dirty)
-  dirtyRef.current = dirty
+  // What the last seed put on screen. A pre-answered box makes the editor dirty
+  // against the baseline from the start, but that is not the operator's edit:
+  // only a change away from the seed itself blocks a re-seed.
+  const seededSignature = useRef(baseline.current)
+  const editedRef = useRef(false)
+  editedRef.current = editorSignature(editor) !== seededSignature.current
   const seededFrame = useRef<string | null>(null)
   const forceReseed = useRef(false)
   const copyLoaded = activeCopy !== undefined
   useEffect(() => {
     const sameFrame = seededFrame.current === activeFrameId
-    if (sameFrame && dirtyRef.current && !forceReseed.current) return
+    if (sameFrame && editedRef.current && !forceReseed.current) return
     forceReseed.current = false
     seededFrame.current = activeFrameId
     // A new frame opens unzoomed.
@@ -170,12 +174,19 @@ export function RetrainWorkbench({
       setConflict(null)
     }
     const { stored, copy } = seedInputs.current
+    const saved = (stored ?? []).filter((a) => a.mediaKey === activeFrameId)
     const seeded = seedEditor(
-      (stored ?? []).filter((a) => a.mediaKey === activeFrameId),
+      saved,
       copy?.pipelineBoxes ?? [],
       copy?.dismissed ?? [],
+      copy?.verdict,
     )
-    baseline.current = editorSignature(seeded)
+    // The baseline is the seed WITHOUT the notification answer: a box the
+    // operator already answered about is unsaved work until they confirm it.
+    baseline.current = editorSignature(
+      seedEditor(saved, copy?.pipelineBoxes ?? [], copy?.dismissed ?? []),
+    )
+    seededSignature.current = editorSignature(seeded)
     resetEditor(seeded)
   }, [activeFrameId, storedAnnotations.dataUpdatedAt, copyLoaded, resetEditor, view.fit])
 

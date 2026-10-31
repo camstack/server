@@ -5880,6 +5880,8 @@ Enum: `"none" \| "staging" \| "trained"`
 
 - `verdict`: `RetrainVerdictValueSchema`
 - `suggestedClass?`: `string`
+- `suggestedMacroClass?`: `RetrainMacroClassSchema`
+- `suggestedLabel?`: `string`
 - `trackId`: `string`
 - `at?`: `number`
 

@@ -39,6 +39,7 @@ import {
   COCO_TO_MACRO,
   type RetrainMacroClass,
   type RetrainPipelineBox,
+  type RetrainVerdict,
   type RetrainVerdictSubject,
   type Track,
 } from '@camstack/types'
@@ -129,6 +130,25 @@ export function toRetrainClassTiers(
     mapped !== undefined && isRetrainMacroClass(mapped) ? mapped : FALLBACK_MACRO_CLASS
   const kept = usableLabel(className)
   return kept !== undefined ? { macroClass, label: kept } : { macroClass }
+}
+
+/** A verdict on the wire: the operator's class split into tiers once, here. */
+export function toRetrainVerdict(input: {
+  readonly verdict: RetrainVerdict['verdict']
+  readonly trackId: string
+  readonly suggestedClass?: string | undefined
+  readonly at?: number | undefined
+}): RetrainVerdict {
+  const tiers =
+    input.suggestedClass !== undefined ? toRetrainClassTiers(input.suggestedClass, undefined) : null
+  return {
+    verdict: input.verdict,
+    trackId: input.trackId,
+    ...(input.suggestedClass !== undefined ? { suggestedClass: input.suggestedClass } : {}),
+    ...(tiers !== null ? { suggestedMacroClass: tiers.macroClass } : {}),
+    ...(tiers?.label !== undefined ? { suggestedLabel: tiers.label } : {}),
+    ...(input.at !== undefined ? { at: input.at } : {}),
+  }
 }
 
 interface Normalised {

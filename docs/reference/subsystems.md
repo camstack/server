@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7569 source files · 1221 file(s) in no subsystem.**
+**31 subsystems · 7570 source files · 1221 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -52,7 +52,7 @@ commits. A generated page may not.
 | LLM runtimes and AI actions | 50 | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1352 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-0946-one-device-name.md`, +155 more, 15 ADRs | 2026-10-27 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
-| Cloud training | 158 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +15 more, 2 ADRs | 2026-10-14 | ✅ |
+| Cloud training | 159 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +15 more, 2 ADRs | 2026-10-14 | ✅ |
 | Benchmarks, model studio and developer tooling | 685 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, +162 more, 14 ADRs | 2026-10-27 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
@@ -324,7 +324,7 @@ Fine-tunes the root detector on the operator's annotated frames in a GPU cloud o
 
 - **Owner doc**: `docs/architecture/cloud-training.md`
 - **Code**: `packages/addon-training/**`, `packages/types/src/capabilities/training.cap.ts`, `packages/types/src/capabilities/training-provider.cap.ts`, `packages/types/src/training/**`, `packages/addon-model-studio/src/bundle/**`, `hf/camstack-trainer/**`
-- **Files**: 158 (93 claimed by some document)
+- **Files**: 159 (94 claimed by some document)
 - **Uncovered**: `hf/camstack-trainer/camstack_train` (16), `hf/camstack-trainer/camstack_train/_vendor/pipeline_python/postprocessors` (16), `hf/camstack-trainer/tests` (15), `hf/camstack-trainer/camstack_train/_vendor/camstack_eval` (9), `hf/camstack-trainer/camstack_train/_vendor/pipeline_python` (3), `packages/addon-training/src` (3), +3 more directories
 
 ### ⚠️ Benchmarks, model studio and developer tooling

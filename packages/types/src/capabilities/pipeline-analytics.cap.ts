@@ -1464,6 +1464,10 @@ export const RetrainVerdictSchema = z.object({
   verdict: RetrainVerdictValueSchema,
   /** The class the operator said it really was. Only with `wrong`. */
   suggestedClass: z.string().optional(),
+  /** `suggestedClass` split into the two tiers by the hub (which owns the
+   *  detector-class → macro map), so a page never re-derives it. */
+  suggestedMacroClass: RetrainMacroClassSchema.optional(),
+  suggestedLabel: z.string().optional(),
   /** The track the notification reported (a still's track is long gone). */
   trackId: z.string(),
   /** When the answer was given, epoch ms. */

@@ -63,7 +63,11 @@ import { loadRetrainCorpusPage } from './retrain-corpus-page-load.js'
 import { aggregateCorpusKpi, type CorpusFrameRow } from './retrain-corpus-query.js'
 import { type RetrainFrame, RetrainFrameStore } from './retrain-frame-store.js'
 import { completeRetrainTrack, restageRetrainTrack } from './retrain-lifecycle.js'
-import { type FrameSubjectBox, pipelineBoxesForFrame } from './retrain-pipeline-boxes.js'
+import {
+  type FrameSubjectBox,
+  pipelineBoxesForFrame,
+  toRetrainVerdict,
+} from './retrain-pipeline-boxes.js'
 import { checkTierSeparation, isRetrainMacroClass } from './retrain-taxonomy.js'
 import { isAnnotatedSceneKind } from '../../notification-center/rule-engine.js'
 
@@ -206,12 +210,7 @@ function verdictOfFrame(
   if (copy.origin === 'track') return verdicts.get(copy.trackId)
   const s = copy.verdictSubject
   if (s === undefined) return undefined
-  return {
-    verdict: s.verdict,
-    trackId: s.trackId,
-    ...(s.suggestedClass !== undefined ? { suggestedClass: s.suggestedClass } : {}),
-    ...(s.at !== undefined ? { at: s.at } : {}),
-  }
+  return toRetrainVerdict(s)
 }
 
 /**

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A verdict tapped after the track is gone keeps the notified subject on the stored still; new "Wrong label, class OK" button on detection notifications
+
 ## [1.2.654] - 2026-10-30
 
 ### Changed

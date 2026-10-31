@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Frames editor opens the subject of a notification verdict as correct, reclassified or flagged, for you to confirm
+
 ## [0.1.115] - 2026-10-31
 
 ### Changed

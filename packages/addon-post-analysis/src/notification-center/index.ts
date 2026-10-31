@@ -42,6 +42,7 @@ import {
   type NcDetectionVerdictGrant,
   type NcSnoozeGrant,
 } from './action-token.js'
+import { toRetrainVerdict } from '../pipeline-analytics/retrain/retrain-pipeline-boxes.js'
 import { type NcAddonUpdateReport } from './addon-update-apply.js'
 import { type NcAlarmOpenDevice } from './alarm/alarm-arm-guard.js'
 import { type NcPanelGateWords, panelAwareLookup } from './alarm/alarm-gate-words.js'
@@ -2035,12 +2036,15 @@ export class NotificationCenter implements NcEventConsumer {
   detectionVerdictsOf(trackIds: readonly string[]): ReadonlyMap<string, RetrainVerdict> {
     const out = new Map<string, RetrainVerdict>()
     for (const [trackId, row] of this.verdicts.forTracks(trackIds)) {
-      out.set(trackId, {
-        verdict: row.verdict,
+      out.set(
         trackId,
-        at: row.at,
-        ...(row.suggestedClass !== undefined ? { suggestedClass: row.suggestedClass } : {}),
-      })
+        toRetrainVerdict({
+          verdict: row.verdict,
+          trackId,
+          at: row.at,
+          suggestedClass: row.suggestedClass,
+        }),
+      )
     }
     return out
   }

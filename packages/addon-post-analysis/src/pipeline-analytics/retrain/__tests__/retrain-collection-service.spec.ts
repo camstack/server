@@ -357,6 +357,7 @@ describe('a verdict still carries the subject the notification reported', () => 
     expect(frame.verdict).toEqual({
       verdict: 'wrong',
       suggestedClass: 'person',
+      suggestedMacroClass: 'person',
       trackId: 'trk-dog',
       at: AT + 13_000,
     })

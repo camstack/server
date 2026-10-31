@@ -4,7 +4,7 @@
  * verdict, and a track nobody answered carries none.
  */
 import type { MediaFileRef, RetrainVerdict, Track } from '@camstack/types'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { makeAnalyticsWorld } from '../../__tests__/fake-records.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { RetrainAnnotationStore } from '../retrain-annotation-store.js'
@@ -119,6 +119,39 @@ describe('retrain verdicts on the listing', () => {
     await service.selectFrames({ deviceId: 101, trackId: 'trk-dog', mediaIds: [501] })
     const wire = (await service.listFrames('trk-dog')).copies[0]
     expect(wire?.verdict).toEqual(WRONG)
+  })
+
+  it('a still carries its verdict with the class split into tiers by the hub', async () => {
+    const { service } = await build(false)
+    const wire = await service.toWireFrames([
+      {
+        frameId: 'f1',
+        deviceId: 615,
+        origin: 'recording',
+        trackId: '',
+        sourceMediaId: 0,
+        locationId: null,
+        epochMs: 1,
+        sourceKind: 'fullFrame',
+        sizeBytes: 1,
+        width: 640,
+        height: 360,
+        copiedAt: 1,
+        complete: false,
+        verdictSubject: {
+          trackId: 'trk-dog',
+          className: 'dog',
+          verdict: 'wrong',
+          suggestedClass: 'dog',
+        },
+      },
+    ])
+    expect(wire[0]?.verdict).toMatchObject({
+      verdict: 'wrong',
+      suggestedClass: 'dog',
+      suggestedMacroClass: 'animal',
+      suggestedLabel: 'dog',
+    })
   })
 
   it('without a verdict source the listing is unchanged', async () => {

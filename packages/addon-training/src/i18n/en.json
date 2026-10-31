@@ -399,7 +399,8 @@
   },
   "editorNote": {
     "subjectBox": "The box the pipeline recorded on this very frame.",
-    "trackPosition": "The pipeline's track position {{ms}} ms from this frame."
+    "trackPosition": "The pipeline's track position {{ms}} ms from this frame.",
+    "verdictBox": "The subject the notification reported, kept after its track was gone."
   },
   "collectionsList": {
     "newName": "New collection name",
@@ -517,5 +518,12 @@
       "defaultProfile": "the AI profile",
       "send": "Send this frame"
     }
+  },
+  "verdictReview": {
+    "by": "Notification answer",
+    "correct": "You answered \"correct\" — confirmed here, save to keep it.",
+    "wrongClass": "You answered \"wrong\": it is {{class}} — saved as a reclassification once you confirm.",
+    "wrong": "You answered \"wrong\" without saying what it was — review this box.",
+    "wrongLabel": "You answered \"wrong label, class OK\" — the class stays, check the label."
   }
 }

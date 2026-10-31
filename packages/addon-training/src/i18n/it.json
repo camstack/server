@@ -399,7 +399,8 @@
   },
   "editorNote": {
     "subjectBox": "Il riquadro registrato dalla pipeline su questo stesso frame.",
-    "trackPosition": "La posizione del track secondo la pipeline a {{ms}} ms da questo frame."
+    "trackPosition": "La posizione del track secondo la pipeline a {{ms}} ms da questo frame.",
+    "verdictBox": "Il soggetto segnalato dalla notifica, conservato dopo la scomparsa della traccia."
   },
   "collectionsList": {
     "newName": "Nome della nuova collezione",
@@ -517,5 +518,12 @@
       "defaultProfile": "il profilo AI",
       "send": "Invia questo frame"
     }
+  },
+  "verdictReview": {
+    "by": "Risposta alla notifica",
+    "correct": "Hai risposto \"corretto\": confermato qui, salva per tenerlo.",
+    "wrongClass": "Hai risposto \"sbagliato\": è {{class}} — diventa una riclassificazione quando confermi.",
+    "wrong": "Hai risposto \"sbagliato\" senza dire cosa fosse — controlla questo riquadro.",
+    "wrongLabel": "Hai risposto \"etichetta sbagliata, classe giusta\": la classe resta, controlla l'etichetta."
   }
 }
