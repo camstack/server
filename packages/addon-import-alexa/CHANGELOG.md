@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Alexa shows an error instead of 'connected' when polling Amazon keeps failing, with the HTTP status in the log.
+- Alexa: quiet vs announce is now decided per notification (a silent notification is spoken quietly, any other announces); the per-target Mode setting is gone and a stored one is ignored.
 
 ## [0.2.171] - 2026-10-30
 

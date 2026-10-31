@@ -216,7 +216,7 @@ describe('speak is bound to a broker', () => {
 })
 
 describe('stored Echo targets', () => {
-  it('are served as targets of the Alexa kind, every field kept', async () => {
+  it('are served as targets of the Alexa kind, every field but the retired mode kept', async () => {
     const h = harness({
       brokers: ONE,
       echoTargets: [
@@ -239,10 +239,11 @@ describe('stored Echo targets', () => {
       config: {
         brokerId: 'alexa_001',
         echoId: 'echo-k',
-        mode: 'announce',
         volume: 63,
         respectDnd: false,
       },
     })
+    // A mode stored by an older version is not served: it no longer decides anything.
+    expect(row?.config).not.toHaveProperty('mode')
   })
 })

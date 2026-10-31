@@ -14,7 +14,6 @@
   "echoTarget.s_echo.title": "Echo",
   "echoTarget.s_echo.brokerId.label": "Account Amazon",
   "echoTarget.s_echo.echoId.label": "Echo",
-  "echoTarget.s_echo.mode.label": "Modalità",
   "echoTarget.s_echo.volume.label": "Volume",
   "echoTarget.s_echo.respectDnd.label": "Rispetta Non disturbare",
   "globalSettings": {

@@ -56,7 +56,6 @@ function targetsFrom(rows: readonly AlexaEchoTarget[]): readonly Target[] {
     config: {
       ...(row.brokerId.length > 0 ? { brokerId: row.brokerId } : {}),
       echoId: row.echoId,
-      mode: row.mode,
       volume: row.volume,
       respectDnd: row.respectDnd,
     },
@@ -70,7 +69,7 @@ function rowsFrom(targets: readonly Target[]): readonly AlexaEchoTarget[] {
     enabled: target.enabled,
     brokerId: typeof target.config['brokerId'] === 'string' ? target.config['brokerId'] : '',
     echoId: typeof target.config['echoId'] === 'string' ? target.config['echoId'] : '',
-    mode: target.config['mode'] === 'announce' ? 'announce' : 'speak',
+    mode: 'speak',
     volume: typeof target.config['volume'] === 'number' ? target.config['volume'] : 40,
     respectDnd: target.config['respectDnd'] !== false,
   }))

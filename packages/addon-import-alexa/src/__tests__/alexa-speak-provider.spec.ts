@@ -44,7 +44,7 @@ function target(config: Record<string, unknown> = {}): Target {
     kind: ALEXA_SPEAK_KIND,
     addonId: ALEXA_SPEAK_ADDON_ID,
     enabled: true,
-    config: { echoId: 'echo-1', mode: 'speak', volume: 40, respectDnd: true, ...config },
+    config: { echoId: 'echo-1', volume: 40, respectDnd: true, ...config },
   }
 }
 
@@ -168,40 +168,70 @@ describe('alexa notification provider', () => {
   })
 })
 
-describe('Alexa delivery parameters (declared on the kind, set by a rule)', () => {
-  it('declares mode and volume on the kind', () => {
-    const declared = alexaTargetKind().deliveryParams ?? []
-    expect(declared.map((p) => [p.key, p.type])).toEqual([
-      ['mode', 'enum'],
-      ['volume', 'number'],
-    ])
-    expect(declared[0]?.options?.map((o) => o.value)).toEqual(['speak', 'announce'])
-  })
-
-  it('a rule delivery overrides the target config; absent falls back to it', async () => {
+describe('Alexa quiet vs announce is decided per notification', () => {
+  function speakingProvider(
+    config: Record<string, unknown>,
+    warnings: { message: string; tags: unknown }[] = [],
+  ): { spoken: SpeakCommand[]; provider: ReturnType<typeof createAlexaNotificationProvider> } {
     const spoken: SpeakCommand[] = []
     let now = 10_000
+    const log = logger()
+    log.warn = (message, options) => {
+      warnings.push({ message, tags: options?.tags })
+    }
     const provider = createAlexaNotificationProvider({
       brokers: () => [broker('b1', 'Home', [echo()])],
-      now: () => now,
-      logger: logger(),
-      loadTargets: () => [target({ mode: 'speak', volume: 40 })],
+      now: () => {
+        now += SPEAK_MIN_GAP_MS
+        return now
+      },
+      logger: log,
+      loadTargets: () => [target(config)],
       saveTargets: () => {},
       speak: async (command) => {
         spoken.push(command)
         return [{ targetId: command.targets[0] ?? '', ok: true }]
       },
     })
+    return { spoken, provider }
+  }
+
+  it('declares only volume as a delivery parameter, and a silent level', () => {
+    const kind = alexaTargetKind()
+    expect((kind.deliveryParams ?? []).map((p) => p.key)).toEqual(['volume'])
+    expect(kind.caps.levels.some((level) => level.flags?.silent === true)).toBe(true)
+    const keys = kind.configSchema.sections.flatMap((section) => section.fields.map((f) => f.key))
+    expect(keys).not.toContain('mode')
+  })
+
+  it('a silent notification is quiet, any other announces', async () => {
+    const { spoken, provider } = speakingProvider({})
+    await provider.send({ targetId: 't1', notification: { ...note('a'), level: 'silent' } })
+    await provider.send({ targetId: 't1', notification: { ...note('b'), priority: 1 } })
+    await provider.send({ targetId: 't1', notification: note('c') })
+    await provider.send({ targetId: 't1', notification: { ...note('d'), level: 'default' } })
+    expect(spoken.map((c) => c.mode)).toEqual(['speak', 'speak', 'announce', 'announce'])
+  })
+
+  it('a stored per-target mode is ignored and reported once per target, tagged', async () => {
+    const warnings: { message: string; tags: unknown }[] = []
+    const { spoken, provider } = speakingProvider({ mode: 'speak' }, warnings)
+    await provider.send({ targetId: 't1', notification: note('a') })
+    await provider.send({ targetId: 't1', notification: note('b') })
+    expect(spoken.map((c) => c.mode)).toEqual(['announce', 'announce'])
+    const ignored = warnings.filter((w) => w.message.includes('mode is ignored'))
+    expect(ignored).toHaveLength(1)
+    expect(ignored[0]?.tags).toEqual({ deviceId: 7 })
+  })
+
+  it('a rule volume still overrides the target volume', async () => {
+    const { spoken, provider } = speakingProvider({ volume: 40 })
     await provider.send({
       targetId: 't1',
-      notification: { ...note('first'), delivery: { mode: 'announce', volume: 85 } },
+      notification: { ...note('a'), delivery: { volume: 85 } },
     })
-    now += SPEAK_MIN_GAP_MS
-    await provider.send({ targetId: 't1', notification: note('second') })
-    expect(spoken.map((c) => [c.mode, c.volume])).toEqual([
-      ['announce', 85],
-      ['speak', 40],
-    ])
+    await provider.send({ targetId: 't1', notification: note('b') })
+    expect(spoken.map((c) => c.volume)).toEqual([85, 40])
   })
 })
 

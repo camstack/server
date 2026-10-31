@@ -97,10 +97,21 @@ function readString(config: Record<string, unknown>, key: string): string {
   return typeof value === 'string' ? value : ''
 }
 
-/** The rule's value for this send wins; the target's saved config is the fallback. */
-function readMode(config: Record<string, unknown>, delivery: Notification['delivery']): SpeakMode {
-  const value = delivery?.['mode'] ?? config['mode']
-  return value === 'announce' ? 'announce' : 'speak'
+/** The level id an Echo notification uses for "quiet: no chime, no announcement". */
+const SILENT_LEVEL_ID = 'silent'
+const SILENT_PRIORITY = 1
+
+/**
+ * Quiet or announce is decided PER NOTIFICATION, never per target: a silent
+ * notification (the kind's silent level, or the lowest priority when no level
+ * is named) is spoken quietly, hours-aware; every other one announces.
+ */
+function modeFor(notification: Notification): SpeakMode {
+  const silent =
+    notification.level !== undefined
+      ? notification.level === SILENT_LEVEL_ID
+      : notification.priority <= SILENT_PRIORITY
+  return silent ? 'speak' : 'announce'
 }
 
 function readVolume(config: Record<string, unknown>, delivery: Notification['delivery']): number {
@@ -113,19 +124,9 @@ function readVolume(config: Record<string, unknown>, delivery: Notification['del
 /**
  * The delivery parameters a rule may set for an Echo target (D938). The
  * target's own config holds the default; these override it per notification.
+ * Quiet vs announce is not one of them: it follows the notification's level.
  */
 const DELIVERY_PARAMS: DeliveryParam[] = [
-  {
-    key: 'mode',
-    label: 'Mode',
-    labelKey: 'import-alexa:echoTarget.s_echo.mode.label',
-    type: 'enum',
-    options: [
-      { value: 'speak', label: 'Speak (quiet hours apply)' },
-      { value: 'announce', label: 'Announce (chime, then speech)' },
-    ],
-    default: 'speak',
-  },
   {
     key: 'volume',
     label: 'Volume',
@@ -185,17 +186,6 @@ function configSchema(): ConfigUISchema {
         fields: [
           ...accountFields,
           {
-            type: 'select',
-            key: 'mode',
-            label: 'Mode',
-            labelKey: 'import-alexa:echoTarget.s_echo.mode.label',
-            default: 'speak',
-            options: [
-              { value: 'speak', label: 'Speak (quiet hours apply)' },
-              { value: 'announce', label: 'Announce (chime, then speech)' },
-            ],
-          },
-          {
             type: 'number',
             key: 'volume',
             label: 'Volume',
@@ -234,7 +224,21 @@ export function alexaTargetKind(): TargetKind {
       attachments: { mediaTypes: [], mode: 'url', max: 0 },
       actions: 0,
       actionIcons: false,
-      levels: [{ id: 'default', label: 'Default', ordinal: 3 }],
+      levels: [
+        {
+          id: SILENT_LEVEL_ID,
+          label: 'Silent',
+          ordinal: SILENT_PRIORITY,
+          flags: { silent: true },
+          description: 'Spoken quietly: no chime, quiet hours apply.',
+        },
+        {
+          id: 'default',
+          label: 'Announce',
+          ordinal: 3,
+          description: 'Announced: chime, then speech.',
+        },
+      ],
       format: ['text'],
       clickUrl: false,
       sound: false,
@@ -251,7 +255,6 @@ function discoveredFrom(broker: SpeakBrokerView, device: EchoDevice): Discovered
     config: {
       brokerId: broker.id,
       echoId: device.id,
-      mode: 'speak',
       volume: 40,
       respectDnd: true,
       family: device.family,
@@ -265,6 +268,7 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
   let targets: readonly Target[] = ports.loadTargets()
   let ledger: SpeechLedger = emptySpeechLedger()
   let deliveries: readonly DeliveryRecord[] = []
+  const warnedLegacyMode = new Set<string>()
 
   function record(row: DeliveryRecord): void {
     deliveries = [...deliveries, row]
@@ -352,7 +356,14 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       })
       return { success: true, renderedAs: speech.renderedAs }
     }
-    const mode = readMode(target.config, notification.delivery)
+    const mode = modeFor(notification)
+    if (target.config['mode'] !== undefined && !warnedLegacyMode.has(target.id)) {
+      warnedLegacyMode.add(target.id)
+      logger.warn('alexa target mode is ignored: quiet vs announce follows each notification', {
+        ...tags,
+        meta: { targetId: target.id },
+      })
+    }
     try {
       const outcomes = await ports.speak({
         brokerId: broker.id,
