@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Devices page: Add device (opens an installed integration's add / scan / adopt flow) and Browse integrations; Addons page filters on integrations with ?kind=integration
+
 ## [1.2.531] - 2026-10-31
 
 ### Changed

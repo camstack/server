@@ -6173,7 +6173,15 @@
   },
   "devices": {
     "orphanDevices": "Dispositivi orfani",
-    "theseDevicesReferenceAnIntegration": "Questi dispositivi fanno riferimento a un'integrazione non più registrata (il loro `integrationId` oppure, per i dispositivi più vecchi che non ne hanno uno, il loro `addonId`). Eliminali, oppure reinstalla l'integrazione mancante per riportarli online. Il badge del provider accanto a ogni riga è l'addon che lo serve."
+    "theseDevicesReferenceAnIntegration": "Questi dispositivi fanno riferimento a un'integrazione non più registrata (il loro `integrationId` oppure, per i dispositivi più vecchi che non ne hanno uno, il loro `addonId`). Eliminali, oppure reinstalla l'integrazione mancante per riportarli online. Il badge del provider accanto a ogni riga è l'addon che lo serve.",
+    "addDevice": {
+      "title": "Aggiungi dispositivo",
+      "loadFailed": "Impossibile caricare le integrazioni.",
+      "noneTitle": "Nessuna integrazione installata",
+      "noneDescription": "Installa prima un'integrazione, poi aggiungi i dispositivi da essa.",
+      "setUp": "Configura"
+    },
+    "browseIntegrations": "Sfoglia integrazioni"
   },
   "embedPlayerPage": {
     "embedConfigError": "Errore di configurazione dell'embed:",
@@ -6434,7 +6442,8 @@
         "reFetchAddonsCheckNpm": "Ricarica gli addon e controlla su npm le nuove versioni",
         "checkForUpdates": "Controlla aggiornamenti",
         "failedToLoadAddons": "Impossibile caricare gli addon",
-        "loadingInstalled": "Caricamento degli addon installati…"
+        "loadingInstalled": "Caricamento degli addon installati…",
+        "integrations": "Integrazioni"
       }
     }
   },

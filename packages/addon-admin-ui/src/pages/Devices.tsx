@@ -12,12 +12,13 @@
  * Filtering, search, view toggle, pagination, and accessory grouping
  * all live inside `<DeviceList>` (see Phase 2 Task 12).
  */
-import { useCallback, useMemo, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
-import { Camera, AlertTriangle } from 'lucide-react'
+import { Camera, AlertTriangle, Plug, Plus } from 'lucide-react'
 import {
+  Button,
   DeviceList,
   deviceIntegrationResolver,
   type DeviceItemDevice,
@@ -35,11 +36,14 @@ import { useEventInvalidation } from '../hooks/useEventInvalidation'
 import { ProviderIcon } from '../components/shared/ProviderIcon'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { AdminPage } from '../components/AdminPage'
+import { AddDevicePicker } from '../components/devices/AddDevicePicker'
+import { BROWSE_INTEGRATIONS_URL } from '../lib/addon-kind-filter'
 import { splitOrphanDevices } from './devices-orphan-split'
 
 export function DevicesPage(): ReactNode {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [addOpen, setAddOpen] = useState(false)
   const system = useSystem()
   const queryClient = useQueryClient()
 
@@ -149,7 +153,10 @@ export function DevicesPage(): ReactNode {
   const parentById = useMemo(() => {
     const byId = new Map<number, DeviceItemParent>()
     for (const d of deviceList) {
-      byId.set(d.id, { id: d.id, name: d.name ?? d.stableId ?? `#${String(d.id)}` })
+      byId.set(d.id, {
+        id: d.id,
+        name: d.name ?? d.stableId ?? `#${String(d.id)}`,
+      })
     }
     return byId
   }, [deviceList])
@@ -176,7 +183,23 @@ export function DevicesPage(): ReactNode {
   )
 
   return (
-    <AdminPage icon={Camera} title={t('nav.devices', 'Devices')}>
+    <AdminPage
+      icon={Camera}
+      title={t('nav.devices', 'Devices')}
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => navigate(BROWSE_INTEGRATIONS_URL)}>
+            <Plug className="h-3.5 w-3.5" />
+            {t('devices.browseIntegrations', 'Browse integrations')}
+          </Button>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            {t('devices.addDevice.title', 'Add device')}
+          </Button>
+        </>
+      }
+    >
+      <AddDevicePicker open={addOpen} onClose={() => setAddOpen(false)} />
       <DeviceList
         context="devices"
         devices={activeDevices}

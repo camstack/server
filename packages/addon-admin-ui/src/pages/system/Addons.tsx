@@ -17,12 +17,18 @@ import {
   useAddonsUpdatePackage,
   useClusterNodes,
   useConfirm,
+  useIntegrationsGetAvailableTypes,
   useNodesClusterAddonStatus,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Download, Loader2, RefreshCw, Search } from 'lucide-react'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  ADDON_KIND_PARAM,
+  filterIntegrationAddons,
+  parseAddonKindFilter,
+} from '../../lib/addon-kind-filter'
 import { AdminPage } from '../../components/AdminPage'
 import type { AddonListItem, BundleGroup } from '../../components/addons/AddonCard'
 import { AddonCard } from '../../components/addons/AddonCard'
@@ -72,7 +78,10 @@ const ADDONS_FILTER_CHIP_ON =
 const ADDONS_FILTER_CHIP_OFF =
   'rounded-full border border-border px-2 py-0.5 text-[10px] text-foreground-muted hover:bg-surface-hover'
 
-const UPDATE_CHECK_INTERVAL_CHOICES: readonly { seconds: number; label: string }[] = [
+const UPDATE_CHECK_INTERVAL_CHOICES: readonly {
+  seconds: number
+  label: string
+}[] = [
   { seconds: 900, label: '15m' },
   { seconds: 3600, label: '1h' },
   { seconds: 21600, label: '6h' },
@@ -99,7 +108,12 @@ type AddonsNode = SelectableNode
  * topology of its own), only used to keep the page's queries pointed
  * somewhere real for the first frame.
  */
-const BOOTSTRAP_HUB: AddonsNode = { id: 'hub', name: 'Hub', isHub: true, isOnline: true }
+const BOOTSTRAP_HUB: AddonsNode = {
+  id: 'hub',
+  name: 'Hub',
+  isHub: true,
+  isOnline: true,
+}
 
 /**
  * Decide whether an addon (declared with `execution.placement`) is
@@ -141,7 +155,14 @@ function normaliseAddon(raw: unknown): AddonListItem | null {
   // Process state from the cap-router wire shape (server reports
   // pid + mode + state — see addons.cap.ts AddonProcessSchema).
   const rawProcess = (
-    typed as { process?: { pid?: number; mode?: string; state?: string; reason?: string } }
+    typed as {
+      process?: {
+        pid?: number
+        mode?: string
+        state?: string
+        reason?: string
+      }
+    }
   ).process
   const process = rawProcess
     ? {
@@ -393,7 +414,9 @@ function InstalledTab({
 
   const setAutoUpdateMutation = useAddonsApplyAutoUpdateToAll({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['addons', 'getAutoUpdateSettings']] })
+      queryClient.invalidateQueries({
+        queryKey: [['addons', 'getAutoUpdateSettings']],
+      })
     },
   })
 
@@ -402,7 +425,9 @@ function InstalledTab({
   // whole point ("tell me, don't install").
   const setCheckIntervalMutation = useAddonsSetAutoUpdateSettings({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['addons', 'getAutoUpdateSettings']] })
+      queryClient.invalidateQueries({
+        queryKey: [['addons', 'getAutoUpdateSettings']],
+      })
     },
   })
 
@@ -519,6 +544,25 @@ function InstalledTab({
   const updatableOnly = searchParams.get('updatable') === '1'
   const errorOnly = searchParams.get('error') === '1'
   const sourceFilter = parseAddonSourceFilter(searchParams.get('source'))
+  const integrationsOnly =
+    parseAddonKindFilter(searchParams.get(ADDON_KIND_PARAM)) === 'integration'
+  const { data: integrationTypes } = useIntegrationsGetAvailableTypes(undefined, {
+    enabled: integrationsOnly,
+  })
+  // null = the integration types have not answered (not "no integrations").
+  const integrationAddonIds = useMemo<ReadonlySet<string> | null>(
+    () => (integrationTypes === undefined ? null : new Set(integrationTypes.map((a) => a.addonId))),
+    [integrationTypes],
+  )
+  const setIntegrationsOnly = useCallback(
+    (next: boolean): void => {
+      const params = new URLSearchParams(searchParams)
+      if (next) params.set(ADDON_KIND_PARAM, 'integration')
+      else params.delete(ADDON_KIND_PARAM)
+      setSearchParams(params, { replace: true })
+    },
+    [searchParams, setSearchParams],
+  )
 
   const setUpdatableOnly = useCallback(
     (next: boolean): void => {
@@ -570,6 +614,9 @@ function InstalledTab({
         return caps.some((c) => (typeof c === 'string' ? c : c.name) === capabilityFilter)
       })
     }
+    if (integrationsOnly) {
+      result = [...filterIntegrationAddons(result, integrationAddonIds)]
+    }
     if (updatableOnly) {
       result = result.filter((addon) => {
         const pkg = addon.manifest.packageName
@@ -590,6 +637,8 @@ function InstalledTab({
     updatableOnly,
     sourceFilter,
     errorOnly,
+    integrationsOnly,
+    integrationAddonIds,
     updateMap,
   ])
 
@@ -815,6 +864,12 @@ function InstalledTab({
         {(
           [
             {
+              id: 'integrations' as const,
+              label: t('admin.system.addons.integrations', 'Integrations'),
+              pressed: integrationsOnly,
+              toggle: () => setIntegrationsOnly(!integrationsOnly),
+            },
+            {
               id: 'updatable' as const,
               label: t('admin.system.addons.updatable', 'Updatable'),
               pressed: updatableOnly,
@@ -881,7 +936,9 @@ function InstalledTab({
             <div className="absolute left-0 right-0 top-full mt-1 z-40 rounded-md border border-border bg-surface shadow-xl overflow-hidden">
               {searchResults.length > 0 && (
                 <div className="px-3 py-1.5 text-[10px] uppercase tracking-wide text-foreground-subtle border-b border-border">
-                  {t('systemPage.addons.npmResults', { count: searchResults.length })}
+                  {t('systemPage.addons.npmResults', {
+                    count: searchResults.length,
+                  })}
                 </div>
               )}
               {searchResults && searchResults.length > 0 && (
@@ -1132,7 +1189,9 @@ export function AddonsPage() {
         <div className="flex items-center gap-2 flex-wrap">
           {!isLoading && !isError && (
             <span className="text-[10px] rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">
-              {t('systemPage.addons.installedCount', { count: addonList.length })}
+              {t('systemPage.addons.installedCount', {
+                count: addonList.length,
+              })}
             </span>
           )}
           <button

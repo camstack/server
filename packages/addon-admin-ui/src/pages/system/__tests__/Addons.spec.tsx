@@ -130,6 +130,7 @@ vi.mock('@camstack/ui-library', () => ({
     isError: false,
   }),
   useNodesClusterAddonStatus: () => ({ data: undefined }),
+  useIntegrationsGetAvailableTypes: () => ({ data: [{ addonId: 'addon-a' }] }),
   // Uninstall controls + the "not on the hub" panel. `data: undefined` = the
   // installations query has not answered, so the panel renders nothing.
   useAddonsListInstallations: () => ({ data: undefined, refetch: vi.fn() }),
@@ -370,6 +371,29 @@ describe('Addons page — "Update all" engine job + layout', () => {
   //    shm-ring, ui-library) are HIDDEN from the Addons page (phase 4) — they
   //    ride inside the node root package and are managed from Server
   //    management. Real addons stay listed.
+  it('?kind=integration keeps only integration addons and the chip is pressed', () => {
+    const addon = (id: string) => ({
+      manifest: {
+        id,
+        name: id,
+        packageName: `@camstack/${id}`,
+        version: '1.0.0',
+        packageVersion: '1.0.0',
+        capabilities: [],
+      },
+      source: 'installed',
+      hasBackup: false,
+    })
+    mockAddons = [addon('addon-a'), addon('addon-b')]
+    mockSearch = '?kind=integration'
+    renderPage()
+    expect(screen.getByText('addon-a')).toBeTruthy()
+    expect(screen.queryByText('addon-b')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Integrations' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+  })
+
   it('hides framework/system packages from the installed list; real addons stay', () => {
     mockAddons = [
       {
