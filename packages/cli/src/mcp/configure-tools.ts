@@ -7,12 +7,12 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
   runGated,
-  text,
   type DryRunOutcome,
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
 } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import { registerConfigureP3bTools } from './configure-p3b.js'
 import type { McpContext, ToolTextResult } from './context.js'

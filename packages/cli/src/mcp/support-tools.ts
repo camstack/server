@@ -4,7 +4,7 @@
  * (it loads a node) and both drafts go through the mutation gate, two steps.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { text } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import type { McpContext, ToolTextResult } from './context.js'
 import { supportDiagnoseAccelerator, ExpectedAcceleratorSchema } from './support-accelerator.js'

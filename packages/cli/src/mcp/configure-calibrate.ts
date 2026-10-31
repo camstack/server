@@ -18,7 +18,8 @@
  * names them as advice, in text.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { text, type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import { ConfirmTokenSchema, adminGated, type AdminGatedResult } from './configure-common.js'
 import { readZones, type ZoneRef } from './configure-hub-reads.js'

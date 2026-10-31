@@ -3,7 +3,7 @@
  * it touches is the public npm registry.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { text } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import type { FetchFn, McpContext, ToolTextResult } from './context.js'
 import { addNodeTool, connectTool, discoverHubsTool, type SetupDeps } from './setup-hubs.js'

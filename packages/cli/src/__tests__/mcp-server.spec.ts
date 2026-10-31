@@ -189,17 +189,17 @@ describe('camstack mcp — hub-less and session behaviour', () => {
     expect(body).toContain('unraid')
   })
 
-  it('without a session a hub tool answers "run camstack login", it does not throw', async () => {
+  it('without a session a hub tool answers "run camstack login" as an isError result', async () => {
     const client = await connect(['ops', 'configure'], context(NO_SESSION))
     const who = await client.callTool({ name: 'ops_whoami', arguments: {} })
-    expect(who.isError).not.toBe(true)
+    expect(who.isError).toBe(true)
     expect(firstText(who)).toContain('"status": "no-session"')
     expect(firstText(who)).toContain('camstack login')
     const rename = await client.callTool({
       name: 'configure_rename_device',
       arguments: { deviceId: 7, name: 'Porch' },
     })
-    expect(rename.isError).not.toBe(true)
+    expect(rename.isError).toBe(true)
     expect(firstText(rename)).toContain('camstack login')
   })
 

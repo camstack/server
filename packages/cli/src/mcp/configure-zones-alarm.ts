@@ -16,7 +16,8 @@
 import { randomUUID } from 'node:crypto'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { AlarmArmModeSchema, ZoneKindEnum } from '@camstack/types'
-import { text, type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import {
   ConfirmTokenSchema,

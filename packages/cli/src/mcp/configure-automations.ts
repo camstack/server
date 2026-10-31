@@ -36,7 +36,7 @@ import {
 import type { DryRunOutcome, GatedToolSpec, HubClient } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { text } from '@camstack/develop'
+import { text } from './tool-result.js'
 import {
   ConfirmTokenSchema,
   adminGated,

@@ -5,7 +5,8 @@
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { jwtClaims, text, type CredentialSource, type CredentialTier } from '@camstack/develop'
+import { jwtClaims, type CredentialSource, type CredentialTier } from '@camstack/develop'
+import { text } from './tool-result.js'
 import type { McpContext, ToolTextResult } from './context.js'
 import { noSessionResult, type NoSessionResult } from './ops-hub.js'
 import { opsAccelerators } from './ops-accelerators.js'

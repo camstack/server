@@ -12,7 +12,8 @@
  * route the result names. A public client (PKCE) needs none.
  */
 
-import { type DryRunOutcome, type GatedToolSpec, type HubClient, text } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { text } from './tool-result.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import {

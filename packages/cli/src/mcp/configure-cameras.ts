@@ -14,12 +14,12 @@
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
-  text,
   type DryRunOutcome,
   type GatedResult,
   type GatedToolSpec,
   type HubClient,
 } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import type { McpContext, ToolTextResult } from './context.js'
 import {

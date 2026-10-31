@@ -9,7 +9,8 @@
  * off goes through the exporter's own `exposeDevice` / `unexposeDevice`.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { text, type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { type DryRunOutcome, type GatedToolSpec, type HubClient } from '@camstack/develop'
+import { text } from './tool-result.js'
 import { z } from 'zod'
 import {
   ConfirmTokenSchema,
