@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An integration instance can have its own settings form: a Reolink NVR / Home Hub shows its connection only, the default integration keeps the full form
+
 ## [1.2.534] - 2026-10-31
 
 ### Changed
 
 - Setting up an integration from a scan result remembers which discovered device it came from
 - Customize offers the door contact on a lock that serves lock-control.
-- An integration instance can have its own settings form: a Reolink NVR / Home Hub shows its connection only, the default integration keeps the full form
 
 ## [1.2.533] - 2026-10-31
 
