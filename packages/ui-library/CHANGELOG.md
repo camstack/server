@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.359] - 2026-10-31
+
 ### Changed
 
 - Pickers, dropdown menus and popovers now open on top of a modal dialog instead of behind it

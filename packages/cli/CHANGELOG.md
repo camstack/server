@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.214] - 2026-10-31
+
 ### Changed
 
 - Every failing MCP tool now reports isError, and hub calls trust only the CA pinned for that hub instead of skipping TLS verification
