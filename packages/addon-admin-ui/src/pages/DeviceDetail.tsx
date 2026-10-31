@@ -2,6 +2,7 @@ import {
   type ConfigSection,
   DeviceFeature,
   DeviceType,
+  type PowerSourceActionResult,
   WELL_KNOWN_TAB_MAP,
   type WellKnownTab,
 } from '@camstack/types'
@@ -26,6 +27,7 @@ import {
   useAddonsRestartAddon,
   useDeviceState,
   useAudioMetricsGetCurrentSnapshot,
+  useAlert,
   useConfirm,
   useDeviceBattery,
   useDeviceNetworkLink,
@@ -38,6 +40,10 @@ import {
   useIsMobile,
   usePipelineOrchestratorGetPipelineAssignment,
   usePipelineRunnerGetCameraMetrics,
+  usePowerSourceForceRestart,
+  usePowerSourceGetStatus,
+  usePowerSourcePowerOff,
+  usePowerSourcePowerOn,
   useRebootReboot,
   useSystem,
   VodPlaybackProvider,
@@ -55,6 +61,7 @@ import {
   Cpu,
   Database,
   Power,
+  PowerOff,
   RefreshCw,
   RotateCw,
   ScrollText,
@@ -601,6 +608,30 @@ export function DeviceDetailPage() {
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
     },
   })
+  // Power source: the smart switch the operator linked in Customize. The status
+  // answers `linked: false` for a device with none, so the three items below
+  // render only where a switch is linked (an unanswered query shows nothing).
+  const powerSource = usePowerSourceGetStatus(
+    { deviceId },
+    { enabled: isValidDeviceId, staleTime: 15_000 },
+  )
+  const powerSourceLinked = powerSource.data?.linked === true
+  const showAlert = useAlert()
+  const onPowerResult = (result: PowerSourceActionResult): void => {
+    void queryClient.invalidateQueries({ queryKey: [['powerSource']] })
+    if (!result.accepted) {
+      void showAlert({
+        title: t('deviceDetail.powerSourceRefused', 'The power action was not done'),
+        message: result.message,
+        variant: 'danger',
+      })
+    }
+  }
+  const powerOnMutation = usePowerSourcePowerOn({ onSuccess: onPowerResult })
+  const powerOffMutation = usePowerSourcePowerOff({ onSuccess: onPowerResult })
+  const powerRestartMutation = usePowerSourceForceRestart({ onSuccess: onPowerResult })
+  const powerSwitchName = powerSource.data?.switchName ?? ''
+  const powerOffSeconds = powerSource.data?.offSeconds ?? 0
   const canReboot = capabilities.includes(DeviceFeature.Rebootable)
   const isBatteryOperated = capabilities.includes(DeviceFeature.BatteryOperated)
   // Battery status — only fetched for cams that advertise battery
@@ -1089,6 +1120,77 @@ export function DeviceDetailPage() {
                         variant: 'danger',
                       })
                       if (confirmed) rebootMutation.mutate({ deviceId })
+                    },
+                  },
+                  {
+                    id: 'power-source-on',
+                    label: t('deviceDetail.powerOn', 'Power on'),
+                    description: t(
+                      'deviceDetail.powerOnDescription',
+                      'Switch on {{switchName}}, which powers this device.',
+                      { switchName: powerSwitchName },
+                    ),
+                    icon: Power,
+                    hidden: !powerSourceLinked,
+                    disabled: powerOnMutation.isPending,
+                    onClick: () => powerOnMutation.mutate({ deviceId }),
+                  },
+                  {
+                    id: 'power-source-off',
+                    label: t('deviceDetail.powerOff', 'Power off'),
+                    description: t(
+                      'deviceDetail.powerOffDescription',
+                      'Switch off {{switchName}}, which powers this device.',
+                      { switchName: powerSwitchName },
+                    ),
+                    icon: PowerOff,
+                    hidden: !powerSourceLinked,
+                    disabled: powerOffMutation.isPending,
+                    danger: true,
+                    onClick: async () => {
+                      const confirmed = await confirm({
+                        title: t('deviceDetail.powerOffTitle', 'Cut the power of "{{name}}"?', {
+                          name,
+                        }),
+                        message: t(
+                          'deviceDetail.powerOffMessage',
+                          '{{switchName}} will be switched off and "{{name}}" stays off until you power it on again.',
+                          { switchName: powerSwitchName, name },
+                        ),
+                        confirmLabel: t('deviceDetail.powerOffConfirm', 'Power off'),
+                        variant: 'danger',
+                      })
+                      if (confirmed) powerOffMutation.mutate({ deviceId })
+                    },
+                  },
+                  {
+                    id: 'power-source-restart',
+                    label: t('deviceDetail.forceRestartPower', 'Force restart (power)'),
+                    description: t(
+                      'deviceDetail.forceRestartPowerDescription',
+                      'Cut the power of {{switchName}} for {{seconds}} seconds, then switch it back on.',
+                      { switchName: powerSwitchName, seconds: powerOffSeconds },
+                    ),
+                    icon: RefreshCw,
+                    hidden: !powerSourceLinked,
+                    disabled:
+                      powerRestartMutation.isPending ||
+                      powerSource.data?.restartInProgress === true,
+                    danger: true,
+                    onClick: async () => {
+                      const confirmed = await confirm({
+                        title: t('deviceDetail.forceRestartTitle', 'Force restart "{{name}}"?', {
+                          name,
+                        }),
+                        message: t(
+                          'deviceDetail.forceRestartMessage',
+                          '{{switchName}} will be switched off for {{seconds}} seconds and then back on. "{{name}}" loses power meanwhile.',
+                          { switchName: powerSwitchName, seconds: powerOffSeconds, name },
+                        ),
+                        confirmLabel: t('deviceDetail.forceRestartConfirm', 'Restart'),
+                        variant: 'danger',
+                      })
+                      if (confirmed) powerRestartMutation.mutate({ deviceId })
                     },
                   },
                   {

@@ -6099,7 +6099,20 @@
     "noDeviceWithId": "No device with ID <code>#{{id}}</code>",
     "loadingIntegration": "Loading integration…",
     "missingIntegration": "Missing integration",
-    "noIntegration": "No integration"
+    "noIntegration": "No integration",
+    "powerSourceRefused": "The power action was not done",
+    "powerOn": "Power on",
+    "powerOnDescription": "Switch on {{switchName}}, which powers this device.",
+    "powerOff": "Power off",
+    "powerOffDescription": "Switch off {{switchName}}, which powers this device.",
+    "powerOffTitle": "Cut the power of \"{{name}}\"?",
+    "powerOffMessage": "{{switchName}} will be switched off and \"{{name}}\" stays off until you power it on again.",
+    "powerOffConfirm": "Power off",
+    "forceRestartPower": "Force restart (power)",
+    "forceRestartPowerDescription": "Cut the power of {{switchName}} for {{seconds}} seconds, then switch it back on.",
+    "forceRestartTitle": "Force restart \"{{name}}\"?",
+    "forceRestartMessage": "{{switchName}} will be switched off for {{seconds}} seconds and then back on. \"{{name}}\" loses power meanwhile.",
+    "forceRestartConfirm": "Restart"
   },
   "devices": {
     "orphanDevices": "Orphan devices",

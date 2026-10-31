@@ -6174,7 +6174,20 @@
     "noDeviceWithId": "Nessun dispositivo con ID <code>#{{id}}</code>",
     "loadingIntegration": "Caricamento integrazione…",
     "missingIntegration": "Integrazione mancante",
-    "noIntegration": "Nessuna integrazione"
+    "noIntegration": "Nessuna integrazione",
+    "powerSourceRefused": "L'azione di alimentazione non è stata eseguita",
+    "powerOn": "Accendi alimentazione",
+    "powerOnDescription": "Accende {{switchName}}, che alimenta questo dispositivo.",
+    "powerOff": "Spegni alimentazione",
+    "powerOffDescription": "Spegne {{switchName}}, che alimenta questo dispositivo.",
+    "powerOffTitle": "Togliere l'alimentazione a \"{{name}}\"?",
+    "powerOffMessage": "{{switchName}} verrà spento e \"{{name}}\" resta spento finché non lo riaccendi.",
+    "powerOffConfirm": "Spegni",
+    "forceRestartPower": "Riavvio forzato (alimentazione)",
+    "forceRestartPowerDescription": "Toglie l'alimentazione a {{switchName}} per {{seconds}} secondi, poi la riaccende.",
+    "forceRestartTitle": "Riavvio forzato di \"{{name}}\"?",
+    "forceRestartMessage": "{{switchName}} verrà spento per {{seconds}} secondi e poi riacceso. \"{{name}}\" resta senza alimentazione nel frattempo.",
+    "forceRestartConfirm": "Riavvia"
   },
   "devices": {
     "orphanDevices": "Dispositivi orfani",
