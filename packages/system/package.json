@@ -480,6 +480,9 @@
             "name": "actions"
           },
           {
+            "name": "schedulers"
+          },
+          {
             "name": "template"
           },
           {

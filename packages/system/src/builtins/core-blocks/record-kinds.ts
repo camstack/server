@@ -4,6 +4,8 @@
 import {
   ActionStepSchema,
   ActionVariableSchema,
+  type Scheduler,
+  SchedulerSchema,
   AutomationStateDocSchema,
   TemplateKindSchema,
   defineRecordKinds,
@@ -72,6 +74,22 @@ export const ActionRowBodySchema: z.ZodType<ActionRowBody> = z.object({
   updatedAt: z.number(),
 })
 
+/** A scheduler (D983): the operator's timeline. The row id is the bare uuid. */
+export type SchedulerRowBody = Omit<Scheduler, 'id'>
+export const SchedulerRowBodySchema: z.ZodType<SchedulerRowBody> = SchedulerSchema.omit({
+  id: true,
+})
+
+/**
+ * How far the engine has processed a scheduler's points. Read at start to tell
+ * a missed edge from one already run; reset to "now" when the operator edits
+ * the scheduler (an edit never replays the past). Row id = the scheduler id.
+ */
+export type SchedulerStateRowBody = { readonly processedUntil: number }
+export const SchedulerStateRowBodySchema: z.ZodType<SchedulerStateRowBody> = z.object({
+  processedUntil: z.number(),
+})
+
 /** The actions one camera links (D356: the operator picked them). Row id = the deviceId. */
 export type ActionLinksRowBody = { readonly actionIds: string[] }
 export const ActionLinksRowBodySchema: z.ZodType<ActionLinksRowBody> = z.object({
@@ -126,6 +144,23 @@ const _coreBlocksRecordKinds = defineRecordKinds({
     retention: { none: 'operator delete only' },
     maxDataBytes: 256 * 1024,
   },
+  schedulers: {
+    schema: SchedulerRowBodySchema,
+    class: 'config',
+    writeTrigger: 'create / update / delete / setEnabled of a scheduler by the operator',
+    device: 'none',
+    at: 'none',
+    retention: { none: 'operator delete only' },
+    maxDataBytes: 256 * 1024,
+  },
+  'scheduler-state': {
+    schema: SchedulerStateRowBodySchema,
+    class: 'config',
+    writeTrigger: 'the engine processed a scheduler point; the operator edited the scheduler',
+    device: 'none',
+    at: 'none',
+    retention: { none: 'the row goes with its scheduler' },
+  },
   'action-links': {
     schema: ActionLinksRowBodySchema,
     class: 'config',
@@ -159,6 +194,8 @@ export type CoreBlocksRecordKindsMap = {
   readonly blocks: DefinedRecordKind<z.ZodType<CoreBlockRowBody>>
   readonly runs: DefinedRecordKind<z.ZodType<RunsRowBody>>
   readonly actions: DefinedRecordKind<z.ZodType<ActionRowBody>>
+  readonly schedulers: DefinedRecordKind<z.ZodType<SchedulerRowBody>>
+  readonly 'scheduler-state': DefinedRecordKind<z.ZodType<SchedulerStateRowBody>>
   readonly 'action-links': DefinedRecordKind<z.ZodType<ActionLinksRowBody>>
   readonly templates: DefinedRecordKind<z.ZodType<TemplateRowBody>>
   readonly settings: DefinedRecordKind<z.ZodType<CoreBlockSettingsBody>>

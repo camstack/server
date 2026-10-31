@@ -29,6 +29,7 @@ import {
   coreBlockComposition,
   coreBlocksCapability,
   actionsCapability,
+  schedulersCapability,
   hydrateSchema,
   type IClusterBroker,
   type ICoreBlocksProvider,
@@ -45,7 +46,12 @@ import {
   BlockSupervisor,
 } from './block-supervisor.js'
 import { type ActionsRuntime, buildActionsRuntime } from './actions-wiring.js'
-import { actionOwner, automationOwner } from './runs-ledger.js'
+import {
+  armSchedulerEngine,
+  buildSchedulersRuntime,
+  type SchedulersRuntime,
+} from './scheduler/scheduler-wiring.js'
+import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
@@ -93,6 +99,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private actions: ActionsRuntime | null = null
   /** The templates engine and the remote — needs the per-device settings store, so absent without one. */
   private remoteRuntime: RemoteRuntime | null = null
+  private schedulers: SchedulersRuntime | null = null
+  private disposed = false
   /** The shared integration, or null when this node does not own it. */
   private blocksIntegrationId: string | null = null
 
@@ -126,6 +134,18 @@ export class CoreBlocksAddon extends BaseAddon {
       api: () => this.ctx.api,
       eventBus: this.ctx.eventBus,
       logger: this.ctx.logger,
+    })
+    const schedulers = buildSchedulersRuntime({
+      records,
+      api: () => this.ctx.api,
+      eventBus: this.ctx.eventBus,
+      logger: this.ctx.logger.child('scheduler'),
+      ledger: this.actions.ledger,
+    })
+    this.schedulers = schedulers
+    // ARMED, never awaited: the site is a hub-core cap, answerable only after boot.
+    void armSchedulerEngine(schedulers.engine, this.ctx.logger.child('scheduler'), {
+      isDisposed: () => this.disposed,
     })
     void this.sweepRunsLedger()
     void this.migrateActionTargets()
@@ -164,6 +184,7 @@ export class CoreBlocksAddon extends BaseAddon {
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
       { capability: actionsCapability, provider: this.requireActions().service },
+      { capability: schedulersCapability, provider: schedulers.service },
       // The built-in palette needs no store: it is served even when the remote is not.
       { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
       ...this.remoteRegistrations(),
@@ -211,6 +232,8 @@ export class CoreBlocksAddon extends BaseAddon {
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null
+    this.disposed = true
+    this.schedulers?.dispose()
     this.actions?.dispose()
     this.actions = null
     this.prefs = null
@@ -354,6 +377,8 @@ export class CoreBlocksAddon extends BaseAddon {
         const live = new Set<string>()
         for (const block of store.list()) live.add(automationOwner(block.id))
         for (const entry of await actions.service.listInternal()) live.add(actionOwner(entry.id))
+        for (const sched of (await this.schedulers?.store.list()) ?? [])
+          live.add(schedulerOwner(sched.id))
         return live
       })
     } catch (err: unknown) {

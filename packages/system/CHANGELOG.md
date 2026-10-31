@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Actions resolve a device-domain target when a step runs, and stored actions are rewritten to the target shape once at start
+- Schedulers run in the hub: one timer for every point, holds that keep a device state true until the next point, priorities between schedulers, and every outcome on the runs ledger
 
 ## [1.2.529] - 2026-10-31
 

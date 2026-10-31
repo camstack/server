@@ -201,7 +201,7 @@ Singleton or collection providers, addressed without a device.
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
 | `remote` | 5 | — | — | — | — | `core-blocks` |
 | `remote-layout-components` | 1 | — | — | — | — | `core-blocks` |
-| `schedulers` | 10 | — | — | — | — | — |
+| `schedulers` | 10 | — | — | — | — | `core-blocks` |
 | `server-management` | 8 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |
 | `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |

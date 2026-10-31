@@ -31,6 +31,7 @@ import type { RunsRowBody } from './record-kinds.js'
 
 export const AUTOMATION_OWNER_PREFIX = 'automation:'
 export const ACTION_OWNER_PREFIX = 'action:'
+export const SCHEDULER_OWNER_PREFIX = 'scheduler:'
 
 export function automationOwner(blockId: string): string {
   return `${AUTOMATION_OWNER_PREFIX}${blockId}`
@@ -38,6 +39,10 @@ export function automationOwner(blockId: string): string {
 
 export function actionOwner(actionId: string): string {
   return `${ACTION_OWNER_PREFIX}${actionId}`
+}
+
+export function schedulerOwner(schedulerId: string): string {
+  return `${SCHEDULER_OWNER_PREFIX}${schedulerId}`
 }
 
 /** The ring size when a reporter does not say. */
