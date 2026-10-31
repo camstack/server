@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Added the migrations capability router (hub-only, admin): ledger, pending, dry run, retry
+- A pre-migration snapshot the operator restores is promoted over its database at the next start, before any runner opens it
 
 ## [1.2.714] - 2026-10-31
 

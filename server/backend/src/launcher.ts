@@ -37,6 +37,7 @@ import {
   seedNodeModulesRoots,
 } from './package-inventory.js'
 import { applyPendingRestore } from './pending-restore.js'
+import { applyPendingPreMigrationRestore } from './pre-migration-restore.js'
 
 /** Resolve the data directory from env or default */
 const DATA_DIR = process.env['CAMSTACK_DATA'] ?? 'camstack-data'
@@ -241,6 +242,8 @@ async function launch(): Promise<void> {
   // installer + symlink step pick up — otherwise we'd install a stale
   // set and overwrite it a step later.
   await applyPendingRestore(dataDir, (line) => console.log(line))
+  // A pre-migration snapshot the operator chose to go back to (D986).
+  applyPendingPreMigrationRestore(dataDir, (line) => console.log(line))
 
   // @camstack/system is imported DYNAMICALLY here — AFTER the active framework
   // dir + NODE_PATH are resolved above — so the correct framework copy is what

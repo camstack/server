@@ -31,7 +31,8 @@ import * as path from 'node:path'
 /** Mirrors `DATABASE_SNAPSHOT_SUFFIX` in `@camstack/types` (spec-pinned). */
 export const SQLITE_SNAPSHOT_SUFFIX = '.backup-snapshot'
 
-const SIDECARS = ['-wal', '-shm', '-journal'] as const
+export const SQLITE_SIDECAR_SUFFIXES = ['-wal', '-shm', '-journal'] as const
+const SIDECARS = SQLITE_SIDECAR_SUFFIXES
 const DATABASE_SUFFIXES = ['.db', '.sqlite', '.sqlite3'] as const
 
 /** What one extraction calls for, as archive-relative paths. */
