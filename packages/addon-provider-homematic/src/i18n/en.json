@@ -1,0 +1,49 @@
+{
+  "common": {
+    "loading": "Loading…"
+  },
+  "write": {
+    "failedTitle": "The CCU refused the change"
+  },
+  "page": {
+    "title": "Homematic CCU",
+    "subtitle": "Manage the CCU without opening its web interface",
+    "sectionsLabel": "CCU sections",
+    "ccuPicker": "CCU",
+    "tabOverview": "Overview",
+    "loadFailed": "Could not load the CCUs",
+    "noCcu": "No Homematic CCU is set up",
+    "noCcuHint": "Add a CCU from Integrations, then manage it here.",
+    "notConnected": "{{name}} is not connected",
+    "notConnectedHint": "The page works on a connected CCU. Check the connection in the integration."
+  },
+  "overview": {
+    "loadFailed": "Could not read the CCU",
+    "ccuTitle": "CCU",
+    "infoUnavailable": "CCU details unavailable",
+    "infoNoAnswer": "The CCU did not answer. Version and serial need the WebUI credentials set in the integration.",
+    "version": "Version",
+    "product": "Product",
+    "hostname": "Hostname",
+    "serial": "Serial",
+    "interfacesTitle": "Interfaces",
+    "interfacesUnavailable": "Interfaces unavailable",
+    "noInterfaces": "The CCU reported no interfaces",
+    "colInterface": "Interface",
+    "colState": "State",
+    "colDutyCycle": "Duty cycle",
+    "colFirmware": "Firmware",
+    "colType": "Type",
+    "colGateways": "Gateways",
+    "messagesTitle": "Service messages",
+    "messagesUnavailable": "Service messages unavailable",
+    "noMessages": "No service messages",
+    "colWhen": "Since",
+    "colMessage": "Message",
+    "colDevice": "Device",
+    "ack": "Acknowledge",
+    "ackTitle": "Acknowledge service message",
+    "ackMessage": "Acknowledge {{type}} for {{name}} on the CCU? The message disappears from the CCU as well.",
+    "ackConfirm": "Acknowledge"
+  }
+}

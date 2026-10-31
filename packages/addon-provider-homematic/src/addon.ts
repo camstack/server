@@ -1,4 +1,5 @@
 import {
+  addonPagesSourceCapability,
   type AddonInitResult,
   BaseDeviceProvider,
   bestLocationMatch,
@@ -14,12 +15,16 @@ import {
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
+  type IAddonPageProvider,
   type IConnectionTestProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SavedDevice,
   type SystemEvent,
 } from '@camstack/types'
+import type { CcuActionDeps } from './ccu/ccu-facade.js'
+import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
+import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
 import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
 import { homematicActions } from './custom-actions.js'
 import { HmContainerDevice } from './devices/hm-container-device.js'
@@ -99,9 +104,11 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         ...regs,
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
         { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        { capability: addonPagesSourceCapability, provider: this.buildPagesProvider() },
       ],
       customActions: homematicActions,
       actionHandlers: {
+        ...buildCcuOverviewHandlers(this.ccuActionDeps()),
         discoverCcu: async () => {
           const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
             addonId: this.ctx.id,
@@ -114,6 +121,39 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
           return { hosts, summary: homematicDiscoverySummary(hosts.length, hosts.length) }
         },
       },
+    }
+  }
+
+  /** The CCU management page, mirroring the manifest `pages[]` entry. */
+  private buildPagesProvider(): IAddonPageProvider {
+    return { id: this.addonId, listPages: () => HOMEMATIC_PAGES }
+  }
+
+  /** What the CCU management actions reach: connected sessions only, never a half-started facade. */
+  private ccuActionDeps(): CcuActionDeps {
+    return {
+      facade: (integrationId) => {
+        const connected = this.clients
+          ?.sessions()
+          .some((session) => session.id === integrationId && session.status === 'connected')
+        return connected === true ? homematicFacades.get(integrationId) : null
+      },
+      integrations: () => {
+        const clients = this.clients
+        if (clients === null) return []
+        const connectedIds = new Set(
+          clients
+            .sessions()
+            .filter((session) => session.status === 'connected')
+            .map((session) => session.id),
+        )
+        return clients.list().map((integrationId) => ({
+          integrationId,
+          name: clients.getName(integrationId) ?? integrationId,
+          connected: connectedIds.has(integrationId),
+        }))
+      },
+      logger: this.ctx.logger,
     }
   }
 

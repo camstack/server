@@ -1,0 +1,49 @@
+{
+  "common": {
+    "loading": "Caricamento…"
+  },
+  "write": {
+    "failedTitle": "La CCU ha rifiutato la modifica"
+  },
+  "page": {
+    "title": "Homematic CCU",
+    "subtitle": "Gestisci la CCU senza aprire la sua interfaccia web",
+    "sectionsLabel": "Sezioni della CCU",
+    "ccuPicker": "CCU",
+    "tabOverview": "Panoramica",
+    "loadFailed": "Impossibile caricare le CCU",
+    "noCcu": "Nessuna CCU Homematic configurata",
+    "noCcuHint": "Aggiungi una CCU da Integrazioni, poi gestiscila qui.",
+    "notConnected": "{{name}} non è connessa",
+    "notConnectedHint": "La pagina lavora su una CCU connessa. Controlla la connessione nell'integrazione."
+  },
+  "overview": {
+    "loadFailed": "Impossibile leggere la CCU",
+    "ccuTitle": "CCU",
+    "infoUnavailable": "Dettagli della CCU non disponibili",
+    "infoNoAnswer": "La CCU non ha risposto. Versione e seriale richiedono le credenziali WebUI impostate nell'integrazione.",
+    "version": "Versione",
+    "product": "Prodotto",
+    "hostname": "Nome host",
+    "serial": "Seriale",
+    "interfacesTitle": "Interfacce",
+    "interfacesUnavailable": "Interfacce non disponibili",
+    "noInterfaces": "La CCU non ha segnalato interfacce",
+    "colInterface": "Interfaccia",
+    "colState": "Stato",
+    "colDutyCycle": "Duty cycle",
+    "colFirmware": "Firmware",
+    "colType": "Tipo",
+    "colGateways": "Gateway",
+    "messagesTitle": "Messaggi di servizio",
+    "messagesUnavailable": "Messaggi di servizio non disponibili",
+    "noMessages": "Nessun messaggio di servizio",
+    "colWhen": "Da",
+    "colMessage": "Messaggio",
+    "colDevice": "Dispositivo",
+    "ack": "Conferma",
+    "ackTitle": "Conferma messaggio di servizio",
+    "ackMessage": "Confermare {{type}} per {{name}} sulla CCU? Il messaggio sparisce anche dalla CCU.",
+    "ackConfirm": "Conferma"
+  }
+}

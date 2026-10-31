@@ -78,7 +78,7 @@ this column exists to stop.
 | `provider-gree` | `@camstack/addon-provider-gree` | providers | own runner | `hub-only` | — | multiple | `device-provider` |
 | `provider-hikvision` | `@camstack/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-homeassistant` | `@camstack/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `broker` `calendar-source` `device-adoption` `humidifier` `image` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
-| `provider-homematic` | `@camstack/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
+| `provider-homematic` | `@camstack/addon-provider-homematic` | providers | own runner | `hub-only` | — | multiple | `addon-pages-source` `connection-test` `device-adoption` `device-provider` |
 | `provider-mqtt-ha` | `@camstack/addon-provider-mqtt-ha` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
 | `provider-onvif` | `@camstack/addon-provider-onvif` | providers | own runner | `any-node` | — | unique | `device-provider` |
 | `provider-petkit` | `@camstack/addon-provider-petkit` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `pet-feeder` |

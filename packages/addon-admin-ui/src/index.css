@@ -22,6 +22,7 @@
 @source "../../addon-benchmark/src";
 @source "../../addon-model-studio/src";
 @source "../../addon-osd-manager/src";
+@source "../../addon-provider-homematic/src";
 @source "../../addon-training/src";
 /* addon-page-sources:end */
 

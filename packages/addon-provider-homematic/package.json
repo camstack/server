@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-provider-homematic",
   "version": "1.2.165",
-  "description": "Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library",
+  "description": "Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack \u2014 wraps the nodehomematic library",
   "keywords": [
     "camstack",
     "addon",
@@ -57,6 +57,20 @@
           },
           {
             "name": "connection-test"
+          },
+          {
+            "name": "addon-pages-source"
+          }
+        ],
+        "pages": [
+          {
+            "id": "homematic-ccu",
+            "label": "Homematic CCU",
+            "icon": "plug",
+            "path": "/addon/homematic-ccu",
+            "remoteName": "addon_provider_homematic_page",
+            "bundle": "remoteEntry.js",
+            "section": "administration"
           }
         ]
       }
@@ -70,24 +84,41 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build -c vite.page.config.ts",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit -p tsconfig.spec.json",
     "test": "vitest run",
-    "publish:npm": "npm publish --access public"
+    "publish:npm": "npm publish --access public",
+    "build:server": "vite build",
+    "build:page": "vite build -c vite.page.config.ts",
+    "dev:page": "vite -c vite.page.config.ts"
   },
   "dependencies": {
     "nodehomematic": "^0.5.1"
   },
   "peerDependencies": {
     "@camstack/types": "*",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
     "@camstack/types": "*",
+    "@camstack/ui-library": "*",
+    "@module-federation/vite": "^1.16.9",
+    "@tailwindcss/vite": "^4.2.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@trpc/client": "^11.16.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "superjson": "^2.0.0",
+    "tailwindcss": "^4.2.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
-    "vitest": "^2.0.0",
+    "vitest": "^3.2.4",
     "zod": "^4.3.6"
   }
 }
