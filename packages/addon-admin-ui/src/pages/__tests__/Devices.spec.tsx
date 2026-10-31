@@ -71,15 +71,32 @@ const devices = [
   },
 ]
 
-const mutationStub = () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false })
+const mutationStub = () => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(),
+  isPending: false,
+})
 
 vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    useIntegrationsList: () => ({ data: integrations, isLoading: false, refetch: vi.fn() }),
-    useDeviceManagerListAll: () => ({ data: devices, isLoading: false, refetch: vi.fn() }),
+    useIntegrationsList: () => ({
+      data: integrations,
+      isLoading: false,
+      refetch: vi.fn(),
+    }),
+    useIntegrationsGetAvailableTypes: () => ({
+      data: [],
+      isError: false,
+      refetch: vi.fn(),
+    }),
+    useDeviceManagerListAll: () => ({
+      data: devices,
+      isLoading: false,
+      refetch: vi.fn(),
+    }),
     useDeviceManagerRemove: () => mutationStub(),
     useDeviceManagerDisable: () => mutationStub(),
     useDeviceManagerEnable: () => mutationStub(),
@@ -94,7 +111,9 @@ vi.mock('../../hooks/useEventInvalidation', () => ({
 import { DevicesPage } from '../Devices'
 
 function renderPage(): ReactElement {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return (
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[window.location.pathname + window.location.search]}>

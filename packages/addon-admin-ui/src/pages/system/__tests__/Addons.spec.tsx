@@ -41,7 +41,11 @@ let mockUpdates: Array<{
   category: string
   requiresRestart: boolean
 }> = []
-let mockLastRestart: { kind: string; requestedAt: number; packagesUpdated?: number } | null = null
+let mockLastRestart: {
+  kind: string
+  requestedAt: number
+  packagesUpdated?: number
+} | null = null
 let mockAddons: Array<{
   manifest: {
     id: string
@@ -51,7 +55,9 @@ let mockAddons: Array<{
     packageVersion: string
     capabilities: []
   }
-  declaration?: { execution?: { placement?: 'hub-only' | 'agent-only' | 'any-node' } }
+  declaration?: {
+    execution?: { placement?: 'hub-only' | 'agent-only' | 'any-node' }
+  }
   source: 'installed'
   installSource?: 'npm' | 'local' | 'upload'
   hasBackup: false
@@ -192,7 +198,11 @@ vi.mock('@camstack/ui-library', () => ({
     isPending: false,
   }),
   useAddonsGetAutoUpdateSettings: () => ({
-    data: { channel: 'off', intervalSeconds: 21600, updateCheckIntervalSeconds: 21600 },
+    data: {
+      channel: 'off',
+      intervalSeconds: 21600,
+      updateCheckIntervalSeconds: 21600,
+    },
   }),
   useAddonsApplyAutoUpdateToAll: () => ({ mutate: vi.fn(), isPending: false }),
   // Availability-poll cadence selector — runs even while the channel is 'off'.
@@ -372,6 +382,7 @@ describe('Addons page — "Update all" engine job + layout', () => {
   //    ride inside the node root package and are managed from Server
   //    management. Real addons stay listed.
   it('?kind=integration keeps only integration addons and the chip is pressed', () => {
+    const noCapabilities: [] = []
     const addon = (id: string) => ({
       manifest: {
         id,
@@ -379,10 +390,10 @@ describe('Addons page — "Update all" engine job + layout', () => {
         packageName: `@camstack/${id}`,
         version: '1.0.0',
         packageVersion: '1.0.0',
-        capabilities: [],
+        capabilities: noCapabilities,
       },
-      source: 'installed',
-      hasBackup: false,
+      source: 'installed' as const,
+      hasBackup: false as const,
     })
     mockAddons = [addon('addon-a'), addon('addon-b')]
     mockSearch = '?kind=integration'
@@ -1118,21 +1129,36 @@ describe('Addons page — ?capability= offers uninstalled addons (D860)', () => 
   })
 
   it('a query that has not answered is "searching", never "no addon exists"', () => {
-    mockCapabilitySearch = { data: undefined, isPending: true, isError: false, isFetching: true }
+    mockCapabilitySearch = {
+      data: undefined,
+      isPending: true,
+      isError: false,
+      isFetching: true,
+    }
     renderPage()
     expect(screen.getByText(/searching the npm catalog/i)).toBeTruthy()
     expect(screen.queryByText(/no published addon declares/i)).toBeNull()
   })
 
   it('a failed query says it could not search, not "none"', () => {
-    mockCapabilitySearch = { data: undefined, isPending: false, isError: true, isFetching: false }
+    mockCapabilitySearch = {
+      data: undefined,
+      isPending: false,
+      isError: true,
+      isFetching: false,
+    }
     renderPage()
     expect(screen.getByText(/could not search the npm catalog/i)).toBeTruthy()
     expect(screen.queryByText(/no published addon declares/i)).toBeNull()
   })
 
   it('an answered, empty query says no published addon declares it', () => {
-    mockCapabilitySearch = { data: [], isPending: false, isError: false, isFetching: false }
+    mockCapabilitySearch = {
+      data: [],
+      isPending: false,
+      isError: false,
+      isFetching: false,
+    }
     renderPage()
     expect(screen.getByText(/no published addon declares the "mesh-network"/i)).toBeTruthy()
   })
