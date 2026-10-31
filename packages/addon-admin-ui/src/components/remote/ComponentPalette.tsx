@@ -4,7 +4,9 @@
  * keypad, a volume rocker … — each with a small preview. Picking one hands it
  * to the editor, which puts it on the grid. The list is concat-fanned across
  * providers, so it is merged and de-duplicated here (`mergeComponents`); a
- * query that has not answered is a loading state, never an empty palette.
+ * query that has not answered is a loading state, never an empty palette. The
+ * palette stays open after a pick, so several components go on in one visit;
+ * a line under the search says what was just added.
  */
 import type { RemoteLayoutComponent, RemoteLayoutPayload } from '@camstack/types'
 import {
@@ -54,16 +56,7 @@ export function ComponentPalette({
           <DialogTitle>{t('remote.palette.title')}</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          {open && (
-            <PaletteBody
-              grid={grid}
-              language={i18n.language}
-              onPick={(component, options) => {
-                onPick(component, options)
-                onOpenChange(false)
-              }}
-            />
-          )}
+          {open && <PaletteBody grid={grid} language={i18n.language} onPick={onPick} />}
         </DialogBody>
       </DialogContent>
     </Dialog>
@@ -81,6 +74,7 @@ function PaletteBody({ grid, language, onPick }: BodyProps): ReactNode {
   const query = useRemoteLayoutComponentsListComponents({})
   const [search, setSearch] = useState('')
   const [fillWidth, setFillWidth] = useState(false)
+  const [added, setAdded] = useState<string | null>(null)
   const categoryLabel = (category: string): string =>
     t(`remote.palette.category.${category}`, category)
   const components = useMemo(
@@ -135,6 +129,11 @@ function PaletteBody({ grid, language, onPick }: BodyProps): ReactNode {
           {t('remote.palette.fillWidth')}
         </label>
       )}
+      {added !== null && (
+        <p role="status" className="text-xs text-success" data-testid="palette-added">
+          {t('remote.palette.added', { name: added })}
+        </p>
+      )}
       {shown.length === 0 ? (
         <EmptyState
           icon={Shapes}
@@ -149,7 +148,10 @@ function PaletteBody({ grid, language, onPick }: BodyProps): ReactNode {
                 component={component}
                 language={language}
                 category={categoryLabel(component.category)}
-                onPick={() => onPick(component, { fillWidth })}
+                onPick={() => {
+                  onPick(component, { fillWidth })
+                  setAdded(componentName(component, language))
+                }}
               />
             </li>
           ))}
@@ -185,7 +187,10 @@ function PaletteItem({ component, language, category, onPick }: ItemProps): Reac
         <span className="block truncate text-sm font-medium text-foreground">{name}</span>
         <span className="block truncate text-xs text-foreground-muted">
           {category} ·{' '}
-          {t('remote.palette.size', { cols: component.size.cols, rows: component.size.rows })}
+          {t('remote.palette.size', {
+            cols: component.size.cols,
+            rows: component.size.rows,
+          })}
         </span>
       </span>
     </button>

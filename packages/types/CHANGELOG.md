@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Remote layout groups accept an optional size and hideTitle for dividers
+
 ## [1.2.453] - 2026-10-30
 
 ### Changed

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { HotkeyProvider } from '@camstack/ui-library'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 import { copyOfPreset } from '../layout-presets'
@@ -81,5 +82,50 @@ describe('RemoteGrid app keys', () => {
     expect(netflix.getAttribute('aria-label')).toBe('Netflix')
     expect(netflix.querySelector('svg path')).not.toBeNull()
     expect(screen.getByTestId('remote-grid-button-b').textContent).toBe('D+')
+  })
+})
+
+describe('TemplateEditorDialog edit history', () => {
+  const open = (): void => {
+    render(
+      <HotkeyProvider platform="other">
+        <TemplateEditorDialog
+          draft={NEW_DRAFT}
+          saving={false}
+          error={null}
+          onSave={() => undefined}
+          onClose={() => undefined}
+        />
+      </HotkeyProvider>,
+    )
+  }
+  it('has nothing to undo until something changes', () => {
+    open()
+    expect((screen.getByTestId('template-undo') as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByTestId('template-redo') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('undo and redo move between the blank layout and a chosen preset', () => {
+    open()
+    const gridButtons = (): number => screen.queryAllByTestId(/^remote-grid-button-/).length
+    expect(gridButtons()).toBe(0)
+    fireEvent.change(screen.getByTestId('template-preset'), { target: { value: 'hisense-vidaa' } })
+    const withPreset = gridButtons()
+    expect(withPreset).toBeGreaterThan(0)
+    fireEvent.click(screen.getByTestId('template-undo'))
+    expect(gridButtons()).toBe(0)
+    fireEvent.click(screen.getByTestId('template-redo'))
+    expect(gridButtons()).toBe(withPreset)
+  })
+
+  it('binds mod+Z and mod+shift+Z through the hotkey registry', () => {
+    open()
+    const gridButtons = (): number => screen.queryAllByTestId(/^remote-grid-button-/).length
+    fireEvent.change(screen.getByTestId('template-preset'), { target: { value: 'hisense-vidaa' } })
+    const withPreset = gridButtons()
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true })
+    expect(gridButtons()).toBe(0)
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true, shiftKey: true })
+    expect(gridButtons()).toBe(withPreset)
   })
 })

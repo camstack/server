@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { AppBrandGlyph } from './AppBrandGlyph'
 import { resolveAppBrand } from './app-brand-icons'
 import type { DragItem, DragPreview } from './layout-drag'
-import { humanRole } from './layout-model'
+import { humanRole, slimRowsOf } from './layout-model'
 import { clampToGrid, frameClass, isDividerFrame, shapeClass, toneClass } from './remote-look'
 
 /** A drag in progress: what is held and where it would land. */
@@ -43,6 +43,11 @@ export interface RemoteGridProps {
   readonly onItemKeyDown?: (item: DragItem, event: KeyboardEvent<HTMLElement>) => void
   readonly drag?: GridDrag | null
 }
+
+const FULL_ROW = '2.75rem'
+const COMPACT_ROW = '1.25rem'
+/** A row that holds only slim dividers. */
+const SLIM_ROW = '1rem'
 
 function occupied(grid: RemoteLayoutPayload): ReadonlySet<string> {
   const cells = new Set<string>()
@@ -128,7 +133,7 @@ function GroupFrame({
 }: GroupFrameProps): ReactNode {
   const { t } = useTranslation()
   const divider = isDividerFrame(group.frame)
-  const title = compact ? undefined : group.title
+  const title = compact || group.hideTitle === true ? undefined : group.title
   return (
     <div
       data-testid={`remote-group-${group.id}`}
@@ -159,7 +164,9 @@ function GroupFrame({
         // ui-check-ok: a 16px drag grip on the frame corner; IconButton has no touch-none drag-handle size
         <button
           type="button"
-          aria-label={t('remote.layout.groupHandle', { name: group.title ?? group.componentId })}
+          aria-label={t('remote.layout.groupHandle', {
+            name: group.title ?? group.componentId,
+          })}
           aria-pressed={selected}
           data-testid={`remote-group-handle-${group.id}`}
           className="absolute -right-1 -top-2.5 z-20 flex h-4 w-4 touch-none cursor-grab items-center justify-center rounded-full border border-border bg-surface-hover text-foreground-muted hover:text-foreground"
@@ -193,12 +200,13 @@ export function RemoteGrid({
   const editable = onItemPointerDown !== undefined
   const dragging = drag !== null
   const taken = occupied(grid)
+  const slim = slimRowsOf(grid)
   const cells: { row: number; col: number }[] = []
   if (showEmptyCells || dragging) {
     for (let row = 0; row < grid.rows; row += 1) {
       for (let col = 0; col < grid.columns; col += 1) {
         // While dragging every cell shows, so the operator sees the whole grid.
-        if (dragging || !taken.has(`${row}:${col}`)) cells.push({ row, col })
+        if (dragging || (!taken.has(`${row}:${col}`) && !slim.has(row))) cells.push({ row, col })
       }
     }
   }
@@ -214,7 +222,16 @@ export function RemoteGrid({
         compact ? 'auto-rows-[1.25rem] gap-0.5' : 'auto-rows-[2.75rem]',
       )}
       // ui-check-ok: computed grid geometry from the layout payload
-      style={{ gridTemplateColumns: `repeat(${grid.columns}, minmax(0, 1fr))` }}
+      style={{
+        gridTemplateColumns: `repeat(${grid.columns}, minmax(0, 1fr))`,
+        ...(slim.size === 0
+          ? {}
+          : {
+              gridTemplateRows: Array.from({ length: grid.rows }, (_, row) =>
+                slim.has(row) ? SLIM_ROW : compact ? COMPACT_ROW : FULL_ROW,
+              ).join(' '),
+            }),
+      }}
     >
       {cells.map(({ row, col }) => (
         <div

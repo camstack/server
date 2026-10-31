@@ -44,21 +44,40 @@ export function itemRect(grid: RemoteLayoutPayload, item: DragItem): LayoutRect 
     item.kind === 'group' ? groupById(grid, item.id) : grid.buttons.find((b) => b.id === item.id)
   return source === undefined
     ? undefined
-    : { row: source.row, col: source.col, rowSpan: source.rowSpan, colSpan: source.colSpan }
+    : {
+        row: source.row,
+        col: source.col,
+        rowSpan: source.rowSpan,
+        colSpan: source.colSpan,
+      }
 }
 
-/** The cell under a point; it may lie outside the grid (negative, or past the last row). */
+/**
+ * The cell under a point; it may lie outside the grid (negative, or past the
+ * last row). `rowWeights` are the relative heights of the rows when they are
+ * not all equal (a slim divider row is thinner than a key row).
+ */
 export function cellAt(
   bounds: GridBounds,
   grid: Pick<RemoteLayoutPayload, 'columns' | 'rows'>,
   x: number,
   y: number,
+  rowWeights?: readonly number[],
 ): Cell {
   if (bounds.width <= 0 || bounds.height <= 0) return { row: 0, col: 0 }
-  return {
-    col: Math.floor(((x - bounds.left) / bounds.width) * grid.columns),
-    row: Math.floor(((y - bounds.top) / bounds.height) * grid.rows),
+  const col = Math.floor(((x - bounds.left) / bounds.width) * grid.columns)
+  const fraction = (y - bounds.top) / bounds.height
+  if (rowWeights === undefined || rowWeights.length !== grid.rows) {
+    return { col, row: Math.floor(fraction * grid.rows) }
   }
+  if (fraction < 0) return { col, row: Math.floor(fraction * grid.rows) }
+  const total = rowWeights.reduce((sum, w) => sum + w, 0)
+  let edge = 0
+  for (const [row, weight] of rowWeights.entries()) {
+    edge += weight / total
+    if (fraction < edge) return { col, row }
+  }
+  return { col, row: Math.max(grid.rows, Math.floor(fraction * grid.rows)) }
 }
 
 /** Where the item's top-left lands when the pointer is over `pointer` and grabbed it at `grabbed`. */

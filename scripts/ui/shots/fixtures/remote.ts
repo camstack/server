@@ -166,6 +166,8 @@ export default defineFixtures({
   area: 'remote',
   description: 'Templates page and the Remote Customize extension on a media player',
   handlers: {
+    'auth.listLoginMethods': [],
+    'preferences.get': { rows: [] },
     'remoteLayoutComponents.listComponents': BUILTIN_REMOTE_COMPONENTS,
     'template.list': TEMPLATES,
     'template.get': (i: { id: string }) => TEMPLATES.find((t) => t.id === i.id) ?? null,

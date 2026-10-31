@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Remote template editor: slim separators with size and hide-label options, undo/redo (Cmd/Ctrl+Z), and the Add component window stays open after adding
+
 ## [1.2.530] - 2026-10-31
 
 ### Changed

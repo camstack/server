@@ -23,6 +23,7 @@ import {
 } from '@camstack/types'
 import {
   Button,
+  Checkbox,
   FormField,
   IconButton,
   IconPicker,
@@ -65,6 +66,7 @@ import {
   setButtonFace,
   setButtonLook,
   setGroupTitle,
+  setSeparatorOptions,
   shiftButton,
 } from './layout-model'
 import { RemoteGrid } from './RemoteGrid'
@@ -484,6 +486,47 @@ function GroupInspector({ grid, groupId, apply, onGone }: GroupInspectorProps): 
           data-testid="remote-group-title"
         />
       </FormField>
+      {group.frame === 'divider' && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label={t('remote.layout.separatorSize')}>
+            <Select
+              value={group.size ?? 'compact'}
+              options={[
+                {
+                  value: 'compact',
+                  label: t('remote.layout.separatorSizeCompact'),
+                },
+                {
+                  value: 'normal',
+                  label: t('remote.layout.separatorSizeNormal'),
+                },
+              ]}
+              onChange={(e) =>
+                apply(
+                  setSeparatorOptions(grid, group.id, {
+                    size: e.target.value === 'normal' ? 'normal' : 'compact',
+                  }),
+                )
+              }
+              data-testid="remote-separator-size"
+            />
+          </FormField>
+          <label className="flex items-center gap-2 self-end pb-2 text-xs text-foreground-muted">
+            <Checkbox
+              checked={group.hideTitle === true}
+              onChange={(e) =>
+                apply(
+                  setSeparatorOptions(grid, group.id, {
+                    hideTitle: e.target.checked,
+                  }),
+                )
+              }
+              data-testid="remote-separator-hide-title"
+            />
+            {t('remote.layout.separatorHideLabel')}
+          </label>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"

@@ -23,7 +23,9 @@ export const RemoteBindingActionSchema = AutomationCapStepSchema.extend({
 })
 export type RemoteBindingAction = z.infer<typeof RemoteBindingActionSchema>
 
-export const RemoteBindingSchema = z.object({ action: RemoteBindingActionSchema })
+export const RemoteBindingSchema = z.object({
+  action: RemoteBindingActionSchema,
+})
 export type RemoteBinding = z.infer<typeof RemoteBindingSchema>
 
 export const RemoteCustomButtonSchema = z.object({
@@ -57,7 +59,11 @@ export const RemoteConfigSchema = z
   .superRefine((config, ctx) => {
     const roles = Object.keys(config.bindings)
     if (roles.length > MAX_REMOTE_BINDINGS) {
-      ctx.addIssue({ code: 'custom', message: 'too many bindings', path: ['bindings'] })
+      ctx.addIssue({
+        code: 'custom',
+        message: 'too many bindings',
+        path: ['bindings'],
+      })
     }
     for (const role of roles) {
       if (!isRemoteRole(role)) {
@@ -112,7 +118,10 @@ export const RemoteAssumedStateSchema = z.object({
 })
 export type RemoteAssumedState = z.infer<typeof RemoteAssumedStateSchema>
 
-export const EMPTY_REMOTE_ASSUMED_STATE: RemoteAssumedState = { power: null, muted: null }
+export const EMPTY_REMOTE_ASSUMED_STATE: RemoteAssumedState = {
+  power: null,
+  muted: null,
+}
 
 // ── The `remote` template kind: a button grid ────────────────────────────────
 
@@ -184,6 +193,13 @@ export const RemoteLayoutGroupSchema = z.object({
   rowSpan: z.number().int().min(1).max(MAX_LAYOUT_SPAN),
   colSpan: z.number().int().min(1).max(MAX_LAYOUT_SPAN),
   title: z.string().min(1).max(40).optional(),
+  /**
+   * How much room a divider takes: `compact` (the default) is a slim rule,
+   * `normal` a full grid row. Other frames ignore it.
+   */
+  size: z.enum(['compact', 'normal']).optional(),
+  /** Keep the title in the layout but draw only the rule. */
+  hideTitle: z.boolean().optional(),
 })
 export type RemoteLayoutGroup = z.infer<typeof RemoteLayoutGroupSchema>
 

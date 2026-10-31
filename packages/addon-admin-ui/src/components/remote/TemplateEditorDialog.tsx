@@ -13,10 +13,14 @@ import {
   DialogTitle,
   FormField,
   Input,
+  IconButton,
   Select,
+  useHotkey,
 } from '@camstack/ui-library'
-import { type ReactNode, useState } from 'react'
+import { Redo2, Undo2 } from 'lucide-react'
+import { type ReactNode, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { canRedo, canUndo, editHistoryReducer, startHistory } from './edit-history'
 import { CREATABLE_TEMPLATE_KINDS, savablePayload, templateKindView } from './template-kinds'
 
 export interface TemplateDraft {
@@ -60,6 +64,13 @@ export function TemplateEditorDialog({
   )
 }
 
+/** What one undo step restores. */
+interface EditorSnapshot {
+  readonly kind: TemplateKind
+  readonly presetId: string
+  readonly payload: unknown
+}
+
 interface BodyProps {
   readonly draft: TemplateDraft
   readonly saving: boolean
@@ -70,20 +81,54 @@ interface BodyProps {
 
 function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): ReactNode {
   const { t } = useTranslation()
-  const [kind, setKind] = useState<TemplateKind>(draft.kind)
   const [name, setName] = useState(draft.name)
-  const [payload, setPayload] = useState<unknown>(draft.payload)
-  const [presetId, setPresetId] = useState('')
+  // Kind, preset and payload move together, so one undo step never leaves a
+  // payload under the wrong kind. The name is a text field and keeps its own undo.
+  const [history, dispatch] = useReducer(
+    editHistoryReducer<EditorSnapshot>,
+    { kind: draft.kind, presetId: '', payload: draft.payload },
+    startHistory,
+  )
+  const { kind, presetId, payload } = history.present
+  const setPayload = (next: unknown): void =>
+    dispatch({ type: 'edit', value: { ...history.present, payload: next } })
+  const undo = (): void => dispatch({ type: 'undo' })
+  const redo = (): void => dispatch({ type: 'redo' })
+  // Left to the field while one has focus (`allowInInput` off), so typing keeps its own undo.
+  useHotkey('mod+z', undo, { allowInInput: false })
+  useHotkey('mod+shift+z', redo, { allowInInput: false })
   const view = templateKindView(kind)
   const presets = view.presets(t)
   const clean = savablePayload(kind, payload)
   const canSave = name.trim() !== '' && clean !== null && view.isSavable(payload) && !saving
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="flex-row items-center justify-between gap-2">
         <DialogTitle>
           {draft.id === null ? t('remote.templates.newTitle') : t('remote.templates.editTitle')}
         </DialogTitle>
+        <div className="flex shrink-0 items-center gap-1">
+          <IconButton
+            icon={Undo2}
+            size="sm"
+            variant="ghost"
+            aria-label={t('remote.history.undo')}
+            title={t('remote.history.undo')}
+            disabled={!canUndo(history)}
+            onClick={undo}
+            data-testid="template-undo"
+          />
+          <IconButton
+            icon={Redo2}
+            size="sm"
+            variant="ghost"
+            aria-label={t('remote.history.redo')}
+            title={t('remote.history.redo')}
+            disabled={!canRedo(history)}
+            onClick={redo}
+            data-testid="template-redo"
+          />
+        </div>
       </DialogHeader>
       <DialogBody className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -106,9 +151,14 @@ function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): React
                 onChange={(e) => {
                   const next = CREATABLE_TEMPLATE_KINDS.find((k) => k === e.target.value)
                   if (next === undefined) return
-                  setKind(next)
-                  setPayload(templateKindView(next).emptyPayload())
-                  setPresetId('')
+                  dispatch({
+                    type: 'edit',
+                    value: {
+                      kind: next,
+                      presetId: '',
+                      payload: templateKindView(next).emptyPayload(),
+                    },
+                  })
                 }}
               />
             </FormField>
@@ -123,8 +173,14 @@ function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): React
                 ]}
                 onChange={(e) => {
                   const chosen = presets.find((p) => p.id === e.target.value)
-                  setPresetId(chosen?.id ?? '')
-                  setPayload(chosen === undefined ? view.emptyPayload() : chosen.payload())
+                  dispatch({
+                    type: 'edit',
+                    value: {
+                      kind,
+                      presetId: chosen?.id ?? '',
+                      payload: chosen === undefined ? view.emptyPayload() : chosen.payload(),
+                    },
+                  })
                   if (chosen !== undefined && name.trim() === '') setName(chosen.label)
                 }}
                 data-testid="template-preset"

@@ -276,7 +276,10 @@ export function setButtonLook(
     ...(shape === undefined ? {} : { shape }),
     ...(tone === undefined ? {} : { tone }),
   }
-  return ok({ ...grid, buttons: grid.buttons.map((b) => (b.id === id ? next : b)) })
+  return ok({
+    ...grid,
+    buttons: grid.buttons.map((b) => (b.id === id ? next : b)),
+  })
 }
 
 export function removeButton(grid: RemoteLayoutPayload, id: string): RemoteLayoutPayload {
@@ -316,6 +319,64 @@ export function setGroupTitle(
   const { title: _old, ...rest } = group
   const trimmed = title.trim()
   const next: RemoteLayoutGroup = trimmed === '' ? rest : { ...rest, title: title.slice(0, 40) }
+  return ok(
+    withGroupList(
+      grid,
+      groupsOf(grid).map((g) => (g.id === groupId ? next : g)),
+    ),
+  )
+}
+
+/** How a divider is drawn: a slim rule unless the group asks for a full row. */
+export function isSlimDivider(group: RemoteLayoutGroup): boolean {
+  return group.frame === 'divider' && group.rowSpan === 1 && group.size !== 'normal'
+}
+
+/**
+ * The grid rows that hold nothing but slim dividers; they are drawn as a thin
+ * strip instead of a full-height row.
+ */
+export function slimRowsOf(grid: RemoteLayoutPayload): ReadonlySet<number> {
+  const slim = new Set<number>()
+  const groups = groupsOf(grid)
+  for (const group of groups) {
+    if (!isSlimDivider(group)) continue
+    const row = group.row
+    const shared =
+      grid.buttons.some((b) => b.row <= row && row < b.row + b.rowSpan) ||
+      groups.some((g) => g !== group && g.row <= row && row < g.row + g.rowSpan)
+    if (!shared) slim.add(row)
+  }
+  return slim
+}
+
+/** Relative row heights (rem, gaps included) for mapping a pointer to a row. */
+export function rowWeightsOf(grid: RemoteLayoutPayload): readonly number[] {
+  const slim = slimRowsOf(grid)
+  return Array.from({ length: grid.rows }, (_, row) => (slim.has(row) ? 1 : 2.75) + 0.375)
+}
+
+export interface SeparatorOptions {
+  readonly size?: 'compact' | 'normal'
+  readonly hideTitle?: boolean
+}
+
+/** A divider's size and whether its label is drawn; the defaults are stored as absent. */
+export function setSeparatorOptions(
+  grid: RemoteLayoutPayload,
+  groupId: string,
+  options: SeparatorOptions,
+): LayoutResult {
+  const group = groupById(grid, groupId)
+  if (group === undefined) return refused('unknown-group')
+  const { size: _size, hideTitle: _hide, ...rest } = group
+  const size = options.size ?? group.size
+  const hideTitle = options.hideTitle ?? group.hideTitle
+  const next: RemoteLayoutGroup = {
+    ...rest,
+    ...(size === 'normal' ? { size } : {}),
+    ...(hideTitle === true ? { hideTitle } : {}),
+  }
   return ok(
     withGroupList(
       grid,

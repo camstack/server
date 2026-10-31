@@ -17,7 +17,7 @@ import {
   moveItem,
   previewMove,
 } from './layout-drag'
-import type { LayoutResult } from './layout-model'
+import { type LayoutResult, rowWeightsOf } from './layout-model'
 
 /** Pixels the pointer must travel before a press is a drag. */
 const DRAG_THRESHOLD_PX = 4
@@ -67,7 +67,13 @@ export function useGridDrag(
         item,
         startX: event.clientX,
         startY: event.clientY,
-        grabbed: cellAt(bounds, latest.current.grid, event.clientX, event.clientY),
+        grabbed: cellAt(
+          bounds,
+          latest.current.grid,
+          event.clientX,
+          event.clientY,
+          rowWeightsOf(latest.current.grid),
+        ),
         active: false,
         target: null,
       }
@@ -79,11 +85,20 @@ export function useGridDrag(
           press.active = true
         }
         const current = latest.current.grid
-        const here = cellAt(element.getBoundingClientRect(), current, e.clientX, e.clientY)
+        const here = cellAt(
+          element.getBoundingClientRect(),
+          current,
+          e.clientX,
+          e.clientY,
+          rowWeightsOf(current),
+        )
         const start = itemRect(current, press.item)
         if (start === undefined) return
         press.target = dropOrigin(start, press.grabbed, here)
-        setDrag({ item: press.item, preview: previewMove(current, press.item, press.target) })
+        setDrag({
+          item: press.item,
+          preview: previewMove(current, press.item, press.target),
+        })
       }
       const finish = (apply: boolean): void => {
         window.removeEventListener('pointermove', move)

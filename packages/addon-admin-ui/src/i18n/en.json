@@ -10878,7 +10878,11 @@
         "rocker-v": "Vertical rocker",
         "rocker-h": "Horizontal rocker",
         "keypad": "Keypad"
-      }
+      },
+      "separatorSize": "Size",
+      "separatorSizeCompact": "Compact",
+      "separatorSizeNormal": "Normal",
+      "separatorHideLabel": "Hide the label"
     },
     "roleGroup": {
       "power": "Power",
@@ -11007,7 +11011,12 @@
         "colour": "Colour keys",
         "apps": "Apps",
         "layout": "Layout"
-      }
+      },
+      "added": "Added \"{{name}}\". Pick another one, or close this window to go back to the editor."
+    },
+    "history": {
+      "undo": "Undo",
+      "redo": "Redo"
     }
   },
   "commands": {

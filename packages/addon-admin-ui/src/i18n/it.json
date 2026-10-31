@@ -10900,7 +10900,11 @@
         "rocker-v": "Bilanciere verticale",
         "rocker-h": "Bilanciere orizzontale",
         "keypad": "Tastierino"
-      }
+      },
+      "separatorSize": "Dimensione",
+      "separatorSizeCompact": "Compatto",
+      "separatorSizeNormal": "Normale",
+      "separatorHideLabel": "Nascondi l'etichetta"
     },
     "roleGroup": {
       "power": "Alimentazione",
@@ -11029,7 +11033,12 @@
         "colour": "Tasti colorati",
         "apps": "App",
         "layout": "Struttura"
-      }
+      },
+      "added": "Aggiunto \"{{name}}\". Scegline un altro, oppure chiudi questa finestra per tornare all'editor."
+    },
+    "history": {
+      "undo": "Annulla",
+      "redo": "Ripeti"
     }
   },
   "commands": {

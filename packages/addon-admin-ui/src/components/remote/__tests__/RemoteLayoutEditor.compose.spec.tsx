@@ -69,6 +69,17 @@ describe('Add component', () => {
     expect(screen.getByTestId('remote-group-inspector')).toBeTruthy()
   })
 
+  it('stays open after a pick, says what was added, and takes a second component', () => {
+    let latest = START
+    render(<Harness onGrid={(g) => (latest = g)} />)
+    fireEvent.click(screen.getByTestId('remote-add-component'))
+    fireEvent.click(screen.getByTestId('palette-item-core:dpad'))
+    expect(screen.getByTestId('palette-list')).toBeTruthy()
+    expect(screen.getByTestId('palette-added').textContent).toContain('D-pad')
+    fireEvent.click(screen.getByTestId('palette-item-core:keypad'))
+    expect(latest.groups?.map((g) => g.id)).toEqual(['dpad', 'keypad'])
+  })
+
   it('narrows the list with the search box', () => {
     render(<Harness onGrid={() => undefined} />)
     fireEvent.click(screen.getByTestId('remote-add-component'))

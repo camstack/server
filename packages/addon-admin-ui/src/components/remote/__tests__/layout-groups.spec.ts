@@ -1,6 +1,7 @@
 import {
   builtinRemoteComponent,
   insertComponent,
+  type RemoteLayoutGroup,
   type RemoteLayoutPayload,
   RemoteLayoutPayloadSchema,
 } from '@camstack/types'
@@ -18,6 +19,8 @@ import {
   setButtonFace,
   setButtonLook,
   setGroupTitle,
+  setSeparatorOptions,
+  slimRowsOf,
 } from '../layout-model'
 
 function must(result: LayoutResult): RemoteLayoutPayload {
@@ -74,9 +77,15 @@ describe('group-aware layout edits', () => {
     const id = layout.buttons.at(-1)?.id ?? ''
     const wide = must(resizeButton(layout, id, 1, 2))
     // Columns 2-3: the D-pad's last column plus one outside it.
-    expect(moveButton(wide, id, 0, 2)).toEqual({ status: 'refused', reason: 'overlap' })
+    expect(moveButton(wide, id, 0, 2)).toEqual({
+      status: 'refused',
+      reason: 'overlap',
+    })
     // The divider's row holds no keys at all.
-    expect(moveButton(layout, id, 4, 2)).toEqual({ status: 'refused', reason: 'overlap' })
+    expect(moveButton(layout, id, 4, 2)).toEqual({
+      status: 'refused',
+      reason: 'overlap',
+    })
   })
 
   it('a member moved out of its group becomes a loose button', () => {
@@ -96,7 +105,12 @@ describe('group-aware layout edits', () => {
   it('a face edit keeps the button group, shape and tone', () => {
     const edited = must(setButtonFace(composed(), 'dpad-ok', { label: 'Select' }))
     const ok = edited.buttons.find((b) => b.id === 'dpad-ok')
-    expect(ok).toMatchObject({ label: 'Select', groupId: 'dpad', shape: 'round', tone: 'accent' })
+    expect(ok).toMatchObject({
+      label: 'Select',
+      groupId: 'dpad',
+      shape: 'round',
+      tone: 'accent',
+    })
   })
 
   it('a look edit sets and clears shape and tone, nothing else', () => {
@@ -117,7 +131,10 @@ describe('group-aware layout edits', () => {
     let layout: RemoteLayoutPayload = { columns: 3, rows: 3, buttons: [] }
     layout = put(layout, 'core:dpad', 0, 0)
     // Every cell is inside the D-pad rectangle: nothing is free.
-    expect(addButton(layout, 'mute')).toEqual({ status: 'refused', reason: 'outside' })
+    expect(addButton(layout, 'mute')).toEqual({
+      status: 'refused',
+      reason: 'outside',
+    })
   })
 
   it('the grid cannot shrink under a group', () => {
@@ -132,8 +149,14 @@ describe('group-aware layout edits', () => {
     expect(membersOf(moved, 'dpad').map((b) => b.row)).toEqual([5, 6, 6, 6, 7])
     expect(accepted(moved)).toBe(true)
     // Onto the divider row.
-    expect(moveGroup(composed(), 'dpad', 3, 0)).toEqual({ status: 'refused', reason: 'overlap' })
-    expect(moveGroup(composed(), 'dpad', 7, 0)).toEqual({ status: 'refused', reason: 'outside' })
+    expect(moveGroup(composed(), 'dpad', 3, 0)).toEqual({
+      status: 'refused',
+      reason: 'overlap',
+    })
+    expect(moveGroup(composed(), 'dpad', 7, 0)).toEqual({
+      status: 'refused',
+      reason: 'outside',
+    })
     expect(moveGroup(composed(), 'nope', 0, 0)).toEqual({
       status: 'refused',
       reason: 'unknown-group',
@@ -174,5 +197,65 @@ describe('group-aware layout edits', () => {
       }
     }
     expect(accepts).toBeGreaterThan(0)
+  })
+})
+
+describe('separators', () => {
+  const grid = (group: Partial<RemoteLayoutGroup> = {}): RemoteLayoutPayload => ({
+    columns: 4,
+    rows: 3,
+    buttons: [{ id: 'b', row: 2, col: 0, rowSpan: 1, colSpan: 1, role: 'ok' }],
+    groups: [
+      {
+        id: 'sep',
+        componentId: 'core:section-divider',
+        frame: 'divider',
+        row: 0,
+        col: 0,
+        rowSpan: 1,
+        colSpan: 4,
+        title: 'Numbers',
+        ...group,
+      },
+    ],
+  })
+
+  it('a labelled divider row that holds nothing else is slim by default', () => {
+    expect(slimRowsOf(grid())).toEqual(new Set([0]))
+  })
+
+  it('a divider set to normal keeps a full row', () => {
+    expect(slimRowsOf(grid({ size: 'normal' })).size).toBe(0)
+  })
+
+  it('a divider sharing its row with a key is not slim', () => {
+    const shared = grid()
+    expect(
+      slimRowsOf({
+        ...shared,
+        buttons: [{ id: 'b', row: 0, col: 0, rowSpan: 1, colSpan: 1, role: 'ok' }],
+      }).size,
+    ).toBe(0)
+  })
+
+  it('stores only non-default options and keeps the title', () => {
+    const normal = setSeparatorOptions(grid(), 'sep', {
+      size: 'normal',
+      hideTitle: true,
+    })
+    expect(normal.status).toBe('ok')
+    if (normal.status !== 'ok') return
+    expect(normal.grid.groups?.[0]).toMatchObject({
+      size: 'normal',
+      hideTitle: true,
+      title: 'Numbers',
+    })
+    const back = setSeparatorOptions(normal.grid, 'sep', {
+      size: 'compact',
+      hideTitle: false,
+    })
+    if (back.status !== 'ok') throw new Error('refused')
+    expect(back.grid.groups?.[0]).not.toHaveProperty('size')
+    expect(back.grid.groups?.[0]).not.toHaveProperty('hideTitle')
   })
 })
