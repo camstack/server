@@ -100,6 +100,8 @@ function makeEnv(options: {
     notePackageUndeployed: async (nodeId: string, packageName: string) => {
       pruned.push({ nodeId, packageName })
     },
+    // D982: a hub uninstall asks for a convergence round (fire-and-forget).
+    requestConvergence: async () => {},
   }
 
   // Documented type boundary: `buildAddonsProvider` takes concrete service
