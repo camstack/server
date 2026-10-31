@@ -92,12 +92,39 @@ jobs:
       # A red shard must not hide the verdict of the others.
       fail-fast: false
       matrix:
-        shard: [system, pipeline, post-analysis, ui, core, light-a, light-b, static]
+        shard:
+          - system-1
+          - system-2
+          - pipeline-1
+          - pipeline-2
+          - post-analysis-1
+          - post-analysis-2
+          - admin-ui-1
+          - admin-ui-2
+          - admin-ui-3
+          - ui-library
+          - server-1
+          - server-2
+          - server-3
+          - core
+          - light-a
+          - light-b
+          - static
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # The change set of a push / pull request, written once and read by every
+      # later step (scoped build, scoped typecheck, footprint guard, tests).
+      # Git + curl + node only: it runs before install on purpose.
+      - name: Compute the change set (push/PR)
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: scripts/ci/changed-files.sh "$RUNNER_TEMP/changed-files.txt"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT_BEFORE: ${{ github.event.before }}
 
       # Nx 23 keeps task bytes in `.nx/cache` and the index in
       # `.nx/workspace-data/<machine-id>-v3.db`. A tarball of `.nx/cache`
@@ -133,8 +160,39 @@ jobs:
       # and its exit code passes through; the wrapper appends peak RSS / cgroup
       # memory to the step summary and warns over <budget-MB> (MEM_BUDGET_ENFORCE=1
       # would fail the step — unset on purpose until the budgets are measured).
+      #
+      # `npm ci` is ~70 s on every job (measured 2026-10-31, run 41183402419).
+      # node_modules — the root and each workspace's own — is restored from a
+      # cache keyed on the lockfile and the Node major, which makes a hit ~15 s
+      # and skips `npm ci`; `patch-package` (postinstall) acts inside
+      # node_modules, so its result is cached with it. The exact key is saved by
+      # the `static` job only, once per lockfile, so 17 jobs never upload the
+      # same 600 MB in parallel; a job that misses simply installs.
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            e2e/node_modules
+            packages/*/node_modules
+            server/*/node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         run: scripts/ci/mem-step.sh install 8000 -- npm ci
+
+      - name: Save node_modules
+        if: steps.node-modules.outputs.cache-hit != 'true' && matrix.shard == 'static'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            e2e/node_modules
+            packages/*/node_modules
+            server/*/node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
 
       # `nx.json` lists `@camstack/nx-plugin` as a workspace plugin, and nx
       # refuses to load a local plugin whose `main` (./dist/index.js) does not
@@ -154,8 +212,38 @@ jobs:
       # Three tasks at once, each with a 4 GB heap, fit in the 16 GB hosted
       # runner. An 8 GB heap per task does not. The largest single program
       # needs ~3.4 GB (admin-ui on sources OOMs at 3 GB).
-      - name: Build all packages
-        run: scripts/ci/mem-step.sh build 12000 -- npm run build -- --parallel=3
+      # What a push can change is what it builds: `affected-scope.mjs` (the same
+      # script `npm run verify:push` runs) lists the affected nx projects, and
+      # `nx run-many -t build` builds those plus their dependencies (`^build`),
+      # from the Nx cache. A framework package (types / system) affects every
+      # project, so that push builds everything, as before. The nightly and a
+      # manual run always build everything.
+      - name: Scope the push (affected projects, typecheck dirs, footprint)
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: |
+          node scripts/ci/affected-scope.mjs "$RUNNER_TEMP/changed-files.txt" | tee "$RUNNER_TEMP/scope.env"
+          {
+            echo "### Scope — shard \`${{ matrix.shard }}\`"
+            echo '```'
+            cat "$RUNNER_TEMP/scope.env"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build packages (affected on push/PR, all otherwise)
+        run: |
+          if [ -f "$RUNNER_TEMP/scope.env" ]; then
+            # shellcheck disable=SC1091
+            . "$RUNNER_TEMP/scope.env"
+          else
+            TC_DIRS=ALL
+          fi
+          if [ -z "$TC_DIRS" ]; then
+            echo "no project affected — nothing to build"
+          elif [ "$TC_DIRS" = "ALL" ]; then
+            scripts/ci/mem-step.sh build 12000 -- npm run build -- --parallel=3
+          else
+            scripts/ci/mem-step.sh build 12000 -- npx nx run-many -t build --projects="$AFFECTED_CSV" --parallel=3
+          fi
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
@@ -178,9 +266,26 @@ jobs:
       # grants a reasoned exception). Reads every packages/addon-*/dist, so it
       # runs right after the build. The runner-dist step above also probes
       # `@camstack/system/addon-utils` (seven hub runners load it).
+      #
+      # ~60 s over every addon dist, so a push runs it where an addon's built
+      # output can change (verify:push does the same): the addons whose own
+      # sources moved (`--addons`), or every addon when `packages/types/src`
+      # moved (all of them bundle it). The nightly / manual run checks all.
       - name: Addon dist footprint (D28)
         if: matrix.shard == 'static'
-        run: npx tsx scripts/check-addon-dist-footprint.ts
+        run: |
+          if [ -f "$RUNNER_TEMP/scope.env" ]; then
+            . "$RUNNER_TEMP/scope.env"
+            if [ "$FOOTPRINT_ALL" = "1" ]; then
+              npx tsx scripts/check-addon-dist-footprint.ts
+            elif [ -n "$FOOTPRINT_ADDONS" ]; then
+              npx tsx scripts/check-addon-dist-footprint.ts --addons "$FOOTPRINT_ADDONS"
+            else
+              echo "no addon source and no packages/types/src change — footprint unchanged"
+            fi
+          else
+            npx tsx scripts/check-addon-dist-footprint.ts
+          fi
         env:
           NODE_OPTIONS: "--max-old-space-size=2048"
 
@@ -190,7 +295,22 @@ jobs:
       # stays tsc 6 until the Checks parity flip.
       - name: Typecheck (TypeScript 7)
         if: matrix.shard == 'static'
-        run: scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts
+        # A push typechecks the packages it affects (`typecheck-tsgo.ts <dir>…`,
+        # the grade against scripts/ci-baseline.json is unchanged and applies to
+        # those packages); types / system affect everything, which is the full
+        # sweep. The nightly / manual run is always the full sweep (237 s).
+        run: |
+          ARGS=""
+          if [ -f "$RUNNER_TEMP/scope.env" ]; then
+            . "$RUNNER_TEMP/scope.env"
+            if [ -z "$TC_DIRS" ]; then
+              echo "no project affected — nothing to typecheck"
+              exit 0
+            fi
+            if [ "$TC_DIRS" != "ALL" ]; then ARGS="$TC_DIRS"; fi
+          fi
+          # shellcheck disable=SC2086
+          scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts $ARGS
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
 
@@ -233,41 +353,12 @@ jobs:
       - name: Test affected packages (push/PR)
         if: matrix.shard != 'static' && (github.event_name == 'push' || github.event_name == 'pull_request')
         run: |
-          # The base is the last commit main was VERIFIED at, not the previous
-          # push. `github.event.before` is the previous push's head, and under
-          # cancel-in-progress most previous runs never finish (20 of the last
-          # 30 were cancelled, 2026-09-20): their commits' packages were diffed
-          # past by the next push and tested by nobody until the nightly —
-          # which had not been green either. Ask the Actions API for the newest
-          # successful run on main (any event: a green nightly counts) and diff
-          # from there; the previous push is the fallback only while no green
-          # run exists yet, and HEAD~1 only when even that is unknown.
-          LAST_GREEN=$(curl -sf -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&status=success&per_page=1" \
-            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s).workflow_runs?.[0];process.stdout.write(r?r.head_sha:"")})' \
-            2>/dev/null || true)
-          BASE="$LAST_GREEN"
-          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null || ! git merge-base --is-ancestor "$BASE" HEAD; then
-            echo "no verified ancestor of HEAD on main yet — diffing from the previous push"
-            BASE="${{ github.event.before }}"
-          fi
-          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
-             || ! git cat-file -e "$BASE" 2>/dev/null; then
-            BASE=$(git rev-parse HEAD~1)
-          fi
-          echo "affected base: $BASE (last green: ${LAST_GREEN:-none})"
-          # CRITICAL — same trap publish-packages.yml already documents: nx
-          # treats ANY package-lock.json change as globally-affecting and
-          # cannot be tuned off via namedInputs, so `nx affected --base/--head`
-          # would mark every project affected on a routine lockfile bump —
-          # silently turning "test affected" back into "test everything" on
-          # exactly the pushes this step exists to keep cheap. Feed nx an
-          # explicit changed-file list with the lockfile excluded instead:
-          # same affected algorithm (project graph + dependent cascade), a
-          # precise input.
-          CHANGED=$(git diff --name-only "$BASE" HEAD -- . ':(exclude)package-lock.json' | paste -sd, -)
+          # The change set was written by `Compute the change set` (base = the
+          # last commit main was verified at; see scripts/ci/changed-files.sh).
+          CHANGED_FILE="$RUNNER_TEMP/changed-files.txt"
+          CHANGED=$(paste -sd, - < "$CHANGED_FILE")
           if [ -z "$CHANGED" ]; then
-            echo "no non-lockfile changes since $BASE — nothing affected"
+            echo "no non-lockfile changes since the verified base — nothing affected"
             exit 0
           fi
           # The list goes to the script through a FILE: a tree-wide change used to
@@ -275,20 +366,17 @@ jobs:
           # to `--all`, which is how a stale base turned every push into the
           # full suite. test-affected.sh slices the list under the limit and
           # unions the affected sets (exact: affected is monotone per file).
-          printf '%s' "$CHANGED" | tr ',' '\n' > "$RUNNER_TEMP/changed-files.txt"
           {
             echo "### Test affected — shard \`${{ matrix.shard }}\`"
-            echo "- base: \`$BASE\` (last green: \`${LAST_GREEN:-none}\`)"
             echo "- changed files (excl. lockfile): $(printf '%s' "$CHANGED" | tr ',' '\n' | grep -c . || true)"
             echo "- cascade flags: types=$(printf '%s' "$CHANGED" | grep -q 'packages/types/' && echo yes || echo no) system=$(printf '%s' "$CHANGED" | grep -q 'packages/system/' && echo yes || echo no) ui-library=$(printf '%s' "$CHANGED" | grep -q 'packages/ui-library/' && echo yes || echo no)"
           } >> "$GITHUB_STEP_SUMMARY"
           scripts/ci/mem-step.sh test-affected 12000 -- \
-            scripts/ci/test-affected.sh --shard "${{ matrix.shard }}" --files-from "$RUNNER_TEMP/changed-files.txt"
+            scripts/ci/test-affected.sh --shard "${{ matrix.shard }}" --files-from "$CHANGED_FILE"
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
           VITEST_MAX_WORKERS: "2"
           LIGHT_PARALLEL: "2"
-          GITHUB_TOKEN: ${{ github.token }}
         # Per shard now (the history below is the single serial job). 60 is far
         # above the slowest shard (post-analysis, ~20 min) and still names a hang.
         #
@@ -333,9 +421,17 @@ jobs:
       # (the guards' own decision functions) has been unrunnable in CI since it
       # was written: not failing, never collected. A test nobody runs is the
       # leftover this repo keeps getting bitten by — it reads as verification.
+      #
+      # ~35 s, so a push runs it only when `scripts/` moved (what verify:push
+      # does); the nightly / manual run always does.
       - name: Test repo scripts
         if: matrix.shard == 'static'
-        run: scripts/ci/mem-step.sh test-repo-scripts 8000 -- npm run test:scripts
+        run: |
+          if [ -f "$RUNNER_TEMP/scope.env" ]; then
+            . "$RUNNER_TEMP/scope.env"
+            if [ "$SCRIPTS_CHANGED" != "1" ]; then echo "scripts/ unchanged — skipped"; exit 0; fi
+          fi
+          scripts/ci/mem-step.sh test-repo-scripts 8000 -- npm run test:scripts
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
