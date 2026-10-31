@@ -9,9 +9,13 @@ export {
   ConditionMirror,
   evaluateWhenTree,
 } from '../condition-eval.js'
+export {
+  ACTION_TARGET_INVALIDATION_EVENTS,
+  ActionTargetResolver,
+} from '../action-target.js'
 export { DetectionTriggerFilter } from '../detection-trigger.js'
 export { evaluateStationaryTrigger } from '../stationary-trigger.js'
 export { RunGate } from '../run-gate.js'
 export { coreBlockIdFromAddonId } from '../../capabilities/core-blocks.cap.js'
-export { resolveDeviceTarget, resolveStepArgs, runSteps } from '../step-runner.js'
+export { resolveDeviceTarget, resolveStepArgs, runForDevices, runSteps } from '../step-runner.js'
 export { buildTriggerTrace, isSkippedTrace, mergeSkipTraces } from '../trace.js'

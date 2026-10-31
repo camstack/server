@@ -626,6 +626,8 @@ export type {
   ExpressionLeaf,
   IdentityLabel,
   LegacyAutomationRecipe,
+  NormalizedCapStep,
+  StepDeviceTrace,
   LegacyCondition,
   LegacyTrigger,
   PlateLabel,
@@ -677,8 +679,12 @@ export {
   LegacyConditionSchema,
   LegacyTriggerSchema,
   MAX_TRACE_ARG_LENGTH,
+  MAX_STEP_DEVICE_OUTCOMES,
   MAX_TRACE_ARGS,
   MAX_WHEN_DEPTH,
+  normalizeCapStep,
+  normalizeStepTargets,
+  StepDeviceTraceSchema,
   MAX_WHEN_LEAVES,
   REDACTED_ARG,
   StationarySubjectSchema,
@@ -742,6 +748,8 @@ export type {
   UnitsNormalized,
 } from './automation/index.js'
 export * from './automation/action.js'
+export * from './automation/action-target.js'
+export * from './automation/nc-action-target.js'
 export * from './automation/step-runner.js'
 export * from './automation/export-entities.js'
 // Per-call node pinning for ctx.api capability calls
@@ -1044,7 +1052,10 @@ export type {
   CapVocabularyEntry,
   CapVocabularyMap,
   L10n as VocabL10n,
+  ActionEffect,
+  IndexedVocabAction,
   LooseCapVocabularyEntry,
+  LooseVocabEffect,
   LooseVocabOffer,
   LooseVocabOpenArg,
   ResolvedBooleanTrigger,
@@ -1060,12 +1071,16 @@ export type {
   VocabLocale,
 } from './device/cap-vocabulary/index.js'
 export {
+  actionEffect,
   actionsForDevice as vocabularyActionsForDevice,
+  allVocabActions,
   CAP_VOCABULARY,
   CAP_VOCABULARY_BY_NAME,
+  findVocabAction,
   renderVocabPhrase,
   triggersForDevice as vocabularyTriggersForDevice,
   VOCAB_TEMPLATES,
+  vocabActionIdFor,
 } from './device/cap-vocabulary/index.js'
 // Device-link value transform
 // Device management

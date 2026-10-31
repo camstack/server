@@ -22,8 +22,32 @@ import type {
   ResolvedVocabAction,
   VocabLocale,
 } from '@camstack/types'
+import type { CapDeviceTarget } from '../../../components/device-do-action/DeviceDoActionFields'
 
 export type CapStep = Extract<AutomationAction, { kind: 'cap' }>
+
+/**
+ * The single device a step names, or null (several, a `$var`, a domain, none).
+ * A stored step names it as `target` (D983); a draft the picker has just
+ * written may still carry the legacy `deviceId`.
+ */
+export function singleDeviceOf(step: CapStep): number | null {
+  if (typeof step.deviceId === 'number') return step.deviceId
+  if (step.target?.kind === 'devices' && step.target.ids.length === 1) {
+    return step.target.ids[0] ?? null
+  }
+  return null
+}
+
+/** The device picker's value for a step: the same reading, in the picker's own shape. */
+export function pickerTargetOf(step: CapStep): CapDeviceTarget {
+  if (step.deviceId !== undefined) return step.deviceId
+  const target = step.target
+  if (target?.kind === 'devices')
+    return target.ids.length === 1 ? (target.ids[0] ?? []) : target.ids
+  if (target?.kind === 'var') return { $var: target.name }
+  return []
+}
 
 /** One argument as the operator holds it: a typed value or a variable. */
 export type StepArgValue =
@@ -148,7 +172,7 @@ export function matchVocabCommand(
   actions: readonly ResolvedVocabAction[],
   step: CapStep,
 ): VocabCommandMatch | null {
-  if (typeof step.deviceId !== 'number') return null
+  if (singleDeviceOf(step) === null) return null
   const args = step.args ?? {}
   let best: ResolvedVocabAction | null = null
   let bestBaked = -1

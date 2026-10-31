@@ -10,10 +10,12 @@
  */
 import { randomUUID } from 'node:crypto'
 import {
+  ACTION_TARGET_INVALIDATION_EVENTS,
   type ActionEntry,
   type ActionRunChanged,
   type AddonApi,
   type CapCall,
+  type DeviceDirectory,
   EventCategory,
   type IEventBus,
   type IScopedLogger,
@@ -28,6 +30,8 @@ import { RunsLedger } from './runs-ledger.js'
 
 export interface ActionsRuntime {
   readonly service: ActionsService
+  /** Drop the registry subscriptions that keep the target cache fresh. */
+  dispose(): void
   readonly ledger: RunsLedger
   readonly runsApi: RunsApi
 }
@@ -37,6 +41,8 @@ export interface ActionsRuntimeDeps {
   readonly api: () => AddonApi | undefined
   readonly eventBus: IEventBus
   readonly logger: IScopedLogger
+  /** The device registry; `ctx.api` by default. A spec swaps it. */
+  readonly directory?: DeviceDirectory
 }
 
 const ACTION_SOURCE_CAP = 'action-source'
@@ -94,6 +100,36 @@ export function invokeCapOver(api: () => AddonApi | undefined): (call: CapCall) 
   }
 }
 
+/**
+ * The device registry as the target resolver reads it: the per-binding walk
+ * (`listDeviceIdsByCaps`, D12/D13) and the slim listing for type and room.
+ */
+export function directoryOver(api: () => AddonApi | undefined): DeviceDirectory {
+  const need = (): AddonApi => {
+    const current = api()
+    if (current === undefined) {
+      throw new Error('core-blocks: no ctx.api on this node — the device registry cannot be read')
+    }
+    return current
+  }
+  return {
+    listDeviceIdsByCaps: (capNames) =>
+      need().deviceManager.listDeviceIdsByCaps.query({ capNames: [...capNames] }),
+    listDevices: async (deviceIds) => {
+      const rows = await need().deviceManager.listAll.query({
+        deviceIds: [...deviceIds],
+        projection: 'slim',
+      })
+      return rows.map((d) => ({
+        id: d.id,
+        type: d.type,
+        location: d.location,
+        disabled: d.disabled,
+      }))
+    },
+  }
+}
+
 export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
   const ledger = new RunsLedger({
     runs: deps.records.kind(coreBlocksRecordKinds.runs),
@@ -107,6 +143,7 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
     store,
     ledger,
     sources: sourcesOver(deps.api),
+    directory: deps.directory ?? directoryOver(deps.api),
     invokeCap: invokeCapOver(deps.api),
     emit: (event: ActionRunChanged) =>
       deps.eventBus.emit({
@@ -118,5 +155,16 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
       }),
     logger: deps.logger.child('actions'),
   })
-  return { service, ledger, runsApi: buildRunsApi(ledger, deps.logger.child('runs')) }
+  // A cached domain is stale the moment a device is added, removed, moved or re-bound.
+  const unsubscribers = ACTION_TARGET_INVALIDATION_EVENTS.map((category) =>
+    deps.eventBus.subscribe({ category }, () => service.invalidateTargets()),
+  )
+  return {
+    service,
+    ledger,
+    runsApi: buildRunsApi(ledger, deps.logger.child('runs')),
+    dispose: () => {
+      for (const unsubscribe of unsubscribers) unsubscribe()
+    },
+  }
 }

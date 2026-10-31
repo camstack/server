@@ -10,6 +10,8 @@ import { pathToFileURL } from 'node:url'
 import { build } from 'esbuild'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateAutomationBlock } from '../codegen.js'
+import { DeviceType } from '../../device/device-type.js'
+import { type FakeRegistry, fakeRegistry } from './target-fixtures.js'
 import {
   type AutomationRecipe,
   AutomationRecipeSchema,
@@ -87,6 +89,8 @@ interface Options {
   readonly failStampRead?: boolean
   /** What `actions.run` answers. */
   readonly actionOutcome?: { outcome: string; message?: string }
+  /** The device registry a domain target resolves against. */
+  readonly registry?: FakeRegistry
 }
 
 function start(block: BlockFn, options: Options = {}): Harness {
@@ -155,8 +159,20 @@ function start(block: BlockFn, options: Options = {}): Harness {
           },
         },
       },
-      deviceManager: { listAll: { query: async () => ({ devices: [] }) } },
+      deviceManager: {
+        listAll: {
+          query: async (q: { deviceIds?: number[] }) =>
+            q.deviceIds === undefined
+              ? { devices: [] }
+              : (options.registry?.directory.listDevices(q.deviceIds) ?? []),
+        },
+        listDeviceIdsByCaps: {
+          query: async (q: { capNames: string[] }) =>
+            options.registry?.directory.listDeviceIdsByCaps(q.capNames) ?? [],
+        },
+      },
       siren: { on: { mutate } },
+      cover: { open: { mutate } },
     },
   }
   const stop = block(ctx)
@@ -248,6 +264,75 @@ describe('detection trigger', () => {
     await settle()
     expect(h.mutate).not.toHaveBeenCalled()
     expect(h.traces()).toEqual([])
+  })
+})
+
+describe('a domain target (D983)', () => {
+  const openIn = (roomId: string): AutomationRecipe['actions'] => [
+    {
+      kind: 'cap',
+      actionId: 'cover.open',
+      target: { kind: 'domain', roomId },
+      cap: 'cover',
+      method: 'open',
+    },
+  ]
+  const covers = () =>
+    fakeRegistry([
+      { id: 1, caps: ['cover'], type: DeviceType.Cover, location: 'Living room' },
+      { id: 2, caps: ['cover'], type: DeviceType.Cover, location: 'Kitchen' },
+      { id: 3, caps: ['cover'], type: DeviceType.Cover, location: 'living room' },
+    ])
+
+  it('runs the action on every device of the room, traced per device, and a device registered later is included', async () => {
+    const registry = covers()
+    const block = await load({ when: MOTION, actions: openIn('Living room') })
+    const h = start(block, { registry })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    expect(
+      h.mutate.mock.calls.map(([a]) => (a as { deviceId: number }).deviceId).toSorted(),
+    ).toEqual([1, 3])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      actionId: 'cover.open',
+      outcome: 'ok',
+      devices: [
+        { deviceId: 1, outcome: 'ok' },
+        { deviceId: 3, outcome: 'ok' },
+      ],
+    })
+    registry.devices.set(9, {
+      id: 9,
+      caps: ['cover'],
+      type: DeviceType.Cover,
+      location: 'Living room',
+      disabled: false,
+    })
+    h.emit('device.registered', {}, 9)
+    h.mutate.mockClear()
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle(1)
+    await settle()
+    expect(
+      h.mutate.mock.calls.map(([a]) => (a as { deviceId: number }).deviceId).toSorted(),
+    ).toEqual([1, 3, 9])
+  })
+
+  it('an empty domain is logged and the step is traced `empty`, never a silent no-op', async () => {
+    const block = await load({
+      when: MOTION,
+      actions: openIn('Attic'),
+    })
+    const h = start(block, { registry: covers() })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]?.steps[0]).toMatchObject({ outcome: 'empty' })
+    expect(h.logs.some((l) => l.level === 'warn' && l.msg.includes('resolved to no devices'))).toBe(
+      true,
+    )
   })
 })
 

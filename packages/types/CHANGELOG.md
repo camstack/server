@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification verdicts carry the subject and reach the retrain listing (new optional verdict fields on retrain frames and tracks)
+- An automation or notification step now names its devices as a target (named devices, or every device that offers an action, optionally in one room), and a stored step is read in that shape
 
 ## [1.2.454] - 2026-10-31
 

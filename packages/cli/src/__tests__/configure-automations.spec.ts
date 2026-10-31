@@ -131,6 +131,32 @@ describe('configure_automation_questionnaire', () => {
     expect(ready.quantities).toContainEqual(expect.objectContaining({ value: 0.05, unit: 'kg' }))
   })
 
+  it('writes the target shape: a deviceId list becomes target.devices, a domain target passes through', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const ready = await automationQuestionnaire(ctx, {
+      name: 'Feed everyone',
+      trigger: { kind: 'schedule', time: '07:30' },
+      conditions: [],
+      actions: [
+        { kind: 'cap', deviceId: [7, 9], cap: 'pet-feeder', method: 'feed', args: { grams: 30 } },
+        {
+          kind: 'cap',
+          target: { kind: 'domain', roomId: 'Kitchen' },
+          actionId: 'cover.open',
+          cap: 'pet-feeder',
+          method: 'feed',
+        },
+      ],
+    })
+    if (ready.status !== 'ready') throw new Error(JSON.stringify(ready))
+    expect(ready.recipe.actions[0]).toMatchObject({ target: { kind: 'devices', ids: [7, 9] } })
+    expect(ready.recipe.actions[0]).not.toHaveProperty('deviceId')
+    expect(ready.recipe.actions[1]).toMatchObject({
+      target: { kind: 'domain', roomId: 'Kitchen' },
+      actionId: 'cover.open',
+    })
+  })
+
   it('refuses a unit of another dimension with the reason', async () => {
     const { ctx } = fakeHub(hubReads)
     const out = await automationQuestionnaire(ctx, {

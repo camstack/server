@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ActionTargetSchema } from '../automation/action-target.js'
 import { NcTaxonomySchema } from '../catalogs/nc-taxonomy.js'
 import { type AlarmArmMode, AlarmArmModeSchema, AlarmStateSchema } from './alarm-panel.cap.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
@@ -767,16 +768,34 @@ export type NcZoneCondition = z.infer<typeof NcZoneConditionSchema>
  */
 export const NcRuleActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('wait'), seconds: z.number().min(0).max(300) }),
-  z.object({
-    kind: z.literal('cap'),
-    deviceId: z.number().int(),
-    /** Capability name, e.g. `alarm-panel`. */
-    cap: z.string().min(1),
-    /** Method on it. The executor refuses a non-device-scoped cap. */
-    method: z.string().min(1),
-    /** Method arguments, minus `deviceId` (the executor injects it). */
-    args: z.record(z.string(), z.unknown()).optional(),
-  }),
+  z
+    .object({
+      kind: z.literal('cap'),
+      /**
+       * WHO the step acts on (D983) — the only shape that is written. A sequence
+       * stored before D983 carries `deviceId`; the sequence store reads it as a
+       * `devices` target.
+       */
+      target: ActionTargetSchema.optional(),
+      /** The vocabulary action the step performs; required for a `domain` target. */
+      actionId: z.string().min(1).optional(),
+      /** @deprecated The pre-D983 single device. Read, never written. */
+      deviceId: z.number().int().optional(),
+      /** Capability name, e.g. `alarm-panel`. */
+      cap: z.string().min(1),
+      /** Method on it. The executor refuses a non-device-scoped cap. */
+      method: z.string().min(1),
+      /** Method arguments, minus `deviceId` (the executor injects it). */
+      args: z.record(z.string(), z.unknown()).optional(),
+    })
+    .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
+      message: 'a cap step needs a target',
+      path: ['target'],
+    })
+    .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
+      message: 'a domain target needs the vocabulary action it applies to (actionId)',
+      path: ['actionId'],
+    }),
 ])
 export type NcRuleAction = z.infer<typeof NcRuleActionSchema>
 

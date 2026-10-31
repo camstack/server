@@ -28,7 +28,7 @@ function feedStep(
 ): AutomationCapStep {
   return {
     kind: 'cap',
-    deviceId: 7,
+    target: { kind: 'devices', ids: [7] },
     cap: 'pet-feeder',
     method: 'feed',
     args,
@@ -189,5 +189,23 @@ describe('normalizeActionUnits', () => {
   it('passes wait and non-cap steps through', () => {
     const { value } = normalizeActionUnits([{ kind: 'wait', seconds: 3 }], resolver)
     expect(value).toEqual([{ kind: 'wait', seconds: 3 }])
+  })
+})
+
+describe('normalizeActionUnits — the save boundary writes only the new target shape', () => {
+  it('turns a legacy multi-device step into target.devices and keeps the marked arg', () => {
+    const legacy: AutomationCapStep = {
+      kind: 'cap',
+      deviceId: [7, 9],
+      cap: 'pet-feeder',
+      method: 'feed',
+      args: { portion: 'MARK-42' },
+    }
+    const { value } = normalizeActionUnits([legacy], resolver)
+    const step = value[0]
+    if (step === undefined || step.kind !== 'cap') throw new Error('expected a cap step')
+    expect(step.target).toEqual({ kind: 'devices', ids: [7, 9] })
+    expect(step.deviceId).toBeUndefined()
+    expect(step.args).toEqual({ portion: 'MARK-42' })
   })
 })

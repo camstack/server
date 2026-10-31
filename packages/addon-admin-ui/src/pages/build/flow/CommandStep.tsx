@@ -34,6 +34,8 @@ import {
   commandId,
   defaultArgValues,
   matchVocabCommand,
+  pickerTargetOf,
+  singleDeviceOf,
   splitPhrase,
   type StepArgValue,
   vocabLocale,
@@ -78,8 +80,9 @@ export function CommandStep({
   const { t, i18n } = useTranslation()
   const locale = vocabLocale(i18n.language)
   const [advanced, setAdvanced] = useState(false)
-  const plainTarget = typeof step.deviceId === 'number'
-  const deviceId = typeof step.deviceId === 'number' ? step.deviceId : 0
+  const single = singleDeviceOf(step)
+  const plainTarget = single !== null
+  const deviceId = single ?? 0
   const device = devices.find((d) => d.id === deviceId)
   const caps = useDeviceBoundCaps(plainTarget ? deviceId : 0)
   const actions = useMemo(
@@ -226,7 +229,7 @@ function GenericRow({ step, devices, devicesState, onChange, onBack }: GenericRo
         </Button>
       )}
       <DeviceDoActionFields
-        value={step}
+        value={{ ...step, deviceId: pickerTargetOf(step) }}
         allowTriggerDevice
         allowMultiSameFamily
         devices={devices}

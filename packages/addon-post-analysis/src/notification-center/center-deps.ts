@@ -287,6 +287,11 @@ export interface NotificationCenterDeps {
    *  may actuate; see the cap file for why it is structural, not a list. */
   readonly isCapDeviceScoped?: import('./rule-actions.js').NcCapScopeCheck
   /**
+   * The device registry, for a `domain` action target (D983). Absent = only a
+   * step naming its devices can run; a domain step is refused by name.
+   */
+  readonly actionTargetDirectory?: import('@camstack/types').DeviceDirectory
+  /**
    * Build the externally-reachable callback URL for one button, or null when
    * no such URL exists (loopback-only install). Null means NO buttons rather
    * than a broken one: a `127.0.0.1` callback is a button that cannot work

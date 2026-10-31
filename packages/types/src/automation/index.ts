@@ -53,6 +53,7 @@ export type {
   AutomationStateDoc,
   AutomationStepTrace,
   AutomationTriggerTrace,
+  StepDeviceTrace,
   TraceNodeOutcome,
   TraceValue,
 } from './trace.js'
@@ -71,9 +72,11 @@ export {
   buildTriggerTrace,
   isSkippedTrace,
   MAX_TRACE_ARG_LENGTH,
+  MAX_STEP_DEVICE_OUTCOMES,
   MAX_TRACE_ARGS,
   REDACTED_ARG,
   skipSignature,
+  StepDeviceTraceSchema,
   TraceNodeOutcomeSchema,
   TraceValueSchema,
 } from './trace.js'
@@ -84,6 +87,7 @@ export type {
   AutomationRecipe,
   AutomationRunMode,
   LegacyAutomationRecipe,
+  NormalizedCapStep,
 } from './recipe.js'
 export {
   ActionStepSchema,
@@ -99,6 +103,8 @@ export {
   MAX_TRACE_KEEP,
   MAX_CONDITION_DEPTH,
   MAX_CONDITION_LEAVES,
+  normalizeCapStep,
+  normalizeStepTargets,
   validateRecipeBounds,
 } from './recipe.js'
 export type {
@@ -160,6 +166,8 @@ export {
   subjectMatches,
 } from './detection-subject.js'
 export * from './action.js'
+export * from './action-target.js'
+export * from './nc-action-target.js'
 export * from './step-runner.js'
 export {
   UnitWarningSchema,

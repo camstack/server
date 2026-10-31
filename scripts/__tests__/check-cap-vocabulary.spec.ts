@@ -335,6 +335,38 @@ describe('checkCapVocabulary', () => {
   })
 })
 
+describe('D983 action effects', () => {
+  function withEffect(
+    effect: NonNullable<NonNullable<LooseCapVocabularyEntry['actions']>[number]['effect']>,
+  ) {
+    const sw = goodSwitch()
+    const actions = (sw.actions ?? []).map((a) => (a.id === 'switch.on' ? { ...a, effect } : a))
+    return problemsOf({ ...sw, actions })
+  }
+
+  it('accepts an effect naming a real field with a value it can hold', () => {
+    expect(withEffect({ field: 'on', value: true })).toEqual([])
+  })
+
+  it('refuses an effect on a field the cap does not declare', () => {
+    expect(withEffect({ field: 'nope', value: true })).toEqual([
+      "switch action 'switch.on': effect field 'nope' is not a status field of switch",
+    ])
+  })
+
+  it('refuses an effect value the status field cannot hold', () => {
+    expect(withEffect({ field: 'mode', value: 'turbo' })).toEqual([
+      "switch action 'switch.on': effect value \"turbo\" is refused by status field 'mode'",
+    ])
+  })
+
+  it('refuses an effect that copies an arg the method does not take', () => {
+    expect(withEffect({ field: 'level', fromArg: 'amount' })).toEqual([
+      "switch action 'switch.on': effect reads arg 'amount', which the method does not take",
+    ])
+  })
+})
+
 describe('the real cap vocabulary', () => {
   function realInput(
     vocabulary: Readonly<Record<string, LooseCapVocabularyEntry>>,

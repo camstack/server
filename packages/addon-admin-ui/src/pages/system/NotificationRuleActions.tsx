@@ -11,6 +11,7 @@ import type {
   NcRuleNotificationButton,
   NcSharedSequence,
 } from '@camstack/types'
+import { normalizeNcCapTarget } from '@camstack/types'
 import type { ReactNode } from 'react'
 import { Button, Input } from '@camstack/ui-library'
 import { AlertTriangle, Plus, Trash2 } from 'lucide-react'
@@ -110,6 +111,16 @@ export function expandDoBindings(wire: CapDoWire): readonly NcActionBinding[] {
 }
 
 /**
+ * The devices a stored cap step names (D983: `target.devices`, or the legacy
+ * `deviceId`). A `domain` or `var` target names none here — this editor is a
+ * device picker.
+ */
+function stepDeviceIds(step: Extract<NcRuleAction, { kind: 'cap' }>): readonly number[] {
+  const { target } = normalizeNcCapTarget(step)
+  return target.kind === 'devices' ? target.ids.filter((id) => id > 0) : []
+}
+
+/**
  * Collapse consecutive same-action sequence `cap` steps into one CapDoWire for editing.
  * Returns how many steps were consumed (at least 1). Wait / mismatched steps stop the group.
  */
@@ -124,7 +135,7 @@ export function collapseCapGroup(
       length: 1,
     }
   }
-  const ids: number[] = first.deviceId > 0 ? [first.deviceId] : []
+  const ids: number[] = [...stepDeviceIds(first)]
   let length = 1
   for (let i = start + 1; i < actions.length; i += 1) {
     const next = actions[i]
@@ -136,7 +147,7 @@ export function collapseCapGroup(
     ) {
       break
     }
-    if (next.deviceId > 0) ids.push(next.deviceId)
+    ids.push(...stepDeviceIds(next))
     length += 1
   }
   return {

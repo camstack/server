@@ -24,6 +24,7 @@ import type {
   RecordsAccess,
 } from '@camstack/types'
 import { NcRuleActionSchema, NcSharedSequenceSchema } from '@camstack/types'
+import { normalizeNcAction } from '@camstack/types'
 import { ncRecordKinds, type SequenceBody } from './record-kinds.js'
 
 /**
@@ -50,9 +51,19 @@ function parseActions(raw: unknown): readonly NcRuleAction[] | null {
   for (const entry of raw) {
     const parsed = NcRuleActionSchema.safeParse(entry)
     if (!parsed.success) return null
-    out.push(parsed.data)
+    // D983: a step stored with `deviceId` is READ as a `devices` target.
+    out.push(normalizeNcAction(parsed.data))
   }
   return out
+}
+
+/** Does a stored row still carry a pre-D983 cap step (`deviceId`, no `target`)? */
+function hasLegacyTarget(raw: unknown): boolean {
+  if (!Array.isArray(raw)) return false
+  return raw.some((entry) => {
+    const parsed = NcRuleActionSchema.safeParse(entry)
+    return parsed.success && parsed.data.kind === 'cap' && parsed.data.target === undefined
+  })
 }
 
 function rowToSequence(id: string, body: SequenceBody): NcSharedSequence | null {
@@ -97,6 +108,7 @@ export class NcSequenceStore {
     try {
       const { records } = await this.kind.query({ limit: 10_000 })
       const next = new Map<string, NcSharedSequence>()
+      const legacyRows: string[] = []
       let skipped = 0
       for (const row of records) {
         const sequence = rowToSequence(row.id, row.data)
@@ -105,9 +117,11 @@ export class NcSequenceStore {
           continue
         }
         next.set(sequence.id, sequence)
+        if (hasLegacyTarget(row.data.actions)) legacyRows.push(row.id)
       }
       this.byId.clear()
       for (const [id, seq] of next) this.byId.set(id, seq)
+      await this.rewriteLegacyRows(legacyRows, records)
       if (skipped > 0) {
         this.logger.warn('sequence rows skipped as malformed — bindings to them will miss', {
           meta: { skipped },
@@ -117,6 +131,40 @@ export class NcSequenceStore {
       this.logger.warn('sequence load failed — keeping the sequences already in memory', {
         meta: { error: String(err), sequences: this.byId.size },
       })
+    }
+  }
+
+  /**
+   * One-shot, idempotent (D983): a row whose steps still carry `deviceId` is
+   * stored again in the target shape. A failed write leaves the row as it was —
+   * it is still READ as the new shape — and is on the record.
+   */
+  private async rewriteLegacyRows(
+    ids: readonly string[],
+    records: readonly { readonly id: string; readonly data: SequenceBody }[],
+  ): Promise<void> {
+    for (const id of ids) {
+      const sequence = this.byId.get(id) ?? null
+      const row = records.find((r) => r.id === id)
+      if (sequence === null || row === undefined) continue
+      try {
+        const createdAt = row.data.createdAt
+        await this.persist(
+          sequence,
+          typeof createdAt === 'number' && Number.isFinite(createdAt) ? createdAt : this.now(),
+          this.now(),
+        )
+        this.logger.info('notification sequence rewritten to the target shape', {
+          meta: { sequenceId: id },
+        })
+      } catch (err) {
+        this.logger.warn(
+          'notification sequence could not be rewritten — it is still read as the target shape',
+          {
+            meta: { sequenceId: id, error: String(err) },
+          },
+        )
+      }
     }
   }
 
@@ -143,7 +191,7 @@ export class NcSequenceStore {
       id: randomUUID(),
       name: input.name,
       ...(input.minDelaySec !== undefined ? { minDelaySec: input.minDelaySec } : {}),
-      actions: [...input.actions],
+      actions: input.actions.map(normalizeNcAction),
     }
     await this.persist(sequence, now, now)
     this.byId.set(sequence.id, sequence)
@@ -160,7 +208,7 @@ export class NcSequenceStore {
       id: sequence.id,
       name: sequence.name,
       ...(sequence.minDelaySec !== undefined ? { minDelaySec: sequence.minDelaySec } : {}),
-      actions: [...sequence.actions],
+      actions: sequence.actions.map(normalizeNcAction),
     }
     await this.persist(stored, now, now)
     this.byId.set(stored.id, stored)
@@ -175,7 +223,7 @@ export class NcSequenceStore {
       id: sequenceId,
       name: input.name,
       ...(input.minDelaySec !== undefined ? { minDelaySec: input.minDelaySec } : {}),
-      actions: [...input.actions],
+      actions: input.actions.map(normalizeNcAction),
     }
     const createdAt = await this.readCreatedAt(sequenceId, now)
     await this.persist(sequence, createdAt, now)

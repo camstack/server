@@ -19,6 +19,7 @@ import {
   internalActionId,
   isInternalActionId,
   INTERNAL_ACTION_PREFIX,
+  normalizeStepTargets,
   type RecordKindHandle,
 } from '@camstack/types'
 import type { ActionLinksRowBody, ActionRowBody } from './record-kinds.js'
@@ -54,7 +55,8 @@ export class ActionsStore {
       addonId: CORE_BLOCKS_ADDON_ID,
       source: 'internal',
       readOnly: false,
-      steps: body.steps,
+      // D983: a row written before the target shape is READ as the new one.
+      steps: normalizeStepTargets(body.steps),
       ...(body.variables === undefined ? {} : { variables: body.variables }),
       status: IDLE_ACTION_STATUS,
     }
@@ -69,6 +71,28 @@ export class ActionsStore {
       cursor = page.nextCursor ?? undefined
     } while (cursor !== undefined)
     return out
+  }
+
+  /**
+   * One-shot, idempotent rewrite (D983): every row whose steps still carry the
+   * pre-target `deviceId` is stored again in the new shape. Returns how many
+   * rows moved. A row already in the new shape is left untouched.
+   */
+  async migrateLegacyTargets(): Promise<number> {
+    let moved = 0
+    let cursor: string | undefined
+    do {
+      const page = await this.actions.query({ ...(cursor === undefined ? {} : { cursor }) })
+      for (const row of page.records) {
+        const legacy = row.data.steps.some((s) => s.kind === 'cap' && s.deviceId !== undefined)
+        if (!legacy) continue
+        const steps = normalizeStepTargets(row.data.steps)
+        await this.actions.put({ id: row.id, data: { ...row.data, steps } })
+        moved += 1
+      }
+      cursor = page.nextCursor ?? undefined
+    } while (cursor !== undefined)
+    return moved
   }
 
   async get(actionId: string): Promise<ActionEntry | null> {

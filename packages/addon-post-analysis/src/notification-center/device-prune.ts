@@ -42,6 +42,7 @@ import type {
   TimelapseRule,
   TimelapseRulePatch,
 } from '@camstack/types'
+import { normalizeNcAction, normalizeNcCapTarget } from '@camstack/types'
 import type { NcSummaryRule, NcSummaryRulePatch } from './summary/summary-rule.js'
 
 /** Which store a pruned rule lives in. */
@@ -292,10 +293,30 @@ function pruneHookBindings(
       kept.push(binding)
       continue
     }
-    if (binding.action.kind === 'cap' && isDead(binding.action.deviceId)) {
-      changed = true
-      notes.removed(field, deviceSubjects([binding.action.deviceId]), 'binding-removed')
-      continue
+    if (binding.action.kind === 'cap') {
+      const { target } = normalizeNcCapTarget(binding.action)
+      if (target.kind === 'devices') {
+        const dead = target.ids.filter(isDead)
+        if (dead.length === target.ids.length) {
+          changed = true
+          notes.removed(field, deviceSubjects(dead), 'binding-removed')
+          continue
+        }
+        if (dead.length > 0) {
+          changed = true
+          notes.removed(field, deviceSubjects(dead), 'binding-removed')
+          const alive = target.ids.filter((id) => !isDead(id))
+          kept.push({
+            ...binding,
+            action: normalizeNcAction({
+              ...binding.action,
+              deviceId: undefined,
+              target: { kind: 'devices', ids: alive },
+            }),
+          })
+          continue
+        }
+      }
     }
     kept.push(binding)
   }
@@ -490,7 +511,9 @@ export function referencedDeviceIds(snapshot: NcPruneSnapshot): ReadonlySet<numb
       ...(rule.actions?.onTrigger ?? []),
       ...(rule.actions?.onTriggerOff ?? []),
     ]) {
-      if (binding.kind === 'do' && binding.action.kind === 'cap') ids.add(binding.action.deviceId)
+      if (binding.kind !== 'do' || binding.action.kind !== 'cap') continue
+      const { target } = normalizeNcCapTarget(binding.action)
+      if (target.kind === 'devices') add(target.ids)
     }
   }
   for (const rule of snapshot.timelapse) add(rule.deviceIds)

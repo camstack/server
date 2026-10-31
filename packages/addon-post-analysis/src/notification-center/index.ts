@@ -29,7 +29,7 @@ import type {
   TimelapseRule,
   Track,
 } from '@camstack/types'
-import { DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@camstack/types'
+import { ActionTargetResolver, DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@camstack/types'
 import {
   type NcActionGrant,
   NcActionTokenRegistry,
@@ -550,6 +550,8 @@ export class NotificationCenter implements NcEventConsumer {
   private readonly zoneOwners: NcZoneOwnershipCache
   /** Runs a matched rule's action sequences. Null when no actuator is wired. */
   private readonly actionRunner: NcRuleActionRunner | null
+  /** Domain action targets read from the registry (D983); null without a directory. */
+  private readonly actionTargets: ActionTargetResolver | null
   /** Grants behind the tap-through buttons. In-process and single-use — read
    *  `action-token.ts` before assuming anything about what a tap proves. */
   private readonly actionTokens = new NcActionTokenRegistry()
@@ -1039,11 +1041,22 @@ export class NotificationCenter implements NcEventConsumer {
         delayMs: deps.nodeLivenessHoldoffMs ?? (process.env.VITEST ? 0 : NODE_LIVENESS_HOLDOFF_MS),
       },
     )
+    const targets =
+      deps.actionTargetDirectory !== undefined
+        ? new ActionTargetResolver(deps.actionTargetDirectory, this.logger.child('actions'))
+        : null
+    this.actionTargets = targets
     this.actionRunner =
       deps.actuate !== undefined && deps.isCapDeviceScoped !== undefined
         ? new NcRuleActionRunner({
             logger: this.logger.child('actions'),
             actuate: (input) => this.actuateWithAttribution(input),
+            ...(targets !== null
+              ? {
+                  resolveTarget: (target, actionId, owner) =>
+                    targets.resolve(target, actionId, {}, { actionId, owner }),
+                }
+              : {}),
             isDeviceScoped: deps.isCapDeviceScoped,
             ...(deps.now !== undefined ? { now: deps.now } : {}),
           })
@@ -2255,6 +2268,11 @@ export class NotificationCenter implements NcEventConsumer {
         return self.zoneOwners
       },
     }
+  }
+
+  /** The device registry changed: a cached domain action target is stale (D983). */
+  invalidateActionTargets(): void {
+    this.actionTargets?.invalidate()
   }
 
   onSystemEvent(event: SystemEvent): void {

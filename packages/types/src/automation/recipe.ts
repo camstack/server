@@ -25,6 +25,8 @@
 
 import { z } from 'zod'
 import { type QuantityValue } from '../units/quantity-input.js'
+import { vocabActionIdFor } from '../device/cap-vocabulary/action-index.js'
+import { ActionTargetSchema, type ActionTarget } from './action-target.js'
 import { LegacyConditionSchema, LegacyTriggerSchema, convertLegacyWhen } from './legacy-recipe.js'
 import {
   AutomationWhenSchema,
@@ -35,6 +37,7 @@ import {
 } from './when.js'
 
 export type { QuantityValue }
+export type { ActionTarget }
 
 /**
  * One action step.
@@ -59,18 +62,35 @@ export const AutomationWaitStepSchema = z.object({
   seconds: z.number().min(0).max(300),
 })
 
-export const AutomationCapStepSchema = z.object({
+/** The legacy `deviceId` of a cap step: still READ, never written (D983). */
+const LegacyStepDeviceSchema = z.union([
+  z.number().int(),
+  z.array(z.number().int()).min(1),
+  z.object({ $var: z.string().min(1) }),
+])
+
+/**
+ * The fields of a cap step, before the target rules are applied. Exported for
+ * a shape that is "a cap call, narrowed" (a remote-control binding is one
+ * device); a step is {@link AutomationCapStepSchema}.
+ */
+export const AutomationCapStepBaseSchema = z.object({
   kind: z.literal('cap'),
   /**
-   * One device, several same-family devices (locks / climate family / …),
-   * or `{ $var }` for the device that triggered the run. An array is
-   * fan-out at codegen — each id gets the same cap.method call.
+   * The vocabulary action this step performs (`cover.open`). Required when
+   * `target` is a `domain` (the domain is "every device offering this
+   * action"); filled by {@link normalizeCapStep} for a legacy step whose
+   * cap + method match exactly one vocabulary action.
    */
-  deviceId: z.union([
-    z.number().int(),
-    z.array(z.number().int()).min(1),
-    z.object({ $var: z.string().min(1) }),
-  ]),
+  actionId: z.string().min(1).optional(),
+  /** WHO the step acts on. The only shape that is written. */
+  target: ActionTargetSchema.optional(),
+  /**
+   * @deprecated The pre-D983 target: one device, several, or `{ $var }`.
+   * Still READ — {@link normalizeCapStep} maps it to `target` — and never
+   * written.
+   */
+  deviceId: LegacyStepDeviceSchema.optional(),
   cap: z.string().min(1),
   method: z.string().min(1),
   /** Values may carry `{{vars.x}}` slots, or be exactly `{ $var: 'name' }`, which
@@ -84,7 +104,63 @@ export const AutomationCapStepSchema = z.object({
    */
   argUnits: z.record(z.string(), z.string().min(1)).optional(),
 })
+
+export const AutomationCapStepSchema = AutomationCapStepBaseSchema.refine(
+  (step) => step.target !== undefined || step.deviceId !== undefined,
+  {
+    message: 'a cap step needs a target',
+    path: ['target'],
+  },
+).refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
+  message: 'a domain target needs the vocabulary action it applies to (actionId)',
+  path: ['actionId'],
+})
 export type AutomationCapStep = z.infer<typeof AutomationCapStepSchema>
+
+/** A cap step after {@link normalizeCapStep}: `target` always set, no legacy `deviceId`. */
+export type NormalizedCapStep = Omit<AutomationCapStep, 'deviceId' | 'target'> & {
+  readonly target: ActionTarget
+}
+
+function legacyTarget(deviceId: NonNullable<AutomationCapStep['deviceId']>): ActionTarget {
+  if (typeof deviceId === 'number') return { kind: 'devices', ids: [deviceId] }
+  if (Array.isArray(deviceId)) return { kind: 'devices', ids: deviceId }
+  return { kind: 'var', name: deviceId.$var }
+}
+
+/**
+ * The ONE reader of a stored cap step. A step written before D983 carries
+ * `deviceId`; it becomes a `target`, and `actionId` is filled when its cap +
+ * method (+ the args it sends) match exactly one vocabulary action. A step in
+ * the new shape passes through (its `deviceId`, if any, is dropped). Nothing
+ * else in the repo reads `deviceId`.
+ */
+export function normalizeCapStep(step: AutomationCapStep): NormalizedCapStep {
+  const { deviceId, target, ...rest } = step
+  const resolvedTarget = target ?? (deviceId === undefined ? undefined : legacyTarget(deviceId))
+  if (resolvedTarget === undefined) {
+    throw new Error(`cap step ${step.cap}.${step.method} has no target`)
+  }
+  const actionId =
+    rest.actionId ??
+    (deviceId === undefined ? undefined : vocabActionIdFor(step.cap, step.method, step.args))
+  return {
+    ...rest,
+    ...(actionId === undefined ? {} : { actionId }),
+    target: resolvedTarget,
+  }
+}
+
+/**
+ * {@link normalizeCapStep} over a step list: cap steps are rewritten to the
+ * new target shape, every other step passes through. The one function a store
+ * reads through and a save boundary writes through.
+ */
+export function normalizeStepTargets<A extends AutomationAction>(
+  steps: readonly A[],
+): (A | NormalizedCapStep)[] {
+  return steps.map((step) => (step.kind === 'cap' ? normalizeCapStep(step) : step))
+}
 
 /**
  * The steps an internal Action may contain: cap and wait, and nothing that can
@@ -132,8 +208,14 @@ export const AutomationRunModeSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('single') }),
   z.object({ mode: z.literal('restart') }),
   z.object({ mode: z.literal('queued'), max: z.number().int().min(1).max(10) }),
-  z.object({ mode: z.literal('parallel'), max: z.number().int().min(1).max(10) }),
-  z.object({ mode: z.literal('cooldown'), minutes: z.number().int().min(1).max(1440) }),
+  z.object({
+    mode: z.literal('parallel'),
+    max: z.number().int().min(1).max(10),
+  }),
+  z.object({
+    mode: z.literal('cooldown'),
+    minutes: z.number().int().min(1).max(1440),
+  }),
 ])
 export type AutomationRunMode = z.infer<typeof AutomationRunModeSchema>
 

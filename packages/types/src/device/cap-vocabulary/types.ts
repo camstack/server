@@ -196,6 +196,20 @@ export interface VocabOpenArg<C extends VocabCapName, K extends string> {
 
 // ── Actions ────────────────────────────────────────────────────────────
 
+/** A value a status field can hold, as an action's effect states it. */
+export type VocabEffectValue = string | number | boolean
+
+/**
+ * The state an action LEADS TO (D983): the cap status field and either a
+ * literal value (`cover.open` → `state = 'open'`) or the arg that carries it
+ * (`brightness.set` → `level = <level arg>`). Only an action with an effect
+ * can be HELD by a scheduler. Absent where the outcome is not a state
+ * (toggle, press, stop).
+ */
+export type VocabEffectFor<C extends VocabCapName, M extends CapMethodName<C>> =
+  | { readonly field: CapStatusField<C>; readonly value: VocabEffectValue }
+  | { readonly field: CapStatusField<C>; readonly fromArg: ActionArgKey<C, M> }
+
 /** One operator-facing action: a cap method call with a phrase. */
 export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<C>> {
   /** Stable id — persisted by pickers as a select value (`switch.on`). */
@@ -213,6 +227,8 @@ export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<
   readonly args?: Partial<ActionArgs<C, M>>
   /** Args the operator fills. */
   readonly openArgs?: readonly VocabOpenArg<C, ActionArgKey<C, M>>[]
+  /** The state this action leads to, when it is one (see {@link VocabEffectFor}). */
+  readonly effect?: VocabEffectFor<C, M>
 }
 
 /** Any action of cap `C`, discriminated by `method`. */
@@ -423,6 +439,11 @@ export interface LooseVocabOpenArg {
   readonly optional?: boolean
 }
 
+/** An effect as a consumer reads it, with no cap-specific key type. */
+export type LooseVocabEffect =
+  | { readonly field: string; readonly value: VocabEffectValue }
+  | { readonly field: string; readonly fromArg: string }
+
 /** An action as a consumer reads it. */
 export interface LooseVocabAction {
   readonly id: string
@@ -432,6 +453,7 @@ export interface LooseVocabAction {
   readonly icon: VocabIcon
   readonly args?: Readonly<Record<string, unknown>>
   readonly openArgs?: readonly LooseVocabOpenArg[]
+  readonly effect?: LooseVocabEffect
 }
 
 /** A boolean state trigger, string-keyed. */

@@ -17,11 +17,14 @@
  */
 
 import type {
+  ActionTarget,
   IScopedLogger,
   NcActionBinding,
   NcRuleAction,
   NcSharedSequence,
+  ResolvedTarget,
 } from '@camstack/types'
+import { normalizeNcCapTarget } from '@camstack/types'
 import type { NcRuleFireRef } from './rule-engine.js'
 
 /**
@@ -51,9 +54,20 @@ export type NcCapScopeCheck = (cap: string) => boolean
 /** Look up a shared sequence by id. Absent ⇒ the binding is skipped. */
 export type NcSequenceLookup = (sequenceId: string) => NcSharedSequence | null
 
+/**
+ * A step's target as device ids (D983). `owner` names the sequence for the log
+ * line of an empty answer. Absent ⇒ only a `devices` target can run.
+ */
+export type NcTargetResolve = (
+  target: ActionTarget,
+  actionId: string | undefined,
+  owner: string,
+) => Promise<ResolvedTarget>
+
 export interface NcRuleActionRunnerDeps {
   readonly logger: IScopedLogger
   readonly actuate: NcActuator
+  readonly resolveTarget?: NcTargetResolve
   readonly isDeviceScoped: NcCapScopeCheck
   readonly sleep?: (ms: number) => Promise<void>
   readonly now?: () => number
@@ -241,7 +255,7 @@ export class NcRuleActionRunner {
     let stepsRun = 0
     for (const [index, action] of sequence.actions.entries()) {
       try {
-        await this.step(action, input.origin)
+        await this.step(action, input.origin, sequence.id)
         stepsRun += 1
       } catch (err) {
         this.deps.logger.warn('rule action failed — stopping the sequence', {
@@ -278,7 +292,11 @@ export class NcRuleActionRunner {
     return { id: sequence.id, name: sequence.name, ran: true, stepsRun }
   }
 
-  private async step(action: NcRuleAction, origin: NcRuleFireRef | undefined): Promise<void> {
+  private async step(
+    action: NcRuleAction,
+    origin: NcRuleFireRef | undefined,
+    owner: string,
+  ): Promise<void> {
     if (action.kind === 'wait') {
       await this.sleep(action.seconds * 1000)
       return
@@ -288,13 +306,34 @@ export class NcRuleActionRunner {
         `rule action refused: "${action.cap}" is not a device capability — only devices can be actuated`,
       )
     }
-    await this.deps.actuate({
-      deviceId: action.deviceId,
-      cap: action.cap,
-      method: action.method,
-      args: action.args ?? {},
-      ...(origin !== undefined ? { origin } : {}),
-    })
+    const { target, actionId } = normalizeNcCapTarget(action)
+    const deviceIds = await this.devicesOf(target, actionId, owner)
+    // An empty answer was logged by the resolver (with the action and the
+    // sequence); the step ran on nobody, which is not a failure.
+    for (const deviceId of deviceIds) {
+      await this.deps.actuate({
+        deviceId,
+        cap: action.cap,
+        method: action.method,
+        args: action.args ?? {},
+        ...(origin !== undefined ? { origin } : {}),
+      })
+    }
+  }
+
+  private async devicesOf(
+    target: ActionTarget,
+    actionId: string | undefined,
+    owner: string,
+  ): Promise<readonly number[]> {
+    if (target.kind === 'devices') return target.ids
+    if (target.kind === 'var') {
+      throw new Error('rule action refused: a sequence has no variables to resolve a target from')
+    }
+    if (this.deps.resolveTarget === undefined) {
+      throw new Error('rule action refused: this node cannot resolve a domain target')
+    }
+    return (await this.deps.resolveTarget(target, actionId, owner)).deviceIds
   }
 }
 

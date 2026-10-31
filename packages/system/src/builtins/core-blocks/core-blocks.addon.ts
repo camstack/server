@@ -128,6 +128,7 @@ export class CoreBlocksAddon extends BaseAddon {
       logger: this.ctx.logger,
     })
     void this.sweepRunsLedger()
+    void this.migrateActionTargets()
     this.remoteRuntime = this.buildRemote(records)
 
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
@@ -210,6 +211,7 @@ export class CoreBlocksAddon extends BaseAddon {
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null
+    this.actions?.dispose()
     this.actions = null
     this.prefs = null
     this.transpiler = null
@@ -358,6 +360,19 @@ export class CoreBlocksAddon extends BaseAddon {
       this.ctx.logger.warn('runs ledger sweep failed — orphan rows stay until the next start', {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
+    }
+  }
+
+  private async migrateActionTargets(): Promise<void> {
+    try {
+      await this.actions?.service.migrateTargets()
+    } catch (err: unknown) {
+      this.ctx.logger.warn(
+        'internal actions could not be rewritten to the target shape — they are still read as it',
+        {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        },
+      )
     }
   }
 

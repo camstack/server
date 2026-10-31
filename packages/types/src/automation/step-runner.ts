@@ -9,20 +9,32 @@
  * after a failure, or after an abort, are `not-run` with the reason.
  */
 
-import type { ActionStep } from './recipe.js'
-import { type AutomationStepTrace, buildStepArgsTrace } from './trace.js'
+import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
+import { type ActionStep, normalizeCapStep } from './recipe.js'
+import {
+  type AutomationStepTrace,
+  buildStepArgsTrace,
+  MAX_STEP_DEVICE_OUTCOMES,
+  type StepDeviceTrace,
+} from './trace.js'
 
 /** Static facts about a step, known before it runs. */
 export interface StepMeta {
   readonly kind: string
   readonly cap?: string
   readonly method?: string
+  /** The vocabulary action id the step performs, when it names one. */
+  readonly actionId?: string
   readonly deviceId?: number
 }
 
 /** What a running step can tell the runner (the device a fan-out is on right now). */
 export interface StepScope {
   setDeviceId(deviceId: number): void
+  /** One device of a multi-device step finished — traced per device. */
+  recordDevice(outcome: StepDeviceTrace): void
+  /** The step's target resolved to no device: traced as `empty`, with the reason. */
+  markEmpty(reason: string): void
   /** The parameters the step is sending NOW (substituted), for its trace. */
   setArgs(args: Readonly<Record<string, unknown>>): void
 }
@@ -83,9 +95,17 @@ export async function runSteps(
     const startedAt = options.now()
     let deviceId: number | undefined = step.meta.deviceId
     let sent: Readonly<Record<string, unknown>> | undefined
+    const perDevice: StepDeviceTrace[] = []
+    let emptyReason: string | undefined
     const scope: StepScope = {
       setDeviceId: (id) => {
         deviceId = id
+      },
+      recordDevice: (outcome) => {
+        perDevice.push(outcome)
+      },
+      markEmpty: (reason) => {
+        emptyReason = reason
       },
       setArgs: (args) => {
         sent = args
@@ -93,16 +113,20 @@ export async function runSteps(
     }
     const argsTrace = (): { args?: ReturnType<typeof buildStepArgsTrace> } =>
       sent === undefined ? {} : { args: buildStepArgsTrace(sent) }
+    const devicesTrace = (): { devices?: StepDeviceTrace[] } =>
+      perDevice.length === 0 ? {} : { devices: perDevice.slice(0, MAX_STEP_DEVICE_OUTCOMES) }
     try {
       await step.run(scope)
       traces.push({
         ...step.meta,
-        ...(deviceId === undefined ? {} : { deviceId }),
+        ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
         ...argsTrace(),
+        ...devicesTrace(),
         path,
         startedAt,
         endedAt: options.now(),
-        outcome: 'ok',
+        outcome: emptyReason === undefined ? 'ok' : 'empty',
+        ...(emptyReason === undefined ? {} : { message: emptyReason }),
       })
     } catch (err: unknown) {
       failed = true
@@ -110,8 +134,9 @@ export async function runSteps(
       options.onFailure({ index, path, message, deviceId })
       traces.push({
         ...step.meta,
-        ...(deviceId === undefined ? {} : { deviceId }),
+        ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
         ...argsTrace(),
+        ...devicesTrace(),
         path,
         startedAt,
         endedAt: options.now(),
@@ -187,24 +212,81 @@ export interface CapCall {
   readonly args: Readonly<Record<string, unknown>>
 }
 
+/** How many devices of one step are driven at once. */
+export const STEP_DEVICE_CONCURRENCY = 4
+
 export interface ActionStepDeps {
   invokeCap(call: CapCall): Promise<void>
   sleep(ms: number): Promise<void>
   onMissingVar(name: string): void
+  /** Turn a step's target into device ids (an empty answer is logged by the resolver). */
+  resolveTarget(
+    target: ActionTarget,
+    actionId: string | undefined,
+    vars: StepVars,
+    origin: ResolveOrigin,
+  ): Promise<ResolvedTarget>
+  /** The action / automation the steps belong to, for the log line of an empty target. */
+  readonly owner?: string
 }
 
 function stepMetaOfAction(step: ActionStep): StepMeta {
   if (step.kind === 'wait') return { kind: 'wait' }
+  const { target, actionId } = normalizeCapStep(step)
   return {
     kind: 'cap',
     cap: step.cap,
     method: step.method,
-    ...(typeof step.deviceId === 'number' ? { deviceId: step.deviceId } : {}),
+    ...(actionId === undefined ? {} : { actionId }),
+    ...(target.kind === 'devices' && target.ids.length === 1 ? { deviceId: target.ids[0] } : {}),
   }
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/**
+ * Run `work` for every device, `concurrency` at a time. EVERY device is tried
+ * (one refusing device must not leave the others undone); each outcome goes to
+ * the step's trace, in device order, and the step fails afterwards if any did.
+ */
+export async function runForDevices(
+  deviceIds: readonly number[],
+  scope: StepScope,
+  work: (deviceId: number) => Promise<void>,
+  concurrency: number = STEP_DEVICE_CONCURRENCY,
+): Promise<void> {
+  const outcomes: StepDeviceTrace[] = new Array(deviceIds.length)
+  let next = 0
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const index = next
+      next += 1
+      const deviceId = deviceIds[index]
+      if (deviceId === undefined) return
+      try {
+        await work(deviceId)
+        outcomes[index] = { deviceId, outcome: 'ok' }
+      } catch (err: unknown) {
+        outcomes[index] = { deviceId, outcome: 'error', message: errorMessage(err) }
+      }
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.max(1, Math.min(concurrency, deviceIds.length)) }, () => worker()),
+  )
+  for (const outcome of outcomes) scope.recordDevice(outcome)
+  const failed = outcomes.filter((o) => o.outcome === 'error')
+  if (failed.length > 0) {
+    throw new Error(
+      `${failed.length} of ${outcomes.length} devices failed: ` +
+        failed
+          .slice(0, 3)
+          .map((f) => `${f.deviceId}: ${f.message ?? 'failed'}`)
+          .join('; '),
+    )
+  }
 }
 
 /**
@@ -222,22 +304,30 @@ export function buildActionSteps(
     if (step.kind === 'wait') {
       return { meta, run: () => deps.sleep(step.seconds * 1000) }
     }
+    const normalized = normalizeCapStep(step)
     return {
       meta,
       run: async (scope) => {
         const resolved = resolveStepArgs(step.args ?? {}, vars, deps.onMissingVar)
         const args = isPlainRecord(resolved) ? resolved : {}
-        const targets =
-          typeof step.deviceId === 'number'
-            ? [step.deviceId]
-            : Array.isArray(step.deviceId)
-              ? step.deviceId
-              : [resolveDeviceTarget(vars, step.deviceId.$var)]
-        for (const deviceId of targets) {
-          scope.setDeviceId(deviceId)
-          scope.setArgs(args)
-          await deps.invokeCap({ deviceId, cap: step.cap, method: step.method, args })
+        const target = await deps.resolveTarget(normalized.target, normalized.actionId, vars, {
+          actionId: normalized.actionId,
+          owner: deps.owner,
+        })
+        if (target.deviceIds.length === 0) {
+          scope.markEmpty(target.emptyReason ?? 'the target matched no device')
+          return
         }
+        scope.setArgs(args)
+        const [only] = target.deviceIds
+        if (target.deviceIds.length === 1 && only !== undefined) {
+          scope.setDeviceId(only)
+          await deps.invokeCap({ deviceId: only, cap: step.cap, method: step.method, args })
+          return
+        }
+        await runForDevices(target.deviceIds, scope, (deviceId) =>
+          deps.invokeCap({ deviceId, cap: step.cap, method: step.method, args }),
+        )
       },
     }
   })

@@ -3544,6 +3544,7 @@ export default class PipelineAnalyticsAddon
       onDeviceUnregistered: (deviceId) => this.handleDeviceUnregisteredEvent(deviceId),
       onClusterTopology: (nodes) => this.nodeLiveness.applySnapshot(nodes, Date.now()),
       onSystemEvent: (event) => this.notificationCenter?.onSystemEvent(event),
+      onDeviceRegistryChange: () => this.notificationCenter?.invalidateActionTargets(),
     })
 
     // Tracking tapes (D681): their OWN step, so a failed event-media plane can

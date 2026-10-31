@@ -25,7 +25,7 @@
  */
 
 import type { AutomationAction, AutomationRecipe } from './recipe.js'
-import { DEFAULT_TRACE_KEEP, validateRecipeBounds } from './recipe.js'
+import { DEFAULT_TRACE_KEEP, normalizeCapStep, validateRecipeBounds } from './recipe.js'
 import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
 
 export interface GenerateAutomationBlockInput {
@@ -42,6 +42,7 @@ interface StepMeta {
   readonly kind: string
   readonly cap?: string
   readonly method?: string
+  readonly actionId?: string
   readonly deviceId?: number
 }
 
@@ -54,13 +55,18 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'code' }
     case 'action':
       return { kind: 'action' }
-    case 'cap':
+    case 'cap': {
+      const { target, actionId } = normalizeCapStep(action)
       return {
         kind: 'cap',
         cap: action.cap,
         method: action.method,
-        ...(typeof action.deviceId === 'number' ? { deviceId: action.deviceId } : {}),
+        ...(actionId === undefined ? {} : { actionId }),
+        ...(target.kind === 'devices' && target.ids.length === 1
+          ? { deviceId: target.ids[0] }
+          : {}),
       }
+    }
   }
 }
 
@@ -240,23 +246,12 @@ ${body}
     case 'wait':
       return step(`        await sleep(${j(action.seconds * 1000)})`)
     case 'cap': {
-      if (Array.isArray(action.deviceId)) {
-        return step(`        for (const deviceId of ${j(action.deviceId)}) {
-          scope.setDeviceId(deviceId)
-          await actuate(scope, deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
-            action.args ?? {},
-          )}, vars)
-        }`)
-      }
-      const target =
-        typeof action.deviceId === 'number'
-          ? j(action.deviceId)
-          : `resolveTarget(vars, ${j(action.deviceId.$var)})`
-      return step(`        const deviceId = ${target}
-        scope.setDeviceId(deviceId)
-        await actuate(scope, deviceId, ${j(action.cap)}, ${j(action.method)}, ${j(
-          action.args ?? {},
-        )}, vars)`)
+      const { target, actionId } = normalizeCapStep(action)
+      return step(
+        `        await actuateTarget(scope, ${j(target)}, ${j(actionId)}, ${j(action.cap)}, ${j(
+          action.method,
+        )}, ${j(action.args ?? {})}, vars)`,
+      )
     }
     case 'action':
       return step(`        // an Action run, awaited: the step takes THAT run's outcome
@@ -295,12 +290,16 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const { name, recipe } = input
   const runMode = recipe.runMode ?? { mode: 'single' }
   const stepMeta = recipe.actions.map(stepMetaOf)
+  const hasDomainTarget = recipe.actions.some(
+    (a) => a.kind === 'cap' && normalizeCapStep(a).target.kind === 'domain',
+  )
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
   })
 
   return `import type {
+  ActionTarget,
   AddonContext,
   AutomationConditionTraceNode,
   AutomationRunTrace,
@@ -310,6 +309,8 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   StepScope,
 } from '@camstack/types'
 import {
+  ACTION_TARGET_INVALIDATION_EVENTS,
+  ActionTargetResolver,
   ConditionMirror,
   DetectionTriggerFilter,
   EventCategory,
@@ -321,8 +322,8 @@ import {
   evaluateStationaryTrigger,
   isSkippedTrace,
   mergeSkipTraces,
-  resolveDeviceTarget,
   resolveStepArgs,
+  runForDevices,
   runSteps,
 } from '@camstack/types'
 
@@ -355,7 +356,10 @@ const STATE_ONLY = ${!hasEventLeaves(recipe.when)}
 const SKIP_FLUSH_MS = 5_000
 
 /** Static facts about each action step, for its trace. */
-const STEP_META: ReadonlyArray<{ kind: string; cap?: string; method?: string; deviceId?: number }> = ${j(stepMeta)}
+const STEP_META: ReadonlyArray<{ kind: string; cap?: string; method?: string; actionId?: string; deviceId?: number }> = ${j(stepMeta)}
+
+/** True when a step acts on a whole domain: only then does the block listen for registry changes. */
+const HAS_DOMAIN_TARGET = ${hasDomainTarget}
 
 /** A cap is named \`alarm-panel\`; \`ctx.api\` is keyed by the ROUTER name,
  *  \`alarmPanel\`. Indexing ctx.api with the cap name yields undefined and every
@@ -544,10 +548,49 @@ export default function block(ctx: AddonContext) {
     }
   }
 
-  /** A {$var} action target, resolved from the run's bag BEFORE dispatch — the
-   *  action runner only ever sees a number. */
-  function resolveTarget(vars: Record<string, unknown>, name: string): number {
-    return resolveDeviceTarget(vars, name)
+  /** WHO a step acts on (D983): picked devices, a \`$var\`, or a whole domain
+   *  resolved NOW. The cache is dropped on every registry event that can change
+   *  it; an empty answer is logged by the resolver and traced as \`empty\`. */
+  const targets = new ActionTargetResolver(
+    {
+      listDeviceIdsByCaps: (capNames) => ctx.api.deviceManager.listDeviceIdsByCaps.query({ capNames: [...capNames] }),
+      listDevices: async (deviceIds) => {
+        const rows = await ctx.api.deviceManager.listAll.query({ deviceIds: [...deviceIds], projection: 'slim' })
+        return rows.map((d) => ({ id: d.id, type: d.type, location: d.location, disabled: d.disabled }))
+      },
+    },
+    ctx.logger,
+  )
+  if (HAS_DOMAIN_TARGET) {
+    for (const category of ACTION_TARGET_INVALIDATION_EVENTS) {
+      disposers.push(ctx.eventBus.subscribe({ category }, () => targets.invalidate()))
+    }
+  }
+
+  async function actuateTarget(
+    scope: StepScope,
+    target: ActionTarget,
+    actionId: string | undefined,
+    cap: string,
+    method: string,
+    args: Record<string, unknown>,
+    vars: Record<string, unknown>,
+  ): Promise<void> {
+    const resolved = await targets.resolve(target, actionId, vars, {
+      actionId,
+      owner: BLOCK_ID ?? undefined,
+    })
+    if (resolved.deviceIds.length === 0) {
+      scope.markEmpty(resolved.emptyReason ?? 'the target matched no device')
+      return
+    }
+    const [only] = resolved.deviceIds
+    if (resolved.deviceIds.length === 1 && only !== undefined) {
+      scope.setDeviceId(only)
+      await actuate(scope, only, cap, method, args, vars)
+      return
+    }
+    await runForDevices(resolved.deviceIds, scope, (deviceId) => actuate(scope, deviceId, cap, method, args, vars))
   }
 
   function warnMissingVar(name: string): void {

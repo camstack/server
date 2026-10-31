@@ -15,6 +15,7 @@
  */
 import {
   ALL_CAPABILITY_DEFINITIONS,
+  ActionTargetSchema,
   AutomationRecipeSchema,
   MACRO_LABELS,
   capUnitResolver,
@@ -25,6 +26,7 @@ import {
   prepareRecipeUnits,
   unitsForQuantity,
   validateRecipeBounds,
+  type ActionTarget,
   type AutomationAction,
   type AutomationConditionOperator,
   type AutomationRecipe,
@@ -90,18 +92,42 @@ export type ConditionAnswer = z.infer<typeof ConditionAnswerSchema>
 
 export const ActionAnswerSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('wait'), seconds: z.number().min(0).max(300) }),
-  z.object({
-    kind: z.literal('cap'),
-    deviceId: z.union([
-      z.number().int().nonnegative(),
-      z.array(z.number().int().nonnegative()).min(1),
-    ]),
-    cap: z.string().min(1),
-    method: z.string().min(1),
-    /** A quantity argument is `{ value, unit }`; a bare number is stamped with the declared unit. */
-    args: z.record(z.string(), z.unknown()).optional(),
-  }),
+  z
+    .object({
+      kind: z.literal('cap'),
+      /** WHO the step acts on: named devices, or every device offering `actionId` (optionally in a room / of a type). */
+      target: ActionTargetSchema.optional(),
+      /** The vocabulary action (`cover.open`); required for a `domain` target. */
+      actionId: z.string().min(1).optional(),
+      /** Shorthand for `target: { kind: 'devices', ids }`. */
+      deviceId: z
+        .union([z.number().int().nonnegative(), z.array(z.number().int().nonnegative()).min(1)])
+        .optional(),
+      cap: z.string().min(1),
+      method: z.string().min(1),
+      /** A quantity argument is `{ value, unit }`; a bare number is stamped with the declared unit. */
+      args: z.record(z.string(), z.unknown()).optional(),
+    })
+    .refine((a) => a.target !== undefined || a.deviceId !== undefined, {
+      message: 'a cap step needs a target (or a deviceId)',
+      path: ['target'],
+    })
+    .refine((a) => a.target?.kind !== 'domain' || a.actionId !== undefined, {
+      message: 'a domain target needs the vocabulary action it applies to (actionId)',
+      path: ['actionId'],
+    }),
 ])
+
+/** The target an answered step means: `target`, else the `deviceId` shorthand. */
+function targetOfAnswer(a: Extract<ActionAnswer, { kind: 'cap' }>): ActionTarget {
+  if (a.target !== undefined) return a.target
+  const ids = Array.isArray(a.deviceId)
+    ? [...a.deviceId]
+    : a.deviceId === undefined
+      ? []
+      : [a.deviceId]
+  return { kind: 'devices', ids }
+}
 export type ActionAnswer = z.infer<typeof ActionAnswerSchema>
 
 export const AutomationTriggerAnswerSchema = z.object({
@@ -218,7 +244,7 @@ const CONDITIONS_QUESTION: Question = {
 
 const ACTIONS_QUESTION: Question = {
   field: 'actions',
-  ask: 'What should it do? A list of steps, in order: { kind: "cap", deviceId, cap, method, args? } or { kind: "wait", seconds }. deviceId may be a list to run the same call on several devices.',
+  ask: 'What should it do? A list of steps, in order: { kind: "cap", target, actionId?, cap, method, args? } or { kind: "wait", seconds }. target is { kind: "devices", ids: [...] } to name devices, or { kind: "domain", roomId?, deviceType? } with the vocabulary actionId (for example "cover.open") to act on every device that offers it — resolved when the step runs, so a device added later is included. deviceId (a number or a list) is still accepted as shorthand for named devices.',
 }
 
 function fieldChoices(fields: readonly WireableField[]): readonly Choice[] {
@@ -581,7 +607,9 @@ async function checkActions(
   const cache = new Map<number, readonly string[]>()
   for (const [idx, action] of actions.entries()) {
     if (action.kind !== 'cap') continue
-    const ids = Array.isArray(action.deviceId) ? action.deviceId : [action.deviceId]
+    const target = targetOfAnswer(action)
+    // A domain / var target is resolved when the step runs; only named devices can be checked now.
+    const ids = target.kind === 'devices' ? target.ids : []
     for (const id of ids) {
       let caps = cache.get(id)
       if (caps === undefined) {
@@ -621,7 +649,8 @@ function toActions(actions: readonly ActionAnswer[]): AutomationAction[] {
     if (a.kind === 'wait') return { kind: 'wait', seconds: a.seconds }
     return {
       kind: 'cap',
-      deviceId: Array.isArray(a.deviceId) ? [...a.deviceId] : a.deviceId,
+      target: targetOfAnswer(a),
+      ...(a.actionId !== undefined ? { actionId: a.actionId } : {}),
       cap: a.cap,
       method: a.method,
       ...(a.args !== undefined ? { args: a.args } : {}),
@@ -675,9 +704,15 @@ function summarize(
   for (const a of actions) {
     if (a.kind === 'wait') lines.push(`  then wait ${a.seconds}s`)
     else {
-      const ids = Array.isArray(a.deviceId) ? a.deviceId.join(', ') : String(a.deviceId)
+      const t = targetOfAnswer(a)
+      const who =
+        t.kind === 'devices'
+          ? `device ${t.ids.join(', ')}`
+          : t.kind === 'var'
+            ? `device $${t.name}`
+            : `every device that can ${a.actionId ?? a.method}${t.roomId === undefined ? '' : ` in ${t.roomId}`}${t.deviceType === undefined ? '' : ` of type ${t.deviceType}`}`
       lines.push(
-        `  then ${a.cap}.${a.method} on device ${ids}${a.args ? ` with ${JSON.stringify(a.args)}` : ''}`,
+        `  then ${a.cap}.${a.method} on ${who}${a.args ? ` with ${JSON.stringify(a.args)}` : ''}`,
       )
     }
   }

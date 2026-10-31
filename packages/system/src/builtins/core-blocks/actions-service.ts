@@ -35,7 +35,9 @@ import {
   type AutomationRunOutcome,
   type AutomationRunTrace,
   type AutomationStepTrace,
+  ActionTargetResolver,
   buildActionSteps,
+  type DeviceDirectory,
   capUnitResolver,
   type CapCall,
   type CapCaller,
@@ -72,6 +74,8 @@ export interface ActionsServiceDeps {
   readonly store: ActionsStore
   readonly ledger: RunsLedger
   readonly sources: ActionSources
+  /** The device registry, for `domain` targets (resolved when a step runs). */
+  readonly directory: DeviceDirectory
   invokeCap(call: CapCall): Promise<void>
   emit(event: ActionRunChanged): void
   readonly logger: IScopedLogger
@@ -129,6 +133,7 @@ export class ActionsService implements IActionsProvider {
   private readonly now: () => number
   private readonly newRunId: () => string
   private readonly units: UnitResolver
+  private readonly targets: ActionTargetResolver
   private readonly running = new Map<string, RunningRun>()
 
   constructor(deps: ActionsServiceDeps) {
@@ -141,6 +146,21 @@ export class ActionsService implements IActionsProvider {
     this.now = deps.now ?? Date.now
     this.newRunId = deps.newRunId ?? randomUUID
     this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
+    this.targets = new ActionTargetResolver(deps.directory, deps.logger)
+  }
+
+  /** One-shot at boot: stored steps written before D983 are rewritten to the target shape. */
+  async migrateTargets(): Promise<number> {
+    const moved = await this.store.migrateLegacyTargets()
+    if (moved > 0) {
+      this.logger.info('internal actions rewritten to the target shape', { meta: { moved } })
+    }
+    return moved
+  }
+
+  /** A device was added, removed, moved or re-bound: forget the cached domains. */
+  invalidateTargets(): void {
+    this.targets.invalidate()
   }
 
   // ── reads ──────────────────────────────────────────────────────────────
@@ -383,6 +403,9 @@ export class ActionsService implements IActionsProvider {
       return buildActionSteps(entry.steps ?? [], values, {
         invokeCap: (call) => this.invokeCap(call),
         sleep: (ms) => token.sleep(ms),
+        resolveTarget: (target, actionId, vars, origin) =>
+          this.targets.resolve(target, actionId, vars, origin),
+        owner: entry.id,
         onMissingVar: (name) =>
           this.logger.warn('action template referenced a variable that was never set', {
             meta: { actionId: entry.id, variable: name },

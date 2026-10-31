@@ -65,6 +65,7 @@ export function variablesUsedBy(steps: readonly ActionStep[]): readonly string[]
   for (const step of steps) {
     if (step.kind !== 'cap') continue
     walk(step.deviceId)
+    if (step.target?.kind === 'var') note(step.target.name)
     walk(step.args)
   }
   return seen
@@ -113,15 +114,24 @@ function renameInValue(value: unknown, from: string, to: string): unknown {
 
 function renameInStep(step: ActionStep, from: string, to: string): ActionStep {
   if (step.kind !== 'cap') return step
-  const target =
+  const deviceId =
     isVarRef(step.deviceId) && step.deviceId.$var === from ? { $var: to } : step.deviceId
+  const target =
+    step.target?.kind === 'var' && step.target.name === from
+      ? { kind: 'var' as const, name: to }
+      : step.target
   const args =
     step.args === undefined
       ? undefined
       : Object.fromEntries(
           Object.entries(step.args).map(([k, v]) => [k, renameInValue(v, from, to)]),
         )
-  return { ...step, deviceId: target, ...(args === undefined ? {} : { args }) }
+  return {
+    ...step,
+    ...(deviceId === undefined ? {} : { deviceId }),
+    ...(target === undefined ? {} : { target }),
+    ...(args === undefined ? {} : { args }),
+  }
 }
 
 /** The variable at `index`, renamed everywhere a step reads it. */

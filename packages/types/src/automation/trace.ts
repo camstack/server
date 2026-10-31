@@ -97,13 +97,28 @@ export const AutomationRunVerdictSchema = z.object({
 export type AutomationRunVerdict = z.infer<typeof AutomationRunVerdictSchema>
 
 /** One executed (or not-run) step — shared by automations and Action runs. */
+/** How many per-device outcomes one step trace keeps. */
+export const MAX_STEP_DEVICE_OUTCOMES = 200
+
+/** One device of a multi-device step: did the call land. */
+export const StepDeviceTraceSchema = z.object({
+  deviceId: z.number().int(),
+  outcome: z.enum(['ok', 'error']),
+  message: z.string().optional(),
+})
+export type StepDeviceTrace = z.infer<typeof StepDeviceTraceSchema>
+
 export const AutomationStepTraceSchema = z.object({
   /** `actions.<i>` */
   path: z.string().min(1),
   kind: z.string().min(1),
   cap: z.string().optional(),
   method: z.string().optional(),
+  /** The vocabulary action the step performs (`cover.open`), when it names one. */
+  actionId: z.string().optional(),
   deviceId: z.number().int().optional(),
+  /** What happened per device, when the step drove several (or a domain). */
+  devices: z.array(StepDeviceTraceSchema).optional(),
   startedAt: z.number().optional(),
   endedAt: z.number().optional(),
   /**
@@ -112,7 +127,8 @@ export const AutomationStepTraceSchema = z.object({
    * is shown as {@link REDACTED_ARG}. Absent on traces written before it existed.
    */
   args: z.record(z.string(), TraceValueSchema).optional(),
-  outcome: z.enum(['ok', 'error', 'not-run']),
+  /** `empty`: the target resolved to no device, so nothing was done — never silently `ok`. */
+  outcome: z.enum(['ok', 'error', 'not-run', 'empty']),
   message: z.string().optional(),
 })
 export type AutomationStepTrace = z.infer<typeof AutomationStepTraceSchema>

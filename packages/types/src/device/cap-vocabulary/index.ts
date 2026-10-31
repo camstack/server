@@ -18,6 +18,13 @@ export {
   renderVocabPhrase,
   triggersForDevice,
 } from './resolve.js'
+export type { ActionEffect, IndexedVocabAction } from './action-index.js'
+export {
+  actionEffect,
+  allVocabActions,
+  findVocabAction,
+  vocabActionIdFor,
+} from './action-index.js'
 export { VOCAB_TEMPLATES } from './templates.js'
 export type {
   ActionArgKey,
@@ -38,6 +45,7 @@ export type {
   LooseCapVocabularyEntry,
   LooseDynamicOffer,
   LooseVocabAction,
+  LooseVocabEffect,
   LooseVocabOffer,
   LooseVocabOpenArg,
   LooseVocabStateTrigger,
@@ -48,6 +56,8 @@ export type {
   VocabAction,
   VocabCapName,
   VocabChoice,
+  VocabEffectFor,
+  VocabEffectValue,
   VocabEventTrigger,
   VocabIcon,
   VocabLocale,

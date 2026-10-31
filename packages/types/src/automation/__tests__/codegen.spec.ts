@@ -143,8 +143,7 @@ describe('actions', () => {
         actions: [{ kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' }],
       },
     })
-    expect(g).toContain('resolveTarget')
-    expect(g).toContain('resolveTarget(vars, "deviceId")')
+    expect(g).toContain('actuateTarget(scope, {"kind":"var","name":"deviceId"}')
   })
 
   it('fans out a same-family multi-device cap action across each id', () => {
@@ -163,8 +162,9 @@ describe('actions', () => {
         ],
       },
     })
-    expect(g).toContain('for (const deviceId of [101,102])')
-    expect(g).toContain('actuate(scope, deviceId, "lock-control", "lock"')
+    expect(g).toContain(
+      'actuateTarget(scope, {"kind":"devices","ids":[101,102]}, "lock.lock", "lock-control", "lock"',
+    )
   })
 })
 

@@ -67,6 +67,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Turn on', 'Accendi'),
         phrase: t('Turn on {device}', 'Accendi {device}'),
         icon: 'power',
+        effect: { field: 'on', value: true },
         args: { on: true },
       },
       {
@@ -75,6 +76,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Turn off', 'Spegni'),
         phrase: t('Turn off {device}', 'Spegni {device}'),
         icon: 'power-off',
+        effect: { field: 'on', value: false },
         args: { on: false },
       },
     ],
@@ -259,6 +261,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Full brightness', 'Luminosità massima'),
         phrase: t('Set {device} to full brightness', 'Porta {device} alla massima luminosità'),
         icon: 'sun',
+        effect: { field: 'level', value: 100 },
         args: { level: 100 },
       },
       {
@@ -267,6 +270,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Half brightness', 'Luminosità a metà'),
         phrase: t('Dim {device} to half', 'Abbassa {device} a metà luminosità'),
         icon: 'sun-dim',
+        effect: { field: 'level', value: 50 },
         args: { level: 50 },
       },
       {
@@ -275,6 +279,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Brightness off', 'Luminosità a zero'),
         phrase: t('Dim {device} to zero', 'Abbassa {device} a zero'),
         icon: 'lightbulb-off',
+        effect: { field: 'level', value: 0 },
         args: { level: 0 },
       },
       {
@@ -286,6 +291,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Imposta la luminosità di {device} a {level}',
         ),
         icon: 'sun-medium',
+        effect: { field: 'level', fromArg: 'level' },
         openArgs: [
           {
             key: 'level',
@@ -390,6 +396,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Open', 'Apri'),
         phrase: t('Open {device}', 'Apri {device}'),
         icon: 'arrow-up-to-line',
+        effect: { field: 'state', value: 'open' },
       },
       {
         id: 'cover.close',
@@ -397,6 +404,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Close', 'Chiudi'),
         phrase: t('Close {device}', 'Chiudi {device}'),
         icon: 'arrow-down-to-line',
+        effect: { field: 'state', value: 'closed' },
       },
       {
         id: 'cover.stop',
@@ -411,6 +419,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set position', 'Imposta la posizione'),
         phrase: t('Move {device} to {position} open', 'Porta {device} al {position} di apertura'),
         icon: 'blinds',
+        effect: { field: 'position', fromArg: 'position' },
         openArgs: [
           {
             key: 'position',
@@ -425,6 +434,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set tilt', 'Imposta l’inclinazione'),
         phrase: t('Tilt {device} to {tiltPosition}', 'Inclina {device} al {tiltPosition}'),
         icon: 'blinds',
+        effect: { field: 'tiltPosition', fromArg: 'tiltPosition' },
         openArgs: [
           {
             key: 'tiltPosition',
@@ -535,6 +545,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Open valve', 'Apri la valvola'),
         phrase: t('Open {device}', 'Apri {device}'),
         icon: 'droplets',
+        effect: { field: 'state', value: 'open' },
       },
       {
         id: 'valve.close',
@@ -542,6 +553,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Close valve', 'Chiudi la valvola'),
         phrase: t('Close {device}', 'Chiudi {device}'),
         icon: 'droplet-off',
+        effect: { field: 'state', value: 'closed' },
       },
       {
         id: 'valve.stop',
@@ -556,6 +568,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set opening', 'Imposta l’apertura'),
         phrase: t('Open {device} to {position}', 'Apri {device} al {position}'),
         icon: 'droplets',
+        effect: { field: 'position', fromArg: 'position' },
         openArgs: [
           {
             key: 'position',
@@ -594,6 +607,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Lock', 'Chiudi a chiave'),
         phrase: t('Lock {device}', 'Chiudi a chiave {device}'),
         icon: 'lock',
+        effect: { field: 'state', value: 'locked' },
         openArgs: [
           {
             key: 'code',
@@ -609,6 +623,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Unlock', 'Apri la serratura'),
         phrase: t('Unlock {device}', 'Sblocca {device}'),
         icon: 'lock-open',
+        effect: { field: 'state', value: 'unlocked' },
         openArgs: [
           {
             key: 'code',
@@ -673,6 +688,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Climate off', 'Clima spento'),
         phrase: t('Turn off {device}', 'Spegni {device}'),
         icon: 'power-off',
+        effect: { field: 'mode', value: 'off' },
         args: { mode: 'off' },
       },
       {
@@ -681,6 +697,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Heat', 'Riscalda'),
         phrase: t('Set {device} to heat', 'Metti {device} in riscaldamento'),
         icon: 'flame',
+        effect: { field: 'mode', value: 'heat' },
         args: { mode: 'heat' },
       },
       {
@@ -689,6 +706,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Cool', 'Raffresca'),
         phrase: t('Set {device} to cool', 'Metti {device} in raffrescamento'),
         icon: 'snowflake',
+        effect: { field: 'mode', value: 'cool' },
         args: { mode: 'cool' },
       },
       {
@@ -697,6 +715,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Climate auto', 'Clima automatico'),
         phrase: t('Set {device} to automatic', 'Metti {device} in automatico'),
         icon: 'thermometer',
+        effect: { field: 'mode', value: 'auto' },
         args: { mode: 'auto' },
       },
       {
@@ -705,6 +724,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set mode', 'Imposta la modalità'),
         phrase: t('Set {device} to {mode}', 'Imposta {device} su {mode}'),
         icon: 'thermometer',
+        effect: { field: 'mode', fromArg: 'mode' },
         openArgs: [
           {
             key: 'mode',
@@ -736,6 +756,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set temperature', 'Imposta la temperatura'),
         phrase: t('Set {device} to {target}', 'Imposta {device} a {target}'),
         icon: 'thermometer',
+        effect: { field: 'target', fromArg: 'target' },
         openArgs: [
           {
             key: 'target',
@@ -775,6 +796,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Imposta l’umidità obiettivo di {device} al {targetHumidity}',
         ),
         icon: 'droplets',
+        effect: { field: 'targetHumidity', fromArg: 'targetHumidity' },
         openArgs: [
           {
             key: 'targetHumidity',
@@ -831,6 +853,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Attiva l’oscillazione verticale di {device}',
         ),
         icon: 'move-vertical',
+        effect: { field: 'swingVertical', value: true },
         args: { on: true },
       },
       {
@@ -842,6 +865,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Ferma l’oscillazione verticale di {device}',
         ),
         icon: 'move-vertical',
+        effect: { field: 'swingVertical', value: false },
         args: { on: false },
       },
       {
@@ -853,6 +877,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Attiva l’oscillazione orizzontale di {device}',
         ),
         icon: 'move-horizontal',
+        effect: { field: 'swingHorizontal', value: true },
         args: { on: true },
       },
       {
@@ -864,6 +889,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Ferma l’oscillazione orizzontale di {device}',
         ),
         icon: 'move-horizontal',
+        effect: { field: 'swingHorizontal', value: false },
         args: { on: false },
       },
     ],
@@ -932,6 +958,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Fan off', 'Ventilatore spento'),
         phrase: t('Stop {device}', 'Ferma {device}'),
         icon: 'power-off',
+        effect: { field: 'speed', value: 0 },
         args: { speed: 0 },
       },
       {
@@ -940,6 +967,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Fan full', 'Ventilatore al massimo'),
         phrase: t('Run {device} at full speed', 'Porta {device} alla massima velocità'),
         icon: 'fan',
+        effect: { field: 'speed', value: 100 },
         args: { speed: 100 },
       },
       {
@@ -951,6 +979,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Imposta la velocità di {device} al {speed}',
         ),
         icon: 'fan',
+        effect: { field: 'speed', fromArg: 'speed' },
         openArgs: [
           {
             key: 'speed',
@@ -983,6 +1012,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Spin forward', 'Rotazione avanti'),
         phrase: t('Spin {device} forward', 'Fai girare {device} in avanti'),
         icon: 'rotate-cw',
+        effect: { field: 'direction', value: 'forward' },
         args: { direction: 'forward' },
       },
       {
@@ -991,6 +1021,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Spin in reverse', 'Rotazione inversa'),
         phrase: t('Spin {device} in reverse', 'Fai girare {device} al contrario'),
         icon: 'rotate-ccw',
+        effect: { field: 'direction', value: 'reverse' },
         args: { direction: 'reverse' },
       },
       {
@@ -999,6 +1030,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Oscillate', 'Oscillazione attiva'),
         phrase: t('Make {device} oscillate', 'Fai oscillare {device}'),
         icon: 'move-horizontal',
+        effect: { field: 'oscillating', value: true },
         args: { oscillating: true },
       },
       {
@@ -1007,6 +1039,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Stop oscillating', 'Oscillazione spenta'),
         phrase: t('Stop {device} oscillating', 'Ferma l’oscillazione di {device}'),
         icon: 'move-horizontal',
+        effect: { field: 'oscillating', value: false },
         args: { oscillating: false },
       },
     ],
@@ -1040,6 +1073,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Humidifier on', 'Umidificatore acceso'),
         phrase: t('Turn on {device}', 'Accendi {device}'),
         icon: 'power',
+        effect: { field: 'on', value: true },
         args: { on: true },
       },
       {
@@ -1048,6 +1082,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Humidifier off', 'Umidificatore spento'),
         phrase: t('Turn off {device}', 'Spegni {device}'),
         icon: 'power-off',
+        effect: { field: 'on', value: false },
         args: { on: false },
       },
       {
@@ -1059,6 +1094,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           'Imposta {device} al {humidity} di umidità',
         ),
         icon: 'droplets',
+        effect: { field: 'targetHumidity', fromArg: 'humidity' },
         openArgs: [
           {
             key: 'humidity',
@@ -1073,6 +1109,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set mode', 'Imposta la modalità'),
         phrase: t('Set {device} to {mode}', 'Imposta {device} su {mode}'),
         icon: 'list',
+        effect: { field: 'mode', fromArg: 'mode' },
         openArgs: [
           {
             key: 'mode',
@@ -1112,6 +1149,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Water heater off', 'Scaldacqua spento'),
         phrase: t('Turn off {device}', 'Spegni {device}'),
         icon: 'power-off',
+        effect: { field: 'operationMode', value: 'off' },
         args: { mode: 'off' },
       },
       {
@@ -1120,6 +1158,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set mode', 'Imposta la modalità'),
         phrase: t('Set {device} to {mode}', 'Imposta {device} su {mode}'),
         icon: 'list',
+        effect: { field: 'operationMode', fromArg: 'mode' },
         openArgs: [
           {
             key: 'mode',
@@ -1134,6 +1173,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Water heater away on', 'Scaldacqua in modalità assenza'),
         phrase: t('Put {device} in away mode', 'Metti {device} in modalità assenza'),
         icon: 'plane',
+        effect: { field: 'away', value: true },
         args: { on: true },
       },
       {
@@ -1142,6 +1182,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Water heater away off', 'Scaldacqua fuori dalla modalità assenza'),
         phrase: t('Take {device} out of away mode', 'Togli {device} dalla modalità assenza'),
         icon: 'house',
+        effect: { field: 'away', value: false },
         args: { on: false },
       },
       {
@@ -1150,6 +1191,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Set temperature', 'Imposta la temperatura'),
         phrase: t('Heat the water of {device} to {temp}', 'Scalda l’acqua di {device} a {temp}'),
         icon: 'thermometer',
+        effect: { field: 'targetTemp', fromArg: 'temp' },
         openArgs: [
           {
             key: 'temp',
@@ -1224,6 +1266,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Disarm', 'Disinserisci'),
         phrase: t('Disarm {device}', 'Disinserisci {device}'),
         icon: 'shield-off',
+        effect: { field: 'state', value: 'disarmed' },
         openArgs: [
           {
             key: 'code',
@@ -1239,6 +1282,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Arm home', 'Inserisci in casa'),
         phrase: t('Arm {device} for home', 'Inserisci {device} in modalità casa'),
         icon: 'house',
+        effect: { field: 'state', value: 'armed_home' },
         args: { mode: 'home' },
         openArgs: [
           {
@@ -1255,6 +1299,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Arm away', 'Inserisci fuori casa'),
         phrase: t('Arm {device} for away', 'Inserisci {device} in modalità fuori casa'),
         icon: 'shield-check',
+        effect: { field: 'state', value: 'armed_away' },
         args: { mode: 'away' },
         openArgs: [
           {
@@ -1271,6 +1316,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Arm night', 'Inserisci notte'),
         phrase: t('Arm {device} for the night', 'Inserisci {device} in modalità notte'),
         icon: 'moon',
+        effect: { field: 'state', value: 'armed_night' },
         args: { mode: 'night' },
         openArgs: [
           {
@@ -1287,6 +1333,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Arm vacation', 'Inserisci vacanza'),
         phrase: t('Arm {device} for vacation', 'Inserisci {device} in modalità vacanza'),
         icon: 'plane',
+        effect: { field: 'state', value: 'armed_vacation' },
         args: { mode: 'vacation' },
         openArgs: [
           {
@@ -1303,6 +1350,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Arm custom bypass', 'Inserisci con esclusioni'),
         phrase: t('Arm {device} with its custom bypass', 'Inserisci {device} con le zone escluse'),
         icon: 'shield-half',
+        effect: { field: 'state', value: 'armed_custom_bypass' },
         args: { mode: 'custom_bypass' },
         openArgs: [
           {
@@ -1421,6 +1469,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Motion trigger on', 'Attivazione al movimento attiva'),
         phrase: t('Let motion trigger {device}', 'Fai attivare {device} dal movimento'),
         icon: 'activity',
+        effect: { field: 'enabled', value: true },
         args: { enabled: true },
       },
       {
@@ -1429,6 +1478,7 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         label: t('Motion trigger off', 'Attivazione al movimento spenta'),
         phrase: t('Stop motion triggering {device}', 'Non far più attivare {device} dal movimento'),
         icon: 'activity',
+        effect: { field: 'enabled', value: false },
         args: { enabled: false },
       },
     ],

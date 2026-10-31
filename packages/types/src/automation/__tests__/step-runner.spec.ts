@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { type ActionVariable, resolveActionVariables } from '../action.js'
+import { ActionTargetResolver } from '../action-target.js'
 import type { ActionStep } from '../recipe.js'
 import {
   buildActionSteps,
@@ -8,6 +9,7 @@ import {
   type RunStepsOptions,
   runSteps,
 } from '../step-runner.js'
+import { fakeRegistry, recordingLogger } from './target-fixtures.js'
 
 function options(overrides: Partial<RunStepsOptions> = {}): RunStepsOptions {
   return {
@@ -24,6 +26,7 @@ function deps() {
   const calls: CapCall[] = []
   const slept: number[] = []
   const missing: string[] = []
+  const resolver = new ActionTargetResolver(fakeRegistry([]).directory, recordingLogger().logger)
   return {
     calls,
     slept,
@@ -39,6 +42,8 @@ function deps() {
       onMissingVar: (name: string) => {
         missing.push(name)
       },
+      resolveTarget: (...args: Parameters<ActionTargetResolver['resolve']>) =>
+        resolver.resolve(...args),
     },
   }
 }

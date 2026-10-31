@@ -37,7 +37,12 @@ import {
 import type { ReadingQuantity } from '../units/quantity.js'
 import { baseUnitForQuantity, unitsForQuantity } from '../units/quantity-units.js'
 import { z } from 'zod'
-import type { AutomationAction, AutomationCapStep, AutomationRecipe } from './recipe.js'
+import {
+  type AutomationAction,
+  type AutomationCapStep,
+  type AutomationRecipe,
+  normalizeCapStep,
+} from './recipe.js'
 import type { AutomationWhen, DeviceIsLeaf } from './when.js'
 
 /** What the boundary needs to know about caps. */
@@ -201,12 +206,17 @@ export function normalizeConditionUnits(
   }
 }
 
-function normalizeCapStep(
+function normalizeCapStepUnits(
   step: AutomationCapStep,
   resolver: UnitResolver,
   path: string,
 ): UnitsNormalized<AutomationCapStep> {
-  const deviceId = typeof step.deviceId === 'number' ? step.deviceId : undefined
+  const deviceId =
+    typeof step.deviceId === 'number'
+      ? step.deviceId
+      : step.target?.kind === 'devices' && step.target.ids.length === 1
+        ? step.target.ids[0]
+        : undefined
   const args: Record<string, unknown> = { ...step.args }
   const argUnits: Record<string, string> = { ...step.argUnits }
   const warnings: UnitWarning[] = []
@@ -269,8 +279,8 @@ export function normalizeActionUnits<A extends AutomationAction>(
       out.push(action)
       return
     }
-    const normalized = normalizeCapStep(action, resolver, `${path}.${i}`)
-    out.push(normalized.value)
+    const normalized = normalizeCapStepUnits(action, resolver, `${path}.${i}`)
+    out.push(normalizeCapStep(normalized.value))
     warnings.push(...normalized.warnings)
   })
   return { value: out, warnings }

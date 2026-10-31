@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A verdict tapped after the track is gone keeps the notified subject on the stored still; new "Wrong label, class OK" button on detection notifications
+- Notification sequences accept a device-domain target and are rewritten to the target shape once at start
 
 ## [1.2.654] - 2026-10-30
 

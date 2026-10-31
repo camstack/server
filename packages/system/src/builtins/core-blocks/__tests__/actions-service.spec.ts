@@ -1,11 +1,15 @@
 import {
   type ActionEntry,
+  type ActionStep,
   type ActionRunChanged,
   type CapCaller,
+  type DeviceDirectory,
+  DeviceType,
   createRecordsAccess,
   IDLE_ACTION_STATUS,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { ActionsService, type ActionSources } from '../actions-service.js'
 import { ActionsStore } from '../actions-store.js'
@@ -28,6 +32,16 @@ function addonEntry(id: string, overrides: Partial<ActionEntry> = {}): ActionEnt
   }
 }
 
+/** A registry that was never asked: a legacy `devices` step does not read it. */
+const NO_REGISTRY: DeviceDirectory = {
+  listDeviceIdsByCaps: async () => {
+    throw new Error('the registry must not be read by a devices target')
+  },
+  listDevices: async () => {
+    throw new Error('the registry must not be read by a devices target')
+  },
+}
+
 async function world(options?: {
   readonly addonActions?: readonly ActionEntry[]
   readonly invoke?: (call: {
@@ -37,6 +51,7 @@ async function world(options?: {
     args: Readonly<Record<string, unknown>>
   }) => Promise<void>
   readonly sourceRun?: () => Promise<void>
+  readonly directory?: DeviceDirectory
 }) {
   const w = makeRecordsWorld()
   await w.provider.init()
@@ -76,6 +91,7 @@ async function world(options?: {
     store,
     ledger,
     sources,
+    directory: options?.directory ?? NO_REGISTRY,
     invokeCap: async (call) => {
       calls.push(call)
       await options?.invoke?.(call)
@@ -183,8 +199,13 @@ describe('actions — internal actions', () => {
   })
 })
 
-const FEED = (args: Record<string, unknown>, deviceId = 41) =>
-  ({ kind: 'cap', deviceId, cap: 'pet-feeder', method: 'feed', args }) as const
+const FEED = (args: Record<string, unknown>, deviceId = 41): ActionStep => ({
+  kind: 'cap',
+  target: { kind: 'devices', ids: [deviceId] },
+  cap: 'pet-feeder',
+  method: 'feed',
+  args,
+})
 
 describe('actions — a number tied to a quantity (D972)', () => {
   it('converts a step arg entered in kilograms to the grams the method takes, keeping the picked unit', async () => {
@@ -411,5 +432,97 @@ describe('runs ledger', () => {
     expect((await w.ledger.get(actionOwner(action.id))).traces).toHaveLength(1)
     await w.service.delete({ actionId: action.id })
     expect((await w.ledger.get(actionOwner(action.id))).traces).toEqual([])
+  })
+})
+
+describe('actions — D983 targets', () => {
+  const DOMAIN_STEP = {
+    kind: 'cap',
+    actionId: 'cover.open',
+    target: { kind: 'domain', roomId: 'Kitchen' },
+    cap: 'cover',
+    method: 'open',
+  } as const
+
+  function coverRegistry(seed: ReadonlyArray<{ id: number; location: string | null }>): {
+    directory: DeviceDirectory
+    add(id: number, location: string | null): void
+  } {
+    const devices = [...seed]
+    return {
+      add: (id, location) => void devices.push({ id, location }),
+      directory: {
+        listDeviceIdsByCaps: async (caps) =>
+          caps.includes('cover') ? devices.map((d) => d.id) : [],
+        listDevices: async (ids) =>
+          devices
+            .filter((d) => ids.includes(d.id))
+            .map((d) => ({
+              id: d.id,
+              type: DeviceType.Generic,
+              location: d.location,
+              disabled: false,
+            })),
+      },
+    }
+  }
+
+  it('runs a domain step on every device in the room, and on one added later after invalidation', async () => {
+    const reg = coverRegistry([
+      { id: 1, location: 'Kitchen' },
+      { id: 2, location: 'Garage' },
+    ])
+    const w = await world({ directory: reg.directory })
+    const { action } = await w.service.create({ action: { name: 'Open', steps: [DOMAIN_STEP] } })
+    await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(w.calls.map((c) => c.deviceId)).toEqual([1])
+
+    reg.add(3, 'kitchen')
+    w.service.invalidateTargets()
+    w.calls.length = 0
+    await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(w.calls.map((c) => c.deviceId).sort()).toEqual([1, 3])
+  })
+
+  it('an empty domain is logged with the action id and traced as empty, never silent', async () => {
+    const w = await world({ directory: coverRegistry([{ id: 2, location: 'Garage' }]).directory })
+    const { action } = await w.service.create({ action: { name: 'Open', steps: [DOMAIN_STEP] } })
+    await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(w.calls).toEqual([])
+    const line = w.log.lines.find((l) => l.message.includes('resolved to no devices'))
+    expect(line?.extras?.meta).toMatchObject({ actionId: 'cover.open', owner: action.id })
+    const { traces } = await w.service.getTraces({ actionId: action.id })
+    expect(traces[0]?.steps[0]?.outcome).toBe('empty')
+  })
+
+  it('a stored legacy row is READ as the new shape and rewritten once by the migration', async () => {
+    const w = await world()
+    const kind = w.records.kind(coreBlocksRecordKinds.actions)
+    await kind.put({
+      id: 'legacy-1',
+      data: {
+        name: 'Legacy',
+        steps: [
+          { kind: 'cap', deviceId: [7, 9], cap: 'siren', method: 'on', args: { code: 'MARK-42' } },
+        ],
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    })
+    const read = await w.store.get('internal:legacy-1')
+    expect(read?.steps?.[0]).toMatchObject({
+      target: { kind: 'devices', ids: [7, 9] },
+      args: { code: 'MARK-42' },
+    })
+    expect(read?.steps?.[0]).not.toHaveProperty('deviceId')
+
+    expect(await w.service.migrateTargets()).toBe(1)
+    const stored = await kind.get('legacy-1')
+    expect(stored?.data.steps[0]).toMatchObject({
+      target: { kind: 'devices', ids: [7, 9] },
+      args: { code: 'MARK-42' },
+    })
+    expect(stored?.data.steps[0]).not.toHaveProperty('deviceId')
+    expect(await w.service.migrateTargets()).toBe(0)
   })
 })

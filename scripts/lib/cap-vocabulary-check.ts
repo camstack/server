@@ -261,6 +261,42 @@ function checkNumberOfferUnit(
   }
 }
 
+/** D983: an action's effect names a real status field and a value it can hold. */
+function checkEffect(
+  where: string,
+  def: CapabilityDefinition,
+  action: LooseVocabAction,
+  inputShape: Readonly<Record<string, z.ZodType>>,
+  problems: string[],
+): void {
+  const effect = action.effect
+  if (effect === undefined) return
+  const status = statusShape(def)
+  const field = status?.[effect.field]
+  if (field === undefined) {
+    problems.push(`${where}: effect field '${effect.field}' is not a status field of ${def.name}`)
+    return
+  }
+  if ('value' in effect) {
+    if (!field.safeParse(effect.value).success) {
+      problems.push(
+        `${where}: effect value ${JSON.stringify(effect.value)} is refused by status field '${effect.field}'`,
+      )
+    }
+    return
+  }
+  const arg = inputShape[effect.fromArg]
+  if (arg === undefined) {
+    problems.push(`${where}: effect reads arg '${effect.fromArg}', which the method does not take`)
+    return
+  }
+  if (scalarKind(arg) !== scalarKind(field)) {
+    problems.push(
+      `${where}: effect copies arg '${effect.fromArg}' (${scalarKind(arg)}) into status field '${effect.field}' (${scalarKind(field)})`,
+    )
+  }
+}
+
 function checkAction(
   def: CapabilityDefinition,
   action: LooseVocabAction,
@@ -289,6 +325,7 @@ function checkAction(
       )
     }
   }
+  checkEffect(where, def, action, shape, problems)
   const open = action.openArgs ?? []
   for (const arg of open) {
     const field = shape[arg.key]
