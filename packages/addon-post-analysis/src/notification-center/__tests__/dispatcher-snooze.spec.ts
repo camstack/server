@@ -83,6 +83,9 @@ function makeHarness(opts: {
     },
   ]
   const dispatcher = new NcDispatcher({
+    // The bounded still poll (NC_STILL_WAIT_MS) paces itself through this seam; a real
+    // 3 s per text-only delivery was this file's whole runtime.
+    sleep: async () => {},
     logger: makeSilentLogger(),
     listTargets: async () => targets,
     send: async (input) => {
@@ -161,6 +164,9 @@ describe('NcDispatcher — the snooze gate', () => {
 
   it('an unwired gate changes nothing (an older wiring simply has no snoozes)', async () => {
     const dispatcher = new NcDispatcher({
+      // The bounded still poll (NC_STILL_WAIT_MS) paces itself through this seam; a real
+      // 3 s per text-only delivery was this file's whole runtime.
+      sleep: async () => {},
       logger: makeSilentLogger(),
       listTargets: async () => [
         { id: 'tgt-1', addonId: 'notifiers', name: 'phone', kind: 'ntfy', enabled: true },
@@ -268,6 +274,9 @@ describe('NcDispatcher — a multi-class grouped row at the snooze gate', () => 
     const sends: NcSendInput[] = []
     const gateCalls: NcSnoozeGateInput[] = []
     const dispatcher = new NcDispatcher({
+      // The bounded still poll (NC_STILL_WAIT_MS) paces itself through this seam; a real
+      // 3 s per text-only delivery was this file's whole runtime.
+      sleep: async () => {},
       logger: makeSilentLogger(),
       listTargets: async () => [
         {

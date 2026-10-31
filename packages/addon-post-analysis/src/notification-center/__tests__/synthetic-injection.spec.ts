@@ -141,6 +141,9 @@ function makeHarness(now: () => number = () => NOW): Harness {
     listUsers: async () => [],
     getDeviceRoute: async () => null,
     dispatcher: {
+      // The bounded still poll (NC_STILL_WAIT_MS) paces itself through this seam; a real
+      // 3 s per text-only delivery was this file's whole runtime.
+      sleep: async () => {},
       listTargets: async () => targets,
       send: async (input) => {
         sends.push(input)
