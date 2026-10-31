@@ -51,7 +51,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useAddonSettingsGetGlobalSettings: () => ({ data: schema }),
+    useAddonSettingsGetIntegrationFormSchema: () => ({ data: schema }),
     useDeviceManagerAdoptDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerDiscoverDevices: () => ({
       mutate: vi.fn(),

@@ -35,7 +35,7 @@ vi.mock('@camstack/ui-library', async () => {
       isPending: false,
       isError: false,
     }),
-    useAddonSettingsGetGlobalSettings: () => ({
+    useAddonSettingsGetIntegrationFormSchema: () => ({
       data: {
         sections: [
           {

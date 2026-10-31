@@ -35,7 +35,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useIntegrationsGetAvailableTypes: () => ({ data: providers.list, isLoading: false }),
   useAddonsList: () => ({ data: [] }),
-  useAddonSettingsGetGlobalSettings: () => ({ data: { sections: [] } }),
+  useAddonSettingsGetIntegrationFormSchema: () => ({ data: { sections: [] } }),
   useDeviceManagerAdoptDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeviceManagerDiscoverDevices: () => ({ mutate: vi.fn(), isPending: false, data: undefined }),
   useDeviceManagerDiscoveryProviders: () => ({ data: { providers: [] } }),
