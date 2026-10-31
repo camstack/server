@@ -232,6 +232,7 @@ describe('the enumeration covers every non-admin read that can leak a secret', (
     expect([...NON_ADMIN_CONFIG_REDACTED_METHODS.keys()].sort()).toEqual([
       'addonSettings.getDeviceSettings',
       'addonSettings.getGlobalSettings',
+      'addonSettings.getIntegrationFormSchema',
       'addonSettings.getIntegrationSettings',
       'cameraStreams.getCameraStreams',
       'cameraStreams.getProfileRtspEntries',
