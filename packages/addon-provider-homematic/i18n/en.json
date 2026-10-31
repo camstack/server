@@ -1,5 +1,6 @@
 {
   "connection.s_connection.title": "CCU connection",
+  "connection.s_connection.credentialsNotice.label": "Device and room names come from the CCU WebUI. Enter a WebUI user (Admin by default). If the WebUI has no login, leave the password empty. Without a user, devices are listed by their address.",
   "connection.s_connection.__homematic-discovered.label": "CCU",
   "connection.s_connection.host.label": "Host / IP",
   "connection.s_connection.host.description": "Filled when one CCU is found. Type the address if it is not.",

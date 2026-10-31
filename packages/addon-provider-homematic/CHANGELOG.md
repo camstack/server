@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The CCU connection form explains why WebUI credentials are needed and prefills the username with Admin.
+
 ## [1.2.172] - 2026-10-31
 
 ### Changed

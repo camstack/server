@@ -30,7 +30,7 @@ export const homematicConfigSchema = z.object({
   enableBidcosWired: z.boolean().default(false).describe('Enable BidCos-Wired (HM-Wired)'),
   username: z
     .string()
-    .default('')
+    .default('Admin')
     .describe('WebUI username (optional — enables names / rooms / sysvars)'),
   password: z.string().default('').describe('WebUI password (optional)').meta({ secret: true }),
   callbackHost: z
@@ -154,6 +154,10 @@ export type HomematicGatewayDeviceConfig = z.infer<typeof homematicGatewayDevice
 
 // ---------------------------------------------------------------------------
 
+/** Why the form asks for credentials; shown first (translated through its `labelKey`). */
+const CREDENTIALS_NOTICE =
+  'Device and room names come from the CCU WebUI. Enter a WebUI user (Admin by default). If the WebUI has no login, leave the password empty. Without a user, devices are listed by their address.'
+
 /**
  * The integration form: a discovered-CCU picker (filled by the LAN scan), the
  * host, the interfaces, the event callback, the WebUI credentials (the password
@@ -168,6 +172,13 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         titleKey: 'provider-homematic:connection.s_connection.title',
         columns: 1,
         fields: [
+          {
+            type: 'info',
+            key: 'credentialsNotice',
+            label: CREDENTIALS_NOTICE,
+            labelKey: 'provider-homematic:connection.s_connection.credentialsNotice.label',
+            content: '',
+          },
           {
             type: 'addon-action-select',
             addonId: 'provider-homematic',
@@ -271,6 +282,7 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             key: 'username',
             label: 'Username',
             labelKey: 'provider-homematic:connection.s_credentials.username.label',
+            default: 'Admin',
           },
           {
             type: 'password',

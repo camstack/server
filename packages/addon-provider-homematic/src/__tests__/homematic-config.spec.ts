@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildConnectionFormSchema,
+  homematicConfigSchema,
   connectionFromSettings,
   sameConnection,
   toHomematicOptions,
@@ -56,10 +57,21 @@ describe('sameConnection', () => {
 })
 
 describe('buildConnectionFormSchema', () => {
-  it('offers the LAN scan picker first and keeps the password a keychain password field', () => {
+  it('opens with the credentials notice, then the LAN scan picker; the password stays a keychain field', () => {
     const fields = buildConnectionFormSchema().sections.flatMap((s) => s.fields)
-    expect(fields[0]?.type).toBe('addon-action-select')
+    expect(fields[0]?.type).toBe('info')
+    expect(fields[0]?.key).toBe('credentialsNotice')
+    expect(fields[1]?.type).toBe('addon-action-select')
     expect(fields.find((f) => f.key === 'password')?.type).toBe('password')
+  })
+
+  it('starts a new integration with the Admin WebUI username, never overriding a stored one', () => {
+    const fields = buildConnectionFormSchema().sections.flatMap((s) => s.fields)
+    const username = fields.find((f) => f.key === 'username')
+    expect(username && 'default' in username ? username.default : undefined).toBe('Admin')
+    expect(homematicConfigSchema.parse({ host: 'h' }).username).toBe('Admin')
+    expect(homematicConfigSchema.parse({ host: 'h', username: 'bob' }).username).toBe('bob')
+    expect(homematicConfigSchema.parse({ host: 'h', username: '' }).username).toBe('')
   })
 })
 

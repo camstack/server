@@ -224,12 +224,6 @@ export function buildHomematicConnectionTestProvider(
       if (connection === null) {
         return { outcome: 'rejected', error: 'Some of the connection settings are not valid.' }
       }
-      if (connection.username.length > 0 !== connection.password.length > 0) {
-        return {
-          outcome: 'rejected',
-          error: 'Enter both the WebUI username and password, or neither.',
-        }
-      }
       const interfaces = enabledInterfaces(connection)
       if (interfaces.length === 0) {
         return { outcome: 'rejected', error: 'Enable at least one interface.' }

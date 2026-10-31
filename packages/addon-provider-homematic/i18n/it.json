@@ -1,5 +1,6 @@
 {
   "connection.s_connection.title": "Connessione alla CCU",
+  "connection.s_connection.credentialsNotice.label": "I nomi di dispositivi e stanze provengono dalla WebUI della CCU. Inserisci un utente della WebUI (Admin per impostazione predefinita). Se la WebUI non richiede login, lascia vuota la password. Senza un utente, i dispositivi vengono elencati per indirizzo.",
   "connection.s_connection.__homematic-discovered.label": "CCU",
   "connection.s_connection.host.label": "Host / IP",
   "connection.s_connection.host.description": "Compilato quando viene trovata una CCU. Digita l'indirizzo se non viene trovata.",

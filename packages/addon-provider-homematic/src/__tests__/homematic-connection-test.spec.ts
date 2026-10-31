@@ -34,16 +34,13 @@ describe('testSettings outcomes', () => {
     expect(probe).not.toHaveBeenCalled()
   })
 
-  it('rejects a username without a password (and the reverse): the library ignores half a login', async () => {
-    const probe = vi.fn()
+  it('probes with a username and an empty password: a WebUI without login has users with no password', async () => {
+    const probe = vi.fn().mockResolvedValue(OK)
     const { run } = provider(probe)
     expect((await run.testSettings({ settings: { host: 'h', username: 'admin' } })).outcome).toBe(
-      'rejected',
+      'validated',
     )
-    expect((await run.testSettings({ settings: { host: 'h', password: SECRET } })).outcome).toBe(
-      'rejected',
-    )
-    expect(probe).not.toHaveBeenCalled()
+    expect(probe).toHaveBeenCalledWith(expect.objectContaining({ username: 'admin', password: '' }))
   })
 
   it('rejects a form with no interface enabled', async () => {
@@ -82,7 +79,7 @@ describe('testSettings outcomes', () => {
     const { run } = provider(
       vi.fn().mockResolvedValue({ interfaces: ['HmIP-RF'], namesUnlocked: false }),
     )
-    const out = await run.testSettings({ settings: { host: 'h' } })
+    const out = await run.testSettings({ settings: { host: 'h', username: '' } })
     expect(out.outcome).toBe('validated')
     if (out.outcome === 'validated') expect(out.detail).toContain('no WebUI credentials')
   })
