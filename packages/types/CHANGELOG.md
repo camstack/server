@@ -7,14 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Added the migrations capability and the migration model (id, order, plan edits, ledger) behind boot-time migrations
+
 ## [1.2.459] - 2026-10-31
 
 ### Added
 
 - A device can be powered by a smart switch linked in Customize, with manual power on, power off and force restart (switch off, wait, switch on).
-### Changed
-
-- Added the migrations capability and the migration model (id, order, plan edits, ledger) behind boot-time migrations
 
 ## [1.2.458] - 2026-10-31
 
