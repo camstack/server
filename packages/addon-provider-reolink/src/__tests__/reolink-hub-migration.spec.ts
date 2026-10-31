@@ -38,6 +38,7 @@ const HUB: SavedDevice = {
   config: {
     host: '192.168.1.10',
     port: 9000,
+    rtspPort: 8554,
     username: 'admin',
     password: 'hub-secret',
     transport: 'tcp',
@@ -129,6 +130,7 @@ describe('planHubMigration', () => {
       settings: {
         host: '192.168.1.10',
         port: 9000,
+        rtspPort: 8554,
         username: 'admin',
         password: 'hub-secret',
       },

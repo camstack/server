@@ -12,6 +12,7 @@ import type { HubChannel } from '../reolink-hub-session.js'
 const CONNECTION: ReolinkHubConnection = {
   host: '10.0.0.5',
   port: 9000,
+  rtspPort: 554,
   username: 'admin',
   password: 'pw',
   transport: 'tcp',

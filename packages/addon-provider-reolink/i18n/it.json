@@ -221,5 +221,6 @@
   "connection.s_hub-debug.debugGeneral.label": "Log di debug generali",
   "connection.s_hub-debug.debugSocketLogs.label": "Categorie di trace del socket",
   "connection.s_hub-debug.debugSocketLogs.description": "Ogni area aumenta il volume dei log.",
-  "connection.s_hub-debug.debugSocketLogs.o_traceEvents.label": "Eventi (cmd 33 — push AlarmEventList)"
+  "connection.s_hub-debug.debugSocketLogs.o_traceEvents.label": "Eventi (cmd 33 — push AlarmEventList)",
+  "connection.s_connection.rtspPort.label": "Porta RTSP"
 }

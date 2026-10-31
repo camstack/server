@@ -5,6 +5,9 @@ import { ReolinkSocketDebugFlagSchema } from './schema.js'
 /** Baichuan control port a Reolink NVR / Home Hub listens on. */
 export const REOLINK_HUB_DEFAULT_PORT = 9000
 
+/** RTSP port of the hub's relay — never the Baichuan port. */
+export const REOLINK_HUB_DEFAULT_RTSP_PORT = 554
+
 /** Settings key that names the section holding the hub connection form. */
 export const HUB_CONNECTION_SECTION_ID = 'connection'
 export const HUB_DEBUG_SECTION_ID = 'hub-debug'
@@ -23,6 +26,11 @@ export const reolinkHubConnectionSchema = z.object({
   port: z.preprocess(
     blankToUndefined,
     z.number().int().min(1).max(65535).default(REOLINK_HUB_DEFAULT_PORT),
+  ),
+  /** The RTSP relay port the cameras dial for their streams (not the Baichuan `port`). */
+  rtspPort: z.preprocess(
+    blankToUndefined,
+    z.number().int().min(1).max(65535).default(REOLINK_HUB_DEFAULT_RTSP_PORT),
   ),
   username: z.preprocess(blankToUndefined, z.string().trim().min(1).default('admin')),
   password: z.string().min(1).describe('NVR / Home Hub password').meta({ secret: true }),
@@ -66,6 +74,7 @@ export function sameHubConnection(a: ReolinkHubConnection, b: ReolinkHubConnecti
   return (
     a.host === b.host &&
     a.port === b.port &&
+    a.rtspPort === b.rtspPort &&
     a.username === b.username &&
     a.password === b.password &&
     a.transport === b.transport &&
@@ -104,6 +113,16 @@ export function buildHubConnectionSections(): ConfigUISchema {
             label: 'Port',
             labelKey: 'provider-reolink:connection.s_connection.port.label',
             default: REOLINK_HUB_DEFAULT_PORT,
+            min: 1,
+            max: 65535,
+            step: 1,
+          },
+          {
+            type: 'number',
+            key: 'rtspPort',
+            label: 'RTSP port',
+            labelKey: 'provider-reolink:connection.s_connection.rtspPort.label',
+            default: REOLINK_HUB_DEFAULT_RTSP_PORT,
             min: 1,
             max: 65535,
             step: 1,

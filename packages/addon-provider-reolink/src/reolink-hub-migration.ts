@@ -65,6 +65,10 @@ export interface HubMigrationPlan {
 /** The marker an integration carries so a re-run reuses it instead of minting a second one. */
 export const MIGRATED_FROM_HUB_KEY = 'migratedFromHubDeviceId'
 
+function positivePort(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : undefined
+}
+
 const CONNECTION_FIELDS = ['host', 'port', 'username', 'transport'] as const
 
 function str(value: unknown): string | undefined {
@@ -119,6 +123,7 @@ async function migrateOneHub(
         settings: {
           host: connection.host,
           port: connection.port,
+          rtspPort: positivePort(hub.config['rtspPort']) ?? connection.rtspPort,
           username: connection.username,
           password: connection.password,
           transport: connection.transport,

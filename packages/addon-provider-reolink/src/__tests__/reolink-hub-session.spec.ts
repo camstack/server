@@ -21,6 +21,7 @@ import {
 const CONNECTION: ReolinkHubConnection = {
   host: '192.168.1.10',
   port: 9000,
+  rtspPort: 554,
   username: 'admin',
   password: 'hub-secret',
   transport: 'tcp',
@@ -258,14 +259,21 @@ describe('ReolinkHubSession connection', () => {
     expect(session.connection.password).toBe('rotated')
   })
 
-  it('publishes the relay endpoint of ITS connection (port else 554)', () => {
+  it('the relay endpoint carries the RTSP port, never the Baichuan one', () => {
+    const fake = fakeApi()
+    const { session } = makeSession(fake.api, () => [])
+    expect(session.relayEndpoint().port).toBe(554)
+    expect(session.relayEndpoint().port).not.toBe(CONNECTION.port)
+  })
+
+  it('publishes the relay endpoint of ITS connection (rtsp port)', () => {
     const fake = fakeApi()
     const { session } = makeSession(fake.api, () => [])
     expect(session.relayEndpoint()).toEqual({
       host: '192.168.1.10',
       username: 'admin',
       password: 'hub-secret',
-      port: 9000,
+      port: 554,
     })
   })
 })

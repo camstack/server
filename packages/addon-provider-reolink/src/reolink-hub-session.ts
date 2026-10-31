@@ -211,8 +211,8 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
   }
 
   /**
-   * What a child dials for the hub's RTSP relay. The port is the connection's, else 554 —
-   * carried over verbatim from the hub device; it is one of the things to check live.
+   * What a child dials for the hub's RTSP relay. The port is the connection's RTSP port
+   * (default 554) — never the Baichuan port.
    */
   relayEndpoint(): HubRelayEndpoint {
     const c = this.#connection
@@ -220,7 +220,7 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
       host: c.host,
       username: c.username,
       password: c.password,
-      port: c.port > 0 ? c.port : 554,
+      port: c.rtspPort,
     }
   }
 

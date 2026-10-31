@@ -63,6 +63,10 @@ nobody offline.
   the Hub is tombstoned only when the DB shows no child under it. A hub with a
   locked or empty password is left untouched. Idempotent: the integration records
   `migratedFromHubDeviceId`.
+- The relay port is the connection's `rtspPort` (default 554), never the Baichuan
+  `port`; a migrated hub carries its `rtspPort` if it had one, else 554.
+- Changes to an integration's connection settings apply at the next reconcile (the
+  60 s pass or an integration lifecycle event); there is no settings-changed event.
 - A hub-integration form also shows the addon's global sections (email, webhook,
   clips) — the account wizard renders the whole `globalSettingsSchema`.
 
