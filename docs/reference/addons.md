@@ -60,13 +60,13 @@ this column exists to stop.
 | `loki-logging` | `@camstack/system` | system | hub-main | `any-node` | — | — | `log-destination` |
 | `matter-broker` | `@camstack/addon-matter-broker` | providers | own runner | `hub-only` | — | unique | `broker` `device-adoption` `device-provider` |
 | `metrics-native` | `@camstack/system` | system | hub-main | `any-node` | — | — | `metrics-provider` |
-| `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `custom-model-registry` `model-convert` |
+| `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `custom-model-registry` `model-convert` `node-removal-hook` |
 | `motion-wasm` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |
 | `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `mqtt-broker` |
 | `notifiers` | `@camstack/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `notification-output` |
 | `osd-manager` | `@camstack/addon-osd-manager` | system | own runner | `hub-only` | `integrations` | unique | `addon-pages-source` `osd-manager` |
 | `pipeline-analytics` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |
-| `pipeline-orchestrator` | `@camstack/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `camera-pipeline-config` `display-palette` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
+| `pipeline-orchestrator` | `@camstack/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `camera-pipeline-config` `display-palette` `node-removal-hook` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
 | `pipeline-runner` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `failure-contribution` `load-contribution` `pipeline-runner` |
 | `platform-probe` | `@camstack/system` | system | hub-main | `any-node` | — | — | `platform-probe` |
 | `provider-amcrest` | `@camstack/addon-provider-amcrest` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `image-settings` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |

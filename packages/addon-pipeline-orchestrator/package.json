@@ -64,6 +64,9 @@
           },
           {
             "name": "display-palette"
+          },
+          {
+            "name": "node-removal-hook"
           }
         ],
         "passive": true,

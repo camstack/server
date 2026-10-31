@@ -23,6 +23,7 @@ import {
   nodePin,
   CustomModelDescriptorSchema,
   customModelRegistryCapability,
+  nodeRemovalHookCapability,
   EventCategory,
   type ModelFormat,
   modelConvertCapability,
@@ -49,6 +50,7 @@ import {
   type RenameResult,
   type UpsertNameOrigin,
 } from './model-registry.js'
+import { createNodeRemovalHook } from './node-removal.js'
 import { optionalImportName } from './display-name.js'
 import {
   buildPlusCatalogCatalogDescriptor,
@@ -353,6 +355,15 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
         importModelBundle: async (input) => this.importModelBundle_(input),
       }
       providers.push({ capability: customModelRegistryCapability, provider: registryProvider })
+      // A forgotten node's model files are gone with it (#265). Hub only: the
+      // availability map lives where the registry does.
+      providers.push({
+        capability: nodeRemovalHookCapability,
+        provider: createNodeRemovalHook({
+          availability: () => this.availability_,
+          logger: this.ctx.logger.child('node-removal'),
+        }),
+      })
     }
 
     return {

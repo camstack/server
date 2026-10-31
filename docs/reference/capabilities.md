@@ -183,7 +183,7 @@ Singleton or collection providers, addressed without a device.
 | `network-access` | 5 | — | — | — | — | `cloudflare-tunnel` `tailscale-client` `tailscale-ingress` |
 | `network-quality` | 3 | — | — | — | — | — |
 | `node-certificates` | 8 | — | — | — | ✓ | — |
-| `node-removal-hook` | 1 | — | — | — | ✓ | `ai` |
+| `node-removal-hook` | 1 | — | — | — | ✓ | `ai` `model-studio` `pipeline-orchestrator` |
 | `nodes` | 14 | — | — | — | — | — |
 | `notification-output` | 10 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
 | `notification-rules` | 32 | — | — | — | — | `pipeline-analytics` |

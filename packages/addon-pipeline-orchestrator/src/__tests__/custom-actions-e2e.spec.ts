@@ -39,7 +39,8 @@ describe('PipelineOrchestratorAddon — custom actions envelope', () => {
     //   - addon-widgets-source (dashboard widgets)
     //   - viewer-ui (serves the staged viewer web SPA)
     //   - display-palette (cluster colour table, D940)
-    expect(envelope?.providers).toHaveLength(7)
+    //   - node-removal-hook (a forgotten node's pipeline data, #265)
+    expect(envelope?.providers).toHaveLength(8)
     expect(envelope?.providers?.map((p) => p.capability.name)).toEqual(
       expect.arrayContaining([
         'pipeline-orchestrator',
@@ -49,6 +50,7 @@ describe('PipelineOrchestratorAddon — custom actions envelope', () => {
         'addon-widgets-source',
         'viewer-ui',
         'display-palette',
+        'node-removal-hook',
       ]),
     )
     expect(envelope?.customActions).toBe(pipelineOrchestratorActions)

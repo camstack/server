@@ -114,3 +114,18 @@ describe('PipelineSettingsStore — agent-settings write atomicity', () => {
     expect(Object.keys(all)).toEqual(['node-a'])
   })
 })
+
+describe('PipelineSettingsStore — removeCapabilityBindings (#265)', () => {
+  it('drops one node and keeps the others; a second call reports nothing removed', async () => {
+    const { store } = makeStoreHarness()
+    await store.setCapabilityBinding('node-a', 'detection-pipeline', 'addon-x')
+    await store.setCapabilityBinding('node-b', 'detection-pipeline', 'addon-y')
+
+    expect(await store.removeCapabilityBindings('node-a')).toBe(true)
+    expect(await store.getCapabilityBindings('node-a')).toEqual({})
+    expect(await store.getCapabilityBindings('node-b')).toEqual({
+      'detection-pipeline': 'addon-y',
+    })
+    expect(await store.removeCapabilityBindings('node-a')).toBe(false)
+  })
+})

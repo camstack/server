@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Forgetting a node now removes its entries from the model Library 'On nodes' list
+
 ## [1.1.328] - 2026-10-30
 
 ### Changed

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Serves viewer 1.0.671 (hold an event to download its clip, snapshot or keyframe).
+- Forgetting a node now also removes its per-node pipeline settings and capability bindings and resets camera pins that named it to auto
 
 ## [1.2.642] - 2026-10-31
 

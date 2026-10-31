@@ -89,10 +89,12 @@ import type {
   RunnerCameraConfig,
   SetCameraSensorsInput,
   Unsubscribe,
+  DurableState,
 } from '@camstack/types'
 import {
   assignNodeColorId,
   addonWidgetsSourceCapability,
+  nodeRemovalHookCapability,
   AUTO_SHARE_HEADROOM,
   BaseAddon,
   cameraPipelineConfigCapability,
@@ -224,7 +226,9 @@ import { EffectiveSharesService } from './load-balancing/effective-shares-servic
 import {
   AutoBenchmarkAttemptsSchema,
   type AgentSettingsMapBlob,
+  type AutoBenchmarkAttemptsBlob,
 } from './orchestrator-store-schemas.js'
+import { createNodeRemovalHook, type NodeRemovalDeps } from './node-removal.js'
 import {
   probedDeviceSignature,
   shareTopologySignature,
@@ -752,6 +756,11 @@ export default class PipelineOrchestratorAddon
         { capability: zonesCapability, provider: this.zonesProvider },
         { capability: zoneRulesCapability, provider: this.zoneRulesProvider },
         { capability: addonWidgetsSourceCapability, provider: widgetsProvider },
+        // A forgotten node's pipeline data is removed / its camera pins re-pointed (#265).
+        {
+          capability: nodeRemovalHookCapability,
+          provider: createNodeRemovalHook(this.nodeRemovalDeps()),
+        },
         // Serve the CamStack viewer web SPA (dist staged into assets/viewer by
         // the viewer repo's copy-dist-to-orchestrator.js). The hub's main.ts
         // mounts it at /viewer/camstack; it 404s cleanly when nothing is staged.
@@ -2723,6 +2732,46 @@ export default class PipelineOrchestratorAddon
     this.startAutoBenchmark(store)
   }
 
+  private autoBenchmarkAttemptsHandle: DurableState<AutoBenchmarkAttemptsBlob> | null = null
+
+  /** The retry ledger's durable handle — one per addon, shared by the scheduler and the node-removal hook. */
+  private autoBenchmarkAttemptsState(): DurableState<AutoBenchmarkAttemptsBlob> {
+    this.autoBenchmarkAttemptsHandle ??= this.state(
+      'autoBenchmarkAttempts',
+      AutoBenchmarkAttemptsSchema,
+      {},
+    )
+    return this.autoBenchmarkAttemptsHandle
+  }
+
+  /** The node-removal hook's deps over this addon's stores (#265). */
+  private nodeRemovalDeps(): NodeRemovalDeps {
+    const settings = this.ctx.settings
+    if (settings === undefined) throw new Error('pipeline-orchestrator: ctx.settings is missing')
+    return {
+      removeAgentSettings: async (nodeId) =>
+        (await this.removeAgentSettings({ agentNodeId: nodeId })).removed,
+      removeCapabilityBindings: (nodeId) => this.settingsStore!.removeCapabilityBindings(nodeId),
+      removeAutoBenchmarkAttempts: async (nodeId) => {
+        let removed = false
+        await this.autoBenchmarkAttemptsState().update((prev) => {
+          if (!(nodeId in prev)) return prev
+          const { [nodeId]: _drop, ...rest } = prev
+          removed = true
+          return rest
+        })
+        return removed
+      },
+      listCameraDeviceIds: async () =>
+        (
+          await this.ctx.api.deviceManager.listAll.query({ projection: 'slim', isCamera: true })
+        ).map((device) => device.id),
+      readDeviceStore: (deviceId) => settings.readDeviceStore(deviceId),
+      writeDeviceStore: (deviceId, patch) => settings.writeDeviceStore(deviceId, patch),
+      logger: this.ctx.logger.child('node-removal'),
+    }
+  }
+
   /**
    * Wire the automatic benchmark: it reads the live device sets already
    * probed (no network call of its own), and starts a device-phase run through
@@ -2732,7 +2781,7 @@ export default class PipelineOrchestratorAddon
   private startAutoBenchmark(store: NodeBenchmarkStore): void {
     this.autoBenchmark?.stop()
     // The retry ledger, in the addon's own settings store (no table of its own).
-    const attempts = this.state('autoBenchmarkAttempts', AutoBenchmarkAttemptsSchema, {})
+    const attempts = this.autoBenchmarkAttemptsState()
     this.autoBenchmark = new AutoBenchmarkScheduler({
       logger: this.ctx.logger,
       readNodes: async () => {

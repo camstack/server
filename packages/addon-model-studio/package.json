@@ -54,6 +54,9 @@
             "name": "model-convert"
           },
           {
+            "name": "node-removal-hook"
+          },
+          {
             "name": "addon-pages-source"
           }
         ],

@@ -270,6 +270,22 @@ export class PipelineSettingsStore {
     return out
   }
 
+  /**
+   * Drop one node's capability bindings. `false` when it had none. Read-modify-
+   * write over the whole blob, so a concurrent binding for another node is kept.
+   * A failed read propagates: an unanswered read never counts as "nothing there".
+   */
+  async removeCapabilityBindings(nodeId: string): Promise<boolean> {
+    let removed = false
+    await this.nodeBindingsState.update((prev) => {
+      if (!(nodeId in prev)) return prev
+      const { [nodeId]: _drop, ...rest } = prev
+      removed = true
+      return rest
+    })
+    return removed
+  }
+
   /** Read-modify-write the WHOLE `nodeBindings` blob so a concurrent binding for another node/cap can't be dropped. */
   async setCapabilityBinding(nodeId: string, capName: string, addonId: string): Promise<void> {
     await this.nodeBindingsState.update((prev) => {
@@ -886,16 +902,19 @@ export class PipelineSettingsStore {
     // the node it may run on has a build (D650) → dropped and reported here,
     // naming what was asked: the elected device and the jump roster.
     if (skipped.length > 0) {
-      this.deps.logger.warn(`pipeline steps gated on but not provisioned on this node — skipped (node ${agentNodeId}, device ${deviceId})`, {
-        tags: { deviceId, nodeId: agentNodeId },
-        meta: {
-          skipped: skipped.map((s) => `${s.addonId}:${s.reason}`).join(','),
-          electedDeviceKey: deviceKey ?? null,
-          electedFormat: deviceFormat,
-          jumpDeviceKeys: jumpDeviceKeys.join(','),
-          why: 'no enabled device of this node the step may run on ships a build for it (a root must run on the elected device; a detail step on the elected device or a jump-roster device)',
+      this.deps.logger.warn(
+        `pipeline steps gated on but not provisioned on this node — skipped (node ${agentNodeId}, device ${deviceId})`,
+        {
+          tags: { deviceId, nodeId: agentNodeId },
+          meta: {
+            skipped: skipped.map((s) => `${s.addonId}:${s.reason}`).join(','),
+            electedDeviceKey: deviceKey ?? null,
+            electedFormat: deviceFormat,
+            jumpDeviceKeys: jumpDeviceKeys.join(','),
+            why: 'no enabled device of this node the step may run on ships a build for it (a root must run on the elected device; a detail step on the elected device or a jump-roster device)',
+          },
         },
-      })
+      )
     }
     const resolved: CameraPipelineConfig = {
       ...resolvedBase,
