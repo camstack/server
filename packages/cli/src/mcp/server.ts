@@ -10,6 +10,8 @@ import { registerConfigureTools } from './configure-tools.js'
 import { registerOpsTools } from './ops-tools.js'
 import { registerSetupTools } from './setup-tools.js'
 import { registerSupportTools } from './support-tools.js'
+import { PreflightMcpServer, VersionPreflight, type PreflightConfig } from './version-preflight.js'
+import { probeVersions } from './version-probe.js'
 import type { Toolset } from './toolsets.js'
 
 export interface PublicServerOptions {
@@ -17,14 +19,28 @@ export interface PublicServerOptions {
   readonly context: McpContext
   /** Registers the `develop` toolset; injected so the CLI keeps it lazy. */
   readonly registerDevelop?: (server: McpServer) => void
+  /**
+   * The version preflight in front of every tool call. On by default, with the
+   * real probe; pass a config to inject the probe and clock, `false` to turn it off.
+   */
+  readonly versionPreflight?: Partial<PreflightConfig> | false
 }
 
 /** Pure assembly: which toolsets register which tools. */
 export function createPublicServer(options: PublicServerOptions): McpServer {
-  const server = new McpServer({ name: 'camstack', version: options.context.cliVersion })
   const { toolsets, context } = options
+  const info = { name: 'camstack', version: context.cliVersion }
+  const preflight =
+    options.versionPreflight === false
+      ? null
+      : new VersionPreflight({
+          probe: () => probeVersions(context),
+          ...options.versionPreflight,
+        })
+  const server = preflight ? new PreflightMcpServer(info, preflight) : new McpServer(info)
   if (toolsets.includes('setup')) registerSetupTools(server, context)
-  if (toolsets.includes('ops')) registerOpsTools(server, context)
+  if (toolsets.includes('ops'))
+    registerOpsTools(server, context, preflight ? () => preflight.refresh() : undefined)
   if (toolsets.includes('configure')) registerConfigureTools(server, context)
   if (toolsets.includes('support')) registerSupportTools(server, context)
   if (toolsets.includes('develop') && options.registerDevelop) options.registerDevelop(server)

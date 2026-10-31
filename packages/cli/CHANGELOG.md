@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The MCP checks versions before every tool call: it prepends one warning line when the hub server, its addons or the CLI/MCP are outdated, and a new version_check tool asks on demand.
+
 ## [1.2.215] - 2026-10-31
 
 ### Changed

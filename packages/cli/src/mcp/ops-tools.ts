@@ -16,6 +16,8 @@ import { opsLogs } from './ops-logs.js'
 import { opsStatus } from './ops-status.js'
 import { opsUpdateApply, UPDATE_APPLY_TOOL } from './ops-update-apply.js'
 import { opsUpdateCheck } from './ops-update-check.js'
+import { formatWarning, probeVersions, type VersionProbe } from './version-probe.js'
+import { VERSION_CHECK_TOOL } from './version-preflight.js'
 
 export { noSessionResult, type NoSessionResult }
 
@@ -54,7 +56,28 @@ export async function whoami(ctx: McpContext): Promise<WhoamiResult | NoSessionR
   }
 }
 
-export function registerOpsTools(server: McpServer, ctx: McpContext): void {
+/** `version_check`'s answer: the probe plus its one-line summary. */
+export interface VersionCheckResult extends VersionProbe {
+  readonly status: 'ok' | 'unavailable'
+  readonly summary: string
+}
+
+function versionCheckResult(probe: VersionProbe): VersionCheckResult {
+  const warning = formatWarning(probe)
+  const unreadable = probe.unavailable.length > 0
+  return {
+    ...probe,
+    status: warning === null && unreadable ? 'unavailable' : 'ok',
+    summary: warning ?? (unreadable ? 'version check incomplete' : 'everything is up to date'),
+  }
+}
+
+export function registerOpsTools(
+  server: McpServer,
+  ctx: McpContext,
+  /** The preflight's own refresh, so `version_check` also warms its cache. */
+  refreshVersions: () => Promise<VersionProbe> = () => probeVersions(ctx),
+): void {
   server.tool(
     'ops_whoami',
     'Which hub this MCP talks to and as whom, from the `camstack login` session (no network call). If there is no session, says to run `camstack login <host>` in a terminal.',
@@ -155,6 +178,13 @@ export function registerOpsTools(server: McpServer, ctx: McpContext): void {
     'Read-only update report for the whole cluster. Every node from the topology: running vs installed vs latest @camstack/server, restartRequired / updateState / rolledBack, the wrapper (Docker image / desktop app) verdict, and whether its addon versions match the hub; the hub\'s addon updates; the viewer (not exposed by any API, said so); and this CLI/MCP against npm. A node that cannot be read is null with a reason, never "up to date". Needs an admin `camstack login`.',
     {},
     async (): Promise<ToolTextResult> => text(await opsUpdateCheck(ctx)),
+  )
+
+  server.tool(
+    VERSION_CHECK_TOOL,
+    "Read-only, light version check, always fresh: the hub's @camstack/server running vs latest, how many hub addons have an update (first names), and this CLI/MCP against npm. With no hub session only the CLI/MCP is checked. Every other tool already prepends a one-line warning when something is outdated (checked at most every 15 minutes); this one asks on demand. `ops_update_check` has the full per-node report.",
+    {},
+    async (): Promise<ToolTextResult> => text(versionCheckResult(await refreshVersions())),
   )
 
   server.tool(

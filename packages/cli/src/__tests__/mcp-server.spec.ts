@@ -82,6 +82,7 @@ async function connect(
   const server = createPublicServer({
     toolsets,
     context: ctx,
+    versionPreflight: false,
     ...(registerDevelop ? { registerDevelop } : {}),
   })
   const [a, b] = InMemoryTransport.createLinkedPair()
@@ -112,6 +113,7 @@ const OPS_TOOLS = [
   'ops_update_apply',
   'ops_update_check',
   'ops_whoami',
+  'version_check',
 ]
 
 describe('camstack mcp — toolset selection', () => {
@@ -150,7 +152,7 @@ describe('camstack mcp — toolset selection', () => {
       'configure_rename_device',
       'configure_zone_upsert',
       'configure_zones',
-      ...OPS_TOOLS,
+      ...OPS_TOOLS.filter((n) => n !== 'version_check'),
       'setup_about',
       'setup_add_node',
       'setup_connect',
@@ -162,6 +164,7 @@ describe('camstack mcp — toolset selection', () => {
       'support_diagnose_camera',
       'support_draft_issue',
       'support_draft_pr',
+      'version_check',
     ])
   })
 

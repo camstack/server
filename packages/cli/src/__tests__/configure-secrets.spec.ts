@@ -12,6 +12,7 @@ async function listedTools(): Promise<Awaited<ReturnType<Client['listTools']>>['
   const server = createPublicServer({
     toolsets: ['configure'],
     context: gatedHub({}).ctx,
+    versionPreflight: false,
   })
   const [a, b] = InMemoryTransport.createLinkedPair()
   await server.connect(a)
