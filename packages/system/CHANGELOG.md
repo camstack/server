@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.530] - 2026-10-31
+
 ### Changed
 
 - Actions resolve a device-domain target when a step runs, and stored actions are rewritten to the target shape once at start

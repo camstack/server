@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.215] - 2026-10-31
+
 ### Changed
 
 - The automation interview accepts a domain target for a step and writes the target shape

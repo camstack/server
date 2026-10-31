@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.709] - 2026-10-31
+
 ### Changed
 
 - A wedged agent shutdown now ends with a self-SIGKILL so exit-time teardown cannot keep the process alive after an update.
