@@ -13557,6 +13557,18 @@
           "type": "DropdownPlacement",
           "optional": true,
           "doc": "Force above/below when the caller already knows (footer chip → above)."
+        },
+        {
+          "name": "scrim",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Dim everything behind the menu (the default stays transparent). Used by a menu that belongs to ONE thing on the page, which `highlight` then"
+        },
+        {
+          "name": "highlight",
+          "type": "React.ReactNode",
+          "optional": true,
+          "doc": "Drawn above the scrim exactly over the anchor; never takes a touch."
         }
       ]
     },
@@ -14777,6 +14789,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Drawn dimmed and inert (an action this item cannot offer now)."
         }
       ]
     },
