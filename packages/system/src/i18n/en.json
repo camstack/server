@@ -252,7 +252,5 @@
   "tls.no-stored-upload": "No uploaded certificate is kept on this node.",
   "ir-transmitter.offline": "The transmitter {name} is not reachable",
   "ir-transmitter.too-long": "The command has {count} pulses but the transmitter accepts at most {max}",
-  "reolink": {
-    "nvr-needs-integration": "This is an NVR / Home Hub. Add it as its own Reolink integration; its channels are then adopted as cameras."
-  }
+  "reolink.nvr-needs-integration": "This is an NVR / Home Hub. Add it as its own Reolink integration; its channels are then adopted as cameras."
 }
