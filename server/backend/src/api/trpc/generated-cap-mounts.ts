@@ -126,6 +126,7 @@ import {
   meshNetworkCapability,
   meterCapability,
   metricsProviderCapability,
+  migrationsCapability,
   modelConvertCapability,
   modelDistributorCapability,
   motionCapability,
@@ -323,6 +324,7 @@ import {
   createCapRouter_meshNetwork,
   createCapRouter_meter,
   createCapRouter_metricsProvider,
+  createCapRouter_migrations,
   createCapRouter_modelConvert,
   createCapRouter_modelDistributor,
   createCapRouter_motion,
@@ -1310,6 +1312,10 @@ export function mountAllCaps(services: MountAllCapsServices) {
       (_ctx) =>
         reg?.getSingleton<InferProvider<typeof metricsProviderCapability>>('metrics-provider') ??
         null,
+      remoteCapProxy,
+    ),
+    migrations: createCapRouter_migrations(
+      (_ctx) => reg?.getSingleton<InferProvider<typeof migrationsCapability>>('migrations') ?? null,
       remoteCapProxy,
     ),
     modelConvert: createCapRouter_modelConvert(

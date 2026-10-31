@@ -4,7 +4,7 @@
 
 # Decisions
 
-948 architecture decision records. One file per decision, never
+949 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -837,7 +837,7 @@ that rots.
 | D850 | [Numeric history has one mechanism — device-history, fed by cap history blocks and addon-declared series; rollups are computed by the owner only](adr-0850-numeric-history-has-one-mechanism-device-history.md) | ✅ accepted (supersedes D132 (point 4 only — the five-minute LTS tier)) | 2026-10-14 |
 | D851 | [One SQLite engine process serves several owned database files, one serving thread per file; a collection's file is declared on declareCollection and a misplaced table is refused, never moved](adr-0851-one-sqlite-engine-serves-several-owned-files-one-thread-per-file.md) | ✅ accepted | 2026-10-14 |
 | D852 | [Event and detection ledgers live in events.db; each database is backed up on its own cadence — settings nightly, events and history weekly — and an archive restores only the databases it carries](adr-0852-event-ledgers-live-in-events-db-and-each-database-has-its-own-backup-cadence.md) | 💭 proposed | 2026-10-14 |
-| D853 | [A storage-layout change ships without migration code — the product targets the new layout, the operator's hub is converted once offline while stopped, and the release train holds that hub until then](adr-0853-a-storage-layout-change-ships-without-migration-code.md) | 💭 proposed | 2026-10-14 |
+| D853 | [A storage-layout change ships without migration code — the product targets the new layout, the operator's hub is converted once offline while stopped, and the release train holds that hub until then](adr-0853-a-storage-layout-change-ships-without-migration-code.md) | ↩︎ superseded | 2026-10-14 |
 | D854 | [One typed icon catalog - every lucide icon both surfaces can draw, picked and stored by key everywhere](adr-0854-one-typed-icon-catalog-every-lucide-icon-both-surfaces-draw.md) | ✅ accepted (supersedes D598) | 2026-10-15 |
 | D855 | [Device certificates are a login method, a signed-in device enrolls itself only after a step-up, and a credential dies only on a definitive answer](adr-0855-device-certificates-as-a-login-method-and-the-app-login-handoff.md) | ✅ accepted | 2026-10-15 |
 | D856 | [Mesh leaves are recorded and handed over, never swapped blind, and agents serve HTTPS from the hub's local CA on the SAME port](adr-0856-mesh-leaves-are-recorded-and-handed-over-and-agents-serve-https-from-the-hubs-local-ca-on-the-same-port.md) | ✅ accepted | 2026-10-15 |
@@ -963,6 +963,7 @@ that rots.
 | D983 | [An action is one shape everywhere — a vocabulary action on a target — and a scheduler is a timeline of edge and hold points](adr-0983-an-action-is-one-shape-everywhere-a-schedule-is-a-timeline-of-edge-and-hold-points.md) | 💭 proposed | 2026-10-31 |
 | D984 | [A cap may declare a native field overridable by a named Customize extension](adr-0984-a-cap-may-declare-a-native-field-overridable-by-a-named-customize-extension.md) | ✅ accepted | 2026-10-31 |
 | D985 | [A hub is its own integration instance](adr-0985-a-hub-is-its-own-integration-instance.md) | ✅ accepted | 2026-10-31 |
+| D986 | [A migration runs at boot under its owner — one ledger per database file, one transaction per migration, a verified snapshot first](adr-0986-a-migration-runs-at-boot-under-its-owner.md) | ✅ accepted (supersedes D853) | 2026-10-31 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

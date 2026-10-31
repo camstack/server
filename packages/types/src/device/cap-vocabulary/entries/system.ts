@@ -79,6 +79,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'login-method': system(IDENTITY),
   'mesh-network': system(NETWORK),
   'metrics-provider': system(CLUSTER),
+  migrations: system(INTERNAL),
   'model-convert': system(ML),
   'model-distributor': system(ML),
   'mqtt-broker': system(NETWORK),

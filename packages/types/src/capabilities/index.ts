@@ -331,6 +331,7 @@ export {
   databaseSnapshotCapability,
   type IDatabaseSnapshotProvider,
 } from './database-snapshot.cap.js'
+export { migrationsCapability, type IMigrationsProvider } from './migrations.cap.js'
 export { CALLER_STAMPED_CAPABILITIES, withoutCallerStamp } from './caller-stamp.js'
 export {
   type IStorageAdminProvider,
@@ -3298,6 +3299,7 @@ import type { coverCapability } from './cover.cap.js'
 import type { customModelRegistryCapability } from './custom-model-registry.cap.js'
 import type { dataStoreProviderCapability } from './data-store-provider.cap.js'
 import type { databaseSnapshotCapability } from './database-snapshot.cap.js'
+import type { migrationsCapability } from './migrations.cap.js'
 import type { storageAdminCapability } from './storage-admin.cap.js'
 import type { recordsCapability } from './records.cap.js'
 import type { recordEntriesCapability } from './record-entries.cap.js'
@@ -3457,6 +3459,7 @@ type AnyCapability =
   | typeof settingsStoreCapability
   | typeof dataStoreProviderCapability
   | typeof databaseSnapshotCapability
+  | typeof migrationsCapability
   | typeof storageAdminCapability
   | typeof recordsCapability
   | typeof recordEntriesCapability

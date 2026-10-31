@@ -122,7 +122,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (97)
+## System-scoped (98)
 
 Singleton or collection providers, addressed without a device.
 
@@ -178,6 +178,7 @@ Singleton or collection providers, addressed without a device.
 | `login-method` | 1 | — | — | — | ✓ | `auth-oidc` `auth-webauthn` |
 | `mesh-network` | 7 | — | — | — | — | `tailscale-client` |
 | `metrics-provider` | 11 | — | — | — | — | `metrics-native` |
+| `migrations` | 6 | — | — | — | ✓ | `sqlite-settings` |
 | `model-convert` | 1 | — | — | — | ✓ | `model-studio` |
 | `model-distributor` | 1 | — | — | — | ✓ | — |
 | `mqtt-broker` | 8 | ✓ | — | — | — | `mqtt-broker` |

@@ -99,7 +99,7 @@ this column exists to stop.
 | `smb-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
 | `smtp-nodemailer` | `@camstack/addon-smtp-nodemailer` | messaging | own runner | `hub-only` | — | — | `smtp-provider` |
 | `snapshot` | `@camstack/system` | system | own runner (`isolate`) | `any-node` | — | — | `snapshot` |
-| `sqlite-settings` | `@camstack/system` | system | own runner (`isolate`) | `any-node` | — | — | `data-store-provider` `database-snapshot` `records` `storage-admin` `vector-store` |
+| `sqlite-settings` | `@camstack/system` | system | own runner (`isolate`) | `any-node` | — | — | `data-store-provider` `database-snapshot` `migrations` `records` `storage-admin` `vector-store` |
 | `static-turn` | `@camstack/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `turn-provider` |
 | `storage-orchestrator` | `@camstack/system` | system | hub-main | `any-node` | — | — | `settings-store` `storage` `storage-migration` |
 | `stream-broker` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `addon-widgets-source` `camera-streams` `device-removal-hook` `load-contribution` `log-channels` `stream-broker` `webrtc-session` |

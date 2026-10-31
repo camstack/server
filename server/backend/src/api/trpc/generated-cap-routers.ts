@@ -121,6 +121,7 @@ import { mediaPlayerCapability } from '@camstack/types'
 import { meshNetworkCapability } from '@camstack/types'
 import { meterCapability } from '@camstack/types'
 import { metricsProviderCapability } from '@camstack/types'
+import { migrationsCapability } from '@camstack/types'
 import { modelConvertCapability } from '@camstack/types'
 import { modelDistributorCapability } from '@camstack/types'
 import { motionCapability } from '@camstack/types'
@@ -9730,6 +9731,72 @@ export function createCapRouter_metricsProvider(
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getLoadSeries(methodInput as any)
+      }),
+  })
+}
+
+// ── migrations (singleton) ──────────────────────────────────────────
+
+type MigrationsProvider = InferProvider<typeof migrationsCapability>
+
+export function createCapRouter_migrations(
+  getProvider: (ctx: TrpcContext) => MigrationsProvider | null,
+  createRemoteProxy?: (capName: string, nodeId: string) => MigrationsProvider | null,
+) {
+  return trpcRouter({
+    listLedger: adminProcedure
+      .input(migrationsCapability.methods.listLedger.input.loose())
+      .output(migrationsCapability.methods.listLedger.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listLedger(methodInput as any)
+      }),
+    listPending: adminProcedure
+      .input(migrationsCapability.methods.listPending.input.loose())
+      .output(migrationsCapability.methods.listPending.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listPending(methodInput as any)
+      }),
+    dryRun: adminProcedure
+      .input(migrationsCapability.methods.dryRun.input.loose())
+      .output(migrationsCapability.methods.dryRun.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.dryRun(methodInput as any)
+      }),
+    markFailed: adminProcedure
+      .input(migrationsCapability.methods.markFailed.input.loose())
+      .output(migrationsCapability.methods.markFailed.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.markFailed(methodInput as any)
+      }),
+    retry: adminProcedure
+      .input(migrationsCapability.methods.retry.input.loose())
+      .output(migrationsCapability.methods.retry.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.retry(methodInput as any)
+      }),
+    restorePreMigration: adminProcedure
+      .input(migrationsCapability.methods.restorePreMigration.input.loose())
+      .output(migrationsCapability.methods.restorePreMigration.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.restorePreMigration(methodInput as any)
       }),
   })
 }
@@ -21036,6 +21103,7 @@ export interface GeneratedCapabilityRouterMap {
   readonly meshNetwork: ReturnType<typeof createCapRouter_meshNetwork>
   readonly meter: ReturnType<typeof createCapRouter_meter>
   readonly metricsProvider: ReturnType<typeof createCapRouter_metricsProvider>
+  readonly migrations: ReturnType<typeof createCapRouter_migrations>
   readonly modelConvert: ReturnType<typeof createCapRouter_modelConvert>
   readonly modelDistributor: ReturnType<typeof createCapRouter_modelDistributor>
   readonly motion: ReturnType<typeof createCapRouter_motion>

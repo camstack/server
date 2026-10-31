@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A device can be powered by a smart switch linked in Customize, with manual power on, power off and force restart (switch off, wait, switch on).
+### Changed
+
+- Added the migrations capability router (hub-only, admin): ledger, pending, dry run, retry
 
 ## [1.2.714] - 2026-10-31
 

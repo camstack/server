@@ -108,6 +108,7 @@ export { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
 export { meshNetworkCapability } from '../capabilities/mesh-network.cap.js'
 export { meterCapability } from '../capabilities/meter.cap.js'
 export { metricsProviderCapability } from '../capabilities/metrics-provider.cap.js'
+export { migrationsCapability } from '../capabilities/migrations.cap.js'
 export { modelConvertCapability } from '../capabilities/model-convert.cap.js'
 export { modelDistributorCapability } from '../capabilities/model-distributor.cap.js'
 export { motionCapability } from '../capabilities/motion.cap.js'
@@ -307,6 +308,7 @@ export const CAPABILITY_NAMES = {
   meshNetwork: 'mesh-network' as const,
   meter: 'meter' as const,
   metricsProvider: 'metrics-provider' as const,
+  migrations: 'migrations' as const,
   modelConvert: 'model-convert' as const,
   modelDistributor: 'model-distributor' as const,
   motion: 'motion' as const,
@@ -509,6 +511,7 @@ export const CAPABILITY_ROUTER_KEYS: ReadonlyArray<{ readonly key: string; reado
   { key: 'meshNetwork', name: 'mesh-network' },
   { key: 'meter', name: 'meter' },
   { key: 'metricsProvider', name: 'metrics-provider' },
+  { key: 'migrations', name: 'migrations' },
   { key: 'modelConvert', name: 'model-convert' },
   { key: 'modelDistributor', name: 'model-distributor' },
   { key: 'motion', name: 'motion' },
@@ -716,6 +719,7 @@ export interface CapabilityRouterMap<TRouter = unknown> {
   readonly meshNetwork: TRouter
   readonly meter: TRouter
   readonly metricsProvider: TRouter
+  readonly migrations: TRouter
   readonly modelConvert: TRouter
   readonly modelDistributor: TRouter
   readonly motion: TRouter
@@ -894,6 +898,7 @@ export const SINGLETON_CAPABILITY_NAMES = [
   'media-player',
   'meter',
   'metrics-provider',
+  'migrations',
   'model-convert',
   'model-distributor',
   'motion',
@@ -1126,6 +1131,7 @@ export const CAPABILITY_MODE: Readonly<Record<string, 'singleton' | 'collection'
   'mesh-network': 'collection',
   'meter': 'singleton',
   'metrics-provider': 'singleton',
+  'migrations': 'singleton',
   'model-convert': 'singleton',
   'model-distributor': 'singleton',
   'motion': 'singleton',
@@ -1326,6 +1332,7 @@ import { mediaPlayerCapability as _mediaPlayerCapability } from '../capabilities
 import { meshNetworkCapability as _meshNetworkCapability } from '../capabilities/mesh-network.cap.js'
 import { meterCapability as _meterCapability } from '../capabilities/meter.cap.js'
 import { metricsProviderCapability as _metricsProviderCapability } from '../capabilities/metrics-provider.cap.js'
+import { migrationsCapability as _migrationsCapability } from '../capabilities/migrations.cap.js'
 import { modelConvertCapability as _modelConvertCapability } from '../capabilities/model-convert.cap.js'
 import { modelDistributorCapability as _modelDistributorCapability } from '../capabilities/model-distributor.cap.js'
 import { motionCapability as _motionCapability } from '../capabilities/motion.cap.js'
@@ -1532,6 +1539,7 @@ export const ALL_CAPABILITY_DEFINITIONS: readonly CapabilityDefinition[] = [
   _meshNetworkCapability as CapabilityDefinition,
   _meterCapability as CapabilityDefinition,
   _metricsProviderCapability as CapabilityDefinition,
+  _migrationsCapability as CapabilityDefinition,
   _modelConvertCapability as CapabilityDefinition,
   _modelDistributorCapability as CapabilityDefinition,
   _motionCapability as CapabilityDefinition,

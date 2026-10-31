@@ -152,6 +152,7 @@ export {
 } from './interfaces/config-ui-secrets.js'
 export * from './keychain/index.js'
 export * from './records/index.js'
+export * from './migrations/migration.js'
 export * from './training/index.js'
 export * from './retrain-review.js'
 export {

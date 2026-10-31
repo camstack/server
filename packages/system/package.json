@@ -79,6 +79,9 @@
             "name": "database-snapshot"
           },
           {
+            "name": "migrations"
+          },
+          {
             "name": "storage-admin"
           },
           {

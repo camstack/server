@@ -125,6 +125,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "mesh-network",
   "meter",
   "metrics-provider",
+  "migrations",
   "model-convert",
   "model-distributor",
   "motion",
