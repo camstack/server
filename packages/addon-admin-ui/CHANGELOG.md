@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New notification targets pre-select the first broker and name themselves '<notifier> — <device>' until you type a name
+
 ## [1.2.532] - 2026-10-31
 
 ### Changed
 
 - Devices page: Add device (opens an installed integration's add / scan / adopt flow) and Browse integrations; Addons page filters on integrations with ?kind=integration
 - The action and notification editors read the new step target
-- New notification targets pre-select the first broker and name themselves '<notifier> — <device>' until you type a name
 
 ## [1.2.531] - 2026-10-31
 
