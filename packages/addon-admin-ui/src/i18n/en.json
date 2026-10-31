@@ -11233,5 +11233,12 @@
       "sat": "Sat",
       "sun": "Sun"
     }
+  },
+  "deviceHero": {
+    "powerLine": {
+      "on": "Power switch on",
+      "off": "Power switch off",
+      "withName": "{{state}} · {{name}}"
+    }
   }
 }

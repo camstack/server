@@ -11255,5 +11255,12 @@
       "sat": "Sab",
       "sun": "Dom"
     }
+  },
+  "deviceHero": {
+    "powerLine": {
+      "on": "Presa accesa",
+      "off": "Presa spenta",
+      "withName": "{{state}} · {{name}}"
+    }
   }
 }

@@ -4,6 +4,7 @@ import type { ReactElement } from 'react'
 import { ContainerHero } from './ContainerHero'
 import { ControlHero } from './ControlHero'
 import { CoverHero } from './CoverHero'
+import { DeviceHeroPowerLine } from './DeviceHeroPowerLine'
 import { DummyHero } from './DummyHero'
 import { EventEmitterHero } from './EventEmitterHero'
 import { GenericHero } from './GenericHero'
@@ -155,6 +156,7 @@ export function DeviceHero(props: HeroProps): ReactElement {
   return (
     <>
       <DeviceHeroRunningLine deviceId={props.deviceId} />
+      <DeviceHeroPowerLine deviceId={props.deviceId} />
       <Hero {...props} />
     </>
   )
