@@ -54,9 +54,16 @@ import type { AgentConnectionInput } from './node-env'
 import { buildNodeEnv } from './node-env'
 import { handleNodeExit } from './node-exit-handler'
 import { createChildShutdownWatch } from './node-shutdown-watch'
+import { probeHungChild } from './hang-probe'
+import { startRestartIntentWatch } from './restart-intent-watch'
 import { roleLabel, summarizeNodeRootStatus } from './node-supervisor'
 import { appendShellLog, formatFatal } from './shell-log'
-import { consumeRestartIntent, readNodeRootStateView } from './node-supervisor-io'
+import {
+  consumeRestartIntent,
+  readNodeRootStateView,
+  restartIntentExists,
+  serverRootPath,
+} from './node-supervisor-io'
 import {
   NodeProcessManager,
   resolveBundledAddonsDir,
@@ -291,6 +298,23 @@ let updateState: UpdateState = {
 const childShutdownWatch = createChildShutdownWatch({
   log: (line) => appendShellLog(shellLogPath(), line),
   forceKill: () => nodeManager.forceKill(),
+  pid: () => nodeManager.pid,
+  probe: () => probeHungChild(nodeManager.pid, app.getPath('userData')),
+})
+
+// The marker is written before the child's SIGTERM: the shell's own, output-independent trigger.
+startRestartIntentWatch({
+  markerExists: () => restartIntentExists(nodeDataDir()),
+  watchDir: (onChange) => {
+    try {
+      const watcher = fs.watch(serverRootPath(nodeDataDir()), onChange)
+      watcher.on('error', () => undefined)
+      return () => watcher.close()
+    } catch {
+      return null
+    }
+  },
+  onAppear: () => childShutdownWatch.onRestartIntent(),
 })
 
 nodeManager.onLog((line, stream) => {

@@ -27,6 +27,24 @@ function serverRootDir(dataDir: string): string {
   return path.join(dataDir, SERVER_ROOT_DIRNAME)
 }
 
+/** The directory the node writes its restart-intent marker into. */
+export function serverRootPath(dataDir: string): string {
+  return serverRootDir(dataDir)
+}
+
+/** A marker older than this is a leftover of an earlier run, not a restart in progress. */
+export const FRESH_RESTART_INTENT_MS = 60_000
+
+/** Whether a FRESH restart-intent marker is on disk (does not read or consume it). */
+export function restartIntentExists(dataDir: string, now: number = Date.now()): boolean {
+  try {
+    const st = fs.statSync(path.join(serverRootDir(dataDir), RESTART_INTENT_FILE))
+    return now - st.mtimeMs <= FRESH_RESTART_INTENT_MS
+  } catch {
+    return false
+  }
+}
+
 function isRestartIntentMarker(v: unknown): v is RestartIntentMarker {
   if (typeof v !== 'object' || v === null) return false
   const m: Record<string, unknown> = { ...v }

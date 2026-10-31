@@ -264,6 +264,11 @@ export class NodeProcessManager {
     return this.current
   }
 
+  /** The running child's pid, or null when none is running. */
+  get pid(): number | null {
+    return this.current?.process.pid ?? null
+  }
+
   /** SIGKILL a child that stopped serving; it exits unintentionally, so the exit handler relaunches it. */
   forceKill(): void {
     try {

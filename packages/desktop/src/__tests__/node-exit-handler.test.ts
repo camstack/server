@@ -104,4 +104,20 @@ describe('handleNodeExit', () => {
     expect(quitting.relaunchDelays).toEqual([])
     expect(quitting.calls).not.toContain('consume')
   })
+
+  it('a forced kill (SIGKILL, shell-initiated or self-inflicted) with the marker is the planned restart, consumed once', () => {
+    for (const code of [null, 137]) {
+      const h = harness()
+      handleNodeExit(h.deps, code, 'SIGKILL', false)
+      expect(h.calls.filter((c) => c === 'consume')).toHaveLength(1)
+      expect(h.calls.filter((c) => c === 'relaunch')).toHaveLength(1)
+      expect(h.state.consecutiveCrashes).toBe(0)
+    }
+  })
+
+  it('a SIGKILL without the marker is still a crash with backoff', () => {
+    const h = harness({}, null)
+    handleNodeExit(h.deps, null, 'SIGKILL', false)
+    expect(h.state.consecutiveCrashes).toBe(3)
+  })
 })

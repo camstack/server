@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Install update & restart now quits and relaunches on the new version instead of only hiding the window.
 - The app publishes its version and update state to its node and installs a downloaded update when the hub asks.
 - macOS: the desktop app now re-asks the native updater when a downloaded update was never staged, and logs why an install request or a quit install did nothing
+- The desktop shell force-kills a node that outlives an update restart, recording the last child output and a stack sample.
 
 ### Fixed
 
