@@ -296,3 +296,142 @@ describe('HomematicCcuPage heating', () => {
     expect(await screen.findByText(/still present/)).toBeTruthy()
   })
 })
+
+describe('HomematicCcuPage pairing', () => {
+  const STATUS_CLOSED = {
+    interfaces: [
+      { name: 'BidCos-RF', secondsLeft: 0, supportsSecure: true, error: null },
+      { name: 'HmIP-RF', secondsLeft: null, supportsSecure: false, error: null },
+    ],
+    error: null,
+  }
+  const EXISTING = {
+    address: 'OLD',
+    type: 'HmIP-eTRV-2',
+    name: 'Old radiator',
+    rooms: [],
+    functions: [],
+    firmware: null,
+    availableFirmware: null,
+    updatable: null,
+    rssi: null,
+    rssiPeer: null,
+    dutyCycle: null,
+    dutyCycleLimited: null,
+    lowBattery: null,
+    unreach: null,
+    configPending: null,
+    sabotage: null,
+  }
+
+  function mountPairing(extra: Record<string, Handler>, status: unknown = STATUS_CLOSED) {
+    window.history.replaceState(null, '', '/?tab=pairing')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      ccuPairingStatus: () => status,
+      listCcuDevices: () => ({ devices: [EXISTING] }),
+      ...extra,
+    })
+    mountPage(fake.trpc)
+    return fake.calls
+  }
+
+  it('shows each radio interface with its window state, unknown as unknown', async () => {
+    mountPairing({})
+    const bidcos = await screen.findByTestId('hm-pairing-BidCos-RF')
+    expect(within(bidcos).getByRole('button', { name: 'Start pairing' })).toBeTruthy()
+    expect(screen.getByText('Closed')).toBeTruthy()
+    expect(screen.getByText('Unknown')).toBeTruthy()
+    expect(screen.getByText(/entering a device key or SGTIN is not offered/)).toBeTruthy()
+  })
+
+  it('opens the window only after the operator confirms, with seconds and mode', async () => {
+    const setMode = vi.fn().mockReturnValue({ ok: true })
+    mountPairing({ setCcuInstallMode: setMode })
+    const bidcos = await screen.findByTestId('hm-pairing-BidCos-RF')
+    fireEvent.change(within(bidcos).getByRole('spinbutton'), { target: { value: '90' } })
+    fireEvent.change(within(bidcos).getByRole('combobox'), { target: { value: 'secure' } })
+    fireEvent.click(within(bidcos).getByRole('button', { name: 'Start pairing' }))
+    expect(setMode).not.toHaveBeenCalled()
+    const confirm = await screen.findByRole('dialog', { name: /Open the BidCos-RF pairing window/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Start pairing' }))
+    await waitFor(() => expect(setMode).toHaveBeenCalled())
+    expect(setMode.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      interface: 'BidCos-RF',
+      on: true,
+      seconds: 90,
+      mode: 'secure',
+      confirmed: true,
+    })
+  })
+
+  it('lists a device that appeared on the CCU after the tab opened', async () => {
+    let devices: unknown[] = [EXISTING]
+    mountPairing(
+      { listCcuDevices: () => ({ devices }) },
+      {
+        interfaces: [{ name: 'HmIP-RF', secondsLeft: 30, supportsSecure: false, error: null }],
+        error: null,
+      },
+    )
+    await screen.findByText('Open, 30 s left')
+    expect(await screen.findByText('Waiting for a device to pair...')).toBeTruthy()
+    devices = [EXISTING, { ...EXISTING, address: 'NEW1', name: 'New thermostat' }]
+    expect(await screen.findByText('New thermostat', {}, { timeout: 8000 })).toBeTruthy()
+    expect(screen.queryByText('Old radiator')).toBeNull()
+  }, 15000)
+
+  it('says why the interfaces are missing instead of showing none', async () => {
+    mountPairing({}, { interfaces: [], error: 'no credentials' })
+    expect(await screen.findByText('no credentials')).toBeTruthy()
+  })
+})
+
+describe('HomematicCcuPage device delete', () => {
+  const DEV = {
+    address: 'ABC',
+    type: 'HmIP-eTRV-2',
+    name: 'Bedroom radiator',
+    rooms: [],
+    functions: [],
+    firmware: null,
+    availableFirmware: null,
+    updatable: null,
+    rssi: null,
+    rssiPeer: null,
+    dutyCycle: null,
+    dutyCycleLimited: null,
+    lowBattery: null,
+    unreach: null,
+    configPending: null,
+    sabotage: null,
+  }
+
+  it('deletes only after the dialog and the confirmation, with the factory-reset flag', async () => {
+    window.history.replaceState(null, '', '/?tab=devices')
+    const del = vi.fn().mockReturnValue({ ok: true })
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices: [DEV] }),
+      deleteCcuDevice: del,
+    })
+    mountPage(fake.trpc)
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete from CCU' }))
+    const form = await screen.findByTestId('hm-delete-device-dialog')
+    fireEvent.click(within(form).getByLabelText('Factory-reset the device'))
+    fireEvent.click(within(form).getByRole('button', { name: 'Continue' }))
+    expect(del).not.toHaveBeenCalled()
+    const confirm = await screen.findByRole('dialog', { name: /Delete device from the CCU/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Delete device' }))
+    await waitFor(() => expect(del).toHaveBeenCalled())
+    expect(del.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      address: 'ABC',
+      reset: true,
+      force: false,
+      confirmed: true,
+    })
+  })
+})

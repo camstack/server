@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Homematic CCU page under Administration: CCU version, interface health and duty cycle, and service messages you can acknowledge.
 - Homematic CCU page: a Devices tab with firmware, signal, duty cycle, low battery, unreachable, config pending and sabotage per device.
 - Homematic CCU page: heating tab lists groups and thermostats and creates, edits and deletes heating groups behind a confirmation
+- Homematic CCU page: pairing tab opens learn mode on BidCos-RF and HmIP-RF and lists new devices live; devices can be deleted from the CCU with a factory-reset option, each behind a confirmation
 
 ## [1.2.165] - 2026-10-31
 

@@ -17,7 +17,8 @@
     "notConnected": "{{name}} non è connessa",
     "notConnectedHint": "La pagina lavora su una CCU connessa. Controlla la connessione nell'integrazione.",
     "tabDevices": "Dispositivi",
-    "tabHeating": "Riscaldamento"
+    "tabHeating": "Riscaldamento",
+    "tabPairing": "Associazione"
   },
   "overview": {
     "loadFailed": "Impossibile leggere la CCU",
@@ -71,7 +72,20 @@
     "facetsLabel": "Filtra dispositivi della CCU",
     "clearFilters": "Azzera filtri",
     "noMatch": "Nessun dispositivo corrisponde al filtro",
-    "none": "La CCU non ha dispositivi"
+    "none": "La CCU non ha dispositivi",
+    "deleteAction": "Elimina dalla CCU",
+    "deleteDialogTitle": "Elimina {{name}} dalla CCU",
+    "deleteContinue": "Continua",
+    "deleteResetLabel": "Ripristino di fabbrica",
+    "deleteResetHint": "Ripristina il dispositivo alle impostazioni di fabbrica mentre lo rimuovi, così potrà essere associato di nuovo.",
+    "deleteResetOption": "Ripristina il dispositivo di fabbrica",
+    "deleteForceLabel": "Dispositivo non raggiungibile",
+    "deleteForceHint": "Rimuovilo anche se la CCU non riesce a raggiungerlo.",
+    "deleteForceOption": "Rimuovi anche se non raggiungibile",
+    "deleteTitle": "Elimina dispositivo dalla CCU",
+    "deleteMessage": "{{name}} sarà rimosso dalla CCU. Programmi e collegamenti sulla CCU andranno persi.",
+    "deleteMessageReset": "{{name}} sarà ripristinato di fabbrica e rimosso dalla CCU. Programmi e collegamenti sulla CCU andranno persi.",
+    "deleteConfirm": "Elimina dispositivo"
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",
@@ -115,5 +129,26 @@
     "deleteTitle": "Elimina gruppo di riscaldamento",
     "deleteMessage": "Eliminare il gruppo {{name}} dalla CCU? I termostati restano sulla CCU.",
     "deleteConfirm": "Elimina gruppo"
+  },
+  "pairing": {
+    "loadFailed": "Impossibile leggere le finestre di associazione",
+    "noInterfaces": "Questa CCU non ha interfacce radio che possano associare dispositivi.",
+    "hmipKeyNote": "I dispositivi HmIP si associano con la finestra qui sotto; l'inserimento di chiave o SGTIN non è offerto dall'interfaccia CCU usata da questa pagina, usa la WebUI della CCU.",
+    "statusOpen": "Aperta, {{seconds}} s rimanenti",
+    "statusClosed": "Chiusa",
+    "statusUnknown": "Sconosciuto",
+    "fieldSeconds": "Durata finestra (secondi)",
+    "fieldMode": "Modalità",
+    "modeNormal": "Normale",
+    "modeSecure": "Sicura (insegna anche la chiave HomeMatic Secure)",
+    "start": "Avvia associazione",
+    "stop": "Ferma associazione",
+    "startTitle": "Apri la finestra di associazione {{name}}",
+    "startMessage": "{{name}} accetterà nuovi dispositivi per {{seconds}} secondi. Metti ora il dispositivo in modalità associazione.",
+    "stopTitle": "Chiudi la finestra di associazione {{name}}",
+    "stopMessage": "{{name}} smetterà di accettare nuovi dispositivi.",
+    "foundTitle": "Dispositivi trovati",
+    "foundNone": "Nessun nuovo dispositivo da quando hai aperto questa scheda.",
+    "foundWaiting": "In attesa di un dispositivo da associare..."
   }
 }

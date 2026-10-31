@@ -1,18 +1,22 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Badge,
   DataTable,
   DataTableFilterBar,
   ErrorBox,
+  KebabMenu,
   useDataTableFilter,
   type DataColumn,
   type DataTableFilterConfig,
 } from '@camstack/ui-library'
-import { CcuDevicesResultSchema, type CcuDeviceRow } from '../ccu/ccu-schemas.js'
+import { Trash2 } from 'lucide-react'
+import { CcuDevicesResultSchema, OkResultSchema, type CcuDeviceRow } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { percentOrDash, textOrDash } from './format.js'
+import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
 import { useCcuData } from './use-ccu-data.js'
+import { useCcuWrite } from './use-ccu-write.js'
 
 type DeviceIssue = 'unreach' | 'sabotage' | 'lowBattery' | 'configPending' | 'ok'
 
@@ -45,6 +49,26 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
   const devices = useCcuData(trpc, 'listCcuDevices', input, CcuDevicesResultSchema)
   const rows = useMemo(() => devices.data?.devices ?? [], [devices.data])
   const filter = useDataTableFilter(rows, FILTER_CONFIG)
+  const write = useCcuWrite(trpc)
+  const [deleting, setDeleting] = useState<CcuDeviceRow | null>(null)
+
+  const removeDevice = async (device: CcuDeviceRow, draft: DeleteDraft): Promise<void> => {
+    const done = await write({
+      action: 'deleteCcuDevice',
+      input: { integrationId, address: device.address, reset: draft.reset, force: draft.force },
+      schema: OkResultSchema,
+      title: t('devices.deleteTitle'),
+      message: t(draft.reset ? 'devices.deleteMessageReset' : 'devices.deleteMessage', {
+        name: device.name ?? device.address,
+      }),
+      confirmLabel: t('devices.deleteConfirm'),
+      variant: 'danger',
+    })
+    if (done !== null) {
+      setDeleting(null)
+      devices.reload()
+    }
+  }
 
   const columns = useMemo<readonly DataColumn<CcuDeviceRow>[]>(
     () => [
@@ -125,6 +149,25 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
           </span>
         ),
       },
+      {
+        key: 'actions',
+        header: '',
+        align: 'right',
+        notSortableReason: 'Action column',
+        render: (row) => (
+          <KebabMenu
+            items={[
+              {
+                id: 'delete',
+                label: t('devices.deleteAction'),
+                icon: Trash2,
+                danger: true,
+                onClick: () => setDeleting(row),
+              },
+            ]}
+          />
+        ),
+      },
     ],
     [t],
   )
@@ -183,6 +226,13 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
               : t('devices.none')
         }
       />
+      {deleting !== null && (
+        <DeleteDeviceDialog
+          device={deleting}
+          onClose={() => setDeleting(null)}
+          onDelete={(draft) => removeDevice(deleting, draft)}
+        />
+      )}
     </div>
   )
 }

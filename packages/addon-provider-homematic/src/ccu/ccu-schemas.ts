@@ -191,3 +191,40 @@ export const DeleteGroupInputSchema = IntegrationRefSchema.extend({
   id: z.number(),
   confirmed: ConfirmedSchema,
 })
+
+// ── Pairing ────────────────────────────────────────────────────────────────
+
+export const INSTALL_MODES = ['normal', 'secure'] as const
+
+export const PairingInterfaceSchema = z.object({
+  name: z.string(),
+  /** Seconds left of the pairing window; `null` = the CCU did not say (never read as 0). */
+  secondsLeft: z.number().nullable(),
+  /** BidCos only: `secure` also teaches the HomeMatic Secure key. */
+  supportsSecure: z.boolean(),
+  error: z.string().nullable(),
+})
+export type PairingInterface = z.infer<typeof PairingInterfaceSchema>
+
+export const PairingStatusSchema = z.object({
+  interfaces: z.array(PairingInterfaceSchema),
+  error: z.string().nullable(),
+})
+export type PairingStatus = z.infer<typeof PairingStatusSchema>
+
+export const SetInstallModeInputSchema = IntegrationRefSchema.extend({
+  interface: z.string().min(1),
+  on: z.boolean(),
+  seconds: z.number().int().min(1).max(3600).optional(),
+  mode: z.enum(INSTALL_MODES).optional(),
+  confirmed: ConfirmedSchema,
+})
+
+export const DeleteCcuDeviceInputSchema = IntegrationRefSchema.extend({
+  address: z.string().min(1),
+  /** Factory-reset the device while removing it. */
+  reset: z.boolean(),
+  /** Remove it even when it is not reachable. */
+  force: z.boolean(),
+  confirmed: ConfirmedSchema,
+})

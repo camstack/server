@@ -17,7 +17,8 @@
     "notConnected": "{{name}} is not connected",
     "notConnectedHint": "The page works on a connected CCU. Check the connection in the integration.",
     "tabDevices": "Devices",
-    "tabHeating": "Heating"
+    "tabHeating": "Heating",
+    "tabPairing": "Pairing"
   },
   "overview": {
     "loadFailed": "Could not read the CCU",
@@ -71,7 +72,20 @@
     "facetsLabel": "Filter CCU devices",
     "clearFilters": "Clear filters",
     "noMatch": "No device matches the filter",
-    "none": "The CCU has no devices"
+    "none": "The CCU has no devices",
+    "deleteAction": "Delete from CCU",
+    "deleteDialogTitle": "Delete {{name}} from the CCU",
+    "deleteContinue": "Continue",
+    "deleteResetLabel": "Factory reset",
+    "deleteResetHint": "Reset the device to factory settings while removing it, so it can be paired again.",
+    "deleteResetOption": "Factory-reset the device",
+    "deleteForceLabel": "Unreachable device",
+    "deleteForceHint": "Remove it even when the CCU cannot reach it.",
+    "deleteForceOption": "Remove even if unreachable",
+    "deleteTitle": "Delete device from the CCU",
+    "deleteMessage": "{{name}} will be removed from the CCU. Its programs and links on the CCU are lost.",
+    "deleteMessageReset": "{{name}} will be factory-reset and removed from the CCU. Its programs and links on the CCU are lost.",
+    "deleteConfirm": "Delete device"
   },
   "heating": {
     "loadFailed": "Could not read the heating setup",
@@ -115,5 +129,26 @@
     "deleteTitle": "Delete heating group",
     "deleteMessage": "Delete the group {{name}} from the CCU? The thermostats stay on the CCU.",
     "deleteConfirm": "Delete group"
+  },
+  "pairing": {
+    "loadFailed": "Could not read the pairing windows",
+    "noInterfaces": "This CCU has no radio interface that can pair devices.",
+    "hmipKeyNote": "HmIP devices are paired with the window below; entering a device key or SGTIN is not offered by the CCU interface this page uses, use the CCU WebUI for that.",
+    "statusOpen": "Open, {{seconds}} s left",
+    "statusClosed": "Closed",
+    "statusUnknown": "Unknown",
+    "fieldSeconds": "Window length (seconds)",
+    "fieldMode": "Mode",
+    "modeNormal": "Normal",
+    "modeSecure": "Secure (also teaches the HomeMatic Secure key)",
+    "start": "Start pairing",
+    "stop": "Stop pairing",
+    "startTitle": "Open the {{name}} pairing window",
+    "startMessage": "{{name}} will accept new devices for {{seconds}} seconds. Put the device in pairing mode now.",
+    "stopTitle": "Close the {{name}} pairing window",
+    "stopMessage": "{{name}} will stop accepting new devices.",
+    "foundTitle": "Devices found",
+    "foundNone": "No new device since this tab opened.",
+    "foundWaiting": "Waiting for a device to pair..."
   }
 }
