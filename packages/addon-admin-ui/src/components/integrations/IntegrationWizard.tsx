@@ -271,6 +271,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
         name: data.name,
         settings: data.config,
         secretKeys: [...data.secretKeys],
+        ...(seed !== null && seed.addonId === selectedAddonId && seed.originStableId !== undefined
+          ? { originStableId: seed.originStableId }
+          : {}),
       })
       setCreatedProviderId(result.id)
       setCreatedIntegrationId(result.id)

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Network discovery no longer offers a device that already has its own integration
 - A lock linked to a door contact refuses lock() while the door is open, naming the sensor; the device-call redirect now composes the remote and the lock gate.
 
 ## [1.2.531] - 2026-10-31

@@ -53,6 +53,7 @@ type FakeProvider = ReturnType<typeof fakeProvider>
 function setup(
   providers: Record<string, FakeProvider>,
   scanResult: ScanNetworkResult,
+  owned: ReadonlySet<string> = new Set(),
 ): { deps: DiscoveryOrchestratorDeps; scan: ReturnType<typeof vi.fn> } {
   const scan = vi.fn(async (_input: { requests: readonly unknown[] }) => scanResult)
   const deps: DiscoveryOrchestratorDeps = {
@@ -62,6 +63,7 @@ function setup(
       return p
     },
     scanNetwork: scan,
+    originStableIds: async () => owned,
     logger: new QuietLogger(),
   }
   return { deps, scan }
@@ -157,11 +159,48 @@ describe('discoverProviders', () => {
       {
         requireProvider: async (id) => (id === 'a' ? a : legacy),
         scanNetwork: scan,
+        originStableIds: async () => new Set<string>(),
         logger: new QuietLogger(),
       },
       { addonIds: ['a', 'legacy'] },
     )
     expect(out[0]).toMatchObject({ addonId: 'a', error: 'bad subnet', candidates: [] })
     expect(out[1]).toMatchObject({ addonId: 'legacy', error: null })
+  })
+
+  it('hides a candidate whose stableId already belongs to an integration, for every provider', async () => {
+    const a = fakeProvider([probe])
+    const legacy = fakeProvider([])
+    const { deps } = setup(
+      { a, legacy },
+      {
+        hits: [
+          { providerId: 'a', hit: hit(0, '10.0.0.1') },
+          { providerId: 'a', hit: hit(0, '10.0.0.2') },
+        ],
+        subnetsScanned: ['10.0.0.0/24'],
+        errors: [],
+        stats: emptyStats,
+      },
+      new Set(['found-10.0.0.1', 'legacy']),
+    )
+    const out = await discoverProviders(deps, { addonIds: ['a', 'legacy'] })
+    expect(out.find((o) => o.addonId === 'a')?.candidates.map((c) => c.stableId)).toEqual([
+      'found-10.0.0.2',
+    ])
+    expect(out.find((o) => o.addonId === 'legacy')?.candidates).toEqual([])
+  })
+
+  it('shows everything when the owned set cannot be read (a failed read hides nothing)', async () => {
+    const a = fakeProvider([])
+    const { deps } = setup({ a }, { hits: [], subnetsScanned: [], errors: [], stats: emptyStats })
+    const failing: DiscoveryOrchestratorDeps = {
+      ...deps,
+      originStableIds: async () => {
+        throw new Error('boom')
+      },
+    }
+    const [out] = await discoverProviders(failing, { addonIds: ['a'] })
+    expect(out?.candidates.map((c) => c.stableId)).toEqual(['legacy'])
   })
 })

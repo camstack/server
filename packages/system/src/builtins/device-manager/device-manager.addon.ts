@@ -334,6 +334,14 @@ export class DeviceManagerAddon extends BaseAddon {
           ...(input.subnets !== undefined ? { subnets: [...input.subnets] } : {}),
         })
       },
+      originStableIds: async () => {
+        const integrations = this.ctx.api?.integrations
+        if (!integrations) return new Set<string>()
+        const all = await integrations.list.query()
+        const ids = new Set<string>()
+        for (const i of all) if (i.originStableId !== undefined) ids.add(i.originStableId)
+        return ids
+      },
       logger: this.ctx.logger,
     }
   }

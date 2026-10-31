@@ -4,7 +4,7 @@
 
 # Decisions
 
-947 architecture decision records. One file per decision, never
+948 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -962,6 +962,7 @@ that rots.
 | D982 | [The hub owns every node's addon set; an agent converges to it and never removes an addon on its own](adr-0982-the-hub-owns-every-nodes-addon-set.md) | ✅ accepted | 2026-10-31 |
 | D983 | [An action is one shape everywhere — a vocabulary action on a target — and a scheduler is a timeline of edge and hold points](adr-0983-an-action-is-one-shape-everywhere-a-schedule-is-a-timeline-of-edge-and-hold-points.md) | 💭 proposed | 2026-10-31 |
 | D984 | [A cap may declare a native field overridable by a named Customize extension](adr-0984-a-cap-may-declare-a-native-field-overridable-by-a-named-customize-extension.md) | ✅ accepted | 2026-10-31 |
+| D985 | [A hub is its own integration instance](adr-0985-a-hub-is-its-own-integration-instance.md) | ✅ accepted | 2026-10-31 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

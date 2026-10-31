@@ -36,6 +36,11 @@ export interface DiscoveryOrchestratorDeps {
     readonly requests: readonly ScanRequest[]
     readonly subnets?: readonly string[]
   }) => Promise<ScanNetworkResult>
+  /**
+   * `stableId`s of the candidates that already became an integration. A failed
+   * read hides nothing (D49): the list is shown whole.
+   */
+  readonly originStableIds: () => Promise<ReadonlySet<string>>
   readonly logger: IScopedLogger
 }
 
@@ -89,6 +94,26 @@ function mergeByStableId(lists: readonly Candidates[]): Candidates {
   return out
 }
 
+async function ownedOrigins(deps: DiscoveryOrchestratorDeps): Promise<ReadonlySet<string>> {
+  try {
+    return await deps.originStableIds()
+  } catch (err) {
+    deps.logger.warn('discovery: integration origins unreadable, hiding nothing', {
+      meta: { error: errMsg(err) },
+    })
+    return new Set()
+  }
+}
+
+/** A candidate that already became an integration is not offered again (D984). */
+function withoutOwned(
+  outcome: ProviderDiscoveryOutcome,
+  owned: ReadonlySet<string>,
+): ProviderDiscoveryOutcome {
+  if (owned.size === 0) return outcome
+  return { ...outcome, candidates: outcome.candidates.filter((c) => !owned.has(c.stableId)) }
+}
+
 export async function discoverProviders(
   deps: DiscoveryOrchestratorDeps,
   request: DiscoverRequest,
@@ -124,7 +149,8 @@ export async function discoverProviders(
     }
   }
 
-  return Promise.all(
+  const owned = await ownedOrigins(deps)
+  const outcomes = await Promise.all(
     loaded.map(async (l): Promise<ProviderDiscoveryOutcome> => {
       const { addonId, provider } = l
       if (provider === null) {
@@ -168,4 +194,5 @@ export async function discoverProviders(
       }
     }),
   )
+  return outcomes.map((o) => withoutOwned(o, owned))
 }

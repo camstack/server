@@ -1216,9 +1216,10 @@ export function buildIntegrationsProvider(
             tags: { addonId: input.addonId, integrationId: existing[0]!.id },
             meta: { phase: 'create' },
           })
-          throw new Error(
-            `Addon "${input.addonId}" is unique-instance and already has an integration (${existing[0]!.id})`,
-          )
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: `Addon "${input.addonId}" is unique-instance and already has an integration (${existing[0]!.id})`,
+          })
         }
       }
 

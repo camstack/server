@@ -101,6 +101,7 @@ const INTEGRATIONS_COLUMNS: readonly CollectionColumn[] = [
   { name: 'name', type: 'TEXT', notNull: true },
   { name: 'enabled', type: 'INTEGER', notNull: true, defaultValue: 1 },
   { name: 'info', type: 'JSON', notNull: true, defaultValue: '{}' },
+  { name: 'origin_stable_id', type: 'TEXT' },
   { name: 'created_at', type: 'INTEGER', notNull: true },
   { name: 'updated_at', type: 'INTEGER', notNull: true },
 ]
@@ -155,6 +156,7 @@ function mapIntegrationBody(id: string, body: IntegrationBody): Integration {
     name: body.name,
     enabled: body.enabled,
     info: readInfo(body.info),
+    ...(body.originStableId !== undefined ? { originStableId: body.originStableId } : {}),
     createdAt: body.createdAt,
     updatedAt: body.updatedAt,
   }
@@ -225,6 +227,7 @@ export class IntegrationRegistry implements IIntegrationRegistry {
       name: input.name,
       enabled,
       info,
+      ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
       createdAt: now,
       updatedAt: now,
     }
@@ -241,6 +244,7 @@ export class IntegrationRegistry implements IIntegrationRegistry {
             name: input.name,
             enabled: enabled ? 1 : 0,
             info,
+            origin_stable_id: input.originStableId ?? null,
             created_at: now,
             updated_at: now,
           },
@@ -258,6 +262,7 @@ export class IntegrationRegistry implements IIntegrationRegistry {
       name: input.name,
       enabled,
       info,
+      ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
       createdAt: now,
       updatedAt: now,
     }
@@ -454,6 +459,9 @@ export class IntegrationRegistry implements IIntegrationRegistry {
       name: String(row['name']),
       enabled: row['enabled'] === 1,
       info: readInfo(row['info']),
+      ...(typeof row['origin_stable_id'] === 'string'
+        ? { originStableId: row['origin_stable_id'] }
+        : {}),
       createdAt: Number(row['created_at']),
       updatedAt: Number(row['updated_at']),
     }

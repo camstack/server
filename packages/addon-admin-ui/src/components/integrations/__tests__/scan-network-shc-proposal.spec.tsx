@@ -94,6 +94,7 @@ describe('Scan network SHC proposal', () => {
       addonId: 'bosch-shc',
       name: 'Bosch SHC [lab]',
       config: { host: '192.0.2.20' },
+      originStableId: 'bosch-shc:shc0123',
     })
     expect(adopt).not.toHaveBeenCalled()
   })

@@ -72,3 +72,25 @@ describe('readIntegrationSeed', () => {
     expect(readIntegrationSeed({ integrationSeed: { addonId: '' } })).toBeNull()
   })
 })
+
+describe('origin of a setup candidate', () => {
+  it('the seed remembers the candidate it was born from', () => {
+    const seed = integrationSetupSeed('provider-reolink', {
+      stableId: 'mac-aabbccddeeff',
+      suggestedName: 'Home Hub',
+      setupIntegration: true,
+      prefilledConfig: { host: '192.0.2.40' },
+    })
+    expect(seed?.originStableId).toBe('mac-aabbccddeeff')
+  })
+
+  it('survives the location-state round trip of a scan on another page', () => {
+    const seed = integrationSetupSeed('provider-reolink', {
+      stableId: 'mac-aabbccddeeff',
+      suggestedName: 'Home Hub',
+      setupIntegration: true,
+      prefilledConfig: { host: '192.0.2.40' },
+    })
+    expect(readIntegrationSeed({ integrationSeed: seed })?.originStableId).toBe('mac-aabbccddeeff')
+  })
+})

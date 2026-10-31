@@ -756,6 +756,18 @@ cannot start one or restart the box); Homematic CCU (`device-admin-link` only, t
 its firmware call updates a radio device by address, never the box). All three are integrations with a connection
 test and a LAN scan that pre-fills the form; the old standalone path is removed, with no migration.
 
+## A hub is its own integration instance (D985)
+
+A provider's physical hub (an NVR, a console, a gateway whose channels are the products) is a standalone
+integration instance named after the hub, not a `Hub` device with children. The provider's default integration
+finds hubs through the LAN engine (D977) and offers each as a `setupIntegration` candidate; picking one creates
+a new integration whose connection is prefilled, and whose own discovery is scoped to that hub
+(`device-adoption`, `integrationId`). `integrations.create` stores the candidate's `stableId` as the typed
+`originStableId`, and `discoverProviders` hides every candidate that already is an integration's origin, once,
+for all providers. `instanceMode: unique` is refused by the backend (typed `CONFLICT`), not only by the picker.
+Velux keeps its Gateway (D976) and ESPHome keeps one integration with a board list (D978). A provider moves over
+with a boot migration that turns each Hub device into an integration and re-stamps its children.
+
 ## How a device is named
 
 A device has one stored name. What a screen paints is a different string, from one function (`formatDeviceName` in `@camstack/ui-library`, mirrored in the viewer at `camstack/src/data/device-name.ts`).

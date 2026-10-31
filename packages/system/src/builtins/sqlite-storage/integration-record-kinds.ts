@@ -13,6 +13,7 @@ export type IntegrationBody = {
   readonly name: string
   readonly enabled: boolean
   readonly info: Record<string, unknown>
+  readonly originStableId?: string | undefined
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -21,6 +22,7 @@ const _integrationBody: z.ZodType<IntegrationBody> = z.object({
   name: z.string(),
   enabled: z.boolean(),
   info: z.record(z.string(), z.unknown()),
+  originStableId: z.string().optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })

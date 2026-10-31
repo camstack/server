@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Creating a second instance of a single-instance integration is refused with a typed conflict
+
 ## [1.2.710] - 2026-10-31
 
 ### Changed

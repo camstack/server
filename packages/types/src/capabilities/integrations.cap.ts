@@ -26,6 +26,8 @@ const IntegrationWithStateSchema = z.object({
   name: z.string(),
   enabled: z.boolean(),
   info: z.record(z.string(), z.unknown()).readonly(),
+  /** The discovery candidate this integration was set up from (D984). */
+  originStableId: z.string().optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
   processState: z.string(),
@@ -37,6 +39,8 @@ const IntegrationLiteSchema = z.object({
   name: z.string(),
   enabled: z.boolean(),
   info: z.record(z.string(), z.unknown()).readonly(),
+  /** The discovery candidate this integration was set up from (D984). */
+  originStableId: z.string().optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
@@ -128,6 +132,8 @@ const CreateIntegrationInputSchema = z.object({
   name: z.string(),
   enabled: z.boolean().optional(),
   info: z.record(z.string(), z.unknown()).optional(),
+  /** `stableId` of the discovery candidate the form was seeded from (D984). */
+  originStableId: z.string().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
   /** Keys of `settings` the form's schema declares secret (by type) — kept in
    *  the keychain, not the table (D787). */

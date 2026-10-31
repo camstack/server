@@ -5,6 +5,12 @@ export interface Integration {
   readonly name: string
   readonly enabled: boolean
   readonly info: Readonly<Record<string, unknown>> // { icon, color, discoveryMode, ... }
+  /**
+   * `stableId` of the discovery candidate this integration was set up from (a hub
+   * found on the LAN). Discovery hides a candidate with this identity, so a hub
+   * that already has its integration is not offered again (D984).
+   */
+  readonly originStableId?: string | undefined
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -15,6 +21,7 @@ export interface CreateIntegrationInput {
   readonly name: string
   readonly enabled?: boolean
   readonly info?: Record<string, unknown>
+  readonly originStableId?: string | undefined
   readonly settings?: Record<string, unknown>
 }
 

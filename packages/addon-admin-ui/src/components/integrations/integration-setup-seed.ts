@@ -12,9 +12,12 @@ export interface IntegrationFormSeed {
   readonly addonId: string
   readonly name: string
   readonly config: Readonly<Record<string, unknown>>
+  /** `stableId` of the candidate the seed came from; `integrations.create` stores it (D984). */
+  readonly originStableId?: string | undefined
 }
 
 export interface DiscoveryProposal {
+  readonly stableId?: string | undefined
   readonly suggestedName: string
   readonly setupIntegration?: boolean | undefined
   readonly prefilledConfig: Readonly<Record<string, unknown>>
@@ -37,7 +40,12 @@ export function seedFromCandidate(
     if (key === SETUP_INTEGRATION_KEY) continue
     config[key] = typeof value === 'string' && key === 'host' ? value.trim() : value
   }
-  return { addonId, name: candidate.suggestedName, config }
+  return {
+    addonId,
+    name: candidate.suggestedName,
+    config,
+    ...(candidate.stableId !== undefined ? { originStableId: candidate.stableId } : {}),
+  }
 }
 
 export function integrationSetupSeed(
@@ -63,5 +71,11 @@ export function readIntegrationSeed(state: unknown): IntegrationFormSeed | null 
   if (!isRecord(config)) return null
   const copy: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(config)) copy[key] = value
-  return { addonId, name, config: copy }
+  const origin = seed['originStableId']
+  return {
+    addonId,
+    name,
+    config: copy,
+    ...(typeof origin === 'string' && origin.length > 0 ? { originStableId: origin } : {}),
+  }
 }

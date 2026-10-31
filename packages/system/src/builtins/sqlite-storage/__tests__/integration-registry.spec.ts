@@ -121,4 +121,17 @@ describe('IntegrationRegistry over the collection surface', () => {
       expect(await registry.getIntegration(int.id)).toBeNull()
     })
   })
+
+  it('keeps the candidate an integration was born from, as a typed field', async () => {
+    const created = await registry.createIntegration({
+      addonId: 'provider-reolink',
+      name: 'Home Hub',
+      originStableId: 'mac-aabbccddeeff',
+    })
+    expect(created.originStableId).toBe('mac-aabbccddeeff')
+    expect((await registry.getIntegration(created.id))?.originStableId).toBe('mac-aabbccddeeff')
+    const listed = (await registry.listIntegrations()).find((i) => i.id === created.id)
+    expect(listed?.originStableId).toBe('mac-aabbccddeeff')
+    expect(listed?.info).not.toHaveProperty('originStableId')
+  })
 })

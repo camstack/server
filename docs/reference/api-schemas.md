@@ -1389,6 +1389,7 @@ Enum: `"open" \| "opening" \| "closing" \| "closed" \| "stopped"`
 - `name`: `string`
 - `enabled?`: `boolean`
 - `info?`: `Record<string, unknown>`
+- `originStableId?`: `string`
 - `settings?`: `Record<string, unknown>`
 - `secretKeys?`: `string[]`
 - `skipRestart?`: `boolean`
@@ -2630,6 +2631,7 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `name`: `string`
 - `enabled`: `boolean`
 - `info`: `Record<string, unknown>`
+- `originStableId?`: `string`
 - `createdAt`: `number`
 - `updatedAt`: `number`
 
@@ -2640,6 +2642,7 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `name`: `string`
 - `enabled`: `boolean`
 - `info`: `Record<string, unknown>`
+- `originStableId?`: `string`
 - `createdAt`: `number`
 - `updatedAt`: `number`
 - `processState`: `string`
