@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub now owns every node's addon set: nodes converge to the hub's any-node addons and tracked agent-ui on connect, after a hub install or uninstall, and every 10 minutes (dry run until addons.convergence.dryRun is set to false); updating agent-ui from the hub now reaches every agent
+
 ## [1.2.705] - 2026-10-31
 
 ### Fixed

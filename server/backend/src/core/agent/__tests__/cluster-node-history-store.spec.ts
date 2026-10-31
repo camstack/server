@@ -193,6 +193,26 @@ describe('ClusterNodeHistoryStore', () => {
     expect((await f.store.getAll())[0]!.hostname).toBe('agent-1.local')
   })
 
+  it('tombstones persist, survive a topology snapshot, and an explicit delivery lifts one', async () => {
+    await f.store.addTombstones('agent-1', ['@camstack/addon-terminal', '@camstack/addon-ai'])
+    // `listNodes()` snapshots a descriptor that carries no tombstones.
+    await f.store.snapshot(descriptor('agent-1'))
+    expect([...(await f.store.getTombstones('agent-1'))].sort()).toEqual([
+      '@camstack/addon-ai',
+      '@camstack/addon-terminal',
+    ])
+
+    await f.store.clearTombstones('agent-1', ['@camstack/addon-ai'])
+    expect([...(await f.store.getTombstones('agent-1'))]).toEqual(['@camstack/addon-terminal'])
+  })
+
+  it('a roster record neither adds nor erases a tombstone', async () => {
+    await f.store.addTombstones('agent-1', ['@camstack/addon-terminal'])
+    await f.store.recordPackages('agent-1', [{ name: '@camstack/addon-ai', version: '1.0.0' }])
+    await f.store.prunePackages('agent-1', ['@camstack/addon-ai'])
+    expect([...(await f.store.getTombstones('agent-1'))]).toEqual(['@camstack/addon-terminal'])
+  })
+
   it('reports an empty roster for a node the hub has never recorded', async () => {
     expect(await f.store.getPackages('ghost')).toEqual([])
   })

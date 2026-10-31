@@ -20,6 +20,7 @@ applies-to:
   - server/backend/src/launcher.ts
   - server/backend/src/core/agent/agent-registry.service.ts
   - server/backend/src/core/agent/agent-addon-backfill.ts
+  - server/backend/src/core/agent/agent-desired-set.ts
   - server/backend/src/core/agent/agent-delivery-ledger.ts
 last-verified: 2026-10-15
 ---
@@ -262,33 +263,39 @@ Two rules follow:
 
 ## Node convergence
 
-Registration also drives a reconcile of the node's *installed* addons, in both
-directions ([D24](../decisions/adr-0024.md)):
+The hub owns every node's addon set ([D982](../decisions/adr-0982-the-hub-owns-every-nodes-addon-set.md)).
+An agent converges to a **desired set** the hub computes (`agent-desired-set.ts`,
+a pure function) and never keeps an addon on its own say:
 
-| Direction | Rule |
+| Part of the desired set | Rule |
 | --- | --- |
-| Remove | An addon on the node that the hub does not install, or installs as `hub-only`, is undeployed. Bootstrap infrastructure (`@camstack/system`, `@camstack/addon-agent-ui`) never is. |
-| Add | A package in the node's own last-declared roster that the node no longer reports is re-delivered — packed hub-side, shipped over `$agent.deploy`, followed by one `$agent.reload`. **Only a package the hub installs**: one the hub does not is reported as `notOnHub` and never delivered ([D766](../decisions/adr-0766-an-uninstall-names-its-nodes-and-the-hubs-install-set-bounds-the-back-fill.md)). |
+| Hub packages | every package the hub installs whose addons are all `any-node` (a package with a `hub-only` addon is never wanted; one whose addons are ALL `hub-only` is a leftover), at the hub's version |
+| Agent-tracked packages | `@camstack/addon-agent-ui`, which the hub never loads: the hub follows the registry's `latest` for it, so `addons.updatePackage` for it fans out to every online agent |
+| Tombstones | a package removed on purpose from a node (a hub uninstall for it, an operator undeploy) stays off it; an explicit delivery to that node lifts it |
+| Never managed | `@camstack/system` |
 
-A **fresh node** — one the hub holds no declared roster for (newly paired, or
-wiped and re-registered under a new id) — is given every hub-installed package
-whose addons are all `any-node`/`agent-only` (never one with a `hub-only` addon),
-at the hub's version; each package left off is logged with its reason
-([D962](../decisions/adr-0962-a-fresh-node-is-given-the-hubs-any-node-addons.md)).
+The diff against the node's reported roster is **install** (missing), **update**
+(behind, or AHEAD of the hub: D942) and **remove** (tombstoned, or a hub-only
+leftover — each removal is logged with its reason). The roster a node declared
+(`ClusterNodeHistoryStore`) is history, never intent, so a node that already had a
+roster still receives an any-node addon added to the hub later.
 
-The intended set is otherwise the roster **the node itself declared**, kept in
-`ClusterNodeHistoryStore`. It grows when a node reports a package and shrinks only
-on an explicit undeploy or uninstall, so a rebuilt node comes back with what it
-had and a deliberate per-node removal stays removed. The version pushed is the
-hub's, never `latest` — and never the version the node last reported: that
-fallback was the one path that could reinstall an addon the hub had uninstalled,
-in the same pass whose stale sweep exists to remove it.
+A convergence round runs **on registration**, **after a hub install / update /
+uninstall** (`hub-change`) and **every 10 minutes for every online agent**
+(`periodic`; `ADDON_CONVERGENCE_INTERVAL_MS`). Rounds that arrive while one runs
+collapse into one more; a round never gates registration (D3) and a failed
+delivery waits for the next round. The decl-level stale sweep below keeps its
+connect-time blast radius and does not run on the scheduled rounds. The whole
+convergence is **dry run until `addons.convergence.dryRun` is set to `false`**:
+it logs the plan (`convergence plan (DRY RUN, nothing applied)`) and applies
+nothing.
 
-For a long time this pass was undeploy-only, and its first statement returned
-early on an empty node — a wiped agent came back with 4 of 14 packages and the
-hub never sent the other 10. That is tolerable while the image bakes a seed copy
-of every addon; it is not tolerable once the image ships none, which is why the
-back-fill has to be live and observed before the seed can go.
+Registration also still runs the decl-level stale sweep ([D24](../decisions/adr-0024.md)):
+an addon on the node that the hub does not install, or installs as `hub-only`, is
+undeployed. Bootstrap infrastructure (`@camstack/system`,
+`@camstack/addon-agent-ui`) never is. The agent has no local uninstall path:
+`$agent.undeploy` is called only by the hub (an operator uninstall, the sweep, or
+a convergence removal).
 
 Failed deliveries are bounded by the same circuit-breaker shape as crashes:
 `MAX_BACKFILL_ATTEMPTS` per `(node, package, version)`, then retired with a log
@@ -303,9 +310,9 @@ pinned by a test that fails without it:
 
 | Gate | Rule |
 | --- | --- |
-| trigger allowlist | the pass names why it runs; only `node-registration`, `hub-boot` and `operator-repair` may install |
+| trigger allowlist | the pass names why it runs; only `node-registration`, `hub-boot`, `operator-repair`, `hub-change` and `periodic` may install |
 | delivery window | a node the hub is writing to (or finished writing to under `DELIVERY_GRACE_MS` ago) is never back-filled |
-| confirmation read | a second `$agent.status` must agree the package is absent ([D49](../decisions/adr-0049.md)); a failed read is refused, not treated as agreement |
+| confirmation read | a second `$agent.status` must agree the package is absent (install) or still present (removal) ([D49](../decisions/adr-0049.md)); a failed read is refused, not treated as agreement |
 
 Both a delivery and a refusal are logged, with the source of the bytes and the
 gate that stopped it. `clusterNodes.repairNodeAddons` is the operator's explicit

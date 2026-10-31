@@ -24,6 +24,8 @@ export interface ClusterNodeDescriptorBody {
   readonly localIps: readonly string[]
   readonly addonIds: readonly string[]
   readonly packages?: readonly ClusterNodePackageEntryBody[]
+  /** Packages removed on purpose from this node (D982); the hub keeps them off. */
+  readonly tombstones?: readonly string[]
 }
 
 export interface ClusterNodeHistoryBody {
@@ -49,6 +51,7 @@ const _clusterNodeDescriptorBody: z.ZodType<ClusterNodeDescriptorBody> = z.objec
   localIps: z.array(z.string()).readonly(),
   addonIds: z.array(z.string()).readonly(),
   packages: z.array(NodePackageEntrySchema).readonly().optional(),
+  tombstones: z.array(z.string()).readonly().optional(),
 })
 export const ClusterNodeDescriptorBodySchema: z.ZodType<ClusterNodeDescriptorBody> =
   _clusterNodeDescriptorBody

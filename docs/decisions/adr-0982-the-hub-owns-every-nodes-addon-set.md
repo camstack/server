@@ -1,7 +1,7 @@
 ---
 id: D982
 title: The hub owns every node's addon set; an agent converges to it and never removes an addon on its own
-status: proposed
+status: accepted
 date: 2026-10-31
 supersedes:
 applies-to:
@@ -9,6 +9,7 @@ applies-to:
   - server/backend/src/core/agent/agent-registry.service.ts
   - server/backend/src/core/agent/cluster-node-history-store.ts
   - server/backend/src/api/addon-upload.ts
+  - server/backend/src/core/agent/agent-desired-set.ts
 ---
 
 ## Context
@@ -51,6 +52,15 @@ refuses a local uninstall of a package in its desired set; the only way a packag
 leaves a node is a hub-side tombstone (`noteAddonUndeployed` /
 `notePackageUndeployed`, or a hub uninstall `everywhere`).
 
+### Operator decisions (2026-10-31)
+
+- **`@camstack/addon-admin-ui` and `@camstack/addon-auth` are `hub-only`.** Their
+  manifests declare `placement: 'hub-only'`; the first convergence removes them
+  from the agents that still carry them.
+- **The periodic reconcile runs every 10 minutes for every online agent**
+  (`ADDON_CONVERGENCE_INTERVAL_MS`). The first live run is a dry run: while
+  `addons.convergence.dryRun` is not `false` the plan is only logged.
+
 ## Consequences
 
 - The hub must track a version for an agent-only package without loading it
@@ -69,7 +79,8 @@ leaves a node is a hub-side tombstone (`noteAddonUndeployed` /
 
 ## Enforcement
 
-A pure spec of the desired-set computation (any-node added to a node WITH a
-roster; agent-ui updated from the hub; hub-only leftover removed; tombstone kept
-off; local uninstall refused). Nothing yet stops a new delivery path from
+A pure spec of the desired-set computation (`agent-desired-set.spec.ts`: any-node
+added to a node WITH a roster; agent-ui updated from the hub; hub-only leftover
+removed; tombstone kept off; admin-ui and auth removed from agents). The agent has
+no local uninstall path to refuse — `$agent.undeploy` is hub-called only. Nothing yet stops a new delivery path from
 bypassing the reconcile — review only until a guard exists.

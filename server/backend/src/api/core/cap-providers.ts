@@ -78,6 +78,7 @@ import {
   PackageProtectedError,
   uninstallPackage,
 } from '../../core/addon/addon-uninstall.js'
+import { isAgentTrackedPackage } from '../../core/agent/agent-desired-set'
 import type { AgentRegistryService } from '../../core/agent/agent-registry.service'
 import type { ConfigService } from '../../core/config/config.service'
 import type { EventBusService } from '../../core/events/event-bus.service'
@@ -1916,6 +1917,30 @@ export function buildAddonsProvider(
 
   const frameworkAllowSet = new Set<string>([SYSTEM_PACKAGE])
 
+  // D982: a hub install / update / uninstall changes every node's desired set.
+  // Fire-and-forget — the round never gates the operator's call, and bursts
+  // collapse into one extra round inside `requestConvergence`.
+  const requestHubChangeConvergence = (): void => {
+    void agentRegistry?.requestConvergence('hub-change')
+  }
+
+  // Ship an already-packed tarball to one agent and reload it. The reload
+  // re-instantiates the changed package's addons; for a large package (the whole
+  // pipeline stack) that can take well over a minute, so allow generous headroom
+  // — a timeout here aborts the call even though the deploy already landed.
+  const deployPackedToAgent = async (
+    agentNodeId: string,
+    packageName: string,
+    bundle: Buffer,
+  ): Promise<void> => {
+    await broker.call(
+      '$agent.deploy',
+      { addonId: packageName, bundle },
+      { nodeID: agentNodeId, timeout: 300_000 },
+    )
+    await broker.call('$agent.reload', {}, { nodeID: agentNodeId, timeout: 300_000 })
+  }
+
   // Process-wide runner built once at boot (manual-boot wires its deps from the
   // addon-package service + event bus). `createdBy` travels per `startJob` call.
   const lifecycleRunner = getLifecycleRunner()
@@ -1977,13 +2002,23 @@ export function buildAddonsProvider(
         level: input.level,
       }),
     listPackages: async () => ps.listInstalled(),
-    installPackage: async (input) => ps.installAndLoad(input.packageName, input.version),
-    installFromWorkspace: async (input) => ps.installFromWorkspaceAndLoad(input.packageName),
+    installPackage: async (input) => {
+      const result = await ps.installAndLoad(input.packageName, input.version)
+      requestHubChangeConvergence()
+      return result
+    },
+    installFromWorkspace: async (input) => {
+      const result = await ps.installFromWorkspaceAndLoad(input.packageName)
+      requestHubChangeConvergence()
+      return result
+    },
     isWorkspaceAvailable: async () => ps.isWorkspaceAvailable(),
     listWorkspacePackages: async () => ps.listWorkspacePackages(),
     uninstallPackage: async (input) => {
       try {
-        return await uninstallPackage(uninstallSeam, input)
+        const result = await uninstallPackage(uninstallSeam, input)
+        requestHubChangeConvergence()
+        return result
       } catch (err) {
         if (err instanceof PackageProtectedError) {
           throw new TRPCError({ code: 'FORBIDDEN', message: err.message })
@@ -2014,6 +2049,30 @@ export function buildAddonsProvider(
     },
     updatePackage: async (input) => {
       const nodeId = input.nodeId
+      if (isAgentTrackedPackage(input.name) && (nodeId === undefined || isHubNode(nodeId))) {
+        // An agent-only package the hub tracks without loading it (agent-ui, D982):
+        // there is nothing to update on the hub, so the update fans out to every
+        // online agent instead of failing with "not currently tracked in manifest".
+        if (agentRegistry === undefined) {
+          return {
+            success: false,
+            error: `${input.name} is delivered by the agent registry, which is not wired`,
+          }
+        }
+        const packed = await ps.packPackage(input.name, input.version)
+        const targets = agentRegistry.onlineAgentIds()
+        const failures: string[] = []
+        for (const target of targets) {
+          try {
+            await deployPackedToAgent(target, input.name, packed.buffer)
+            await agentRegistry.noteExplicitDelivery(target, input.name)
+          } catch (err) {
+            failures.push(`${target}: ${err instanceof Error ? err.message : String(err)}`)
+          }
+        }
+        if (failures.length > 0) return { success: false, error: failures.join('; ') }
+        return { success: true, name: input.name, version: packed.version }
+      }
       if (nodeId === undefined || isHubNode(nodeId)) {
         // Hub-single: route through the lifecycle job engine so the fast
         // staged-swap path (applyStagedAddonUpdate) is always used.
@@ -2026,6 +2085,7 @@ export function buildAddonsProvider(
         const job = lifecycleRunner.getJob(jobId)
         const task = job?.tasks[0]
         if (task?.phase === 'done') {
+          requestHubChangeConvergence()
           return { success: true, name: input.name, version, jobId }
         }
         return { success: false, error: task?.error ?? 'update failed', jobId }
@@ -2053,12 +2113,9 @@ export function buildAddonsProvider(
       // minute, so allow generous headroom — a timeout here aborts the call
       // even though the deploy already landed on disk.
       const packed = await ps.packPackage(input.name, input.version)
-      await broker.call(
-        '$agent.deploy',
-        { addonId: input.name, bundle: packed.buffer },
-        { nodeID: nodeId, timeout: 300_000 },
-      )
-      await broker.call('$agent.reload', {}, { nodeID: nodeId, timeout: 300_000 })
+      await deployPackedToAgent(nodeId, input.name, packed.buffer)
+      // An operator's explicit delivery lifts the node's tombstone (D982).
+      await agentRegistry?.noteExplicitDelivery(nodeId, input.name)
       return { success: true, name: input.name, version: packed.version, nodeId }
     },
     rollbackPackage: async (input) => ps.rollbackPackage(input.name),

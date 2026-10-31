@@ -32,6 +32,9 @@
     "addons": [
       {
         "id": "admin-ui",
+        "execution": {
+          "placement": "hub-only"
+        },
         "category": "system",
         "name": "Admin UI",
         "icon": "assets/icon.svg",

@@ -22,15 +22,22 @@ import { MoleculerService } from '../moleculer/moleculer.service'
 import {
   BackfillAttemptTracker,
   type BackfillFailureRecord,
+  type BackfillPlan,
   type BackfillSeam,
   type BackfillTrigger,
-  computeBackfillPlan,
   confirmBackfillPlan,
   executeBackfill,
   MAX_BACKFILL_ATTEMPTS,
   type NodePackageEntry,
   triggerMayDeliver,
 } from './agent-addon-backfill'
+import {
+  AGENT_TRACKED_PACKAGES,
+  computeDesiredSet,
+  diffNodeAgainstDesired,
+  type ConvergencePlan,
+  type HubPackageFact,
+} from './agent-desired-set'
 import { AgentDeliveryLedger } from './agent-delivery-ledger'
 import { agentOfflineData, nodeDisplayName } from './agent-liveness-event'
 import { ClusterNodeHistoryMirror } from './cluster-node-history-mirror'
@@ -182,6 +189,26 @@ const AGENT_BOOTSTRAP_PACKAGES: ReadonlySet<string> = new Set([
   '@camstack/system',
   '@camstack/addon-agent-ui',
 ])
+
+/**
+ * What the CONVERGENCE never manages (D982): only the framework carrier. The
+ * agent-only dashboard is not bootstrap to the convergence — the hub tracks it
+ * and keeps it at the hub's version — though the stale sweep above still never
+ * undeploys it as "not installed on the hub".
+ */
+const CONVERGENCE_BOOTSTRAP: ReadonlySet<string> = new Set(['@camstack/system'])
+
+/** The fixed schedule of the convergence round over every online node (D982). */
+export const ADDON_CONVERGENCE_INTERVAL_MS = 10 * 60_000
+
+/** Settings key: `true` (the default) logs the convergence plan and applies nothing. */
+export const ADDON_CONVERGENCE_DRY_RUN_KEY = 'addons.convergence.dryRun'
+
+/** How long a resolved registry version of a tracked package is reused. */
+const TRACKED_VERSION_TTL_MS = 5 * 60_000
+
+/** Resolves the registry version the hub follows for an agent-only tracked package. */
+export type TrackedVersionResolver = (packageName: string) => Promise<string | null>
 
 /** Shape of one addon entry in the `$agent.status` response. */
 interface AgentStatusAddon {
@@ -367,6 +394,17 @@ export class AgentRegistryService {
    */
   private readonly reconcilingNodes = new Set<string>()
 
+  /** Resolves the version of an agent-tracked package (agent-ui); `null` = not wired. */
+  private trackedVersionResolver: TrackedVersionResolver | null = null
+  private readonly trackedVersionCache = new Map<string, { version: string; at: number }>()
+
+  /** Reads the dry-run switch per round, so flipping the setting needs no restart. */
+  private convergenceDryRun: () => boolean = () => true
+
+  private convergenceTimer: ReturnType<typeof setInterval> | null = null
+  private convergenceRunning = false
+  private convergenceRerun: BackfillTrigger | null = null
+
   constructor(
     private readonly eventBus: EventBusService,
     private readonly moleculer: MoleculerService,
@@ -446,6 +484,17 @@ export class AgentRegistryService {
     this.addonBackfill = seam
   }
 
+  /** Wire how the hub resolves the version of an agent-only tracked package. */
+  setTrackedVersionResolver(resolver: TrackedVersionResolver | null): void {
+    this.trackedVersionResolver = resolver
+    this.trackedVersionCache.clear()
+  }
+
+  /** Wire the dry-run switch; unwired it is ON (D982: the first live run only logs). */
+  setConvergenceDryRun(read: () => boolean): void {
+    this.convergenceDryRun = read
+  }
+
   /**
    * Delivery failures the breaker is tracking for a node — surfaced so a node
    * that is missing capabilities never merely *looks* healthy.
@@ -466,8 +515,18 @@ export class AgentRegistryService {
   async noteAddonUndeployed(nodeId: string, addonId: string): Promise<void> {
     const packageName = this.resolvePackageForAddon(addonId)
     if (packageName === null) return
-    if (AGENT_BOOTSTRAP_PACKAGES.has(packageName)) return
+    if (CONVERGENCE_BOOTSTRAP.has(packageName)) return
     await this.historyStore?.prunePackages(nodeId, [packageName])
+    await this.historyStore?.addTombstones(nodeId, [packageName])
+  }
+
+  /**
+   * The operator delivered a package to ONE node on purpose (`updatePackage` with
+   * a `nodeId`, `camstack deploy -n`): that lifts its tombstone, so the desired
+   * set wants it there again.
+   */
+  async noteExplicitDelivery(nodeId: string, packageName: string): Promise<void> {
+    await this.historyStore?.clearTombstones(nodeId, [packageName])
   }
 
   /**
@@ -483,8 +542,9 @@ export class AgentRegistryService {
     packageName: string,
     addonIds: readonly string[],
   ): Promise<void> {
-    if (AGENT_BOOTSTRAP_PACKAGES.has(packageName)) return
+    if (CONVERGENCE_BOOTSTRAP.has(packageName)) return
     await this.historyStore?.prunePackages(nodeId, [packageName])
+    await this.historyStore?.addTombstones(nodeId, [packageName])
     for (const addonId of addonIds) {
       this.eventBus.emit({
         id: randomUUID(),
@@ -788,6 +848,94 @@ export class AgentRegistryService {
     } catch {
       // Registry shape varies across Moleculer versions — never fatal.
     }
+
+    this.startConvergenceTimer()
+  }
+
+  /**
+   * The fixed schedule of D982: every online agent is converged to its desired
+   * set every {@link ADDON_CONVERGENCE_INTERVAL_MS}. A round never gates
+   * registration (D3) and a failed delivery waits for the next round — the
+   * per-`(node, package)` breaker bounds the retries, there is no tight loop.
+   */
+  private startConvergenceTimer(): void {
+    if (this.convergenceTimer !== null) return
+    const timer = setInterval(() => {
+      void this.requestConvergence('periodic')
+    }, ADDON_CONVERGENCE_INTERVAL_MS)
+    timer.unref()
+    this.convergenceTimer = timer
+  }
+
+  /** Stop the convergence schedule (shutdown, specs). */
+  stopConvergenceTimer(): void {
+    if (this.convergenceTimer === null) return
+    clearInterval(this.convergenceTimer)
+    this.convergenceTimer = null
+  }
+
+  /**
+   * Converge every online agent to its desired set. Requests that arrive while a
+   * round runs collapse into ONE more round after it — a burst of hub installs
+   * cannot stack passes, and a round never re-triggers itself.
+   */
+  async requestConvergence(trigger: BackfillTrigger): Promise<void> {
+    if (this.convergenceRunning) {
+      this.convergenceRerun = trigger
+      return
+    }
+    this.convergenceRunning = true
+    try {
+      let next: BackfillTrigger | null = trigger
+      while (next !== null) {
+        this.convergenceRerun = null
+        for (const agentId of this.onlineAgentIds()) {
+          await this.reconcileAgentAddons(agentId, next)
+        }
+        next = this.convergenceRerun
+      }
+    } finally {
+      this.convergenceRunning = false
+    }
+  }
+
+  /** Bare agent ids currently online (workers and the hub excluded). */
+  onlineAgentIds(): readonly string[] {
+    const registry = this.nodeCatalogRegistry()
+    const nodes = registry?.getNodeList?.({ onlyAvailable: true }) ?? []
+    return nodes
+      .map((n) => n.id)
+      .filter((id) => typeof id === 'string' && id !== 'hub' && !id.includes('/'))
+  }
+
+  /** The version the hub follows for an agent-only tracked package, or `null`. */
+  private async resolveTrackedVersions(): Promise<ReadonlyMap<string, string>> {
+    const resolver = this.trackedVersionResolver
+    const out = new Map<string, string>()
+    if (resolver === null) return out
+    const now = Date.now()
+    for (const name of AGENT_TRACKED_PACKAGES) {
+      const cached = this.trackedVersionCache.get(name)
+      if (cached !== undefined && now - cached.at < TRACKED_VERSION_TTL_MS) {
+        out.set(name, cached.version)
+        continue
+      }
+      try {
+        const version = await resolver(name)
+        if (version === null) continue
+        this.trackedVersionCache.set(name, { version, at: now })
+        out.set(name, version)
+      } catch (err) {
+        // Unresolved = not wanted this round; a node is never moved on a guess.
+        this.logger?.warn('convergence: could not resolve a tracked package version', {
+          meta: {
+            package: name,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        })
+      }
+    }
+    return out
   }
 
   /** The durable history's display name for a node, when it knows a real one. */
@@ -807,11 +955,7 @@ export class AgentRegistryService {
    * must not abort the pass or hub boot.
    */
   async reconcileConnectedAgents(): Promise<void> {
-    const registry = this.nodeCatalogRegistry()
-    const nodes = registry?.getNodeList?.({ onlyAvailable: true }) ?? []
-    const agentIds = nodes
-      .map((n) => n.id)
-      .filter((id) => typeof id === 'string' && id !== 'hub' && !id.includes('/'))
+    const agentIds = this.onlineAgentIds()
     if (agentIds.length === 0) return
     console.log(`[agent-registry] Boot reconcile: ${agentIds.length} connected agent(s)`)
     for (const agentId of agentIds) {
@@ -943,7 +1087,12 @@ export class AgentRegistryService {
         }
       }
 
+      // The decl-level sweep keeps its connect-time blast radius: the scheduled and
+      // hub-change rounds (D982) converge by the desired set only, so a hub whose
+      // registry is momentarily short can never undeploy a node's addons on a timer.
+      const sweepsStale = trigger !== 'periodic' && trigger !== 'hub-change'
       const stale = agentAddons.filter((addon) => {
+        if (!sweepsStale) return false
         // Agent bootstrap infrastructure (storage/settings/metrics/logging from
         // `@camstack/system`, plus the agent-only `addon-agent-ui` dashboard)
         // runs on every node as bootstrap infrastructure — never hub-managed
@@ -968,7 +1117,7 @@ export class AgentRegistryService {
         return placement === 'hub-only'
       })
 
-      if (stale.length === 0) {
+      if (stale.length === 0 && sweepsStale) {
         console.log(
           `[agent-registry] Reconcile ${agentId}: no stale addons (${agentAddons.length} checked)`,
         )
@@ -978,6 +1127,7 @@ export class AgentRegistryService {
       // back-fill below cannot immediately put them back, and so the node's
       // intended set shrinks — the only way that happens.
       const undeployedPackages = new Set<string>()
+      const undeployedIds = new Set<string>()
       const survivingIds = new Set(agentAddons.filter((a) => !stale.includes(a)).map((a) => a.id))
 
       for (const addon of stale) {
@@ -993,6 +1143,7 @@ export class AgentRegistryService {
               timeout: AGENT_RECONCILE_RPC_TIMEOUT_MS,
             },
           )
+          undeployedIds.add(addon.id)
           console.log(
             `[agent-registry] Reconcile ${agentId}: undeployed stale addon "${addon.id}" (${reason})`,
           )
@@ -1021,12 +1172,18 @@ export class AgentRegistryService {
         }
       }
 
-      await this.backfillAgentAddons(
+      const hubPackageFacts = new Map<string, HubPackageFact>()
+      for (const [name, placements] of hubPackagePlacements) {
+        hubPackageFacts.set(name, {
+          version: hubVersions.get(name) ?? null,
+          placements,
+        })
+      }
+      await this.convergeAgentAddons(
         agentId,
-        agentAddons,
+        agentAddons.filter((a) => !undeployedIds.has(a.id)),
         undeployedPackages,
-        hubVersions,
-        hubPackagePlacements,
+        hubPackageFacts,
         trigger,
       )
     } catch (err) {
@@ -1040,31 +1197,31 @@ export class AgentRegistryService {
   }
 
   /**
-   * Converge a node UP to the roster it last declared.
+   * Converge a node to ITS DESIRED SET ([D982](../../../../docs/decisions/adr-0982-the-hub-owns-every-nodes-addon-set.md)).
+   *
+   * The desired set comes from the hub (placements, versions, the agent-only
+   * packages it tracks, the node's tombstones); the roster the node reports is
+   * the observation it is diffed against and is recorded only as history.
    *
    * Order matters and is deliberate:
-   *   1. record what the node declares NOW (grow-only merge) — a wiped node
-   *      reporting 4 packages must not erase the record of its 14;
-   *   2. prune what this pass undeployed — the intended set's only shrink;
-   *   3. read the resulting intended set and deliver the difference.
+   *   1. record what the node declares NOW — history, never intent;
+   *   2. prune what the stale sweep undeployed from that record;
+   *   3. compute the plan, then apply it behind the gates (trigger allowlist,
+   *      delivery window, confirmation read, dry-run switch).
    *
    * Every leg is idempotent: run twice with no change in between and step 3
    * finds nothing to do.
    */
-  private async backfillAgentAddons(
+  private async convergeAgentAddons(
     agentId: string,
     agentAddons: readonly AgentStatusAddon[],
     undeployedPackages: ReadonlySet<string>,
-    hubVersions: ReadonlyMap<string, string>,
-    hubPackagePlacements: ReadonlyMap<string, readonly AddonPlacement[]>,
+    hubPackages: ReadonlyMap<string, HubPackageFact>,
     trigger: BackfillTrigger,
   ): Promise<void> {
     const store = this.historyStore
     if (!store) return
 
-    // Read BEFORE recording: a fresh node is one that never declared a roster
-    // (D962), and the record below would make it look like it had one.
-    const priorRoster = await store.getPackages(agentId)
     const live = rosterFromAddons(agentAddons)
     await store.recordPackages(agentId, live)
     if (undeployedPackages.size > 0) {
@@ -1074,104 +1231,190 @@ export class AgentRegistryService {
     const seam = this.addonBackfill
     if (!seam) return
 
-    const recorded = await store.getPackages(agentId)
-    const planned = computeBackfillPlan({
-      recorded,
-      live,
-      bootstrap: AGENT_BOOTSTRAP_PACKAGES,
-      undeployed: undeployedPackages,
+    const tombstones = await store.getTombstones(agentId)
+    const desired = computeDesiredSet({
+      hubPackages,
+      trackedForAgents: await this.resolveTrackedVersions(),
+      tombstones,
+      bootstrap: CONVERGENCE_BOOTSTRAP,
+    })
+    const planned = diffNodeAgainstDesired({
+      desired,
+      observed: live.filter((p) => !undeployedPackages.has(p.name)),
       retired: this.backfillTracker.retiredFor(agentId),
-      hubVersions,
-      freshNode: priorRoster.length === 0 ? { hubPackagePlacements } : undefined,
+      bootstrap: CONVERGENCE_BOOTSTRAP,
     })
 
-    if (priorRoster.length === 0) {
-      this.logger?.info(
-        'back-fill: fresh node (no prior declared roster), plan from the hub any-node set',
-        {
-          tags: { nodeId: agentId },
-          meta: {
-            planned: planned.targets.map((t) => `${t.name}@${t.version}`),
-          },
-        },
-      )
-      for (const skip of planned.skipped) {
-        this.logger?.info('back-fill: fresh node not given a hub package', {
-          tags: { nodeId: agentId },
-          meta: { package: skip.name, reason: skip.reason },
-        })
-      }
-    }
+    const changes = planned.install.length + planned.update.length + planned.remove.length
+    if (changes === 0 && planned.retired.length === 0) return
 
-    // Never a delivery, and said so: an addon the hub no longer installs stays
-    // off the node even though the node once declared it (the stale sweep above
-    // removes a copy that is still there).
-    if (planned.notOnHub.length > 0) {
-      console.log(
-        `[agent-registry] Back-fill ${agentId}: NOT delivering ${planned.notOnHub.join(', ')} — ` +
-          `in the node's declared roster but not installed on the hub`,
-      )
-    }
-
-    if (planned.targets.length === 0 && planned.retired.length === 0) {
-      return
-    }
+    const dryRun = this.convergenceDryRun()
+    this.logger?.info(dryRun ? 'convergence plan (DRY RUN, nothing applied)' : 'convergence plan', {
+      tags: { nodeId: agentId },
+      meta: {
+        trigger,
+        install: planned.install.map((t) => `${t.name}@${t.version}`),
+        update: planned.update.map((t) => `${t.name} ${t.from ?? 'absent'} -> ${t.version}`),
+        remove: planned.remove.map((r) => `${r.name} (${r.reason})`),
+        retired: planned.retired,
+        observed: live.length,
+      },
+    })
+    if (dryRun) return
 
     // GATE 1 — the trigger allowlist. A pass that must not install says so and
     // stops; silence here would read as "nothing was missing".
     if (!triggerMayDeliver(trigger)) {
       console.log(
-        `[agent-registry] Back-fill ${agentId}: SKIPPED — trigger "${trigger}" may not deliver ` +
-          `(${planned.targets.length} package(s) would have been installed)`,
+        `[agent-registry] Convergence ${agentId}: SKIPPED — trigger "${trigger}" may not deliver ` +
+          `(${changes} change(s) planned)`,
       )
       return
     }
 
     // GATE 2 — the delivery window. A roster gap the hub itself opened is not
-    // evidence a node is missing anything. This is the trigger that made every
-    // `camstack deploy … -n <agent>` on 2026-08-07 get reverted ~1.5s later.
+    // evidence a node is missing anything (`camstack deploy … -n <agent>` was
+    // reverted ~1.5s later on 2026-08-07).
     const suppression = this.deliveryLedger.suppressionFor(agentId)
     if (suppression !== null) {
       console.log(
-        `[agent-registry] Back-fill ${agentId}: SKIPPED — a hub delivery to this node is ` +
+        `[agent-registry] Convergence ${agentId}: SKIPPED — a hub delivery to this node is ` +
           `in flight or just finished (inFlight=${suppression.inFlight}, ` +
           `msSinceLastDelivery=${suppression.msSinceLastDelivery ?? 'n/a'}, ` +
-          `packages=${suppression.packages.join(', ') || 'none'}); ` +
-          `the node reported ${planned.liveCount} package(s) and the roster gap is OURS, not the node's`,
+          `packages=${suppression.packages.join(', ') || 'none'}); the roster gap is OURS, not the node's`,
       )
       return
     }
 
-    // GATE 3 — the confirmation read (D49). A back-fill overwrites whatever is
-    // on the node, so the destroying direction needs a SECOND read to agree.
-    const plan = await this.confirmBackfillTargets(agentId, planned)
-    if (plan === null) return
-    if (plan.targets.length === 0 && plan.retired.length === 0) {
+    await this.applyRemovals(agentId, agentAddons, planned)
+    await this.applyDeliveries(agentId, live, planned, trigger, seam)
+  }
+
+  /**
+   * Remove tombstoned and hub-only leftovers. A removal DESTROYS work, so it
+   * needs a second roster read to agree (D49) and fails closed when that read
+   * cannot be taken. Every removal logs its reason.
+   */
+  private async applyRemovals(
+    agentId: string,
+    agentAddons: readonly AgentStatusAddon[],
+    plan: ConvergencePlan,
+  ): Promise<void> {
+    if (plan.remove.length === 0) return
+    let secondAddons: readonly AgentStatusAddon[] | null = null
+    try {
+      secondAddons = this.extractAgentAddons(
+        await this.broker.call(
+          '$agent.status',
+          {},
+          { nodeID: agentId, timeout: AGENT_RECONCILE_RPC_TIMEOUT_MS },
+        ),
+      )
+    } catch (err) {
+      this.logger?.warn('convergence: removals skipped, the confirmation read failed', {
+        tags: { nodeId: agentId },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
       return
     }
+    if (secondAddons === null) {
+      this.logger?.warn('convergence: removals skipped, the confirmation read had no addon list', {
+        tags: { nodeId: agentId },
+      })
+      return
+    }
+    const stillThere = new Set(
+      secondAddons.flatMap((a) => (a.packageName === undefined ? [] : [a.packageName])),
+    )
+    for (const removal of plan.remove) {
+      if (!stillThere.has(removal.name)) continue
+      const addonIds = agentAddons.filter((a) => a.packageName === removal.name).map((a) => a.id)
+      try {
+        // One package-mode call removes every addon the package ships; the first
+        // id rides along so an agent that predates package mode still removes it.
+        await this.broker.call(
+          '$agent.undeploy',
+          {
+            packageName: removal.name,
+            ...(addonIds[0] === undefined ? {} : { addonId: addonIds[0] }),
+          },
+          { nodeID: agentId, timeout: AGENT_RECONCILE_RPC_TIMEOUT_MS },
+        )
+        this.logger?.info('convergence: removed a package from the node', {
+          tags: { nodeId: agentId },
+          meta: { package: removal.name, reason: removal.reason, addonIds },
+        })
+        this.eventBus.emit({
+          id: randomUUID(),
+          timestamp: new Date(),
+          source: { type: 'core', id: 'agent-registry' },
+          category: EventCategory.AddonUninstalled,
+          data: {
+            agentId,
+            packageName: removal.name,
+            reason: `convergence: ${removal.reason}`,
+          },
+        })
+      } catch (err) {
+        this.logger?.warn('convergence: removing a package failed, the next round retries', {
+          tags: { nodeId: agentId },
+          meta: {
+            package: removal.name,
+            reason: removal.reason,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        })
+      }
+    }
+  }
+
+  /** Install and update, behind the D49 confirmation read. */
+  private async applyDeliveries(
+    agentId: string,
+    live: readonly NodePackageEntry[],
+    plan: ConvergencePlan,
+    trigger: BackfillTrigger,
+    seam: BackfillSeam,
+  ): Promise<void> {
+    const planned = {
+      targets: [...plan.install, ...plan.update].map((t) => ({
+        name: t.name,
+        version: t.version,
+        versionSource:
+          t.origin === 'agent-tracked' ? ('agent-tracked' as const) : ('hub-installed' as const),
+      })),
+      retired: plan.retired,
+      liveCount: live.length,
+    }
+    if (planned.targets.length === 0 && planned.retired.length === 0) return
+
+    // GATE 3 — the confirmation read (D49). A delivery overwrites whatever is
+    // on the node, so the destroying direction needs a SECOND read to agree.
+    const confirmed = await this.confirmBackfillTargets(agentId, planned)
+    if (confirmed === null) return
+    if (confirmed.targets.length === 0 && confirmed.retired.length === 0) return
 
     // Hold the delivery window open for the whole pass, so the reload this
-    // back-fill is about to cause cannot trigger a second one.
+    // delivery is about to cause cannot trigger a second one.
     const closeWindow = this.deliveryLedger.begin(
       agentId,
-      plan.targets.map((t) => t.name).join(', ') || 'back-fill',
+      confirmed.targets.map((t) => t.name).join(', ') || 'convergence',
     )
     let outcome
     try {
-      outcome = await executeBackfill(seam, agentId, plan, this.backfillTracker)
+      outcome = await executeBackfill(seam, agentId, confirmed, this.backfillTracker)
     } finally {
       closeWindow()
     }
 
     if (outcome.delivered.length > 0) {
       console.log(
-        `[agent-registry] Back-fill ${agentId}: delivered ${outcome.delivered
+        `[agent-registry] Convergence ${agentId}: delivered ${outcome.delivered
           .map((d) => {
             const from = live.find((p) => p.name === d.name)?.version ?? 'absent'
-            return `${d.name} ${from} → ${d.version} (agent follows the hub installed version)`
+            return `${d.name} ${from} → ${d.version} (${d.versionSource})`
           })
-          .join(', ')} — trigger=${trigger}, node reported ${plan.liveCount} package(s) and its ` +
-          `declared roster has ${recorded.length}`,
+          .join(', ')} — trigger=${trigger}, node reported ${confirmed.liveCount} package(s)`,
       )
       this.eventBus.emit({
         id: randomUUID(),
@@ -1181,22 +1424,22 @@ export class AgentRegistryService {
         data: {
           agentId,
           packages: outcome.delivered.map((d) => `${d.name}@${d.version}`),
-          reason: 'back-fill: node missing packages from its declared roster',
+          reason: 'convergence: the hub desired set differs from what the node runs',
         },
       })
     }
     // Fail LOUD: a node missing capabilities must never merely look healthy.
     for (const failure of outcome.failed) {
       console.error(
-        `[agent-registry] Back-fill ${agentId}: FAILED to deliver ${failure.name}@${failure.version} — ${failure.error}` +
+        `[agent-registry] Convergence ${agentId}: FAILED to deliver ${failure.name}@${failure.version} — ${failure.error}` +
           (failure.retired
             ? ` (retired after ${MAX_BACKFILL_ATTEMPTS} attempts; this node is running WITHOUT that package)`
-            : ''),
+            : ' (the next round retries)'),
       )
     }
     for (const name of outcome.skipped) {
       console.error(
-        `[agent-registry] Back-fill ${agentId}: ${name} is still missing and RETIRED — the node is degraded until an operator intervenes`,
+        `[agent-registry] Convergence ${agentId}: ${name} is still wrong and RETIRED — the node is degraded until an operator intervenes`,
       )
     }
   }
@@ -1213,8 +1456,8 @@ export class AgentRegistryService {
    */
   private async confirmBackfillTargets(
     agentId: string,
-    plan: ReturnType<typeof computeBackfillPlan>,
-  ): Promise<ReturnType<typeof computeBackfillPlan> | null> {
+    plan: BackfillPlan,
+  ): Promise<BackfillPlan | null> {
     if (plan.targets.length === 0) return plan
     let secondRaw: unknown
     try {

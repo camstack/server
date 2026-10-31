@@ -4,13 +4,15 @@ import type { CapabilityService } from '../../capability/capability.service'
 import type { EventBusService } from '../../events/event-bus.service'
 import type { MoleculerService } from '../../moleculer/moleculer.service'
 import { MAX_BACKFILL_ATTEMPTS, type NodePackageEntry } from '../agent-addon-backfill'
+import type { IScopedLogger } from '@camstack/types'
 import { DELIVERY_GRACE_MS } from '../agent-delivery-ledger'
 import { AgentRegistryService } from '../agent-registry.service'
 import type { ClusterNodeHistoryStore } from '../cluster-node-history-store'
 
 /**
- * Node addon back-fill — the hub converges a node to the roster THAT NODE
- * itself last declared.
+ * Node addon convergence — the hub converges a node to ITS DESIRED SET (D982):
+ * every any-node package it installs, the agent-only packages it tracks, minus
+ * the node's tombstones. The roster a node declares is only the observation.
  *
  * Before this existed, `reconcileAgentAddons` was undeploy-only: an agent whose
  * `<dataDir>/addons` had been wiped came back with its 4 bootstrap packages and
@@ -49,6 +51,7 @@ const HUB_ROWS: readonly HubAddonRow[] = [
 
 /** In-memory stand-in for the durable per-node roster record. */
 function makeStore(seed: Record<string, readonly NodePackageEntry[]> = {}) {
+  const tombstones = new Map<string, Set<string>>()
   const rosters = new Map<string, NodePackageEntry[]>(
     Object.entries(seed).map(([k, v]) => [k, [...v]]),
   )
@@ -66,12 +69,21 @@ function makeStore(seed: Record<string, readonly NodePackageEntry[]> = {}) {
         (rosters.get(nodeId) ?? []).filter((p) => !drop.has(p.name)),
       )
     }),
+    getTombstones: vi.fn(async (nodeId: string) => new Set(tombstones.get(nodeId) ?? [])),
+    addTombstones: vi.fn(async (nodeId: string, names: readonly string[]) => {
+      const set = tombstones.get(nodeId) ?? new Set<string>()
+      for (const n of names) set.add(n)
+      tombstones.set(nodeId, set)
+    }),
+    clearTombstones: vi.fn(async (nodeId: string, names: readonly string[]) => {
+      for (const n of names) tombstones.get(nodeId)?.delete(n)
+    }),
     snapshot: vi.fn(async () => undefined),
     touch: vi.fn(async () => undefined),
     tryGetAll: vi.fn(async () => []),
     forget: vi.fn(async () => undefined),
   }
-  return { store: store as unknown as ClusterNodeHistoryStore, rosters, spies: store }
+  return { store: store as unknown as ClusterNodeHistoryStore, rosters, tombstones, spies: store }
 }
 
 interface HarnessOptions {
@@ -79,11 +91,14 @@ interface HarnessOptions {
   readonly recorded?: Record<string, readonly NodePackageEntry[]>
   readonly hubRows?: readonly HubAddonRow[]
   readonly packFails?: ReadonlySet<string>
+  readonly dryRun?: boolean
+  readonly trackedVersions?: Record<string, string>
   readonly deployDelayMs?: number
 }
 
 function makeHarness(opts: HarnessOptions) {
   const undeployed: string[] = []
+  const undeployCalls: Record<string, unknown>[] = []
   const deployed: string[] = []
   const reloads: string[] = []
 
@@ -92,12 +107,21 @@ function makeHarness(opts: HarnessOptions) {
       if (action === '$agent.status') return { addons: opts.agentAddons }
       if (action === '$agent.undeploy') {
         undeployed.push(String(params?.['addonId']))
+        undeployCalls.push(params ?? {})
         return { ok: true }
       }
       return undefined
     }),
     waitForServices: vi.fn(async () => undefined),
     localBus: { on: vi.fn() },
+    registry: {
+      getNodeList: () => [
+        { id: 'hub' },
+        { id: 'agent-a' },
+        { id: 'agent-b' },
+        { id: 'agent-a/runner' },
+      ],
+    },
   }
 
   const moleculer = { broker } as unknown as MoleculerService
@@ -109,8 +133,20 @@ function makeHarness(opts: HarnessOptions) {
     listAddons: () => opts.hubRows ?? HUB_ROWS,
   } as unknown as AddonRegistryService)
 
-  const { store, rosters, spies } = makeStore(opts.recorded ?? {})
+  const { store, rosters, tombstones, spies } = makeStore(opts.recorded ?? {})
   service.setClusterNodeHistoryStore(store)
+  service.setConvergenceDryRun(() => opts.dryRun ?? false)
+  const trackedVersions = opts.trackedVersions
+  if (trackedVersions !== undefined) {
+    service.setTrackedVersionResolver(async (name) => trackedVersions[name] ?? null)
+  }
+  const logLines: string[] = []
+  service.setLogger({
+    info: (msg: string, ctx?: unknown) => logLines.push(`${msg} ${JSON.stringify(ctx ?? {})}`),
+    warn: (msg: string, ctx?: unknown) => logLines.push(`${msg} ${JSON.stringify(ctx ?? {})}`),
+    error: (msg: string, ctx?: unknown) => logLines.push(`${msg} ${JSON.stringify(ctx ?? {})}`),
+    debug: () => undefined,
+  } as unknown as IScopedLogger)
 
   service.setAddonBackfill({
     pack: vi.fn(async (name: string) => {
@@ -126,7 +162,18 @@ function makeHarness(opts: HarnessOptions) {
     }),
   })
 
-  return { service, undeployed, deployed, reloads, rosters, spies }
+  return {
+    service,
+    brokerCall: broker.call,
+    undeployed,
+    undeployCalls,
+    deployed,
+    reloads,
+    rosters,
+    tombstones,
+    spies,
+    logLines,
+  }
 }
 
 const WIPED_AGENT = [
@@ -270,7 +317,37 @@ describe('AgentRegistryService — addon back-fill', () => {
     expect(h.deployed).toContain('@camstack/addon-post-analysis')
   })
 
-  it("does not undo an operator's deliberate undeploy", async () => {
+  it("does not undo an operator's deliberate undeploy (tombstone)", async () => {
+    const h = makeHarness({
+      agentAddons: [
+        ...WIPED_AGENT,
+        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+      ],
+      recorded: { 'agent-a': FULL_ROSTER },
+    })
+
+    // Operator removes post-analysis from this node only; the node then reconnects.
+    await h.service.noteAddonUndeployed('agent-a', 'embedding-encoder')
+    await h.service.reconcileAgentAddons('agent-a')
+
+    expect(h.deployed).toEqual([])
+    expect([...(h.tombstones.get('agent-a') ?? [])]).toEqual(['@camstack/addon-post-analysis'])
+  })
+
+  it('delivers an any-node addon the hub added to a node that ALREADY has a roster', async () => {
+    const h = makeHarness({
+      agentAddons: WIPED_AGENT,
+      // The node declared only these two before the hub gained the other any-node packages.
+      recorded: { 'agent-a': FULL_ROSTER.slice(0, 3) },
+    })
+
+    await h.service.reconcileAgentAddons('agent-a')
+
+    expect(h.deployed).toEqual(['@camstack/addon-ai', '@camstack/addon-post-analysis'])
+  })
+
+  it('updates agent-ui from the hub-tracked version', async () => {
+    const packCalls: Array<[string, string]> = []
     const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
@@ -281,23 +358,109 @@ describe('AgentRegistryService — addon back-fill', () => {
           version: '1.2.14',
         },
       ],
-      recorded: { 'agent-a': FULL_ROSTER },
+      trackedVersions: { '@camstack/addon-agent-ui': '1.3.0' },
+    })
+    h.service.setAddonBackfill({
+      pack: async (name: string, version: string) => {
+        packCalls.push([name, version])
+        return Buffer.from('tgz')
+      },
+      deploy: async (_n, name) => {
+        h.deployed.push(name)
+      },
+      reload: async () => undefined,
     })
 
-    // Operator removes post-analysis from this node only.
-    await h.service.noteAddonUndeployed('agent-a', 'embedding-encoder')
+    await h.service.reconcileAgentAddons('agent-a')
 
-    // The node reconnects reporting it no longer runs post-analysis.
-    const h2 = makeHarness({
+    expect(packCalls).toEqual([['@camstack/addon-agent-ui', '1.3.0']])
+    expect(h.deployed).toEqual(['@camstack/addon-agent-ui'])
+  })
+
+  it('removes a hub-only leftover on the scheduled round and logs the reason', async () => {
+    const h = makeHarness({
       agentAddons: [
         ...WIPED_AGENT,
         { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        {
+          id: 'embedding-encoder',
+          packageName: '@camstack/addon-post-analysis',
+          version: '1.2.14',
+        },
+        { id: 'benchmark', packageName: '@camstack/addon-benchmark', version: '1.0.0' },
       ],
-      recorded: { 'agent-a': h.rosters.get('agent-a') ?? [] },
+      hubRows: [
+        ...HUB_ROWS,
+        {
+          manifest: {
+            id: 'benchmark',
+            packageName: '@camstack/addon-benchmark',
+            packageVersion: '1.1.0',
+          },
+          declaration: { id: 'benchmark', execution: { placement: 'hub-only' } },
+        },
+      ],
     })
-    await h2.service.reconcileAgentAddons('agent-a')
 
-    expect(h2.deployed).toEqual([])
+    await h.service.reconcileAgentAddons('agent-a', 'periodic')
+
+    expect(h.undeployCalls).toEqual([
+      { packageName: '@camstack/addon-benchmark', addonId: 'benchmark' },
+    ])
+    expect(
+      h.logLines.some((l) => l.includes('removed a package') && l.includes('hub-only placement')),
+    ).toBe(true)
+  })
+
+  it('a scheduled round never runs the decl-level stale sweep', async () => {
+    const h = makeHarness({
+      agentAddons: [
+        ...WIPED_AGENT,
+        { id: 'llm', packageName: '@camstack/addon-ai', version: '1.2.14' },
+        {
+          id: 'embedding-encoder',
+          packageName: '@camstack/addon-post-analysis',
+          version: '1.2.14',
+        },
+        { id: 'stranger', packageName: '@camstack/addon-not-on-hub', version: '1.0.0' },
+      ],
+    })
+
+    await h.service.reconcileAgentAddons('agent-a', 'periodic')
+    expect(h.undeployed).toEqual([])
+    await h.service.reconcileAgentAddons('agent-a', 'node-registration')
+    expect(h.undeployed).toEqual(['stranger'])
+  })
+
+  it('dry run logs the plan and applies nothing', async () => {
+    const h = makeHarness({
+      agentAddons: [
+        ...WIPED_AGENT,
+        { id: 'benchmark', packageName: '@camstack/addon-benchmark', version: '1.0.0' },
+      ],
+      hubRows: [
+        ...HUB_ROWS,
+        {
+          manifest: {
+            id: 'benchmark',
+            packageName: '@camstack/addon-benchmark',
+            packageVersion: '1.1.0',
+          },
+          declaration: { id: 'benchmark', execution: { placement: 'hub-only' } },
+        },
+      ],
+      dryRun: true,
+    })
+
+    await h.service.reconcileAgentAddons('agent-a', 'periodic')
+
+    expect(h.deployed).toEqual([])
+    expect(h.undeployCalls).toEqual([])
+    expect(
+      h.logLines.some(
+        (l) => l.includes('DRY RUN') && l.includes('addon-benchmark') && l.includes('addon-ai'),
+      ),
+    ).toBe(true)
   })
 
   it('does not double-install when two reconciles race', async () => {
@@ -355,4 +518,42 @@ describe('AgentRegistryService — addon back-fill', () => {
     await expect(h.service.reconcileAgentAddons('agent-a')).resolves.toBeUndefined()
     expect(h.deployed).toEqual([])
   })
+
+  it('a convergence round reaches every online agent and never a worker or the hub', async () => {
+    const h = makeHarness({ agentAddons: WIPED_AGENT })
+
+    await h.service.requestConvergence('periodic')
+
+    expect([...new Set(statusNodes(h.brokerCall))]).toEqual(['agent-a', 'agent-b'])
+  })
+
+  it('requests that arrive during a round collapse into ONE more round', async () => {
+    const h = makeHarness({ agentAddons: WIPED_AGENT, deployDelayMs: 15 })
+
+    const first = h.service.requestConvergence('hub-change')
+    // A burst while the first round runs.
+    void h.service.requestConvergence('hub-change')
+    void h.service.requestConvergence('hub-change')
+    void h.service.requestConvergence('hub-change')
+    await first
+
+    // Without coalescing the burst would add three full rounds (>= 6 status reads
+    // per agent); with it, exactly one more round follows the first.
+    const perAgent = statusNodes(h.brokerCall).filter((n) => n === 'agent-a').length
+    expect(perAgent).toBeLessThanOrEqual(4)
+    expect(perAgent).toBeGreaterThanOrEqual(2)
+  })
 })
+
+function statusNodes(brokerCall: {
+  mock: { calls: ReadonlyArray<ReadonlyArray<unknown>> }
+}): string[] {
+  return brokerCall.mock.calls.flatMap((c) => {
+    const options = c[2]
+    const nodeID =
+      typeof options === 'object' && options !== null && 'nodeID' in options
+        ? String(options.nodeID)
+        : null
+    return c[0] === '$agent.status' && nodeID !== null ? [nodeID] : []
+  })
+}

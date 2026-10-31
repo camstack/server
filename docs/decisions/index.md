@@ -959,7 +959,7 @@ that rots.
 | D979 | [Stale data is detected read-only and deleted only by an operator call that re-checks its verdict](adr-0979-stale-data-is-detected-read-only-and-deleted-only-by-an-operator-call-that-re-checks-its-verdict.md) | ✅ accepted | 2026-10-30 |
 | D980 | [An automation has one `when` tree — an event is an instant, a state is a fact, and a detection is a macro class with an optional label](adr-0980-an-automation-has-one-when-tree-an-event-is-an-instant-a-state-is-a-fact-and-a-detection-is-a-macro-class-with-an-optional-label.md) | ✅ accepted | 2026-10-30 |
 | D981 | [A notification target picks a broker and fetches its own options inside its form; there is no mass discovery](adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md) | ✅ accepted (supersedes D950 (the "broker picker inside the schema-driven config UI" rejection)) | 2026-10-30 |
-| D982 | [The hub owns every node's addon set; an agent converges to it and never removes an addon on its own](adr-0982-the-hub-owns-every-nodes-addon-set.md) | 💭 proposed | 2026-10-31 |
+| D982 | [The hub owns every node's addon set; an agent converges to it and never removes an addon on its own](adr-0982-the-hub-owns-every-nodes-addon-set.md) | ✅ accepted | 2026-10-31 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

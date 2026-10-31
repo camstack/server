@@ -1,53 +1,26 @@
 /**
- * Node addon back-fill — converge a node to the addon roster THAT NODE last
- * declared.
+ * Node addon delivery — the bookkeeping that carries a convergence plan to a
+ * node: the trigger allowlist, the delivery circuit breaker, the confirmation
+ * read and the execution seam.
  *
- * WHY THIS EXISTS
- * `AgentRegistryService.reconcileAgentAddons` used to be undeploy-only: it read
- * the node's live roster, removed what no longer belonged, and had no branch for
- * "installed on the hub but missing on the node". A node whose `<dataDir>/addons`
- * had been wiped therefore came back with only its bootstrap packages
- * (`@camstack/system` + `camstack.agentBootstrapAddons`) and the hub never sent
- * the rest — measured live as 4 of 14 packages on `agent-a`. Under the
- * volume-only image (no addons baked in) an empty addons dir is the ORDINARY
- * first-boot state of every new or rebuilt node, so that gap becomes the normal
- * case rather than an anomaly.
+ * WHAT A NODE SHOULD HAVE is decided in `agent-desired-set.ts`
+ * ([D982](../../../../docs/decisions/adr-0982-the-hub-owns-every-nodes-addon-set.md)):
+ * the hub's desired set, never the roster the node declared. This module only
+ * delivers a computed plan, and is seam-driven so that is tested with no
+ * Moleculer, filesystem or npm registry.
  *
- * THE INTENDED SET
- * A node's intended set is the roster the node itself last declared while
- * online, remembered durably hub-side (`ClusterNodeHistoryStore`). It is not
- * invented by the hub and it is not "every agent-deployable package the hub has
- * installed" — that would over-install and would override deliberate per-node
- * operator choices. The record GROWS when a node declares a package and SHRINKS
- * only on an explicit undeploy (operator gesture or the stale-reconcile), so
- * both mutations are attributable actions rather than heuristics.
- *
- * THE INTENDED VERSION
- * The hub's own installed version, and only that — including when the node
- * is AHEAD of the hub (D942). Never npm `latest` directly: the hub follows
- * the registry, and every node follows the hub. A package the hub's version
- * map does not name is left as it is when it is already installed, and is
- * never delivered when it is missing (`notOnHub`). An unreadable hub version
- * is not a reason to move.
- *
- * A package the hub does NOT install is never delivered, whatever the node last
- * reported. It used to fall back to the node's last-reported version, which
- * made the back-fill the one path that could put an UNINSTALLED addon back: an
- * operator removes `@camstack/addon-decoder-ffmpeg` from the hub and moves the
- * agent's copy aside, and the next reconnect reinstalled it from npm at the
- * version the node last ran — while the same pass's stale sweep exists to
- * remove exactly such an addon. The two directions disagreed; now the hub's
- * install set bounds both. Such packages are reported as `notOnHub`.
+ * THE VERSION is the hub's own installed version, and only that — including when
+ * the node is AHEAD of the hub (D942). Never npm `latest` directly for a package
+ * the hub installs: the hub follows the registry, and every node follows the hub.
+ * An agent-only package the hub tracks (agent-ui) is delivered at the registry
+ * version the hub resolved for it.
  *
  * BOUNDING
  * Delivery failures are counted per `(node, package, version)` and the pair is
  * retired after {@link MAX_BACKFILL_ATTEMPTS}, exactly as `CrashSupervisor`
- * bounds respawns (D6). A reconnect flap therefore cannot turn a broken package
- * into an endless push loop. A different hub version resets the count — a new
- * version is a new fact worth one more attempt.
- *
- * This module is pure/seam-driven on purpose: the decision of what a node should
- * have is asserted in unit tests with no Moleculer, filesystem or npm registry.
+ * bounds respawns (D6). A reconnect flap or a periodic round therefore cannot
+ * turn a broken package into an endless push loop. A different hub version
+ * resets the count — a new version is a new fact worth one more attempt.
  */
 
 /**
@@ -63,13 +36,14 @@
  * ledger and the confirmation read instead, which discriminate on FACTS rather
  * than on which callback fired.
  */
-import type { AddonPlacement } from '@camstack/types'
-import { ADDON_VERSION_REASON_HUB, decideAddonVersionMove } from '@camstack/system'
-
 export type BackfillTrigger =
   | 'node-registration'
   | 'hub-boot'
   | 'operator-repair'
+  /** The fixed-schedule round over every online node (D982). */
+  | 'periodic'
+  /** After a hub install / update / uninstall (D982). */
+  | 'hub-change'
   /**
    * A pass that must never deliver. Reserved for callers that reconcile for a
    * reason unrelated to convergence (a status refresh, a diagnostic sweep) —
@@ -82,6 +56,8 @@ const DELIVERING_TRIGGERS: ReadonlySet<BackfillTrigger> = new Set<BackfillTrigge
   'node-registration',
   'hub-boot',
   'operator-repair',
+  'periodic',
+  'hub-change',
 ])
 
 /** Is this trigger allowed to put bytes on a node? */
@@ -97,7 +73,7 @@ export interface NodePackageEntry {
 }
 
 /** Where the pinned version came from. Named in the log, never inferred later. */
-export type BackfillVersionSource = 'hub-installed'
+export type BackfillVersionSource = 'hub-installed' | 'agent-tracked'
 
 /** A package the hub decided to (re)deliver, at a resolved exact version. */
 export interface BackfillTarget {
@@ -107,48 +83,11 @@ export interface BackfillTarget {
   readonly versionSource: BackfillVersionSource
 }
 
-export interface BackfillPlanInput {
-  /** The roster this node last declared — the durable, node-authored record. */
-  readonly recorded: readonly NodePackageEntry[]
-  /** What the node reports installed right now (`$agent.status`). */
-  readonly live: readonly NodePackageEntry[]
-  /** Packages a node bootstraps itself; the hub must never push these. */
-  readonly bootstrap: ReadonlySet<string>
-  /** Packages undeployed in this same pass — they must not come straight back. */
-  readonly undeployed: ReadonlySet<string>
-  /** Packages the circuit breaker has retired for this node. */
-  readonly retired: ReadonlySet<string>
-  /** Hub-installed version per package name — the pin source. */
-  readonly hubVersions: ReadonlyMap<string, string>
-  /**
-   * Set when the node has NEVER declared a roster to the hub (D962): its
-   * intended set is then every hub-installed package whose addons all allow an
-   * agent. Absent (or `recorded` non-empty) keeps the history-based behaviour.
-   */
-  readonly freshNode?: FreshNodeInput
-}
-
-export interface FreshNodeInput {
-  /** Placements of every addon the hub installs, per npm package name. */
-  readonly hubPackagePlacements: ReadonlyMap<string, readonly AddonPlacement[]>
-}
-
-/** A package a fresh node was NOT given, with the reason (D391). */
-export interface BackfillSkip {
-  readonly name: string
-  readonly reason: string
-}
-
 export interface BackfillPlan {
-  /** Packages to deliver, in recorded order. */
+  /** Packages to deliver: installs first, then updates. */
   readonly targets: readonly BackfillTarget[]
   /** Missing packages skipped because the circuit breaker retired them. */
   readonly retired: readonly string[]
-  /**
-   * Missing packages the hub does not install. Never delivered — the hub's
-   * install set is the ceiling of what a node is converged to.
-   */
-  readonly notOnHub: readonly string[]
   /**
    * How many packages the node reported when this plan was computed. The
    * "why did you think it was missing" half of the log line: a plan built
@@ -156,93 +95,6 @@ export interface BackfillPlan {
    * not fourteen missing packages.
    */
   readonly liveCount: number
-  /** Fresh node only: hub packages deliberately left off, each with its reason. */
-  readonly skipped: readonly BackfillSkip[]
-}
-
-/**
- * Why a hub package may not go to a fresh node, or `null` when it may.
- * A package with a hub-only addon is refused whole: the stale sweep would
- * undeploy that addon and with it the shared bundle directory.
- */
-export function freshNodeSkipReason(placements: readonly AddonPlacement[]): string | null {
-  if (placements.includes('hub-only')) return 'hub-only placement'
-  if (!placements.includes('any-node')) return 'placement does not allow any node'
-  return null
-}
-
-/**
- * Decide what a node is missing relative to its own last-declared roster.
- * Pure — no I/O, no clock, no randomness.
- */
-export function computeBackfillPlan(input: BackfillPlanInput): BackfillPlan {
-  if (input.freshNode !== undefined && input.recorded.length === 0) {
-    return computeFreshNodePlan(input, input.freshNode)
-  }
-  const liveByName = new Map(input.live.map((p) => [p.name, p.version]))
-  const targets: BackfillTarget[] = []
-  const retired: string[] = []
-  const notOnHub: string[] = []
-
-  for (const entry of input.recorded) {
-    if (input.bootstrap.has(entry.name)) continue
-    if (input.undeployed.has(entry.name)) continue
-    const hubVersion = input.hubVersions.get(entry.name)
-    const present = liveByName.has(entry.name)
-    const liveVersion = present ? (liveByName.get(entry.name) ?? null) : null
-    if (hubVersion === undefined) {
-      if (!present && input.retired.has(entry.name)) retired.push(entry.name)
-      else if (!present) notOnHub.push(entry.name)
-      continue
-    }
-    const decision = decideAddonVersionMove(
-      present ? liveVersion : null,
-      hubVersion,
-      ADDON_VERSION_REASON_HUB,
-    )
-    if (!decision.move) continue
-    if (input.retired.has(entry.name)) {
-      retired.push(entry.name)
-      continue
-    }
-    targets.push({ name: entry.name, version: hubVersion, versionSource: 'hub-installed' })
-  }
-
-  return { targets, retired, notOnHub, liveCount: liveByName.size, skipped: [] }
-}
-
-function computeFreshNodePlan(input: BackfillPlanInput, fresh: FreshNodeInput): BackfillPlan {
-  const liveByName = new Map(input.live.map((p) => [p.name, p.version]))
-  const targets: BackfillTarget[] = []
-  const retired: string[] = []
-  const skipped: BackfillSkip[] = []
-  for (const [name, placements] of fresh.hubPackagePlacements) {
-    if (input.bootstrap.has(name)) continue
-    if (input.undeployed.has(name)) continue
-    const reason = freshNodeSkipReason(placements)
-    if (reason !== null) {
-      skipped.push({ name, reason })
-      continue
-    }
-    const hubVersion = input.hubVersions.get(name)
-    if (hubVersion === undefined) {
-      skipped.push({ name, reason: 'hub version unknown' })
-      continue
-    }
-    const present = liveByName.has(name)
-    const decision = decideAddonVersionMove(
-      present ? (liveByName.get(name) ?? null) : null,
-      hubVersion,
-      ADDON_VERSION_REASON_HUB,
-    )
-    if (!decision.move) continue
-    if (input.retired.has(name)) {
-      retired.push(name)
-      continue
-    }
-    targets.push({ name, version: hubVersion, versionSource: 'hub-installed' })
-  }
-  return { targets, retired, notOnHub: [], liveCount: liveByName.size, skipped }
 }
 
 /**
@@ -407,7 +259,6 @@ export interface BackfillOutcome {
     readonly retired: boolean
   }[]
   readonly skipped: readonly string[]
-  readonly notOnHub: readonly string[]
 }
 
 /**
@@ -433,7 +284,12 @@ export async function executeBackfill(
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err)
       const { retired } = tracker.recordFailure(nodeId, target.name, target.version, error)
-      failed.push({ name: target.name, version: target.version, error, retired })
+      failed.push({
+        name: target.name,
+        version: target.version,
+        error,
+        retired,
+      })
     }
   }
 
@@ -441,5 +297,5 @@ export async function executeBackfill(
     await seam.reload(nodeId)
   }
 
-  return { delivered, failed, skipped: plan.retired, notOnHub: plan.notOnHub }
+  return { delivered, failed, skipped: plan.retired }
 }

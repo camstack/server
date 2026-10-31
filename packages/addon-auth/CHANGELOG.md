@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Authentication addons are now hub-only: they are removed from agents that still carry them
+
 ## [1.2.172] - 2026-10-30
 
 ### Changed

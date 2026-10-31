@@ -104,6 +104,12 @@ export function buildHubHttpSource(
   }
 }
 
+/** What the upload route tells the agent registry (D982). */
+export interface UploadConvergence {
+  noteExplicitDelivery(nodeId: string, packageName: string): Promise<void>
+  requestConvergence(trigger: 'hub-change'): Promise<void>
+}
+
 export async function registerAddonUploadRoute(
   fastify: FastifyInstance,
   addonBridge: AddonBridgeService,
@@ -124,6 +130,12 @@ export async function registerAddonUploadRoute(
    * not build one; `main.ts` always passes the AgentRegistryService's.
    */
   deliveryLedger?: DeliveryWindowLedger,
+  /**
+   * The D982 convergence: an explicit delivery to one node lifts its tombstone,
+   * and a hub install asks for a convergence round. Optional so route unit tests
+   * need not build one; `main.ts` passes the AgentRegistryService.
+   */
+  convergence?: UploadConvergence,
 ): Promise<void> {
   await fastify.register(import('@fastify/multipart'), {
     limits: { fileSize: MAX_UPLOAD_BYTES },
@@ -199,6 +211,7 @@ export async function registerAddonUploadRoute(
         buffer,
         resolveClusterBaseUrl,
         deliveryLedger,
+        convergence,
       )
     }
     const agentAddonId = addonIdHint ?? manifest.name
@@ -211,6 +224,7 @@ export async function registerAddonUploadRoute(
       buffer,
       resolveClusterBaseUrl,
       deliveryLedger,
+      convergence,
     )
   })
 }
@@ -337,6 +351,7 @@ async function installToHub(
   buffer: Buffer,
   resolveClusterBaseUrl: ClusterBaseUrlResolver,
   deliveryLedger: DeliveryWindowLedger | undefined,
+  convergence: UploadConvergence | undefined,
 ): Promise<void> {
   const tmpDir = path.join(os.tmpdir(), `camstack-addon-upload-${Date.now()}`)
   fs.mkdirSync(tmpDir, { recursive: true })
@@ -480,7 +495,10 @@ async function installToHub(
         logger.info('propagation done', {
           meta: { packageName: result.name, agents: agentResults },
         })
+        void convergence?.requestConvergence('hub-change')
       })
+    } else {
+      void convergence?.requestConvergence('hub-change')
     }
 
     return reply.send({
@@ -517,6 +535,7 @@ async function deployToAgent(
   buffer: Buffer,
   resolveClusterBaseUrl: ClusterBaseUrlResolver,
   deliveryLedger: DeliveryWindowLedger | undefined,
+  convergence: UploadConvergence | undefined,
 ): Promise<void> {
   const hubBaseUrl = await resolveBaseUrlOrReason(resolveClusterBaseUrl)
   if (!hubBaseUrl.ok) {
@@ -542,6 +561,8 @@ async function deployToAgent(
   if (!result.success) {
     return reply.status(502).send({ error: `Agent deploy failed: ${result.error ?? 'unknown'}` })
   }
+  // An operator's explicit delivery to this node lifts its tombstone (D982).
+  await convergence?.noteExplicitDelivery(nodeId, addonId)
   return reply.send({
     success: true,
     target: nodeId,

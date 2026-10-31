@@ -936,6 +936,15 @@ export class AddonPackageService {
   }
 
   /**
+   * The version the registry serves as `latest` for a package — what the hub
+   * follows for an agent-only package it tracks without installing (D982).
+   * Throws when the registry cannot answer.
+   */
+  async resolveRegistryVersion(name: string): Promise<string> {
+    return resolveNpmVersion(name, 'latest', process.env['CAMSTACK_NPM_REGISTRY'])
+  }
+
+  /**
    * Resolve `name@version` and `npm pack` it into a tarball buffer
    * WITHOUT installing. Used to push a package update to an agent: the
    * hub packs here, then ships the tgz via `$agent.deploy` — agents

@@ -541,6 +541,7 @@ async function bootstrap() {
           .getSingleton<ILocalNetworkProvider>('local-network'),
       ),
       app.get(AgentRegistryService).deliveryLedger,
+      app.get(AgentRegistryService),
     )
     console.log('[bootstrap] Addon upload route registered at POST /api/addons/upload')
     // Dev server-deploy channel gateway (`camstack deploy-server`). MUST be

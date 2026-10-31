@@ -67,6 +67,13 @@ export interface ClusterNodeDescriptor {
    * which is the safe direction.
    */
   readonly packages?: readonly NodePackageEntry[]
+  /**
+   * Packages deliberately removed from this node (D982) — a hub uninstall for
+   * the node, or an operator undeploy. The desired set excludes them, so the
+   * hub never puts one back; an explicit delivery to the node clears the entry.
+   * Distinct from `packages`, which is only the node's last observation.
+   */
+  readonly tombstones?: readonly string[]
 }
 
 /**
@@ -103,6 +110,7 @@ const DescriptorSchema = z.object({
     .array(z.object({ name: z.string(), version: z.string().nullable() }))
     .readonly()
     .optional(),
+  tombstones: z.array(z.string()).readonly().optional(),
 })
 
 /** A row as the store reads it: `at` as `lastActive`, plus the descriptor. */
@@ -140,7 +148,8 @@ function descriptorsEqual(a: ClusterNodeDescriptor, b: ClusterNodeDescriptor): b
     sameStrings(a.engines, b.engines) &&
     sameStrings(a.localIps, b.localIps) &&
     sameStrings(a.addonIds, b.addonIds) &&
-    samePackages(a.packages, b.packages)
+    samePackages(a.packages, b.packages) &&
+    sameStrings(a.tombstones ?? [], b.tombstones ?? [])
   )
 }
 
@@ -200,7 +209,12 @@ export class ClusterNodeHistoryStore {
       // the back-fill's intended set on the very next topology poll.
       const existing = await this.readStored(kind, descriptor.id)
       const packages = descriptor.packages ?? existing?.descriptor.packages
-      const next = packages === undefined ? descriptor : { ...descriptor, packages }
+      const tombstones = descriptor.tombstones ?? existing?.descriptor.tombstones
+      const next: ClusterNodeDescriptor = {
+        ...descriptor,
+        ...(packages === undefined ? {} : { packages }),
+        ...(tombstones === undefined ? {} : { tombstones }),
+      }
       if (existing !== null && !this.worthWriting(existing, next)) return
       await this.writeStored(kind, descriptor.id, Date.now(), next)
     } catch (err) {
@@ -352,6 +366,62 @@ export class ClusterNodeHistoryStore {
     }
   }
 
+  /** The packages tombstoned for a node (D982). Empty when none or unreadable. */
+  async getTombstones(nodeId: string): Promise<ReadonlySet<string>> {
+    const kind = this.resolveKind()
+    if (kind === null) return new Set()
+    try {
+      return new Set((await this.readStored(kind, nodeId))?.descriptor.tombstones ?? [])
+    } catch (err) {
+      this.logger.warn('getTombstones failed (best-effort)', {
+        tags: { nodeId },
+        meta: { error: errMsg(err) },
+      })
+      return new Set()
+    }
+  }
+
+  /** Keep packages off a node: an operator undeploy / hub uninstall for it. */
+  async addTombstones(nodeId: string, names: readonly string[]): Promise<void> {
+    await this.editTombstones(nodeId, names, 'add')
+  }
+
+  /** An explicit delivery to the node lifts the tombstone. */
+  async clearTombstones(nodeId: string, names: readonly string[]): Promise<void> {
+    await this.editTombstones(nodeId, names, 'clear')
+  }
+
+  private async editTombstones(
+    nodeId: string,
+    names: readonly string[],
+    mode: 'add' | 'clear',
+  ): Promise<void> {
+    if (names.length === 0) return
+    const kind = this.resolveKind()
+    if (kind === null) return
+    try {
+      const existing = await this.readStored(kind, nodeId)
+      if (existing === null && mode === 'clear') return
+      const current = new Set(existing?.descriptor.tombstones ?? [])
+      const before = current.size
+      for (const name of names) {
+        if (mode === 'add') current.add(name)
+        else current.delete(name)
+      }
+      if (current.size === before) return
+      const base = existing?.descriptor ?? ClusterNodeHistoryStore.placeholderDescriptor(nodeId)
+      await this.writeStored(kind, nodeId, existing?.lastActive ?? Date.now(), {
+        ...base,
+        tombstones: [...current].sort(),
+      })
+    } catch (err) {
+      this.logger.warn('editTombstones failed (best-effort)', {
+        tags: { nodeId },
+        meta: { error: errMsg(err), mode },
+      })
+    }
+  }
+
   /**
    * Touch `lastActive` for a node without rewriting its descriptor — used on
    * `$node.disconnected` so an offline node's "last seen" is the disconnect
@@ -401,11 +471,16 @@ export class ClusterNodeHistoryStore {
           })
           continue
         }
-        result.push({ ...parsed.data.descriptor, lastActive: parsed.data.lastActive })
+        result.push({
+          ...parsed.data.descriptor,
+          lastActive: parsed.data.lastActive,
+        })
       }
       return result
     } catch (err) {
-      this.logger.warn('history read failed (best-effort)', { meta: { error: errMsg(err) } })
+      this.logger.warn('history read failed (best-effort)', {
+        meta: { error: errMsg(err) },
+      })
       return null
     }
   }
@@ -428,7 +503,9 @@ export class ClusterNodeHistoryStore {
       const existed = (await this.readStored(kind, nodeId)) !== null
       await kind.delete(nodeId)
       if (!existed) {
-        this.logger.info('cluster node had no history row to forget', { tags: { nodeId } })
+        this.logger.info('cluster node had no history row to forget', {
+          tags: { nodeId },
+        })
         return 'not-found'
       }
       this.logger.info('forgot cluster node', { tags: { nodeId } })

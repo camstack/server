@@ -50,6 +50,7 @@
       {
         "id": "auth-oidc",
         "execution": {
+          "placement": "hub-only",
           "group": "auth"
         },
         "category": "system",
@@ -76,6 +77,7 @@
       {
         "id": "auth-webauthn",
         "execution": {
+          "placement": "hub-only",
           "group": "auth"
         },
         "category": "system",

@@ -81,6 +81,7 @@ function makeStore(seed: readonly NodePackageEntry[]) {
       rosters.set(nodeId, [...merged.values()])
     }),
     prunePackages: vi.fn(async () => undefined),
+    getTombstones: vi.fn(async () => new Set<string>()),
     snapshot: vi.fn(async () => undefined),
     touch: vi.fn(async () => undefined),
     tryGetAll: vi.fn(async () => []),
@@ -127,6 +128,7 @@ function makeHarness(opts: HarnessOptions) {
     listAddons: () => HUB_ROWS,
   } as unknown as AddonRegistryService)
   service.setClusterNodeHistoryStore(makeStore(RECORDED))
+  service.setConvergenceDryRun(() => false)
   service.setAddonBackfill({
     pack: async () => Buffer.from('tgz'),
     deploy: async (_nodeId: string, name: string) => {

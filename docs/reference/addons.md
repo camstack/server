@@ -20,13 +20,13 @@ this column exists to stop.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `addon-pages-aggregator` | `@camstack/system` | system | hub-main | `any-node` | — | — | `addon-pages` |
 | `addon-widgets-aggregator` | `@camstack/system` | system | hub-main | `any-node` | — | — | `addon-widgets` |
-| `admin-ui` | `@camstack/addon-admin-ui` | system | own runner | `any-node` | — | — | `admin-ui` |
+| `admin-ui` | `@camstack/addon-admin-ui` | system | own runner | `hub-only` | — | — | `admin-ui` |
 | `agent-ui` | `@camstack/addon-agent-ui` | system | own runner | `agent-only` | — | — | `admin-ui` |
 | `ai` | `@camstack/addon-ai` | analytics | own runner | `any-node` | `ml` | — | `llm` `llm-runtime` `node-removal-hook` |
 | `alert-center` | `@camstack/system` | system | hub-main | `any-node` | — | — | `alerts` |
 | `audio-analyzer` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `audio-analysis` `audio-analyzer` |
-| `auth-oidc` | `@camstack/addon-auth` | system | own runner | `any-node` | `auth` | — | `addon-routes` `auth-provider` `login-method` `oidc-connections` |
-| `auth-webauthn` | `@camstack/addon-auth` | system | own runner | `any-node` | `auth` | — | `addon-widgets-source` `login-method` `user-passkeys` |
+| `auth-oidc` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-routes` `auth-provider` `login-method` `oidc-connections` |
+| `auth-webauthn` | `@camstack/addon-auth` | system | own runner | `hub-only` | `auth` | — | `addon-widgets-source` `login-method` `user-passkeys` |
 | `autotrack` | `@camstack/system` | system | hub-main | `any-node` | — | — | `ptz-autotrack` |
 | `backup-orchestrator` | `@camstack/system` | system | hub-main | `any-node` | — | — | `backup` |
 | `benchmark` | `@camstack/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` |

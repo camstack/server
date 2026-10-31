@@ -31,6 +31,7 @@ import { AddonBridgeService } from './core/addon-bridge/addon-bridge.service'
 import { AddonPagesService } from './core/addon-pages/addon-pages.service'
 import { AddonWidgetsService } from './core/addon-widgets/addon-widgets.service'
 import {
+  ADDON_CONVERGENCE_DRY_RUN_KEY,
   AGENT_BACKFILL_RPC_TIMEOUT_MS,
   AgentRegistryService,
 } from './core/agent/agent-registry.service'
@@ -351,6 +352,16 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
       )
     },
   })
+
+  // D982: the hub follows the registry's `latest` for an agent-only package it
+  // tracks without installing (agent-ui), and the convergence is DRY RUN unless
+  // the operator sets `addons.convergence.dryRun` to false.
+  agentRegistryService.setTrackedVersionResolver((name) =>
+    addonPackageService.resolveRegistryVersion(name),
+  )
+  agentRegistryService.setConvergenceDryRun(
+    () => configService.get<boolean>(ADDON_CONVERGENCE_DRY_RUN_KEY) !== false,
+  )
 
   // ---- Lifecycle job runner (boot singleton) -----------------------------
   // The runner used to be built per-tRPC-request inside the `addons` cap
