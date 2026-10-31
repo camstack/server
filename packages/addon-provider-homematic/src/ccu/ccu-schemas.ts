@@ -91,3 +91,31 @@ export const AcknowledgeInputSchema = IntegrationRefSchema.extend({
 })
 
 export const OkResultSchema = z.object({ ok: z.literal(true) })
+
+// ── Devices ────────────────────────────────────────────────────────────────
+
+export const CcuDeviceRowSchema = z.object({
+  address: z.string(),
+  type: z.string(),
+  name: z.string().nullable(),
+  rooms: z.array(z.string()),
+  functions: z.array(z.string()),
+  firmware: z.string().nullable(),
+  availableFirmware: z.string().nullable(),
+  updatable: z.boolean().nullable(),
+  /** Signal at the device, dBm; `null` when the device reports none (or the "unknown" marker). */
+  rssi: z.number().nullable(),
+  /** Signal at the peer, dBm. */
+  rssiPeer: z.number().nullable(),
+  /** Duty cycle in percent, for devices that report a number. */
+  dutyCycle: z.number().nullable(),
+  /** HmIP devices report a limit-reached flag instead of a percentage. */
+  dutyCycleLimited: z.boolean().nullable(),
+  lowBattery: z.boolean().nullable(),
+  unreach: z.boolean().nullable(),
+  configPending: z.boolean().nullable(),
+  sabotage: z.boolean().nullable(),
+})
+export type CcuDeviceRow = z.infer<typeof CcuDeviceRowSchema>
+
+export const CcuDevicesResultSchema = z.object({ devices: z.array(CcuDeviceRowSchema) })

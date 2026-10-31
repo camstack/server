@@ -2,6 +2,7 @@ import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
 import {
   AcknowledgeInputSchema,
+  CcuDevicesResultSchema,
   CcuListItemSchema,
   CcuOverviewSchema,
   IntegrationRefSchema,
@@ -33,6 +34,10 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   listServiceMessages: customAction(IntegrationRefSchema, ServiceMessagesResultSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  listCcuDevices: customAction(IntegrationRefSchema, CcuDevicesResultSchema, {
     kind: 'query',
     auth: 'admin',
   }),

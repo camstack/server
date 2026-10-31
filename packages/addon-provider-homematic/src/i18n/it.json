@@ -15,7 +15,8 @@
     "noCcu": "Nessuna CCU Homematic configurata",
     "noCcuHint": "Aggiungi una CCU da Integrazioni, poi gestiscila qui.",
     "notConnected": "{{name}} non è connessa",
-    "notConnectedHint": "La pagina lavora su una CCU connessa. Controlla la connessione nell'integrazione."
+    "notConnectedHint": "La pagina lavora su una CCU connessa. Controlla la connessione nell'integrazione.",
+    "tabDevices": "Dispositivi"
   },
   "overview": {
     "loadFailed": "Impossibile leggere la CCU",
@@ -45,5 +46,30 @@
     "ackTitle": "Conferma messaggio di servizio",
     "ackMessage": "Confermare {{type}} per {{name}} sulla CCU? Il messaggio sparisce anche dalla CCU.",
     "ackConfirm": "Conferma"
+  },
+  "devices": {
+    "colDevice": "Dispositivo",
+    "colType": "Tipo",
+    "colPlace": "Stanza / funzione",
+    "colFirmware": "Firmware",
+    "colSignal": "Segnale",
+    "colDutyCycle": "Duty cycle",
+    "colHealth": "Stato",
+    "updateTo": "Aggiorna a {{version}}",
+    "dutyLimited": "Limite raggiunto",
+    "unreach": "Non raggiungibile",
+    "sabotage": "Sabotaggio",
+    "lowBattery": "Batteria scarica",
+    "configPending": "Configurazione in sospeso",
+    "ok": "OK",
+    "loadFailed": "Impossibile leggere i dispositivi",
+    "groupIssue": "Stato",
+    "groupType": "Tipo",
+    "searchPlaceholder": "Cerca nome, indirizzo, tipo, stanza",
+    "searchLabel": "Cerca dispositivi della CCU",
+    "facetsLabel": "Filtra dispositivi della CCU",
+    "clearFilters": "Azzera filtri",
+    "noMatch": "Nessun dispositivo corrisponde al filtro",
+    "none": "La CCU non ha dispositivi"
   }
 }

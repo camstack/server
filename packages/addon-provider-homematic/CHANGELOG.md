@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New Homematic CCU page under Administration: CCU version, interface health and duty cycle, and service messages you can acknowledge.
+- Homematic CCU page: a Devices tab with firmware, signal, duty cycle, low battery, unreachable, config pending and sabotage per device.
 
 ## [1.2.165] - 2026-10-31
 

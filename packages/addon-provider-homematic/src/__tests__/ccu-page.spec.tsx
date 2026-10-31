@@ -130,3 +130,56 @@ describe('HomematicCcuPage overview', () => {
     )
   })
 })
+
+describe('HomematicCcuPage devices', () => {
+  const DEVICE = {
+    address: 'ABC',
+    type: 'HmIP-eTRV-2',
+    name: 'Bedroom radiator',
+    rooms: ['Bedroom'],
+    functions: ['Heating'],
+    firmware: '1.0.6',
+    availableFirmware: '1.0.8',
+    updatable: true,
+    rssi: -61,
+    rssiPeer: null,
+    dutyCycle: null,
+    dutyCycleLimited: null,
+    lowBattery: true,
+    unreach: false,
+    configPending: false,
+    sabotage: false,
+  }
+  const OK_DEVICE = { ...DEVICE, address: 'DEF', name: 'Hall lamp', lowBattery: false }
+
+  function mountDevices(devices: unknown[]) {
+    window.history.replaceState(null, '', '/?tab=devices')
+    const { trpc, calls } = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices }),
+    })
+    mountPage(trpc)
+    return calls
+  }
+
+  it('lists devices with firmware, signal and health flags', async () => {
+    mountDevices([DEVICE])
+    expect(await screen.findByText('Bedroom radiator')).toBeTruthy()
+    expect(screen.getByText('-61 dBm')).toBeTruthy()
+    expect(screen.getByText('Low battery')).toBeTruthy()
+    expect(screen.getByText('Update to 1.0.8')).toBeTruthy()
+  })
+
+  it('filters to the devices with a health issue', async () => {
+    mountDevices([DEVICE, OK_DEVICE])
+    expect(await screen.findByText('Hall lamp')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Low battery/ }))
+    await waitFor(() => expect(screen.queryByText('Hall lamp')).toBeNull())
+    expect(screen.getByText('Bedroom radiator')).toBeTruthy()
+  })
+
+  it('says the CCU has no devices instead of showing an empty grid', async () => {
+    mountDevices([])
+    expect(await screen.findByText('The CCU has no devices')).toBeTruthy()
+  })
+})

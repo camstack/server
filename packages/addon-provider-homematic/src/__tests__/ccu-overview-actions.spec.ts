@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildCcuOverviewHandlers } from '../ccu/ccu-overview-actions.js'
 import type { CcuFacade } from '../ccu/ccu-facade.js'
-import { RecordingLogger } from './recording-logger.js'
+import { fakeDeps } from './ccu-fake.js'
 
 const INFO = {
   version: '3.75.7',
@@ -23,16 +23,13 @@ const IFACE = {
 }
 
 function setup(facade: Partial<CcuFacade> | null) {
-  const logger = new RecordingLogger()
-  const handlers = buildCcuOverviewHandlers({
-    facade: (id) => (id === 'hm_1' && facade !== null ? (facade as CcuFacade) : null),
-    integrations: () => [
+  const { deps, logger } = fakeDeps(facade, {
+    integrations: [
       { integrationId: 'hm_1', name: 'Casa', connected: true },
       { integrationId: 'hm_2', name: 'Cabin', connected: false },
     ],
-    logger,
   })
-  return { handlers, logger }
+  return { handlers: buildCcuOverviewHandlers(deps), logger }
 }
 
 describe('listCcus', () => {

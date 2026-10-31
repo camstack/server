@@ -15,6 +15,7 @@ import { Plug } from 'lucide-react'
 import { z } from 'zod'
 import { CcuListItemSchema } from './ccu/ccu-schemas.js'
 import { useT } from './i18n/index.js'
+import { CcuDevicesTab } from './ui/CcuDevicesTab.js'
 import { CcuOverviewTab } from './ui/CcuOverviewTab.js'
 import type { CcuTrpc } from './ui/ccu-client.js'
 import { useCcuData } from './ui/use-ccu-data.js'
@@ -88,6 +89,11 @@ export default function HomematicCcuPage(props: AddonPageProps) {
           id: 'overview',
           label: t('page.tabOverview'),
           content: body(<CcuOverviewTab trpc={trpc} integrationId={integrationId} />),
+        },
+        {
+          id: 'devices',
+          label: t('page.tabDevices'),
+          content: body(<CcuDevicesTab trpc={trpc} integrationId={integrationId} />),
         },
       ]}
     />

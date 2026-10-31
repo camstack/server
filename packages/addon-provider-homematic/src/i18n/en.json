@@ -15,7 +15,8 @@
     "noCcu": "No Homematic CCU is set up",
     "noCcuHint": "Add a CCU from Integrations, then manage it here.",
     "notConnected": "{{name}} is not connected",
-    "notConnectedHint": "The page works on a connected CCU. Check the connection in the integration."
+    "notConnectedHint": "The page works on a connected CCU. Check the connection in the integration.",
+    "tabDevices": "Devices"
   },
   "overview": {
     "loadFailed": "Could not read the CCU",
@@ -45,5 +46,30 @@
     "ackTitle": "Acknowledge service message",
     "ackMessage": "Acknowledge {{type}} for {{name}} on the CCU? The message disappears from the CCU as well.",
     "ackConfirm": "Acknowledge"
+  },
+  "devices": {
+    "colDevice": "Device",
+    "colType": "Type",
+    "colPlace": "Room / function",
+    "colFirmware": "Firmware",
+    "colSignal": "Signal",
+    "colDutyCycle": "Duty cycle",
+    "colHealth": "Health",
+    "updateTo": "Update to {{version}}",
+    "dutyLimited": "Limit reached",
+    "unreach": "Unreachable",
+    "sabotage": "Sabotage",
+    "lowBattery": "Low battery",
+    "configPending": "Config pending",
+    "ok": "OK",
+    "loadFailed": "Could not read the devices",
+    "groupIssue": "Health",
+    "groupType": "Type",
+    "searchPlaceholder": "Search name, address, type, room",
+    "searchLabel": "Search CCU devices",
+    "facetsLabel": "Filter CCU devices",
+    "clearFilters": "Clear filters",
+    "noMatch": "No device matches the filter",
+    "none": "The CCU has no devices"
   }
 }
