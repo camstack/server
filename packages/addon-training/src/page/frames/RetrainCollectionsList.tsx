@@ -114,7 +114,8 @@ export function RetrainCollectionsList({
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
+                    variant="unstyled"
                     type="button"
                     className="flex-1 min-w-0 text-left truncate text-foreground"
                     onClick={() => {
@@ -122,7 +123,7 @@ export function RetrainCollectionsList({
                     }}
                   >
                     {collection.name}
-                  </button>
+                  </Button>
                   <Badge>{collection.frameCount}</Badge>
                   <Button
                     variant="ghost"

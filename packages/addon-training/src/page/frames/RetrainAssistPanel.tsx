@@ -341,7 +341,8 @@ export function RetrainAssistPanel({
               {ALL_CLASSES.map((c) => {
                 const on = classes.includes(c)
                 return (
-                  <button
+                  <Button
+                    variant="unstyled"
                     key={c}
                     type="button"
                     aria-pressed={on}
@@ -353,7 +354,7 @@ export function RetrainAssistPanel({
                     }}
                   >
                     {c}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
