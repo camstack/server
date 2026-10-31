@@ -1651,9 +1651,9 @@
       "props": [
         {
           "name": "variant",
-          "type": "'primary' | 'secondary' | 'ghost' | 'danger' | 'outline'",
+          "type": "'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'unstyled'",
           "optional": true,
-          "doc": ""
+          "doc": "`unstyled` draws nothing: no height, padding, colour or radius. It is the library's wrapper for a pressable whose look is the caller's layou"
         },
         {
           "name": "size",
@@ -5181,6 +5181,15 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
       "summary": "The glyphs the admin draws on FIRST PAINT, synchronously — the ones the device-type and role meta tables above already import. Everything else in the icon catalog is drawn from the lazily loaded full table (`icon-glyp…"
+    },
+    {
+      "name": "FileInput",
+      "kind": "component",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/file-input.tsx",
+      "summary": "The picker behind a `Button`: always visually hidden. The caller keeps a ref and opens it with `ref.current?.click()` from a library `Button`.",
+      "propsExtends": ["Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>"],
+      "props": []
     },
     {
       "name": "FILL",
@@ -9021,6 +9030,15 @@
       ]
     },
     {
+      "name": "Radio",
+      "kind": "component",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/radio.tsx",
+      "summary": "One radio button; group them with a shared `name`.",
+      "propsExtends": ["Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>"],
+      "props": []
+    },
+    {
       "name": "readHistory",
       "kind": "function",
       "area": "composites",
@@ -10452,6 +10470,15 @@
       "file": "packages/ui-library/src/primitives/skeleton.tsx",
       "summary": "",
       "propsExtends": ["HTMLAttributes<HTMLDivElement>"],
+      "props": []
+    },
+    {
+      "name": "Slider",
+      "kind": "component",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/slider.tsx",
+      "summary": "A range slider (`min`, `max`, `step`, `value`, `onChange`). Carries an `aria-label` at the call site.",
+      "propsExtends": ["Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>"],
       "props": []
     },
     {
@@ -11911,6 +11938,22 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/responsive.ts",
       "summary": "Primary value (a metric, badge, …)."
+    },
+    {
+      "name": "Textarea",
+      "kind": "component",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/textarea.tsx",
+      "summary": "Multi-line text field, drawn like `Input` (same border, focus ring and disabled affordance).",
+      "propsExtends": ["TextareaHTMLAttributes<HTMLTextAreaElement>"],
+      "props": [
+        {
+          "name": "state",
+          "type": "'default' | 'error'",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "ThemeProvider",

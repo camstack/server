@@ -35,15 +35,20 @@ const buttonVariants = cva(
 )
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline'
+  /**
+   * `unstyled` draws nothing: no height, padding, colour or radius. It is the
+   * library's wrapper for a pressable whose look is the caller's layout (a row,
+   * a chip, a toggle segment), so the browser's `<button>` never appears in a
+   * page. A control that should LOOK like a button uses another variant.
+   */
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'unstyled'
   size?: 'sm' | 'md' | 'lg'
 }
 
 export const Button: ForwardRefExoticComponent<ButtonProps & RefAttributes<HTMLButtonElement>> =
   forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, ...props }, ref) => {
-    return (
-      <button ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
-    )
+    const base = variant === 'unstyled' ? undefined : buttonVariants({ variant, size })
+    return <button ref={ref} className={cn(base, className)} {...props} />
   })
 
 Button.displayName = 'Button'
