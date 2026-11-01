@@ -19,7 +19,14 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck, KeySquare, Globe, Smartphone, Info, BookOpen } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { Badge, useAddonsList, useAddonsListCapabilityProviders } from '@camstack/ui-library'
+import {
+  Badge,
+  SECTION_BODY,
+  SectionCard,
+  useAddonsList,
+  useAddonsListCapabilityProviders,
+} from '@camstack/ui-library'
+import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
 import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
@@ -253,16 +260,52 @@ export function AuthenticationPage() {
   ]
 
   return (
-    <IntegrationHub
-      embedded
+    <div className="space-y-3 sm:space-y-4">
+      <IntegrationHub
+        embedded
+        icon={ShieldCheck}
+        title={t(AUTH_SECTION.titleKey)}
+        subtitle={t(AUTH_SECTION.subtitleKey)}
+        groups={groups}
+        isLoading={loginQuery.isLoading || passkeyQuery.isLoading}
+        emptyTitle={t(AUTH_SECTION.emptyTitleKey)}
+        emptyDescription={t(AUTH_SECTION.emptyDescriptionKey)}
+      />
+      <AuthenticationPolicyCard />
+    </div>
+  )
+}
+
+/**
+ * The hub-wide sign-in policy: token lifetimes, trusted proxies, trusted
+ * networks and the allowed browser origins. They are the `system-config`
+ * addon's `system-config-auth` section, written to its own store; this is the
+ * only place the section is drawn (System → Settings omits it).
+ */
+export const AUTH_POLICY_SECTION_ID = 'system-config-auth'
+
+export function AuthenticationPolicyCard(): React.ReactElement {
+  const { t } = useTranslation()
+  return (
+    <SectionCard
+      headingId="authentication-policy"
+      title={t('system.authentication.policyTitle', 'Sign-in policy')}
       icon={ShieldCheck}
-      title={t(AUTH_SECTION.titleKey)}
-      subtitle={t(AUTH_SECTION.subtitleKey)}
-      groups={groups}
-      isLoading={loginQuery.isLoading || passkeyQuery.isLoading}
-      emptyTitle={t(AUTH_SECTION.emptyTitleKey)}
-      emptyDescription={t(AUTH_SECTION.emptyDescriptionKey)}
-    />
+    >
+      <div className={SECTION_BODY}>
+        <NodeAddonsSettingsPanel
+          nodeId="hub"
+          addonIds={['system-config']}
+          level="global"
+          sectionIds={[AUTH_POLICY_SECTION_ID]}
+          hideSectionChrome
+          emptyMessage={t(
+            'system.authentication.policyUnavailable',
+            'Not available — the addon that owns these settings did not answer.',
+          )}
+        />
+      </div>
+    </SectionCard>
   )
 }
 

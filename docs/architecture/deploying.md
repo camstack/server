@@ -241,8 +241,8 @@ socket, only when its origin is on an allowlist
 Some origins are allowed already: the hub's own (whatever address the browser
 used — the request's `Host`), the hosted viewer at
 `https://camstack.zentik.app` and the native app's embed (`null`). To add another, for example a self-hosted viewer or
-Expo web on `http://localhost:8081`, add it under System → Settings →
-Authentication → Allowed browser origins. It applies to the next request, with
+Expo web on `http://localhost:8081`, add it under Identity → Authentication →
+Sign-in policy → Allowed browser origins. It applies to the next request, with
 no restart. There is no environment variable and no `config.yaml` key for it:
 the retired `server.corsOrigins` and `CAMSTACK_CORS_ORIGINS` are ignored and
 named in the boot log.

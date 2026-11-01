@@ -102,7 +102,9 @@
       "sectionEmptyTitle": "No authentication providers registered",
       "sectionEmptyDescription": "Local auth should always be available — if this list is empty the local-auth builtin failed to register. Check the Addons page for load errors.",
       "sectionInstall": "Add provider",
-      "totpNote": "TOTP / 2FA is self-service: each user enrols from their own profile page — <access>My access</access> → Sign-in & security → “Two-factor authentication” → Enable 2FA. Admins can only remove a user’s active enrollment (lost device) from the <users>Users</users> page via Actions → “Remove 2FA”."
+      "totpNote": "TOTP / 2FA is self-service: each user enrols from their own profile page — <access>My access</access> → Sign-in & security → “Two-factor authentication” → Enable 2FA. Admins can only remove a user’s active enrollment (lost device) from the <users>Users</users> page via Actions → “Remove 2FA”.",
+      "policyTitle": "Sign-in policy",
+      "policyUnavailable": "Not available — the addon that owns these settings did not answer."
     },
     "backup": {
       "restartServerNow": "Restart server now?",

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New /approve page to approve a terminal sign-in by its code, and a Pending terminal sign-ins card under Login sessions.
 - The terminal sign-in approval page compares the requester's address with yours, marks the self-reported name unverified and states what is granted
 - Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X
+- The hub sign-in policy (session and access token lifetimes, trusted proxies, trusted networks, allowed browser origins) moves from System > Settings to Identity > Authentication
 
 ## [1.2.540] - 2026-10-31
 

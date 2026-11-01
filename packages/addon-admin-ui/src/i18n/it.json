@@ -102,7 +102,9 @@
       "sectionEmptyTitle": "Nessun provider di autenticazione registrato",
       "sectionEmptyDescription": "L'autenticazione locale dovrebbe essere sempre disponibile — se questo elenco è vuoto il built-in local-auth non si è registrato. Controlla la pagina Addon per errori di caricamento.",
       "sectionInstall": "Aggiungi provider",
-      "totpNote": "TOTP / 2FA è in autoservizio: ogni utente si registra dalla propria pagina del profilo — <access>Il mio accesso</access> → Accesso e sicurezza → “Autenticazione a due fattori” → Abilita 2FA. Gli admin possono solo rimuovere la registrazione attiva di un utente (dispositivo perso) dalla pagina <users>Utenti</users> tramite Azioni → “Rimuovi 2FA”."
+      "totpNote": "TOTP / 2FA è in autoservizio: ogni utente si registra dalla propria pagina del profilo — <access>Il mio accesso</access> → Accesso e sicurezza → “Autenticazione a due fattori” → Abilita 2FA. Gli admin possono solo rimuovere la registrazione attiva di un utente (dispositivo perso) dalla pagina <users>Utenti</users> tramite Azioni → “Rimuovi 2FA”.",
+      "policyTitle": "Criteri di accesso",
+      "policyUnavailable": "Non disponibile: l'addon che gestisce queste impostazioni non ha risposto."
     },
     "backup": {
       "restartServerNow": "Riavviare il server ora?",

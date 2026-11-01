@@ -22,6 +22,7 @@
 import { useClusterNodes } from '@camstack/ui-library'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { AdminPage } from '../../components/AdminPage'
+import { AUTH_POLICY_SECTION_ID } from './Authentication'
 import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
 import { SiteLocationCard } from '../../components/settings/SiteLocationCard'
 import { useTranslation } from 'react-i18next'
@@ -57,7 +58,12 @@ export function SettingsPage() {
           {t('admin.system.settings.noAddonsInstalledOnThe', 'No addons installed on the hub yet.')}
         </div>
       ) : (
-        <NodeAddonsSettingsPanel nodeId={hub.id} addonIds={addonIds} level="global" />
+        <NodeAddonsSettingsPanel
+          nodeId={hub.id}
+          addonIds={addonIds}
+          level="global"
+          omitSectionIds={[AUTH_POLICY_SECTION_ID]}
+        />
       )}
     </AdminPage>
   )
