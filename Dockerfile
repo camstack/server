@@ -220,18 +220,16 @@ EXPOSE 4443 8554 6443/tcp
 EXPOSE 4444
 
 # Role-aware healthcheck: hub probes /health on CAMSTACK_PORT (default 4443),
-# over HTTPS unless CAMSTACK_TLS_ENABLED says otherwise (the server reads any
-# value but "true" as off); agent probes its plain-HTTP /health on
-# CAMSTACK_STATUS_PORT (default 4444).
+# over HTTPS and then plain HTTP (whether the hub serves HTTPS is the "Serve
+# HTTPS" setting in Network → Local access, not an env var); agent probes its
+# plain-HTTP /health on CAMSTACK_STATUS_PORT (default 4444).
 COPY <<'EOF' /usr/local/bin/camstack-healthcheck.sh
 #!/bin/sh
 if [ "$CAMSTACK_ROLE" = "agent" ]; then
   exec curl -fsS --max-time 20 "http://localhost:${CAMSTACK_STATUS_PORT:-4444}/health" -o /dev/null
 fi
-if [ -n "$CAMSTACK_TLS_ENABLED" ] && [ "$CAMSTACK_TLS_ENABLED" != "true" ]; then
-  exec curl -fsS --max-time 20 "http://localhost:${CAMSTACK_PORT:-4443}/health" -o /dev/null
-fi
-exec curl -fsSk --max-time 20 "https://localhost:${CAMSTACK_PORT:-4443}/health" -o /dev/null
+curl -fsSk --max-time 20 "https://localhost:${CAMSTACK_PORT:-4443}/health" -o /dev/null && exit 0
+exec curl -fsS --max-time 20 "http://localhost:${CAMSTACK_PORT:-4443}/health" -o /dev/null
 EOF
 RUN chmod +x /usr/local/bin/camstack-healthcheck.sh
 HEALTHCHECK --interval=30s --timeout=25s --start-period=180s --retries=5 \

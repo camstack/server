@@ -265,7 +265,7 @@ return undefined                    // ← auth.tokenExpiry lands here
 `configured` is therefore always `undefined` and `auth-manager.ts:57` falls
 back to a hardcoded `'30d'`. Three defaults disagree about a value nothing
 reads: schema `'30d'` (`:124`), `RUNTIME_DEFAULTS['auth.tokenExpiry'] = '7d'`
-(`packages/types/src/constants.ts:88`), hardcoded `'30d'`. A live, editable,
+(`packages/types/src/constants.ts`), hardcoded `'30d'`. A live, editable,
 silently inert security control.
 
 ### 4.2 The rest

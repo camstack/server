@@ -194,11 +194,17 @@ All optional, all `advanced` in the Unraid template:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `CAMSTACK_TLS_ENABLED` | `true` | Any value other than `true` serves plain HTTP — for a reverse proxy that terminates TLS. |
 | `CAMSTACK_PORT` | `4443` | The hub's HTTPS port. With bridge networking change the published mapping instead. |
 
-The image's healthcheck follows `CAMSTACK_PORT` and `CAMSTACK_TLS_ENABLED`, so a
-hub moved off 4443 or onto plain HTTP does not report itself unhealthy.
+The image's healthcheck follows `CAMSTACK_PORT` and tries HTTPS, then plain HTTP,
+so a hub moved off 4443 or onto plain HTTP does not report itself unhealthy.
+
+Whether the hub serves HTTPS is not a variable: it is **Serve HTTPS** in
+**Network → Local access** (on by default, and on at first boot). Turn it off only behind a
+reverse proxy that terminates TLS. It applies after the hub restarts: the
+setting is mirrored to `<dataDir>/tls/enabled`, which the boot reads because the
+listener is built before the settings database opens. `CAMSTACK_TLS_ENABLED` is
+ignored and named in the boot log.
 
 There is no variable for the certificate itself. The hub issues its own from a
 local CA ([D227](../decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md));
