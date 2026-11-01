@@ -10,6 +10,7 @@ import * as path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   candidateReason,
+  compareCandidate,
   compareNormalised,
   contentHash,
   VERSION_PLACEHOLDER,
@@ -104,7 +105,11 @@ describe('finalizePublishSet', () => {
       pinned: 'packages/addon-admin-ui',
       publishes: 'packages/types',
     })
-    expect(staleRegistryPins(final.publish, ROOT, { verifiedUnchanged: final.dropped })).toEqual([])
+    expect(
+      staleRegistryPins(final.publish, ROOT, {
+        verifiedUnchanged: final.dropped,
+      }),
+    ).toEqual([])
   })
 })
 
@@ -264,7 +269,11 @@ describe('addon-agent-ui build reproducibility', () => {
       execFileSync('npm', ['run', 'build', '-w', 'packages/addon-agent-ui'], {
         cwd: ROOT,
         stdio: 'inherit',
-        env: { ...process.env, NODE_ENV: 'production', VITE_AGENT_PORT: '4444' },
+        env: {
+          ...process.env,
+          NODE_ENV: 'production',
+          VITE_AGENT_PORT: '4444',
+        },
       })
     }
     const digest = (): string => {
@@ -309,5 +318,58 @@ describe('addon-agent-ui build reproducibility', () => {
       fs.writeFileSync(manifestPath, original)
       build()
     }
+  })
+})
+
+describe('a page candidate is judged by the modules its bundle holds', () => {
+  const MANIFEST = 'dist/.bundle-modules.json'
+  const file = (rel: string, text: string) => ({
+    path: rel,
+    bytes: Buffer.from(text),
+  })
+  const manifest = (modules: Record<string, string>) => file(MANIFEST, JSON.stringify(modules))
+  const modules = {
+    'packages/ui-library/src/composites/view-switch.tsx': 'aaa',
+    'packages/addon-training/src/page.tsx': 'bbb',
+  }
+
+  it('drops a candidate whose bytes differ but whose bundled modules are identical', () => {
+    // Two builds of one tree: the module-federation chunk is not deterministic.
+    const local = [file('dist/_stub.js', 'function Te(){}'), manifest(modules)]
+    const published = [file('dist/_stub.js', 'function T(){}'), manifest(modules)]
+    const result = compareCandidate(local, published, [], [])
+    expect(result.equal).toBe(true)
+    expect(result.differing).toEqual([])
+  })
+
+  it('keeps a candidate when one bundled module changed, and names it', () => {
+    const changed = {
+      ...modules,
+      'packages/ui-library/src/composites/view-switch.tsx': 'zzz',
+    }
+    const result = compareCandidate([manifest(changed)], [manifest(modules)], [], [])
+    expect(result.equal).toBe(false)
+    expect(result.differing).toEqual(['packages/ui-library/src/composites/view-switch.tsx'])
+  })
+
+  it('keeps a candidate when a module was added to or removed from the bundle', () => {
+    const added = {
+      ...modules,
+      'packages/ui-library/src/composites/new.tsx': 'ccc',
+    }
+    expect(compareCandidate([manifest(added)], [manifest(modules)], [], []).equal).toBe(false)
+    expect(compareCandidate([manifest(modules)], [manifest(added)], [], []).equal).toBe(false)
+  })
+
+  it('says "differs" when the registry copy carries no manifest', () => {
+    const result = compareCandidate([manifest(modules)], [file('dist/_stub.js', 'x')], [], [])
+    expect(result.equal).toBe(false)
+    expect(result.reason).toContain('no bundle manifest')
+  })
+
+  it('falls back to the byte comparison when the local build writes no manifest', () => {
+    const same = [file('dist/index.js', 'one')]
+    expect(compareCandidate(same, [file('dist/index.js', 'one')], [], []).equal).toBe(true)
+    expect(compareCandidate(same, [file('dist/index.js', 'two')], [], []).equal).toBe(false)
   })
 })

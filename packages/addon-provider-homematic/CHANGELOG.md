@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An integration deleted while its provider was down now has its orphan devices removed after two concordant reads of the integration list
+- The addon page now ships a list of the library modules it bundles, so a library change the page never reaches no longer republishes it
 
 ## [1.2.174] - 2026-11-01
 

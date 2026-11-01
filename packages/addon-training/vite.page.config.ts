@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { federation } from '@module-federation/vite'
+import { bundleModulesManifest } from '../../tools/build/bundle-modules-manifest'
 import path from 'node:path'
 import fs from 'node:fs'
 import { execSync } from 'node:child_process'
@@ -52,6 +53,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    bundleModulesManifest(),
     federation({
       name: 'addon_training_page',
       filename: 'remoteEntry.js',

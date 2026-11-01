@@ -72,6 +72,18 @@ page (`packages/addon-pipeline-orchestrator`, `packages/addon-model-studio`,
 `@camstack/ui-library` is host-provided, not bundled into addons
 ([D15](../decisions/adr-0015.md)): two copies would mean two Reacts.
 
+That is the rule for React and the other shared singletons. It is **not true of
+the ui-library source in a page remote**: `addon-model-studio`, `-osd-manager`,
+`-training`, `-benchmark`, `-provider-homematic` and `-agent-ui` alias
+`@camstack/ui-library` to `../ui-library/src`, which bypasses the `shared`
+entry, so the page bundles the components and hooks it reaches (the built stub
+holds them and no `loadShare` chunk exists for ui-library). A ui-library fix
+reaches such a page only when the addon is rebuilt. The publish step therefore
+treats these addons as bundle candidates and decides on the modules the bundle
+holds (`dist/.bundle-modules.json`, `tools/build/bundle-modules-manifest.ts`),
+never on bytes: the module-federation chunk is not deterministic between builds
+of one tree.
+
 ## An addon page's strings: JSON bundles, one helper, the host's language
 
 Every user-visible string of an addon page or widget lives in

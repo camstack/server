@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { bundleModulesManifest } from '../../tools/build/bundle-modules-manifest'
 import path from 'node:path'
 
 // The dev.sh script passes VITE_AGENT_PORT to point at the correct
@@ -8,7 +9,7 @@ import path from 'node:path'
 const agentPort = process.env.VITE_AGENT_PORT ?? '4444'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), bundleModulesManifest()],
   resolve: {
     alias: {
       '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),

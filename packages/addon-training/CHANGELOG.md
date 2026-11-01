@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The addon page now ships a list of the library modules it bundles, so a library change the page never reaches no longer republishes it
+
 ## [0.1.122] - 2026-11-01
 
 ### Changed

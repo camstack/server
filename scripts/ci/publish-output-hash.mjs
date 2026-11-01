@@ -11,30 +11,35 @@
  * on the registry — that is the whole publish decision.
  */
 
-import { createHash } from 'node:crypto'
-import * as path from 'node:path'
+import { createHash } from "node:crypto";
+import * as path from "node:path";
 
-export const VERSION_PLACEHOLDER = '0.0.0'
+export const VERSION_PLACEHOLDER = "0.0.0";
 
-const DEP_SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
+const DEP_SECTIONS = [
+  "dependencies",
+  "devDependencies",
+  "peerDependencies",
+  "optionalDependencies",
+];
 
 const TEXT_EXTENSIONS = new Set([
-  '.js',
-  '.mjs',
-  '.cjs',
-  '.css',
-  '.html',
-  '.json',
-  '.map',
-  '.txt',
-  '.md',
-  '.svg',
-  '.xml',
-])
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".css",
+  ".html",
+  ".json",
+  ".map",
+  ".txt",
+  ".md",
+  ".svg",
+  ".xml",
+]);
 
 /** `index-DKs9f3a1.js` or `file-CIorc-ds.mjs` — vite's content hash, not a word. */
 const CONTENT_HASH =
-  /-([A-Za-z0-9_-]{8,12})(\.(?:js|mjs|cjs|css|map|html|svg|png|jpe?g|woff2?))(?=["'\s)\];,]|\.map|$)/g
+  /-([A-Za-z0-9_-]{8,12})(\.(?:js|mjs|cjs|css|map|html|svg|png|jpe?g|woff2?))(?=["'\s)\];,]|\.map|$)/g;
 
 /**
  * A vite/rollup content hash is mixed-case or contains a digit. A lowercase
@@ -44,8 +49,8 @@ const CONTENT_HASH =
  * looked like two files.
  */
 function looksLikeContentHash(hash) {
-  if (hash.length < 8 || hash.length > 12) return false
-  return /[A-Z]/.test(hash) || /[0-9]/.test(hash)
+  if (hash.length < 8 || hash.length > 12) return false;
+  return /[A-Z]/.test(hash) || /[0-9]/.test(hash);
 }
 
 /**
@@ -55,7 +60,7 @@ function looksLikeContentHash(hash) {
  * those, and their depth depends on where the checkout sits.
  */
 const ABSOLUTE_WORKSPACE =
-  /(?<![.\w])(?:file:\/\/)?(?:\/(?!\.\.)[\w.+@-]+)+\/(?=(?:packages|server)\/)/g
+  /(?<![.\w])(?:file:\/\/)?(?:\/(?!\.\.)[\w.+@-]+)+\/(?=(?:packages|server)\/)/g;
 
 /**
  * `//#region ../../packages/types/dist/foo.mjs` and
@@ -66,107 +71,127 @@ const ABSOLUTE_WORKSPACE =
  */
 export function normaliseBuildPaths(text) {
   const regions = text.replace(/\/\/#region\s+(\S+)/g, (_full, spec) => {
-    const suffix = spec.replace(/^(?:\.\.\/)+/, '').replace(/^(?:packages|server)\//, '')
-    return `//#region ${suffix}`
-  })
-  return regions.replace(/(?:\.\.\/)+(?=(?:node_modules|packages|server)\/)/g, '')
+    const suffix = spec
+      .replace(/^(?:\.\.\/)+/, "")
+      .replace(/^(?:packages|server)\//, "");
+    return `//#region ${suffix}`;
+  });
+  return regions.replace(
+    /(?:\.\.\/)+(?=(?:node_modules|packages|server)\/)/g,
+    "",
+  );
 }
 
 function isTextPath(rel) {
-  if (rel.endsWith('.viewer-version')) return true
-  return TEXT_EXTENSIONS.has(path.posix.extname(rel))
+  if (rel.endsWith(".viewer-version")) return true;
+  return TEXT_EXTENSIONS.has(path.posix.extname(rel));
 }
 
 function stableStringify(value) {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null'
-  if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(',')}]`
+  if (value === null || typeof value !== "object")
+    return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value))
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
   const body = Object.keys(value)
     .filter((key) => value[key] !== undefined)
     .sort()
     .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
-    .join(',')
-  return `{${body}}`
+    .join(",");
+  return `{${body}}`;
 }
 
 function starCamstackDeps(section) {
-  const next = {}
+  const next = {};
   for (const [name, spec] of Object.entries(section)) {
-    next[name] = name.startsWith('@camstack/') ? '*' : spec
+    next[name] = name.startsWith("@camstack/") ? "*" : spec;
   }
-  return next
+  return next;
 }
 
 /** Top-level version and `@camstack/*` specs. Nested manifest versions stay. */
 export function normalisePackageJsonText(text) {
-  const parsed = JSON.parse(text)
-  const next = { ...parsed, version: VERSION_PLACEHOLDER }
+  const parsed = JSON.parse(text);
+  const next = { ...parsed, version: VERSION_PLACEHOLDER };
   for (const section of DEP_SECTIONS) {
-    if (parsed[section] !== undefined) next[section] = starCamstackDeps(parsed[section])
+    if (parsed[section] !== undefined)
+      next[section] = starCamstackDeps(parsed[section]);
   }
-  return stableStringify(next)
+  return stableStringify(next);
 }
 
 export function embeddedCamstackVersions(files) {
-  const found = []
+  const found = [];
   const patterns = [
     /@camstack\/[a-z0-9-]+[^@]{0,240}?version:\s*["'](\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)["']/g,
     /version:\s*["'](\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)["'][^@]{0,240}?@camstack\/[a-z0-9-]+/g,
-  ]
+  ];
   for (const file of files) {
-    if (!isTextPath(file.path)) continue
-    const text = file.bytes.toString('utf8')
+    if (!isTextPath(file.path)) continue;
+    const text = file.bytes.toString("utf8");
     for (const pattern of patterns) {
-      pattern.lastIndex = 0
-      for (const match of text.matchAll(pattern)) found.push(match[1])
+      pattern.lastIndex = 0;
+      for (const match of text.matchAll(pattern)) found.push(match[1]);
     }
   }
-  return found
+  return found;
 }
 
 export function mergeStamps(groups) {
-  return [...new Set(groups.flat().filter((stamp) => stamp && stamp !== VERSION_PLACEHOLDER))].sort(
-    (a, b) => b.length - a.length,
-  )
+  return [
+    ...new Set(
+      groups.flat().filter((stamp) => stamp && stamp !== VERSION_PLACEHOLDER),
+    ),
+  ].sort((a, b) => b.length - a.length);
 }
 export function versionStampsFromPackageJson(packageJson) {
-  const stamps = []
-  if (typeof packageJson.version === 'string' && packageJson.version !== VERSION_PLACEHOLDER) {
-    stamps.push(packageJson.version)
+  const stamps = [];
+  if (
+    typeof packageJson.version === "string" &&
+    packageJson.version !== VERSION_PLACEHOLDER
+  ) {
+    stamps.push(packageJson.version);
   }
   for (const section of DEP_SECTIONS) {
     for (const [name, spec] of Object.entries(packageJson[section] ?? {})) {
-      if (!name.startsWith('@camstack/') || typeof spec !== 'string' || spec === '*') continue
-      const bare = spec.replace(/^[\^~>=< ]+/, '')
-      if (/^\d+\.\d+\.\d+/.test(bare)) stamps.push(bare)
+      if (
+        !name.startsWith("@camstack/") ||
+        typeof spec !== "string" ||
+        spec === "*"
+      )
+        continue;
+      const bare = spec.replace(/^[\^~>=< ]+/, "");
+      if (/^\d+\.\d+\.\d+/.test(bare)) stamps.push(bare);
     }
   }
-  return [...new Set(stamps)].sort((a, b) => b.length - a.length)
+  return [...new Set(stamps)].sort((a, b) => b.length - a.length);
 }
 
 export function replaceStamps(text, stamps) {
-  let out = text
+  let out = text;
   for (const stamp of stamps) {
-    if (stamp.length === 0 || stamp === VERSION_PLACEHOLDER) continue
-    out = out.split(stamp).join(VERSION_PLACEHOLDER)
+    if (stamp.length === 0 || stamp === VERSION_PLACEHOLDER) continue;
+    out = out.split(stamp).join(VERSION_PLACEHOLDER);
   }
-  return out
+  return out;
 }
 
 export function stripAbsolutePaths(text, roots) {
-  let out = text
-  const ordered = [...roots].filter((root) => root.length > 1).sort((a, b) => b.length - a.length)
+  let out = text;
+  const ordered = [...roots]
+    .filter((root) => root.length > 1)
+    .sort((a, b) => b.length - a.length);
   for (const root of ordered) {
-    out = out.split(root).join('<root>')
-    out = out.split(`file://${root}`).join('file://<root>')
+    out = out.split(root).join("<root>");
+    out = out.split(`file://${root}`).join("file://<root>");
   }
-  return out.replace(ABSOLUTE_WORKSPACE, '<root>/')
+  return out.replace(ABSOLUTE_WORKSPACE, "<root>/");
 }
 
 export function stripContentHashes(text) {
   return text.replace(CONTENT_HASH, (full, hash, ext) => {
-    if (!looksLikeContentHash(hash)) return full
-    return `-[hash]${ext}`
-  })
+    if (!looksLikeContentHash(hash)) return full;
+    return `-[hash]${ext}`;
+  });
 }
 
 /**
@@ -177,10 +202,11 @@ export function stripContentHashes(text) {
  * `node_modules` is a symlink, and not from the GitHub runner that built
  * the registry tarball. The statement is not addon behaviour.
  */
-const HOST_RUNTIME_IMPORT = /^[ \t]*import\s+["']@module-federation\/runtime["'];?[ \t]*\r?\n?/gm
+const HOST_RUNTIME_IMPORT =
+  /^[ \t]*import\s+["']@module-federation\/runtime["'];?[ \t]*\r?\n?/gm;
 
 export function stripHostProvidedRuntimeImport(text) {
-  return text.replace(HOST_RUNTIME_IMPORT, '')
+  return text.replace(HOST_RUNTIME_IMPORT, "");
 }
 
 /**
@@ -191,31 +217,33 @@ export function stripHostProvidedRuntimeImport(text) {
  * runtime), so a bundler candidate must not ship for it either. Only the
  * package's OWN code and the libraries it bundles decide (planning #332).
  */
-const TYPES_REGION = /\/\/#region [^\n]*\btypes\/dist\/[^\n]*\n[\s\S]*?\/\/#endregion[ \t]*\r?\n?/g
-const TYPES_SHIM_PATH = /_camstack_mf_\d+_types__loadShare__/
+const TYPES_REGION =
+  /\/\/#region [^\n]*\btypes\/dist\/[^\n]*\n[\s\S]*?\/\/#endregion[ \t]*\r?\n?/g;
+const TYPES_SHIM_PATH = /_camstack_mf_\d+_types__loadShare__/;
 
 export function stripEmbeddedTypes(rel, text) {
-  if (TYPES_SHIM_PATH.test(rel)) return '/* @camstack/types loadShare shim */\n'
-  return text.replace(TYPES_REGION, '')
+  if (TYPES_SHIM_PATH.test(rel))
+    return "/* @camstack/types loadShare shim */\n";
+  return text.replace(TYPES_REGION, "");
 }
 
 export function normaliseRelPath(rel) {
-  const posix = rel.replace(/\\/g, '/')
-  const dir = path.posix.dirname(posix)
-  const base = stripContentHashes(path.posix.basename(posix))
-  return dir === '.' ? base : `${dir}/${base}`
+  const posix = rel.replace(/\\/g, "/");
+  const dir = path.posix.dirname(posix);
+  const base = stripContentHashes(path.posix.basename(posix));
+  return dir === "." ? base : `${dir}/${base}`;
 }
 
 function normaliseBytes(rel, bytes, stamps, roots) {
-  if (!isTextPath(rel)) return bytes
-  const text = bytes.toString('utf8')
-  if (rel === 'package.json' || rel.endsWith('/package.json')) {
-    return Buffer.from(normalisePackageJsonText(text))
+  if (!isTextPath(rel)) return bytes;
+  const text = bytes.toString("utf8");
+  if (rel === "package.json" || rel.endsWith("/package.json")) {
+    return Buffer.from(normalisePackageJsonText(text));
   }
-  const stamped = replaceStamps(text, stamps)
-  const rooted = stripAbsolutePaths(stamped, roots)
-  const pathed = stripHostProvidedRuntimeImport(normaliseBuildPaths(rooted))
-  return Buffer.from(stripContentHashes(stripEmbeddedTypes(rel, pathed)))
+  const stamped = replaceStamps(text, stamps);
+  const rooted = stripAbsolutePaths(stamped, roots);
+  const pathed = stripHostProvidedRuntimeImport(normaliseBuildPaths(rooted));
+  return Buffer.from(stripContentHashes(stripEmbeddedTypes(rel, pathed)));
 }
 
 /**
@@ -226,58 +254,123 @@ export function normaliseFileSet(files, stamps, roots) {
   const mapped = files.map((file) => ({
     path: normaliseRelPath(file.path),
     bytes: normaliseBytes(file.path, file.bytes, stamps, roots),
-  }))
-  mapped.sort((a, b) => a.path.localeCompare(b.path) || Buffer.compare(a.bytes, b.bytes))
-  const seen = new Map()
+  }));
+  mapped.sort(
+    (a, b) => a.path.localeCompare(b.path) || Buffer.compare(a.bytes, b.bytes),
+  );
+  const seen = new Map();
   return mapped.map((file) => {
-    const count = seen.get(file.path) ?? 0
-    seen.set(file.path, count + 1)
-    if (count === 0) return file
-    return { path: `${file.path}#${count}`, bytes: file.bytes }
-  })
+    const count = seen.get(file.path) ?? 0;
+    seen.set(file.path, count + 1);
+    if (count === 0) return file;
+    return { path: `${file.path}#${count}`, bytes: file.bytes };
+  });
 }
 
 export function contentHash(files, options) {
-  const stamps = options.stamps ?? []
-  const roots = options.roots ?? []
-  const normalised = normaliseFileSet(files, stamps, roots)
-  const hash = createHash('sha256')
+  const stamps = options.stamps ?? [];
+  const roots = options.roots ?? [];
+  const normalised = normaliseFileSet(files, stamps, roots);
+  const hash = createHash("sha256");
   for (const file of normalised) {
-    hash.update(file.path)
-    hash.update('\0')
-    hash.update(file.bytes)
-    hash.update('\0')
+    hash.update(file.path);
+    hash.update("\0");
+    hash.update(file.bytes);
+    hash.update("\0");
   }
-  return { digest: hash.digest('hex'), files: normalised }
+  return { digest: hash.digest("hex"), files: normalised };
 }
 
 export function differingPaths(leftFiles, rightFiles) {
-  const left = new Map(leftFiles.map((file) => [file.path, file.bytes]))
-  const right = new Map(rightFiles.map((file) => [file.path, file.bytes]))
-  const paths = new Set([...left.keys(), ...right.keys()])
-  const differing = []
+  const left = new Map(leftFiles.map((file) => [file.path, file.bytes]));
+  const right = new Map(rightFiles.map((file) => [file.path, file.bytes]));
+  const paths = new Set([...left.keys(), ...right.keys()]);
+  const differing = [];
   for (const rel of [...paths].sort()) {
-    const a = left.get(rel)
-    const b = right.get(rel)
-    if (a === undefined || b === undefined || !a.equals(b)) differing.push(rel)
+    const a = left.get(rel);
+    const b = right.get(rel);
+    if (a === undefined || b === undefined || !a.equals(b)) differing.push(rel);
   }
-  return differing
+  return differing;
 }
 
 /** `diffCount === 0` → the candidate publishes nothing new. */
 export function candidateReason(diffCount) {
-  return diffCount === 0 ? 'bundle unchanged' : `dist differs: ${diffCount} files`
+  return diffCount === 0
+    ? "bundle unchanged"
+    : `dist differs: ${diffCount} files`;
 }
 
-export function compareNormalised(localFiles, publishedFiles, stamps, roots = []) {
-  const local = contentHash(localFiles, { stamps, roots })
-  const published = contentHash(publishedFiles, { stamps, roots })
-  const differing = differingPaths(local.files, published.files)
+export function compareNormalised(
+  localFiles,
+  publishedFiles,
+  stamps,
+  roots = [],
+) {
+  const local = contentHash(localFiles, { stamps, roots });
+  const published = contentHash(publishedFiles, { stamps, roots });
+  const differing = differingPaths(local.files, published.files);
   return {
     equal: differing.length === 0,
     differing,
     reason: candidateReason(differing.length),
     local,
     published,
+  };
+}
+
+/**
+ * `dist/.bundle-modules.json`, written by `tools/build/bundle-modules-manifest.ts`
+ * in a page remote's vite config: workspace module id → hash of what the
+ * bundler rendered for it. Two builds of one tree differ byte for byte (the
+ * module-federation chunk is not deterministic), the manifests do not.
+ */
+export const BUNDLE_MODULES_MANIFEST_PATH = "dist/.bundle-modules.json";
+
+function readManifest(files) {
+  const file = files.find(
+    (entry) => entry.path === BUNDLE_MODULES_MANIFEST_PATH,
+  );
+  return file === undefined ? null : JSON.parse(file.bytes.toString("utf8"));
+}
+
+/**
+ * Compare two tarballs by their bundle manifests. `null` when the LOCAL build
+ * writes none (not a page remote: judge it by bytes). A registry copy without
+ * one is a "differs": nothing proves it equal.
+ */
+export function compareByBundleManifest(localFiles, publishedFiles) {
+  const local = readManifest(localFiles);
+  if (local === null) return null;
+  const published = readManifest(publishedFiles);
+  if (published === null) {
+    return {
+      equal: false,
+      differing: [BUNDLE_MODULES_MANIFEST_PATH],
+      reason: "registry copy has no bundle manifest",
+    };
   }
+  const ids = new Set([...Object.keys(local), ...Object.keys(published)]);
+  const differing = [...ids].filter((id) => local[id] !== published[id]).sort();
+  return {
+    equal: differing.length === 0,
+    differing,
+    reason:
+      differing.length === 0
+        ? "bundled modules unchanged"
+        : `bundled modules differ: ${differing.length}`,
+  };
+}
+
+/** The decision for one bundle candidate: its module manifest, else its bytes. */
+export function compareCandidate(
+  localFiles,
+  publishedFiles,
+  stamps,
+  roots = [],
+) {
+  return (
+    compareByBundleManifest(localFiles, publishedFiles) ??
+    compareNormalised(localFiles, publishedFiles, stamps, roots)
+  );
 }

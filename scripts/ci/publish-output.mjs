@@ -33,7 +33,7 @@ import {
   readWorkspace,
 } from './publish-scope.mjs'
 import {
-  compareNormalised,
+  compareCandidate,
   embeddedCamstackVersions,
   mergeStamps,
   versionStampsFromPackageJson,
@@ -119,7 +119,7 @@ export function compareBuiltPackage(dir, registryVersion, root) {
     embeddedCamstackVersions(localFiles),
     embeddedCamstackVersions(publishedFiles),
   ])
-  return compareNormalised(localFiles, publishedFiles, stamps, [path.resolve(root)])
+  return compareCandidate(localFiles, publishedFiles, stamps, [path.resolve(root)])
 }
 
 export function restoreManifest(dir, root) {

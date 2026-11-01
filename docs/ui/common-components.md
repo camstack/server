@@ -33,9 +33,12 @@ An addon page can import only the library: admin-ui-local components are not
 reachable from a Module Federation remote. A component two packages need moves
 INTO the library — it is never copied.
 
-`@camstack/ui-library` is host-provided (D15): the admin UI shares its copy
-with every addon page and widget, so a library change reaches an addon page
-only once the host's library is published and deployed.
+`@camstack/ui-library` is host-provided (D15) for React and the other shared
+singletons, but a page remote that aliases it to `../ui-library/src`
+(model-studio, osd-manager, training, benchmark, homematic, agent-ui) BUNDLES
+the components and hooks it reaches. A library change reaches such a page only
+when the addon is rebuilt and published; the publish step decides that from the
+page's module manifest (`docs/architecture/ui.md`, "The library is host-provided").
 
 ## Tokens: one palette, two spellings
 
