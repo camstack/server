@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Built against the server that now carries the framework itself; requires a matching @camstack/server.
+- Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X
+
 ## [0.2.152] - 2026-11-01
 
 ### Changed
 
 - Ecowitt is now an integration with a Gateway device, like the other account integrations; the old Hub device is migrated automatically and every container and sensor keeps its id and history
 - Ecowitt hub migration no longer stops at one bad hub, resumes cleanly after an interrupted run, and a failed or locked settings read can no longer remove an integration's devices
-- Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X
 
 ## [0.2.151] - 2026-10-30
 

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Packages can declare the minimum versions they need (camstack.requires), with typed unmet-requirement reasons
 - Rain-rate readings spelled mm/Hr or in/Hr by a weather station are now accepted instead of refused as an unknown unit
+- Removed the unread logging, retention, storage, ffmpeg, providers and eventBus runtime defaults
 
 ## [1.2.462] - 2026-11-01
 
@@ -18,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addons can declare migrations (plan and procedure bodies) that run under the shared ledger, snapshot and rollback
 - A terminal sign-in approval lands on the existing completion page (new cli-login outcome).
-- Packages can declare the minimum versions they need (camstack.requires), with typed unmet-requirement reasons
-- Removed the unread logging, retention, storage, ffmpeg, providers and eventBus runtime defaults
 
 ## [1.2.461] - 2026-10-31
 
