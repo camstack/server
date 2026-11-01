@@ -88,7 +88,50 @@ describe('appliance helper', () => {
   it('refuses a member that is not a power reading', () => {
     const compiled = compileHelper(
       appliance('washer', {
-        member: { ...PLUG, cap: 'temperature-sensor', fieldPath: 'temperature' },
+        member: {
+          ...PLUG,
+          cap: 'temperature-sensor',
+          fieldPath: 'temperature',
+        },
+      }),
+    )
+    expect(compiled.ok).toBe(false)
+    if (compiled.ok) return
+    expect(compiled.problems.map((item) => item.code)).toContain('member-constraint')
+  })
+})
+
+describe('appliance power switch', () => {
+  const SWITCH = {
+    source: {
+      addonId: 'provider-homeassistant',
+      stableId: 'switch.washer_plug',
+    },
+    cap: 'switch',
+    fieldPath: 'on',
+  }
+
+  it('emits a power-source feature reading the plug, only when powerSwitch is set', () => {
+    const without = compileHelper(appliance('washer'))
+    const withSwitch = compileHelper(appliance('washer', { powerSwitch: SWITCH, offSeconds: 20 }))
+    expect(without.ok && withSwitch.ok).toBe(true)
+    if (!without.ok || !withSwitch.ok) return
+    expect(without.composition.features.map((f) => f.cap)).toEqual(['running-state', 'power-meter'])
+    expect(withSwitch.composition.features.slice(0, 2)).toEqual(without.composition.features)
+    const feature = withSwitch.composition.features[2]
+    expect(feature?.cap).toBe('power-source')
+    if (feature?.kind !== 'fields') throw new Error('power-source is a fields feature')
+    expect(feature.fields.switchOn).toEqual({ kind: 'from', ...SWITCH })
+    expect(feature.fields.offSeconds).toMatchObject({
+      kind: 'expression',
+      expr: '20',
+    })
+  })
+
+  it('refuses a plug that is not switch.on', () => {
+    const compiled = compileHelper(
+      appliance('washer', {
+        powerSwitch: { ...SWITCH, cap: 'power-meter', fieldPath: 'power' },
       }),
     )
     expect(compiled.ok).toBe(false)
@@ -143,5 +186,12 @@ function context(composition: Composition): ValidateCompositionContext {
       quantity: 'power',
     })
   }
-  return { lookupCap, sources, self: null, blockId: null, target: null, peers: [] }
+  return {
+    lookupCap,
+    sources,
+    self: null,
+    blockId: null,
+    target: null,
+    peers: [],
+  }
 }

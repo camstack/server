@@ -10,7 +10,7 @@ import {
   POWER_SOURCE_OFF_SECONDS_MAX,
   POWER_SOURCE_OFF_SECONDS_MIN,
 } from '../capabilities/power-source.cap.js'
-import { fieldReads, type Composition } from './composition.js'
+import { composedDeviceRef, fieldReads, type Composition } from './composition.js'
 import type { CompositionSourceRef } from './source-ref.js'
 
 export interface PowerSourceLink {
@@ -45,10 +45,20 @@ function storedOffSeconds(composition: Composition): unknown {
   return field.expr.trim() === '' || !Number.isFinite(n) ? undefined : n
 }
 
+/**
+ * The link a composition stores. An `existing` target names its own device; a
+ * `new` target (an appliance helper) is the composer's own device, so the caller
+ * passes the block id and a new-target composition without one has no link.
+ */
 export function powerSourceLinkOfComposition(
   composition: Composition | null,
+  blockId?: string,
 ): PowerSourceLink | null {
-  if (composition === null || composition.target.kind !== 'existing') return null
+  if (composition === null) return null
+  let device: CompositionSourceRef
+  if (composition.target.kind === 'existing') device = composition.target.device
+  else if (blockId !== undefined) device = composedDeviceRef(blockId)
+  else return null
   const feature = composition.features.find((f) => f.cap === 'power-source')
   if (feature === undefined || feature.kind !== 'fields' || feature.enabled === false) return null
   const field = feature.fields['switchOn']
@@ -56,7 +66,7 @@ export function powerSourceLinkOfComposition(
   const read = fieldReads(field).find((r) => r.cap === 'switch')
   if (read === undefined) return null
   return {
-    device: composition.target.device,
+    device,
     switch: read.source,
     offSeconds: normalizeOffSeconds(storedOffSeconds(composition)),
   }

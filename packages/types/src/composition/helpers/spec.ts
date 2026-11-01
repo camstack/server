@@ -93,11 +93,17 @@ export type GroupHelperSpec = z.infer<typeof GroupHelperSpecSchema>
 export const ApplianceHelperSpecSchema: z.ZodObject<{
   kind: z.ZodLiteral<'appliance'>
   templateId: z.ZodLiteral<typeof APPLIANCE_TEMPLATE_ID>
-  appliance: z.ZodEnum<{ washer: 'washer'; dryer: 'dryer'; dishwasher: 'dishwasher' }>
+  appliance: z.ZodEnum<{
+    washer: 'washer'
+    dryer: 'dryer'
+    dishwasher: 'dishwasher'
+  }>
   thresholdWatts: z.ZodNumber
   startDwellMs: z.ZodNumber
   stopDwellMs: z.ZodNumber
   member: typeof HelperMemberSchema
+  powerSwitch: z.ZodOptional<typeof HelperMemberSchema>
+  offSeconds: z.ZodOptional<z.ZodNumber>
 }> = z.object({
   kind: z.literal('appliance'),
   templateId: z.literal(APPLIANCE_TEMPLATE_ID),
@@ -106,6 +112,14 @@ export const ApplianceHelperSpecSchema: z.ZodObject<{
   startDwellMs: z.number().int().nonnegative(),
   stopDwellMs: z.number().int().nonnegative(),
   member: HelperMemberSchema,
+  /**
+   * The plug that powers the appliance (`switch.on`). Optional: when set, the
+   * composition carries a `power-source` feature, so the hub can cut and restore
+   * that plug (power-source link of a NEW-target composition).
+   */
+  powerSwitch: HelperMemberSchema.optional(),
+  /** How long a forced restart keeps the plug off; the cap's default when unset. */
+  offSeconds: z.number().optional(),
 })
 export type ApplianceHelperSpec = z.infer<typeof ApplianceHelperSpecSchema>
 

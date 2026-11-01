@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - HTTPS on or off is now the Serve HTTPS setting in Network > Local access (on by default, applies after a restart); CAMSTACK_TLS_ENABLED and the config.yaml keys mode, hub, agent, auth, tls and bootstrap.settingsStoreAddon/forceDisable are no longer read
 - The crash breaker retries a runner it parked as failed once when the package version it hosts changes (one retry per new version)
+- A washer or dryer helper with a power plug is restartable through the power-source link of its composed device
 
 ## [1.2.537] - 2026-11-01
 

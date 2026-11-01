@@ -2,6 +2,7 @@
  * Project a helper spec onto the composition the composer already runs (D944).
  * Pure: it stores nothing. A group does not compile to `avg(...)` / `any(...)`.
  */
+import { normalizeOffSeconds } from '../power-source-link.js'
 import { DeviceType } from '../../device/device-type.js'
 import { dwellExpr, unsignedToken } from '../customize/scalar-expr.js'
 import {
@@ -205,6 +206,22 @@ function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
       ],
     }
   }
+  const powerSwitch = spec.powerSwitch
+  if (
+    powerSwitch !== undefined &&
+    (powerSwitch.cap !== 'switch' || powerSwitch.fieldPath !== 'on')
+  ) {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'member-constraint',
+          'helper.powerSwitch',
+          'the power plug of an appliance helper is a switch, read at switch.on',
+        ),
+      ],
+    }
+  }
   const threshold = unsignedToken(spec.thresholdWatts)
   const start = unsignedToken(spec.startDwellMs)
   const stop = unsignedToken(spec.stopDwellMs)
@@ -240,6 +257,25 @@ function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
   }
   const dwell = dwellExpr('gte', threshold, start, stop)
   const clock = expressionSource('now')
+  const powerSourceFeatures =
+    powerSwitch === undefined
+      ? []
+      : [
+          {
+            kind: 'fields' as const,
+            cap: 'power-source',
+            fields: {
+              switchOn: {
+                kind: 'from' as const,
+                source: powerSwitch.source,
+                cap: powerSwitch.cap,
+                fieldPath: powerSwitch.fieldPath,
+              },
+              offSeconds: expressionSource(String(normalizeOffSeconds(spec.offSeconds))),
+              lastFetchedAt: clock,
+            },
+          },
+        ]
   return parseDraft({
     target: { kind: 'new', type: applianceDeviceType(spec.appliance) },
     helper: spec,
@@ -263,6 +299,7 @@ function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
           lastFetchedAt: clock,
         },
       },
+      ...powerSourceFeatures,
     ],
   })
 }

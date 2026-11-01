@@ -1,4 +1,4 @@
-import { CompositionSchema } from '@camstack/types'
+import { compileHelper, composedDeviceRef, CompositionSchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   PowerSourceService,
@@ -14,6 +14,7 @@ const PLUG_ID = 9
 
 function block(offSeconds?: number) {
   return {
+    id: 'blk-existing',
     source: {
       kind: 'composition' as const,
       composition: CompositionSchema.parse({
@@ -63,7 +64,32 @@ function fakeScheduler() {
   return { scheduler, pending }
 }
 
-function world(opts: { online?: boolean; on?: boolean | null; offSeconds?: number } = {}) {
+/** A washer helper: a NEW-target composition whose own device carries the plug. */
+function applianceBlock() {
+  const compiled = compileHelper({
+    kind: 'appliance',
+    templateId: 'appliance',
+    appliance: 'washer',
+    thresholdWatts: 5,
+    startDwellMs: 1000,
+    stopDwellMs: 1000,
+    member: {
+      source: { addonId: 'ha', stableId: 'meter' },
+      cap: 'power-meter',
+      fieldPath: 'power',
+    },
+    powerSwitch: { source: PLUG_REF, cap: 'switch', fieldPath: 'on' },
+  })
+  if (!compiled.ok) throw new Error('appliance did not compile')
+  return {
+    id: 'blk-washer',
+    source: { kind: 'composition' as const, composition: compiled.composition },
+  }
+}
+
+function world(
+  opts: { online?: boolean; on?: boolean | null; offSeconds?: number; appliance?: boolean } = {},
+) {
   const calls: { id: number; on: boolean }[] = []
   const state = {
     online: opts.online ?? true,
@@ -71,6 +97,8 @@ function world(opts: { online?: boolean; on?: boolean | null; offSeconds?: numbe
   }
   const devices: PowerSourceDevices = {
     find: async (ref) => {
+      if (ref.stableId === composedDeviceRef('blk-washer').stableId)
+        return { id: GATEWAY_ID, name: 'Washer', online: true }
       if (ref.stableId === GATEWAY_REF.stableId)
         return { id: GATEWAY_ID, name: 'Gateway', online: true }
       if (ref.stableId === PLUG_REF.stableId)
@@ -86,7 +114,7 @@ function world(opts: { online?: boolean; on?: boolean | null; offSeconds?: numbe
   const log = recordingLogger()
   const timers = fakeScheduler()
   const service = new PowerSourceService({
-    blocks: () => [block(opts.offSeconds)],
+    blocks: () => [opts.appliance === true ? applianceBlock() : block(opts.offSeconds)],
     devices,
     scheduler: timers.scheduler,
     logger: log.logger,
@@ -110,6 +138,14 @@ describe('forceRestart', () => {
       { id: PLUG_ID, on: false },
       { id: PLUG_ID, on: true },
     ])
+  })
+
+  it('cuts the plug of an appliance helper (a new-target composition)', async () => {
+    const w = world({ appliance: true })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({
+      accepted: true,
+    })
+    expect(w.calls).toEqual([{ id: PLUG_ID, on: false }])
   })
 
   it('uses 10 s when no off time is stored', async () => {

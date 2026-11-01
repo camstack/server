@@ -58,7 +58,7 @@ export const timeoutScheduler: PowerSourceScheduler = {
 }
 
 export interface PowerSourceServiceDeps {
-  readonly blocks: () => readonly Pick<CoreBlock, 'source'>[]
+  readonly blocks: () => readonly Pick<CoreBlock, 'id' | 'source'>[]
   readonly devices: PowerSourceDevices
   readonly scheduler: PowerSourceScheduler
   readonly logger: IScopedLogger
@@ -252,7 +252,7 @@ export class PowerSourceService implements IPowerSourceProvider {
   /** The stored link of the device `deviceId`, read from the customizations now. */
   private async linkOf(deviceId: number): Promise<PowerSourceLink | null> {
     for (const block of this.deps.blocks()) {
-      const link = powerSourceLinkOfComposition(coreBlockComposition(block))
+      const link = powerSourceLinkOfComposition(coreBlockComposition(block), block.id)
       if (link === null) continue
       const device = await this.deps.devices.find(link.device).catch(() => null)
       if (device !== null && device.id === deviceId) return link
