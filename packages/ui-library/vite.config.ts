@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import { buildLibPreset } from '../../tools/build/vite-lib.preset.ts'
 
@@ -15,4 +16,11 @@ const base = buildLibPreset({
   externals: 'framework+ui',
 })
 
-export default defineConfig(base)
+const version: string = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
+).version
+
+export default defineConfig({
+  ...base,
+  define: { ...base.define, __UI_LIBRARY_VERSION__: JSON.stringify(version) },
+})

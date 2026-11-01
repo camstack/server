@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Generated hooks for the fan presets capability.
 - A heater has its own card with a heat glow, and a heater or pet fountain shows a run-for-N timer with a countdown.
+- Exports uiLibraryVersion so the admin UI can tell which library a page was built against.
 
 ## [1.2.368] - 2026-11-01
 

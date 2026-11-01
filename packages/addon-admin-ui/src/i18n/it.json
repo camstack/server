@@ -5767,7 +5767,8 @@
       "failedTitle": "Impossibile mostrare questa pagina",
       "listFailed": "Impossibile caricare l'elenco delle pagine.",
       "listStalled": "L'hub non ha inviato l'elenco delle pagine. Riprova tra poco.",
-      "remoteStalled": "La pagina non si è caricata. Il suo addon potrebbe essere in avvio o non raggiungibile."
+      "remoteStalled": "La pagina non si è caricata. Il suo addon potrebbe essere in avvio o non raggiungibile.",
+      "hostTooOld": "Questa pagina richiede un'admin UI piu recente (UI library {{required}} o successiva; questa ha {{host}}). Aggiorna admin-ui."
     },
     "protectedRoute": {
       "loading": "Caricamento..."

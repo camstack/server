@@ -16,12 +16,22 @@
  */
 import { useState, useEffect, useMemo, type ComponentType } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { registerRemotes, loadRemote } from '@module-federation/runtime'
+import { registerRemotes, loadRemote, getInstance } from '@module-federation/runtime'
 import type { AddonPageInfo as ServerAddonPageInfo } from '@camstack/types'
 import type { System } from '@camstack/sdk'
-import { useAddonPagesListPages, useSystem, ensureMfHostInit } from '@camstack/ui-library'
+import {
+  useAddonPagesListPages,
+  useSystem,
+  ensureMfHostInit,
+  uiLibraryVersion,
+} from '@camstack/ui-library'
 import { hubPath } from '../lib/mount'
 import { useTranslation } from 'react-i18next'
+import {
+  declaredUiLibraryRanges,
+  uiLibraryRequirementProblem,
+  type UiLibraryRequirementProblem,
+} from './page-ui-library-requirement'
 import { AddonPageBoundary, AddonPageError, AddonPageLoading } from './AddonPageFrame'
 
 /**
@@ -132,6 +142,29 @@ function isRemotePageModule(value: unknown): value is RemotePageModule {
   return typeof def === 'function'
 }
 
+/**
+ * The remote's ui-library requirement against the host's. Page remotes share the
+ * host's ui-library, so an older host cannot serve a page built against a newer
+ * one: say that, never crash.
+ */
+/** The host's ui-library is older than the page's declared minimum. */
+class HostTooOldError extends Error {
+  constructor(readonly problem: UiLibraryRequirementProblem) {
+    super(`ui-library ${problem.host} is older than the ${problem.required} this page requires`)
+  }
+}
+
+function throwIfHostTooOld(remoteName: string): void {
+  const shareScopeMap = getInstance()?.shareScopeMap
+  if (!shareScopeMap) return
+  const problem = uiLibraryRequirementProblem(
+    uiLibraryVersion,
+    declaredUiLibraryRanges(shareScopeMap, remoteName),
+  )
+  if (problem === null) return
+  throw new HostTooOldError(problem)
+}
+
 async function loadRemotePage(
   remoteName: string,
   entryUrl: string,
@@ -153,6 +186,7 @@ async function loadRemotePage(
 
   const promise = loadRemote<unknown>(`${remoteName}/page`)
     .then((mod): ComponentType<AddonPageRenderProps> => {
+      throwIfHostTooOld(remoteName)
       if (!isRemotePageModule(mod)) {
         throw new Error(
           `Addon page remote ${remoteName} (${entryUrl}) does not expose a default React component on './page'`,
@@ -164,6 +198,9 @@ async function loadRemotePage(
     })
     .catch((err: unknown) => {
       pageInflight.delete(remoteName)
+      // A page built for a newer ui-library often fails on a missing export
+      // before it renders; the cause the operator can act on is the old host.
+      throwIfHostTooOld(remoteName)
       throw err
     })
   pageInflight.set(remoteName, promise)
@@ -218,7 +255,17 @@ export function AddonPageLoader() {
       })
       .catch((err: unknown) => {
         if (cancelled) return
-        const message = err instanceof Error ? err.message : String(err)
+        const message =
+          err instanceof HostTooOldError
+            ? t('layouts.addonPageLoader.hostTooOld', {
+                defaultValue:
+                  'This page needs a newer admin UI (UI library {{required}} or later; this one has {{host}}). Update admin-ui.',
+                required: err.problem.required,
+                host: err.problem.host,
+              })
+            : err instanceof Error
+              ? err.message
+              : String(err)
         setError(message)
       })
     return () => {

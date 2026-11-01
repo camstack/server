@@ -43,6 +43,31 @@ describe('stamp-requires (D989)', () => {
     })
   })
 
+  it('makes an addon with pages require the admin UI that provides ui-library', () => {
+    const pageAddon: Entry = {
+      dir: 'packages/addon-p',
+      pkg: {
+        name: '@camstack/addon-p',
+        version: '1.0.0',
+        camstack: {
+          addons: [{ pages: [{ id: 'p' }] }],
+          requires: { addons: { '@camstack/other': '>=1.0.0' } },
+        },
+      },
+    }
+    const stamps = computeStamps({
+      packages: [pageAddon, addon('addon-a', '1.0.5')],
+      serverVersion: '1.2.718',
+      wrapperMinimums,
+      adminUiVersion: '1.2.600',
+    })
+    expect(stamps.get('packages/addon-p')).toEqual({
+      server: '>=1.2.718',
+      addons: { '@camstack/other': '>=1.0.0', '@camstack/addon-admin-ui': '>=1.2.600' },
+    })
+    expect(stamps.get('packages/addon-a')).toEqual({ server: '>=1.2.718' })
+  })
+
   it('leaves a non-addon package unstamped', () => {
     const stamps = computeStamps({
       packages: [{ dir: 'packages/types', pkg: { name: '@camstack/types', version: '1.0.0' } }],

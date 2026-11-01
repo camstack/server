@@ -12384,6 +12384,13 @@
       "summary": "\"media-player\" → \"Media player\"; null → \"No type\"."
     },
     {
+      "name": "uiLibraryVersion",
+      "kind": "constant",
+      "area": "root",
+      "file": "packages/ui-library/src/ui-library-version.ts",
+      "summary": "The version of this ui-library build. Page remotes share ui-library from the host instead of bundling it, so the host is the one place that can say which version a remote is running against (`AddonPageLoader` compares…"
+    },
+    {
       "name": "UiTextProvider",
       "kind": "component",
       "area": "contexts",

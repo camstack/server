@@ -92,6 +92,12 @@ const appVersion: string = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'),
 ).version
 
+// ui-library is compiled from source here; its `uiLibraryVersion` is defined from
+// its package.json so `AddonPageLoader` can compare it with a remote's requirement.
+const uiLibraryVersion: string = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../ui-library/package.json'), 'utf-8'),
+).version
+
 export default defineConfig(({ command }) => ({
   // RELATIVE base: the shell references its assets as `./assets/…`, so the
   // build runs unchanged at the hub root AND under a reverse-proxy path prefix
@@ -101,6 +107,7 @@ export default defineConfig(({ command }) => ({
   base: './',
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
+    __UI_LIBRARY_VERSION__: JSON.stringify(uiLibraryVersion),
   },
   plugins: [
     react(),
@@ -156,13 +163,19 @@ export default defineConfig(({ command }) => ({
               // the host's single loaded instance.
               'react-konva': { singleton: true, requiredVersion: false },
               konva: { singleton: true, requiredVersion: false },
-              '@tanstack/react-query': { singleton: true, requiredVersion: false },
+              '@tanstack/react-query': {
+                singleton: true,
+                requiredVersion: false,
+              },
               '@trpc/client': { singleton: true, requiredVersion: false },
               '@trpc/react-query': { singleton: true, requiredVersion: false },
               // Remotes that transitively touch ui-library's MF helpers must
               // resolve this from the host — a bare browser import of the
               // package name fails (`Failed to resolve module specifier`).
-              '@module-federation/runtime': { singleton: true, requiredVersion: false },
+              '@module-federation/runtime': {
+                singleton: true,
+                requiredVersion: false,
+              },
               // `import:` pins the host provider source to each package's ESM
               // entry so rolldown doesn't pull in the CJS `main` bundle (see
               // `workspaceEsmEntry` above). These stay full providers (NOT
@@ -174,8 +187,16 @@ export default defineConfig(({ command }) => ({
                 requiredVersion: false,
                 import: uiLibraryEsm,
               },
-              '@camstack/sdk': { singleton: true, requiredVersion: false, import: sdkEsm },
-              '@camstack/types': { singleton: true, requiredVersion: false, import: typesEsm },
+              '@camstack/sdk': {
+                singleton: true,
+                requiredVersion: false,
+                import: sdkEsm,
+              },
+              '@camstack/types': {
+                singleton: true,
+                requiredVersion: false,
+                import: typesEsm,
+              },
             },
           }),
         ]

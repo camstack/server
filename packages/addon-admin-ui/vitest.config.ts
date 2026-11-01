@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
@@ -5,7 +6,12 @@ import react from '@vitejs/plugin-react'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
+const uiLibraryVersion: string = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, 'packages/ui-library/package.json'), 'utf-8'),
+).version
+
 export default defineConfig({
+  define: { __UI_LIBRARY_VERSION__: JSON.stringify(uiLibraryVersion) },
   plugins: [react()],
   resolve: {
     alias: [

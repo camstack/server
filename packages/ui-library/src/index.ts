@@ -1,4 +1,5 @@
 export * from './composites'
+export { uiLibraryVersion } from './ui-library-version'
 export * from './hotkeys'
 export * from './contexts/custom-field-renderers'
 export * from './contexts/broker-picker-slot'

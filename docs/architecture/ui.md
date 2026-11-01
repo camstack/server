@@ -72,17 +72,39 @@ page (`packages/addon-pipeline-orchestrator`, `packages/addon-model-studio`,
 `@camstack/ui-library` is host-provided, not bundled into addons
 ([D15](../decisions/adr-0015.md)): two copies would mean two Reacts.
 
-That is the rule for React and the other shared singletons. It is **not true of
-the ui-library source in a page remote**: `addon-model-studio`, `-osd-manager`,
-`-training`, `-benchmark`, `-provider-homematic` and `-agent-ui` alias
-`@camstack/ui-library` to `../ui-library/src`, which bypasses the `shared`
-entry, so the page bundles the components and hooks it reaches (the built stub
-holds them and no `loadShare` chunk exists for ui-library). A ui-library fix
-reaches such a page only when the addon is rebuilt. The publish step therefore
-treats these addons as bundle candidates and decides on the modules the bundle
-holds (`dist/.bundle-modules.json`, `tools/build/bundle-modules-manifest.ts`),
-never on bytes: the module-federation chunk is not deterministic between builds
-of one tree.
+A page remote (`addon-model-studio`, `-osd-manager`, `-training`, `-benchmark`,
+`-provider-homematic`) declares `@camstack/ui-library` as `shared` with
+`import: false` and compiles none of it in: the built stub holds the page's own
+code and a `loadShare` chunk for ui-library, and its
+`dist/.bundle-modules.json` lists no `packages/ui-library/` module. A ui-library
+change therefore never republishes a page addon, the same as `types`. A page's
+config must **not** alias `@camstack/ui-library` (or `@camstack/ui`, `@camstack/types`)
+to a `src` path: that rewrites the specifier before the sharing layer sees it
+and bundles the library again. `scripts/check-page-remote-no-ui-library-alias.ts`
+refuses it, and `scripts/__tests__/page-remote-shared-ui-library.spec.ts` proves
+the remote build holds no library module. `addon-agent-ui` is a standalone app,
+not a remote, and keeps bundling.
+
+Sharing makes the host's library the one the page runs against, so a version
+floor travels with the page:
+
+- The remote's config states `requiredVersion: '>=<ui-library version at build>'`.
+- At runtime `AddonPageLoader` reads that declaration from the share scope and
+  compares it with `uiLibraryVersion` (exported by ui-library, defined from its
+  `package.json` at build). A host that is too old shows an in-frame message
+  naming both versions instead of mounting the page (`strictVersion` stays off;
+  the check is ours).
+- At publish, `scripts/ci/stamp-requires.mjs` writes
+  `camstack.requires.addons['@camstack/addon-admin-ui'] = '>=<admin-ui version>'`
+  into every addon that declares pages, and the hub refuses to install or start
+  such an addon on an older admin UI (`unmetAddonRequirements`).
+
+The publish step still decides on the modules a bundle holds
+(`dist/.bundle-modules.json`, `tools/build/bundle-modules-manifest.ts`), never
+on bytes: the module-federation chunk is not deterministic between builds of one
+tree. A page that imports a subpath that is not shared (`@camstack/types/addon`,
+as `addon-osd-manager` does for `CAP_STATE_LEAVES`) still bundles that module
+and republishes with it.
 
 ## An addon page's strings: JSON bundles, one helper, the host's language
 

@@ -48,6 +48,15 @@ const httpsConfig = fs.existsSync(certPath)
     }
   : undefined
 
+/**
+ * ui-library is NOT bundled into this remote: the host provides it as a shared
+ * singleton. The remote states the lowest ui-library it was built against, and
+ * `AddonPageLoader` refuses to mount it on an older host.
+ */
+const uiLibraryVersion: string = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../ui-library/package.json'), 'utf-8'),
+).version
+
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 export default defineConfig({
   plugins: [
@@ -78,7 +87,11 @@ export default defineConfig({
         '@tanstack/react-query': { singleton: true, requiredVersion: false, import: false },
         '@trpc/client': { singleton: true, requiredVersion: false, import: false },
         '@trpc/react-query': { singleton: true, requiredVersion: false, import: false },
-        '@camstack/ui-library': { singleton: true, requiredVersion: false, import: false },
+        '@camstack/ui-library': {
+          singleton: true,
+          requiredVersion: `>=${uiLibraryVersion}`,
+          import: false,
+        },
         '@camstack/sdk': { singleton: true, requiredVersion: false, import: false },
         '@camstack/types': { singleton: true, requiredVersion: false, import: false },
       },
@@ -90,12 +103,6 @@ export default defineConfig({
   // time so those branches are dead-stripped by the minifier.
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
-  },
-  resolve: {
-    alias: {
-      '@camstack/ui': path.resolve(__dirname, '../ui-library/src/index.ts'),
-      '@camstack/ui-library': path.resolve(__dirname, '../ui-library/src'),
-    },
   },
   base: '/api/addon-pages/benchmark/',
   build: {

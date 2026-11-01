@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The page no longer bundles the UI library; the admin UI provides it, so the page stays unchanged when the library changes.
+
 ## [1.1.340] - 2026-11-01
 
 ### Changed

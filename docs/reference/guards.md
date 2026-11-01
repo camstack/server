@@ -4,12 +4,12 @@
 
 # Guards
 
-207 repository guards: 202 in `scripts/`,
+208 repository guards: 203 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (198)
+## Enforced by CI checks (199)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -147,6 +147,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-orphan-reclaimers.ts` | Orphan-reclaimer guard — **every collection the audit WALKS declares how its rows are deleted.** ## The failure this catches The audit's reclaim was one `if` for media and a raw `settingsStore.delete` for everything else. The raw delete … |
 | `scripts/check-owner-only-events.ts` | GUARD: an owner-only event category never reaches a consumer surface (D224, D663). |
 | `scripts/check-package-promotion-satisfiable.ts` | A promotion criterion fed by the motion-settle governor must be SATISFIABLE at the governor's cadence. |
+| `scripts/check-page-remote-no-ui-library-alias.ts` | Page-remote shared-library guard — a page remote never compiles ui-library, ui or types into its own bundle (planning #332). |
 | `scripts/check-parked-frame-no-handle-fallback.ts` | Parked-frame guard — a retrieval keyed by a TRACK never reaches back for pixels by HANDLE, and the by-handle fetch lives in one file. |
 | `scripts/check-patches-reach-production.ts` | A patch is only worth something if it reaches production. (D478) ## The failure this catches `patches/` is applied by `patch-package` on the repo root's `postinstall`, which runs in a developer's and a CI runner's `node_modules` and nowh… |
 | `scripts/check-physical-tables-ratchet.ts` | Physical-table ratchet — **the set of SQLite tables the code can create is a committed list, and it only shrinks** (D901). |

@@ -243,6 +243,7 @@ jobs:
             scripts/check-ui-catalogue-current.ts \
             scripts/check-host-widget-resolves.ts \
             scripts/check-addon-page-css.ts \
+            scripts/check-page-remote-no-ui-library-alias.ts \
             scripts/check-step-model-single-owner.ts \
             scripts/check-nc-simulate-mirror.ts \
             scripts/check-nc-system-filter-scope.ts \
