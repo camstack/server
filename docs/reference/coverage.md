@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**227 units · 7690 source files · 214 units claimed by at least one document (7649 files).**
+**227 units · 7691 source files · 214 units claimed by at least one document (7650 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -43,8 +43,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-admin-ui/src/lib` | 58 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-10-27 |
 | `packages/addon-pipeline/src/pipeline-runner` | 57 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-provider-homematic` | 55 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
+| `packages/addon-provider-dreame` | 52 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, `decisions/adr-0371-a-device-signal-is-a-level-the-recorder-holds-and-a-publisher-names-the-slot-its-stream-is.md`, +4 more, 2 ADRs | 2026-10-26 |
 | `packages/types/src/device` | 52 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md`, +26 more, 1 ADR | 2026-10-26 |
-| `packages/addon-provider-dreame` | 51 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, `decisions/adr-0371-a-device-signal-is-a-level-the-recorder-holds-and-a-publisher-names-the-slot-its-stream-is.md`, +4 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-provider-hikvision` | 51 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +12 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-ai` | 50 | `ai` | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 |
 | `packages/addon-import-alexa` | 50 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md`, `decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md`, +4 more | — |

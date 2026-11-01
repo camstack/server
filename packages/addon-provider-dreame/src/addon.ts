@@ -16,6 +16,7 @@ import {
   type SystemEvent,
   userError,
 } from '@camstack/types'
+import { DreameReconciler, type IntegrationLifecycleKind } from './dreame-reconciler.js'
 import { buildConnectionFormSchema, connectionFromSettings, toNodreameOptions } from './config.js'
 import { DreameContainerDevice } from './devices/dreame-container-device.js'
 import { buildDreameAdoptionProvider } from './dreame-adoption-provider.js'
@@ -56,6 +57,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
     [DeviceType.Container]: DreameContainerDevice,
   }
 
+  private integrationReconciler: DreameReconciler | null = null
   private clients: DreameClientRegistry | null = null
   /** Teardown for the `/map` data-plane listener (vacuum-map PNG serving). */
   private mapDataPlaneDispose: (() => Promise<void>) | null = null
@@ -67,10 +69,15 @@ export class DreameProviderAddon extends BaseDeviceProvider {
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
-    dreameSession.bind({ logger: this.ctx.logger, getAlerts: () => this.ctx.api.alerts })
+    dreameSession.bind({
+      logger: this.ctx.logger,
+      getAlerts: () => this.ctx.api.alerts,
+    })
     this.clients = new DreameClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
-      this.ctx.logger.info('Dreame: integration connected', { meta: { integrationId } })
+      this.ctx.logger.info('Dreame: integration connected', {
+        meta: { integrationId },
+      })
       this.setIntegrationDevicesOnline(integrationId, true)
     })
     this.clients.setOnDisconnected((integrationId) => {
@@ -89,8 +96,14 @@ export class DreameProviderAddon extends BaseDeviceProvider {
 
     return [
       ...regs,
-      { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-      { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+      {
+        capability: deviceAdoptionCapability,
+        provider: this.buildAdoptionProvider(),
+      },
+      {
+        capability: connectionTestCapability,
+        provider: this.buildConnectionTestProvider(),
+      },
     ]
   }
 
@@ -119,9 +132,12 @@ export class DreameProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Dreame: provider shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Dreame: provider shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
+    this.integrationReconciler = null
     dreameSession.unbind()
     await super.onShutdown()
   }
@@ -156,10 +172,15 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       setMapBaseUrl(`/addon/${this.addonId}/map`)
       this.mapDataPlaneDispose = (): Promise<void> => handle.dispose()
       this.ctx.logger.info('Dreame: vacuum-map data-plane ready', {
-        meta: { clientBase: `/addon/${this.addonId}/map`, internal: handle.baseUrl },
+        meta: {
+          clientBase: `/addon/${this.addonId}/map`,
+          internal: handle.baseUrl,
+        },
       })
     } catch (err) {
-      this.ctx.logger.warn('Dreame: map data-plane setup failed', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Dreame: map data-plane setup failed', {
+        meta: { error: errMsg(err) },
+      })
     }
   }
 
@@ -184,61 +205,61 @@ export class DreameProviderAddon extends BaseDeviceProvider {
    * Idempotent; runs on boot + on every integration lifecycle event. Guarded so
    * a failure never fails init.
    */
+  private reconciler(): DreameReconciler {
+    this.integrationReconciler ??= new DreameReconciler({
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      clients: {
+        list: () => this.requireClients().list(),
+        remove: async (id) => {
+          await this.requireClients().remove(id)
+          await dreameSession.forget(id)
+        },
+      },
+      listIntegrations: () => this.ctx.api.integrations.list.query(),
+      applySettings: async (integration) => {
+        const connection = connectionFromSettings(
+          await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          }),
+        )
+        if (!connection) return false
+        await this.requireClients().upsert(integration.id, integration.name, connection)
+        return true
+      },
+      removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+    })
+    return this.integrationReconciler
+  }
+
+  /** Upsert one client per enabled integration; never removes a device (D49). */
   private async reconcileIntegrations(): Promise<void> {
-    const reg = this.requireClients()
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const connection = connectionFromSettings(settings)
-          if (!connection) {
-            this.ctx.logger.warn('Dreame integration has no complete credentials — skipping', {
-              meta: { integrationId: integration.id },
-            })
-            continue
-          }
-          await reg.upsert(integration.id, integration.name, connection)
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('Dreame reconcile: failed to read integration settings', {
-            meta: { integrationId: integration.id, error: errMsg(err) },
-          })
-        }
-      }
-      // Drop managers for integrations that vanished, and cascade-remove any
-      // devices they had adopted (mirrors the old integration→broker cleanup).
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      for (const integrationId of vanished) {
-        await dreameSession.forget(integrationId)
-        await this.cascadeRemoveDevicesForIntegration(integrationId)
-      }
-    } catch (err) {
-      this.ctx.logger.warn('Dreame integration reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
+    await this.reconciler().reconcile()
   }
 
+  /** Lifecycle events: only an explicit Deleted/Disabled naming an integration removes devices. */
   private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrations()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
+    const on =
+      (kind: IntegrationLifecycleKind) =>
+      (event: SystemEvent): void => {
+        const addonId = event.data['addonId']
+        if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+        const integrationId = event.data['integrationId']
+        void this.reconciler().onLifecycle(
+          kind,
+          typeof integrationId === 'string' ? integrationId : null,
+        )
+      }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 
-  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<void> {
+  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    if (!reg || !devices) return
-    await cascadeRemoveDevicesForIntegration({
+    if (!reg || !devices) return 0
+    return await cascadeRemoveDevicesForIntegration({
       reg,
       devices,
       addonId: this.addonId,
@@ -287,7 +308,10 @@ export class DreameProviderAddon extends BaseDeviceProvider {
           integrationId,
         })
         const children = await devices.getChildren(device.id)
-        return { deviceId: device.id, accessoryDeviceIds: children.map((c) => c.id) }
+        return {
+          deviceId: device.id,
+          accessoryDeviceIds: children.map((c) => c.id),
+        }
       },
       removeDevice: async (id) => {
         await this.ctx.kernel.devices?.remove(id)
