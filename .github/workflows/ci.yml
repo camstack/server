@@ -171,7 +171,7 @@ jobs:
       #
       # `npm ci` is ~70 s on every job (measured 2026-10-31, run 41183402419).
       # node_modules — the root and each workspace's own — is restored from a
-      # cache keyed on the lockfile and the Node major, which makes a hit ~15 s
+      # cache keyed on the lockfile, the patches and the Node major, which makes a hit ~15 s
       # and skips `npm ci`; `patch-package` (postinstall) acts inside
       # node_modules, so its result is cached with it. The exact key is saved by
       # the `static` job only, once per lockfile, so 17 jobs never upload the
@@ -185,7 +185,7 @@ jobs:
             e2e/node_modules
             packages/*/node_modules
             server/*/node_modules
-          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json', 'patches/**') }}
 
       - name: Install dependencies
         if: steps.node-modules.outputs.cache-hit != 'true'
@@ -200,7 +200,7 @@ jobs:
             e2e/node_modules
             packages/*/node_modules
             server/*/node_modules
-          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json', 'patches/**') }}
 
       # `nx.json` lists `@camstack/nx-plugin` as a workspace plugin, and nx
       # refuses to load a local plugin whose `main` (./dist/index.js) does not
