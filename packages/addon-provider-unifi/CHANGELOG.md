@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X
+- Integration reconcile no longer removes devices when the integration list or settings read fails or is empty; devices are removed only on an explicit Deleted/Disabled event
 
 ## [0.2.151] - 2026-11-01
 
