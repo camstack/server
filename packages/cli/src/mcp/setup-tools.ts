@@ -8,6 +8,7 @@ import { z } from 'zod'
 import type { FetchFn, McpContext, ToolTextResult } from './context.js'
 import { addNodeTool, connectTool, discoverHubsTool, type SetupDeps } from './setup-hubs.js'
 import { installGuide } from './setup-install.js'
+import { setupWizard } from './setup-wizard.js'
 import {
   AcceleratorSchema,
   HOST_KINDS,
@@ -108,5 +109,11 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
       hubAddress: z.string().min(1).optional(),
     },
     async (input): Promise<ToolTextResult> => text(await addNodeTool(input, ctx)),
+  )
+  server.tool(
+    'setup_wizard',
+    'Read-only first-run checklist for a hub, to call after setup_connect: eight steps (admin account and 2FA, hub address and remote access, backups, cameras and agents, notification targets, admin alert rules, detection rules per camera, calibration and updates), each done, missing, unknown or suggested, with the existing tool or UI page that comes next. An unreadable part is unknown with its reason, never missing. Needs a login session; an admin session judges every step.',
+    {},
+    async (): Promise<ToolTextResult> => text(await setupWizard(ctx)),
   )
 }

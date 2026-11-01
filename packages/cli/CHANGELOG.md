@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- MCP: new read-only setup_wizard tool lists what a fresh hub still lacks (admin 2FA, remote access, backups, cameras, notifiers, alert rules, calibration) and the tool to run next
+
 ## [1.2.216] - 2026-10-31
 
 ### Changed
