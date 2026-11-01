@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.721] - 2026-11-01
+
 ### Changed
 
 - Addons loaded in the hub process take the active server's packages ahead of an older copy left by the image (benchmark failed to load on 1.2.720).
