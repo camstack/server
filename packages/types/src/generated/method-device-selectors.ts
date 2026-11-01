@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 575 methods carry a device reference, of which
- * 184 are on SYSTEM-scope caps.
+ * Coverage: 579 methods carry a device reference, of which
+ * 188 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -223,6 +223,10 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'fanControl.setOscillating': [{ name: "deviceId", form: "single", optional: false }] as const,
   'fanControl.setPercentage': [{ name: "deviceId", form: "single", optional: false }] as const,
   'fanControl.setPreset': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'fanPresets.applyPreset': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'fanPresets.capturePreset': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'fanPresets.getPresets': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'fanPresets.setPresets': [{ name: "deviceId", form: "single", optional: false }] as const,
   'featureProbe.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'flood.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'gas.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -690,6 +694,10 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceState.setCapSlice",
   "faceGallery.getFaceByTrack",
   "faceGallery.listRecentFaces",
+  "fanPresets.applyPreset",
+  "fanPresets.capturePreset",
+  "fanPresets.getPresets",
+  "fanPresets.setPresets",
   "keychain.deleteDeviceScope",
   "logDestination.read",
   "networkQuality.getDeviceStats",

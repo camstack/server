@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1016 shared schemas.**
+**1024 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2340,6 +2340,15 @@ Enum: `"ok" \| "missing" \| "foreign" \| "unavailable"`
 - `reason`: `string`
 - `count`: `number`
 
+### `FanCaptureFieldSchema`
+
+Enum: `"speed" \| "oscillating" \| "direction" \| "preset"`
+
+### `FanCaptureOmissionSchema`
+
+- `what`: `string`
+- `reason`: `string`
+
 ### `FanControlStatusSchema`
 
 - `speed`: `number \| null`
@@ -2353,6 +2362,40 @@ Enum: `"ok" \| "missing" \| "foreign" \| "unavailable"`
 ### `FanDirectionSchema`
 
 Enum: `"forward" \| "reverse"`
+
+### `FanPresetApplyResultSchema`
+
+- `status`: `"applied" \| "partial" \| "refused"`
+- `steps`: `FanPresetStepResultSchema[]`
+
+### `FanPresetCaptureResultSchema`
+
+- `steps`: `({ kind: "wait"; seconds: number } \| { kind: "cap"; actionId?: string; target?: { kind: "devices"; ids: number[] } \| { kind: "domain"; deviceType?: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway"; roomId?: string } \| { kind: "var"; name: string }; deviceId?: number \| number[] \| { $var: string }; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> })[]`
+- `omitted`: `FanCaptureOmissionSchema[]`
+
+### `FanPresetSchema`
+
+- `id`: `string`
+- `name`: `string`
+- `steps`: `({ kind: "wait"; seconds: number } \| { kind: "cap"; actionId?: string; target?: { kind: "devices"; ids: number[] } \| { kind: "domain"; deviceType?: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway"; roomId?: string } \| { kind: "var"; name: string }; deviceId?: number \| number[] \| { $var: string }; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> })[]`
+
+### `FanPresetsRefusalSchema`
+
+Enum: `"not-sibling" \| "bad-target" \| "duplicate-name" \| "duplicate-id" \| "too-many" \| "not-a-fan"`
+
+### `FanPresetsSetResultSchema`
+
+- `{ status: "saved"; count: number }`
+- `{ status: "refused"; reason: FanPresetsRefusalSchema; detail: string }`
+
+### `FanPresetStepResultSchema`
+
+- `index`: `number`
+- `outcome`: `"applied" \| "failed" \| "not-run" \| "refused"`
+- `deviceId?`: `number`
+- `cap?`: `string`
+- `method?`: `string`
+- `message?`: `string`
 
 ### `FeatureManifestSchema`
 

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1468 method paths across 197 capabilities.
+ * Coverage: 1472 method paths across 198 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -502,6 +502,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'fanControl.setOscillating': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'fanControl.setPercentage': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'fanControl.setPreset': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'fanPresets.applyPreset': { capName: "fan-presets", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'fanPresets.capturePreset': { capName: "fan-presets", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'fanPresets.getPresets': { capName: "fan-presets", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'fanPresets.setPresets': { capName: "fan-presets", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'featureProbe.getStatus': { capName: "feature-probe", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'filesystemBrowse.browse': { capName: "filesystem-browse", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'filesystemBrowse.createDir': { capName: "filesystem-browse", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1567,6 +1571,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "face-gallery",
   "failure-contribution",
   "fan-control",
+  "fan-presets",
   "feature-probe",
   "filesystem-browse",
   "flood",
@@ -1835,6 +1840,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "embedding-encoder",
   "face-gallery",
   "failure-contribution",
+  "fan-presets",
   "filesystem-browse",
   "integrations",
   "keychain",

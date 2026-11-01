@@ -29,6 +29,7 @@ import type { deviceProviderCapability } from '../capabilities/device-provider.c
 import type { deviceStateCapability } from '../capabilities/device-state.cap.js'
 import type { displayPaletteCapability } from '../capabilities/display-palette.cap.js'
 import type { faceGalleryCapability } from '../capabilities/face-gallery.cap.js'
+import type { fanPresetsCapability } from '../capabilities/fan-presets.cap.js'
 import type { integrationsCapability } from '../capabilities/integrations.cap.js'
 import type { keychainAdminCapability } from '../capabilities/keychain-admin.cap.js'
 import type { llmCapability } from '../capabilities/llm.cap.js'
@@ -100,6 +101,7 @@ export interface SystemProxy {
   readonly deviceState: Pick<InferProvider<typeof deviceStateCapability>, 'getAllSnapshots' | 'listClaims'>
   readonly displayPalette: Pick<InferProvider<typeof displayPaletteCapability>, 'getPalette' | 'listPresets' | 'setPalette'>
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
+  readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getSettings' | 'setSettings' | 'getAvailableTypes' | 'testConnection'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listProfileKinds' | 'listProfiles' | 'upsertProfile' | 'migrateRawSecrets' | 'deleteProfile' | 'testProfile' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
@@ -486,6 +488,13 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     assignFaces: (input?: unknown) => dispatch('faceGallery', 'assignFaces', 'mutation', input),
     unassignFaces: (input?: unknown) => dispatch('faceGallery', 'unassignFaces', 'mutation', input),
     suggestFaceClusters: (input?: unknown) => dispatch('faceGallery', 'suggestFaceClusters', 'query', input),
+  }
+
+  const fanPresetsInterface = {
+    getPresets: (input?: unknown) => dispatch('fanPresets', 'getPresets', 'query', input),
+    setPresets: (input?: unknown) => dispatch('fanPresets', 'setPresets', 'mutation', input),
+    applyPreset: (input?: unknown) => dispatch('fanPresets', 'applyPreset', 'mutation', input),
+    capturePreset: (input?: unknown) => dispatch('fanPresets', 'capturePreset', 'query', input),
   }
 
   const integrationsInterface = {
@@ -1092,6 +1101,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     deviceState: deviceStateInterface,
     displayPalette: displayPaletteInterface,
     faceGallery: faceGalleryInterface,
+    fanPresets: fanPresetsInterface,
     integrations: integrationsInterface,
     keychainAdmin: keychainAdminInterface,
     llm: llmInterface,

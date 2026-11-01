@@ -488,6 +488,12 @@
           },
           {
             "name": "power-source"
+          },
+          {
+            "name": "fan-presets"
+          },
+          {
+            "name": "action-source"
           }
         ]
       },

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**197 capabilities · 1468 methods.**
+**198 capabilities · 1472 methods.**
 
 ## Method index
 
@@ -493,6 +493,10 @@
 | `fanControl.setPreset` | mutation | protected | fan-control |
 | `fanControl.setDirection` | mutation | protected | fan-control |
 | `fanControl.setOscillating` | mutation | protected | fan-control |
+| `fanPresets.getPresets` | query | protected | fan-presets |
+| `fanPresets.setPresets` | mutation | admin | fan-presets |
+| `fanPresets.applyPreset` | mutation | protected | fan-presets |
+| `fanPresets.capturePreset` | query | protected | fan-presets |
 | `featureProbe.getStatus` | query | protected | feature-probe (auto) |
 | `filesystemBrowse.listAllowedRoots` | query | admin | filesystem-browse |
 | `filesystemBrowse.browse` | query | admin | filesystem-browse |
@@ -2731,6 +2735,20 @@
 | setPreset | `fanControl.setPreset` | mutation | protected | `{ deviceId: number; preset: string }` | `void` |
 | setDirection | `fanControl.setDirection` | mutation | protected | `{ deviceId: number; direction: FanDirectionSchema }` | `void` |
 | setOscillating | `fanControl.setOscillating` | mutation | protected | `{ deviceId: number; oscillating: boolean }` | `void` |
+
+### `fan-presets` → `fanPresets.*`
+
+- **Source:** `packages/types/src/capabilities/fan-presets.cap.ts:113`
+- **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
+- **Archetypes:** —
+- **Provider interface:** `IFanPresetsProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getPresets | `fanPresets.getPresets` | query | protected | `{ deviceId: number }` | `FanPresetSchema[]` |
+| setPresets | `fanPresets.setPresets` | mutation | admin | `{ deviceId: number; presets: FanPresetSchema[] }` | `FanPresetsSetResultSchema` |
+| applyPreset | `fanPresets.applyPreset` | mutation | protected | `{ deviceId: number; presetId: string }` | `FanPresetApplyResultSchema` |
+| capturePreset | `fanPresets.capturePreset` | query | protected | `{ deviceId: number; fields?: FanCaptureFieldSchema[]; steps?: ({ kind: "wait"; seconds: number } \| { kind: "cap"; actionId?: string; target?: { kind: "devices"; ids: number[] } \| { kind: "domain"; deviceType?: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway"; roomId?: string } \| { kind: "var"; name: string }; deviceId?: number \| number[] \| { $var: string }; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> })[] = [] }` | `FanPresetCaptureResultSchema` |
 
 ### `feature-probe` → `featureProbe.*`
 

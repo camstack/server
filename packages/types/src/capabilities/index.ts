@@ -2021,6 +2021,30 @@ export {
   brightnessCapability,
   type IBrightnessProvider,
 } from './brightness.cap.js'
+export {
+  FAN_CAPTURE_FIELDS,
+  FAN_PRESETS_MAX,
+  FAN_PRESETS_REFUSALS,
+  FAN_PRESET_STEPS_MAX,
+  type FanCaptureField,
+  FanCaptureFieldSchema,
+  type FanCaptureOmission,
+  FanCaptureOmissionSchema,
+  type FanPreset,
+  type FanPresetApplyResult,
+  FanPresetApplyResultSchema,
+  type FanPresetCaptureResult,
+  FanPresetCaptureResultSchema,
+  FanPresetSchema,
+  type FanPresetStepResult,
+  FanPresetStepResultSchema,
+  type FanPresetsRefusal,
+  FanPresetsRefusalSchema,
+  type FanPresetsSetResult,
+  FanPresetsSetResultSchema,
+  type IFanPresetsProvider,
+  fanPresetsCapability,
+} from './fan-presets.cap.js'
 // Infrared: the command map (remote); the transport (ir-transmitter) is exported below
 export {
   type IRemoteProvider,
@@ -3300,6 +3324,7 @@ import type { brokerCapability } from './broker.cap.js'
 import type { buttonCapability } from './button.cap.js'
 import type { irTransmitterCapability } from './ir-transmitter.cap.js'
 import type { remoteCapability } from './remote.cap.js'
+import type { fanPresetsCapability } from './fan-presets.cap.js'
 import type { templateCapability } from './template.cap.js'
 import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
@@ -3650,6 +3675,7 @@ type AnyCapability =
   | typeof buttonCapability
   | typeof irTransmitterCapability
   | typeof remoteCapability
+  | typeof fanPresetsCapability
   | typeof templateCapability
   | typeof remoteLayoutComponentsCapability
   | typeof cameraCredentialsCapability

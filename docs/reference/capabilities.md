@@ -4,7 +4,7 @@
 
 # Capabilities
 
-197 capability definitions in `packages/types/src/capabilities/`.
+198 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -123,13 +123,13 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (98)
+## System-scoped (99)
 
 Singleton or collection providers, addressed without a device.
 
 | Capability | Methods | status | runtimeState | History | internal | Declared by |
 | --- | --- | --- | --- | --- | --- | --- |
-| `action-source` | 3 | — | — | — | — | — |
+| `action-source` | 3 | — | — | — | — | `core-blocks` |
 | `actions` | 11 | — | — | — | — | `core-blocks` |
 | `addon-pages` | 1 | — | — | — | — | `addon-pages-aggregator` |
 | `addon-pages-source` | 1 | — | — | — | ✓ | `benchmark` `model-studio` `osd-manager` `provider-homematic` `training` |
@@ -166,6 +166,7 @@ Singleton or collection providers, addressed without a device.
 | `embedding-encoder` | 4 | — | — | — | ✓ | `embedding-encoder` |
 | `face-gallery` | 16 | — | — | — | — | `pipeline-analytics` |
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
+| `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
 | `integrations` | 10 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |

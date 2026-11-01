@@ -66,6 +66,9 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'embedding-encoder': system(ML),
   'face-gallery': system('the face gallery — curated on its own page'),
   'failure-contribution': system(INTERNAL),
+  'fan-presets': system(
+    'the per-fan presets — authored in the Customize presets editor, applied through the actions the exports list',
+  ),
   'filesystem-browse': system(INTERNAL),
   integrations: system(ADDON_ADMIN),
   keychain: system(IDENTITY),

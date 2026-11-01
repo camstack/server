@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 9 caps. Field keys are `runtimeState` paths. No Zod.
+ * 10 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -256,6 +256,25 @@ export const CAP_CUSTOMIZE_CATALOG = {
         counterPath: 'pressCountSinceStart',
         highWater: 'composer-advance',
         debounceMs: 2000,
+      },
+    ],
+  },
+  'fan-presets': {
+    version: 1,
+    targets: [
+      {
+        id: 'presets',
+        cardinality: 'config',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'add',
+        readMethod: 'getPresets',
+        writeMethod: 'setPresets',
+        vocabularyCap: 'fan-presets',
+        sources: [],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
       },
     ],
   },

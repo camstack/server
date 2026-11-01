@@ -1334,6 +1334,18 @@ export const useFanControlSetOscillating: typeof trpc.fanControl.setOscillating.
 /** Generated alias around `trpc.fanControl.getStatus.useQuery`. */
 export const useFanControlGetStatus: typeof trpc.fanControl.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.fanControl.getStatus.useQuery)
 
+/** Generated alias around `trpc.fanPresets.getPresets.useQuery`. */
+export const useFanPresetsGetPresets: typeof trpc.fanPresets.getPresets.useQuery = /*#__PURE__*/ alias(() => trpc.fanPresets.getPresets.useQuery)
+
+/** Generated alias around `trpc.fanPresets.setPresets.useMutation`. */
+export const useFanPresetsSetPresets: typeof trpc.fanPresets.setPresets.useMutation = /*#__PURE__*/ alias(() => trpc.fanPresets.setPresets.useMutation)
+
+/** Generated alias around `trpc.fanPresets.applyPreset.useMutation`. */
+export const useFanPresetsApplyPreset: typeof trpc.fanPresets.applyPreset.useMutation = /*#__PURE__*/ alias(() => trpc.fanPresets.applyPreset.useMutation)
+
+/** Generated alias around `trpc.fanPresets.capturePreset.useQuery`. */
+export const useFanPresetsCapturePreset: typeof trpc.fanPresets.capturePreset.useQuery = /*#__PURE__*/ alias(() => trpc.fanPresets.capturePreset.useQuery)
+
 /** Generated alias around `trpc.featureProbe.getStatus.useQuery`. */
 export const useFeatureProbeGetStatus: typeof trpc.featureProbe.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.featureProbe.getStatus.useQuery)
 

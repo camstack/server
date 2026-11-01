@@ -38,6 +38,8 @@ import {
   normalizeCoreBlockWrite,
   type ProviderRegistration,
   remoteCapability,
+  fanPresetsCapability,
+  actionSourceCapability,
   remoteLayoutComponentsCapability,
   templateCapability,
   EventCategory,
@@ -65,6 +67,7 @@ import {
 } from './power-source-service.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import { buildRemoteRuntime, type RemoteRuntime } from './remote-wiring.js'
+import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
 import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integration.js'
@@ -109,6 +112,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private actions: ActionsRuntime | null = null
   /** The templates engine and the remote — needs the per-device settings store, so absent without one. */
   private remoteRuntime: RemoteRuntime | null = null
+  /** The fan presets and the action entries that list them — same per-device store, same absence. */
+  private fanPresets: FanPresetsRuntime | null = null
   private schedulers: SchedulersRuntime | null = null
   /** The power-source provider; its pending switch-on timers are cancelled on shutdown. */
   private powerSource: PowerSourceService | null = null
@@ -165,6 +170,7 @@ export class CoreBlocksAddon extends BaseAddon {
     void this.sweepRunsLedger()
     void this.migrateActionTargets()
     this.remoteRuntime = this.buildRemote(records)
+    this.fanPresets = this.buildFanPresets()
     this.installDeviceCallRedirect()
 
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
@@ -205,6 +211,7 @@ export class CoreBlocksAddon extends BaseAddon {
       // The built-in palette needs no store: it is served even when the remote is not.
       { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
       ...this.remoteRegistrations(),
+      ...this.fanPresetRegistrations(),
     ]
   }
 
@@ -342,6 +349,26 @@ export class CoreBlocksAddon extends BaseAddon {
     return doorSensorOf(this.requireStore().list(), deviceId, this.deviceNames(api))
   }
 
+  private buildFanPresets(): FanPresetsRuntime | null {
+    const settings = this.ctx.settings
+    if (settings === undefined) return null
+    return buildFanPresetsRuntime({
+      settings,
+      api: () => this.ctx.api,
+      addonId: CORE_BLOCKS_ADDON_ID,
+      logger: this.ctx.logger,
+    })
+  }
+
+  private fanPresetRegistrations(): ProviderRegistration[] {
+    const runtime = this.fanPresets
+    if (runtime === null) return []
+    return [
+      { capability: fanPresetsCapability, provider: runtime.presets },
+      { capability: actionSourceCapability, provider: runtime.actionSource },
+    ]
+  }
+
   private remoteRegistrations(): ProviderRegistration[] {
     const runtime = this.remoteRuntime
     if (runtime === null) return []
@@ -354,6 +381,7 @@ export class CoreBlocksAddon extends BaseAddon {
   protected async onShutdown(): Promise<void> {
     this.ctx.kernel?.capabilityRegistry?.setDeviceCallRedirect(null)
     this.remoteRuntime = null
+    this.fanPresets = null
     this.powerSource?.stop()
     this.powerSource = null
     this.supervisor?.stop()
