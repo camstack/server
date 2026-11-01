@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1464 method paths across 196 capabilities.
+ * Coverage: 1467 method paths across 196 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -665,12 +665,15 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'metricsProvider.getProcessStats': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.listAddonInstances': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.listNodeProcesses': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'migrations.declareOwner': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.dryRun': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'migrations.finishMigration': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.listLedger': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'migrations.listPending': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'migrations.markFailed': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.restorePreMigration': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.retry': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'migrations.startMigration': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'modelConvert.convert': { capName: "model-convert", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'modelDistributor.distributeModel': { capName: "model-distributor", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'motion.getStatus': { capName: "motion", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,

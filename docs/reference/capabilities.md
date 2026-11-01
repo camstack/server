@@ -178,7 +178,7 @@ Singleton or collection providers, addressed without a device.
 | `login-method` | 1 | — | — | — | ✓ | `auth-oidc` `auth-webauthn` |
 | `mesh-network` | 7 | — | — | — | — | `tailscale-client` |
 | `metrics-provider` | 11 | — | — | — | — | `metrics-native` |
-| `migrations` | 6 | — | — | — | ✓ | `sqlite-settings` |
+| `migrations` | 9 | — | — | — | ✓ | `sqlite-settings` |
 | `model-convert` | 1 | — | — | — | ✓ | `model-studio` |
 | `model-distributor` | 1 | — | — | — | ✓ | — |
 | `mqtt-broker` | 8 | ✓ | — | — | — | `mqtt-broker` |

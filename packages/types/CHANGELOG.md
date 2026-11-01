@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Addons can declare migrations (plan and procedure bodies) that run under the shared ledger, snapshot and rollback
+
 ## [1.2.461] - 2026-10-31
 
 ### Changed

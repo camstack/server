@@ -10,6 +10,8 @@ applies-to:
   - packages/system/src/builtins/sqlite-storage/migrations/**
   - packages/system/src/builtins/sqlite-storage/sqlite-snapshotter.ts
   - packages/system/src/builtins/sqlite-storage/sqlite-settings.addon.ts
+  - packages/types/src/addon/base-addon.ts
+  - scripts/check-migrations-well-formed.ts
   - scripts/check-migrations-well-formed.ts
 ---
 
@@ -77,3 +79,39 @@ refused snapshot applies nothing; a restored older snapshot converges; a
 `skipped-newer` id writes nothing; the data-store provider is not returned before
 migrations finish; a hold survives a restore. The in-transaction rollback spec is
 red when the per-migration transaction is removed.
+
+## Amendment M3 — addon catalogues, plan and procedure bodies
+
+`sqlite-settings` boots first and cannot see addons, so an addon's catalogue is
+**owner-driven**: the addon calls `declareOwner`, then `startMigration` and
+`finishMigration` per step through `ctx.api` (`BaseAddon.runMigrations`, bound with
+`defineAddonMigrations(ADDON_MIGRATIONS, ports)`; the catalogue lives in
+`packages/<addon>/src/migrations/index.ts`). Same ledger, same file, same
+pre-migration snapshot, same rollback; the engine orders steps across owners by
+`dependsOn`.
+
+- A `plan` body reads and returns edits (`setKeys`, `deleteKeys`, `putRow`,
+  `deleteRow`); the ENGINE applies them in the same transaction as the `applied`
+  row. `precondition` is `preconditionOf(canonical JSON of what the plan read)`;
+  a mismatch refuses the apply. A hub-owned plan is `plan(db)`.
+- `upsertRecord` / `deleteRecord` are refused by name: the records engine owns the
+  derived columns (`device_id`, `at`, `expires_at`, `rev`), so a record migration is a
+  procedure through the records cap.
+- A `procedure` body calls the owning addon through a typed port
+  (`IntegrationMigrationPorts` for the integration case: create with
+  `originStableId` and keychain `secretKeys`, re-stamp children keeping `deviceId`
+  and `stableId`, sibling gateway, retire the hub by tombstone). The ledger records
+  the reported outcome (`done` | `already-done`); a procedure must be idempotent
+  because a crash between its effect and the row reruns it.
+- `onFailure: 'block-owner'` makes `runMigrations` throw, so the addon refuses to
+  start; `tolerate` never throws. The hub always finishes booting.
+- A failed procedure marks same-owner and cross-owner dependents `blocked`.
+
+Known limits: a dependency on another addon's migration that has not run yet is
+`blocked(dependency-pending)` until the next boot or a retry; `retry` of an
+addon-owned id clears its rows and the owner reruns at its next boot (the engine
+cannot call a possibly absent process); `dryRun` is hub-only; events and history
+files accept plan edits only while open at declare time. `check-migrations-well-formed`
+now also checks body kind against body, ownership, the manifest owner and that an
+addon with a catalogue calls `runMigrations(`. Specs: `migration-m3.spec.ts` (real
+SQLite; removing the transaction in the addon plan path turns the rollback spec red).

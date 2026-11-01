@@ -153,6 +153,8 @@ export {
 export * from './keychain/index.js'
 export * from './records/index.js'
 export * from './migrations/migration.js'
+export * from './migrations/addon-migration.js'
+export * from './migrations/integration-migration-ports.js'
 export * from './training/index.js'
 export * from './retrain-review.js'
 export {

@@ -37,7 +37,13 @@ export const MigrationScopeSchema = z.enum(['cluster', 'per-node'])
 /** What depends on a migration while it is pending: `block-owner` is the default. */
 export const MigrationOnFailureSchema = z.enum(['block-owner', 'tolerate'])
 
-/** `sql` is a hub-only body over the owner's connection; `plan` and `procedure` are M3. */
+/**
+ * `sql` is a hub-only body over the owner's connection. `plan` returns edits the
+ * engine applies inside the migration's own transaction (hub-owned: computed in
+ * that transaction; addon-owned: computed by the owner and shipped to the engine).
+ * `procedure` is addon-owned work that is not SQL (keychain, integration registry,
+ * device tombstones); the ledger records its outcome and it must be idempotent.
+ */
 export const MigrationBodyKindSchema = z.enum(['sql', 'plan', 'procedure'])
 export type MigrationBodyKind = z.infer<typeof MigrationBodyKindSchema>
 
@@ -195,7 +201,11 @@ export const MigrationCatalogueSchema = z.array(MigrationMetaSchema).superRefine
 
 // ── Plan edits (the `plan` body, applied by the framework) ───────────────
 
-/** The hash of the value a plan read; the apply step re-reads and refuses a mismatch. */
+/**
+ * The canonical JSON (`preconditionOf`) of the value a plan read; the apply step
+ * re-reads, and a plan whose read no longer matches is refused (the migration is
+ * `failed`, nothing it edited is kept).
+ */
 const PreconditionSchema = z.string().min(1).optional()
 
 export const MigrationEditSchema = z.discriminatedUnion('op', [
@@ -242,6 +252,45 @@ export type MigrationEdit = z.infer<typeof MigrationEditSchema>
 
 export const MigrationPlanSchema = z.object({ edits: z.array(MigrationEditSchema) })
 export type MigrationPlan = z.infer<typeof MigrationPlanSchema>
+
+/** `JSON.stringify` with object keys sorted, so equal values spell the same. */
+export function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(',')}]`
+  if (typeof value === 'object' && value !== null) {
+    const body = Object.entries(value)
+      .filter(([, item]) => item !== undefined)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
+    return `{${body.join(',')}}`
+  }
+  return JSON.stringify(value) ?? 'null'
+}
+
+/** The precondition string for a value a plan read (`null` when it read nothing). */
+export function preconditionOf(value: unknown): string {
+  return canonicalJson(value ?? null)
+}
+
+// ── Procedure outcome and the owner protocol (M3) ────────────────────────
+
+/**
+ * What a `procedure` body reports. `already-done` means the rerun observed the
+ * work finished (a crash between the work and the ledger row, or a manual fix)
+ * and did none of it again; the ledger records `applied` either way.
+ */
+export const MigrationProcedureResultSchema = z.object({
+  outcome: z.enum(['done', 'already-done']),
+  summary: z.record(z.string(), z.unknown()),
+})
+export type MigrationProcedureResult = z.infer<typeof MigrationProcedureResultSchema>
+
+/** What an owner hands the engine when one of its migrations ran. */
+export const MigrationOwnerResultSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('plan'), plan: MigrationPlanSchema }),
+  z.object({ kind: z.literal('procedure'), result: MigrationProcedureResultSchema }),
+  z.object({ kind: z.literal('failed'), error: z.string().min(1) }),
+])
+export type MigrationOwnerResult = z.infer<typeof MigrationOwnerResultSchema>
 
 // ── The ledger ───────────────────────────────────────────────────────────
 
@@ -305,3 +354,12 @@ export const MigrationDryRunResultSchema = z.object({
   ),
 })
 export type MigrationDryRunResult = z.infer<typeof MigrationDryRunResultSchema>
+
+/** One of an owner's migrations, as the engine tells the owner to treat it this boot. */
+export const MigrationOwnerStepSchema = z.object({
+  id: MigrationIdSchema,
+  action: z.enum(['run', 'skip']),
+  /** The ledger state the engine found: `pending` has no row yet. */
+  state: z.union([z.literal('pending'), MigrationStatusSchema]),
+})
+export type MigrationOwnerStep = z.infer<typeof MigrationOwnerStepSchema>

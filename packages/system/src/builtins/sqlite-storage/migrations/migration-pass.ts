@@ -31,10 +31,12 @@ import {
   orderMigrations,
   errMsg,
 } from '@camstack/types'
+import { applyEdits } from './migration-edits.js'
 import {
   type AppliedPass,
   type ApplyPassInput,
   databaseOfStore,
+  HUB_OWNER,
   type HubMigration,
   type MigrateInput,
   type MigrateOp,
@@ -101,13 +103,19 @@ function parseJsonObject(text: string | null): Record<string, unknown> | null {
   }
 }
 
+/** An applied hub row whose id this code does not catalogue: a newer database under older code. */
+function isNewerRow(row: LedgerRow, knownIds: ReadonlySet<string>): boolean {
+  return row.owner === HUB_OWNER && !knownIds.has(row.id) && row.status === 'applied'
+}
+
 function entryOf(
   row: LedgerRow,
   databaseId: DataStoreDatabase,
   knownIds: ReadonlySet<string>,
 ): MigrationLedgerEntry {
-  // A row this code does not know is REPORTED as skipped-newer; the row itself is never written.
-  const status = !knownIds.has(row.id) && row.status === 'applied' ? 'skipped-newer' : row.status
+  // A HUB row this code does not know is REPORTED as skipped-newer; the row itself is never
+  // written. An addon-owned row is judged by the engine, which knows what its owner declared.
+  const status = isNewerRow(row, knownIds) ? 'skipped-newer' : row.status
   return MigrationLedgerEntrySchema.parse({
     id: row.id,
     database: databaseId,
@@ -172,6 +180,15 @@ function totalChanges(db: Database.Database): number {
   throw new Error('total_changes() answered no number')
 }
 
+/** Run a hub migration's body: `sql` writes itself, `plan` returns edits the engine applies. */
+function executeBody(db: Database.Database, m: HubMigration): void {
+  if ('plan' in m) {
+    applyEdits(db, m.plan(db))
+    return
+  }
+  m.run(db)
+}
+
 /** The catalogue entries this file serves. */
 function ownEntries(
   catalogue: readonly HubMigration[],
@@ -233,9 +250,7 @@ export function prepareFile(
     statuses[m.meta.id] = status
     if (status !== 'applied' && !held) runnable.push(m.meta.id)
   }
-  const newer = [...rows.values()]
-    .filter((row) => !knownIds.has(row.id) && row.status === 'applied')
-    .map((row) => row.id)
+  const newer = [...rows.values()].filter((row) => isNewerRow(row, knownIds)).map((row) => row.id)
   return { statuses, runnable, newer }
 }
 
@@ -328,7 +343,7 @@ export function applyFile(
     try {
       const rowsChanged = db.transaction((): number => {
         const before = totalChanges(db)
-        m.run(db)
+        executeBody(db, m)
         const changed = totalChanges(db) - before
         writeRow(db, meta, {
           ...common,
@@ -419,7 +434,7 @@ export function dryRunOf(
     db.transaction(() => {
       const before = tableCounts(db)
       const changesBefore = totalChanges(db)
-      m.run(db)
+      executeBody(db, m)
       const rowsChanged = totalChanges(db) - changesBefore
       const after = tableCounts(db)
       const tables = [...new Set([...before.keys(), ...after.keys()])]
@@ -479,6 +494,85 @@ export function markFailedRow(
     : entryOf(row, databaseId, new Set(catalogue.map((c) => c.meta.id)))
 }
 
+/**
+ * An addon-owned `plan`: its edits and the `applied` row commit in ONE transaction, exactly
+ * as a hub migration's body does. The transaction is what makes a half-applied plan
+ * impossible; remove it and an edit that fails after an earlier one leaves that earlier
+ * edit behind (the spec that pins this goes red).
+ */
+export function applyPlanFile(
+  db: Database.Database,
+  input: MigrateInput<'applyPlan'>,
+): MigrateOutput<'applyPlan'> {
+  ensureLedger(db)
+  const { meta } = input
+  const attempts = (readRows(db).get(meta.id)?.attempts ?? 0) + 1
+  const common = { codeVersion: input.codeVersion, bootId: input.bootId }
+  try {
+    const rowsChanged = db.transaction((): number => {
+      const before = totalChanges(db)
+      applyEdits(db, input.plan)
+      const changed = totalChanges(db) - before
+      writeRow(db, meta, {
+        ...common,
+        status: 'applied',
+        attempts,
+        appliedAt: Date.now(),
+        planSummary: { rowsChanged: changed, edits: input.plan.edits.length },
+        error: null,
+        reason: null,
+      })
+      return changed
+    })()
+    return { status: 'applied', rowsChanged, error: null }
+  } catch (err) {
+    const error = errMsg(err)
+    try {
+      writeRow(db, meta, {
+        ...common,
+        status: 'failed',
+        attempts,
+        appliedAt: null,
+        planSummary: null,
+        error,
+        reason: null,
+      })
+    } catch (recordErr) {
+      return {
+        status: 'failed',
+        rowsChanged: 0,
+        error: `${error} (and the failure could not be recorded: ${errMsg(recordErr)})`,
+      }
+    }
+    return { status: 'failed', rowsChanged: 0, error }
+  }
+}
+
+/** The ledger row of an addon-owned migration whose body ran in its owner (a `procedure`, a gate). */
+export function recordRow(
+  db: Database.Database,
+  databaseId: DataStoreDatabase,
+  input: MigrateInput<'record'>,
+): MigrateOutput<'record'> {
+  ensureLedger(db)
+  const { meta } = input
+  const previous = readRows(db).get(meta.id)
+  const ran = input.status === 'applied' || input.status === 'failed'
+  writeRow(db, meta, {
+    status: input.status,
+    attempts: (previous?.attempts ?? 0) + (ran ? 1 : 0),
+    appliedAt: input.status === 'applied' ? Date.now() : null,
+    codeVersion: input.codeVersion,
+    planSummary: input.summary === null ? null : { ...input.summary },
+    error: input.error,
+    reason: input.reason,
+    bootId: input.bootId,
+  })
+  const row = readRows(db).get(meta.id)
+  if (row === undefined) throw new Error(`ledger row ${meta.id} was not written`)
+  return entryOf(row, databaseId, new Set([meta.id]))
+}
+
 /** What one file answers: every op, bound to its connection and catalogue. */
 export type MigrateTarget = {
   readonly [K in MigrateOp]: (input: MigrateInput<K>) => MigrateOutput<K>
@@ -496,6 +590,8 @@ export function migrateTargetOf(
     dryRun: (input) => dryRunOf(db, databaseId, catalogue, input.id),
     reset: (input) => resetRows(db, input.ids),
     markFailed: (input) => markFailedRow(db, databaseId, catalogue, input),
+    applyPlan: (input) => applyPlanFile(db, input),
+    record: (input) => recordRow(db, databaseId, input),
   }
 }
 

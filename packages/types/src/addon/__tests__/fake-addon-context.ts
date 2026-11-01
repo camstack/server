@@ -23,6 +23,8 @@ export interface FakeAddonContextOptions {
   readonly id?: string
   readonly localNodeId?: string
   readonly settings?: FakeSettings
+  /** A wired `ctx.api` (a tRPC client with a scripted link); unwired by default. */
+  readonly api?: AddonContext['api']
 }
 
 function unused(name: string): () => never {
@@ -101,7 +103,7 @@ export function fakeAddonContext(options: FakeAddonContextOptions = {}): AddonCo
     nodeDataDir: '/nonexistent',
     kernel: { localNodeId: options.localNodeId ?? 'hub', devices: fakeDevices() },
     settings: fakeSettings(options.settings ?? {}),
-    api: createTRPCClient<AppRouter>({ links: [unwiredLink] }),
+    api: options.api ?? createTRPCClient<AppRouter>({ links: [unwiredLink] }),
     deps: {
       ensureBinary: unused('deps.ensureBinary'),
       ensureFfmpeg: unused('deps.ensureFfmpeg'),

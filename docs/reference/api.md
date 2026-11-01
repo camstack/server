@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**196 capabilities · 1464 methods.**
+**196 capabilities · 1467 methods.**
 
 ## Method index
 
@@ -662,6 +662,9 @@
 | `migrations.markFailed` | mutation | admin | migrations |
 | `migrations.retry` | mutation | admin | migrations |
 | `migrations.restorePreMigration` | mutation | admin | migrations |
+| `migrations.declareOwner` | mutation | admin | migrations |
+| `migrations.startMigration` | mutation | admin | migrations |
+| `migrations.finishMigration` | mutation | admin | migrations |
 | `modelConvert.convert` | mutation | admin | model-convert |
 | `modelDistributor.distributeModel` | mutation | admin | model-distributor |
 | `motion.getStatus` | query | protected | motion (auto) |
@@ -3200,7 +3203,7 @@
 
 ### `migrations` → `migrations.*`
 
-- **Source:** `packages/types/src/capabilities/migrations.cap.ts:22`
+- **Source:** `packages/types/src/capabilities/migrations.cap.ts:26`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IMigrationsProvider`
@@ -3213,6 +3216,9 @@
 | markFailed | `migrations.markFailed` | mutation | admin | `{ id: string; error: string }` | `{ id: string; database: DataStoreDatabaseSchema; owner: string; level: "hub-store" \| "addon-state" \| "node-config" \| "viewer" \| "addon-internal"; seq: number; status: "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer"; attempts: number; appliedAt: number \| null; codeVersion: string \| null; planSummary: Record<string, unknown> \| null; progress: Record<string, unknown> \| null; error: string \| null; reason: string \| null; nodeId: string \| null; bootId: string \| null }` |
 | retry | `migrations.retry` | mutation | admin | `{ id: string }` | `{ entries: ({ id: string; database: DataStoreDatabaseSchema; owner: string; level: "hub-store" \| "addon-state" \| "node-config" \| "viewer" \| "addon-internal"; seq: number; status: "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer"; attempts: number; appliedAt: number \| null; codeVersion: string \| null; planSummary: Record<string, unknown> \| null; progress: Record<string, unknown> \| null; error: string \| null; reason: string \| null; nodeId: string \| null; bootId: string \| null })[] }` |
 | restorePreMigration | `migrations.restorePreMigration` | mutation | admin | `{ database: DataStoreDatabaseSchema; snapshotId: string }` | `{ scheduled: boolean; held: string[]; restartRequired: boolean }` |
+| declareOwner | `migrations.declareOwner` | mutation | admin | `{ owner: string; metas: ({ id: string; owner: string; level: "hub-store" \| "addon-state" \| "node-config" \| "viewer" \| "addon-internal"; seq: number; dependsOn: string[]; store: "settings" \| "events" \| "history" \| "node-local" \| "addon-files"; scope: "cluster" \| "per-node"; onFailure: "block-owner" \| "tolerate"; bodyKind: "sql" \| "plan" \| "procedure"; description: string; fixtureMark: string })[] }` | `{ bootId: string; snapshot: "none" \| "written" \| "refused"; steps: ({ id: string; action: "run" \| "skip"; state: "pending" \| "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer" })[] }` |
+| startMigration | `migrations.startMigration` | mutation | admin | `{ id: string }` | `{ proceed: boolean; state: "pending" \| "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer"; reason: string \| null }` |
+| finishMigration | `migrations.finishMigration` | mutation | admin | `{ id: string; result: { kind: "plan"; plan: { edits: ({ op: "setKeys"; scope: string; values: Record<string, unknown>; precondition?: string } \| { op: "deleteKeys"; scope: string; keys: string[]; precondition?: string } \| { op: "putRow"; table: string; key: Record<string, unknown>; row: Record<string, unknown>; precondition?: string } \| { op: "deleteRow"; table: string; key: Record<string, unknown>; precondition?: string } \| { op: "upsertRecord"; kind: string; recordKey: string; value: unknown; precondition?: string } \| { op: "deleteRecord"; kind: string; recordKey: string; precondition?: string })[] } } \| { kind: "procedure"; result: { outcome: "done" \| "already-done"; summary: Record<string, unknown> } } \| { kind: "failed"; error: string } }` | `{ status: "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer"; error: string \| null; rowsChanged: number }` |
 
 ### `model-convert` → `modelConvert.*`
 

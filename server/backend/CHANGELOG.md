@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Migration capability gains the owner-driven declare, start and finish calls for addon catalogues
+
 ## [1.2.717] - 2026-10-31
 
 ### Changed

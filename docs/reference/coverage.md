@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**227 units · 7649 source files · 214 units claimed by at least one document (7609 files).**
+**227 units · 7652 source files · 214 units claimed by at least one document (7612 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -22,7 +22,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-admin-ui/src/components` | 579 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +76 more, 4 ADRs | 2026-10-27 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 473 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +166 more, 27 ADRs | 2026-10-14 |
 | `scripts` | 464 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +136 more, 14 ADRs | 2026-10-27 |
-| `packages/system/src/builtins` | 428 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +173 more, 21 ADRs | 2026-10-26 |
+| `packages/system/src/builtins` | 429 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +173 more, 21 ADRs | 2026-10-26 |
 | `packages/ui-library/src/composites` | 355 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +54 more, 3 ADRs | 2026-10-27 |
 | `packages/types/src/capabilities` | 223 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +201 more, 41 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/notification-center` | 211 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +81 more, 27 ADRs | 2026-10-07 |
@@ -123,7 +123,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-gree` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-vesync` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types` | 11 | `capabilities`, `decode-and-data-planes`, `shared-types`, `transport` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/cloud-training.md`, `decisions/adr-0267-the-token-lifetime-has-one-default-and-is-validated-where-it-is-signed.md`, +2 more, 1 ADR | 2026-10-14 |
-| `packages/types/src/addon` | 11 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/secrets-keychain.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +5 more | 2026-10-18 |
+| `packages/types/src/addon` | 11 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/secrets-keychain.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +6 more | 2026-10-18 |
 | `packages/types/src/expression` | 11 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-08-automation-scripts-custom-devices.md`, `design/2026-08-09-automation-recipe-phase6-design.md`, +2 more | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +2 more, 1 ADR | 2026-09-29 |
 | `packages/addon-mqtt-broker` | 10 | `ecosystem-exports` | `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md` | — |
@@ -179,6 +179,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/enums` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0387-a-new-disk-is-noticed-planned-onto-and-said-out-loud.md` | — |
 | `packages/types/src/helpers` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/logging` | 3 | `logging` | `decisions/adr-0248-channels-are-declared-by-addons-values-stay-in-one-document.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
+| `packages/types/src/migrations` | 3 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md` | — |
 | `packages/types/src/storage` | 3 | `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0389-one-type-one-physical-root-refused-at-the-door.md` | — |
 | `packages/types/src/time` | 3 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/util` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `design/boot-to-usable-camera.md` _(covers)_ | 2026-10-13 |
@@ -236,7 +237,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/health` | 1 | `alerts-and-health` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/history` | 1 | — | `architecture/device-history.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-10-23 |
 | `packages/types/src/media` | 1 | `post-analysis` | `decisions/adr-0476-a-media-key-names-its-table-and-the-codec-is-the-only-place-that-spells-it.md`, `decisions/adr-0482-a-media-row-is-addressed-by-its-own-id.md`, `decisions/adr-0560-a-clip-source-over-recorded-footage-is-registered-by-the-addon-that-owns-the-footage-and-the-half-that-went-remote-is-the-half-that-needs-a-degradation.md`, +2 more | 2026-10-04 |
-| `packages/types/src/migrations` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md` | — |
 | `packages/types/src/process` | 1 | `alerts-and-health` | `architecture/load-ledger.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/system` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0861-the-hub-has-a-human-name-in-one-setting-an-unset-name-reads-as-the-hostname-and-is-never-written-by-the-hub.md` | — |
 | `packages/types/src/template` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |

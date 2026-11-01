@@ -9798,6 +9798,33 @@ export function createCapRouter_migrations(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.restorePreMigration(methodInput as any)
       }),
+    declareOwner: adminProcedure
+      .input(migrationsCapability.methods.declareOwner.input.loose())
+      .output(migrationsCapability.methods.declareOwner.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.declareOwner(methodInput as any)
+      }),
+    startMigration: adminProcedure
+      .input(migrationsCapability.methods.startMigration.input.loose())
+      .output(migrationsCapability.methods.startMigration.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.startMigration(methodInput as any)
+      }),
+    finishMigration: adminProcedure
+      .input(migrationsCapability.methods.finishMigration.input.loose())
+      .output(migrationsCapability.methods.finishMigration.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.finishMigration(methodInput as any)
+      }),
   })
 }
 

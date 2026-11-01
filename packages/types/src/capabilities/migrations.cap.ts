@@ -2,7 +2,11 @@ import { z } from 'zod'
 import {
   MigrationDryRunResultSchema,
   MigrationLedgerEntrySchema,
+  MigrationMetaSchema,
+  MigrationOwnerResultSchema,
+  MigrationOwnerStepSchema,
   MigrationPendingEntrySchema,
+  MigrationStatusSchema,
 } from '../migrations/migration.js'
 import { DataStoreDatabaseSchema } from './settings-store.cap.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
@@ -67,6 +71,50 @@ export const migrationsCapability = {
         scheduled: z.boolean(),
         held: z.array(z.string()),
         restartRequired: z.boolean(),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * An ADDON offers its catalogue at its own boot (D987 M3). The engine checks it
+     * together with every other owner's, takes the pre-migration snapshot of each
+     * file a pending migration touches, and answers the owner's steps in the order
+     * the framework decides. A catalogue the engine refuses (a cycle, a foreign
+     * owner, a body kind the owner cannot run) is refused whole and writes nothing.
+     */
+    declareOwner: method(
+      z.object({ owner: z.string().min(1), metas: z.array(MigrationMetaSchema) }),
+      z.object({
+        bootId: z.string(),
+        snapshot: z.enum(['none', 'written', 'refused']),
+        steps: z.array(MigrationOwnerStepSchema),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * The gate before one owner migration runs: `proceed: false` when a
+     * predecessor is not applied (the row is written `blocked`), the id is held, or
+     * the snapshot was refused.
+     */
+    startMigration: method(
+      z.object({ id: z.string().min(1) }),
+      z.object({
+        proceed: z.boolean(),
+        state: z.union([z.literal('pending'), MigrationStatusSchema]),
+        reason: z.string().nullable(),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * The owner's result for one migration. A `plan` is applied by the engine in one
+     * transaction with the `applied` row; a `procedure` outcome is recorded as it
+     * is; a `failed` report is recorded and blocks the dependents.
+     */
+    finishMigration: method(
+      z.object({ id: z.string().min(1), result: MigrationOwnerResultSchema }),
+      z.object({
+        status: MigrationStatusSchema,
+        error: z.string().nullable(),
+        rowsChanged: z.number().int().nonnegative(),
       }),
       { kind: 'mutation', auth: 'admin' },
     ),

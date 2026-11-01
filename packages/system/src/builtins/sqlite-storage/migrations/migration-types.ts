@@ -7,6 +7,7 @@ import type {
   MigrationDryRunResult,
   MigrationLedgerEntry,
   MigrationMeta,
+  MigrationPlan,
   MigrationStatus,
 } from '@camstack/types'
 
@@ -27,11 +28,26 @@ export interface MigrationDatabase {
   prepare(sql: string): MigrationStatement
 }
 
-/** A hub-store migration: its identity plus the synchronous body that runs in its transaction. */
-export interface HubMigration {
+/** The owner of every migration that ships with the hub itself. */
+export const HUB_OWNER = 'hub'
+
+/** A hub-store `sql` migration: its identity plus the synchronous body that runs in its transaction. */
+export interface HubSqlMigration {
   readonly meta: MigrationMeta
   run(db: MigrationDatabase): void
 }
+
+/**
+ * A hub-store `plan` migration: the body READS through the connection and returns the
+ * edits the engine applies, in the same transaction as the `applied` row. It must not
+ * write — everything it changes is an edit the engine can count, check and roll back.
+ */
+export interface HubPlanMigration {
+  readonly meta: MigrationMeta
+  plan(db: MigrationDatabase): MigrationPlan
+}
+
+export type HubMigration = HubSqlMigration | HubPlanMigration
 
 /** Where a catalogued migration stands. `pending` has no ledger row yet. */
 export type PassStatus = MigrationStatus | 'pending'
@@ -99,6 +115,37 @@ export interface MigrateOps {
     readonly input: { readonly id: string; readonly error: string; readonly bootId: string }
     readonly output: MigrationLedgerEntry | null
   }
+  /**
+   * An ADDON-owned `plan` (M3): the owner computed `plan`; the file applies its edits and
+   * writes the `applied` row in ONE transaction. A throwing edit rolls everything back
+   * and is recorded `failed` by a separate statement.
+   */
+  readonly applyPlan: {
+    readonly input: {
+      readonly meta: MigrationMeta
+      readonly plan: MigrationPlan
+      readonly bootId: string
+      readonly codeVersion: string
+    }
+    readonly output: {
+      readonly status: 'applied' | 'failed'
+      readonly rowsChanged: number
+      readonly error: string | null
+    }
+  }
+  /** Write the ledger row of an addon-owned migration whose body ran elsewhere (a `procedure`, a gate). */
+  readonly record: {
+    readonly input: {
+      readonly meta: MigrationMeta
+      readonly status: 'applied' | 'failed' | 'blocked' | 'held'
+      readonly reason: string | null
+      readonly error: string | null
+      readonly summary: Readonly<Record<string, unknown>> | null
+      readonly bootId: string
+      readonly codeVersion: string
+    }
+    readonly output: MigrationLedgerEntry
+  }
 }
 export type MigrateOp = keyof MigrateOps
 export type MigrateInput<K extends MigrateOp> = MigrateOps[K]['input']
@@ -111,6 +158,8 @@ export const MIGRATE_OPS: readonly MigrateOp[] = [
   'dryRun',
   'reset',
   'markFailed',
+  'applyPlan',
+  'record',
 ]
 
 export function isMigrateOp(op: string): op is MigrateOp {

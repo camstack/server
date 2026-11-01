@@ -18,6 +18,11 @@ import type {
 import { hydrateSchema } from '../interfaces/config-ui.js'
 import { emitReadiness } from '../interfaces/event-bus.js'
 import { SECRET_CLEAR } from '../keychain/secret-marker.js'
+import {
+  type AddonMigrationRunReport,
+  type BoundAddonMigration,
+  runAddonMigrations,
+} from '../migrations/addon-migration.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import { normalizeNodeId, projectStore, readNodeValue, scopePatch } from './per-node-store.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
@@ -272,6 +277,39 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       normalized && 'providers' in normalized && normalized.providers ? normalized.providers : []
     this._registeredCapNames = providers.map((p) => p.capability.name)
     return normalized
+  }
+
+  /**
+   * Run this addon's migration catalogue (D987 M3) through the hub's `migrations`
+   * engine. Call it at the point of the boot where the data must already have the new
+   * shape — `onInitialize`, or `onRestoreDevices` for a migration that needs the
+   * restored devices — with the catalogue bound to the addon's ports
+   * (`defineAddonMigrations(ADDON_MIGRATIONS, ports)`).
+   *
+   * An engine that cannot be reached or refuses the catalogue is logged and runs
+   * nothing; the boot continues. A migration that FAILED (or was blocked by one)
+   * and declares `onFailure: 'block-owner'` makes this throw, so the addon does not
+   * serve data whose shape it cannot trust; `tolerate` migrations never do.
+   */
+  protected async runMigrations(
+    migrations: readonly BoundAddonMigration[],
+  ): Promise<AddonMigrationRunReport> {
+    const api = this.ctx.api.migrations
+    const report = await runAddonMigrations(
+      {
+        declareOwner: (input) => api.declareOwner.mutate(input),
+        startMigration: (input) => api.startMigration.mutate(input),
+        finishMigration: (input) => api.finishMigration.mutate(input),
+      },
+      migrations,
+      this.ctx.logger,
+    )
+    if (report.blockOwner.length > 0) {
+      throw new Error(
+        `migration(s) ${report.blockOwner.join(', ')} did not apply and block this addon — fix or retry them (migrations.retry), then restart it`,
+      )
+    }
+    return report
   }
 
   /**

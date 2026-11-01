@@ -6,7 +6,11 @@ import type {
   IMigrationsProvider,
   MigrationDryRunResult,
   MigrationLedgerEntry,
+  MigrationMeta,
+  MigrationOwnerResult,
+  MigrationOwnerStep,
   MigrationPendingEntry,
+  MigrationStatus,
   DataStoreDatabase,
 } from '@camstack/types'
 import type { MigrationEngine } from './migration-engine.js'
@@ -32,6 +36,32 @@ export class MigrationsProvider implements IMigrationsProvider {
 
   async retry(input: { id: string }): Promise<{ entries: MigrationLedgerEntry[] }> {
     return { entries: [...(await this.engine.retry(input.id))] }
+  }
+
+  declareOwner(input: { owner: string; metas: MigrationMeta[] }): Promise<{
+    bootId: string
+    snapshot: 'none' | 'written' | 'refused'
+    steps: MigrationOwnerStep[]
+  }> {
+    return this.engine
+      .declareOwner(input.owner, input.metas)
+      .then((out) => ({ ...out, steps: [...out.steps] }))
+  }
+
+  startMigration(input: { id: string }): Promise<{
+    proceed: boolean
+    state: MigrationStatus | 'pending'
+    reason: string | null
+  }> {
+    return this.engine.startMigration(input.id)
+  }
+
+  finishMigration(input: { id: string; result: MigrationOwnerResult }): Promise<{
+    status: MigrationStatus
+    error: string | null
+    rowsChanged: number
+  }> {
+    return this.engine.finishMigration(input.id, input.result)
   }
 
   async restorePreMigration(input: {
