@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.724",
+  "version": "1.2.725",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -65,7 +65,10 @@
       "@camstack/addon-agent-ui"
     ],
     "requires": {
-      "addons": {},
+      "addons": {
+        "@camstack/addon-admin-ui": ">=1.2.545",
+        "@camstack/addon-provider-mqtt-ha": ">=0.1.33"
+      },
       "wrapper": {
         "desktop": ">=0.0.1",
         "image": ">=0.0.1"

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.33] - 2026-11-01
+
 ### Changed
 
 - Zigbee2MQTT and other bridges that publish discovery with a node id are now seen: every plug and sensor appears in Adopt
