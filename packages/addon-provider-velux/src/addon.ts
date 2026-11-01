@@ -18,6 +18,7 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
 } from '@camstack/types'
+import { VeluxReconciler, type IntegrationLifecycleKind } from './velux-reconciler.js'
 import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
 import { veluxActions } from './custom-actions.js'
 import { VeluxCoverDevice } from './devices/velux-cover-device.js'
@@ -60,6 +61,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     [DeviceType.Sensor]: VeluxRainSensorDevice,
   }
 
+  private integrationReconciler: VeluxReconciler | null = null
   private clients: VeluxClientRegistry | null = null
 
   constructor() {
@@ -126,6 +128,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.integrationReconciler = null
     setKlfLibraryLogSink(null)
     await super.onShutdown()
   }
@@ -220,61 +223,60 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     return this.clients
   }
 
-  private async reconcileIntegrations(): Promise<void> {
-    const reg = this.requireClients()
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
+  private reconciler(): VeluxReconciler {
+    this.integrationReconciler ??= new VeluxReconciler({
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      clients: {
+        list: () => this.requireClients().list(),
+        remove: async (id) => {
+          await this.requireClients().remove(id)
+        },
+      },
+      listIntegrations: () => this.ctx.api.integrations.list.query(),
+      applySettings: async (integration) => {
+        const connection = connectionFromSettings(
+          await this.ctx.api.integrations.getSettings.query({
             id: integration.id,
-          })
-          const connection = connectionFromSettings(settings)
-          if (!connection) {
-            this.ctx.logger.warn('Velux reconcile: host or password missing, no session opened', {
-              tags: { integrationId: integration.id },
-            })
-            continue
-          }
-          await reg.upsert(integration.id, integration.name, connection)
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('Velux reconcile: settings read failed', {
-            tags: { integrationId: integration.id },
-            meta: { error: errMsg(err) },
-          })
-        }
-      }
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      for (const integrationId of vanished) {
-        await this.cascadeRemoveDevicesForIntegration(integrationId)
-      }
-    } catch (err) {
-      this.ctx.logger.warn('Velux integration reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
+          }),
+        )
+        if (!connection) return false
+        await this.requireClients().upsert(integration.id, integration.name, connection)
+        return true
+      },
+      removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+    })
+    return this.integrationReconciler
   }
 
+  /** Upsert one client per enabled integration; never removes a device (D49). */
+  private async reconcileIntegrations(): Promise<void> {
+    await this.reconciler().reconcile()
+  }
+
+  /** Lifecycle events: only an explicit Deleted/Disabled naming an integration removes devices. */
   private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrations()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
+    const on =
+      (kind: IntegrationLifecycleKind) =>
+      (event: SystemEvent): void => {
+        const addonId = event.data['addonId']
+        if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+        const integrationId = event.data['integrationId']
+        void this.reconciler().onLifecycle(
+          kind,
+          typeof integrationId === 'string' ? integrationId : null,
+        )
+      }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 
-  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<void> {
+  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    if (!reg || !devices) return
-    await cascadeRemoveDevicesForIntegration({
+    if (!reg || !devices) return 0
+    return await cascadeRemoveDevicesForIntegration({
       reg,
       devices,
       addonId: this.addonId,
