@@ -17,6 +17,7 @@ import {
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
+  collectOwnerIntegrationIds,
 } from '@camstack/types'
 import { VeluxReconciler, type IntegrationLifecycleKind } from './velux-reconciler.js'
 import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
@@ -128,6 +129,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.integrationReconciler?.dispose()
     this.integrationReconciler = null
     setKlfLibraryLogSink(null)
     await super.onShutdown()
@@ -245,6 +247,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
         return true
       },
       removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+      ownerIntegrationIds: () => this.ownerIntegrationIds(),
     })
     return this.integrationReconciler
   }
@@ -270,6 +273,22 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
+  }
+
+  /** The integrations that own devices here, for the orphan sweep. */
+  private async ownerIntegrationIds(): Promise<readonly string[]> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return []
+    return await collectOwnerIntegrationIds({
+      reg,
+      devices,
+      addonId: this.addonId,
+      ownerOf: (cfg) => {
+        const owner = cfg['integrationId']
+        return cfg['system'] === 'velux' && typeof owner === 'string' ? owner : null
+      },
+    })
   }
 
   private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {

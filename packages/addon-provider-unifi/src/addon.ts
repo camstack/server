@@ -11,8 +11,9 @@ import {
   type IDeviceAdoptionProvider,
   type ProviderRegistration,
   type SystemEvent,
+  collectOwnerIntegrationIds,
 } from '@camstack/types'
-import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
+import { buildConnectionFormSchema, connectionFromSettings, UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
@@ -87,6 +88,7 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
       this.ctx.logger.warn('UniFi shutdown error', { meta: { error: errMsg(err) } })
     }
     this.clients = null
+    this.integrationReconciler?.dispose()
     this.integrationReconciler = null
     unifiControllers.clear()
     await super.onShutdown()
@@ -131,6 +133,7 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
         return true
       },
       removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+      ownerIntegrationIds: () => this.ownerIntegrationIds(),
     })
     return this.integrationReconciler
   }
@@ -155,6 +158,22 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
+  }
+
+  /** The integrations that own devices here, for the orphan sweep. */
+  private async ownerIntegrationIds(): Promise<readonly string[]> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return []
+    return await collectOwnerIntegrationIds({
+      reg,
+      devices,
+      addonId: this.addonId,
+      ownerOf: (cfg) => {
+        const owner = cfg['integrationId']
+        return cfg['system'] === UNIFI_SYSTEM && typeof owner === 'string' ? owner : null
+      },
+    })
   }
 
   private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {

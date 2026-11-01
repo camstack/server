@@ -85,3 +85,62 @@ describe('Enpal reconcile never removes devices on an unanswered read', () => {
     expect(h.live.has('int-b')).toBe(true)
   })
 })
+
+describe('Enpal orphan sweep — an integration deleted while the addon was down', () => {
+  function sweepHarness() {
+    let t = 0
+    const removed: string[] = []
+    const reconciler = new EnpalReconciler({
+      addonId: ADDON,
+      logger,
+      clients: { list: () => [], remove: async () => undefined },
+      listIntegrations: async () => [B],
+      applySettings: async () => true,
+      removeDevices: async (id) => {
+        removed.push(id)
+        return 1
+      },
+      ownerIntegrationIds: async () => ['int-a', 'int-b'],
+      sweepOptions: { minIntervalMs: 60_000, now: () => t },
+    })
+    return { reconciler, removed, advance: (ms: number) => void (t += ms) }
+  }
+
+  it('removes the orphan only on a second answered read, never the listed one', async () => {
+    const h = sweepHarness()
+    await h.reconciler.reconcile()
+    expect(h.removed).toEqual([])
+    h.advance(61_000)
+    await h.reconciler.reconcile()
+    expect(h.removed).toEqual(['int-a'])
+    h.reconciler.dispose()
+  })
+
+  it('a failed list in between neither removes nor resets the first sighting', async () => {
+    let fail = false
+    let t = 0
+    const removed: string[] = []
+    const reconciler = new EnpalReconciler({
+      addonId: ADDON,
+      logger,
+      clients: { list: () => [], remove: async () => undefined },
+      listIntegrations: async () => {
+        if (fail) throw new Error('down')
+        return [B]
+      },
+      applySettings: async () => true,
+      removeDevices: async (id) => (removed.push(id), 1),
+      ownerIntegrationIds: async () => ['int-a'],
+      sweepOptions: { now: () => t },
+    })
+    await reconciler.reconcile()
+    fail = true
+    t = 120_000
+    await reconciler.reconcile()
+    expect(removed).toEqual([])
+    fail = false
+    await reconciler.reconcile()
+    expect(removed).toEqual(['int-a'])
+    reconciler.dispose()
+  })
+})

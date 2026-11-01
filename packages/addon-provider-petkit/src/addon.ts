@@ -14,6 +14,7 @@ import {
   type IDeviceAdoptionProvider,
   type ProviderRegistration,
   type SystemEvent,
+  collectOwnerIntegrationIds,
 } from '@camstack/types'
 import { PetkitReconciler, type IntegrationLifecycleKind } from './petkit-reconciler.js'
 import {
@@ -118,6 +119,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.integrationReconciler?.dispose()
     this.integrationReconciler = null
     petkitSession.unbind()
     await super.onShutdown()
@@ -163,6 +165,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
         return true
       },
       removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+      ownerIntegrationIds: () => this.ownerIntegrationIds(),
     })
     return this.integrationReconciler
   }
@@ -188,6 +191,22 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
+  }
+
+  /** The integrations that own devices here, for the orphan sweep. */
+  private async ownerIntegrationIds(): Promise<readonly string[]> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return []
+    return await collectOwnerIntegrationIds({
+      reg,
+      devices,
+      addonId: this.addonId,
+      ownerOf: (cfg) => {
+        const owner = cfg['integrationId']
+        return cfg['system'] === 'petkit' && typeof owner === 'string' ? owner : null
+      },
+    })
   }
 
   /** Remove every adopted PetKit device belonging to a vanished integration. */

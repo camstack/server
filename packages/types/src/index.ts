@@ -2182,6 +2182,15 @@ export {
 export { cosineSimilarity } from './utils/cosine-similarity.js'
 export { ElementConfigStore } from './utils/element-config-store.js'
 export { errMsg } from './utils/err-msg.js'
+export {
+  collectOwnerIntegrationIds,
+  ORPHAN_SWEEP_MIN_INTERVAL_MS,
+  OrphanIntegrationSweep,
+  type OrphanIntegrationSweepOptions,
+  type OrphanSweepInput,
+  type OrphanSweepResult,
+  type OwnerIdsInput,
+} from './utils/orphan-integration-sweep.js'
 export { hfModelUrl } from './utils/hf-url.js'
 // Utils
 export {

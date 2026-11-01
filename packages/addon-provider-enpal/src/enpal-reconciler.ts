@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, OrphanIntegrationSweep, type IScopedLogger } from '@camstack/types'
 
 export interface ReconcilerIntegration {
   readonly id: string
@@ -21,6 +21,10 @@ export interface EnpalReconcilerDeps {
   readonly applySettings: (integration: ReconcilerIntegration) => Promise<boolean>
   /** Remove the Container and Gateway devices of an integration (children follow their Container). */
   readonly removeDevices: (integrationId: string) => Promise<number>
+  /** Integration ids that own devices here; absent = no orphan sweep (two concordant reads, see OrphanIntegrationSweep). */
+  readonly ownerIntegrationIds?: () => Promise<readonly string[]>
+  /** Test seam for the sweep's clock and interval. */
+  readonly sweepOptions?: { readonly minIntervalMs?: number; readonly now?: () => number }
 }
 
 export type IntegrationLifecycleKind = 'enabled' | 'disabled' | 'deleted'
@@ -32,9 +36,12 @@ export type IntegrationLifecycleKind = 'enabled' | 'disabled' | 'deleted'
  */
 export class EnpalReconciler {
   readonly #deps: EnpalReconcilerDeps
+  readonly #sweep: OrphanIntegrationSweep
+  #rerun: ReturnType<typeof setTimeout> | null = null
 
   constructor(deps: EnpalReconcilerDeps) {
     this.#deps = deps
+    this.#sweep = new OrphanIntegrationSweep({ logger: deps.logger, ...deps.sweepOptions })
   }
 
   /** Upsert a client per usable enabled integration; drop the CLIENT (never devices) of one the list answered is gone. */
@@ -66,6 +73,38 @@ export class EnpalReconciler {
     const enabledIds = new Set(enabled.map((i) => i.id))
     for (const id of clients.list()) {
       if (!enabledIds.has(id)) await clients.remove(id)
+    }
+    await this.#sweepOrphans(all.map((i) => i.id))
+  }
+
+  /** Stop the scheduled second read (addon stop). */
+  dispose(): void {
+    if (this.#rerun !== null) clearTimeout(this.#rerun)
+    this.#rerun = null
+  }
+
+  /**
+   * An integration deleted while this addon was down emits nothing it sees: its id owns devices
+   * yet is absent from the ANSWERED list. Removal needs a second answered read later, so one
+   * re-run is scheduled when a suspect appears (bounded: one timer, no retry loop).
+   */
+  async #sweepOrphans(listedIds: readonly string[]): Promise<void> {
+    const { ownerIntegrationIds, removeDevices, logger } = this.#deps
+    if (ownerIntegrationIds === undefined) return
+    try {
+      const ownerIds = await ownerIntegrationIds()
+      const result = await this.#sweep.sweep({ ownerIds, listedIds, removeDevices })
+      if (result.newSuspects > 0 && this.#rerun === null) {
+        this.#rerun = setTimeout(() => {
+          this.#rerun = null
+          void this.reconcile()
+        }, this.#sweep.minIntervalMs + 1_000)
+        this.#rerun.unref()
+      }
+    } catch (err) {
+      logger.warn('Orphan integration sweep failed — devices left as they are', {
+        meta: { error: errMsg(err) },
+      })
     }
   }
 

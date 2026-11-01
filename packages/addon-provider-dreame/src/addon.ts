@@ -15,6 +15,7 @@ import {
   type ProviderRegistration,
   type SystemEvent,
   userError,
+  collectOwnerIntegrationIds,
 } from '@camstack/types'
 import { DreameReconciler, type IntegrationLifecycleKind } from './dreame-reconciler.js'
 import { buildConnectionFormSchema, connectionFromSettings, toNodreameOptions } from './config.js'
@@ -137,6 +138,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.integrationReconciler?.dispose()
     this.integrationReconciler = null
     dreameSession.unbind()
     await super.onShutdown()
@@ -228,6 +230,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
         return true
       },
       removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+      ownerIntegrationIds: () => this.ownerIntegrationIds(),
     })
     return this.integrationReconciler
   }
@@ -253,6 +256,22 @@ export class DreameProviderAddon extends BaseDeviceProvider {
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
+  }
+
+  /** The integrations that own devices here, for the orphan sweep. */
+  private async ownerIntegrationIds(): Promise<readonly string[]> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return []
+    return await collectOwnerIntegrationIds({
+      reg,
+      devices,
+      addonId: this.addonId,
+      ownerOf: (cfg) => {
+        const owner = cfg['brokerId']
+        return cfg['system'] === 'dreame' && typeof owner === 'string' ? owner : null
+      },
+    })
   }
 
   private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {

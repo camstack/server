@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An integration deleted while its provider was down now has its orphan devices removed after two concordant reads of the integration list
+
 ## [0.2.152] - 2026-11-01
 
 ### Changed
