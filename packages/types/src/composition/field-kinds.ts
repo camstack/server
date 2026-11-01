@@ -77,7 +77,10 @@ function readKinds(read: CompositionFieldRead, lookupCap: CapabilityLookup): Kin
     }
   }
   const base: ExpressionValueKind = field.kind === 'enum' ? 'string' : field.kind
-  return { ok: true, kinds: new Set<ExpressionValueKind>(field.nullable ? [base, 'null'] : [base]) }
+  return {
+    ok: true,
+    kinds: new Set<ExpressionValueKind>(field.nullable ? [base, 'null'] : [base]),
+  }
 }
 
 export function sourceKinds(
@@ -86,7 +89,11 @@ export function sourceKinds(
 ): KindsResult {
   if (source.kind === 'from') return readKinds(source, lookupCap)
   if (source.kind === 'code') {
-    return { ok: false, code: 'reserved-variant', message: 'code fields arrive in slice 4' }
+    return {
+      ok: false,
+      code: 'reserved-variant',
+      message: 'code fields arrive in slice 4',
+    }
   }
   if (source.kind === 'aggregate') return aggregateKinds(source)
   if (source.kind === 'series') return seriesKinds(source)
@@ -225,6 +232,9 @@ export function unavailableFor(
   // The only remaining case is an ADDED derived field.
   if (tf.nullable) return { ok: true, unavailable: 'null' }
   if (tf.enumValues?.includes('unknown') === true) return { ok: true, unavailable: 'unknown' }
+  // An OPTIONAL field: absent IS the capability's honest "unknown" (D393). The
+  // composer leaves the key out of the composed status, never a stale value or 0.
+  if (!tf.required) return { ok: true, unavailable: 'omit' }
   return {
     ok: false,
     problem: problem(

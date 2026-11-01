@@ -16,20 +16,27 @@ import {
 const lookupCap = buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS)
 const HA = 'provider-homeassistant'
 const FEEDER = { addonId: HA, stableId: 'ha:b:dev:8dec' }
-const FOOD = { addonId: HA, stableId: 'ha:b:dev:8dec-binary_sensor.freshelement_3_food_level' }
+const FOOD = {
+  addonId: HA,
+  stableId: 'ha:b:dev:8dec-binary_sensor.freshelement_3_food_level',
+}
 /** An HA container WITH a battery entity: it registers `battery` natively (`ha-container-device.ts:225`). */
 const CAM = { addonId: HA, stableId: 'ha:b:dev:cam1' }
 /** A replaced enum field: EVERY replaced derived field is `unavailable: 'release'`, even one that could say 'unknown' (S1b). */
 const CORRECT_CHARGING = {
   kind: 'expression',
   expr: 'c == "none" ? "unknown" : c',
-  bindings: { c: { kind: 'from', source: CAM, cap: 'battery', fieldPath: 'charging' } },
+  bindings: {
+    c: { kind: 'from', source: CAM, cap: 'battery', fieldPath: 'charging' },
+  },
 } as const
 /** The "Invert state" replace case: a non-nullable boolean → `unavailable: 'release'` (S1b). */
 const INVERT_ON = {
   kind: 'expression',
   expr: '!on',
-  bindings: { on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' } },
+  bindings: {
+    on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' },
+  },
 } as const
 
 const DESCRIBED_SOURCES: readonly (readonly [string, CompositionSourceDescription])[] = [
@@ -78,7 +85,11 @@ describe('per-feature enablement (D670)', () => {
               cap: 'binary',
               fieldPath: 'lastChangedAt',
             },
-            pressCountSinceStart: { kind: 'expression', expr: '0', bindings: {} },
+            pressCountSinceStart: {
+              kind: 'expression',
+              expr: '0',
+              bindings: {},
+            },
           },
         },
       ],
@@ -167,7 +178,13 @@ describe('existing targets (D663, D944)', () => {
   it('a bound native cap is refused by name — an add and a new device still plan (D944)', () => {
     const native = CompositionSchema.parse({
       target: { kind: 'existing', device: CAM },
-      features: [{ kind: 'fields', cap: 'battery', fields: { charging: CORRECT_CHARGING } }],
+      features: [
+        {
+          kind: 'fields',
+          cap: 'battery',
+          fields: { charging: CORRECT_CHARGING },
+        },
+      ],
     })
     const refused = validateComposition(native, ctx(found({ battery: HA }), CAM))
     expect(refused.features).toEqual([])
@@ -196,7 +213,11 @@ describe('existing targets (D663, D944)', () => {
     expect(addPlan.features).toEqual([{ featureIndex: 0, cap: 'battery', mode: 'add' }])
 
     const built = CompositionSchema.parse({
-      target: { kind: 'new', type: DeviceType.Sensor, role: 'temperature-sensor' },
+      target: {
+        kind: 'new',
+        type: DeviceType.Sensor,
+        role: 'temperature-sensor',
+      },
       features: [
         {
           kind: 'fields',
@@ -218,7 +239,13 @@ describe('existing targets (D663, D944)', () => {
   it('refusing a native override does not report a cycle', () => {
     const c = CompositionSchema.parse({
       target: { kind: 'existing', device: CAM },
-      features: [{ kind: 'fields', cap: 'battery', fields: { charging: CORRECT_CHARGING } }],
+      features: [
+        {
+          kind: 'fields',
+          cap: 'battery',
+          fields: { charging: CORRECT_CHARGING },
+        },
+      ],
     })
     const codes = validateComposition(c, ctx(found({ battery: HA }), CAM)).problems.map(
       (p) => p.code,
@@ -259,7 +286,14 @@ describe('existing targets (D663, D944)', () => {
     const feature = {
       kind: 'fields',
       cap: 'battery',
-      fields: { sleeping: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' } },
+      fields: {
+        sleeping: {
+          kind: 'from',
+          source: FOOD,
+          cap: 'binary',
+          fieldPath: 'on',
+        },
+      },
     }
     const replace = validateComposition(
       CompositionSchema.parse({
@@ -359,12 +393,16 @@ describe('existing targets (D663, D944)', () => {
       level: {
         kind: 'expression',
         expr: 'on ? 100 : null',
-        bindings: { on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' } },
+        bindings: {
+          on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' },
+        },
       },
       charging: {
         kind: 'expression',
         expr: 'on ? "dc" : "unknown"',
-        bindings: { on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' } },
+        bindings: {
+          on: { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' },
+        },
       },
     }
     const added = validateComposition(
@@ -536,8 +574,17 @@ describe('existing targets (D663, D944)', () => {
           kind: 'fields',
           cap: 'doorbell',
           fields: {
-            lastPressedAt: { kind: 'from', source: CAM, cap: 'binary', fieldPath: 'lastChangedAt' },
-            pressCountSinceStart: { kind: 'expression', expr: '0', bindings: {} },
+            lastPressedAt: {
+              kind: 'from',
+              source: CAM,
+              cap: 'binary',
+              fieldPath: 'lastChangedAt',
+            },
+            pressCountSinceStart: {
+              kind: 'expression',
+              expr: '0',
+              bindings: {},
+            },
           },
         },
       ],
@@ -559,7 +606,12 @@ describe('existing targets (D663, D944)', () => {
               kind: 'expression',
               expr: 't > 0 ? 50 : null',
               bindings: {
-                t: { kind: 'from', source: FEEDER, cap: 'battery', fieldPath: 'lastUpdated' },
+                t: {
+                  kind: 'from',
+                  source: FEEDER,
+                  cap: 'battery',
+                  fieldPath: 'lastUpdated',
+                },
               },
             },
             charging: { kind: 'expression', expr: '"unknown"', bindings: {} },
@@ -584,7 +636,12 @@ describe('existing targets (D663, D944)', () => {
   })
 
   describe('item leaves follow the same per-mode unavailable mapping (rule 3)', () => {
-    const on = { kind: 'from', source: FOOD, cap: 'binary', fieldPath: 'on' } as const
+    const on = {
+      kind: 'from',
+      source: FOOD,
+      cap: 'binary',
+      fieldPath: 'on',
+    } as const
     const consumables = (itemFields: Record<string, unknown>) =>
       CompositionSchema.parse({
         target: { kind: 'existing', device: FEEDER },
@@ -601,8 +658,16 @@ describe('existing targets (D663, D944)', () => {
         ],
       })
     const nullableLeaves = {
-      level: { kind: 'expression', expr: 'o ? 100 : null', bindings: { o: on } },
-      status: { kind: 'expression', expr: 'o ? "ok" : "replace"', bindings: { o: on } },
+      level: {
+        kind: 'expression',
+        expr: 'o ? 100 : null',
+        bindings: { o: on },
+      },
+      status: {
+        kind: 'expression',
+        expr: 'o ? "ok" : "replace"',
+        bindings: { o: on },
+      },
     }
     const unit = {
       'remaining.kind': {
@@ -636,5 +701,46 @@ describe('existing targets (D663, D944)', () => {
       expect(v.features).toEqual([])
       expect(v.problems.map((p) => p.code)).toEqual(['native-capability-replace'])
     })
+  })
+})
+
+describe('an ADDED capability with OPTIONAL fields (D944, D951)', () => {
+  const PLUG = { addonId: 'zigbee', stableId: 'plug-1' }
+  const meter = (fields: Record<string, unknown>) =>
+    CompositionSchema.parse({
+      target: { kind: 'existing', device: FEEDER },
+      features: [{ kind: 'fields', cap: 'power-meter', fields }],
+    })
+  const from = (fieldPath: string) => ({
+    kind: 'from',
+    source: PLUG,
+    cap: 'power-meter',
+    fieldPath,
+  })
+
+  it('power and energy read from a source are accepted and omitted when the source is lost', () => {
+    const v = validateComposition(
+      meter({
+        power: from('power'),
+        energy: from('energy'),
+        lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+      }),
+      {
+        ...ctx(found({}, DeviceType.Dishwasher)),
+        sources: new Map([
+          [
+            `${PLUG.addonId}/${PLUG.stableId}`,
+            { kind: 'found', deviceId: 60, caps: new Set(['power-meter']) },
+          ],
+        ]),
+      },
+    )
+    expect(v.problems).toEqual([])
+    expect(
+      v.fields.filter((f) => f.path !== 'lastFetchedAt').map((f) => [f.path, f.unavailable]),
+    ).toEqual([
+      ['power', 'omit'],
+      ['energy', 'omit'],
+    ])
   })
 })

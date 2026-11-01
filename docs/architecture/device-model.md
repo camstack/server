@@ -539,7 +539,8 @@ runner (a group of one) for every declarative composition. Existing devices are 
   the native value shows, the block is `degraded` naming source and field, and
   the field is re-claimed when the source returns (one authority at a time,
   D393). An ADDED field has no native to hand back to: it says `null` /
-  `'unknown'`. One composition per existing device, by block id; its name
+  `'unknown'`, or — for an OPTIONAL field such as `power-meter.power` — leaves
+  the key out (never a stale value, never 0). One composition per existing device, by block id; its name
   (`customize:<addonId>/<stableId>`) is derived by the server and never shown.
 - **An added cap is GRAFTED** onto the foreign device as a method-serving
   native (`DeviceContext.unregisterNativeCap` takes it back). A native always

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Power and energy can now be added to a device that has no native power meter (the optional reading is simply left out while its source is unavailable)
+
 ## [1.2.468] - 2026-11-01
 
 ### Changed

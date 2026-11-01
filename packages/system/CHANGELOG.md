@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The crash breaker retries a runner it parked as failed once when the package version it hosts changes (one retry per new version)
 - A washer or dryer helper with a power plug is restartable through the power-source link of its composed device
 - local-auth answers userManagement.getAdminBootstrapStatus from the stored password hashes
+- Customizing a device with an optional reading (power, energy) no longer fails validation; the composed reading is omitted when its source is lost
 
 ### Fixed
 
