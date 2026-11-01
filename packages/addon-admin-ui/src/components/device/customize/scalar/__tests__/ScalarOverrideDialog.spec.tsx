@@ -119,7 +119,7 @@ describe('ScalarOverrideDialog', () => {
         targetId="running"
         host={HOST}
         target={DISHWASHER}
-        apply="replace"
+        apply="add"
         seed={null}
         canSave
         onClose={() => undefined}

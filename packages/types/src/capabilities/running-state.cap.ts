@@ -57,6 +57,9 @@ const RUNNING_CUSTOMIZE_DEVICE_TYPES = [
 /** Generic Customize target for the running boolean (D936). */
 const runningCustomize = {
   version: 1,
+  // The assigned source may REPLACE a native `running` (D990): the same target
+  // adds it where the device has none. The target's companions ride with it.
+  overridable: [{ path: 'running', by: 'running' }],
   targets: [
     {
       id: 'running',
@@ -89,7 +92,8 @@ const runningCustomize = {
       ],
       companions: [
         { kind: 'constant', path: 'source', value: 'assigned', when: 'always' },
-        { kind: 'constant', path: 'phase', value: null, when: 'always' },
+        // On a replace the NATIVE phase stays: the claimed slice merges over the native one.
+        { kind: 'constant', path: 'phase', value: null, when: 'add' },
         { kind: 'clock', path: 'lastFetchedAt', when: 'always' },
         { kind: 'transition-time', path: 'since', sourceChangedAt: 'prefer' },
       ],

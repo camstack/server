@@ -447,7 +447,17 @@ const customizeCatalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
  * the catalog. No items, no commands, no field outside the list; no cap is named.
  */
 function overridesOnlyDeclared(feature: CompositionFieldsFeature): boolean {
-  const allowed = new Set((customizeCatalog[feature.cap]?.overridable ?? []).map((o) => o.path))
+  const entry = customizeCatalog[feature.cap]
+  const allowed = new Set(
+    (entry?.overridable ?? []).flatMap((o) => {
+      const target = entry?.targets.find((t) => t.id === o.by && t.path === o.path)
+      // A target's replace-time companions (source, clock, transition time) ride with its field.
+      const companions = (target?.companions ?? []).filter(
+        (c) => c.kind === 'transition-time' || c.when === 'always',
+      )
+      return [o.path, ...companions.map((c) => c.path)]
+    }),
+  )
   const paths = Object.keys(feature.fields)
   return (
     paths.length > 0 &&

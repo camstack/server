@@ -53,17 +53,29 @@ describe('customize apply is add, or a replace the cap declares (D944, D984)', (
     expect(wrongTarget.length).toBe(2)
   })
 
-  it('refuses an allow-list entry that names no replace target', () => {
+  it('accepts an add target the cap lists as overridable (D990)', () => {
+    expect(
+      customizeApplyViolations([
+        {
+          capName: 'running-state',
+          overridable: [{ path: 'running', by: 'running' }],
+          targets: [{ id: 'running', apply: 'add', path: 'running' }],
+        },
+      ]),
+    ).toEqual([])
+  })
+
+  it('refuses an allow-list entry that names no target on that path', () => {
     expect(
       customizeApplyViolations([
         {
           capName: 'battery',
           overridable: [{ path: 'level', by: 'percentage' }],
-          targets: [{ id: 'percentage', apply: 'add', path: 'level' }],
+          targets: [{ id: 'percentage', apply: 'add', path: 'other' }],
         },
       ]),
     ).toEqual([
-      'battery overridable level by percentage names no replace target on that path (D984)',
+      'battery overridable level by percentage names no add or replace target on that path (D984, D990)',
     ])
   })
 })

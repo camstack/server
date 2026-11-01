@@ -79,7 +79,25 @@ describe('assignmentAvailability — four answered states (D315, D676 ruling 13)
       assignmentAvailability(DOORBELL, { ...CAMERA, nativeCaps: known(new Set(['doorbell'])) }),
     ).toEqual({ kind: 'absent' })
   })
-  it('running-state is offered only where the device has none of its own', () => {
+  it('running-state is offered as a REPLACE where the device has its own, because the cap lists it overridable (D990)', () => {
+    expect(
+      assignmentAvailability(
+        { ...RUNNING, overridable: true },
+        {
+          ...CAMERA,
+          composable: known(new Set(['running-state'])),
+          nativeCaps: known(new Set(['running-state'])),
+        },
+      ),
+    ).toEqual({ kind: 'present', mode: 'replace' })
+    expect(
+      assignmentAvailability(
+        { ...RUNNING, overridable: true },
+        { ...CAMERA, composable: known(new Set(['running-state'])) },
+      ),
+    ).toEqual({ kind: 'present', mode: 'add' })
+  })
+  it('running-state is offered only where the device has none of its own, unless declared overridable', () => {
     const composableRunning: AssignmentFacts = {
       ...CAMERA,
       composable: known(new Set(['running-state'])),

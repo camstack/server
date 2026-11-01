@@ -4,12 +4,20 @@
  * `unknown`, never absent (D315). The catalog target decides the rule: a
  * camera-sensors span follows the sensor read, a keyed array with read-only
  * native items stays addable, a declared `replace` (D984) needs the device's own
- * cap, and every other extension is absent when the device already serves the
+ * cap, an add target the cap lists as overridable (D990) adds where the cap is missing and replaces
+ * where it is native, and every other extension is absent when the device already serves the
  * cap (D944).
  * Whether a cap is the device's OWN is the validator's rule over `getBindings`
  * (G8): a non-blank owner that is not the composer.
  */
-import { COMPOSER_ADDON_ID, DeviceType, type CustomizeCatalogTarget } from '@camstack/types'
+import {
+  CAP_CUSTOMIZE_CATALOG,
+  COMPOSER_ADDON_ID,
+  DeviceType,
+  type CustomizeCatalog,
+  type CustomizeCatalogTarget,
+} from '@camstack/types'
+
 import type { Known } from './known'
 import i18n from '../../../i18n/index'
 import type { CameraSensorsPresence } from './use-camera-sensors-presence'
@@ -45,7 +53,11 @@ export interface CustomizeOffer {
   readonly apply: CustomizeCatalogTarget['apply']
   readonly authority: 'composition-claim' | 'camera-sensors'
   readonly nativeItemsReadOnly: boolean
+  /** The cap lists this ADD target as the one that may replace its native field (D990). */
+  readonly overridable?: boolean
 }
+
+const catalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
 
 export function offerFromCatalog(cap: string, target: CustomizeCatalogTarget): CustomizeOffer {
   return {
@@ -53,6 +65,7 @@ export function offerFromCatalog(cap: string, target: CustomizeCatalogTarget): C
     apply: target.apply,
     authority: target.applyAuthority?.kind ?? 'composition-claim',
     nativeItemsReadOnly: target.nativeItems === 'read-only',
+    overridable: (catalog[cap]?.overridable ?? []).some((row) => row.by === target.id),
   }
 }
 
@@ -100,5 +113,9 @@ export function assignmentAvailability(
   // needs that cap and is absent without it; the composable list is for caps the device lacks.
   if (offer.apply === 'replace')
     return native.has(offer.cap) ? { kind: 'present', mode: 'replace' } : { kind: 'absent' }
-  return native.has(offer.cap) ? { kind: 'absent' } : addable(facts, offer.cap)
+  if (native.has(offer.cap)) {
+    // An add target the cap also lists as overridable (D990) replaces the native field instead.
+    return offer.overridable === true ? { kind: 'present', mode: 'replace' } : { kind: 'absent' }
+  }
+  return addable(facts, offer.cap)
 }

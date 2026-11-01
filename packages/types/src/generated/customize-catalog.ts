@@ -650,7 +650,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
             kind: 'constant',
             path: 'phase',
             value: null,
-            when: 'always',
+            when: 'add',
           },
           {
             kind: 'clock',
@@ -663,6 +663,12 @@ export const CAP_CUSTOMIZE_CATALOG = {
             sourceChangedAt: 'prefer',
           },
         ],
+      },
+    ],
+    overridable: [
+      {
+        path: 'running',
+        by: 'running',
       },
     ],
   },

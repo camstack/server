@@ -38,9 +38,14 @@ function replaceViolation(cap: CustomizeApplyCap, target: CustomizeApplyTarget):
 function dangling(cap: CustomizeApplyCap): readonly string[] {
   return (cap.overridable ?? []).flatMap((row) => {
     const target = cap.targets.find((candidate) => candidate.id === row.by)
-    if (target !== undefined && target.apply === 'replace' && target.path === row.path) return []
+    if (
+      target !== undefined &&
+      target.path === row.path &&
+      ['add', 'replace'].includes(target.apply)
+    )
+      return []
     return [
-      `${cap.capName} overridable ${row.path} by ${row.by} names no replace target on that path (D984)`,
+      `${cap.capName} overridable ${row.path} by ${row.by} names no add or replace target on that path (D984, D990)`,
     ]
   })
 }

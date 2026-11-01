@@ -224,7 +224,7 @@ function compileCompanions(
   const fields = included.reduce<CustomizeRoundTrip<Record<string, CompositionFieldSource>>>(
     (acc, companion) => {
       if (!acc.ok) return acc
-      const built = companionField(input, path, companion)
+      const built = companionField(input, path, companion, value)
       if (!built.ok) return { ok: false, reason: built.reason }
       return { ok: true, value: { ...acc.value, [companion.path]: built.value } }
     },
@@ -242,6 +242,7 @@ function companionField(
   input: ScalarCompileInput,
   path: string,
   companion: CustomizeCompanion,
+  value: CompositionFieldSource,
 ): CustomizeRoundTrip<CompositionFieldSource> {
   if (companion.kind === 'constant') {
     const expr = constantExpr(companion.value)
@@ -249,13 +250,14 @@ function companionField(
     return { ok: true, value: literal(expr) }
   }
   if (companion.kind === 'clock') return { ok: true, value: literal('now') }
-  return transitionField(input, path, companion.sourceChangedAt)
+  return transitionField(input, path, companion.sourceChangedAt, value)
 }
 
 function transitionField(
   input: ScalarCompileInput,
   path: string,
   sourceChangedAt: 'prefer' | 'ignore',
+  value: CompositionFieldSource,
 ): CustomizeRoundTrip<CompositionFieldSource> {
   if (
     sourceChangedAt === 'prefer' &&
@@ -268,11 +270,22 @@ function transitionField(
       value: fromRead(refOf(input.draft), input.draft.source.cap, input.changedAtField),
     }
   }
+  // A replaced field reads back NATIVE from itself, so its stamp is taken on the
+  // assigned value (D990) — never on a read of the field it replaces.
+  if (input.apply === 'replace') return stampOfValue(value)
   if (!isIdentifier(path)) return fail('transform')
   const bindings: CompositionExpressionSource['bindings'] = {
     [path]: fromRead(input.device, input.draft.cap, path),
   }
   return { ok: true, value: expression(`latchedAt(${path})`, bindings) }
+}
+
+function stampOfValue(value: CompositionFieldSource): CustomizeRoundTrip<CompositionFieldSource> {
+  if (value.kind === 'expression') {
+    return { ok: true, value: expression(`latchedAt(${value.expr})`, value.bindings) }
+  }
+  if (value.kind === 'from') return { ok: true, value: expression('latchedAt(x)', { x: value }) }
+  return fail('transform')
 }
 
 function refOf(draft: ScalarOverrideDraft): CompositionSourceRef {

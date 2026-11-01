@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An appliance helper can name the smart plug that powers it, so a forced restart can cut and restore that plug
+- Customize can now replace a device's native running state with an assigned source such as a plug's power
 
 ## [1.2.464] - 2026-11-01
 
