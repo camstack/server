@@ -136,7 +136,7 @@ export interface SystemProxy {
   readonly toast: Pick<InferProvider<typeof toastCapability>, 'onToast'>
   readonly training: Pick<InferProvider<typeof trainingCapability>, 'listBaseModels' | 'planJob' | 'startJob' | 'startJobBatch' | 'listJobs' | 'getJob' | 'cancelJob' | 'getJobResult' | 'listCanaryTargets' | 'registerResult' | 'canaryResult' | 'rollbackCanary' | 'discardResult'>
   readonly turnProvider: Pick<InferProvider<typeof turnProviderCapability>, 'getTurnServers'>
-  readonly userManagement: Pick<InferProvider<typeof userManagementCapability>, 'listUsers' | 'createUser' | 'updateUser' | 'deleteUser' | 'resetPassword' | 'setUserScopes' | 'validateCredentials' | 'setupTotp' | 'confirmTotp' | 'disableTotp' | 'getTotpStatus' | 'migrateRawSecrets' | 'verifyTotp' | 'oauthIssueCode' | 'oauthExchangeCode' | 'oauthRefresh' | 'oauthVerifyAccessToken' | 'listExternalIdentities' | 'findUserByExternalIdentity' | 'unlinkExternalIdentity' | 'listOauthSessions' | 'revokeOauthSession'>
+  readonly userManagement: Pick<InferProvider<typeof userManagementCapability>, 'listUsers' | 'getAdminBootstrapStatus' | 'createUser' | 'updateUser' | 'deleteUser' | 'resetPassword' | 'setUserScopes' | 'validateCredentials' | 'setupTotp' | 'confirmTotp' | 'disableTotp' | 'getTotpStatus' | 'migrateRawSecrets' | 'verifyTotp' | 'oauthIssueCode' | 'oauthExchangeCode' | 'oauthRefresh' | 'oauthVerifyAccessToken' | 'listExternalIdentities' | 'findUserByExternalIdentity' | 'unlinkExternalIdentity' | 'listOauthSessions' | 'revokeOauthSession'>
 }
 
 /**
@@ -1046,6 +1046,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
 
   const userManagementInterface = {
     listUsers: (input?: unknown) => dispatch('userManagement', 'listUsers', 'query', input),
+    getAdminBootstrapStatus: (input?: unknown) => dispatch('userManagement', 'getAdminBootstrapStatus', 'query', input),
     createUser: (input?: unknown) => dispatch('userManagement', 'createUser', 'mutation', input),
     updateUser: (input?: unknown) => dispatch('userManagement', 'updateUser', 'mutation', input),
     deleteUser: (input?: unknown) => dispatch('userManagement', 'deleteUser', 'mutation', input),

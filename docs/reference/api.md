@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**196 capabilities · 1467 methods.**
+**196 capabilities · 1468 methods.**
 
 ## Method index
 
@@ -1391,6 +1391,7 @@
 | `update.getStatus` | query | protected | update (auto) |
 | `update.installUpdate` | mutation | admin | update |
 | `userManagement.listUsers` | query | admin | user-management |
+| `userManagement.getAdminBootstrapStatus` | query | admin | user-management |
 | `userManagement.createUser` | mutation | admin | user-management |
 | `userManagement.updateUser` | mutation | admin | user-management |
 | `userManagement.deleteUser` | mutation | admin | user-management |
@@ -4784,6 +4785,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | listUsers | `userManagement.listUsers` | query | admin | `void` | `UserSummarySchema[]` |
+| getAdminBootstrapStatus | `userManagement.getAdminBootstrapStatus` | query | admin | `void` | `{ defaultPasswordInUse: boolean }` |
 | createUser | `userManagement.createUser` | mutation | admin | `CreateUserInputSchema` | `UserSummarySchema` |
 | updateUser | `userManagement.updateUser` | mutation | admin | `UpdateUserInputSchema` | `{ success: true }` |
 | deleteUser | `userManagement.deleteUser` | mutation | admin | `{ id: string }` | `{ success: true }` |

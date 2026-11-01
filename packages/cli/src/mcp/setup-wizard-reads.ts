@@ -36,6 +36,19 @@ export async function readUsers(client: HubClient): Promise<Read<readonly UserFa
   }
 }
 
+const BootstrapStatusSchema = z.looseObject({ defaultPasswordInUse: z.boolean() })
+
+/** Whether an admin still signs in with the first-boot password; one boolean, nothing else. */
+export async function readDefaultPasswordInUse(client: HubClient): Promise<Read<boolean>> {
+  const read = await readQuery(
+    client,
+    'userManagement.getAdminBootstrapStatus',
+    undefined,
+    BootstrapStatusSchema,
+  )
+  return read.ok ? { ok: true, value: read.value.defaultPasswordInUse } : read
+}
+
 const PasskeyListSchema = z.array(z.looseObject({ credentialId: z.string() }))
 
 /** How many passkeys one user has registered; the credential ids are dropped. */

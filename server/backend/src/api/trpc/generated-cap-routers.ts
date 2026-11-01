@@ -19768,6 +19768,18 @@ export function createCapRouter_userManagement(
         )
         return p.listUsers()
       }),
+    getAdminBootstrapStatus: adminProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(userManagementCapability.methods.getAdminBootstrapStatus.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'user-management',
+          input?.nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        return p.getAdminBootstrapStatus()
+      }),
     createUser: adminProcedure
       .input(userManagementCapability.methods.createUser.input.loose())
       .output(userManagementCapability.methods.createUser.output)

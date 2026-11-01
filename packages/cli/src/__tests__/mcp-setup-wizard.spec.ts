@@ -23,6 +23,7 @@ const HEALTHY: Answers = {
     { id: 'u1', username: 'root', isAdmin: true, totpEnabled: true, passwordHash: 'SECRET-HASH' },
   ],
   'userPasskeys.listPasskeys': [],
+  'userManagement.getAdminBootstrapStatus': { defaultPasswordInUse: false },
   'localNetwork.getAddresses': {
     roles: { publicEndpoint: { resolved: 'https://hub.example.test' } },
   },
@@ -166,6 +167,7 @@ describe('setup_wizard', () => {
 
   it.each([
     ['admin-account', 'userManagement.listUsers'],
+    ['admin-account', 'userManagement.getAdminBootstrapStatus'],
     ['hub-address-remote-access', 'localNetwork.getAddresses', 'networkAccess.getStatus'],
     ['backups', 'backup.listDestinations'],
     ['cameras-and-agents', 'deviceManager.listAll'],
@@ -210,11 +212,32 @@ describe('setup_wizard', () => {
     const adminPaths = [
       'userManagement.listUsers',
       'userPasskeys.listPasskeys',
+      'userManagement.getAdminBootstrapStatus',
       'backup.listDestinations',
       'notificationRules.listRules',
       'nodes.topology',
     ]
     expect(calls.filter((c) => adminPaths.includes(c.path))).toEqual([])
+  })
+
+  it('an admin that still has the default password is missing, even with 2FA', async () => {
+    const { body } = await run(
+      harness({
+        ...HEALTHY,
+        'userManagement.getAdminBootstrapStatus': { defaultPasswordInUse: true },
+      }).ctx,
+    )
+    const s = step(body, 'admin-account')
+    expect(s.status).toBe('missing')
+    expect(s.detail).toContain('default password')
+    expect(body.nextStep?.id).toBe('admin-account')
+  })
+
+  it('an unreadable default-password probe is unknown, never done, never missing', async () => {
+    const { body } = await run(harness(HEALTHY, ['userManagement.getAdminBootstrapStatus']).ctx)
+    const s = step(body, 'admin-account')
+    expect(s.status).toBe('unknown')
+    expect(s.reason).toContain('exploded')
   })
 
   it('reports an admin without 2FA as missing and lists uncovered cameras', async () => {

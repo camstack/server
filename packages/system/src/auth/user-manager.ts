@@ -266,6 +266,29 @@ export class UserManager {
     return { kind: 'seeded', username }
   }
 
+  /**
+   * Whether any admin account still hashes to {@link FIRST_BOOT_ADMIN_PASSWORD}.
+   * Judged from the stored hashes; the answer is one boolean, so neither the
+   * password nor a hash can leave through it.
+   */
+  async adminBootstrapStatus(): Promise<{ readonly defaultPasswordInUse: boolean }> {
+    const admins = (await this.listWithHashes()).filter((u) => u.isAdmin)
+    const matches = await Promise.all(
+      admins.map((u) => this.auth.comparePassword(FIRST_BOOT_ADMIN_PASSWORD, u.passwordHash)),
+    )
+    return { defaultPasswordInUse: matches.some((m) => m) }
+  }
+
+  private async listWithHashes(): Promise<UserRecord[]> {
+    const kind = this.usersKind
+    if (kind !== null) {
+      const rows = await readAllRows(kind)
+      return rows.map((row) => rowToUser(row.id, row.data))
+    }
+    const results = await this.store.query.query({ collection: USERS_COLLECTION })
+    return results.map((r) => parseUser(r.data))
+  }
+
   async hasPassword(username: string, password: string): Promise<boolean> {
     const user = await this.findByUsername(username)
     if (!user) return false

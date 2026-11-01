@@ -349,6 +349,10 @@ export class LocalAuthAddon extends BaseAddon {
           totpEnabled: statuses[i]?.enabled ?? false,
         }))
       },
+      getAdminBootstrapStatus: async () => {
+        if (!this.userManager) throw new Error('User management not available')
+        return this.userManager.adminBootstrapStatus()
+      },
       createUser: async (input) => {
         if (!this.userManager) throw new Error('User management not available')
         const record = await this.userManager.create(input)

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1467 method paths across 196 capabilities.
+ * Coverage: 1468 method paths across 196 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1404,6 +1404,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'userManagement.deleteUser': { capName: "user-management", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'userManagement.disableTotp': { capName: "user-management", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'userManagement.findUserByExternalIdentity': { capName: "user-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'userManagement.getAdminBootstrapStatus': { capName: "user-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'userManagement.getTotpStatus': { capName: "user-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'userManagement.listExternalIdentities': { capName: "user-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'userManagement.listOauthSessions': { capName: "user-management", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

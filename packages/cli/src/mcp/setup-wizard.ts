@@ -16,6 +16,7 @@ import { ADMIN_ONLY_NOTE, readQuery, withHub, type NoSessionResult, type Read } 
 import { TopologySchema } from './ops-status.js'
 import {
   readBackupDestinations,
+  readDefaultPasswordInUse,
   readPasskeyCount,
   readPublicEndpoint,
   readRemoteAccessStatus,
@@ -47,7 +48,6 @@ export interface WizardStep {
 export const PASSKEY_ADMIN_LIMIT = 10
 const UNCOVERED_LIMIT = 10
 const ADMIN_ALERT_KINDS: readonly NcRuleKind[] = ['system', 'device-events', 'alarm', 'mixed']
-const DEFAULT_PASSWORD_REASON = 'default password state: the hub does not expose it'
 
 /** Everything the steps are judged from. `null` counts live inside a failed `Read`. */
 export interface WizardReads {
@@ -56,6 +56,8 @@ export interface WizardReads {
   readonly passkeys: ReadonlyMap<string, number>
   readonly passkeysFailed: number
   readonly passkeysSkipped: number
+  /** Whether an admin still has the first-boot password (D728, D797). */
+  readonly defaultPassword: Read<boolean>
   readonly publicEndpoint: Read<boolean>
   readonly remoteAccess: Read<RemoteAccessFact>
   readonly backups: Read<readonly BackupFact[]>
@@ -84,13 +86,24 @@ function adminStep(reads: WizardReads): WizardStep {
   if (admins.length === 0) {
     return { id, title, status: 'missing', detail: 'no admin account exists', next }
   }
+  if (reads.defaultPassword.ok && reads.defaultPassword.value) {
+    return {
+      id,
+      title,
+      status: 'missing',
+      detail: 'an admin account still has the default password (admin / changeme)',
+      next,
+    }
+  }
   if (protectedAdmins.length > 0) {
+    if (!reads.defaultPassword.ok) {
+      return unknownStep(id, title, reads.defaultPassword.reason, next)
+    }
     return {
       id,
       title,
       status: 'done',
-      detail: `${protectedAdmins.length} of ${admins.length} admin(s) sign in with 2FA or a passkey`,
-      reason: DEFAULT_PASSWORD_REASON,
+      detail: `${protectedAdmins.length} of ${admins.length} admin(s) sign in with 2FA or a passkey; the default password was replaced`,
       next,
     }
   }
@@ -104,7 +117,6 @@ function adminStep(reads: WizardReads): WizardStep {
     title,
     status: 'missing',
     detail: `no admin has 2FA or a passkey${skipped}`,
-    reason: DEFAULT_PASSWORD_REASON,
     next,
   }
 }
@@ -328,6 +340,7 @@ async function gatherReads(connection: HubConnection, ctx: McpContext): Promise<
     cameras,
     targets,
     versions,
+    defaultPassword,
   ] = await Promise.all([
     admin
       ? readUsers(client)
@@ -346,6 +359,9 @@ async function gatherReads(connection: HubConnection, ctx: McpContext): Promise<
     readCameras(client),
     readTargets(client),
     probeVersions(ctx).catch(() => null),
+    admin
+      ? readDefaultPasswordInUse(client)
+      : Promise.resolve(refused<boolean>('userManagement.getAdminBootstrapStatus')),
   ])
   const passkeys = new Map<string, number>()
   let passkeysFailed = 0
@@ -370,6 +386,7 @@ async function gatherReads(connection: HubConnection, ctx: McpContext): Promise<
     passkeys,
     passkeysFailed,
     passkeysSkipped,
+    defaultPassword,
     publicEndpoint,
     remoteAccess,
     backups,

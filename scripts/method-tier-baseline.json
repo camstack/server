@@ -1278,6 +1278,7 @@
   "userManagement.deleteUser": "admin",
   "userManagement.disableTotp": "admin",
   "userManagement.findUserByExternalIdentity": "admin",
+  "userManagement.getAdminBootstrapStatus": "admin",
   "userManagement.getTotpStatus": "admin",
   "userManagement.listExternalIdentities": "admin",
   "userManagement.listOauthSessions": "admin",

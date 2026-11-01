@@ -222,7 +222,7 @@ Singleton or collection providers, addressed without a device.
 | `training` | 13 | — | — | — | — | `training` |
 | `training-provider` | 17 | — | — | — | ✓ | `training-modal` |
 | `turn-provider` | 1 | — | — | — | — | `cloudflare-turn` `static-turn` |
-| `user-management` | 22 | — | — | — | — | `local-auth` |
+| `user-management` | 23 | — | — | — | — | `local-auth` |
 | `user-passkeys` | 10 | — | — | — | ✓ | `auth-webauthn` |
 | `vector-store` | 9 | — | — | — | ✓ | `sqlite-settings` |
 | `viewer-ui` | 2 | — | — | — | ✓ | `pipeline-orchestrator` |

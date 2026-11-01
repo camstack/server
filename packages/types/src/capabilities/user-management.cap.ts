@@ -116,6 +116,14 @@ export const userManagementCapability = {
   mode: 'singleton',
   methods: {
     listUsers: method(z.void(), z.array(UserSummarySchema), { auth: 'admin' }),
+    /**
+     * Read-only: does an admin account still carry the first-boot password
+     * (D728, D797)? One typed boolean; the password and its hash never leave
+     * the hub. Backs the `setup_wizard` admin step.
+     */
+    getAdminBootstrapStatus: method(z.void(), z.object({ defaultPasswordInUse: z.boolean() }), {
+      auth: 'admin',
+    }),
     createUser: method(CreateUserInputSchema, UserSummarySchema, {
       kind: 'mutation',
       auth: 'admin',

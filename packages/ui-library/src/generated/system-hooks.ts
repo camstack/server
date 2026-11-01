@@ -3683,6 +3683,9 @@ export const useUpdateGetStatus: typeof trpc.update.getStatus.useQuery = /*#__PU
 /** Generated alias around `trpc.userManagement.listUsers.useQuery`. */
 export const useUserManagementListUsers: typeof trpc.userManagement.listUsers.useQuery = /*#__PURE__*/ alias(() => trpc.userManagement.listUsers.useQuery)
 
+/** Generated alias around `trpc.userManagement.getAdminBootstrapStatus.useQuery`. */
+export const useUserManagementGetAdminBootstrapStatus: typeof trpc.userManagement.getAdminBootstrapStatus.useQuery = /*#__PURE__*/ alias(() => trpc.userManagement.getAdminBootstrapStatus.useQuery)
+
 /** Generated alias around `trpc.userManagement.createUser.useMutation`. */
 export const useUserManagementCreateUser: typeof trpc.userManagement.createUser.useMutation = /*#__PURE__*/ alias(() => trpc.userManagement.createUser.useMutation)
 
