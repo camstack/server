@@ -103,8 +103,7 @@ jobs:
           - admin-ui-1
           - admin-ui-2
           - admin-ui-3
-          - ui-library-1
-          - ui-library-2
+          - ui-library
           - server-1
           - server-2
           - server-3
@@ -112,7 +111,6 @@ jobs:
           - light-a
           - light-b
           - light-c
-          - light-d
           - static
     steps:
       - name: Checkout code
@@ -239,7 +237,13 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build packages (affected on push/PR, all otherwise)
+      # Why a test shard builds only its own projects (2026-11-01, issue
+      # planning#319): the full affected build cost 80-130 s in EVERY job although a
+      # shard needs the dist of its own project and its dependencies (`test`
+      # dependsOn `^build`). `nx run-many -t build --projects=<shard>` builds
+      # exactly those. `static` keeps the full affected build: the typecheck and
+      # the footprint guard read every package's dist.
+      - name: Build packages (static builds affected or all, a test shard its own projects)
         run: |
           if [ -f "$RUNNER_TEMP/scope.env" ]; then
             # shellcheck disable=SC1091
@@ -247,7 +251,20 @@ jobs:
           else
             TC_DIRS=ALL
           fi
-          if [ -z "$TC_DIRS" ]; then
+          if [ "${{ matrix.shard }}" != "static" ]; then
+            if [ -f "$RUNNER_TEMP/changed-files.txt" ]; then
+              SCOPE_ARGS="--files-from $RUNNER_TEMP/changed-files.txt"
+            else
+              SCOPE_ARGS="--all"
+            fi
+            # shellcheck disable=SC2086
+            SHARD_CSV=$(scripts/ci/test-affected.sh --shard "${{ matrix.shard }}" $SCOPE_ARGS --projects-only)
+            if [ -z "$SHARD_CSV" ]; then
+              echo "this shard tests nothing on this change — nothing to build"
+            else
+              scripts/ci/mem-step.sh build 12000 -- npx nx run-many -t build --projects="$SHARD_CSV" --parallel=3
+            fi
+          elif [ -z "$TC_DIRS" ]; then
             echo "no project affected — nothing to build"
           elif [ "$TC_DIRS" = "ALL" ]; then
             scripts/ci/mem-step.sh build 12000 -- npm run build -- --parallel=3
@@ -281,29 +298,19 @@ jobs:
       # output can change (verify:push does the same): the addons whose own
       # sources moved (`--addons`), or every addon when `packages/types/src`
       # moved (all of them bundle it). The nightly / manual run checks all.
-      - name: Addon dist footprint (D28)
-        if: matrix.shard == 'static'
-        run: |
-          if [ -f "$RUNNER_TEMP/scope.env" ]; then
-            . "$RUNNER_TEMP/scope.env"
-            if [ "$FOOTPRINT_ALL" = "1" ]; then
-              npx tsx scripts/check-addon-dist-footprint.ts
-            elif [ -n "$FOOTPRINT_ADDONS" ]; then
-              npx tsx scripts/check-addon-dist-footprint.ts --addons "$FOOTPRINT_ADDONS"
-            else
-              echo "no addon source and no packages/types/src change — footprint unchanged"
-            fi
-          else
-            npx tsx scripts/check-addon-dist-footprint.ts
-          fi
-        env:
-          NODE_OPTIONS: "--max-old-space-size=2048"
-
+      # (the header above is the footprint guard's; it now runs inside the
+      # typecheck step, because a background process cannot outlive its step)
+      #
       # D3 (docs/design/2026-10-09-ts7-transition-plan.md): typecheck is out of
       # the three UI `build` gates and runs once here on TypeScript 7 (c1,
       # sequential). Peak ≈ admin-ui spec (~3 GB). Local `npm run typecheck`
       # stays tsc 6 until the Checks parity flip.
-      - name: Typecheck (TypeScript 7)
+      #
+      # The footprint guard runs CONCURRENTLY with it (planning#319): `static` was
+      # the critical path of the run (build + footprint 60 s + typecheck 240 s) and
+      # both only read dist. 8 GB + 2 GB heaps fit the 16 GB hosted runner. Both
+      # exit codes are joined: either one red fails the step.
+      - name: Addon dist footprint (D28) and Typecheck (TypeScript 7)
         if: matrix.shard == 'static'
         # A push typechecks the packages it affects (`typecheck-tsgo.ts <dir>…`,
         # the grade against scripts/ci-baseline.json is unchanged and applies to
@@ -311,18 +318,38 @@ jobs:
         # sweep. The nightly / manual run is always the full sweep (237 s).
         run: |
           ARGS=""
+          FOOTPRINT_CMD="npx tsx scripts/check-addon-dist-footprint.ts"
+          TC_RUN=1
           if [ -f "$RUNNER_TEMP/scope.env" ]; then
             . "$RUNNER_TEMP/scope.env"
+            if [ "$FOOTPRINT_ALL" = "1" ]; then
+              :
+            elif [ -n "$FOOTPRINT_ADDONS" ]; then
+              FOOTPRINT_CMD="npx tsx scripts/check-addon-dist-footprint.ts --addons $FOOTPRINT_ADDONS"
+            else
+              FOOTPRINT_CMD="echo no addon source and no packages/types/src change - footprint unchanged"
+            fi
             if [ -z "$TC_DIRS" ]; then
               echo "no project affected — nothing to typecheck"
-              exit 0
+              TC_RUN=0
+            elif [ "$TC_DIRS" != "ALL" ]; then
+              ARGS="$TC_DIRS"
             fi
-            if [ "$TC_DIRS" != "ALL" ]; then ARGS="$TC_DIRS"; fi
           fi
-          # shellcheck disable=SC2086
-          scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts $ARGS
-        env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
+          NODE_OPTIONS="--max-old-space-size=2048" bash -c "$FOOTPRINT_CMD" > "$RUNNER_TEMP/footprint.log" 2>&1 &
+          fp_pid=$!
+          rc=0
+          if [ "$TC_RUN" = "1" ]; then
+            # shellcheck disable=SC2086
+            NODE_OPTIONS="--max-old-space-size=8192" scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts $ARGS || rc=$?
+          fi
+          fprc=0
+          wait "$fp_pid" || fprc=$?
+          echo "::group::Addon dist footprint (D28) output"
+          cat "$RUNNER_TEMP/footprint.log"
+          echo "::endgroup::"
+          [ "$rc" -eq 0 ] || exit "$rc"
+          exit "$fprc"
 
       # The suites that spawn ffmpeg get the binary the PRODUCT runs: the pinned
       # jellyfin-ffmpeg build of `ffmpeg-artifacts.ts`, downloaded by the same

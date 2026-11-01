@@ -24,6 +24,7 @@ MODE=""
 FILES=""
 FILES_FROM=""
 SHARD="all"
+PROJECTS_ONLY=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -42,8 +43,14 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --list-shards)
-      echo "system-1 system-2 pipeline-1 pipeline-2 post-analysis-1 post-analysis-2 post-analysis-3 admin-ui-1 admin-ui-2 admin-ui-3 ui-library-1 ui-library-2 server-1 server-2 server-3 core light-a light-b light-c light-d"
+      echo "system-1 system-2 pipeline-1 pipeline-2 post-analysis-1 post-analysis-2 post-analysis-3 admin-ui-1 admin-ui-2 admin-ui-3 ui-library server-1 server-2 server-3 core light-a light-b light-c"
       exit 0
+      ;;
+    --projects-only)
+      # Print the nx projects this shard tests (comma list) and exit: CI builds
+      # only those and their dependencies instead of every affected project.
+      PROJECTS_ONLY=1
+      shift
       ;;
     --all)
       MODE=all
@@ -68,6 +75,7 @@ if [[ -n "$FILES_FROM" ]]; then
 fi
 
 if [[ "$MODE" == files && -z "$FILES" ]]; then
+  [[ -n "$PROJECTS_ONLY" ]] && exit 0
   echo "test-affected: empty --files — nothing to test"
   exit 0
 fi
@@ -102,15 +110,14 @@ const SHARDS = {
   'admin-ui-1': { p: ['@camstack/addon-admin-ui'], v: '1/3' },
   'admin-ui-2': { p: ['@camstack/addon-admin-ui'], v: '2/3' },
   'admin-ui-3': { p: ['@camstack/addon-admin-ui'], v: '3/3' },
-  'ui-library-1': { p: ['@camstack/ui-library'], v: '1/2' },
-  'ui-library-2': { p: ['@camstack/ui-library'], v: '2/2' },
+  'ui-library': { p: ['@camstack/ui-library'] },
   'server-1': { p: ['@camstack/server'], v: '1/3' },
   'server-2': { p: ['@camstack/server'], v: '2/3' },
   'server-3': { p: ['@camstack/server'], v: '3/3' },
   core: { p: ['@camstack/types', '@camstack/addon-pipeline-orchestrator'] },
 }
 const HEAVY_SHARDS = Object.keys(SHARDS)
-const LIGHT_SHARDS = ['light-a', 'light-b', 'light-c', 'light-d']
+const LIGHT_SHARDS = ['light-a', 'light-b', 'light-c']
 // A hash of the name alone left one light shard at 352 s and the other at 130 s
 // (2026-10-31, run 41218965725): a handful of addons carry most of the time.
 // Those are placed by hand, longest first onto the least loaded shard; the
@@ -120,15 +127,15 @@ const LIGHT_PINS = {
   '@camstack/addon-export-alexa': 0,
   '@camstack/addon-training': 1,
   '@camstack/addon-provider-homeassistant': 2,
-  '@camstack/addon-model-studio': 3,
+  '@camstack/addon-model-studio': 2,
   '@camstack/addon-provider-reolink': 0,
   '@camstack/addon-export-hap': 1,
   '@camstack/addon-ai': 2,
-  '@camstack/addon-provider-velux': 3,
+  '@camstack/addon-provider-velux': 1,
   '@camstack/addon-provider-bosch': 1,
   '@camstack/addon-provider-dreame': 0,
   '@camstack/addon-osd-manager': 2,
-  '@camstack/addon-provider-homematic': 3,
+  '@camstack/addon-provider-homematic': 0,
 }
 const heavy = new Set(Object.values(SHARDS).flatMap((s) => s.p))
 const hash = (name) => {
@@ -180,6 +187,11 @@ console.log(`LIGHT_CSV=${sh(L.join(','))}`)
 console.log(`VITEST_SHARD=${sh(SHARDS[wanted]?.v ?? '')}`)
 NODE
 eval "$(cat "$PROJECT_LISTS")"
+
+if [[ -n "$PROJECTS_ONLY" ]]; then
+  printf '%s\n' "${HEAVY_CSV}${HEAVY_CSV:+${LIGHT_CSV:+,}}${LIGHT_CSV}"
+  exit 0
+fi
 
 if [[ -n "${HEAVY_CSV}" ]]; then
   echo "test-affected: heavy (parallel=1): ${HEAVY_CSV}"

@@ -28,12 +28,11 @@ describe('CI test shards', () => {
     expect([...scriptShards(), 'static'].sort()).toEqual(matrixShards().sort())
   })
 
-  it('the light lane is spread over four shards, so no one job carries the slow addons', () => {
+  it('the light lane is spread over three shards, so no one job carries the slow addons', () => {
     expect(scriptShards().filter((s) => s.startsWith('light-'))).toEqual([
       'light-a',
       'light-b',
       'light-c',
-      'light-d',
     ])
   })
 
