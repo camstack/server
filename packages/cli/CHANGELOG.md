@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.219] - 2026-11-01
+
 ### Changed
 
 - setup_wizard now also checks that no admin account still has the default password (admin / changeme); on a hub too old to answer, that step reports unknown

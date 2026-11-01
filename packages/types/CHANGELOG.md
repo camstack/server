@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.468] - 2026-11-01
+
 ### Changed
 
 - The migrations ledger rows carry their catalogued meta (description, body kind, store, dependsOn) as an optional field

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.728] - 2026-11-01
+
 ### Changed
 
 - The hub serves userManagement.getAdminBootstrapStatus (admin-only: is the first-boot admin password still in use)

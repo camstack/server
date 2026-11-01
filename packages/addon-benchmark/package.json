@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-benchmark",
-  "version": "1.2.306",
+  "version": "1.2.307",
   "description": "Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound",
   "keywords": [
     "camstack",
@@ -66,7 +66,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.723"
+      "server": ">=1.2.728"
     }
   },
   "files": [

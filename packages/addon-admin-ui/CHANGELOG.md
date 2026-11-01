@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.548] - 2026-11-01
+
 ### Changed
 
 - System → Data has a read-only Migrations tab: every migration with its status, owner, level, body kind and a detail with all its metadata, error and dependencies
