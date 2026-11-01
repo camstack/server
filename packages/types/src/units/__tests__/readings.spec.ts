@@ -4,6 +4,21 @@ import { ingestReading, quantityFromUnit } from '../ingest-reading.js'
 import { QUANTITY_BASE, historyUnitFor } from '../quantity.js'
 
 describe('ingestReading', () => {
+  it('accepts the gateway spelling of a rain rate (mm/Hr) as mm/h', () => {
+    expect(ingestReading({ value: 3.2, rawUnit: 'mm/Hr', quantity: 'precipitation-rate' })).toEqual(
+      {
+        ok: true,
+        value: 3.2,
+      },
+    )
+    expect(quantityFromUnit('mm/Hr')).toBe('precipitation-rate')
+  })
+
+  it('converts in/Hr into stored mm/h', () => {
+    const result = ingestReading({ value: 1, rawUnit: 'in/Hr', quantity: 'precipitation-rate' })
+    expect(result).toEqual({ ok: true, value: 25.4 })
+  })
+
   it('converts Fahrenheit into stored Celsius', () => {
     const result = ingestReading({ value: 32, rawUnit: '°F', quantity: 'temperature' })
     expect(result.ok).toBe(true)
