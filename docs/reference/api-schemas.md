@@ -3036,13 +3036,14 @@ Enum: `"auth" \| "network" \| "unsupported" \| "invalid"`
 - `vision`: `boolean`
 - `tools`: `boolean`
 - `streaming`: `boolean`
+- `reasoning?`: `boolean \| null`
 
 ### `LlmModelInfoSchema`
 
 - `id`: `string`
 - `label?`: `string`
 - `contextLength?`: `number`
-- `features?`: `{ vision?: boolean; tools?: boolean; streaming?: boolean }`
+- `features?`: `{ vision?: boolean; tools?: boolean; streaming?: boolean; reasoning?: boolean \| null }`
 
 ### `LlmNodeModelSchema`
 

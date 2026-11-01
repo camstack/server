@@ -76,6 +76,7 @@ import {
   tcpEndpointOf,
 } from './connect-probe.js'
 import { OPENAI_DEFAULT_BASE_URL } from './list-models.js'
+import { type ProviderOptions, reasoningProviderOptions } from './reasoning-options.js'
 
 /**
  * Every kind. There is no longer a wire this client cannot speak, which is what
@@ -90,8 +91,6 @@ const SUPPORTED_KINDS: ReadonlySet<LlmProfile['kind']> = new Set<LlmProfile['kin
   'google',
 ])
 
-type LlmReasoningEffort = NonNullable<LlmProfile['reasoningEffort']>
-
 export interface LlmCallRequest {
   readonly profile: LlmProfile
   readonly system?: string
@@ -102,7 +101,7 @@ export interface LlmCallRequest {
   readonly temperature?: number
   readonly topP?: number
   readonly topK?: number
-  readonly reasoningEffort?: LlmReasoningEffort
+  readonly reasoningEffort?: NonNullable<LlmProfile['reasoningEffort']>
   readonly retry?: LlmRetryPolicy
   /** Mandatory. See property 2 in the header. */
   readonly signal: AbortSignal
@@ -272,35 +271,7 @@ interface CallSettings {
   readonly topK?: number
   readonly maxOutputTokens?: number
   readonly maxRetries: number
-  readonly providerOptions?: Record<string, Record<string, string>>
-}
-
-/**
- * The provider-options key the openai-compatible provider reads for a kind: its
- * name in camelCase (`openai-compatible` -> `openaiCompatible`).
- */
-function providerOptionsKeyOf(kind: string): string {
-  return kind.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase())
-}
-
-/**
- * `reasoning_effort` for the kinds whose descriptor offers `reasoningEffort`.
- * The top-level `reasoning` call option cannot carry `none` on this wire (the
- * library drops it), so the provider option is the only way to switch thinking
- * off. `off` is the wire's `none`.
- */
-function reasoningOptionsFor(
-  profile: LlmProfile,
-  callEffort: LlmReasoningEffort | undefined,
-): { providerOptions: Record<string, Record<string, string>> } | Record<string, never> {
-  const effort = callEffort ?? profile.reasoningEffort
-  if (effort === undefined) return {}
-  if (descriptorOf(profile.kind)?.profileFields.includes('reasoningEffort') !== true) return {}
-  return {
-    providerOptions: {
-      [providerOptionsKeyOf(profile.kind)]: { reasoningEffort: effort === 'off' ? 'none' : effort },
-    },
-  }
+  readonly providerOptions?: ProviderOptions
 }
 
 export function callSettingsFor(request: LlmCallRequest): CallSettings {
@@ -310,12 +281,13 @@ export function callSettingsFor(request: LlmCallRequest): CallSettings {
   const topK = supportsTopK(profile.kind) ? (request.topK ?? profile.topK) : undefined
   const maxOutputTokens = request.maxTokens ?? profile.maxTokens
   const retry = request.retry ?? profile.retry
+  const reasoning = reasoningProviderOptions(profile, request.reasoningEffort)
   return {
     ...(temperature !== undefined ? { temperature } : {}),
     ...(topP !== undefined ? { topP } : {}),
     ...(topK !== undefined ? { topK } : {}),
     ...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
-    ...reasoningOptionsFor(profile, request.reasoningEffort),
+    ...(reasoning !== undefined ? { providerOptions: reasoning } : {}),
     // The library counts RETRIES; we configure ATTEMPTS. `enabled: false` and
     // `maxAttempts: 1` both mean "call once".
     maxRetries: retry.enabled ? Math.max(0, retry.maxAttempts - 1) : 0,

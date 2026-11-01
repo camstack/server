@@ -98,7 +98,7 @@ describe('Anthropic — GET /v1/models', () => {
       id: 'claude-opus-5-5',
       label: 'Claude Opus 5.5',
       contextLength: 1_000_000,
-      features: { vision: true, tools: true, streaming: true },
+      features: { vision: true, tools: true, streaming: true, reasoning: true },
     })
     expect(haiku).toMatchObject({
       contextLength: 200_000,
@@ -109,7 +109,7 @@ describe('Anthropic — GET /v1/models', () => {
       id: 'claude-example-text-only',
       label: 'Example text-only model (deprecated)',
       contextLength: 100_000,
-      features: { vision: false, tools: true, streaming: true },
+      features: { vision: false, tools: true, streaming: true, reasoning: false },
     })
     // No capability tree: nothing is claimed, the kind's defaults apply.
     expect(unknown).toEqual({
@@ -134,6 +134,45 @@ describe('Anthropic — GET /v1/models', () => {
     expect(result.message).toContain('invalid_request_error')
     expect(result.message).toContain('anthropic-beta: unexpected value(s)')
     expect(JSON.stringify(result)).not.toContain(KEY)
+  })
+})
+
+describe('reasoning detection on the cloud lists', () => {
+  it('OpenAI: a reasoning id is claimed, a plain chat id is not', async () => {
+    const { fetchImpl } = routed((c) =>
+      c.url.endsWith('/models')
+        ? jsonOf(
+            '{"data":[{"id":"o3-mini"},{"id":"gpt-5"},{"id":"gpt-4o"},{"id":"gpt-5-chat-latest"}]}',
+          )
+        : null,
+    )
+    const result = await listHttpModels('openai', { apiKey: KEY }, { ...OPTS, fetchImpl })
+    if (!result.ok) throw new Error(result.message)
+    expect(result.models.map((m) => m.features?.reasoning)).toEqual([
+      true,
+      true,
+      undefined,
+      undefined,
+    ])
+  })
+
+  it("Google: the list's thinking flag becomes features.reasoning", async () => {
+    const { fetchImpl } = routed((c) =>
+      c.url.includes('/models?')
+        ? jsonOf(
+            JSON.stringify({
+              models: [
+                { name: 'models/gemini-example-a', thinking: true },
+                { name: 'models/gemini-example-b', thinking: false },
+                { name: 'models/gemini-example-c' },
+              ],
+            }),
+          )
+        : null,
+    )
+    const result = await listHttpModels('google', { apiKey: KEY }, { ...OPTS, fetchImpl })
+    if (!result.ok) throw new Error(result.message)
+    expect(result.models.map((m) => m.features?.reasoning)).toEqual([true, false, undefined])
   })
 })
 
@@ -167,16 +206,40 @@ describe('local OpenAI-compatible servers', () => {
         {
           id: 'llama3.2:3b',
           contextLength: 131_072,
-          features: { vision: false, tools: true },
+          features: { vision: false, tools: true, reasoning: false },
         },
         {
           id: 'qwen2.5vl:7b',
           contextLength: 128_000,
-          features: { vision: true, tools: false },
+          features: { vision: true, tools: false, reasoning: false },
         },
       ],
     })
     expect(calls.filter((c) => c.url.endsWith('/api/show'))).toHaveLength(2)
+  })
+
+  it('Ollama: a "thinking" capability is features.reasoning === true', async () => {
+    const { fetchImpl } = routed(
+      (c) =>
+        c.url === 'http://192.0.2.20:11434/v1/models'
+          ? jsonOf('{"data":[{"id":"qwen3:8b"}]}')
+          : null,
+      (c) =>
+        c.url === 'http://192.0.2.20:11434/api/tags'
+          ? jsonOf('{"models":[{"name":"qwen3:8b"}]}')
+          : null,
+      (c) =>
+        c.url === 'http://192.0.2.20:11434/api/show'
+          ? jsonOf(fixture('ollama-show-qwen3.json'))
+          : null,
+    )
+    const result = await listHttpModels(
+      'openai-compatible',
+      { baseUrl: 'http://192.0.2.20:11434/v1' },
+      { ...OPTS, fetchImpl },
+    )
+    if (!result.ok) throw new Error(result.message)
+    expect(result.models[0]?.features?.reasoning).toBe(true)
   })
 
   it('llama.cpp: the context window from meta.n_ctx_train; no Ollama probe answer', async () => {

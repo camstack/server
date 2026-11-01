@@ -34,6 +34,7 @@ import { type ListModelsOptions, type Page, requestJson } from './list-models-ht
 import {
   OpenAiModelEntrySchema,
   openAiModelInfo,
+  openAiReasoningOf,
   serverRootOf,
   withOllamaFeatures,
 } from './local-model-features.js'
@@ -58,6 +59,7 @@ const GoogleModelsSchema = z.object({
         displayName: z.string().optional(),
         inputTokenLimit: z.number().int().positive().optional(),
         supportedGenerationMethods: z.array(z.string()).optional(),
+        thinking: z.boolean().optional(),
       }),
     )
     .optional(),
@@ -133,7 +135,15 @@ async function listOpenAiWire(
   const { models } = found
   // Only a server the operator pointed at can be a local one; the cloud wire
   // is never probed for another server's endpoints.
-  if (kind === 'openai') return { ok: true, models }
+  if (kind === 'openai') {
+    return {
+      ok: true,
+      models: models.map((m) => {
+        const reasoning = openAiReasoningOf(m.id)
+        return reasoning === undefined ? m : { ...m, features: { ...m.features, reasoning } }
+      }),
+    }
+  }
   return {
     ok: true,
     models: await withOllamaFeatures(found.base, models, headers, key, opts),
@@ -209,6 +219,7 @@ async function listGoogle(
         id: m.name.startsWith('models/') ? m.name.slice('models/'.length) : m.name,
         ...(m.displayName !== undefined ? { label: m.displayName } : {}),
         ...(m.inputTokenLimit !== undefined ? { contextLength: m.inputTokenLimit } : {}),
+        ...(m.thinking !== undefined ? { features: { reasoning: m.thinking } } : {}),
       })
     }
     token = page.body.nextPageToken

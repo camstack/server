@@ -39,13 +39,16 @@ const OPENAI_WIRE_FIELDS: readonly LlmProfileField[] = ALL_HTTP_FIELDS.filter(
 )
 
 /**
- * `reasoning_effort` is sent only on the openai-compatible wire (LM Studio,
- * llama-server, Ollama's /v1) where 'none' is measured to switch thinking off.
- * The OpenAI cloud rejects it on non-reasoning models, Anthropic has no 'off',
- * so those kinds do not offer it.
+ * Every kind with a reasoning wire lists `reasoningEffort` — the wire mapping
+ * is `client/reasoning-options.ts`. The editor additionally hides the field for
+ * a model that declares it cannot reason (`features.reasoning === false`), and
+ * the OpenAI cloud receives it only for a reasoning model id.
  */
-const OPENAI_COMPATIBLE_FIELDS: readonly LlmProfileField[] = [
-  ...OPENAI_WIRE_FIELDS,
+const REASONING_FIELDS: readonly LlmProfileField[] = [...OPENAI_WIRE_FIELDS, 'reasoningEffort']
+const OPENAI_COMPATIBLE_FIELDS: readonly LlmProfileField[] = REASONING_FIELDS
+const OPENAI_CLOUD_FIELDS: readonly LlmProfileField[] = REASONING_FIELDS
+const ALL_HTTP_REASONING_FIELDS: readonly LlmProfileField[] = [
+  ...ALL_HTTP_FIELDS,
   'reasoningEffort',
 ]
 
@@ -154,7 +157,7 @@ export const HTTP_KIND_DESCRIPTORS: readonly KindDescriptor[] = [
       apiKeyRequired: true,
     },
     { vision: true, tools: true, streaming: true },
-    OPENAI_WIRE_FIELDS,
+    OPENAI_CLOUD_FIELDS,
   ),
   httpKind(
     'anthropic',
@@ -166,7 +169,7 @@ export const HTTP_KIND_DESCRIPTORS: readonly KindDescriptor[] = [
       apiKeyRequired: true,
     },
     { vision: true, tools: true, streaming: true },
-    ALL_HTTP_FIELDS,
+    ALL_HTTP_REASONING_FIELDS,
   ),
   httpKind(
     'google',
@@ -178,7 +181,7 @@ export const HTTP_KIND_DESCRIPTORS: readonly KindDescriptor[] = [
       apiKeyRequired: true,
     },
     { vision: true, tools: true, streaming: true },
-    ALL_HTTP_FIELDS,
+    ALL_HTTP_REASONING_FIELDS,
   ),
 ]
 

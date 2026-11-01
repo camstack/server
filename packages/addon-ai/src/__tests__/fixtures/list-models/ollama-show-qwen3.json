@@ -1,0 +1,6 @@
+{
+  "license": "Example license text.",
+  "details": { "family": "qwen3", "parameter_size": "8B", "quantization_level": "Q4_K_M" },
+  "model_info": { "general.architecture": "qwen3", "qwen3.context_length": 40960 },
+  "capabilities": ["completion", "tools", "thinking"]
+}

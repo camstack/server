@@ -51,6 +51,9 @@ export const LlmModelFeaturesSchema = z.object({
   vision: z.boolean(),
   tools: z.boolean(),
   streaming: z.boolean(),
+  /** Whether the model thinks before it answers. `null` = the endpoint does not
+   *  say; an editor then still offers the switch (unknown is not "no"). */
+  reasoning: z.boolean().nullable().optional(),
 })
 export type LlmModelFeatures = z.infer<typeof LlmModelFeaturesSchema>
 

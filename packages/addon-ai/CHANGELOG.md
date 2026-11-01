@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A per-call reasoning effort beats the profile's on the openai-compatible wire
+- Reasoning effort now reaches Anthropic (thinking), Google (thinking budget) and OpenAI reasoning models; the model list reports which models think
 
 ## [0.4.175] - 2026-11-01
 

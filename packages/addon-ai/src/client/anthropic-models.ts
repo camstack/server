@@ -25,6 +25,7 @@ const Supported = z.object({ supported: z.boolean() })
 
 const AnthropicCapabilitiesSchema = z.object({
   image_input: Supported.optional(),
+  thinking: Supported.optional(),
 })
 
 export const AnthropicModelSchema = z.object({
@@ -55,6 +56,7 @@ export function anthropicModelInfo(m: AnthropicModel): LlmModelInfo {
   const label = labelOf(m)
   const contextLength = m.max_input_tokens ?? undefined
   const vision = m.capabilities?.image_input?.supported
+  const reasoning = m.capabilities?.thinking?.supported
   return {
     id: m.id,
     ...(label !== undefined ? { label } : {}),
@@ -65,6 +67,7 @@ export function anthropicModelInfo(m: AnthropicModel): LlmModelInfo {
             vision,
             tools: MESSAGES_API_TOOLS,
             streaming: MESSAGES_API_STREAMING,
+            ...(reasoning !== undefined ? { reasoning } : {}),
           },
         }
       : {}),

@@ -5,9 +5,9 @@
  *   - llama.cpp (`llama-server`) puts `meta.n_ctx_train` on each `/v1/models`
  *     entry → `contextLength`. Nothing about vision or tools.
  *   - Ollama answers `/api/tags` at the server root; `POST /api/show` per model
- *     then reports `capabilities` (`vision`, `tools`, …) and
+ *     then reports `capabilities` (`vision`, `tools`, `thinking`, …) and
  *     `model_info["<arch>.context_length"]`. Mapping: `vision` ← "vision" in
- *     capabilities, `tools` ← "tools" in capabilities, `contextLength` ← the
+ *     capabilities, `tools` ← "tools" in capabilities, `reasoning` ← "thinking" in capabilities, `contextLength` ← the
  *     `*.context_length` entry. `streaming` is not reported and not claimed.
  *   - Anything else (LM Studio's OpenAI surface, vLLM, a proxy) reports nothing
  *     here: the ids stand alone and the kind's defaults apply.
@@ -25,6 +25,17 @@ export const OpenAiModelEntrySchema = z.object({
   meta: z.object({ n_ctx_train: z.number().int().positive().optional() }).nullable().optional(),
 })
 export type OpenAiModelEntry = z.infer<typeof OpenAiModelEntrySchema>
+
+/**
+ * The OpenAI cloud lists ids only. Its reasoning families are named by id
+ * (`o1`, `o3-mini`, `gpt-5…`); a chat-only id (`gpt-5-chat-latest`) is not one.
+ * An id outside the pattern is not claimed either way (`null` stays unset).
+ */
+const OPENAI_REASONING_ID = /^(o\d|gpt-5)(?!.*chat)/
+
+export function openAiReasoningOf(id: string): boolean | undefined {
+  return OPENAI_REASONING_ID.test(id) ? true : undefined
+}
 
 export function openAiModelInfo(entry: OpenAiModelEntry): LlmModelInfo {
   const contextLength = entry.meta?.n_ctx_train
@@ -71,7 +82,11 @@ function contextLengthOf(show: OllamaShow): number | undefined {
 function featuresOf(show: OllamaShow): Partial<LlmModelFeatures> | undefined {
   const caps = show.capabilities
   if (caps === undefined) return undefined
-  return { vision: caps.includes('vision'), tools: caps.includes('tools') }
+  return {
+    vision: caps.includes('vision'),
+    tools: caps.includes('tools'),
+    reasoning: caps.includes('thinking'),
+  }
 }
 
 function merged(model: LlmModelInfo, show: OllamaShow): LlmModelInfo {
