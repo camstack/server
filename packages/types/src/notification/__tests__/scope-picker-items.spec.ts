@@ -47,7 +47,6 @@ describe('scope picker items', () => {
   it('offers every package an update EVENT carries, even when listPackages omits it', () => {
     expect(packagePickerItems([])).toEqual([
       { id: '@camstack/server', name: '@camstack/server', type: 'server', location: null },
-      { id: '@camstack/server', name: '@camstack/server', type: 'framework', location: null },
       { id: 'camstack-wrapper', name: 'camstack-wrapper', type: 'wrapper', location: null },
     ])
   })
@@ -64,7 +63,7 @@ describe('scope picker items', () => {
       {
         id: '@camstack/server',
         name: '@camstack/server',
-        type: 'framework',
+        type: 'server',
         location: null,
         detail: '2.0.0',
       },
@@ -76,10 +75,6 @@ describe('scope picker items', () => {
   // pins each literal below to its producer constant.
   it('the literals are the ones the update producers stamp', () => {
     expect(NC_SERVER_PACKAGE_NAME).toBe('@camstack/server')
-    expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual([
-      '@camstack/server',
-      '@camstack/server',
-      'camstack-wrapper',
-    ])
+    expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual(['@camstack/server', 'camstack-wrapper'])
   })
 })

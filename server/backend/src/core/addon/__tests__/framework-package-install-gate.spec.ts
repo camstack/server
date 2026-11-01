@@ -33,7 +33,6 @@ describe('framework package install gate', () => {
   it('excludes @camstack/server and the framework tier from the addon-package path', () => {
     for (const name of [
       '@camstack/server',
-      '@camstack/server',
       '@camstack/types',
       '@camstack/sdk',
       '@camstack/kernel',
