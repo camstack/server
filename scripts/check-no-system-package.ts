@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * `@camstack/system` is not a package any more.
+ * The old system package is gone: its source ships as `@camstack/server/system`.
  *
  * The kernel and the builtins are a private workspace (`@camstack/server-framework`)
  * whose built output ships INSIDE the `@camstack/server` tarball, imported as
@@ -43,7 +43,7 @@ export const ALLOWED: readonly RegExp[] = [
   /^packages\/node-root\/src\/__tests__\/starter-core\.spec\.ts$/,
   /^scripts\/check-npm-orphan-packages\.ts$/,
   /^scripts\/check-no-system-package\.ts$/,
-  /^scripts\/__tests__\/check-no-system-package\.spec\.ts$/,
+  /^scripts\/__tests__\/check-(no-system-package|host-externals-identical)\.spec\.ts$/,
 ]
 
 export interface SystemPackageFinding {

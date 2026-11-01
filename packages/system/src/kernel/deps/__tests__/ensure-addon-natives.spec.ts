@@ -177,7 +177,7 @@ describe('ensureAddonNativePrebuilds', () => {
         target: TARGET,
         fetchPrebuild,
       }),
-    ).rejects.toThrow(/@camstack\/system.*better-sqlite3/)
+    ).rejects.toThrow(/@camstack\/server.*better-sqlite3/)
 
     expect(logger.error).toHaveBeenCalled()
     const errCall = (logger.error as ReturnType<typeof vi.fn>).mock.calls.find((c) =>

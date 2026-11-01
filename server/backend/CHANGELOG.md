@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allowed browser origins (CORS) are read live from the new auth.corsOrigins setting; config.yaml server.corsOrigins and CAMSTACK_CORS_ORIGINS are ignored with a boot warning
 - A terminal (camstack login, the MCP setup tool) signs in by browser approval: begin and poll are public, approval needs a fresh sign-in.
 - Terminal sign-in approval: audit lines, soft global cap and the requester's User-Agent and address shown to the approver
+- The server now carries the framework (@camstack/server/system) and refuses an update whose declared minimum is not met
 
 ## [1.2.717] - 2026-10-31
 

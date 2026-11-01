@@ -26,7 +26,7 @@ describe('hub-main arms the event-loop stall monitor', () => {
 
   it('imports it from @camstack/server/system rather than re-implementing it', () => {
     expect(source).toMatch(/startEventLoopStallMonitor/)
-    expect(source).toMatch(/from '@camstack\/system'/)
+    expect(source).toMatch(/from '@camstack\/server\/system'/)
   })
 
   it('arms it only once the logging service exists, so the lines reach Loki', () => {

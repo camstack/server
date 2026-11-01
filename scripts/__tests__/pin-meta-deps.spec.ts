@@ -22,10 +22,7 @@ describe('computePinnedDeps', () => {
       versions,
     )
     expect(deps).toEqual({ '@camstack/addon-pipeline': '0.1.19', '@camstack/server': '0.1.43' })
-    expect(pinned.sort()).toEqual([
-      '@camstack/addon-pipeline@0.1.19',
-      '@camstack/server/system@0.1.43',
-    ])
+    expect(pinned.sort()).toEqual(['@camstack/addon-pipeline@0.1.19', '@camstack/server@0.1.43'])
   })
 
   it('leaves non-@camstack deps untouched', () => {

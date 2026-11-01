@@ -96,7 +96,7 @@ describe('release_plan — classification and the train', () => {
     )
     expect(titles.at(-1)).toBe('Verify it is LIVE')
     const all = plan.steps.flatMap((s) => s.commands).join('\n')
-    expect(all).toContain('force_packages=@camstack/server/system,@camstack/server')
+    expect(all).toContain('force_packages=@camstack/server')
     expect(all).toContain('include_dependents=false')
     expect(all).toContain('camstack deploy packages/addon-reolink')
     expect(all).not.toMatch(/--all|scope=all/)

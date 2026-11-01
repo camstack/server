@@ -53,7 +53,7 @@ export interface FrameworkDistProblem {
  */
 export const CORE_ROUTER_FRAMEWORK_PACKAGES: readonly FrameworkPackage[] = [
   { dir: 'packages/types', name: '@camstack/types' },
-  { dir: 'packages/system', name: '@camstack/server/system' },
+  { dir: 'packages/system', name: '@camstack/server-framework' },
 ]
 
 /**

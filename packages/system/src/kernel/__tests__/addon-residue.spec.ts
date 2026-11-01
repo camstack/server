@@ -53,7 +53,7 @@ describe('classifyAddonDir', () => {
   })
 
   it('keeps a package whose directory matches its declared name', () => {
-    expect(classifyAddonDir({ dirName: 'system', declaredName: '@camstack/server' })).toBeNull()
+    expect(classifyAddonDir({ dirName: 'server', declaredName: '@camstack/server' })).toBeNull()
     expect(
       classifyAddonDir({ dirName: 'addon-pipeline', declaredName: '@camstack/addon-pipeline' }),
     ).toBeNull()
@@ -77,7 +77,7 @@ describe('classifyAddonDir', () => {
       selectAddonResidue([
         { dirName: 'addon-pipeline', declaredName: '@camstack/addon-pipeline' },
         { dirName: 'system.bak-pre-unshadow', declaredName: null },
-        { dirName: 'system', declaredName: '@camstack/server' },
+        { dirName: 'server', declaredName: '@camstack/server' },
         { dirName: '.staging', declaredName: null },
       ]).map((v) => v.dirName),
     ).toEqual(['system.bak-pre-unshadow'])
@@ -101,7 +101,7 @@ describe('quarantineAddonResidue', () => {
 
   it('moves residue out of the scanned root, keeps the real package, and never deletes', () => {
     const scope = path.join(root, '@camstack')
-    writePkg(path.join(scope, 'system'), '@camstack/server', '1.2.61')
+    writePkg(path.join(scope, 'server'), '@camstack/server', '1.2.61')
     writePkg(path.join(scope, 'system.bak-pre-1272-1786129145'), '@camstack/server', '1.2.3')
 
     const lines: string[] = []
@@ -109,7 +109,7 @@ describe('quarantineAddonResidue', () => {
 
     expect(result.quarantined).toHaveLength(1)
     expect(fs.existsSync(path.join(scope, 'system.bak-pre-1272-1786129145'))).toBe(false)
-    expect(fs.existsSync(path.join(scope, 'system', 'package.json'))).toBe(true)
+    expect(fs.existsSync(path.join(scope, 'server', 'package.json'))).toBe(true)
 
     // Moved, not removed — the bytes are still on disk under quarantine.
     const moved = result.quarantined[0]!.to

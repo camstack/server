@@ -30,7 +30,7 @@ describe('resolveAddonPackageDirs', () => {
   }
 
   it('finds scoped and flat packages, and skips exactly the named scoped one', () => {
-    writePkg(path.join(root, '@camstack', 'system'), BUILTINS_PACKAGE)
+    writePkg(path.join(root, '@camstack', 'server'), BUILTINS_PACKAGE)
     writePkg(
       path.join(root, '@camstack', 'addon-platform-probe-native'),
       '@camstack/addon-platform-probe-native',
@@ -41,7 +41,7 @@ describe('resolveAddonPackageDirs', () => {
     expect(all.map((d) => path.basename(d)).sort()).toEqual([
       'addon-platform-probe-native',
       'legacy-addon',
-      'system',
+      'server',
     ])
 
     // The non-framework infra provider must survive the skip — it is the reason
@@ -56,8 +56,8 @@ describe('resolveAddonPackageDirs', () => {
   it('matches the skip list the way AddonLoader.loadFromDirectory does', () => {
     // `<scope>/<name>` for a scoped dir — NOT the bare directory basename, or
     // the hub and the agent would exclude different things from one list.
-    writePkg(path.join(root, '@camstack', 'system'), BUILTINS_PACKAGE)
-    expect(resolveAddonPackageDirs(root, ['system'])).toHaveLength(1)
+    writePkg(path.join(root, '@camstack', 'server'), BUILTINS_PACKAGE)
+    expect(resolveAddonPackageDirs(root, ['server'])).toHaveLength(1)
     expect(resolveAddonPackageDirs(root, ['@camstack/server'])).toHaveLength(0)
   })
 

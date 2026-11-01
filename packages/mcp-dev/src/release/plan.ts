@@ -124,7 +124,7 @@ export function releasePlan(paths: readonly string[], note?: string): ReleasePla
   }
   if (framework || bootstrap) {
     const forced = has('capability')
-      ? ' -f force_packages=@camstack/server/system,@camstack/server'
+      ? ' -f force_packages=@camstack/server'
       : bootstrap && !framework
         ? ' -f force_packages=@camstack/server'
         : ''

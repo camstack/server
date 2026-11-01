@@ -137,7 +137,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-retired-fanout-heap-env.ts` | No runtime code reads the retired heap-snapshot or event-fanout mode envs. |
 | `scripts/check-no-service-account-keys.ts` | Credential guard — no Google service-account key, and no private key of any kind, may be committed to this repository. |
 | `scripts/check-no-state-unit-sibling.ts` | D944 §4 — device state has no root `unit` / `precision` / `*Unit` sibling, and every device-native numeric reading names a quantity (or is listed in the debt file until it is classified). |
-| `scripts/check-no-system-package.ts` | `@camstack/system` is not a package any more. |
+| `scripts/check-no-system-package.ts` | The old system package is gone: its source ships as `@camstack/server/system`. |
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
 | `scripts/check-no-token-file-lookup.ts` | No tool looks for a specific token file: the `camstack login` session is the credential. |
 | `scripts/check-notification-tap-targets.ts` | A notification's tap URL lands on a page that PARSES it. |

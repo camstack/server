@@ -8,7 +8,6 @@ import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { resolvePinnedVersion } from '../ci/pin-root-deps.mjs'
 import {
   candidateReason,
   compareNormalised,
@@ -91,25 +90,18 @@ describe('finalizePublishSet', () => {
     expect(final.dropped).toContain('packages/addon-benchmark')
   })
 
-  it('pins the registry version of a dropped candidate and does not call that pin stale', () => {
+  it('a types change publishes types and the server, and never the folded framework (D988)', () => {
     const part = partitionPublishSet(
       directOwners(['packages/types/src/capabilities/ptz.cap.ts'], ROOT),
       ROOT,
     )
-    expect(part.candidates).toContain('packages/system')
+    expect(part.candidates).not.toContain('packages/system')
     const final = finalizePublishSet(part, new Set(), ROOT)
     expect(final.publish).toContain('packages/types')
     expect(final.publish).toContain('server/backend')
     expect(final.publish).not.toContain('packages/system')
-    expect(
-      resolvePinnedVersion(
-        '@camstack/server',
-        { dir: 'packages/system', version: '9.9.9' },
-        { publishSet: new Set(final.publish), lookup: () => '1.2.273' },
-      ),
-    ).toBe('1.2.273')
     expect(staleRegistryPins(final.publish, ROOT)).toContainEqual({
-      pinned: 'packages/system',
+      pinned: 'packages/addon-admin-ui',
       publishes: 'packages/types',
     })
     expect(staleRegistryPins(final.publish, ROOT, { verifiedUnchanged: final.dropped })).toEqual([])

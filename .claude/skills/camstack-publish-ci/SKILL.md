@@ -110,11 +110,12 @@ registry tarball after the build. The same bytes → dropped, and the server
 keeps the pin it already has. `dry_run=true` prints one line per package
 (`bundle unchanged` or `dist differs: N files`) and stops before the bump.
 
-**A capability change** (`*.cap.ts`) selects `@camstack/server/system` as that kind
-of candidate, because system inlines the cap definitions the hub serves.
-The output check publishes system when those bytes differ, and
-`@camstack/server` with it. `force_packages=@camstack/server/system,@camstack/server`
-still publishes both even when the built output matches.
+**A capability or framework change** (`*.cap.ts`, `packages/system`) selects
+`@camstack/server`: the framework is the private `@camstack/server-framework`
+workspace, built into the server tarball as `@camstack/server/system` (D988). There
+is no separate system publish and no `force_packages` for it; `force_packages=@camstack/server`
+still publishes the server even when the built output matches. After the bump the
+workflow stamps `camstack.requires` (`scripts/ci/stamp-requires.mjs`).
 
 The workflow bumps, builds, publishes, commits the bumps as
 `chore: publish packages (patch) [skip ci]` and pushes a `publish-<ts>` tag
@@ -210,7 +211,7 @@ old (`422`). Unpublish only versions under 72 h, and `npm deprecate <pkg>
 | Want to ship… | Do | Then |
 | --- | --- | --- |
 | changed packages | `Publish Packages`, `include_dependents=false` | `applyServerUpdate` per node (framework) / `camstack deploy` (addon) |
-| a capability change | the same + `force_packages=@camstack/server/system,@camstack/server` | `applyServerUpdate` per node, then deploy the providing addon |
+| a capability change | the same + `force_packages=@camstack/server` | `applyServerUpdate` per node, then deploy the providing addon |
 | a release (image + desktop app) | publish → wait for npm → commit the product version on `main` → `gh workflow run "Release — CamStack (Docker + Electron)" --ref main -f publish_release=true` | the workflow creates `vX.Y.Z`; nodes still need `applyServerUpdate`; an image only changes on a container recreate |
 
 ## Done-gate — paste it before "done"

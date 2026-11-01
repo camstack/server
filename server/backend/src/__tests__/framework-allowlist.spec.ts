@@ -63,12 +63,18 @@ function discoverWorkspacePackages(): readonly PackageJsonView[] {
   return results
 }
 
+const FRAMEWORK_WORKSPACE_PACKAGE = '@camstack/server-framework'
+
 describe('framework package — manifest parity', () => {
   it('SYSTEM_PACKAGE exists in `packages/` with camstack.system: true', () => {
     const pkgs = discoverWorkspacePackages()
-    const match = pkgs.find((p) => p.name === SYSTEM_PACKAGE)
-    expect(match, `expected ${SYSTEM_PACKAGE} in packages/`).toBeDefined()
-    expect(match?.system, `${SYSTEM_PACKAGE} must declare camstack.system: true`).toBe(true)
+    // The kernel + builtins are the private workspace `@camstack/server-framework`,
+    // shipped inside the `@camstack/server` tarball as `@camstack/server/system` (D988).
+    const match = pkgs.find((p) => p.name === FRAMEWORK_WORKSPACE_PACKAGE)
+    expect(match, `expected ${FRAMEWORK_WORKSPACE_PACKAGE} in packages/`).toBeDefined()
+    expect(match?.system, `${FRAMEWORK_WORKSPACE_PACKAGE} must declare camstack.system: true`).toBe(
+      true,
+    )
   })
 
   it.todo(

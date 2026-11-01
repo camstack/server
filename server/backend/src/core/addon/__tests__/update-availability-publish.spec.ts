@@ -1,13 +1,10 @@
 /**
- * `listFrameworkPackages` is the surface that SHOWS `@camstack/server/system` has an
- * update — and it published nothing at all, so the operator was never told.
- * These tests pin the publish, the downgrade guard (the live hub runs a
- * `-dev.<ts>` build that is NEWER than the npm tag, and announcing that as an
- * "update" would be a lie), and the fallible-read rule: a registry lookup that
- * FAILS must log and publish nothing, never look like "no updates".
- *
- * They also pin the poll-interval knob living on the auto-update settings
- * surface, and surviving a restart.
+ * Availability publishing: the framework is part of `@camstack/server` (D988), so
+ * `listFrameworkPackages` has no row and publishes nothing — the server-update
+ * path announces it. The fallible-read rule is pinned here: a registry lookup
+ * that FAILS must log and publish nothing, never look like "no updates". The
+ * poll-interval knob lives on the auto-update settings surface and survives a
+ * restart.
  */
 import * as fs from 'node:fs'
 import * as os from 'node:os'
@@ -97,79 +94,12 @@ function availabilityEvents(events: readonly SystemEvent[]): readonly SystemEven
   return events.filter((event) => event.category === 'update.available')
 }
 
-describe('listFrameworkPackages → update.available', () => {
-  let dataDir = ''
-  let previousDataDir: string | undefined
-
-  beforeEach(() => {
-    previousDataDir = process.env['CAMSTACK_DATA']
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-fw-avail-'))
-    process.env['CAMSTACK_DATA'] = dataDir
-    npmViewResult = { ok: true, stdout: '999.0.0\n' }
-  })
-
-  afterEach(() => {
-    if (previousDataDir === undefined) delete process.env['CAMSTACK_DATA']
-    else process.env['CAMSTACK_DATA'] = previousDataDir
-    fs.rmSync(dataDir, { recursive: true, force: true })
-    vi.useRealTimers()
-  })
-
-  it('publishes a server-target availability event when the registry is genuinely newer', async () => {
+describe('listFrameworkPackages after the fold (D988)', () => {
+  it('has no row of its own: the framework ships inside @camstack/server, whose update the server path announces', async () => {
     const { service, emitted } = buildService()
     const rows = await service.listFrameworkPackages()
-    expect(rows[0]?.latestVersion).toBe('999.0.0')
-
-    const events = availabilityEvents(emitted)
-    expect(events).toHaveLength(1)
-    expect(events[0]!.data).toMatchObject({
-      target: 'server',
-      packageName: '@camstack/server',
-      latestVersion: '999.0.0',
-    })
-  })
-
-  /**
-   * The DISPLAYED flag has to obey the same rule as the published event.
-   * `hasUpdate` was `latest !== current`, so a hub running a `-dev.<ts>` build
-   * AHEAD of the npm tag — exactly what the live hub does — lit an "update
-   * available" badge that, if followed, is a DOWNGRADE. The publish path
-   * already gated on strictly-newer; the row the UI reads did not, so the two
-   * disagreed on the same page.
-   */
-  it('does not flag an OLDER registry tag as an available update', async () => {
-    npmViewResult = { ok: true, stdout: '0.0.1\n' }
-    const { service, emitted } = buildService()
-
-    const rows = await service.listFrameworkPackages()
-
-    expect(rows[0]?.latestVersion).toBe('0.0.1')
-    expect(rows[0]?.hasUpdate, 'an older tag is not an update').toBe(false)
-    expect(availabilityEvents(emitted), 'and nothing is announced').toHaveLength(0)
-  })
-
-  it('announces the same framework version only once', async () => {
-    const { service, emitted } = buildService()
-    await service.listFrameworkPackages()
-    await service.listFrameworkPackages()
-    expect(availabilityEvents(emitted)).toHaveLength(1)
-  })
-
-  it('never announces a registry version OLDER than what is running', async () => {
-    npmViewResult = { ok: true, stdout: '0.0.1\n' }
-    const { service, emitted } = buildService()
-    const rows = await service.listFrameworkPackages()
-    expect(rows[0]?.currentVersion).not.toBe('unknown')
+    expect(rows).toEqual([])
     expect(availabilityEvents(emitted)).toHaveLength(0)
-  })
-
-  it('logs and publishes nothing when the registry lookup FAILS', async () => {
-    npmViewResult = { ok: false }
-    const { service, emitted, warnings } = buildService()
-    await service.listFrameworkPackages()
-
-    expect(availabilityEvents(emitted)).toHaveLength(0)
-    expect(warnings.some((w) => /framework/i.test(w.message))).toBe(true)
   })
 })
 

@@ -27,8 +27,19 @@ hours. This page exists because it has cost them.
 
 | What | Channel | Reaches a node when |
 | --- | --- | --- |
-| **Framework** (`types`, `system`, `sdk`, `ui-library`) | inside the `@camstack/server` dependency closure | a root-package install runs |
+| **Framework** (`types`, `sdk`, `ui-library`, and the private `server-framework` shipped as `@camstack/server/system`) | inside the `@camstack/server` tarball and dependency closure | a root-package install runs |
 | **Addons** | `<dataDir>/addons/` | `camstack deploy`, or the Admin UI Addons page |
+
+**One published framework package ([D988](../decisions/adr-0988-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md)).**
+The old system package is no longer published; its dist is built into
+`server/backend/system/` by `scripts/sync-system-into-server.mjs` and travels in
+the `@camstack/server` tarball. Each addon declares `camstack.requires.server`, the
+server declares `requires.addons` / `requires.wrapper`, wrappers declare
+`requires.server`; the publish workflow stamps them after the version bump
+(`scripts/ci/stamp-requires.mjs`). A delivery whose minimum is unmet is refused (or
+held, for an agent that reports no server version) with a typed reason naming the
+versions. A framework change selects the server for publish; no `force_packages`
+is needed.
 
 [reference/packages.md](../reference/packages.md) has a "Reaches a node via" column
 per package, derived from the closure — check it rather than guessing.

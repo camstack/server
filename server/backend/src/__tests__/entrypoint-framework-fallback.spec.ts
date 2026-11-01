@@ -73,7 +73,15 @@ describe('entrypoint framework fallback', () => {
   })
 
   function writeClosureSystem(dataDir: string): void {
-    const dir = path.join(dataDir, 'server-root', 'current', 'node_modules', '@camstack', 'system')
+    const dir = path.join(
+      dataDir,
+      'server-root',
+      'current',
+      'node_modules',
+      '@camstack',
+      'server',
+      'system',
+    )
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(
       path.join(dir, 'package.json'),
@@ -106,15 +114,14 @@ describe('entrypoint framework fallback', () => {
    * package the fallback must NOT carry over.
    *
    * The single baked tree is `@camstack/server`'s own install, so it also holds
-   * the server and every baked addon. The fallback narrows the `@camstack` scope
-   * to system/types/sdk on purpose — copying it wholesale would plant a second
-   * `@camstack/server` and `shm-ring` inside the framework dir, which is the
+   * every baked addon besides. The fallback narrows the `@camstack` scope
+   * to server/types/sdk on purpose — copying it wholesale would plant every baked
+   * addon such as `shm-ring` inside the framework dir, which is the
    * very shadowing D45 forbids and D184 removed.
    */
   function seedTree(): string {
     const seed = path.join(root, 'seed')
     for (const [name, version] of [
-      ['system', '1.2.78'],
       ['types', '1.2.78'],
       ['sdk', '1.2.78'],
       ['server', '1.2.78'],
@@ -126,6 +133,13 @@ describe('entrypoint framework fallback', () => {
         JSON.stringify({ name: `@camstack/${name}`, version }),
       )
     }
+    // The server carries the kernel and builtins itself, as `@camstack/server/system` (D988).
+    const folded = path.join(seed, 'node_modules', '@camstack', 'server', 'system')
+    fs.mkdirSync(folded, { recursive: true })
+    fs.writeFileSync(
+      path.join(folded, 'package.json'),
+      JSON.stringify({ name: '@camstack/server-framework', version: '1.2.78' }),
+    )
     return seed
   }
 
@@ -147,7 +161,7 @@ describe('entrypoint framework fallback', () => {
 
     const out = runFallback(dataDir, seedTree())
 
-    const seeded = path.join(dataDir, 'framework', 'node_modules', '@camstack', 'system')
+    const seeded = path.join(dataDir, 'framework', 'node_modules', '@camstack', 'server', 'system')
     expect(fs.existsSync(path.join(seeded, 'package.json'))).toBe(true)
     expect(out).toContain('FALLBACK')
     expect(out).toContain('so this node can boot')
@@ -155,14 +169,14 @@ describe('entrypoint framework fallback', () => {
     expect(out).toContain(`OBSERVED_NODE_PATH=<${path.join(dataDir, 'framework', 'node_modules')}>`)
   })
 
-  it('carries system/types/sdk and leaves @camstack/server behind', () => {
+  it('carries server/types/sdk and nothing else from the scope', () => {
     const dataDir = path.join(root, 'data')
     fs.mkdirSync(dataDir, { recursive: true })
 
     runFallback(dataDir, seedTree())
 
     const scope = path.join(dataDir, 'framework', 'node_modules', '@camstack')
-    expect(fs.readdirSync(scope).toSorted()).toEqual(['sdk', 'system', 'types'])
+    expect(fs.readdirSync(scope).toSorted()).toEqual(['sdk', 'server', 'types'])
   })
 
   it('FAILS LOUDLY when the baked seed is missing a framework package', () => {
@@ -171,7 +185,7 @@ describe('entrypoint framework fallback', () => {
     // A seed without `types`: the node would otherwise start and then fail
     // module resolution with an error that names nothing.
     const crippled = path.join(root, 'crippled')
-    for (const name of ['system', 'sdk']) {
+    for (const name of ['server', 'sdk']) {
       const dir = path.join(crippled, 'node_modules', '@camstack', name)
       fs.mkdirSync(dir, { recursive: true })
       fs.writeFileSync(

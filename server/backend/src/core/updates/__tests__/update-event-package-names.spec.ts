@@ -6,7 +6,6 @@
 import { HUB_ROOT_SPEC } from '@camstack/node-root'
 import { NC_SERVER_PACKAGE_NAME, NC_UPDATE_EVENT_PACKAGE_NAMES } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { SYSTEM_PACKAGE } from '../../addon/addon-package.service.js'
 import { WRAPPER_PACKAGE_NAME } from '../wrapper-update-checker.js'
 
 describe('NC_UPDATE_EVENT_PACKAGE_NAMES — one entry per update-event producer', () => {
@@ -14,13 +13,10 @@ describe('NC_UPDATE_EVENT_PACKAGE_NAMES — one entry per update-event producer'
     expect(NC_SERVER_PACKAGE_NAME).toBe(HUB_ROOT_SPEC.packageName)
   })
 
-  it('is exactly [root package, framework check package, wrapper literal]', () => {
-    // `listFrameworkPackages` checks `[SYSTEM_PACKAGE]` only — `@camstack/types`
-    // and `@camstack/sdk` are never announced, so they are not offered.
-    expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual([
-      HUB_ROOT_SPEC.packageName,
-      SYSTEM_PACKAGE,
-      WRAPPER_PACKAGE_NAME,
-    ])
+  it('is exactly [root package, wrapper literal]', () => {
+    // The framework ships inside the root package (D988): `listFrameworkPackages`
+    // has no row of its own, and `@camstack/types` / `@camstack/sdk` are never
+    // announced, so none of them is offered.
+    expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual([HUB_ROOT_SPEC.packageName, WRAPPER_PACKAGE_NAME])
   })
 })

@@ -84,7 +84,7 @@ describe('findUnusableFrameworkDists', () => {
   it('names the packages the core-router expansion actually resolves through', () => {
     expect(CORE_ROUTER_FRAMEWORK_PACKAGES.map((p) => p.name)).toEqual([
       '@camstack/types',
-      '@camstack/server',
+      '@camstack/server-framework',
     ])
   })
 })

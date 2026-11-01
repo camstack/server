@@ -175,7 +175,7 @@ node scripts/hub/hub.mjs POST <cap>.<newMethod> '{…}'                         
 | --- | --- |
 | Addon `src` (provider logic, settings schema) | `camstack deploy <addon>` |
 | An additive OUTPUT field on an existing cap method | `camstack deploy <addon>` (output passes through structurally) |
-| A new INPUT field, a new method, a new cap | publish (`force_packages=@camstack/server/system,@camstack/server`) → `applyServerUpdate`, then deploy the addon |
+| A new INPUT field, a new method, a new cap | publish (`force_packages=@camstack/server`) → `applyServerUpdate`, then deploy the addon |
 | `server/backend`, `@camstack/server/system`, `@camstack/sdk` | publish → `applyServerUpdate` |
 | Manifest `placement` / `execution.group` | publish → `applyServerUpdate` |
 | The starter, the entrypoint (heap flags, env, user), `Dockerfile` | a new image AND a container recreate |

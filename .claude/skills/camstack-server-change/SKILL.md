@@ -108,9 +108,8 @@ tool, `hub.mjs` included, uses that session and refreshes it) + POST. Reuse an u
 
 1. Push first (`git log --oneline origin/main..HEAD` must be empty) — the
    workflow builds `origin/main`, not your tree.
-2. `Publish Packages` with `include_dependents=false`; a cap change adds
-   `force_packages=@camstack/server/system,@camstack/server` (nx-affected misses
-   `system` for a `types` edit). Details and the lockfile preflight:
+2. `Publish Packages` with `include_dependents=false`; a framework or cap change
+   selects `@camstack/server` by itself (the framework is folded into its tarball, D988). Details and the lockfile preflight:
    `camstack-publish-ci`.
 3. **Registry lag is not failure.** Right after a publish `npm view <pkg>
    version` serves the previous version and installs 404 for minutes. Read

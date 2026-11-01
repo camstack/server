@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - UniFi is now added as an integration: the controller connection and credentials are the integration's settings, and the controller appears as a Gateway beside its infra devices and clients instead of a Hub.
+- Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X
 
 ## [0.2.150] - 2026-10-28
 

@@ -12,13 +12,17 @@ import { describe, expect, it } from 'vitest'
 
 const PKG_DIR = join(__dirname, '..')
 const pkg = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf8')) as {
-  files: string[]
   camstack: { addons: { id: string; icon?: string }[] }
 }
 
 describe('@camstack/server/system builtin icons', () => {
-  it('ships assets/ in the tarball', () => {
-    expect(pkg.files).toContain('assets')
+  it('ships assets/ in the server tarball', () => {
+    // This package is private (D988): its dist and assets travel inside the
+    // `@camstack/server` tarball, copied by `scripts/sync-system-into-server.mjs`.
+    const server = JSON.parse(
+      readFileSync(join(PKG_DIR, '..', '..', 'server', 'backend', 'package.json'), 'utf8'),
+    ) as { files: string[] }
+    expect(server.files).toContain('system/assets')
   })
 
   it.each(

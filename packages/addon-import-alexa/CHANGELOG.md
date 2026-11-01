@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Amazon device-code sign-in's refresh token and session cookie are declared secret
+- Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X
 
 ## [0.2.172] - 2026-10-31
 

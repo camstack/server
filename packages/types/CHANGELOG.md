@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addons can declare migrations (plan and procedure bodies) that run under the shared ledger, snapshot and rollback
 - A terminal sign-in approval lands on the existing completion page (new cli-login outcome).
+- Packages can declare the minimum versions they need (camstack.requires), with typed unmet-requirement reasons
 
 ## [1.2.461] - 2026-10-31
 
