@@ -194,7 +194,7 @@ ENV CAMSTACK_ADDONS_DIR=/data/addons
 # the location or override this env; unset falls the seed back to /data.
 ENV CAMSTACK_BACKUP_ROOT=/backups
 # NO CAMSTACK_BUNDLED_ADDONS_DIR. It named the baked addon tree, and the launcher
-# resolves `installSource: 'local'` whenever it points at a directory that
+# seeds from it whenever it points at a directory that
 # exists — so it must leave with the tree, in the same image. Left behind, it
 # would send the bootstrap looking for a copy that is no longer there.
 # Runtime-updatable root package (2026-07-12 design): the baked closure is the

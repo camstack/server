@@ -81,7 +81,6 @@ beforeAll(async () => {
       // workspace `'local'` copy mode — same path Electron-bundled
       // builds use. The synthetic addon still goes through the npm
       // installer against the test verdaccio.
-      CAMSTACK_INSTALL_SOURCE: 'local',
       // Skip the 60s admin-ui registration wait in main.ts. E2e tests
       // don't serve the SPA, and the wait pushes boot past the
       // spawnHub timeout. Production keeps the poll so the SPA is

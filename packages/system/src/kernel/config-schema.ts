@@ -12,7 +12,6 @@ export type BootstrapServerConfig = {
 
 /** Bootstrap `bootstrap` section — see {@link bootstrapAddonsSchema}. */
 export type BootstrapAddonsConfig = {
-  installSource?: 'npm' | 'local' | 'symlink'
   requiredAddons?: string[]
 }
 
@@ -26,7 +25,7 @@ export type BootstrapKeychainConfig = {
  * Bootstrap config — loaded from config.yaml (plus the three env overrides) ONLY
  * at startup, by `loadBootstrapConfig`, the one loader. A key not named here is
  * not read: an older yaml that still carries `mode`, `hub`, `agent`, `auth`,
- * `tls` or `bootstrap.settingsStoreAddon` / `forceDisable` boots with them ignored.
+ * `tls` or `bootstrap.settingsStoreAddon` / `forceDisable` / `installSource` boots with them ignored.
  */
 export type BootstrapConfig = {
   server: BootstrapServerConfig
@@ -47,28 +46,6 @@ const serverSchema: z.ZodType<BootstrapServerConfig> = z.object({
  * kernel can talk to the settings-store. Every field is optional.
  */
 const bootstrapAddonsSchema: z.ZodType<BootstrapAddonsConfig> = z.object({
-  /**
-   * How the launcher provisions REQUIRED_PACKAGES into `data/addons/`
-   * on startup.
-   *
-   *   - `'npm'`     — pull from the npm registry (production default).
-   *   - `'local'`   — copy `packages/<X>/` from the workspace into
-   *                   `data/addons/<X>/`. Use for the Electron-
-   *                   packaged bundle and the e2e harness.
-   *   - `'symlink'` — point `data/addons/<X>` at the workspace source
-   *                   dir via a directory symlink. Dev-only: a
-   *                   workspace rebuild (`npm run build -w <X>`) is
-   *                   immediately reflected at the next addon load,
-   *                   no copy step. Falls back to `'local'` on
-   *                   platforms that reject symlink creation (Windows
-   *                   without developer-mode).
-   *
-   * The `CAMSTACK_INSTALL_SOURCE` env var, when set, wins over this
-   * field. Leave undefined to keep the launcher's default behaviour
-   * (npm when no workspace, local when a bundled addons dir is
-   * present, …).
-   */
-  installSource: z.enum(['npm', 'local', 'symlink']).optional(),
   /**
    * Override the kernel's hard-coded `AddonInstaller.REQUIRED_PACKAGES`.
    * Passing an array here REPLACES the default list entirely — useful
@@ -99,7 +76,7 @@ const keychainSchema: z.ZodType<BootstrapKeychainConfig> = z.object({
 
 const bootstrapSchemaDefinition: z.ZodType<BootstrapConfig> = z.object({
   server: serverSchema.default(serverSchema.parse({})),
-  /** Install source and the required-addon override (read by the launcher). */
+  /** The required-addon override (read by the launcher). */
   bootstrap: bootstrapAddonsSchema.default(bootstrapAddonsSchema.parse({})),
   /** Keychain master-key location (config.yaml only). */
   keychain: keychainSchema.default({}),

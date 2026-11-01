@@ -4,13 +4,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
 import { asJsonObject, asString, parseJsonUnknown } from '@camstack/types'
-import {
-  copyDirRecursive,
-  copyExtraFileDirs,
-  ensureDir,
-  ensureLibraryBuilt,
-  stripBundledDeps,
-} from './fs-utils.js'
+import { copyDirRecursive, copyExtraFileDirs, ensureDir, stripBundledDeps } from './fs-utils.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -80,29 +74,6 @@ function readPackageJson(pkgJsonPath: string): PackageJsonView | null {
   return { name, version, raw, camstackAddons }
 }
 
-/**
- * Addon install source mode:
- * - 'npm'     — download from npm registry (production + dev default).
- * - 'local'   — copy dist/ from local workspace `packages/` (used by
- *               `installFromWorkspace` + the Electron-packaged bundled
- *               addons path).
- * - 'symlink' — point `data/addons/<pkg>` directly at the workspace
- *               source dir. Dev-only: workspace edits → next addon
- *               load picks them up after a `npm run build` of the
- *               package, without re-copying. Costs ~80ms per addon at
- *               cold boot instead of the ~200ms-per-package copy.
- *               Windows fallback: drops back to `'local'` if symlink
- *               creation fails (needs admin / developer-mode on Win10).
- *
- * The previous symlink mode (auto-on when workspace was detected) was
- * removed in `eb96df3c` once addons moved to self-contained bundles —
- * the legacy `symlinkAddonsToNodeModules` / `symlinkPeerDepsIntoAddonsDir`
- * helpers it relied on are GONE. This is the narrower successor: no
- * symlinks into the hub's `node_modules`, no peer-dep planting — just
- * `addonsDir/<pkg>` → `packages/<pkg>`.
- */
-export type InstallSource = 'npm' | 'local' | 'symlink'
-
 /** The one bootstrap package the server closure carries itself. */
 export const CLOSURE_PROVIDED_PACKAGE = '@camstack/server'
 
@@ -131,10 +102,12 @@ export interface AddonInstallerConfig {
   readonly addonsDir: string
   /** npm registry URL */
   readonly registry?: string
-  /** Workspace packages directory (e.g., /path/to/camstack-server/packages) */
-  readonly workspacePackagesDir?: string
-  /** Install source mode. Default: auto-detect */
-  readonly installSource?: InstallSource
+  /**
+   * Directory of pre-built package dirs to seed from instead of npm — the
+   * Electron bundle's closure scope dir (`CAMSTACK_BUNDLED_ADDONS_DIR`). Unset
+   * everywhere else: addons then always come from npm.
+   */
+  readonly bundledAddonsDir?: string
   /**
    * Override for "does the running closure already provide this package?".
    * Production leaves it unset (real `require.resolve`); a spec sets it to
@@ -279,8 +252,7 @@ export function selectSweepableStaging(
 export class AddonInstaller {
   readonly addonsDir: string
   private readonly registry: string | undefined
-  readonly workspaceDir: string | undefined
-  readonly installSource: InstallSource
+  readonly bundledAddonsDir: string | undefined
   private readonly logger: IScopedLogger
   private readonly isPackageResolvable?: (packageName: string) => boolean
   /** Test seam — production resolves via `CAMSTACK_FRAMEWORK_DIR`. */
@@ -305,23 +277,12 @@ export class AddonInstaller {
   constructor(config: AddonInstallerConfig, logger: IScopedLogger = noopLogger) {
     this.addonsDir = config.addonsDir
     this.registry = config.registry
-    this.workspaceDir = config.workspacePackagesDir
+    this.bundledAddonsDir = config.bundledAddonsDir
     this.logger = logger
     this.manifest = new AddonManifest(config.addonsDir)
     this.isPackageResolvable = config.isPackageResolvable
     this.closureNodeModulesDir = config.closureNodeModulesDir
     this.resolveLatestVersionOverride = config.resolveLatestVersion
-
-    // Default: 'npm'. The legacy "auto-detect symlink if workspace
-    // present" branch was removed — dev now pushes via `camstack
-    // deploy`, prod resolves from the registry. The explicit `'local'`
-    // mode (copy-from-workspace) stays available for the Electron
-    // bundled-addons path; callers set it explicitly.
-    if (config.installSource) {
-      this.installSource = config.installSource
-    } else {
-      this.installSource = 'npm'
-    }
   }
 
   /**
@@ -485,32 +446,23 @@ export class AddonInstaller {
     const pkgList = packages ?? AddonInstaller.REQUIRED_PACKAGES
     ensureDir(this.addonsDir)
 
-    // Bootstrap prefers local whenever workspace/bundle is available,
-    // regardless of `installSource` (which governs on-demand installs).
-    // Only an explicit `installSource: 'npm'` overrides this.
-    const isLocal = this.installSource !== 'npm' && this.workspaceDir != null
+    // A bundled seed dir (Electron closure) is copied from; otherwise npm.
+    const isLocal = this.bundledAddonsDir != null
 
     this.logger.info(
-      `Install source: ${this.installSource}${this.workspaceDir ? ` (${this.workspaceDir})` : ''}, ${pkgList.length} package(s)`,
+      `Install source: ${isLocal ? `bundle (${this.bundledAddonsDir})` : 'npm'}, ${pkgList.length} package(s)`,
     )
-
-    // Build library deps first when using local packages
-    if (isLocal && this.workspaceDir) {
-      ensureLibraryBuilt('@camstack/kernel', this.workspaceDir)
-      ensureLibraryBuilt('@camstack/types', this.workspaceDir)
-    }
 
     for (const packageName of pkgList) {
       const addonDir = path.join(this.addonsDir, packageName)
 
       // An on-disk copy is not a pin. On the npm source it is moved to
-      // registry `latest` when that tag differs (D942). A workspace or bundled
-      // seed (`installSource` local/symlink) is the checkout itself and is
+      // registry `latest` when that tag differs (D942). A bundled seed is
       // left alone, as is `@camstack/server/system` when the closure already provides
       // it — a copy under the addon root would shadow the closure (D15).
       if (fs.existsSync(path.join(addonDir, 'package.json'))) {
         if (
-          this.installSource !== 'npm' ||
+          isLocal ||
           shouldSkipClosureProvidedSeed(packageName, this.isResolvableFromClosure(packageName))
         ) {
           this.logger.debug(`${packageName} — already installed, skipping`)
@@ -868,19 +820,6 @@ export class AddonInstaller {
   }
 
   /**
-   * Install addon from a local workspace package. Two strategies
-   * depending on `installSource`:
-   *   - `'symlink'` (dev): create a directory symlink
-   *     `addonsDir/<pkg>` → `<workspace>/packages/<pkg>`. Edits to
-   *     the workspace are visible at the next addon load after a
-   *     `npm run build` of that package — no copy step. Falls back
-   *     to `'local'` if symlink creation fails (Windows w/o
-   *     developer-mode).
-   *   - `'local'` (default): copy `package.json` (stripped) + `dist/`
-   *     into `addonsDir/<pkg>/`. The Electron bundled-addons path
-   *     uses this so the runtime owns its on-disk copy.
-   */
-  /**
    * Re-install one addon from the running server closure.
    *
    * The closure carries a copy of every addon it declares as a dependency, and
@@ -919,55 +858,7 @@ export class AddonInstaller {
       throw new Error(`Invalid package.json at ${sourceDir}`)
     }
     const targetDir = path.join(this.addonsDir, packageName)
-    if (this.installSource === 'symlink') {
-      try {
-        return await this.installSymlink(packageName, sourceDir, pkgView.raw, targetDir)
-      } catch (err) {
-        this.logger.warn(`${packageName} — symlink failed, falling back to copy: ${errMsg(err)}`)
-        // Windows without developer-mode rejects symlink creation —
-        // copy is functionally equivalent for boot, just slower.
-      }
-    }
     return this.installCopy(packageName, sourceDir, pkgView.raw, targetDir)
-  }
-
-  /**
-   * Symlink `addonsDir/<pkg>` at the workspace source dir. Dev-only.
-   * After this, the AddonLoader resolves `<addonsDir>/<pkg>/dist/...`
-   * through the symlink straight to `packages/<pkg>/dist/...` — a fresh
-   * `npm run build` of the package is immediately picked up by the
-   * next addon load.
-   *
-   * Auto-runs `ensureBuilt` so a workspace freshly cloned (with no
-   * dist/ yet) still boots — same auto-build hook installCopy uses.
-   *
-   * Does NOT plant peer-dep symlinks into `<targetDir>/node_modules/`
-   * the way the pre-`eb96df3c` symlink mode did. Self-contained
-   * addons bundle their own copy of types/zod/sdk — no shared
-   * workspace symlinks needed.
-   */
-  private async installSymlink(
-    packageName: string,
-    sourceDir: string,
-    pkgData: Record<string, unknown>,
-    targetDir: string,
-  ): Promise<{ name: string; version: string }> {
-    await this.ensureBuilt(packageName, sourceDir, pkgData)
-
-    fs.rmSync(targetDir, { recursive: true, force: true })
-    ensureDir(path.dirname(targetDir))
-    fs.symlinkSync(sourceDir, targetDir, 'dir')
-
-    this.manifest.upsert(packageName, {
-      version: asString(pkgData.version, '0.0.0'),
-      source: 'local',
-    })
-
-    this.logger.info(`${packageName} — symlinked → ${sourceDir}`)
-    return {
-      name: asString(pkgData.name, packageName),
-      version: asString(pkgData.version, '0.0.0'),
-    }
   }
 
   private async installCopy(
@@ -1613,7 +1504,7 @@ export class AddonInstaller {
    *
    * Steps:
    *   1. Rename current install dir → {addonsDir}/.backups/{name}/{ts}/
-   *   2. Run a fresh install (npm or local depending on installSource)
+   *   2. Run a fresh install from npm
    *   3. Record `lastBackupDir` in the manifest entry
    *   4. Prune every OTHER backup of this addon — the previous one just
    *      lost its only pointer and would otherwise be orphaned forever.
@@ -1651,21 +1542,7 @@ export class AddonInstaller {
     // 2. Install new version
     let result: { name: string; version: string }
     try {
-      if (this.installSource === 'local' || this.installSource === 'symlink') {
-        const pkgDir = this.findLocalPackage(packageName)
-        if (pkgDir == null) {
-          throw new Error(
-            `Local source not found for ${packageName} (installSource=${this.installSource})`,
-          )
-        }
-        await this.installLocal(packageName, pkgDir)
-        result = {
-          name: packageName,
-          version: this.manifest.get(packageName)?.version ?? current.version,
-        }
-      } else {
-        result = await this.installFromNpm(packageName, version)
-      }
+      result = await this.installFromNpm(packageName, version)
     } catch (installErr) {
       // Restore the backup so the addon stays online with the old version
       this.logger.error(`${packageName} — install failed, restoring backup`, {
@@ -2170,10 +2047,10 @@ export class AddonInstaller {
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   private findLocalPackage(packageName: string): string | null {
-    if (!this.workspaceDir) return null
+    if (!this.bundledAddonsDir) return null
     const shortName = packageName.replace('@camstack/', '')
     for (const dirName of [shortName, `addon-${shortName}`, shortName.replace('addon-', '')]) {
-      const candidate = path.join(this.workspaceDir, dirName)
+      const candidate = path.join(this.bundledAddonsDir, dirName)
       try {
         const pkg = asJsonObject(
           parseJsonUnknown(fs.readFileSync(path.join(candidate, 'package.json'), 'utf-8')),

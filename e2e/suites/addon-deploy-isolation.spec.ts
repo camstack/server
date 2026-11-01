@@ -47,7 +47,6 @@ beforeAll(async () => {
     port: HUB_PORT,
     bootTimeoutMs: 180_000,
     env: {
-      CAMSTACK_INSTALL_SOURCE: 'local',
       CAMSTACK_SKIP_ADMIN_UI_WAIT: '1',
       CAMSTACK_HUB_TCP_PORT: '6031',
     },

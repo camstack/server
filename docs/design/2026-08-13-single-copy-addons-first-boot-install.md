@@ -217,8 +217,8 @@ trap). Bootstrap never re-installs a package that is present, so it cannot
 overwrite a deployed bundle — the seed-only rule is what protects this, and it is
 kept verbatim.
 
-Dev is unaffected: `CAMSTACK_INSTALL_SOURCE=local|symlink` with a workspace
-`packages/` dir still wins over npm inside `ensureRequiredPackages`.
+Superseded (#342): `CAMSTACK_INSTALL_SOURCE` and `bootstrap.installSource` no
+longer exist; a workspace build reaches a node through `camstack deploy`.
 
 ## 5. The Dockerfile diet
 

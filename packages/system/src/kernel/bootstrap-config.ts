@@ -32,9 +32,28 @@ const ENV_VAR_MAP: Record<string, string> = {
  * `main.ts` and `ConfigManager` come through here, so a key is
  * read in one place. Keys the schema does not name are stripped, not read.
  */
-export function loadBootstrapConfig(configPath: string): BootstrapConfig {
-  const merged = applyEnvOverrides(asJsonObject(loadYaml(configPath)) ?? {})
-  return bootstrapSchema.parse(merged)
+export function loadBootstrapConfig(
+  configPath: string,
+  options: { readonly warnRetiredKeys?: boolean } = {},
+): BootstrapConfig {
+  const raw = asJsonObject(loadYaml(configPath)) ?? {}
+  if (options.warnRetiredKeys === true) warnRetiredYamlKeys(raw)
+  return bootstrapSchema.parse(applyEnvOverrides(raw))
+}
+
+/**
+ * A yaml key that no longer exists is stripped by the schema; this names it
+ * once so an operator who still carries it is told. Addons always come from
+ * npm — a workspace build reaches a node through `camstack deploy`.
+ */
+function warnRetiredYamlKeys(raw: Record<string, unknown>): void {
+  const section = raw['bootstrap']
+  if (isRecord(section) && 'installSource' in section) {
+    console.warn(
+      '[Phase1] WARN bootstrap.installSource ignored — addons always install from npm; ' +
+        'a workspace build reaches a node through `camstack deploy`. Remove the key.',
+    )
+  }
 }
 
 /**

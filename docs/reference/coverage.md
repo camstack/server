@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**228 units · 7711 source files · 214 units claimed by at least one document (7668 files).**
+**228 units · 7710 source files · 214 units claimed by at least one document (7667 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/notification-center` | 211 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +81 more, 27 ADRs | 2026-10-07 |
 | `packages/addon-admin-ui/src/pages` | 201 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +53 more, 8 ADRs | 2026-10-27 |
 | `packages/addon-pipeline/src/stream-broker` | 187 | `recorder`, `stream-broker` | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +58 more, 21 ADRs | 2026-10-08 |
-| `packages/system/src/kernel` | 163 | `alerts-and-health`, `capabilities`, `detection-execution`, `device-model`, `kernel`, `storage`, `transport`, `update-and-release` | `architecture/overview.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +91 more, 21 ADRs | 2026-10-22 |
+| `packages/system/src/kernel` | 162 | `alerts-and-health`, `capabilities`, `detection-execution`, `device-model`, `kernel`, `storage`, `transport`, `update-and-release` | `architecture/overview.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +91 more, 21 ADRs | 2026-10-22 |
 | `packages/addon-pipeline/src/recorder` | 112 | `recorder` | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, +76 more, 10 ADRs | 2026-10-26 |
 | `server/backend/src/core` | 94 | `api-surface`, `auth`, `capabilities`, `device-model`, `logging`, `notification-center`, `remote-access`, `storage`, `stream-broker`, `transport`, `update-and-release` | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `architecture/addon-lifecycle.md`, +52 more, 7 ADRs | 2026-10-27 |
 | `server/backend/src/api` | 92 | `api-surface`, `secrets` | `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, `decisions/adr-0895-there-is-one-token-and-no-other-bearer-format-a-share-link-is-a-token-and-only-a-login-session-becomes-a-session.md`, +64 more, 10 ADRs | 2026-10-26 |

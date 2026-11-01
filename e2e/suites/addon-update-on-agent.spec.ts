@@ -199,7 +199,6 @@ beforeAll(async () => {
       // Framework/required packages aren't on the test verdaccio —
       // bootstrap them from the local workspace, same as the other
       // verdaccio-backed suites.
-      CAMSTACK_INSTALL_SOURCE: 'local',
       CAMSTACK_SKIP_ADMIN_UI_WAIT: '1',
     },
   })

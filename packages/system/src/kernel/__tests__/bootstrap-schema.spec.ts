@@ -52,37 +52,28 @@ describe('bootstrapSchema — dead yaml keys are ignored (#342)', () => {
     })
     expect(Object.keys(parsed).sort()).toEqual(['bootstrap', 'keychain', 'server'])
     expect(parsed.server.port).toBe(5555)
-    expect(parsed.bootstrap).toEqual({ installSource: 'local' })
+    expect(parsed.bootstrap).toEqual({})
   })
 
   it('names exactly the surviving bootstrap keys', () => {
     const parsed = bootstrapSchema.parse({
       server: {},
-      bootstrap: { installSource: 'npm', requiredAddons: [] },
+      bootstrap: { requiredAddons: [] },
       keychain: { keyFile: '/k', previousKeyFile: '/p' },
     })
     expect(Object.keys(parsed.server).sort()).toEqual(['dataPath', 'host', 'port'])
-    expect(Object.keys(parsed.bootstrap).sort()).toEqual(['installSource', 'requiredAddons'])
+    expect(Object.keys(parsed.bootstrap).sort()).toEqual(['requiredAddons'])
     expect(Object.keys(parsed.keychain).sort()).toEqual(['keyFile', 'previousKeyFile'])
   })
 })
 
-describe('bootstrapSchema — bootstrap.installSource', () => {
-  it('defaults to undefined when YAML omits it (launcher uses its own resolution)', () => {
-    const parsed = bootstrapSchema.parse({})
-    expect(parsed.bootstrap.installSource).toBeUndefined()
-  })
-
-  it('accepts the three known modes', () => {
-    for (const value of ['npm', 'local', 'symlink'] as const) {
+describe('bootstrapSchema — retired bootstrap.installSource', () => {
+  it('strips the key: a yaml that still carries any value parses without it', () => {
+    for (const value of ['npm', 'local', 'symlink', 'rsync']) {
       const parsed = bootstrapSchema.parse({ bootstrap: { installSource: value } })
-      expect(parsed.bootstrap.installSource).toBe(value)
+      expect(parsed.bootstrap).toEqual({})
+      expect('installSource' in parsed.bootstrap).toBe(false)
     }
-  })
-
-  it('rejects unknown install source values', () => {
-    const result = bootstrapSchema.safeParse({ bootstrap: { installSource: 'rsync' } })
-    expect(result.success).toBe(false)
   })
 })
 

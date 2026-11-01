@@ -35,7 +35,6 @@ import {
   createReadinessServiceForRegistry,
   createUdsEventBridge,
   deriveAgentListenPort,
-  detectWorkspacePackagesDir,
   getBrokerEventBus,
   getOrInitReadinessRegistry,
   HUB_CAP_FWD_ACTION,
@@ -229,23 +228,12 @@ async function startAgent(configPath?: string): Promise<void> {
   //      the closure's own scope dir, `<resourcesPath>/node_modules/@camstack`
   //      (`'local'` mode). Was a second `<resourcesPath>/addons` tree until
   //      2026-08-25 — see `packages/desktop/src/process-manager.ts`.
-  //   2. Otherwise npm from registry. Local dev pushes addons via
+  //   2. Otherwise npm from registry. A workspace build reaches a node via
   //      `camstack deploy` (CLI tarball upload), bypassing this path.
-  const explicitSource = process.env['CAMSTACK_INSTALL_SOURCE'] as 'npm' | 'local' | undefined
   const bundledDir = process.env['CAMSTACK_BUNDLED_ADDONS_DIR']
-  let workspaceDir: string | null = null
-  let resolvedSource: typeof explicitSource = explicitSource
-  if (bundledDir && fs.existsSync(bundledDir)) {
-    workspaceDir = bundledDir
-    resolvedSource = 'local'
-    console.log(`[Agent] Using bundled addons from ${bundledDir}`)
-  } else if (explicitSource === 'local') {
-    workspaceDir = detectWorkspacePackagesDir(config.dataDir)
-  }
   const installer = new AddonInstaller({
     addonsDir: config.addonsDir,
-    workspacePackagesDir: workspaceDir ?? undefined,
-    installSource: resolvedSource,
+    ...(bundledDir && fs.existsSync(bundledDir) ? { bundledAddonsDir: bundledDir } : {}),
   })
   await installer.ensureRequiredPackages(AddonInstaller.AGENT_PACKAGES)
 

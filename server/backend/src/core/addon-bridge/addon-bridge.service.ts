@@ -46,11 +46,7 @@ export class AddonBridgeService {
       const kernel = require('@camstack/server/system') as typeof import('@camstack/server/system')
       const dataDir = process.env.CAMSTACK_DATA ?? 'camstack-data'
       const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
-      const workspacePackagesDir = kernel.detectWorkspacePackagesDir(__dirname)
-      this.installer = new kernel.AddonInstaller({
-        addonsDir,
-        workspacePackagesDir: workspacePackagesDir ?? undefined,
-      })
+      this.installer = new kernel.AddonInstaller({ addonsDir })
       kernel.ensureDir(addonsDir)
     } catch (error: unknown) {
       const msg = errMsg(error)

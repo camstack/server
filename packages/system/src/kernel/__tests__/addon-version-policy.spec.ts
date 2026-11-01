@@ -116,7 +116,6 @@ describe('ensureRequiredPackages follows registry latest', () => {
     const installer = new AddonInstaller(
       {
         addonsDir,
-        installSource: 'npm',
         resolveLatestVersion: async () => '1.2.6',
       },
       logger,
@@ -140,7 +139,6 @@ describe('ensureRequiredPackages follows registry latest', () => {
     installed(addonsDir, '@camstack/addon-pipeline', '1.2.7')
     const installer = new AddonInstaller({
       addonsDir,
-      installSource: 'npm',
       resolveLatestVersion: async () => {
         throw new Error('ENOTFOUND registry.npmjs.org')
       },
@@ -162,7 +160,6 @@ describe('ensureRequiredPackages follows registry latest', () => {
     installed(addonsDir, '@camstack/addon-pipeline', '1.2.6')
     const installer = new AddonInstaller({
       addonsDir,
-      installSource: 'npm',
       resolveLatestVersion: async () => '1.2.6',
     })
     const apply = vi.spyOn(installer, 'applyUpdate')

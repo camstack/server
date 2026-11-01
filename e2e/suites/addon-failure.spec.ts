@@ -71,7 +71,6 @@ beforeAll(async () => {
     dataDir: dataDir.path,
     // Don't auto-install bundled addons — keep the boot lean so the failure
     // log is easy to read.
-    env: { CAMSTACK_INSTALL_SOURCE: 'local' },
   })
   client = await loginAsAdmin(hub.port)
 }, 120_000)

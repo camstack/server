@@ -131,7 +131,7 @@ export function retiredSecretSources(
  * variable still set, so a container template that carries one is told.
  */
 export function loadBootstrapConfig(configPath: string): BootstrapConfig {
-  const config = loadKernelBootstrapConfig(configPath)
+  const config = loadKernelBootstrapConfig(configPath, { warnRetiredKeys: true })
   const env = process.env
 
   const retired = retiredSecretSources(env)

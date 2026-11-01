@@ -43,7 +43,12 @@ function seedWorkspacePackage(workspaceDir: string, opts: SeedOpts): string {
         main: 'dist/index.js',
         camstack: {
           addons: [
-            { id: shortName, name: opts.name, version: opts.version, entry: './dist/index.js' },
+            {
+              id: shortName,
+              name: opts.name,
+              version: opts.version,
+              entry: './dist/index.js',
+            },
           ],
         },
       },
@@ -79,7 +84,10 @@ describe('AddonInstaller — .backups retention', () => {
 
   /** Bump the workspace source to `version` so the next update installs it. */
   const bumpWorkspace = (version: string): void => {
-    fs.rmSync(path.join(workspaceDir, 'test-foo'), { recursive: true, force: true })
+    fs.rmSync(path.join(workspaceDir, 'test-foo'), {
+      recursive: true,
+      force: true,
+    })
     seedWorkspacePackage(workspaceDir, { name: PKG, version })
   }
 
@@ -94,15 +102,19 @@ describe('AddonInstaller — .backups retention', () => {
     seedWorkspacePackage(workspaceDir, { name: PKG, version: '1.0.0' })
     installer = new AddonInstaller({
       addonsDir,
-      workspacePackagesDir: workspaceDir,
-      installSource: 'local',
+      bundledAddonsDir: workspaceDir,
     })
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double: drive the private local-install path so no registry is needed
-    await (
-      installer as unknown as {
-        installLocal: (pkg: string, sourceDir: string) => Promise<{ name: string; version: string }>
-      }
-    ).installLocal(PKG, path.join(workspaceDir, 'test-foo'))
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double: the registry is replaced by a directory of built packages
+    const seam = installer as unknown as {
+      installLocal: (pkg: string, sourceDir: string) => Promise<{ name: string; version: string }>
+      installFromNpm: (pkg: string) => Promise<{ name: string; version: string }>
+    }
+    seam.installFromNpm = async (pkg) => {
+      const source = path.join(workspaceDir, 'test-foo')
+      if (!fs.existsSync(source)) throw new Error(`Local source not found for ${pkg}`)
+      return seam.installLocal(pkg, source)
+    }
+    await seam.installLocal(PKG, path.join(workspaceDir, 'test-foo'))
   })
 
   afterEach(() => {
@@ -218,7 +230,9 @@ describe('AddonInstaller — .backups retention', () => {
     fs.mkdirSync(sibling, { recursive: true })
     fs.writeFileSync(path.join(sibling, 'residue'), 'x')
 
-    fs.mkdirSync(path.join(backupsRoot, PKG, '2026-01-01T00-00-00-000Z'), { recursive: true })
+    fs.mkdirSync(path.join(backupsRoot, PKG, '2026-01-01T00-00-00-000Z'), {
+      recursive: true,
+    })
     const result = await installer.sweepBackups()
 
     expect(fs.existsSync(path.join(sibling, 'residue'))).toBe(true)

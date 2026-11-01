@@ -14,7 +14,6 @@ import {
   ADDON_VERSION_REASON_REGISTRY_LATEST,
   AddonInstaller,
   decideAddonVersionMove,
-  detectWorkspacePackagesDir,
   ensureDir,
   scheduleSelfRestart,
   writePendingRestart,
@@ -394,7 +393,6 @@ export class AddonPackageService {
     // Ensures install/uninstall works before full module init completes.
     try {
       const addonsDir = this.resolveAddonsDir()
-      const workspacePackagesDir = detectWorkspacePackagesDir(__dirname)
       // `CAMSTACK_NPM_REGISTRY` override exists primarily for the e2e
       // harness — it points the installer at a sandboxed verdaccio so
       // the CLI-vs-npm version-interaction tests don't hit the public
@@ -405,7 +403,6 @@ export class AddonPackageService {
       const registry = process.env['CAMSTACK_NPM_REGISTRY']
       this.installer = new AddonInstaller({
         addonsDir,
-        workspacePackagesDir: workspacePackagesDir ?? undefined,
         ...(registry ? { registry } : {}),
       })
       ensureDir(addonsDir)
@@ -716,44 +713,14 @@ export class AddonPackageService {
   // Workspace
   // =========================================================================
 
-  /** Check if workspace packages directory is available (dev mode) */
+  /** Always false: addons install from npm; a workspace build arrives through `camstack deploy`. */
   isWorkspaceAvailable(): boolean {
-    return this.installer?.workspaceDir != null
+    return false
   }
 
-  /** List addon packages available in the workspace but not necessarily installed */
+  /** Always empty — see {@link isWorkspaceAvailable}. */
   listWorkspacePackages(): Array<{ name: string; version: string; installed: boolean }> {
-    const workspaceDir = this.installer?.workspaceDir
-    if (!workspaceDir) return []
-
-    const results: Array<{ name: string; version: string; installed: boolean }> = []
-    const installed = new Set(this.listInstalled().map((p) => p.name))
-
-    try {
-      for (const entry of fs.readdirSync(workspaceDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue
-        const pkgJsonPath = path.join(workspaceDir, entry.name, 'package.json')
-        if (!fs.existsSync(pkgJsonPath)) continue
-        const pkg = readJsonObject(pkgJsonPath)
-        if (!pkg) {
-          this.logger.debug('Skipping malformed package.json', { meta: { entryName: entry.name } })
-          continue
-        }
-        const name = asString(pkg['name'])
-        if (!name.startsWith('@camstack/')) continue
-        const camstack = asRecord(pkg['camstack'])
-        if (!Array.isArray(camstack['addons'])) continue
-        results.push({
-          name,
-          version: asString(pkg['version'], '0.0.0'),
-          installed: installed.has(name),
-        })
-      }
-    } catch (err) {
-      this.logger.warn('Failed to read workspace directory', { meta: { error: errMsg(err) } })
-    }
-
-    return results
+    return []
   }
 
   // =========================================================================
@@ -1342,9 +1309,9 @@ export class AddonPackageService {
           }
         }
         // Reuse the long-lived installer the registry already configured
-        // (correct addonsDir + installSource + workspaceDir) — building a
-        // fresh one with `new AI({ addonsDir })` would lose installSource
-        // detection and skip the central manifest write.
+        // (correct addonsDir + registry) — building a
+        // fresh one with `new AI({ addonsDir })` would skip the central
+        // manifest write.
         this.requireInstaller()
         const addonInstaller = this.installer!
         const previousVersion = this.getInstalledPackageVersion(name)

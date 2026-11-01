@@ -356,7 +356,6 @@
     - packages/system/src/kernel/addon-loader.ts
     - packages/system/src/kernel/addon-manifest.ts
     - packages/system/src/kernel/addon-residue.ts
-    - packages/system/src/kernel/workspace-detect.ts
 
 - id: ecosystem-exports
   title: Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT

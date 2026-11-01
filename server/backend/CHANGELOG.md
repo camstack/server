@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The hub serves userManagement.getAdminBootstrapStatus (admin-only: is the first-boot admin password still in use)
+- Addons now always install from npm: the bootstrap.installSource key and the CAMSTACK_INSTALL_SOURCE variable are gone (a config.yaml still carrying the key boots with one warning); a workspace build reaches a node through camstack deploy.
 
 ## [1.2.727] - 2026-11-01
 

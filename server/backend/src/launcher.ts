@@ -42,12 +42,6 @@ import { applyPendingPreMigrationRestore } from './pre-migration-restore.js'
 /** Resolve the data directory from env or default */
 const DATA_DIR = process.env['CAMSTACK_DATA'] ?? 'camstack-data'
 
-/** Narrow `CAMSTACK_INSTALL_SOURCE` env into the typed union. */
-function parseInstallSource(value: string | undefined): 'npm' | 'local' | 'symlink' | undefined {
-  if (value === 'npm' || value === 'local' || value === 'symlink') return value
-  return undefined
-}
-
 /**
  * Locate + parse `config.yaml` relative to the data dir. Returns the
  * raw object on success, `null` when missing or unparseable. The
@@ -76,29 +70,6 @@ function readConfigYaml(dataDir: string): unknown {
     )
     return null
   }
-}
-
-/**
- * Read `bootstrap.installSource` from `<dataDir>/config.yaml` if present.
- * Returns the configured value or `null` when absent.
- *
- * Production deployments should leave this unset (defaults to 'npm');
- * `symlink` is a dev-time convenience that points data/addons/<pkg>
- * directly at the workspace source dir — never set in shipped
- * containers or Electron bundles.
- *
- * `bootstrapSchema` is passed in (not imported at module top) so this
- * helper can be called after the dynamic @camstack/server/system import in launch().
- */
-function readBootstrapInstallSource(
-  dataDir: string,
-  bootstrapSchema: typeof BootstrapSchemaType,
-): 'npm' | 'local' | 'symlink' | undefined {
-  const raw = readConfigYaml(dataDir)
-  if (raw === null) return undefined
-  const validation = bootstrapSchema.safeParse(raw)
-  if (!validation.success) return undefined
-  return parseInstallSource(validation.data.bootstrap.installSource)
 }
 
 /**
@@ -248,8 +219,9 @@ async function launch(): Promise<void> {
   // @camstack/server/system is imported DYNAMICALLY here — AFTER the active framework
   // dir + NODE_PATH are resolved above — so the correct framework copy is what
   // gets loaded. Never import it at module top.
-  const { AddonInstaller, bootstrapSchema, detectWorkspacePackagesDir, quarantineAddonResidue } =
-    await import('@camstack/server/system')
+  const { AddonInstaller, bootstrapSchema, quarantineAddonResidue } = await import(
+    '@camstack/server/system'
+  )
 
   // Residue quarantine — FIRST thing that touches the addon root, before the
   // bootstrap seed writes into it and long before any loader scans it.
@@ -276,47 +248,20 @@ async function launch(): Promise<void> {
     console.warn('[launcher] quarantineAddonResidue unavailable — skipping residue quarantine')
   }
 
-  // Install source resolution:
-  //   1. CAMSTACK_BUNDLED_ADDONS_DIR — set by Electron-packaged builds to
-  //      the closure's own scope dir, <resourcesPath>/node_modules/@camstack.
-  //      Pre-built addons ship inside that closure and are copied out of it at
-  //      first launch (`'local'` mode). ONE copy in the bundle: the app used to
-  //      ship a second, hand-copied <resourcesPath>/addons tree as well (D45).
-  //   2. CAMSTACK_INSTALL_SOURCE=local — explicit opt-in to copy from
-  //      the monorepo workspace (used by e2e + dev bootstrap). Hub
-  //      auto-detects `packages/` via detectWorkspacePackagesDir.
-  //   3. Otherwise: 'npm' from the registry. Local development pushes
-  //      via `camstack deploy` (CLI tarball upload), bypassing this
-  //      bootstrap entirely.
+  // Provisioning source: CAMSTACK_BUNDLED_ADDONS_DIR — set by Electron-packaged
+  // builds to the closure's own scope dir, <resourcesPath>/node_modules/@camstack
+  // — seeds first launch from that closure (D45). Otherwise addons come from
+  // npm; a workspace build reaches a node only through `camstack deploy`.
   console.log('[launcher] Checking required packages...')
-  // Install source resolution:
-  //   CAMSTACK_INSTALL_SOURCE env: 'npm' | 'local' | 'symlink' | undefined.
-  //   CAMSTACK_BUNDLED_ADDONS_DIR: Electron path, forces 'local'.
-  //   bootstrap.installSource (config.yaml): same set as env. Env wins.
-  const rawEnvSource = process.env['CAMSTACK_INSTALL_SOURCE']
-  const yamlSource = readBootstrapInstallSource(dataDir, bootstrapSchema)
-  const explicitSource = parseInstallSource(rawEnvSource) ?? yamlSource
   const bundledDir = process.env['CAMSTACK_BUNDLED_ADDONS_DIR']
-  let workspaceDir: string | null = null
-  let resolvedSource: 'npm' | 'local' | 'symlink' | undefined = explicitSource
+  let bundledAddonsDir: string | undefined
   if (bundledDir && fs.existsSync(bundledDir)) {
-    workspaceDir = bundledDir
-    resolvedSource = 'local'
+    bundledAddonsDir = bundledDir
     console.log(`[launcher] Using bundled addons from ${bundledDir}`)
-  } else if (explicitSource === 'local' || explicitSource === 'symlink') {
-    workspaceDir = detectWorkspacePackagesDir(__dirname)
-    if (workspaceDir === null) {
-      console.warn(
-        `[launcher] installSource=${explicitSource} requested but no workspace ` +
-          `packages/ dir found from ${__dirname} — falling back to 'npm'`,
-      )
-      resolvedSource = 'npm'
-    }
   }
   const installer = new AddonInstaller({
     addonsDir,
-    workspacePackagesDir: workspaceDir ?? undefined,
-    installSource: resolvedSource,
+    ...(bundledAddonsDir ? { bundledAddonsDir } : {}),
   })
 
   // bootstrap.requiredAddons from config.yaml — if set, REPLACES the

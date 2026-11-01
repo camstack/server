@@ -86,17 +86,21 @@ describe('AddonInstaller.applyUpdate', () => {
 
     installer = new AddonInstaller({
       addonsDir,
-      workspacePackagesDir: workspaceDir,
-      installSource: 'local',
+      bundledAddonsDir: workspaceDir,
     })
 
     // Initial install of v1
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double: exercise the private installLocal install path directly
-    await (
-      installer as unknown as {
-        installLocal: (pkg: string, sourceDir: string) => Promise<{ name: string; version: string }>
-      }
-    ).installLocal('@camstack/test-foo', path.join(workspaceDir, 'test-foo'))
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double: the registry is replaced by a directory of built packages
+    const seam = installer as unknown as {
+      installLocal: (pkg: string, sourceDir: string) => Promise<{ name: string; version: string }>
+      installFromNpm: (pkg: string) => Promise<{ name: string; version: string }>
+    }
+    seam.installFromNpm = async (pkg) => {
+      const source = path.join(workspaceDir, 'test-foo')
+      if (!fs.existsSync(source)) throw new Error(`Local source not found for ${pkg}`)
+      return seam.installLocal(pkg, source)
+    }
+    await seam.installLocal('@camstack/test-foo', path.join(workspaceDir, 'test-foo'))
   })
 
   afterEach(() => {
@@ -136,7 +140,9 @@ describe('AddonInstaller.applyUpdate', () => {
   })
 
   it('refuses to update when install dir is gone', async () => {
-    fs.rmSync(path.join(addonsDir, '@camstack', 'test-foo'), { recursive: true })
+    fs.rmSync(path.join(addonsDir, '@camstack', 'test-foo'), {
+      recursive: true,
+    })
     await expect(installer.applyUpdate('@camstack/test-foo')).rejects.toThrow(
       /install dir.*missing/,
     )

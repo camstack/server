@@ -39,7 +39,6 @@ describe('bootstrap seeding of @camstack/server/system', () => {
   it('does NOT seed a copy when the closure provides it', async () => {
     const installer = new AddonInstaller({
       addonsDir,
-      installSource: 'npm',
       isPackageResolvable: () => true,
     })
 
@@ -66,7 +65,6 @@ describe('bootstrap seeding of @camstack/server/system', () => {
 
     const installer = new AddonInstaller({
       addonsDir,
-      installSource: 'npm',
       isPackageResolvable: () => true,
     })
     await installer.ensureRequiredPackages(['@camstack/server'])

@@ -40,12 +40,18 @@ describe('one bootstrap loader', () => {
         '',
       ].join('\n'),
     )
+    const warn = vi.spyOn(console, 'warn')
     const config = loadBootstrapConfig(configPath)
     const manager = new ConfigManager(configPath)
 
+    const installSourceWarns = warn.mock.calls.filter((c) =>
+      String(c[0]).includes('bootstrap.installSource'),
+    )
+    expect(installSourceWarns).toHaveLength(1)
+    expect('installSource' in config.bootstrap).toBe(false)
     expect(Object.keys(config).sort()).toEqual(['bootstrap', 'keychain', 'server'])
     expect(config.server.port).toBe(5151)
-    expect(config.bootstrap).toEqual({ installSource: 'local' })
+    expect(config.bootstrap).toEqual({})
     for (const dead of ['mode', 'hub.url', 'agent.name', 'tls.enabled', 'auth.jwtSecret']) {
       expect(manager.getBootstrap(dead)).toBeUndefined()
     }

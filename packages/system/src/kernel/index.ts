@@ -2,7 +2,7 @@
 export type { RegisteredAddon } from './addon-loader.js'
 export { AddonLoader } from './addon-loader.js'
 export { AddonEngineManager } from './addon-engine-manager.js'
-export type { AddonInstallerConfig, InstallSource, InstalledPackage } from './addon-installer.js'
+export type { AddonInstallerConfig, InstalledPackage } from './addon-installer.js'
 export { AddonInstaller } from './addon-installer.js'
 export type { AddonVersionMove, AddonVersionReason } from './addon-version-policy.js'
 export {
@@ -38,7 +38,6 @@ export {
 } from './fs-utils.js'
 
 // Workspace detection
-export { detectWorkspacePackagesDir } from './workspace-detect.js'
 
 // Restart coordination — framework live-update primitives
 // Spec: docs/superpowers/specs/2026-05-14-framework-live-update-design.md
