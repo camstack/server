@@ -50,12 +50,13 @@ export const CORS_ALLOWED_METHODS = 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTION
 /**
  * Request headers a cross-origin caller may send. `authorization` is the
  * whole point; `range` is recorded-media seeking; the `trpc-*` / `x-trpc-*`
- * names are what `@trpc/client` links may add. NOT `x-camstack-exchange`:
+ * names are what `@trpc/client` links may add; `x-camstack-lang` is the
+ * language the SDK sends on every request. NOT `x-camstack-exchange`:
  * the cookie→bearer exchange is a same-origin mechanism and a cross-origin
  * page has no business asking for it.
  */
 export const CORS_ALLOWED_HEADERS =
-  'authorization, content-type, range, if-range, if-none-match, cache-control, trpc-accept, x-trpc-source, x-trpc-batch-mode'
+  'authorization, content-type, range, if-range, if-none-match, cache-control, trpc-accept, x-trpc-source, x-trpc-batch-mode, x-camstack-lang'
 
 /**
  * Response headers a cross-origin script may read. The byte-range trio is

@@ -132,6 +132,22 @@ describe('registerCorsPolicy — HTTP', () => {
     expect(res.headers['access-control-allow-credentials']).toBeUndefined()
   })
 
+  it('grants the language header the SDK sends on every request', async () => {
+    // A preflight that omits a header the client sends fails the whole call:
+    // the viewer's sign-in from a configured origin died on `x-camstack-lang`.
+    const app = await makeApp(makePolicy().policy)
+    const res = await app.inject(
+      preflight(VIEWER_PWA_ORIGIN, {
+        'access-control-request-headers': 'content-type, x-camstack-lang',
+      }),
+    )
+
+    const granted = String(res.headers['access-control-allow-headers'])
+      .split(',')
+      .map((name) => name.trim())
+    expect(granted).toContain('x-camstack-lang')
+  })
+
   it('grants Chromium’s private-network preflight to an allowed origin only', async () => {
     const app = await makeApp(makePolicy().policy)
     const pna = { 'access-control-request-private-network': 'true' }
