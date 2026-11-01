@@ -22,6 +22,7 @@ import {
   type SavedDevice,
   type SystemEvent,
 } from '@camstack/types'
+import { HomematicReconciler, type IntegrationLifecycleKind } from './homematic-reconciler.js'
 import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
 import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
@@ -74,6 +75,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
   }
 
   /** Live per-integration CCU sessions, or null before init / after shutdown. */
+  private integrationReconciler: HomematicReconciler | null = null
   private clients: HmClientRegistry | null = null
 
   constructor() {
@@ -85,7 +87,9 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
 
     this.clients = new HmClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
-      this.ctx.logger.info('Homematic: CCU connected', { meta: { integrationId } })
+      this.ctx.logger.info('Homematic: CCU connected', {
+        meta: { integrationId },
+      })
       this.setIntegrationDevicesOnline(integrationId, true)
       // Containers that restored while the CCU was unreachable left
       // `lastProbedAt === 0` (see HmContainerDevice.onProbe). Reprobe now that
@@ -106,9 +110,18 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
-        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
-        { capability: addonPagesSourceCapability, provider: this.buildPagesProvider() },
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: connectionTestCapability,
+          provider: this.buildConnectionTestProvider(),
+        },
+        {
+          capability: addonPagesSourceCapability,
+          provider: this.buildPagesProvider(),
+        },
       ],
       customActions: homematicActions,
       actionHandlers: {
@@ -126,7 +139,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
             name: candidate.suggestedName,
             id: candidate.stableId.replace(/^homematic:/, ''),
           }))
-          return { hosts, summary: homematicDiscoverySummary(hosts.length, hosts.length) }
+          return {
+            hosts,
+            summary: homematicDiscoverySummary(hosts.length, hosts.length),
+          }
         },
       },
     }
@@ -174,6 +190,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.integrationReconciler = null
     homematicFacades.clear()
     await super.onShutdown()
   }
@@ -254,7 +271,9 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       for (const integration of all) {
         if (integration.addonId !== this.ctx.id) continue
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+          const settings = await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          })
           const connection = connectionFromSettings(settings)
           if (connection) hosts.push(connection.host)
         } catch (err) {
@@ -322,62 +341,60 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
    * devices. Idempotent; runs on boot and on every integration lifecycle event.
    * Guarded: a failing read warns and returns, `onInitialize` must not fail.
    */
+  private reconciler(): HomematicReconciler {
+    this.integrationReconciler ??= new HomematicReconciler({
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      clients: {
+        list: () => this.requireClients().list(),
+        remove: async (id) => {
+          await this.requireClients().remove(id)
+        },
+      },
+      listIntegrations: () => this.ctx.api.integrations.list.query(),
+      applySettings: async (integration) => {
+        const connection = connectionFromSettings(
+          await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          }),
+        )
+        if (!connection) return false
+        await this.requireClients().upsert(integration.id, integration.name, connection)
+        return true
+      },
+      removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+    })
+    return this.integrationReconciler
+  }
+
+  /** Upsert one client per enabled integration; never removes a device (D49). */
   private async reconcileIntegrations(): Promise<void> {
-    const reg = this.requireClients()
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const connection = connectionFromSettings(settings)
-          if (!connection) {
-            this.ctx.logger.warn(
-              'Homematic reconcile: host missing or invalid, no session opened',
-              {
-                tags: { integrationId: integration.id },
-              },
-            )
-            continue
-          }
-          await reg.upsert(integration.id, integration.name, connection)
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('Homematic reconcile: settings read failed', {
-            tags: { integrationId: integration.id },
-            meta: { error: errMsg(err) },
-          })
-        }
-      }
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      for (const integrationId of vanished) {
-        await this.cascadeRemoveDevicesForIntegration(integrationId)
-      }
-    } catch (err) {
-      this.ctx.logger.warn('Homematic integration reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
+    await this.reconciler().reconcile()
   }
 
+  /** Lifecycle events: only an explicit Deleted/Disabled naming an integration removes devices. */
   private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrations()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
+    const on =
+      (kind: IntegrationLifecycleKind) =>
+      (event: SystemEvent): void => {
+        const addonId = event.data['addonId']
+        if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+        const integrationId = event.data['integrationId']
+        void this.reconciler().onLifecycle(
+          kind,
+          typeof integrationId === 'string' ? integrationId : null,
+        )
+      }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 
-  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<void> {
+  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    if (!reg || !devices) return
-    await cascadeRemoveDevicesForIntegration({
+    if (!reg || !devices) return 0
+    return await cascadeRemoveDevicesForIntegration({
       reg,
       devices,
       addonId: this.addonId,
@@ -423,7 +440,11 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       adoptGateway: async ({ integrationId, nativeId, name }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('homematic adopt: kernel.devices unavailable')
-        const config = { integrationId, system: 'homematic' as const, nativeId }
+        const config = {
+          integrationId,
+          system: 'homematic' as const,
+          nativeId,
+        }
         const stableId = this.generateStableId(DeviceType.Gateway, config)
         const device = await devices.create(stableId, HomematicGatewayDevice, config, null, {
           type: DeviceType.Gateway,
@@ -454,7 +475,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
           integrationId,
         })
         const children = await devices.getChildren(device.id)
-        return { deviceId: device.id, accessoryDeviceIds: children.map((c) => c.id) }
+        return {
+          deviceId: device.id,
+          accessoryDeviceIds: children.map((c) => c.id),
+        }
       },
       adoptStandaloneEntity: async ({ deviceType, role, name, integrationId, config }) => {
         const devices = this.ctx.kernel.devices
@@ -513,7 +537,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         await this.ctx.api.deviceManager.addLocation.mutate({ name })
         locations = [...knownLocations, name]
       }
-      await this.ctx.api.deviceManager.setLocation.mutate({ deviceId, location: name })
+      await this.ctx.api.deviceManager.setLocation.mutate({
+        deviceId,
+        location: name,
+      })
       return locations
     } catch (err) {
       this.ctx.logger.warn('homematic adopt: location import failed (non-fatal)', {
