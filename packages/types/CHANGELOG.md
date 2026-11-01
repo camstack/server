@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.
+- A plug-in heater is a new device type, and a new timed-run capability turns a heater or a pet fountain pump on for a set time and then off again.
+- Entity drafting: schemas, vocabulary slice, prompt, validator and comparator for describing an automation, action, scheduler or composition in words.
+
 ## [1.2.469] - 2026-11-01
 
 ### Changed
@@ -17,9 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
 - Added the device-runs capability: a durable record of each washer, dryer and dishwasher cycle.
 - Washer and dryer resolve to the new appliance control kind
-- fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.
-- A plug-in heater is a new device type, and a new timed-run capability turns a heater or a pet fountain pump on for a set time and then off again.
-- Entity drafting: schemas, vocabulary slice, prompt, validator and comparator for describing an automation, action, scheduler or composition in words.
 
 ## [1.2.468] - 2026-11-01
 

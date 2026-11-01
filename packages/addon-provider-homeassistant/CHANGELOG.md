@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The timed-run capability is listed as not exported to Home Assistant.
+
 ## [1.2.645] - 2026-11-01
 
 ### Changed
 
 - Classified the device-runs capability as not exported.
-- The timed-run capability is listed as not exported to Home Assistant.
 
 ## [1.2.644] - 2026-11-01
 
