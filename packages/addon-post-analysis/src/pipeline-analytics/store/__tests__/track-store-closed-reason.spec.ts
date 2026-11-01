@@ -108,6 +108,45 @@ describe('TrackStore — the close marker', () => {
     expect(rows).toHaveLength(0)
   })
 
+  it('KEEPS a discardable track whose notification is held — row persisted, nothing handed to the cascade (#315)', async () => {
+    // A dog notified at its first sighting went motionless; the sweep discarded
+    // it 13 s later and the verdict tap found no track.
+    upsertLive('notified-dog', 1_000)
+    const discarded: string[] = []
+    const asked: string[] = []
+
+    const expired = await trackStore.expireStale(1_000 + 60_000, {
+      onDiscard: (track) => {
+        discarded.push(track.trackId)
+      },
+      holdsDeliveredNotification: async (deviceId, trackId) => {
+        asked.push(`${deviceId}:${trackId}`)
+        return true
+      },
+    })
+
+    expect(asked).toEqual([`${DEVICE_ID}:notified-dog`])
+    expect(discarded).toEqual([])
+    expect(expired).toHaveLength(1)
+    const rows = await trackStore.queryHistorical({ deviceId: DEVICE_ID, projection: 'slim' })
+    expect(rows.map((r) => r.trackId)).toEqual(['notified-dog'])
+  })
+
+  it('DISCARDS the same track once the hold is gone (#315)', async () => {
+    upsertLive('notified-dog-late', 1_000)
+    const discarded: string[] = []
+
+    const expired = await trackStore.expireStale(1_000 + 60_000, {
+      onDiscard: (track) => {
+        discarded.push(track.trackId)
+      },
+      holdsDeliveredNotification: async () => false,
+    })
+
+    expect(expired).toHaveLength(0)
+    expect(discarded).toEqual(['notified-dog-late'])
+  })
+
   it('without a discard sink it still PERSISTS the stamped row — a caller that cannot cascade is never handed an orphan (D161)', async () => {
     upsertLive('parked-flash-no-sink', 1_000)
 

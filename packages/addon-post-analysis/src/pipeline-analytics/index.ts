@@ -2777,6 +2777,9 @@ export default class PipelineAnalyticsAddon
             this.stationaryRegistry?.listViews(track.deviceId) ?? [],
           )
         },
+        // #315: a notified track is kept while its buttons are live.
+        holdsDeliveredNotification: async (deviceId, trackId) =>
+          (await this.notificationCenter?.holdsDeliveredNotification(deviceId, trackId)) === true,
         // A discarded track (D547) wrote media, events and a vector while it
         // lived; the same cascade retention runs takes them, at once.
         discardTracks: (tracks) => this.cascadeDiscardedTracks(tracks),

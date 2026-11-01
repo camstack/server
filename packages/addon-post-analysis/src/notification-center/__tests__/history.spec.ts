@@ -166,3 +166,45 @@ describe('NcOutbox.queryHistory (delivery history view)', () => {
     expect(rows.map((r) => r.ruleId)).toEqual(['r-4', 'r-3'])
   })
 })
+
+describe('NcOutbox.holdsDeliveredNotification (#315)', () => {
+  const TTL = 24 * 60 * 60_000
+
+  it('holds a track whose notification was SENT inside the TTL', async () => {
+    const h = makeHarness()
+    await h.outbox.enqueue([makeInput({ deviceId: 615, trackId: 'dog-1' })])
+    await h.outbox.drainOnce()
+    h.setNow(100_000 + TTL - 1)
+    expect(await h.outbox.holdsDeliveredNotification(615, 'dog-1', TTL)).toBe(true)
+  })
+
+  it('releases it once the TTL has run out', async () => {
+    const h = makeHarness()
+    await h.outbox.enqueue([makeInput({ deviceId: 615, trackId: 'dog-1' })])
+    await h.outbox.drainOnce()
+    h.setNow(100_000 + TTL + 1)
+    expect(await h.outbox.holdsDeliveredNotification(615, 'dog-1', TTL)).toBe(false)
+  })
+
+  it('does not hold a track that was never notified, or another device', async () => {
+    const h = makeHarness()
+    await h.outbox.enqueue([makeInput({ deviceId: 615, trackId: 'dog-1' })])
+    await h.outbox.drainOnce()
+    expect(await h.outbox.holdsDeliveredNotification(615, 'cat-9', TTL)).toBe(false)
+    expect(await h.outbox.holdsDeliveredNotification(616, 'dog-1', TTL)).toBe(false)
+  })
+
+  it('holds a track whose notification is still pending delivery', async () => {
+    const h = makeHarness()
+    await h.outbox.enqueue([makeInput({ deviceId: 615, trackId: 'dog-1' })])
+    expect(await h.outbox.holdsDeliveredNotification(615, 'dog-1', TTL)).toBe(true)
+  })
+
+  it('does not hold a DEAD row — nothing was delivered', async () => {
+    const h = makeHarness()
+    h.setResult({ ok: false, error: 'gone', permanent: true })
+    await h.outbox.enqueue([makeInput({ deviceId: 615, trackId: 'dog-1' })])
+    await h.outbox.drainOnce()
+    expect(await h.outbox.holdsDeliveredNotification(615, 'dog-1', TTL)).toBe(false)
+  })
+})

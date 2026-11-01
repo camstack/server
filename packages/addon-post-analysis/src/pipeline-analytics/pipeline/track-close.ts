@@ -80,6 +80,7 @@ export interface TrackCloseTrackStore {
     opts?: {
       readonly isKnownParked?: (track: ParkedProbeTrack) => boolean
       readonly onDiscard?: (track: Track) => void
+      readonly holdsDeliveredNotification?: (deviceId: number, trackId: string) => Promise<boolean>
       readonly canClose?: (track: SweptTrack) => boolean
       readonly canCloseReason?: (track: SweptTrack) => 'live' | 'tail-not-final' | undefined
       readonly maxMissedMsOf?: (track: SweptTrack) => number
@@ -389,6 +390,11 @@ export interface TrackCloserDeps {
    */
   readonly isKnownParked?: (track: ParkedProbeTrack) => boolean
   /**
+   * #315: a track whose notification still has live buttons is not discarded
+   * (see `TrackStore.expireStale`). Optional: absent = never held.
+   */
+  readonly holdsDeliveredNotification?: (deviceId: number, trackId: string) => Promise<boolean>
+  /**
    * Cascade what the tracks `expireStale` DISCARDED wrote while they lived
    * (D547): media, events, crops, vector. Without it a discarded track's media
    * would be exactly the orphan D161 measured — so a closer built without this
@@ -524,6 +530,9 @@ export class TrackCloser {
                 discarded.push(t)
               },
             }
+          : {}),
+        ...(this.deps.holdsDeliveredNotification !== undefined
+          ? { holdsDeliveredNotification: this.deps.holdsDeliveredNotification }
           : {}),
         ...(this.deps.canClose !== undefined ? { canClose: this.deps.canClose } : {}),
         ...(this.deps.canCloseReason !== undefined

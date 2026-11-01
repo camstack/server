@@ -31,6 +31,7 @@ import type {
 } from '@camstack/types'
 import { ActionTargetResolver, DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@camstack/types'
 import {
+  actionTtlMs,
   type NcActionGrant,
   NcActionTokenRegistry,
   type NcAddonUpdateGrant,
@@ -1893,6 +1894,19 @@ export class NotificationCenter implements NcEventConsumer {
   /** D692: the open grouped windows — the tester, the status and the specs read it. */
   groupedOpenWindows(): readonly NcGroupedWindow[] {
     return this.grouped.openWindows()
+  }
+
+  /**
+   * #315: does a notification about this track still have live verdict
+   * buttons? The track sweep asks before it discards a still object — the tap
+   * resolves the track, so the track must outlive the buttons.
+   */
+  holdsDeliveredNotification(deviceId: number, trackId: string): Promise<boolean> {
+    return this.outbox.holdsDeliveredNotification(
+      deviceId,
+      trackId,
+      actionTtlMs({ kind: 'detection-verdict' }),
+    )
   }
 
   onTrackClosed(

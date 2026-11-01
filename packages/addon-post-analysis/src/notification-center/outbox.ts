@@ -988,6 +988,56 @@ export class NcOutbox {
   }
 
   /**
+   * Does a notification about this track still have live buttons? True while a
+   * row for `(deviceId, trackId)` is pending delivery, or was SENT less than
+   * `ttlMs` ago — the window a verdict tap may still arrive in. Read from the
+   * durable rows (never from an event), so it answers the same after a respawn.
+   *
+   * A read that FAILED answers `true`: the caller uses this to decide whether
+   * to DESTROY a track, and a store that could not answer must not read as
+   * "nothing was sent" (D49, D393). The failure is logged here.
+   */
+  async holdsDeliveredNotification(
+    deviceId: number,
+    trackId: string,
+    ttlMs: number,
+  ): Promise<boolean> {
+    for (const entry of this.pending.values()) {
+      if (entry.deviceId === deviceId && entry.trackId === trackId) return true
+    }
+    const nowMs = this.now()
+    try {
+      // A row is stamped `updatedAt` when it is sent, at most a retry budget
+      // after its fire time `createdAt` (the indexed range): twice the TTL of
+      // slack on the range loses no row whose hold is still open.
+      const { rows } = await collectRecordPages(
+        this.rows,
+        {
+          where: {
+            status: 'sent',
+            deviceId,
+            createdAt: { gte: nowMs - 2 * ttlMs },
+          },
+          desc: true,
+        },
+        NC_OUTBOX_RECENT_QUERY_LIMIT,
+      )
+      for (const row of rows) {
+        const entry = rowToEntry(row.id, row.data)
+        if (entry === null || entry.trackId !== trackId) continue
+        if (entry.updatedAt + ttlMs > nowMs) return true
+      }
+      return false
+    } catch (err) {
+      this.logger.warn('delivery hold read failed — the track is treated as held', {
+        tags: { deviceId },
+        meta: { deviceId, trackId, error: String(err) },
+      })
+      return true
+    }
+  }
+
+  /**
    * The rows `getRuleLastRuns` reduces: fire time inside `[sinceMs, ∞)`,
    * newest-first on the `created` index, read page by page (a records page
    * carries the whole row; there is no column projection), at most

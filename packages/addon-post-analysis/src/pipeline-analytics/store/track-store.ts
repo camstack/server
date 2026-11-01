@@ -1393,6 +1393,14 @@ export class TrackStore {
        */
       readonly onDiscard?: (track: Track) => void
       /**
+       * #315: does a notification about this track still have live buttons?
+       * Asked only of a track about to be DISCARDED. True keeps the track
+       * exactly as a non-discardable one (row persisted, media kept) so the
+       * verdict tap finds it; once the buttons have expired the next sweep
+       * discards it as before. Absent = never held.
+       */
+      readonly holdsDeliveredNotification?: (deviceId: number, trackId: string) => Promise<boolean>
+      /**
        * D683 §6.4: a row closes only when the TRACKER says its chain is not
        * live and its tail is final (`TrackerSweep.canClose`, the production
        * frame-clock gate — review C2/M2). Undefined behaves exactly as
@@ -1517,7 +1525,26 @@ export class TrackStore {
       // stamped, exactly as before — hidden from the feed, reachable by
       // retention.
       const onDiscard = opts?.onDiscard
-      if (discardable && onDiscard !== undefined) {
+      let heldByNotification = false
+      if (discardable && onDiscard !== undefined && opts?.holdsDeliveredNotification) {
+        heldByNotification = await opts.holdsDeliveredNotification(t.deviceId, trackId)
+        if (heldByNotification) {
+          this.logger.info(
+            'track kept on expiry — its notification still has live buttons, a verdict tap needs it',
+            {
+              tags: { deviceId: t.deviceId },
+              meta: {
+                deviceId: t.deviceId,
+                trackId,
+                className: t.className,
+                lifeMs: t.lastSeen - t.firstSeen,
+                knownParked,
+              },
+            },
+          )
+        }
+      }
+      if (discardable && onDiscard !== undefined && !heldByNotification) {
         const record = cloneTrack(t)
         this.active.delete(trackId)
         this.noteRowClosed(trackId, nowMs)

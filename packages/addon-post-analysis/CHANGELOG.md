@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A still object whose notification was delivered is no longer discarded while its Correct/Wrong buttons are valid, so the verdict tap finds its track.
+
 ## [1.2.657] - 2026-11-01
 
 ### Changed
