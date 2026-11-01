@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.537] - 2026-11-01
+
 ### Changed
 
 - The migration engine runs addon-owned catalogues and applies plan edits inside the per-migration transaction

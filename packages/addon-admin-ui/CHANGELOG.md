@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.541] - 2026-11-01
+
 ### Changed
 
 - Sign-in hides the passkey option when the desktop app has no platform authenticator, and the single sign-in completion page links back to sign-in when its window has no opener

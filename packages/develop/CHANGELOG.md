@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.42] - 2026-11-01
+
 ### Changed
 
 - The login hints now name the browser approval for a terminal with no TTY

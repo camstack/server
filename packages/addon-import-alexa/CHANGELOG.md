@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.173] - 2026-11-01
+
 ### Changed
 
 - The Amazon device-code sign-in's refresh token and session cookie are declared secret
