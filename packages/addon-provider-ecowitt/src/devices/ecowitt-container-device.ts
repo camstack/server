@@ -8,6 +8,7 @@ import {
   type IDevice,
 } from '@camstack/types'
 import { ecowittFacades } from '../ecowitt-gateway.js'
+import { entriesForGroup } from '../ecowitt-sensor-groups.js'
 import { capForQuantity, roleForQuantity, sensorLabel } from '../ecowitt-mapping.js'
 import { EcowittSensorDevice } from './ecowitt-sensor-device.js'
 
@@ -74,7 +75,12 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     // Read the LIVE config so an additive reconcile (re-persisted `sensors[]`
     // via applyDerivedSpec) spawns new children + removes orphaned ones.
-    return this.config.values.sensors.map((sensor) => {
+    const own = entriesForGroup(
+      this.config.values.sensors,
+      this.config.values.deviceGroup,
+      ecowittFacades.getSensors(this.gatewayId),
+    )
+    return own.map((sensor) => {
       const meta: AccessoryChildSpec['meta'] = {
         type: DeviceType.Sensor,
         role: roleForQuantity(sensor.quantity),

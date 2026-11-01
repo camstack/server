@@ -55,3 +55,42 @@ export function sensorsEqual(a: readonly unknown[], b: readonly EcowittSensorEnt
   }
   return true
 }
+
+/** The measurement key of a sensor id: the part after the first ':' (`8E:0x02` gives `0x02`). */
+export function sensorKeyOf(sensorId: string): string {
+  const i = sensorId.indexOf(':')
+  return i < 0 ? sensorId : sensorId.slice(i + 1)
+}
+
+/** The owner prefix of a sensor id (`8E` of `8E:0x02`, `gateway` for a gateway-owned reading). */
+export function sensorOwnerOf(sensorId: string): string {
+  const i = sensorId.indexOf(':')
+  return i < 0 ? '' : sensorId.slice(0, i)
+}
+
+/**
+ * The persisted entries a Container of `group` may spawn as children. An early snapshot had no
+ * model, so nodewitt called a weather-station reading `gateway:<key>`; once the sensor map is
+ * known the same reading is `<hardwareId>:<key>`. An entry is dropped when its live sensor (the
+ * exact id, or for a `gateway:` id the hardware-owned sensor of the same key) belongs to another
+ * group. An entry the live set does not know is kept: unknown is not gone (D49).
+ */
+export function entriesForGroup(
+  entries: readonly EcowittSensorEntry[],
+  group: EcowittDeviceGroup,
+  live: readonly Sensor[],
+): readonly EcowittSensorEntry[] {
+  return entries.filter((entry) => {
+    const exact = live.find((s) => s.id === entry.sensorId)
+    const sensor =
+      exact ??
+      (sensorOwnerOf(entry.sensorId) === 'gateway'
+        ? live.find(
+            (s) =>
+              sensorOwnerOf(s.id) !== 'gateway' &&
+              sensorKeyOf(s.id) === sensorKeyOf(entry.sensorId),
+          )
+        : undefined)
+    return sensor === undefined || deviceGroupForSensor(sensor.category, sensor.channel) === group
+  })
+}

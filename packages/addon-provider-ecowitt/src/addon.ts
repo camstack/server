@@ -43,6 +43,7 @@ import {
   ecowittScanKey,
 } from './ecowitt-lan-discovery.js'
 import type { EcowittDeviceGroup } from './ecowitt-mapping.js'
+import { findDuplicateGatewaySensors, type DuplicateScanRow } from './ecowitt-duplicate-sensors.js'
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
 import { EcowittReconciler, type IntegrationLifecycleKind } from './ecowitt-reconciler.js'
 import { restoreAfterMigration } from './migrations/restore-after-migration.js'
@@ -284,6 +285,63 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     const devices = this.ctx.kernel.devices
     if (!reg || !devices) return
     const byGroup = bucketSensorsByGroup(sensors)
+    const changed = await this.reconcileEachContainer(gatewayKey, byGroup)
+    if (changed || !this.duplicatesChecked.has(gatewayKey)) {
+      await this.removeDuplicateGatewaySensors(gatewayKey)
+    }
+  }
+
+  /** Gateway keys whose duplicate scan already saw spawned sensor children (idempotent anyway). */
+  private readonly duplicatesChecked = new Set<string>()
+
+  /**
+   * Idempotent cleanup of the sensors minted under the `gateway` Container that duplicate a
+   * sensor of the weather-station / CH1 Container (see {@link findDuplicateGatewaySensors}).
+   * Goes through the normal device removal (tombstone); a read that failed removes nothing.
+   */
+  private async removeDuplicateGatewaySensors(gatewayKey: string): Promise<void> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return
+    const rows: DuplicateScanRow[] = []
+    for (const d of reg.getAllForAddon(this.addonId)) {
+      if (d.type !== DeviceType.Container && d.type !== DeviceType.Sensor) continue
+      const config = await devices.loadConfig(d.id).catch((): null => null)
+      if (config === null) return
+      if (config['system'] !== ECOWITT_SYSTEM || config['gatewayId'] !== gatewayKey) continue
+      rows.push({
+        id: d.id,
+        type: d.type,
+        parentDeviceId: d.parentDeviceId,
+        config,
+      })
+    }
+    const { duplicates, scanned } = findDuplicateGatewaySensors(rows)
+    if (scanned > 0) this.duplicatesChecked.add(gatewayKey)
+    for (const id of duplicates) {
+      try {
+        await devices.remove(id)
+        this.ctx.logger.info('Ecowitt: duplicate sensor under the gateway container removed', {
+          tags: { deviceId: id },
+          meta: { gatewayKey },
+        })
+      } catch (err) {
+        this.ctx.logger.warn('Ecowitt: duplicate sensor removal failed', {
+          tags: { deviceId: id },
+          meta: { gatewayKey, error: errMsg(err) },
+        })
+      }
+    }
+  }
+
+  private async reconcileEachContainer(
+    gatewayKey: string,
+    byGroup: ReturnType<typeof bucketSensorsByGroup>,
+  ): Promise<boolean> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return false
+    let changed = false
     for (const d of reg.getAllForAddon(this.addonId)) {
       if (d.parentDeviceId !== null || d.type !== DeviceType.Container) continue
       const cfg = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
@@ -294,6 +352,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       await devices.applyDerivedSpec(d.id, {
         config: { sensors: nextSensors },
       })
+      changed = true
       this.ctx.logger.info('Ecowitt: group sensors reconciled', {
         tags: { deviceId: d.id },
         meta: {
@@ -302,6 +361,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
         },
       })
     }
+    return changed
   }
 
   // ── Adoption: the Gateway device and the group Containers ───────────────
