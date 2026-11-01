@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Skills and scaffolds updated for the single framework package and the required server minimum
+
 ## [0.1.42] - 2026-11-01
 
 ### Changed

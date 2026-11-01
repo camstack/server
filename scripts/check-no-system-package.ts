@@ -35,6 +35,7 @@ export const ALLOWED: readonly RegExp[] = [
   /^changelog\//,
   /^releases?\//,
   /^patches\//,
+  /(^|\/)assets\/viewer\//,
   /(^|\/)package-lock\.json$/,
   /^server\/backend\/src\/legacy-package-names\.ts$/,
   /^packages\/system\/src\/kernel\/(__tests__\/)?addon-residue(\.spec)?\.ts$/,

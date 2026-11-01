@@ -16,7 +16,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 | --- | --- | --- | --- | --- |
 | `@camstack/server` | `server/backend` | 1.2.718 | the update itself | — |
 
-## Framework (5)
+## Framework (4)
 
 Host-provided: addons do NOT bundle these, they resolve them from the running closure. Consequence worth knowing: a framework change reaches a node ONLY through a root-package install (`applyServerUpdate` / "Update all"), pinned to the exact version the published `@camstack/server` carries. `camstack deploy` cannot ship it.
 
@@ -24,11 +24,10 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | --- | --- | --- | --- | --- |
 | `@camstack/develop` | `packages/develop` | 0.1.42 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.154 | `@camstack/server` closure | — |
-| `@camstack/system` | `packages/system` | 1.2.537 | `@camstack/server` closure | Core addon for CamStack — builtins, pipeline, process management, auth, logging, events |
 | `@camstack/types` | `packages/types` | 1.2.462 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
 | `@camstack/ui-library` | `packages/ui-library` | 1.2.364 | `@camstack/server` closure | — |
 
-## Addons (50)
+## Addons (51)
 
 Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/addons/`. Updated with `camstack deploy` (or the Addons page) — NOT by a root-package update. The ones marked _image-seeded_ are also dependencies of the root package: the image copies them into the addons dir on first boot, after which the addons-dir copy is what loads and the closure copy is inert.
 
@@ -84,6 +83,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.157 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
 | `@camstack/addon-training` | `packages/addon-training` | 0.1.121 | addons dir | Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account |
 | `@camstack/addon-waste-collections` | `packages/addon-waste-collections` | 0.1.32 | addons dir | Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source. |
+| `@camstack/server-framework` | `packages/system` | _private_ | addons dir | Source of the kernel + builtins. Private workspace: its built dist ships inside the @camstack/server tarball as @camstack/server/system. |
 
 ## Tooling (7)
 
