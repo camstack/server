@@ -60,6 +60,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { closureRootPinProblem } from './closure-root-pin.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PATCHES_DIR = path.join(ROOT, 'patches')
@@ -245,6 +246,12 @@ function checkClosurePostinstall(
       )
     }
   }
+  // The closure ROOT must declare it too. A dependency that only some addon
+  // pins nests that copy under the addon, and a transitive peer range
+  // (node-av@6.2 peers werift >=0.24.3) is then free to hoist a newer one to
+  // the top level — exactly where the applier looks (1.2.723 was refused).
+  const rootProblem = closureRootPinProblem(asRecord(serverPkg['dependencies']), entry.package, pinned)
+  if (rootProblem !== null) fail(`${entry.patch}: ${rootProblem}`)
   const declared = new Set(entry.declaredBy ?? [])
   for (const declarer of declarers) {
     if (declared.size > 0 && !declared.has(declarer.dir)) {
