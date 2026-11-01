@@ -7,7 +7,7 @@
  *  - `keychain` (internal): the owner's door — put / resolve / delete /
  *    listMeta / getState, owner-checked against the caller the transport
  *    stamped (`callerAddonId`, never in the input schema);
- *  - `keychain-admin`: System → Secrets — status, list, audit, reveal,
+ *  - `keychain-admin`: Data → Secrets — status, list, audit, reveal,
  *    orphans, rotation, recovery key, reset (and its report). Every method
  *    admin; those that change or hand out material take the session's user
  *    for the audit.

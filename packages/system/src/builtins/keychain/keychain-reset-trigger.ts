@@ -4,7 +4,7 @@
  *
  * ## Why a file
  *
- * A locked keychain cannot be reset from System → Secrets: the session signing
+ * A locked keychain cannot be reset from Data → Secrets: the session signing
  * key lives IN the keychain (D797), so no login and no bearer token verifies,
  * and every admin credential is a signing-key JWT. Whoever can write the data
  * directory can already read the default master key, so a file there is the
@@ -130,7 +130,7 @@ export async function applyKeychainResetTrigger(
   logger.error(
     '*** KEYCHAIN RESET by the RESET_KEYCHAIN trigger file *** Every stored secret was archived ' +
       '(unreadable without the lost master key) and a new master key and data key were created. ' +
-      'Every secret field now reads "not set" — re-enter them (System → Secrets lists them). ' +
+      'Every secret field now reads "not set" — re-enter them (Data → Secrets lists them). ' +
       'The session signing key is regenerated: everyone signs in again.',
     {
       lockedReason: state.reason,

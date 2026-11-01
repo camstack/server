@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * System → Secrets, as the operator reported it (2026-10-08): a revealed value
+ * Data → Secrets, as the operator reported it (2026-10-08): a revealed value
  * blew the table apart, and the warnings stacked into overlapping boxes.
  *
  * Pinned here:
@@ -104,7 +104,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 import { SECRET_REVEAL_MS } from '@camstack/ui-library'
 import { SecretsPage } from '../Secrets'
 
-function renderPage(path = '/system/secrets') {
+function renderPage(path = '/system/data?tab=secrets') {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <SecretsPage />
@@ -177,7 +177,7 @@ describe('SecretsPage — notices', () => {
       recoveryKeyDownloadedAt: 5,
     }
     report = { reset: null, pendingReentry: [] }
-    renderPage('/system/secrets')
+    renderPage('/system/data?tab=secrets')
     // Orphans still exist in the fixture → one info notice, nothing else.
     const region = screen.getByRole('region', { name: /keychain notices/i })
     expect(within(region).getAllByRole('listitem')).toHaveLength(1)
@@ -270,7 +270,7 @@ describe('SecretsPage — orphans', () => {
 
 describe('SecretsPage — audit', () => {
   it('is its own view, deep-linkable and paginated', () => {
-    renderPage('/system/secrets?view=audit')
+    renderPage('/system/data?tab=secrets&secretsView=audit')
     const table = screen.getByRole('table')
     expect(within(table).getAllByRole('row')).toHaveLength(1 + 25)
     expect(table.textContent).toContain('field-0')

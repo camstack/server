@@ -1,5 +1,5 @@
 /**
- * Data — Storage + Backup under one SectionedPage (OSD template).
+ * Data — Storage, Records, Backup and Secrets under one SectionedPage (OSD template).
  */
 import { Database } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,7 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 import { navChromeForPath } from '../../lib/nav-items'
 import { StoragePage } from './Storage'
 import { BackupPage } from './Backup'
+import { SecretsPage } from './Secrets'
 import { DataRecordsSection } from './DataRecordsSection'
 
 /** Tabs that were merged into Records: `null` = the kinds view, else the `view` value. */
@@ -55,6 +56,12 @@ export function DataPage() {
           id: 'backup',
           label: t('systemPage.data.backup', 'Backup'),
           content: <BackupPage />,
+        },
+        {
+          id: 'secrets',
+          label: t('systemPage.data.secrets', 'Secrets'),
+          content: <SecretsPage />,
+          ownedParams: ['secretsView'],
         },
       ]}
     />

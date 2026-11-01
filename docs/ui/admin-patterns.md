@@ -586,15 +586,19 @@ The first three are now tabs of ONE page (Terminal stays standalone), `pages/sys
 | Tab | `?tab=` | Content |
 | --- | --- | --- |
 | Settings (default) | `settings` | site location + the hub's addon settings |
-| Secrets | `secrets` | the keychain (owns `?view=`, values or audit, inside the tab) |
 | Capabilities | `capabilities` | registered capabilities, singleton providers |
 
 The shell is `AdminTabs`, the same `?tab=` strip as Network, Identity, Data and
 Logs. `lib/system-page-url.ts` is the one builder: `systemTabHref(tab, search)`
 and `SYSTEM_LEGACY_ROUTES`, which App.tsx maps to `SystemTabRedirect` so
-`/system/secrets` and `/system/capabilities` land on their
-tab **keeping their query** (`/system/secrets?view=audit` →
-`/system/settings?view=audit&tab=secrets`). `/system` redirects to the page.
+`/system/capabilities` lands on its tab **keeping its query**. `/system`
+redirects to the page.
+
+Secrets is not a System tab: it is the fourth tab of Data
+(`/system/data?tab=secrets`). Its sub-view is `?secretsView=audit` (default
+values), because Data's Records tab owns `?view=`. `secretsTabHref` maps the
+old addresses — `/system/secrets` and `/system/settings?tab=secrets`, with
+their `?view=audit` — onto it.
 
 What deliberately did NOT move in:
 

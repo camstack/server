@@ -1,5 +1,5 @@
 /**
- * The Secrets page's ONE notice region (System → Secrets).
+ * The Secrets page's ONE notice region (Data → Secrets).
  *
  * Every condition that needs the operator is a single line here — icon, a
  * short sentence, its action — ordered by `buildKeychainNotices`. Longer

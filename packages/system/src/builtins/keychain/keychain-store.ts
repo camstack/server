@@ -49,7 +49,7 @@ export const KEYCHAIN_AUDIT_COLLECTION = 'keychain:audit'
 
 /**
  * @durable class=config owner=keychain
- *   write="one row per keychain reset (System → Secrets, or the RESET_KEYCHAIN
+ *   write="one row per keychain reset (Data → Secrets, or the RESET_KEYCHAIN
  *     trigger file); `acknowledgeReset` stamps `acknowledgedAt`"
  *   retention="none — a handful of rows over a hub's life; they name the
  *     archive tables a reset left behind"

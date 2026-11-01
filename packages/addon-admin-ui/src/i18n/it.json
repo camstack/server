@@ -6542,7 +6542,8 @@
       "backup": "Backup",
       "viewKinds": "Tipi di record",
       "viewDeletedDevices": "Dispositivi eliminati",
-      "recordsUnifiedIntro": "Ogni tipo di record dichiarato su questo hub. I tipi voce si possono aggiungere, modificare ed eliminare; gli altri sono in sola lettura. I campi segreti sono oscurati."
+      "recordsUnifiedIntro": "Ogni tipo di record dichiarato su questo hub. I tipi voce si possono aggiungere, modificare ed eliminare; gli altri sono in sola lettura. I campi segreti sono oscurati.",
+      "secrets": "Segreti"
     },
     "notifications": {
       "settings": "Impostazioni",

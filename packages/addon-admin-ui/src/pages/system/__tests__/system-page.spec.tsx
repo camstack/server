@@ -12,9 +12,13 @@ vi.mock('../Settings', () => ({ SettingsPage: () => <p>settings-content</p> }))
 vi.mock('../Secrets', () => ({ SecretsPage: () => <p>secrets-content</p> }))
 vi.mock('../Capabilities', () => ({ CapabilitiesPage: () => <p>capabilities-content</p> }))
 
-import { SystemTabRedirect } from '../../../components/system/SystemTabRedirect'
+import { SecretsTabRedirect, SystemTabRedirect } from '../../../components/system/SystemTabRedirect'
 import { buildNavSections } from '../../../lib/nav-items'
-import { SYSTEM_LEGACY_ROUTES, SYSTEM_PAGE_PATH } from '../../../lib/system-page-url'
+import {
+  SECRETS_LEGACY_PATH,
+  SYSTEM_LEGACY_ROUTES,
+  SYSTEM_PAGE_PATH,
+} from '../../../lib/system-page-url'
 import { SystemPage } from '../System'
 
 function Where() {
@@ -27,6 +31,8 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path={SYSTEM_PAGE_PATH} element={<SystemPage />} />
+        <Route path="/system/data" element={<div>data-page</div>} />
+        <Route path={SECRETS_LEGACY_PATH} element={<SecretsTabRedirect />} />
         {SYSTEM_LEGACY_ROUTES.map((r) => (
           <Route key={r.path} path={r.path} element={<SystemTabRedirect tab={r.tab} />} />
         ))}
@@ -41,13 +47,12 @@ describe('SystemPage', () => {
     renderAt('/system/settings')
     expect(screen.getByText('settings-content')).toBeTruthy()
     expect(screen.getByRole('tablist', { name: 'System sections' })).toBeTruthy()
-    for (const label of ['Settings', 'Secrets', 'Capabilities']) {
+    for (const label of ['Settings', 'Capabilities']) {
       expect(screen.getByRole('tab', { name: label })).toBeTruthy()
     }
   })
 
   it.each([
-    ['secrets', 'secrets-content'],
     ['capabilities', 'capabilities-content'],
   ])('?tab=%s deep-links to its tab', (tab, content) => {
     renderAt(`/system/settings?tab=${tab}`)
@@ -57,7 +62,6 @@ describe('SystemPage', () => {
 
 describe('legacy standalone routes', () => {
   it.each([
-    ['/system/secrets', '/system/settings?tab=secrets', 'secrets-content'],
     ['/system/capabilities', '/system/settings?tab=capabilities', 'capabilities-content'],
   ])('%s redirects to its tab', (from, to, content) => {
     renderAt(from)
@@ -65,9 +69,23 @@ describe('legacy standalone routes', () => {
     expect(screen.getByText(content)).toBeTruthy()
   })
 
-  it('carries the old query along', () => {
+  it('/system/secrets lands on the Data Secrets tab', () => {
+    renderAt('/system/secrets')
+    expect(screen.getByTestId('where').textContent).toBe('/system/data?tab=secrets')
+  })
+
+  it('maps the old ?view=audit to secretsView, which Records does not own', () => {
     renderAt('/system/secrets?view=audit')
-    expect(screen.getByTestId('where').textContent).toBe('/system/settings?view=audit&tab=secrets')
+    expect(screen.getByTestId('where').textContent).toBe(
+      '/system/data?tab=secrets&secretsView=audit',
+    )
+  })
+
+  it('the old /system/settings?tab=secrets deep link follows to Data', () => {
+    renderAt('/system/settings?view=audit&tab=secrets')
+    expect(screen.getByTestId('where').textContent).toBe(
+      '/system/data?tab=secrets&secretsView=audit',
+    )
   })
 })
 

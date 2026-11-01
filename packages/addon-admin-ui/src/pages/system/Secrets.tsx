@@ -1,5 +1,5 @@
 /**
- * System → Secrets — the keychain, as the operator sees it (D787, D788).
+ * Data → Secrets — the keychain, as the operator sees it (D787, D788).
  *
  * Top to bottom:
  *   1. ONE notice region (`KeychainNotices`): every condition that needs the
@@ -8,7 +8,7 @@
  *      orphans. It replaced a stack of banners that overlapped on a phone.
  *   2. The status card: state, key source and path, fingerprint, recovery copy,
  *      and the key actions.
- *   3. Two views, `?view=values` (default) and `?view=audit`: the stored values
+ *   3. Two views, `?secretsView=values` (default) and `?secretsView=audit`: the stored values
  *      table (filter by usage, bulk-delete orphans) and the paginated audit.
  *
  * A value is revealed in a dialog that hides itself after SECRET_REVEAL_MS
@@ -52,7 +52,7 @@ import { useKeychainActions } from '../../components/system/secrets/use-keychain
 import { useTranslation } from 'react-i18next'
 
 /** `?view=` — its own param, so the page can sit under a host's `?tab=`. */
-const VIEW_PARAM = 'view'
+const VIEW_PARAM = 'secretsView'
 type SecretsView = 'values' | 'audit'
 
 function useSecretsView(): [SecretsView, (v: SecretsView) => void] {

@@ -6467,7 +6467,8 @@
       "backup": "Backup",
       "viewKinds": "Record kinds",
       "viewDeletedDevices": "Deleted devices",
-      "recordsUnifiedIntro": "Every declared record kind on this hub. Entry kinds can be added, edited and deleted; the rest are read-only. Secret fields are redacted."
+      "recordsUnifiedIntro": "Every declared record kind on this hub. Entry kinds can be added, edited and deleted; the rest are read-only. Secret fields are redacted.",
+      "secrets": "Secrets"
     },
     "notifications": {
       "settings": "Settings",

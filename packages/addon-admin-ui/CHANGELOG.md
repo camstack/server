@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Sign-in hides the passkey option when the desktop app has no platform authenticator, and the single sign-in completion page links back to sign-in when its window has no opener
+- Secrets moved from System to a fourth tab of Data; old Secrets links keep working
 
 ## [1.2.540] - 2026-10-31
 

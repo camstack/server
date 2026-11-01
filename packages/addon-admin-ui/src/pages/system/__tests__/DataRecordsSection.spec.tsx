@@ -13,6 +13,7 @@ vi.mock('../../../components/system/deleted-devices/DeletedDevicesData', () => (
 }))
 vi.mock('../Storage', () => ({ StoragePage: () => <div /> }))
 vi.mock('../Backup', () => ({ BackupPage: () => <div /> }))
+vi.mock('../Secrets', () => ({ SecretsPage: () => <p>secrets-content</p> }))
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return { ...actual, DataRecordsHub: () => <div data-testid="records-hub" /> }
@@ -59,5 +60,33 @@ describe('DataPage legacy tabs', () => {
     expect(search).toContain(tab)
     if (view !== null) expect(search).toContain(view)
     else expect(search).not.toContain('view=')
+  })
+})
+
+describe('DataPage Secrets tab', () => {
+  it('is the fourth tab and deep-links by ?tab=secrets', () => {
+    render(
+      <MemoryRouter initialEntries={['/system/data?tab=secrets&secretsView=audit']}>
+        <DataPage />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('secrets-content')).toBeTruthy()
+    const names = screen.getAllByRole('tab').map((n) => n.textContent)
+    expect(names).toEqual(['Storage', 'Records', 'Backup', 'Secrets'])
+  })
+
+  it("switching away clears secretsView but leaves Records' own view alone", () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/system/data?tab=secrets&secretsView=audit&view=deleted-devices']}
+      >
+        <DataPage />
+        <Where />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Backup' }))
+    const search = screen.getByTestId('where').textContent ?? ''
+    expect(search).not.toContain('secretsView')
+    expect(search).toContain('view=deleted-devices')
   })
 })

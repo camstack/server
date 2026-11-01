@@ -41,7 +41,7 @@ const _keychainRecordKinds = defineRecordKinds({
     schema: KeychainResetBodySchema,
     class: 'config',
     writeTrigger:
-      'one row per keychain reset (System → Secrets, or the RESET_KEYCHAIN trigger file); acknowledgeReset stamps acknowledgedAt',
+      'one row per keychain reset (Data → Secrets, or the RESET_KEYCHAIN trigger file); acknowledgeReset stamps acknowledgedAt',
     device: 'none',
     at: 'required',
     retention: {

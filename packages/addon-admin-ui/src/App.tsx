@@ -23,7 +23,7 @@ import { ModelSelector } from './components/form-builder/ModelSelector'
 import { RedirectKeepingQuery } from './components/RedirectKeepingQuery'
 import { KeychainRevealHost } from './components/system/KeychainRevealHost'
 import { ReconnectOverlay } from './components/system/ReconnectOverlay'
-import { SystemTabRedirect } from './components/system/SystemTabRedirect'
+import { SecretsTabRedirect, SystemTabRedirect } from './components/system/SystemTabRedirect'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { AddonIconsProvider } from './contexts/addon-icons-context'
 import { AuthProvider, useAuth } from './contexts/auth-context'
@@ -41,7 +41,7 @@ import { integrationHubHref } from './lib/integration-hub-url'
 import { readLastLocation } from './lib/last-location'
 import { stripLegacyAdminPrefix } from './lib/legacy-admin-path'
 import { routerBasename } from './lib/mount'
-import { SYSTEM_LEGACY_ROUTES, SYSTEM_PAGE_PATH } from './lib/system-page-url'
+import { SECRETS_LEGACY_PATH, SYSTEM_LEGACY_ROUTES, SYSTEM_PAGE_PATH } from './lib/system-page-url'
 import { AccessDeniedPage } from './pages/AccessDenied'
 import { ChangePasswordPage } from './pages/ChangePassword'
 // Critical first-paint pages — kept eager so they render without a Suspense flash
@@ -558,6 +558,10 @@ export function App() {
                                       <TerminalPage />
                                     </ProtectedRoute>
                                   }
+                                />
+                                <Route
+                                  path={SECRETS_LEGACY_PATH}
+                                  element={<SecretsTabRedirect />}
                                 />
                                 {SYSTEM_LEGACY_ROUTES.map((r) => (
                                   <Route

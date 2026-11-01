@@ -747,7 +747,7 @@ export class KeychainService {
     return retired.length
   }
 
-  /** Lost-key recovery from System → Secrets — see `keychain-admin.resetKeychain`. */
+  /** Lost-key recovery from Data → Secrets — see `keychain-admin.resetKeychain`. */
   async resetKeychain(
     userId: string,
   ): Promise<{ archivedCollection: string | null; archived: number }> {

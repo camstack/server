@@ -117,7 +117,7 @@ archive), writes a new master key (the default file; a configured file is used
 as it is), starts a new data key, clears the system-held markers (none remain
 since D857 removed the cluster secret; the list is empty), emits a `delete` per archived ref so every keeper
 reloads (local-auth then generates a new signing key: everyone signs in again),
-and writes a `keychain:resets` row. System → Secrets shows "Keychain was
+and writes a `keychain:resets` row. Data → Secrets shows "Keychain was
 reset: N fields to re-enter" as a notice line whose details list the fields
 still unset (owner, scope, field; `keychain-admin.resetReport`) until an admin
 dismisses it (`acknowledgeReset`).
@@ -166,7 +166,8 @@ usage: `in-use` / `orphan` / `unknown` — an unreadable owner blob is never
 called an orphan), the audit, an audited reveal, orphan deletion, rotation,
 the recovery key and, when the key is lost, reset.
 
-The page (`pages/system/Secrets.tsx`, parts in `components/system/secrets/`)
+The page (`pages/system/Secrets.tsx`, parts in `components/system/secrets/`;
+the fourth tab of Data, `/system/data?tab=secrets`, sub-view `?secretsView=audit`)
 has three parts, and two rules came from an operator report (2026-10-08):
 
 - **One notice region.** Every condition is one line in a single
