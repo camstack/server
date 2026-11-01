@@ -23,6 +23,7 @@
  * Pure logic (backoff, classification, the pages) lives in
  * `viewer-connection.ts`; certificate policy in `cert-trust.ts`.
  */
+import type { Session } from 'electron'
 import { BrowserWindow, nativeImage, net, session, shell } from 'electron'
 import type { CertTrustRejection } from './cert-trust'
 import { installCertificateTrust } from './cert-trust'
@@ -51,6 +52,8 @@ export interface ViewerWindowBounds {
 }
 
 export interface ViewerWindowDeps {
+  /** Called once per hub partition, with its session, so the shell can attach session-level handlers. */
+  readonly onSession: (ses: Session) => void
   /** The hub to show, read fresh (the operator can switch hubs at runtime). */
   readonly hub: () => HubEntry | null
   readonly bounds: () => ViewerWindowBounds
@@ -250,7 +253,9 @@ export class ViewerWindowController {
   private installTrust(partition: string): void {
     if (this.trustedPartitions.has(partition)) return
     this.trustedPartitions.add(partition)
-    installCertificateTrust(session.fromPartition(partition), {
+    const partitionSession = session.fromPartition(partition)
+    this.deps.onSession(partitionSession)
+    installCertificateTrust(partitionSession, {
       pinnedFingerprint: () => this.deps.hub()?.pinnedIssuerFingerprint ?? null,
       onDecision: (decision, hostname, verificationResult) => {
         this.deps.log(

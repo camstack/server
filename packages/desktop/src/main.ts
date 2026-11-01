@@ -40,6 +40,7 @@ import {
   ipcMain,
   Menu,
   nativeImage,
+  type Session,
   safeStorage,
   shell,
   Tray,
@@ -834,6 +835,7 @@ function attachRendererDiagnostics(win: BrowserWindow): void {
 function ensureViewerWindow(): ViewerWindowController {
   if (viewerWindow !== null) return viewerWindow
   viewerWindow = new ViewerWindowController({
+    onSession: (ses) => attachAccountChooser(ses),
     hub: () => activeHub(store.get('viewerHubs')),
     // Writes the operator's trust decision through the SAME store the verify
     // proc reads its pin from, so the next verification sees it. Refuses when
@@ -1113,6 +1115,9 @@ function refreshTrayMenu(): void {
  * that carries no signing team id (unsigned / ad-hoc) cannot hold the keychain
  * entitlement, so it stays unconfigured and says so.
  */
+/** Attaches the passkey account chooser to a viewer session; a no-op until WebAuthn is configured. */
+let attachAccountChooser: (ses: Session) => void = () => undefined
+
 function installWebAuthn(): void {
   if (process.platform !== 'darwin') return
   let infoPlist = ''
@@ -1138,15 +1143,20 @@ function installWebAuthn(): void {
         : dialog.showMessageBox(parent, { ...options, buttons: [...options.buttons] })
     },
   })
-  app.on('select-webauthn-account', (_event, details, callback) => {
-    void answerAccountSelection(
-      details.accounts,
-      details.relyingPartyId,
-      callback,
-      choose,
-      (message) => console.warn(message),
-    )
-  })
+  // The account chooser event belongs to the SESSION the page runs in — each
+  // hub's viewer has its own partition — so it is attached per session as the
+  // viewer window opens it.
+  attachAccountChooser = (ses) => {
+    ses.on('select-webauthn-account', (_event, details, callback) => {
+      void answerAccountSelection(
+        details.accounts,
+        details.relyingPartyId,
+        callback,
+        choose,
+        (message) => console.warn(message),
+      )
+    })
+  }
 }
 
 void app.whenReady().then(async () => {
