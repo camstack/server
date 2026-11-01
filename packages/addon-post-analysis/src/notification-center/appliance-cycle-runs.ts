@@ -1,6 +1,6 @@
 /**
  * The production {@link NcResolveApplianceCycleFacts}: the facts of a finished
- * cycle come from the durable run record (`device-runs`, D1003) - the duration
+ * cycle come from the durable run record (`device-runs`, D992) - the duration
  * the recorder measured and the energy it integrated - instead of a start the
  * notification centre remembered itself.
  *

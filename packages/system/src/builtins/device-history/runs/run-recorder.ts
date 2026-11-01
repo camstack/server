@@ -1,5 +1,5 @@
 /**
- * The run recorder (D1003): turns the `running-state` flips of a device into one
+ * The run recorder (D992): turns the `running-state` flips of a device into one
  * durable `device-runs` row per run.
  *
  *  - open: `running` false -> true writes the OPEN row through, so a run that

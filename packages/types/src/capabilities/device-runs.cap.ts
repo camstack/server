@@ -5,7 +5,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 
 /**
  * device-runs - the durable record of ONE run of a device: a washing cycle, a
- * dishwasher cycle, later a mow or a clean (D1003).
+ * dishwasher cycle, later a mow or a clean (D992).
  *
  * A run is a DOCUMENT (opened at one instant, closed at another, carrying what
  * was measured over it), never a sample - device-history keeps the numbers over

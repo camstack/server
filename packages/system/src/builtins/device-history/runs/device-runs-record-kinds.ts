@@ -1,16 +1,17 @@
 /**
- * The record kind of the run ledger (D1003). Declared by the device-history
+ * The record kind of the run ledger (D992). Declared by the device-history
  * addon (owner stamp `device-history`) in the `events` file: a ring of the
  * newest runs per device, with one row per run and the open row written
  * through at the instant the run opens.
  *
  * Kept in a module with no side effects: the records guards import it.
  */
-import { defineRecordKinds, DeviceRunSchema } from '@camstack/types'
+import type { z } from 'zod'
+import { defineRecordKinds, DeviceRunSchema, type DefinedRecordKind } from '@camstack/types'
 
 export const DEVICE_RUNS_MAX_ROWS_PER_DEVICE = 500
 
-export const deviceRunsRecordKinds = defineRecordKinds({
+const _deviceRunsRecordKinds = defineRecordKinds({
   'device-runs': {
     schema: DeviceRunSchema,
     class: 'ledger',
@@ -27,3 +28,9 @@ export const deviceRunsRecordKinds = defineRecordKinds({
     deviceRemoval: 'delete',
   },
 })
+
+export type DeviceRunsRecordKindsMap = {
+  readonly 'device-runs': DefinedRecordKind<z.ZodType<z.infer<typeof DeviceRunSchema>>>
+}
+
+export const deviceRunsRecordKinds: DeviceRunsRecordKindsMap = _deviceRunsRecordKinds

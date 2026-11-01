@@ -1,6 +1,6 @@
 /**
  * The energy of a window from device-history's OWN stored series - the
- * fallback when the meter counter could not give `end - start` (D1003).
+ * fallback when the meter counter could not give `end - start` (D992).
  *
  * It sums the per-bucket `delta` of the derived energy key. Buckets are five
  * minutes wide, so a window shorter than {@link MIN_HISTORY_WINDOW_MS} is never
